@@ -2,6 +2,8 @@ import { ashenBlightProblems, ashenBlightCombatProblems } from '../model/ashenBl
 import { statusControlProblems } from '../model/combatStatusState.js';
 import { combatExpansionEntityProblems } from '../model/combatTacticsRules.js';
 import { combatExpansionRulesProblems } from '../model/combatExpansionRules.js';
+import { combatEnemyKnowledgeProblems } from '../model/enemyKnowledgeCombat.js';
+import { perceptionProblems } from '../model/perception.js';
 
 // A reference table preserves queued ally/source references and Map identity.
 // Runtime callbacks, catalogue projections and RNG objects never enter the save.
@@ -107,5 +109,11 @@ export function decodeCoopCombatSnapshot(snapshot) {
     }
   }
   if (combat.order.length !== combat.players.size || new Set(combat.order).size !== combat.order.length) throw new Error('Invalid co-op seat order');
+  const knowledgeProblems = combatEnemyKnowledgeProblems(combat.enemyKnowledge, combat.enemies,
+    { ownerIds: new Set(combat.players.keys()), coop: combat.enemyKnowledge !== undefined });
+  if (combat.enemyKnowledge?.rules?.perception) for (const [id, seat] of combat.players) {
+    if (Object.hasOwn(combat.enemyKnowledge.owners, id)) knowledgeProblems.push(...perceptionProblems(seat.skills?.perception, combat.enemyKnowledge.rules.perception));
+  }
+  if (knowledgeProblems.length) throw new Error(knowledgeProblems.join('; '));
   return combat;
 }

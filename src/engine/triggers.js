@@ -14,6 +14,7 @@ import { TRIGGER_EVENTS } from '../model/schemas.js';
 import * as StatusHelpers from '../framework/statusSemantics.js';
 import * as Statuses from './statuses.js';
 import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './abilityRiders.js';
+import { recordKnowledgeEvent } from './enemyKnowledge.js';
 import { dispatchCombatCombos } from './combatExpansionCombos.js';
 
 const MAX_EMIT_DEPTH = 64;
@@ -44,6 +45,7 @@ export function emitEvent(ctx, type, payload = {}) {
   ctx.eventLog.push(event);
   recordAbilityEvent(ctx, type, event);
   if (ctx._buffer) ctx._buffer.push(event);
+  recordKnowledgeEvent(ctx, event);
   ctx._emitDepth = (ctx._emitDepth || 0) + 1;
   if (ctx._emitDepth > MAX_EMIT_DEPTH) {
     ctx._emitDepth = 0;

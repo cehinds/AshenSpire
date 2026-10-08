@@ -1,18 +1,22 @@
 import { commitCombatSnapshot, serializeCombatSnapshot } from './combatSnapshot.js';
+import { reconcileCombatKnowledge } from './enemyKnowledge.js';
 
 /** Irreversible changes are saved before adoption, animation or terminal presentation. */
 export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, saveCandidate }) {
-  // Ordinary actions do not replace the entry/explicit Save Game checkpoint.
+  // Legacy ordinary actions do not replace the entry/explicit Save Game checkpoint.
+  // Knowledge reads, predictions and learning always need their exact transaction.
   // Blight receipts, choices and zero-delta converted payments are irreversible,
   // so compare the complete state rather than just its meter value. The first
   // opening checkpoint also saves the entry check and exact initial RNG state.
   const checkpoint = run.combatEntered;
-  if (candidate.combatExpansionVersion === 2 && !candidate.result
+  const savesKnowledge = run.enemyKnowledgeRules?.version === 1 || candidate.enemyKnowledge?.version === 1;
+  if (!savesKnowledge && candidate.combatExpansionVersion === 2 && !candidate.result
     && checkpoint?.nodeId === nodeId && checkpoint.encounterId === encounterId && checkpoint.snapshot
     && JSON.stringify(run.ashenBlight) === JSON.stringify(candidate.player.ashenBlight)) {
     return { ok: true, durable: false };
   }
   const next = structuredClone(run);
+  reconcileCombatKnowledge(next, candidate);
   if (candidate.result) {
     next.ashenBlight = structuredClone(candidate.player.ashenBlight);
     next.ashenBlightBasePools = structuredClone(candidate.player.baseResourceMaxima);

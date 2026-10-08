@@ -312,8 +312,8 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     // Nothing new is drawn on any existing stream. Only the additions' own
     // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
     // Sigils and intent visibility were appended after the fixture; shops use neither.
-    const { shopOffers: _offers, sigils: _sigils, enemyIntentVisibility: _intentReads, combatAvoidance: _avoidance, statusRecovery: _recovery, statusPressure: _pressure, ashenBlight: _blight, ...counters } = rng.getCounters();
-    assert.deepEqual([_avoidance, _recovery, _pressure, _blight], [0, 0, 0, 0]);
+    const { shopOffers: _offers, sigils: _sigils, enemyIntentVisibility: _intentReads, combatAvoidance: _avoidance, statusRecovery: _recovery, statusPressure: _pressure, ashenBlight: _blight, enemyIntentClue: _clue, ...counters } = rng.getCounters();
+    assert.deepEqual([_avoidance, _recovery, _pressure, _blight, _clue], [0, 0, 0, 0, 0]);
     assert.equal(_sigils, 0);
     assert.equal(_intentReads, 0);
     assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
@@ -328,7 +328,7 @@ test('shopOffers retains its appended index after later stream additions', () =>
   // Sigils and intent visibility append after it, preserving historical indices.
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
   assert.equal(STREAM_NAMES.indexOf('rewardRolls'), 14);
-  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight']);
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue']);
   assert.equal(STREAM_NAMES.indexOf('shop'), 9);
   // A save written before the stream existed restores it at 0.
   assert.equal(createRng(7, { shop: 3 }).getCounters().shopOffers, 0);

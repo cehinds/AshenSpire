@@ -72,6 +72,7 @@ import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
 import { turnDrawCount, endTurnCardFate, returnUnplayedCards } from './handRules.js';
 import { orderedDrawPile } from '../model/deckRules.js';
+import { initializeCombatKnowledge, rollEnemyKnowledge, addKnowledgeObserver, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -88,7 +89,7 @@ export function coopHpMult(headcount, factor = 0.6) {
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null, knowledge = null }) {
   const C = {
     combatExpansionVersion, sharedExpansionVersion: combatExpansionVersion,
     combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: defaultStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
@@ -208,6 +209,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
 
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
+  if (knowledge) initializeCombatKnowledge(C, knowledge);
   if (C.sharedExpansionVersion === 2 && !livingPlayers(C).length) { finish(C, 'defeat'); return C; }
 
   // combatStart per player so each player's relics/statuses hook up.
@@ -439,6 +441,7 @@ export function joinCombat(C, player) {
   if (existing) { // returning player reconnects to their frozen body
     existing.connected = true;
     existing.entity.alive = !existing.entity.blightTerminal && existing.entity.hp > 0;
+    if (C.enemyKnowledge && existing.entity.alive && !C.result) addKnowledgeObserver(C, player.id, player.enemyKnowledgeProfile);
     if (C.sharedExpansionVersion === 2 && existing.endedBeforeDisconnect !== undefined) {
       existing.ended = existing.endedBeforeDisconnect;
       delete existing.endedBeforeDisconnect;
@@ -451,7 +454,15 @@ export function joinCombat(C, player) {
     }
     return existing;
   }
-  return addPlayerState(C, player);
+  const seat = addPlayerState(C, player);
+  if (C.enemyKnowledge && seat.entity.alive && !C.result) addKnowledgeObserver(C, player.id, player.enemyKnowledgeProfile);
+  return seat;
+}
+
+export function predictCoopIntent(C, playerId, enemyInstanceId, actionSerial, maneuver) {
+  if (!C._foundationTransaction) return F.foundationTransaction(C,
+    candidate => predictCoopIntent(candidate, playerId, enemyInstanceId, actionSerial, maneuver), { advanceAction: false });
+  return predictEnemyIntent(C, playerId, enemyInstanceId, actionSerial, maneuver);
 }
 
 export function leaveCombat(C, playerId) {
@@ -998,7 +1009,7 @@ function enemyPhase(C) {
     if (C.result || !enemy.alive) continue;
     if (C.sharedExpansionVersion === 2) {
       recoverStatusesAtOwnerStart(C, enemy, { cycle: enemy.combatOwnerCycle }); sleepRestoration(C, enemy);
-      if (controlRestrictions(C, enemy).locked) { endControlTurn(C, enemy); continue; }
+      if (controlRestrictions(C, enemy).locked) { if (!enemy.pendingMove) cancelKnowledgeAction(C, enemy); endControlTurn(C, enemy); continue; }
       if (tacticalProtection.block) A.gainBlock(C, enemy, tacticalProtection.block);
       if (tacticalProtection.barrier) C.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: tacticalProtection.barrier }, source: enemy, owner: enemy, target: enemy, meta: {} });
       drainQueue(C);
@@ -1006,6 +1017,7 @@ function enemyPhase(C) {
 
     // Staggered (poise meter filled) or skipTurn: the telegraphed move is lost.
     if (enemy.skipNextTurn || S.getFlag(C, enemy, 'skipTurn')) {
+      if (!enemy.pendingMove) cancelKnowledgeAction(C, enemy);
       enemy.skipNextTurn = false;
     } else if (enemy.pendingMove) {
       if (C.turn >= enemy.pendingMove.resolveOnTurn) {
@@ -1138,7 +1150,10 @@ function rollIntents(C, isFirstTurn = false) {
     if (C.sharedExpansionVersion !== 2) clearCombatCounter(enemy);
     if (C.sharedExpansionVersion === 2) C.combatExpansionVersion = 2;
     enemy.intent = buildIntent(def.moves[moveId], moveId, enemy, C);
-    if (enemy.intent.combatProfile.camp) {
+    if (C.enemyKnowledge) {
+      rollEnemyKnowledge(C, enemy, { charging: !!def.moves[moveId].delay });
+      delete enemy.intentReads;
+    } else if (enemy.intent.combatProfile.camp) {
       enemy.intentReads = Object.fromEntries(livingPlayers(C).map(P => [P.id, C.rng.float('enemyIntentVisibility') >= hiddenIntentChance(P.attributes || {}, C.combatIntentRules || {})]));
     } else delete enemy.intentReads;
     primeEnemyCounter(C, enemy, def.moves[moveId], moveId);

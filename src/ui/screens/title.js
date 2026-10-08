@@ -52,6 +52,7 @@ export function mountTitle(app, {
   onCustom,
   onLan,
   onCompendium,
+  onBestiary,
   reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
   // Draws the built-in art's notice into the title root after every render
   // (step 5, src/ui/components/artLoadNotice.js); the composition root decides
@@ -115,6 +116,7 @@ export function mountTitle(app, {
         ...(onHistory ? [entry('Run history', 'history', { id: 'run-history' })] : []),
         // #armaments remains the compatibility anchor for the existing watched probe.
         entry('Compendium', 'collection', { id: 'armaments' }),
+        ...(onBestiary ? [entry('Bestiary', 'bestiary', { id: 'bestiary' })] : []),
         entry('Settings', 'settings', { id: 'settings' }),
         ...(onLan ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
       ],
@@ -316,6 +318,7 @@ export function mountTitle(app, {
         else if (action === 'load') openLoadSelector(button);
         else if (action === 'new') openModal(action);
         else if (action === 'collection' && onCompendium) onCompendium();
+        else if (action === 'bestiary') onBestiary?.();
         else if (action === 'history') onHistory?.();
         else if (action === 'profile') onProfile?.();
         else if (action === 'custom') onCustom?.();

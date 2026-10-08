@@ -6,6 +6,7 @@ import { expansionStatuses } from './combatStatusRules.js';
 import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
+import { enemyKnowledgeTuning } from './enemyKnowledge.js';
 
 // ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
 //
@@ -180,6 +181,7 @@ const PROGRESSION_CONTRACT_DESCRIPTION = 'The progression contract version saved
 export const balance = {
   combatMatchups,
   combatIntent,
+  enemyKnowledge: enemyKnowledgeTuning,
   progression: {
     version: 1,
     gearRequirements: progressionGearRequirements,

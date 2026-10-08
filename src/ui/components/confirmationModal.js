@@ -189,13 +189,20 @@ export function openConfirmationModal({
     window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
       detail: { component, tone },
     }));
+    let awaitingDestination = false;
     try {
-      onConfirm?.();
+      const destination = onConfirm?.();
+      if (destination && typeof destination.then === 'function') {
+        awaitingDestination = true;
+        // Profile-backed starts may wait for another browser's storage lock.
+        // Keep the navigation shield until that accepted operation settles.
+        Promise.resolve(destination).then(shield.afterDestinationPaint, shield.afterDestinationPaint);
+      }
     } finally {
       // Destination callbacks synchronously replace the app surface today.
       // Two paints let its hit-test tree settle before the bounded shield timer
       // begins; a physical second click is swallowed and may release it sooner.
-      shield.afterDestinationPaint();
+      if (!awaitingDestination) shield.afterDestinationPaint();
     }
   });
   // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the
