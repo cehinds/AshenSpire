@@ -284,6 +284,18 @@ async function newGameFromTitle(label) {
   await press('#cz-armours .equip-chip .equipment-choose');
   for (let i = 0; i < 8; i++) {
     if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+    // Starting maneuvers/spells are required choices. Complete the open fold
+    // through its real Choose controls before asking its Continue to advance.
+    const abilityFold = '#cz-equipment-fold details[open] [data-equipment-section="startingAbilities"]';
+    if (await has(abilityFold)) {
+      while (await ev(`document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
+        const cardId = await ev(`document.querySelector(${JSON.stringify(abilityFold + ' .cc-ability-choose[aria-pressed="false"]:not(:disabled)')})?.closest('.cc-ability-choice')?.dataset.cardId`);
+        if (!cardId) throw new Error(`no legal starting ability while Continue is blocked; screen ${JSON.stringify(await ev(SCREEN))}`);
+        const choice = `${abilityFold} .cc-ability-choice[data-card-id=${JSON.stringify(cardId)}] .cc-ability-choose`;
+        await press(choice);
+        await until(`document.querySelector(${JSON.stringify(choice)})?.getAttribute('aria-pressed') === 'true'`, `the starting ability ${cardId} to be chosen`);
+      }
+    }
     await press('#cz-next');
   }
   await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');
