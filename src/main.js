@@ -2203,8 +2203,7 @@ async function finishRun(victory) {
     if (!owned()) throw new Error('The active run changed while completion was pending.');
     if (!shotState) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
     stampSkillBonuses(finishedRegistries, finishedRun);
-    const saved = saves.saveRun(finishedRun, finishedRng, finishedSlot);
-    if (!saved.ok) throw new Error(`Run completion checkpoint was not saved: ${saved.reason}`);
+    saves.saveRun(finishedRun, finishedRng, finishedSlot);
   };
   const resultRecord = runResult(victory);
   return commitRunFinishAsync(finishedRun, {
