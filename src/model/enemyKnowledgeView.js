@@ -4,6 +4,7 @@ import { combatProfileFor } from './combatCardProfile.js';
 import { enemyMoveCards } from './enemyMoveCards.js';
 import { predictionCategory, broadIntentLabel } from './enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../content/enemyKnowledge.js';
+import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, char => char.toUpperCase());
 
 export function learnedEnemyMoveCards(def, stage, { registries = null, combatMatchupRules = null } = {}) {
@@ -24,9 +25,10 @@ export function learnedEnemyMoveCards(def, stage, { registries = null, combatMat
   return enemyMoveCards(catalog, { registries, combatMatchupRules });
 }
 
-export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bestiary.encountersToMaster, registries = null, combatMatchupRules = null } = {}) {
+export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bestiary.encountersToMaster, registries = null, combatMatchupRules = null, equipmentRules = combatExpansionEquipment } = {}) {
   const progress = knowledgeProgress(record, target);
   const stage = progress.stage;
+  const defenses = equipmentRules.enemies?.[def.id];
   const stages = KNOWLEDGE_STAGE_NAMES.slice(1).map((label, index) => ({ stage: index + 1, label,
     learned: stage >= index + 1, requiredPoints: [1, Math.ceil(progress.target * .2), Math.ceil(progress.target * .4), Math.ceil(progress.target * .7), progress.target][index] }));
   return {
@@ -36,10 +38,16 @@ export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bes
     resources: stage >= 2 ? [
       Array.isArray(def.hp) && { label: 'Base HP', value: `${def.hp[0]}–${def.hp[1]}` },
       def.poiseMax != null && { label: 'Base Poise', value: String(def.poiseMax) },
-      def.wardMax != null && { label: 'Base Ward', value: String(def.wardMax) },
+      { label: 'Base Ward rating', value: String(def.poiseMax || 1) },
+      { label: 'Base armor class', value: words(defenses?.armorClass || 'medium') },
       ...Object.entries(def.damageResistanceBySchool || {}).map(([school, amount]) => ({ label: `${words(school)} resistance`, value: String(amount) })),
+      ...Object.entries(defenses?.flat || {}).map(([type, amount]) => ({ label: `${words(type)} flat resistance`, value: `${amount} point${amount === 1 ? '' : 's'}` })),
+      ...Object.entries(defenses?.weak || {}).map(([type, amount]) => ({ label: `${words(type)} weakness`, value: `${amount}%` })),
     ].filter(Boolean) : null,
-    traits: stage >= 2 ? (def.traits || []).map(trait => typeof trait === 'string' ? { name: words(trait) } : { name: trait.name, detail: trait.detail || '' }) : null,
+    traits: stage >= 2 ? [
+      ...(def.traits || []).map(trait => typeof trait === 'string' ? { name: words(trait) } : { name: trait.name, detail: trait.detail || '' }),
+      ...Object.entries(defenses?.traits || {}).filter(([, value]) => value === true || (value && typeof value === 'object')).map(([name, value]) => ({ name: words(name), detail: value === true ? '' : Object.entries(value).map(([type, amount]) => `${words(type)}: ${amount}%`).join(', ') })),
+    ] : null,
     moveCards: learnedEnemyMoveCards(def, stage, { registries, combatMatchupRules }),
   };
 }

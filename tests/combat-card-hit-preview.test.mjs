@@ -6,7 +6,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createCoopCombat, playCard, previewCoopCard } from '../src/engine/coopCombat.js';
 import { armCombatCounter } from '../src/engine/combatMatchups.js';
-import { playingCardModel } from '../src/model/playingCard.js';
+import { playingCardModel, combatCardSummary } from '../src/model/playingCard.js';
 
 function fight(coop, { split = false, smash = false } = {}) {
   const registries = createRegistries({ ...contentBundle,
@@ -45,6 +45,10 @@ for (const coop of [false, true]) for (const split of [false, true]) for (const 
     const values = shown.values.filter(value => value.op === 'damage');
     const hits = values.flatMap(value => value.hitDamages);
     assert.deepEqual(hits, smash ? [4, 3, 3] : [1, 3, 3]);
+    if (!split) {
+      const summary = combatCardSummary(shown.resolvedDefinition, shown, f.registries);
+      assert.ok(summary.includes(`${hits.join(' + ')} damage (${hits.reduce((sum, amount) => sum + amount, 0)} total across 3 hits)`), summary);
+    }
     for (const value of values) {
       assert.equal(value.totalDamage, value.hitDamages.reduce((sum, amount) => sum + amount, 0));
       assert.deepEqual(value.perTargetHitDamages[f.enemy.id], value.hitDamages);
