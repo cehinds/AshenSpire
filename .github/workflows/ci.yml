@@ -293,13 +293,13 @@ jobs:
       - name: Prompt-library CLI safety plants
         run: node tools/verdict.mjs -- node tools/prompt-library-selftest.mjs
 
-      # THE SUITE'S TWO LANES, ON TWO CHECKOUTS (owner, 2026-10-02: every CI job
+      # THE SUITE'S LANES, ON SEPARATE CHECKOUTS (owner, 2026-10-02: every CI job
       # finishes in 20 minutes or less). `node tests/run-node.mjs` with no flag
-      # is exactly `--no-selftests` plus `--selftests-only`; the second half runs
-      # in `test-selftests` below, on its own checkout, as run-node's header
+      # keeps its complete original coverage; discovered files run in test-discovered,
+      # and the link/other corpora run in test-selftests, as run-node's header
       # requires (weapon-card-packages writes a mutant into src/ while it runs).
-      - name: Engine suite, every discovered test file, and each tool's verdict on the tree
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests
+      - name: Engine suite and each tool's verdict on the tree
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests --no-discovered
 
       - name: Historical standalone artifacts resolve verified LFS bytes
         run: node tools/git-artifact.test.mjs
@@ -364,13 +364,74 @@ jobs:
         run: node tools/release-series.mjs --selftest
 
   # ---------------------------------------------------------------------------
-  # The `--selftests-only` half of the engine suite, on all three platforms, on
-  # its own checkout (see run-node.mjs's header). Split from `test` by the
-  # owner's 20-minute rule (2026-10-02); together the two jobs run exactly what
-  # `node tests/run-node.mjs` ran in one step before.
+  # The discovered suite took about 17 minutes on Windows at test6a903,
+  # leaving no time for the original post-suite tools. Four exhaustive shards
+  # preserve every discovered file; the engine and tools stay in `test`.
+  # Separate checkouts also prevent a self-test mutant from reaching discovery.
   # ---------------------------------------------------------------------------
+  test-discovered:
+    name: discovered tests (${{ matrix.os }}, ${{ matrix.shard }})
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        shard: ['0/4', '1/4', '2/4', '3/4']
+    steps:
+      # Before checkout, deliberately: with autocrlf on (the Windows default) the
+      # working tree gets CRLF bytes that were stored as LF, and the bundler reads
+      # index.html and the stylesheets verbatim. That would make the build differ
+      # on Windows for a reason that has nothing to do with the code. Fixed here
+      # rather than with a .gitattributes because I cannot test a .gitattributes
+      # on Windows from where I am, and an untested repo-wide line-ending rule is
+      # a bigger claim than a runner setting.
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+        with:
+          # Nothing in this job reads an LFS object: the built HTML is not
+          # committed on dev (it exhausted the LFS budget), and the version checks
+          # that read a build moved to `reproducible`, which builds first.
+          lfs: false
+          fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
+
+      - uses: ./.github/actions/setup-node
+      - name: Install card artwork encoder for conversion tests
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/Scripts"
+          else
+            python3 -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/bin"
+          fi
+          "$encoder/python" -m pip install Pillow==11.1.0
+          echo "$encoder" >> "$GITHUB_PATH"
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - name: Every discovered test file, partitioned without omissions
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --shard ${{ matrix.shard }}
+
+  # Windows linkcheck's complete five-plant corpus took 15 minutes at test6a903.
+  # Give it its own job; `other` runs every remaining self-test unchanged.
+  # The two closed groups together are the original --selftests-only lane.
   test-selftests:
-    name: tool self-tests (${{ matrix.os }})
+    name: tool self-tests (${{ matrix.os }}, ${{ matrix.group }})
     if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -378,6 +439,7 @@ jobs:
       fail-fast: false # a Windows-only failure is a FINDING; do not hide it
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        group: [link, other]
     steps:
       - name: Keep checked-out bytes identical to stored bytes
         run: git config --global core.autocrlf false
@@ -402,7 +464,7 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Every tool check still catches its own known-bad corpus
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only --selftest-group ${{ matrix.group }}
 
   # ---------------------------------------------------------------------------
   # The bundler's parse gate, moved out of `test (ubuntu-latest)` into its own
@@ -918,12 +980,35 @@ jobs:
       - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --only 390x650
 
-      - name: The mobile visual reach gate can fail (13 plants)
-        run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
 
   # Keep the complete desktop/portrait/landscape sweep separate from the
   # phone regression corpus so both retain the owner's 20-minute budget.
   # A clear phone does not prove the fitted landscape targets are clear.
+  # The full screenreach corpus finished at the 20-minute boundary on test6a903.
+  # Four shards keep every original plant and a clean rendered edge per shard.
+  browser-layout-plants:
+    name: mobile visual reach known-bads (${{ matrix.shard }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['0/4', '1/4', '2/4', '3/4']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+
+      - name: The mobile visual reach gate can fail, with every plant retained
+        run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest --shard ${{ matrix.shard }}
+
   browser-layout-all:
     name: all five layouts in a real browser
     if: github.event_name != 'pull_request'
@@ -1163,7 +1248,7 @@ jobs:
       fail-fast: false
       matrix:
         # tests/doorplant-shard.test.mjs requires every shard of the count here.
-        shard: ['0/4', '1/4', '2/4', '3/4']
+        shard: ['0/8', '1/8', '2/8', '3/8', '4/8', '5/8', '6/8', '7/8']
     steps:
       - uses: actions/checkout@v5
         with:
@@ -1174,11 +1259,12 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
-      - name: The startup gate can fail by the same rendered door (its plants at index i mod 4)
+      - name: The startup gate can fail by the same rendered door (its plants at index i mod 8)
         # This took 41-46 minutes as one step, one browser boot per plant, run
-        # serially. SHARDED, NOT CUT (owner, 2026-10-02: every CI job finishes in
-        # 20 minutes or less): each leg runs the plants at index i mod 4 plus its
-        # own clean edge (tools/doorplant.mjs SHARDS); the four legs together run
+        # serially; a later four-shard run reached the budget. Eight retain headroom.
+        # SHARDED, NOT CUT (owner, 2026-10-02: every CI job finishes in
+        # 20 minutes or less): each leg runs the plants at index i mod 8 plus its
+        # own clean edge (tools/doorplant.mjs SHARDS); the eight legs together run
         # every plant, each once.
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest --shard ${{ matrix.shard }}
 
@@ -1219,14 +1305,14 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
+    needs: [test, test-discovered, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
-          echo "upstream results: test=${{ needs.test.result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
+          echo "upstream results: test=${{ needs.test.result }} test-discovered=${{ needs['test-discovered'].result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
           echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
-          echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-all=${{ needs['browser-layout-all'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
+          echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-plants=${{ needs['browser-layout-plants'].result }} browser-layout-all=${{ needs['browser-layout-all'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
           echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
