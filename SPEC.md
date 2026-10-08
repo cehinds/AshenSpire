@@ -1073,6 +1073,20 @@ All tactical numbers remain authored/configurable; their defaults above establis
 
 ---
 
+### 4.8 Martial and Spell expansion (version 2)
+
+The owner authorized the complete revised combat expansion for implementation
+on 2026-10-07. [docs/combat-expansion-contract.md](docs/combat-expansion-contract.md)
+and its referenced revised notes define version-2 ordering, state, defaults,
+and acceptance requirements. New runs snapshot version 2; older runs and
+snapshots preserve §4.7's carried version-1 rules. The expansion introduces one
+persistent tactical stance, authored Counter coverage and returns, persistent
+Ward, reach and area tradeoffs, seeded Evade/recovery checks, control recovery
+cards, opt-in upcasting, tag/status combos, and run-lasting Ashen Blight with
+three feat milestones. Preview and rejected/cancelled actions are inert;
+committed random outcomes and per-cycle budgets survive saves. Solo, co-op,
+enemy actions, and both presentation variants share the headless contract.
+
 ## 5. Content specification
 
 ### 5.1 Classes, creation presets, and levels
