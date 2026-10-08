@@ -160,7 +160,7 @@ export function mountTutorial(root, { onDone }) {
     const step = steps[i];
     veil.querySelector('.tut-title').textContent = typeof step.title === 'function' ? step.title() : step.title;
     veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
-    veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
+    actions.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show
   }
 
