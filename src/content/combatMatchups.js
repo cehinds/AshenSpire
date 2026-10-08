@@ -69,3 +69,47 @@ export const combatMatchups = {
   damageAliases: { frost: 'cold', arcane: 'force', sacred: 'holy', decay: 'necrotic', pierce: 'piercing', bludgeoning: 'blunt' },
   cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'burn'],
 };
+
+// New runs carry this table separately; the version-1 table above is immutable
+// history for saves which were priced under the original tagged-card contract.
+export const combatExpansionMatchups = {
+  counter: { incomingMultiplier: 0.5, maxReturnsPerCycle: 1,
+    defaultCoverage: {
+      melee: { camps: ['physical'], reaches: ['contact'], targeting: ['single'], maneuvers: ['attack', 'smash'], effects: ['damage'] },
+      ranged: { camps: ['physical'], reaches: ['near', 'far'], targeting: ['single'], effects: ['damage'] },
+      spell: { camps: ['spell'], reaches: ['contact', 'near', 'far'], targeting: ['single'], effects: ['damage', 'status'] },
+    },
+    schoolStrongMultiplier: 1.25, schoolWeakMultiplier: 0.75,
+    schoolMatchups: {
+      fire: { strongSchools: ['frost'], weakDamageTypes: ['blunt'] },
+      frost: { strongReaches: ['contact'], weakSchools: ['fire'], weakTraits: ['shattering'] },
+      lightning: { strongTraits: ['conductive'], weakTraits: ['grounded'] },
+      force: { strongTraits: ['projectile'], weakTraits: ['mental', 'statusOnly'] },
+      alteration: {},
+      illusion: { strongTargeting: ['single'], weakTargeting: ['area'], weakTraits: ['reveal', 'mindless'] },
+      divine: { strongSchools: ['decay'], weakDamageTypes: ['blunt'] },
+      decay: { strongTraits: ['healing', 'protective'] },
+    },
+  },
+  attack: { smashMultiplier: 1.25, preparedPoiseMultiplier: 1.5 },
+  smash: { defendedMultiplier: 1.5, guardBreakPoiseBonus: 3 },
+  defend: { sweepMultiplier: 0.75, turnStartProtection: 1 },
+  evade: { die: 20, baseDC: 8, armorPenalty: { light: 1, medium: 2, heavy: 3 },
+    areaDifficulty: { contact: 0, near: 2, far: 4 },
+  },
+  distance: { nearChance: 20, farChance: 35, maximumBaseChance: 50 },
+  reactionLocks: ['sleep', 'paralysis', 'dazed'],
+  damageAliases: { frost: 'cold', arcane: 'force', sacred: 'holy', decay: 'necrotic', pierce: 'piercing', bludgeoning: 'blunt' },
+  damageRiders: {
+    blunt: { poise: 2 }, piercing: { guardBypass: 2 },
+    slashing: { status: 'bleed', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
+    cold: { status: 'frost', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
+    fire: { status: 'burn', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
+    lightning: { status: 'paralysis', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
+    force: { wardDrain: 2 },
+    necrotic: { status: 'crimsonBlight', pressure: 4, recoveryProfile: 'curse', requiresHpLoss: true },
+    holy: { cleanse: 1, requiresHpLoss: true },
+    poison: { status: 'venom', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
+  },
+  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'burn'],
+};

@@ -144,7 +144,7 @@ test('non-combat snapshots retain shared party state without mutating host save 
   assert.equal(source.scene.votes.warrior, 'a');
 });
 
-test('actual next-turn Counter priming receipts expose defense gain without next selected move metadata', () => {
+for (const combatExpansionVersion of [1, 2]) test(`version ${combatExpansionVersion} actual next-turn Counter priming receipts expose defense gain without next selected move metadata`, () => {
   const registries = createRegistries({ ...legacyContentBundle,
     balance: { ...legacyContentBundle.balance,
       combatIntent: { ...legacyContentBundle.balance.combatIntent,
@@ -154,7 +154,7 @@ test('actual next-turn Counter priming receipts expose defense gain without next
       tags: ['camp:physical', 'maneuver:counter', 'damage:slashing'],
       damage: 6, block: 3, effects: [] })),
   });
-  const host = createSession({ registries, seedString: 'GUARD2' });
+  const host = createSession({ registries, seedString: 'GUARD2', combatExpansionVersion });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
@@ -182,5 +182,6 @@ test('actual next-turn Counter priming receipts expose defense gain without next
   assert.ok(message.snapshot.scene.events.some(event => event.type === 'enemyMoveStarted' && event.moveId),
     'already performed move receipts remain public');
   assert.equal(JSON.stringify({ source: authoritative, counters: host.live.combat.rng.getCounters() }), before);
-  assert.equal(host.serialize(), null, 'transport projection does not turn an active fight into a save');
+  if (combatExpansionVersion === 1) assert.equal(host.serialize(), null, 'legacy active fights retain their original save boundary');
+  else assert.ok(host.serialize()?.liveCombat, 'expanded active fights retain their durable snapshot without exposing it on the wire');
 });

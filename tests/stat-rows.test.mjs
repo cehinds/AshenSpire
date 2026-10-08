@@ -378,7 +378,7 @@ test("an old run's attribute cards name its own hand groups, not the live hand r
 const CLASS_HAND = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
 const hand1294 = (base, primary, { minimum = 4, maximum = 6 } = {}) => Math.min(maximum, Math.max(minimum, base + Math.floor(Math.max(0, primary - 1) / 2)));
 const ruleset6Run = (classId, registries, overrides = null) => {
-  const run = createRunState({ seed: 3, classId, registries });
+  const run = createRunState({ seed: 3, classId, registries, combatExpansionVersion: 1 });
   const rules = Object.fromEntries(Object.entries(run.derivedStatRuleSnapshot.rules.rules).filter(([id]) => !['openingHand', 'handSize', 'ar', 'dr', 'pr', 'ward'].includes(id)));
   run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6, rules } };
   if (overrides) run.advancedConfigSnapshot = { schemaVersion: 1, ratingsVersion: 1, overrides };

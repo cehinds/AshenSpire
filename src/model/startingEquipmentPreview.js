@@ -1,4 +1,5 @@
 import { equipmentRoleSource, startingDeckRefs, stampDeck } from './loadout.js';
+import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
 
 /** A disposable candidate using the same composition and stamping as run creation. */
 export function startingEquipmentPreview(registries, baseRun, hands, slot) {
@@ -10,6 +11,7 @@ export function startingEquipmentPreview(registries, baseRun, hands, slot) {
     .map((ref, index) => ({ ...ref, upgraded: false, instanceId: `creation-preview:${index}` }));
   run.equipmentAttackSlotCount = run.deck.filter(ref => ref.equipmentRole === 'attack').length;
   stampDeck(registries, run, null, { reconcileEquipmentPools: false });
+  ensureExpandedStarterCoverage(registries, run);
   const itemId = hands[slot] || null;
   const hand = slot === 'leftHand' ? 'left' : 'right';
   const groups = new Map();

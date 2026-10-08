@@ -394,7 +394,10 @@ export function contentReach(bundle, opts = {}) {
     // classes → their cards and relics
     for (const cls of played) {
       const def = R.classes.get(cls);
-      if (anyFight || merchant) for (const id of def.cardPool || []) grew = note('cards', id, `C-pool ${cls} card pool`) || grew;
+      if (anyFight || merchant) {
+        for (const id of def.cardPool || []) grew = note('cards', id, `C-pool ${cls} card pool`) || grew;
+        for (const card of bundle.cards.filter(row => row.minCombatExpansionVersion === 2 && row.class === cls)) grew = note('cards', card.id, `C-expanded-pool ${cls} version-2 reward pool`) || grew;
+      }
       grew = note('cards', def.startingSignatureCard, `C-class ${cls} signature`) || grew;
       grew = note('cards', def.abilityCard, `C-class ${cls} ability`) || grew;
       for (const id of (creation[cls] || {}).relicIds || []) grew = note('relics', id, `R-class ${cls} creation relic`) || grew;

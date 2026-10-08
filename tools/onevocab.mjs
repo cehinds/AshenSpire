@@ -173,7 +173,9 @@ const MAX_HP_COMPOSITION = [
       // RE-AIMED 2026-09-19 (plan phase 6): the derivation gained the run's
       // character level — the snapshot's `perLevel` term rides it — and the
       // three addends are otherwise UNCHANGED; a human read the diff.
-      "deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value",
+      // V2 projects earned Blight attributes without mutating allocation.
+      // The reviewed composition still has exactly these three addends.
+      "deriveStat(restored.rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value",
       'hpEquipmentBonus',
       'run.maxHpAdjustment',
     ],

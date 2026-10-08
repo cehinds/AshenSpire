@@ -9,11 +9,12 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { foundationEvent, foundationTriggerAllowed } from './combatRules.js';
+import * as Foundation from './combatRules.js';
 import { TRIGGER_EVENTS } from '../model/schemas.js';
-import { getStacks } from '../framework/statusSemantics.js';
-import { advanceStatusClock } from './statuses.js';
+import * as StatusHelpers from '../framework/statusSemantics.js';
+import * as Statuses from './statuses.js';
 import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './abilityRiders.js';
+import { dispatchCombatCombos } from './combatExpansionCombos.js';
 
 const MAX_EMIT_DEPTH = 64;
 const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'statusApplied', 'statusExpired']);
@@ -39,7 +40,7 @@ export function emitEvent(ctx, type, payload = {}) {
   if (ctx.players && payload.targetId === 'player' && PLAYER_TARGET_EVENTS.has(type)) {
     payload = { ...payload, playerId: payload.playerId ?? payload.targetPlayerId ?? ctx.playerKey };
   }
-  const event = { type, ...foundationEvent(ctx, type, payload) };
+  const event = { type, ...Foundation.foundationEvent(ctx, type, payload) };
   ctx.eventLog.push(event);
   recordAbilityEvent(ctx, type, event);
   if (ctx._buffer) ctx._buffer.push(event);
@@ -49,6 +50,7 @@ export function emitEvent(ctx, type, payload = {}) {
     throw new Error(`Trigger recursion exceeded ${MAX_EMIT_DEPTH} (event '${type}')`);
   }
   try {
+    dispatchCombatCombos(ctx, event);
     scanTriggers(ctx, event);
   } finally {
     ctx._emitDepth -= 1;
@@ -214,8 +216,8 @@ function allCombatants(ctx) {
  */
 export function fireOwnerHooks(ctx, entity, hookName) {
   if (!entity.alive) return;
-  advanceStatusClock(ctx, entity, hookName);
-  const syntheticEvent = { type: hookName, ...foundationEvent(ctx, hookName, { ownerId: entity.id }) };
+  Statuses.advanceStatusClock(ctx, entity, hookName);
+  const syntheticEvent = { type: hookName, ...Foundation.foundationEvent(ctx, hookName, { ownerId: entity.id }) };
   const oKey = ownerKeyFor(ctx, entity);
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
@@ -251,7 +253,7 @@ function maybeFire(ctx, key, trigger, owner, event) {
   const target = resolveEventEntity(ctx, event);
   if (trigger.if && !evalPredicate(ctx, trigger.if, { owner, target, event })) return false;
 
-  if (!foundationTriggerAllowed(ctx, key, trigger, event)) return false;
+  if (!Foundation.foundationTriggerAllowed(ctx, key, trigger, event)) return false;
   st.fires += 1;
   st.turnFires += 1;
   const ratingCard = ctx.ratingsRules && key.startsWith('status:')
@@ -372,11 +374,11 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     case 'inStance':
       return ctx.player.stanceId === pred.stance;
     case 'hasStatus': {
-      if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
+      if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && StatusHelpers.getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
       const current = resolveOf(ctx, pctx, pred.of);
       const ent = pred.snapshot ? priorAbilityEntity(ctx, current, pctx.meta || pctx.event) : current;
       const atLeast = pred.atLeast != null ? pred.atLeast : 1;
-      return ent != null && getStacks(ent, pred.status) >= atLeast;
+      return ent != null && StatusHelpers.getStacks(ent, pred.status) >= atLeast;
     }
     case 'hasBlock': {
       const current = resolveOf(ctx, pctx, pred.of);
