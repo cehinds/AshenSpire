@@ -1185,6 +1185,15 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     throw new Error('shotCombatVersion must be 1 or 2');
   }
   const combatExpansionVersion = legacyArcaneShot || shotCombatVersion === '1' ? 1 : 2;
+  const shotKnowledgeVersion = shotState === 'combat' ? shotParams.get('shotKnowledgeVersion') : null;
+  if (shotKnowledgeVersion !== null && !['0', '1'].includes(shotKnowledgeVersion)) {
+    throw new Error('shotKnowledgeVersion must be 0 or 1');
+  }
+  // Checkpoint fixtures can disable knowledge independently of combat rules.
+  // Normal runs and default expanded shots keep accepted knowledge durable.
+  const enemyKnowledgeVersion = shotKnowledgeVersion === null
+    ? legacyArcaneShot || shotCombatVersion === '1' ? null : 1
+    : shotKnowledgeVersion === '0' ? null : 1;
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
@@ -1193,7 +1202,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion: legacyArcaneShot || shotCombatVersion === '1' ? null : 1,
+    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -2806,7 +2815,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
         saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
-      if (saves.bankEnemyKnowledge) {
+      if (committed.ok && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
         const learningRun = run, learningRng = rng, learningSlot = activeSlot;
         saves.bankEnemyKnowledge(learningRun).then(result => {
           // The accepted action already saved the complete pending ledger.
