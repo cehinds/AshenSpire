@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../src/content/combatSigils.js';
-import { compactCardRules, cardSigilsHtml, sigilExplanationHtml } from '../src/ui/components/combatSigilView.js';
+import { compactCardRules, cardSigilsHtml, sigilExplanationHtml, sigilHtml } from '../src/ui/components/combatSigilView.js';
 
 test('all requested identities have unique monochrome geometry', () => {
   assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defend','counter','sweep','ranged','smash','spell','power','skill','status']);
@@ -18,6 +18,7 @@ test('identity follows authored action and school rather than damage or card nam
   assert.equal(cardSigilIdentity('Skill', {}).action, 'skill');
   assert.equal(cardSigilIdentity('Status', {}).action, 'status');
   assert.throws(() => cardSigilIdentity('Unknown', {}), /Unknown primary card type/);
+  assert.throws(() => cardSigilIdentity('Constructor', {}), /Unknown primary card type/);
   assert.throws(() => cardSigilIdentity('Spell', {school:'unknown'}), /Unknown card school/);
 });
 
@@ -29,6 +30,7 @@ test('marks preserve readable accessible names and inspection explanations', () 
   assert.match(html, /role="img" aria-label="Alteration"/);
   assert.match(html, /focusable="false"/);
   assert.doesNotMatch(html, /tabindex=/);
+  assert.equal(sigilHtml('constructor'), '');
   assert.match(sigilExplanationHtml(identity), /earth and grounding/);
   assert.match(cardSigilsHtml(identity, ['Blunt', 'Cold']), /class="card-damage-types">Blunt · Cold<\/span>/);
 });

@@ -26,8 +26,8 @@ export const SCHOOL_SIGILS = Object.freeze({
 
 export function cardSigilIdentity(primaryType, profile) {
   const action = primaryType.toLowerCase();
-  if (!ACTION_SIGILS[action]) throw new Error(`Unknown primary card type: ${primaryType}`);
+  if (!Object.hasOwn(ACTION_SIGILS, action)) throw new Error(`Unknown primary card type: ${primaryType}`);
   const school = profile.school || null;
-  if (school && !SCHOOL_SIGILS[school]) throw new Error(`Unknown card school: ${school}`);
+  if (school && !Object.hasOwn(SCHOOL_SIGILS, school)) throw new Error(`Unknown card school: ${school}`);
   return Object.freeze({ action, school });
 }

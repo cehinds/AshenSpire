@@ -2,7 +2,8 @@ import { ACTION_SIGILS, SCHOOL_SIGILS } from '../../content/combatSigils.js';
 import { esc } from './tooltip.js';
 
 export function sigilHtml(id, kind = 'action') {
-  const mark = (kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS)[id];
+  const catalog = kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS;
+  const mark = Object.hasOwn(catalog, id) ? catalog[id] : null;
   if (!mark) return '';
   return `<span class="combat-sigil combat-sigil-${kind}" role="img" aria-label="${esc(mark.label)}" title="${esc(mark.label + ': ' + mark.help)}" data-sigil="${esc(id)}"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${mark.shape}</svg></span>`;
 }
@@ -15,7 +16,8 @@ export function cardSigilsHtml(identity, damageTypes = []) {
 export function sigilExplanationHtml(identity) {
   if (!identity) return '';
   return `<div class="inspection-sigils">${[['action', identity.action], ['school', identity.school]].map(([kind, id]) => {
-    const mark = (kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS)[id];
+    const catalog = kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS;
+    const mark = Object.hasOwn(catalog, id) ? catalog[id] : null;
     return mark ? `<div class="inspection-sigil-row">${sigilHtml(id, kind)}<span><b>${esc(mark.label)}</b> — ${esc(mark.help)}</span></div>` : '';
   }).join('')}</div>`;
 }
