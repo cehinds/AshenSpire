@@ -5,6 +5,7 @@ Owner authorization: implement the revised combat notes in one delivery and land
 - **Accepted rules**
   - The complete rules in [the revised combat notes](combat-cards-expansion-proposal.md) are the behavioral contract for expansion version 2.
   - Values labelled Suggested become configurable initial defaults for this implementation, not omitted features.
+  - This implementation contract overrides conflicting earlier proposal wording: Counter mitigation/reply is consumed by its first eligible incoming action, and large authored buildup can complete multiple protected or active fills in one action.
   - The concrete Reaver example takes precedence over the retired version-1 automatic Counter return multiplier and flat bonus: return exactly the authored reply after the attack action is fully absorbed.
   - Counter preparation grants only authored protection. A card with no protection effect grants none; its preview must make that clear.
   - Every shipped class and enemy move receives explicit camp, stance, reach, targeting, and applicable school/damage/trait tags. Existing Attack/Skill/Power lifecycle remains a separate property.
@@ -17,7 +18,7 @@ Owner authorization: implement the revised combat notes in one delivery and land
 - **State and ownership**
   - Each actor carries one persistent `combatStance`, prepared Counter coverage/payload, persistent Ward and starting-Ward cap, status gauges/stacks, recovery/Resolve state, and once-per-cycle budgets.
   - Each accepted action has one saved resolution receipt per affected target: modifiers, avoidance roll, all direct-damage contacts, absorbed damage, independent status pressure, and eventual reaction.
-  - A multi-hit action rolls avoidance once and returns at most one Counter after its final contact. Stagger, incapacitation, replacement stance, defeat, or interruption cancels a pending reaction.
+  - A multi-hit action rolls avoidance once and returns at most one Counter after the complete action's direct contacts, independent status pressure, and impact. Stagger, incapacitation, replacement stance, defeat, or interruption cancels a pending reaction.
   - Sum direct-damage contacts after authored modifiers, apply the stance multiplier to the action total, and round positive damage up once before distributing it over contacts. Mixed-camp actions apply coverage to eligible contacts; a reply still requires the complete incoming direct-damage action to cause no HP loss.
   - The first eligible committed incoming action spends the prepared Counter's mitigation/reply charge whether or not fully absorbed. The stance remains visible but cannot rearm or halve another action without new preparation.
   - Distance avoidance is checked once before explicit Evade. A successful distance check preserves the explicit Evade charge; a failed distance check permits one d20 Evade roll. Evade requires strictly greater than its DC, with no automatic natural-20 success.
