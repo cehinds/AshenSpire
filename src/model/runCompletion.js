@@ -28,7 +28,15 @@ export function commitRunFinish(run, { victory, finishId, checkpoint, bank, comp
   }
 }
 
-export async function commitRunFinishAsync(run, { victory, finishId, checkpoint, bank, complete, clear }) {
+const pendingCompletions = new WeakMap();
+export function commitRunFinishAsync(run, options) {
+  if (pendingCompletions.has(run)) return pendingCompletions.get(run);
+  const operation = finish(run, options).finally(() => pendingCompletions.delete(run));
+  pendingCompletions.set(run, operation);
+  return operation;
+}
+
+async function finish(run, { victory, finishId, checkpoint, bank, complete, clear }) {
   run.pendingFinish ||= { victory, id: finishId };
   try {
     await checkpoint();

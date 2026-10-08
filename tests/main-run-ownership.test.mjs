@@ -1,0 +1,64 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { commitRunFinishAsync } from '../src/model/runCompletion.js';
+import { createRunStartOwner } from '../src/model/runStart.js';
+const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
+const deferred = () => { let resolve; const promise = new Promise(yes => { resolve = yes; }); return { promise, resolve }; };
+
+function finishFixture() {
+  const gate = deferred(), checkpoints = [], records = [], cleared = [];
+  let banks = 0;
+  const saves = {
+    loadMeta: () => ({}), saveRun: (run, rng, slot) => { checkpoints.push({ seed: run.seed, slot }); return { ok: true }; },
+    bankEnemyKnowledge: () => { banks++; return gate.promise; },
+    withProfile: callback => callback({ loadMeta: () => ({}), saveMeta: meta => { records.push(...meta.results); return { ok: true }; } }),
+    clearRun: slot => cleared.push(slot), hasRun: () => false,
+  };
+  const fixture = new Function('commitRunFinishAsync', 'saves', `
+    let run = { seed: 'A', classMasteryState: { receiptId: 'A' } }, activeSlot = 1;
+    const registries = { unlocks: [] }, rng = {}, shotState = false;
+    const crypto = { randomUUID: () => 'unused' };
+    const refreshRunClassMastery = () => {}, stampSkillBonuses = () => {}, hasClassMastery = () => false;
+    const runResult = victory => ({ victory, seed: run.seed });
+    const completedRunMeta = (registries, meta, result) => ({ meta: { results: [result] }, unlocked: [] });
+    ${body('async function finishRun(', '\nasync function showFinishedRun(')}
+    return { finish: finishRun, change: () => { run = { seed: 'B' }; activeSlot = 2; } };
+  `)(commitRunFinishAsync, saves);
+  return { ...fixture, gate, checkpoints, records, cleared, banks: () => banks };
+}
+
+test('actual terminal completion cannot record or clear a later adopted run after awaiting learning storage', async () => {
+  const fixture = finishFixture();
+  const operation = fixture.finish(false);
+  await Promise.resolve(); await Promise.resolve();
+  fixture.change(); fixture.gate.resolve({ ok: true });
+  const result = await operation;
+  assert.equal(result.ok, false); assert.match(result.error.message, /active run changed/);
+  assert.equal(fixture.banks(), 1); assert.deepEqual(fixture.records, []); assert.deepEqual(fixture.cleared, []);
+  assert.deepEqual(fixture.checkpoints, [{ seed: 'A', slot: 1 }]);
+});
+
+test('repeated terminal completion requests share one bank, result and original-slot clear', async () => {
+  const fixture = finishFixture();
+  const first = fixture.finish(false), second = fixture.finish(false);
+  await Promise.resolve(); await Promise.resolve(); fixture.gate.resolve({ ok: true });
+  assert.ok((await first).ok); assert.ok((await second).ok);
+  assert.equal(fixture.banks(), 1); assert.equal(fixture.records.length, 1);
+  assert.deepEqual(fixture.records[0], { victory: false, seed: 'A', finishId: 'A' });
+  assert.deepEqual(fixture.cleared, [1]);
+});
+
+test('actual screenshot new-run entry adopts its synchronous memory fixture before returning', () => {
+  const fixture = new Function('createRunStartOwner', `
+    const runStartOwner = createRunStartOwner(), shotState = 'combat';
+    let run = null; const saves = { ensureProfile: () => ({ ok: true }) };
+    const randomSeedString = () => 'SHOWCASE', seedProblem = () => null;
+    const beginPreparedRun = config => { run = { seed: config.seedString }; };
+    ${body('function newRun(', '\nfunction beginPreparedRun(')}
+    return { start: newRun, current: () => run };
+  `)(createRunStartOwner);
+  fixture.start({ seedString: 'SHOWCASE' });
+  assert.deepEqual(fixture.current(), { seed: 'SHOWCASE' });
+});

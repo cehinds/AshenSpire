@@ -1121,6 +1121,13 @@ function newRun(config) {
     console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
     return Promise.resolve({ ok: false, reason: why });
   }
+  // Screenshot boot composes its fixture immediately after this call. Its
+  // memory profile is synchronous and must preserve that same-stack contract.
+  if (shotState) {
+    const profile = saves.ensureProfile();
+    if (!profile.ok) throw new Error(`Profile could not be saved: ${profile.reason}`);
+    return beginPreparedRun({ ...config, seedString: asked });
+  }
   const surface = app.firstElementChild, previousRun = run;
   return runStartOwner.start({
     prepare: () => saves.ensureProfile(),
@@ -1352,7 +1359,9 @@ function refusedRunLanding(slot) {
 // hand until the second pass hands back a run. A refusal restores the
 // registries and calls `onRefused` — the title by default; the in-run Load
 // door passes its own, which keeps the run on screen (confirmSlotLoad).
+let terminalResume = null;
 function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
+  if (terminalResume) return terminalResume;
   const liveRegistries = registries;
   const refused = () => {
     if (registries !== liveRegistries) {
@@ -1403,13 +1412,13 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
   if (run.pendingFinish) {
     const victory = run.pendingFinish.victory;
-    return showFinishedRun(victory);
+    return resumeTerminal(() => showFinishedRun(victory));
   }
   if (run.combatPendingOutcome) {
     const pending = run.combatPendingOutcome;
     const ended = restoreCombatSnapshot({ registries, rng, snapshot: pending.snapshot });
     const encounter = combatEncounterFor(registries, run, { nodeId: pending.nodeId, encounterId: pending.encounterId });
-    return onCombatEnd(pending.result, ended, encounter);
+    return resumeTerminal(() => onCombatEnd(pending.result, ended, encounter));
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
@@ -1427,6 +1436,16 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   } else {
     showMap();
   }
+}
+
+function resumeTerminal(operation) {
+  const previouslyInert = app.inert;
+  app.inert = true;
+  terminalResume = Promise.resolve().then(operation).finally(() => {
+    app.inert = previouslyInert;
+    terminalResume = null;
+  });
+  return terminalResume;
 }
 
 function saveSlotRecords() {
@@ -2165,44 +2184,60 @@ function treasureSmithingReward() {
 }
 
 async function finishRun(victory) {
-  return commitRunFinishAsync(run, {
+  const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries, finishedRng = rng;
+  const owned = () => run === finishedRun && activeSlot === finishedSlot;
+  const checkpoint = () => {
+    if (!owned()) throw new Error('The active run changed while completion was pending.');
+    if (!shotState) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
+    stampSkillBonuses(finishedRegistries, finishedRun);
+    const saved = saves.saveRun(finishedRun, finishedRng, finishedSlot);
+    if (!saved.ok) throw new Error(`Run completion checkpoint was not saved: ${saved.reason}`);
+  };
+  const resultRecord = runResult(victory);
+  return commitRunFinishAsync(finishedRun, {
     victory,
-    finishId: run.classMasteryState?.receiptId || crypto.randomUUID(),
-    checkpoint: persist,
+    finishId: finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
+    checkpoint,
     bank: async () => {
-      const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(run) : { ok: true };
+      const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(finishedRun) : { ok: true };
       if (!knowledge.ok) throw new Error(`Enemy learning was not saved: ${knowledge.reason}`);
-      persist();
-      if (!hasClassMastery(run)) return;
-      const bank = await saves.bankClassMastery(run, registries);
+      checkpoint();
+      if (!hasClassMastery(finishedRun)) return;
+      const bank = await saves.bankClassMastery(finishedRun, finishedRegistries);
       if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
-      adoptClassMasteryProfile(run, bank.meta);
-      if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+      adoptClassMasteryProfile(finishedRun, bank.meta);
+      checkpoint();
+      if (bank.warning && owned()) showSettingsNotice(bank.warning, 'profile');
     },
     complete: (pending) => saves.withProfile ? saves.withProfile(writer => {
-      const result = { ...runResult(pending.victory), finishId: pending.id };
-      const completed = completedRunMeta(registries, writer.loadMeta(), result);
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      const result = { ...resultRecord, victory: pending.victory, finishId: pending.id };
+      const completed = completedRunMeta(finishedRegistries, writer.loadMeta(), result);
       const saved = writer.saveMeta(completed.meta);
       if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
-      return completed.unlocked.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+      return completed.unlocked.map((id) => finishedRegistries.unlocks.find((u) => u.id === id)).filter(Boolean);
     }) : (() => {
-      const result = { ...runResult(pending.victory), finishId: pending.id };
-      const completed = completedRunMeta(registries, saves.loadMeta(), result);
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      const result = { ...resultRecord, victory: pending.victory, finishId: pending.id };
+      const completed = completedRunMeta(finishedRegistries, saves.loadMeta(), result);
       const saved = saves.saveMeta(completed.meta);
       if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
-      return completed.unlocked.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+      return completed.unlocked.map((id) => finishedRegistries.unlocks.find((u) => u.id === id)).filter(Boolean);
     })(),
     clear: () => {
-      saves.clearRun(activeSlot);
-      if (saves.hasRun(activeSlot)) throw new Error('The completed run could not be cleared from its slot.');
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      saves.clearRun(finishedSlot);
+      if (saves.hasRun(finishedSlot)) throw new Error('The completed run could not be cleared from its slot.');
     },
   });
 }
 
 async function showFinishedRun(victory) {
+  const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries;
   const result = await finishRun(victory);
+  if (run !== finishedRun || activeSlot !== finishedSlot) return result;
   const retry = () => showFinishedRun(victory);
-  mountGameOver(app, { registries, game: run, victory, earned: result.earned,
+  mountGameOver(app, { registries: finishedRegistries, game: finishedRun, victory, earned: result.earned,
     onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry });
   if (!result.ok) openSaveStatusReview({
     ...runIdentityParts(), savedAt: run.savedAt ?? null, error: result.error, onRetry: retry,
@@ -2921,8 +2956,11 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
+  const learningRun = run, learningSlot = activeSlot;
+  const owned = () => run === learningRun && activeSlot === learningSlot;
   if (saves.bankEnemyKnowledge) {
-    const learning = await saves.bankEnemyKnowledge(run);
+    const learning = await saves.bankEnemyKnowledge(learningRun);
+    if (!owned()) return;
     if (!learning.ok) showSettingsNotice(`Enemy learning remains pending: ${learning.reason}`, 'profile');
     persist();
   }
@@ -2930,6 +2968,7 @@ async function onCombatEnd(result, combat, enc) {
   // and animation. Ordinary XP, room completion and the reward/finish receipt
   // are then installed synchronously before the next durable checkpoint.
   if (result === 'victory') await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
+  if (!owned()) return;
   delete run.combatPendingOutcome;
   if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
