@@ -870,7 +870,7 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier = 0, selectedBuildup = undefined) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
     if (!live) return { ok: false, error: 'no combat' };
     try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup); }
     catch (e) { return { ok: false, error: e.message }; }

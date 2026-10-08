@@ -567,7 +567,7 @@ export function cardChoicePlan(C, playerId, cardInstanceId) {
   return cardChoice(registries, resolveCombatCard(context, inst), P.entity.classId, P.entity.stanceId);
 }
 
-export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier = 0) {
+export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier) {
   const clone = F.candidateState(C);
   setActive(clone, clone.players.get(playerId));
   return soloPreviewCard(clone, instanceId, targetId, upcastTier);
@@ -613,7 +613,7 @@ export function cardNeedsEnemyTargetForPlayer(C, playerId, instanceId) {
   return cardNeedsEnemyTargetNow(candidate, instanceId);
 }
 
-export function playCard(C, playerId, cardInstanceId, targetId, choice, upcastTier = 0, selectedBuildup = undefined) {
+export function playCard(C, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
   R.assertNoAbilityChoice(C);
   if (!C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup));
   if (C.result) throw new Error('Combat is over');
@@ -643,7 +643,7 @@ function effectiveCost(C, def) {
   })).action;
 }
 
-function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier = 0, selectedBuildup, preflightOnly = false }) {
+function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedBuildup, preflightOnly = false }) {
   const p = C.player;
   const idx = C.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
