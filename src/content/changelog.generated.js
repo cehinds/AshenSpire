@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1740",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative combat keeps its art with the complete tactical rules",
+    "detail": "The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation uses the played card, paid rank and character, and phone Upcast controls stay reachable. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.",
+    "build": "0.7.1.1142",
+    "pullRequest": 1740,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1740"
+  },
+  {
     "id": "pr-1737",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -11,16 +21,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1140",
     "pullRequest": 1737,
     "url": "https://github.com/cehinds/AshenSpire/pull/1737"
-  },
-  {
-    "id": "pr-1740",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
-    "summary": "Alternative combat keeps its art with the complete tactical rules",
-    "detail": "Physical maneuvers, spell schools, status recovery, Counter replies and full upcast prices work with the alternative battlefield and class motions. Corruption costs and choices stay saved before taking effect; friendly and hostile targeting follow the same rules as regular combat. Both development histories remain available in the changelog.",
-    "build": "0.7.1.1136",
-    "pullRequest": 1740,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1740"
   },
   {
     "id": "pr-1731",
