@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
-- **Alternative previews document the current published release** ([#1721](https://github.com/cehinds/AshenSpire/pull/1721), `0.7.1.1101`). Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.
+- **Alternative previews document the current published release** ([#1721](https://github.com/cehinds/AshenSpire/pull/1721), `0.7.1.1102`). Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.
+
+- **Base class actions are ready to preview** ([#1719](https://github.com/cehinds/AshenSpire/pull/1719), `0.7.1.1101`). The alternative animation atelier offers a dashing strike, defense and power for each class in base armour. Equipped weapons share the class's default animation. Reaver wears a full cape, Herald keeps the shield left and sword right, and the preview includes a red hit flash. These are editable animation studies; live combat integration and weapon-tag combinations come later.
 
 - **Alternative updates retain combat plans and starting choices** ([#1715](https://github.com/cehinds/AshenSpire/pull/1715), `0.7.1.1100`). The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.
 

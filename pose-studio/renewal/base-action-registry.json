@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "selection": "class-default",
+  "equipmentIndependent": true,
+  "classes": [
+    "reaver",
+    "rogue",
+    "starseer",
+    "herald"
+  ],
+  "actions": [
+    "attack",
+    "defense",
+    "power"
+  ],
+  "families": {
+    "reaver": {
+      "manifest": "base-actions.json",
+      "rig": "reaver-base.rig.json",
+      "folder": ""
+    },
+    "rogue": {
+      "manifest": "rogue/base-actions.json",
+      "rig": "rogue/rogue-base.rig.json",
+      "folder": "rogue/"
+    },
+    "starseer": {
+      "manifest": "starseer/base-actions.json",
+      "rig": "starseer/starseer-base.rig.json",
+      "folder": "starseer/"
+    },
+    "herald": {
+      "manifest": "herald/base-actions.json",
+      "rig": "herald/herald-base.rig.json",
+      "folder": "herald/"
+    }
+  },
+  "notes": [
+    "Base armour and class reference weapon only.",
+    "Equipped weapons do not select animations.",
+    "Tag-combination choreography is deferred.",
+    "Authoring preview; no gameplay bindings."
+  ]
+}

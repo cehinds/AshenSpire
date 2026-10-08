@@ -1,22 +1,21 @@
 import { ANIM_SPEEDS } from '../../src/ui/fx.js';
 import { auraFilter } from '../../src/ui/combatAura.js';
 import { COMBAT_EFFECT_ART } from '../../src/content/combatEffectArt.js';
-import { alternativeArtCatalog } from '../../src/ui/alternativeArtCatalog.js';
-import { durationFor, sampleSequence, hitFlashOpacity } from './model.mjs';
+import { durationFor, sampleSequence, hitFlashOpacity, defaultFamily } from './model.mjs';
 
 const $=s=>document.querySelector(s), canvas=$('#preview'), ctx=canvas.getContext('2d');
 const flashCanvas=document.createElement('canvas');flashCanvas.width=flashCanvas.height=512;
 const flashContext=flashCanvas.getContext('2d');
-const response=await fetch('./manifest.json');
+const response=await fetch('./base-action-registry.json');
 if(!response.ok)throw Error('Cannot load renewal manifest');
-const manifest=await response.json(), images=new Map(), families=new Map([['reaver/sword',manifest]]);
-for(const [key,entry] of Object.entries(manifest.families||{})){if(entry.manifest){const r=await fetch('./'+entry.manifest);if(!r.ok)throw Error('Cannot load family: '+key);families.set(key,await r.json());}}
-let action='attack', time=0, playing=false, last=0, ready=false, cyclePause=0;
-const familyKey=()=>$('#actor').value+'/'+$('#loadout').value;
-const family=()=>families.get(familyKey())||manifest;
-const available=()=>families.has(familyKey());
+const manifest=await response.json(), images=new Map(), families=new Map();
+for(const [key,entry] of Object.entries(manifest.families)){const r=await fetch('./'+entry.manifest);if(!r.ok)throw Error('Cannot load family: '+key);families.set(key,await r.json());}
+let action='attack', time=0, playing=false, last=0, ready=false, cyclePause=0, hitAt=null;
+const family=()=>families.get($('#actor').value);
+const available=()=>!!defaultFamily(manifest,$('#actor').value);
 const seq=()=>family().sequences[action];
 const duration=()=>durationFor(seq(),ANIM_SPEEDS[$('#pace').value]);
+const hitProgress=now=>hitAt===null?1:(now-hitAt)*($('#slowmo').checked?.25:1)/260;
 const message=t=>$('#message').textContent=t;
 async function image(url){
  if(!images.has(url))images.set(url,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Missing image: '+url));img.src=url;}));
@@ -27,29 +26,29 @@ async function preload(){
  const urls=[...families.values()].flatMap(m=>Object.values(m.frames).flatMap(f=>[f.path,f.lite]));
  const effects=new Set(['slash','ward','starbolt','shieldBash',...[...families.values()].flatMap(m=>Object.values(m.sequences).map(s=>s.effect).filter(Boolean))]);
  urls.push(...[...effects].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../'+p.replace('assets/','assets-mobile/'))));
- urls.push(...manifest.classes.map(c=>'../../'+alternativeArtCatalog.sprites[c+'-default'].path));
  await Promise.all(urls.map(async u=>decoded.set(u,await image(u))));
- ready=true;render();message(`${families.size} base families drafted; ${manifest.coverage.length-families.size} combinations remain pending.`);
+ ready=true;render();message('4 classes · 3 base actions each · equipment does not change the animation.');
 }
 $('#actor').innerHTML=manifest.classes.map(c=>`<option value="${c}">${c[0].toUpperCase()+c.slice(1)}</option>`).join('');
-$('#loadout').innerHTML=manifest.loadouts.map(l=>`<option value="${l.id}">${l.label}</option>`).join('');
-$('#actions').innerHTML=Object.entries(manifest.sequences).map(([id,s])=>`<button data-action="${id}">${s.label}</button>`).join('');
+$('#actions').innerHTML=manifest.actions.map(id=>`<button data-action="${id}">${family().sequences[id].label}</button>`).join('');
 function stop(){playing=false;$('#play').textContent='▶ Play';}
-function reset(){time=0;cyclePause=0;render();}
+function reset(){time=0;cyclePause=0;hitAt=null;render();}
 function selection(){
  stop();reset();
  const drafted=available();
- const entry=manifest.families?.[familyKey()];
- $('#workshop-project').hidden=!drafted;$('#workshop-project').href=entry?.rig||'reaver-sword.rig.json';
+ const entry=defaultFamily(manifest,$('#actor').value);
+ $('#workshop-project').hidden=!drafted;$('#workshop-project').href=entry.rig;
  document.querySelector('[data-action=attack]').textContent=family().sequences.attack.label;
- $('#coverage').textContent=drafted?'Draft · 5 actions to inspect':'Pending · base reference only';
+ $('#coverage').textContent='Base armour · '+family().referenceWeapon;
  $('#play').disabled=$('#restart').disabled=$('#scrub').disabled=!drafted||!ready;
+ $('#hit').disabled=!ready||$('#reduced').checked||!duration();
  document.querySelectorAll('[data-action]').forEach(b=>{b.disabled=!drafted;b.classList.toggle('active',b.dataset.action===action);});
- $('#stage-label').textContent=`${$('#actor').value.toUpperCase()} · BASE ARMOUR · ${$('#loadout').selectedOptions[0].textContent.toUpperCase()}`;
- $('#action-note').textContent=action==='down'?'Down holds its final pose until Restart.':action==='power'||action==='spell'?($('#loadout').value==='staff'?'Staff stays in hand; the free hand releases the spell.':$('#loadout').value==='swordShield'?'Sword is sheathed; shield stays on the left arm. Draw / sheath transitions still need review.':'Weapons are sheathed while casting. Draw / sheath transitions still need review.'):'Forward travel returns to the same stance anchor.';
- $('#edit').hidden=!drafted||!['attack','power','spell'].includes(action);
- $('#edit').href='../index.html?renewal='+action+'&family='+$('#actor').value;
- $('#board').innerHTML=manifest.coverage.filter(r=>r.classId===$('#actor').value).map(r=>`<div class="card ${r.status}">${manifest.loadouts.find(l=>l.id===r.loadout).label}<span>${r.status==='draft'?'Draft · attack / hurt / down / casts':'Pending artwork'}</span></div>`).join('');
+ $('#stage-label').textContent=`${$('#actor').value.toUpperCase()} · BASE ARMOUR · ${seq().label.toUpperCase()}`;
+ const guardNotes={reaver:'Raise the sword, brace, and recover.',rogue:'Cross the daggers, brace, and recover.',starseer:'Brace behind the staff, then recover.',herald:'Raise the left shield, brace, and recover. Sword stays in the right hand.'};
+ $('#action-note').textContent=action==='power'?'Gather, release, and return. Existing power effects stay separate from the painted figure.':action==='defense'?guardNotes[$('#actor').value]:'Wind up, dash into contact, follow through, and return to the starting stance.';
+ $('#edit').hidden=!drafted;
+ $('#edit').href='../index.html?renewal='+action+'&family='+$('#actor').value+'&study=base';
+ $('#board').innerHTML=manifest.classes.map(c=>`<div class="card draft">${c[0].toUpperCase()+c.slice(1)}<span>Strike · Defense · Power</span></div>`).join('');
  $('#timeline').innerHTML=drafted?seq().poses.map((p,i)=>`<button class="frame" data-frame="${i}" aria-label="Inspect ${p}"><img src="${family().frames[p].path}" alt="${p}"><span>${String(i+1).padStart(2,'0')} · ${p}</span></button>`).join(''):'';
  render();
 }
@@ -66,18 +65,13 @@ function render(){
  ctx.strokeStyle='#a8bd9d12';ctx.lineWidth=1;for(let x=0;x<1000;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,580);ctx.stroke();}for(let y=30;y<580;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1000,y);ctx.stroke();}
  ctx.strokeStyle='#859b6755';ctx.beginPath();ctx.moveTo(120,486);ctx.lineTo(880,486);ctx.stroke();
  if(!ready)return;
- if(!available()){
-   const art=alternativeArtCatalog.sprites[$('#actor').value+'-default'],img=decoded.get('../../'+art.path),[x,y,x1,y1]=art.bounds;
-   const scale=365/(y1-y);ctx.drawImage(img,x,y,x1-x,y1-y,500-(x1-x)*scale/2,486-365,(x1-x)*scale,365);
-   ctx.fillStyle='#d6c49b';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('Base reference · selected weapon animation pending',500,540);return;
- }
  const reduce=$('#reduced').checked, instant=!d;
- const pose=(instant||reduce)&&!seq().hold?(action==='power'||action==='spell'?'power':'ready'):seq().poses[sampled.index];
+ const pose=(instant||reduce)?(action==='power'?'power':action==='defense'?'guard-brace':'ready'):seq().poses[sampled.index];
  const frame=family().frames[pose],img=decoded.get($('#quality').value==='lite'?frame.lite:frame.path);
  const aura=$('#aura').value, filter=aura==='none'?'none':auraFilter(action==='power'?'power2':'idle',aura==='guard'?'guard':'idle',aura==='guard'?[]:[aura],aura!=='guard');
  const x=410+(reduce?0:sampled.x),size=470;
  drawFigure(img,x,530,size,filter);
- const flash=hitFlashOpacity(action,sampled.progress,{reduced:reduce||instant});
+ const flash=hitFlashOpacity('hurt',hitProgress(performance.now()),{reduced:reduce||instant});
  if(flash){
    flashContext.clearRect(0,0,512,512);
    flashContext.globalCompositeOperation='source-over';flashContext.drawImage(img,0,0,512,512);
@@ -95,17 +89,19 @@ function render(){
  }
  ctx.fillStyle='#84947d';ctx.textAlign='center';ctx.font='10px system-ui';ctx.fillText('SHARED FLOOR ANCHOR',410,552);
 }
-$('#actor').onchange=$('#loadout').onchange=selection;
+$('#actor').onchange=selection;
 $('#actions').onclick=e=>{const button=e.target.closest('[data-action]');if(button){action=button.dataset.action;selection();}};
 $('#play').onclick=()=>{if(!ready||!available())return;if($('#reduced').checked||!duration()){time=duration();stop();render();return;}playing=!playing;if(time>=duration())reset();$('#play').textContent=playing?'Ⅱ Pause':'▶ Play';last=performance.now();};
 $('#restart').onclick=()=>{stop();reset();};
+$('#hit').onclick=()=>{hitAt=performance.now();render();};
 $('#scrub').oninput=e=>{stop();time=Number(e.target.value);render();};
 $('#timeline').onclick=e=>{const button=e.target.closest('[data-frame]');if(button){stop();time=seq().durations.slice(0,Number(button.dataset.frame)).reduce((a,b)=>a+b,0)/260*duration();render();}};
-$('#pace').onchange=()=>{stop();reset();};
+$('#pace').onchange=selection;
 for(const id of ['aura','quality','effect'])$('#'+id).onchange=render;
 $('#reduced').checked=matchMedia('(prefers-reduced-motion: reduce)').matches;
-$('#reduced').onchange=()=>{stop();reset();};
+$('#reduced').onchange=selection;
 function tick(now){
+ if(hitAt!==null){if(hitProgress(now)>=.55)hitAt=null;render();}
  if(playing&&document.visibilityState==='visible'){
   const dt=Math.min(80,now-last)*($('#slowmo').checked?.25:1);
   if(time<duration())time=Math.min(duration(),time+dt);

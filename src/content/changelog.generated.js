@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Alternative previews document the current published release",
     "detail": "Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.",
-    "build": "0.7.1.1101",
+    "build": "0.7.1.1102",
     "pullRequest": 1721,
     "url": "https://github.com/cehinds/AshenSpire/pull/1721"
+  },
+  {
+    "id": "pr-1719",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Base class actions are ready to preview",
+    "detail": "The alternative animation atelier offers a dashing strike, defense and power for each class in base armour. Equipped weapons share the class's default animation. Reaver wears a full cape, Herald keeps the shield left and sword right, and the preview includes a red hit flash. These are editable animation studies; live combat integration and weapon-tag combinations come later.",
+    "build": "0.7.1.1101",
+    "pullRequest": 1719,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1719"
   },
   {
     "id": "pr-1715",
