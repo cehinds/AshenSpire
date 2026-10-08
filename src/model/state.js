@@ -311,7 +311,7 @@ export function createRunState({
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
-  for (const ref of startingAbilityRefs(registries, run, startingAbilityIds)) {
+  for (const ref of startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {})) {
     run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });
   }
   // Stamp only after every opening card exists. Starting ability grades own
