@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Alternative combat opens up with option C",
     "detail": "Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
-    "build": "0.7.1.1143",
+    "build": "0.7.1.1144",
     "pullRequest": 1751,
     "url": "https://github.com/cehinds/AshenSpire/pull/1751"
   },
