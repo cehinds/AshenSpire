@@ -101,6 +101,15 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
 const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
+  ...Object.fromEntries(['baseExact', 'wisdomExact', 'intelligenceExact', 'levelExact', 'perceptionExact', 'minimumExact', 'maximumExact',
+    'baseClue', 'wisdomClue', 'intelligenceClue', 'levelClue', 'perceptionClue', 'minimumClue', 'maximumClue']
+    .map(key => [`enemyKnowledge.reads.${key}`, Object.freeze({ integer: false, step: 0.0005, min: 0, max: 1 })])),
+  'enemyKnowledge.perception.base': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'enemyKnowledge.perception.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 10 }),
+  'enemyKnowledge.perception.roundTo': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'enemyKnowledge.perception.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
+  'enemyKnowledge.perception.correctPredictionXp': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'enemyKnowledge.bestiary.encountersToMaster': Object.freeze({ integer: true, step: 1, min: 20, max: 50 }),
   ...Object.fromEntries(['baseHiddenChance', 'wisdomReduction', 'intelligenceReduction', 'minimumHiddenChance', 'maximumHiddenChance']
     .map(key => [`combatIntent.${key}`, Object.freeze({ integer: false, step: 0.01, min: 0, max: 1 })])),
   'rewards.sourceBonuses.combatFeatChancePct': PERCENT,

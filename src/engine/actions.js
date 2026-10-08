@@ -47,6 +47,7 @@ import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
+import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
@@ -205,6 +206,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   const components = receipt?.components.map((c, i) => ({ ...c, amount: componentShares[i] || 0 }));
   const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
   if (hpLoss > 0) target.hp -= hpLoss;
+  creditKnowledgeImpact(ctx, target, dmg, tactical.smash && dmg > critical);
   ctx.emit('damageDealt', {
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     sourceId: source ? source.id : null,
@@ -223,14 +225,14 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (hpLoss > 0) {
     if (ctx.ratingsRules && !carrier?.combatReaction) {
       const multiplier = Matchups.matchupPoiseMultiplier(ctx, source, target, carrier);
-      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null);
+      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null, { knowledgeMatchup: multiplier > 1 });
     }
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
     if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   Matchups.completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
-    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount) });
+    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount, { knowledgeMatchup: true }) });
   for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
     ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
@@ -311,6 +313,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
   const hpLoss = amount - blocked;
   if (hpLoss) target.hp -= hpLoss;
+  creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
@@ -578,14 +581,15 @@ export function staggerPlayer(ctx, player) {
  * (staggerEnemy + balance.poise.onFill) or the player (staggerPlayer), and the
  * meter grows by balance.poise.growthMult either way.
  */
-export function dealPoiseDamage(ctx, entity, amount) {
-  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount);
+export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false } = {}) {
+  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
   // A Poise guard (gainPoise) takes the impact before the meter does.
   const n = Math.max(0, Math.floor(amount)) - Ratings.absorbMeterGuard(entity, 'poise', amount);
   if (n <= 0) return;
+  creditKnowledgeImpact(ctx, entity, n, knowledgeMatchup);
   if (ctx.foundation && isEnemy && entity.impactProtectedUntil >= ctx.turn) {
     entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value + n);
     return;
@@ -933,8 +937,11 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'wardDamage': {
-      for (const t of resolveTargets(ctx, action, eff.target)) Control.spendPersistentWard(ctx, t,
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+        creditKnowledgeImpact(ctx, t, spent.spent);
+      }
       break;
     }
     case 'buildup': {
@@ -1158,7 +1165,7 @@ function runOpcode(ctx, action, eff) {
         const amount = Math.floor((authored + bonus) * multiplier);
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
           Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
-        } else dealPoiseDamage(ctx, t, amount);
+        } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
       }
       break;
     }

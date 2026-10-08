@@ -54,6 +54,7 @@ export const STREAM_NAMES = Object.freeze([
   'statusRecovery',
   'statusPressure',
   'ashenBlight',
+  'enemyIntentClue',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

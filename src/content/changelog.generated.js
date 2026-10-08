@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Alternative combat opens up with option C",
     "detail": "Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
-    "build": "0.7.1.1144",
+    "build": "0.7.1.1146",
     "pullRequest": 1751,
     "url": "https://github.com/cehinds/AshenSpire/pull/1751"
   },
@@ -31,6 +31,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1134",
     "pullRequest": 1731,
     "url": "https://github.com/cehinds/AshenSpire/pull/1731"
+  },
+  {
+    "id": "pr-1750",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat intents and targets share the approved option C layout",
+    "detail": "Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.",
+    "build": "0.7.1.1138",
+    "pullRequest": 1750,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1747",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: alternative sync keeps the full history efficiently",
+    "detail": "Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.",
+    "build": "0.7.1.1133",
+    "pullRequest": 1747,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1747"
+  },
+  {
+    "id": "pr-1734",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Read enemy clues and learn their Bestiary",
+    "detail": "Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.",
+    "build": "0.7.1.1132",
+    "pullRequest": 1734,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1734"
   },
   {
     "id": "pr-1736",

@@ -1380,7 +1380,12 @@
 /* Names stay above every silhouette, including the shallow rear row. Frames
    do not create stacking contexts; only sprite art participates in depth. */
 :root .combat[data-layout='formation'] .field .combatant { transform:none; }
-:root .combat[data-layout='formation'] .combatant-stack { left:0; transform:none; }
+:root .combat[data-layout='formation'] .combatant-stack { left:0; transform:none; filter:none; }
+/* Selection glow belongs to the artwork: filtering the shared stack traps
+   its Inspect/intent controls underneath a neighbouring sprite. */
+:root .combat[data-layout='formation'] .combatant.context-selected .sprite {
+ filter:var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
+}
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) { position:relative; z-index:1000; }
 :root .combat[data-layout='formation'] .combatant .nm { background:#17130fa6; border-radius:3px; }
 
