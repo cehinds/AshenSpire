@@ -6,7 +6,7 @@ import { setAnimSpeed } from '../src/ui/fx.js';
 
 test('class stage owns travel, hit flashing, interruption, pause and disposal', async () => {
   const dom=rewardDom(), raf=new Map(), paints=[];
-  let time=1000, serial=0, reduced=false;
+  let time=1000, serial=0, reduced=false, failArt=false;
   const create=dom.document.createElement.bind(dom.document);
   dom.document.createElement=tag=>{
     const node=create(tag);
@@ -18,7 +18,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     return node;
   };
   const globals={...dom, performance:{now:()=>time},
-    Image:class {set src(value){this.url=value;queueMicrotask(()=>this.onload?.());}},
+    Image:class {set src(value){this.url=value;queueMicrotask(()=>failArt?this.onerror?.():this.onload?.());}},
     matchMedia:query=>({matches:query.includes('reduced-motion')&&reduced}),
     requestAnimationFrame:fn=>{raf.set(++serial,fn);return serial;},
     cancelAnimationFrame:id=>raf.delete(id),
@@ -50,6 +50,14 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('attack',0);assert.equal(raf.size,0);
     setAnimSpeed('normal');stage.play('attack');assert.equal(raf.size,1);
     stage.dispose();assert.equal(raf.size,0);assert.equal(stage.play('attack'),false);
+    failArt=true;stage=createAlternativeCardStage('herald');
+    assert.equal(await stage.ready,false);
+    assert.ok(stage.el.hasAttribute('data-art-placeholder'));
+    assert.equal(stage.el.querySelector('span').hidden,false,'failed art retains a visible character marker');
+    failArt=false;await stage.el.ashenRestoreArt();
+    assert.equal(stage.el.hasAttribute('data-art-placeholder'),false);
+    assert.equal(stage.el.querySelector('span').hidden,true,'Retry restores the class art');
+    assert.equal(stage.pose,'ready');
   } finally {
     stage?.dispose();setAnimSpeed('normal');
     for(const [key,value]of Object.entries(saved))if(value===undefined)delete globalThis[key];else globalThis[key]=value;

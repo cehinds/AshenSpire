@@ -6,6 +6,7 @@ import { reducedMotionRequested } from './motion.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { assetUrl } from './assetmap.js';
 import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
+import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 
 const aliases = { idle: 'ready', guard: 'defend', guardHit: 'defend', cast: 'spell', power: 'spell', buff: 'spell' };
 const cached = new Map();
@@ -14,7 +15,7 @@ function load(url) {
     const image = new Image();
     const ready = new Promise((resolve, reject) => {
       image.onload = () => resolve(image);
-      image.onerror = () => { cached.delete(url); reject(new Error('Cannot load class action art: '+url)); };
+      image.onerror = () => { cached.delete(url); reject(new Error('Character artwork could not load.')); };
     });
     image.src = url;
     cached.set(url, { image, ready });
@@ -48,9 +49,19 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   const maskCtx = mask.getContext('2d');
   const lite = typeof matchMedia === 'function' && matchMedia('(max-width: 599px)').matches;
   const images = new Map();
-  const ready = Promise.all(Object.entries(family.frames).map(async ([name, frame]) => {
-    images.set(name, await load(alternativeArtUrl(frame[lite ? 'lite' : 'path'])).ready);
-  }));
+  const placeholder=document.createElement('span');placeholder.textContent='⚔';placeholder.hidden=true;
+  placeholder.setAttribute('role','img');placeholder.setAttribute('aria-label',classId+' character');
+  placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
+  async function preload(){
+    const results=await Promise.allSettled(Object.entries(family.frames).map(async([name,frame])=>{
+      images.set(name,await load(alternativeArtUrl(frame[lite?'lite':'path'])).ready);
+    }));
+    if(disposed)return false;
+    const failed=results.some(result=>result.status==='rejected');
+    if(failed){el.dataset.artError='Character artwork could not load.';markArtPlaceholder(el,preload);}
+    else{delete el.dataset.artError;el.removeAttribute(ART_PLACEHOLDER_ATTR);delete el.ashenRestoreArt;}
+    placeholder.hidden=images.has('ready');paint();return !failed;
+  }
   let down = null;
   if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { down=image; paint(); }).catch(()=>{});
   let pose='ready', rest='idle', playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, disposed=false;
@@ -93,7 +104,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   const wake=()=>{ if (request===null && !disposed) {last=performance.now();request=requestAnimationFrame(tick);} };
   function settle() { playing=null;resources=[];elapsed=0;pose=restPose();paint(); }
   function hit() { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();wake();return true; }
-  ready.then(()=>paint()).catch(error=>{ if(!disposed){el.dataset.artError=error.message;canvas.setAttribute('aria-label',error.message);} });
+  const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],
     get pose(){return pose;},
