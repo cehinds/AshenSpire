@@ -91,7 +91,9 @@ test('a skill draft offers each card at its rolled rank, and the taken card keep
     app.querySelector('.reward-level-up[data-track="item:blade"]').click();
     app.querySelector('.reward-kind[data-kind="skillDraft"]').click();
     const faces = app.querySelectorAll('.reward-row .card');
-    assert.equal(faces[0].getAttribute('aria-label'), `${resolveCard(registries, { cardId: 'rend' }).name}, rank 3`, 'the offered face shows its rank');
+    assert.ok(faces[0].getAttribute('aria-label').startsWith(resolveCard(registries, { cardId: 'rend' }).name), 'the offered face names its card');
+    assert.ok(faces[0].getAttribute('aria-label').includes('rank 3'), 'the offered face shows its rank');
+    assert.ok(faces[0].getAttribute('aria-label').includes('Attack'), 'the offered face names its primary sigil');
     faces[0].click();
     app.querySelector('#reward-card-confirm').click();
     assert.equal(run.deck.at(-1).cardId, 'rend');
