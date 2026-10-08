@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
-- **Saved fights load with their intended combat rules** ([#1736](https://github.com/cehinds/AshenSpire/pull/1736), `0.7.1.1129`). Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.
+- **Saved fights load with their intended combat rules** ([#1736](https://github.com/cehinds/AshenSpire/pull/1736), `0.7.1.1130`). Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.
 
 - **Behind the scenes: complete combat checks finish within their limits** ([#1739](https://github.com/cehinds/AshenSpire/pull/1739), `0.7.1.1128`). Nothing you play changes. The full discovered-test, self-test and mobile-layout sets now run in exhaustive parallel pieces, so every original check still runs while each automated job remains within its 20-minute limit.
 
