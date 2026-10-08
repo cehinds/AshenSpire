@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1725",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Power and card-label rules clarified",
+    "detail": "Defines expanded Power casts that Exhaust their paid card instance while its installed effect lasts for the combat. Preserves authored action labels, reusable Skills, and separate deck Status cards. Additional copies and Replicas remain separate paid casts. This contract prepares the combat implementation; gameplay does not change yet.",
+    "build": "0.7.1.1103",
+    "pullRequest": 1725,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1725"
+  },
+  {
     "id": "pr-1726",
     "date": "2026-10-07",
     "group": "2026-10-07",

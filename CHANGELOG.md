@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Power and card-label rules clarified** ([#1725](https://github.com/cehinds/AshenSpire/pull/1725), `0.7.1.1103`). Defines expanded Power casts that Exhaust their paid card instance while its installed effect lasts for the combat. Preserves authored action labels, reusable Skills, and separate deck Status cards. Additional copies and Replicas remain separate paid casts. This contract prepares the combat implementation; gameplay does not change yet.
+
 - **Enemy knowledge rules defined** ([#1726](https://github.com/cehinds/AshenSpire/pull/1726), `0.7.1.1102`). Specifies unknown and broad enemy clues, run Perception from successful predictions, and five-stage persistent bestiary knowledge. Defines saved receipts, bounded counter bonuses and private co-op reads. This is the contract for a later gameplay update; the game does not change yet.
 
 - **Next combat rules accepted for implementation** ([#1718](https://github.com/cehinds/AshenSpire/pull/1718), `0.7.1.1100`). Defines the complete Martial and Spell expansion: whole-action counters and evasion, persistent Ward, control recovery, optional upcasting, and three run-lasting Blight feat stages. Old runs keep their saved rules. This contract update prepares the runtime implementation; gameplay does not change yet.
