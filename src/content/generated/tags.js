@@ -3628,5 +3628,158 @@ export const tags = [
     "glyph": "",
     "visibility": "INTERNAL",
     "blurb": "A scoped action in an enemy move table."
+  },
+  {
+    "id": "maneuver:casting",
+    "domain": "maneuver",
+    "label": "Spell",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "A spell stance. Counter coverage depends on school and delivery."
+  },
+  {
+    "id": "reach:contact",
+    "domain": "reach",
+    "label": "Contact",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "At melee reach."
+  },
+  {
+    "id": "reach:near",
+    "domain": "reach",
+    "label": "Near",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Normal ranged reach."
+  },
+  {
+    "id": "reach:far",
+    "domain": "reach",
+    "label": "Far",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Extended ranged reach."
+  },
+  {
+    "id": "targeting:single",
+    "domain": "targeting",
+    "label": "Single",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "One direct target."
+  },
+  {
+    "id": "targeting:area",
+    "domain": "targeting",
+    "label": "Area",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "An area action; most Counters do not cover it."
+  },
+  {
+    "id": "trait:adequateReach",
+    "domain": "trait",
+    "label": "Adequatereach",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Adequatereach combat interaction."
+  },
+  {
+    "id": "trait:closing",
+    "domain": "trait",
+    "label": "Closing",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Closing combat interaction."
+  },
+  {
+    "id": "trait:conductive",
+    "domain": "trait",
+    "label": "Conductive",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Conductive combat interaction."
+  },
+  {
+    "id": "trait:grounded",
+    "domain": "trait",
+    "label": "Grounded",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Grounded combat interaction."
+  },
+  {
+    "id": "trait:insulated",
+    "domain": "trait",
+    "label": "Insulated",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Insulated combat interaction."
+  },
+  {
+    "id": "trait:mental",
+    "domain": "trait",
+    "label": "Mental",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Mental combat interaction."
+  },
+  {
+    "id": "trait:projectile",
+    "domain": "trait",
+    "label": "Projectile",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Projectile combat interaction."
+  },
+  {
+    "id": "trait:reveal",
+    "domain": "trait",
+    "label": "Reveal",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Reveal combat interaction."
+  },
+  {
+    "id": "trait:shattering",
+    "domain": "trait",
+    "label": "Shattering",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Shattering combat interaction."
+  },
+  {
+    "id": "trait:unavoidable",
+    "domain": "trait",
+    "label": "Unavoidable",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Unavoidable combat interaction."
+  },
+  {
+    "id": "trait:unreflectable",
+    "domain": "trait",
+    "label": "Unreflectable",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Unreflectable combat interaction."
   }
 ];

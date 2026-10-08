@@ -1,8 +1,10 @@
+import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
 import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems } from './combatTacticsRules.js';
+import { statusControlProblems } from './combatStatusState.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -150,8 +152,8 @@ export function combatSnapshotProblems(snapshot) {
     else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
   }
   if (snapshot.breakMeterVersion !== undefined) {
-    if (snapshot.breakMeterVersion !== 1 || !snapshot.ratingsRules?.enabled) problems.push('breakMeterVersion requires version 1 and enabled ratings');
-    for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
+    if (![1, 2].includes(snapshot.breakMeterVersion) || (snapshot.breakMeterVersion === 1 && !snapshot.ratingsRules?.enabled)) problems.push('breakMeterVersion must be 1 with enabled ratings, or 2');
+    if (snapshot.breakMeterVersion === 1) for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
       for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) if (entity?.[field] !== undefined) problems.push(`${path}.${field} is retired by breakMeterVersion 1`);
     }
   }
@@ -259,6 +261,11 @@ export function combatSnapshotProblems(snapshot) {
   problems.push(...entityProblems(snapshot.player, 'player', { player: true }));
   if (!Array.isArray(snapshot.enemies)) problems.push('enemies must be an array');
   else snapshot.enemies.forEach((enemy, index) => problems.push(...entityProblems(enemy, `enemies[${index}]`)));
+  if (snapshot.combatExpansionVersion !== undefined && ![1, 2].includes(snapshot.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2');
+  if (snapshot.combatExpansionVersion === 2) problems.push(...combatExpansionRulesProblems(snapshot.combatExpansionRules));
+  for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((enemy, i) => [`enemies[${i}]`, enemy])]) {
+    problems.push(...statusControlProblems(entity, path, { required: snapshot.combatExpansionVersion === 2, rules: snapshot.combatStatusRules || snapshot.combatExpansionRules?.statuses }));
+  }
 
   if (!record(snapshot.piles)) problems.push('piles must be an object');
   else {

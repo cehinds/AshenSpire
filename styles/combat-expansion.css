@@ -1,0 +1,6 @@
+.combat-expansion-controls{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;position:relative;z-index:35;padding:.3rem .6rem;background:rgba(12,15,18,.94);border:1px solid #766547;border-radius:.4rem;font-size:.85rem}
+.combat-expansion-controls button{min-height:44px;padding:.4rem .7rem}
+.combat-expansion-controls .ashen-blight-bar{flex:1;min-width:150px}
+.combat-expansion-upcast{position:absolute;top:100%;left:0;right:0;z-index:40;min-height:36px;background:#181c26;color:#e7ce94;border:1px solid #9f8862;border-radius:.3rem}
+.combat-expansion-controls[hidden]{display:none}
+.combat-expansion-hint{max-width:30rem;font-size:.8rem;color:#d4c6a4}

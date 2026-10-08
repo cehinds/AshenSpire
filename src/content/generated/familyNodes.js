@@ -477,5 +477,49 @@ export const familyNodes = [
   {
     "family": "enemyMove",
     "nodeId": "theme"
+  },
+  {
+    "family": "card",
+    "nodeId": "reach"
+  },
+  {
+    "family": "card",
+    "nodeId": "trait"
+  },
+  {
+    "family": "basicCardProfile",
+    "nodeId": "reach"
+  },
+  {
+    "family": "basicCardProfile",
+    "nodeId": "targeting"
+  },
+  {
+    "family": "basicCardProfile",
+    "nodeId": "trait"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "reach"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "targeting"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "trait"
+  },
+  {
+    "family": "effect",
+    "nodeId": "reach"
+  },
+  {
+    "family": "effect",
+    "nodeId": "targeting"
+  },
+  {
+    "family": "effect",
+    "nodeId": "trait"
   }
 ];

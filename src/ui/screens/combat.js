@@ -20,6 +20,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
+import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
@@ -102,6 +103,10 @@ import { formationGridHtml } from '../components/formationGrid.js';
 import { formationMovePlan } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
+import { resolveCombatCard } from '../../engine/combatExpansion.js';
+import { upcastOptions } from '../../model/upcasting.js';
+import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
+import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
@@ -172,6 +177,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
+        <div class="combat-expansion-controls" aria-live="polite"></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
@@ -334,6 +340,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   let selected = null; // card instanceId in click-targeting mode
+  const upcastRanksByCard = new Map();
+  let upcastPreviewRefresh = false;
+  let expansionChoiceShell = null;
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
@@ -377,7 +386,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animateArrival: true,
     fitFan: true,
     registries,
-    wireCard: (el, entry) => entry.preview ? wireCardInput(el, entry.inst, entry.preview, entry.affordable) : null,
+    wireCard: (el, entry) => {
+      if (!entry.preview) return null;
+      const release = wireCardInput(el, entry.inst, entry.preview, entry.affordable);
+      wireUpcastControl(el, entry.inst, entry.preview);
+      return release;
+    },
   });
 
   // WGC11 lists the WGH8 contents: ONE projection (models/PotionContentsModel.js)
@@ -506,7 +520,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // released until its observer runs — so an outgoing mount can be notified
     // once after its own DOM is gone. It has nothing left to re-dress.
     if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) return;
-    if (lit !== null || (!selected && !selfArm)) return;
+    if (upcastPreviewRefresh || lit !== null || (!selected && !selfArm)) return;
     selected = null;
     selfArm = null;
     // The stage, THEN the sync. `syncCardSelection` dresses what is already
@@ -523,7 +537,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // used to outlive the play or cancel that ended it.
   function cardTargets(instanceId) {
     const inst = findInst(instanceId);
-    return cardTargetPlan(inst ? { ...resolveCard(registries, inst), combatPreview: previewCard(combat, inst.instanceId) } : null, combat.player.id, combat.enemies,
+    return cardTargetPlan(inst ? { ...resolveCard(registries, inst), combatPreview: previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)) } : null, combat.player.id, combat.enemies,
       [{ id: combat.player.id, alive: combat.player.alive, connected: true }], { solo: true });
   }
 
@@ -798,6 +812,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       hp: e.hp,
       mana: e.mana,
       block: e.block,
+      barrier: e.barrier || 0,
+      persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
+      combatStance: e.combatStance ? { ...e.combatStance } : null,
       ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
       statuses,
@@ -824,6 +841,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const e of beat.events) {
       const t = e.targetId && disp.ents[e.targetId];
       switch (e.type) {
+        case 'persistentWardChanged':
+          if (t?.persistentWard) t.persistentWard.value = e.value;
+          break;
+        case 'barrierGained':
+          if (t) t.barrier = e.total;
+          break;
         case 'arcaneExposureChanged':
           if (t && t.arcaneExposure) t.arcaneExposure.value = e.value;
           disp.arcaneEvents.push(e);
@@ -837,7 +860,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'damageDealt':
           if (t) {
-            t.block = Math.max(0, t.block - e.blocked);
+            t.block = e.blockRemaining ?? Math.max(0, t.block - e.blocked);
+            if (e.barrierRemaining !== undefined) t.barrier = e.barrierRemaining;
             if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
             reconcileWardBlock(t);
           }
@@ -1484,7 +1508,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // wedge the timeline (this froze the game on the killing blow).
         let pv = null;
         try {
-          if (!heldTurnHand) pv = previewCard(combat, inst.instanceId);
+          if (!heldTurnHand) pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId));
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
@@ -1522,7 +1546,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!inst) return unavailable('This card is no longer in your hand.');
     const reason = unplayableReason(inst);
     if (reason) return unavailable(reason);
-    const pv = previewCard(combat, instanceId);
+    const pv = previewCard(combat, instanceId, undefined, upcastRanksByCard.get(instanceId));
     if (combat.player.energy < (pv.costIsX ? 0 : pv.cost) || combat.player.mana < pv.manaCost || combat.player.stamina < (pv.staminaCost || 0)) {
       return unavailable('Not enough resources to play this card.');
     }
@@ -1586,7 +1610,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function unplayableReason(inst) {
-    const def = resolveCard(registries, inst);
+    const def = resolveCombatCard(combat, inst);
+    if (!controlGate(combat, combat.player, def).allowed) return 'Recover your active control effects first.';
+    if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return 'Choose your Blight feat first.';
     if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
     try { assertFoundationPlayable(combat, def); } catch (error) { return error.message; }
     return '';
@@ -1601,7 +1627,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // same numbers the badge shows and the engine charges, in all three
       // pools. A card the preview cannot resolve is not a playable card.
       let pv = null;
-      try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      try { pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)); } catch (e) { return false; }
       if (pv.needsTarget && !combat.enemies.some(enemy => enemy.alive)) return false;
       const friendly = friendlyTargetPlan({ ...resolveCard(registries, inst), combatPreview: pv }, combat.player.id,
         [{ ...combat.player, connected: true }]);
@@ -1613,7 +1639,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
     // player at 0 Energy with Stamina left still holds a playable card, and
     // the per-card check above already prices every pool.
-    return anyPlayable;
+    return anyPlayable || combat.combatExpansionVersion === 2 && recoveryControls(combat, combat.player).some(row => !row.disabled && combat.player.energy >= row.costPerStack);
   }
 
   function renderControls() {
@@ -1632,7 +1658,54 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (endTurnBeat) endTurnBeat.refresh();
     $('.end-turn').disabled = busy || enemyPlayback || !!combat.result;
     paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
+    const expandedHost = $('.combat-expansion-controls');
+    if (combat.combatExpansionVersion === 2) {
+      const actor = dv(combat.player), ward = actor.persistentWard || combat.player.persistentWard;
+      const stance = actor.combatStance?.maneuver;
+      expandedHost.innerHTML = `<div class="combat-protection-values">Block ${actor.block || 0} · Barrier ${actor.barrier || 0} · Ward ${ward?.value || 0}/${ward?.max || 0}${stance ? ` · ${esc(stance[0].toUpperCase() + stance.slice(1))}` : ''}</div>${ashenBlightBarHtml(combat.player, { compact: true })}
+        ${combat.player.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}
+        <div class="combat-recovery-controls">${recoveryControls(combat, combat.player).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>`;
+      expandedHost.querySelector('[data-blight-feat]')?.addEventListener('click', () => {
+        if (busy || expansionChoiceShell || combat.result) return;
+        const pending = combat.player.ashenBlight.milestones.find(row => row.path === null);
+        expansionChoiceShell = openAshenBlightMilestone({ threshold: pending.threshold,
+          onClosed: () => { expansionChoiceShell = null; },
+          onChoose: selection => expansionIntent({ type: 'chooseBlightFeat', ...selection }) });
+      });
+      for (const node of expandedHost.querySelectorAll('[data-control-recovery]')) node.addEventListener('click', () => expansionIntent({ type: 'recoverControl', selections: [{ status: node.dataset.controlRecovery, stacks: 1 }] }));
+    } else expandedHost.replaceChildren();
 
+  }
+
+  function expansionIntent(intent) {
+    if (busy || enemyPlayback || combat.result || combat.phase !== 'player') return false;
+    disp = takeSnapshot();
+    try { const out = dispatch(combat, intent); busy = true; afterDispatch(out.events); return true; }
+    catch (error) { disp = null; render(); return { ok: false, error: error.message }; }
+  }
+
+  function wireUpcastControl(card, inst, preview) {
+    if (combat.combatExpansionVersion !== 2 || !upcastOptions(preview.resolvedDefinition).length) return;
+    const baseTier = preview.resolvedDefinition.upcast.baseTier;
+    const selectedTier = upcastRanksByCard.get(inst.instanceId) ?? baseTier;
+    const controls = document.createElement('div'); controls.className = 'card-upcast-controls';
+    const toggle = document.createElement('button'); toggle.className = 'card-upcast'; toggle.textContent = selectedTier > baseTier ? `Upcast +${selectedTier - baseTier}` : 'Upcast';
+    toggle.setAttribute('aria-expanded', 'false'); toggle.disabled = busy || enemyPlayback || !!combat.result;
+    const picker = document.createElement('select'); picker.className = 'card-upcast-rank'; picker.hidden = true; picker.setAttribute('aria-label', `Upcast tier for ${preview.name}`);
+    picker.innerHTML = upcastChoicePlan(preview.resolvedDefinition).options.map(option => `<option value="${option.id}">${esc(option.name)}</option>`).join('');
+    picker.value = String(selectedTier);
+    for (const event of ['pointerdown', 'pointerup', 'click', 'keydown']) controls.addEventListener(event, e => e.stopPropagation());
+    toggle.addEventListener('click', () => { picker.hidden = !picker.hidden; toggle.setAttribute('aria-expanded', String(!picker.hidden)); if (!picker.hidden) picker.focus(); });
+    picker.addEventListener('change', () => {
+      upcastRanksByCard.set(inst.instanceId, Number(picker.value));
+      // Repainting the rank releases the prior inspection node. This is still
+      // the same selected play, so its targeting must survive that release.
+      upcastPreviewRefresh = true;
+      try { handRenderKey = null; renderHand(); }
+      finally { upcastPreviewRefresh = false; }
+      syncCardSelection();
+    });
+    controls.append(toggle, picker); card.appendChild(controls);
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -2072,7 +2145,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const visibleId = handCards[hotkey.index]?.dataset.instanceId;
       const inst = combat.piles.hand.find(card => card.instanceId === visibleId);
       if (!inst) return;
-      const pv = previewCard(combat, inst.instanceId);
+      const pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId));
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
       if (!affordable) return;
       const hostile = cardTargets(inst.instanceId).mode === 'enemy';
@@ -2307,7 +2380,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animation.oncancel = remove;
   }
 
-  function playCard(instanceId, targetId, choice) {
+  function playCard(instanceId, targetId, choice, chosenUpcastRanks = null) {
     if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (targetId && !cardTargets(instanceId).legalIds.includes(targetId)) return;
@@ -2317,6 +2390,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       dlog('ignored', `playCard ${instanceId}`, why);
       return;
     }
+    const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
+    if (!inst || unplayableReason(inst)) return;
+    const definition = resolveCombatCard(combat, inst);
+    const rank = chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0;
+    if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && upcastOptions(definition).length) {
+      if (expansionChoiceShell) return;
+      if (targetId) lastTargetId = targetId;
+      expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),
+        onClosed: () => { expansionChoiceShell = null; },
+        onChoose: selectedRank => { upcastRanksByCard.set(instanceId, Number(selectedRank)); playCard(instanceId, targetId, choice, Number(selectedRank)); } });
+      return;
+    }
     // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
     // first; the pick rides the same intent, and Cancel plays nothing.
     if (choice == null) {
@@ -2324,20 +2409,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (plan) {
         const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
         hideTooltip();
-        openCardChoiceModal({ plan, cardName: resolveCard(registries, inst).name, onChoose: (id) => playCard(instanceId, targetId, id) });
+        openCardChoiceModal({ plan, cardName: resolveCard(registries, inst).name, onChoose: (id) => playCard(instanceId, targetId, id, rank) });
         return;
       }
     }
-    if (targetId) lastTargetId = targetId; // remembered for the next card's aim
-    selected = null;
-    selectedFlask = null;
-    selfArm = null;
-    clearAim();
+    const finalPreview = previewCard(combat, instanceId, targetId, rank);
+    if (combat.player.energy < (finalPreview.costIsX ? 0 : finalPreview.cost) || combat.player.mana < finalPreview.manaCost || combat.player.stamina < (finalPreview.staminaCost || 0)) return;
+    if (targetId) lastTargetId = targetId;
     hideTooltip();
     disp = takeSnapshot();
     let out;
     try {
-      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, ...(choice != null ? { choice } : {}) });
+      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, upcastTier: rank, ...(choice != null ? { choice } : {}) });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', `playCard ${instanceId}`, err && err.message);
@@ -2345,6 +2428,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
+    selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(instanceId);
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
     sfx.play('cardPlay');
@@ -2602,6 +2686,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         combatLayout.release();
         aimObserver?.disconnect();
         releaseSelectionWatch();
+        expansionChoiceShell?.close?.(); expansionChoiceShell = null;
         clearCardFeedback();
         pagerVeilObserver.disconnect();
         document.removeEventListener(ART_REDRAW_EVENT, redrawArt);

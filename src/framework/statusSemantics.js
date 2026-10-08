@@ -39,3 +39,17 @@ export const getAdd = adoptedGetAdd;
 export const getFlag = adoptedGetFlag;
 export const getCap = adoptedGetCap;
 export const anyCombatantFlag = adoptedAnyCombatantFlag;
+
+// Explicit v2 pressure/recovery shares the same framework authority boundary.
+import {
+  applyStatusPressure as adoptedApplyStatusPressure,
+  controlRestrictions as adoptedControlRestrictions,
+  controlGate as adoptedControlGate,
+  recoveryControls as adoptedRecoveryControls,
+  manualRecovery as adoptedManualRecovery,
+} from '../engine/combatStatusControl.js';
+export const applyStatusPressure = adoptedApplyStatusPressure;
+export const controlRestrictions = adoptedControlRestrictions;
+export const controlGate = adoptedControlGate;
+export const recoveryControls = adoptedRecoveryControls;
+export const manualRecovery = adoptedManualRecovery;

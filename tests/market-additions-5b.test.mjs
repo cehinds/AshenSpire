@@ -173,7 +173,7 @@ test('with shipped defaults pre-§14 shelves are byte-identical and later stream
   // only today's shelves are promised unmoved (review, #1377).
   // Sigils and intent visibility were appended later; a market draws neither.
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15, 'no stream was inserted before shopOffers');
-  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility']);
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight']);
   for (let seed = 1; seed <= 30; seed++) {
     const run = createRunState({ seed, classId: 'reaver', registries: REG });
     run.seenEvents = [];

@@ -1,0 +1,31 @@
+/* Procedural volcanic trim preserves the artwork and the readable center. */
+.card.corrupted-card { position: relative; isolation: isolate; }
+.card.corrupted-card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+  background:
+    linear-gradient(126deg, transparent 0 8%, #ec783f99 8.25% 8.55%, transparent 8.8% 100%),
+    linear-gradient(45deg, transparent 0 13%, #fa9b5377 13.2% 13.5%, transparent 13.75% 100%),
+    linear-gradient(232deg, transparent 0 17%, #e1643677 17.2% 17.5%, transparent 17.75% 100%),
+    linear-gradient(304deg, transparent 0 10%, #f5945077 10.2% 10.5%, transparent 10.75% 100%),
+    radial-gradient(ellipse at center, transparent 46%, #100d0bd9 82%, #080707 100%);
+  mask-image: radial-gradient(ellipse at center, transparent 37%, #0007 63%, #000 88%);
+  box-shadow: inset 0 0 .9rem .3rem #050505cc, inset 0 0 0 1px #ba62395c;
+}
+.corrupted-card-label { position: absolute; z-index: 4; bottom: 7%; left: 12%; right: 12%; display: flex; justify-content: space-between; gap: .3rem; padding: .15rem .35rem; border: 1px solid #a25e42; border-radius: .2rem; background: #17100ff2; color: #ffcdac; font: 600 .85rem/1.3 system-ui, sans-serif; pointer-events: none; }
+.corrupted-card-price { white-space: nowrap; color: #ffdccc; }
+.ashen-blight { --blight-value: 0%; color: #f0d8c8; background: #1b1413; border: 1px solid #80513e; border-radius: .5rem; padding: .65rem .8rem; }
+.ashen-blight-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; font-size: 1rem; }
+.ashen-blight-heading strong { font-variant-numeric: tabular-nums; }
+.ashen-blight-track { position: relative; height: .6rem; margin: .6rem 0; background: #090807; border: 1px solid #745341; border-radius: .3rem; }
+.ashen-blight-fill { display: block; width: var(--blight-value); height: 100%; border-radius: inherit; background: linear-gradient(90deg, #854c36, #d57b47, #ffc181); }
+.ashen-blight-pip { position: absolute; top: -.25rem; height: 1rem; width: .3rem; transform: translateX(-50%); border: 1px solid #aa8570; border-radius: .2rem; background: #241c18; }
+.ashen-blight-pip.reached { background: #ffd6a7; border-color: #f0b37e; }
+.ashen-blight-help { margin: .25rem 0 0; font-size: .9rem; line-height: 1.4; }
+.ashen-blight-compact { padding: .35rem .6rem; }
+.ashen-blight-choice-row { margin-bottom: 1rem; padding: .8rem; border: 1px solid #81503a; border-radius: .4rem; }
+.ashen-blight-feat h3 { margin: 0 0 .4rem; }
+.ashen-blight-feat ul { margin: 0 0 .65rem; padding-left: 1.25rem; line-height: 1.5; }
+.ashen-blight-benefit { color: #ead7bd; }
+.ashen-blight-drawback { color: #ffc5b7; }
+@media (max-width: 480px) { .ashen-blight-heading { font-size: .9rem; } .corrupted-card-label { font-size: .75rem; } }
+@media (forced-colors: active) { .card.corrupted-card::after { display: none; } .corrupted-card-label, .ashen-blight, .ashen-blight-pip { border-color: CanvasText; color: CanvasText; background: Canvas; } .ashen-blight-fill, .ashen-blight-pip.reached { background: Highlight; } }

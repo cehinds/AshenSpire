@@ -23,7 +23,8 @@ import { setKeyBindings } from '../src/ui/input.js';
 import { withModalDom as withDom } from './helpers/modal-dom.mjs';
 
 const REG = createRegistries(contentBundle);
-const freshRun = (seed = 0x5eed) => createRunState({ seed, classId: 'reaver', registries: REG });
+// Keep the historical equipment filler allocation used by these edit plants.
+const freshRun = (seed = 0x5eed) => createRunState({ seed, classId: 'reaver', registries: REG, combatExpansionVersion: 1 });
 const ordinary = (run) => run.deck.find((c) => !c.equipmentRole && !c.grantedBy);
 const editState = (run) => structuredClone({
   deck: run.deck, sideboard: run.sideboard, equipmentAttackSlotCount: run.equipmentAttackSlotCount,
@@ -230,7 +231,7 @@ test('equipment cards are removable for bare and namespaced owner refs', () => {
 
 test('unordered, the deck list is one row per variant with a ×N count; ordered, one row per copy (SPEC §14.7, Codex review on #1372)', () => {
   // A fresh Starseer: its three attack-slot Strikes and two guard Defends are one row each.
-  const fresh = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG });
+  const fresh = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 1 });
   const freshModel = deckEditorModel({ registries: REG, run: fresh, settings: {} });
   const attacks = fresh.deck.filter((c) => c.equipmentRole === 'attack');
   const guards = fresh.deck.filter((c) => c.equipmentRole === 'guard');

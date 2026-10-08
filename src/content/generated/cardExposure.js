@@ -601,5 +601,45 @@ export const cardExposure = [
     "cardId": "progression-crown-of-scars",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "rimeNeedle",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "emberDart",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "staticNeedle",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "forceNudge",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "drowsingMote",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "holySpark",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "rotMote",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "crawlingShot",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   }
 ];
