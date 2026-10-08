@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Valid card content keeps building through strict checks** ([#1732](https://github.com/cehinds/AshenSpire/pull/1732), `0.7.1.1120`). The bundler accepts legal empty statements after static imports, including the combat status data's doubled-semicolon test fixture. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.
+
 - **Actions and schools have distinct card sigils** ([#1729](https://github.com/cehinds/AshenSpire/pull/1729), `0.7.1.1118`). A large monochrome action mark leads a smaller school mark and written damage types. Information explains each mark and keeps the detailed tags. Complete effects adapt to the available card space while preserving costs, ranks, conditions and durations.
 
 ## 2026-10-07
