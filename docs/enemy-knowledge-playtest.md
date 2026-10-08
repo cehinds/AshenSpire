@@ -75,6 +75,15 @@ engine regression cases, and 150 checks with zero failures. Independent regular
 and alternative source reviews found no actionable issues. Alternative focused
 checks passed 69/69, with protected-path auditing retaining all variant art.
 
+The reconciled alternative source was also exercised with the same saved normal
+run at desktop and native-touch phone sizes. It retained its character, enemy
+and backdrop art while showing two Attack clues and one wholly unknown action.
+A ready Spell prediction advanced Perception to level 1 without a draft on both
+devices, and reload preserved the exact saved projection. Native inspection used
+the visible figure and its normal Inspect button; the prediction controls were
+44 pixels high with no panel overflow and nine plain native options. Final
+compiled alternative captures and promotion checks are tracked separately.
+
 Optional audio samples returned 404 and used the existing procedural fallback.
 Map/music requests cancelled during navigation were recorded separately. No
 JavaScript runtime exception was observed in the gameplay interactions.
