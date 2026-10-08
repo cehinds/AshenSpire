@@ -1016,8 +1016,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             <span class="fight-label">${esc(actTitle(snap.actNumber, snap.seatName || null))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
+          <div class="combat-blight-hud" aria-live="polite">${ashenBlightBarHtml(meP, { compact: true, cooperative: true })}</div>
         </header>
-        ${ashenBlightBarHtml(meP, { compact: true, cooperative: true })}
         ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
         ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}
