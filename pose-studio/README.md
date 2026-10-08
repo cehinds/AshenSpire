@@ -28,7 +28,7 @@ The project schema and resolver live in `src/model/presentationSequence.js`. Ent
 
 ## Distribution and tests
 
-The [base-action atelier](renewal/index.html) now offers each class's default dashing strike, defense and power in base armour. Equipment does not affect this selection; weapon-tag choreography is deferred. Reaver uses a full crimson cape. See [base-action sources, exports and validation](renewal/BASE-ACTIONS.md).
+The [card-action atelier](renewal/index.html) offers attack, smash, sweep, counter, defend, spell and physical/magic ranged actions for every base-armour class. Card types select the same choreography in the preview, deck and alternative combat. Reaver uses a full cape, two-handed greatsword and crossbow; Rogue twin daggers and bow; Starseer staff and open spellbook; Herald unarmed and open spellbook. Equipment-tag combinations remain deferred. See [sources, exports and validation](renewal/cards/README.md). The earlier [base-action studies](renewal/BASE-ACTIONS.md) remain available.
 
 For alternative sprite studies, shields stay on the character's anatomical left hand/forearm; swords stay in the right hand. Casting may sheath the sword and free the right hand, while retaining the shield on the left. Preserve that assignment through wind-up, contact, recovery, hurt and down poses. Check each painted pose in Workshop; a mirrored image or valid export schema does not establish correct handedness.
 

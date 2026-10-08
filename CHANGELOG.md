@@ -32,13 +32,29 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-08
+
+- **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
+
+- **Actions and schools have distinct card sigils** ([#1729](https://github.com/cehinds/AshenSpire/pull/1729), `0.7.1.1118`). A large monochrome action mark leads a smaller school mark and written damage types. Information explains each mark and keeps the detailed tags. Complete effects adapt to the available card space while preserving costs, ranks, conditions and durations.
+
 ## 2026-10-07
 
+- **Martial and Spell combat is playable** ([#1723](https://github.com/cehinds/AshenSpire/pull/1723), `0.7.1.1111`). New runs use persistent stances, whole-action counters and evasion, Ward, typed defenses, status buildup and recovery, optional upcasting, and run-long Ashen Blight. Cards show their action at the bottom with compact effects and inspected tags; Powers Exhaust while their buffs stay active for the fight. Solo and co-op share the rules and saved outcomes. Existing runs retain their original combat rules.
+
+- **Cards animate with each class's base weapons** ([#1727](https://github.com/cehinds/AshenSpire/pull/1727), `0.7.1.1106`). Alternative combat now plays attack, smash, sweep, counter, defend, spell and ranged motions from the card type. Reaver uses a two-handed greatsword and crossbow, Rogue twin daggers and bow, Starseer staff and open book, and Herald unarmed strikes and book casting. Attacks advance and return, hits flash red, and the atelier and deck preview share the new motions. Equipment-tag combinations and stance families remain separate work.
+
+- **Power and card-label rules clarified** ([#1725](https://github.com/cehinds/AshenSpire/pull/1725), `0.7.1.1103`). Defines expanded Power casts that Exhaust their paid card instance while its installed effect lasts for the combat. Preserves authored action labels, reusable Skills, and separate deck Status cards. Additional copies and Replicas remain separate paid casts. This contract prepares the combat implementation; gameplay does not change yet.
+
 - **Alternative previews document the current published release** ([#1721](https://github.com/cehinds/AshenSpire/pull/1721), `0.7.1.1102`). Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.
+
+- **Enemy knowledge rules defined** ([#1726](https://github.com/cehinds/AshenSpire/pull/1726), `0.7.1.1102`). Specifies unknown and broad enemy clues, run Perception from successful predictions, and five-stage persistent bestiary knowledge. Defines saved receipts, bounded counter bonuses and private co-op reads. This is the contract for a later gameplay update; the game does not change yet.
 
 - **Base class actions are ready to preview** ([#1719](https://github.com/cehinds/AshenSpire/pull/1719), `0.7.1.1101`). The alternative animation atelier offers a dashing strike, defense and power for each class in base armour. Equipped weapons share the class's default animation. Reaver wears a full cape, Herald keeps the shield left and sword right, and the preview includes a red hit flash. These are editable animation studies; live combat integration and weapon-tag combinations come later.
 
 - **Alternative updates retain combat plans and starting choices** ([#1715](https://github.com/cehinds/AshenSpire/pull/1715), `0.7.1.1100`). The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.
+
+- **Next combat rules accepted for implementation** ([#1718](https://github.com/cehinds/AshenSpire/pull/1718), `0.7.1.1100`). Defines the complete Martial and Spell expansion: whole-action counters and evasion, persistent Ward, control recovery, optional upcasting, and three run-lasting Blight feat stages. Old runs keep their saved rules. This contract update prepares the runtime implementation; gameplay does not change yet.
 
 - **README shows the current published game** ([#1720](https://github.com/cehinds/AshenSpire/pull/1720), `0.7.1.1099`). The README illustrates character creation, exploration, card combat and shops with screenshots from the published release candidate, including a phone view. Future README updates verify and refresh the gallery for the latest published release.
 

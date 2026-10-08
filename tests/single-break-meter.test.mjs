@@ -58,9 +58,9 @@ test('fully Blocked hits cause no impact; explicit Poise damage adds no magical 
   assert.equal(e.poiseMeter.value, 2); assert.equal(events(c, 'arcaneImpact').length, 0);
 });
 
-test('new run construction stamps fights; a persisted older run remains on its own rules', () => {
+test('version-1 run construction stamps fights; a persisted older run remains on its own rules', () => {
   const reg = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot()));
-  const run = createRunState({ registries: reg, classId: 'reaver', seed: 8 });
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 8, combatExpansionVersion: 1 });
   assert.equal(run.advancedConfigSnapshot.breakMeterVersion, 1);
   const current = createRunCombat({ registries: reg, run, rng: createRng(8), enemyIds: ['wanderingSoldier'] });
   assert.equal(current.breakMeterVersion, 1); assert.equal(current.player.wardMeter, undefined);
@@ -203,7 +203,7 @@ test('co-op Stagger triggers refund and draw only for the source, including an i
 
 test('the real co-op session sends Ward ratings and omits retired meters under the host stamp', () => {
   const reg = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot()));
-  const host = createSession({ registries: reg, seedString: 'BOSSTIER' });
+  const host = createSession({ registries: reg, seedString: 'BOSSTIER', combatExpansionVersion: 1 });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' }); host.start();
   assert.equal(host.serialize().advancedConfigSnapshot.breakMeterVersion, 1);
   // Keep this a current-run host fixture, including its required starting pick.

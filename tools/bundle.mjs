@@ -270,8 +270,9 @@ if (!entrySrc) fail('no <script type="module" src="..."> entry found in index.ht
 //   import { \n a, \n b, \n } from './x.js';
 //   import * as N from './x.js';
 //   import './x.js';                       (side-effect only)
+// Trailing empty statements are legal module syntax (e.g. `import './x.js';;`).
 const IMPORT_RE =
-  /^[ \t]*import\b(?:[\s\S]*?)from\s*['"]([^'"]+)['"][ \t]*;?[ \t]*$|^[ \t]*import\s+['"]([^'"]+)['"][ \t]*;?[ \t]*$/gm;
+  /^[ \t]*import\b(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
 
 function resolveSpecifier(fromAbs, spec) {
   if (!spec.startsWith('.')) {
@@ -548,6 +549,14 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
   const aliases = [];
   const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
   const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+  const cardSource = sources.get('src/content/alternativeCardAnimations.js');
+  if (cardSource) {
+    const cards = JSON.parse(cardSource.match(/^export const alternativeCardAnimations = (.+);$/m)[1]);
+    for (const [file, hash] of Object.entries(cards.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+    }
+  }
   for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
     if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
     const bytes = readFileSync(resolve(ROOT, 'assets-alternative', file));
@@ -733,7 +742,7 @@ function padLines(original, replacement) {
 
 function rewriteImport(stmt, fromAbs) {
   // Namespace import:  import * as N from '...'
-  let m = /^([ \t]*)import\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s*['"]([^'"]+)['"][ \t]*;?[ \t]*$/.exec(stmt);
+  let m = /^([ \t]*)import\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/.exec(stmt);
   if (m) {
     const [, indent, name, spec] = m;
     const id = idOf(resolveSpecifier(fromAbs, spec));
@@ -741,7 +750,7 @@ function rewriteImport(stmt, fromAbs) {
   }
 
   // Named import (possibly multi-line):  import { a, b as c } from '...'
-  m = /^([ \t]*)import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"][ \t]*;?[ \t]*$/.exec(stmt);
+  m = /^([ \t]*)import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/.exec(stmt);
   if (m) {
     const [, indent, body, spec] = m;
     const id = idOf(resolveSpecifier(fromAbs, spec));
@@ -758,7 +767,7 @@ function rewriteImport(stmt, fromAbs) {
   }
 
   // Side-effect-only import:  import '...'
-  m = /^([ \t]*)import\s*['"]([^'"]+)['"][ \t]*;?[ \t]*$/.exec(stmt);
+  m = /^([ \t]*)import\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/.exec(stmt);
   if (m) {
     const [, indent, spec] = m;
     const id = idOf(resolveSpecifier(fromAbs, spec));

@@ -1,5 +1,11 @@
 # Credits & Asset Licenses
 
+## Combat card sigils (2026-10-07)
+
+| Source | License |
+| --- | --- |
+| Original project-authored monochrome SVG geometry in [combatSigils.js](https://github.com/cehinds/AshenSpire/blob/dev/src/content/combatSigils.js): ten primary actions and eight schools | CC0-1.0. These inline source primitives use no third-party artwork. |
+
 ## Alternative animation reference study (2026-10-06)
 
 `pose-studio/renewal/` contains first-party Reaver sword animation drafts made
@@ -525,3 +531,14 @@ The exact prompts and reference identities are retained in its manifest.
 The PNG paintings are unchanged originals; native HTML labels and CSS cell
 views support review. No candidate is promoted into a runtime asset by this
 selection package.
+### Alternative class card actions (2026-10-07)
+
+The 90 original poses under `pose-studio/renewal/cards/` were generated and
+edited with OpenAI image generation from the project's own class references.
+[Source provenance and exact prompts](pose-studio/renewal/cards/source-provenance.json)
+and each class's normalization recipe accompany the PNG sheets. Starseer's
+casting layout repair is recorded beside its source sheet. The reproducible
+512px/256px WebPs are copied into the branch-owned `assets-alternative/` pack;
+`src/content/alternativeCardAnimations.js` records their hashes. These assets
+power alternative combat and the authoring preview. No third-party artwork
+was downloaded and no third-party license is claimed.

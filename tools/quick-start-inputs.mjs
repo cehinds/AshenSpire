@@ -63,7 +63,7 @@ const BROWSERS = [
 const BUDGET = 6;
 // A seed whose shuffled Reaver opening hand holds only skills (Defend, Dodge
 // Roll, Brace…), found with --quick-seed. The skills-only pass pins it.
-const SKILLS_ONLY_SEED = 8;
+const SKILLS_ONLY_SEED = 190;
 const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));

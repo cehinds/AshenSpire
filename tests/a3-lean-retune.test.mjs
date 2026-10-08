@@ -25,7 +25,9 @@ const withRows = (patch) => {
   for (const [id, fields] of Object.entries(patch)) Object.assign(bundle.derivedStatRules.rules[id], fields);
   return createRegistries(bundle);
 };
-const run = (registries, classId, attributes) => createRunState({ seed: 0xa3, classId, registries, attributes });
+// Historical Action-row tuning remains a version-1 compatibility contract;
+// expansion version 2 deliberately unifies Actions with the Stamina row.
+const run = (registries, classId, attributes) => createRunState({ seed: 0xa3, classId, registries, attributes, combatExpansionVersion: 1 });
 
 test('stock lean pools open on the retuned HP base', () => {
   assert.equal(contentBundle.derivedStatRules.rules.hp.base, 51, 'hp.base is the A3 figure');
