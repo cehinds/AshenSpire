@@ -451,7 +451,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const inst = cardId && combat.piles.hand.find(card => card.instanceId === cardId);
     if (inst) {
       if (!inspectionPlayAction(cardId).enabled) return [];
-      const def = resolveCard(registries, inst);
+      const def = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
       const hostile = cardTargets(inst.instanceId).mode === 'enemy';
       if (hostile) return combat.enemies.filter(enemy => enemy.alive).map(enemy => ({
         el: combatEl.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`), kind: 'enemy',
@@ -539,7 +539,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // used to outlive the play or cancel that ended it.
   function cardTargets(instanceId) {
     const inst = findInst(instanceId);
-    return cardTargetPlan(inst ? { ...resolveCard(registries, inst), combatPreview: previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)) } : null, combat.player.id, combat.enemies,
+    return cardTargetPlan(inst ? { ...resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }), combatPreview: previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)) } : null, combat.player.id, combat.enemies,
       [{ id: combat.player.id, alive: combat.player.alive, connected: true }], { solo: true });
   }
 
@@ -1631,7 +1631,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       let pv = null;
       try { pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)); } catch (e) { return false; }
       if (pv.needsTarget && !combat.enemies.some(enemy => enemy.alive)) return false;
-      const friendly = friendlyTargetPlan({ ...resolveCard(registries, inst), combatPreview: pv }, combat.player.id,
+      const friendly = friendlyTargetPlan({ ...resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }), combatPreview: pv }, combat.player.id,
         [{ ...combat.player, connected: true }]);
       if (friendly.active && !friendly.legalIds.length) return false;
       return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
@@ -1739,7 +1739,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // player — so it can never light a target the release would refuse. The
     // A-side (declared mode only: `self` lights, `mixed` never does) is the
     // shipped behaviour this replaces. Co-op keeps its own aiming.
-    const dragDef = resolveCard(registries, inst);
+    const dragDef = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
       { id: combat.player.id, alive: combat.player.alive, connected: true },
     ]).legalIds;
