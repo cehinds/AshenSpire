@@ -1097,6 +1097,19 @@ family limit applies. Skills normally remain reusable; deck-added Status
 cards remain distinct from entity statuses and built-in recovery controls.
 These Power destinations do not change version-1 fights or saved snapshots.
 
+### 4.9 Enemy knowledge, Perception and hidden-intent clues
+
+[docs/enemy-knowledge-contract.md](docs/enemy-knowledge-contract.md) defines the
+separately versioned extension to §4.8: three saved visibility outcomes, a 30%
+base exact identification chance improved by Wisdom, Intelligence, character
+level and run Perception, accepted prediction/counter receipts, and five-stage
+persistent bestiary knowledge. Its allowlisted hidden projections supersede
+§4.7's precise hidden stances only for opted-in new runs; existing runs retain
+their carried rules. Bestiary knowledge reveals static reference facts, never
+a future concealed action. Co-op authority owns private per-seat reads and
+learning receipts; profile writes remain durable and idempotent. The contract
+lands before its runtime implementation, which depends on the §4.8 runtime.
+
 ## 5. Content specification
 
 ### 5.1 Classes, creation presets, and levels
