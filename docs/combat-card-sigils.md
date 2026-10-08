@@ -37,3 +37,11 @@
 - These are original inline vector marks in source; the existing paintings and artwork packages remain in use.
 - The editor inventory was checked at `e116cfd1414bce9effb2e12ed643a481342ee934`. Its card adapter handles data definitions; native layout and runtime renderer changes are separate. The shared vector renderer uses normal source tools.
 - Build identities, review, test results, desktop/phone captures and branch promotions are recorded with delivery evidence.
+
+## Browser evidence
+
+- Source at `61c93ea1c2`: 2,186 native faces on each viewport, covering base cards, upgrades, all authored ranks and equipment profiles in both authored and live expanded combat forms.
+- Desktop 1440×1000 and phone 390×844 with touch emulation: no clipped effects, title overlaps, damage footer overflow, added sigil tab stops, or runtime errors. All ten actions and eight schools are covered. Minimum catalog rule text is 12.22px desktop and 11.18px phone.
+- Tapping the action mark selects the card through the existing hand hit lane. Information spends no resources or card plays; Escape closes it and restores focus.
+- Required code and artwork load. Optional SFX `.ogg` probes return 404 and use the existing synthesized audio fallback. Physical-device and subjective owner acceptance are separate.
+- [Desktop combat](qa/combat-card-sigils/source/desktop-combat.png), [phone Information](qa/combat-card-sigils/source/phone-inspection.png), [desktop legend in cards](qa/combat-card-sigils/source/desktop-sigil-gallery.png), [phone legend in cards](qa/combat-card-sigils/source/phone-sigil-gallery.png), [report](qa/combat-card-sigils/source/report.json).
