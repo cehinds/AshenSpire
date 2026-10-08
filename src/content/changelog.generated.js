@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Choose your game appearance",
     "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
-    "build": "0.7.1.1151",
+    "build": "0.7.1.1153",
     "pullRequest": 1757,
     "url": "https://github.com/cehinds/AshenSpire/pull/1757"
   },
