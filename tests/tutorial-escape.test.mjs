@@ -46,8 +46,9 @@ test('detached tutorial controls navigate all steps and remove their independent
     let done = 0;
     mountTutorial(root, { onDone: () => { done++; } });
     const veil = root.querySelector('.tut-veil'), row = root.querySelector('.tut-row');
-    assert.equal(row.parentNode, root, 'the real controls occupy their independent input layer');
-    assert.equal(veil.querySelector('.tut-next'), null);
+    assert.equal(row.parentNode, veil, 'the controls share the veil coordinate space used for placement');
+    assert.equal(veil.querySelector('.tut-bubble').querySelector('.tut-next'), null,
+      'the real controls remain outside the pointer-transparent prose');
     const next = row.querySelector('.tut-next');
     for (const label of ['Next (1/4)', 'Next (2/4)', 'Next (3/4)', 'Got it']) {
       assert.equal(next.textContent, label, 'step labels follow the moved button');
