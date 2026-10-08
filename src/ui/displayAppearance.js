@@ -27,7 +27,8 @@ export function onDisplayAppearanceChange(root, redraw) {
 
 // Publish after all display settings are applied; detached screens never redraw.
 export function publishDisplayAppearanceChange() {
-  for (const view of views) {
+  for (const view of [...views]) {
+    if (!views.has(view)) continue;
     if (!view.root.isConnected) view.release();
     else view.redraw();
   }

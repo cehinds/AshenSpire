@@ -63,3 +63,20 @@ test('redraw is published after settings application and detached screens stop r
     assert.equal(draws, 1);
   } finally { release(); releaseGone(); applyDisplayAppearance({}); }
 });
+
+test('a remounted screen subscribes for the next appearance publication', () => {
+  const root = { isConnected: true };
+  let first = 0, replacement = 0, releaseReplacement = () => {};
+  const release = onDisplayAppearanceChange(root, () => {
+    first++;
+    release();
+    releaseReplacement = onDisplayAppearanceChange(root, () => { replacement++; });
+  });
+  try {
+    publishDisplayAppearanceChange();
+    assert.equal(first, 1);
+    assert.equal(replacement, 0, 'a replacement must not redraw in the same publication');
+    publishDisplayAppearanceChange();
+    assert.equal(replacement, 1);
+  } finally { release(); releaseReplacement(); }
+});

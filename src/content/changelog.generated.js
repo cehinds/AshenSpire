@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1757",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Choose your game appearance",
+    "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
+    "build": "0.7.1.1149",
+    "pullRequest": 1757,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1757"
+  },
+  {
+    "id": "pr-1745",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative heroes hold their selected combat poses",
+    "detail": "Reaver, Rogue, Starseer and Herald use the twelve chosen Attack, Defend and Prepare poses after card actions. Books and defensive guards follow the selected artwork. Each co-op player keeps their own pose until their next turn; counters keep their existing presentation for a later selection pass. The separate Block, Barrier and Ward box is removed. Ashen Blight now appears as a wider centered header bar only above zero, with its own row on phones.",
+    "build": "0.7.1.1146",
+    "pullRequest": 1745,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
+    "id": "pr-1746",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative figures keep idle life and respect reduced motion",
+    "detail": "Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.",
+    "build": "0.7.1.1143",
+    "pullRequest": 1746,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1746"
+  },
+  {
+    "id": "pr-1737",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative tutorial controls stay reachable",
+    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1737,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
+  },
+  {
     "id": "pr-1755",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -21,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1136",
     "pullRequest": 1748,
     "url": "https://github.com/cehinds/AshenSpire/pull/1748"
+  },
+  {
+    "id": "pr-1731",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative cards show action and school sigils",
+    "detail": "Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.",
+    "build": "0.7.1.1134",
+    "pullRequest": 1731,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1731"
   },
   {
     "id": "pr-1747",
@@ -113,6 +163,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1723"
   },
   {
+    "id": "pr-1727",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Cards animate with each class's base weapons",
+    "detail": "Alternative combat now plays attack, smash, sweep, counter, defend, spell and ranged motions from the card type. Reaver uses a two-handed greatsword and crossbow, Rogue twin daggers and bow, Starseer staff and open book, and Herald unarmed strikes and book casting. Attacks advance and return, hits flash red, and the atelier and deck preview share the new motions. Equipment-tag combinations and stance families remain separate work.",
+    "build": "0.7.1.1106",
+    "pullRequest": 1727,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1727"
+  },
+  {
     "id": "pr-1725",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -123,6 +183,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1725"
   },
   {
+    "id": "pr-1721",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative previews document the current published release",
+    "detail": "Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.",
+    "build": "0.7.1.1102",
+    "pullRequest": 1721,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1721"
+  },
+  {
     "id": "pr-1726",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -131,6 +201,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1102",
     "pullRequest": 1726,
     "url": "https://github.com/cehinds/AshenSpire/pull/1726"
+  },
+  {
+    "id": "pr-1719",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Base class actions are ready to preview",
+    "detail": "The alternative animation atelier offers a dashing strike, defense and power for each class in base armour. Equipped weapons share the class's default animation. Reaver wears a full cape, Herald keeps the shield left and sword right, and the preview includes a red hit flash. These are editable animation studies; live combat integration and weapon-tag combinations come later.",
+    "build": "0.7.1.1101",
+    "pullRequest": 1719,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1719"
+  },
+  {
+    "id": "pr-1715",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates retain combat plans and starting choices",
+    "detail": "The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.",
+    "build": "0.7.1.1100",
+    "pullRequest": 1715,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1715"
   },
   {
     "id": "pr-1718",
@@ -173,6 +263,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1714"
   },
   {
+    "id": "pr-1712",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative Counters retain readable clauses and charges",
+    "detail": "Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.",
+    "build": "0.7.1.1095",
+    "pullRequest": 1712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1712"
+  },
+  {
     "id": "pr-1713",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -191,6 +291,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1093",
     "pullRequest": 1711,
     "url": "https://github.com/cehinds/AshenSpire/pull/1711"
+  },
+  {
+    "id": "pr-1706",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative combat gains tactical cards and readable stances",
+    "detail": "Physical and spell cards, damage effects and guarded Counters now follow the shared combat rules. Hidden enemy moves keep their stances visible, and co-op reads stay private to each character. The alternative battlefield retains its figures, layered scenery, motion and update history.",
+    "build": "0.7.1.1092",
+    "pullRequest": 1706,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1706"
   },
   {
     "id": "pr-1705",
@@ -223,6 +333,46 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1702"
   },
   {
+    "id": "pr-1707",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "More class animations to preview",
+    "detail": "The alternative animation atelier adds Rogue twin daggers, Starseer staff and Herald sword-and-shield studies. The Herald keeps the sword in the right hand and shield on the left arm through attacks and reactions. Current attack timing, forward movement and return, red hit flashes, down poses and casting are available in the preview. These are authoring studies; gameplay integration and the remaining base loadouts are still pending.",
+    "build": "0.7.1.1068",
+    "pullRequest": 1707,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1707"
+  },
+  {
+    "id": "pr-1701",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Both game versions retain their updates",
+    "detail": "Alternative updates preserve the reviewed artwork checks, skill Level Up repairs and both changelog histories while accepting the latest promoted primary build.",
+    "build": "0.7.1.1067",
+    "pullRequest": 1701,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1701"
+  },
+  {
+    "id": "pr-1689",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative figures recover and keep moving",
+    "detail": "Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.",
+    "build": "0.7.1.1065",
+    "pullRequest": 1689,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1689"
+  },
+  {
+    "id": "pr-1691",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1065",
+    "pullRequest": 1691,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
     "id": "pr-1704",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -253,6 +403,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1698"
   },
   {
+    "id": "pr-1695",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Preview the new alternative character animations",
+    "detail": "The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1695,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1695"
+  },
+  {
     "id": "pr-1692",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -261,6 +421,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1059",
     "pullRequest": 1692,
     "url": "https://github.com/cehinds/AshenSpire/pull/1692"
+  },
+  {
+    "id": "pr-1694",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Lighter alternative characters, clearer scenery",
+    "detail": "The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1694,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1694"
+  },
+  {
+    "id": "pr-1684",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative battles use the completed art collection",
+    "detail": "All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place. Sprite feet remain grounded when co-op battles resize between desktop and phone.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1684,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1684"
   },
   {
     "id": "pr-1693",
@@ -291,6 +471,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1054",
     "pullRequest": 1688,
     "url": "https://github.com/cehinds/AshenSpire/pull/1688"
+  },
+  {
+    "id": "pr-1686",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative builds gain class progression and retraining",
+    "detail": "Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1686,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1686"
   },
   {
     "id": "pr-1676",
@@ -333,6 +523,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1679"
   },
   {
+    "id": "pr-1683",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative characters keep pace",
+    "detail": "The alternative preview gains the ready-to-play character defaults, compact class cards, stat and relic detail dialogs, and continuous Smith upgrades. Its own battlefield and artwork stay intact, with both update histories preserved.",
+    "build": "0.7.1.1045",
+    "pullRequest": 1683,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1683"
+  },
+  {
     "id": "pr-1681",
     "date": "2026-10-06",
     "group": "2026-10-06",
@@ -373,6 +573,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1675"
   },
   {
+    "id": "pr-1673",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative artwork loads from the web packs",
+    "detail": "The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.",
+    "build": "0.7.1.1038",
+    "pullRequest": 1673,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1673"
+  },
+  {
     "id": "pr-1671",
     "date": "2026-10-06",
     "group": "2026-10-06",
@@ -401,6 +611,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1033",
     "pullRequest": 1667,
     "url": "https://github.com/cehinds/AshenSpire/pull/1667"
+  },
+  {
+    "id": "pr-1670",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative combat faces the battlefield",
+    "detail": "The alternative build uses rear-view hero armor, detailed facing enemies, thin gold and red outlines, and a layered Hollow Weald scene. The existing cards, HUD and footer stay playable above a fading textured base, with separate phone and desktop combat placement.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1670,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1670"
   },
   {
     "id": "pr-1666",
@@ -3493,6 +3713,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1234"
   },
   {
+    "id": "pr-1228",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Your level and every skill you are training now have bars you can watch",
+    "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
+    "build": "0.7.1.342",
+    "pullRequest": 1228,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1228"
+  },
+  {
     "id": "pr-1232",
     "date": "2026-09-20",
     "group": "2026-09-20",
@@ -3501,6 +3731,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.341",
     "pullRequest": 1232,
     "url": "https://github.com/cehinds/AshenSpire/pull/1232"
+  },
+  {
+    "id": "pr-1227",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Combat and combat animation have their own Settings section",
+    "detail": "The General tab now offers Combat beside Display and Audio, in two groups: Animation & effects holds Character sprites, Combat pacing, Rendering quality, Screen shake and Show played card animation, and Armaments holds Combat Armaments and Phone Armaments location. Every one of those switches moved there — pacing, quality, shake and the card animation were filed beside the title screen's lit-city pause, Character sprites was behind Advanced, and the Armaments rows sat with the accent colour — so each now has one place to be found and none is drawn twice. Advanced → Combat & actors still holds the balance constants and now says where the feel settings went. Your existing choices are unchanged; only where you find them moved.",
+    "build": "0.7.1.340",
+    "pullRequest": 1227,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1227"
   },
   {
     "id": "pr-1229",
@@ -3523,16 +3763,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1233"
   },
   {
-    "id": "pr-1228",
-    "date": "2026-09-20",
-    "group": "2026-09-20",
-    "summary": "Your level and every skill you are training now have bars you can watch",
-    "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
-    "build": "0.7.1.342",
-    "pullRequest": 1228,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1228"
-  },
-  {
     "id": "pr-1225",
     "date": "2026-09-20",
     "group": "2026-09-20",
@@ -3551,16 +3781,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.332",
     "pullRequest": 1226,
     "url": "https://github.com/cehinds/AshenSpire/pull/1226"
-  },
-  {
-    "id": "pr-1227",
-    "date": "2026-09-20",
-    "group": "2026-09-20",
-    "summary": "Combat and combat animation have their own Settings section",
-    "detail": "The General tab now offers Combat beside Display and Audio, in two groups: Animation & effects holds Character sprites, Combat pacing, Rendering quality, Screen shake and Show played card animation, and Armaments holds Combat Armaments and Phone Armaments location. Every one of those switches moved there — pacing, quality, shake and the card animation were filed beside the title screen's lit-city pause, Character sprites was behind Advanced, and the Armaments rows sat with the accent colour — so each now has one place to be found and none is drawn twice. Advanced → Combat & actors still holds the balance constants and now says where the feel settings went. Your existing choices are unchanged; only where you find them moved.",
-    "build": "0.7.1.340",
-    "pullRequest": 1227,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1227"
   },
   {
     "id": "pr-1217",
@@ -3783,6 +4003,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1199"
   },
   {
+    "id": "pr-1187",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Last Lantern opens a new quest, and the road offers new gear",
+    "detail": "Help a stranded caravan with oil or effort, then meet it again for a reward that remembers your choice. Frost Spear, Cinder Axe and Dusk Chime bring three new weapon Arts; Bastion Harness, Rimeweave Robes and Waywatcher Coat trade protection, Frost and Stamina against their own drawbacks. Four new relics offer travel rewards, stronger Exposure, portable healing or cheaper Powers. Every weapon has smith upgrades and uses existing artwork throughout the Armoury, shops and compendium. Reward cards now have fixed resource costs distributed by rarity: about 30%, 50% and 70% of Common, Uncommon and Rare cards use Stamina, including 15%, 30% and 50% using both Mana and Stamina. Most weapon attacks still cost Actions only; caster rewards favor higher rarities once unlocked.",
+    "build": "0.7.1.226",
+    "pullRequest": 1187,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1187"
+  },
+  {
     "id": "pr-1194",
     "date": "2026-09-19",
     "group": "2026-09-19",
@@ -3841,16 +4071,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.192",
     "pullRequest": 1189,
     "url": "https://github.com/cehinds/AshenSpire/pull/1189"
-  },
-  {
-    "id": "pr-1187",
-    "date": "2026-09-19",
-    "group": "2026-09-19",
-    "summary": "The Last Lantern opens a new quest, and the road offers new gear",
-    "detail": "Help a stranded caravan with oil or effort, then meet it again for a reward that remembers your choice. Frost Spear, Cinder Axe and Dusk Chime bring three new weapon Arts; Bastion Harness, Rimeweave Robes and Waywatcher Coat trade protection, Frost and Stamina against their own drawbacks. Four new relics offer travel rewards, stronger Exposure, portable healing or cheaper Powers. Every weapon has smith upgrades and uses existing artwork throughout the Armoury, shops and compendium. Reward cards now have fixed resource costs distributed by rarity: about 30%, 50% and 70% of Common, Uncommon and Rare cards use Stamina, including 15%, 30% and 50% using both Mana and Stamina. Most weapon attacks still cost Actions only; caster rewards favor higher rarities once unlocked.",
-    "build": "0.7.1.226",
-    "pullRequest": 1187,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1187"
   },
   {
     "id": "pr-1186",
@@ -3963,6 +4183,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1141"
   },
   {
+    "id": "pr-1140",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The rest of the game’s look-and-timing settings move out of the code",
+    "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
+    "build": "0.7.1.92",
+    "pullRequest": 1140,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1140"
+  },
+  {
     "id": "pr-1149",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -4023,16 +4253,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1143"
   },
   {
-    "id": "pr-1140",
-    "date": "2026-09-18",
-    "group": "2026-09-18",
-    "summary": "The rest of the game’s look-and-timing settings move out of the code",
-    "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
-    "build": "0.7.1.92",
-    "pullRequest": 1140,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1140"
-  },
-  {
     "id": "pr-1133",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -4061,6 +4281,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.80",
     "pullRequest": 1132,
     "url": "https://github.com/cehinds/AshenSpire/pull/1132"
+  },
+  {
+    "id": "pr-1124",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The last of the game’s look-and-layout settings move out of the code",
+    "detail": "Nothing you see changes in play — that is the point, and it is checked rather than hoped. Ten parts of the game still kept their presentation settings written into the program itself: the map’s tile sizes and zoom limits, the stances a fighter can hold, which animation each kind of action plays, where the class medallion sits on each painted figure, the environment paintings and their scenes, the map node icons and their descriptions, the in-run menu, the gamepad button names, and the timings and artwork of the combat pose stage. All of it now lives as plain, organised settings files alongside the rest, so a value can be changed in one readable place instead of hunted through the code. Every one of those parts was recorded before the move and is held to exactly what it produced before — same values, in the same order — and a further check refuses to let a stray number creep back into the code beside its new home.",
+    "build": "0.7.1.78",
+    "pullRequest": 1124,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1124"
   },
   {
     "id": "pr-1129",
@@ -4093,16 +4323,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1119"
   },
   {
-    "id": "pr-1124",
-    "date": "2026-09-18",
-    "group": "2026-09-18",
-    "summary": "The last of the game’s look-and-layout settings move out of the code",
-    "detail": "Nothing you see changes in play — that is the point, and it is checked rather than hoped. Ten parts of the game still kept their presentation settings written into the program itself: the map’s tile sizes and zoom limits, the stances a fighter can hold, which animation each kind of action plays, where the class medallion sits on each painted figure, the environment paintings and their scenes, the map node icons and their descriptions, the in-run menu, the gamepad button names, and the timings and artwork of the combat pose stage. All of it now lives as plain, organised settings files alongside the rest, so a value can be changed in one readable place instead of hunted through the code. Every one of those parts was recorded before the move and is held to exactly what it produced before — same values, in the same order — and a further check refuses to let a stray number creep back into the code beside its new home.",
-    "build": "0.7.1.78",
-    "pullRequest": 1124,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1124"
-  },
-  {
     "id": "pr-1126",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -4111,6 +4331,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.77",
     "pullRequest": 1126,
     "url": "https://github.com/cehinds/AshenSpire/pull/1126"
+  },
+  {
+    "id": "pr-1120",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the game’s own content builder is whole again",
+    "detail": "Nothing you see changes. The tool that packs the game’s content keeps a list of the eight parts a finished pack must contain, and tests itself by removing each one in turn to prove the right checker catches it. One of those eight — the events, the things that happen to you on the road — had stopped being caught the way the list says. Instead of one plain report that the events were missing, the content checker raised seventeen complaints about quests, speakers and a relic that all pointed at events which are in fact present, and never mentioned the one part that was gone. The checker now leaves that part to the tool that owns it and says so once, plainly. Nothing about the events themselves was wrong, and every check the content checker made before it still runs: a pack that ships an empty list of events is still refused, in all seventeen ways.",
+    "build": "0.7.1.77",
+    "pullRequest": 1120,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1120"
   },
   {
     "id": "pr-1116",
@@ -4131,16 +4361,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.75",
     "pullRequest": 1111,
     "url": "https://github.com/cehinds/AshenSpire/pull/1111"
-  },
-  {
-    "id": "pr-1120",
-    "date": "2026-09-18",
-    "group": "2026-09-18",
-    "summary": "A check on the game’s own content builder is whole again",
-    "detail": "Nothing you see changes. The tool that packs the game’s content keeps a list of the eight parts a finished pack must contain, and tests itself by removing each one in turn to prove the right checker catches it. One of those eight — the events, the things that happen to you on the road — had stopped being caught the way the list says. Instead of one plain report that the events were missing, the content checker raised seventeen complaints about quests, speakers and a relic that all pointed at events which are in fact present, and never mentioned the one part that was gone. The checker now leaves that part to the tool that owns it and says so once, plainly. Nothing about the events themselves was wrong, and every check the content checker made before it still runs: a pack that ships an empty list of events is still refused, in all seventeen ways.",
-    "build": "0.7.1.77",
-    "pullRequest": 1120,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1120"
   },
   {
     "id": "pr-1113",
@@ -4263,16 +4483,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1104"
   },
   {
-    "id": "pr-994",
-    "date": "2026-09-15",
-    "group": "2026-09-15",
-    "summary": "The i that explains a card sits above it on every screen",
-    "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading at every interface size, and the same control no longer appears in two places depending on where you are.",
-    "build": "0.7.1.58",
-    "pullRequest": 994,
-    "url": "https://github.com/cehinds/AshenSpire/pull/994"
-  },
-  {
     "id": "pr-1003",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -4281,6 +4491,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.59",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
+    "id": "pr-994",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The i that explains a card sits above it on every screen",
+    "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading at every interface size, and the same control no longer appears in two places depending on where you are.",
+    "build": "0.7.1.58",
+    "pullRequest": 994,
+    "url": "https://github.com/cehinds/AshenSpire/pull/994"
   },
   {
     "id": "pr-1101",
