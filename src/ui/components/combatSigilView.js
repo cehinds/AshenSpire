@@ -9,7 +9,7 @@ export function sigilHtml(id, kind = 'action') {
 
 export function cardSigilsHtml(identity, damageTypes = []) {
   if (!identity) return '';
-  return `<div class="card-sigil-band" data-primary-sigil="${esc(identity.action)}">${sigilHtml(identity.action)}${sigilHtml(identity.school, 'school')}${damageTypes.length ? `<span class="card-damage-types">${damageTypes.map(esc).join(' · ')}</span>` : ''}</div>`;
+  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}">${sigilHtml(identity.action)}${sigilHtml(identity.school, 'school')}${damageTypes.length ? `<span class="card-damage-types">${damageTypes.map(esc).join(' · ')}</span>` : ''}</div>`;
 }
 
 export function sigilExplanationHtml(identity) {

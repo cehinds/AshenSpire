@@ -27,13 +27,15 @@ try {
   page.on('response',r=>{if(r.status()>=400 && new URL(r.url()).origin===base)failed.push(`${r.status()} ${r.url()}`);});
   await page.goto(base+'/index.html?shot=combat',{waitUntil:'domcontentloaded',timeout:120000});
   await page.waitForSelector('.hand .card [data-primary-sigil]');
+  assert.equal(await page.evaluate(()=>window.__combat.combatExpansionVersion),2,'live fixture uses expanded combat');
   await page.evaluate(()=>document.fonts.ready);
   await page.waitForTimeout(800);
   await readyImages(page);
   await page.screenshot({path:resolve(output,name+'-combat.png')});
   const beforeInspect=await page.evaluate(()=>JSON.stringify({plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'),energy:window.__combat.player.energy,mana:window.__combat.player.mana,stamina:window.__combat.player.stamina}));
-  const card=page.locator('.hand .card').first();
-  if(phone)await card.tap({position:{x:45,y:70}});else await card.click({position:{x:45,y:70}});
+  const card=page.locator('.hand .card').last(),glyph=card.locator('.combat-sigil-action');
+  if(phone)await glyph.tap();else await glyph.click();
+  assert.ok(await card.locator('.card-info-button').isVisible(),'sigil tap selects the card');
   if(phone)await card.locator('.card-info-button').tap();else await card.locator('.card-info-button').click();
   await page.locator('.card-inspection-modal .inspection-sigils').waitFor();
   assert.ok((await page.locator('.card-inspection-modal .inspection-sigils').innerText()).length>15);
