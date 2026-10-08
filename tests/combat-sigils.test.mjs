@@ -30,6 +30,7 @@ test('marks preserve readable accessible names and inspection explanations', () 
   assert.match(html, /role="img" aria-label="Alteration"/);
   assert.match(html, /focusable="false"/);
   assert.doesNotMatch(html, /tabindex=/);
+  assert.doesNotMatch(html, /title=/);
   assert.equal(sigilHtml('constructor'), '');
   assert.match(sigilExplanationHtml(identity), /earth and grounding/);
   assert.match(cardSigilsHtml(identity, ['Blunt', 'Cold']), /class="card-damage-types">Blunt · Cold<\/span>/);
