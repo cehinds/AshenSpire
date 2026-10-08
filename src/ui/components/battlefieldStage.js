@@ -159,20 +159,20 @@ export function wireBattlefieldStage(field, model) {
     const handLeft = Math.min(...[...combat.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().left));
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
-    combat.dataset.waistOverlap = String(classicAppearance() && solo && window.innerHeight > 480);
+    combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
     // Short landscape needs a lower foot line to reserve the full intent row.
     if (classicAppearance() && window.innerHeight <= 480) for (const actor of actors) {
       actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
     }
     const fitFormation = () => {
-      const sizes = classicAppearance()
-        ? combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
-          handTop: handRect ? handRect.top - fieldRect.top + 22 : null,
-          handLeft: Number.isFinite(handLeft) ? handLeft - fieldRect.left : 0,
-          solo: solo && window.innerHeight > 480,
-          sizes: fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
-            minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 }) })
-        : fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow });
+      const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
+        handTop: handRect ? handRect.top - fieldRect.top + 22 : null,
+        handLeft: Number.isFinite(handLeft) ? handLeft - fieldRect.left : 0,
+        solo: solo && window.innerHeight > 480,
+        sizes: classicAppearance()
+          ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
+            minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
+          : fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
         .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
       const growthFor = (actor, fitted) => {

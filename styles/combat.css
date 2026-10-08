@@ -677,8 +677,7 @@
    a nested painted stage; bobbing their common parent keeps one timeline
    across that swap, so the nested stage's .pose-layer is not a carrier
    (#1475 review). The Glyph style is a sigil panel, not a figure, and
-   stays put. Alternative silhouettes carry their complete clipped figure
-   on the common stage, preserving the same phase and per-slot delays. */
+   stays put. */
 @keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
 .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }

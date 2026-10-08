@@ -52,7 +52,7 @@ test('enemy, companion and speaker IDs match the canonical content roster', () =
   }
 });
 
-test('all canonical settings retain independent device transforms and four pinned layers', () => {
+test('authored settings retain four layers while option C renders three without foreground framing', () => {
   const ids = [...ENVIRONMENTS.flatMap(r => r.scenes), ...LEGACY_SCENES].map(s => s.id).sort();
   assert.deepEqual(Object.keys(catalog.scenes).sort(), ids);
   assert.equal(ids.length, 32);
@@ -76,7 +76,10 @@ test('all canonical settings retain independent device transforms and four pinne
     }
     assert.notDeepEqual(scene.devices.desktop.layers, scene.devices.phone.layers);
     assert.match(combatBackdropHtml({}, id), new RegExp(`data-scene="${id}"`));
-    assert.equal((alternativeBackdropHtml(id).match(/class="alternative-scene-layer"/g) || []).length, 4);
+    const rendered = alternativeBackdropHtml(id);
+    assert.equal((rendered.match(/class="alternative-scene-layer"/g) || []).length, 3);
+    const foreground = scene.devices.desktop.layers.find(layer => catalog.sceneLayers[layer.id].kind === 'foreground');
+    assert(!rendered.includes(`data-layer="${foreground.id}"`), 'side-tree foreground must be omitted');
   }
   assert.equal(alternativeBackdropHtml('not-a-scene'), null);
   assert.throws(() => combatBackdropHtml({}, 'not-a-scene'), /Unknown combat preview/);
@@ -96,7 +99,7 @@ test('phone first paint references only phone scene exports before fitting', () 
     for (const id of Object.keys(catalog.scenes)) {
       const html = alternativeBackdropHtml(id);
       const paths = [...html.matchAll(/assets-display\/(?:alternative|shared)\/[A-Za-z0-9-]+\.webp/g)].map(m => m[0]);
-      assert.equal(paths.length, 5);
+      assert.equal(paths.length, 4); // Three scene layers and the hand fade.
       assert(paths.every(p => p.endsWith('-mobile.webp')), id);
     }
   } finally {
