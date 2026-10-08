@@ -8604,5 +8604,334 @@ export const uiStrings = [
     "short": "Starting ability",
     "full": "Starting ability",
     "tip": "Starting ability"
+  },
+  {
+    "id": "knowledge.bestiary",
+    "extends": "",
+    "short": "Bestiary",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.stages",
+    "extends": "",
+    "short": "Five knowledge stages",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.stage",
+    "extends": "",
+    "short": "{stage}. {label} — {status}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.learned",
+    "extends": "",
+    "short": "Learned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.unlock",
+    "extends": "",
+    "short": "Unlocks at {points} points",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.progress",
+    "extends": "",
+    "short": "{label} · {points} / {target}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.lifetime",
+    "extends": "",
+    "short": "Lifetime enemy knowledge grows through real encounters and successful tactical responses.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.next",
+    "extends": "",
+    "short": "Next: {label} at {points} points.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.mastered",
+    "extends": "",
+    "short": "Mastered. Hidden current actions still require an intent read.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.perception",
+    "extends": "",
+    "short": "Run Perception: level {level}. Perception improves intent reads and starts fresh on each new run.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.resources",
+    "extends": "",
+    "short": "Base resources and defenses",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.resources.locked",
+    "extends": "",
+    "short": "Locked · Studied at {points} points.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.resources.empty",
+    "extends": "",
+    "short": "No base resource facts recorded.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.moves",
+    "extends": "",
+    "short": "Known moves",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.moves.locked",
+    "extends": "",
+    "short": "Locked · Familiar at {points} points.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.effects.locked",
+    "extends": "",
+    "short": "Base effects and counterplay unlock at {points} points.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.rules.locked",
+    "extends": "",
+    "short": "Repeat, phase and delay rules unlock at {points} points.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.lore",
+    "extends": "",
+    "short": "Lore and role",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.lore.locked",
+    "extends": "",
+    "short": "Locked · Meet this enemy in a real encounter.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.lore.empty",
+    "extends": "",
+    "short": "No lore recorded.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction",
+    "extends": "",
+    "short": "Prediction",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.status",
+    "extends": "",
+    "short": "Prediction: {prediction}. {status}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.correct",
+    "extends": "",
+    "short": "Correct.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.incorrect",
+    "extends": "",
+    "short": "Incorrect.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.cancelled",
+    "extends": "",
+    "short": "Action cancelled.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.awaiting",
+    "extends": "",
+    "short": "Awaiting the action.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.choose",
+    "extends": "",
+    "short": "Choose the actual action you expect. XP is earned only after a correct prediction resolves.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.feedback",
+    "extends": "",
+    "short": "Action {serial}: {prediction} — {outcome}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.feedback.cancelled",
+    "extends": "",
+    "short": "cancelled; no prediction XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.feedback.correct",
+    "extends": "",
+    "short": "correct",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.feedback.incorrect",
+    "extends": "",
+    "short": "incorrect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.action",
+    "extends": "",
+    "short": "Predicted enemy action",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.commit",
+    "extends": "",
+    "short": "Predict action",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.sent",
+    "extends": "",
+    "short": "Prediction sent. Waiting for the host.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.failed",
+    "extends": "",
+    "short": "Prediction could not be accepted.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.help",
+    "extends": "",
+    "short": "Spell means ready magic; Casting means charging; Preparing means other support.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.prediction.expected",
+    "extends": "",
+    "short": "Expected action",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.details",
+    "extends": "",
+    "short": "Enemy knowledge details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.encountered",
+    "extends": "",
+    "short": "Encountered enemies",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.heading",
+    "extends": "",
+    "short": "Lifetime enemy knowledge",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.close",
+    "extends": "",
+    "short": "Close Bestiary",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.empty.help",
+    "extends": "",
+    "short": "Meet an enemy in a real encounter to begin learning about it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.empty",
+    "extends": "",
+    "short": "No enemies encountered yet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.save.pending",
+    "extends": "",
+    "short": "Enemy learning remains pending.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.save.retry",
+    "extends": "",
+    "short": "Retry saving enemy knowledge",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "knowledge.save.retained",
+    "extends": "",
+    "short": "Enemy learning is retained and waiting to be saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.intent.partial",
+    "extends": "",
+    "short": "{stance} ?",
+    "full": "",
+    "tip": ""
   }
 ];

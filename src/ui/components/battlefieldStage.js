@@ -14,6 +14,7 @@ import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { combatComposition } from '../models/CombatCompositionModel.js';
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
@@ -49,6 +50,9 @@ export function wireBattlefieldStage(field, model) {
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
+    const vitality = hudBand?.querySelector('.resbars-host');
+    if (vitality) combat.style.setProperty('--combat-header-opaque-end',
+      `${Math.max(0, (vitality.getBoundingClientRect().bottom - hudBand.getBoundingClientRect().top) / zoom)}px`);
     // The turn ribbon hangs from the HUD band's bottom edge (player-polish.css
     // reads --turn-ribbon-top), so it never sits under a band taller than its
     // row. Its box, in the same screen px as the plan, is a second ceiling for
@@ -145,12 +149,24 @@ export function wireBattlefieldStage(field, model) {
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
     });
     const narrow = document.documentElement.dataset.layout === 'narrow';
+    const handRect = combat.querySelector('.hand')?.getBoundingClientRect();
+    const handLeft = Math.min(...[...combat.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().left));
+    const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
+    combat.dataset.composition = 'option-c';
+    combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
+    if (window.innerHeight <= 480) for (const actor of actors) {
+      actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
+    }
     const fitFormation = () => {
-      const sizes = fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow });
+      const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
+        handTop: handRect ? handRect.top - fieldRect.top + 22 : null,
+        handLeft: Number.isFinite(handLeft) ? handLeft - fieldRect.left : 0,
+        solo: solo && window.innerHeight > 480,
+        sizes: fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
         .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
       const growthFor = (actor, fitted) => {
-        const requestedGrowth = actor.frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, actor.slot.row)] : 1;
+        const requestedGrowth = 1; // Reading selection never changes approved artwork geometry.
         return Math.min(requestedGrowth, Math.max(1,
           ((fitted.ground ?? actor.slot.ground) - actor.leading - 6) / fitted.visibleHeight),
           // Selection must not make the player tower over a foe already capped
@@ -161,7 +177,7 @@ export function wireBattlefieldStage(field, model) {
         controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
           const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - 14;
-          return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
+          return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
             width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
         }) });
       return { sizes, growthFor, overheads };
@@ -201,7 +217,7 @@ export function wireBattlefieldStage(field, model) {
       // screen (CombatSpriteScaleModel); only the selection growth is added.
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
       const scale = fitted.scale * growth;
-      const x = fitted.x;
+      const x = overheads.find(overhead => overhead.id === slot.id)?.x ?? fitted.x;
       const ground = fitted.ground ?? slot.ground;
       const visibleHeight = fitted.visibleHeight * growth;
       sprite.style.zoom = String(scale / zoom);
@@ -269,8 +285,9 @@ export function wireBattlefieldStage(field, model) {
     // below places only the absolutely positioned badge and the hit target's
     // ::after, never a box read here, so one layout serves every read.
     const boxes = placed.map(({ frame, sprite }) => ({
+      intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
-      frameRect: frame.classList.contains('enemy-target-hitbox') || frame.classList.contains('player-target-hitbox') ? frame.getBoundingClientRect() : null,
+      frameRect: frame.classList.contains('enemy-target-hitbox') || (frame.classList.contains('player-target-hitbox') && combat.dataset.waistOverlap !== 'true') ? frame.getBoundingClientRect() : null,
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
@@ -280,6 +297,7 @@ export function wireBattlefieldStage(field, model) {
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
     const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
+      lockX: true, size: Math.max(44, ...boxes.map(box => box.intentRect?.height || 0)),
       obstacles: boxes.flatMap(box => box.controls.map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
@@ -288,11 +306,16 @@ export function wireBattlefieldStage(field, model) {
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
         x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top,
-        width: box.footerWidth,
+        y: box.hostRect.bottom - fieldRect.top + (box.intentRect ? box.intentRect.height / 2 : 0),
+        width: Math.max(box.footerWidth, box.intentRect?.width || 0),
       })) });
     placed.forEach(({ frame, sprite, scale }, i) => {
-      const { hostRect, frameRect, artRect } = boxes[i];
+      const { hostRect, frameRect, artRect, intentRect } = boxes[i];
+      frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
+      if (intentRect) {
+        frame.style.setProperty('--enemy-hit-width', `${intentRect.width / zoom}px`);
+        frame.style.setProperty('--enemy-hit-height', `${intentRect.height / zoom}px`);
+      }
       if (frameRect) {
         const target = targets.find(target => target.id === frame.dataset.eid);
         const local = anchorLocalBox(frameRect, { left: fieldRect.left + target.x,
@@ -302,7 +325,7 @@ export function wireBattlefieldStage(field, model) {
         frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom, width: 0, height: 0 }, { zoom });
+          top: fieldRect.top + target.y - hostRect.bottom - (intentRect ? intentRect.height / 2 - 5 : 0), width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
@@ -324,8 +347,9 @@ export function wireBattlefieldStage(field, model) {
     });
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
-    // Keep the painting within its atlas cell, with the same ground line as
-    // the formation. Continuing behind cards must not move that line.
+    // Fit the sky from the top of the combat screen, including the HUD.
+    // Extending a field-only crop upward can expose empty space above the
+    // painting. Continuing behind cards must not move the ground line.
     const backdrop = combat.querySelector('.environment-backdrop');
     // Its width is read BEFORE the two variables below are written: they are
     // set on the fight's root, so a read after them restyled the whole screen
@@ -335,11 +359,13 @@ export function wireBattlefieldStage(field, model) {
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
     fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop: (fieldRect.top - rect.top) / zoom, ground: plan.ground / zoom, narrow });
+    const fieldTop = (fieldRect.top - rect.top) / zoom;
+    const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
-      windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,
-      config: battlefieldBackdropConfig({ height: fieldRect.height / zoom,
-        fieldTop: 0, fieldHeight: fieldRect.height / zoom,
+      windowTop: 0, windowHeight: sceneHeight,
+      config: battlefieldBackdropConfig({ height: sceneHeight,
+        fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
@@ -393,4 +419,3 @@ export function wireBattlefieldStage(field, model) {
   refresh();
   return Object.freeze({ refresh, release });
 }
-

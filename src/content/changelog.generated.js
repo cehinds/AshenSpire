@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1751",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative combat opens up with option C",
+    "detail": "The approved pointed shield and inner-loop Counter match the named card footers, with distinct HP and Poise damage symbols. Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
+    "build": "0.7.1.1152",
+    "pullRequest": 1751,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1751"
+  },
+  {
+    "id": "pr-1745",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative heroes hold their selected combat poses",
+    "detail": "Reaver, Rogue, Starseer and Herald use the twelve chosen Attack, Defend and Prepare poses after card actions. Books and defensive guards follow the selected artwork. Each co-op player keeps their own pose until their next turn; counters keep their existing presentation for a later selection pass. The separate Block, Barrier and Ward box is removed. Ashen Blight now appears as a wider centered header bar only above zero, with its own row on phones.",
+    "build": "0.7.1.1146",
+    "pullRequest": 1745,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
+    "id": "pr-1746",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative figures keep idle life and respect reduced motion",
+    "detail": "Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.",
+    "build": "0.7.1.1143",
+    "pullRequest": 1746,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1746"
+  },
+  {
+    "id": "pr-1750",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat intents and targets share the approved option C layout",
+    "detail": "Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.",
+    "build": "0.7.1.1142",
+    "pullRequest": 1750,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
     "id": "pr-1737",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -13,6 +53,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1737"
   },
   {
+    "id": "pr-1755",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat shows Blight only when it matters",
+    "detail": "The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.",
+    "build": "0.7.1.1138",
+    "pullRequest": 1755,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1755"
+  },
+  {
+    "id": "pr-1748",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat scenery reaches the top of the screen",
+    "detail": "The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.",
+    "build": "0.7.1.1136",
+    "pullRequest": 1748,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1748"
+  },
+  {
     "id": "pr-1731",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -21,6 +81,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1134",
     "pullRequest": 1731,
     "url": "https://github.com/cehinds/AshenSpire/pull/1731"
+  },
+  {
+    "id": "pr-1747",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: alternative sync keeps the full history efficiently",
+    "detail": "Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.",
+    "build": "0.7.1.1133",
+    "pullRequest": 1747,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1747"
+  },
+  {
+    "id": "pr-1734",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Read enemy clues and learn their Bestiary",
+    "detail": "Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.",
+    "build": "0.7.1.1132",
+    "pullRequest": 1734,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1734"
   },
   {
     "id": "pr-1736",

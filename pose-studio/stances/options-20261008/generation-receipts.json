@@ -1,0 +1,138 @@
+{
+  "tool": "built-in image_gen",
+  "boards": [
+    {
+      "id": "reaver-defend",
+      "path": "boards/reaver-defend.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-dbef1abc-4990-4239-8b31-761a10e53e6b.png"
+      },
+      "corrections": []
+    },
+    {
+      "id": "rogue-defend",
+      "path": "boards/rogue-defend.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-a4a2142e-ed33-4869-8dec-58a4b34d3188.png"
+      },
+      "corrections": []
+    },
+    {
+      "id": "starseer-casting",
+      "path": "boards/starseer-casting.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-426f5419-c0ea-42c4-844b-7fda840d8459.png"
+      },
+      "corrections": [
+        {
+          "prompt": "Use case: precise-object-edit. Correct ONLY registration and framing of this same five-pose character comparison painting. Preserve all five exact character costumes, pose intentions, weapon/prop identity, hand grips and rear-three-quarter facing-right style. Exactly FIVE figures in fixed THREE-COLUMN TWO-ROW grid on transparent 1536x1024, bottom-right EMPTY. CRITICAL: SCALE EACH WHOLE FIGURE INCLUDING ITS LONGEST WEAPON OR STAFF DOWN BY ABOUT 20 PERCENT within its own cell; then center the complete figure inside its own 512x512 cell. Every opaque pixel must fit within inner margins at least 35px. Top row silhouettes are wholly between y35 and y477; bottom row silhouettes wholly between y547 and y989. Columns entirely within x35..477, x547..989, x1059..1501. ALL staff ornaments, sword tips, toes, books, capes and fingers inside the respective bounds. No neighbour fragments or cross-cell overlaps; no figure clipping. Keep ground contact of each top-row figure at y477 and bottom-row at y989. No text or labels; genuine transparent empty gutters. Keep FIVE recognizably different held stances and exact same gritty painted dark fantasy style.\nCRITICAL BOOK GEOMETRY: Enemy and character gaze are toward screen RIGHT. The book is physically AHEAD of the sternum in that same front-facing direction (screen-right of torso), NEVER behind back or out on viewer-left. Left arm reaches around/across in FRONT to support underside of book. Book open in shallow V with inside pages tilted UP and INWARD toward the character's face so character can READ it. From rear camera we see its OUTER COVER/back underside or oblique top page edges; do NOT show pages facing away from character toward the viewer. Keep head looking toward book, credible wrist/grip and exactly one book. Do not reuse old reference book placement/orientation.",
+          "reference": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-e4e64ae6-d261-48d3-bd58-c4813e63634f.png"
+        }
+      ]
+    },
+    {
+      "id": "herald-casting",
+      "path": "boards/herald-casting.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-c57cb5b1-7ae9-4a64-8964-7a9096da7ed7.png"
+      },
+      "corrections": [
+        {
+          "prompt": "Use case: precise-object-edit. Correct the FIVE BOOKS in this Herald casting comparison plate. Preserve all five different full-body poses, rust-red hood and Rite Vestments, rear-three-quarter facing RIGHT, right-hand gesture, character anatomy and painted style. CRITICAL: the book is HELD IN FRONT of the sternum toward enemy-right by the LEFT hand, never behind. Each OPEN BOOK lies mostly HORIZONTAL like a reading tray resting on his left palm, tilted about 25 degrees UP/BACK toward his own hooded FACE. Show two large pale PARCHMENT INSIDE PAGES as the visible top reading surface, with the spine fold running across that flat spread; only a thin brown leather cover edge/underside, NOT two upright brown outside covers facing the camera. The upper-left hooded reader looks DOWN onto the inside pages. Do not present the upright outer covers as a sign or open the book away from the reader. Think of reading a book held flat at chest/waist/chin height, not displaying it to the enemy. Natural supporting wrist and two hands only. Exactly five character copies in strict THREE-COLUMN TWO-ROW grid, bottom-right empty. Transparent1536x1024. Scale each entire figure including raised fingers to fit all pixels within own512x512 cell with35px empty margin. Top row opaque y35..477; bottom row y547..989. Cells x35..477,x547..989,x1059..1501. Keep each stance's height variation but use horizontal readable book spreads. No text/labels/background/shadows; genuine transparency.",
+          "reference": "D:/repos/.codex/generated_images/01a119f7-2a07-7fa3-8d06-39a01c0f36cf/exec-cf0992d5-81a0-4d12-9b2f-6ddbd9a95589.png"
+        }
+      ]
+    },
+    {
+      "id": "reaver-attack",
+      "path": "boards/reaver-attack.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-d283b4b8-76d3-4135-9d4b-0671bf54fccb.png"
+      },
+      "corrections": [
+        {
+          "prompt": "Use case: precise-object-edit. Correct ONLY registration and framing of this same five-pose character comparison painting. Preserve all five exact character costumes, pose intentions, weapon/prop identity, hand grips and rear-three-quarter facing-right style. Exactly FIVE figures in fixed THREE-COLUMN TWO-ROW grid on transparent 1536x1024, bottom-right EMPTY. CRITICAL: SCALE EACH WHOLE FIGURE INCLUDING ITS LONGEST WEAPON OR STAFF DOWN BY ABOUT 20 PERCENT within its own cell; then center the complete figure inside its own 512x512 cell. Every opaque pixel must fit within inner margins at least 35px. Top row silhouettes are wholly between y35 and y477; bottom row silhouettes wholly between y547 and y989. Columns entirely within x35..477, x547..989, x1059..1501. ALL staff ornaments, sword tips, toes, books, capes and fingers inside the respective bounds. No neighbour fragments or cross-cell overlaps; no figure clipping. Keep ground contact of each top-row figure at y477 and bottom-row at y989. No text or labels; genuine transparent empty gutters. Keep FIVE recognizably different held stances and exact same gritty painted dark fantasy style.",
+          "reference": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-4862efa8-d07b-4e2d-b404-6f590ea3d7a8.png"
+        }
+      ]
+    },
+    {
+      "id": "reaver-casting",
+      "path": "boards/reaver-casting.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-3c9bc317-ce24-4165-b959-4ce0fc9c23f8.png"
+      },
+      "corrections": []
+    },
+    {
+      "id": "rogue-attack",
+      "path": "boards/rogue-attack.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-7552ada9-76f5-4d90-a47b-b26751854a8e.png"
+      },
+      "corrections": []
+    },
+    {
+      "id": "rogue-casting",
+      "path": "boards/rogue-casting.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-c1a8fd38-fc09-495c-97d7-90f73b8230ed.png"
+      },
+      "corrections": []
+    },
+    {
+      "id": "starseer-attack",
+      "path": "boards/starseer-attack.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-007612de-2b74-4563-b72b-49566c6b2efd.png"
+      },
+      "corrections": [
+        {
+          "prompt": "Use case: precise-object-edit. Correct ONLY registration and framing of this same five-pose character comparison painting. Preserve all five exact character costumes, pose intentions, weapon/prop identity, hand grips and rear-three-quarter facing-right style. Exactly FIVE figures in fixed THREE-COLUMN TWO-ROW grid on transparent 1536x1024, bottom-right EMPTY. CRITICAL: SCALE EACH WHOLE FIGURE INCLUDING ITS LONGEST WEAPON OR STAFF DOWN BY ABOUT 20 PERCENT within its own cell; then center the complete figure inside its own 512x512 cell. Every opaque pixel must fit within inner margins at least 35px. Top row silhouettes are wholly between y35 and y477; bottom row silhouettes wholly between y547 and y989. Columns entirely within x35..477, x547..989, x1059..1501. ALL staff ornaments, sword tips, toes, books, capes and fingers inside the respective bounds. No neighbour fragments or cross-cell overlaps; no figure clipping. Keep ground contact of each top-row figure at y477 and bottom-row at y989. No text or labels; genuine transparent empty gutters. Keep FIVE recognizably different held stances and exact same gritty painted dark fantasy style.",
+          "reference": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-67dbe655-78b2-43de-bd98-c818c6aa17e8.png"
+        }
+      ]
+    },
+    {
+      "id": "starseer-defend",
+      "path": "boards/starseer-defend.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-f2658c0c-fd03-4e43-a7be-973cb580bd91.png"
+      },
+      "corrections": [
+        {
+          "prompt": "Use case: precise-object-edit. Correct ONLY registration and framing of this same five-pose character comparison painting. Preserve all five exact character costumes, pose intentions, weapon/prop identity, hand grips and rear-three-quarter facing-right style. Exactly FIVE figures in fixed THREE-COLUMN TWO-ROW grid on transparent 1536x1024, bottom-right EMPTY. CRITICAL: SCALE EACH WHOLE FIGURE INCLUDING ITS LONGEST WEAPON OR STAFF DOWN BY ABOUT 20 PERCENT within its own cell; then center the complete figure inside its own 512x512 cell. Every opaque pixel must fit within inner margins at least 35px. Top row silhouettes are wholly between y35 and y477; bottom row silhouettes wholly between y547 and y989. Columns entirely within x35..477, x547..989, x1059..1501. ALL staff ornaments, sword tips, toes, books, capes and fingers inside the respective bounds. No neighbour fragments or cross-cell overlaps; no figure clipping. Keep ground contact of each top-row figure at y477 and bottom-row at y989. No text or labels; genuine transparent empty gutters. Keep FIVE recognizably different held stances and exact same gritty painted dark fantasy style.\nFor first and fourth staff guards, the staff must be physically IN FRONT of the torso guarding the enemy-right direction, not passing behind the back. Both hands extend ahead of sternum toward screen-right.",
+          "reference": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-279dc54f-fc25-4d5d-978f-bb758f3eafdf.png"
+        }
+      ]
+    },
+    {
+      "id": "herald-attack",
+      "path": "boards/herald-attack.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-b098b43d-dee5-48a6-9460-527ae49d22d6.png"
+      },
+      "corrections": []
+    },
+    {
+      "id": "herald-defend",
+      "path": "boards/herald-defend.png",
+      "generation": {
+        "tool": "built-in image_gen",
+        "output": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-8f7595d2-9b3a-4cb8-b363-51e9b743e80b.png"
+      },
+      "corrections": []
+    }
+  ]
+}

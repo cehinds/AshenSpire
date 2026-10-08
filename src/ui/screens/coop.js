@@ -7,8 +7,10 @@ import { combatantInfo, combatantIntent, selectCombatantInfo } from '../componen
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { coopEnemyIntent } from '../models/CoopIntentModel.js';
+import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { cardTargetPlan } from '../../model/cardTargets.js';
@@ -197,13 +199,40 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   return seq;
 }
 
-export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
+export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
+  clearSelection();
+  let disposed = false;
+  const banking = new Set();
+  const bankFailures = new Map();
+  const bankAttempts = new Map();
+  async function bankOwnedLearning(snapshot) {
+    if (!bankEnemyKnowledge || disposed) return;
+    for (const member of snapshot.party || []) {
+      const signature = JSON.stringify(member.enemyKnowledgeState?.pending);
+      if (!(myIds || [myId]).includes(member.id) || banking.has(member.id) || !Object.keys(member.enemyKnowledgeState?.pending?.enemies || {}).length || bankAttempts.get(member.id) === signature) continue;
+      banking.add(member.id);
+      const pending = structuredClone(member.enemyKnowledgeState.pending);
+      try {
+        const learningRun = { enemyKnowledgeState: structuredClone(member.enemyKnowledgeState) };
+        const result = await bankEnemyKnowledge(learningRun);
+        if (disposed) return;
+        if (result.ok) { bankAttempts.set(member.id, signature); bankFailures.delete(member.id); conn.send({ t: 'knowledgeBanked', as: member.id, receipts: pending }); }
+        else {
+          bankFailures.set(member.id, JSON.stringify(learningRun.enemyKnowledgeState.pending));
+          bankAttempts.set(member.id, JSON.stringify(learningRun.enemyKnowledgeState.pending));
+          conn.send({ t: 'knowledgeBankFailed', as: member.id, recovery: { pending: learningRun.enemyKnowledgeState.pending, recoveryTargets: learningRun.enemyKnowledgeState.recoveryTargets } });
+          if (snap) render();
+        }
+      } catch (error) {
+        if (!disposed) { bankFailures.set(member.id, error.message || t('knowledge.save.pending')); if (snap) render(); }
+      } finally { banking.delete(member.id); }
+    }
+  }
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
-  clearSelection();
   configureTooltipGlossary(registries);
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
@@ -254,6 +283,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   const combatRests = new Map();
+  const heldStances = createStanceLedger();
   const readinessOrders = new Map();
   let posePresentations = new Map();
   let poseReactions = new Map();
@@ -283,6 +313,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (event.type === 'cardPlayed' && member) {
         const definition = resolveCard(registriesForClassMastery(registries,{...member,class:member.classId}), event);
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
+        heldStances.accept(event, { ...definition, cardTags: tags });
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
         const animation = equipmentAnimationForLoadout(registries, member.loadout, member.classId);
         plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, classId: member.classId, action });
@@ -292,7 +323,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         pendingAnimations.set(ownerId, plan);
       }
       combatRests.set(ownerId, combatRestAfterEvent(combatRests.get(ownerId) || 'idle', event, ownerId, plan));
-      if (event.type === 'playerTurnStart') pendingAnimations.delete(ownerId);
+      if (event.type === 'playerTurnStart') { pendingAnimations.delete(ownerId); heldStances.accept(event); }
     }
   }
   let pacing = false; // an enemy-turn replay is holding the render
@@ -323,6 +354,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   conn.setHandlers({
     onMessage: (msg) => {
       if (msg.t === 'rejoined') { seats = [msg.id]; seatIdx = 0; me = msg.id; return; }
+      if (msg.t === 'knowledgeBankResult') {
+        if (!msg.ok) bankFailures.set(msg.memberId, 'host checkpoint failed');
+        if (snap) render();
+        return;
+      }
       if(msg.t==='progressionResult'&&msg.memberId===me){progressionError=msg.ok?'':msg.error || 'This progression claim could not be saved.';if(!msg.ok){progressionDoor?.rejectClaim(progressionError);render();}return;}
       if (msg.t === 'state') receiveSnapshot(msg.snapshot);
     },
@@ -657,6 +693,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    disposed = true;
+    snap = null;
     closeCombatantDoor();
     disposeProgression();
     closeClassRespec();
@@ -729,7 +767,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
-    else { combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
+    else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -771,6 +809,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       default: app.innerHTML = ''; app.appendChild(el('div', { class: 'screen coop-scene' }, flavour(`${snap.scene.kind}…`, { class: 'coop-note' })));
     }
     renderProgression();
+    if (bankFailures.size) {
+      const retry = button({ label: t('knowledge.save.retry') });
+      retry.addEventListener('click', () => { bankAttempts.clear(); bankFailures.clear(); void bankOwnedLearning(snap); render(); });
+      app.append(el('aside', { class: 'coop-learning-save-status', role: 'status' }, [el('p', { text: t('knowledge.save.retained') }), retry]));
+    }
   }
 
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
@@ -845,7 +888,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
       const intent = def ? readEnemyIntent(entity, def) : null;
-      const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
+      const owner = snap.scene.enemyKnowledge?.owners?.[me];
+      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
+      const moveCards = learning ? learning.moveCards : def ? enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
       // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
       // solo reads off `entity.performedMoves`. The snapshot now carries the
       // field, so an enemy that has acted lists what it did and one that has
@@ -863,9 +908,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         })
         : null;
       const subject = { name, resources, statuses: abilities, ...(def
-        ? { moveCards, history, intent: {
+        ? { moveCards, history, ...(learning ? { learning, perception: snap.party.find(member => member.id === me)?.skills?.perception?.level || 0,
+          prediction: entity.intentPredictions?.[me], onPredict: (actionSerial, maneuver) => {
+            conn.send({ t: 'predictIntent', as: me, enemyInstanceId: entity.id, actionSerial, maneuver });
+            return { accepted: false };
+          } } : {}), intent: {
           ...intent,
-          name: intent.hidden ? `${intent.stance} · Move hidden` : (moveCards.find(card => card.active)?.name || intent.stance),
+          name: intent.hidden ? intent.label || '?' : (moveCards?.find(card => card.active)?.name || intent.label || intent.stance),
           detail: intent.hidden ? 'Exact move, damage, and effects unread.' : intentTooltip(intent),
         } }
         : { abilities }) };
@@ -967,8 +1016,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             <span class="fight-label">${esc(actTitle(snap.actNumber, snap.seatName || null))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
+          <div class="combat-blight-hud" aria-live="polite">${ashenBlightBarHtml(meP, { compact: true, cooperative: true })}</div>
         </header>
-        ${ashenBlightBarHtml(meP, { compact: true, cooperative: true })}
         ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
         ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}
@@ -1029,6 +1078,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId) }));
       const resume = posePresentations.get(p.id);
+      stageFor(sprite)?.setStance?.(heldStances.get(p.id));
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
       for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
       box.appendChild(sprite);
@@ -1724,6 +1774,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   function receiveSnapshot(s) {
+    void bankOwnedLearning(s);
     latestWireSnap = s;
     receivedSnapshots += 1;
     if (pacing) {

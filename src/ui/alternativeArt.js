@@ -90,9 +90,12 @@ export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
   const device = scene.devices[mobile ? 'phone' : 'desktop'];
   return `<div class="backdrop alternative-backdrop" data-region="${scene.region}" data-scene="${sceneId}" aria-hidden="true">
     <svg class="alternative-scene" viewBox="0 0 ${device.width} ${device.height}" focusable="false">
-      ${device.layers.map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(alternativeArtCatalog.sceneLayers[layer.id][mobile ? 'mobilePath' : 'path'])}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
+      ${combatSceneLayers(device).map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(alternativeArtCatalog.sceneLayers[layer.id][mobile ? 'mobilePath' : 'path'])}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
     </svg></div>${alternativeCardFadeHtml()}`;
 }
+
+// Option C opens the battlefield edges by omitting the near-camera side trees.
+const combatSceneLayers = device => device.layers.filter(layer => alternativeArtCatalog.sceneLayers[layer.id].kind !== 'foreground');
 
 export function alternativeCardFadeHtml() {
   return `<div class="alternative-card-fade" aria-hidden="true" style="background-image:url('${alternativeArtUrl((phoneArt() ? alternativeArtCatalog.mobileLayers : alternativeArtCatalog.layers)['card-section-texture'])}')"></div>`;
@@ -116,7 +119,7 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;
   [...svg.children].forEach((group, index) => {
-    const layer = device.layers[index];
+    const layer = combatSceneLayers(device)[index];
     const art = alternativeArtCatalog.sceneLayers[layer.id];
     const image = group.firstElementChild;
     group.dataset.depth = String(layer.depth);

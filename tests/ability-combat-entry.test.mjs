@@ -19,7 +19,7 @@ const graded=(cardId,abilityRank,id)=>({...createCardInstance(cardId),instanceId
 const liveCard=(piles,id)=>Object.values(piles).filter(Array.isArray).flat().find(card=>card.instanceId===id);
 function runFor(inst,{legacy=false,classId='starseer',combatExpansionVersion=2}={}){
   const source=legacy?root.legacyProgressionSource:root;
-  const run=createRunState({registries:source,classId,seed:11,attributeMode:'standard',combatExpansionVersion});
+  const run=createRunState({registries:source,classId,seed:11,attributeMode:'standard',combatExpansionVersion,enemyKnowledgeVersion:null});
   openRunClassMastery(source,run,{}, {receiptId:`entry-${classId}-${legacy}`});
   run.deck.unshift(inst);
   return deserializeRun(serializeRun(run));

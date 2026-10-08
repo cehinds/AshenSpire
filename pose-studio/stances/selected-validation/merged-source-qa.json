@@ -1,0 +1,121 @@
+{
+  "base": "http://127.0.0.1:4393/index.html",
+  "results": [
+    "reaver:offensive",
+    "reaver:defensive",
+    "reaver:casting",
+    "reaver:phone-lite",
+    "rogue:offensive",
+    "rogue:defensive",
+    "rogue:casting",
+    "rogue:phone-lite",
+    "starseer:offensive",
+    "starseer:defensive",
+    "starseer:casting",
+    "starseer:phone-lite",
+    "herald:offensive",
+    "herald:defensive",
+    "herald:casting",
+    "herald:phone-lite",
+    "coop:independent-seats",
+    "coop:own-turn-reset"
+  ],
+  "errors": [],
+  "httpErrors": [],
+  "optionalAudioRequests": [
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_medium.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/relic.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/cardPlay.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/block.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/relic.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_medium.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/relic.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/cardPlay.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/block.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/relic.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_medium.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/cardPlay.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/block.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_light.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_medium.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_medium.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/cardPlay.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/block.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_light.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://127.0.0.1:4393/assets/sfx/hit_light.ogg",
+      "status": 404
+    }
+  ],
+  "browserNotices": [
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+    "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216."
+  ],
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ]
+}

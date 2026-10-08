@@ -3840,6 +3840,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+/* A clue is a word; the formation column must not clip it to a number badge. */
+:root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 /* WCF3: the selected card and its inspect control share one glow. The hand
@@ -5250,6 +5252,16 @@ button[data-button-size] {
   column-gap: 0; row-gap: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-row-gap));
 }
 
+/* The Bestiary lists identities rather than thumbnail collections. One column
+   keeps encountered names readable at the phone rung. Shared kit controls,
+   typography and workspace scrolling still own the presentation. */
+.bestiary-list.cp-grid, :root[data-layout='narrow'] .bestiary .bestiary-list.cp-grid { grid-template-columns: minmax(0, 1fr); }
+:root[data-layout='narrow'] .bestiary .w1-split { grid-template-rows: minmax(0, 7fr) minmax(0, 13fr); }
+.enemy-intent-prediction.as-pane { flex: 0 0 auto; gap: .6rem; padding: 0; overflow: visible; }
+.enemy-intent-prediction .as-row.setting { flex-direction: column; align-items: stretch; padding: 0; }
+.enemy-intent-prediction .as-row.setting > .r-trail { width: 100%; max-width: 100%; margin-left: 0; }
+.enemy-intent-prediction select, .enemy-intent-prediction > .as-btn { width: 100%; max-width: 100%; min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+
 /* ═══ W1 CATEGORY NAVIGATION — kit/categoryNav.js ═══════════════════════════ */
 /* ONE component for every categorized W1 surface (Settings, Shop, Armoury,
    Compendium, Profile, the pile viewer). models/CategoryNavModel.js decides
@@ -6062,10 +6074,8 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .card-upcast-controls :is(button,select) { min-height:32px; min-width:0; font-size:12px; }
 .card-upcast-rank { flex:1; width:100%; }
 .card-upcast-rank[hidden] { display:none; }
-.combat-expansion-controls { position:absolute; right:8px; bottom:8px; z-index:20; display:flex; flex-direction:column; gap:5px; width:min(260px,44%); padding:6px; border-radius:6px; background:#171411e8; }
-.combat-expansion-controls:empty { display:none; }
-.combat-protection-values { font-size:12px; color:var(--gold); line-height:1.3; }
-.combat-expansion-controls .ashen-blight { margin:0; }
+.combat-expansion-controls { position:absolute; right:8px; bottom:8px; z-index:20; display:flex; flex-direction:column; gap:5px; width:min(260px,44%); padding:0; border:0; background:none; }
+.combat-expansion-controls:empty, .combat-expansion-controls[hidden] { display:none; }
 .combat-recovery-controls { display:flex; flex-wrap:wrap; gap:4px; }
 .combat-recovery-controls button { flex:1 1 100px; min-height:36px; font-size:12px; white-space:normal; }
 @media(max-width:600px) { .combat-expansion-controls { width:min(220px,46%); } .combat-recovery-controls button { min-height:44px; } }
@@ -6073,6 +6083,23 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,select) { pointer-events:auto; }
 @media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:44px; } }
 
-/* Keep the protection readout clear of the centered turn ribbon. */
-.field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; }
+/* Recovery and pending feat actions have no permanent protection box. */
+.field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; z-index:2600; }
 @media(max-width:600px) { .field > .combat-expansion-controls { top:48px; } }
+
+/* Positive Blight occupies the open center of the floating header. A phone
+   gives it a full-width row so health, relics and menu controls stay clear. */
+.combat-hud > .combat-blight-hud {
+  position:absolute; top:calc(6px / var(--ui-zoom, 1)); left:50%; transform:translateX(-50%);
+  width:min(calc(600px / var(--ui-zoom, 1)), calc(100% - 460px / var(--ui-zoom, 1)));
+  min-width:0; pointer-events:auto;
+}
+.combat-hud > .combat-blight-hud:empty { display:none; }
+.combat-blight-hud > .ashen-blight { margin:0; padding:.35rem .6rem; border:0; background:#171411bd; }
+.combat-blight-hud .ashen-blight-heading { font-size:max(.8rem, calc(11px / var(--ui-zoom, 1))); line-height:1.2; }
+.combat-blight-hud .ashen-blight-track { height:calc(8px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
+@media(max-width:700px) {
+  .combat-hud > .combat-blight-hud { position:relative; top:auto; left:auto; transform:none; width:100%; margin:.25rem auto 0; }
+  .combat.coop > .combat-hud { flex-wrap:wrap; }
+  .combat.coop > .combat-hud > .combat-blight-hud { flex:0 0 100%; }
+}

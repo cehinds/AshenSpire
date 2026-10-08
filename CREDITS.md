@@ -513,6 +513,24 @@ its `source/base-normalization.json` recipe.
 These are authoring assets with empty gameplay bindings; no third-party artwork
 was downloaded and no third-party license is claimed.
 
+### Alternative held stance studies (2026-10-07)
+
+`pose-studio/stances/` preserves four base-player stance sheets generated with
+OpenAI's built-in image generator from the project's own rear character
+references, exact prompts, source hashes, normalization recipes and portable
+authoring projects. Enemy held frames reuse the project's existing attack,
+guard and buff paintings and retain their original provenance; these are
+adaptations rather than newly painted enemy art. This package is authoring
+material with a separate integration seam and empty gameplay bindings.
+Other canonical armour cells remain explicitly unpainted. No third-party
+artwork was downloaded and no third-party license is claimed.
+
+`pose-studio/stances/options-20261008/` adds twelve first-party ImageGen
+comparison paintings containing sixty stance candidates for owner selection.
+The exact prompts and reference identities are retained in its manifest.
+The PNG paintings are unchanged originals; native HTML labels and CSS cell
+views support review. No candidate is promoted into a runtime asset by this
+selection package.
 ### Alternative class card actions (2026-10-07)
 
 The 90 original poses under `pose-studio/renewal/cards/` were generated and
@@ -524,3 +542,15 @@ casting layout repair is recorded beside its source sheet. The reproducible
 `src/content/alternativeCardAnimations.js` records their hashes. These assets
 power alternative combat and the authoring preview. No third-party artwork
 was downloaded and no third-party license is claimed.
+
+### Owner-selected alternative held stances (2026-10-08)
+
+The twelve owner selections in
+`pose-studio/stances/options-20261008/selections.json` are exported unchanged
+from the first-party paintings above into `assets-alternative/stances/`.
+The selection receipt records the original viewports and source hashes;
+`src/content/alternativeSelectedStances.js` records registration and Full/Lite
+hashes. `tools/alternative-selected-stances-export.mjs` reproduces the browser
+Canvas normalization. Four embedded Sprite Workshop projects accompany the
+exports under `pose-studio/stances/selected-projects/`. No new third-party
+artwork or license is introduced by this integration.
