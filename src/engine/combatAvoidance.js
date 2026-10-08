@@ -111,6 +111,7 @@ export function resolveAvoidance(ctx, source, target, profile, incomingDamage, o
   }
   if (outcome.prevention || outcome.distance || outcome.evade) ctx.emit?.('combatAvoidanceResolved', {
     sourceId: source?.id, targetId: target?.id,
+    ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}),
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     ...outcome,
   });

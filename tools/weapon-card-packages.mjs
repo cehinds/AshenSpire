@@ -74,8 +74,10 @@ function makeRun(registries, rightHand, leftHand) {
     classId: 'reaver',
     registries,
     // This is the pre-kit migration corpus, paired with unstamped legacy
-    // combat snapshots below. Expanded birth/save is covered separately.
+    // combat snapshots below. Expanded birth/save and enemy-knowledge
+    // snapshots are covered separately, so keep both newer rulesets absent.
     combatExpansionVersion: 1,
+    enemyKnowledgeVersion: null,
   });
   run.loadout.sets.rightHand[0] = rightHand;
   run.loadout.sets.leftHand[0] = leftHand;

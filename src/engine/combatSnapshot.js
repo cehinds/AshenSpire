@@ -51,6 +51,7 @@ export function serializeCombatSnapshot(combat) {
       expansionActionSerial: combat.expansionActionSerial || 0, pendingExpansionActions: combat.pendingExpansionActions || 0, allocatedAttributes: combat.allocatedAttributes } : {}),
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
+    ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
@@ -149,6 +150,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
       expansionActionSerial: saved.expansionActionSerial || 0, pendingExpansionActions: saved.pendingExpansionActions || 0, allocatedAttributes: saved.allocatedAttributes } : {}),
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
     ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
+    ...(saved.enemyKnowledge ? { enemyKnowledge: saved.enemyKnowledge } : {}),
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
     ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight

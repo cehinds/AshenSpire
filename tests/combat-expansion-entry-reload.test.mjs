@@ -18,7 +18,7 @@ const registries = createRegistries(contentBundle);
 // must be compared in their persisted representation, not object key presence.
 const persisted = snapshot => JSON.parse(JSON.stringify(snapshot));
 function fixture(prepare = () => {}) {
-  const run = createRunState({ registries, seed: 11, classId: 'reaver' });
+  const run = createRunState({ registries, seed: 11, classId: 'reaver', enemyKnowledgeVersion: null });
   assert.equal(run.combatExpansionVersion, 2, 'use a real expanded creation receipt');
   assert.equal(run.equipmentProfileRuleSnapshot.snapshotVersion, 2);
   assert.ok(Number.isInteger(run.equipmentAttackSlotCount));

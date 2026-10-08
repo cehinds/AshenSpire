@@ -3125,7 +3125,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // migration used the recovered number for its restamp and then dropped it.
     // Healing the door and leaving the consumer is the half-fix this work keeps
     // making, so the resolved value is written where the resume looks.
-    const midFight = createRunState({ combatExpansionVersion: 1, seed: 31, classId: 'reaver', registries: LEGACY_REG });
+    const midFight = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 31, classId: 'reaver', registries: LEGACY_REG });
     const midBorn = midFight.equipmentAttackSlotCount;
     const fight = createCombat({
       registries: LEGACY_REG,
@@ -3514,7 +3514,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
     b.scripts = contentBundle.scripts;
     const reg = createRegistries(b);
-    const run = createRunState({ combatExpansionVersion: 1, seed: 23, classId: 'reaver', registries: reg });
+    const run = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 23, classId: 'reaver', registries: reg });
     const sword = 'armament/straightSword';
     const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
     const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
@@ -8212,7 +8212,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/phase/.test(malformedReason),
       `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
 
-    const malformedRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
+    const malformedRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
     const storage = createMemoryStorage();
     storage.setItem(RUN_KEY, serializeRun(malformedRun));
@@ -8223,7 +8223,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const dangling = structuredClone(stored);
     dangling.piles.hand[0].cardId = 'removedByContentPatch';
-    const danglingRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
+    const danglingRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
     const danglingStorage = createMemoryStorage();
     danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
@@ -8232,7 +8232,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
       'the dangling exact-snapshot refusal names the affected card pile');
 
-    const checkpointRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
+    const checkpointRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
     const checkpointStorage = createMemoryStorage();
     checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
@@ -8605,7 +8605,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // combat snapshot. The reference check passes a slot the snapshot never
     // knew, the door heals that loadout too, and the run resumes rather than
     // being archived.
-    const midFight = createRunState({ combatExpansionVersion: 1, seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const midFight = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 0x3b3b, classId: 'reaver', registries: REG });
     const fight = createCombat({
       registries: REG, rng: createRng(0x3b3b), enemyIds: ['fellWarden'],
       player: { classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp, maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina, energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn, damageBySchoolAdd: midFight.damageBySchoolAdd, equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot, equipmentAttackSlotCount: midFight.equipmentAttackSlotCount, equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels, deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks, flaskCharges: midFight.flaskCharges, loadout: midFight.loadout },
@@ -8757,7 +8757,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(armourSteps.slice(0, 5).join(','), '100,200,400,795,1585', 'armour starts at 100 and each step costs about 1.995 times the last');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
-    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{"perception":{"xp":0,"level":0,"pendingDrafts":0}}', 'a fresh run starts only automatic Perception at zero');
     eq(skillLevel(run, 'item:blade'), 0);
     const first = awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1) + 1);
     eq(first.levelUps, 2, 'enough XP for two steps climbs two');
@@ -8770,6 +8770,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/skills\.x\.bogus is not a ledger field/.test(skillsProblems({ x: { xp: 0, level: 0, pendingDrafts: 0, bogus: 1 } }).join('|')));
     assert(/missing 'skills'/.test(validateRunShape({ ...run, skills: undefined }).join(' | ')), 'a current save without the ledger is named');
     const old = JSON.parse(serializeRun(run)); delete old.skills; old.schemaVersion = 7;
+    // Schema seven predates knowledge; it cannot carry the new run opt-in.
+    delete old.enemyKnowledgeRules; delete old.enemyKnowledgeState;
     const back = deserializeRun(JSON.stringify(old));
     eq(back.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(back.skills), '{}', 'a schema-7 save gains the empty ledger');
 

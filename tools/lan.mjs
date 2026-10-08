@@ -1,4 +1,5 @@
 import { normalizeMasteryProfile, masteryProfileProblems } from '../src/model/classMasteryProfile.js';
+import { emptyEnemyKnowledge, enemyKnowledgeProblems } from '../src/model/enemyKnowledgeProfile.js';
 // tools/lan.mjs — zero-dependency LAN session layer ("Forsaken Together").
 //
 // Adds three things to the launcher's static server (tools/serve.mjs):
@@ -15,7 +16,7 @@ import { normalizeMasteryProfile, masteryProfileProblems } from '../src/model/cl
 // (run.bat / node tools/launch.mjs). Nothing here touches the game engine.
 
 import { createSocket } from 'node:dgram';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { networkInterfaces } from 'node:os';
 import { readFileSync, writeFileSync, existsSync, rmSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
@@ -199,18 +200,19 @@ export function attachLan(server, { port, root }) {
     if (!session.game) return;
     if (session.game.scene.kind !== 'complete') persistGame();
     broadcastLanSnapshot(session.clients, session.game.snapshot(), wsEncode);
-    if (session.game.scene.kind === 'complete') clearSave(); // run over — forget it
+    if (session.game.scene.kind === 'complete' && !session.game.snapshot().party.some(member => Object.keys(member.enemyKnowledgeState?.pending?.enemies || {}).length)) clearSave();
   }
 
   // Start the server-authoritative run from the lobby roster.
   function startGame() {
-    const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless, saveSession: persistRespecSnapshot });
+    const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless, saveSession: persistRespecSnapshot,
+      knowledgeAuthority: { roomId: randomUUID(), privateSeed: randomBytes(4).readUInt32LE(0) } });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, classMastery: cl.classMastery, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, classMastery: cl.classMastery, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder, enemyKnowledge: cl.enemyKnowledge });
       (cl.locals || []).forEach((lp, i) => game.addMember({
         id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, classMastery: lp.classMastery, tint: lp.tint, spriteStyle: lp.spriteStyle,
-        playInDeckOrder: cl.playInDeckOrder, // couch seats share the device's profile
+        playInDeckOrder: cl.playInDeckOrder, enemyKnowledge: lp.enemyKnowledge || cl.enemyKnowledge,
       }));
     }
     game.start();
@@ -231,6 +233,7 @@ export function attachLan(server, { port, root }) {
     if (!g) return;
     // Couch co-op: `as` lets a client act for any seat it OWNS (validated).
     const id = msg.as && memberIdsOf(pl).includes(msg.as) ? msg.as : pl.id;
+    if (['predictIntent', 'knowledgeBanked', 'knowledgeBankFailed'].includes(msg.t) && msg.as && !memberIdsOf(pl).includes(msg.as)) return;
     if((msg.t.startsWith('classRespec')||['claimSkillLevel','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(msg.t)) && msg.as && !memberIdsOf(pl).includes(msg.as))return;
     const progressionIntent=operation=>{const result=operation();for(const [socket,client] of session.clients)if(client===pl)socket.write(wsEncode(JSON.stringify({t:'progressionResult',memberId:id,ok:result.ok,error:result.error})));};
     switch (msg.t) {
@@ -241,6 +244,13 @@ export function attachLan(server, { port, root }) {
       case 'chooseMasteryNode': g.chooseMasteryNode(id, msg.nodeId); break;
       case 'chooseNode': progressionIntent(() => g.chooseNode(id, msg.nodeId)); break;
       case 'playCard': progressionIntent(() => g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice, msg.upcastTier ?? msg.upcastRanks ?? 0, msg.selectedBuildup)); break;
+      case 'predictIntent': progressionIntent(() => g.combatPredict(id, msg.enemyInstanceId, msg.actionSerial, msg.maneuver)); break;
+      case 'knowledgeBanked': {
+        const result = g.acknowledgeEnemyLearning(id, msg.receipts);
+        for (const [socket, client] of session.clients) if (client === pl) socket.write(wsEncode(JSON.stringify({ t: 'knowledgeBankResult', memberId: id, ok: result.ok })));
+        break;
+      }
+      case 'knowledgeBankFailed': g.retainEnemyLearning(id, msg.recovery); break;
       case 'recoverControl': progressionIntent(() => g.combatRecovery(id, msg.selections)); break;
       case 'chooseBlightFeat': progressionIntent(() => g.combatBlightFeat(id, { threshold: msg.threshold, path: msg.path })); break;
       case 'chooseDiscard': g.combatChooseDiscard(id, msg.cardInstanceIds); break;
@@ -266,6 +276,8 @@ export function attachLan(server, { port, root }) {
     if (session.game && msg.t !== 'hello' && msg.t !== 'resume') { onGameIntent(pl, msg); return; }
     switch (msg.t) {
       case 'hello':
+        if (enemyKnowledgeProblems(msg.enemyKnowledge || emptyEnemyKnowledge(), new Set(REG.enemies.ids())).length) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: 'Enemy knowledge profile is malformed' }))); return; }
+        pl.enemyKnowledge = structuredClone(msg.enemyKnowledge || emptyEnemyKnowledge());
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);
         if (msg.classMastery !== undefined) {
           const profile = normalizeMasteryProfile({ classMastery: msg.classMastery });
