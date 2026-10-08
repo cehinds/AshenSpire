@@ -261,10 +261,10 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       openConfirmationModal({ title: 'Replace this browser’s saves?',
         message: `This backup contains ${count} saved run${count === 1 ? '' : 's'}${preview.hasProfile ? ' and a profile' : ' and no profile'}.`,
         consequence: `All ${preview.slots.length} slots and the profile will be replaced. A previous-save backup is kept first. The game reloads after import.`,
-        confirmLabel: 'Import saves', onConfirm: () => {
+        confirmLabel: 'Import saves', onConfirm: async () => {
           try {
             assertImportAllowed();
-            transfer.restore(text); status.textContent = 'Saves imported. Reload the game to use them.';
+            await transfer.restore(text); status.textContent = 'Saves imported. Reload the game to use them.';
             reload.hidden = false; importSave.disabled = true; reload.focus();
             onImported();
           } catch (error) { status.textContent = error.message; }

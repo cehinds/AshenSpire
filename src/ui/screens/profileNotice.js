@@ -145,8 +145,8 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
   leave.addEventListener('click', () => onContinue());
 
   if (restore) {
-    restore.addEventListener('click', () => {
-      const res = saves.restoreProfile(status.archiveId);
+    restore.addEventListener('click', async () => {
+      const res = await saves.restoreProfile(status.archiveId);
       if (res.ok) { onContinue(); return; }
       // Sunna's line, verbatim — the raw parser error goes to the support
       // disclosure, never into the sentence (her D2).
@@ -221,9 +221,10 @@ export function mountProfileNotice(app, { saves, status, onContinue }) {
     door2.veil.classList.add('confirm-fresh');
     document.addEventListener('keydown', onKey, true);
     cancel.addEventListener('click', door2.close);
-    go.addEventListener('click', () => {
+    go.addEventListener('click', async () => {
       document.removeEventListener('keydown', onKey, true);
-      saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
+      const res = await saves.startNewProfile(); // archives the old bytes first (save.js) — Vira D1
+      if (!res.ok) { say('The new profile could not be saved. Your existing copy is preserved.'); return; }
       onContinue();
     });
     cancel.focus(); // the safe option holds the cursor
