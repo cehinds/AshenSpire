@@ -9,7 +9,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
+import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardSummary } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -29,6 +29,9 @@ import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
 import { combatProfileFor, combatProfileTags } from '../../model/combatCardProfile.js';
+import { ashenBlightCardLabel } from './ashenBlight.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
+import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -134,7 +137,7 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = resolveCard(registries, ref);
+  const def = opts.preview?.resolvedDefinition || resolveCard(registries, ref);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
@@ -143,7 +146,23 @@ export function renderCard(registries, ref, opts = {}) {
   const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
-  const model = { ...rawModel, tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
+  const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
+  const stanceLabel = combatProfile.maneuver && `${combatProfile.maneuver[0].toUpperCase()}${combatProfile.maneuver.slice(1)}`;
+  const model = { ...rawModel, ...(expanded && stanceLabel ? { type: { ...rawModel.type, label: stanceLabel,
+    subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
+    ...(expanded ? { faceType: combatCardType(def) } : {}),
+    tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
+  // Authored clauses carry family limits and charge/payment constraints that
+  // the generic effect summary cannot express. Keep those complete on the face.
+  const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
+  const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
+  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
+    model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
+    damageWords.length && `Damage: ${damageWords.join(', ')}`,
+    model.abilityRank !== null && rawModel.type.label,
+    model.abilityRank !== null && rawModel.type.subtype,
+    model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rank > 1 && `rank ${model.rank}`,
+  ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
     : null;
@@ -154,6 +173,8 @@ export function renderCard(registries, ref, opts = {}) {
   // divide. `as-card` is the recipe; the old class names stay as the hooks
   // every tool and screen reads.
   el.className = playingCardClasses(model) + ' illustrated-card';
+  if (def.corrupted) el.classList.add('corrupted-card');
+  if (expanded) el.classList.add('expanded-combat-card');
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
@@ -242,25 +263,24 @@ export function renderCard(registries, ref, opts = {}) {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     el.innerHTML = illustratedCardHtml(model,{
-      // A weight-priced card (the Dodge Roll) keeps its live numbers at glance
-      // size and folds its per-class price table into one clause.
-      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/\. (?=[A-Z])/g,'.\n'),
+      // The printed price is live; the full weight table stays in Information.
+      rules: compactCardRules(faceSummary ? esc(faceSummary) : def.weightClassPriced ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.' : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences)),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
+    if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
     // A ranked card (SPEC §13.4o) wears its rank in the top right of its art; the
     // number it adds is already in the face's text.
     if(model.rankBadge){const badge=document.createElement('span');badge.className='card-rank';badge.textContent=model.rankBadge;badge.title=model.rankHelp;el.appendChild(badge);}
-    if(model.abilityRank!==null){const label=document.createElement('span');label.className='card-ability-type';label.textContent=`${model.type.glyph} ${model.type.label}${model.type.subtype ? ` · ${model.type.subtype}` : ''}`;label.title=model.type.help;el.appendChild(label);}
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
     for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
     scheduleCardFits([el]);
-    el.setAttribute?.('aria-label',model.abilityRank!==null?`${model.name}, ${model.type.label}${model.type.subtype ? `, ${model.type.subtype}` : ''}, rank ${model.abilityRank}`:model.rank>1?`${model.name}, rank ${model.rank}`:model.name);
+    el.setAttribute?.('aria-label',accessibleLabel);
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
@@ -293,7 +313,7 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
+      details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card
@@ -324,6 +344,8 @@ export function renderCard(registries, ref, opts = {}) {
         actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
         commands: opts.commands || {} });
     } });
+  // The read-only binder adds keyboard behavior; retain the richer card name.
+  el.setAttribute?.('aria-label',accessibleLabel);
   // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED. A selection lights one card and
   // douses one card, and cardInspection.js fires both events on the card they
   // concern, so each face repaints itself. Nothing sweeps the document —
@@ -543,7 +565,15 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
-  if (combatProfile.maneuver === 'counter') html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
+  if (combatProfile.maneuver === 'counter') {
+    if (def.counterCoverage) {
+      const c = def.counterCoverage;
+      const names = { physical: 'Martial', spell: 'Spell', contact: 'Contact', near: 'Near', far: 'Far', single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const coverage = [c.camps, c.reaches, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
+      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
+    } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];

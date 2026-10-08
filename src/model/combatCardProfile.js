@@ -2,9 +2,11 @@ import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
 
 const CAMP = new Set(['physical', 'spell']);
-const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash']);
+const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
 const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay']);
 const COUNTER = new Set(['melee', 'ranged', 'spell']);
+const REACH = new Set(['contact', 'near', 'far']);
+const TARGETING = new Set(['single', 'area']);
 
 function identity(tags, prefix, allowed, name) {
   const values = [...new Set(tags.filter(tag => tag.startsWith(prefix)).map(tag => tag.slice(prefix.length)))];
@@ -33,7 +35,19 @@ export function combatProfileFor(carrier = {}) {
   const types = [...new Set((components?.map(component => component.type)
     || (carrier.attack?.damageType ? [carrier.attack.damageType] : tags.filter(tag => tag.startsWith('damage:')).map(tag => tag.slice(7))))
     .filter(Boolean))];
-  return { camp, maneuver, school, damageType: types.length === 1 ? types[0] : null, counterMode };
+  const profile = { camp, maneuver, school, damageType: types.length === 1 ? types[0] : null, counterMode };
+  const reach = identity(tags, 'reach:', REACH, id);
+  const targeting = identity(tags, 'targeting:', TARGETING, id);
+  if (reach) profile.reach = reach;
+  if (targeting) profile.targeting = targeting;
+  const traits = [...new Set(tags.filter(tag => tag.startsWith('trait:')).map(tag => tag.slice(6)))];
+  if (traits.length) profile.traits = traits;
+  // These are authored payloads, not guessed from a card's name or damage type.
+  for (const key of ['reach', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus']) {
+    if (carrier[key] !== undefined) profile[key] = structuredClone(carrier[key]);
+  }
+  return profile;
 }
 
 /** Registry labels and blurbs stay shared across card chips and enemy intents. */
@@ -46,6 +60,9 @@ export function combatProfileTags(carrier = {}, registries = null) {
     profile.school && `school:${profile.school}`,
     profile.damageType && `damage:${profile.damageType}`,
     profile.counterMode && `counter:${profile.counterMode}`,
+    profile.reach && `reach:${profile.reach}`,
+    profile.targeting && `targeting:${profile.targeting}`,
+    ...(profile.traits || []).map(trait => `trait:${trait}`),
   ].filter(Boolean);
   // Runtime surfaces must describe the active bundle, including intentionally
   // absent metadata. Static authoring callers can still use shipped labels.

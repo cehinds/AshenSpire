@@ -31,8 +31,132 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
+import { combatProfileFor } from './combatCardProfile.js';
+import { cardSigilIdentity } from '../content/combatSigils.js';
 
 const freeze = (value) => Object.freeze(value);
+
+export function combatCardType(def) {
+  const p = combatProfileFor(def);
+  if (def.type === 'power') return 'Power';
+  if (['status', 'curse'].includes(def.type)) return 'Status';
+  if (def.type === 'skill' && !p.maneuver) return 'Skill';
+  if (p.maneuver === 'counter') return 'Counter';
+  if (p.camp === 'spell') return 'Spell';
+  return p.maneuver && p.maneuver !== 'casting' ? p.maneuver[0].toUpperCase() + p.maneuver.slice(1)
+    : def.type[0].toUpperCase() + def.type.slice(1);
+}
+
+/** Plain complete effect text. Numeric values come from the resolved preview. */
+export function combatCardSummary(def, preview = null, registries = null) {
+  const bindings = computeTokenBindings(def.effects || []), tokens = { ...staticCardTokens(def), ...preview?.tokens };
+  const value = (effect, index, field = 'amount') => {
+    const token = bindings.find(row => row.index === index && row.field === field)?.token;
+    const live = preview?.values?.[index];
+    return tokens[token] ?? (live?.op === effect.op ? live.value : undefined) ?? (typeof effect[field] === 'number' ? effect[field] : '?');
+  };
+  const title = id => registries?.statuses?.has(id) ? registries.statuses.get(id).name : id[0].toUpperCase() + id.slice(1);
+  const condition = pred => {
+    if (!pred) return '';
+    if (pred.p === 'hasStatus') return `${pred.of === 'self' ? 'you have' : pred.of === 'allEnemies' ? 'an enemy has' : 'the target has'} ${title(pred.status)}`;
+    if (pred.p === 'hasBlock') return `${pred.of === 'self' ? 'you' : 'the target'} ${pred.of === 'self' ? 'have' : 'has'} Block${pred.snapshot === 'beforePlay' ? ' before this card' : ''}`;
+    if (pred.p === 'hpBelowPct') return `${pred.of === 'self' ? 'your' : 'target'} HP is at most ${pred.pct}%`;
+    if (pred.p === 'firstCardThisTurn') return 'this is your first card this turn';
+    if (pred.p === 'inStance') return `you are in ${pred.stance}`;
+    if (pred.p === 'turnMetric') {
+      const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
+      const threshold = [pred.atLeast !== undefined ? `at least ${pred.atLeast}` : '', pred.atMost !== undefined ? `at most ${pred.atMost}` : ''].filter(Boolean).join(' and ');
+      if (!threshold) return '';
+      if (pred.metric === 'sameCardPlays' && pred.cardId && pred.cardId !== def.id) return '';
+      if (pred.metric === 'turnStartHpPct') return `you began this turn with HP ${threshold}%`;
+      if (pred.metric === 'hpLostSinceTurnStart') return `HP lost ${threshold} since your previous turn began`;
+      const name = names[pred.metric] || (['tagPlays', 'distinctTagPlays'].includes(pred.metric) && pred.tag
+        ? `${pred.metric === 'distinctTagPlays' ? 'distinct ' : ''}${pred.tag} card${pred.metric === 'distinctTagPlays' ? ' IDs' : 's'} played` : null);
+      if (!name) return '';
+      if (pred.metric === 'previousSpell' && pred.atLeast === 1) return 'your previous card this turn was a Spell';
+      return `${name} ${threshold}${pred.metric === 'cardPlaysCombat' ? '' : ' this turn'}`;
+    }
+    if (pred.p === 'chargeAvailable') return 'its prepared charge is available';
+    if (pred.p === 'not') { const text = condition(pred.pred); return text ? `not (${text})` : ''; }
+    if (['all', 'any'].includes(pred.p)) { const parts = pred.preds.map(condition); return parts.every(Boolean) ? parts.join(pred.p === 'all' ? ' and ' : ' or ') : ''; }
+    return '';
+  };
+  const p = combatProfileFor(def), parts = [];
+  for (const [index, effect] of (def.effects || []).entries()) {
+    const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
+      : effect.target === 'randomEnemy' ? ' to a random enemy' : '';
+    let text;
+    switch (effect.op) {
+      case 'damage': {
+        const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
+        if (typeof hits !== 'number') return null;
+        const sequence = live?.hitDamages;
+        const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
+        const damage = unequal ? `${sequence.join(' + ')} damage (${live.totalDamage} total across ${sequence.length} hits)`
+          : `${n} damage${hits !== 1 ? ` ×${hits}` : ''}`;
+        text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;
+      }
+      case 'block': text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Block`; break;
+      case 'gainBarrier': text = `Gain ${n} Barrier`; break;
+      case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
+      case 'gainPoise': text = `Gain ${n} Poise guard`; break;
+      case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
+      case 'applyStatus': {
+        if (['invulnerability', 'decoy', 'grounded', 'sleep'].includes(effect.status)) return null;
+        if (effect.duration !== undefined && typeof effect.duration !== 'number') return null;
+        text = `${effect.target === 'self' ? 'Gain' : 'Apply'} ${value(effect, index, 'stacks')} ${title(effect.status)}${effect.target === 'enemy' ? ' to target' : effect.target === 'ally' ? ' to an ally' : area}${effect.duration !== undefined ? ` for ${effect.duration} turns` : ''}`;
+        if (effect.status === 'concealed') {
+          const explanation = registries?.statuses?.has(effect.status) && registries.statuses.get(effect.status).tooltip;
+          if (!explanation) return null;
+          text += `. ${explanation.replace(/\.$/, '')}`;
+        }
+        break;
+      }
+      case 'removeStatus': text = `Remove ${effect.amount === undefined ? 'all' : n} ${title(effect.status)}${effect.target === 'enemy' ? ' from target' : effect.target === 'ally' ? ' from an ally' : area}`; break;
+      case 'draw': text = `Draw ${n}`; break;
+      case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
+      case 'heal': text = `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${n} HP`; break;
+      case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`; break;
+      case 'gainEnergy': text = `Gain ${n} SP`; break;
+      case 'restoreMana': text = `Restore ${n} Mana`; break;
+      case 'restoreStamina': text = `Restore ${n} SP`; break;
+      case 'poiseDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Poise${area}`; break;
+      case 'wardDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Ward impact${area}`; break;
+      case 'retain': text = `Retain ${n}`; break;
+      case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
+      case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
+      case 'addCard': text = `Add ${effect.count || 1} ${registries?.cards?.has(effect.card) ? registries.cards.get(effect.card).name : effect.card} to ${effect.pile || 'hand'}`; break;
+      case 'grantCardCharge': {
+        const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
+          .filter(([key]) => effect[key] !== undefined).map(([key, label]) => key === 'manaDiscount'
+            ? `${value(effect, index, key)} less Mana (min 0)` : `+${value(effect, index, key)} ${label}`);
+        const match = [effect.cardType, effect.abilityKind, effect.cardTag].filter(Boolean).join(' ');
+        text = `Next ${match || 'matching card'} this turn: ${bonuses.join(', ')}; cannot stack with itself`; break;
+      }
+      default: return null; // Keep authored descriptions for complex effects.
+    }
+    if (effect.if) { const prefix = condition(effect.if); if (!prefix) return null; text = `If ${prefix}: ${text[0].toLowerCase() + text.slice(1)}`; }
+    if (text.includes('?')) return null; // Unresolved formulas keep their authored tokens.
+    if (effect.oncePerTurn) text += ' once per turn per family';
+    parts.push(text);
+  }
+  if (p.maneuver === 'counter') {
+    const payload = def.counterPayload || {}, returns = [];
+    for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
+      if (def.effects.some(effect => effect.op === op)) continue;
+      const live = preview?.values?.find(row => row.op === op)?.value;
+      const amount = live ?? payload[key];
+      if (typeof amount === 'number' && amount > 0) returns.push(`${amount} ${label}`);
+    }
+    if (returns.length) parts.push(`Return ${returns.join(' + ')}`);
+    if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
+  }
+  if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
+  if (def.comboHook) return null;
+  if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
+  for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
+  return parts.length ? `${parts.join('. ')}.` : null;
+}
 
 /**
  * The numbers a card's own template substitutes, before any live preview.
@@ -86,7 +210,7 @@ export function staticCardTokens(def) {
  *              a raised number can be marked as raised.
  */
 export function playingCardModel(registries, ref, { preview = null } = {}) {
-  const def = resolveCard(registries, ref);
+  const def = preview?.resolvedDefinition || resolveCard(registries, ref);
   const base = staticCardTokens(def);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
@@ -188,6 +312,7 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     }),
     costs,
     tags,
+    sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
     paint: freeze({
       typeColor: typeRow ? typeRow.color : null,
       radiusPx: typeRow ? typeRow.radius : null,

@@ -129,8 +129,8 @@ if (args.includes('--selftest')) {
     }, {
       name: 'playCard commit door records a duplicate cardPlayed event',
       file: 'src/ui/screens/combat.js',
-      find: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, ...(choice != null ? { choice } : {}) });",
-      replace: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, ...(choice != null ? { choice } : {}) });\n      combat.eventLog.push({ type: 'cardPlayed', cardInstanceId: instanceId }); // planted: duplicate commit receipt",
+      find: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, upcastTier: rank, ...(choice != null ? { choice } : {}) });",
+      replace: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, upcastTier: rank, ...(choice != null ? { choice } : {}) });\n      combat.eventLog.push({ type: 'cardPlayed', cardInstanceId: instanceId }); // planted: duplicate commit receipt",
       expectRed: /FAIL held controller Confirm fires one activation and one multi-target commit/,
     }, {
       name: 'controller self Cancel leaves stale self targeting armed',
@@ -558,6 +558,7 @@ const STATE = `(() => {
   return {
     cards,
     plays: plays.length,
+    playCardInstanceIds: plays.map((event) => event.cardInstanceId),
     lastPlay: plays.length ? plays[plays.length - 1] : null,
     discard: combat ? combat.piles.discard.length : null,
     exhaust: combat ? combat.piles.exhaust.length : null,
@@ -1272,9 +1273,11 @@ async function main() {
       const multiControllerOk = oneCommit(before, after, multi.id) && cleanTargeting(after)
         && multiOutcome(before, after);
       check(multiControllerOk, 'controller multi-target Confirm commits once without a false self target', JSON.stringify(after));
-      check(activations === 1 && oneCommit(before, after, multi.id)
+      const heldCommits = after.playCardInstanceIds.slice(before.plays);
+      check(activations === 1 && heldCommits.length === 1 && heldCommits[0] === multi.id
+        && oneCommit(before, after, multi.id)
         && after.pad.mapping === 'standard' && after.pad.reads > heldReads,
-        'held controller Confirm fires one activation and one multi-target commit', JSON.stringify({ activations, heldReads, after }));
+        'held controller Confirm fires one activation and one multi-target commit', JSON.stringify({ activations, heldCommits, heldReads, after }));
       check(multiOutcome(before, after), 'controller multi-target outcome reaches every living enemy once with exact cost/status deltas', JSON.stringify({ before, after }));
       if (screenshots) await screenshot(multiControllerOk ? 'controller-multi' : 'controller-multi-red');
 

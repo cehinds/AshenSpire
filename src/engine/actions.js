@@ -24,21 +24,21 @@
 // Headless: no document/window/localStorage/timers.
 
 import * as F from './combatRules.js';
-import { allocateInteger } from '../model/combatRules.js';
+import { allocateInteger, resolveDamageComponents, groupedResistance } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { usesSingleBreakMeter } from '../model/breakMeter.js';
-import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
+import * as Triggers from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
-import { propertyMountsOf } from './properties.js';
-import { cardRatingBonus, applyRatingImpact, absorbMeterGuard } from './combatRatings.js';
+import * as Properties from './properties.js';
+import * as Ratings from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier, attackImpact } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
@@ -46,7 +46,11 @@ import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
-import { prepareMatchupHit, completeMatchupHit, matchupPoiseMultiplier, matchupRiderEffects, clearCombatCounter } from './combatMatchups.js';
+import * as Matchups from './combatMatchups.js';
+
+import * as Expanded from './combatExpansionActions.js';
+import * as Control from './combatStatusControl.js';
+import * as Blight from './ashenBlight.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -56,11 +60,11 @@ import { prepareMatchupHit, completeMatchupHit, matchupPoiseMultiplier, matchupR
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true } = {}) {
-  const ratedBase = base + (carrier?.skipRatingBonus ? 0 : cardRatingBonus(ctx, source, carrier, 'damage', base));
+export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false } = {}) {
+  const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   if (ctx.foundation) {
-    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []).amount;
-    return matchups ? prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
+    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
   }
   let dmg = ratedBase;
   const school = carrier && carrier.damageSchool;
@@ -72,7 +76,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
-  if (target) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
+  if (target && !beforeDefense) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
   // tags intersect the hit's effect tags. Composition is the row's DECLARED
   // stacking rule (closed enum, validated): 'multiplicative' sources multiply
@@ -94,7 +98,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   }
   if (target && school) {
     const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
-    if (Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
+    if (!beforeDefense && Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
     for (const [id, inst] of Object.entries(target.statuses || {})) {
       if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
       const def = ctx.registries.statuses.get(id);
@@ -105,7 +109,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   }
   dmg = Math.floor(dmg);
   dmg = dmg < 0 ? 0 : dmg;
-  return matchups ? prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
+  return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
 }
 
 /**
@@ -165,7 +169,7 @@ export function critChance(rules, attributes, tags) {
 // The roll: only the player's attacks, only with a crit rule that matches, on
 // the combatProcs stream (nothing is drawn without a rule, so a run with no
 // such feat draws exactly what it always drew).
-function rollCrit(ctx, source, tags) {
+export function rollCrit(ctx, source, tags) {
   if (!source || source.kind !== 'player' || !Array.isArray(source.critRules) || !source.critRules.length) return 0;
   const { chance, multiplier } = critChance(source.critRules, ctx.attributes, tags);
   if (!(chance > 0) || !(multiplier > 1)) return 0;
@@ -179,15 +183,16 @@ function rollCrit(ctx, source, tags) {
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
+  if (ctx.combatExpansionVersion === 2) return applyExpandedDamage(ctx, source, target, base, attackTags, carrier);
   const targetStatusesBefore = structuredClone(target.statuses || {});
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
-  const ratedBase = base + (carrier?.skipRatingBonus ? 0 : cardRatingBonus(ctx, source, carrier, 'damage', base));
+  const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
   const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
   // A critical hit multiplies the finished blow, before Block takes its share.
   const critical = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
   if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: critical });
-  const tactical = prepareMatchupHit(ctx, source, target, carrier, critical);
+  const tactical = Matchups.prepareMatchupHit(ctx, source, target, carrier, critical);
   const dmg = tactical.amount;
   const blocked = Math.min(target.block, Math.max(0, dmg - tactical.guardBypass));
   target.block -= blocked;
@@ -217,19 +222,117 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   });
   if (hpLoss > 0) {
     if (ctx.ratingsRules && !carrier?.combatReaction) {
-      const multiplier = matchupPoiseMultiplier(ctx, source, target, carrier);
-      applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null);
+      const multiplier = Matchups.matchupPoiseMultiplier(ctx, source, target, carrier);
+      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null);
     }
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
     if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
-  completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
+  Matchups.completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
     applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount) });
-  for (const effect of matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
+  for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
     ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
   return dmg;
+}
+
+export function gainBarrier(ctx, entity, base, card = null) {
+  if (!entity?.alive) return 0;
+  const amount = computeBlockGain(ctx, entity, base, card);
+  entity.barrier = (entity.barrier || 0) + amount;
+  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...seatOf(ctx, entity) });
+  return amount;
+}
+
+export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
+  return Control.restorePersistentWard(ctx, entity, nominal, { source: 'card', ...options });
+}
+
+export function prepareExpandedDefense(ctx, target, receipt, carrier) {
+  if (receipt.defendedAmounts) return;
+  const sums = {}, indices = {};
+  receipt.amounts.forEach((amount, index) => {
+    const profile = receipt.profiles[index];
+    const aliases = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
+    const type = aliases[profile.damageType] || profile.damageType || 'blunt';
+    const key = `${profile.camp}:${type}`;
+    sums[key] = (sums[key] || 0) + amount;
+    (indices[key] ||= []).push(index);
+  });
+  receipt.defendedAmounts = receipt.amounts.map(() => 0);
+  for (const [key, total] of Object.entries(sums)) {
+    const [camp, type] = key.split(':');
+    let amount;
+    if (ctx.foundation) {
+      const defense = F.foundationProfile(ctx, target), rules = ctx.foundation.rules;
+      amount = resolveDamageComponents(rules, { components: [{ type, amount: total }], armor: defense.armor || 0,
+        penetration: carrier?.attack?.penetration || 0,
+        resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}),
+        immunities: defense.immunities || [], multiplier: 1, flatBonus: 0 }).reduce((sum, part) => sum + part.amount, 0);
+    } else {
+      const resistance = target.damageResistanceBySchool?.[carrier?.damageSchool];
+      amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
+        * (Number.isFinite(resistance) ? Math.max(0, 1 - resistance / 100) : 1)));
+    }
+    amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
+      - Math.max(0, target.damageResistanceFlat?.[type] || 0));
+    const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
+    indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
+  }
+  const magical = receipt.profiles.map((profile, index) => profile.camp === 'spell' ? index : -1).filter(index => index >= 0);
+  const total = magical.reduce((sum, index) => sum + receipt.defendedAmounts[index], 0);
+  const ward = Math.min(total, target.persistentWard?.value || 0);
+  const shares = total > 0 ? allocateInteger(total - ward, magical.map(index => receipt.defendedAmounts[index])) : magical.map(() => 0);
+  magical.forEach((index, i) => { receipt.defendedAmounts[index] = shares[i] || 0; });
+  receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
+  receipt.guardBypassRemaining = receipt.guardBypass || 0;
+}
+
+function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
+  const planned = carrier.expansionContact;
+  const profile = { ...carrier.combatProfile, reach: carrier.combatProfile?.reach || 'contact', targeting: carrier.combatProfile?.targeting || 'single' };
+  const raw = planned ? planned.receipt.amounts[planned.index] : Math.floor(computeAttackDamage(ctx, source, target, base, tags, carrier, { matchups: false, beforeDefense: true }) * (carrier.critMultiplier || 1));
+  const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, amount: raw }],
+    { ...Control.statusIncomingModifier(ctx, target, profile), restrictions: Control.controlRestrictions(ctx, target) });
+  if (tactical.avoided) return 0;
+  if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: raw });
+  prepareExpandedDefense(ctx, target, tactical, carrier);
+  const contactIndex = planned?.index || 0;
+  let amount = tactical.defendedAmounts[contactIndex] || 0;
+  const spell = profile.camp === 'spell';
+  // Matchup and control vulnerabilities precede typed defenses and Ward.
+  const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
+  const ward = tactical.resistedAmounts[contactIndex] || 0;
+  const pool = spell ? 'barrier' : 'block';
+  const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
+  tactical.guardBypassRemaining -= bypass;
+  const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
+  target[pool] = Math.max(0, (target[pool] || 0) - blocked);
+  const hpLoss = amount - blocked;
+  if (hpLoss) target.hp -= hpLoss;
+  Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
+  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+    damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+    ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
+    ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
+  if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
+  if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier);
+  // Independent pressure resolves even when all direct damage met protection.
+  if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
+    if (['applyStatus', 'buildup'].includes(effect.op)) {
+      const pressure = Control.applyStatusPressure(ctx, target, effect.status, effect.amount ?? effect.stacks, source, { camp: effect.camp || profile.camp,
+        actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
+      Matchups.recordTacticalStatus(tactical, pressure);
+    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount);
+  }
+  if (profile.school === 'lightning' && Control.electricalTraits(ctx, target).conductive
+    && source?.alive && !Control.electricalTraits(ctx, source).grounded && amount > 0) {
+    const backlash = Math.floor(amount / 4);
+    if (backlash) applyLoseHp(ctx, source, backlash, 'conductiveBacklash');
+  }
+  afterHpChange(ctx, target, { sourceId: source?.id });
+  return amount;
 }
 
 /** Host-only Arcane Exposure mutation, reached only after final HP loss. */
@@ -243,7 +346,7 @@ function applyArcaneExposure(ctx, source, target, carrier) {
   // The hit's SOURCE may multiply its buildup: an `exposureBuildupMult` passive
   // on a relic it owns or a property it has mounted (a wand's `overcharge`).
   // Exactly 1 when neither carries one, so every existing hit is unchanged.
-  const sourceMult = passiveMult(ctx.registries, (source && source.relicIds) || [], 'exposureBuildupMult', propertyMountsOf(ctx, source));
+  const sourceMult = passiveMult(ctx.registries, (source && source.relicIds) || [], 'exposureBuildupMult', Properties.propertyMountsOf(ctx, source));
   addArcaneExposure(ctx, source, target, { school, attempted: perHit, amountFor: (cfg) => Math.floor(perHit * mapped * cfg.buildupMultiplier * sourceMult) });
 }
 
@@ -288,7 +391,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
-  let amt = base + cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
+  let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
@@ -302,7 +405,7 @@ export function computeBlockGain(ctx, entity, base, card = null) {
  * guard is not Block. Pure; the preview reads it too.
  */
 export function computeMeterGuardGain(ctx, entity, base, card = null) {
-  const amt = Math.floor(base + cardRatingBonus(ctx, entity, card, 'block', base));
+  const amt = Math.floor(base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base));
   return amt < 0 ? 0 : amt;
 }
 
@@ -331,6 +434,7 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
+  if (ctx.combatExpansionVersion === 2 && card?.combatProfile?.camp === 'spell') return gainBarrier(ctx, entity, base, card);
   let amt = computeBlockGain(ctx, entity, base, card);
   const cap = statuses.getCap(ctx, entity, 'blockCap');
   if (cap != null && entity.block + amt > cap) {
@@ -413,7 +517,7 @@ function afterHpChange(ctx, target, death = {}) {
     }
     // Player death is finalized by combat.js's end-of-combat check.
   }
-  checkPhases(ctx);
+  Triggers.checkPhases(ctx);
 }
 
 /**
@@ -435,7 +539,7 @@ function afterHpChange(ctx, target, death = {}) {
 export function staggerEnemy(ctx, enemy) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
   if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
-  clearCombatCounter(enemy, ctx);
+  Matchups.clearCombatCounter(enemy, ctx);
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
   enemy.skipNextTurn = true;
@@ -452,7 +556,7 @@ export function staggerEnemy(ctx, enemy) {
  * `playerStaggered` with what it took.
  */
 export function staggerPlayer(ctx, player) {
-  clearCombatCounter(player, ctx);
+  Matchups.clearCombatCounter(player, ctx);
   const cfg = (((ctx.registries.balance || {}).stagger || {}).player) || {};
   const actionLoss = Number.isInteger(cfg.actionLoss) ? cfg.actionLoss : 0;
   const applied = {};
@@ -475,12 +579,12 @@ export function staggerPlayer(ctx, player) {
  * meter grows by balance.poise.growthMult either way.
  */
 export function dealPoiseDamage(ctx, entity, amount) {
-  if (ctx.ratingsRules) return applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount);
+  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount);
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
   // A Poise guard (gainPoise) takes the impact before the meter does.
-  const n = Math.max(0, Math.floor(amount)) - absorbMeterGuard(entity, 'poise', amount);
+  const n = Math.max(0, Math.floor(amount)) - Ratings.absorbMeterGuard(entity, 'poise', amount);
   if (n <= 0) return;
   if (ctx.foundation && isEnemy && entity.impactProtectedUntil >= ctx.turn) {
     entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value + n);
@@ -676,7 +780,9 @@ function evalRaw(ctx, action, value, dflt, target) {
 // ---------------------------------------------------------------------------
 
 export function executeAction(ctx, action) {
+  if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
+  if (ctx.combatExpansionVersion === 2) Expanded.beginExpandedAction(ctx, action.meta?.expansionGroup, action.source);
   if (action.meta?.combatCounterReaction && (!action.source?.alive || action.meta.combatCounterInterrupted)) return;
   if (ctx.foundation) ctx._foundationAncestry = action.meta?.foundationAncestry || [];
   const eff = action.effect;
@@ -697,7 +803,7 @@ export function executeAction(ctx, action) {
       card: action.card,
       meta: action.meta,
     };
-    if (!evalPredicate(ctx, eff.if, pctx)) return;
+    if (!Triggers.evalPredicate(ctx, eff.if, pctx)) return;
   }
   if (eff.oncePerTurn && !allowAbilityOnce(action.owner || action.source || ctx.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op)) return;
 
@@ -712,6 +818,13 @@ export function executeAction(ctx, action) {
   } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
 }
 
+function plannedStatusTargets(ctx, action, eff) {
+  const refs = action.meta?.expansionTargets?.[action.meta.statusTargetCursor || 0];
+  if (!refs) return resolveTargets(ctx, action, eff.target);
+  action.meta.statusTargetCursor = (action.meta.statusTargetCursor || 0) + 1;
+  return refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => entity?.alive);
+}
+
 function runOpcode(ctx, action, eff) {
   if (RUN_OPCODES.includes(eff.op)) {
     runRunOpcode(ctx, action, eff);
@@ -722,6 +835,18 @@ function runOpcode(ctx, action, eff) {
   }
 
   switch (eff.op) {
+    case 'grantRollMode': {
+      if (ctx.combatExpansionVersion !== 2 || eff.roll !== 'evade') throw new Error('Unsupported next-roll mode');
+      for (const target of resolveTargets(ctx, action, eff.target)) target.nextEvadeMode = { advantage: !!eff.advantage, disadvantage: !!eff.disadvantage };
+      break;
+    }
+    case 'retain': {
+      const owner = action.owner || action.source;
+      const piles = ctx.players?.get(ctx.playerIdForEntity?.(owner))?.piles || ctx.piles;
+      owner.combatRetainedCards ||= [];
+      for (const card of piles.hand.filter(card => !owner.combatRetainedCards.includes(card.instanceId)).slice(0, evalNum(ctx, action, eff.amount, 0))) owner.combatRetainedCards.push(card.instanceId);
+      break;
+    }
     case 'damage': {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
@@ -734,21 +859,29 @@ function runOpcode(ctx, action, eff) {
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
-        const targets = resolveTargets(ctx, action, eff.target);
+        const plannedContacts = action.meta?.expansionContacts?.[action.meta.expansionCursor || 0];
+        if (plannedContacts) action.meta.expansionCursor = (action.meta.expansionCursor || 0) + 1;
+        const targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
         for (const t of targets) {
           if (!t.alive) continue;
           const bonus = (action.meta?.abilityChargeDamageEffect || 0) + (h === 0 && t === targets[0] ? action.meta?.abilityChargeDamage || 0 : 0);
           const base = evalNum(ctx, action, eff.amount, 0, t) + bonus;
-          const carrier = { ...action.card, ...(eff.attack ? { attack: eff.attack } : {}),
+          const carrier = { ...Expanded.effectCarrier(action.card, eff), ...(eff.attack ? { attack: eff.attack } : {}),
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
-            combatProfile: eff.combatProfile || action.card?.combatProfile,
+            combatProfile: Expanded.effectCarrier(action.card, eff).combatProfile,
             combatRiderTargets,
             energySpent: action.meta?.energySpent || 0 };
+          if (plannedContacts) {
+            const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
+            carrier.expansionGroup = action.meta.expansionGroup;
+            carrier.expansionContact = { index: contact.index, receipt: action.meta.expansionGroup.targets[contact.key].receipt };
+            if (contact.crit) carrier.critMultiplier = contact.crit;
+          }
           if (Array.isArray(carrier.appliedStatusEffects)) {
             carrier.appliedStatuses = carrier.appliedStatusEffects
               .filter(effect => !['self', 'owner', 'ally'].includes(effect.target)
-                && (!effect.if || evalPredicate(ctx, effect.if, { ...action, target: t })))
+                && (!effect.if || Triggers.evalPredicate(ctx, effect.if, { ...action, target: t })))
               .map(effect => effect.status);
           }
           if (ctx.ratingsRules && action.source?.kind === 'enemy') {
@@ -758,7 +891,7 @@ function runOpcode(ctx, action, eff) {
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;
           // A skill feat's critical hit (SPEC §13.4o), rolled per hit and target.
-          const crit = rollCrit(ctx, action.source, attackTags);
+          const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags);
           if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
           if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak);
@@ -775,7 +908,7 @@ function runOpcode(ctx, action, eff) {
             }
           }
           if (ctx.foundation && !evaded && t.alive && !carrier.combatReaction && !(action.meta?.foundationAncestry?.length)) {
-            const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)) * matchupPoiseMultiplier(ctx, action.source, t, carrier));
+            const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)) * Matchups.matchupPoiseMultiplier(ctx, action.source, t, carrier));
             dealPoiseDamage(ctx, t, resistedImpact);
             // The player's meter is real too (plan phase 8): the receipt is
             // emitted for every target, and the armour skill hooks read it.
@@ -795,15 +928,41 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'gainBarrier': {
+      for (const t of resolveTargets(ctx, action, eff.target)) gainBarrier(ctx, t, evalNum(ctx, action, eff.amount, 0, t) + (action.meta?.abilityChargeBlock || 0), action.card);
+      break;
+    }
+    case 'wardDamage': {
+      for (const t of resolveTargets(ctx, action, eff.target)) Control.spendPersistentWard(ctx, t,
+        evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+      break;
+    }
+    case 'buildup': {
+      for (const t of plannedStatusTargets(ctx, action, eff)) {
+        if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure' }).success) continue;
+        const authored = evalNum(ctx, action, eff.amount, 0, t);
+        const cinder = ctx.combatExpansionVersion === 2 && action.source ? Blight.ashenBlightSpellBuildup(ctx, action.source,
+          { cycleKey: String(action.source.combatOwnerCycle || 0), school: action.card?.combatProfile?.school, buildups: [{ status: eff.status, amount: authored }] }) : null;
+        const pressure = Control.applyStatusPressure(ctx, t, eff.status,
+          authored + (cinder?.amount || 0) + (action.meta?.abilityChargeBuildup || 0), action.source,
+          { camp: eff.camp || action.card?.combatProfile?.camp, actionKey: action.meta?.expansionGroup?.key || `${ctx.turn}:${action.card?.instanceId || 'effect'}`,
+            recoveryProfile: eff.recoveryProfile, traits: eff.traits });
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (row?.receipt) Matchups.recordTacticalStatus(row.receipt, pressure);
+      }
+      break;
+    }
     case 'gainPoise':
     case 'gainWard': {
       const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
+        if (ctx.combatExpansionVersion === 2 && meter === 'ward') restoreExpandedWard(ctx, t, evalNum(ctx, action, eff.amount, 0, t), { onceKey: eff.oncePerCombat });
+        else gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
       }
       break;
     }
     case 'dodgeRoll': {
+      if (ctx.combatExpansionVersion === 2) { Matchups.prepareCombatEvade(ctx, action.source, action.card?.combatProfile?.evade || {}); break; }
       if (ctx.foundation) { F.grantFoundationEvade(ctx, action.source); break; }
       // The dodge (framework contract: Weight Class and Dodge Roll). Player
       // only — the class, Dexterity and the die live on the player's side of
@@ -830,9 +989,14 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'applyStatus': {
-      for (const t of resolveTargets(ctx, action, eff.target)) {
+      for (const t of plannedStatusTargets(ctx, action, eff)) {
         const stacks = evalNum(ctx, action, eff.stacks, 1, t) + (action.meta?.abilityChargeBuildup || 0);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
+        if (ctx.combatExpansionVersion === 2) {
+          const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+          if (row?.receipt) Matchups.recordTacticalStatus(row.receipt, { accepted: stacks });
+          if (eff.status === 'grounded') Control.groundStatusPressure(ctx, t);
+        }
         if (ctx.ratingsRules && t.id === action.source?.id && action.card && isMagicalAttack(ctx, action.card) && t.statuses[eff.status]) {
           t.statuses[eff.status].ratingCard = structuredClone(action.card);
         }
@@ -949,10 +1113,12 @@ function runOpcode(ctx, action, eff) {
       // (the review of #1195: 50 × 35% × 1.15 is 20, not 19).
       const mult = typeof ctx.healMult === 'number' ? ctx.healMult : 1;
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        const amount = mult === 1
-          ? evalNum(ctx, action, eff.amount, 0, t)
-          : Math.floor(evalRaw(ctx, action, eff.amount, 0, t) * mult);
-        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0));
+        const base = eff.ashenBlightBaseAmount ?? eff.amount;
+        const nominal = evalRaw(ctx, action, base, 0, t);
+        const percentage = ctx.combatExpansionVersion === 2 && nominal > 0
+          ? (ctx.restorationModifierPercent?.(t, 'hp') || 0) + (eff.ashenBlightBonusPct || 0) : 0;
+        const amount = Math.max(0, Math.floor(nominal * mult * (1 + percentage / 100)));
+        applyHeal(ctx, t, amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0));
       }
       break;
     }
@@ -985,10 +1151,13 @@ function runOpcode(ctx, action, eff) {
     }
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        const multiplier = matchupPoiseMultiplier(ctx, action.source, t, action.card);
-        const amount = Math.floor(evalNum(ctx, action, eff.amount, 0, t) * multiplier);
+        const multiplier = Matchups.matchupPoiseMultiplier(ctx, action.source, t, action.card);
+        const authored = evalNum(ctx, action, eff.amount, 0, t);
+        const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
+          { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
+        const amount = Math.floor((authored + bonus) * multiplier);
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
-          applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
+          Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
         } else dealPoiseDamage(ctx, t, amount);
       }
       break;
@@ -1014,7 +1183,7 @@ function runOpcode(ctx, action, eff) {
         if (usesSingleBreakMeter(ctx)) {
           const threshold = Number.isFinite(firedThreshold) ? firedThreshold : t.poiseMeter?.max || 0;
           const amount = eff.pct !== undefined ? Math.floor(threshold * evalNum(ctx, action, eff.pct, 0, t) / 100) : evalNum(ctx, action, eff.amount, 0, t);
-          applyRatingImpact(ctx, null, t, { damageSchool: school }, amount, { triggerHit: false });
+          Ratings.applyRatingImpact(ctx, null, t, { damageSchool: school }, amount, { triggerHit: false });
           continue;
         }
         addArcaneExposure(ctx, action.source, t, {
@@ -1039,7 +1208,7 @@ export function preflightCardHp(ctx, def, source, target, meta) {
   for (const effect of def.effects || []) {
     if (effect.op !== 'loseHp') continue;
     const action = { effect, source, owner: source, target, card: def, meta };
-    if (effect.if && !evalPredicate(ctx, effect.if, action)) continue;
+    if (effect.if && !Triggers.evalPredicate(ctx, effect.if, action)) continue;
     for (const entity of resolveTargets(ctx, action, effect.target)) {
       const amount = Math.max(0, evalNum(ctx, action, effect.amount, 0, entity)) * Math.max(0, evalNum(ctx, action, effect.repeat, 1));
       const hp = remaining.get(entity) ?? entity.hp;
@@ -1260,7 +1429,7 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     // mounted and no relics on the facade the scan finds no source and the
     // event is simply logged, as before.
     emit(type, payload) {
-      emitEvent(ctx, type, payload);
+      Triggers.emitEvent(ctx, type, payload);
     },
     enqueue(a) {
       ctx.queue.push(a);

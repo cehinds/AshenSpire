@@ -13,7 +13,9 @@ function hostFight() {
       ...(move.damage != null ? { damage: 5, hits: 3,
         tags: ['camp:physical', 'maneuver:attack', 'damage:slashing', 'source:weapon', 'delivery:melee'] } : {}) })),
   });
-  const host = createSession({ registries, seedString: 'GUARD2' });
+  // This historical projection spends Counter on one hit; grouped v2 actions
+  // have their own shared-action regressions.
+  const host = createSession({ registries, seedString: 'GUARD2', combatExpansionVersion: 1 });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
