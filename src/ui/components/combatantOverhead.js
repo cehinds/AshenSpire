@@ -61,10 +61,12 @@ export function combatantIntent(intent, content, registries = null) {
     const values = document.createElement('span');
     values.className = 'intent-values';
     for (const part of badge.parts) {
-      values.append(intentIcon(part.icon));
+      const group = document.createElement('span'); group.className = 'intent-value';
+      group.append(intentIcon(part.icon));
       if (part.value != null) {
-        const value = document.createElement('span'); value.textContent = part.value; values.append(value);
+        const value = document.createElement('span'); value.textContent = part.value; group.append(value);
       }
+      values.append(group);
     }
     node.append(values);
   }
@@ -74,7 +76,7 @@ export function combatantIntent(intent, content, registries = null) {
     const body = typeof content === 'function' ? content() : content;
     const tags = intent?.profile ? combatProfileTags(intent.profile, registries) : [];
     const counter = badge.stance === 'countering' && intent.counterDamage != null
-      ? `<div>Base counter damage: ${esc(intent.counterDamage)}. The triggering attack and defenses determine the resolved damage.</div>` : '';
+      ? `<div>Base counter damage: ${esc(intent.counterDamage)} HP${intent.counterPoiseDamage > 0 ? `, ${esc(intent.counterPoiseDamage)} Poise` : ''}. The triggering attack and defenses determine the resolved damage.</div>` : '';
     return `${body || ''}${counter}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
   };
   attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });

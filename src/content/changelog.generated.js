@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-08",
     "group": "2026-10-08",
     "summary": "Combat intents and targets share the approved option C layout",
-    "detail": "Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.",
-    "build": "0.7.1.1138",
+    "detail": "Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.",
+    "build": "0.7.1.1140",
     "pullRequest": 1750,
     "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1748",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat scenery reaches the top of the screen",
+    "detail": "The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.",
+    "build": "0.7.1.1136",
+    "pullRequest": 1748,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1748"
   },
   {
     "id": "pr-1747",

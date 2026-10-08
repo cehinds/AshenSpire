@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
-- **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1138`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
+- **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1140`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
+
+- **Combat scenery reaches the top of the screen** ([#1748](https://github.com/cehinds/AshenSpire/pull/1748), `0.7.1.1136`). The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.
 
 - **Behind the scenes: alternative sync keeps the full history efficiently** ([#1747](https://github.com/cehinds/AshenSpire/pull/1747), `0.7.1.1133`). Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.
 

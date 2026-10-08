@@ -30,7 +30,8 @@ test('known intent titles and icon rows match the approved six states', () => {
   for (const [intent,title,parts] of [
     [{kind:'attack',damage:8},'Attacking',[{icon:'attack',value:'8'}]],
     [{kind:'attack',stance:'smashing',damage:12},'Smashing',[{icon:'smash',value:'12'}]],
-    [{kind:'block',stance:'countering',block:6,counterDamage:4},'Countering',[{icon:'defend',value:'6'},{icon:'attack',value:'4'}]],
+    [{kind:'block',stance:'countering',block:6,counterDamage:4},'Countering',[{icon:'counter',value:'6'},{icon:'attack',value:'4'}]],
+    [{kind:'block',stance:'countering',block:6,counterDamage:0,counterPoiseDamage:4},'Countering',[{icon:'counter',value:'6'},{icon:'smash',value:'4'}]],
     [{kind:'debuff',stance:'casting'},'Casting',[{icon:'cast',value:null}]],
     [{kind:'buff',stance:'casting'},'Buffing',[{icon:'buff',value:null}]],
     [{kind:'block',block:6},'Defending',[{icon:'defend',value:'6'}]],
@@ -38,6 +39,13 @@ test('known intent titles and icon rows match the approved six states', () => {
     const result = view(intent); assert.equal(result.visibility,'known');
     assert.equal(result.title,title); assert.deepEqual(result.parts,parts);
   }
+});
+
+test('mixed counters preserve separate HP and Poise values without relabeling either amount', () => {
+  assert.deepEqual(view({kind:'block',stance:'countering',block:6,counterDamage:3,counterPoiseDamage:4}).parts,
+    [{icon:'counter',value:'6'},{icon:'attack',value:'3'},{icon:'smash',value:'4'}]);
+  assert.deepEqual(view({hidden:true,stance:'countering',block:6,counterDamage:3,counterPoiseDamage:4}).parts,
+    [{icon:'defend',value:null}]);
 });
 
 test('damage sequences and zero values stay readable without inventing missing amounts', () => {
