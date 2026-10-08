@@ -3125,7 +3125,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // migration used the recovered number for its restamp and then dropped it.
     // Healing the door and leaving the consumer is the half-fix this work keeps
     // making, so the resolved value is written where the resume looks.
-    const midFight = createRunState({ combatExpansionVersion: 1, seed: 31, classId: 'reaver', registries: LEGACY_REG });
+    const midFight = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 31, classId: 'reaver', registries: LEGACY_REG });
     const midBorn = midFight.equipmentAttackSlotCount;
     const fight = createCombat({
       registries: LEGACY_REG,
@@ -3514,7 +3514,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
     b.scripts = contentBundle.scripts;
     const reg = createRegistries(b);
-    const run = createRunState({ combatExpansionVersion: 1, seed: 23, classId: 'reaver', registries: reg });
+    const run = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 23, classId: 'reaver', registries: reg });
     const sword = 'armament/straightSword';
     const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
     const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
@@ -8212,7 +8212,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/phase/.test(malformedReason),
       `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
 
-    const malformedRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
+    const malformedRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
     const storage = createMemoryStorage();
     storage.setItem(RUN_KEY, serializeRun(malformedRun));
@@ -8223,7 +8223,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const dangling = structuredClone(stored);
     dangling.piles.hand[0].cardId = 'removedByContentPatch';
-    const danglingRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
+    const danglingRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
     const danglingStorage = createMemoryStorage();
     danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
@@ -8232,7 +8232,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
       'the dangling exact-snapshot refusal names the affected card pile');
 
-    const checkpointRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
+    const checkpointRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
     const checkpointStorage = createMemoryStorage();
     checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
@@ -8770,6 +8770,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/skills\.x\.bogus is not a ledger field/.test(skillsProblems({ x: { xp: 0, level: 0, pendingDrafts: 0, bogus: 1 } }).join('|')));
     assert(/missing 'skills'/.test(validateRunShape({ ...run, skills: undefined }).join(' | ')), 'a current save without the ledger is named');
     const old = JSON.parse(serializeRun(run)); delete old.skills; old.schemaVersion = 7;
+    // Schema seven predates knowledge; it cannot carry the new run opt-in.
+    delete old.enemyKnowledgeRules; delete old.enemyKnowledgeState;
     const back = deserializeRun(JSON.stringify(old));
     eq(back.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(back.skills), '{}', 'a schema-7 save gains the empty ledger');
 

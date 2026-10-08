@@ -383,7 +383,7 @@ function collectContentProblems(bundle, errors = []) {
   for (const problem of b.balance?.combatMatchups !== undefined ? combatMatchupRulesProblems(b.balance.combatMatchups, 'balance.combatMatchups') : []) err('balance.combatMatchups', problem);
   for (const problem of b.balance?.combatIntent !== undefined ? combatIntentRulesProblems(b.balance.combatIntent, 'balance.combatIntent') : []) err('balance.combatIntent', problem);
   for (const problem of enemyKnowledgeRuleProblems({ version: 1, ...b.balance?.enemyKnowledge },
-    new Set((b.enemies || []).map(row => row.id)))) err('balance.enemyKnowledge', problem);
+    new Set((Array.isArray(b.enemies) ? b.enemies : []).map(row => row?.id).filter(id => typeof id === 'string')))) err('balance.enemyKnowledge', problem);
   const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
   if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
     err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');
