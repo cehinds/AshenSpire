@@ -51,6 +51,7 @@ import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
 import { unknownConsumableId, unknownCompanionId } from '../model/consumables.js';
 import { normalizeMasteryProfile, masteryProfileProblems, mergeMasteryProfiles, bankMasteryProfile } from '../model/classMasteryProfile.js';
+import { emptyEnemyKnowledge, enemyKnowledgeProblems, mergeEnemyKnowledge } from '../model/enemyKnowledgeProfile.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -67,7 +68,7 @@ export const SLOTS = 3; // save slots, one run each
 const HISTORY_LIMIT = 20;
 // THE ONE HOME for the meta schema's version (the run schema's one home is
 // RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
-export const META_SCHEMA_VERSION = 3;
+export const META_SCHEMA_VERSION = 4;
 const ARCHIVE_LIMIT = 12; // keep the last N RUN archives…
 // …and profiles are counted separately, because a run must never evict one
 // (Saga's gate). This cap is generous and exists only so the drawer cannot grow
@@ -305,7 +306,7 @@ function newerRunSchemaVersion(json) {
  * createSaveManager(storage) → { saveRun, loadRun, clearRun, hasRun, slotSummary,
  *                                listSlots, loadMeta, saveMeta, recordResult }
  */
-export function createSaveManager(storage) {
+export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   if (!storage || typeof storage.getItem !== 'function') {
     throw new Error('createSaveManager requires a storage with getItem/setItem/removeItem');
   }
@@ -326,7 +327,7 @@ export function createSaveManager(storage) {
       // or a later tool can still pick them apart.
       const salvageKey = `${RUN_ARCHIVE_KEY}_salvage_${Date.now()}`;
       try {
-        storage.setItem(salvageKey, raw);
+        if (!readOnlyProfile) storage.setItem(salvageKey, raw);
       } catch (e2) {
         /* storage refused the salvage write; the fresh index below still lets the game run */
       }
@@ -423,6 +424,7 @@ export function createSaveManager(storage) {
   // loss and push genuine older archives out of the cap. Same bytes → same
   // entry, however many times we are asked.
   function archiveMeta(json, reason) {
+    if (readOnlyProfile) return null;
     const index = readArchiveIndex();
     const existing = index.entries.find((e) => e.kind === 'meta' && e.save === json);
     if (existing) {
@@ -476,7 +478,7 @@ export function createSaveManager(storage) {
     }
     const v = meta.schemaVersion;
     if (v === META_SCHEMA_VERSION) {
-      const problems = masteryProfileProblems(meta);
+      const problems = [...masteryProfileProblems(meta), ...enemyKnowledgeProblems(meta.enemyKnowledge)];
       return problems.length ? { json, meta, error: problems.join('; '), kind: 'corrupt' } : { json, meta };
     }
     if (typeof v === 'number' && v > META_SCHEMA_VERSION) {
@@ -495,6 +497,7 @@ export function createSaveManager(storage) {
   // migrateMeta(meta, fromVersion) → meta | null. One switch, one home; every
   // arm must be able to state what it changed.
   function migrateMeta(meta, fromVersion) {
+    if (fromVersion === 3) return { ...meta, schemaVersion: META_SCHEMA_VERSION, enemyKnowledge: emptyEnemyKnowledge() };
     if (fromVersion === undefined || fromVersion === 0 || fromVersion === 1 || fromVersion === 2) {
       return {
         ...normalizeMasteryProfile({ ...meta, classMastery: {}, classMasteryReceipts: {} }, null, { veteran: (meta.results?.length || 0) > 0 || (meta.progress?.runs || 0) > 0 }),
@@ -502,21 +505,23 @@ export function createSaveManager(storage) {
         schemaVersion: META_SCHEMA_VERSION,
         discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
         discoveryReceipts: [...(meta.discoveryReceipts || [])],
+        enemyKnowledge: emptyEnemyKnowledge(),
       };
     }
     return null;
   }
 
   function freshMeta() {
-    return normalizeMasteryProfile({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [] });
+    return normalizeMasteryProfile({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [], enemyKnowledge: emptyEnemyKnowledge() });
   }
 
   // The actual write, shared by saveMeta (updates the live profile) and
   // replacePrimaryWith (swaps in a different one). Verify-then-rotate lives here
   // so both paths get it.
   function saveMetaInternal(meta) {
-    const canonical = normalizeMasteryProfile(meta, null, { veteran: !meta.classMastery && ((meta.results?.length || 0) > 0 || (meta.progress?.runs || 0) > 0) });
-    const problems = masteryProfileProblems(canonical);
+    if (readOnlyProfile) return { ok: false, reason: 'Profile writes require the shared storage owner' };
+    const canonical = normalizeMasteryProfile({ ...meta, enemyKnowledge: meta.enemyKnowledge || emptyEnemyKnowledge() }, null, { veteran: !meta.classMastery && ((meta.results?.length || 0) > 0 || (meta.progress?.runs || 0) > 0) });
+    const problems = [...masteryProfileProblems(canonical), ...enemyKnowledgeProblems(canonical.enemyKnowledge)];
     if (problems.length) return { ok: false, reason: problems.join('; ') };
     const json = JSON.stringify({ ...canonical, schemaVersion: META_SCHEMA_VERSION });
     storage.setItem(META_KEY, json);
@@ -553,6 +558,7 @@ export function createSaveManager(storage) {
   // findable by grep: this and saveMeta are the only two writers, and saveMeta
   // never replaces a DIFFERENT profile — it updates the one already live.
   function replacePrimaryWith(meta, reason) {
+    if (readOnlyProfile) return { ok: false, reason: 'Profile replacement requires the shared storage owner' };
     const outgoing = storage.getItem(META_KEY);
     const archiveId = outgoing ? archiveMeta(outgoing, reason) : null;
     quarantined = false; // an explicit, player-driven replacement clears the freeze
@@ -589,6 +595,7 @@ export function createSaveManager(storage) {
   // those bytes are the evidence (property 4).
   function ensureProfile() {
     if (storage.getItem(META_KEY) != null) return { created: false, ok: true };
+    if (readOnlyProfile) return { created: false, ok: false, reason: 'Profile creation requires the shared storage owner' };
     if (quarantined) {
       return { created: false, ok: false, reason: `profile is quarantined (${status.state}); refusing to write` };
     }
@@ -1115,7 +1122,7 @@ export function createSaveManager(storage) {
       if (!backup.empty && !backup.error) {
         // Recovered. Put the good bytes back in the primary so the next
         // ordinary write has something true to build on, and say so.
-        storage.setItem(META_KEY, backup.json);
+        if (!readOnlyProfile) storage.setItem(META_KEY, backup.json);
         status = { ok: true, state: 'recovered', reason: primary.error, archiveId, recoveredFrom: META_BACKUP_KEY };
         quarantined = false;
         return backup.meta;
@@ -1170,7 +1177,7 @@ export function createSaveManager(storage) {
      * bytes are the evidence of the failure and the player's only copy, and one
      * ordinary settings write used to destroy them silently.
      */
-    saveMeta(meta) {
+    saveMeta(meta, { knowledgeRecovery = null } = {}) {
       if (quarantined) {
         return { ok: false, reason: `profile is quarantined (${status.state}); refusing to overwrite the original bytes` };
       }
@@ -1178,7 +1185,10 @@ export function createSaveManager(storage) {
       if (quarantined) return { ok: false, reason: 'profile is quarantined; refusing a stale write' };
       const problems = meta.classMastery ? masteryProfileProblems(normalizeMasteryProfile(meta)) : [];
       if (problems.length) return { ok: false, reason: problems.join('; ') };
-      return saveMetaInternal(mergeMasteryProfiles(meta, current));
+      if (knowledgeRecovery && enemyKnowledgeProblems(knowledgeRecovery).length) return { ok: false, reason: 'Enemy knowledge recovery requires a valid retained ledger' };
+      const foundation = knowledgeRecovery ? mergeEnemyKnowledge(current.enemyKnowledge || emptyEnemyKnowledge(), knowledgeRecovery) : current.enemyKnowledge || emptyEnemyKnowledge();
+      const knowledge = mergeEnemyKnowledge(meta.enemyKnowledge || emptyEnemyKnowledge(), foundation);
+      return saveMetaInternal({ ...mergeMasteryProfiles(meta, current), enemyKnowledge: knowledge });
     },
     /** Bank one run's cumulative XP against the freshest durable receipt. */
     bankClassMastery(run, registries) {
