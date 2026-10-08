@@ -106,6 +106,8 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
+  'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
+  'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
   // A skill feat's critical hit landed (SPEC §13.4o).
   'critHit',
@@ -516,7 +518,7 @@ export const EFFECT_SPECS = Object.freeze({
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
-  removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
+  removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
   discard: { allowed: ['random', 'choose'], required: [], refs: {} },
@@ -599,6 +601,8 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  counterDamage: opt(int),
+  counterPoiseDamage: opt(int),
   damageSchool: opt(en(...DAMAGE_SCHOOLS)),
   intent: en(...INTENT_KINDS),
   damage: opt(int),

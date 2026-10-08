@@ -51,6 +51,11 @@ export const characterCreation = {
   ],
   "classes": {
     "reaver": {
+      "startingAbility": {
+        "skillId": "combatManeuvers",
+        "count": 1,
+        "rank": 1
+      },
       "armourIds": [
         "default",
         "vigil"
@@ -68,6 +73,11 @@ export const characterCreation = {
       ]
     },
     "starseer": {
+      "startingAbility": {
+        "skillId": "item:magic-focus",
+        "count": 2,
+        "rank": 1
+      },
       "armourIds": [
         "default",
         "eclipse"
@@ -83,6 +93,11 @@ export const characterCreation = {
       ]
     },
     "rogue": {
+      "startingAbility": {
+        "skillId": "combatManeuvers",
+        "count": 1,
+        "rank": 1
+      },
       "armourIds": [
         "default",
         "nightveil"
@@ -100,6 +115,11 @@ export const characterCreation = {
       ]
     },
     "herald": {
+      "startingAbility": {
+        "skillId": "item:magic-focus",
+        "count": 2,
+        "rank": 1
+      },
       "armourIds": [
         "default",
         "ossuary"

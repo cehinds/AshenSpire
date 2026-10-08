@@ -515,7 +515,16 @@ async function main() {
           for (const state of STATES) {
             if (state === 'armed') {
               if (hand < 6) continue;
-              const attackIndex = await evaluate(`[...document.querySelectorAll('.hand .card')].findIndex((card)=>card.classList.contains('type-attack')&&card.getAttribute('aria-disabled')!=='true'&&!card.classList.contains('unaffordable'))`);
+              const attackIndex = await evaluate(`(async () => {
+                const { resolveCard } = await import('/src/model/registries.js');
+                const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
+                const combat = window.__combat;
+                return [...document.querySelectorAll('.hand .card')].findIndex(node => {
+                  if (node.getAttribute('aria-disabled') === 'true' || node.classList.contains('unaffordable')) return false;
+                  const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
+                  return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst), { targeted: true });
+                });
+              })()`);
               let armed = false;
               if (attackIndex >= 0 && attackIndex < 9) {
                 const key = String(attackIndex + 1);

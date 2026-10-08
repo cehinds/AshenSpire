@@ -226,7 +226,7 @@ export function contentReach(bundle, opts = {}) {
   // tagging/node tables are vocabulary and carry no ops; everything else is
   // scanned so a new door reads loudly instead of as absence.
   for (const [key, value] of Object.entries(bundle)) {
-    if (['cards', 'enemies', 'events'].includes(key)) continue;
+    if (['cards', 'enemies', 'enemyMoves', 'events'].includes(key)) continue;
     const scanned = key === 'characterCreation'
       ? Object.fromEntries(Object.entries(value || {}).filter(([k]) => k !== 'keepsakes'))
       // Saved-run compatibility repeats original card definitions. Its cards
@@ -237,6 +237,12 @@ export function contentReach(bundle, opts = {}) {
     for (const op of opsIn(scanned, INJECTOR_OPS)) {
       floors.push(`F3  op '${op.op}' found in bundle.${key} — no route in this file models that set; enumerate it from the engine before trusting any verdict`);
     }
+  }
+  // The scoped move table stamps existing enemy payloads. It is the same
+  // injection door, not an independently reachable source of reward cards.
+  for (const move of bundle.enemyMoves || []) {
+    const enemy = byId.enemies.get(move.enemyId);
+    if (!enemy?.moves?.[move.id]) floors.push(`F3  enemyMoves '${move.enemyId}/${move.id}' has no executable enemy move`);
   }
   for (const card of bundle.legacyProgression?.cards || []) {
     if (!byId.cards.has(card.id)) floors.push(`F3  legacy card '${card.id}' has no current card identity to route`);
@@ -414,7 +420,7 @@ export function contentReach(bundle, opts = {}) {
     }
     for (const en of pop.enemies) {
       if (!witness.enemies.has(en.id)) continue;
-      for (const op of opsIn(en, CARD_OPS)) grew = creditOp(op, `enemy ${en.id}`) || grew;
+      for (const op of opsIn(R.enemies.get(en.id), CARD_OPS)) grew = creditOp(op, `enemy ${en.id}`) || grew;
     }
     // reached cards inject further cards (transitive)
     for (const c of pop.cards) {

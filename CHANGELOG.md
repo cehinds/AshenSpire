@@ -34,6 +34,20 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Plans: recover from control and build around Blight** ([#1713](https://github.com/cehinds/AshenSpire/pull/1713), `0.7.1.1094`). The next combat proposal gives Sleep, Paralysis and Dazed recovery cards with clear Stamina costs, caps Sleep healing and Ward restoration, and trades Prone's ranged protection for greater Contact damage. Three Blight milestones offer feats with two benefits and one drawback. Counter coverage, school interactions, tag combos and optional upcasting are documented for future implementation; gameplay does not change in this update.
+
+- **Counter cards show the reply they prepare** ([#1711](https://github.com/cehinds/AshenSpire/pull/1711), `0.7.1.1093`). Choosing an enemy for immediate support no longer changes the printed Counter damage. One-use damage charges stay in the preview when an earlier damage effect has no contacts. Solo and co-op show the same armed reply.
+
+- **Combat cards and enemy moves share tactical rules** ([#1705](https://github.com/cehinds/AshenSpire/pull/1705), `0.7.1.1089`). All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.
+
+- **Square targets and starting abilities** ([#1703](https://github.com/cehinds/AshenSpire/pull/1703), `0.7.1.1080`). Enemy selection buttons form a square grid near their foes and move apart when crowded. After armaments, Starseer and Herald choose two distinct Rank 1 spells; Reaver and Rogue choose one Rank 1 combat maneuver. Legal choices follow equipped weapons and the selected cards enter the saved starting deck.
+
+- **Clearer header with fewer controls** ([#1702](https://github.com/cehinds/AshenSpire/pull/1702), `0.7.1.1074`). Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.
+
+- **Combat matchup rules defined** ([#1704](https://github.com/cehinds/AshenSpire/pull/1704), `0.7.1.1064`). Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.
+
+- **Rear sprite studies archived for authoring** ([#1697](https://github.com/cehinds/AshenSpire/pull/1697), `0.7.1.1061`). The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.
+
 - **Alternative updates keep progressing** ([#1698](https://github.com/cehinds/AshenSpire/pull/1698), `0.7.1.1060`). The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.
 
 - **Skill Level Up works after victory** ([#1692](https://github.com/cehinds/AshenSpire/pull/1692), `0.7.1.1059`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.
