@@ -74,7 +74,10 @@ export function acknowledgeKnowledgeBank(run, captured) {
     for (const [id, receipt] of Object.entries(row.receipts)) {
       if (Object.hasOwn(live.receipts, id) && (receipt.bonus || !live.receipts[id].bonus)) delete live.receipts[id];
     }
-    if (!Object.keys(live.receipts).length) delete pending.enemies[enemyId];
+    if (!Object.keys(live.receipts).length) {
+      delete pending.enemies[enemyId];
+      if (run.enemyKnowledgeState.recoveryTargets) delete run.enemyKnowledgeState.recoveryTargets[enemyId];
+    }
   }
 }
 export function enemyKnowledgeRunProblems(run, enemyIds = null) {

@@ -599,13 +599,17 @@ export function mountRewards(app, {
   const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
   const draftUnlocked = (row) => Number.isInteger(row.requiredLevel) ? unlocked(row) : !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
 
-  function claimSkill(skillId) {
+  let skillClaimPending = false;
+  async function claimSkill(skillId) {
+    if (skillClaimPending) return;
     if (!xpAnimationDone || refill || !onClaimSkill || pendingSkillLevelCount(registries, run, skillId) < 1) return;
     // The owned cards' skill bonus before the claim, to say which ones it raised.
     const owned = () => [...run.deck, ...(run.sideboard || [])].filter(Boolean);
     const bonusBefore = new Map(owned().map((inst) => [inst, skillBonusFor(registries, run, inst)]));
     const beforeSkills = structuredClone(run.skills || {});
-    const claim = onClaimSkill(skillId);
+    skillClaimPending = true;
+    let claim;
+    try { claim = await onClaimSkill(skillId); } finally { skillClaimPending = false; }
     if (!claim) return;
     claimBonusStarts = {};
     for (const award of claim.skillAwards || []) {

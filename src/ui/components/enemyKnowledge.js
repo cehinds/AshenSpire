@@ -34,6 +34,7 @@ export function renderIntentPrediction(model, onPredict) {
     ? `Prediction: ${model.prediction}. ${model.resolved ? model.correct === true ? 'Correct.' : model.correct === false ? 'Incorrect.' : 'Action cancelled.' : 'Awaiting the action.'}`
     : 'Choose the actual action you expect. XP is earned only after a correct prediction resolves.' });
   const panel = pane({ attrs: { class: 'enemy-intent-prediction' }, children: [eyebrow('Prediction'), status] });
+  for (const receipt of model.feedback || []) panel.append(statusText(`Action ${receipt.actionSerial}: ${receipt.prediction} — ${receipt.outcome === 'cancelled' ? 'cancelled; no prediction XP' : receipt.correct ? 'correct' : 'incorrect'}.`));
   if (!model.eligible) return panel;
   const choices = el('select', { 'aria-label': 'Predicted enemy action', class: 'as-btn' }, PREDICTION_CHOICES.map(choice => el('option', { value: choice, text: choice })));
   const commit = button({ label: 'Predict action' });

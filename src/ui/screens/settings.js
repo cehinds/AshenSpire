@@ -1517,6 +1517,7 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     changed[SEED_KEY] = next;
   }
   const result = onChange(changed);
+  const settle = result => {
   if (result?.ok === false) {
     // Not saved, so not reset: put every value (and the seed record) back —
     // here and, through the same onChange, in the game and its live state.
@@ -1540,6 +1541,8 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
   offerUndo(label, undo, seedMoved ? seedPatch(seedBefore, changed[SEED_KEY]) : null);
   return snapshot;
+  };
+  return result?.then ? result.then(settle, () => settle({ ok: false })) : settle(result);
 }
 
 /** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
@@ -2884,7 +2887,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     bar.className = 'set-undo';
     bar.setAttribute('role', 'status');
     bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>Undo</button>`;
-    bar.querySelector('[data-undo]').onclick = () => {
+    bar.querySelector('[data-undo]').onclick = async () => {
       const restore = {};
       // The seed record too, even when the Undo does not carry it: the save
       // path may prune it for the keys this Undo moves.
@@ -2901,14 +2904,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         settings[SEED_KEY] = restore[SEED_KEY];
       }
       undoOffer = null;
-      if (onChange(restore)?.ok === false) {
+      if ((await onChange(restore))?.ok === false) {
         // Not saved, so not undone: put the state the Undo replaced back, here
         // and through onChange, so the live display and audio follow it — and
         // keep the offer, so the player can try again.
         for (const [key, value] of Object.entries(now)) {
           if (value === undefined) delete settings[key]; else settings[key] = value;
         }
-        onChange(now);
+        await onChange(now);
         undoOffer = offer;
       }
       repaintPanel({ keepScroll: true });
@@ -2966,12 +2969,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     repaintPanel();
   };
   const clearTuning = headerTools.querySelector('[data-clear-tuning]');
-  if (clearTuning) clearTuning.onclick = () => {
+  if (clearTuning) clearTuning.onclick = async () => {
     const keys = hiddenTuningKeys(settings);
     if (!keys.length) return;
     // Cleared, not reset: a promoted value for hidden tuning is not this
     // build's default either (promotionFor leaves it out at boot).
-    resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
+    await resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
     headerTools.querySelector('details').open = false;
     repaintPanel({ keepScroll: true });
   };
@@ -3227,8 +3230,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
       const fromMenu = !!button.closest('.set-options');
       headerTools.querySelector('details').open = false;
-      const run = () => {
-        resetKeys(settings, onChange, keys, label);
+      const run = async () => {
+        await resetKeys(settings, onChange, keys, label);
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       };
       // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
@@ -3291,11 +3294,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // applies them the way the reset button already does — `undefined` unsets —
   // and re-renders, because the list, the counts and the per-scene topics are
   // all reading the same settings.
-  const applyPrologue = (changes, refocus = null) => {
+  const applyPrologue = async (changes, refocus = null) => {
     for (const [key, value] of Object.entries(changes)) {
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
-    if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
+    if ((await onChange(changes))?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
@@ -3473,11 +3476,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-reset-key]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const key = btn.dataset.resetKey;
       if (btn.closest('.set-row')?.querySelector('[data-key]:disabled')) return;
       typedRefusals.delete(key);
-      resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
+      await resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
       repaintPanel({ keepScroll: true });
       container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
     });
@@ -3492,8 +3495,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
-    btn.addEventListener('click', () => confirmResetAll(() => {
-      resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
+    btn.addEventListener('click', () => confirmResetAll(async () => {
+      await resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
       renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));
@@ -3559,7 +3562,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
         const problem = promotionProblem(contentBundle, settings, saved);
         if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
-        const result = onChange(saved);
+        const result = await onChange(saved);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
@@ -4083,7 +4086,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
       const problem = promotionProblem(contentBundle, settings, saved);
       if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
-      if (onChange(saved)?.ok === false) throw new Error('Settings could not be saved.');
+      if ((await onChange(saved))?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
       rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });

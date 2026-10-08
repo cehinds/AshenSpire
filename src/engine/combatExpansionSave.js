@@ -1,8 +1,10 @@
 import { commitCombatSnapshot, serializeCombatSnapshot } from './combatSnapshot.js';
+import { reconcileCombatKnowledge } from './enemyKnowledge.js';
 
 /** One durable write precedes adoption, animation and terminal presentation. */
 export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, saveCandidate }) {
   const next = structuredClone(run);
+  reconcileCombatKnowledge(next, candidate);
   if (candidate.result) {
     next.ashenBlight = structuredClone(candidate.player.ashenBlight);
     next.ashenBlightBasePools = structuredClone(candidate.player.baseResourceMaxima);

@@ -13,6 +13,7 @@
 
 import { handRulesDefaults } from '../content/handRules.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems } from './combatTacticsRules.js';
+import { enemyKnowledgeRuleProblems } from './enemyKnowledgeRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
@@ -381,6 +382,8 @@ function collectContentProblems(bundle, errors = []) {
 
   for (const problem of b.balance?.combatMatchups !== undefined ? combatMatchupRulesProblems(b.balance.combatMatchups, 'balance.combatMatchups') : []) err('balance.combatMatchups', problem);
   for (const problem of b.balance?.combatIntent !== undefined ? combatIntentRulesProblems(b.balance.combatIntent, 'balance.combatIntent') : []) err('balance.combatIntent', problem);
+  for (const problem of enemyKnowledgeRuleProblems({ version: 1, ...b.balance?.enemyKnowledge },
+    new Set((b.enemies || []).map(row => row.id)))) err('balance.enemyKnowledge', problem);
   const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
   if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
     err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');

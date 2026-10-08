@@ -38,6 +38,8 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
+import { snapshotEnemyKnowledgeRules } from './enemyKnowledgeRules.js';
+import { openRunEnemyKnowledge, enemyKnowledgeRunProblems } from './enemyKnowledgeRun.js';
 import { coreTagsProblems } from './classTree.js';
 import { classLibraryProblems } from './classLibraryState.js';
 import { featById } from './feats.js';
@@ -101,7 +103,9 @@ export const MAX_CARD_RANK = 99;
 // filled with [] at migrateRunSchema and its `sigils` are left untouched.
 // 21: optional durable mastery run receipt and owner unlock snapshot. Older
 // runs keep their previous class curve and pools; migration never opts them in.
-export const RUN_SCHEMA_VERSION = 22;
+// 23: new runs carry enemy knowledge rules and their exact learning receipts.
+// Migration preserves absence on historical runs.
+export const RUN_SCHEMA_VERSION = 23;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -132,6 +136,7 @@ export function createRunState({
   classId,
   registries,
   combatExpansionVersion = 2,
+  enemyKnowledgeVersion = 1,
   attributeMode = undefined,
   attributes: requestedAttributes = undefined,
   derivedStatOptions = {},
@@ -144,6 +149,7 @@ export function createRunState({
   profileMeta = {},
 }) {
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
+  if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
@@ -277,6 +283,10 @@ export function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  if (enemyKnowledgeVersion === 1) {
+    run.enemyKnowledgeRules = snapshotEnemyKnowledgeRules(registries);
+    openRunEnemyKnowledge(run);
+  }
   // The quota, from the deck that was just composed — before anything else can
   // touch it. Recorded even when it is zero, because zero is a quota.
   run.equipmentAttackSlotCount = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
@@ -949,6 +959,23 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       && prior[field].some((receipt, index) => JSON.stringify(receipt) !== JSON.stringify(saved[field][index])))) problems.push(`${path} cannot roll back accepted Ashen Blight receipts`);
     if (terminal && JSON.stringify(saved) !== JSON.stringify(prior)) problems.push(`${path} terminal Ashen Blight must match the persisted run`);
   };
+  const validateKnowledgeSnapshot = (snapshot, path) => {
+    if (!typeOk(snapshot, 'object')) return;
+    const knowledge = snapshot.enemyKnowledge;
+    if (!run.enemyKnowledgeRules) {
+      if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
+      return;
+    }
+    if (!knowledge) {
+      problems.push(`${path}.enemyKnowledge must preserve the run's knowledge state`);
+      return;
+    }
+    if (JSON.stringify(knowledge.rules) !== JSON.stringify(run.enemyKnowledgeRules)) problems.push(`${path}.enemyKnowledge.rules must match the run`);
+    if (!run.enemyKnowledgeState?.currentEncounter || JSON.stringify(knowledge.encounter) !== JSON.stringify(run.enemyKnowledgeState.currentEncounter)) problems.push(`${path}.enemyKnowledge.encounter must match the run`);
+    if (knowledge.bankable !== run.enemyKnowledgeState?.bankable) problems.push(`${path}.enemyKnowledge.bankable must match the run`);
+    const definitions = [...new Set((snapshot.enemies || []).map(enemy => enemy.enemyId))].sort();
+    if (JSON.stringify(definitions) !== JSON.stringify([...(knowledge.encounter?.enemyIds || [])].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
+  };
   if (run.combatPendingOutcome !== undefined) {
     const pending = run.combatPendingOutcome;
     if (!typeOk(pending, 'object')) problems.push('combatPendingOutcome must be an object');
@@ -958,6 +985,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       for (const problem of combatSnapshotProblems(pending.snapshot)) problems.push(`combatPendingOutcome.snapshot.${problem}`);
       if (pending.snapshot?.phase !== 'ended' || pending.snapshot?.result !== pending.result) problems.push('combatPendingOutcome.snapshot must contain the matching ended fight');
       validateExpandedSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot', true);
+      validateKnowledgeSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot');
       if (run.combatEntered !== null) problems.push('combatPendingOutcome cannot coexist with combatEntered');
     }
   }
@@ -1011,6 +1039,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.classMasteryState !== undefined) problems.push(...classMasteryRunProblems(run.classMasteryState));
   if (run.pendingFinish !== undefined && (typeof run.pendingFinish?.victory !== 'boolean' || typeof run.pendingFinish?.id !== 'string' || !run.pendingFinish.id)) problems.push('pendingFinish must hold a victory and completion ID');
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
+  problems.push(...enemyKnowledgeRunProblems(run));
+  if (!run.enemyKnowledgeRules && run.skills?.perception !== undefined) problems.push('Run Perception requires enemy knowledge rules');
   problems.push(...coopProgressionProblems(run));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
@@ -1077,6 +1107,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
       validateExpandedSnapshot(entered.snapshot, 'combatEntered.snapshot');
+      validateKnowledgeSnapshot(entered.snapshot, 'combatEntered.snapshot');
     }
   }
   // A respec withdraws what the record names (FINISH D13a), so it may never
@@ -1640,7 +1671,7 @@ export function migrateRunSchema(run) {
   // needs the deck's own attack slots, so the load door does it once
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);

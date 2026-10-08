@@ -1,14 +1,16 @@
 // Authority-owned action reads and success receipts. No storage or UI.
 import { createRng } from './rng.js';
 import { rollKnowledgeRead, predictionCategory, PREDICTION_CHOICES, concealKnowledgeIntent } from '../model/enemyIntentKnowledge.js';
-import { advancePerception, perceptionLevel, PERCEPTION_SKILL } from '../model/perception.js';
+import { advancePerception, perceptionLevel, perceptionProblems, PERCEPTION_SKILL } from '../model/perception.js';
 import { emptyEnemyKnowledge, mergeEnemyKnowledge, enemyKnowledgeProblems, knowledgeKey } from '../model/enemyKnowledgeProfile.js';
-import { addKnowledgeCounterBonus } from '../model/enemyKnowledgeRun.js';
+import { addKnowledgeCounterBonus, reconcilePerception } from '../model/enemyKnowledgeRun.js';
 import { enemyMasteryTarget, enemyKnowledgeRuleProblems } from '../model/enemyKnowledgeRules.js';
 
 export function initializeCombatKnowledge(combat, { rules, encounter = null, bankable = false, profiles = {}, privateSeed = null }) {
   const problems = enemyKnowledgeRuleProblems(rules);
   for (const profile of Object.values(profiles)) problems.push(...enemyKnowledgeProblems(profile));
+  const living = observers(combat).filter(row => row.entity?.alive && row.connected);
+  for (const owner of living) if (owner.skills?.[PERCEPTION_SKILL]) problems.push(...perceptionProblems(owner.skills[PERCEPTION_SKILL], rules.perception));
   if (typeof bankable !== 'boolean' || (bankable && (!encounter || !knowledgeKey(encounter.id)
     || !Array.isArray(encounter.enemyIds) || !encounter.enemyIds.length || encounter.enemyIds.some(id => !knowledgeKey(id))))) problems.push('Combat learning requires an accepted unique encounter');
   if (problems.length) throw new Error(problems.join('; '));
@@ -16,8 +18,21 @@ export function initializeCombatKnowledge(combat, { rules, encounter = null, ban
   combat.enemyKnowledge = { version: 1, rules: structuredClone(rules), encounter: structuredClone(encounter), bankable,
     nextSerial: 0, owners: {}, ...(combat.players instanceof Map ? { privateSeed,
       readCounters: { enemyIntentVisibility: 0, enemyIntentClue: 0 } } : {}) };
-  for (const owner of observers(combat).filter(row => row.entity?.alive && row.connected)) combat.enemyKnowledge.owners[owner.id] = newKnowledgeOwner(combat.enemyKnowledge, profiles[owner.id]);
+  for (const owner of living) {
+    if (owner.skills) owner.skills[PERCEPTION_SKILL] ||= { xp: 0, level: 0, pendingDrafts: 0 };
+    combat.enemyKnowledge.owners[owner.id] = newKnowledgeOwner(combat.enemyKnowledge, profiles[owner.id]);
+  }
   return combat.enemyKnowledge;
+}
+// A combat owns a cloned skill ledger. Carry only its cumulative earned XP,
+// keyed by the accepted encounter, into the run; retries never pay it twice.
+export function reconcileCombatKnowledge(run, combat, ownerId = combat.playerKey || 'player') {
+  if (!run.enemyKnowledgeState || !combat.enemyKnowledge) return false;
+  const state = combat.enemyKnowledge, owner = state.owners[ownerId];
+  if (!owner || !state.encounter || state.encounter.id !== run.enemyKnowledgeState.currentEncounter?.id) throw new Error('Combat learning does not match its run encounter');
+  run.enemyKnowledgeState.pending = mergeEnemyKnowledge(owner.pending, run.enemyKnowledgeState.pending);
+  reconcilePerception(run, state.encounter.id, owner.earnedXp);
+  return true;
 }
 function observers(combat) {
   if (combat.players instanceof Map) return [...combat.players.entries()].map(([id, seat]) => ({ id, entity: seat.entity,
@@ -54,7 +69,9 @@ export function addKnowledgeObserver(combat, ownerId, profile = emptyEnemyKnowle
   const state = combat.enemyKnowledge, owner = observerFor(combat, ownerId);
   if (!state || !knowledgeKey(ownerId) || !owner?.entity?.alive || !owner.connected || combat.result) throw new Error('Enemy knowledge observer is unavailable');
   const problems = enemyKnowledgeProblems(profile);
+  if (owner.skills?.[PERCEPTION_SKILL]) problems.push(...perceptionProblems(owner.skills[PERCEPTION_SKILL], state.rules.perception));
   if (problems.length) throw new Error(problems.join('; '));
+  if (owner.skills) owner.skills[PERCEPTION_SKILL] ||= { xp: 0, level: 0, pendingDrafts: 0 };
   if (!Object.hasOwn(state.owners, ownerId)) state.owners[ownerId] = newKnowledgeOwner(state, profile);
   else state.owners[ownerId].knowledge = mergeEnemyKnowledge(profile, state.owners[ownerId].knowledge);
   const rng = Object.hasOwn(state, 'privateSeed') ? createRng(state.privateSeed, state.readCounters) : combat.rng;
@@ -101,6 +118,15 @@ export function knowledgeIntentProjection(combat, enemy, ownerId = combat.player
   const read = action?.reads[ownerId];
   return read?.visibility === 'exact' ? { exact: true, actionSerial: action.serial }
     : { exact: false, intent: concealKnowledgeIntent(read, action?.serial || 0) };
+}
+export function knowledgePredictionModel(combat, enemy, ownerId = combat.playerKey || 'player') {
+  const action = enemy.knowledgeAction, read = action?.reads[ownerId], owner = observerFor(combat, ownerId);
+  return { actionSerial: action?.serial || 0, prediction: read?.prediction || null,
+    resolved: read?.resolved || false, correct: read?.correct ?? null,
+    feedback: structuredClone((combat.enemyKnowledge?.owners[ownerId]?.feedback || []).filter(row => row.enemyInstanceId === enemy.id)),
+    eligible: !!(combat.enemyKnowledge && combat.phase === 'player' && !combat.result && enemy.alive
+      && enemy.intent?.kind !== 'staggered' && owner?.entity?.alive && owner.connected && !owner.ended
+      && !action.executed && !action.cancelled && read?.visibility === 'unknown' && read.prediction === null && !read.resolved) };
 }
 export function predictEnemyIntent(combat, ownerId, enemyId, serial, maneuver) {
   const owner = observerFor(combat, ownerId);
@@ -165,12 +191,29 @@ export function creditKnowledgeResponse(combat, ownerId, enemyId, receipt) {
   }
   return paid;
 }
+export function creditKnowledgeBenefit(combat, source, target, { amount, kind = 'matchup', actionSerial } = {}) {
+  if (source?.kind !== 'player' || target?.kind !== 'enemy') return false;
+  const ownerId = combat.players instanceof Map ? combat.playerIdForEntity?.(source) : combat.playerKey || 'player';
+  return creditKnowledgeResponse(combat, ownerId, target.id, { committed: true, amount, kind,
+    actionSerial: kind === 'counter' ? actionSerial : actionSerial ?? target.knowledgeAction?.serial });
+}
+// An executed reaction or a realized authored advantage reaches this hook.
+export function creditKnowledgeImpact(combat, target, amount, matchup = false) {
+  const action = combat._abilityAction;
+  const counter = action?.meta?.combatCounterReaction;
+  if (!counter && !action?.meta?.combatSmashBreak && !matchup) return false;
+  return creditKnowledgeBenefit(combat, action?.source, target, { amount, kind: counter ? 'counter' : 'matchup',
+    actionSerial: counter ? action.meta.enemyKnowledgeActionSerial : target?.knowledgeAction?.serial });
+}
 export function recordKnowledgeEvent(combat, event) {
   if (!combat.enemyKnowledge) return;
   if (event.type === 'enemyMoveStarted') resolveKnowledgeAction(combat, combat.enemies.find(row => row.id === event.sourceId));
-  if (event.type === 'attackEvaded') creditKnowledgeResponse(combat, event.targetPlayerId || combat.playerKey || 'player', event.sourceId,
+  if (event.type === 'attackEvaded') creditKnowledgeResponse(combat, event.targetPlayerId || (combat.players instanceof Map ? null : combat.playerKey || 'player'), event.sourceId,
     { committed: true, kind: 'evade', amount: 1, actionSerial: event.enemyActionSerial });
-  if (event.type === 'enemyDied') {
+  if (event.type === 'combatAvoidanceResolved' && event.avoided && (event.evade?.success || event.prevention)) creditKnowledgeResponse(combat,
+    event.targetPlayerId || (combat.players instanceof Map ? null : combat.playerKey || 'player'), event.sourceId,
+    { committed: true, kind: 'evade', amount: 1, actionSerial: event.enemyActionSerial });
+  if (event.type === 'enemyDied' || event.type === 'enemyStaggered') {
     const enemy = combat.enemies.find(row => row.id === (event.targetId || event.enemyInstanceId || event.enemyId));
     cancelKnowledgeAction(combat, enemy);
   }

@@ -27,3 +27,17 @@ export function commitRunFinish(run, { victory, finishId, checkpoint, bank, comp
     return { ok: false, earned: [], error };
   }
 }
+
+export async function commitRunFinishAsync(run, { victory, finishId, checkpoint, bank, complete, clear }) {
+  run.pendingFinish ||= { victory, id: finishId };
+  try {
+    await checkpoint();
+    await bank();
+    const earned = await complete(run.pendingFinish);
+    await clear();
+    delete run.pendingFinish;
+    return { ok: true, earned };
+  } catch (error) {
+    return { ok: false, earned: [], error };
+  }
+}

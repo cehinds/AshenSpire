@@ -5,7 +5,7 @@ import { acknowledgeKnowledgeBank } from '../model/enemyKnowledgeRun.js';
 // ordinary settings and result writes. Capture pending receipts before waiting
 // for ownership; acknowledge only that captured, verified successful bank.
 export async function bankRunEnemyKnowledge(saves, owner, run) {
-  const state = run.enemyKnowledgeState;
+  let state = run.enemyKnowledgeState;
   if (!state?.bankable) return { ok: true, changed: false, meta: null };
   const captured = structuredClone(state.pending);
   const problems = enemyKnowledgeProblems(captured);
@@ -14,6 +14,12 @@ export async function bankRunEnemyKnowledge(saves, owner, run) {
   try {
     if (typeof owner?.mutate !== 'function') throw new Error('Enemy knowledge banking requires the shared profile storage owner');
     return await owner.mutate(() => {
+      // Accepted combat commits replace the run's cloned state while a lock
+      // waits. Keep the captured receipts, but always repair/acknowledge the
+      // currently adopted ledger belonging to this same run receipt.
+      const liveState = run.enemyKnowledgeState;
+      if (!liveState || liveState.receiptId !== state.receiptId || liveState.bankable !== state.bankable) throw new Error('Enemy knowledge run identity changed before banking');
+      state = liveState;
       const current = saves.loadMeta();
       if (saves.profileStatus?.().quarantined) return { ok: false, changed: false, meta: current, reason: 'Profile is quarantined; enemy knowledge remains pending.' };
       // Recovery is explicitly marked after a failed bank; ordinary stale
@@ -39,7 +45,7 @@ export async function bankRunEnemyKnowledge(saves, owner, run) {
       };
       try {
         if (bank.changed) {
-          const result = saves.saveMeta(bank.meta);
+          const result = saves.saveMeta(bank.meta, { knowledgeRecovery: Object.keys(foundation.enemies).length ? foundation : null });
           if (!result?.ok) return failed(result?.reason || 'Enemy knowledge write failed; learning remains pending.');
         }
         const verified = saves.loadMeta();
