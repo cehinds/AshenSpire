@@ -45,6 +45,7 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
+          filter: blob:none # retain ancestry without downloading historical artwork
           lfs: false
       - uses: ./.github/actions/setup-node
       - uses: actions/setup-python@v5

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1748",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat scenery reaches the top of the screen",
+    "detail": "The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.",
+    "build": "0.7.1.1136",
+    "pullRequest": 1748,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1748"
+  },
+  {
     "id": "pr-1742",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -11,6 +21,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1134",
     "pullRequest": 1742,
     "url": "https://github.com/cehinds/AshenSpire/pull/1742"
+  },
+  {
+    "id": "pr-1747",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: alternative sync keeps the full history efficiently",
+    "detail": "Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.",
+    "build": "0.7.1.1133",
+    "pullRequest": 1747,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1747"
   },
   {
     "id": "pr-1734",
