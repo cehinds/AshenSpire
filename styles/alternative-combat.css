@@ -15,3 +15,7 @@
 /* Let the alpha-cropped figure own its box, including co-op's older 110px slot. */
 :root[data-layout='narrow'] .combat.coop .coop-seat .sprite:has(.alternative-figure, .alternative-card-stage) { width:max-content; height:auto; }
 .combat:has(.alternative-backdrop) .hand-area { background:transparent; }
+/* Large figures can leave no empty callout region on short screens. The
+   tutorial's informational surface passes board input; its exits stay active. */
+.tut-bubble { pointer-events:none; }
+.tut-bubble :is(.tut-next,.tut-skip) { pointer-events:auto; }
