@@ -65,9 +65,13 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (pred.p === 'inStance') return `you are in ${pred.stance}`;
     if (pred.p === 'turnMetric') {
       const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
-      const name = names[pred.metric] || (pred.tag ? `${pred.tag} cards played` : pred.metric);
+      const threshold = pred.atLeast !== undefined ? `at least ${pred.atLeast}` : `at most ${pred.atMost}`;
+      if (pred.metric === 'turnStartHpPct') return `you began this turn with HP ${threshold}%`;
+      const name = names[pred.metric] || (['tagPlays', 'distinctTagPlays'].includes(pred.metric) && pred.tag
+        ? `${pred.metric === 'distinctTagPlays' ? 'distinct ' : ''}${pred.tag} card${pred.metric === 'distinctTagPlays' ? ' IDs' : 's'} played` : null);
+      if (!name) return '';
       if (pred.metric === 'previousSpell' && pred.atLeast === 1) return 'your previous card this turn was a Spell';
-      return `${name} ${pred.atLeast !== undefined ? `at least ${pred.atLeast}` : `at most ${pred.atMost}`}${pred.metric === 'cardPlaysCombat' ? '' : ' this turn'}`;
+      return `${name} ${threshold}${pred.metric === 'cardPlaysCombat' ? '' : ' this turn'}`;
     }
     if (pred.p === 'chargeAvailable') return 'its prepared charge is available';
     if (pred.p === 'not') { const text = condition(pred.pred); return text ? `not (${text})` : ''; }

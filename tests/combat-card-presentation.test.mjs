@@ -46,6 +46,10 @@ test('expanded grade summaries retain added buildup together with authored limit
   const charged = combatCardSummary(ward, {tokens:{chargeManaDiscount:2}}, reg);
   assert.match(charged, /Next spell this turn: 2 less Mana \(min 0\); cannot stack with itself/);
   assert.match(charged, /Gain 2 Barrier once per turn per family/);
+  const constellation = combatCardSummary(grade('progression-falling-constellation'), null, reg);
+  assert.match(constellation, /distinct starstone card IDs played at least 2 this turn/);
+  const shelter = combatCardSummary(grade('progression-pilgrim-s-shelter'), null, reg);
+  assert.match(shelter, /you began this turn with HP at most 50%/);
 });
 
 test('temporary tier options keep nonzero base separate and never offer locked tiers', async () => {
