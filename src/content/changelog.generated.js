@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1736",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Saved fights load with their intended combat rules",
+    "detail": "Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.",
+    "build": "0.7.1.1130",
+    "pullRequest": 1736,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1736"
+  },
+  {
+    "id": "pr-1739",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: complete combat checks finish within their limits",
+    "detail": "Nothing you play changes. The full discovered-test, self-test and mobile-layout sets now run in exhaustive parallel pieces, so every original check still runs while each automated job remains within its 20-minute limit.",
+    "build": "0.7.1.1128",
+    "pullRequest": 1739,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1739"
+  },
+  {
     "id": "pr-1733",
     "date": "2026-10-08",
     "group": "2026-10-08",
