@@ -7,6 +7,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { playingCardModel, combatCardType } from '../src/model/playingCard.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
 
 test('all requested identities have unique monochrome geometry', () => {
   assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defend','counter','sweep','ranged','smash','spell','power','skill','status']);
@@ -41,13 +42,23 @@ test('marks preserve readable accessible names and inspection explanations', () 
   const html = cardSigilsHtml(identity);
   assert.match(html, /data-primary-sigil="spell"/);
   assert.match(html, /role="img" aria-label="Spell"/);
-  assert.match(html, /role="img" aria-label="Alteration"/);
+  assert.match(html, /class="card-type-name">Spell<\/span>/);
+  assert.doesNotMatch(html, /combat-sigil-school|card-damage-types/);
   assert.match(html, /focusable="false"/);
   assert.doesNotMatch(html, /tabindex=/);
   assert.doesNotMatch(html, /title=/);
   assert.equal(sigilHtml('constructor'), '');
   assert.match(sigilExplanationHtml(identity), /earth and grounding/);
-  assert.match(cardSigilsHtml(identity, ['Blunt', 'Cold']), /class="card-damage-types">Blunt · Cold<\/span>/);
+  assert.match(sigilExplanationHtml(identity), /role="img" aria-label="Alteration"/);
+});
+
+test('card footer icons and corresponding intents use the same approved geometry', () => {
+  for (const [intent,card] of [['attack','attack'],['defend','defend'],['counter','counter'],['smash','smash'],['cast','spell'],['buff','power']]) {
+    assert.equal(INTENT_ICON_SHAPES[intent], ACTION_SIGILS[card].shape);
+    const html=cardSigilsHtml({action:card});
+    assert.ok(html.includes(ACTION_SIGILS[card].shape));
+    assert.ok(html.includes(`class="card-type-name">${ACTION_SIGILS[card].label}</span>`));
+  }
 });
 
 test('short damage wording retains numbers, types, timing, targets and conditions', () => {

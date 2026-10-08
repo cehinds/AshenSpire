@@ -237,3 +237,11 @@ test('insufficient stage room is reported rather than placing a target over anot
   assert.deepEqual(anchors,[{id:'a',x:60,y:30,obstructed:true}]);
   assert.ok(anchors[0].y-22>=0&&anchors[0].y+22<=60);
 });
+
+test('aligned target plates resolve crowded footers vertically', () => {
+  const placed = combatTargetAnchors({ width:390,height:500,size:54,lockX:true,
+    targets:[{id:'a',x:180,y:250,width:96},{id:'b',x:200,y:250,width:96}] });
+  assert.equal(placed[0].x,180); assert.equal(placed[1].x,200);
+  assert(placed[1].y-placed[0].y>=56);
+  assert(placed.every(p=>!p.obstructed));
+});
