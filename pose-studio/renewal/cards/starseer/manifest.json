@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "classId": "starseer",
+  "armour": "default",
+  "referenceWeapon": "Staff \u00b7 open spellbook and upward staff",
+  "equipmentIndependent": true,
+  "selection": "card-profile",
+  "frames": {
+    "attack-load": {
+      "path": "cards/starseer/frames/attack-load.webp",
+      "lite": "cards/starseer/frames/attack-load-lite.webp",
+      "bounds": [
+        116,
+        133,
+        357,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "attack-contact": {
+      "path": "cards/starseer/frames/attack-contact.webp",
+      "lite": "cards/starseer/frames/attack-contact-lite.webp",
+      "bounds": [
+        88,
+        198,
+        492,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ready": {
+      "path": "cards/starseer/frames/ready.webp",
+      "lite": "cards/starseer/frames/ready-lite.webp",
+      "bounds": [
+        145,
+        147,
+        342,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-load": {
+      "path": "cards/starseer/frames/smash-load.webp",
+      "lite": "cards/starseer/frames/smash-load-lite.webp",
+      "bounds": [
+        104,
+        120,
+        363,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-contact": {
+      "path": "cards/starseer/frames/smash-contact.webp",
+      "lite": "cards/starseer/frames/smash-contact-lite.webp",
+      "bounds": [
+        102,
+        230,
+        428,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-return": {
+      "path": "cards/starseer/frames/smash-return.webp",
+      "lite": "cards/starseer/frames/smash-return-lite.webp",
+      "bounds": [
+        120,
+        111,
+        365,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-load": {
+      "path": "cards/starseer/frames/sweep-load.webp",
+      "lite": "cards/starseer/frames/sweep-load-lite.webp",
+      "bounds": [
+        86,
+        235,
+        389,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-contact": {
+      "path": "cards/starseer/frames/sweep-contact.webp",
+      "lite": "cards/starseer/frames/sweep-contact-lite.webp",
+      "bounds": [
+        91,
+        227,
+        478,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-return": {
+      "path": "cards/starseer/frames/sweep-return.webp",
+      "lite": "cards/starseer/frames/sweep-return-lite.webp",
+      "bounds": [
+        126,
+        182,
+        373,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-rise": {
+      "path": "cards/starseer/frames/guard-rise.webp",
+      "lite": "cards/starseer/frames/guard-rise-lite.webp",
+      "bounds": [
+        106,
+        129,
+        398,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-brace": {
+      "path": "cards/starseer/frames/guard-brace.webp",
+      "lite": "cards/starseer/frames/guard-brace-lite.webp",
+      "bounds": [
+        100,
+        147,
+        367,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-return": {
+      "path": "cards/starseer/frames/guard-return.webp",
+      "lite": "cards/starseer/frames/guard-return-lite.webp",
+      "bounds": [
+        108,
+        148,
+        418,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-load": {
+      "path": "cards/starseer/frames/counter-load.webp",
+      "lite": "cards/starseer/frames/counter-load-lite.webp",
+      "bounds": [
+        131,
+        152,
+        378,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-parry": {
+      "path": "cards/starseer/frames/counter-parry.webp",
+      "lite": "cards/starseer/frames/counter-parry-lite.webp",
+      "bounds": [
+        114,
+        163,
+        402,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-contact": {
+      "path": "cards/starseer/frames/counter-contact.webp",
+      "lite": "cards/starseer/frames/counter-contact-lite.webp",
+      "bounds": [
+        110,
+        167,
+        492,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-load": {
+      "path": "cards/starseer/frames/spell-load.webp",
+      "lite": "cards/starseer/frames/spell-load-lite.webp",
+      "bounds": [
+        152,
+        147,
+        369,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-release": {
+      "path": "cards/starseer/frames/spell-release.webp",
+      "lite": "cards/starseer/frames/spell-release-lite.webp",
+      "bounds": [
+        149,
+        128,
+        370,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-return": {
+      "path": "cards/starseer/frames/spell-return.webp",
+      "lite": "cards/starseer/frames/spell-return-lite.webp",
+      "bounds": [
+        148,
+        149,
+        368,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-load": {
+      "path": "cards/starseer/frames/ranged-load.webp",
+      "lite": "cards/starseer/frames/ranged-load-lite.webp",
+      "bounds": [
+        150,
+        149,
+        367,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-aim": {
+      "path": "cards/starseer/frames/ranged-aim.webp",
+      "lite": "cards/starseer/frames/ranged-aim-lite.webp",
+      "bounds": [
+        137,
+        127,
+        372,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-release": {
+      "path": "cards/starseer/frames/ranged-release.webp",
+      "lite": "cards/starseer/frames/ranged-release-lite.webp",
+      "bounds": [
+        148,
+        150,
+        366,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    }
+  },
+  "sequences": {
+    "attack": {
+      "label": "Attack",
+      "poses": [
+        "ready",
+        "attack-load",
+        "attack-contact",
+        "attack-contact",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        80,
+        50,
+        0
+      ],
+      "effect": "slash",
+      "impact": 2,
+      "hold": false
+    },
+    "smash": {
+      "label": "Smash",
+      "poses": [
+        "ready",
+        "smash-load",
+        "smash-contact",
+        "smash-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -8,
+        60,
+        32,
+        0
+      ],
+      "effect": "impact",
+      "impact": 2,
+      "hold": false
+    },
+    "sweep": {
+      "label": "Sweep",
+      "poses": [
+        "ready",
+        "sweep-load",
+        "sweep-contact",
+        "sweep-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        55,
+        28,
+        0
+      ],
+      "effect": "slash",
+      "impact": 2,
+      "hold": false
+    },
+    "counter": {
+      "label": "Counter",
+      "poses": [
+        "ready",
+        "counter-load",
+        "counter-parry",
+        "counter-contact",
+        "ready"
+      ],
+      "durations": [
+        45,
+        40,
+        30,
+        95,
+        50
+      ],
+      "travel": [
+        0,
+        -12,
+        -8,
+        45,
+        0
+      ],
+      "effect": "parry",
+      "impact": 3,
+      "hold": false
+    },
+    "defend": {
+      "label": "Defend",
+      "poses": [
+        "ready",
+        "guard-rise",
+        "guard-brace",
+        "guard-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -3,
+        -6,
+        -3,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "spell": {
+      "label": "Spell",
+      "poses": [
+        "spell-return",
+        "spell-load",
+        "spell-release",
+        "spell-release",
+        "spell-return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "ranged": {
+      "label": "Ranged \u00b7 magic",
+      "poses": [
+        "ranged-load",
+        "ranged-load",
+        "ranged-aim",
+        "ranged-release",
+        "ranged-load"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        -4,
+        -2,
+        0
+      ],
+      "effect": "starbolt",
+      "impact": 2,
+      "hold": false
+    },
+    "rangedMagic": {
+      "label": "Ranged \u00b7 magic",
+      "poses": [
+        "ranged-load",
+        "ranged-load",
+        "ranged-aim",
+        "ranged-release",
+        "ranged-load"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "starbolt",
+      "impact": 2,
+      "hold": false
+    }
+  },
+  "bytes": {
+    "webp": 740664,
+    "lite": 209842
+  }
+}

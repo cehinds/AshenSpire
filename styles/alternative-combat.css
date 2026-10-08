@@ -13,5 +13,5 @@
 .combat .combatant.enemy .alternative-silhouette { --edge-color:#c84136; }
 .combat .combatant .alternative-figure img { object-fit:fill; }
 /* Let the alpha-cropped figure own its box, including co-op's older 110px slot. */
-:root[data-layout='narrow'] .combat.coop .coop-seat .sprite:has(.alternative-figure) { width:max-content; height:auto; }
+:root[data-layout='narrow'] .combat.coop .coop-seat .sprite:has(.alternative-figure, .alternative-card-stage) { width:max-content; height:auto; }
 .combat:has(.alternative-backdrop) .hand-area { background:transparent; }

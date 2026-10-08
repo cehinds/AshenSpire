@@ -548,6 +548,14 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
   const aliases = [];
   const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
   const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+  const cardSource = sources.get('src/content/alternativeCardAnimations.js');
+  if (cardSource) {
+    const cards = JSON.parse(cardSource.match(/^export const alternativeCardAnimations = (.+);$/m)[1]);
+    for (const [file, hash] of Object.entries(cards.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+    }
+  }
   for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
     if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
     const bytes = readFileSync(resolve(ROOT, 'assets-alternative', file));

@@ -1,0 +1,5 @@
+{
+  "prompt": "Production sprite-sheet repair. Keep these six Starseer casting figures and their costumes and exact hand arrangements: staff always anatomical right, open spellbook anatomical left, orb upward. Correct the layout so each of the SIX full body figures is 15 percent smaller within its own equal cell, strict 3 columns by 2 rows, with at least 40 pixels of fully transparent EMPTY padding on every edge of EVERY cell. In particular the upper-middle staff finial must be entirely drawn, with its tip well below the top image edge, and there must be a broad transparent gutter between upper-middle feet and lower-middle staff tip. No cropping, no touching figures, no overlap. Match relative body size in all six cells. Preserve the complete long staff, boots, cape, and open book in every pose. True transparent background, no background glow, no labels. Do not swap hands or change the character. Output a complete six-pose sheet, not a close-up.",
+  "tool": "image_gen",
+  "original": "D:\\repos\\.codex\\generated_images\\01a1144d-e55f-7af2-bf4b-4e9021df990b\\exec-c4a09bb3-2816-40a7-9d02-148199d84aac.png"
+}

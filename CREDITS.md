@@ -506,3 +506,15 @@ sheets; prompts are in `source/base-action-prompts.json` and each class retains
 its `source/base-normalization.json` recipe.
 These are authoring assets with empty gameplay bindings; no third-party artwork
 was downloaded and no third-party license is claimed.
+
+### Alternative class card actions (2026-10-07)
+
+The 90 original poses under `pose-studio/renewal/cards/` were generated and
+edited with OpenAI image generation from the project's own class references.
+[Source provenance and exact prompts](pose-studio/renewal/cards/source-provenance.json)
+and each class's normalization recipe accompany the PNG sheets. Starseer's
+casting layout repair is recorded beside its source sheet. The reproducible
+512px/256px WebPs are copied into the branch-owned `assets-alternative/` pack;
+`src/content/alternativeCardAnimations.js` records their hashes. These assets
+power alternative combat and the authoring preview. No third-party artwork
+was downloaded and no third-party license is claimed.
