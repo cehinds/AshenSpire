@@ -138,14 +138,30 @@ function connectCdp(wsUrl) {
   const socket = new WebSocket(wsUrl);
   let nextId = 0;
   const pending = new Map();
+  const exceptions = [];
+  const loading = new Map();
+  const networkFailures = [];
   socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    if (message.method === 'Runtime.exceptionThrown') {
+      const detail = message.params?.exceptionDetails;
+      exceptions.push(detail?.exception?.description || detail?.text || 'unknown page exception');
+    }
+    if (message.method === 'Network.requestWillBeSent') loading.set(message.params.requestId, message.params.request.url);
+    if (message.method === 'Network.loadingFinished') loading.delete(message.params.requestId);
+    if (message.method === 'Network.loadingFailed') {
+      networkFailures.push({ url: loading.get(message.params.requestId), error: message.params.errorText });
+      loading.delete(message.params.requestId);
+    }
     if (message.id == null || !pending.has(message.id)) return;
     const { yes, no } = pending.get(message.id);
     pending.delete(message.id);
     message.error ? no(new Error(message.error.message)) : yes(message.result);
   };
   return {
+    exceptions,
+    loading,
+    networkFailures,
     ready: new Promise((yes, no) => { socket.onopen = yes; socket.onerror = no; }),
     send(method, params = {}, sessionId) {
       const id = ++nextId;
@@ -181,7 +197,7 @@ try {
   // Port 0: the OS picks a free one, so this never collides with another tool.
   const served = await serve({ root: ROOT, port: 0, open: false });
   server = served.server;
-  const port = server.address().port;
+  const sourceUrl = `http://127.0.0.1:${server.address().port}/`;
   const launched = await launchBrowser({ prefix: 'slot-load-door-', browser: browserPath, headless: '--headless=new', timeoutMs: 20000 });
   closeBrowser = launched.close;
   cdp = connectCdp(launched.wsUrl);
@@ -191,7 +207,9 @@ try {
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, sessionId);
   await cdp.send('Runtime.enable', {}, sessionId);
+  await cdp.send('Network.enable', {}, sessionId);
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 730, deviceScaleFactor: 1, mobile: false }, sessionId);
+  await cdp.send('Page.bringToFront', {}, sessionId);
 
   const ev = async (expression) => {
     const result = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
@@ -204,7 +222,8 @@ try {
       if (await ev(expression).catch(() => false)) return true;
       await wait(70);
     }
-    throw new Error(`timeout waiting for ${waitingFor}`);
+    const pageState = await ev(`({ url: location.href, ready: document.readyState, combat: !!window.__combat, text: document.body?.innerText?.slice(0, 800) })`).catch((error) => ({ unavailable: error.message }));
+    throw new Error(`timeout waiting for ${waitingFor}; page=${JSON.stringify(pageState)}; exceptions=${JSON.stringify(cdp.exceptions)}; loading=${JSON.stringify([...cdp.loading.values()].slice(0, 12))}; networkFailures=${JSON.stringify(cdp.networkFailures.slice(-12))}`);
   };
   const click = async (selector) => {
     const point = await ev(pointerTargetExpression(selector));
@@ -259,7 +278,7 @@ try {
     await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'combat timeline settlement');
   };
 
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotCombatVersion=1&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
+  await cdp.send('Page.navigate', { url: `${sourceUrl}?shot=combat&shotCombatVersion=1&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
   await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'combat boot', bootTimeout);
   measuring = true;
   const opening = await pose();
@@ -437,7 +456,7 @@ try {
     // combat-ready check below. Mark the old document and wait for the new
     // one, or the step can read the old deck and click the old page.
     await ev('window.__staleDoc = 1');
-    await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotRefusedSlot=3` }, sessionId);
+    await cdp.send('Page.navigate', { url: `${sourceUrl}?shot=combat&shotRefusedSlot=3` }, sessionId);
     await until(`!window.__staleDoc && location.search.includes('shotRefusedSlot=3') && !location.search.includes('shotNewerSlot')`, 'the second document');
     await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the second combat boot', bootTimeout);
     const openingDeck = await ev('window.__spoils().liveDeck || []');
@@ -483,7 +502,7 @@ try {
   // checkpoint after later unsaved actions. Keep the two versions independent.
   try {
     await ev('window.__staleDoc = 1');
-    await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotKnowledgeVersion=0` }, sessionId);
+    await cdp.send('Page.navigate', { url: `${sourceUrl}?shot=combat&shotKnowledgeVersion=0` }, sessionId);
     await until(`!window.__staleDoc && location.search.includes('shotKnowledgeVersion=0') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'a fresh expanded combat without knowledge', bootTimeout);
     if (!(await ev('window.__combat.combatExpansionVersion === 2'))) throw new Error('the default fixture is not expanded combat');
     if (await ev('!!window.__combat.enemyKnowledge')) throw new Error('the checkpoint fixture unexpectedly enables knowledge');
@@ -534,7 +553,7 @@ try {
   // including its reads and RNG. Load must restore the latest accepted turn.
   try {
     await ev('window.__staleDoc = 1');
-    await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat` }, sessionId);
+    await cdp.send('Page.navigate', { url: `${sourceUrl}?shot=combat` }, sessionId);
     await until(`!window.__staleDoc && !location.search.includes('shotKnowledgeVersion') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'fresh default knowledge-enabled combat', bootTimeout);
     if (!(await ev('window.__combat.combatExpansionVersion === 2 && window.__combat.enemyKnowledge?.version === 1'))) throw new Error('the default fixture lacks independent knowledge rules');
     await advanceTurn();
