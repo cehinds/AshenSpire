@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Alternative combat keeps its art with the complete tactical rules** ([#1740](https://github.com/cehinds/AshenSpire/pull/1740), `0.7.1.1136`). Physical maneuvers, spell schools, status recovery, Counter replies and full upcast prices work with the alternative battlefield and class motions. Corruption costs and choices stay saved before taking effect; friendly and hostile targeting follow the same rules as regular combat. Both development histories remain available in the changelog.
+
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
 
 - **Combat build checks keep their full coverage** ([#1739](https://github.com/cehinds/AshenSpire/pull/1739), `0.7.1.1128`). Combat validation runs in complete, smaller groups so promoted builds can finish their checks within each job's time limit. Every discovered test and known-defect case is retained.
