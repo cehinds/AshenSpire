@@ -8,13 +8,15 @@ import { stanceInventory } from '../tools/alternative-stances-inventory.mjs';
 import { validate } from '../src/model/presentationSequence.js';
 
 const card = (maneuver, camp='physical') => ({cardTags:[`camp:${camp}`,`maneuver:${maneuver}`]});
-test('Attack, Smash and Sweep share offensive; Defend and Counter share defensive; spell is casting',()=>{
+test('Attack, Smash and Sweep share offensive; Defend uses defensive; Counter keeps its existing pose',()=>{
   for(const maneuver of ['attack','smash','sweep','ranged'])assert.equal(stanceForCard(card(maneuver)),'offensive');
-  for(const maneuver of ['defend','counter'])assert.equal(stanceForCard(card(maneuver)),'defensive');
+  assert.equal(stanceForCard(card('defend')),'defensive');
+  assert.equal(stanceForCard(card('counter')),null);
   assert.equal(stanceForCard(card('ranged','spell')),'casting');
   assert.equal(stanceForCard({cardTags:['camp:spell','school:fire']}),'casting');
 });
 test('resolved card tags own identity; damage colour and equipped weapons cannot select stance',()=>{
+  assert.equal(stanceForCard({type:'attack',cardTags:[{id:'camp:spell'},{id:'maneuver:ranged'}]}),'casting');
   assert.equal(stanceForCard({id:'attack',type:'attack',cardTags:['camp:spell','maneuver:ranged'],damageSchool:'fire'}),'casting');
   assert.equal(stanceForCard({type:'attack',cardTags:['camp:physical','maneuver:smash'],damageSchool:'frost',weaponId:'staff'}),'offensive');
   assert.equal(stanceForCard({type:'skill',cardTags:[],tags:['camp:spell']}),null);
@@ -35,7 +37,7 @@ test('only confirmed plays replace the latest stance; new turn clears the same a
 });
 test('co-op seats are independent and a new combat clears both',()=>{
   const ledger=createStanceLedger();
-  ledger.accept({type:'cardPlayed',playerId:'a'},card('counter'));
+  ledger.accept({type:'cardPlayed',playerId:'a'},card('defend'));
   ledger.accept({type:'cardPlayed',playerId:'b'},card('smash'));
   ledger.accept({type:'playerTurnStart',playerId:'a'});
   assert.equal(ledger.get('a'),null);assert.equal(ledger.get('b'),'offensive');

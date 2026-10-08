@@ -1,13 +1,17 @@
 import { combatProfileFor } from './combatCardProfile.js';
 
 export const STANCE_FAMILIES = Object.freeze(['offensive', 'defensive', 'casting']);
-const defensive = new Set(['defend', 'counter', 'defending', 'countering']);
+const defensive = new Set(['defend', 'defending']);
 const offensive = new Set(['attack', 'smash', 'sweep', 'ranged', 'attacking', 'smashing', 'sweeping']);
 
 /** Presentation only. The resolved card, including equipment-projected tags, owns identity. */
 export function stanceForCard(card = {}) {
   card ??= {};
+  const resolvedTags = card.cardTags ?? card.tags;
+  if (resolvedTags) card = { ...card, cardTags: resolvedTags.map(tag => typeof tag === 'string' ? tag : tag.id) };
   const profile = combatProfileFor(card);
+  // Counter artwork is a separate owner pass; retain its existing presentation.
+  if (profile.maneuver === 'counter') return null;
   if (defensive.has(profile.maneuver)) return 'defensive';
   if (profile.camp === 'spell') return 'casting';
   if (offensive.has(profile.maneuver)) return 'offensive';

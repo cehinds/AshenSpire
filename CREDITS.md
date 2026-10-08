@@ -542,3 +542,15 @@ casting layout repair is recorded beside its source sheet. The reproducible
 `src/content/alternativeCardAnimations.js` records their hashes. These assets
 power alternative combat and the authoring preview. No third-party artwork
 was downloaded and no third-party license is claimed.
+
+### Owner-selected alternative held stances (2026-10-08)
+
+The twelve owner selections in
+`pose-studio/stances/options-20261008/selections.json` are exported unchanged
+from the first-party paintings above into `assets-alternative/stances/`.
+The selection receipt records the original viewports and source hashes;
+`src/content/alternativeSelectedStances.js` records registration and Full/Lite
+hashes. `tools/alternative-selected-stances-export.mjs` reproduces the browser
+Canvas normalization. Four embedded Sprite Workshop projects accompany the
+exports under `pose-studio/stances/selected-projects/`. No new third-party
+artwork or license is introduced by this integration.

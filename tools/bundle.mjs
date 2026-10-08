@@ -557,8 +557,16 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
       catalog.hashes[file] = hash;
     }
   }
+  const stanceSource = sources.get('src/content/alternativeSelectedStances.js');
+  if (stanceSource) {
+    const stances = JSON.parse(stanceSource.match(/^export const alternativeSelectedStances = (.+);$/m)[1]);
+    for (const [file, hash] of Object.entries(stances.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+    }
+  }
   for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
-    if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
+    if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
     const bytes = readFileSync(resolve(ROOT, 'assets-alternative', file));
     if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
       fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
