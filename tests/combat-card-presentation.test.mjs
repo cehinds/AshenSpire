@@ -29,7 +29,9 @@ test('summary uses live bindings and preserves full conditional effects', () => 
   assert.match(lucid, /you have Sleep/); assert.match(lucid, /Remove 1 Sleep/); assert.match(lucid, /gain 2 Barrier/);
 });
 test('complex passive cards preserve authored text rather than hiding trigger rules', () => {
-  for (const id of ['emberCovenant','shatterOpportunity','earthGrounding','restfulDream','starPath']) assert.equal(combatCardSummary(card(id), null, reg), null);
+  for (const id of ['emberCovenant','shatterOpportunity','earthGrounding','restfulDream']) assert.equal(combatCardSummary(card(id), null, reg), null);
+  assert.match(combatCardSummary(card('starPath'), null, reg), /Gain 1 Concealed for 2 turns/);
+  assert.match(combatCardSummary(card('starPath'), null, reg), /Sweep and Holy revelation clear it/);
 });
 
 test('summaries retain ally and random targets, removal quantities and resolved hit counts', () => {

@@ -101,7 +101,17 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
       case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
-      case 'applyStatus': if (['invulnerability', 'decoy', 'grounded', 'sleep', 'concealed'].includes(effect.status)) return null; text = `${effect.target === 'self' ? 'Gain' : 'Apply'} ${value(effect, index, 'stacks')} ${title(effect.status)}${effect.target === 'enemy' ? ' to target' : effect.target === 'ally' ? ' to an ally' : area}${effect.duration !== undefined ? ` for ${effect.duration} turns` : ''}`; break;
+      case 'applyStatus': {
+        if (['invulnerability', 'decoy', 'grounded', 'sleep'].includes(effect.status)) return null;
+        if (effect.duration !== undefined && typeof effect.duration !== 'number') return null;
+        text = `${effect.target === 'self' ? 'Gain' : 'Apply'} ${value(effect, index, 'stacks')} ${title(effect.status)}${effect.target === 'enemy' ? ' to target' : effect.target === 'ally' ? ' to an ally' : area}${effect.duration !== undefined ? ` for ${effect.duration} turns` : ''}`;
+        if (effect.status === 'concealed') {
+          const explanation = registries?.statuses?.has(effect.status) && registries.statuses.get(effect.status).tooltip;
+          if (!explanation) return null;
+          text += `. ${explanation.replace(/\.$/, '')}`;
+        }
+        break;
+      }
       case 'removeStatus': text = `Remove ${effect.amount === undefined ? 'all' : n} ${title(effect.status)}${effect.target === 'enemy' ? ' from target' : effect.target === 'ally' ? ' from an ally' : area}`; break;
       case 'draw': text = `Draw ${n}`; break;
       case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
