@@ -25,7 +25,7 @@
 - Frost: a snowflake.
 - Fire: a flame.
 - Lightning: a lightning bolt.
-- Force: a central ring sending rays outward.
+- Force: a small ring sending waves outward.
 - Alteration: mountains on a grounded baseline, including earth and grounding.
 - Illusion: an eye crossed by a diagonal stroke.
 - Divine: a radiant ring crossed by a plus.

@@ -44,7 +44,7 @@ try {
   assert.equal(await page.evaluate(()=>JSON.stringify({plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'),energy:window.__combat.player.energy,mana:window.__combat.player.mana,stamina:window.__combat.player.stamina})),beforeInspect,'inspection spends no resources and plays no card');
   const refs=await page.evaluate(async()=>{
    const {contentBundle}=await import('/src/content/index.js');
-   const {createRegistries}=await import('/src/model/registries.js');
+   const {createRegistries,resolveCard}=await import('/src/model/registries.js');
    const {renderCard,scheduleCardFits}=await import('/src/ui/components/card.js');
    const {playingCardModel}=await import('/src/model/playingCard.js');
    const registries=createRegistries(contentBundle);
@@ -53,24 +53,28 @@ try {
     ...(c.gradeProfiles||[]).map((p,abilityRank)=>({cardId:c.id,abilityRank})),
    ]);
    for(const p of registries.equipment.basicCardProfiles||[])refs.push({cardId:p.role==='defend'?'defend':'strike',profileId:p.id});
-   const picked=[],actions=new Set(),schools=new Set();
+   const picked=[],actions=new Set(),schools=new Set();let corrupted=false,rankFive=false;
    for(const ref of refs){
-    const identity=playingCardModel(registries,ref).sigils;
-    if(!actions.has(identity.action)||(identity.school&&!schools.has(identity.school))){picked.push(ref);actions.add(identity.action);if(identity.school)schools.add(identity.school);}
+    const model=playingCardModel(registries,ref),identity=model.sigils,def=resolveCard(registries,ref);
+    if(!actions.has(identity.action)||(identity.school&&!schools.has(identity.school))||(def.corrupted&&!corrupted)||(model.abilityRank===5&&!rankFive)){
+     picked.push(ref);actions.add(identity.action);if(identity.school)schools.add(identity.school);
+     if(def.corrupted)corrupted=true;if(model.abilityRank===5)rankFive=true;
+    }
    }
    const ordered=[...picked,...refs.filter(ref=>!picked.includes(ref))];
    const app=document.querySelector('#app');app.replaceChildren();
-   const style=document.createElement('style');style.textContent='.sigil-corpus{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:28px;padding:35px 20px;background:#1d1712;width:100%;box-sizing:border-box}.sigil-corpus .card{width:100%!important;max-width:200px!important;margin:auto}.sigil-corpus:not([data-corpus-expanded]) .card[data-qa-deferred="true"]{display:none!important}';document.head.append(style);
+   const style=document.createElement('style');style.textContent='.sigil-corpus{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px;padding:35px 20px;background:#1d1712;width:100%;box-sizing:border-box}.sigil-corpus .card{width:100%!important;max-width:200px!important;margin:auto}.sigil-corpus:not([data-corpus-expanded]) .card[data-qa-deferred="true"]{display:none!important}@media(max-width:500px){.sigil-corpus{grid-template-columns:repeat(2,minmax(0,1fr))}}';document.head.append(style);
    const gallery=document.createElement('div');gallery.className='sigil-corpus';app.append(gallery);
    ordered.forEach((ref,index)=>{const card=renderCard(registries,ref,{level:'inspect',inspection:false});card.dataset.qaRef=JSON.stringify(ref);card.dataset.qaDeferred=String(index>=picked.length);gallery.append(card);});
    scheduleCardFits(gallery.querySelectorAll('.card'));
    return refs.length;
   });
-  await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1000);
+  await page.evaluate(()=>document.fonts.ready);
+  await page.waitForFunction(()=>[...document.querySelectorAll('.sigil-corpus .card')].filter(card=>card.getBoundingClientRect().width>0).every(card=>card.querySelector('[data-card-binding="rules"]').dataset.rulesComplete==='true'));
   await readyImages(page);
   await page.screenshot({path:resolve(output,name+'-sigil-gallery.png'),fullPage:true});
   await page.evaluate(async()=>{const gallery=document.querySelector('.sigil-corpus');gallery.dataset.corpusExpanded='true';const {scheduleCardFits}=await import('/src/ui/components/card.js');scheduleCardFits(gallery.querySelectorAll('.card'));});
-  await page.waitForTimeout(1000);
+  await page.waitForFunction(()=>[...document.querySelectorAll('.sigil-corpus [data-card-binding="rules"]')].every(text=>text.dataset.rulesComplete==='true'));
   const geometry=await page.locator('.sigil-corpus .card').evaluateAll(cards=>cards.map(c=>{
    const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
    const r=text.getBoundingClientRect(),top=title.getBoundingClientRect();
