@@ -34,6 +34,7 @@
 ## Implementation boundary
 
 - Identity follows the shared primary type supplied by the combat expansion and authored school metadata. A name, class colour or damage type never selects a school.
+- Expanded Powers show their Exhaust rule in Information. Historical saves retain their original removal rule; the common crown explanation describes cast-once behavior without changing that lifecycle.
 - These are original inline vector marks in source; the existing paintings and artwork packages remain in use.
 - The editor inventory was checked at `e116cfd1414bce9effb2e12ed643a481342ee934`. Its card adapter handles data definitions; native layout and runtime renderer changes are separate. The shared vector renderer uses normal source tools.
 - Build identities, review, test results, desktop/phone captures and branch promotions are recorded with delivery evidence.

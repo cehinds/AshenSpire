@@ -9,7 +9,7 @@ export const ACTION_SIGILS = Object.freeze({
   ranged: mark('Ranged', '<path d="M8 4q16 12 0 24M8 4v24M3 16h24m-6-5 6 5-6 5"/>', 'An attack made at range.'),
   smash: mark('Smash', '<path d="m9 5 15 4-2 8-15-4ZM15 15l-4 13M23 22l4 5M5 20l-3 4"/>', 'A heavy, forceful attack.'),
   spell: mark('Spell', '<path d="m16 3 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z"/>', 'A spell. Its smaller mark identifies the school.'),
-  power: mark('Power', '<path d="M5 25h22M6 22 4 9l8 6 4-11 4 11 8-6-2 13Z"/>', 'Cast once, then Exhaust. Its buff lasts for this combat.'),
+  power: mark('Power', '<path d="M5 25h22M6 22 4 9l8 6 4-11 4 11 8-6-2 13Z"/>', 'Cast once; its buff lasts for this combat. The paid card leaves play.'),
   skill: mark('Skill', '<path d="M5 17v-5l4-4 4 4v3l5-8 5 3-4 7h7v5l-9 6H9Z"/>', 'Reusable utility or a buff. Inspect for its effects.'),
   status: mark('Status', '<path d="m16 3 13 25H3ZM16 11v7m0 5h.01"/>', 'A status-effect card added to the deck, usually harmful.'),
 });

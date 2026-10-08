@@ -27,6 +27,15 @@ test('identity follows authored action and school rather than damage or card nam
   assert.throws(() => cardSigilIdentity('Spell', {school:'unknown'}), /Unknown card school/);
 });
 
+test('Power explanations remain truthful for historical and expanded lifecycles', () => {
+  const reg=createRegistries(contentBundle), legacy=reg.cards.get('rallyingStandard'), expanded=applyCombatExpansionCard(legacy);
+  assert.ok(!legacy.keywords.includes('exhaust'));
+  assert.ok(expanded.keywords.includes('exhaust'));
+  assert.match(ACTION_SIGILS.power.help,/Cast once/);
+  assert.match(ACTION_SIGILS.power.help,/lasts for this combat/);
+  assert.doesNotMatch(ACTION_SIGILS.power.help,/then Exhaust/);
+});
+
 test('marks preserve readable accessible names and inspection explanations', () => {
   const identity = {action:'spell', school:'alteration'};
   const html = cardSigilsHtml(identity);
