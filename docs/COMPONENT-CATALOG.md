@@ -713,6 +713,8 @@ Selected combat cards preview legal targets without committing: pure friendly ca
 
 Co-op card definitions use `src/ui/models/CombatCardView.js` to select the owner’s authoritative preview at the chosen upcast tier. Missing preview data resolves that same tier with the owner’s saved combat and break-meter versions; a base-tier preview cannot supply a higher tier’s target plan.
 
+Co-op Upcast uses `coopUpcastControl.wireCoopUpcastControl` and the same selected-card `.card-upcast-controls` surface as solo, including touch targets. An upcastable hostile card first selects without submitting an intent; its next activation plays. Friendly cards keep their target-arming flow. Pointer and keyboard gestures on Upcast open only its rank chooser; Escape and seat changes clear selection.
+
 World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
 masks, inspectable landmark overlays, and one native location dialog. It is laid
 out in W4b bands: a header, the map scene, and a context band for the selected

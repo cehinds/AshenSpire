@@ -17,6 +17,7 @@ import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashe
 import { combatCardView } from '../models/CombatCardView.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { openUpcastChoice } from '../components/upcastChoice.js';
+import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
@@ -114,7 +115,7 @@ import {
 } from '../kit/index.js';
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
-import { clearSelection } from '../components/cardSelection.js';
+import { clearSelection, litCard } from '../components/cardSelection.js';
 import { smithingStoneNote } from '../../model/rewardplan.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
@@ -486,6 +487,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     me = seats[i];
     closeCoopPotions();
     closeCardChoice();
+    clearSelection();
     armedFlask = null;
     armedFriendlyCard = null;
     render();
@@ -609,7 +611,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (cardChoiceShell) return; // the stance chooser owns the keyboard (see send)
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
-    if (ev.key === 'Escape') selectCombatant(null);
+    if (ev.key === 'Escape') {
+      selectCombatant(null);
+      if (litCard() !== null) ev.preventDefault();
+      clearSelection();
+    }
     if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
       ev.preventDefault();
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
@@ -625,6 +631,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const c = meP.hand[idx];
       const def = cardDef(c);
       if (!cardAffordableFromSnapshot(def, meP)) return;
+      if (upcastOptions(def).length && meP.combatExpansionVersion === 2) {
+        // Use the same selecting/playing door as pointer and focused activation.
+        app.querySelector(`.hand .card[data-instance-id="${c.instanceId}"]`)?.click();
+        return;
+      }
       if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
       const needs = cardNeedsEnemyTarget(def);
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
@@ -1127,33 +1138,39 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     handStrip = mountHand(app.querySelector('.hand'), {
       registries:memberRegistries(), fitFan: true,
       wireCard: (el, entry) => {
-        if (upcastOptions(entry.def).length && meP?.combatExpansionVersion === 2) {
-          const surcharge = (entry.def.upcastTier ?? entry.def.upcast.baseTier) - entry.def.upcast.baseTier;
-          const upcast = document.createElement('button'); upcast.className = 'card-upcast'; upcast.textContent = surcharge ? `Upcast +${surcharge}` : 'Upcast';
-          upcast.disabled = pacing || meP.ended || !meP.alive;
-          upcast.addEventListener('click', event => {
-            event.stopPropagation(); closeCardChoice(); const seatAtOpen = me;
-            const shell = openUpcastChoice({ definition: entry.def, opener: upcast,
-              onClosed: () => { if (cardChoiceShell === shell) cardChoiceShell = null; },
-              onChoose: ranks => {
-                if (me !== seatAtOpen) return;
-                upcastTiersByCard.set(upcastKey(entry.inst.instanceId), Number(ranks));
-                if (friendlyTargetPlan(cardDef(entry.inst), me, sc.players).active) armFriendlyTargeting(entry.inst.instanceId);
-                else render();
-              },
-            }); cardChoiceShell = shell;
-          }); el.appendChild(upcast);
-        }
-        el.addEventListener('click', () => {
+        const play = () => {
           if (pacing || meP?.ended || !entry.affordable) return;
-          const effects = entry.def.effects || [];
           if (friendlyTargetPlan(entry.def, me, sc.players).active) {
             armFriendlyTargeting(entry.inst.instanceId);
             return;
           }
           const needs = cardNeedsEnemyTarget(entry.def);
           send({ t: 'playCard', cardInstanceId: entry.inst.instanceId, targetId: needs ? selectedEnemy : undefined });
-        });
+        };
+        if (upcastOptions(entry.def).length && meP?.combatExpansionVersion === 2) {
+          const surcharge = (entry.def.upcastTier ?? entry.def.upcast.baseTier) - entry.def.upcast.baseTier;
+          wireCoopUpcastControl(el, {
+            label: surcharge ? `Upcast +${surcharge}` : 'Upcast',
+            disabled: pacing || meP.ended || !meP.alive,
+            selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
+            onPlay: play,
+            onOpen: upcast => {
+              closeCardChoice(); const seatAtOpen = me;
+              const shell = openUpcastChoice({ definition: entry.def, opener: upcast,
+                onClosed: () => { if (cardChoiceShell === shell) cardChoiceShell = null; },
+                onChoose: ranks => {
+                  if (me !== seatAtOpen) return;
+                  upcastTiersByCard.set(upcastKey(entry.inst.instanceId), Number(ranks));
+                  if (friendlyTargetPlan(cardDef(entry.inst), me, sc.players).active) {
+                    // Choosing a tier keeps an already armed friendly card armed.
+                    if (armedFriendlyCard !== entry.inst.instanceId) armFriendlyTargeting(entry.inst.instanceId);
+                    else render();
+                  } else { armedFriendlyCard = null; render(); }
+                },
+              }); cardChoiceShell = shell;
+            },
+          });
+        } else el.addEventListener('click', play);
       },
     });
     if (meP && meP.alive && meP.connected) {

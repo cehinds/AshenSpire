@@ -2228,7 +2228,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
       ));
       trackStats(events);
-      render(); // hand/energy react now; bars render from the pre-dispatch snapshot
+      // The displayed hand and fighters still belong to the pre-play snapshot.
+      // Freeze their input now, then repaint them at their own receipt beat.
+      // Rebuilding the unchanged board here put layout and card previews ahead
+      // of the first impact; the actual click handler took over 240 ms before
+      // the capped wind-up could even start in the compiled game.
+      combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
+      $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
+      $('.hand').inert = true;
+      $('.hand').setAttribute('aria-disabled', 'true');
+      $('.end-turn').disabled = true;
+      $('.combat-expansion-controls').querySelectorAll('button').forEach(button => { button.disabled = true; });
+      syncCardSelection();
+      formationMovement?.refresh();
     } catch (e) {
       console.warn('[combat] post-dispatch render failed:', e && e.message);
     }
@@ -2243,6 +2255,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
           renderTopbar();
+          paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
         },
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
