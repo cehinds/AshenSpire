@@ -56,3 +56,12 @@ test('Herald cannot select another copy of its already-granted spell', () => {
   assert.ok(!startingAbilityPlan(registries, run).choices.some(card => card.id === 'blightTouch'));
   assert.throws(() => birth('herald', { startingAbilityIds: ['blightTouch', 'penance'] }));
 });
+
+test('configured copy limits allow an already-granted spell as a starting ability', () => {
+  const settings = { classSpellPowerCopies: 2 };
+  const profileMeta = { settings };
+  const run = birth('herald', { profileMeta });
+  assert.ok(startingAbilityPlan(registries, run, settings).choices.some(card => card.id === 'blightTouch'));
+  const started = birth('herald', { profileMeta, startingAbilityIds: ['blightTouch', 'penance'] });
+  assert.equal(started.deck.filter(inst => inst.cardId === 'blightTouch').length, 2);
+});
