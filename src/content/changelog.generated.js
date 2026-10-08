@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1731"
   },
   {
+    "id": "pr-1732",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Valid card content keeps building through strict checks",
+    "detail": "The bundler keeps adjacent static imports separate and accepts legal empty statements between whitespace. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.",
+    "build": "0.7.1.1124",
+    "pullRequest": 1732,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1732"
+  },
+  {
     "id": "pr-1728",
     "date": "2026-10-08",
     "group": "2026-10-08",
