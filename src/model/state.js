@@ -973,8 +973,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (JSON.stringify(knowledge.rules) !== JSON.stringify(run.enemyKnowledgeRules)) problems.push(`${path}.enemyKnowledge.rules must match the run`);
     if (!run.enemyKnowledgeState?.currentEncounter || JSON.stringify(knowledge.encounter) !== JSON.stringify(run.enemyKnowledgeState.currentEncounter)) problems.push(`${path}.enemyKnowledge.encounter must match the run`);
     if (knowledge.bankable !== run.enemyKnowledgeState?.bankable) problems.push(`${path}.enemyKnowledge.bankable must match the run`);
-    const definitions = [...new Set((snapshot.enemies || []).map(enemy => enemy.enemyId))].sort();
-    if (JSON.stringify(definitions) !== JSON.stringify([...(knowledge.encounter?.enemyIds || [])].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
+    const definitions = [...new Set((Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map(enemy => enemy?.enemyId).filter(id => typeof id === 'string'))].sort();
+    const receiptIds = Array.isArray(knowledge.encounter?.enemyIds) ? knowledge.encounter.enemyIds : [];
+    if (JSON.stringify(definitions) !== JSON.stringify([...receiptIds].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
   };
   if (run.combatPendingOutcome !== undefined) {
     const pending = run.combatPendingOutcome;

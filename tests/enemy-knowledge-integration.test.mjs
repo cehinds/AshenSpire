@@ -16,6 +16,7 @@ import { previewCard } from '../src/engine/combat.js';
 import { skillTracks, awardSkillXp, bankSkillXp, claimBankedSkillLevel } from '../src/model/skills.js';
 import { skillProgressRows, staleSkillTracks } from '../src/model/progression.js';
 import { characterSheetModel } from '../src/ui/models/CharacterSheetModel.js';
+import { combatEnemyKnowledgeProblems } from '../src/model/enemyKnowledgeCombat.js';
 
 function fixture({ registries = createRegistries(contentBundle), enemyId = 'wanderingSoldier', counter = false, responseCard = 'shieldBash', exact = false } = {}) {
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
@@ -171,6 +172,24 @@ test('run saves bind active and terminal learning snapshots to their accepted en
   assert.deepEqual(validateRunShape(terminal), []);
   snapshot.enemyKnowledge.encounter.id = 'unrelated-encounter';
   assert.ok(validateRunShape(terminal).some(problem => problem.includes('combatPendingOutcome.snapshot.enemyKnowledge.encounter')));
+});
+
+test('damaged enemy containers return save diagnostics instead of throwing through knowledge validation', () => {
+  const { run, combat } = fixture();
+  const snapshot = serializeCombatSnapshot(combat);
+  for (const enemies of [{}, null, [null]]) {
+    const damaged = structuredClone(run);
+    damaged.combatEntered = { nodeId: 'combat', encounterId: 'wanderingSoldier', snapshot: { ...snapshot, enemies } };
+    let problems;
+    assert.doesNotThrow(() => { problems = validateRunShape(damaged); });
+    assert.ok(problems.some(problem => /enemies|enemy/.test(problem)));
+    assert.doesNotThrow(() => { problems = combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, enemies); });
+    assert.ok(problems.some(problem => /enemies/.test(problem)));
+  }
+  const damaged = structuredClone(snapshot.enemyKnowledge);
+  damaged.encounter.enemyIds = {};
+  assert.doesNotThrow(() => combatEnemyKnowledgeProblems(damaged, snapshot.enemies));
+  assert.ok(combatEnemyKnowledgeProblems(damaged, snapshot.enemies).some(problem => /encounter receipt/.test(problem)));
 });
 
 test('actual delayed move retains its serial and read through charge, snapshot and release', () => {

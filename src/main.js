@@ -79,6 +79,7 @@ import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
 import { createBrowserSaveManager } from './engine/browserSave.js';
 import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
+import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
@@ -1111,7 +1112,25 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-async function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
+const runStartOwner = createRunStartOwner();
+function newRun(config) {
+  const asked = config.seedString || randomSeedString();
+  const why = seedProblem(asked);
+  if (why) {
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))} — ${why}`);
+    console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
+    return Promise.resolve({ ok: false, reason: why });
+  }
+  const surface = app.firstElementChild, previousRun = run;
+  return runStartOwner.start({
+    prepare: () => saves.ensureProfile(),
+    isCurrent: () => app.firstElementChild === surface && run === previousRun,
+    adopt: () => beginPreparedRun({ ...config, seedString: asked }),
+    onFailure: error => showSettingsNotice(`Profile could not be saved: ${error.message}`, 'profile'),
+  });
+}
+
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1151,8 +1170,6 @@ async function newRun({ classId, seedString, customization, keepsakeId, custom, 
   // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
   // and it is one line above the run being made, so the write order is the ask.
   // A refused seed returns above and creates nothing.
-  const profile = shotState ? saves.ensureProfile() : await saves.ensureProfile();
-  if (!profile.ok) throw new Error(`Profile could not be saved: ${profile.reason}`);
   activeSlot = slot;
   const seed = seedFromString(asked);
   const legacyArcaneShot = shotState === 'combat' && shotParams.get('shotArcane') === 'matrix';

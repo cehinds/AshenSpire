@@ -6,10 +6,12 @@ const count = value => Number.isSafeInteger(value) && value >= 0;
 const choices = new Set([...PREDICTION_CHOICES, 'Staggered']);
 
 export function combatEnemyKnowledgeProblems(state, enemies, { enemyIds = null, ownerIds = null, coop = false } = {}) {
-  if (state === undefined) return enemies.some(enemy => enemy.knowledgeAction !== undefined) ? ['Enemy action knowledge requires a versioned combat knowledge state'] : [];
+  const rows = Array.isArray(enemies) ? enemies : [];
+  const enemyProblems = !Array.isArray(enemies) ? ['combat.enemies must be an array'] : rows.some(enemy => !object(enemy)) ? ['combat.enemies must contain enemy objects'] : [];
+  if (state === undefined) return [...enemyProblems, ...(rows.some(enemy => enemy?.knowledgeAction !== undefined) ? ['Enemy action knowledge requires a versioned combat knowledge state'] : [])];
   if (!object(state) || state.version !== 1 || !object(state.owners) || !count(state.nextSerial)
     || typeof state.bankable !== 'boolean') return ['combat.enemyKnowledge requires version 1, owner ledgers and action serials'];
-  const problems = enemyKnowledgeRuleProblems(state.rules, enemyIds);
+  const problems = [...enemyProblems, ...enemyKnowledgeRuleProblems(state.rules, enemyIds)];
   const encounter = state.encounter;
   if ((state.bankable && !encounter) || (encounter !== null && (!object(encounter) || !knowledgeKey(encounter.id)
     || !Array.isArray(encounter.enemyIds) || !encounter.enemyIds.length || new Set(encounter.enemyIds).size !== encounter.enemyIds.length
@@ -20,14 +22,14 @@ export function combatEnemyKnowledgeProblems(state, enemies, { enemyIds = null, 
     if (!Number.isInteger(state.privateSeed) || state.privateSeed < 0 || state.privateSeed > 0xffffffff || !object(state.readCounters)
       || required.some(key => !Object.hasOwn(counters, key) || !Number.isInteger(counters[key]) || counters[key] < 0 || counters[key] > 0xffffffff)
       || Object.keys(counters).some(key => !required.includes(key)) || counters.enemyIntentVisibility !== counters.enemyIntentClue
-      || counters.enemyIntentVisibility < enemies.reduce((sum, enemy) => sum + Object.keys(enemy.knowledgeAction?.reads || {}).length, 0)) problems.push('Co-op read continuation requires a host-private seed and equal carried visibility/clue counters');
+      || counters.enemyIntentVisibility < rows.reduce((sum, enemy) => sum + Object.keys(enemy?.knowledgeAction?.reads || {}).length, 0)) problems.push('Co-op read continuation requires a host-private seed and equal carried visibility/clue counters');
   }
   for (const [ownerId, owner] of Object.entries(state.owners)) {
     if (!knowledgeKey(ownerId) || (ownerIds && !ownerIds.has(ownerId)) || !object(owner) || !count(owner.earnedXp)
       || owner.earnedXp > state.nextSerial * (state.rules?.perception?.correctPredictionXp || 0)
       || !Array.isArray(owner.feedback) || owner.feedback.length > 12 || !Array.isArray(owner.counterEnemyIds)
       || new Set(owner.counterEnemyIds).size !== owner.counterEnemyIds.length
-      || owner.counterEnemyIds.some(id => !knowledgeKey(id) || !encounter?.enemyIds.includes(id))) {
+      || owner.counterEnemyIds.some(id => !knowledgeKey(id) || !Array.isArray(encounter?.enemyIds) || !encounter.enemyIds.includes(id))) {
       problems.push(`combat.enemyKnowledge.owners.${ownerId} has invalid XP, feedback or counter caps`); continue;
     }
     problems.push(...enemyKnowledgeProblems(owner.knowledge, enemyIds), ...enemyKnowledgeProblems(owner.pending, enemyIds));
@@ -37,7 +39,8 @@ export function combatEnemyKnowledgeProblems(state, enemies, { enemyIds = null, 
       || (row.outcome === 'cancelled' ? row.correct !== null : typeof row.correct !== 'boolean')) problems.push('Combat prediction feedback is invalid');
   }
   const serials = new Set();
-  for (const enemy of enemies) {
+  for (const enemy of rows) {
+    if (!object(enemy)) continue;
     const action = enemy.knowledgeAction;
     if (action === undefined) continue; // an enemy without a selected action
     if (!object(action) || !Number.isSafeInteger(action.serial) || action.serial < 1 || action.serial > state.nextSerial
