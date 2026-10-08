@@ -11,7 +11,7 @@ export function combatComposition({ sizes, actors, width, height, handTop, handL
     const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7));
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
-    const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth * .65) : size.x) : size.x - center + width * .55;
+    const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x) : size.x - center + width * .55;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     const ground = player && solo && Number.isFinite(handTop)
       ? handTop + visibleHeight * .5

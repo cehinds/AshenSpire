@@ -1305,3 +1305,4 @@ creation.abilities.choose,,Learn ability,Learn ability,Learn this starting abili
 creation.abilities.remove,,Unpick ability,Unpick ability,Unpick this starting ability choice.
 creation.abilities.chooseLabel,,Learn ability {name},Learn ability {name},Learn ability {name}
 creation.abilities.summary,,Starting ability,Starting ability,Starting ability
+"combat.intent.partial","","{stance} ?","",""

@@ -8604,5 +8604,12 @@ export const uiStrings = [
     "short": "Starting ability",
     "full": "Starting ability",
     "tip": "Starting ability"
+  },
+  {
+    "id": "combat.intent.partial",
+    "extends": "",
+    "short": "{stance} ?",
+    "full": "",
+    "tip": ""
   }
 ];
