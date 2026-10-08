@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1745",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative heroes hold their selected combat poses",
+    "detail": "Reaver, Rogue, Starseer and Herald use the twelve chosen Attack, Defend and Prepare poses after card actions. Books and defensive guards follow the selected artwork. Each co-op player keeps their own pose until their next turn; counters keep their existing presentation for a later selection pass.",
+    "build": "0.7.1.1142",
+    "pullRequest": 1745,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
     "id": "pr-1737",
     "date": "2026-10-08",
     "group": "2026-10-08",
