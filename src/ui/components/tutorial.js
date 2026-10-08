@@ -190,9 +190,10 @@ export function mountTutorial(root, { onDone }) {
     // handler, which runs after this capture listener. Yield the SAME event
     // without preventing or stopping it: combat clears its card/flask selection
     // and targetable enemies, while this tutorial remains mounted and onDone
-    // stays untouched. A selected self-card has no targetable enemy, so it still
-    // follows the tutorial's ordinary one-press exit.
+    // stays untouched. A self Counter arms the player instead, and owns the
+    // same cancel-before-exit ordering without spending its preparation.
     if (root.querySelector('.enemy-row .enemy.targetable')) return;
+    if (root.querySelector('.combatant.player.armed')) return;
     ev.preventDefault();
     ev.stopPropagation();
     finish();
