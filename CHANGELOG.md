@@ -34,6 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Full-run checks choose a starting ability** ([#1716](https://github.com/cehinds/AshenSpire/pull/1716), `0.7.1.1098`). The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.
+
+- **Starting abilities respect your deck copy limit** ([#1714](https://github.com/cehinds/AshenSpire/pull/1714), `0.7.1.1097`). Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.
+
 - **Alternative Counters retain readable clauses and charges** ([#1712](https://github.com/cehinds/AshenSpire/pull/1712), `0.7.1.1095`). Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.
 
 - **Plans: recover from control and build around Blight** ([#1713](https://github.com/cehinds/AshenSpire/pull/1713), `0.7.1.1094`). The next combat proposal gives Sleep, Paralysis and Dazed recovery cards with clear Stamina costs, caps Sleep healing and Ward restoration, and trades Prone's ranged protection for greater Contact damage. Three Blight milestones offer feats with two benefits and one drawback. Counter coverage, school interactions, tag combos and optional upcasting are documented for future implementation; gameplay does not change in this update.
