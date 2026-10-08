@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Alternative combat opens up with option C",
     "detail": "Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
-    "build": "0.7.1.1147",
+    "build": "0.7.1.1148",
     "pullRequest": 1751,
     "url": "https://github.com/cehinds/AshenSpire/pull/1751"
   },
@@ -23,16 +23,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1737"
   },
   {
-    "id": "pr-1731",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
-    "summary": "Alternative cards show action and school sigils",
-    "detail": "Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.",
-    "build": "0.7.1.1134",
-    "pullRequest": 1731,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1731"
-  },
-  {
     "id": "pr-1750",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -41,6 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1138",
     "pullRequest": 1750,
     "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1731",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative cards show action and school sigils",
+    "detail": "Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.",
+    "build": "0.7.1.1134",
+    "pullRequest": 1731,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1731"
   },
   {
     "id": "pr-1747",
