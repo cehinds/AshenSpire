@@ -35,7 +35,10 @@ export function combatIntentPresentation(intent = {}) {
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
   const damage = intent.damage != null ? intentBadge(intent).label : null;
   const part = (icon, value = null) => ({ icon, value: value == null ? null : String(value) });
-  const parts = family === 'countering' ? [part('defend', intent.block), part('attack', intent.counterDamage)]
+  const counterParts = [part('counter', intent.block)];
+  if (!(intent.counterPoiseDamage > 0) || intent.counterDamage > 0) counterParts.push(part('attack', intent.counterDamage));
+  if (intent.counterPoiseDamage > 0) counterParts.push(part('smash', intent.counterPoiseDamage));
+  const parts = family === 'countering' ? counterParts
     : family === 'defending' ? [part('defend', intent.block)]
     : family === 'smashing' ? [part('smash', damage)]
     : family === 'attacking' ? [part('attack', damage)]

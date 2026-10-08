@@ -22,3 +22,5 @@ Reproduce the live layout/input screenshots with
 `COMBAT_QA_OUT` selects the evidence directory, `QA_WIDTH` narrows the viewport,
 and `QA_SCENE` selects an authored scenery fixture. Screenshots are posed
 combat fixtures, with actual focus, inspection, and Escape interactions.
+
+Approved symbols: S1 Pointed shield and C2 Inner loop Counter. Card bottoms pair the shared action symbol with the authored card type name. HP counter damage uses crossed swords; Poise counter damage uses the hammer. Both values remain distinct when a reaction carries both. Schools and damage types remain available in Information and accessible card descriptions.

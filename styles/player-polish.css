@@ -5,6 +5,7 @@
   --polish-frame: url('../assets/player-polish/ui/components/panel-frame.svg');
   --polish-slot: url('../assets/player-polish/ui/components/item-slot.svg');
   --polish-slot-selected: url('../assets/player-polish/ui/components/item-slot-selected.svg');
+  --polish-card-material: linear-gradient(color-mix(in srgb, var(--bg) 88%, transparent), color-mix(in srgb, var(--bg) 88%, transparent));
 }
 .engraved-icon {
   display:inline-block; flex:0 0 auto; width:24px; height:24px;
@@ -78,7 +79,7 @@
    The frame is sliced, rather than stretching the illustration aperture. */
 .card, .equipment-poker-card {
   border-image:var(--polish-frame) 24 / 10px stretch;
-  background-image:linear-gradient(color-mix(in srgb, var(--bg) 88%, transparent), color-mix(in srgb, var(--bg) 88%, transparent)), url('../assets/player-polish/materials/soot-leather-material.webp');
+  background-image:var(--polish-card-material), url('../assets/player-polish/materials/soot-leather-material.webp');
   background-size:cover; background-repeat:no-repeat;
 }
 .card .cname { font-family:var(--font-display); color:var(--parchment); }
@@ -497,6 +498,17 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shared-hud .illustrated-hud-button:is(:hover,:focus-visible) { filter:drop-shadow(0 0 3px #e1bd73); }
 
 :root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-vitals-panel { background:none; }
+
+/* The card's dark leather backs Vitality, fading out at the turn ribbon.
+   Mask the complete material so its texture also becomes transparent. */
+:root .combat > .shared-hud { isolation:isolate; }
+:root .combat > .shared-hud::before {
+ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+ background-color:var(--bg);
+ background-size:cover; background-repeat:no-repeat;
+ mask-image:linear-gradient(to bottom, #000 0, #000 var(--combat-header-opaque-end, 35%), transparent 100%);
+ -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 var(--combat-header-opaque-end, 35%), transparent 100%);
+}
 
 /* Enlarge the complete HP row while reserving its scaled height above relics. */
 :root .shared-hud .resbars-host { zoom:1.22; }
