@@ -54,17 +54,6 @@ const bootTimeout = Number(process.env.SLOT_LOAD_BOOT_TIMEOUT_MS || 20000);
 if (!Number.isFinite(bootTimeout) || bootTimeout < 20000 || bootTimeout > 300000) {
   throw new Error('SLOT_LOAD_BOOT_TIMEOUT_MS must be between 20000 and 300000');
 }
-// A local run can reuse its already-running source server. Fault plants must
-// always serve their own mutated checkout, so they refuse this option.
-const reusedServer = process.env.SLOT_LOAD_SERVER_URL || null;
-if (reusedServer) {
-  const target = new URL(reusedServer);
-  if (target.protocol !== 'http:' || !['localhost', '127.0.0.1'].includes(target.hostname)
-      || !target.port || target.pathname !== '/' || target.search || target.hash || target.username || target.password) {
-    throw new Error('SLOT_LOAD_SERVER_URL must name a local HTTP source server root');
-  }
-  if (process.argv.includes('--selftest')) throw new Error('fault plants require their own source server');
-}
 const browserPath = [
   process.env.CHROME,
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -206,10 +195,9 @@ let closeBrowser = async () => {};
 let measuring = false;
 try {
   // Port 0: the OS picks a free one, so this never collides with another tool.
-  const served = reusedServer ? null : await serve({ root: ROOT, port: 0, open: false });
-  server = served?.server;
-  const sourceUrl = reusedServer || `http://127.0.0.1:${server.address().port}/`;
-  console.log(`slot-load-door: source server ${sourceUrl}${reusedServer ? ' (reused local server)' : ''}`);
+  const served = await serve({ root: ROOT, port: 0, open: false });
+  server = served.server;
+  const sourceUrl = `http://127.0.0.1:${server.address().port}/`;
   const launched = await launchBrowser({ prefix: 'slot-load-door-', browser: browserPath, headless: '--headless=new', timeoutMs: 20000 });
   closeBrowser = launched.close;
   cdp = connectCdp(launched.wsUrl);
