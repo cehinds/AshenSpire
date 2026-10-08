@@ -25,6 +25,10 @@ captures and delivery checks will be added before merge.
 - Actual card plays defeated the encounter. Reload at the victory handoff
   preserved the reward offer, level XP, RNG, fight totals and Perception exactly.
   The reward door resumed, rather than reopening or recounting the encounter.
+- Native phone taps claimed Riposte and the ordinary Combat Maneuvers Backstep
+  draft, then confirmed Continue and returned to the map. All three rewards
+  were claimed; Perception remained level 1, XP 1, pendingDrafts 0, and its
+  encounter credit remained 4. The selected cards were present in the saved deck.
 - The learned Bestiary showed five stages, 1/30 progress before the tactical
   bonus, next threshold 6, locked resources/moves, and no page overflow. Back and
   Escape returned to the title; keyboard inspector Escape restored its opener.
