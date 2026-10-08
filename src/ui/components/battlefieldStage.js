@@ -161,7 +161,7 @@ export function wireBattlefieldStage(field, model) {
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(classicAppearance() && solo && window.innerHeight > 480);
     // Short landscape needs a lower foot line to reserve the full intent row.
-    if (window.innerHeight <= 480) for (const actor of actors) {
+    if (classicAppearance() && window.innerHeight <= 480) for (const actor of actors) {
       actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
     }
     const fitFormation = () => {
