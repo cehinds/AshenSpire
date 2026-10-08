@@ -46,7 +46,7 @@ import { configuredContentBundle, advancedConfigSnapshot } from '../src/model/ad
 import { createRegistries } from '../src/model/registries.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
-import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
+import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, botControlAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
 import { createRunLoop, payFightXp, SoftLock, fleetSeed } from './simrun.mjs';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { skillTracks } from '../src/model/skills.js';
@@ -372,6 +372,8 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // open after STALEMATE_TURNS turns is scored as lost and counted as a
   // stalemate, and the crash below is kept for a bot stuck inside one turn.
   while (!combat.result && guard++ < ACTION_GUARD && combat.turn <= STALEMATE_TURNS) {
+    const control = botControlAction(combat);
+    if (control) { botDispatch(combat, control); continue; }
     // Drink a flask when hurt (below 55% HP) — humans use them; a bot that
     // hoards flasks under-measures the sustain the game actually provides.
     if (combat.player.hp < combat.player.maxHp * 0.55) {

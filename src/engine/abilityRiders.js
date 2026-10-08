@@ -99,14 +99,18 @@ export function cardTargetsAllEnemies(def) {
 // this grade has no application yet, add one after its primary effect. A pure
 // guard may therefore apply its charged buildup to the selected living enemy,
 // or the first living enemy when the play has no selection.
-export function abilityChargedEffects(effects, charges, enemyAvailable = true) {
+export function abilityChargedEffects(effects, charges, enemyAvailable = true, ctx = null) {
   if (!enemyAvailable) return effects;
-  const missing = [...new Set((charges.buildupBonuses || []).map(bonus => bonus.status))]
-    .filter(status => !effects.some(effect => effect.op === 'applyStatus' && effect.status === status));
+  const expanded = ctx?.combatExpansionVersion === 2;
+  const statusId = id => expanded && id === 'insanity' ? 'dazed' : id;
+  const missing = [...new Set((charges.buildupBonuses || []).map(bonus => statusId(bonus.status)))]
+    .filter(status => !effects.some(effect => (effect.op === 'applyStatus' || (expanded && effect.op === 'buildup')) && effect.status === status));
   if (!missing.length) return effects;
-  const primary = effects.findIndex(effect => ['damage', 'block', 'heal'].includes(effect.op));
+  const primary = effects.findIndex(effect => ['damage', 'block', 'heal', ...(expanded ? ['gainBarrier'] : [])].includes(effect.op));
   const index = primary < 0 ? effects.length : primary + 1;
-  return [...effects.slice(0, index), ...missing.map(status => ({ op: 'applyStatus', target: 'enemy', status, stacks: 0 })), ...effects.slice(index)];
+  return [...effects.slice(0, index), ...missing.map(status => expanded
+    ? { op: 'buildup', target: 'enemy', status, amount: 0 }
+    : { op: 'applyStatus', target: 'enemy', status, stacks: 0 }), ...effects.slice(index)];
 }
 
 export function consumeAbilityCharges(entity, keys) {
@@ -124,12 +128,13 @@ export function grantAbilityCharge(entity, effect) {
   if (effect.damageScope) charges[effect.key].damageScope = effect.damageScope;
 }
 
-export function attachAbilityCharges(action, charges, applied) {
+export function attachAbilityCharges(action, charges, applied, ctx = null) {
   const map = { damage: 'damage', block: 'block', heal: 'heal' };
+  if (ctx?.combatExpansionVersion === 2) map.gainBarrier = 'block';
   if (action.effect.op === 'damage' && charges.break && !applied.has('break')) { applied.add('break'); action.meta = { ...action.meta, abilityChargeBreak: charges.break }; }
   if (action.effect.op === 'damage' && charges.damageEffect && !applied.has('damageEffect')) { applied.add('damageEffect'); action.meta = { ...action.meta, abilityChargeDamageEffect: charges.damageEffect }; }
-  if (action.effect.op === 'applyStatus' && !applied.has(`buildup:${action.effect.status}`)) {
-    const amount = (charges.buildupBonuses || []).filter(bonus => bonus.status === action.effect.status).reduce((sum, bonus) => sum + bonus.amount, 0);
+  if ((action.effect.op === 'applyStatus' || (ctx?.combatExpansionVersion === 2 && action.effect.op === 'buildup')) && !applied.has(`buildup:${action.effect.status}`)) {
+    const amount = (charges.buildupBonuses || []).filter(bonus => (ctx?.combatExpansionVersion === 2 && bonus.status === 'insanity' ? 'dazed' : bonus.status) === action.effect.status).reduce((sum, bonus) => sum + bonus.amount, 0);
     if (amount) { applied.add(`buildup:${action.effect.status}`); action.meta = { ...action.meta, abilityChargeBuildup: amount }; }
   }
   const field = map[action.effect.op];

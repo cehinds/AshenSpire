@@ -751,11 +751,58 @@ test('the option-decision router door serves the shipped router, identically', (
 const semanticsDoor = await import('../src/framework/statusSemantics.js');
 const semanticsHome = await import('../src/engine/statuses.js');
 
-test('the status-semantics door serves the shipped engine semantics, identically', () => {
-  for (const name of ['getStatusInstance', 'getStacks', 'hasStatus', 'applyStatus', 'removeStatus',
-    'decayAtTurnEnd', 'getMult', 'getAdd', 'getFlag', 'getCap', 'anyCombatantFlag']) {
-    eq(semanticsDoor[name] === semanticsHome[name], true, `${name}: one home`);
-  }
+test('the status-semantics door forwards shipped state, results and errors', () => {
+  const exercise = api => {
+    const definitions = {
+      buff: { id: 'buff', stackMode: 'add', decay: 'perTurnEnd', modifiers: {
+        attackDamageAdd: 2, damageDealtMult: 1.25, blockCap: 9, meterMaxGrowthDisabled: true,
+      } },
+      timed: { id: 'timed', stackMode: 'add', decay: { duration: 2 } },
+      clocked: { id: 'clocked', stackMode: 'add', decay: 'none',
+        stacking: { mode: 'add', cap: 9, duration: 1, clock: 'ownerTurnEnd' } },
+    };
+    const player = { id: 'player', kind: 'player', alive: true, statuses: {} };
+    const events = [];
+    const ctx = { player, enemies: [], combatExpansionVersion: 1,
+      registries: { statuses: { get: id => {
+        if (!definitions[id]) throw new Error(`Unknown status: ${id}`);
+        return definitions[id];
+      } } }, emit: (type, payload) => events.push({ type, ...payload }) };
+    const reads = [];
+    const read = () => reads.push({
+      instance: structuredClone(api.getStatusInstance(player, 'buff')),
+      stacks: api.getStacks(player, 'buff'), has: api.hasStatus(player, 'buff'),
+      mult: api.getMult(ctx, player, 'damageDealtMult'),
+      add: api.getAdd(ctx, player, 'attackDamageAdd'),
+      flag: api.getFlag(ctx, player, 'meterMaxGrowthDisabled'),
+      cap: api.getCap(ctx, player, 'blockCap'),
+      anyFlag: api.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled'),
+    });
+    read();
+    eq(api.applyStatus(ctx, player, 'buff', 3), undefined, 'apply forwards its return');
+    api.applyStatus(ctx, player, 'timed', 2);
+    read();
+    eq(reads[1].add, 6, 'the adopted per-stack modifier remains effective');
+    eq(reads[1].mult, 1.25, 'the adopted flat multiplier remains effective');
+    api.decayAtTurnEnd(ctx, player);
+    eq(player.statuses.timed.duration, 1, 'duration decay advances state');
+    api.removeStatus(ctx, player, 'buff', { amount: 1 });
+    read();
+    eq(reads[2].stacks, 1, 'partial removal follows the prior decay');
+    api.decayAtTurnEnd(ctx, player);
+    read();
+    eq(reads[3].instance, null, 'final decay removes the status');
+    eq(reads[3].anyFlag, false, 'expired status no longer supplies a combat flag');
+    ctx.foundation = {};
+    api.applyStatus(ctx, player, 'clocked', 2, player);
+    api.advanceStatusClock(ctx, player, 'enemyTurnEnd');
+    eq(api.getStacks(player, 'clocked'), 2, 'another clock cannot expire the application');
+    api.advanceStatusClock(ctx, player, 'ownerTurnEnd');
+    eq(api.hasStatus(player, 'clocked'), false, 'the authored clock expires the application');
+    const error = assertThrows(() => api.applyStatus(ctx, player, 'missing'), /Unknown status: missing/);
+    return { reads, player, events, error: { name: error.name, message: error.message } };
+  };
+  eq(exercise(semanticsDoor), exercise(semanticsHome), 'the door forwards actual engine semantics');
   // The door covers the implementation's whole exported surface — a symbol
   // added to statuses.js without a door row would strand its consumers.
   for (const name of Object.keys(semanticsHome)) {
@@ -1044,7 +1091,7 @@ test('the pure dodge is priced by the Weight Class; a guard that dodges keeps it
 
 test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed profiles', () => {
   const { stampDeck } = compositionDoor;
-  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG, combatExpansionVersion: 1 });
   run.loadout.sets.rightHand = run.loadout.sets.rightHand.map(() => null);
   run.loadout.sets.leftHand = run.loadout.sets.leftHand.map(() => null);
   stampDeck(LEGACY_REG, run);
@@ -1059,10 +1106,10 @@ test('an unarmed run composes Evasive Guard and Dodge Roll from the unarmed prof
   // Born unarmed, and a legacy save whose technique slot already holds one:
   // every Dodge Roll in the deck is counted, whatever its role.
   for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
-    const bare = createRunState({ seed: 7, classId, registries: LEGACY_REG, startingHands: { leftHand: null, rightHand: null } });
+    const bare = createRunState({ seed: 7, classId, registries: LEGACY_REG, combatExpansionVersion: 1, startingHands: { leftHand: null, rightHand: null } });
     eq(bare.deck.filter((c) => c.cardId === 'dodgeRoll').length, 1, `${classId} created unarmed carries exactly one Dodge Roll`);
   }
-  const legacy = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
+  const legacy = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG, combatExpansionVersion: 1 });
   legacy.loadout.sets.rightHand = legacy.loadout.sets.rightHand.map(() => null);
   legacy.loadout.sets.leftHand = legacy.loadout.sets.leftHand.map(() => null);
   legacy.deck.push({ instanceId: 'legacy-technique', cardId: 'dodgeRoll', upgraded: false, equipmentRole: 'technique' });

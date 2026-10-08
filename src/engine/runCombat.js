@@ -24,6 +24,7 @@ import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
 import { stampSkillBonuses, critRulesFor } from '../model/skills.js';
+import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
@@ -52,7 +53,10 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     ...(run.classUnequipped ? { classUnequipped: true } : {}),
-    attributes: run.attributes,
+    attributes: run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
+    allocatedAttributes: run.attributes,
+    ashenBlight: run.ashenBlight,
+    baseResourceMaxima: run.ashenBlightBasePools,
     // The character level every stat row's `perLevel` reads (ruleset 7).
     level: Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1,
     attributeMode: run.attributeMode, // the scale the dodge reads Dexterity on (plan A3)
@@ -116,6 +120,9 @@ export function createRunCombat({
   // here so the fight's copies carry the levels and hands it starts with.
   stampSkillBonuses(registries, run);
   return createCombat({
+    combatExpansionVersion: run.combatExpansionVersion || 1,
+    combatExpansionRules: run.combatExpansionRules,
+    combatKey: `${run.seed}/${run.actNumber}/${run.floor}/${run.mapNodeId || enemyIds.join(',')}`,
     // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the
     // three hand rows are this run's own — its snapshot's (its class's opening
     // hand among them), or for a run born before ruleset 7 the retired homes it
@@ -151,6 +158,10 @@ export function createRunCombat({
 
 /** Write what a fight leaves behind back onto the run (live onCombatEnd's first half). */
 export function runCombatEnd(run, combat) {
+  if (combat.combatExpansionVersion === 2) {
+    run.ashenBlight = structuredClone(combat.player.ashenBlight);
+    run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);
+  }
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   for (const field of ['hp', 'mana', 'stamina']) {

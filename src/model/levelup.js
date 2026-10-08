@@ -29,6 +29,7 @@ import { note } from './healLedger.js';
 import { enemyCombatPower } from './combatPower.js';
 import { xpStepCost } from './xpCurve.js';
 import { linkedAttributes, spendAttributePick } from './skills.js';
+import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
  *  soft in tools rather than throwing on a missing key. Bad data is caught at
@@ -334,16 +335,20 @@ export function rederivePools(registries, run, why) {
   const classDef = registries.classes.get(run.class);
   const level = characterLevel(run);
   const before = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
+  const priorEnergy = run.energyMax;
+  const attributes = effectiveAshenBlightAttributes(run);
   let moved = 0;
   for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
     if (run[key] === undefined) continue;
-    const next = deriveStat(rules, statId, { attributes: run.attributes, classDef, level }).value;
+    if (run.combatExpansionVersion === 2 && key === 'energyMax') continue;
+    const next = deriveStat(rules, statId, { attributes, classDef, level }).value;
     if (next !== run[key]) moved += 1;
     run[key] = next;
   }
   // Reconcile from the original equipped maxima exactly once. Writing bare
   // derived maxima first would make the equipment bonus look like a refill.
   reconcileRunLoadoutHp(registries, run);
+  if (run.combatExpansionVersion === 2 && priorEnergy !== run.energyMax) moved += 1;
   for (const key of Object.keys(before)) if (run[key] !== before[key]) moved += 1;
   return moved;
 }

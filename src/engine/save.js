@@ -657,7 +657,10 @@ export function createSaveManager(storage) {
           assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
           run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
         }
-        const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
+        const snapshotReferenceProblems = [
+          ...combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries),
+          ...combatSnapshotReferenceProblems(run.combatPendingOutcome?.snapshot, registries),
+        ];
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
         }
