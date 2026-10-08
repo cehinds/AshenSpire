@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
+import { createCoopCombat, playCard, endTurn, previewCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
 import { combatRules } from '../src/content/combatRules.js';
@@ -120,6 +120,51 @@ test('solo and one-seat co-op execute same deferred Counter health and Poise out
   assert.deepEqual(counterEvents(c).map(event => [event.amount, event.poiseDamage]), counterEvents(s).map(event => [event.amount, event.poiseDamage]));
 });
 
+for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Counter preview ignores the support target's Vulnerable modifier`, () => {
+  const c = isCoop ? coop('spikedReprisal') : solo('spikedReprisal');
+  const enemy = c.enemies[0];
+  applyStatus(c, enemy, 'vulnerable', 1);
+  const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', enemy.id) : previewCard(c, 'card1', enemy.id);
+  const damage = preview.values.find(value => value.op === 'damage');
+  assert.equal(damage.value, 4);
+  assert.equal(damage.perTarget[enemy.id], 4);
+  assert.deepEqual(damage.hitDamages, [4]);
+  if (isCoop) playCard(c, 'p1', 'card1', enemy.id);
+  else dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
+  const actor = isCoop ? c.players.get('p1').entity : c.player;
+  assert.equal(actor.combatCounter.damage, damage.totalDamage);
+  assert.equal(getStacks(enemy, 'bleed'), 2, 'the selected enemy still receives immediate support');
+});
+
+for (const isCoop of [false, true]) for (const inactive of ['condition', 'zeroHits', 'zeroRepeat', 'allInactive']) {
+  test(`${isCoop ? 'co-op' : 'solo'} charged Counter preserves its bonus after ${inactive}`, () => {
+    const effects = [{ op: 'damage', target: 'enemy', amount: 4,
+      ...(inactive === 'condition' || inactive === 'allInactive' ? { if: { p: 'hasStatus', of: 'self', status: 'starstoneCharge' } }
+        : inactive === 'zeroHits' ? { hits: 0 } : { repeat: 0 }) },
+      ...(inactive === 'allInactive' ? [] : [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }])];
+    const registries = { ...basicRegistry, cards: { ...basicRegistry.cards, get(id) {
+      const def = basicRegistry.cards.get(id);
+      return id === 'riposte' ? { ...def, effects, gradeProfiles: undefined } : def;
+    } } };
+    const c = isCoop ? createCoopCombat({ registries, rng: createRng(50),
+      players: [{ id: 'p1', ...player('riposte') }], enemyIds: ['wanderingSoldier'], ratingsRules: null })
+      : solo('riposte', registries);
+    const actor = isCoop ? c.players.get('p1').entity : c.player;
+    grantAbilityCharge(actor, { key: 'counter-card-charge', cardType: 'attack', damage: 2 });
+    grantAbilityCharge(actor, { key: 'counter-effect-charge', cardType: 'attack', damage: 1, damageScope: 'effect' });
+    const before = structuredClone(actor.abilityRiders);
+    const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', c.enemies[0].id) : previewCard(c, 'card1', c.enemies[0].id);
+    const damage = preview.values.filter(value => value.op === 'damage');
+    assert.deepEqual(actor.abilityRiders, before, 'preview leaves both one-use charges intact');
+    assert.deepEqual(damage.map(value => value.hitDamages), inactive === 'allInactive' ? [[7]] : [inactive === 'condition' ? [4] : [], [7, 4]]);
+    if (isCoop) playCard(c, 'p1', 'card1');
+    else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+    if (inactive !== 'condition' && inactive !== 'allInactive')
+      assert.equal(actor.combatCounter.damage, damage.reduce((total, value) => total + value.totalDamage, 0));
+    assert.equal(actor.combatCounter.damage, inactive === 'allInactive' ? 3 : 11);
+  });
+}
+
 test('two co-op seats keep independent Counter charges and retaliation owners', () => {
   const c = coop('riposte', 2);
   playCard(c, 'p1', 'card1'); playCard(c, 'p2', 'card1');
@@ -139,6 +184,31 @@ test('legacy conditional Counter takes exactly one eligible damage branch before
   dispatch(guarded, { type: 'playCard', cardInstanceId: 'card1' });
   assert.equal(guarded.player.combatCounter.damage, 10, 'conditional branches must not sum to14');
 });
+
+for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Crimson Reprisal prints its inactive conditional clause`, () => {
+  const c = isCoop ? coop('progression-crimson-reprisal') : solo('progression-crimson-reprisal');
+  const actor = isCoop ? c.players.get('p1').entity : c.player;
+  const preview = isCoop ? previewCoopCard(c, 'p1', 'card1') : previewCard(c, 'card1');
+  assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [8, 4]);
+  if (isCoop) playCard(c, 'p1', 'card1');
+  else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+  assert.equal(actor.combatCounter.damage, 8, 'the inactive clause remains unarmed');
+});
+
+for (const isCoop of [false, true]) for (const hasBlock of [false, true]) {
+  test(`${isCoop ? 'co-op' : 'solo'} conditional Counter keeps both printed branches with Block=${hasBlock}`, () => {
+    const c = isCoop ? createCoopCombat({ registries: legacyRegistry, rng: createRng(50),
+      players: [{ id: 'p1', ...player('guardCounter') }], enemyIds: ['wanderingSoldier'], ratingsRules: null })
+      : solo('guardCounter', legacyRegistry);
+    const actor = isCoop ? c.players.get('p1').entity : c.player;
+    if (hasBlock) actor.block = 2;
+    const preview = isCoop ? previewCoopCard(c, 'p1', 'card1') : previewCard(c, 'card1');
+    assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [4, 10]);
+    if (isCoop) playCard(c, 'p1', 'card1');
+    else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+    assert.equal(actor.combatCounter.damage, hasBlock ? 10 : 4, 'only the eligible branch is armed');
+  });
+}
 
 test('foundation Counter snapshots its source before payment and preserves it for deferred reply', () => {
   const c = createCombat({ registries: basicRegistry, rng: createRng(50), player: player('riposte'),
