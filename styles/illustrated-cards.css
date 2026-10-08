@@ -21,3 +21,20 @@
 :root .illustrated-card-face .ic-text .val.up { color:#205e2b; font-weight:bold; }
 :root .illustrated-card-face .ic-text .val.down { color:#8d2424; font-weight:bold; }
 :root .card.illustrated-card.tag-boost .ic-text .val.up { color:var(--boost-tint,#205e2b); text-shadow:0 1px #efe1ba; }
+
+/* Primary action leads; school is secondary. The authored tags layer owns
+   placement, and Information keeps the full tag vocabulary and explanations. */
+:root .illustrated-card-face .card-sigil-band {
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:3cqw;
+  color:#f3e6c5;filter:drop-shadow(0 1px 1px #0d0a07);
+}
+:root .combat-sigil { display:inline-flex;align-items:center;justify-content:center;flex:none; }
+:root .combat-sigil svg { display:block;width:100%;height:100%;pointer-events:none; }
+:root .card-sigil-band .combat-sigil-action { width:16cqw;height:16cqw; }
+:root .card-sigil-band .combat-sigil-school { width:9cqw;height:9cqw; }
+:root .card-sigil-band .combat-sigil { pointer-events:auto; }
+:root .card-sigil-band .card-damage-types { max-width:36cqw;font:normal max(8px,4.5cqw)/1.15 Georgia;text-align:left; }
+:root .illustrated-card-face [data-rules-complete='true'] { overflow:visible; }
+:root .inspection-sigils { margin-block:12px;display:grid;gap:10px; }
+:root .inspection-sigil-row { display:flex;align-items:center;gap:12px;line-height:1.5; }
+:root .inspection-sigils .combat-sigil { width:32px;height:32px;color:var(--gold,#d6bd85); }

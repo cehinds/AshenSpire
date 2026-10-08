@@ -91,12 +91,19 @@ if (process.argv.includes('--selftest')) {
         expectRed: /✗ .*targeted-flask Escape cancels targeting and leaves the tutorial standing/,
       },
       {
+        name: 'tutorial Escape takes an armed self Counter instead of yielding its cancellation',
+        file: 'src/ui/components/tutorial.js',
+        find: "    if (root.querySelector('.combatant.player.armed')) return;",
+        replace: '    /* planted: self Counter confirmation loses Escape to the tutorial */',
+        expectRed: /✗ .*self-Counter Escape cancels without spending and leaves the tutorial standing/,
+      },
+      {
         // THE LOCKOUT ITSELF: the button row pushed off the bottom of the
         // viewport, which is the state the header says makes the veil
         // un-dismissable AND persistent across a reload.
         name: 'the coach mark buttons are pushed off the bottom of the viewport (the un-dismissable veil)',
         file: 'styles/ui.css',
-        append: '.tut-bubble .tut-row { position: relative; top: 4000px; }',
+        append: '.tut-veil > .tut-row { top: 4000px !important; }',
         expectRed: /(FAIL|off-screen|not hit-testable|unreachable|✗)/i,
       },
       {
@@ -105,7 +112,7 @@ if (process.argv.includes('--selftest')) {
         // the veil instead of the control. el.click() would not notice.
         name: 'a transparent layer covers the buttons — a real click lands on the veil',
         file: 'styles/ui.css',
-        append: '.tut-veil::after, .tut-bubble::after { content: ""; position: fixed; inset: 0; z-index: 99999; }',
+        append: '.tut-veil::after, .tut-bubble::after { content: ""; position: fixed; inset: 0; z-index: 99999; pointer-events: auto; }',
         expectRed: /(FAIL|not hit-testable|covered|unreachable|✗)/i,
       },
     ],
@@ -235,7 +242,10 @@ const PROBE = `(() => {
   if (!veil) return { veil: false };
   const vw = innerWidth, vh = innerHeight;
   const box = (sel) => {
-    const el = veil.querySelector(sel);
+    // Controls remain inside the pointer-transparent veil and own their hit
+    // lane independently of the prose bubble. Measure those live controls
+    // while the veil remains the tutorial-presence guard.
+    const el = document.querySelector(sel);
     if (!el) return null;
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
@@ -253,7 +263,7 @@ const PROBE = `(() => {
   return {
     veil: true, vw, vh,
     zoom: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1,
-    label: veil.querySelector('.tut-next').textContent,
+    label: document.querySelector('.tut-next')?.textContent || '',
     next: box('.tut-next'), skip: box('.tut-skip'),
     spot: { left: Math.round(spot.left), top: Math.round(spot.top), width: Math.round(spot.width), height: Math.round(spot.height) },
   };
@@ -402,12 +412,20 @@ async function main() {
   const armAttackTarget = async () => {
     for (let guard = 0; guard < 8; guard++) {
       const pt = await evalIn(`(async () => {
-        const { resolveCard } = await import('/src/model/registries.js');
+        const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
         const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
+        const { cardTargetPlan } = await import('/src/model/cardTargets.js');
+        const { previewCard } = await import('/src/engine/combat.js');
         const combat = window.__combat;
         const c = [...document.querySelectorAll('.hand .card:not(.unaffordable)')].find(node => {
           const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
-          return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst), { targeted: true });
+          if (!inst) return false;
+          const def = resolveCombatCard(combat, inst);
+          const preview = previewCard(combat, inst.instanceId);
+          const plan = cardTargetPlan({ ...def, combatPreview: preview }, combat.player.id, combat.enemies,
+            [{ ...combat.player, connected: true }], { solo: true });
+          return plan.mode === 'enemy' && plan.legalIds.length > 0
+            && hasImmediateHostileDamage(def, { targeted: true });
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
@@ -423,6 +441,42 @@ async function main() {
     }
     return { armed: false, card: null };
   };
+  const armSelfCounter = async () => {
+    for (let guard = 0; guard < 3; guard++) {
+      const pt = await evalIn(`(async () => {
+        const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
+        const { combatProfileFor } = await import('/src/model/combatCardProfile.js');
+        const { cardTargetPlan } = await import('/src/model/cardTargets.js');
+        const combat = window.__combat;
+        const c = [...document.querySelectorAll('.hand .card:not(.unaffordable)')].find(node => {
+          const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
+          if (!inst) return false;
+          const def = resolveCombatCard(combat, inst);
+          const plan = cardTargetPlan(def, combat.player.id, combat.enemies,
+            [{ ...combat.player, connected: true }], { solo: true });
+          return combatProfileFor(def).maneuver === 'counter' && plan.mode === 'friendly'
+            && plan.legalIds.includes(combat.player.id);
+        });
+        if (!c) return null;
+        const r = c.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      })()`);
+      if (!pt) return { armed: false, card: null };
+      await clickAt(pt.x, pt.y);
+      const state = await evalIn(`({
+        armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.combatant.player.armed'),
+        enemyTarget: !!document.querySelector('.enemy-row .enemy.targetable'),
+        card: document.querySelector('.hand .card.selected')?.dataset.cardId || null,
+      })`);
+      if (state.armed) { await parkPointer(); return state; }
+    }
+    return { armed: false, card: null };
+  };
+  const gameplayReceipt = () => evalIn(`(() => {
+    const c = window.__combat;
+    return JSON.stringify({ player: c.player, enemies: c.enemies, piles: c.piles,
+      events: c.eventLog, rng: c.rng.getCounters() });
+  })()`);
   const armTargetedFlask = async () => {
     // Select by the product-owned identity rather than an inventory position:
     // the shot fixture carries Crimson then Blight, while the durable standalone
@@ -561,6 +615,16 @@ async function main() {
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
     await wait(700); // auto-zoom re-flexes on a 150ms debounce, plus a boot re-apply
     return evalIn(`(async () => {
+      // The expanded Reaver opener may legitimately draw only Counters and
+      // friendly actions. This cell verifies Escape while a CARD target is
+      // armed, not the shuffle, so give the shot fixture one authored,
+      // affordable hostile card instead of mistaking Shield Bash's deferred
+      // reply for an immediate attack.
+      const combat = window.__combat;
+      if (!combat.piles.hand.some(card => card.instanceId === 'tutorial-reach-attack')) {
+        combat.piles.hand.unshift({ instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false });
+        window.__renderCombatForShot();
+      }
       const m = await import('/src/ui/components/tutorial.js');
       window.__tutDone = 0;
       m.mountTutorial(document.getElementById('app'), { onDone: () => { window.__tutDone++; } });
@@ -604,7 +668,14 @@ async function main() {
     ok(reacted.n !== before || reacted.sel, `${name}: a real click plays a card THROUGH the veil (hand ${before}→${reacted.n}, selected=${reacted.sel})`);
     ok(await evalIn(`!!document.querySelector('.tut-veil')`), `${name}: …and the tutorial is still up while that happened`);
 
-    // 2) Escape is an exit that does not depend on geometry.
+    // 2) An armed card owns cancellation before the tutorial's geometry-free exit.
+    const initiallyArmed = await evalIn(`!!document.querySelector('.enemy.targetable, .combatant.player.armed')`);
+    if (initiallyArmed) {
+      const receipt = await gameplayReceipt();
+      await pressKey('Escape', 'Escape', 27);
+      ok(await evalIn(`!!document.querySelector('.tut-veil') && !document.querySelector('.hand .card.selected, .enemy.targetable, .combatant.player.armed')`)
+        && await gameplayReceipt() === receipt, `${name}: through-veil card Escape cancels without spending or finishing`);
+    }
     await pressKey('Escape', 'Escape', 27);
     const escaped = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
     ok(escaped.done === 1 && !escaped.veil, `${name}: Escape finishes the tutorial (onDone fired, veil removed)`);
@@ -630,6 +701,23 @@ async function main() {
     await pressKey('Escape', 'Escape', 27);
     const later = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
     ok(later.done === 1 && !later.veil, `${name}: a later unarmed Escape finishes the tutorial exactly once`);
+
+    // A self Counter has no enemy target: its player confirmation owns the same
+    // first Escape. Inspect real state before/after so preparation is not paid.
+    await boardWithTutorial(vp);
+    ok(await advanceToPlayCards(), `${name}: reached tutorial step 3 for self Counter`);
+    const selfReceipt = await gameplayReceipt();
+    const armedSelf = await armSelfCounter();
+    ok(armedSelf.armed && !armedSelf.enemyTarget, `${name}: armed a real self Counter — ${JSON.stringify(armedSelf)}`);
+    await pressKey('Escape', 'Escape', 27);
+    const selfCancelled = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil'),
+      selected: !!document.querySelector('.hand .card.selected'), playerArmed: !!document.querySelector('.combatant.player.armed') })`);
+    ok(selfCancelled.done === 0 && selfCancelled.veil && !selfCancelled.selected && !selfCancelled.playerArmed
+      && await gameplayReceipt() === selfReceipt,
+      `${name}: self-Counter Escape cancels without spending and leaves the tutorial standing — ${JSON.stringify(selfCancelled)}`);
+    await pressKey('Escape', 'Escape', 27);
+    ok(await evalIn(`window.__tutDone === 1 && !document.querySelector('.tut-veil')`),
+      `${name}: later unarmed Escape after self Counter finishes exactly once`);
 
     // A targeted flask arms the same enemy-targeting state without selecting a
     // hand card. This is the discriminating sibling of the attack-card case:
@@ -822,22 +910,41 @@ async function main() {
     await wait(500);
     const haveFight = await evalIn(`!!document.querySelector('.map-node.monster.reachable')`);
     ok(haveFight, 'first-run: the first floor offers a fight to walk into');
+    const savedRules = await evalIn(`(() => {
+      const saved = JSON.parse(localStorage.getItem('sote_run_v1') || 'null');
+      return { expansion: saved?.combatExpansionVersion, defense: saved?.advancedConfigSnapshot?.breakMeterVersion };
+    })()`);
+    ok(savedRules?.expansion === 2 && savedRules?.defense === 2,
+      'first-run: expanded combat and defense versions survive the actual creation save', JSON.stringify(savedRules));
 
-    // A brand-new run intentionally carries no utility flask. Seed one valid
-    // saved-run row, then reload through CONTINUE so the standalone cell reaches
-    // Blight Coating through the real save loader and combat constructor rather
-    // than mutating the rendered combat object. The profile stays first-run:
-    // seenTutorial is still absent/false and the coach marks must mount itself.
+    // A brand-new run intentionally carries no utility flask, and its expanded
+    // opener may contain no immediate hostile card. Seed both fixtures through
+    // the durable run/profile, then reload through CONTINUE so the standalone
+    // cell reaches them through the real save loader and combat constructor
+    // rather than mutating the rendered combat object. The profile stays
+    // first-run: seenTutorial is still absent/false and the coach marks must
+    // mount itself.
     const seededFlask = await evalIn(`(() => {
       const key = 'sote_run_v1';
       const raw = localStorage.getItem(key);
       if (!raw) return false;
       const saved = JSON.parse(raw);
       saved.flasks = [{ flaskId: 'blightCoating' }];
+      saved.deck = saved.deck.filter(card => card.instanceId !== 'tutorial-reach-attack');
+      const selfCounter = saved.deck.find(card => card.cardId === 'shieldBash');
+      if (!selfCounter) return false;
+      saved.deck = saved.deck.filter(card => card.instanceId !== selfCounter.instanceId);
+      saved.deck.unshift({ instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false }, selfCounter);
       localStorage.setItem(key, JSON.stringify(saved));
-      return JSON.parse(localStorage.getItem(key)).flasks?.[0]?.flaskId === 'blightCoating';
+      const metaKey = 'sote_meta_v1';
+      const meta = JSON.parse(localStorage.getItem(metaKey));
+      meta.settings.playInDeckOrder = true;
+      localStorage.setItem(metaKey, JSON.stringify(meta));
+      const reread = JSON.parse(localStorage.getItem(key));
+      return reread.flasks?.[0]?.flaskId === 'blightCoating'
+        && reread.deck?.[0]?.instanceId === 'tutorial-reach-attack';
     })()`);
-    ok(seededFlask, 'first-run: valid Blight Coating row entered through the durable run save');
+    ok(seededFlask, 'first-run: valid attack and Blight Coating rows entered through the durable save');
     await cdp.send('Page.navigate', { url: base }, S);
     await passStartupGate();
     await until(`!!document.querySelector('.slot-continue:not([disabled])')`, 'the title screen with the flask-seeded run');
@@ -875,6 +982,19 @@ async function main() {
         !afterCancel.meta || JSON.parse(afterCancel.meta).settings.seenTutorial !== true,
         'first-run: armed Escape leaves durable seenTutorial false'
       );
+
+      const selfReceipt = await gameplayReceipt();
+      const armedSelf = await armSelfCounter();
+      ok(armedSelf.armed && !armedSelf.enemyTarget, `first-run: armed a real self Counter — ${JSON.stringify(armedSelf)}`);
+      await pressKey('Escape', 'Escape', 27);
+      const afterSelfCancel = await evalIn(`({ veil: !!document.querySelector('.tut-veil'),
+        selected: !!document.querySelector('.hand .card.selected'), playerArmed: !!document.querySelector('.combatant.player.armed'),
+        meta: localStorage.getItem('sote_meta_v1') })`);
+      ok(afterSelfCancel.veil && !afterSelfCancel.selected && !afterSelfCancel.playerArmed
+        && await gameplayReceipt() === selfReceipt,
+        `first-run: self-Counter Escape cancels without spending and leaves the tutorial standing — ${JSON.stringify(afterSelfCancel)}`);
+      ok(!afterSelfCancel.meta || JSON.parse(afterSelfCancel.meta).settings.seenTutorial !== true,
+        'first-run: self-Counter Escape leaves durable seenTutorial false');
 
       // Exercise the targeted-flask sibling through the first-run path too.
       // This block runs against both source and --root, so a regenerated

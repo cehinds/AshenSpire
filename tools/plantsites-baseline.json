@@ -226,7 +226,7 @@
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
-      "digest": "22a1e5caac6cd30b"
+      "digest": "3614d59895fed293"
     },
     "tools/menufit.mjs": {
       "count": 1,
@@ -305,8 +305,8 @@
       "digest": "0df767382db6375e"
     },
     "tools/slot-load-door.mjs": {
-      "count": 6,
-      "digest": "9f0f43754b557d8c"
+      "count": 8,
+      "digest": "c6512ad9276c2202"
     },
     "tools/startup-gate.mjs": {
       "count": 26,
@@ -341,8 +341,8 @@
       "digest": "edaf8f33b2ee919a"
     },
     "tools/tutorial-reach.mjs": {
-      "count": 1,
-      "digest": "8ecba2d09176de17"
+      "count": 2,
+      "digest": "a44c1e0b0012988e"
     },
     "tools/ui-sweep.mjs": {
       "count": 3,

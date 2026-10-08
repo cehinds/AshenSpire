@@ -3,6 +3,116 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1737",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative tutorial controls stay reachable",
+    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1737,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
+  },
+  {
+    "id": "pr-1731",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative cards show action and school sigils",
+    "detail": "Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.",
+    "build": "0.7.1.1134",
+    "pullRequest": 1731,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1731"
+  },
+  {
+    "id": "pr-1736",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Saved fights load with their intended combat rules",
+    "detail": "Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.",
+    "build": "0.7.1.1130",
+    "pullRequest": 1736,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1736"
+  },
+  {
+    "id": "pr-1739",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: complete combat checks finish within their limits",
+    "detail": "Nothing you play changes. The full discovered-test, self-test and mobile-layout sets now run in exhaustive parallel pieces, so every original check still runs while each automated job remains within its 20-minute limit.",
+    "build": "0.7.1.1128",
+    "pullRequest": 1739,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1739"
+  },
+  {
+    "id": "pr-1733",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat prices and checkpoints stay consistent",
+    "detail": "Upcast cards show their full SP and Mana price before payment; solo and co-op apply the same Mana discount. Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.",
+    "build": "0.7.1.1127",
+    "pullRequest": 1733,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1733"
+  },
+  {
+    "id": "pr-1732",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Valid card content keeps building through strict checks",
+    "detail": "The bundler keeps adjacent static imports separate and accepts legal empty statements between whitespace. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.",
+    "build": "0.7.1.1124",
+    "pullRequest": 1732,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1732"
+  },
+  {
+    "id": "pr-1728",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat controls respond promptly and upcasts keep legal targets",
+    "detail": "Accepted plays immediately lock further actions while the hand and fighters stay in place for their animation. Escape cancels a selected Counter card before closing the tutorial. Co-op Upcast appears under a selected card and opens only its rank chooser. Solo and co-op show legal targets for the selected rank, ask for a new target when its destination changes, and spend nothing before the final play. Cards with a higher base rank keep that rank when no upcast is chosen.",
+    "build": "0.7.1.1122",
+    "pullRequest": 1728,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1728"
+  },
+  {
+    "id": "pr-1729",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Actions and schools have distinct card sigils",
+    "detail": "A large monochrome action mark leads a smaller school mark and written damage types. Information explains each mark and keeps the detailed tags. Complete effects adapt to the available card space while preserving costs, ranks, conditions and durations.",
+    "build": "0.7.1.1118",
+    "pullRequest": 1729,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1729"
+  },
+  {
+    "id": "pr-1723",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Martial and Spell combat is playable",
+    "detail": "New runs use persistent stances, whole-action counters and evasion, Ward, typed defenses, status buildup and recovery, optional upcasting, and run-long Ashen Blight. Cards show their action at the bottom with compact effects and inspected tags; Powers Exhaust while their buffs stay active for the fight. Solo and co-op share the rules and saved outcomes. Existing runs retain their original combat rules.",
+    "build": "0.7.1.1111",
+    "pullRequest": 1723,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1723"
+  },
+  {
+    "id": "pr-1727",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Cards animate with each class's base weapons",
+    "detail": "Alternative combat now plays attack, smash, sweep, counter, defend, spell and ranged motions from the card type. Reaver uses a two-handed greatsword and crossbow, Rogue twin daggers and bow, Starseer staff and open book, and Herald unarmed strikes and book casting. Attacks advance and return, hits flash red, and the atelier and deck preview share the new motions. Equipment-tag combinations and stance families remain separate work.",
+    "build": "0.7.1.1106",
+    "pullRequest": 1727,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1727"
+  },
+  {
+    "id": "pr-1725",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Power and card-label rules clarified",
+    "detail": "Defines expanded Power casts that Exhaust their paid card instance while its installed effect lasts for the combat. Preserves authored action labels, reusable Skills, and separate deck Status cards. Additional copies and Replicas remain separate paid casts. This contract prepares the combat implementation; gameplay does not change yet.",
+    "build": "0.7.1.1103",
+    "pullRequest": 1725,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1725"
+  },
+  {
     "id": "pr-1721",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -11,6 +121,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1102",
     "pullRequest": 1721,
     "url": "https://github.com/cehinds/AshenSpire/pull/1721"
+  },
+  {
+    "id": "pr-1726",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Enemy knowledge rules defined",
+    "detail": "Specifies unknown and broad enemy clues, run Perception from successful predictions, and five-stage persistent bestiary knowledge. Defines saved receipts, bounded counter bonuses and private co-op reads. This is the contract for a later gameplay update; the game does not change yet.",
+    "build": "0.7.1.1102",
+    "pullRequest": 1726,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1726"
   },
   {
     "id": "pr-1719",
@@ -31,6 +151,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1100",
     "pullRequest": 1715,
     "url": "https://github.com/cehinds/AshenSpire/pull/1715"
+  },
+  {
+    "id": "pr-1718",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Next combat rules accepted for implementation",
+    "detail": "Defines the complete Martial and Spell expansion: whole-action counters and evasion, persistent Ward, control recovery, optional upcasting, and three run-lasting Blight feat stages. Old runs keep their saved rules. This contract update prepares the runtime implementation; gameplay does not change yet.",
+    "build": "0.7.1.1100",
+    "pullRequest": 1718,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1718"
   },
   {
     "id": "pr-1720",

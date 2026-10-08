@@ -1,5 +1,5 @@
 # .github/workflows/tests.yml — every test in the repository, on every push to
-# `test` and `release`; the fast core suite also on every PR into dev and every
+# `test` and `release`; core and discovery shards also on every PR into dev and every
 # push to dev.
 #
 # WHY THIS FILE EXISTS. ci.yml holds the whole suite but was dispatch-only
@@ -19,7 +19,7 @@
 #                              two PRs each green alone can break together.
 #   push to test / release   — all three jobs.
 #   workflow_dispatch        — all three jobs, on any ref.
-# Nothing was removed: every job and step below runs, unchanged, on every push
+# Nothing was removed: every original check runs on every push
 # to `test` and `release`.
 #
 # WHAT IT COSTS. Linux only, no LFS (no test here reads an LFS-tracked
@@ -28,10 +28,10 @@
 # `push` never share a ref here, so no commit runs twice — the defect ci.yml's
 # header measured for `push: ['**']` + `pull_request`.
 #
-# THREE PARALLEL JOBS, so a slow corpus cannot hold the fast answer hostage and
+# PARALLEL JOBS, so a slow corpus cannot hold the fast answer hostage and
 # no job reads a tree another is mutating:
 #   core       — the art release fetch first (step 12: the suite reads the
-#                packs), the engine suite, every discovered *.test.mjs, each
+#                packs), the engine suite, each
 #                tool's verdict on the tree as it stands (tests/run-node.mjs),
 #                the no-browser CHANGELOG ordering check with its own
 #                known-bads (step 13 retired the `fetch-art --agree` step
@@ -54,9 +54,9 @@ name: tests
 
 on:
   pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev'] # `core` only; see the header
+    branches: [dev, alternative/dev, 'alternative/**/dev'] # fast core + discovered shards
   push:
-    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test'] # `core` only on dev; see the header
+    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test'] # core + discovered shards on dev; see the header
   workflow_dispatch:
 
 concurrency:
@@ -113,8 +113,8 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
 
-      - name: Engine suite, every discovered test file, and each tool's verdict on the tree
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests
+      - name: Engine suite and each tool's verdict on the tree
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests --no-discovered
 
       - name: CHANGELOG receipts run newest first and name builds that exist (no browser)
         if: always() # independent of the step above; a red there must not hide this
@@ -124,13 +124,66 @@ jobs:
         if: always()
         run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order --selftest
 
+  discovered:
+    name: discovered tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['0/4', '1/4', '2/4', '3/4']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
+          # Match the heavy discovery lane: retain source and history while
+          # leaving unused authoring PNGs out of this test-only checkout.
+          lfs: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
+
+      - name: The base branch, for the tools that measure against it
+        run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
+
+      - uses: ./.github/actions/setup-node
+      - name: Install card artwork encoder for conversion tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/card-art-python"
+          "$RUNNER_TEMP/card-art-python/bin/python" -m pip install Pillow==11.1.0
+          echo "$RUNNER_TEMP/card-art-python/bin" >> "$GITHUB_PATH"
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - name: Every discovered test file, partitioned without omissions
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --shard ${{ matrix.shard }}
+
   selftests:
-    name: tool self-tests
+    name: tool self-tests (${{ matrix.group }})
     # About 6 minutes: over the dev-PR budget, so it runs on push to test and
     # release (and on dispatch), not on a pull request into dev.
     if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [link, other]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -146,7 +199,7 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Every tool check still catches its own known-bad corpus
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only --selftest-group ${{ matrix.group }}
 
   parse-gate:
     name: bundler parse gate
@@ -154,7 +207,7 @@ jobs:
     # not on a pull request into dev.
     if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
 

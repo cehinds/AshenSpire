@@ -11,7 +11,15 @@ import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { coopEnemyIntent } from '../models/CoopIntentModel.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
+import { cardTargetPlan } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
+import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
+import { combatCardView } from '../models/CombatCardView.js';
+import { combatSnapshotCardCosts } from '../models/CombatSnapshotCardCosts.js';
+import { upcastOptions } from '../../model/upcasting.js';
+import { openUpcastChoice } from '../components/upcastChoice.js';
+import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
+import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
@@ -69,7 +77,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds } from '../fx.js';
+import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -108,7 +116,7 @@ import {
 } from '../kit/index.js';
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
-import { clearSelection } from '../components/cardSelection.js';
+import { clearSelection, litCard } from '../components/cardSelection.js';
 import { smithingStoneNote } from '../../model/rewardplan.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
@@ -242,6 +250,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   app.addEventListener('cardinspectionselect', inspectCard);
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
+  const upcastTiersByCard = new Map();
+  const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   const combatRests = new Map();
   const readinessOrders = new Map();
@@ -275,7 +285,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
         const animation = equipmentAnimationForLoadout(registries, member.loadout, member.classId);
-        plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, action });
+        plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, classId: member.classId, action });
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
         plan.spriteEffect=combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},event);plan.targetId=event.targetId;plan.effectEvents=effectEvents;
@@ -340,9 +350,41 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (shell && shell.close) shell.close();
   }
   const send = (obj,{progressionPopup=false}={}) => {
+    if (obj.t === 'playCard' && obj.upcastTier == null && upcastTiersByCard.has(upcastKey(obj.cardInstanceId))) obj = { ...obj, upcastTier: upcastTiersByCard.get(upcastKey(obj.cardInstanceId)) };
     if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
     if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
     if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
+    if (obj.t === 'playCard' && obj.upcastTier == null && meta.settings?.askToUpcastAfterTarget) {
+      const seat = latestWireSnap?.scene?.players?.find(entry => entry.id === me);
+      const inst = seat?.hand.find(entry => entry.instanceId === obj.cardInstanceId);
+      const def = inst && cardDef(inst);
+      const options = def && upcastOptions(def);
+      if (options?.length) {
+        closeCardChoice(); const seatAtOpen = me;
+        const shell = openUpcastChoice({ definition: def,
+          onClosed: () => { if (cardChoiceShell === shell) cardChoiceShell = null; },
+          onChoose: ranks => {
+            if (me !== seatAtOpen) return;
+            upcastTiersByCard.set(upcastKey(inst.instanceId), Number(ranks));
+            const scene = snap?.scene;
+            const chosen = cardDef(inst);
+            const plan = cardTargetPlan(chosen, me, scene?.enemies, scene?.players);
+            const previousTarget = obj.targetId ?? (plan.mode === 'friendly' ? me : null);
+            if (!plan.legalIds.includes(previousTarget)) {
+              if (plan.mode === 'friendly') { armFriendlyTargeting(inst.instanceId); return; }
+              armedFriendlyCard = null; render();
+              const targetShell = openCardChoiceModal({ cardName: chosen.name,
+                plan: { kind: 'target', options: (scene?.enemies || []).filter(enemy => plan.legalIds.includes(enemy.id))
+                  .map(enemy => ({ id: enemy.id, name: registries.enemies.get(enemy.enemyId)?.name || enemy.id })) },
+                onClosed: () => { if (cardChoiceShell === targetShell) cardChoiceShell = null; },
+                onChoose: targetId => { if (me === seatAtOpen) send({ ...obj, targetId, upcastTier: Number(ranks) }); },
+              }); cardChoiceShell = targetShell; return;
+            }
+            send({ ...obj, upcastTier: Number(ranks) });
+          },
+        }); cardChoiceShell = shell; return;
+      }
+    }
     // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
     // here, before its one network intent, from the same offer the host
     // validates (model/cardChoices.js); Cancel sends nothing.
@@ -370,6 +412,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         return;
       }
     }
+    if (obj.t === 'playCard') upcastTiersByCard.delete(upcastKey(obj.cardInstanceId));
+    if (obj.t === 'endTurn') for (const key of upcastTiersByCard.keys()) if (key.startsWith(`${me}:`)) upcastTiersByCard.delete(key);
     return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
   };
 
@@ -444,6 +488,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     me = seats[i];
     closeCoopPotions();
     closeCardChoice();
+    clearSelection();
     armedFlask = null;
     armedFriendlyCard = null;
     render();
@@ -467,23 +512,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // Power reduction and its live Weight Class (the pure dodge is class-priced),
   // in every pool the host checks — Energy, Mana AND Stamina.
   function snapshotCosts(def, player) {
-    if (def.combatPreview) {
-      const preview = def.combatPreview;
-      return { energy: preview.costIsX ? 0 : preview.cost, mana: preview.manaCost, stamina: preview.staminaCost, preview };
-    }
-    const pools = registries.framework.costProfile(def, {
-      powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
-      weightClass: player.weightClass || null,
-    });
-    return {
-      energy: pools.variable ? 0 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
-      // The same numbers as a live preview, so the card face and its tooltip
-      // show what the host will charge (renderCard reads opts.preview).
-      preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
-    };
+    return combatSnapshotCardCosts(memberRegistries(), def, player);
   }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.pendingAbilityDiscard || player.ended || !player.alive || !player.connected) return false;
+    if (player.ashenBlight?.milestones.some(row => row.path === null) || !controlGate({ combatExpansionVersion: player.combatExpansionVersion || 1, combatStatusRules: snap?.scene?.combatStatusRules }, player, def).allowed) return false;
     const costs = snapshotCosts(def, player);
     return player.energy >= costs.energy && player.mana >= costs.mana && (player.stamina || 0) >= costs.stamina;
   }
@@ -566,7 +599,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (cardChoiceShell) return; // the stance chooser owns the keyboard (see send)
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
-    if (ev.key === 'Escape') selectCombatant(null);
+    if (ev.key === 'Escape') {
+      selectCombatant(null);
+      if (litCard() !== null) ev.preventDefault();
+      clearSelection();
+    }
     if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
       ev.preventDefault();
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
@@ -582,6 +619,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const c = meP.hand[idx];
       const def = cardDef(c);
       if (!cardAffordableFromSnapshot(def, meP)) return;
+      if (upcastOptions(def).length && meP.combatExpansionVersion === 2) {
+        // Use the same selecting/playing door as pointer and focused activation.
+        app.querySelector(`.hand .card[data-instance-id="${c.instanceId}"]`)?.click();
+        return;
+      }
       if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
       const needs = cardNeedsEnemyTarget(def);
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
@@ -639,7 +681,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const memberRegistries=()=>{const member=myMember();return member?registriesForClassMastery(registries,{...member,class:member.classId}):registries;};
-  const cardDef = (c) => ({ ...resolveCard(memberRegistries(), c), combatPreview: c.combatPreview });
+  const cardDef = (c) => {
+    const seat = snap?.scene?.players?.find(entry => entry.id === me);
+    return combatCardView({ registries: memberRegistries(), player: seat,
+      combatExpansionVersion: seat?.combatExpansionVersion || 1,
+      breakMeterVersion: snap?.scene?.breakMeterVersion ?? c.breakMeterVersion ?? 0 },
+    c, upcastTiersByCard.get(upcastKey(c.instanceId)));
+  };
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
     playFirstFromLatest: () => {
@@ -761,6 +809,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     wrap.classList.add('as-meters', 'tight');
     while (bars.firstChild) wrap.append(bars.firstChild);
+    if (ent.combatExpansionVersion === 2) {
+      const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
+      const stance = ent.combatStance?.maneuver;
+      protection.textContent = [`Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard?.max || 0}`,
+        `Barrier ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
+      wrap.appendChild(protection);
+    }
     if (isEnemy) {
       const arcane = renderArcaneExposure(registries, ent, recentEvents);
       if (arcane) wrap.appendChild(arcane);
@@ -784,7 +839,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
-          { label: t('combat.rating.ward'), value: entity.ratings?.ward },
+          { label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward },
+          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: 'Barrier', value: entity.barrier || 0 }] : []),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
@@ -912,6 +968,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
         </header>
+        ${ashenBlightBarHtml(meP, { compact: true, cooperative: true })}
+        ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
+        ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}
         <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing ? 'Enemy Turn' : 'Player Turn'}</div>
           <div class="player-zone"></div>
@@ -929,6 +988,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
                supplies only the viewer half below: snapshot-fed entries with
                spelled-out reasons, and network intents as the play wiring. -->
           <div class="hand"></div>
+          <div class="combat-recovery-controls">${(meP?.recoveryControls || []).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || meP.ended || pacing || meP.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(row.status)}`} · ${row.costPerStack} SP</button>`).join('')}</div>
           <!-- THE ACTION ROW: solo's own footer (components/combatActionRow.js)
                — Actions, Draw, End Turn, Discard/Exhaust and Potions — sized by
                the same layout adapter. The flasks live behind Potions. -->
@@ -937,6 +997,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         <div class="fx-layer"></div>
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+    app.querySelector('#coop-blight-feat')?.addEventListener('click', () => {
+      const pending = meP.ashenBlight.milestones.find(row => row.path === null), seatAtOpen = me;
+      closeCardChoice();
+      const shell = openAshenBlightMilestone({ threshold: pending.threshold,
+        onChoose: selection => { if (me !== seatAtOpen) return false; send({ t: 'chooseBlightFeat', ...selection }); },
+        onClosed: () => { if (cardChoiceShell === shell) cardChoiceShell = null; },
+      }); cardChoiceShell = shell;
+    });
+    for (const control of app.querySelectorAll('[data-control-recovery]')) control.addEventListener('click', () => send({ t: 'recoverControl', selections: [{ status: control.dataset.controlRecovery, stacks: 1 }] }));
 
     // The active seat gets the same main-HUD plan as solo. Values come only
     // from the host snapshot; a missing current/max pair produces no bar.
@@ -1057,16 +1126,39 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     handStrip = mountHand(app.querySelector('.hand'), {
       registries:memberRegistries(), fitFan: true,
       wireCard: (el, entry) => {
-        el.addEventListener('click', () => {
+        const play = () => {
           if (pacing || meP?.ended || !entry.affordable) return;
-          const effects = entry.def.effects || [];
           if (friendlyTargetPlan(entry.def, me, sc.players).active) {
             armFriendlyTargeting(entry.inst.instanceId);
             return;
           }
           const needs = cardNeedsEnemyTarget(entry.def);
           send({ t: 'playCard', cardInstanceId: entry.inst.instanceId, targetId: needs ? selectedEnemy : undefined });
-        });
+        };
+        if (upcastOptions(entry.def).length && meP?.combatExpansionVersion === 2) {
+          const surcharge = (entry.def.upcastTier ?? entry.def.upcast.baseTier) - entry.def.upcast.baseTier;
+          wireCoopUpcastControl(el, {
+            label: surcharge ? `Upcast +${surcharge}` : 'Upcast',
+            disabled: pacing || meP.ended || !meP.alive,
+            selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
+            onPlay: play,
+            onOpen: upcast => {
+              closeCardChoice(); const seatAtOpen = me;
+              const shell = openUpcastChoice({ definition: entry.def, opener: upcast,
+                onClosed: () => { if (cardChoiceShell === shell) cardChoiceShell = null; },
+                onChoose: ranks => {
+                  if (me !== seatAtOpen) return;
+                  upcastTiersByCard.set(upcastKey(entry.inst.instanceId), Number(ranks));
+                  if (friendlyTargetPlan(cardDef(entry.inst), me, sc.players).active) {
+                    // Choosing a tier keeps an already armed friendly card armed.
+                    if (armedFriendlyCard !== entry.inst.instanceId) armFriendlyTargeting(entry.inst.instanceId);
+                    else render();
+                  } else { armedFriendlyCard = null; render(); }
+                },
+              }); cardChoiceShell = shell;
+            },
+          });
+        } else el.addEventListener('click', play);
       },
     });
     if (meP && meP.alive && meP.connected) {
@@ -1149,7 +1241,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,ownerId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       const authoredTargets=presentationTargetIds(plan.effectEvents,ownerId,plan.spriteEffect?.bindingContext.objectId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       const pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
-      const duration = stage?.actionTiming?.(pose)?.totalMs || 420;
+      const duration = stage?.actionTiming?.(pose, ANIM_SPEEDS[getAnimSpeed()])?.totalMs ?? 420;
       if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
       stage?.play(pose, duration, plan.aura);
     }

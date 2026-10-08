@@ -72,12 +72,13 @@ export { cardRewardRarityWeights };
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
  * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
  */
-export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false }) {
+export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false, combatExpansionVersion = 1 }) {
   const bal = registries.balance.rewards;
   let count = bal.cardChoices;
   if (pool === 'elite' && passiveFlag(registries, relicIds, 'eliteExtraCardReward')) count += 1;
 
-  const cardPool = registries.classes.get(classId).cardPool;
+  const cardPool = [...registries.classes.get(classId).cardPool,
+    ...(combatExpansionVersion === 2 ? registries.cards.all().filter(card => card.minCombatExpansionVersion === 2 && [classId, 'colorless'].includes(card.class)).map(card => card.id) : [])];
   // flatRarity (Custom Climb "Chaos Rewards") ignores the pool weighting and
   // gives every rarity equal odds — far more rares than normal.
   const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
@@ -141,9 +142,9 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
  * so the shipped schedule writes exactly the bytes it wrote before.
  * Pure of the run: the caller hands in the level-ups the fight bought.
  */
-export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0 } = {}) {
+export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0, combatExpansionVersion = 1 } = {}) {
   const plan = cardRewardPlan(registries.balance, { pool, levelsGained: levelUps, draftWaiting }, rng);
-  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity });
+  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity, combatExpansionVersion });
   const cardIds = plan.offerCard ? roll() : [];
   const levelCards = [];
   for (let i = 0; i < plan.levelCards; i++) {
@@ -324,7 +325,7 @@ export function buildShopStock(registries, rng, run) {
   const bal = registries.balance.shop;
   const classId = run.class;
 
-  const cardIds = rollShopCards(registries, rng, classId, bal.cardStock);
+  const cardIds = rollShopCards(registries, rng, classId, bal.cardStock, run.combatExpansionVersion || 1);
   const cards = cardIds.map((id) => ({
     id,
     cost: rng.int('shop', ...bal.cardCost[registries.cards.get(id).rarity]),
@@ -372,11 +373,11 @@ export function buildShopStock(registries, rng, run) {
 // colorless is sold at Merchants, not offered in standard combat rewards).
 // The status/curse colorless are rarity 'special' and excluded here.
 const SHOP_RARITIES = ['common', 'uncommon', 'rare'];
-function rollShopCards(registries, rng, classId, count) {
+function rollShopCards(registries, rng, classId, count, combatExpansionVersion = 1) {
   const artIds = new Set(eligibleWeaponArts(registries));
   const colorless = registries.cards
     .all()
-    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity) && !artIds.has(c.id))
+    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity) && !artIds.has(c.id) && (c.minCombatExpansionVersion || 1) <= combatExpansionVersion)
     .map((c) => c.id);
   const pool = [...registries.classes.get(classId).cardPool, ...colorless];
   const out = [];

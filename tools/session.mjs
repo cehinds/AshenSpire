@@ -31,6 +31,7 @@ import { advancedConfigSnapshot } from '../src/model/advancedConfig.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
+import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells,addToStorage,carriedIds } from '../src/model/loadout.js';
 import { stampSkillBonuses,skillTracks,spendSkillDraft,pendingSkillLevelCount,claimBankedSkillLevel } from '../src/model/skills.js';
@@ -61,10 +62,15 @@ import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } fro
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
   createCoopCombat, coopOutcome, playCard, chooseDiscard, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 import { staminaAtCombatStart } from '../src/framework/resources.js';
+import { serializeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
+import { recoveryControls } from '../src/engine/combatStatusControl.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { upcastOptions } from '../src/model/upcasting.js';
 
 // Focused browser gates may establish only the starting HP/Block named by the
 // story before driving the real LAN intent/event/render path. Keep that setup
@@ -130,12 +136,14 @@ function memberRng(seed, index, counters) {
 // refusal that stays whole: a blob where NO member survives — a party of
 // nobody is not a resume, and pretending it resumed would be the silent
 // version of the same loss.
-export function restoreSession(registries, data) {
-  const s = createSession({ registries, seedString: data.seedString, endless: data.endless, restore: data });
+export function restoreSession(registries, data, { saveSession = null } = {}) {
+  const s = createSession({ registries, seedString: data.seedString, endless: data.endless, restore: data, saveSession });
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null }) {
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null, saveSession = null, combatExpansionVersion = 2 }) {
+  if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
+  const memberCombatVersion = restore ? (restore.advancedConfigSnapshot?.breakMeterVersion === 2 ? 2 : 1) : combatExpansionVersion;
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   // Each member's open shrine visit (engine/locations.js), by member id.
   const shrineVisits = new Map();
@@ -165,7 +173,7 @@ export function createSession({ registries, seedString, endless = false, restore
   let order = restore ? restore.order : 0;
 
   const session = {
-    ...(restore ? (restore.advancedConfigSnapshot ? { advancedConfigSnapshot: structuredClone(restore.advancedConfigSnapshot) } : {}) : { advancedConfigSnapshot: advancedConfigSnapshot() }),
+    ...(restore ? (restore.advancedConfigSnapshot ? { advancedConfigSnapshot: structuredClone(restore.advancedConfigSnapshot) } : {}) : { advancedConfigSnapshot: { ...advancedConfigSnapshot(), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 } }),
     id: `s${(seed % 100000).toString(36)}`,
     seedString: restore ? restore.seedString : seedToString(seed),
     seed,
@@ -317,7 +325,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const entitlement = [...new Set(discoveredArmaments || [])];
     const profile = classMastery === undefined ? { discoveredArmaments: entitlement } : normalizeMasteryProfile({ discoveredArmaments: entitlement, classMastery });
     if (classMastery !== undefined && masteryProfileProblems(profile).length) throw new Error('co-op class mastery profile is malformed');
-    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile });
+    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile, combatExpansionVersion: memberCombatVersion });
     if (classMastery !== undefined || run.progressionRulesVersion===1) openRunClassMastery(registries, run, profile, { receiptId: `coop:${seed}:${id}`, bankable: false });
     // The party's order, not the default: a member's run rides the session's
     // seats exactly as it rides the session's act and floor (SPEC §13.4).
@@ -346,6 +354,7 @@ export function createSession({ registries, seedString, endless = false, restore
   function setConnected(id, connected, { settle = true } = {}) {
     const m = members.get(id);
     if (m) {
+      const previousConnected = m.connected;
       m.connected = !!connected;
       // A RETURN INTO A LIVE FIGHT WAITS ON THE SEAT'S CATCH-UP: what the
       // queue pays out or costs — a missed event's healing, damage or lost
@@ -353,7 +362,12 @@ export function createSession({ registries, seedString, endless = false, restore
       // fight would carry the old numbers and write them back over the run
       // when the fight settles (Codex on #548). The seat joins when its
       // queue drains (resolveCatchup); a leave is always a leave.
-      if (live && (!connected || !m.catchup.length)) combatPresence(id, !!connected); // rescale the live fight
+      try {
+        if (live && (!connected || !m.catchup.length)) combatPresence(id, !!connected); // rescale the live fight
+      } catch (error) {
+        m.connected = previousConnected;
+        throw error;
+      }
       if (settle) settlePresence(!!connected);
     }
     return m;
@@ -450,7 +464,20 @@ export function createSession({ registries, seedString, endless = false, restore
       if (waiting.length) return { ok: true, waiting: waiting.length };
       nodeId = tallyVotes(session.scene.votes, voters);
     }
-    return travelTo(nodeId);
+    const checkpoint = typeof saveSession === 'function' ? {
+      state: structuredClone(Object.fromEntries(Object.entries(session).filter(([key]) => key !== 'members'))),
+      members: [...members].map(([id, member]) => [id, structuredClone(Object.fromEntries(Object.entries(member).filter(([key]) => key !== 'rng'))), member.rng.getCounters()]),
+      rng: rng.getCounters(), live,
+    } : null;
+    try { return travelTo(nodeId); }
+    catch (error) {
+      if (!checkpoint) throw error;
+      for (const key of Object.keys(session)) if (key !== 'members') delete session[key];
+      Object.assign(session, checkpoint.state);
+      for (const [id, saved, counters] of checkpoint.members) { const member = members.get(id); Object.assign(member, saved); member.rng.restoreCounters(counters); }
+      rng.restoreCounters(checkpoint.rng); live = checkpoint.live;
+      return { ok: false, error: error.message };
+    }
   }
 
   function chooseMasteryNode(memberId, nodeId) {
@@ -521,6 +548,14 @@ export function createSession({ registries, seedString, endless = false, restore
   // ---- combat (live shared fight via coopCombat) ---------------------------
   let live = null; // { combat, pool } — the running shared fight
   let combatReceiptSeq = 0; // stable wire identity; resync reuses session.scene
+  function attachCombatSave(combat) {
+    if (typeof saveSession !== 'function') return;
+    combat.beforeCombatCommit = candidate => {
+      const data = serialize({ combatCandidate: candidate });
+      if (saveSession(data) === false) throw new Error('The accepted combat action could not be saved.');
+    };
+  }
+  function setCombatSave(callback) { saveSession = callback; if (live) attachCombatSave(live.combat); }
 
   function memberAsPlayer(m) {
     // The derived skill bonus (SPEC §13.4o): a seat levels through applySkillXp,
@@ -528,6 +563,9 @@ export function createSession({ registries, seedString, endless = false, restore
     stampSkillBonuses(registriesForClassMastery(registries,m.run), m.run);
     return {
       id: m.id, name: m.name, classId: m.classId,
+      combatExpansionVersion: m.run.combatExpansionVersion || 1,
+      ...(m.run.ashenBlightBasePools ? { baseResourceMaxima: structuredClone(m.run.ashenBlightBasePools) } : {}),
+      ...(m.run.ashenBlight ? { ashenBlight: structuredClone(m.run.ashenBlight) } : {}),
       registries:registriesForClassMastery(registries,m.run),progressionRulesVersion:m.run.progressionRulesVersion,skillFeats:[...(m.run.skillFeats || [])],
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       orderedDraw: !!m.playInDeckOrder, // Play in deck order, per seat (SPEC §14.1)
@@ -549,6 +587,10 @@ export function createSession({ registries, seedString, endless = false, restore
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
       itemMounts: m.run.itemMounts ? structuredClone(m.run.itemMounts) : undefined,
+      equipmentProfileRuleSnapshot: m.run.equipmentProfileRuleSnapshot ? structuredClone(m.run.equipmentProfileRuleSnapshot) : undefined,
+      equipmentAttackSlotCount: m.run.equipmentAttackSlotCount,
+      removedAttackSlotIds: structuredClone(m.run.removedAttackSlotIds || []),
+      ...(isPoolDeckMode(m.run) ? { poolDeck: true } : {}),
       // THE SEAT'S POISE THRESHOLD, derived the way the solo engine derives it
       // (combat.js: the armour rule over the loadout, relics and tiers). The
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
@@ -556,6 +598,19 @@ export function createSession({ registries, seedString, endless = false, restore
       // while its weight still priced the seat's dodge (Codex, #528).
       poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes, derivedStatRuleSnapshot: m.run.derivedStatRuleSnapshot, level: m.run.level }).value,
     };
+  }
+  if (restore?.liveCombat) {
+    const saved = restore.liveCombat;
+    const combat = createCoopCombat({ registries, rng, players: [...members.values()].map(memberAsPlayer), enemyIds: [], snapshot: saved.snapshot });
+    for (const P of combat.players.values()) {
+      if (!members.has(P.id)) throw new Error(`Cannot restore combat seat '${P.id}': its run was refused.`);
+      P.connected = false;
+    }
+    live = { combat, pool: saved.pool, evCursor: saved.evCursor, opening: null };
+    combatReceiptSeq = saved.receiptSeq || 0;
+    attachCombatSave(combat);
+    if (combat.result) settleCombat();
+    else session.scene = combatScene();
   }
 
   // `forcedEncounterId`: an event's startCombat names its encounter (the
@@ -576,6 +631,9 @@ export function createSession({ registries, seedString, endless = false, restore
     const boss = bossTierScale(registries, { encounter: enc, tier: contentAct() });
     const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * (boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct()));
     const combat = createCoopCombat({
+      combatKey: `${session.seed}:${session.actNumber}:${session.cursorId}:${encounterId}`,
+      combatExpansionVersion: connectedMembers().some(member => member.run.combatExpansionVersion === 2) ? 2 : 1,
+      combatExpansionRules: connectedMembers().find(member => member.run.combatExpansionVersion === 2)?.run.combatExpansionRules || null,
       breakMeterVersion: session.advancedConfigSnapshot?.breakMeterVersion,
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
@@ -645,7 +703,13 @@ export function createSession({ registries, seedString, endless = false, restore
     // hurt seat's device buzzes as solo's does; it plays no sound.
     live = { combat, pool, evCursor: combat.eventLog.length, opening: combat.eventLog.filter((e) => OPENING_CUE_EVENTS.includes(e.type)
       || (e.type === 'hpLost' && e.cause !== 'attack' && e.targetPlayerId != null)) };
+    attachCombatSave(combat);
+    if (typeof saveSession === 'function') {
+      const saved = serialize();
+      if (saved && saveSession(saved) === false) throw new Error('Combat entry could not be saved.');
+    }
     session.scene = combatScene();
+    if (combat.result) return settleCombat();
     return { ok: true, combat: session.scene };
   }
 
@@ -678,7 +742,9 @@ export function createSession({ registries, seedString, endless = false, restore
     live.opening = null;
     return {
       kind: 'combat',
-      ...(c.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+      combatExpansionVersion: c.sharedExpansionVersion || 1,
+      combatExpansionRules: c.combatExpansionRules, combatStatusRules: c.combatStatusRules,
+      ...([1, 2].includes(c.breakMeterVersion) ? { breakMeterVersion: c.breakMeterVersion } : {}),
       ...(c.combatMatchupRules ? { combatMatchupRules: structuredClone(c.combatMatchupRules) } : {}),
       receiptSeq: ++combatReceiptSeq,
       opening,
@@ -689,6 +755,8 @@ export function createSession({ registries, seedString, endless = false, restore
       result: c.result,
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
+        combatExpansionVersion: e.combatExpansionVersion || 1, combatStance: e.combatStance,
+        persistentWard: e.persistentWard, barrier: e.barrier, statusControl: e.statusControl,
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive: e.alive, intent: e.intent, intentReads: e.intentReads ? { ...e.intentReads } : undefined, statuses: e.statuses, poiseMeter: e.poiseMeter,
@@ -711,6 +779,10 @@ export function createSession({ registries, seedString, endless = false, restore
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
       players: [...c.players.values()].map((P) => ({
+        combatExpansionVersion: P.entity.combatExpansionVersion || 1,
+        ashenBlight: P.entity.ashenBlight ? structuredClone(P.entity.ashenBlight) : undefined,
+        combatStance: P.entity.combatStance, persistentWard: P.entity.persistentWard, barrier: P.entity.barrier,
+        statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
         pendingAbilityDiscard: c.pendingAbilityDiscard || null,
         abilityRiders: P.entity.abilityRiders,
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
@@ -728,7 +800,13 @@ export function createSession({ registries, seedString, endless = false, restore
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
         ...(P.entity.wardMeter ? { wardMeter: P.entity.wardMeter } : {}),
         ratings: P.entity.ratings,
-        hand: P.piles.hand.map((c2) => ({ ...c2, combatPreview: previewCoopCard(c, P.id, c2.instanceId), breakMeterVersion: c.breakMeterVersion === 1 ? 1 : 0 })),
+        hand: P.piles.hand.map((c2) => {
+          const preview = previewCoopCard(c, P.id, c2.instanceId);
+          const options = P.entity.combatExpansionVersion === 2 ? upcastOptions(preview.resolvedDefinition || resolveCombatCard({ ...c, registries: c.registriesForPlayer(P.id), player: P.entity, combatExpansionVersion: 2 }, c2)) : [];
+          return { ...c2, combatPreview: preview,
+            ...(options.length ? { upcastPreviews: Object.fromEntries(options.map(option => [option.ranks, previewCoopCard(c, P.id, c2.instanceId, undefined, option.ranks)])) } : {}),
+            breakMeterVersion: [1, 2].includes(c.breakMeterVersion) ? c.breakMeterVersion : 0 };
+        }),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
@@ -746,11 +824,21 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId, choice) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
     if (!live) return { ok: false, error: 'no combat' };
-    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice); }
+    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup); }
     catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
+  }
+  function combatRecovery(memberId, selections) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { recoverControl(live.combat, memberId, selections); return settleCombat(); }
+    catch (error) { return { ok: false, error: error.message }; }
+  }
+  function combatBlightFeat(memberId, selection) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { chooseBlightFeat(live.combat, memberId, selection); return settleCombat(); }
+    catch (error) { return { ok: false, error: error.message }; }
   }
   function combatEndTurn(memberId) {
     if (!live) return { ok: false, error: 'no combat' };
@@ -797,9 +885,14 @@ export function createSession({ registries, seedString, endless = false, restore
       const s = outcome.survivors[m.id];
       if (!s) continue;
       m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
+      if (s.ashenBlight) m.run.ashenBlight = structuredClone(s.ashenBlight);
+      if (s.blightTerminal) { m.alive = false; m.catchup.length = 0; }
       const P = c.players.get(m.id);
       if (P) {
         m.run.mana = P.entity.mana;
+        if (P.entity.baseResourceMaxima) m.run.ashenBlightBasePools = structuredClone(P.entity.baseResourceMaxima);
+        m.run.maxHp = P.entity.maxHp; m.run.maxMana = P.entity.maxMana; m.run.maxStamina = P.entity.maxStamina;
+        if (P.entity.combatExpansionVersion === 2) { m.run.energyMax = P.entity.energyMax; m.run.drawPerTurn = P.entity.drawPerTurn; }
         m.run.stamina = Math.min(P.entity.stamina, m.run.maxStamina);
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
@@ -890,7 +983,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // on 'rewardRolls', so an existing co-op seed rolls what it rolled.
     const plan = cardRewardPlan(registries.balance, { pool, levelsGained }, m.rng);
     const cardIds = plan.offerCard ? rollCardRewardIds(registriesForClassMastery(registries, m.run), m.rng, {
-      classId: m.classId, pool, relicIds: m.run.relics,
+      classId: m.classId, pool, relicIds: m.run.relics, combatExpansionVersion: m.run.combatExpansionVersion || 1,
     }) : [];
     // Co-op-only cards (StS2): with a real party, every combat reward carries
     // one team-play option on top of the normal class picks — when there is
@@ -900,7 +993,7 @@ export function createSession({ registries, seedString, endless = false, restore
     }
     const levelCards = [];
     for (let i = 0; i < plan.levelCards; i++) {
-      const ids = rollCardRewardIds(registriesForClassMastery(registries, m.run), m.rng, { classId: m.classId, pool, relicIds: m.run.relics });
+      const ids = rollCardRewardIds(registriesForClassMastery(registries, m.run), m.rng, { classId: m.classId, pool, relicIds: m.run.relics, combatExpansionVersion: m.run.combatExpansionVersion || 1 });
       if (ids.length) levelCards.push({ ordinal: levelCards.length, cardIds: ids });
     }
     const cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
@@ -1629,10 +1722,12 @@ export function createSession({ registries, seedString, endless = false, restore
     };
   }
 
-  // Serialize the run to plain JSON for host disk-resume. Returns null during a
-  // live fight (combat is not persisted; resume lands at the pre-combat node).
-  function serialize() {
-    if (live || session.scene.kind === 'combat') return null;
+  // Exact live fights commit before broadcast: cards, resources and rolls travel together.
+  function serialize({ combatCandidate = null } = {}) {
+    const combat = combatCandidate || live?.combat;
+    // Legacy fights retain their pre-combat resume contract. Version two
+    // persists the whole fight because accepted Blight prices are irreversible.
+    if (combat && combat.sharedExpansionVersion !== 2 && combat.combatExpansionVersion !== 2) return null;
     // Member runs are emitted as they are, not through serializeRun, so the
     // projection is drawn here from the fields that own it (plan phase 3a):
     // what is written is what class, loadout, relics and deck say now.
@@ -1652,7 +1747,9 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(session.advancedConfigSnapshot ? { advancedConfigSnapshot: session.advancedConfigSnapshot } : {}),
       history: session.history.slice(),
       mapGraph: session.mapGraph,
-      rng: rng.getCounters(),
+      rng: combatCandidate ? combatCandidate.rng.getCounters() : rng.getCounters(),
+      ...(combat ? { liveCombat: { pool: live.pool, evCursor: live.evCursor || 0, receiptSeq: combatReceiptSeq,
+        snapshot: serializeCoopCombatSnapshot(combat) } } : {}),
       order,
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
@@ -1729,7 +1826,7 @@ export function createSession({ registries, seedString, endless = false, restore
     addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, chooseMasteryNode, resolveNode,
     previewMemberClassRespec,applyMemberClassRespec,cancelMemberClassRespec,
-    combatPlay, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat,
+    combatPlay, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat, setCombatSave, combatRecovery, combatBlightFeat,
     chooseReward, chooseAbilityDraft,claimMemberSkillLevel,chooseClassMilestone,chooseMemberLevelCard, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },

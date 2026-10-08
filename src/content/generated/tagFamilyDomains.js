@@ -477,5 +477,49 @@ export const tagFamilyDomains = [
   {
     "family": "enemyMove",
     "domain": "theme"
+  },
+  {
+    "family": "card",
+    "domain": "reach"
+  },
+  {
+    "family": "card",
+    "domain": "trait"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "reach"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "targeting"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "trait"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "reach"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "targeting"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "trait"
+  },
+  {
+    "family": "effect",
+    "domain": "reach"
+  },
+  {
+    "family": "effect",
+    "domain": "targeting"
+  },
+  {
+    "family": "effect",
+    "domain": "trait"
   }
 ];

@@ -1,0 +1,120 @@
+{
+  "source": "9183363e9a3eb008d96997c20be4b91810e5d8f5",
+  "build": null,
+  "surface": "source",
+  "devices": [
+    {
+      "name": "desktop",
+      "refs": 2186,
+      "fullyReadable": 2186,
+      "expanded": 328,
+      "minFont": 12.2222,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 8.85417
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.14931
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.6219
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
+      "actions": [
+        "attack",
+        "defend",
+        "sweep",
+        "smash",
+        "counter",
+        "skill",
+        "power",
+        "spell",
+        "ranged",
+        "status"
+      ],
+      "schools": [
+        "force",
+        "alteration",
+        "illusion",
+        "frost",
+        "lightning",
+        "fire",
+        "divine",
+        "decay"
+      ],
+      "errors": [],
+      "failed": [
+        "404 http://localhost:58777/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "name": "phone",
+      "refs": 2186,
+      "fullyReadable": 2186,
+      "expanded": 331,
+      "minFont": 11.1833,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 8.85417
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.14931
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.6219
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
+      "actions": [
+        "attack",
+        "defend",
+        "sweep",
+        "smash",
+        "counter",
+        "skill",
+        "power",
+        "spell",
+        "ranged",
+        "status"
+      ],
+      "schools": [
+        "force",
+        "alteration",
+        "illusion",
+        "frost",
+        "lightning",
+        "fire",
+        "divine",
+        "decay"
+      ],
+      "errors": [],
+      "failed": [
+        "404 http://localhost:58777/assets/sfx/nodeTravel.ogg",
+        "404 http://localhost:58777/assets/sfx/cardDraw.ogg",
+        "404 http://localhost:58777/assets/sfx/turnStinger.ogg",
+        "404 http://localhost:58777/assets/sfx/holdTick.ogg"
+      ]
+    }
+  ]
+}

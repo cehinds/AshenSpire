@@ -34,7 +34,8 @@ export function runCardRemovalFlickTests() {
   const registries = createRegistries(contentBundle);
   // A Starseer: its bound cards leave three basic attacks under the cap, so a
   // middle one exists (a sword-and-shield Reaver's kits and Dodge Roll leave one).
-  const run = createRunState({ seed: 671, classId: 'starseer', registries });
+  // This regression constructs the original headless combat/swap contract.
+  const run = createRunState({ seed: 671, classId: 'starseer', registries, combatExpansionVersion: 1 });
   const attacks = run.deck.filter(card => card.equipmentAttackSlotId);
   const retired = attacks[1];
   check(removeDeckCard(run, retired.instanceId, { keepOne: true }), 'merchant can remove a middle basic attack');

@@ -105,7 +105,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   for (const old of pre.tagFamilyDomains) assert.ok(pairs.has(`${old.family}|${old.domain}`), `pairing ${old.family}×${old.domain} is derived`);
   // The additions, by name, so a stray one cannot hide among them.
   const addedDomains = TAG_DOMAINS.map((d) => d.id).filter((id) => !pre.tagDomains.some((d) => d.id === id)).sort();
-  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'scaling', 'school', 'targeting', 'utility'],
+  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'reach', 'scaling', 'school', 'targeting', 'trait', 'utility'],
     'the roots that joined are the framework\'s nine plus four named tactical domains');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
   // Plan phase 5a's property nodes: the class card's leaning and the four
@@ -136,14 +136,16 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   assert.equal(ABILITY_TAGS.length, 50);
   const TACTICAL_TAGS = {
     camp: ['camp:physical', 'camp:spell'],
-    maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash'],
+    maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash', 'maneuver:casting'],
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
+    reach: ['reach:contact', 'reach:near', 'reach:far'],
+    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:grounded', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
   };
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
   }
-  const tacticalIds = Object.values(TACTICAL_TAGS).flat();
+  const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area'];
   assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
   for (const id of ABILITY_TAGS) {
     const tag = tags.get(id);
@@ -175,7 +177,7 @@ test('every object states exactly one kind, the one its collection and type name
   // twenty existing mastery feats now participating in the kind registry.
   assert.equal(contentBundle.classSkillFeats.length, 70);
   assert.equal(contentBundle.enemyMoves.length, 103, 'the scoped enemy move collection contains all 103 authored actions');
-  assert.equal(counted, 513 + 40 + 10 + 70 + 103, 'all 736 objects, including class feats and scoped enemy move kinds');
+  assert.equal(counted, 513 + 40 + 10 + 70 + 103 + 32, 'all 768 objects, including class feats and scoped enemy move kinds');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

@@ -2238,7 +2238,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const balance = JSON.parse(JSON.stringify(legacyBundle.balance));
       balance.equipment.startingDeck.classes.reaver.strikeBias = bias;
       const reg = createRegistries({ ...legacyTestBundle(), balance });
-      const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+      const run = createRunState({ combatExpansionVersion: 1, seed: 1, classId: 'reaver', registries: reg });
       eq(run.deck.length, 11, `bias ${bias} still starts an 11-card deck (10 before the class ability card joined the kit, plan phase 5a)`);
       eq(run.deck.filter((c) => c.equipmentRole === 'attack').length, wantAttack, `bias ${bias} deals ${wantAttack} attacks`);
       eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, wantGuard, `bias ${bias} deals ${wantGuard} guards`);
@@ -2681,7 +2681,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const fracSaid = validateEquipment(fracReg).join(' | ');
     assert(/startingDeckSize must be a non-negative integer/.test(fracSaid),
       `a fractional deck size is refused by name — said ${JSON.stringify(fracSaid.slice(0, 160))}`);
-    eq(createRunState({ seed: 1, classId: 'reaver', registries: fracReg }).deck.length, 11,
+    eq(createRunState({ combatExpansionVersion: 1, seed: 1, classId: 'reaver', registries: fracReg }).deck.length, 11,
       'and 11 is what it silently produced, which is why the door had to say so');
 
     // THE PACKAGE LAYER ADDS REAL CARDS. `grantedCards` is a live-but-dormant
@@ -2709,7 +2709,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // package grants count at creation — and the shrink is simply what happens.
     const fits = packaged(3);
     eq(validateEquipment(fits).length, 0, 'package grants are legal under the cap rule');
-    eq(createRunState({ seed: 1, classId: 'reaver', registries: fits }).deck.length,
+    eq(createRunState({ combatExpansionVersion: 1, seed: 1, classId: 'reaver', registries: fits }).deck.length,
       contentBundle.balance.startingDeckSize,
       'and creation lands on the cap, because the base cards made room for them');
 
@@ -2727,7 +2727,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(validateEquipment(REG).length, 0, 'the shipped bundle still boots');
     eq(startingDeckWarnings(REG).length, 0, 'with nothing left to warn about');
     for (const classId of ['starseer', 'herald']) {
-      eq(createRunState({ seed: 3, classId, registries: REG }).deck.length, contentBundle.balance.startingDeckSize,
+      eq(createRunState({ combatExpansionVersion: 1, seed: 3, classId, registries: REG }).deck.length, contentBundle.balance.startingDeckSize,
         `${classId} begins at the cap, its weapon art counted like any other bound card`);
     }
   });
@@ -2794,7 +2794,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // else. Effects now allow the legacy card domain plus categorized combat
     // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
-    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme', 'camp', 'maneuver', 'school', 'counterMode'];
+    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme', 'camp', 'maneuver', 'school', 'counterMode', 'reach', 'targeting', 'trait'];
     eq(tagIdsAllowedFor(contentBundle, 'effect').sort().join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).sort().join('|'),
       'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));
@@ -2868,7 +2868,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const biased = JSON.parse(JSON.stringify(legacyBundle));
     biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 0.75 };
     const biasedReg = createRegistries(biased);
-    const run = createRunState({ seed: 2, classId: 'reaver', registries: biasedReg });
+    const run = createRunState({ combatExpansionVersion: 1, seed: 2, classId: 'reaver', registries: biasedReg });
     const actual = { attack: 0, guard: 0 };
     for (const card of run.deck) if (actual[card.equipmentRole] !== undefined) actual[card.equipmentRole] += 1;
     // Seven filler (the body's Dodge Roll takes one base card's place under the cap).
@@ -2883,7 +2883,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const legacy = JSON.parse(JSON.stringify(legacyBundle));
     legacy.balance.equipment.startingDeck.enabled = false;
     const legacyReg = createRegistries(legacy);
-    const legacyRun = createRunState({ seed: 2, classId: 'reaver', registries: legacyReg });
+    const legacyRun = createRunState({ combatExpansionVersion: 1, seed: 2, classId: 'reaver', registries: legacyReg });
     const legacyShown = Object.fromEntries(equipmentSurfaceReceipt(legacyReg, legacyRun).roles.map((r) => [r.role, r.copies]));
     eq(legacyShown.attack, legacy.balance.equipment.roleCopies.attack, 'the legacy path still reads the authored table');
     eq(legacyShown.guard, legacy.balance.equipment.roleCopies.guard, 'for both roles');
@@ -2905,7 +2905,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       equipmentGrants: [{ family: 'armament', scope: '', sourceId: 'straightSword', cards: ['strike', 'defend'] }],
     };
     const reg = createRegistries(granting);
-    const run = createRunState({ seed: 4, classId: 'reaver', registries: reg });
+    const run = createRunState({ combatExpansionVersion: 1, seed: 4, classId: 'reaver', registries: reg });
     const roleCount = (deck) => {
       const out = {};
       for (const card of deck) if (card && card.equipmentRole) out[card.equipmentRole] = (out[card.equipmentRole] || 0) + 1;
@@ -2968,7 +2968,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `a rename that leaves the binding behind is named, not silently mis-ordered — said ${JSON.stringify(halfDone.slice(0, 200))}`);
     const whole = renamed(true);
     eq(validateEquipment(whole).length, 0, 'and a rename that moves the binding with it is clean');
-    const stamped = createRunState({ seed: 3, classId: 'starseer', registries: whole })
+    const stamped = createRunState({ combatExpansionVersion: 1, seed: 3, classId: 'starseer', registries: whole })
       .deck.map((c) => c.grantSource || null).filter((id) => id !== null);
     assert(stamped.every((id) => id !== 'from:weapon'),
       `no seam stamps the old id after the rename — ${JSON.stringify(stamped)}`);
@@ -3092,7 +3092,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const biased = JSON.parse(JSON.stringify(legacyBundle));
     biased.balance.equipment.startingDeck.classes.reaver = { strikeBias: 1 };
     const biasedReg = createRegistries(biased);
-    const run = createRunState({ seed: 9, classId: 'reaver', registries: biasedReg });
+    const run = createRunState({ combatExpansionVersion: 1, seed: 9, classId: 'reaver', registries: biasedReg });
     eq(run.deck.filter((c) => c.equipmentRole === 'guard').length, 0, 'this deck really has no guards');
     const shown = Object.fromEntries(equipmentSurfaceReceipt(biasedReg, run).roles.map((r) => [r.role, r.copies]));
     eq(shown.guard, 0, 'and the panel says zero rather than the authored four');
@@ -3109,7 +3109,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // re-deriving it, which is the mistake four earlier rounds were about.
     const storage = createMemoryStorage();
     const saves = createSaveManager(storage);
-    const fresh = createRunState({ seed: 21, classId: 'reaver', registries: LEGACY_REG });
+    const fresh = createRunState({ combatExpansionVersion: 1, seed: 21, classId: 'reaver', registries: LEGACY_REG });
     const bornWith = fresh.equipmentAttackSlotCount;
     assert(Number.isFinite(bornWith) && bornWith > 0, 'a new run records its quota');
     delete fresh.equipmentAttackSlotCount; // exactly what a pre-field save holds
@@ -3125,7 +3125,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // migration used the recovered number for its restamp and then dropped it.
     // Healing the door and leaving the consumer is the half-fix this work keeps
     // making, so the resolved value is written where the resume looks.
-    const midFight = createRunState({ seed: 31, classId: 'reaver', registries: LEGACY_REG });
+    const midFight = createRunState({ combatExpansionVersion: 1, seed: 31, classId: 'reaver', registries: LEGACY_REG });
     const midBorn = midFight.equipmentAttackSlotCount;
     const fight = createCombat({
       registries: LEGACY_REG,
@@ -3275,7 +3275,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       ],
     };
     const reg = createRegistries(b);
-    const run = createRunState({ seed: 11, classId: 'reaver', registries: reg });
+    const run = createRunState({ combatExpansionVersion: 1, seed: 11, classId: 'reaver', registries: reg });
     const owned = () => run.deck.filter(isItemOwned).map((c) => c.instanceId).sort();
     const sword = pieceItemRef(reg.equipment.armaments.find((a) => a.id === 'straightSword'));
     eq(sword, 'armament/straightSword', 'an owner is written as the namespaced item ref the rest of the model keys on');
@@ -3514,7 +3514,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
     b.scripts = contentBundle.scripts;
     const reg = createRegistries(b);
-    const run = createRunState({ seed: 23, classId: 'reaver', registries: reg });
+    const run = createRunState({ combatExpansionVersion: 1, seed: 23, classId: 'reaver', registries: reg });
     const sword = 'armament/straightSword';
     const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
     const dodge = reg.equipment.basicCardProfiles.find((p) => p.id === contentBundle.balance.equipment.unarmedProfiles.technique).baseCardId;
@@ -6402,7 +6402,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     rejected((b) => { b.attributeRules.presets.standard.reaver.strength = b.creationModes.find((m) => m.id === 'standard').maximum + 1; }, 'strength', 'out-of-range preset value');
     rejected((b) => { b.attributeRules.presets.standard.reaver.strength -= 1; }, 'reaver', 'wrong fixed total');
 
-    const fresh = createRunState({ seed: 50, classId: 'herald', registries: REG });
+    const fresh = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'herald', registries: REG });
     eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
@@ -6419,7 +6419,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
     eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 100160, '100,160 XP reaches level 20, the cap, on the default curve');
-    const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
+    const rogue = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
     eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/53/3/4', 'Rogue lean stats reach the HP, action, and hand formulas');
@@ -6428,12 +6428,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
     eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/2/5', 'Rogue dagger Strike is stamped from source AR (DEX 3 × 0.75 feeds AR since 2026-09-24)');
     eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/7/10', 'Rogue buckler Defend is stamped from source DR (DEX 3 × 0.75 where 0.5 stood, 2026-09-24)');
-    const star = createRunState({ seed: 50, classId: 'starseer', registries: REG });
+    const star = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
     let alternateRefusal = '';
     try {
-      createRunState({
+      createRunState({ combatExpansionVersion: 1,
         seed: 50, classId: 'reaver', registries: REG, startingKitId: 'reaverGreatsword',
         profileMeta: { discoveredArmaments: ['greatsword'] },
         attributes: { strength: 1, dexterity: 4, constitution: 1, wisdom: 1, intelligence: 1 },
@@ -6455,11 +6455,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(afterDrift !== null, 'a later live mode edit cannot refuse an allocation admitted by its saved snapshot');
     eq(afterDrift.attributeModeSnapshot.baseline, 1, 'the run keeps the creation rules it was born under');
     for (const mode of modes) {
-      const selected = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: mode.id });
+      const selected = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'reaver', registries: REG, attributeMode: mode.id });
       eq(selected.attributeMode, mode.id, `creation accepts authored mode '${mode.id}'`);
     }
     const allocated = { ...contentBundle.attributeRules.presets.standard.reaver, strength: 12, dexterity: 11 };
-    const custom = createRunState({ seed: 50, classId: 'reaver', registries: REG, attributeMode: 'standard', attributes: allocated });
+    const custom = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'reaver', registries: REG, attributeMode: 'standard', attributes: allocated });
     eq(JSON.stringify(custom.attributes), JSON.stringify(allocated), 'creation accepts a valid player allocation through the shared validator');
 
     // Whole-block legacy migration is allowed; any half-block is corruption.
@@ -6501,12 +6501,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     };
     assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
     const MR = createRegistries(mutant);
-    const mr = createRunState({ seed: 51, classId: 'reaver', registries: MR });
+    const mr = createRunState({ combatExpansionVersion: 1, seed: 51, classId: 'reaver', registries: MR });
     eq(mr.attributeMode, 'testMode', 'creation follows mutated default mode');
     eq(Object.keys(mr.attributes).join(','), mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => a.id).join(','), 'run allocation key order follows mutated authored order');
     eq(Object.values(mr.attributes).reduce((a, b) => a + b, 0), testMode.baseline * mutant.attributes.length + testMode.bonusPool, 'run total follows mutated baseline/count/pool');
     const mutantAllocation = { ...mutant.attributeRules.presets.testMode.reaver, strength: 9, dexterity: 8 };
-    const ma = createRunState({ seed: 52, classId: 'reaver', registries: MR, attributeMode: testMode.id, attributes: mutantAllocation });
+    const ma = createRunState({ combatExpansionVersion: 1, seed: 52, classId: 'reaver', registries: MR, attributeMode: testMode.id, attributes: mutantAllocation });
     eq(JSON.stringify(ma.attributes), JSON.stringify(Object.fromEntries(mutant.attributes.slice().sort((a, b) => a.order - b.order).map((a) => [a.id, mutantAllocation[a.id]]))), 'creation input follows mutated vocabulary/order/rules');
     // The legacy save is cut from the PRESET run, not from `ma`: the door
     // refills a missing allocation from the class preset, and since the
@@ -7256,8 +7256,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'useSprites,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
-      'every combat pacing, quality, shake, sprite and played-card switch is under one name');
+      'askToUpcastAfterTarget,useSprites,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
+      'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
+    eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',
       'the combat Armaments cluster is filed with combat, not with the accent colour');
@@ -8211,7 +8212,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/phase/.test(malformedReason),
       `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
 
-    const malformedRun = createRunState({ seed, classId: 'reaver', registries: REG });
+    const malformedRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
     malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
     const storage = createMemoryStorage();
     storage.setItem(RUN_KEY, serializeRun(malformedRun));
@@ -8222,7 +8223,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const dangling = structuredClone(stored);
     dangling.piles.hand[0].cardId = 'removedByContentPatch';
-    const danglingRun = createRunState({ seed, classId: 'reaver', registries: REG });
+    const danglingRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
     danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
     const danglingStorage = createMemoryStorage();
     danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
@@ -8231,7 +8232,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
       'the dangling exact-snapshot refusal names the affected card pile');
 
-    const checkpointRun = createRunState({ seed, classId: 'reaver', registries: REG });
+    const checkpointRun = createRunState({ combatExpansionVersion: 1, seed, classId: 'reaver', registries: REG });
     checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
     const checkpointStorage = createMemoryStorage();
     checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
@@ -8506,7 +8507,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(slot.swap, 'outOfCombat', `slot '${id}' swaps out of combat`);
       eq(slotHand(slot), null, `slot '${id}' is worn, not held`);
     }
-    const run = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const run = createRunState({ combatExpansionVersion: 1, seed: 0x3b3b, classId: 'reaver', registries: REG });
     eq(Object.keys(run.zones.worn).join('|'), 'body|head|hands|feet|talisman', 'the worn zone has its five slots in order');
     for (const id of ['head', 'hands', 'feet']) {
       assert(Array.isArray(run.loadout.sets[id]) && run.loadout.sets[id].length === 1, `loadout.sets.${id} is one empty cell`);
@@ -8563,7 +8564,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // The lock is grantedBy: a lent card cannot be removed while its piece is
     // worn, and is gone — not unlocked — once the piece is not.
-    const fresh = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const fresh = createRunState({ combatExpansionVersion: 1, seed: 0x3b3b, classId: 'reaver', registries: REG });
     const lent = fresh.deck.filter(isItemOwned);
     assert(lent.length > 0, 'the starting hands lend cards');
     for (const inst of lent) {
@@ -8587,7 +8588,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // feet; the load door gives it each slot's empty cells and says so.
     const storage2 = createMemoryStorage();
     const saves2 = createSaveManager(storage2);
-    saves2.saveRun(createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG }), createRng(1));
+    saves2.saveRun(createRunState({ combatExpansionVersion: 1, seed: 0x3b3b, classId: 'reaver', registries: REG }), createRng(1));
     const old = JSON.parse(storage2.getItem(RUN_KEY));
     for (const id of ['head', 'hands', 'feet']) { delete old.loadout.sets[id]; delete old.loadout.active[id]; }
     delete old.zones; delete old.collection; old.schemaVersion = 6;
@@ -8604,7 +8605,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // combat snapshot. The reference check passes a slot the snapshot never
     // knew, the door heals that loadout too, and the run resumes rather than
     // being archived.
-    const midFight = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const midFight = createRunState({ combatExpansionVersion: 1, seed: 0x3b3b, classId: 'reaver', registries: REG });
     const fight = createCombat({
       registries: REG, rng: createRng(0x3b3b), enemyIds: ['fellWarden'],
       player: { classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp, maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina, energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn, damageBySchoolAdd: midFight.damageBySchoolAdd, equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot, equipmentAttackSlotCount: midFight.equipmentAttackSlotCount, equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels, deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks, flaskCharges: midFight.flaskCharges, loadout: midFight.loadout },
@@ -9411,7 +9412,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // them in levelUps; it arrives at the level those purchases reached, no
     // XP toward the next, nothing waiting — and, born under a snapshot with
     // no level term, gains no bump.
-    const bought = createRunState({ seed: 0x6a6b, classId: 'reaver', registries: REG });
+    const bought = createRunState({ combatExpansionVersion: 1, seed: 0x6a6b, classId: 'reaver', registries: REG });
     bought.seedString = 'BOUGHT';
     const st2 = createMemoryStorage(); const sv2 = createSaveManager(st2);
     sv2.saveRun(bought, createRng(2));
