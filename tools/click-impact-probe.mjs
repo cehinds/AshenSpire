@@ -226,7 +226,7 @@ async function main() {
       const t0 = Date.now();
       while (Date.now() - t0 < 3000 && (await played()) === before) {
         if (await evalIn(`!!document.querySelector('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])')`)) { await click('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])', 'its legal enemy target', false); break; }
-        if (await evalIn(`!!document.querySelector('.combatant.player.targetable')`)) { await click('.combatant.player.targetable', 'its legal source target', false); break; }
+        if (await evalIn(`!!document.querySelector('.combatant.player.targetable, .combatant.player.armed')`)) { await click('.combatant.player.targetable, .combatant.player.armed', 'its legal source target', false); break; }
         await wait(30);
       }
       await until(`(window.__combat?.player?.counters?.cardsPlayedThisCombat || 0) > ${before}`, 'the card to resolve', 5000);
