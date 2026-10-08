@@ -19,7 +19,7 @@
 //           open (REFUSED-KEEPS-RUN). `?shotRefusedSlot=3` plants it.
 //   RESTART Abandoning a fight mid-combat (no Save Game) and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
-//           the same opening hand, an unchanged deck. tests/midcombat-reload
+//           the same opening hand, RNG seed/counters, an unchanged deck. tests/midcombat-reload
 //           proves the same property against a hand-copied mirror of
 //           enterCombat; this is the production load door itself.
 //   OVERLAY-FOCUS  The same refused load, launched from the in-run
@@ -92,9 +92,15 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'combat entry stops writing its receipt',
-        file: 'src/main.js',
-        find: '  if (!resuming) persist();',
-        replace: '  // slot-load-door selftest plant',
+        // The original deletion is now protected by the v2 durable opening
+        // checkpoint. Omit BOTH saves to plant the same missing-entry defect;
+        // the old deletion alone no longer produces an observed regression.
+        edits: [
+          { file: 'src/main.js', find: '  if (!resuming) persist();',
+            replace: '  // slot-load-door selftest plant' },
+          { file: 'src/main.js', find: '      durable(combat);',
+            replace: '      // slot-load-door selftest plant: omit the v2 entry checkpoint too' },
+        ],
         expectRed: /RED SLOT-LOAD-MIDCOMBAT-RESTART/,
       },
       {
@@ -199,6 +205,7 @@ try {
       hand: ids('hand'),
       cards: ['draw', 'hand', 'discard', 'exhaust'].flatMap(ids).sort(),
       enemies: c.enemies.map((e) => ({ id: e.enemyId, hp: e.hp })),
+      rng: { seed: c.rng.seed, counters: c.rng.getCounters() },
       liveDeck: spoils.liveDeck, savedDeck: spoils.savedDeck,
     };
   })()`);
@@ -358,6 +365,10 @@ try {
     if (!same(reloaded.hand, opening.hand)) problems.push(`hand [${reloaded.hand}] vs [${opening.hand}]`);
     if (!same(reloaded.cards, opening.cards)) problems.push('the fight holds different cards');
     if (!same(reloaded.enemies, opening.enemies)) problems.push(`enemies ${JSON.stringify(reloaded.enemies)} vs ${JSON.stringify(opening.enemies)}`);
+    // A wrong seed can restore identical current geometry from a snapshot,
+    // while changing the next random draw. Compare the full RNG receipt now.
+    if (reloaded.rng.seed !== opening.rng.seed) problems.push(`RNG seed ${reloaded.rng.seed} vs ${opening.rng.seed}`);
+    if (!same(reloaded.rng.counters, opening.rng.counters)) problems.push(`RNG counters ${JSON.stringify(reloaded.rng.counters)} vs ${JSON.stringify(opening.rng.counters)}`);
     if (!same(reloaded.liveDeck, opening.liveDeck) || !same(reloaded.savedDeck, opening.savedDeck)) problems.push('the deck changed');
     check(problems.length === 0, 'SLOT-LOAD-MIDCOMBAT-RESTART',
       problems.length ? problems.join('; ') : `turn 1, HP ${reloaded.playerHp}, the same ${reloaded.hand.length}-card opening hand, deck of ${reloaded.liveDeck.length} unchanged`);

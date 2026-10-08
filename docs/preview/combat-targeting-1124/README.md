@@ -1,4 +1,6 @@
-# Combined compiled combat targeting QA
+# Historical compiled combat targeting QA (1124)
+
+Visual review after these checks found understated SP badges: the custom Tier 5 card showed 0 SP and co-op Shield Bash Tier 2 showed 1 SP, although their paid surcharge was 3 SP. A later price fix and fresh compiled checks supersede this evidence. The original records and screenshots remain tied to build 1124.
 
 Artifact: **0.7.1.1124 / 84f593f7fd**, read directly from `build/download/AshenSpire.html`. Each correctness driver confirmed this compiled identity. The completed standalone artifact was exercised through real Chromium mouse/touch input; source and build metadata were unchanged during these checks.
 
