@@ -1,4 +1,6 @@
-# Final compiled combat targeting QA
+# Historical compiled combat targeting QA
+
+These historical claims remain tied to build 1115; the later combined build is recorded separately.
 
 Artifact: **0.7.1.1115 / 2d9127408f**, read directly from `build/download/AshenSpire.html`. Both correctness drivers confirmed the compiled identity before interaction. These are real Chromium mouse/touch interactions with the completed standalone artifact.
 

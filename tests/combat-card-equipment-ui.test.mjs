@@ -25,7 +25,7 @@ const tacticalLabels = new Set(['Physical', 'Spell', 'Attack', 'Defend', 'Counte
   'Frost', 'Fire', 'Lightning', 'Force', 'Alteration', 'Illusion', 'Divine', 'Decay']);
 
 // The DOM fixture models structure, but does not parse text nodes. Capture the
-// actual renderer's markup as well, to assert the visible tag strip's words.
+// actual renderer's markup as well, to assert the sigils and damage words.
 function withCardDom(fn) {
   return withKitDom(dom => {
     const prototype = Object.getPrototypeOf(dom.document.body);
@@ -34,11 +34,11 @@ function withCardDom(fn) {
     Object.defineProperty(prototype, 'innerHTML', { configurable: true,
       set(value) { markup.set(this, value); descriptor.set.call(this, value); },
     });
-    return fn(element => markup.get(element)?.match(/data-card-binding="tags"[^>]*>(.*?)<\/div>/s)?.[1].split(' · ').filter(Boolean) || []);
+    return fn(element => markup.get(element) || '');
   });
 }
 
-test('all 17 resolved equipment profiles show their own tactical tags and data attributes', () => withCardDom(labelsFor => {
+test('all 17 resolved equipment profiles show their sigils and retain tactical inspection tags', () => withCardDom(markupFor => {
   assert.deepEqual(registries.equipment.basicCardProfiles.map(profile => profile.id).sort(), Object.keys(identities).sort());
   for (const profile of registries.equipment.basicCardProfiles) {
     const ref = { cardId: profile.baseCardId, profileId: profile.id };
@@ -49,17 +49,20 @@ test('all 17 resolved equipment profiles show their own tactical tags and data a
     const card = renderCard(registries, ref, { inspection: false });
     assert.deepEqual([card.dataset.combatCamp || null, card.dataset.combatManeuver || null,
       card.dataset.combatSchool || null], expected, `${profile.id} attributes`);
-    const labels = labelsFor(card).filter(label => tacticalLabels.has(label));
+    const model = playingCardModel(registries, ref), markup = markupFor(card);
+    assert.ok(markup.includes(`data-primary-sigil="${model.sigils.action}"`), `${profile.id} primary sigil`);
+    if (expected[2]) assert.ok(markup.includes(`data-sigil="${expected[2]}"`), `${profile.id} school sigil`);
     const expectedLabels = expected.filter(Boolean).map(capitalized);
     if (['staffMagicAttack', 'sceptreArcaneAttack'].includes(profile.id)) expectedLabels.push('Force');
     if (profile.id === 'bowTechnique') expectedLabels.push('Ranged'); // Authored legacy weapon tag; no attack maneuver.
-    // Force may describe both the school and damage type, but one visible word
-    // must not conceal an extra stale Physical/Attack classification.
-    assert.deepEqual([...new Set(labels)].sort(), [...new Set(expectedLabels)].sort(), `${profile.id} visible tag identity`);
+    const detail = cardDetailHtml(registries, ref);
+    for (const label of expectedLabels) assert.ok(detail.includes(`>${label}</span>`), `${profile.id} inspected ${label}`);
+    const damage = model.tags.filter(tag=>tag.id.startsWith('damage:')).map(tag=>tag.label);
+    for (const label of damage) assert.ok(markup.includes(label), `${profile.id} written damage type`);
   }
 }));
 
-test('resolved equipment tags replace even nonempty base tags and explicit empty arrays stay authoritative', () => withCardDom(labelsFor => {
+test('resolved equipment tags replace even nonempty base tags and explicit empty arrays stay authoritative', () => withCardDom(markupFor => {
   assert.equal(combatProfileFor({ id: 'strike', tags: ['camp:physical', 'maneuver:attack'], cardTags: [] }).camp, null);
   const custom = createRegistries({ ...contentBundle,
     cards: contentBundle.cards.map(card => card.id === 'strike' ? { ...card, cardTags: [] } : card),
@@ -69,11 +72,12 @@ test('resolved equipment tags replace even nonempty base tags and explicit empty
   const card = renderCard(custom, ref, { inspection: false });
   assert.equal(card.dataset.combatCamp, undefined);
   assert.equal(card.dataset.combatManeuver, undefined);
-  assert.deepEqual(labelsFor(card), []);
+  assert.match(markupFor(card), /data-primary-sigil="attack"/); // The authored type still identifies its action.
+  assert.doesNotMatch(markupFor(card), /combat-sigil-school|card-damage-types/);
   assert.doesNotMatch(cardDetailHtml(custom, ref), /class="inspection-tag"/);
 }));
 
-test('weapon-art source metadata preserves every authored Counter identity on the rendered face', () => withCardDom(labelsFor => {
+test('weapon-art source metadata preserves every authored Counter identity on the rendered face', () => withCardDom(markupFor => {
   const counters = {
     guardCounter: 'melee', riposte: 'melee', rondelParry: 'melee', bindingParry: 'melee',
     spikedReprisal: 'melee', 'progression-crimson-reprisal': 'melee', nockAndWait: 'ranged',
@@ -88,11 +92,12 @@ test('weapon-art source metadata preserves every authored Counter identity on th
     assert.equal(profile.counterMode, mode, cardId);
     const card = renderCard(registries, ref, { inspection: false });
     assert.equal(card.dataset.combatManeuver, 'counter', cardId);
-    assert.ok(labelsFor(card).includes('Counter'), cardId);
+    assert.match(markupFor(card), /data-primary-sigil="counter"/, cardId);
+    assert.match(markupFor(card), /role="img" aria-label="Counter"/, cardId);
   }
 }));
 
-test('active tactical metadata owns enemy move descriptions, card tags and inspection tooltips', () => withCardDom(labelsFor => {
+test('active tactical metadata owns enemy move descriptions, written damage and inspection tooltips', () => withCardDom(markupFor => {
   const renamed = {
     'camp:physical': 'Run Might', 'maneuver:attack': 'Run Jab',
     'maneuver:counter': 'Run Reversal', 'counter:melee': 'Run Melee Reply', 'damage:frost': 'Run Ice',
@@ -115,13 +120,13 @@ test('active tactical metadata owns enemy move descriptions, card tags and inspe
     assert.equal(tag.blurb, `Active description for ${renamed[tag.id]}.`);
   }
   const card = renderCard(custom, ref, { inspection: false });
-  assert.ok(labelsFor(card).includes('Run Ice'));
-  assert.ok(labelsFor(card).includes('Run Might'));
-  assert.ok(labelsFor(card).includes('Run Jab'));
-  assert.ok(!labelsFor(card).includes('Cold'));
+  assert.match(markupFor(card), /class="card-damage-types">Run Ice<\/span>/);
+  assert.doesNotMatch(markupFor(card), /class="card-damage-types">Cold<\/span>/);
   const tooltip = cardDetailHtml(custom, ref);
   assert.match(tooltip, /Active description for Run Ice/);
   assert.match(tooltip, />Run Ice<\/span>/);
+  assert.match(tooltip, />Run Might<\/span>/);
+  assert.match(tooltip, />Run Jab<\/span>/);
   const moves = enemyMoveCards(custom.enemies.get('gildedKnight'), { registries: custom });
   const parry = moves.find(move => move.moveId === 'parry');
   for (const id of ['camp:physical', 'maneuver:counter', 'counter:melee']) {

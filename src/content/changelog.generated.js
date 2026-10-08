@@ -3,14 +3,34 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1733",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Loading keeps your combat checkpoint",
+    "detail": "Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.",
+    "build": "0.7.1.1124",
+    "pullRequest": 1733,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1733"
+  },
+  {
     "id": "pr-1728",
     "date": "2026-10-08",
     "group": "2026-10-08",
     "summary": "Combat controls respond promptly and upcasts keep legal targets",
     "detail": "Accepted plays immediately lock further actions while the hand and fighters stay in place for their animation. Escape cancels a selected Counter card before closing the tutorial. Co-op Upcast appears under a selected card and opens only its rank chooser. Solo and co-op show legal targets for the selected rank, ask for a new target when its destination changes, and spend nothing before the final play. Cards with a higher base rank keep that rank when no upcast is chosen.",
-    "build": "0.7.1.1115",
+    "build": "0.7.1.1122",
     "pullRequest": 1728,
     "url": "https://github.com/cehinds/AshenSpire/pull/1728"
+  },
+  {
+    "id": "pr-1729",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Actions and schools have distinct card sigils",
+    "detail": "A large monochrome action mark leads a smaller school mark and written damage types. Information explains each mark and keeps the detailed tags. Complete effects adapt to the available card space while preserving costs, ranks, conditions and durations.",
+    "build": "0.7.1.1118",
+    "pullRequest": 1729,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1729"
   },
   {
     "id": "pr-1723",

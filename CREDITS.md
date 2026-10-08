@@ -1,5 +1,11 @@
 # Credits & Asset Licenses
 
+## Combat card sigils (2026-10-07)
+
+| Source | License |
+| --- | --- |
+| Original project-authored monochrome SVG geometry in [combatSigils.js](https://github.com/cehinds/AshenSpire/blob/dev/src/content/combatSigils.js): ten primary actions and eight schools | CC0-1.0. These inline source primitives use no third-party artwork. |
+
 ## Alternative animation reference study (2026-10-06)
 
 `pose-studio/renewal/` contains first-party Reaver sword animation drafts made

@@ -25,7 +25,9 @@ test('rank zero and one are visible on rendered cards without a legacy rank over
     for (const [cardId, label] of [['progression-cinder-orbit', 'Cantrip'], ['progression-ember-hew', 'Technique']]) for (const abilityRank of [0, 1, 5]) {
       const face = renderCard(reg, { cardId, abilityRank });
       assert.equal(face.querySelector('.card-rank').textContent, `R${abilityRank}`);
-      assert.ok(face.querySelector('.card-ability-type').textContent.includes(abilityRank === 0 ? label : label === 'Cantrip' ? 'Spell' : 'Combat Maneuver'));
+      assert.equal(face.querySelector('.card-ability-type'), null);
+      assert.ok(face.querySelector('.combat-sigil-action'));
+      assert.ok(face.getAttribute('aria-label').includes(abilityRank === 0 ? label : label === 'Cantrip' ? 'Spell' : 'Combat Maneuver'));
       assert.ok(face.getAttribute('aria-label').includes(`rank ${abilityRank}`));
     }
     const plain = renderCard(reg, { cardId: 'strike' }), ranked = renderCard(reg, { cardId: 'strike', rank: 2 });
