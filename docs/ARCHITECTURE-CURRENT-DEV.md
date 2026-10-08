@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `dev`
-- Source commit: `29e5715ce536103030f55fd7539afee53a3556b4`
+- Source branch: `codex/combat-final-delivery-20261008`
+- Source commit: `5d482e21240f31478386cb03e465526919b3cbcd`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -25,12 +25,12 @@
 | Headless simulation/services | `src/engine/` | 41 |
 | Screen presenters/hosts | `src/ui/screens/` | 34 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
-| Component models and behavior records | `src/ui/models/` | 89 |
+| Component models and behavior records | `src/ui/models/` | 90 |
 | DOM components and observer adapters | `src/ui/components/` | 119 |
 | Code-side content adapters | `src/content/` | 151 |
 | Authoritative JSON/CSV content | `content/source/` | 32 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 431 |
+| Tests | `tests/` | 433 |
 | Architecture/tooling | `tools/` | 431 |
 
 ## Current implementation signals
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **10954**.
-Extensions: `.bat` 1, `.cjs` 9, `.cmd` 3, `.css` 33, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 48, `.jpg` 190, `.js` 730, `.json` 427, `.log` 1, `.md` 194, `.mjs` 791, `.nojekyll` 1, `.nsi` 1, `.png` 1372, `.ps1` 10, `.py` 32, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 32, `.webp` 6272, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
+Tracked files: **10969**.
+Extensions: `.bat` 1, `.cjs` 9, `.cmd` 3, `.css` 33, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 48, `.jpg` 190, `.js` 731, `.json` 430, `.log` 1, `.md` 195, `.mjs` 793, `.nojekyll` 1, `.nsi` 1, `.png` 1380, `.ps1` 10, `.py` 32, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 32, `.webp` 6272, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
