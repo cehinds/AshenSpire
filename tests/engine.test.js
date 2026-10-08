@@ -8605,7 +8605,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // combat snapshot. The reference check passes a slot the snapshot never
     // knew, the door heals that loadout too, and the run resumes rather than
     // being archived.
-    const midFight = createRunState({ combatExpansionVersion: 1, seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const midFight = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 0x3b3b, classId: 'reaver', registries: REG });
     const fight = createCombat({
       registries: REG, rng: createRng(0x3b3b), enemyIds: ['fellWarden'],
       player: { classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp, maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina, energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn, damageBySchoolAdd: midFight.damageBySchoolAdd, equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot, equipmentAttackSlotCount: midFight.equipmentAttackSlotCount, equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels, deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks, flaskCharges: midFight.flaskCharges, loadout: midFight.loadout },
@@ -8757,7 +8757,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(armourSteps.slice(0, 5).join(','), '100,200,400,795,1585', 'armour starts at 100 and each step costs about 1.995 times the last');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
-    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{"perception":{"xp":0,"level":0,"pendingDrafts":0}}', 'a fresh run starts only automatic Perception at zero');
     eq(skillLevel(run, 'item:blade'), 0);
     const first = awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1) + 1);
     eq(first.levelUps, 2, 'enough XP for two steps climbs two');

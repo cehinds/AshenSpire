@@ -3292,16 +3292,21 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
     onClaimSkill: async (skillId) => {
-      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels }, ...(expandedProgression(run) ? {classMilestones:structuredClone(run.classMilestones || {})} : {}) } : null;
-      const claim = claimBankedSkillLevel(registries, run, skillId);
-      if (claim && before && run.classMasteryState.bankable) {
-        const bank = await saves.bankClassMastery(run, registries);
+      const claimRun = run, claimRegistries = registries;
+      const needsBank = hasClassMastery(claimRun) && skillId.startsWith('class:') && claimRun.classMasteryState.bankable;
+      const candidate = needsBank ? structuredClone(claimRun) : claimRun;
+      const claim = claimBankedSkillLevel(claimRegistries, candidate, skillId);
+      if (claim && needsBank) {
+        const bank = await saves.bankClassMastery(candidate, claimRegistries);
+        if (run !== claimRun || run.pendingReward !== checkpoint) return null;
         if (!bank.ok) {
-          Object.assign(run, before);
           showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
           return null;
         }
-        adoptClassMasteryProfile(run, bank.meta);
+        adoptClassMasteryProfile(candidate, bank.meta);
+        for (const key of ['skills', 'classMasteryState', 'classRewardLevels', 'classMilestones']) {
+          if (Object.hasOwn(candidate, key)) claimRun[key] = candidate[key];
+        }
         if (bank.warning) showSettingsNotice(bank.warning, 'profile');
       }
       if (claim && skillId === classSkillId(run.class)) {

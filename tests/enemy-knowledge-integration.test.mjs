@@ -17,12 +17,13 @@ import { skillTracks, awardSkillXp, bankSkillXp, claimBankedSkillLevel } from '.
 import { skillProgressRows, staleSkillTracks } from '../src/model/progression.js';
 import { characterSheetModel } from '../src/ui/models/CharacterSheetModel.js';
 
-function fixture({ registries = createRegistries(contentBundle), enemyId = 'wanderingSoldier', counter = false } = {}) {
+function fixture({ registries = createRegistries(contentBundle), enemyId = 'wanderingSoldier', counter = false, responseCard = 'shieldBash', exact = false } = {}) {
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
   Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
+  if (exact) Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 1, maximumExact: 1 });
   if (counter) {
     openRunEnemyKnowledge(run, { bankable: true, receiptId: 'actual-response-owned-run' });
-    run.deck.unshift({ instanceId: 'knowledge-counter', cardId: 'shieldBash', upgraded: false });
+    run.deck.unshift({ instanceId: 'knowledge-counter', cardId: responseCard, upgraded: false });
   }
   const rng = createRng(run.seed);
   const combat = createRunCombat({ registries, run, rng, enemyIds: [enemyId], settings: { playInDeckOrder: true } });
@@ -51,6 +52,35 @@ test('real Counter preparation and previews are inert; executed return pays one 
   }
 });
 
+test('real tactical replies earn definition learning at any visibility, but exact reads earn no Perception', () => {
+  const { combat } = fixture({ counter: true, exact: true });
+  const enemy = combat.enemies[0], receiptId = combat.enemyKnowledge.encounter.id;
+  assert.equal(enemy.knowledgeAction.reads.player.visibility, 'exact');
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
+  dispatch(combat, { type: 'endTurn' });
+  const owner = combat.enemyKnowledge.owners.player;
+  assert.equal(owner.earnedXp, 0);
+  assert.equal(owner.pending.enemies[enemy.enemyId].receipts[receiptId].bonus, true);
+});
+
+test('a committed successful evade against a multi-hit wholly unknown action credits once', () => {
+  const base = contentBundle.enemies.find(row => row.id === 'wanderingSoldier');
+  const attack = Object.values(base.moves).find(move => move.damage != null);
+  const enemy = { ...base, id: 'knowledgeMultiFixture', hp: [1000, 1000], poiseMax: 1000,
+    firstMove: 'triple', moves: { triple: { ...attack, damage: 10, hits: 3 } } };
+  const registries = createRegistries({ ...contentBundle, enemies: [...contentBundle.enemies, enemy] });
+  const { combat } = fixture({ registries, enemyId: enemy.id, counter: true, responseCard: 'evasiveGuard' });
+  combat.player.attributes.dexterity = combat.attributes.dexterity = 100;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
+  assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 0);
+  const prepared = structuredClone(combat.player.combatEvade);
+  dispatch(combat, { type: 'endTurn' });
+  assert.ok(combat.eventLog.some(event => event.type === 'combatAvoidanceResolved' && event.evade?.success), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
+  assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 1);
+  const owner = combat.enemyKnowledge.owners.player;
+  assert.equal(owner.pending.enemies[enemy.id].receipts[combat.enemyKnowledge.encounter.id].bonus, true);
+});
+
 test('Perception is visible only on opted-in runs and cannot be manually trained or grant rewards', () => {
   const { registries, run } = fixture();
   assert.equal(skillTracks(registries).some(track => track.id === 'perception'), false);
@@ -66,6 +96,21 @@ test('Perception is visible only on opted-in runs and cannot be manually trained
   assert.deepEqual(run.skills, before);
   const legacy = createRunState({ registries, seed: 11, classId: 'reaver', enemyKnowledgeVersion: null });
   assert.equal(skillProgressRows(registries, legacy, { includeUntouched: true }).some(track => track.id === 'perception'), false);
+});
+
+test('hidden card previews cannot reveal selected defend/counter stance through numeric matchup benefits', () => {
+  const { combat, rng } = fixture();
+  const enemy = combat.enemies[0], card = combat.piles.hand[0].instanceId;
+  const counters = rng.getCounters(), state = structuredClone(combat.enemyKnowledge);
+  const original = previewCard(combat, card, enemy.id);
+  for (const maneuver of ['defend', 'counter', 'smash']) {
+    enemy.combatStance = { camp: 'physical', maneuver, expiresOnOwnerCycle: 100 };
+    enemy.combatCounter = { damage: 999, poiseDamage: 999 };
+    enemy.intent = { kind: 'attack', moveId: 'secret', damage: 999, combatProfile: { camp: 'physical', maneuver } };
+    assert.deepEqual(previewCard(combat, card, enemy.id), original);
+  }
+  assert.deepEqual(rng.getCounters(), counters);
+  assert.deepEqual(combat.enemyKnowledge, state);
 });
 
 test('actual solo dispatch awards only executed predictions and reconciles cloned Perception once', () => {

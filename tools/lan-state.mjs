@@ -14,6 +14,13 @@ export function projectLanSnapshot(snapshot, memberIds) {
   for (const seat of [...(view.party || []), ...(view.scene?.players || [])]) if (!owned.has(seat.id)) {
     for (const key of ['enemyKnowledge', 'enemyKnowledgeState', 'enemyKnowledgeRules']) delete seat[key];
     if (seat.skills) delete seat.skills.perception;
+    function concealPerception(receipt) {
+      if (receipt?.xpBefore?.tracks) delete receipt.xpBefore.tracks.perception;
+      if (receipt?.xpGains?.tracks) delete receipt.xpGains.tracks.perception;
+      if (Array.isArray(receipt?.xpGains)) receipt.xpGains = receipt.xpGains.filter(row => row.skillId !== 'perception');
+      for (const previous of receipt?.history || []) concealPerception(previous);
+    }
+    concealPerception(seat.xpProgression);
     for (const card of seat.hand || []) for (const key of ['combatPreview', 'upcastPreviews', 'values', 'tokens', 'damageSequences']) delete card[key];
   }
   if (view.scene?.kind !== 'combat') return view;

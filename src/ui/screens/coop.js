@@ -196,11 +196,13 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
 }
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
+  clearSelection();
+  let disposed = false;
   const banking = new Set();
   const bankFailures = new Map();
   const bankAttempts = new Map();
   async function bankOwnedLearning(snapshot) {
-    if (!bankEnemyKnowledge) return;
+    if (!bankEnemyKnowledge || disposed) return;
     for (const member of snapshot.party || []) {
       const signature = JSON.stringify(member.enemyKnowledgeState?.pending);
       if (!(myIds || [myId]).includes(member.id) || banking.has(member.id) || !Object.keys(member.enemyKnowledgeState?.pending?.enemies || {}).length || bankAttempts.get(member.id) === signature) continue;
@@ -209,6 +211,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       try {
         const learningRun = { enemyKnowledgeState: structuredClone(member.enemyKnowledgeState) };
         const result = await bankEnemyKnowledge(learningRun);
+        if (disposed) return;
         if (result.ok) { bankAttempts.set(member.id, signature); bankFailures.delete(member.id); conn.send({ t: 'knowledgeBanked', as: member.id, receipts: pending }); }
         else {
           bankFailures.set(member.id, JSON.stringify(learningRun.enemyKnowledgeState.pending));
@@ -216,6 +219,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           conn.send({ t: 'knowledgeBankFailed', as: member.id, recovery: { pending: learningRun.enemyKnowledgeState.pending, recoveryTargets: learningRun.enemyKnowledgeState.recoveryTargets } });
           if (snap) render();
         }
+      } catch (error) {
+        if (!disposed) { bankFailures.set(member.id, error.message || 'Enemy learning remains pending.'); if (snap) render(); }
       } finally { banking.delete(member.id); }
     }
   }
@@ -224,7 +229,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // whose `i` had been read kept its first beat for the life of the page, and
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
-  clearSelection();
   configureTooltipGlossary(registries);
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
@@ -668,6 +672,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    disposed = true;
+    snap = null;
     closeCombatantDoor();
     disposeProgression();
     closeClassRespec();

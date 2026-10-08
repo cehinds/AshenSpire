@@ -101,3 +101,18 @@ test('actual LAN learning bank acknowledges only earned owned receipts and never
   const row = Object.values(fake.enemies)[0]; row.receipts['unearned-encounter'] = { bonus: true };
   assert.equal(host.acknowledgeEnemyLearning('p1', fake).ok, false);
 });
+
+test('foreign postcombat progression history omits private Perception while preserving ordinary XP', () => {
+  const receipt = { xpBefore: { tracks: { perception: { level: 2, xp: 3 }, 'item:blade': { level: 1, xp: 4 } } },
+    xpGains: { tracks: { perception: 1, 'item:blade': 2 } } };
+  const source = { party: ['p1', 'p2'].map(id => ({ id, xpProgression: { ...structuredClone(receipt), history: [structuredClone(receipt)] } })), scene: { kind: 'reward' } };
+  const view = projectLanSnapshot(source, ['p1']);
+  for (const row of [view.party[1].xpProgression, ...view.party[1].xpProgression.history]) {
+    assert.equal(row.xpBefore.tracks.perception, undefined);
+    assert.equal(row.xpGains.tracks.perception, undefined);
+    assert.deepEqual(row.xpBefore.tracks['item:blade'], { level: 1, xp: 4 });
+    assert.equal(row.xpGains.tracks['item:blade'], 2);
+  }
+  assert.deepEqual(view.party[0].xpProgression, source.party[0].xpProgression);
+  assert.ok(source.party[1].xpProgression.xpBefore.tracks.perception);
+});
