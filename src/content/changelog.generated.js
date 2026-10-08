@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1739",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat build checks keep their full coverage",
+    "detail": "Combat validation runs in complete, smaller groups so promoted builds can finish their checks within each job's time limit. Every discovered test and known-defect case is retained.",
+    "build": "0.7.1.1128",
+    "pullRequest": 1739,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1739"
+  },
+  {
     "id": "pr-1733",
     "date": "2026-10-08",
     "group": "2026-10-08",
