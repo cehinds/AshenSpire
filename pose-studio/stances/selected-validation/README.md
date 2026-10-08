@@ -33,9 +33,10 @@ motion, existing counter presentation and load retry. Counter artwork and
 additional armour/enemy variants remain separate work.
 
 The Blight HUD follow-up removes the standalone Block / Barrier / Ward summary.
-`blight-qa.json` covers the source game at 1440, 994 and 390 pixels wide;
-`blight-coop-qa.json` covers two-seat co-op at 1440 and 390 pixels. Positive
+`blight-qa.json` covers packaged build 0.7.1.1143 at 1440, 994 and 390 pixels wide;
+`blight-coop-qa.json` covers two-seat co-op in build 0.7.1.1144 at 1440 and 390 pixels. Positive
 Blight is centered and wide, phones reserve a separate header row, and the
 meter disappears at zero. The shared renderer also passes values -1, 0, 1,
-35 and 100. No page errors or horizontal overflow occurred. The accompanying
+35 and 100. The phone also shows Stand up when prone and opens the pending
+Blight feat chooser. No page errors or horizontal overflow occurred. The accompanying
 `blight-*.png` captures show positive and zero solo states and phone co-op.
