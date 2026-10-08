@@ -1,5 +1,6 @@
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { intentBadge } from '../uiContent.js';
+import { t } from '../strings.js';
 
 // Presentation consumes only the observer's projected intent. Never recover a
 // hidden amount from enemy definitions, a move id, or the host's private state.
@@ -11,7 +12,7 @@ export function combatIntentPresentation(intent = {}) {
       return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown' };
     }
     const attacking = intent.label === 'Attack?';
-    return { visibility: 'partial', title: attacking ? 'Attacking ?' : 'Preparing ?',
+    return { visibility: 'partial', title: partialTitle(attacking ? 'attacking' : 'preparing'),
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : 'prepare', value: null }] };
   }
   const stance = combatIntentStance(intent);
@@ -23,12 +24,12 @@ export function combatIntentPresentation(intent = {}) {
   if (partial) {
     const family = ['attacking', 'smashing', 'sweeping', 'ranged'].includes(stance) ? 'attacking'
       : ['defending', 'countering'].includes(stance) ? 'defending' : 'preparing';
-    return { visibility: 'partial', title: `${capitalize(family)} ?`, stance: family,
+    return { visibility: 'partial', title: partialTitle(family), stance: family,
       parts: [{ icon: family === 'attacking' ? 'attack' : family === 'defending' ? 'defend' : 'prepare', value: null }] };
   }
   // Interrupted turns retain their status in the tooltip; their badge simply
   // reports that the enemy is preparing, rather than claiming an attack.
-  if (intent.kind === 'staggered') return { visibility: 'partial', title: 'Preparing ?', stance: 'preparing',
+  if (intent.kind === 'staggered') return { visibility: 'partial', title: partialTitle('preparing'), stance: 'preparing',
     parts: [{ icon: 'prepare', value: null }] };
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
@@ -43,3 +44,4 @@ export function combatIntentPresentation(intent = {}) {
 }
 
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
+const partialTitle = stance => t('combat.intent.partial', { stance: capitalize(stance) });

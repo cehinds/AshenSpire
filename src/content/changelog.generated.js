@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1750",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat intents and targets share the approved option C layout",
+    "detail": "Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.",
+    "build": "0.7.1.1134",
+    "pullRequest": 1750,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
     "id": "pr-1734",
     "date": "2026-10-08",
     "group": "2026-10-08",
