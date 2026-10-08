@@ -10,7 +10,20 @@ const server=await serve({root:process.cwd(),port:0,open:false});
 const launched=await launchBrowser({prefix:'sigil-',browser:process.env.CHROME,args:['--disable-background-mode']});
 const browser=await chromium.connectOverCDP(launched.wsUrl);
 const base=`http://localhost:${server.server.address().port}`;
-const report={source:process.env.SIGIL_SOURCE_SHA || null,devices:[]};
+const standalone=process.argv.includes('--standalone');
+const report={source:process.env.SIGIL_SOURCE_SHA || null,build:process.env.SIGIL_BUILD_VERSION || null,surface:standalone?'standalone':'source',devices:[]};
+function cardGeometry(cards){return cards.map(c=>{
+ const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
+ const r=text.getBoundingClientRect(),top=title.getBoundingClientRect();
+ return {ref:c.dataset.qaRef||c.dataset.cardId,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
+  school:c.querySelector('.combat-sigil-school')?.dataset.sigil||null,
+  clipped:text.scrollHeight>text.parentElement.clientHeight+1||text.scrollWidth>text.clientWidth+1,
+  overlapsTitle:r.top<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),
+  expanded:c.querySelector('.illustrated-card-face').dataset.rulesExpanded==='true',
+  accessibleName:c.getAttribute('aria-label'),actionName:c.querySelector('.combat-sigil-action').getAttribute('aria-label'),
+  schoolName:c.querySelector('.combat-sigil-school')?.getAttribute('aria-label')||null,
+  extraTabStops:c.querySelectorAll('.combat-sigil[tabindex],.combat-sigil svg[tabindex]').length};
+ });}
 async function readyImages(page){
  await page.evaluate(async()=>{
   await Promise.all([...document.images].filter(img=>img.getBoundingClientRect().width>0).map(img=>img.decode().catch(()=>{})));
@@ -25,7 +38,7 @@ try {
   const page=await context.newPage();const errors=[],failed=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('response',r=>{if(r.status()>=400 && new URL(r.url()).origin===base)failed.push(`${r.status()} ${r.url()}`);});
-  await page.goto(base+'/index.html?shot=combat',{waitUntil:'domcontentloaded',timeout:120000});
+  await page.goto(base+(standalone?'/AshenSpire.html':'/index.html')+'?shot=combat',{waitUntil:'domcontentloaded',timeout:120000});
   await page.waitForSelector('.hand .card [data-primary-sigil]');
   assert.equal(await page.evaluate(()=>window.__combat.combatExpansionVersion),2,'live fixture uses expanded combat');
   await page.evaluate(()=>document.fonts.ready);
@@ -44,6 +57,14 @@ try {
   assert.equal(await page.locator('.card-inspection-modal').count(),0);
   assert.ok(await page.evaluate(()=>document.activeElement.matches('.card, .card-info-button')),'focus returned');
   assert.equal(await page.evaluate(()=>JSON.stringify({plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'),energy:window.__combat.player.energy,mana:window.__combat.player.mana,stamina:window.__combat.player.stamina})),beforeInspect,'inspection spends no resources and plays no card');
+  if(standalone){
+   const geometry=await page.locator('.hand .card').evaluateAll(cardGeometry);
+   assert.ok(geometry.every(g=>!g.clipped&&!g.overlapsTitle),'standalone hand effects remain complete');
+   assert.ok(geometry.every(g=>g.accessibleName?.includes(g.actionName)&&(!g.schoolName||g.accessibleName.includes(g.schoolName))),'standalone action and school names remain accessible');
+   assert.equal(errors.length,0,errors.join('\n'));
+   assert.equal(failed.filter(f=>!f.includes('favicon')).length,0,failed.join('\n'));
+   report.devices.push({name,hand:geometry,errors,failed});await context.close();continue;
+  }
   const refs=await page.evaluate(async()=>{
    const {contentBundle}=await import('/src/content/index.js');
    const {createRegistries,resolveCard}=await import('/src/model/registries.js');
@@ -77,19 +98,7 @@ try {
   await page.screenshot({path:resolve(output,name+'-sigil-gallery.png'),fullPage:true});
   await page.evaluate(async()=>{const gallery=document.querySelector('.sigil-corpus');gallery.dataset.corpusExpanded='true';const {scheduleCardFits}=await import('/src/ui/components/card.js');scheduleCardFits(gallery.querySelectorAll('.card'));});
   await page.waitForFunction(()=>[...document.querySelectorAll('.sigil-corpus [data-card-binding="rules"]')].every(text=>text.dataset.rulesComplete==='true'));
-  const geometry=await page.locator('.sigil-corpus .card').evaluateAll(cards=>cards.map(c=>{
-   const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
-   const r=text.getBoundingClientRect(),top=title.getBoundingClientRect();
-   return {ref:c.dataset.qaRef,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
-    school:c.querySelector('.combat-sigil-school')?.dataset.sigil||null,
-    clipped:text.scrollHeight>text.parentElement.clientHeight+1||text.scrollWidth>text.clientWidth+1,
-    overlapsTitle:r.top<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),
-    expanded:c.querySelector('.illustrated-card-face').dataset.rulesExpanded==='true',
-    accessibleName:c.getAttribute('aria-label'),
-    actionName:c.querySelector('.combat-sigil-action').getAttribute('aria-label'),
-    schoolName:c.querySelector('.combat-sigil-school')?.getAttribute('aria-label')||null,
-    extraTabStops:c.querySelectorAll('.combat-sigil[tabindex],.combat-sigil svg[tabindex]').length};
-  }));
+  const geometry=await page.locator('.sigil-corpus .card').evaluateAll(cardGeometry);
   await page.screenshot({path:resolve(output,name+'-cards.png'),clip:{x:0,y:0,width:phone?390:1440,height:phone?844:1000}});
   const bad=geometry.filter(g=>g.clipped||g.overlapsTitle);
   writeFileSync(resolve(output,name+'-geometry.json'),JSON.stringify(geometry,null,2)+'\n');
