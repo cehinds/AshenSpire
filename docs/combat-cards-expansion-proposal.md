@@ -884,9 +884,20 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 ## Delivery scope
 
-- **Documentation proposal**
-  - These notes update the future expansion design.
-  - Existing shipped tagged-combat rules remain governed by SPEC §4.7.
-  - New mechanics require their own accepted state, save, preview, and implementation contracts.
-  - No runtime code, card catalog, or live balance is changed by merging this write-up.
-  - Enemy behavior, multiplayer ownership, saved outcomes, and recovery budgets must follow the same rules when implemented.
+- **Implemented expansion**
+  - New runs use version 2 of the Martial and Spell rules. Existing runs keep their saved rules.
+  - [The implementation contract](combat-expansion-contract.md) governs final values, ownership, rounding, card lifecycle, and compatibility.
+  - Solo, co-op, enemies, card previews, and saved fights share those rules.
+  - [Card sigils](combat-card-sigils.md) explain the action and school marks. Damage types remain written; inspection explains secondary tags.
+
+- **Loading a fight**
+  - Ordinary combat actions preserve the latest durable checkpoint, initially the fight's entry.
+  - Explicit Save Game records the current fight. Later ordinary actions leave that checkpoint intact.
+  - Irreversible Blight payments, milestone choices, encounter checks, and terminal outcomes are saved before adoption and presentation.
+  - A failed required save rejects the whole play, including costs and RNG changes. Zero-cost corrupted plays still record their payment receipt.
+  - Blight's effective stats update live equipment ratings and Poise without changing allocated points; reloading preserves the same projection.
+
+- **Playtest delivery**
+  - The implementation must reach regular and alternative dev/test with each channel's required checks passing.
+  - Alternative presentation and animation changes remain preserved during reconciliation.
+  - [Enemy knowledge](enemy-knowledge-contract.md) remains a separately coordinated runtime expansion.

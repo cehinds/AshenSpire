@@ -8,7 +8,7 @@ import * as Blight from './ashenBlight.js';
 import { enqueueExpandedAction, previewExpandedActions } from './combatExpansionActions.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
-import { settleExpandedPools } from './combatExpansionProjection.js';
+import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
@@ -391,6 +391,7 @@ export function createCombat({
   }
 
   if (combatExpansionVersion === 2) {
+    refreshExpandedLoadout(combat, combat.player, { refreshPoise: false });
     const entry = Blight.rollAshenBlightEncounter(combat, combat.player, combatKey);
     if (entry.terminal) { combat.turn = 1; combat.player.alive = false; combat.player.hp = 0; combat.phase = 'ended'; combat.result = 'defeat'; combat.emit('ashenBlightLost', { targetId: combat.player.id, reason: 'encounter' }); return combat; }
   }
@@ -828,6 +829,7 @@ export function dispatch(combat, intent) {
         combat.player.attributes = { ...combat.attributes };
         combat.drawPerTurn = combat.player.drawPerTurn;
         if (combat.handRules) combat.handMax = scaledCards(handRow(combat.handRules, 'handSize'), combat.attributes, combat.characterLevel);
+        refreshExpandedLoadout(combat, combat.player);
         refreshCombatRatings(combat);
         break;
       }
