@@ -38,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Read enemy clues and learn their Bestiary",
     "detail": "Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.",
-    "build": "0.7.1.1131",
+    "build": "0.7.1.1132",
     "pullRequest": 1734,
     "url": "https://github.com/cehinds/AshenSpire/pull/1734"
   },
