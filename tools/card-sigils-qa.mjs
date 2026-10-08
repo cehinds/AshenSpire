@@ -69,6 +69,13 @@ try {
   if(phone)await card.locator('.card-info-button').tap();else await card.locator('.card-info-button').click();
   await page.locator('.card-inspection-modal .inspection-sigils').waitFor();
   assert.ok((await page.locator('.card-inspection-modal .inspection-sigils').innerText()).length>15);
+  // The modal can exist while its entrance fade is still painting. Capture
+  // the stable face after finite animations on it and its ancestors finish.
+  await page.locator('.card-inspection-modal').evaluate(async modal=>{
+   const animations=[];
+   for(let node=modal;node;node=node.parentElement)animations.push(...node.getAnimations());
+   await Promise.all(animations.filter(a=>a.playState==='running'&&Number.isFinite(a.effect?.getComputedTiming().endTime)).map(a=>a.finished.catch(()=>{})));
+  });
   await page.screenshot({path:resolve(output,name+'-inspection.png')});
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('.card-inspection-modal').count(),0);
