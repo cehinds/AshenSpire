@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1740"
   },
   {
+    "id": "pr-1737",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative sigils and tutorial controls finish their integration",
+    "detail": "Alternative combat retains its battlefield artwork and animation pacing while gaining the completed action and school sigils, combined combat input behavior, and tutorial controls that avoid cards, combat controls, and visible fighter targets across desktop and phone layouts.",
+    "build": "0.7.1.1135",
+    "pullRequest": 1737,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
+  },
+  {
     "id": "pr-1731",
     "date": "2026-10-08",
     "group": "2026-10-08",
