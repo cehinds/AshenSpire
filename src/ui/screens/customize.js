@@ -529,7 +529,7 @@ export function mountCustomize(app, {
   /** The stats step: the mode, then a complete and legal allocation. */
   function statsStepProblem() { return modeProblem() || allocationProblem(); }
   function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
-  function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds); }
+  function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds, meta.settings || {}); }
   function equipmentProblem() { return armourProblem() || handsProblem() || abilitiesProblem(); }
   function flowProblem() { return classProblem() || characterProblem() || equipmentProblem(); }
 
@@ -984,7 +984,7 @@ export function mountCustomize(app, {
 
   function renderEquipment(preferredOpenId = null) {
     equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices(), meta });
-    const ability = startingAbilityPlan(registries, previewRun());
+    const ability = startingAbilityPlan(registries, previewRun(), meta.settings || {});
     if (ability) {
       const sections = [...equipmentSectionViews];
       const lastHand = sections.findLastIndex(section => section.kind === 'hand');
@@ -1415,7 +1415,7 @@ export function mountCustomize(app, {
     slots.push({ key: 'relic', label: 'Relic', node: relic
       ? renderCollectibleCard(registries, relic, 'Relic', { ...summaryCard, identity: 'creation-summary:relic' }).card
       : null, empty: 'None' });
-    const ability = startingAbilityPlan(registries, run);
+    const ability = startingAbilityPlan(registries, run, meta.settings || {});
     for (const cardId of state.startingAbilityIds) slots.push({ key: `ability:${cardId}`, label: t('creation.abilities.summary'),
       node: renderCard(registries, { cardId, abilityRank: ability.rank }) });
     const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
