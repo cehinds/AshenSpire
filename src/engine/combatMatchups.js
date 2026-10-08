@@ -1,6 +1,6 @@
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
-import { previewAvoidance, resolveAvoidance } from './combatAvoidance.js';
+import * as Avoidance from './combatAvoidance.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -365,7 +365,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const amount = Math.max(0, Math.ceil(stanceAmount * Math.max(0, 1 + statusPercent / 100) - 1e-9));
   const amounts = allocateTacticalDamage(amount, contacts.map(contact => contact.effect === 'status' ? 0 : number(contact.amount)));
   const profile = normalizedProfile(carrier);
-  const avoidance = previewAvoidance(ctx, target, profile, amount, { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
+  const avoidance = Avoidance.previewAvoidance(ctx, target, profile, amount, { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
   const guardBefore = number(target?.block) - Math.min(number(target?.block), number(target?.wardBlock));
   const pierce = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0
     && (cfg.damageAliases[p.damageType] === 'piercing' || p.damageType === 'piercing'));
@@ -389,7 +389,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
       sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
   }
   const control = restrictions(ctx, target, options);
-  receipt.avoidance = resolveAvoidance(ctx, source, target, receipt.profile, receipt.amount,
+  receipt.avoidance = Avoidance.resolveAvoidance(ctx, source, target, receipt.profile, receipt.amount,
     { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
   receipt.avoided = receipt.avoidance.avoided;
   receipt.connected = receipt.amount > 0 && !receipt.avoided;

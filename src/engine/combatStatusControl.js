@@ -1,4 +1,4 @@
-import { staggerEnemy, staggerPlayer } from './actions.js';
+import * as Actions from './actions.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
@@ -142,8 +142,8 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
         meter.value %= meter.max;
         emit(ctx, 'statusPoiseBreak', target, { status: id, actionKey: options.actionKey });
         if (ctx.onStatusPoiseBreak) ctx.onStatusPoiseBreak(target, source, options);
-        else if (target.kind === 'enemy') staggerEnemy(ctx, target);
-        else staggerPlayer(ctx, target);
+        else if (target.kind === 'enemy') Actions.staggerEnemy(ctx, target);
+        else Actions.staggerPlayer(ctx, target);
       }
     }
     if (admitted) {

@@ -16,6 +16,17 @@ import {
   bringRunSnapshotForward,
 } from '../src/model/advancedConfig.js';
 import { saveAdvancedConfigFile } from '../src/ui/services/saveJsonFile.js';
+import { validateContent } from '../src/model/validate.js';
+
+test('expanded defense snapshots preserve custom settings through the content validation door', () => {
+  const snapshot = { ...advancedConfigSnapshot({ 'gameConfig.balance.startingCinders': 7 }), breakMeterVersion: 2 };
+  const configured = configuredContentBundle(contentBundle, snapshot);
+  assert.equal(configured.breakMeterVersion, 2);
+  assert.equal(configured.balance.startingCinders, 7);
+  const report = validateContent(configured);
+  assert.equal(report.ok, true, JSON.stringify(report.errors));
+  assert.equal(validateContent({ ...configured, breakMeterVersion: 3 }).ok, false);
+});
 
 test('settings files round trip and leave unrelated settings untouched', () => {
   const source = { 'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.gridShape': 'circle' };

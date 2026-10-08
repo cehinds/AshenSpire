@@ -1,6 +1,6 @@
 // Chance calculations are pure; only resolveAvoidance owns a committed draw.
 import { combatExpansionMatchups } from '../content/combatMatchups.js';
-import { removeStatus } from './statuses.js';
+import * as Statuses from './statuses.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
 export function chanceMode({ advantage = false, disadvantage = false } = {}) {
@@ -92,7 +92,7 @@ export function resolveAvoidance(ctx, source, target, profile, incomingDamage, o
   const preview = previewAvoidance(ctx, target, profile, incomingDamage, options);
   const outcome = { resolved: true, avoided: false, distance: null, evade: null, chance: preview.chance };
   if (preview.prevention) {
-    removeStatus(ctx, target, preview.prevention, { amount: 1, reason: 'consumed' });
+    Statuses.removeStatus(ctx, target, preview.prevention, { amount: 1, reason: 'consumed' });
     outcome.avoided = true;
     outcome.prevention = preview.prevention;
   }

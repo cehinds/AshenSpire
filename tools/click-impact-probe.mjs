@@ -1,5 +1,5 @@
-// tools/click-impact-probe.mjs — how long from the click that plays an attack
-// to the first floating damage number? (docs/FINISH.md §5: "Click to impact
+// tools/click-impact-probe.mjs — how long from the click that plays a card
+// to its first visible damage, protection or Poise/Ward impact? (docs/FINISH.md §5: "Click to impact
 // ≤ 400 ms at Normal pacing", baseline 1.28 s.)
 //
 // A REAL CLICK, A REAL CLOCK. A headless Chromium boots the source tree on a
@@ -8,7 +8,8 @@
 // own coordinates. The page records, on its own clock (performance.now), every
 // capturing `pointerup` and every `.float-num` element added to the document;
 // a play's latency is the last pointerup before the card resolved to the first
-// damage float after it. It plays up to PLAYS attack cards (ending the turn
+// damage/protection float after it. Counter preparation counts its protection;
+// a later return cannot count as an immediate hit. It plays up to PLAYS cards (ending the turn
 // when no attack is affordable) and judges the median against BUDGET_MS.
 //
 //   node tools/click-impact-probe.mjs                 (judge the median)
@@ -159,16 +160,21 @@ async function main() {
     await until(`!!window.__combat && !!document.querySelector('.hand .card')`, 'the first fight');
     await wait(1500);
 
-    // The page's own clock: every capturing pointerup, every damage float.
+    // The page's own clock: pointer releases and visible damage/protection.
+    // Dedicated Poise/Ward payloads can update a bar without a damage float.
     await evalIn(`(() => {
-      window.__impact = { ups: [], floats: [] };
+      const meters = () => JSON.stringify([...document.querySelectorAll('.combatant [data-res=poise], .combatant [data-res=ward]')].map(e => [e.closest('[data-eid]')?.dataset.eid, e.dataset.res, e.dataset.cur, e.dataset.max]));
+      window.__impact = { ups: [], floats: [], meterState: meters(), measureMeters: false };
       addEventListener('pointerup', () => window.__impact.ups.push(performance.now()), { capture: true });
       new MutationObserver((list) => {
         const t = performance.now();
-        for (const m of list) for (const n of m.addedNodes) {
+        for (const m of list) for (const n of m.addedNodes || []) {
           if (n.nodeType === 1 && n.classList.contains('float-num') && /\\bdmg\\b|\\bblk\\b/.test(n.className)) window.__impact.floats.push(t);
         }
-      }).observe(document.body, { childList: true, subtree: true });
+        const nextMeters = meters();
+        if (window.__impact.measureMeters && nextMeters !== window.__impact.meterState) window.__impact.floats.push(t);
+        window.__impact.meterState = nextMeters;
+      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-cur', 'data-max'] });
       return true;
     })()`);
 
@@ -180,20 +186,22 @@ async function main() {
       await until(idle, 'an idle hand', 15000);
       await wait(400);
       const picked = await evalIn(`(async () => {
-        const { resolveCard } = await import('/src/model/registries.js');
-        const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
+        const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
+        const { hasImmediateCombatImpact } = await import('/tools/click-impact-card.mjs');
+        const { immediateCardEffects } = await import('/src/model/cardTargets.js');
         const combat = window.__combat;
         const hand = [...document.querySelectorAll('.hand .card')];
         hand.forEach((c) => delete c.dataset.ciCard);
         const pick = hand.find(c => {
           if (c.classList.contains('unaffordable')) return false;
           const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId);
-          return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst));
+          return inst && hasImmediateCombatImpact(resolveCombatCard(combat, inst));
         });
         if (!pick) return false;
         pick.dataset.ciCard = 'true';
         return { cardId: pick.dataset.cardId, instanceId: pick.dataset.instanceId,
-          maneuver: pick.dataset.combatManeuver };
+          maneuver: pick.dataset.combatManeuver,
+          meterImpact: immediateCardEffects(resolveCombatCard(combat, combat.piles.hand.find(card => card.instanceId === pick.dataset.instanceId))).some(effect => ['poiseDamage', 'wardDamage'].includes(effect.op)) };
       })()`);
       lastPicked = picked;
       if (args.includes('--debug')) console.log('    picked', JSON.stringify(picked));
@@ -209,27 +217,27 @@ async function main() {
         continue;
       }
       const before = await played();
-      const mark = await evalIn(`performance.now()`);
+      const mark = await evalIn(`(() => { window.__impact.measureMeters = ${!!picked.meterImpact}; return performance.now(); })()`);
       // Park the pointer off the hand so a hover lift or tooltip from the last
       // play does not cover the next card.
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 700, y: 120 }, S);
       await wait(250);
-      await click('[data-ci-card="true"]', 'an attack card', false);
+      await click('[data-ci-card="true"]', 'an immediate-impact card', false);
       const t0 = Date.now();
       while (Date.now() - t0 < 3000 && (await played()) === before) {
-        if (await evalIn(`!!document.querySelector('.combatant.player.armed')`)) { await click('.combatant.player.armed', 'its source', false); break; }
-        if (await evalIn(`!!document.querySelector('.enemy-row .enemy.targetable')`)) { await click('.enemy-row .enemy.targetable', 'its target', false); break; }
+        if (await evalIn(`!!document.querySelector('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])')`)) { await click('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])', 'its legal enemy target', false); break; }
+        if (await evalIn(`!!document.querySelector('.combatant.player.targetable, .combatant.player.armed')`)) { await click('.combatant.player.targetable, .combatant.player.armed', 'its legal source target', false); break; }
         await wait(30);
       }
       await until(`(window.__combat?.player?.counters?.cardsPlayedThisCombat || 0) > ${before}`, 'the card to resolve', 5000);
-      await until(`window.__impact.floats.some((t) => t > ${mark})`, 'a damage float', 5000).catch(() => null);
+      await until(`window.__impact.floats.some((t) => t > ${mark})`, 'a visible damage, protection or Poise/Ward impact', 5000).catch(() => null);
       const sample = await evalIn(`(() => {
         const f = window.__impact.floats.find((t) => t > ${mark});
         if (f == null) return null;
         const up = window.__impact.ups.filter((t) => t > ${mark} && t < f).pop();
         return up == null ? null : Math.round(f - up);
       })()`);
-      if (sample != null) { samples.push(sample); console.log(`    play ${samples.length}: ${sample} ms`); }
+      if (sample != null) { samples.push(sample); console.log(`    play ${samples.length}: ${sample} ms (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`); }
     }
     // A median over fewer than three plays says too little to judge.
     if (samples.length < 3) { console.error(`click-impact-probe: only ${samples.length} play(s) measured; need 3`); process.exitCode = 2; return; }
