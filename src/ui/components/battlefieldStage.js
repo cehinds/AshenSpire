@@ -284,7 +284,9 @@ export function wireBattlefieldStage(field, model) {
     const boxes = placed.map(({ frame, sprite }) => ({
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
-      frameRect: frame.classList.contains('enemy-target-hitbox') || (frame.classList.contains('player-target-hitbox') && combat.dataset.waistOverlap !== 'true') ? frame.getBoundingClientRect() : null,
+      // Waist-overlap moves the painted player below the field; its real
+      // 44px frame tap target must still receive a finite, in-field anchor.
+      frameRect: frame.classList.contains('enemy-target-hitbox') || frame.classList.contains('player-target-hitbox') ? frame.getBoundingClientRect() : null,
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),

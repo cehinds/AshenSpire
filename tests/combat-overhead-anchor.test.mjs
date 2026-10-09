@@ -245,3 +245,36 @@ test('aligned target plates resolve crowded footers vertically', () => {
   assert(placed[1].y-placed[0].y>=56);
   assert(placed.every(p=>!p.obstructed));
 });
+
+test('actual 1200x730 XL floor targets find upward room without detaching their columns', () => {
+  const height=303.1875, size=54.3906;
+  const targets=[{id:'e1',x:765.57815,y:272.773,width:96},
+    {id:'e2',x:554.39065,y:272.773,width:96},
+    {id:'e3',x:741.82815,y:248.586,width:96}];
+  const obstacles=[{left:706,right:778,top:100,bottom:140}];
+  const placed=combatTargetAnchors({width:1200,height,size,targets,obstacles,lockX:true});
+  const e1=placed.find(p=>p.id==='e1'),e3=placed.find(p=>p.id==='e3');
+  assert.equal(e1.x,targets[0].x);assert.equal(e3.x,targets[2].x);
+  assert.ok(e1.y+size/2+2<=e3.y-size/2,'complete target bands clear at least two pixels');
+  assert.ok(e1.y<targets[0].y,'floor exhaustion uses available upward space');
+  for(const p of placed){assert.equal(p.obstructed,false);assert.ok(p.y-size/2>=0&&p.y+size/2<=height);}
+  const settled=targets.map(t=>({...t,y:placed.find(p=>p.id===t.id).y}));
+  assert.deepEqual(combatTargetAnchors({width:1200,height,size,targets:settled,obstacles,lockX:true}).toSorted((a,b)=>a.id.localeCompare(b.id)),
+    placed.toSorted((a,b)=>a.id.localeCompare(b.id)),
+    'the packed result remains stable on a subsequent refit');
+});
+
+test('waist-overlap player foot below the field retains a clamped 44px target', () => {
+  const placed=combatTargetAnchors({width:390,height:275.203,size:44,lockX:true,
+    targets:[{id:'player',x:112.297,y:395.094,width:44}]});
+  assert.equal(placed[0].x,112.297);assert.equal(placed[0].y,275.203-22);
+  assert.ok(Number.isFinite(placed[0].y));assert.equal(placed[0].obstructed,false);
+});
+
+test('upward fallback still reports obstruction when an overhead occupies all available space', () => {
+  const placed=combatTargetAnchors({width:120,height:60,size:44,lockX:true,
+    targets:[{id:'player',x:60,y:38,width:44}],
+    obstacles:[{left:0,right:120,top:0,bottom:60}]});
+  assert.equal(placed[0].obstructed,true);assert.equal(placed[0].x,60);
+  assert.ok(placed[0].y-22>=0&&placed[0].y+22<=60);
+});
