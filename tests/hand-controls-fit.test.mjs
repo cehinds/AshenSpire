@@ -47,6 +47,46 @@ test('a clipped, tools-reserved hand contains every selected face and its below-
   }
 });
 
+test('a compact paged hand reserves two native chooser rows without shrinking its readable face', () => {
+  // The 320px lane retains two44px pagers and the compact labelled tools.
+  // Its remaining96px is the actual port, not the unreserved viewport width.
+  for (const zoom of [.67, .738, .74, 1, 1.5]) {
+    const port = { width: 96 / zoom, height: 234 / zoom };
+    const controlsHeight = 100 / zoom;
+    const plan = handLayout({ ...port, count: 8, rem: 16 / zoom, zoom, controlsHeight });
+    assert.ok(plan.cardWidth * zoom >= 80 - 1e-7, 'the card does not shrink to the former72px port');
+    assert.ok(plan.cardWidth <= port.width, 'native paging can admit the entire readable face');
+    for (const slot of plan.cards) {
+      const top = plan.top + slot.y - plan.lift;
+      assert.ok(top >= 0, 'selection cannot hide the top of the card');
+      assert.ok(top + plan.cardHeight + controlsHeight <= port.height - 1 / zoom,
+        'both44px input rows fit below the whole selected face');
+    }
+  }
+});
+
+test('a native minimum-width change remeasures the complete wrapped chooser', () => {
+  const originalStyle = globalThis.getComputedStyle;
+  let minWidth = 0, clones = 0;
+  const input = {};
+  const controls = { textContent: 'Upcast Tier 2', querySelectorAll: () => [input], parentElement: { appendChild() {} },
+    cloneNode() { clones++; return { style: {}, setAttribute() {}, querySelectorAll: () => [], offsetHeight: minWidth ? 100 : 52, remove() {} }; } };
+  globalThis.getComputedStyle = node => node === input ? { font: '12px Georgia', minHeight: '44px', minWidth: `${minWidth}px` } :
+    { font: '12px Georgia', paddingTop: '3px', paddingBottom: '3px', borderTopWidth: '1px', borderBottomWidth: '1px', gap: '4px' };
+  try {
+    const options = { zoom: .738, width: 96 / .738, cache: new WeakMap() };
+    assert.equal(measureHandUpcastHeight(controls, options), 52);
+    minWidth = 44;
+    assert.equal(measureHandUpcastHeight(controls, options), 100, '44px width wraps instead of compressing the picker');
+    assert.equal(clones, 2);
+    assert.equal(measureHandUpcastHeight(controls, options), 100);
+    assert.equal(clones, 2, 'the complete wrapped reserve is stable after selection');
+  } finally {
+    if (originalStyle === undefined) delete globalThis.getComputedStyle;
+    else globalThis.getComputedStyle = originalStyle;
+  }
+});
+
 test('native child touch-target style changes invalidate a reserve even when parent typography is unchanged', () => {
   const originalStyle=globalThis.getComputedStyle;
   let minHeight=32,clones=0;

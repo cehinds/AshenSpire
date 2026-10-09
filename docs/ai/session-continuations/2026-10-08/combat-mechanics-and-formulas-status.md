@@ -5,6 +5,12 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Compact controls and target follow-up: source acceptance**
+  - The compact tool dock preserves labels while giving the full card and wrapped 44-pixel Upcast inputs enough space. Target fitting reserves the complete visible player status widget after final art placement.
+  - Independent review is clear. Combined hand/target source suite: 96 passed, zero skipped. Combat mechanics suite remains 122 passed from the unchanged engine. Original 1176 failures remain retained below.
+  - The overlap fixture waits for public production geometry refitting and reasserts its small-player and covered-intent invariants. Original hit predicates, negative plants, and deadlines remain unchanged.
+  - Fresh packaged acceptance and all four branch promotions remain pending.
+
 - **Latest native-pan candidate: 1176 / `28544cb164`**
   - Source `2c0423d584d549a6f0ef8af452beb9335bccccf6`, official architecture `bf827d7ac8f5d55cb1203a77c6ddf38926dae63e`; normal remote build checkpoint inheritance is preserved.
   - Scroll now follows the Info portal without pulling the hand back to an older selected card. Explicit selection/focus/layout/resize still reveals the owner. Both native appearance drivers reach offscreen cards through genuine pagers or touch swipes and prove navigation leaves all combat state and RNG unchanged.

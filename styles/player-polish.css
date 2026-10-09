@@ -450,7 +450,13 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
  top:100%; bottom:auto; width:max-content; min-width:100%; max-width:var(--hand-controls-max-width,100%);
  right:auto; flex-wrap:wrap; box-sizing:border-box; font-size:calc(12px / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,select) { min-height:calc(44px / var(--ui-zoom,1)); font-size:inherit; }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,select) { min-height:calc(44px / var(--ui-zoom,1)); min-width:calc(44px / var(--ui-zoom,1)); font-size:inherit; }
+/* Keep room for a readable face between two real44px pagers on compact
+   phones. Labels remain visible; the Reaction track wraps below its label. */
+@media (max-width:359px) {
+ :root .combat[data-layout='formation'] .combat-tools { --combat-tools-physical-width:112; }
+ :root .combat[data-layout='formation'] .combat-tools .reaction-switch { flex-wrap:wrap; justify-content:center; }
+}
 :root[data-layout='narrow'] .combat .turn-ribbon { font-size:1.2rem; }
 :root .combat .combatant-leading .intent { width:calc(96px / var(--ui-zoom,1)); min-width:calc(96px / var(--ui-zoom,1)); max-width:none; }
 :root .combat[data-composition='option-c'] > .combat-hud.shared-hud { background: none; }

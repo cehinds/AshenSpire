@@ -269,7 +269,7 @@ const SETTINGS_CYCLE = `(async () => {
 // spacing: place the intent over a real neighbouring sprite. The
 // normal overhead layer must remain hittable; the frame-stacking plant below
 // must hide it. Both the clean and planted runs use this same fixture.
-const INTENT_OVERLAP = `(() => {
+const INTENT_OVERLAP = `(async () => {
   if (innerWidth !== 390 || innerHeight !== 650) return true;
   // Missing art uses a wider fallback figure in copied trees. Pin the small
   // player case below 24px when the visible plate supplies its tap area.
@@ -340,6 +340,21 @@ const INTENT_OVERLAP = `(() => {
   const centreHit = document.elementFromPoint(centreX, centreY);
   if (playerPlate && centreHit && playerFrame.contains(centreHit))
     throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
+  // Moving artwork above also moves fitted foot anchors. Let the production
+  // stage fit the changed geometry before probing it; an immediate snapshot
+  // otherwise judges the fixture's stale, manually overridden plate positions.
+  document.querySelector('.combat').dispatchEvent(new Event('combatantselectionchange', { bubbles: true }));
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const refittedPlayer = player.getBoundingClientRect();
+  const refittedSprite = sprite.getBoundingClientRect(), refittedIntent = intent.getBoundingClientRect();
+  if (playerPlate && refittedPlayer.width >= 24)
+    throw new Error('screenreach: refit erased the small-player fixture');
+  if (refittedSprite.left > refittedIntent.left || refittedSprite.right < refittedIntent.right
+      || refittedSprite.top > refittedIntent.top || refittedSprite.bottom < refittedIntent.bottom)
+    throw new Error('screenreach: refit erased the neighbouring intent cover');
+  const refittedCentreHit = document.elementFromPoint(centreX, centreY);
+  if (playerPlate && refittedCentreHit && playerFrame.contains(refittedCentreHit))
+    throw new Error('screenreach: refit erased the separate player foot patch');
   return true;
 })()`;
 

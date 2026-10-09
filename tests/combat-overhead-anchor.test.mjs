@@ -324,3 +324,60 @@ test('bounded floor retry does not trade an impossible stage for outside or over
   assert.deepEqual(combatTargetAnchors({width:120,height:80,size:44,targets,lockX:true}),packed,
     'the two bounded attempts are deterministic');
 });
+
+test('ordinary 390x650 feet reserve the complete visible player HUD without moving artwork columns', () => {
+  const top=69.515625,height=280.421875;
+  const targets=[{id:'player',x:91.65625,y:479.28125-top,width:44},
+    {id:'e1',x:161.25,y:302.28125-top+54.390625/2,width:96},
+    {id:'e2',x:263.2421875,y:302.265625-top+54.390625/2,width:96}];
+  const intents=[{left:113.25,right:209.25,top:166.796875-top,bottom:221.1875-top},
+    {left:215.25,right:311.25,top:172.875-top,bottom:227.265625-top}];
+  const hud={left:35.65625,right:147.65625,top:321.9375-top,bottom:335.9375-top};
+  const input={width:390,height,size:44,targets,lockX:true};
+  const original=combatTargetAnchors({...input,obstacles:intents});
+  const player=original.find(t=>t.id==='player');
+  assert.ok(player.y-22<hud.bottom&&player.y+22>hud.top,
+    'actual ordinary fixture reproduces the unchanged foot gate failure');
+  const obstacles=[...intents,hud],before=structuredClone(targets);
+  const packed=combatTargetAnchors({...input,obstacles});
+  assert.deepEqual(targets,before,'measured artwork feet are not mutated');
+  for(const target of packed){
+    assert.equal(target.x,before.find(t=>t.id===target.id).x,'keep the canonical column');
+    assert.equal(target.obstructed,false,target.id);
+    assert.ok(target.y-22>=0&&target.y+22<=height,'the full physical 44px plate is in the field');
+    for(const obstacle of obstacles)assert.ok(target.x+target.width/2<=obstacle.left
+      || target.x-target.width/2>=obstacle.right || target.y+22<=obstacle.top
+      || target.y-22>=obstacle.bottom,target.id+' clears complete HUD and intent rectangles');
+  }
+  for(let i=0;i<packed.length;i++)for(let j=i+1;j<packed.length;j++){
+    const a=packed[i],b=packed[j];
+    assert.ok(Math.abs(a.x-b.x)>=(a.width+b.width)/2||Math.abs(a.y-b.y)>=46,
+      'complete target/footer rectangles keep their clearance');
+  }
+  assert.deepEqual(combatTargetAnchors({...input,targets:packed,obstacles})
+    .toSorted((a,b)=>a.id.localeCompare(b.id)),packed.toSorted((a,b)=>a.id.localeCompare(b.id)),
+    'stable widget geometry does not feed back into repeated packing');
+});
+
+test('actual desktop player plate clears its raised mini-HUD while enemy feet stay unchanged', () => {
+  const top=85.09375,height=303.1875;
+  const targets=[{id:'player',x:345.8125,y:531.53125-top,width:44},
+    {id:'e1',x:522,y:330.65625-top+54.390625/2,width:96},
+    {id:'e2',x:798,y:330.65625-top+54.390625/2,width:96},
+    {id:'e3',x:420,y:294.265625-top+54.390625/2,width:96}];
+  const hud={left:289.8125,right:401.8125,top:355.578125-top,bottom:369.578125-top};
+  const input={width:1200,height,size:44,targets,lockX:true};
+  const original=combatTargetAnchors(input),packed=combatTargetAnchors({...input,obstacles:[hud]});
+  const player=packed.find(t=>t.id==='player');
+  assert.equal(player.y+22,hud.top-2,'the entire 44px plate clears the independent reading widget');
+  for(const target of packed){
+    assert.equal(target.x,targets.find(t=>t.id===target.id).x);
+    assert.equal(target.obstructed,false);
+    assert.ok(target.y-22>=0&&target.y+22<=height);
+    if(target.id!=='player')assert.deepEqual(target,original.find(t=>t.id===target.id),
+      'unobstructed enemy footer cues retain their exact placement');
+  }
+  assert.deepEqual(combatTargetAnchors({...input,targets:packed,obstacles:[hud]})
+    .toSorted((a,b)=>a.id.localeCompare(b.id)),packed.toSorted((a,b)=>a.id.localeCompare(b.id)),
+    'the final HUD rectangle yields idempotent anchors');
+});

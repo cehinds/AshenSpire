@@ -335,6 +335,11 @@ export function wireBattlefieldStage(field, model) {
     // fight runs several refreshes before its first paint. What is written
     // below places only the absolutely positioned badge and the hit target's
     // ::after, never a box read here, so one layout serves every read.
+    // Position the player's visible reading widget from the final art before
+    // reserving target space. Its hit-testable health row and ability badges
+    // must not split the independent frame plate's complete tap area.
+    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    placePlayerHud();
     const boxes = placed.map(({ frame, sprite }) => ({
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
@@ -346,7 +351,7 @@ export function wireBattlefieldStage(field, model) {
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .map(footer => footer.getBoundingClientRect().width)),
-      controls: [...frame.querySelectorAll('.combatant-leading button')]
+      controls: [...frame.querySelectorAll('.combatant-leading button, .combatant-mini-hud')]
         .filter(control => {
           const style = getComputedStyle(control);
           return !control.hidden && style.display !== 'none' && !['hidden','collapse'].includes(style.visibility);
@@ -404,8 +409,6 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
-    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
-    placePlayerHud();
     const rect = combat.getBoundingClientRect();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
