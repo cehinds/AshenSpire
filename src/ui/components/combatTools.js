@@ -40,8 +40,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     root.style.width = `${localWidth.width}px`;
     const reserve = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: width + gap + 4, height: 0 }, { zoom });
     combatEl.style.setProperty('--combat-tools-reserve', `${reserve.width}px`);
-    const footer = combatEl.querySelector('.combat-action-row')?.getBoundingClientRect();
-    const bottom = (footer?.top ?? innerHeight) - gap;
+    const footerHost = combatEl.querySelector('.combat-action-row');
+    const footer = footerHost?.getBoundingClientRect();
+    // Landscape side rails span the whole hand. Dock above their actual
+    // buttons, not the transparent container that reaches into the battlefield.
+    const footerButtons = [...(footerHost?.querySelectorAll('button, [role="button"]') || [])]
+      .map(button=>button.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
+    const bottom = (footerButtons.length ? Math.min(...footerButtons.map(rect=>rect.top)) : footer?.top ?? innerHeight) - gap;
     const localDock = anchorLocalBox(combatEl, { left: 0, top: bottom - root.getBoundingClientRect().height, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
     const menu = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
