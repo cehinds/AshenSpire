@@ -1958,6 +1958,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     playTimeline(events, {
       get layer() { return app.querySelector('.fx-layer'); },
       get combatEl() { return app.querySelector('.combat'); }, anchorFor,
+      maxActorAnimationMs(speed) {
+        return Math.max(0, ...[...app.querySelectorAll('.sprite')].flatMap(sprite => {
+          const stage = stageFor(sprite);
+          return (stage?.poses || []).map(pose => stage.actionTiming?.(pose, speed)?.totalMs || 0);
+        }));
+      },
       animateActor(beat, sprite, speed) {
         const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
         const played = returned?.sourceKind === 'player' ? returned : beat.events.find(event => event.type === 'cardPlayed');
@@ -1979,11 +1985,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           }
           const plan = resolveCombatAnimation(def, equippedPieces(registries, member?.loadout, member?.classId),
             { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId) });
+          sprite.dataset.actionFamily = plan.family;
+          sprite.dataset.actionMotion = plan.motion;
           pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
         } else {
           const definition = registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
           const plan = resolveActionAnimation({ actorId: moved.enemyId, actionId: moved.moveId,
             tags: definition?.tags || [], intent: moved.kind, availablePoses: stage?.poses || [] });
+          sprite.dataset.actionFamily = plan.family;
+          sprite.dataset.actionMotion = plan.motion;
           pose = moved.kind === 'attack' ? ['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack'
             : moved.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
         }

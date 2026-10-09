@@ -1643,7 +1643,8 @@
   font-size: calc(12px / var(--ui-zoom,1));
 }
 .combat-tools > button { min-height: calc(44px / var(--ui-zoom,1)); padding: calc(5px / var(--ui-zoom,1)); font-size:inherit; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand-overlay { width: calc(100% - var(--combat-tools-reserve, 0px)); }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand-overlay,
+:root .combat.coop[data-layout='formation'] > .hand-area > .hand { width: calc(100% - var(--combat-tools-reserve, 0px)); }
 .combat-tools .reaction-switch { display:flex; align-items:center; justify-content:space-between; gap:4px; color:white; }
 .reaction-switch, .reaction-switch-value { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .reaction-switch-track { position:relative; display:flex; align-items:center; border:1px solid var(--gold); border-radius:20px; width:calc(72px / var(--ui-zoom,1)); height:calc(24px / var(--ui-zoom,1)); background:#397342; color:white; }
