@@ -21,14 +21,20 @@ test('pointer target avoids nested intent controls and a neighbouring actor', ()
   const run = fixture(({nested, blocker, art}, x) => x === 70 ? nested : x === 45 ? blocker : art);
   assert.deepEqual(run(), { x:95, y:70 });
 });
+test('pointer target uses a formation actor published hit centre before its covered wrapper', () => {
+  const probe = formationFixture(({target, blocker}, x, y) => x === 56 && y === 116 ? target : blocker,
+    { zoom: 1.2, originY: 20, localHeight: 100, targetStyle: { left: '30px', top: '80px' } });
+  assert.deepEqual(probe.run(), { x:56, y:116 });
+  assert.deepEqual(probe.samples, [{ x:56, y:116 }]);
+});
 test('pointer target refuses a wholly covered or offscreen control', () => {
   assert.throws(fixture(({blocker}) => blocker), /no unobstructed/);
   assert.throws(fixture(({target}) => target, {x:250,y:250,width:100,height:100}), /no unobstructed/);
 });
 
-function formationFixture(hitAt, { zoom = 1, targetStyle = {} } = {}) {
-  const rect = { x: 20, y: 10, width: 100 * zoom, height: 400 * zoom };
-  const core = { x: 20 + 70 * zoom, y: 10 + 333 * zoom };
+function formationFixture(hitAt, { zoom = 1, originY = 10, localHeight = 400, targetStyle = {} } = {}) {
+  const rect = { x: 20, y: originY, width: 100 * zoom, height: localHeight * zoom };
+  const core = { x: 20 + parseFloat(targetStyle.left ?? '70') * zoom, y: originY + parseFloat(targetStyle.top ?? '333') * zoom };
   const samples = [];
   const target = { scrollIntoView() {}, getBoundingClientRect: () => rect,
     matches: () => true, offsetWidth: 100,
