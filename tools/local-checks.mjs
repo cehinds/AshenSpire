@@ -24,17 +24,32 @@ if (normalized(output) === normalized(root) || normalized(output).startsWith(nor
 await mkdir(path.dirname(output), { recursive: true });
 await mkdir(output); // Exclusive: never overwrite another session's evidence.
 
-async function capture(command, argv, cwd = root) {
-  const child = spawn(command, argv, { cwd, windowsHide: true, env: { ...process.env, GIT_LFS_SKIP_SMUDGE: '1' } });
-  let stdout = '', stderr = '';
+async function capture(command, argv, cwd = root, input) {
+  const child = spawn(command, argv, { cwd, windowsHide: true,
+    stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
+    env: { ...process.env, GIT_LFS_SKIP_SMUDGE: '1' } });
+  let stdout = '', stderr = '', inputError;
   child.stdout.on('data', data => { stdout += data; });
   child.stderr.on('data', data => { stderr += data; });
+  if (input !== undefined) {
+    child.stdin.once('error', error => { inputError = error; });
+    child.stdin.end(input);
+  }
   const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('close', resolve); });
-  if (code !== 0) throw new Error(`${command} failed (${code}): ${stderr}`);
+  if (code !== 0 || inputError) throw new Error(`${command} failed (${code}): ${stderr || inputError?.message}`);
   return stdout.trim();
 }
 const head = await capture('git', ['rev-parse', '--verify', `${options.ref || 'HEAD'}^{commit}`]);
-const report = { suite, head, startedAt: new Date().toISOString(), status: 'running', checks: [], output, snapshot: path.join(output, 'source') };
+const refFormat = '--format=%(refname)%09%(objectname)%09%(symref)';
+const readOriginRefs = async cwd => (await capture('git', ['for-each-ref', refFormat, 'refs/remotes/origin/'], cwd))
+  .split('\n').filter(Boolean).map(line => {
+    const [ref, sha, symbolic] = line.split('\t');
+    return { ref, sha, symbolic: symbolic || null };
+  });
+// A local clone maps author *local branches* into origin/*. Freeze the actual
+// author remote-tracking context separately, including absent dev/test refs.
+const originRefs = await readOriginRefs(root);
+const report = { suite, head, originRefs, startedAt: new Date().toISOString(), status: 'running', checks: [], output, snapshot: path.join(output, 'source') };
 const save = async () => {
   await writeFile(path.join(output, 'result.json.tmp'), JSON.stringify(report, null, 2) + '\n');
   await rename(path.join(output, 'result.json.tmp'), path.join(output, 'result.json'));
@@ -47,6 +62,21 @@ try {
   // configuration is not inherited by clones; a global Windows autocrlf=true
   // otherwise changes LF source and breaks format-sensitive production tests.
   await capture('git', ['clone', '--config', 'core.autocrlf=false', '--config', 'core.eol=lf', '--shared', '--no-checkout', '--', root, report.snapshot]);
+  const clonedRefs = await readOriginRefs(report.snapshot);
+  const frozenRefs = new Map(originRefs.map(record => [record.ref, record]));
+  const refUpdates = [...new Set([...clonedRefs.map(record => record.ref), ...frozenRefs.keys()])].map(ref => {
+    const record = frozenRefs.get(ref);
+    return record && !record.symbolic ? `update ${ref} ${record.sha}` : `delete ${ref}`;
+  });
+  // Only the private snapshot's refs change. No-deref prevents deleting the
+  // clone's origin/HEAD from deleting the branch that symbolic ref points at.
+  if (refUpdates.length) await capture('git', ['update-ref', '--no-deref', '--stdin'], report.snapshot, refUpdates.join('\n') + '\n');
+  for (const { ref, symbolic } of originRefs) {
+    if (symbolic) await capture('git', ['symbolic-ref', ref, symbolic], report.snapshot);
+  }
+  if (JSON.stringify(await readOriginRefs(report.snapshot)) !== JSON.stringify(originRefs)) {
+    throw new Error('Snapshot origin refs differ from the frozen author context');
+  }
   await capture('git', ['-c', 'core.fscache=false', '-c', 'core.preloadIndex=false', '-c', 'index.threads=1', 'checkout', '--detach', head], report.snapshot);
   if (suite !== 'combat') {
     const pin = JSON.parse(await readFile(path.join(report.snapshot, 'art-release.json'), 'utf8'));
@@ -70,7 +100,7 @@ try {
     ownsNativeLock = true;
     await writeFile(path.join(nativeLock, 'owner.json'), JSON.stringify({ head, pid: process.pid, output }));
   }
-  const files = (await readdir(path.join(report.snapshot, 'tests'))).filter(name => /(?:motion-probe-(?:alternative|boundary|fixed-rest)|alternative-branches|default-combat-perspective|alternative-composition|local-checks-snapshot|combat-expansion|combat-matchups|counter|power-lifecycle|blight|enemy-knowledge|combat-card|class-sprite-combat-presentation|combat-attached-hand-envelope|combat-frame-reach|combat-target-layers|combat-overhead-anchor|player-details-placement|hand-controls|upcast).*\.test\.mjs$/.test(name)).sort();
+  const files = (await readdir(path.join(report.snapshot, 'tests'))).filter(name => /(?:pointer-target|quick-start-tutorial-input|motion-probe-(?:alternative|boundary|fixed-rest)|alternative-branches|default-combat-perspective|alternative-composition|local-checks-snapshot|combat-expansion|combat-matchups|counter|power-lifecycle|blight|enemy-knowledge|combat-card|class-sprite-combat-presentation|combat-attached-hand-envelope|combat-frame-reach|combat-target-layers|combat-overhead-anchor|player-details-placement|hand-controls|upcast).*\.test\.mjs$/.test(name)).sort();
   const commands = suite === 'combat' ? [['combat', ['--test', ...files.map(name => `tests/${name}`)]]]
     : suite === 'core' ? [['core', ['tests/run-node.mjs', '--no-selftests']]]
     : suite === 'tools' ? [['tools', ['tests/run-node.mjs', '--selftests-only']]]
