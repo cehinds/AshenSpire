@@ -31,6 +31,12 @@ Finish the currently active appearance/defaults and README PR, reconcile eligibl
 
 The shared prompt package is incorporated through a merge of `origin/codex/session-continuations-20261008` (both `7a317010d1` and `3178fd1b59`). This documentation changes no build identity. A newer checkpoint commit on the same named feature branch carries these notes; fetch that branch and verify its current SHA rather than treating the older recorded checkpoint as its permanent tip.
 
+### Integration update after the checkpoint
+
+Latest Dev `f785dc0eb1271ae03849f00c165d0645dca308f0` (Molten River #1763 plus successful architecture sync) is incorporated. The independently reviewed reward/map branch `c01f7559d059737ee7bac09e4c2fca826efccdcc` (#1756) is also being carried by #1757; retain its ancestry and original build 1144 evidence. Only metadata conflicts required manual resolution. The combined appearance/map/reward/frame suite passes 57/57; the review independently tested the reward head with 56 passing checks. Fresh integrated source-browser QA passes containment at 833/1440/390px and the complete touch Back/reselect/Enter flow, with controls ready at 41.3ms and no page or unexpected request errors. The final rebuilt box and #1757 receipt target **0.7.1.1166 / 3f8943d50c**. Shipping verification, current-head CI and merge/promotion remain pending until recorded below or in a newer task status.
+
+The original appearance gallery remains accurately attributed to build 1163; the newer runtime changes affect map/reward presentation and the generated changelog, not the captured combat appearance. The portable capture recipe can check the current built artifact without changing that historical gallery. The latest card branch received independent source review at `3d5bea6fe5b979e4873fa09ce53ff02d95df7c24`: 42 tests plus 813 model assertions pass, and its missing rank preview was added. Conflict reconciliation, final packaged evidence and current-head CI are still required for #1766. #1767 reaction implementation is still an active owner delivery with failing/pending gates; do not merge it prematurely.
+
 ### Durable source and reproduction
 
 - Appearance model/controller: `src/model/displayAppearance.js`, `src/ui/displayAppearance.js`; settings entry and UI strings use `classicAppearance` with the **Classic appearance** label.
