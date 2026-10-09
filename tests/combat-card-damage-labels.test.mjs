@@ -76,7 +76,7 @@ test('expanded complex card faces expose damage words and preserve v1 authored t
     cost: 1, manaCost: 0, tokens: {}, values: [] };
   const expanded = renderCard(reg, ref, { preview, inspection: false });
   assert.match(markup.get(expanded), /Slashing: /);
-  assert.match(markup.get(expanded), /card-type-name">Attack/);
+  assert.match(markup.get(expanded), /card-type-name"[^>]*>Attack/);
   const v1 = renderCard(reg, ref, { inspection: false });
   assert.doesNotMatch(markup.get(v1), /Slashing: /);
   assert.equal(reg.cards.get('strike'), legacy);

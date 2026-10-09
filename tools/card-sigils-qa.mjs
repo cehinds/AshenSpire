@@ -13,15 +13,17 @@ const launched=await launchBrowser({prefix:'sigil-',browser:process.env.CHROME,a
 const browser=await chromium.connectOverCDP(launched.wsUrl);
 const base=`http://localhost:${server.server.address().port}`;
 const standalone=process.argv.includes('--standalone');
-const report={source:process.env.SIGIL_SOURCE_SHA || execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),build:process.env.SIGIL_BUILD_VERSION || null,surface:standalone?'standalone':'source',devices:[]};
+const report={source:process.env.SIGIL_SOURCE_SHA || execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),uncommittedChanges:!!execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim(),build:process.env.SIGIL_BUILD_VERSION || null,surface:standalone?'standalone':'source',devices:[]};
 // audio.js deliberately probes optional SFX samples and synthesizes missing
 // cues. Retain these requests in the report; required art and code must load.
 const requiredFailures=failed=>failed.filter(f=>!f.includes('favicon')&&!/^404 .*\/assets\/sfx\/[^/]+\.ogg$/.test(f));
 function cardGeometry(cards){return cards.map(c=>{
  const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
- const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),panel=c.querySelector('[data-component="panel"]')?.getBoundingClientRect();
+ const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),panel=c.querySelector('[data-component="panel"]')?.getBoundingClientRect(),rail=c.querySelector('.card-tag-rail')?.getBoundingClientRect();
  const band=c.querySelector('[data-primary-sigil]'),mark=band?.querySelector('.combat-sigil-action'),label=band?.querySelector('.card-type-name'),b=band?.getBoundingClientRect();
  const m=mark?.getBoundingClientRect(),l=label?.getBoundingClientRect();
+ const fade=c.querySelector('.card-title-fade')?.getBoundingClientRect();
+ const rankNode=c.querySelector('.card-rank'),rank=rankNode?.getBoundingClientRect(),trim=c.querySelector('[data-component="panel-trim"]')?.getBoundingClientRect();
  const within=(a,z)=>!!a&&!!z&&a.left>=z.left-1&&a.right<=z.right+1&&a.top>=z.top-1&&a.bottom<=z.bottom+1;
  const horizontal=(a,z)=>!!a&&!!z&&a.left>=z.left-1&&a.right<=z.right+1;
  const bounds=a=>a?{left:a.left,top:a.top,right:a.right,bottom:a.bottom,width:a.width,height:a.height}:null;
@@ -29,6 +31,13 @@ function cardGeometry(cards){return cards.map(c=>{
  const expectedDamageWords=JSON.parse(c.dataset.qaDamageWords||'[]');
  return {ref:c.dataset.qaRef||c.dataset.cardId,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
   school:c.dataset.combatSchool||null,schoolName:accessibleName?.match(/(?:^|, )([^,]+) school(?:,|$)/)?.[1]||null,
+  titleCovered:!!fade&&fade.left<=top.left+1&&fade.right>=top.right-1&&fade.top<=top.top+1&&fade.top+fade.height*.48>=top.bottom-1,
+  rankLabel:rankNode?.textContent||null,
+  rankInvalid:!!rank&&(!/^Rank [1-9]\d*$/.test(rankNode.textContent)||rank.bottom>(panel?.top??r.top)+1||rank.top<top.bottom-1||(rail&&rank.top<rail.bottom-1&&rank.right>rail.left+1&&rank.left<rail.right-1)||Math.abs((rank.left+rank.right-face.left-face.right)/2)>1),
+  trimDetached:!!trim&&!!panel&&(Math.abs(trim.top-panel.top)>1||Math.abs(trim.height-panel.height)>1),
+  sideTags:c.querySelectorAll('.card-tag-symbol').length,
+  railOverlap:!!rail && rail.bottom>Math.min(r.top,panel?.top??r.top)+1,
+  footerLabel:c.querySelector('.card-type-name')?.textContent,
   clipped:text.scrollHeight>text.parentElement.clientHeight+1||text.scrollWidth>text.clientWidth+1,
   overlapsTitle:Math.min(r.top,panel?.top??r.top)<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),ruleTop:r.top-face.top,titleBottom:top.bottom-face.top,panelTop:panel?.top-face.top,
   // The authored 40/360 band is shorter than its centered 12cqw mark.
@@ -45,7 +54,7 @@ function cardGeometry(cards){return cards.map(c=>{
   accessibleName,actionName:mark?.getAttribute('aria-label'),
   extraTabStops:c.querySelectorAll('.combat-sigil[tabindex],.combat-sigil svg[tabindex]').length};
  });}
-const badGeometry=geometry=>geometry.filter(g=>g.clipped||g.overlapsTitle||g.primaryBandOutside||g.secondaryFaceChips||g.primaryMarks!==1||g.primaryLabel!==g.actionName||!g.damageWordsComplete||!g.numbersComplete);
+const badGeometry=geometry=>geometry.filter(g=>g.rankInvalid||g.trimDetached||!g.titleCovered||g.railOverlap||g.sideTags>3||!g.footerLabel||g.clipped||g.overlapsTitle||g.primaryBandOutside||g.secondaryFaceChips||g.primaryMarks!==1||g.primaryLabel!==g.actionName||!g.damageWordsComplete||!g.numbersComplete);
 async function readyImages(page){
  await page.evaluate(async()=>{
   await Promise.all([...document.images].filter(img=>img.getBoundingClientRect().width>0).map(img=>img.decode().catch(()=>{})));
@@ -120,6 +129,7 @@ try {
     ...(c.gradeProfiles||[]).map((p,abilityRank)=>({cardId:c.id,abilityRank})),
    ]);
    for(const p of registries.equipment.basicCardProfiles||[])refs.push({cardId:p.role==='defend'?'defend':'strike',profileId:p.id});
+   for(const cardId of ['strike','gorefireSlash'])for(const rank of [1,2,5])refs.push({cardId,rank});
    refs.push(...refs.map(ref=>({...ref,qaExpanded:true})));
    const combat=window.__combat,originalHand=combat.piles.hand;
    const previewFor=ref=>{
