@@ -34,6 +34,7 @@ export function wireBattlefieldStage(field, model) {
   field.style.setProperty('--combatant-stage-center', `${model.tokens.centerPct}%`);
 
   let frameRequest = 0;
+  let handAnchor = null;
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
@@ -155,8 +156,18 @@ export function wireBattlefieldStage(field, model) {
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
     });
     const narrow = document.documentElement.dataset.layout === 'narrow';
-    const handRect = combat.querySelector('.hand')?.getBoundingClientRect();
-    const handLeft = Math.min(...[...combat.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().left));
+    const hand = combat.querySelector('.hand');
+    const handRect = hand?.getBoundingClientRect();
+    const restLeft = parseFloat(hand?.style.getPropertyValue('--hand-rest-left'));
+    // Card selection and pile changes cannot move the battlefield. Re-anchor
+    // only when the hand's viewport geometry or text scale actually changes.
+    const handKey = handRect && hand.clientWidth > 0 ? [hand.clientWidth, hand.clientHeight,
+      handRect.width / hand.clientWidth, getComputedStyle(document.documentElement).fontSize, handRect.left].join(':') : null;
+    if (Number.isFinite(restLeft) && handRect && hand.dataset.handGeometry === handKey
+      && (!handAnchor || handAnchor.key !== handKey)) {
+      handAnchor = { key: handKey, left: handRect.left + restLeft * handRect.width / hand.clientWidth };
+    }
+    const handLeft = handAnchor?.left ?? 0;
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
@@ -385,6 +396,7 @@ export function wireBattlefieldStage(field, model) {
   let wiredAppearance = displayAppearance();
   let releaseBackdrop = wireAlternativeBackdrop(combatHost);
   combatHost.addEventListener('combatantselectionchange', schedule);
+  combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
   // CSS zoom can move the rendered floor without changing the observed
@@ -407,6 +419,7 @@ export function wireBattlefieldStage(field, model) {
   const release = () => {
     releaseBackdrop();
     combatHost.removeEventListener('combatantselectionchange', schedule);
+    combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
     resizeObserver.disconnect();
     layoutObserver.disconnect();

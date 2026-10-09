@@ -155,9 +155,9 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
-        name: 'a small player sprite loses its frame-level tap area',
+        name: 'a player loses its exposed artwork or frame-level tap area',
         file: 'styles/combat.css',
-        append: '.player-target-hitbox::after { pointer-events: none !important; }',
+        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -272,20 +272,25 @@ const SETTINGS_CYCLE = `(async () => {
 const INTENT_OVERLAP = `(() => {
   if (innerWidth !== 390 || innerHeight !== 650) return true;
   // Missing art uses a wider fallback figure in copied trees. Pin the small
-  // player case below the probe's 24px patch size in both clean and bad runs.
+  // player case below 24px when the visible plate supplies its tap area.
+  // Waist-overlap players use exposed artwork and retain their authored size.
   const player = document.querySelector('.combatant.player .combatant-card > .sprite');
   const playerBefore = player?.getBoundingClientRect();
   if (!playerBefore || !Number.isFinite(playerBefore.width) || playerBefore.width <= 0)
     throw new Error('screenreach: small-player fixture is missing its sprite');
-  player.style.transformOrigin = 'center bottom';
-  player.style.scale = String(Math.min(1, 16 / playerBefore.width));
-  // Artwork may overhang its host. Keep this deliberately small fixture's
-  // actual hit surface inside the measured 16px host.
-  player.style.overflow = 'clip';
-  const playerAfter = player.getBoundingClientRect();
-  if (playerAfter.width >= 24 || Math.abs(playerAfter.bottom - playerBefore.bottom) > 1
-      || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
-    throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
+  const playerPlate = getComputedStyle(player.closest('.combatant'), '::after').display !== 'none';
+  let playerAfter = playerBefore;
+  if (playerPlate) {
+    player.style.transformOrigin = 'center bottom';
+    player.style.scale = String(Math.min(1, 16 / playerBefore.width));
+    // Artwork may overhang its host. Keep this deliberately small fixture's
+    // actual hit surface inside the measured 16px host.
+    player.style.overflow = 'clip';
+    playerAfter = player.getBoundingClientRect();
+    if (playerAfter.width >= 24 || Math.abs(playerAfter.bottom - playerBefore.bottom) > 1
+        || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
+      throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
+  }
   const frames = [...document.querySelectorAll('.combatant.enemy')];
   const depth = frame => Number(frame.querySelector('.combatant-card > .sprite').style.zIndex);
   const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
@@ -309,15 +314,17 @@ const INTENT_OVERLAP = `(() => {
   const centreX = playerFrameBox.left + playerFrameBox.width / 2, centreY = playerFrameBox.top + playerFrameBox.height / 2;
   // This fixture moves only sideways; keep the production target's fitted
   // vertical anchor, which may already be clamped above the hand.
-  const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::after').top) * zoom;
-  const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
-  playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
-  const playerMoved = player.getBoundingClientRect(), playerMovedFrameBox = playerFrame.getBoundingClientRect();
-  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerMovedFrameBox.left) / zoom) + 'px');
-  playerFrame.style.setProperty('--enemy-hit-y', ((playerHitY - playerMovedFrameBox.top) / zoom) + 'px');
-  if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
-      || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
-    throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
+  if (playerPlate) {
+    const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::after').top) * zoom;
+    const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
+    playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
+    const playerMoved = player.getBoundingClientRect(), playerMovedFrameBox = playerFrame.getBoundingClientRect();
+    playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerMovedFrameBox.left) / zoom) + 'px');
+    playerFrame.style.setProperty('--enemy-hit-y', ((playerHitY - playerMovedFrameBox.top) / zoom) + 'px');
+    if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
+        || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
+      throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
+  }
   // Stage the pair in the clear centre so neither existing fighter's target
   // becomes an accidental second obstruction in this controlled scene.
   sprite.style.translate = ((fieldBox.left + fieldBox.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
@@ -331,7 +338,7 @@ const INTENT_OVERLAP = `(() => {
   if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
     throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
   const centreHit = document.elementFromPoint(centreX, centreY);
-  if (centreHit && playerFrame.contains(centreHit))
+  if (playerPlate && centreHit && playerFrame.contains(centreHit))
     throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
   return true;
 })()`;
@@ -458,7 +465,9 @@ const PROBE = `(() => {
       const targetStyle = getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
-      const reach = c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
+      // Waist-overlap players expose their artwork; their plate is hidden.
+      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none';
+      const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
           top => top === c || top === sprite || sprite.contains(top))
