@@ -22,6 +22,18 @@ export function revealHandUpcastControl(hand, control, viewportWidth = window.in
     const shift = parseFloat(card.style.getPropertyValue('--hand-upcast-shift')) || 0;
     card.style.setProperty('--hand-upcast-shift', `${shift - remaining / scale}px`);
   }
+  // The chooser belongs below its card, but must clear the fixed footer.
+  // Move only that selected owner; resting fan geometry stays unchanged.
+  if (control !== card && card && Number.isFinite(port.bottom)) {
+    box = control.getBoundingClientRect();
+    const rise = parseFloat(card.style.getPropertyValue('--hand-upcast-rise')) || 0;
+    const overflow = box.bottom - port.bottom + 1;
+    if (Number.isFinite(overflow) && overflow > 0) {
+      card.style.setProperty('--hand-upcast-rise', `${rise - overflow / scale}px`);
+    }
+  } else if (control === card && card.style.getPropertyValue('--hand-upcast-rise')) {
+    card.style.removeProperty('--hand-upcast-rise');
+  }
 }
 
 // The hand is the only horizontal scroller. Its inspection control lives in
