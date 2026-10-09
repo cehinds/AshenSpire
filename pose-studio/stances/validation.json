@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "verifiedAtUtc": "2026-10-08T06:38:08Z",
+  "baseHead": "44d5fbd0425249b191785d2002ce5ea12a868acc",
+  "scope": "Independent held-stance authoring preview and model/presentation seam",
+  "checks": {
+    "stanceAndExistingIntentTestsPassed": 20,
+    "workshopSchemaProjectsPassed": 37,
+    "poseStudioSchemaProjectsPassed": 12,
+    "browserExportDecodesPassed": 222,
+    "browserViewports": ["1440x1000", "390x844"],
+    "browserConsoleErrors": 0,
+    "browserFailedRequests": 0,
+    "coOpLatestConfirmedCardAndSeatReset": true,
+    "enemyHiddenAndRevealedPublicFamilyParity": true,
+    "unpaintedCanonicalArtworkHasNoFallback": true,
+    "wrapperForwardsTimingIdentityAndHoldArguments": true,
+    "wrapperWaitsForHostTimelineCompletion": true,
+    "workshopUiImportedAndQueuePlayedWithAnchorOverlays": [
+      "reaver-default", "rogue-default", "starseer-default", "herald-default", "graveWisp"
+    ],
+    "poseStudioUiImported": "starseer-default/casting.pose.json"
+  },
+  "coverage": {
+    "newPlayerAppearances": 4,
+    "explicitSameClassEquivalences": 4,
+    "reusedEnemyAppearances": 33,
+    "unpaintedArmourAppearances": 27,
+    "exportedCanonicalStanceCells": 123,
+    "requiredCanonicalStanceCells": 204
+  },
+  "localEvidenceDirectory": "D:/repos/.codex/authoring/combat-stances-20261007",
+  "localEvidenceFiles": [
+    "qa.json", "qa.mjs", "tool-qa.json", "tool-qa.mjs",
+    "desktop-offensive.png", "desktop-starseer-casting.png", "desktop-enemy-hidden.png",
+    "phone-offensive.png", "phone-starseer-casting.png",
+    "workshop-reaver-default-anchors.png", "workshop-rogue-default-anchors.png",
+    "workshop-starseer-default-anchors.png", "workshop-herald-default-anchors.png",
+    "workshop-graveWisp-anchors.png", "pose-studio-import.png"
+  ],
+  "acceptance": {
+    "gameRuntimeIntegrated": false,
+    "realSoloCoOpCombatPlaytested": false,
+    "allCanonicalArmourPainted": false,
+    "ownerAnatomyApproved": false,
+    "mergedOrPromoted": false
+  }
+}

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { animationClip } from '../src/model/equipmentAnimation.js';
+import { alternativeCardAnimations } from '../src/content/alternativeCardAnimations.js';
 import { deckCardAnimationPlan, deckCardAnimationPreview } from '../src/ui/components/deckCardAnimationPreview.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
@@ -16,25 +16,22 @@ const equip = (run, right, left) => {
   }
 };
 
-test('preview routes actual equipped blade, shield, bow and spell cards without mutating the run', () => {
+test('preview routes card types through the same class defaults as combat without mutating the run', () => {
   const run = freshRun();
   for (const [right, left, ref, technique] of [
-    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' }, 'bladeAttack'],
-    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'shieldAttack', sourceArmamentId: 'roundShield' }, 'shieldBash'],
-    ['straightSword', 'roundShield', { cardId: 'defend', profileId: 'shieldGuard', sourceArmamentId: 'roundShield' }, 'shieldGuard'],
-    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'bowAttack'],
-    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'parryDagger' }, 'attack'],
-    ['greatsword', null, { cardId: 'starstonePebble' }, 'cast'],
+    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' }, 'attack'],
+    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'shieldAttack', sourceArmamentId: 'roundShield' }, 'attack'],
+    ['straightSword', 'roundShield', { cardId: 'defend', profileId: 'shieldGuard', sourceArmamentId: 'roundShield' }, 'defend'],
+    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'ranged'],
+    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'parryDagger' }, 'ranged'],
+    ['greatsword', null, { cardId: 'starstonePebble' }, 'spell'],
   ]) {
     equip(run, right, left);
     const before = structuredClone(run);
     const playback = deckCardAnimationPlan(registries, run, ref);
     assert.equal(playback.plan.technique, technique);
-    const clip = animationClip(playback.animation, technique);
-    if (clip) {
-      assert.deepEqual(playback.frames, clip.frames, 'authored frame order is preserved');
-      assert.equal(playback.frameMs, clip.frameMs);
-    }
+    assert.deepEqual(playback.frames, alternativeCardAnimations.classes.reaver.sequences[technique].poses);
+    assert.equal(playback.duration, 260);
     assert.deepEqual(run, before);
   }
 });
@@ -114,9 +111,9 @@ test('desktop preview loops authored frames and Pause/Play preserves the exact f
     assert.equal(stage.painted.length, count);
     button.click(); step(30000);
     assert.equal(stage.painted.length, count, 'resume does not jump due to paused wall time');
-    step(30000 + dt * .6);
+    step(30000 + dt * .8);
     assert.equal(stage.painted.at(-1), plan.frames[3]);
-    step(30000 + dt * (plan.frames.length - 1.4));
+    step(30000 + dt * (plan.frames.length - 1.1));
     assert.equal(stage.painted.at(-1), plan.frames[1], 'sequence wraps without changing its order');
     assert.deepEqual(pauses, [true, false]);
   });
@@ -183,7 +180,7 @@ test('visibility resume preserves an explicit Pause and disposal prevents future
   });
 });
 
-test('reduced motion starts paused; a one-frame card paints its authored pose without a loop', () => {
+test('reduced motion starts paused; defend cards have the authored guard sequence', () => {
   withPreview({ reduced: true }, ({ raf, stages, button }) => {
     assert.equal(raf.size, 0);
     assert.equal(stages[0].painted.length, 1);
@@ -191,10 +188,11 @@ test('reduced motion starts paused; a one-frame card paints its authored pose wi
     assert.equal(raf.size, 1, 'explicit Play opts into motion');
   });
   withPreview({ ref: { cardId: 'dodgeRoll' } }, ({ plan, stages, button, raf }) => {
-    assert.equal(plan.frames.length, 1);
-    assert.deepEqual(stages[0].painted, plan.frames);
-    assert.equal(button.disabled, true);
-    assert.equal(raf.size, 0);
+    assert.equal(plan.plan.technique, 'defend');
+    assert.equal(plan.frames.length, 5);
+    assert.deepEqual(stages[0].painted, [plan.frames[0]]);
+    assert.equal(button.disabled, false);
+    assert.equal(raf.size, 1);
   });
   withPreview({ unavailable: true }, ({ preview, button, raf }) => {
     assert.equal(preview.root.querySelector('.deck-editor-animation-stage').hidden, true);

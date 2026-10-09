@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "selection": "card-profile",
+  "equipmentIndependent": true,
+  "classes": [
+    "reaver",
+    "rogue",
+    "starseer",
+    "herald"
+  ],
+  "actions": [
+    "attack",
+    "smash",
+    "sweep",
+    "counter",
+    "defend",
+    "spell",
+    "ranged",
+    "rangedMagic"
+  ],
+  "families": {
+    "reaver": {
+      "manifest": "cards/reaver/manifest.json",
+      "rig": "cards/reaver/reaver-cards.rig.json",
+      "folder": "cards/reaver/"
+    },
+    "rogue": {
+      "manifest": "cards/rogue/manifest.json",
+      "rig": "cards/rogue/rogue-cards.rig.json",
+      "folder": "cards/rogue/"
+    },
+    "starseer": {
+      "manifest": "cards/starseer/manifest.json",
+      "rig": "cards/starseer/starseer-cards.rig.json",
+      "folder": "cards/starseer/"
+    },
+    "herald": {
+      "manifest": "cards/herald/manifest.json",
+      "rig": "cards/herald/herald-cards.rig.json",
+      "folder": "cards/herald/"
+    }
+  }
+}

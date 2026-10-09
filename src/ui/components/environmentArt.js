@@ -1,4 +1,5 @@
 import { illustratedBackgroundHtml } from './illustratedBackground.js';
+import { alternativeBackdropHtml, alternativeCardFadeHtml } from '../alternativeArt.js';
 import { mapFogDefs } from './mapFog.js';
 import { dungeonScene } from '../../model/legacyDungeon.js';
 import { assetUrl } from '../assetmap.js';
@@ -6,8 +7,12 @@ import { combatEnvironment } from '../../model/environmentArt.js';
 import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 
 export function combatBackdropHtml(run, previewSceneId = null) {
+  if (previewSceneId) {
+    const layered = alternativeBackdropHtml(previewSceneId);
+    if (layered) return layered;
+  }
   const legacy = !previewSceneId && dungeonScene(run);
-  if (legacy) return illustratedBackgroundHtml({region:legacy.region,scene:legacy.id,viewBox:[0,0,1536,1024],layers:[{id:'floor',href:legacy.floor,width:1536,height:1024},{id:'background',href:legacy.background,width:1536,height:1024}]});
+  if (legacy) return alternativeBackdropHtml(legacy.id) || illustratedBackgroundHtml({region:legacy.region,scene:legacy.id,viewBox:[0,0,1536,1024],layers:[{id:'floor',href:legacy.floor,width:1536,height:1024},{id:'background',href:legacy.background,width:1536,height:1024}]}) + alternativeCardFadeHtml();
   let { region, scene } = combatEnvironment(run);
   if (previewSceneId) {
     region = ENVIRONMENTS.find(r => r.scenes.some(s => s.id === previewSceneId));
@@ -15,10 +20,12 @@ export function combatBackdropHtml(run, previewSceneId = null) {
     scene = region.scenes.find(s => s.id === previewSceneId);
   }
   const [width, height] = ENVIRONMENT_ATLAS_SIZE;
+  const layered = alternativeBackdropHtml(scene.id);
+  if (layered) return layered;
   const [x, y, w, h] = scene.box;
   // Keep the painting intact. Slice crops the viewport without stretching
   // architecture or terrain independently as the battlefield changes shape.
-  return illustratedBackgroundHtml({region:region.id,scene:scene.id,viewBox:[x,y,w,h],layers:[{id:'painting',href:region.atlas,width,height}]});
+  return illustratedBackgroundHtml({region:region.id,scene:scene.id,viewBox:[x,y,w,h],layers:[{id:'painting',href:region.atlas,width,height}]}) + alternativeCardFadeHtml();
 }
 let nextMapId = 0;
 

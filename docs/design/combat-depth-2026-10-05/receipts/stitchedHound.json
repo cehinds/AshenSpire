@@ -1,0 +1,37 @@
+{
+  "id": "stitchedHound",
+  "name": "Stitched Hound",
+  "family": "enemy",
+  "act": 2,
+  "size": "small",
+  "source": "src/content/enemies/act2.js",
+  "facing": "left",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Gaunt hound assembled with visible coarse stitch seams, aged leather bands and bone reinforcement, cold muted gray fur, four legs, no exposed gore. Face LEFT toward the player. Use a canvas that contains the complete silhouette, wide 1536x1024 for broad beasts and winged figures, portrait 1024x1536 for upright figures. Lowest foot at 94 percent height; no clipped horns, wings, tails or weapons.",
+  "file": "masters/stitchedHound.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-e7382812-194d-4661-9e60-41b89278c836.png",
+  "validation": {
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6426614125569662,
+    "visibleBounds": [
+      77,
+      44,
+      1497,
+      987
+    ],
+    "anchor": [
+      787.0,
+      987
+    ],
+    "sha256": "4ff7b197a99ab46ed7d9581d62a847f504728dfee950322c0edda55a07418057"
+  }
+}

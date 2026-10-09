@@ -1,4 +1,5 @@
 import { cardKind } from './tree.js';
+import { cardActionPlan } from './alternativeCardAnimation.js';
 // Owner-approved player presentation groups. Enemy motion remains governed by
 // actionAnimations.js. These plans never change card effects or combat state.
 export const COMBAT_SEQUENCES = Object.freeze({
@@ -9,7 +10,9 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation, combatExpansionVersion } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, appearance = 'alternative', combatExpansionVersion } = {}) {
+  const classDefault = appearance === 'alternative' ? cardActionPlan(card, classId) : null;
+  if (classDefault) return classDefault;
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));

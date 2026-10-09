@@ -501,8 +501,8 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 
 /* The card's dark leather backs Vitality, fading out at the turn ribbon.
    Mask the complete material so its texture also becomes transparent. */
-:root .combat > .shared-hud { isolation:isolate; }
-:root .combat > .shared-hud::before {
+:root[data-display-appearance='classic'] .combat > .shared-hud { isolation:isolate; }
+:root[data-display-appearance='classic'] .combat > .shared-hud::before {
  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
  background-color:var(--bg);
  background-size:cover; background-repeat:no-repeat;

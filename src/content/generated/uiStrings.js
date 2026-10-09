@@ -5680,6 +5680,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.row.classicAppearance",
+    "extends": "",
+    "short": "Classic appearance",
+    "full": "Use the previous character art and battlefield layout. Turn off for the layered appearance. This choice changes visuals only.",
+    "tip": ""
+  },
+  {
     "id": "settings.row.animSpeed",
     "extends": "",
     "short": "Combat pacing",

@@ -1,0 +1,167 @@
+[
+  {
+    "width": 833,
+    "layout": {
+      "menu": {
+        "left": 230.5,
+        "right": 405.75,
+        "top": 288.1875,
+        "bottom": 598.96875,
+        "width": 175.25
+      },
+      "side": {
+        "left": 417.234375,
+        "right": 592.484375,
+        "top": 288.1875,
+        "bottom": 410.0625,
+        "width": 175.25
+      },
+      "rows": [
+        {
+          "left": 230.5,
+          "right": 405.75,
+          "top": 288.1875,
+          "bottom": 353.953125,
+          "width": 175.25
+        },
+        {
+          "left": 230.5,
+          "right": 405.75,
+          "top": 359.8074951171875,
+          "bottom": 429.3699951171875,
+          "width": 175.25
+        },
+        {
+          "left": 230.5,
+          "right": 405.75,
+          "top": 436.6043701171875,
+          "bottom": 519.8231201171875,
+          "width": 175.25
+        },
+        {
+          "left": 230.5,
+          "right": 405.75,
+          "top": 528.4375,
+          "bottom": 598.96875,
+          "width": 175.25
+        }
+      ]
+    },
+    "map": null,
+    "errors": [],
+    "failedRequests": [],
+    "expectedAudioFallbacks": []
+  },
+  {
+    "width": 1440,
+    "layout": {
+      "menu": {
+        "left": 395.796875,
+        "right": 697.71875,
+        "top": 187.796875,
+        "bottom": 717.046875,
+        "width": 301.921875
+      },
+      "side": {
+        "left": 732.265625,
+        "right": 1034.203125,
+        "top": 187.796875,
+        "bottom": 404.984375,
+        "width": 301.9375
+      },
+      "rows": [
+        {
+          "left": 395.796875,
+          "right": 697.71875,
+          "top": 187.796875,
+          "bottom": 299.25,
+          "width": 301.921875
+        },
+        {
+          "left": 395.796875,
+          "right": 697.71875,
+          "top": 309.4437561035156,
+          "bottom": 427.5062561035156,
+          "width": 301.921875
+        },
+        {
+          "left": 395.796875,
+          "right": 697.71875,
+          "top": 440.1000061035156,
+          "bottom": 581.9124755859375,
+          "width": 301.921875
+        },
+        {
+          "left": 395.796875,
+          "right": 697.71875,
+          "top": 596.90625,
+          "bottom": 717.046875,
+          "width": 301.921875
+        }
+      ]
+    },
+    "map": null,
+    "errors": [],
+    "failedRequests": [],
+    "expectedAudioFallbacks": []
+  },
+  {
+    "width": 390,
+    "layout": {
+      "menu": {
+        "left": 17.1875,
+        "right": 372.8125,
+        "top": 164.671875,
+        "bottom": 496.796875,
+        "width": 355.625
+      },
+      "side": {
+        "left": 17.1875,
+        "right": 372.8125,
+        "top": 512.984375,
+        "bottom": 725.921875,
+        "width": 355.625
+      },
+      "rows": [
+        {
+          "left": 17.1875,
+          "right": 372.8125,
+          "top": 164.671875,
+          "bottom": 247.84375,
+          "width": 355.625
+        },
+        {
+          "left": 17.1875,
+          "right": 372.8125,
+          "top": 256.84063720703125,
+          "bottom": 320.40313720703125,
+          "width": 355.625
+        },
+        {
+          "left": 17.1875,
+          "right": 372.8125,
+          "top": 331.20001220703125,
+          "bottom": 394.76251220703125,
+          "width": 355.625
+        },
+        {
+          "left": 17.1875,
+          "right": 372.8125,
+          "top": 407.359375,
+          "bottom": 496.796875,
+          "width": 355.625
+        }
+      ]
+    },
+    "map": {
+      "readyMs": 87.19999999925494,
+      "inert": false,
+      "enterDisabled": false
+    },
+    "errors": [],
+    "failedRequests": [],
+    "expectedAudioFallbacks": [
+      "404 http://localhost:60900/assets/sfx/nodeTravel.ogg"
+    ]
+  }
+]

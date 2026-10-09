@@ -6,12 +6,15 @@ import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
+import { classicAppearance, displayAppearance } from '../displayAppearance.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
+import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { combatComposition } from '../models/CombatCompositionModel.js';
 
 let releaseActiveStage = null;
@@ -31,18 +34,26 @@ export function wireBattlefieldStage(field, model) {
   field.style.setProperty('--combatant-stage-center', `${model.tokens.centerPct}%`);
 
   let frameRequest = 0;
+  let handAnchor = null;
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
     if (!field.isConnected) return;
     const combat = field.closest('.combat');
+    if (wiredAppearance !== displayAppearance()) {
+      releaseBackdrop();
+      releaseBackdrop = wireAlternativeBackdrop(combat);
+      wiredAppearance = displayAppearance();
+    }
     combat.dataset.layout = 'formation';
     // No combatants yet (the wiring's own call, before the first render): there
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
     const fieldRect = field.getBoundingClientRect();
-    const zoom = fieldRect.width / field.clientWidth || 1;
+    // clientWidth excludes a vertical scrollbar. Comparing it with the full
+    // rendered box inflated zoom on phone co-op and lifted feet off the floor.
+    const zoom = fieldRect.width / field.offsetWidth || 1;
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
@@ -78,6 +89,7 @@ export function wireBattlefieldStage(field, model) {
       footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
+    if (!classicAppearance()) alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow');
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     const grid = field.querySelector('.formation-grid');
     if (grid) {
@@ -136,7 +148,7 @@ export function wireBattlefieldStage(field, model) {
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
         * wireframeUi.formation.displayScale * (slot.characterScale || 1);
-      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, multiplier, ...geometry, leadingHost,
+      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth,
@@ -144,13 +156,23 @@ export function wireBattlefieldStage(field, model) {
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
     });
     const narrow = document.documentElement.dataset.layout === 'narrow';
-    const handRect = combat.querySelector('.hand')?.getBoundingClientRect();
-    const handLeft = Math.min(...[...combat.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().left));
+    const hand = combat.querySelector('.hand');
+    const handRect = hand?.getBoundingClientRect();
+    const restLeft = parseFloat(hand?.style.getPropertyValue('--hand-rest-left'));
+    // Card selection and pile changes cannot move the battlefield. Re-anchor
+    // only when the hand's viewport geometry or text scale actually changes.
+    const handKey = handRect && hand.clientWidth > 0 ? [hand.clientWidth, hand.clientHeight,
+      handRect.width / hand.clientWidth, getComputedStyle(document.documentElement).fontSize, handRect.left].join(':') : null;
+    if (Number.isFinite(restLeft) && handRect && hand.dataset.handGeometry === handKey
+      && (!handAnchor || handAnchor.key !== handKey)) {
+      handAnchor = { key: handKey, left: handRect.left + restLeft * handRect.width / hand.clientWidth };
+    }
+    const handLeft = handAnchor?.left ?? 0;
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
     // Short landscape needs a lower foot line to reserve the full intent row.
-    if (window.innerHeight <= 480) for (const actor of actors) {
+    if (classicAppearance() && window.innerHeight <= 480) for (const actor of actors) {
       actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
     }
     const fitFormation = () => {
@@ -158,8 +180,10 @@ export function wireBattlefieldStage(field, model) {
         handTop: handRect ? handRect.top - fieldRect.top + 22 : null,
         handLeft: Number.isFinite(handLeft) ? handLeft - fieldRect.left : 0,
         solo: solo && window.innerHeight > 480,
-        sizes: fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
-          minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 }) });
+        sizes: classicAppearance()
+          ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
+            minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
+          : fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
         .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
       const growthFor = (actor, fitted) => {
@@ -356,10 +380,12 @@ export function wireBattlefieldStage(field, model) {
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
     const fieldTop = (fieldRect.top - rect.top) / zoom;
     const sceneHeight = fieldTop + fieldRect.height / zoom;
+    if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
+      fieldTop, ground: plan.ground / zoom, narrow });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
-      config: battlefieldBackdropConfig({ height: sceneHeight,
+      config: battlefieldBackdropConfig({ height: sceneHeight, appearance: displayAppearance(),
         fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
@@ -367,7 +393,10 @@ export function wireBattlefieldStage(field, model) {
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };
   const combatHost = field.closest('.combat');
+  let wiredAppearance = displayAppearance();
+  let releaseBackdrop = wireAlternativeBackdrop(combatHost);
   combatHost.addEventListener('combatantselectionchange', schedule);
+  combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
   // CSS zoom can move the rendered floor without changing the observed
@@ -388,7 +417,9 @@ export function wireBattlefieldStage(field, model) {
     if (!field.isConnected) release();
   });
   const release = () => {
+    releaseBackdrop();
     combatHost.removeEventListener('combatantselectionchange', schedule);
+    combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
     resizeObserver.disconnect();
     layoutObserver.disconnect();
