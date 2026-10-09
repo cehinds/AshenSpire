@@ -786,6 +786,9 @@ function evalRaw(ctx, action, value, dflt, target) {
 export function executeAction(ctx, action) {
   if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
+  if (action.meta?.expansionGroup?.cancelled) return;
+  if (ctx.players && action.source?.kind === 'enemy' && action.target?.kind === 'player'
+    && !Expanded.expansionTargetPresent(ctx, action.target)) return;
   if (ctx.combatExpansionVersion === 2) Expanded.beginExpandedAction(ctx, action.meta?.expansionGroup, action.source);
   if (action.meta?.combatCounterReaction && (!action.source?.alive || action.meta.combatCounterInterrupted)) return;
   if (ctx.foundation) ctx._foundationAncestry = action.meta?.foundationAncestry || [];
@@ -826,7 +829,7 @@ function plannedStatusTargets(ctx, action, eff) {
   const refs = action.meta?.expansionTargets?.[action.meta.statusTargetCursor || 0];
   if (!refs) return resolveTargets(ctx, action, eff.target);
   action.meta.statusTargetCursor = (action.meta.statusTargetCursor || 0) + 1;
-  return refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => entity?.alive);
+  return refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity));
 }
 
 function runOpcode(ctx, action, eff) {
@@ -867,7 +870,7 @@ function runOpcode(ctx, action, eff) {
         if (plannedContacts) action.meta.expansionCursor = (action.meta.expansionCursor || 0) + 1;
         const targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
         for (const t of targets) {
-          if (!t.alive) continue;
+          if (!Expanded.expansionTargetPresent(ctx, t)) continue;
           const bonus = (action.meta?.abilityChargeDamageEffect || 0) + (h === 0 && t === targets[0] ? action.meta?.abilityChargeDamage || 0 : 0);
           const base = evalNum(ctx, action, eff.amount, 0, t) + bonus;
           const carrier = { ...Expanded.effectCarrier(action.card, eff), ...(eff.attack ? { attack: eff.attack } : {}),

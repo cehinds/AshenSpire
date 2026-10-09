@@ -28,6 +28,7 @@ function fixture(knowledge) {
   } };
   const run = createRunState({ registries, seed: 11, classId: 'reaver',
     combatExpansionVersion: 2, enemyKnowledgeVersion: knowledge ? 1 : null });
+  if (!knowledge) delete run.reactionRulesVersion; // Historical unsaved-turn policy.
   if (knowledge) openRunEnemyKnowledge(run, { bankable: true,
     receiptId: '50000000-0000-4000-8000-000000000003' });
   const rng = createRng(run.seed), nodeId = 'n1_4', encounterId = 'patrol';
@@ -62,9 +63,14 @@ test('production browser wrapper banks opted-in learning and preserves its lates
   await settle();
   assert.equal(f.banks(), 1);
   dispatch(f.combat, { type: 'endTurn' });
+  let choices = 0;
+  while (f.combat.pendingReaction) {
+    assert.ok(choices++ < 64, 'reaction answers remain bounded');
+    dispatch(f.combat, { type: 'chooseReaction', offerId: f.combat.pendingReaction.id, optionId: null });
+  }
   await settle();
   const loaded = f.saves.loadRun(f.registries);
-  assert.equal(f.banks(), 2);
+  assert.equal(f.banks(), 2 + choices, 'each accepted reaction command banks its own checkpoint');
   assert.equal(loaded.combatEntered.snapshot.turn, 2);
   assert.deepEqual(loaded.streamCounters, f.rng.getCounters());
   assert.deepEqual(loaded.skills.perception, f.run.skills.perception);

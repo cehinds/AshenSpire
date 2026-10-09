@@ -31,11 +31,14 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     setAnimSpeed('normal');
     stage=createAlternativeCardStage('reaver');await stage.ready;
     assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
+    assert.match(stage.currentArt.image.url,/reaver/);
+    assert.equal(stage.currentArt.left,128);
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
     stage.play('attack',260);step(115);
     stage.setStance('casting');assert.equal(stage.pose,'attack-contact','receipt selection must not interrupt the action');
     step(145);assert.equal(stage.pose,'stance-casting');
     assert.match(paints.at(-1).args[0].url,/stances\/reaver\/casting\.webp$/);
+    assert.equal(stage.currentArt.image,paints.at(-1).args[0],'HUD ink source follows the held pose');
     stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
     stage.setStance(null);stage.setRestPose('counter');assert.equal(stage.pose,'guard-brace','counter remains unchanged');
@@ -43,6 +46,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('attack',260,['stamina']);step(115);
     assert.equal(stage.pose,'attack-contact');
     assert.equal(paints.at(-1).args[1],208,'the figure has advanced 80 pixels');
+    assert.equal(stage.currentArt.left,208,'HUD ink source follows authored canvas travel');
     stage.hold(60);step(50);assert.equal(stage.presentation.elapsed,115);
     step(155);assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
     assert.equal(paints.at(-1).args[1],128,'return to the original floor anchor');

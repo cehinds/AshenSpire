@@ -358,6 +358,7 @@ const KNOWN = {
   'src/ui/components/battlefieldStage.js': ["'resize'"],
   'src/ui/components/card.js': ["'resize'"],
   'src/ui/components/cardInspection.js': ["'resize'"],
+  'src/ui/components/combatTools.js': ["'resize'"],
   'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
   'src/ui/components/creationInfoLayer.js': ["'resize'"],
   'src/ui/components/dialogueStage.js': ["'resize'"],

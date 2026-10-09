@@ -59,6 +59,7 @@ import * as R from './abilityRiders.js';
 import * as SoloCombatCosts from './combat.js';
 import { previewCard as soloPreviewCard, previewIntent as soloPreviewIntent, cardNeedsEnemyTargetNow } from './combat.js';
 import * as F from './combatRules.js';
+import * as Reactions from './combatReactions.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
@@ -89,7 +90,7 @@ export function coopHpMult(headcount, factor = 0.6) {
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null, knowledge = null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null, knowledge = null, reactionRulesVersion = null }) {
   const C = {
     combatExpansionVersion, sharedExpansionVersion: combatExpansionVersion,
     combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: defaultStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
@@ -99,6 +100,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
+    ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
     registries,
     rng,
     turn: 0,
@@ -436,7 +438,7 @@ function connectedCount(C) {
 
 // ---- presence: join / leave rescale ----------------------------------------
 export function joinCombat(C, player) {
-  if (C.sharedExpansionVersion === 2 && !C._foundationTransaction) return F.foundationTransaction(C, candidate => joinCombat(candidate, player));
+  if (C.sharedExpansionVersion === 2 && !C._foundationTransaction) return F.foundationTransaction(C, candidate => joinCombat(candidate, player), { advanceAction: !Reactions.reactionPaused(C) && !C.reactionCursor });
   const existing = C.players.get(player.id);
   if (existing) { // returning player reconnects to their frozen body
     existing.connected = true;
@@ -448,6 +450,11 @@ export function joinCombat(C, player) {
     }
     rescaleEnemies(C);
     if (C.phase === 'suspended') {
+      if (C.pendingReaction || C.reactionCursor) {
+        C.phase = C.reactionCursor ? 'enemy' : 'player';
+        if (!C.pendingReaction) resumeReaction(C);
+        return existing;
+      }
       C.phase = 'player';
       if (C.sharedExpansionVersion !== 2) startPlayerPhase(C);
       else if (livingPlayers(C).length && livingPlayers(C).every(seat => seat.ended)) enemyPhase(C);
@@ -460,19 +467,34 @@ export function joinCombat(C, player) {
 }
 
 export function predictCoopIntent(C, playerId, enemyInstanceId, actionSerial, maneuver) {
+  if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   if (!C._foundationTransaction) return F.foundationTransaction(C,
     candidate => predictCoopIntent(candidate, playerId, enemyInstanceId, actionSerial, maneuver), { advanceAction: false });
   return predictEnemyIntent(C, playerId, enemyInstanceId, actionSerial, maneuver);
 }
 
 export function leaveCombat(C, playerId) {
-  if (C.sharedExpansionVersion === 2 && !C._foundationTransaction) return F.foundationTransaction(C, candidate => leaveCombat(candidate, playerId));
+  if (C.sharedExpansionVersion === 2 && !C._foundationTransaction) return F.foundationTransaction(C, candidate => leaveCombat(candidate, playerId), { advanceAction: !Reactions.reactionPaused(C) && !C.reactionCursor });
   const P = C.players.get(playerId);
   if (!P) return;
   if (C.sharedExpansionVersion === 2 && P.connected) P.endedBeforeDisconnect = P.ended;
   P.connected = false;
   P.ended = true; // no longer blocks the phase transition
+  // A frozen body's undecided offer is declined at disconnect, including
+  // later seats whose prompt has not been shown yet. Rejoin cannot reopen it.
+  for (const action of [...C.queue, ...(C.reactionResume?.queue || [])]) {
+    const group = action.meta?.expansionGroup;
+    if (!group || group.begun || !Object.values(group.targets).some(row => row.playerId === playerId)) continue;
+    group.reactionAnswered ||= [];
+    if (!group.reactionAnswered.includes(playerId)) group.reactionAnswered.push(playerId);
+  }
   rescaleEnemies(C);
+  if (C.pendingReaction?.ownerId === playerId) {
+    Reactions.answerReaction(C, playerId, { offerId: C.pendingReaction.id }, reactionHooks);
+    if (!connectedCount(C)) { C.phase = 'suspended'; return; }
+    resumeReaction(C);
+    return;
+  }
   if (!connectedCount(C)) { C.phase = 'suspended'; return; }
   if (C.pendingAbilityDiscard) return;
   maybeEndPlayerPhase(C);
@@ -496,7 +518,12 @@ function drainQueue(C) {
   let guard = 0;
   while (C.queue.length) {
     if (++guard > QUEUE_GUARD) throw new Error('Co-op action queue did not drain (trigger loop?)');
-    A.executeAction(C, C.queue.shift());
+    if (Reactions.beforeReactionAction(C, C.queue[0], reactionHooks)) return;
+    const action = C.queue.shift();
+    const seatId = action.meta?.activePlayerId || (action.source?.kind === 'player' ? C.playerIdForEntity(action.source) : C.playerIdForEntity(action.target));
+    if (seatId) setActive(C, C.players.get(seatId));
+    Reactions.startQueuedEnemy(C, action);
+    A.executeAction(C, action);
     if (C.pendingAbilityDiscard) return;
     endCheck(C);
     if (C.result) { C.queue.length = 0; return; }
@@ -523,6 +550,7 @@ function endCheck(C) {
 function finish(C, result) {
   C.result = result;
   C.phase = 'ended';
+  Reactions.finishReactions(C);
   C.queue.length = 0;
   C.emit('combatEnd', { victory: result === 'victory' });
   C.queue.length = 0;
@@ -602,6 +630,7 @@ export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier) {
 }
 
 export function recoverControl(C, playerId, selections) {
+  if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => recoverControl(candidate, playerId, selections));
   const P = C.players.get(playerId);
   if (C.phase !== 'player' || C.result || !P?.connected || !P.entity.alive || P.ended) throw new Error('This seat cannot recover now');
@@ -613,6 +642,7 @@ export function recoverControl(C, playerId, selections) {
 }
 
 export function chooseBlightFeat(C, playerId, choice) {
+  if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseBlightFeat(candidate, playerId, choice));
   const P = C.players.get(playerId);
   if (!P?.connected || !P.entity.alive || C.result) throw new Error('This seat cannot choose a feat now');
@@ -642,6 +672,7 @@ export function cardNeedsEnemyTargetForPlayer(C, playerId, instanceId) {
 }
 
 export function playCard(C, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
+  if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   R.assertNoAbilityChoice(C);
   if (!C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup));
   if (C.result) throw new Error('Combat is over');
@@ -745,6 +776,9 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
     ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
   Object.assign(cardRef, tacticalCarrier(def, cardRef, C, p));
+  if (C._reactionPlaying) cardRef.reactionDepth = 1;
+  cardRef.committedInstance = structuredClone(inst);
+  if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
   const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef);
   if (cardRef.combatProfile?.maneuver === 'counter' && sourceSnapshots?.size) {
     Object.assign(cardRef, sourceSnapshots.values().next().value);
@@ -853,6 +887,7 @@ function finishAbilityPlay(C) {
 // targetId may be an enemy id (offensive flask) OR another player's member id
 // (StS2 throw-to-ally: a self-beneficial flask lands on a chosen ally instead).
 export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
+  if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   R.assertNoAbilityChoice(C);
   if (!C._foundationTransaction && (C.foundation || C.sharedExpansionVersion === 2)) return F.foundationTransaction(C, (candidate) => useFlask(candidate, playerId, slot, targetId, chargeKind));
   if (C.result) throw new Error('Combat is over');
@@ -900,6 +935,7 @@ export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
 }
 
 export function endTurn(C, playerId) {
+  if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   R.assertNoAbilityChoice(C);
   if (!C._foundationTransaction && (C.foundation || C.sharedExpansionVersion === 2)) return F.foundationTransaction(C, (candidate) => endTurn(candidate, playerId));
   if (C.result) throw new Error('Combat is over');
@@ -912,8 +948,41 @@ export function endTurn(C, playerId) {
   maybeEndPlayerPhase(C);
 }
 
+const reactionHooks = {
+  setOwner(C, id) { if (C.players.has(id)) setActive(C, C.players.get(id)); },
+  play: doPlayCard,
+};
+
+export function setReactions(C, playerId, enabled) {
+  const owner = C.players.get(playerId);
+  if (!owner?.connected || !owner.entity.alive) throw new Error('That reaction owner is unavailable');
+  if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => setReactions(candidate, playerId, enabled), { advanceAction: false });
+  Reactions.setReactionsEnabled(C, owner.entity, enabled);
+  return { events: [] };
+}
+
+export function chooseReaction(C, playerId, intent) {
+  if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseReaction(candidate, playerId, intent), { advanceAction: false });
+  const P = C.players.get(playerId);
+  if (!P?.connected || !P.entity.alive || C.phase === 'suspended') throw new Error('This player cannot answer a reaction');
+  C._buffer = [];
+  try {
+    Reactions.answerReaction(C, playerId, intent, reactionHooks);
+    resumeReaction(C);
+    return { events: C._buffer };
+  } finally { C._buffer = null; }
+}
+
+function resumeReaction(C) {
+  if (C.pendingAbilityDiscard || C.reactionResume || C.phase === 'suspended') return;
+  if (!C.reactionCursor) { drainQueue(C); finishAbilityPlay(C); return; }
+  enemyPhase(C);
+  if (C.result || Reactions.reactionPaused(C)) return;
+  finishReactionPhase(C);
+}
+
 export function chooseDiscard(C, playerId, cardInstanceIds) {
-  if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseDiscard(candidate, playerId, cardInstanceIds));
+  if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseDiscard(candidate, playerId, cardInstanceIds), { advanceAction: !C.reactionResume });
   if (C.pendingAbilityDiscard?.playerId !== playerId) throw new Error('This discard choice belongs to another player');
   const P = C.players.get(playerId);
   if (!P) throw new Error('Unknown player');
@@ -923,6 +992,7 @@ export function chooseDiscard(C, playerId, cardInstanceIds) {
     R.chooseAbilityDiscard(C, cardInstanceIds);
     drainQueue(C);
     finishAbilityPlay(C);
+    if (Reactions.restoreReactionQueue(C) || C.reactionCursor) resumeReaction(C);
     return { events: C._buffer };
   } finally { C._buffer = null; }
 }
@@ -954,6 +1024,12 @@ function endOnePlayerTurn(C, P) {
   endControlTurn(C, p);
   // Stamina refills with the next player turn.
   p.counters.staminaSpentThisTurn = 0;
+  if (Reactions.usesReactions(C)) { P.reactionHandCleanup = { locked }; return; }
+  finishSeatHand(C, P, locked);
+}
+
+function finishSeatHand(C, P, locked) {
+  const p = P.entity;
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {
     if (locked) { keep.push(card); continue; }
@@ -980,14 +1056,23 @@ function maybeEndPlayerPhase(C) {
   const active = livingPlayers(C);
   if (active.length && active.every((P) => P.ended)) {
     enemyPhase(C);
+    if (Reactions.reactionPaused(C)) return;
     if (C.result) return;
+    finishReactionPhase(C);
+  }
+}
+
+function finishReactionPhase(C) {
+    for (const P of C.players.values()) if (P.reactionHandCleanup) {
+      setActive(C, P); finishSeatHand(C, P, P.reactionHandCleanup.locked); delete P.reactionHandCleanup;
+    }
     rollIntents(C);
     startPlayerPhase(C);
-  }
 }
 
 // ---- enemy phase (fan-out) --------------------------------------------------
 function enemyPhase(C) {
+  if (!C.reactionCursor) {
   C.phase = 'enemy';
   C.emit('enemyTurnStart', { turn: C.turn });
   for (const e of C.enemies) {
@@ -999,10 +1084,15 @@ function enemyPhase(C) {
   setActive(C, firstLiving(C));
   drainQueue(C);
   if (C.result) return;
-
-  for (const enemy of C.enemies) {
+  }
+  const cursor = C.reactionCursor || { index: 0, stage: 'start' };
+  if (Reactions.usesReactions(C)) C.reactionCursor = cursor;
+  for (; cursor.index < C.enemies.length; cursor.index++, cursor.stage = 'start') {
+    const enemy = C.enemies[cursor.index];
     if (C.result) return;
     if (!enemy.alive) continue;
+    if (cursor.stage === 'start') {
+    Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));
     let tacticalProtection = { block: 0, barrier: 0 };
     if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; tacticalProtection = startTacticalTurn(C, enemy); }
@@ -1016,7 +1106,10 @@ function enemyPhase(C) {
       if (tacticalProtection.barrier) C.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: tacticalProtection.barrier }, source: enemy, owner: enemy, target: enemy, meta: {} });
       drainQueue(C);
     }
-
+    cursor.stage = 'payload';
+    }
+    if (cursor.stage === 'payload') {
+    cursor.stage = 'drain';
     // Staggered (poise meter filled) or skipTurn: the telegraphed move is lost.
     if (enemy.skipNextTurn || S.getFlag(C, enemy, 'skipTurn')) {
       if (!enemy.pendingMove) cancelKnowledgeAction(C, enemy);
@@ -1049,24 +1142,31 @@ function enemyPhase(C) {
         executeMove(C, enemy, move, enemy.intent.moveId);
       }
     }
+    }
+    drainQueue(C);
+    if (Reactions.reactionPaused(C)) return;
     if (C.result) return;
     if (enemy.alive) { setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
   }
   C.emit('enemyTurnEnd', { turn: C.turn });
   setActive(C, firstLiving(C));
   drainQueue(C);
+  delete C.reactionCursor;
 }
 
 // A move's self/enemy-targeted parts apply once; player-targeted damage +
 // effects fan out to every living player (each blocks independently).
 function executeMove(C, enemy, move, moveId) {
   if (C.result || !enemy.alive) return;
-  (enemy.performedMoves ||= []).push(moveId); // performed, not rolled (see combat.js)
-  C.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
+  const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent };
+  if (!Reactions.usesReactions(C)) {
+    (enemy.performedMoves ||= []).push(moveId);
+    C.emit('enemyMoveStarted', start);
+  }
   if (C.sharedExpansionVersion === 2) move = expandedEnemyMove(enemy, move, moveId, { ...C, combatExpansionVersion: 2 });
   const carrier = enemyMoveCarrier(enemy, move, moveId, C);
   if (C.sharedExpansionVersion === 2) {
-    executeExpandedEnemyPayload(C, enemy, move, moveId, carrier);
+    executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start);
     return;
   }
   if (move.block != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) {
@@ -1097,7 +1197,26 @@ function executeMove(C, enemy, move, moveId) {
 // the row names no target (Dazed injectors; docs/FINISH.md, Owner decisions).
 const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
 
-function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier) {
+function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = null) {
+  if (Reactions.usesReactions(C)) {
+    const actions = [];
+    for (const P of livingPlayers(C)) {
+      setActive(C, P);
+      const effects = (move.effects || []).filter(effect => effect.target === 'player' || SEAT_PILE_OPS.has(effect.op));
+      if (move.damage != null && carrier.combatProfile.maneuver !== 'counter') effects.unshift({ op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits ?? 1 });
+      for (const effect of effects) actions.push({ effect: { ...effect, ...(effect.target === 'player' ? { target: undefined } : {}) },
+        source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId, activePlayerId: P.id } });
+    }
+    setActive(C, firstLiving(C)); C.combatExpansionVersion = 2;
+    const self = (move.effects || []).filter(effect => effect.target !== 'player' && !SEAT_PILE_OPS.has(effect.op));
+    if (move.block != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'block', target: 'self', amount: move.block });
+    if (move.barrier != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'gainBarrier', target: 'self', amount: move.barrier });
+    actions.unshift(...self.map(effect => ({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } })));
+    const group = enqueueExpandedAction(C, actions, { source: enemy, target: firstLiving(C)?.entity, carrier });
+    if (start && group) group.enemyMoveStart = start;
+    drainQueue(C);
+    return;
+  }
   const effects = move.effects || [];
   setActive(C, firstLiving(C)); C.combatExpansionVersion = 2;
   const self = effects.filter(effect => effect.target !== 'player' && !SEAT_PILE_OPS.has(effect.op));
@@ -1140,6 +1259,7 @@ function applyEnemyEffect(C, enemy, eff, moveId, rootCarrier = null) {
 // ---- enemy intent (mirrors combat.js §4.6) ----------------------------------
 function rollIntents(C, isFirstTurn = false) {
   for (const enemy of C.enemies) {
+    delete enemy.actorIntentRevealed;
     if (!enemy.alive) continue;
     if (enemy.pendingMove) { if (enemy.intent) enemy.intent = { ...enemy.intent, pending: true }; continue; }
     if (enemy.skipNextTurn || S.getFlag(C, enemy, 'skipTurn')) { enemy.intent = { kind: 'staggered', moveId: null }; continue; }
