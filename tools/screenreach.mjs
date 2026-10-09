@@ -149,15 +149,15 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.alternative-silhouette \[authored-neighbour\])/,
       },
       {
-        name: 'a silhouette loses its frame-level tap area',
+        name: 'a silhouette loses its frame and attached plate tap areas',
         file: 'styles/combat.css',
-        append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
+        append: '.enemy-target-hitbox::after, .enemy-target-hitbox .combatant-card > :is(.nm,.meters), .enemy-target-hitbox .combatant-card > :is(.nm,.meters) * { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
-        name: 'a player loses its exposed artwork or frame-level tap area',
+        name: 'a player loses its artwork, frame and mini HUD tap areas',
         file: 'styles/combat.css',
-        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
+        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite *, .player .combatant-mini-hud, .player .combatant-mini-hud * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -473,6 +473,8 @@ const PROBE = `(() => {
     if (hit && (hit === c || c.contains(hit))) continue;
     // Formation frames span a grid cell. Measure the actual 44 px frame tap
     // target: final fitting can pack it away from an overlapping sprite foot.
+    // Its attached name/HP plate belongs to the same fighter and can answer
+    // the hit test, just as it does for the ordinary centre test above.
     // The frame centre may still sit beneath another fighter.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
@@ -485,9 +487,12 @@ const PROBE = `(() => {
       const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => top === c || top === sprite || sprite.contains(top))
+          top => top === c || c.contains(top))
         : exposedPatch(sprite, 24);
       if (reach) continue;
+      // The attached player details panel is another visible surface of this
+      // same clickable frame, and may cover its artwork on short XL layouts.
+      if (c.matches('.player') && exposedPatch(c.querySelector('.combatant-mini-hud'), 24)) continue;
     }
     // A tall neighbouring enemy can paint across an intent badge's centre on
     // short phones. It is still usable if a finger-sized patch of that button
