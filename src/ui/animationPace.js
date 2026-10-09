@@ -7,8 +7,8 @@ export const ANIM_SPEEDS = {
 };
 
 let animSpeed = 'normal';
-export function setAnimSpeed(value) {
-  animSpeed = ANIM_SPEEDS[value] === undefined ? 'normal' : value;
+export function setAnimSpeed(v) {
+  animSpeed = ANIM_SPEEDS[v] === undefined ? 'normal' : v;
 }
 export function getAnimSpeed() {
   return animSpeed;

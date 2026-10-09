@@ -233,8 +233,8 @@
       "digest": "eeefabab3caca651"
     },
     "tools/motion-probe.mjs": {
-      "count": 18,
-      "digest": "1ff760852f3a4451"
+      "count": 22,
+      "digest": "bd4d1ba11d28ac42"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,

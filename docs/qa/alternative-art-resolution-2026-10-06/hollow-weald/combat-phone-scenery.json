@@ -1,0 +1,36 @@
+{
+  "images": [
+    {
+      "src": "http://localhost:53516/build/objects/66/66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527.webp",
+      "w": 1279,
+      "h": 720
+    },
+    {
+      "src": "http://localhost:53516/build/objects/31/314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f.webp",
+      "w": 1279,
+      "h": 720
+    },
+    {
+      "src": "http://localhost:53516/build/objects/50/50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0.webp",
+      "w": 1279,
+      "h": 720
+    },
+    {
+      "src": "http://localhost:53516/build/objects/f4/f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6.webp",
+      "w": 1279,
+      "h": 720
+    }
+  ],
+  "html": "<div class=\"backdrop alternative-backdrop\" aria-hidden=\"true\"><img class=\"alternative-scene-layer\" data-depth=\"0\" src=\"./objects/66/66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527.webp\" alt=\"\" draggable=\"false\"><img class=\"alternative-scene-layer\" data-depth=\"1\" src=\"./objects/31/314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f.webp\" alt=\"\" draggable=\"false\"><img class=\"alternative-scene-layer\" data-depth=\"2\" src=\"./objects/50/50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0.webp\" alt=\"\" draggable=\"false\"><img class=\"alternative-scene-layer\" data-depth=\"3\" src=\"./objects/f4/f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6.webp\" alt=\"\" draggable=\"false\"></div>",
+  "style": {
+    "display": "block",
+    "opacity": "1",
+    "visibility": "visible"
+  },
+  "rect": {
+    "x": 0,
+    "y": 0,
+    "w": 390,
+    "h": 844
+  }
+}

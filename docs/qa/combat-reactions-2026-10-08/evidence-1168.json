@@ -1,0 +1,2566 @@
+{
+  "sourceCheckpoint": "1974b9b386440949a383522fd4cdea592df5104a",
+  "build": {
+    "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1168,
+    "digest": "e8982e69ab",
+    "built": "2026-10-09"
+  },
+  "aliases": [
+    "dist/AshenSpire.html",
+    "dist/AshenSpire-0.7.1.1168.html",
+    "dist/download/AshenSpire.html",
+    "AshenSpire.html"
+  ],
+  "receipt": "- **Ordered counters, defensive reactions and combat controls** ([#1767](https://github.com/cehinds/AshenSpire/pull/1767), `0.7.1.1168`). Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.",
+  "scope": "Authored saved combat and production memory showcase; real UI and LAN commands, not a complete playthrough or physical-device acceptance",
+  "reports": {
+    "small-geometry": {
+      "desktop": {
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "visibleHeight": 900
+        },
+        "touch": 0,
+        "tools": {
+          "x": 1292,
+          "y": 677.28125,
+          "width": 136,
+          "height": 92,
+          "top": 677.28125,
+          "bottom": 769.28125,
+          "right": 1428
+        },
+        "log": {
+          "x": 1128,
+          "y": 549.78125,
+          "width": 300,
+          "height": 121.5,
+          "top": 549.78125,
+          "bottom": 671.28125,
+          "right": 1428
+        },
+        "card": {
+          "x": 404.7165832519531,
+          "y": 533.23828125,
+          "width": 167.73867797851562,
+          "height": 243.0234375,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "right": 572.4552612304688
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1292,
+          "height": 270,
+          "top": 507.28125,
+          "bottom": 777.28125,
+          "right": 1292
+        },
+        "footer": {
+          "x": 420,
+          "y": 777.28125,
+          "width": 600,
+          "height": 122.71875,
+          "top": 777.28125,
+          "bottom": 900,
+          "right": 1020
+        },
+        "hud": {
+          "x": 446.3125,
+          "y": 446.578125,
+          "width": 112,
+          "height": 28.59375,
+          "top": 446.578125,
+          "bottom": 475.171875,
+          "right": 558.3125
+        },
+        "menuBottom": 56,
+        "artTop": 485.183884564568,
+        "hudGap": 10.012009564568018,
+        "controls": [
+          {
+            "text": "Small",
+            "height": 44
+          },
+          {
+            "text": "Medium",
+            "height": 44
+          },
+          {
+            "text": "Large",
+            "height": 44
+          },
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
+      "native": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "visibleHeight": 844
+        },
+        "touch": 1,
+        "tools": {
+          "x": 242.109375,
+          "y": 651.5625,
+          "width": 135.890625,
+          "height": 92,
+          "top": 651.5625,
+          "bottom": 743.5625,
+          "right": 378
+        },
+        "log": {
+          "x": 78,
+          "y": 532.921875,
+          "width": 300,
+          "height": 112.640625,
+          "top": 532.921875,
+          "bottom": 645.5625,
+          "right": 378
+        },
+        "card": {
+          "x": 0.9586463570594788,
+          "y": 525.2442016601562,
+          "width": 155.61395263671875,
+          "height": 225.4647216796875,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "right": 156.57259899377823
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 242.109375,
+          "height": 253.25,
+          "top": 498.828125,
+          "bottom": 752.078125,
+          "right": 242.109375
+        },
+        "footer": {
+          "x": 0,
+          "y": 752.078125,
+          "width": 390,
+          "height": 91.921875,
+          "top": 752.078125,
+          "bottom": 844,
+          "right": 390
+        },
+        "hud": {
+          "x": 35.65625,
+          "y": 455.546875,
+          "width": 112,
+          "height": 17.59375,
+          "top": 455.546875,
+          "bottom": 473.140625,
+          "right": 147.65625
+        },
+        "menuBottom": 53,
+        "artTop": 483.1415261661305,
+        "hudGap": 10.000901166130518,
+        "controls": [
+          {
+            "text": "Small",
+            "height": 44
+          },
+          {
+            "text": "Medium",
+            "height": 44
+          },
+          {
+            "text": "Large",
+            "height": 44
+          },
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      }
+    },
+    "medium-geometry": {
+      "desktop": {
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "visibleHeight": 900
+        },
+        "touch": 0,
+        "tools": {
+          "x": 1292,
+          "y": 677.28125,
+          "width": 136,
+          "height": 92,
+          "top": 677.28125,
+          "bottom": 769.28125,
+          "right": 1428
+        },
+        "log": {
+          "x": 1128,
+          "y": 221.28125,
+          "width": 300,
+          "height": 450,
+          "top": 221.28125,
+          "bottom": 671.28125,
+          "right": 1428
+        },
+        "card": {
+          "x": 404.7165832519531,
+          "y": 533.23828125,
+          "width": 167.73867797851562,
+          "height": 243.0234375,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "right": 572.4552612304688
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1292,
+          "height": 270,
+          "top": 507.28125,
+          "bottom": 777.28125,
+          "right": 1292
+        },
+        "footer": {
+          "x": 420,
+          "y": 777.28125,
+          "width": 600,
+          "height": 122.71875,
+          "top": 777.28125,
+          "bottom": 900,
+          "right": 1020
+        },
+        "hud": {
+          "x": 446.3125,
+          "y": 450.046875,
+          "width": 112,
+          "height": 28.59375,
+          "top": 450.046875,
+          "bottom": 478.640625,
+          "right": 558.3125
+        },
+        "menuBottom": 56,
+        "artTop": 488.65159696691177,
+        "hudGap": 10.010971966911768,
+        "controls": [
+          {
+            "text": "Small",
+            "height": 44
+          },
+          {
+            "text": "Medium",
+            "height": 44
+          },
+          {
+            "text": "Large",
+            "height": 44
+          },
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
+      "native": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "visibleHeight": 844
+        },
+        "touch": 1,
+        "tools": {
+          "x": 242.109375,
+          "y": 651.5625,
+          "width": 135.890625,
+          "height": 92,
+          "top": 651.5625,
+          "bottom": 743.5625,
+          "right": 378
+        },
+        "log": {
+          "x": 78,
+          "y": 223.890625,
+          "width": 300,
+          "height": 421.671875,
+          "top": 223.890625,
+          "bottom": 645.5625,
+          "right": 378
+        },
+        "card": {
+          "x": 0.9586463570594788,
+          "y": 525.2442016601562,
+          "width": 155.61395263671875,
+          "height": 225.4647216796875,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "right": 156.57259899377823
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 242.109375,
+          "height": 253.25,
+          "top": 498.828125,
+          "bottom": 752.078125,
+          "right": 242.109375
+        },
+        "footer": {
+          "x": 0,
+          "y": 752.078125,
+          "width": 390,
+          "height": 91.921875,
+          "top": 752.078125,
+          "bottom": 844,
+          "right": 390
+        },
+        "hud": {
+          "x": 35.65625,
+          "y": 458.5,
+          "width": 112,
+          "height": 17.59375,
+          "top": 458.5,
+          "bottom": 476.09375,
+          "right": 147.65625
+        },
+        "menuBottom": 53,
+        "artTop": 486.10386747472427,
+        "hudGap": 10.010117474724268,
+        "controls": [
+          {
+            "text": "Small",
+            "height": 44
+          },
+          {
+            "text": "Medium",
+            "height": 44
+          },
+          {
+            "text": "Large",
+            "height": 44
+          },
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      }
+    },
+    "large-geometry": {
+      "desktop": {
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "visibleHeight": 900
+        },
+        "touch": 0,
+        "tools": {
+          "x": 1292,
+          "y": 677.28125,
+          "width": 136,
+          "height": 92,
+          "top": 677.28125,
+          "bottom": 769.28125,
+          "right": 1428
+        },
+        "log": {
+          "x": 1128,
+          "y": 64,
+          "width": 300,
+          "height": 607.28125,
+          "top": 64,
+          "bottom": 671.28125,
+          "right": 1428
+        },
+        "card": {
+          "x": 404.7165832519531,
+          "y": 533.23828125,
+          "width": 167.73867797851562,
+          "height": 243.0234375,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "right": 572.4552612304688
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1292,
+          "height": 270,
+          "top": 507.28125,
+          "bottom": 777.28125,
+          "right": 1292
+        },
+        "footer": {
+          "x": 420,
+          "y": 777.28125,
+          "width": 600,
+          "height": 122.71875,
+          "top": 777.28125,
+          "bottom": 900,
+          "right": 1020
+        },
+        "hud": {
+          "x": 446.3125,
+          "y": 449.984375,
+          "width": 112,
+          "height": 28.59375,
+          "top": 449.984375,
+          "bottom": 478.578125,
+          "right": 558.3125
+        },
+        "menuBottom": 56,
+        "artTop": 488.59284468258124,
+        "hudGap": 10.014719682581244,
+        "controls": [
+          {
+            "text": "Small",
+            "height": 44
+          },
+          {
+            "text": "Medium",
+            "height": 44
+          },
+          {
+            "text": "Large",
+            "height": 44
+          },
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
+      "native": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "visibleHeight": 844
+        },
+        "touch": 1,
+        "tools": {
+          "x": 242.109375,
+          "y": 651.5625,
+          "width": 135.890625,
+          "height": 92,
+          "top": 651.5625,
+          "bottom": 743.5625,
+          "right": 378
+        },
+        "log": {
+          "x": 78,
+          "y": 61.453125,
+          "width": 300,
+          "height": 584.109375,
+          "top": 61.453125,
+          "bottom": 645.5625,
+          "right": 378
+        },
+        "card": {
+          "x": 0.9586463570594788,
+          "y": 525.2442016601562,
+          "width": 155.61395263671875,
+          "height": 225.4647216796875,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "right": 156.57259899377823
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 242.109375,
+          "height": 253.25,
+          "top": 498.828125,
+          "bottom": 752.078125,
+          "right": 242.109375
+        },
+        "footer": {
+          "x": 0,
+          "y": 752.078125,
+          "width": 390,
+          "height": 91.921875,
+          "top": 752.078125,
+          "bottom": 844,
+          "right": 390
+        },
+        "hud": {
+          "x": 35.65625,
+          "y": 458.5,
+          "width": 112,
+          "height": 17.59375,
+          "top": 458.5,
+          "bottom": 476.09375,
+          "right": 147.65625
+        },
+        "menuBottom": 53,
+        "artTop": 486.095993939568,
+        "hudGap": 10.002243939568018,
+        "controls": [
+          {
+            "text": "Small",
+            "height": 44
+          },
+          {
+            "text": "Medium",
+            "height": 44
+          },
+          {
+            "text": "Large",
+            "height": 44
+          },
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      }
+    },
+    "desktop-freeze": {
+      "unchanged": true,
+      "focusTrap": true
+    },
+    "native-freeze": {
+      "unchanged": true
+    },
+    "native-mid": {
+      "hp": 63,
+      "enemies": [
+        91,
+        100
+      ],
+      "events": 1
+    },
+    "desktop-counter-timeline": {
+      "frames": [
+        {
+          "time": 119927.60000000149,
+          "hp": "3563/63",
+          "enemy": "100/100",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 121192.30000000075,
+          "hp": "3563/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 121421.5,
+          "hp": "3563/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 121786.5,
+          "hp": "3563/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 122099.10000000149,
+          "hp": "3363/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 122572.80000000075,
+          "hp": "3363/63",
+          "enemy": "100/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 123112.60000000149,
+          "hp": "3363/63",
+          "enemy": "100/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "92/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 8 damage to Wandering Soldier (1 blocked)."
+        },
+        {
+          "time": 123516.10000000149,
+          "hp": "3363/63",
+          "enemy": "100/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "92/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 8 damage to Wandering Soldier (1 blocked)."
+        },
+        {
+          "time": 124071.90000000224,
+          "hp": "63/63",
+          "enemy": "100/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "92/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 8 damage to Wandering Soldier (1 blocked)."
+        }
+      ],
+      "fx": {
+        "open": 3,
+        "finished": 3,
+        "watchdog": 0
+      }
+    },
+    "native-counter-timeline": {
+      "frames": [
+        {
+          "time": 141760.8999999985,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "100/100"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 143122.3999999985,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 143500.3999999985,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking7",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 143802.1000000015,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 144759.30000000075,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 144948,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 145093.19999999925,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 145340.1000000015,
+          "hp": "3863/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 145595.69999999925,
+          "hp": "3863/63",
+          "enemy": "100/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 145861.19999999925,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 146136.5,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking7"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 146434.69999999925,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 146919.30000000075,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction."
+        },
+        {
+          "time": 147166.8999999985,
+          "hp": "3363/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 147626.5,
+          "hp": "3363/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 148022.6000000015,
+          "hp": "63/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        }
+      ],
+      "fx": {
+        "open": 3,
+        "finished": 3,
+        "watchdog": 0
+      }
+    },
+    "classic-timeline": {
+      "frames": [
+        {
+          "time": 36973.29999999702,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "100/100"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 38123.699999999255,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 38709.099999997765,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking7",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 39211.5,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 40540.099999997765,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 40889,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 41290,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 41579.89999999851,
+          "hp": "3863/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 42009.599999997765,
+          "hp": "3863/63",
+          "enemy": "100/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 42472,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 43062.39999999851,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking7"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 43502.099999997765,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 44046.39999999851,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction."
+        },
+        {
+          "time": 44319.199999999255,
+          "hp": "3363/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 45228.29999999702,
+          "hp": "3363/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 45736.89999999851,
+          "hp": "63/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        }
+      ],
+      "fx": {
+        "open": 3,
+        "finished": 3,
+        "watchdog": 0
+      }
+    },
+    "lan-host-timeline": {
+      "frames": [
+        {
+          "time": 192189.90000000224,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 197511.40000000224,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 197986.69999999925,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": true,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 245363.5,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 247354.90000000224,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 249413.69999999925,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemyAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101",
+              "action": "strike"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 249699.90000000224,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 249932.1000000015,
+          "hp": "9563/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 250680,
+          "hp": "9563/63",
+          "enemy": "101/101",
+          "playerAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 251074.6000000015,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 253192.19999999925,
+          "hp": "63/63",
+          "enemy": "97/101",
+          "enemyAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101",
+              "action": "strike"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 253619.90000000224,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 254057.1000000015,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "playerAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 254415.40000000224,
+          "hp": "9563/63",
+          "enemy": "93/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "93/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 256404.40000000224,
+          "hp": "63/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        }
+      ],
+      "fx": {
+        "open": 3,
+        "finished": 3,
+        "watchdog": 0
+      }
+    },
+    "lan-guest-timeline": {
+      "frames": [
+        {
+          "time": 192180.80000000075,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "?"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 197455.70000000298,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 247372.20000000298,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": true,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 248605.30000000075,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 249521.30000000075,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemyAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101",
+              "action": "strike"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 249827.80000000075,
+          "hp": "9563/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+        },
+        {
+          "time": 250017.6000000015,
+          "hp": "9563/63",
+          "enemy": "101/101",
+          "playerAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+        },
+        {
+          "time": 250369.90000000224,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 251821.30000000075,
+          "hp": "63/63",
+          "enemy": "97/101",
+          "enemyAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101",
+              "action": "strike"
+            }
+          ],
+          "intents": [
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 252135.40000000224,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+        },
+        {
+          "time": 252421.40000000224,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "playerAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+        },
+        {
+          "time": 252934.70000000298,
+          "hp": "9563/63",
+          "enemy": "93/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "93/101"
+            }
+          ],
+          "intents": [
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 254120.80000000075,
+          "hp": "63/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+        }
+      ],
+      "fx": {
+        "open": 3,
+        "finished": 3,
+        "watchdog": 0
+      }
+    },
+    "lan-log-geometry": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
+        "height": 92,
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
+      },
+      "log": {
+        "x": 78,
+        "y": 193.71875,
+        "width": 300,
+        "height": 451.84375,
+        "top": 193.71875,
+        "bottom": 645.5625,
+        "right": 378
+      },
+      "card": {
+        "x": 0.9586463570594788,
+        "y": 525.2442016601562,
+        "width": 155.61395263671875,
+        "height": 225.4647216796875,
+        "top": 525.2442016601562,
+        "bottom": 750.7089233398438,
+        "right": 156.57259899377823
+      },
+      "hand": {
+        "x": 0,
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
+      },
+      "hud": {
+        "x": 6,
+        "y": 267.3125,
+        "width": 112,
+        "height": 63.984375,
+        "top": 267.3125,
+        "bottom": 331.296875,
+        "right": 118
+      },
+      "menuBottom": 185.359375,
+      "artTop": 341.2975149715648,
+      "hudGap": 10.000639971564794,
+      "controls": [
+        {
+          "text": "Small",
+          "height": 44
+        },
+        {
+          "text": "Medium",
+          "height": 44
+        },
+        {
+          "text": "Large",
+          "height": 44
+        },
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactionenabled",
+          "height": 44
+        }
+      ],
+      "reaction": "true"
+    },
+    "native-selected-off": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
+        "height": 92,
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
+      },
+      "log": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "card": {
+        "x": 0.9586463570594788,
+        "y": 525.2442016601562,
+        "width": 155.61395263671875,
+        "height": 225.4647216796875,
+        "top": 525.2442016601562,
+        "bottom": 750.7089233398438,
+        "right": 156.57259899377823
+      },
+      "hand": {
+        "x": 0,
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
+      },
+      "hud": {
+        "x": 35.65625,
+        "y": 418.25,
+        "width": 112,
+        "height": 57.328125,
+        "top": 418.25,
+        "bottom": 475.578125,
+        "right": 147.65625
+      },
+      "menuBottom": 53,
+      "artTop": 485.588669720818,
+      "hudGap": 10.010544720818018,
+      "controls": [
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactiondisabled",
+          "height": 44
+        }
+      ],
+      "reaction": "false"
+    },
+    "native-320-large": {
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "visibleHeight": 740
+      },
+      "touch": 1,
+      "tools": {
+        "x": 172.140625,
+        "y": 547.53125,
+        "width": 135.859375,
+        "height": 92,
+        "top": 547.53125,
+        "bottom": 639.53125,
+        "right": 308
+      },
+      "log": {
+        "x": 12,
+        "y": 59.875,
+        "width": 296,
+        "height": 481.65625,
+        "top": 59.875,
+        "bottom": 541.53125,
+        "right": 308
+      },
+      "card": {
+        "x": 0.7957843542098999,
+        "y": 453.44488525390625,
+        "width": 133.65841674804688,
+        "height": 193.6414794921875,
+        "top": 453.44488525390625,
+        "bottom": 647.0863647460938,
+        "right": 134.45420110225677
+      },
+      "hand": {
+        "x": 0,
+        "y": 426.09375,
+        "width": 172.140625,
+        "height": 222,
+        "top": 426.09375,
+        "bottom": 648.09375,
+        "right": 172.140625
+      },
+      "footer": {
+        "x": 0,
+        "y": 648.09375,
+        "width": 320,
+        "height": 91.90625,
+        "top": 648.09375,
+        "bottom": 740,
+        "right": 320
+      },
+      "hud": {
+        "x": 19.625,
+        "y": 395.6875,
+        "width": 112,
+        "height": 13.984375,
+        "top": 395.6875,
+        "bottom": 409.671875,
+        "right": 131.625
+      },
+      "menuBottom": 51.390625,
+      "artTop": 419.6734834558823,
+      "hudGap": 10.00160845588232,
+      "controls": [
+        {
+          "text": "Small",
+          "height": 44
+        },
+        {
+          "text": "Medium",
+          "height": 44
+        },
+        {
+          "text": "Large",
+          "height": 44
+        },
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactionenabled",
+          "height": 44
+        }
+      ],
+      "reaction": "true"
+    },
+    "classic-selected": {
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "visibleHeight": 900
+      },
+      "touch": 0,
+      "tools": {
+        "x": 1292,
+        "y": 677.28125,
+        "width": 136,
+        "height": 92,
+        "top": 677.28125,
+        "bottom": 769.28125,
+        "right": 1428
+      },
+      "log": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "card": {
+        "x": 404.7165832519531,
+        "y": 533.23828125,
+        "width": 167.73867797851562,
+        "height": 243.0234375,
+        "top": 533.23828125,
+        "bottom": 776.26171875,
+        "right": 572.4552612304688
+      },
+      "hand": {
+        "x": 0,
+        "y": 507.28125,
+        "width": 1292,
+        "height": 270,
+        "top": 507.28125,
+        "bottom": 777.28125,
+        "right": 1292
+      },
+      "footer": {
+        "x": 420,
+        "y": 777.28125,
+        "width": 600,
+        "height": 122.71875,
+        "top": 777.28125,
+        "bottom": 900,
+        "right": 1020
+      },
+      "hud": {
+        "x": 434.03125,
+        "y": 401.25,
+        "width": 112,
+        "height": 71.96875,
+        "top": 401.25,
+        "bottom": 473.21875,
+        "right": 546.03125
+      },
+      "menuBottom": 56,
+      "artTop": 483.23231608072916,
+      "hudGap": 10.013566080729163,
+      "controls": [
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactionenabled",
+          "height": 44
+        }
+      ],
+      "reaction": "true"
+    },
+    "reduced-motion": {
+      "reduced": true,
+      "animation": "none"
+    },
+    "reduced-sweep": {
+      "hp": 63,
+      "enemies": [
+        87,
+        91
+      ],
+      "played": [
+        "sweepingBlow"
+      ]
+    },
+    "browser-health": {
+      "errors": [],
+      "failures": [
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdCommit_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/relic.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/relic.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "url": "http://localhost:62173/objects/16/163c659352139dcd8f23ae06ba925f05a24b702083d6faadaed7f18cf2fbad24.webp",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/hit_light.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/hit_light.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/nodeTravel.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/relic.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/nodeTravel.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/holdCommit_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/relic.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
+        }
+      ]
+    }
+  }
+}

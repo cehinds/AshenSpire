@@ -9,8 +9,8 @@ export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
 // Text, selection and intent changes can repack controls without refitting the
 // artwork. Only layout, presentation settings, art geometry or formation changes
 // invalidate the settled body sizes and foot positions.
-export function combatArtworkKey({ width, height, zoom, presentation, handAnchor, actors }) {
-  return JSON.stringify([width, height, zoom, presentation, handAnchor, actors.map(actor => [
+export function combatArtworkKey({ width, height, zoom, presentation, appearance, handAnchor, actors }) {
+  return JSON.stringify([width, height, zoom, presentation, appearance, handAnchor, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
     actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.footOffset,

@@ -1,114 +1,85 @@
 # AshenSpire
 
-A browser roguelike with card combat, equipment, skill training, exploration, and optional LAN co-op.
+A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
-- **[Play / download builds](https://cehinds.github.io/AshenSpire/)** · [Changelog](CHANGELOG.md) · [Windows installer](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe).
-- **Development preview.** Release acceptance: [FINISH](docs/FINISH.md). The title screen and build history identify the version you are playing.
+> **AI-made game.** The original game code, design, writing, artwork and music
+> are created by AI under human direction. Third-party fonts and software are
+> exceptions; some asset records still need confirmation. [AI acknowledgement and credits](#legal-and-credits).
+
+[Play](#play-and-download) · [Screenshots](#screenshots) · [Features](#features) · [Guides](#guides)
 
 ## Play and download
 
-- **Test — latest promoted game; full QA:** [Play](https://cehinds.github.io/AshenSpire/test/latest/) · [HTML](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html) · [Build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Atest) · [Build numbers / history](https://cehinds.github.io/AshenSpire/test/).
-- **Dev — integration:** [Play](https://cehinds.github.io/AshenSpire/dev/latest/) · [HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html) · [Build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev) · [Build numbers / history](https://cehinds.github.io/AshenSpire/dev/).
-- **Release — owner-selected candidate:** [Play](https://cehinds.github.io/AshenSpire/release/latest/) · [HTML](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html) · [Build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Arelease) · [Build numbers / history](https://cehinds.github.io/AshenSpire/release/).
-- **Main — stable:** [Play](https://cehinds.github.io/AshenSpire/main/latest/) · [HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html) · [Build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Amain) · [Build numbers / history](https://cehinds.github.io/AshenSpire/main/).
-- **GitHub downloads:** sign in, open a successful run, download `<branch>-standalone-<commit>`, unzip, and open its HTML file. Retention: dev 14 days, test 30, release/main 90.
-- **Hosted builds:** publication can lag the branch; use the build zip if a hosted link is unavailable.
-- **Build numbers:** `<major>.<minor>.<candidate>.<build>`; the counter resets with each candidate. Compare the full version. [Versioning](docs/versioning.md).
-- **Windows:** [download latest test installer](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe) and run `AshenSpire-Setup.exe`. Release and main use `installer-release` or `installer-main` in the same URL. Older builds remain available as `windows-installer-<commit>` workflow artifacts. Installs for your user; choose game builds and compatible optional high-resolution art in the version chooser. [Installer guide](desktop/windows/README.md).
+Choose **Test** for the latest promoted game. Badges show the full **published**
+build number and link to its history. Play and HTML follow that channel's latest build.
 
-## Alternative branch previews
+| Channel | Published build / history | Play | Download |
+| --- | --- | --- | --- |
+| **Test** — promoted | [![Test build](https://cehinds.github.io/AshenSpire/test/latest/build.svg)](https://cehinds.github.io/AshenSpire/test/) | [Play Test](https://cehinds.github.io/AshenSpire/test/latest/) | [HTML](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html) |
+| Dev — integration | [![Dev build](https://cehinds.github.io/AshenSpire/dev/latest/build.svg)](https://cehinds.github.io/AshenSpire/dev/) | [Play Dev](https://cehinds.github.io/AshenSpire/dev/latest/) | [HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html) |
+| Release — candidate | [![Release build](https://cehinds.github.io/AshenSpire/release/latest/build.svg)](https://cehinds.github.io/AshenSpire/release/) | [Play Release](https://cehinds.github.io/AshenSpire/release/latest/) | [HTML](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html) |
+| Main — earlier stable | [![Main build](https://cehinds.github.io/AshenSpire/main/latest/build.svg)](https://cehinds.github.io/AshenSpire/main/) | [Play Main](https://cehinds.github.io/AshenSpire/main/latest/) | [HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html) |
+| Alternative Dev | [![Alternative Dev build](https://cehinds.github.io/AshenSpire/alternative/dev/latest/build.svg)](https://cehinds.github.io/AshenSpire/alternative/dev/) | [Play Alternative Dev](https://cehinds.github.io/AshenSpire/alternative/dev/latest/) | [HTML](https://cehinds.github.io/AshenSpire/alternative/dev/latest/download/AshenSpire.html) |
+| Alternative Test | [![Alternative Test build](https://cehinds.github.io/AshenSpire/alternative/test/latest/build.svg)](https://cehinds.github.io/AshenSpire/alternative/test/) | [Play Alternative Test](https://cehinds.github.io/AshenSpire/alternative/test/latest/) | [HTML](https://cehinds.github.io/AshenSpire/alternative/test/latest/download/AshenSpire.html) |
 
-- **[Alternative previews and build numbers](https://cehinds.github.io/AshenSpire/#alternative-previews)** — separate from the primary channels, with each published build's full version and commit.
-- **Alternative dev:** ![Published build](https://cehinds.github.io/AshenSpire/alternative/dev/latest/build.svg) · [Play](https://cehinds.github.io/AshenSpire/alternative/dev/latest/) · [HTML](https://cehinds.github.io/AshenSpire/alternative/dev/latest/download/AshenSpire.html) · [Build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Aalternative%2Fdev) · [Build numbers / history](https://cehinds.github.io/AshenSpire/alternative/dev/).
-- **Alternative test:** ![Published build](https://cehinds.github.io/AshenSpire/alternative/test/latest/build.svg) · [Play](https://cehinds.github.io/AshenSpire/alternative/test/latest/) · [HTML](https://cehinds.github.io/AshenSpire/alternative/test/latest/download/AshenSpire.html) · [Build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Aalternative%2Ftest) · [Build numbers / history](https://cehinds.github.io/AshenSpire/alternative/test/).
-- **Combat Studio:** the current alternative adds isolated authoring previews and layered art. Download its `alternative-*-preview-<commit>` artifact; the studio is under `workbench/docs/design/combat-depth-2026-10-05/`. [Branch guide](https://github.com/cehinds/AshenSpire/blob/alternative/dev/docs/design/COMBAT-STUDIO-ALTERNATIVE.md). Saved layouts are not yet bound to live combat.
-- **Updates:** primary `dev → test` promotions sync existing alternative dev/test pairs. Alternative changes are protected; overlapping edits stop for review. Alternative dev uses development checks; alternative test uses the full test pipelines. [Sync status](https://github.com/cehinds/AshenSpire/actions/workflows/sync-alternatives.yml).
-- Preview URLs appear after their first successful publication. History pages show actual published numbers; a source branch alone is not a published preview.
+**Windows:** [Test installer / build chooser](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe)
+· [Installer build number](https://github.com/cehinds/AshenSpire/releases/tag/installer-test)
+· [Installation guide](desktop/windows/README.md).
+The chooser identifies the selected game build; its installer can be newer than the hosted Test badge.
 
-## Local, offline, art, and Unity
-
-- **Local:** install Node.js 22, clone, run `node tools/fetch-art.mjs --pack common`, then `node tools/launch.mjs`, `run.bat`, or `./run.sh`. Opens `http://localhost:8080`; no root `npm install`. Options: `--no-open`, `--port <n>`, `--build-only`, `--full-art`.
-- **Offline:** double-click the light-art HTML download, or use **Download & saves → Make available offline** in the hosted game. LAN co-op needs the Node server. [Distribution guide](dist/README.md).
-- **Art:** [AshenSpire-art](https://github.com/cehinds/AshenSpire-art) holds masters and shared assets; [art releases](https://github.com/cehinds/AshenSpire-art/releases) supply high, light, and common packs. `art-release.json` pins compatibility. Dev uses light art; current test/release/main web builds use high art. HTML downloads use light art; phones choose light in Auto mode.
-- **Unity:** [AshenedSpire](https://github.com/cehinds/AshenSpire-Unity) has its own [playable builds](https://cehinds.github.io/AshenSpire-Unity/) and [milestones](https://github.com/cehinds/AshenSpire-Unity/blob/dev/docs/Unity-Milestones.md).
-
-## Gameplay
-
-- **Classes:** Reaver, Rogue, Starseer, or Herald. Choose gear and attributes, or Quick start with the recommended Reaver.
-- **Journey:** seeded regions, encounters, shops, quests, and bosses. Custom Climb offers Sealed, Draft, and Endless rules.
-- **Combat:** cards spend Stamina and sometimes Mana or HP. Enemy intents preview attacks; ratings, Poise, Ward, weight, and statuses shape outcomes. Inspect cards for current rules.
-- **Hand:** default draws are four cards; Retain cards stay and other unplayed cards shuffle back. Capacity defaults to fifteen. Settings can change these rules.
-- **Equipment and deck:** weapons lend attacks and techniques; owned cards move between deck and sideboard outside combat. Sealed/Draft preserve their dealt pools.
-- **Progression:** XP unlocks attributes and rewards. Books teach track and cross-class lessons; class books grant XP and reusable class cards.
-- **Services:** markets trade goods, smiths improve equipment, masters train skills, and rest services restore resources. Collect rewards after combat.
-- **Co-op and saves:** LAN play shares routes and fights. Runs autosave; older saves may retain earlier rule snapshots.
-- **Exact rules:** [SPEC](SPEC.md) · [Developer guide](DEVELOPER.md) · [Combat and equipment contract](docs/COMBAT-EQUIPMENT-RULES.md) · [Implementation boundaries](docs/SPEC-RECONCILE.md) · [Balance measurements](docs/BALANCE.md). Design contracts can include unimplemented work.
+[All builds](https://cehinds.github.io/AshenSpire/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
+Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.
 
 ## Screenshots
 
-From the latest published **release candidate, 0.7.1.1060**, captured on
-2026-10-08 UTC. [Play this build](https://cehinds.github.io/AshenSpire/release/1060/)
-or see the [capture details](docs/preview/releases/0.7.1.1060/README.md).
-The Test and Alternative previews above may contain newer development work.
+Latest published Release candidate **0.7.1.1060**, captured 2026-10-08 UTC.
+[Play this exact build](https://cehinds.github.io/AshenSpire/release/1060/) · [Capture details](docs/preview/releases/0.7.1.1060/README.md).
+Dev/Test can contain newer features. Select an image to view its full size.
 
-**Character creation.** Choose a class with its own combat style, then shape
-your attributes, keepsake, and equipment.
-
-![Character creation showing the four classes and the Reaver's starting statistics](docs/preview/releases/0.7.1.1060/creation.png)
-
-**Exploration.** Follow a seeded route through encounters toward the act boss.
-
-![The Pale Marches map showing a revealed route and encounter nodes](docs/preview/releases/0.7.1.1060/map.png)
-
-**Card combat.** Read enemy intentions, manage Stamina, and play weapon and
-class cards to attack or defend.
-
-![Reaver combat with enemy attack intentions and a hand of four cards](docs/preview/releases/0.7.1.1060/combat.png)
-
-**Shops and equipment.** Spend cinders on armaments, relics, flasks, books,
-and services between fights.
-
-![Merchant offering relics, with categories for equipment and services](docs/preview/releases/0.7.1.1060/shop.png)
+| Create a character | Explore a route |
+| --- | --- |
+| ![Character creation with four classes and Reaver starting statistics](docs/preview/releases/0.7.1.1060/creation.png) | ![Pale Marches map with a revealed route and encounter nodes](docs/preview/releases/0.7.1.1060/map.png) |
+| **Fight with cards** | **Visit shops and improve equipment** |
+| ![Combat with enemy intentions and four cards in hand](docs/preview/releases/0.7.1.1060/combat.png) | ![Merchant relics, equipment categories and services](docs/preview/releases/0.7.1.1060/shop.png) |
 
 <details>
-<summary>Combat on a phone (390 × 844)</summary>
+<summary>Phone combat — 390 × 844</summary>
 
-![Phone layout with combatants, enemy intentions, cards, and turn controls](docs/preview/releases/0.7.1.1060/combat-phone.png)
+![Phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1060/combat-phone.png)
 
 </details>
 
-<details>
-<summary>Earlier previews and component QA</summary>
+## Features
 
-These captures document earlier builds and component checks.
+Checked items are implemented; build channels and older saves can differ.
 
-- [Title](docs/preview/title.png) · [Map](docs/preview/map.png) · [Combat](docs/preview/combat.png) · [Game page](https://cehinds.github.io/AshenSpire/AshenSpire.html).
-- **Armoury:** [Equipment](docs/preview/armoury-simple-equipment-1440.png) · [Character](docs/preview/armoury-simple-character-1440.png) · [Inventory](docs/preview/armoury-simple-inventory-1440.png) · [Cards](docs/preview/armoury-simple-cards-1440.png) · [Phone cards](docs/preview/armoury-simple-cards-390.png).
-- **Title flow:** [Folded wide](docs/preview/startup-folded-wide-1440x900.png) · [Folded phone](docs/preview/startup-folded-mobile-390x844.png) · [Title wide](docs/preview/title-menu-wide-1440x900.png) · [Load phone](docs/preview/title-load-mobile-390x844.png).
-- **Catalog QA:** [Title family](docs/preview/component-catalog-title-wide-1440x900.png) · [Startup family](docs/preview/component-catalog-startup-mobile-390x844.png) · [Class sprites](docs/preview/class-sprites.svg) · [Menu control audit](docs/preview/menu-control-audit.md).
-- Screenshots carry their captured build stamp. Inspect regenerated images before committing them.
+- [x] Four classes: Reaver, Rogue, Starseer, Herald
+- [x] Seeded exploration, encounters, shops and bosses
+- [x] Card combat with enemy intentions, equipment and statuses
+- [x] Deck building, skill training, attributes and rewards
+- [x] Saved runs, offline play and phone layouts
+- [x] Optional LAN co-op
+- [x] Alternative appearance by default; optional Classic appearance with the debug flag on
+- [ ] Complete 1.0 release acceptance — [remaining work](docs/FINISH.md)
 
-</details>
+## Guides
 
-## UI library and design
-
-- [Player polish asset kit](docs/design/player-polish-asset-kit-2026-10-02/index.html) · [Integration guide](docs/design/player-polish-asset-kit-2026-10-02/README.md).
-- [Player polish inspiration](docs/design/player-polish-2026-10-01/index.html) · [Design notes](docs/design/player-polish-2026-10-01/README.md).
-- [Visual component catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html) · [Source](docs/component-catalog.html) · [Markdown catalog](docs/COMPONENT-CATALOG.md).
-- [Folding Tray gallery](docs/tray-gallery.html) · [Tray contract](docs/TRAY-COMPONENTS.md).
-- [Component architecture](docs/COMPONENT-MODEL-ARCHITECTURE.md) · [Armoury layout](docs/ARMOURY-LAYOUT-BRIEF.md) · [Asset-component index](docs/ASSET-COMPONENTS.md).
-- UI changes update both catalogs and include component IDs plus the catalog link in the PR summary.
-
-## Contributing and roadmap
-
-- **Branch flow:** `feature/* → dev → test → release → main`. Sessions merge reviewed, green work into dev and promote to test; release/main remain owner-controlled. Existing `alternative/…/dev → alternative/…/test` pairs receive compatible promoted updates.
-- [Contributing rules](CONTRIBUTING.md) · [Build and test commands](DEVELOPER.md) · [Architecture map](docs/ARCHITECTURE-MAP.md) · [Current dev snapshot](docs/ARCHITECTURE-CURRENT-DEV.md).
-- [QA testing](docs/QA-TESTING.md) · [Feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md) · [Smith modal design](docs/qa/2026-08-25-smith-modal-design.md).
-- [Project board](https://github.com/users/cehinds/projects/4) · [Status and daily briefs](https://github.com/cehinds/AshenSpire/issues/183).
-- **Code layout:** `src/content/` holds data, `src/engine/` rules, `src/model/` schemas, `src/ui/` rendering, `styles/` CSS, `tests/` checks, and `docs/` contracts. Adding a card should touch one content file.
-- **Roadmap:** combat and run loop shipped; content is core implemented; polish and release acceptance remain open. [Acceptance tracking](docs/FINISH.md) · [Milestone criteria](SPEC.md).
+[Getting started and project links](docs/PROJECT-GUIDE.md) · [Contributing](CONTRIBUTING.md)
+· [Game rules](SPEC.md) · [Development](DEVELOPER.md) · [Credits](CREDITS.md).
 
 ## Legal and credits
 
-- Code: [MIT license](LICENSE). Original fan-inspired work; no FromSoftware assets, music, or proper nouns, and no affiliation with FromSoftware or Bandai Namco.
-- “Ashen Spire was built by AI under human direction.” Anthropic Claude assisted with code and writing; OpenAI ChatGPT generated artwork. The [AI disclosure](src/content/aiDisclosure.js) records the full account, including synthesized music. [Credits](CREDITS.md) records sources, rights, and provenance gaps; bundled lore fonts use SIL OFL.
+**“Ashen Spire was built by AI under human direction.”** Anthropic Claude and
+OpenAI ChatGPT/Codex created the original game work under the owner's direction.
+The [full AI acknowledgement](src/content/aiDisclosure.js) describes code,
+writing, generated art and synthesized music. No AI model runs while you play.
+
+**Not AI-made by this project:** bundled fonts are third-party work under
+[SIL OFL 1.1](asset-data/fonts/OFL.txt); system emoji come from your OS/browser;
+Electron and its dependencies have their own licences. The project's
+[MIT code licence](LICENSE) does not replace those licences.
+
+**Rights review remains open:** [CREDITS.md](CREDITS.md#ai-authorship-and-third-party-exceptions)
+identifies unrecorded flask/landmark sources and incomplete sprite/map rights.
+AI authorship is not a guarantee that every asset's provenance or licence is cleared.
+No FromSoftware assets or affiliation are claimed.

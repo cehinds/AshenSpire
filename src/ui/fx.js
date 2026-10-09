@@ -15,10 +15,6 @@ import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
-import { ANIM_SPEEDS as sharedAnimSpeeds, getAnimSpeed as sharedGetAnimSpeed, setAnimSpeed as sharedSetAnimSpeed } from './animationPace.js';
-export const ANIM_SPEEDS = sharedAnimSpeeds;
-export function getAnimSpeed() { return sharedGetAnimSpeed(); }
-export function setAnimSpeed(value) { sharedSetAnimSpeed(value); }
 
 const STEP_MS = 80;
 
@@ -32,6 +28,8 @@ const STEP_MS = 80;
 // (model/equipmentAnimation.js animationTiming), so the hit, its number and its
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
+import { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed } from './animationPace.js';
+export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed };
 
 let pending = [];
 let flushRequested = false;
@@ -584,13 +582,19 @@ export function groupBeats(events) {
   for (const e of events) {
     switch (e.type) {
       case 'cardPlayed':
-        startActor('player', e.cardType === 'attack' ? 'attack' : 'act', e);
+        startActor(e.sourcePlayerId || e.playerId || 'player', e.cardType === 'attack' ? 'attack' : 'act', e);
         break;
       case 'flaskUsed':
         startActor('player', 'act', e);
         break;
       case 'enemyMoveStarted':
         startActor(e.sourceId, e.kind === 'attack' ? 'attack' : 'act', e);
+        break;
+      case 'enemyActorTurnStarted':
+        startActor(e.sourceId, 'reveal', e);
+        break;
+      case 'combatCounterTriggered':
+        startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
         break;
       case 'enemyTurnStart':
         push();
@@ -678,8 +682,10 @@ export function playTimeline(events, ctx, done) {
     removeEventListener('pointercancel', skipRelease, { capture: true });
     skipRelease = null;
   };
-  const skip = () => {
+  const skip = event => {
+    if (event?.target?.closest?.('[data-combat-read-only]')) return;
     if (finished) return;
+    removeEventListener('pointerdown', skip, { capture: true });
     flushed = true;
     clearHeldFigures();
     clearCombatEffects(ctx.layer);
@@ -696,7 +702,7 @@ export function playTimeline(events, ctx, done) {
     addEventListener('pointerup', skipRelease, { once: true, capture: true });
     addEventListener('pointercancel', skipRelease, { once: true, capture: true });
   };
-  addEventListener('pointerdown', skip, { once: true, capture: true });
+  addEventListener('pointerdown', skip, { capture: true });
   const finish = () => {
     if (finished) return;
     finished = true;
@@ -788,9 +794,10 @@ export function playTimeline(events, ctx, done) {
       activeActorAnimation = actorAnimation;
     } else {
       actorAnimation = null;
-      if (actorEl) {
-        safe(() => flash(actorEl, beat.kind === 'attack' ? 'act-attack' : 'act-move', speed.lungeMs));
-        safe(() => playPoseOn(actorEl, beat.kind === 'attack' ? 'attack' : 'guard', speed.lungeMs));
+      if (actorEl && beat.kind !== 'reveal') {
+        const attacking = beat.kind === 'attack' || beat.kind === 'counter';
+        safe(() => flash(actorEl, attacking ? 'act-attack' : 'act-move', speed.lungeMs));
+        safe(() => playPoseOn(actorEl, attacking ? 'attack' : 'guard', speed.lungeMs));
       }
     }
     const actorStartedAt = Date.now();

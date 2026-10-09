@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "status": "owner-selected-pose-identities",
+  "selectedInChatOn": "2026-10-08",
+  "remainingClasses": [],
+  "choices": [
+    {
+      "actor": "reaver",
+      "stance": "attack",
+      "name": "Overhead sword ready",
+      "sourceOption": "reaver-attack-2",
+      "reference": "selection-references/reaver-attack.png",
+      "source": {
+        "path": "boards/reaver-attack.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 512,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "840b38a5aa828a4a771eefdb03246bb7665e59fd9b5cccba2010c4f3e8f78c15"
+      }
+    },
+    {
+      "actor": "reaver",
+      "stance": "defend",
+      "name": "Forward diagonal sword guard",
+      "sourceOption": "reaver-attack-3",
+      "reference": "selection-references/reaver-defend.png",
+      "note": "The owner explicitly assigns this attack-board candidate to defending.",
+      "source": {
+        "path": "boards/reaver-attack.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 1024,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "840b38a5aa828a4a771eefdb03246bb7665e59fd9b5cccba2010c4f3e8f78c15"
+      }
+    },
+    {
+      "actor": "reaver",
+      "stance": "casting",
+      "name": "Hands together · preparing",
+      "sourceOption": "reaver-casting-4",
+      "reference": "selection-references/reaver-casting.png",
+      "source": {
+        "path": "boards/reaver-casting.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 0,
+          "y": 512,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "a68e9049260c34a1eba2ad1e95e06e612b36225bbf711eea3b241bf90d426c16"
+      }
+    },
+    {
+      "actor": "rogue",
+      "stance": "attack",
+      "name": "Wide twin-dagger ready",
+      "sourceOption": "original-rogue-offensive",
+      "reference": "selection-references/rogue-attack.png",
+      "source": {
+        "path": "../frames/rogue-default/offensive.webp",
+        "width": 512,
+        "height": 512,
+        "view": {
+          "x": 0,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "6286f0305e40b4d04f50c0c6180ad2b28fba3db1a1346303bfe18b4f1e2f34ce"
+      }
+    },
+    {
+      "actor": "rogue",
+      "stance": "defend",
+      "name": "Compact forward dagger guard",
+      "sourceOption": "rogue-defend-3",
+      "reference": "selection-references/rogue-defend.png",
+      "source": {
+        "path": "boards/rogue-defend.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 1024,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "475dda5d10656e24aeafb198e3cd5d1e4b3ec7f9a09877b6f22fae9bd20f96ec"
+      }
+    },
+    {
+      "actor": "rogue",
+      "stance": "casting",
+      "name": "Raised hands · preparing",
+      "sourceOption": "original-rogue-casting",
+      "reference": "selection-references/rogue-casting.png",
+      "source": {
+        "path": "../frames/rogue-default/casting.webp",
+        "width": 512,
+        "height": 512,
+        "view": {
+          "x": 0,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "e658a3e4584cbb919c5d4d236d1391553d326b7d0b6aa88c2fcbe44e053c07c7"
+      }
+    },
+    {
+      "actor": "starseer",
+      "stance": "attack",
+      "name": "Forward staff ready",
+      "sourceOption": "earlier-starseer-attack-4",
+      "reference": "selection-references/starseer-attack.png",
+      "source": {
+        "path": "selected-sources/starseer-attack-earlier.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 0,
+          "y": 512,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "866968d509083a82656727e0287a8558a9a207b7002593e1debade9d0251d2b8"
+      },
+      "generationSource": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-67dbe655-78b2-43de-bd98-c818c6aa17e8.png"
+    },
+    {
+      "actor": "starseer",
+      "stance": "defend",
+      "name": "Upright staff guard",
+      "sourceOption": "earlier-starseer-defend-5",
+      "reference": "selection-references/starseer-defend.png",
+      "source": {
+        "path": "selected-sources/starseer-defend-earlier.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 550,
+          "y": 512,
+          "width": 474,
+          "height": 512
+        },
+        "sha256": "75f6a36cd584555166284d7825af62118ad1a9224d4b73be6e7e1c93a0828ae8"
+      },
+      "generationSource": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-279dc54f-fc25-4d5d-978f-bb758f3eafdf.png"
+    },
+    {
+      "actor": "starseer",
+      "stance": "casting",
+      "name": "Raised book in front · preparing",
+      "sourceOption": "earlier-starseer-casting-3",
+      "reference": "selection-references/starseer-casting.png",
+      "source": {
+        "path": "selected-sources/starseer-casting-earlier.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 1024,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "5396fde6e1feb53cc947590c8c84625458e6d5b8d2f84caa4b072ed1579afefc"
+      },
+      "generationSource": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-e4e64ae6-d261-48d3-bd58-c4813e63634f.png"
+    },
+    {
+      "actor": "herald",
+      "stance": "attack",
+      "name": "Compact fist readiness",
+      "sourceOption": "herald-attack-5",
+      "reference": "selection-references/herald-attack.png",
+      "source": {
+        "path": "boards/herald-attack.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 512,
+          "y": 512,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "57ba42551afe73fd2b48b6850e876b5caff68a022056a3e3fc0977c8c57e2208"
+      }
+    },
+    {
+      "actor": "herald",
+      "stance": "defend",
+      "name": "Raised forward fist guard",
+      "sourceOption": "herald-defend-2",
+      "reference": "selection-references/herald-defend.png",
+      "source": {
+        "path": "boards/herald-defend.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 512,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "878822d559541c34595c09ef9ea44bc3ab1b55f735ac1a25da7ed24e0f3a04a0"
+      }
+    },
+    {
+      "actor": "herald",
+      "stance": "casting",
+      "name": "Open book and raised hand · preparing",
+      "sourceOption": "herald-casting-1",
+      "reference": "selection-references/herald-casting.png",
+      "source": {
+        "path": "boards/herald-casting.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 0,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "173809c0ab589d58f3c2f7e46049c48772130d414ebc4e37722177fcfff06e0a"
+      }
+    }
+  ]
+}

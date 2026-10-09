@@ -59,6 +59,7 @@
 :root .combat[data-layout='formation'] > .hand-area > .hand { z-index: var(--combat-layer-cards); }
 :root .combat[data-layout='formation'] > .combat-hud,
 :root .combat[data-layout='formation'] .combat-recovery-controls,
+:root .combat[data-layout='formation'] .combat-tools,
 :root .combat[data-layout='formation'] .combat-action-row[data-footer-geometry],
 :root .combat[data-layout='formation'] .turn-ribbon { z-index: var(--combat-layer-hud) !important; }
 /* In landscape the footer spans the hand as side rails. Its full-row material

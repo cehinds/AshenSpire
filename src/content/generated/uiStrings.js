@@ -59,6 +59,139 @@ export const uiStrings = [
     "tip": "Ward guard"
   },
   {
+    "id": "combat.log.title",
+    "extends": "",
+    "short": "Combat log",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.sizeLabel",
+    "extends": "",
+    "short": "Log size",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.size.small",
+    "extends": "",
+    "short": "Small",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.size.medium",
+    "extends": "",
+    "short": "Medium",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.size.large",
+    "extends": "",
+    "short": "Large",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.actions",
+    "extends": "",
+    "short": "Actions by round",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.round",
+    "extends": "",
+    "short": "Round {round}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.empty",
+    "extends": "",
+    "short": "",
+    "full": "Actions will appear here as the round unfolds.",
+    "tip": ""
+  },
+  {
+    "id": "combat.reactions.label",
+    "extends": "",
+    "short": "Reaction",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reactions.enabled",
+    "extends": "",
+    "short": "enabled",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reactions.disabled",
+    "extends": "",
+    "short": "disabled",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reactions.state",
+    "extends": "",
+    "short": "Reaction {state}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.title",
+    "extends": "",
+    "short": "Respond to the incoming action",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.eyebrow",
+    "extends": "",
+    "short": "Defensive reaction",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.help",
+    "extends": "",
+    "short": "",
+    "full": "Choose a card to play before this action resolves. Back skips this reaction.",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.play",
+    "extends": "",
+    "short": "Play",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.upcast",
+    "extends": "",
+    "short": "Upcast {tier}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.sp",
+    "extends": "",
+    "short": "{amount} SP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.mp",
+    "extends": "",
+    "short": "{amount} MP",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "common.back",
     "extends": "",
     "short": "Back",
@@ -5677,6 +5810,13 @@ export const uiStrings = [
     "extends": "",
     "short": "Character sprites",
     "full": "Show a drawn class figure in combat instead of your chosen sigil.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.classicAppearance",
+    "extends": "",
+    "short": "Classic appearance",
+    "full": "Use the previous character art and battlefield layout. Turn off for the layered appearance. This choice changes visuals only.",
     "tip": ""
   },
   {

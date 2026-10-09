@@ -41,7 +41,7 @@ try {
       return {
         scenery: z('.backdrop'), shadows: z('.combat-ground-shadows'),
         enemies: [...document.querySelectorAll('.enemy .sprite')].map(el => Number(getComputedStyle(el).zIndex)),
-        player: z('.player .sprite'), fade: z('.combat', '::before'),
+        player: z('.player .sprite'), fade: document.querySelector('.alternative-card-fade') ? z('.alternative-card-fade') : z('.combat', '::before'),
         selection: z('.enemy .combatant-leading'), cards: z('.hand-overlay, .hand-area > .hand'),
         targetPlate: document.querySelector('.enemy.enemy-target-hitbox') ? z('.enemy.enemy-target-hitbox', '::after') : null, targetHealth: z('.enemy .meters'),
         hud: z('.combat-hud'), footer: z('.combat-action-row'), ancestors,

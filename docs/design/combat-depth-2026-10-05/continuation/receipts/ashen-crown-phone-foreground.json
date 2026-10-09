@@ -1,0 +1,30 @@
+{
+  "id": "ashen-crown-phone-foreground",
+  "kind": "foreground",
+  "phoneOnly": true,
+  "region": "ashen-crown",
+  "transparent": true,
+  "resultFile": "scenes/shared/ashen-crown/foreground-phone.png",
+  "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's ashen-crown combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY crumbling limestone balustrade fragments, dark cypress branches and a tarnished brass lantern. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-bc3cafd8-b31f-4e6b-b31f-36c512a16674.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "afa6b35a06bfef2b1f2d1703180147e1ad27266fa470eec8feeb1acbd72da39e",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6699002583821615,
+  "visibleBounds": [
+    0,
+    0,
+    1024,
+    1536
+  ],
+  "alphaThreshold": 32
+}

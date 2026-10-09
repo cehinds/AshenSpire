@@ -63,7 +63,7 @@ import { resolve, dirname, relative, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { verifyPacks, PACKS, objectPath, indexText, withRearPlayerArt } from './asset-pack.mjs';
+import { verifyPacks, withAlternativeArt, PACKS, objectPath, indexText } from './asset-pack.mjs';
 import { slotIds, VAR_PREFIX } from './asset-css.mjs';
 import { unmappedFaceDescriptors } from '../src/ui/assetPacks.js';
 import { MAP_ART } from '../src/content/mapArt.generated.js';
@@ -205,8 +205,7 @@ function verify(outDir) {
   // every index canonical and in agreement with the manifest.
   checks++;
   let manifest = null;
-  try { manifest = withRearPlayerArt(JSON.parse(readFileSync(MANIFEST, 'utf8'))); }
-  catch (error) { findings.push(`art manifest or rear artwork catalog could not be verified: ${error.message}`); }
+  try { manifest = withAlternativeArt(JSON.parse(readFileSync(MANIFEST, 'utf8')), ROOT); } catch (e) { findings.push(`art manifests could not be read: ${e.message}`); }
   const problems = verifyPacks(outDir, { manifest, packs: pinned.filter((p) => PACKS.includes(p)) });
   for (const p of problems.slice(0, 6)) findings.push(p);
   if (problems.length > 6) findings.push(`… and ${problems.length - 6} more pack problem(s)`);

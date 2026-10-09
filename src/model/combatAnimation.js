@@ -10,9 +10,9 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation, combatExpansionVersion, classId } = {}) {
-  const rearAction = cardActionPlan(card, classId);
-  if (rearAction) return rearAction;
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, appearance = 'alternative', combatExpansionVersion } = {}) {
+  const classDefault = appearance === 'alternative' ? cardActionPlan(card, classId) : null;
+  if (classDefault) return classDefault;
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));

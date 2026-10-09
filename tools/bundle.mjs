@@ -20,7 +20,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
-import { writePacks, inBuildOrDist, objectPath, rearPlayerArtRecords } from './asset-pack.mjs';
+import { writePacks, inBuildOrDist, objectPath } from './asset-pack.mjs';
 import { artDir, artPath, treeOf } from './art-source.mjs';
 import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_HIGH, EDITION_LIGHT } from './buildversion.mjs';
@@ -505,13 +505,6 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
     mapEntries += 1;
     mapBytes += buf.length;
   }
-  // Reuse the approved rear-view class/stance package in both delivery shapes.
-  // The same catalog hashes are checked by the common-pack writer.
-  if (!EXTERNAL_ART) for (const id of Object.keys(rearPlayerArtRecords(ROOT))) {
-    const bytes = readFileSync(resolve(ROOT, id));
-    pairs.push(`  ${JSON.stringify(id)}: "data:image/webp;base64,${bytes.toString('base64')}"`);
-    mapEntries += 1; mapBytes += bytes.length;
-  }
   const src = sources.get(ASSET_MAP_ID);
   if (!/\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//.test(src)) {
     fail(`${ASSET_MAP_ID} has lost its ASSET_MAP markers — the bundler anchors on them`);
@@ -549,6 +542,54 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 // packs/ and objects/ are only ever written under build/ or dist/ (ignored) or
 // outside the checkout.
 // ---------------------------------------------------------------------------
+// Portable builds inline branch-owned artwork. Web builds resolve the same
+// IDs through the common pack, including Pages' shared content-addressed store.
+const alternativeId = 'src/ui/alternativeArt.js';
+if (!EXTERNAL_ART && sources.has(alternativeId)) {
+  const map = {};
+  const firstPathOf = new Map();
+  const aliases = [];
+  const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
+  const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+  catalog.filePaths ||= {};
+  const cardSource = sources.get('src/content/alternativeCardAnimations.js');
+  if (cardSource) {
+    const cards = JSON.parse(cardSource.match(/^export const alternativeCardAnimations = (.+);$/m)[1]);
+    for (const [file, hash] of Object.entries(cards.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+      if (cards.filePaths?.[file]) catalog.filePaths[file] = cards.filePaths[file];
+    }
+  }
+  const stanceSource = sources.get('src/content/alternativeSelectedStances.js');
+  if (stanceSource) {
+    const stances = JSON.parse(stanceSource.match(/^export const alternativeSelectedStances = (.+);$/m)[1]);
+    for (const [file, hash] of Object.entries(stances.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+      if (stances.filePaths?.[file]) catalog.filePaths[file] = stances.filePaths[file];
+    }
+  }
+  for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
+    if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
+    const path = catalog.filePaths[file] || `assets-display/alternative/${file}`;
+    if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(path) || !path.endsWith('/' + file)) fail(`Invalid display art path: ${path}`);
+    const bytes = readFileSync(resolve(ROOT, path));
+    if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
+      fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
+    }
+    if (firstPathOf.has(expectedHash)) aliases.push([path, firstPathOf.get(expectedHash)]);
+    else {
+      firstPathOf.set(expectedHash, path);
+      map[path] = 'data:image/webp;base64,' + bytes.toString('base64');
+    }
+  }
+  sources.set(alternativeId, sources.get(alternativeId).replace(
+    /\/\* ALTERNATIVE_ART_START \*\/[\s\S]*?\/\* ALTERNATIVE_ART_END \*\//,
+    () => `/* ALTERNATIVE_ART_START */\nconst alternativeArtMap = ${JSON.stringify(map)};\n`
+      + (aliases.length ? `for (const [alias, key] of ${JSON.stringify(aliases)}) alternativeArtMap[alias] = alternativeArtMap[key];\n` : '')
+      + '/* ALTERNATIVE_ART_END */'));
+}
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
 const ASSET_CSS_MARKERS = /\/\* ASSET_CSS_START \*\/[\s\S]*?\/\* ASSET_CSS_END \*\//;
