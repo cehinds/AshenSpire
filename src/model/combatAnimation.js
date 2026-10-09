@@ -43,7 +43,8 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation, c
       && (tags.has('bow') || (card.sourceArmamentId === bow.id && tags.has('ranged')))
       && animation?.references?.bowAttack;
     const blade = !bash && !tags.has('ranged') && tags.has('blade') && animation?.references?.bladeAttack;
-    return { group: 'attack', technique: bash ? 'shieldBash' : bowShot ? 'bowAttack' : blade ? 'bladeAttack' : 'attack', rest: null, family: bowShot ? 'projectile' : 'strike', motion: bowShot ? 'release' : 'impact' };
+    const ranged = !bash && (bowShot || tags.has('ranged') || tags.has('reach:distance'));
+    return { group: 'attack', technique: bash ? 'shieldBash' : bowShot ? 'bowAttack' : blade ? 'bladeAttack' : 'attack', rest: null, family: ranged ? 'projectile' : 'strike', motion: ranged ? 'release' : 'impact' };
   }
   if (kind === 'power') return { group: 'cast', technique: 'power', rest: 'cast', family: 'spell', motion: 'cast' };
   if (kind === 'skill' && (tags.has('guard') || tags.has('block'))) {

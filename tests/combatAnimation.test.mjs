@@ -12,6 +12,15 @@ import { paintedOutfit } from '../src/model/paintedOutfitArt.js';
 const reg=createRegistries(contentBundle);
 const items=ids=>reg.equipment.armaments.filter(item=>ids.includes(item.id));
 const card=(id,profileId)=>{const def=resolveCard(reg,{cardId:id,profileId});return {...def,cardTags:def.cardTags?.length?def.cardTags:tagService(reg).tagsOf('card',def)};};
+test('ranged attacks stay projectile motions even without a matching authored bow clip',()=>{
+  for (const tags of [['ranged'], ['reach:distance']]) {
+    const plan=route({kindIds:['classification.attack'],tags});
+    assert.equal(plan.family,'projectile');
+    assert.equal(plan.motion,'release');
+  }
+  assert.equal(route({kindIds:['classification.attack'],tags:['blade']}).family,'strike');
+});
+
 test('real shield equipment selects bash; dagger and lighting tools do not',()=>{
   for(const id of ['buckler','kiteShield','towerShield','roundShield','spikedShield']) {
     assert.equal(route(card('shieldBash'),items([id])).technique,'shieldBash');
