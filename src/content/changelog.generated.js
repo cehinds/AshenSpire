@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1775",
     "date": "2026-10-09",
     "group": "2026-10-09",
-    "summary": "Combat verification follows attached controls",
-    "detail": "Verify attacks through the visible enemy target buttons, recognize each character's attached details as part of its inspection surface, and decline defensive reactions through Back when checking saved combat turns.",
-    "build": "0.7.1.1185",
+    "summary": "Compact combat details stay clear of cards",
+    "detail": "Pack enemy name and health plates around the visible hand and player details on short screens with enlarged text. Keep the sprites fixed while moving only crowded plates. Verify attacks through the visible target buttons and saved turns through the normal defensive-reaction controls.",
+    "build": "0.7.1.1189",
     "pullRequest": 1775,
     "url": "https://github.com/cehinds/AshenSpire/pull/1775"
   },

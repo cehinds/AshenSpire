@@ -38,9 +38,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let frameRequest = 0;
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
-  function placePlayerHud() {
+  function placePlayerHud(reserveFirst = false) {
     const zoom = uiZoom();
-    const panels = [...field.querySelectorAll('.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
+    const panels = [...field.querySelectorAll(reserveFirst === true ? '.enemy .combatant-leading' : '.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
       .map(node=>node.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
     for (const player of field.querySelectorAll('.combatant.player')) {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
@@ -393,13 +393,25 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       controls: [...frame.querySelectorAll('.combatant-leading button')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
+    // Reserve the player's readable panel before packing enemy footers. The
+    // final HUD pass can then keep this slot without competing with a footer.
+    placePlayerHud(true);
+    const footerObstacles = [...combat.querySelectorAll('.hand, .hand .card, .combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading')]
+      .map(node => {
+        const rect = node.getBoundingClientRect();
+        // Footer packing supplies two pixels; reserve eight more around the
+        // panel to match the final player HUD pass's ten-pixel clearance.
+        const padding = node.matches('.player .combatant-leading') ? 8 : 0;
+        return { left: rect.left - padding, right: rect.right + padding,
+          top: rect.top - padding, bottom: rect.bottom + padding, width: rect.width, height: rect.height };
+      }).filter(rect => rect.width && rect.height);
     const footerSize = Math.max(44, ...boxes.map(box=>box.footerHeight));
     const targets = combatTargetAnchors({ width: fieldRect.width, height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
-      size: footerSize,
-      obstacles: boxes.flatMap(box => box.controls.map(rect => ({
+      size: footerSize, packWithinBounds: true,
+      obstacles: [...footerObstacles, ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls)].map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
-      }))),
+      })),
       targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
