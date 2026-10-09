@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-09",
     "summary": "Readable card effects and stable combat targets",
     "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.",
-    "build": "0.7.1.1197",
+    "build": "0.7.1.1198",
     "pullRequest": 1768,
     "url": "https://github.com/cehinds/AshenSpire/pull/1768"
+  },
+  {
+    "id": "pr-1778",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "The shared card design loads without repeated master data",
+    "detail": "Keep the complete editable card structure while storing its shared components once in the game bundle. Browser checks follow optional reaction choices, current fighter motion and the combat layer order.",
+    "build": "0.7.1.1195",
+    "pullRequest": 1778,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1778"
   },
   {
     "id": "pr-1766",

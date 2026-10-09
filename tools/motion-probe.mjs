@@ -100,6 +100,10 @@ const VIEWPORT = { width: 1440, height: 900 };
 // opt-in changes only boot readiness, never action deadlines or motion limits.
 const BOOT_TIMEOUT_MS = Math.max(20000, Math.min(120000, Number(process.env.MOTION_BOOT_TIMEOUT_MS) || 20000));
 const ALTERNATIVE = existsSync(new URL('../src/ui/alternativeArt.js', import.meta.url));
+// Primary rear fighters hold their root still; choreography moves pixels inside
+// the canvas. This is branch-owned policy: alternative branches retain `bob`
+// along with their authored CSS carriers during synchronization.
+const CANVAS_IDLE = 'anchored';
 const argv = process.argv.slice(2);
 const CLASSIC = argv.includes('--classic'); // original idle-bob plants use the actual Classic appearance
 const SEED = argv.includes('--seed') ? argv[argv.indexOf('--seed') + 1] : 'MOTION1';
@@ -136,7 +140,7 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
         replace: '.combatant .sprite > img { animation: sprite-idle',
-        expectRed: /RED IDLE player#\d+ — .*no idle animation/,
+        expectRed: CANVAS_IDLE === 'anchored' ? /RED IDLE enemy#\d+ — .*no idle animation/ : /RED IDLE player#\d+ — .*no idle animation/,
       },
       {
         // #1475 review: the carrier list before the Rendered style's still
@@ -487,13 +491,14 @@ async function session(browser) {
   return { ws, send, evaluate };
 }
 
-async function until(evaluate, expression, what, ms = 20000) {
+async function until(evaluate, expression, what, ms = 20000, onWait = null) {
   const end = Date.now() + ms;
   while (Date.now() < end) {
     if (await evaluate(expression)) return true;
+    if(onWait)await onWait();
     await wait(100);
   }
-  throw new Error(`timed out after ${ms} ms waiting for ${what}`);
+  throw new Error(`timed out after ${ms} ms waiting for ${what}; screen ${JSON.stringify(await evaluate(`({url:location.href,text:document.body.innerText.slice(0,1200),combat:!!window.__combat,sampler:!!window.__motionProbe})`))}`);
 }
 
 async function boot({ send, evaluate }, base, { setting, os, classic = CLASSIC }) {
@@ -537,7 +542,10 @@ const DRAW_TURNS = 4;
 async function endTurn(s, turn) {
   await until(s.evaluate, `!!document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled`, 'End Turn to be ready');
   await press(s, '.end-turn', 1200);
-  await until(s.evaluate, `window.__combat.turn > ${turn} && !document.querySelector('.end-turn').disabled`, `turn ${turn + 1} to return to the player`, 30000);
+  await until(s.evaluate, `window.__combat.turn > ${turn} && !document.querySelector('.end-turn').disabled`, `turn ${turn + 1} to return to the player`, 30000, async()=>{
+    const decline='.reaction-choice [data-control-role="exit"]';
+    if(await s.evaluate(`!!document.querySelector(${JSON.stringify(decline)})`))await press(s,decline);
+  });
 }
 
 // One full turn: play the first attack in hand on the first living enemy, hold
@@ -677,7 +685,9 @@ async function fixedRest({ evaluate }, label, baseline = []) {
 // moves it: the image itself or a layer up to .sprite (D42 puts the bob on
 // .facing / .pose-layer). A carrier needs a computed animationName AND a
 // running infinite CSSAnimation of that name on that element.
-async function idle({ evaluate }, label, { excludeCanvases = false } = {}) {
+async function idle({ evaluate }, label, canvasPolicy = CANVAS_IDLE) {
+  const options = typeof canvasPolicy === 'object' ? canvasPolicy : { canvasIdle: canvasPolicy };
+  const { excludeCanvases = false, canvasIdle = CANVAS_IDLE } = options;
   // Two frames first: an animation the probe's own style reads create is
   // started, and its animationstart (which pins the bob's phase to the
   // clock) dispatched, only at a frame. A painted frame never shows it
@@ -749,16 +759,20 @@ async function idle({ evaluate }, label, { excludeCanvases = false } = {}) {
       // The carrier is a running, moving sprite-idle; another infinite
       // animation on the figure or a layer (a pulse, a glow) is not one.
       const idles = named.filter((n) => n.anim.split(/,\\s*/).includes('sprite-idle'));
-      return { img: tag(img), src: img.tagName === 'IMG' ? (img.getAttribute('src') || '').slice(0, 120) : '', loaded: loaded(img), carrier: idles.find((n) => n.running) || null,
+      const anchored = ${canvasIdle === 'anchored'} && img.tagName === 'CANVAS' && !!img.closest('.alternative-card-stage');
+      return { img: tag(img), anchoredMotion: anchored && idles.length > 0,
+        src: img.tagName === 'IMG' ? (img.getAttribute('src') || '').slice(0, 120) : '', loaded: loaded(img),
+        carrier: anchored && !idles.length ? {expected:true,anim:'held stance',on:'anchored canvas'} : idles.find((n) => n.running) || null,
         stopped: idles.find((n) => !n.running) || null, twice: carriers.length > 1 ? carriers.map((n) => n.on) : null };
     }) };
   }); })()`);
   for (const f of figures) {
     if (label !== 'IDLE' && f.dead) continue;
     if (f.fixedCanvas) continue; // fixedRest separately checks pixels and every stage/canvas bound
-    const bare = f.imgs.filter((i) => !i.carrier || !i.carrier.expected || !i.loaded || i.twice);
+    const bare = f.imgs.filter((i) => !i.carrier || !i.carrier.expected || !i.loaded || i.twice || i.anchoredMotion);
     const why = (i) => !i.loaded ? (i.img === 'canvas' ? 'the canvas has no painted pixels' : `the image did not load, it draws nothing (src ${i.src || 'empty'})`)
       : i.twice ? `bobbed twice, by sprite-idle on ${i.twice.join(' and ')}`
+        : i.anchoredMotion ? 'anchored canvas has an external idle animation'
         : i.carrier && !i.carrier.expected ? 'idle animation runs outside the alternative silhouette carrier'
         : !i.carrier && i.stopped?.flat ? `${i.stopped.anim} runs on ${i.stopped.on} but its keyframes never move it`
           : !i.carrier && i.stopped?.offClock ? `${i.stopped.anim} runs on ${i.stopped.on} off the document clock, so a rebuild snaps its phase`
@@ -782,7 +796,7 @@ try {
   await boot(s, base, { setting: false, os: false });
   const fixedDefault = ALTERNATIVE && !CLASSIC;
   const resting = fixedDefault ? await fixedRest(s, 'IDLE') : [];
-  const first = await idle(s, 'IDLE', { excludeCanvases: fixedDefault });
+  const first = await idle(s, 'IDLE', { excludeCanvases: fixedDefault, canvasIdle: CANVAS_IDLE });
   const alternativeStageId = await s.evaluate(`document.querySelector('.combatant.player .sprite .alternative-card-stage')?.dataset.animationSet || null`);
   const expectedStageId = await s.evaluate('"class-cards-" + window.__combatRunForShot.class');
   if (fixedDefault) check(alternativeStageId === expectedStageId, 'IDLE-ALTERNATIVE-IDENTITY', 'the approved Default player art matches the current class');
@@ -801,7 +815,7 @@ try {
   check(missing.length === 0, 'CONTROL', `motion on: ${control.log.length} animation(s) seen, ${seen.length} over ${MAX_ACTIVE_MS} ms; `
     + (missing.length ? `never saw a ${missing.join(' or ')} over the limit — the sampler may be blind to it` : Object.entries(kinds).map(([k, a]) => `${k}: ${show(a)}`).join('; ')));
   if (fixedDefault) await fixedRest(s, 'IDLE-AFTER', resting);
-  await idle(s, 'IDLE-AFTER', { excludeCanvases: fixedDefault });
+  await idle(s, 'IDLE-AFTER', { excludeCanvases: fixedDefault, canvasIdle: CANVAS_IDLE });
   // Idle-bob coverage uses the actual Classic appearance, not a sprite-style
   // setting that Default deliberately ignores. All original CSS plants remain
   // meaningful, including after-turn guard/state-image carrier changes.
@@ -823,7 +837,7 @@ try {
     await until(s.evaluate, `!!document.querySelector(${JSON.stringify(`.combatant.player .sprite ${mark}`)})
       && [...document.querySelectorAll('.combatant.player .sprite img')].every((i) => i.complete)`, `the player redrawn in the ${style} style`);
     await wait(300);
-    const drawn = await idle(s, `IDLE-${style}`);
+    const drawn = await idle(s, `IDLE-${style}`, CANVAS_IDLE);
     check(drawn.some((f) => f.who.startsWith('player')), `IDLE-${style}-BOARD`, `the player is on the board in the ${style} style`);
     if (style === 'rendered') {
       // The Rendered stage swaps its still painting for a nested painted
