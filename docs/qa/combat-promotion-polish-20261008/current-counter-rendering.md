@@ -1,5 +1,7 @@
 # Counter rendering follow-up
 
+- Latest packaged candidate 1172 / `43fb71b4ca` passes both complete Default and Classic native drivers, including the strengthened full Upcast-control bounds. Desktop/phone standalone card inspection and corrupted trim also pass. A separate strict 24-pixel hit-target gate fails the first compact XL fixture at enemy `e1`; final promotion remains blocked on that correction and actual reaction/hand integration. [Full results and acceptance limits](current-1172/README.md).
+
 - The packaged default-appearance build `0.7.1.1168`, source `2361091aae`, was tested from clean commit `846b3635016599de448b40a361a8fcb6c588de81` with the unchanged full native Counter driver.
   - The first desktop Shield Counter correctly paid 3 SP and 3 Mana, left enemy HP unchanged, and prepared one Counter charge.
   - The strict transient-frame assertion failed: no authored `counter-*` frame was observed before the character settled into `guard-brace` / Counter rest. Remaining shapes and projected co-op cases were not completed.
