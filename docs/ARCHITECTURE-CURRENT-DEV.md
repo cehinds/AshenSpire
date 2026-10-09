@@ -5,8 +5,8 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `alternative/dev`
-- Source commit: `eeca9ccbcd998b910471288c536983519f91fd54`
-- Boundary status: **REVIEW**
+- Source commit: `9f234b91d47b3fb09dfdda0824875ad06ef3d624`
+- Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
 
@@ -46,10 +46,8 @@
 - PASS — engine has no browser host references.
 - PASS — model has no DOM/storage references.
 - PASS — engine has no UI imports.
-- REVIEW — core architecture contracts exist.
-- REVIEW — core redesign markers remain present.
-  - Missing: `docs/ARCHITECTURE-MAP.md`, `docs/COMPONENT-MODEL-ARCHITECTURE.md`.
-  - Missing core markers: `composition/component-based`, `mvp`, `observer`, `json/csv`, `source of truth`.
+- PASS — core architecture contracts exist.
+- PASS — core redesign markers remain present.
 
 ## File-shape summary
 
