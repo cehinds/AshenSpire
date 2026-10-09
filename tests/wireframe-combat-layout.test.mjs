@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allocateCombatBands, packCombatFooter } from '../src/ui/models/CombatLayout.js';
+import { allocateCombatBands, minimumHandHeight, packCombatFooter } from '../src/ui/models/CombatLayout.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import { handLayout } from '../src/ui/models/HandLayout.js';
 
@@ -37,10 +37,20 @@ test('hand and footer keep physical minimums; the battlefield absorbs them', () 
 });
 
 test('compact landscape is reported, not silently squeezed', () => {
-  // 844x390: the minimums leave too little battlefield for one readable actor.
+  // Without a width, the minimums leave too little battlefield for one readable actor.
   const bands = allocateCombatBands({ height: 390 });
   assert.equal(bands.supported, false);
   assert.ok(bands.hand >= 208 && bands.footer >= 56);
+});
+
+test('compact landscape folds its footer into rails before reporting failure', () => {
+  const bands = allocateCombatBands({ width: 600, height: 360, compact: true });
+  assert.equal(bands.arrangement, 'rails');
+  assert.equal(bands.supported, true);
+  assert.equal(bands.footer, 0);
+  assert.ok(bands.battlefield >= 130, 'one compact combatant remains readable');
+  assert.ok(bands.hand >= minimumHandHeight(), 'the hand keeps one whole minimum card');
+  assert.ok(bands.rails.supported, 'the controls and five exposed cards fit beside the hand');
 });
 
 test('band shares must describe the whole host', () => {
