@@ -279,6 +279,13 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 /* Keep the measured HUD clearance and native formation floor anchors. Only
    the opaque backing is removed; combatants must not stand behind HP. */
 :root .combat[data-layout='formation'] > .combat-hud.shared-hud { z-index:20; background:none; border:0; pointer-events:none; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud { align-self: start; margin: 0; top: 0; isolation: isolate; }
+.combat > .combat-hud::before {
+  content: ''; position: absolute; inset: 0 0 -22px; z-index: -1; pointer-events: none;
+  background-color: #201b15; background-size: cover;
+  mask-image: linear-gradient(#000 65%, transparent); -webkit-mask-image: linear-gradient(#000 65%, transparent);
+}
+.combat > .combat-hud :is(.hud-vitals-panel,.hud-identity,.hud-center,.hud-trail) { background: none; border-image: none; }
 .combat > .combat-hud .hud-info-row,
 .combat > .combat-hud .hud-vitals-panel,
 .combat > .combat-hud .hud-control-grid,
@@ -427,15 +434,22 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Dodge already reveals its full rules through normal card selection. */
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'] > .card-more-button { display:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'][data-truncated='true'] .cname { padding-left:0; }
-:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; }
+:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; max-height:calc(100% - 12rem); overflow:auto; }
 :root[data-layout='narrow'] .title-screen .tm-name { position:absolute; top:5rem; left:0; width:100%; margin:0; font-size:3.5rem; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
 :root[data-layout='narrow'] .title-screen .title-traveler { top:17%; height:28%; }
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand { overflow:visible; scrollbar-width:none; }
 :root[data-layout='narrow'] .combat .turn-ribbon { font-size:1.2rem; }
-:root[data-layout='narrow'] .combat .combatant-leading .intent { font-size:calc(18px / var(--ui-zoom,1)) !important; min-width:calc(56px / var(--ui-zoom,1)); }
-:root[data-layout='narrow'] .combat .combatant-leading .intent .as-glyph { display:none; }
+:root .combat .combatant-leading .intent { width:calc(96px / var(--ui-zoom,1)); min-width:calc(96px / var(--ui-zoom,1)); max-width:none; }
+:root .combat[data-composition='option-c'] > .combat-hud.shared-hud { background: none; }
+:root .combat > .combat-hud::before,
+:root .combat .combatant-leading .intent,
+:root .combat[data-composition='option-c'] .enemy:is(.context-selected,.targetable,.hover-target)::after,
+:root .combat[data-composition='option-c'] .combat-action-row {
+  background-image: linear-gradient(#201b15b8, #100d09c9), url('../assets/player-polish/materials/soot-leather-material.webp');
+  background-size: cover;
+}
 :root .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
 :root .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
 :root .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
@@ -491,7 +505,6 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .combat > .shared-hud::before {
  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
  background-color:var(--bg);
- background-image:var(--polish-card-material), url('../assets/player-polish/materials/soot-leather-material.webp');
  background-size:cover; background-repeat:no-repeat;
  mask-image:linear-gradient(to bottom, #000 0, #000 var(--combat-header-opaque-end, 35%), transparent 100%);
  -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 var(--combat-header-opaque-end, 35%), transparent 100%);

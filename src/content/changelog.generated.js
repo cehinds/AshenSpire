@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1761",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Contract: defensive reactions and actor-turn presentation",
+    "detail": "Specify optional in-hand Counter and defensive Sweep choices, a separate successful Counter return, acting-enemy intent revelation, exact paused continuation, and the player widget's fixed gap above the art. This contract precedes runtime implementation.",
+    "build": "0.7.1.1145",
+    "pullRequest": 1761,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1761"
+  },
+  {
+    "id": "pr-1759",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Finished runs record their outcome and phone title controls stay reachable",
+    "detail": "Successful run checkpoints allow completion to record the result and clear the finished slot. A refused checkpoint still preserves the run for retry. On small phone screens, the title menu scrolls below the wordmark so Continue and the remaining controls stay usable.",
+    "build": "0.7.1.1144",
+    "pullRequest": 1759,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1759"
+  },
+  {
+    "id": "pr-1750",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat intents and targets share the approved option C layout",
+    "detail": "Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.",
+    "build": "0.7.1.1142",
+    "pullRequest": 1750,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1755",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat shows Blight only when it matters",
+    "detail": "The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.",
+    "build": "0.7.1.1138",
+    "pullRequest": 1755,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1755"
+  },
+  {
     "id": "pr-1742",
     "date": "2026-10-08",
     "group": "2026-10-08",
