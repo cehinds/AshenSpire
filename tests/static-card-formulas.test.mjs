@@ -30,6 +30,7 @@ test('context defaults and malformed formulas never become guessed static values
     { f: 'percentMaxHp', of: 'self', pct: 15 },
     { f: 'mul', args: [{ f: 'percentMaxHp', of: 'self', pct: 15 }, 2] },
     { f: 'add', args: [1, NaN] }, { f: 'mul', args: [Number.MAX_VALUE, 2] },
+    { f: 'mul', args: [Number.MAX_VALUE, Number.MAX_VALUE, 0] },
     { f: 'add', args: [1], unknown: true }, { f: 'add', args: '1' },
     { f: 'random', min: 1, max: 3 },
   ]) {
@@ -46,6 +47,7 @@ test('stack descriptions distinguish whole-group counting from the amount cap', 
   assert.equal(evaluate(formula, context(20)), 5);
   assert.equal(constantFormulaValue(formula), undefined);
   for (const invalid of [{ ...formula, per: 0 }, { ...formula, of: 'unknown' },
+    { ...formula, of: '__proto__' }, { ...formula, of: 'constructor' },
     { ...formula, max: Infinity }, { ...formula, unknown: true }]) {
     assert.equal(describeFormula(invalid), undefined);
   }

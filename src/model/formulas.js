@@ -69,8 +69,12 @@ export function constantFormulaValue(formula) {
       && Array.isArray(node.args) && node.args.every(constant);
   };
   if (!constant(formula)) return undefined;
-  const value = evaluate(formula);
-  return Number.isFinite(value) ? value : undefined;
+  try {
+    const value = evaluate(formula);
+    return Number.isFinite(value) ? value : undefined;
+  } catch {
+    return undefined; // Finite literals can still overflow into a non-number.
+  }
 }
 
 /** State-dependent stack quantities on authored faces, without evaluating an actor. */
@@ -79,7 +83,7 @@ export function describeFormula(formula) {
       || Object.keys(formula).some(key => !['f', 'status', 'of', 'per', 'min', 'max'].includes(key))
       || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
   const location = { self: 'on you', owner: 'on the owner', target: 'on the target', enemy: 'on the enemy', player: 'on the player', allEnemies: 'across all enemies' };
-  if (!location[formula.of] || typeof formula.status !== 'string' || !formula.status
+  if (!Object.hasOwn(location, formula.of) || typeof formula.status !== 'string' || !formula.status
       || (formula.per !== undefined && (!Number.isFinite(formula.per) || formula.per <= 0))) return undefined;
   const status = formula.status.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
   let text = `${status} stacks ${location[formula.of]}`;
