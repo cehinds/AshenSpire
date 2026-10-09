@@ -5,8 +5,8 @@
   - `core`: repository fast core/discovered checks, using `--no-selftests`.
   - `tools`: full tool self-tests, with a shared native lock at `D:/repos/.codex/tmp/shared-native-qa.lock` on Windows.
   - `build`: official standalone build, identity and shipping checks in the independent Git snapshot.
-- Launch that finite command through **Codex Process Jobs** when running in the background. It stays in the foreground of its worker and propagates failure.
-- The runner creates a separate Git checkout at an exact commit before checking. It has its own index and history; object sharing is read-only. Uncommitted edits are excluded; commit changes first, or supply `--ref <existing-commit>`.
+- Launch that finite command through **Codex Process Jobs** where its controller supports the host. On Windows, use an owned hidden process with redirected logs and a launcher receipt recording PID, creation time, command and report path. The finite runner stays in the foreground of that worker and propagates failure.
+- The runner creates a separate Git checkout at an exact commit before checking. It has its own index and history; object sharing is read-only. Its local Git configuration disables automatic CRLF conversion and selects LF before checkout, preserving canonical source regardless of host-global settings without changing the author checkout. Uncommitted edits are excluded; commit changes first, or supply `--ref <existing-commit>`.
 - Core/tool/build suites copy the pinned cache into their own snapshot and validate it with the frozen checkout's fetch tool; missing packs are fetched there. Cache writes never reach the author checkout.
 - Each new output directory contains `result.json`, individual logs and the immutable source snapshot. The report names the exact tested head; it remains valid when another session edits, merges or advances a branch.
 - Never reuse an evidence directory or delete another session's native lock. Source/core suites can run together; native self-tests share one owner. Interactive/manual browser QA must also honor that lock. A pre-existing lock produces a blocked report and is preserved, even if its owner record is malformed.
