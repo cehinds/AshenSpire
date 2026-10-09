@@ -25,7 +25,7 @@ function cardGeometry(cards){return cards.map(c=>{
   titleCovered:!!fade&&fade.left<=top.left+1&&fade.right>=top.right-1&&fade.top<=top.top+1&&fade.top+fade.height*.48>=top.bottom-1,
   school:c.dataset.combatSchool||null,
   rankLabel:rankNode?.textContent||null,
-  rankInvalid:!!rank&&(!/^Rank [1-9]\d*$/.test(rankNode.textContent)||rank.bottom>(panel?.top??r.top)+1||rank.top<top.bottom-1||(rail&&rank.top<rail.bottom-1&&rank.right>rail.left+1&&rank.left<rail.right-1)||Math.abs((rank.left+rank.right-face.left-face.right)/2)>1),
+  rankInvalid:!!rank&&(!/^Rank [1-9]\d*$/.test(rankNode.textContent)||rank.bottom>r.top+1||rank.top<top.bottom-1||(rail&&rank.top<rail.bottom-1&&rank.right>rail.left+1&&rank.left<rail.right-1)||Math.abs((rank.left+rank.right-face.left-face.right)/2)>1),
   trimDetached:!!trim&&!!panel&&(Math.abs(trim.top-panel.top)>1||Math.abs(trim.height-panel.height)>1),
   sideTags:c.querySelectorAll('.card-tag-symbol').length,
   railOverlap:!!rail && rail.bottom>Math.min(r.top,panel?.top??r.top)+1,

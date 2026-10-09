@@ -1,5 +1,6 @@
 import { cardSideTags } from './cardTagSymbols.js';
 import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
+import {applyCardAppearance} from './cardAppearance.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
@@ -274,6 +275,7 @@ export function renderCard(registries, ref, opts = {}) {
       artworkPosition:artwork?.position,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
+    applyCardAppearance(el.querySelector('.illustrated-card-face'));
     if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
     // The illustrated face owns the rank label and keeps it above its fitted panel.
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';

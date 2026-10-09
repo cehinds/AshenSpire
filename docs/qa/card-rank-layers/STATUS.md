@@ -1,5 +1,99 @@
 # Card layers and rank continuation
 
+## October 9 — master component appearance and real combat preview
+
+The master now exposes `components` (image paths, fit, styles, typography and
+rank bevel decorations) and `symbols.actions` / `symbols.tags` (individual
+identity images or inert SVG shapes). Card content remains bound to the model.
+The explorer's Component appearance panel edits those fields and previews them
+before saving. Saving and exporting clear the saved appearance draft so a later
+direct edit to the master is not masked by an already-applied browser copy.
+
+The editor includes the actual combat screen and a refresh control. The local
+`--editor-write` server regenerates card data on a source-game refresh after a
+direct JSON edit, and serves local authoring images ahead of the pinned cache.
+Published builds still use the repository's normal build and art-pack workflow.
+
+Verified in an isolated workspace: editor PNG change saved to master; direct
+title-color and footer-image changes appeared in actual combat cards after
+refresh; live names/effects remained intact; PNG decoded successfully. Restored
+approved visuals were captured in combat, inspection and phone screenshots with
+zero page errors (`master-game/`). The group/save/export regression passed
+(`master-components/`), and 13 focused tests passed. This remains local source
+work, not a merge or published build.
+The final master-appearance corpus passed for 2,198 native faces on each of
+desktop and phone, including widths 120/124/144/200 and restoration, with zero
+page errors (`master-corpus/report.json`).
+
+## October 9 — shared game JSON and anchored text box
+
+The owner approved applying the preview layout to the game and requested the
+same JSON structure. `src/content/card-layout.json` now contains the preview's
+`version`, `order`, `layouts`, `coordinateSpace`, shared references and group
+definition, alongside the existing artwork and component metadata. The uploaded
+blue rank geometry is the shared default. Native cards consume the generated
+data; the usual build regenerates it from this JSON.
+
+Selecting the text box or its rank selects the panel, trim, rules, blue bar and
+rank text together. Moving and scaling preserve their relative placement. Long
+effects expand the panel upward while the rank stays attached to the upper
+edge. Rank 0 remains hidden.
+
+The local server's `--editor-write` bridge lets **Save to game** update the
+canonical source and regenerate card definitions. **Export JSON** also saves
+to the game and downloads the identical document. Browser drafts remain drafts
+until one of those actions succeeds. New or refreshed source game views use the
+saved layout; existing standalone builds require rebuilding.
+
+Verified: 11 focused tests; isolated editor move/scale/save/regenerate/reload;
+exact exported-versus-saved JSON equality; fresh native cards; hidden Rank 0;
+expanded-panel anchors; desktop and phone; stale-write and foreign-origin
+rejection. Native six-card gallery checks also passed on desktop and phone,
+including inspection, paint order, rank/rules clearance and unclipped effects.
+Evidence is in the task visualization folder's `card-save/` and `anchored-rank/`.
+The full source corpus also passed on desktop and phone: 2,198 native faces per
+device, widths 120/124/144/200 and restoration, complete effects, attached trims,
+rank clearance, title coverage, inspection and zero page errors. See
+`anchored-corpus/report.json` in the same evidence folder. Layout measurement
+and transform writes are batched to avoid a forced layout per card.
+This is a local source implementation; PR #1766 remains unmerged.
+
+## October 9 — interactive editor added locally
+
+The owner requested selection, dragging, scaling, component-edge/center snapping,
+grid lines and freely draggable layer order in the existing explorer. These are
+implemented in `docs/qa/card-layers/editor.js`, `layout-math.js`, `explorer.js`
+and `explorer.css`. The editor flattens isolated native components into independent
+preview planes, so changing a layer's position changes its actual paint order.
+It also supports group selection, eight resize handles, keyboard nudging,
+pointer cancellation, undo/redo, browser persistence and JSON export.
+
+`tools/card-layer-editor-qa.mjs` passed in Edge on desktop and a narrow viewport,
+including real touch pointer events. Screenshots and exported layout are under
+the task visualization folder's `card-editor/`. See the explorer README for
+controls and the reproducible command. This is local preview tooling; the
+prior game changes remain unmerged.
+
+## Latest owner correction — local preview, merge held
+
+The owner rejected the prior result, then explicitly selected the existing
+**Card layer explorer** to break the actual cards into parts. The explorer at
+`docs/qa/card-layers/index.html` now renders native components with nine layer
+toggles, individual visibility/Solo controls, isolated component tiles and a
+Rank 0–5 selector. Its former SVG study is preserved as `wireframe.html`.
+
+Rank is now a compact blue, faceted bar inspired by the mana gem. The bar and
+`Rank X` text are independently inspectable parts on layer 9. Rank 0 is hidden.
+The source preview and rank gallery are updated locally; no new merge or
+publication is authorized by the rejected visual result. Do not mistake the
+earlier validation below for owner acceptance of the replacement.
+
+Verified locally: 15 focused tests; native rank gallery on desktop and phone,
+including inspection; all six explorer cards, nine layers, part Solo, unchanged
+footer geometry under isolation, rank switching and narrow viewport bounds.
+Explorer browser run had zero page errors or failed HTTP responses. Evidence is
+under the task's D: visualization folder in `blue-rank/`.
+
 ## Objective and ownership
 
 Implement the approved card face, explicit layers 1–8 and the new layer 9 rank

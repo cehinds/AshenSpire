@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {CARD_COMPONENTS} from '../src/content/cardComponents.generated.js';
 import {resolve} from 'node:path';
 import {mkdirSync} from 'node:fs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -16,10 +17,10 @@ try{
  await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(i=>i.decode()));});
  for(const width of [1180,390]){
   await page.setViewportSize({width,height:1100});await page.evaluate(async()=>{const {scheduleCardFits}=await import('/src/ui/components/card.js');scheduleCardFits(document.querySelectorAll('.card'));await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
-  const geometry=await page.locator('.sample .card').evaluateAll(cards=>cards.map(c=>{const badge=c.querySelector('.card-rank'),panel=c.querySelector('[data-component="panel"]'),trim=c.querySelector('[data-component="panel-trim"]'),rules=c.querySelector('[data-card-binding="rules"]'),rank=badge?.getBoundingClientRect(),box=panel.getBoundingClientRect(),rim=trim.getBoundingClientRect(),rail=c.querySelector('.card-tag-rail')?.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect();return {expected:Number(c.dataset.exampleRank),label:badge?.textContent||null,center:rank?Math.abs((rank.left+rank.right)/2-(face.left+face.right)/2):0,rankOverlapsPanel:rank?rank.bottom>box.top+1:false,rankOverlapsRail:rank&&rail?rank.top<rail.bottom-1&&rank.right>rail.left+1&&rank.left<rail.right-1:false,clipped:rules.scrollHeight>rules.parentElement.clientHeight+1,trimTracksPanel:Math.abs(box.top-rim.top)<1&&Math.abs(box.height-rim.height)<1,layers:[...c.querySelectorAll('[data-card-layer]')].map(n=>({layer:Number(n.dataset.cardLayer),z:getComputedStyle(n).zIndex}))};}));
+  const geometry=await page.locator('.sample .card').evaluateAll(cards=>cards.map(c=>{const badge=c.querySelector('.card-rank'),panel=c.querySelector('[data-component="panel"]'),trim=c.querySelector('[data-component="panel-trim"]'),rules=c.querySelector('[data-card-binding="rules"]'),rank=badge?.getBoundingClientRect(),box=panel.getBoundingClientRect(),rim=trim.getBoundingClientRect(),rail=c.querySelector('.card-tag-rail')?.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect();return {expected:Number(c.dataset.exampleRank),label:badge?.textContent||null,center:rank?Math.abs((rank.left+rank.right)/2-(face.left+face.right)/2):0,rankOverlapsPanel:rank?rank.bottom>rules.getBoundingClientRect().top+1:false,rankOverlapsRail:rank&&rail?rank.top<rail.bottom-1&&rank.right>rail.left+1&&rank.left<rail.right-1:false,clipped:rules.scrollHeight>rules.parentElement.clientHeight+1,trimTracksPanel:Math.abs(box.top-rim.top)<1&&Math.abs(box.height-rim.height)<1,layers:[...c.querySelectorAll('[data-card-layer]')].map(n=>({layer:Number(n.dataset.cardLayer),z:getComputedStyle(n).zIndex}))};}));
   console.log(JSON.stringify({width,geometry}));
   assert.ok(geometry.every(g=>g.label===(g.expected>0?`Rank ${g.expected}`:null)&&g.center<1&&!g.rankOverlapsPanel&&!g.rankOverlapsRail&&!g.clipped&&g.trimTracksPanel));
-  assert.ok(geometry.every(g=>g.layers.every(l=>l.z===String(l.layer))),'each declared paint layer owns its stacking order');
+  assert.ok(geometry.every(g=>g.layers.every(l=>l.z===String(9-CARD_COMPONENTS.template.order.indexOf(l.layer)))),'each declared paint layer owns its stacking order');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:output+(width===1180?'/rank-examples.png':'/rank-phone.png'),fullPage:true});
  }

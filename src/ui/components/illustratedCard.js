@@ -5,6 +5,7 @@ import {esc} from './tooltip.js';
 import {playingCardArt} from '../cardArtwork.js';
 import {cardSigilsHtml} from './combatSigilView.js';
 import {fitIllustratedCards} from './illustratedCardFitter.js';
+import {rankAnchor} from './cardLayout.js';
 
 export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended}={}) {
   const override=CARD_COMPONENTS.cards[id]?.layers.find(l=>l.bind==='artwork')?.href;
@@ -76,10 +77,12 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
   }).join('');
   const panel=doc.layers.find(l=>l.id==='panel');
   const panelTop=panel?panel.y-(model.sigils?doc.height*.061:0):doc.height*.58;
-  const rank=model.rankBadge?`<span class="card-rank" data-card-layer="9" title="${esc(model.rankHelp)}" style="top:${(panelTop-28)/doc.height*100}%">${esc(model.rankBadge)}</span>`:'';
+  const anchor=rankAnchor(doc,{...panel,y:panelTop});
+  const r=anchor?.box,text=anchor?.text;
+  const rank=model.rankBadge?`<span class="card-rank" data-card-layer="9" data-panel-inset="${r?(r.y-panelTop)/doc.height*100:0}" title="${esc(model.rankHelp)}" style="${r?`left:${r.x/doc.width*100}%;top:${r.y/doc.height*100}%;width:${r.w/doc.width*100}%;height:${r.h/doc.width*100}cqw;transform:none;`:''}"><span class="card-rank-bar" data-component="rank-bar" aria-hidden="true"></span><span class="card-rank-text" data-component="rank-text"${text?` style="position:absolute;left:${text.x}%;top:${text.y}%;width:${text.w}%;height:${text.h}%;display:grid;place-items:center;font-size:clamp(8px,${r.h*text.h/100/1.15/doc.width*100}cqw,20px);"`:''}>${esc(model.rankBadge)}</span></span>`:'';
   const backdrops=model.sigils?'<div class="card-title-fade" data-card-layer="3" aria-hidden="true"></div><div class="card-footer-backdrop" data-card-layer="3" aria-hidden="true"></div>':'';
   const footerTrim=model.sigils?`<div class="ic-plane" data-card-layer="4" style="z-index:4">${actionBaseFrame}</div>`:'';
-  return `<div class="illustrated-card-face" data-cost-layout="${costLayout}" aria-label="${esc(model.name)}" data-design-width="${doc.width}" style="--illustrated-ratio:${doc.width}/${doc.height}">${layers}${backdrops}${footerTrim}${cardTagRailHtml(model.sideTags)}${rank}</div>`;
+  return `<div class="illustrated-card-face" data-card-layout-id="${esc(model.id)}" data-cost-layout="${costLayout}" aria-label="${esc(model.name)}" data-design-width="${doc.width}" style="--illustrated-ratio:${doc.width}/${doc.height}">${layers}${backdrops}${footerTrim}${cardTagRailHtml(model.sideTags)}${rank}</div>`;
 }
 
 export { fitIllustratedCards };

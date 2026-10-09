@@ -5,14 +5,14 @@
 <style>
 html,body{height:auto;overflow:auto;min-height:100%;background:#17130f}body{margin:0;color:#ecdfc2;font-family:Georgia,serif}header{max-width:1120px;margin:34px auto 20px;padding:0 30px}h1{font-size:30px;font-weight:normal;margin:0 0 10px}p{color:#c6b795;line-height:1.5}a{color:#e8bd78}.gallery{max-width:1120px;margin:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px;padding:30px}.sample{min-width:0;display:flex;flex-direction:column;align-items:center}.sample .card{width:100%!important;max-width:270px!important;margin:12px auto}.sample h2{font:16px Georgia,serif;color:#e5c793;margin:0 0 12px}.sample p{font:13px/1.4 system-ui,sans-serif;max-width:270px;text-align:center;margin:0}.legend{max-width:1060px;margin:12px auto 40px;padding:20px 30px;border-top:1px solid #57472e;font:14px/1.7 system-ui,sans-serif;color:#cfbea1}.legend strong{color:#edce91}@media(max-width:650px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px;padding:20px}.sample h2{font-size:13px}.sample p{font-size:11px}h1{font-size:26px}}
 </style></head><body>
-<header><h1>Rank above the effect</h1><p>Rank 1 and higher use a centered, fully written label above the effect panel. Rank 0 leaves that space clear. These are native game cards with the new layer structure.</p></header><main class="gallery"></main>
-<div class="legend"><strong>Front → back:</strong> 9 Rank label · 8 Text · 7 Icons · 6 Card / text box trim · 5 Banner / text box fill · 4 Footer trim · 3 Heading / footer backdrop · 2 Art · 1 Card background.<br>The label follows the panel when a longer effect expands upward. Select a card and open Information for full details.</div>
+<header><h1>Rank anchored to the text box</h1><p>Rank 1 and higher use a compact blue gem bar with the full Rank X label on the upper text box edge. Rank 0 leaves that space clear. These are native game cards with the new layer structure.</p><p><a href="/docs/qa/card-layers/index.html">Break the cards into parts in the layer explorer</a></p></header><main class="gallery"></main>
+<div class="legend"><strong>Front → back:</strong> 9 Blue rank bar + text · 8 Text · 7 Icons · 5 Banner / text box fill · 6 Card / text box trim · 4 Footer trim · 3 Heading / footer backdrop · 2 Art · 1 Card background.<br>The label follows the panel when a longer effect expands upward. Select a card and open Information for full details.</div>
 <script type="module">
 import {contentBundle} from '/src/content/index.js';import {createRegistries} from '/src/model/registries.js';import {renderCard,scheduleCardFits} from '/src/ui/components/card.js';
 const registry=createRegistries(contentBundle),gallery=document.querySelector('.gallery');
 const samples=[
  [{cardId:'cinderSigil',abilityRank:0},'Rank 0 · no label','Baseline: no rank label is drawn.'],
- [{cardId:'cinderSigil',abilityRank:1},'Rank 1 · simple effect','The label sits above the upper text box trim.'],
+ [{cardId:'cinderSigil',abilityRank:1},'Rank 1 · simple effect','The rank bar is anchored to the upper text box edge.'],
  [{cardId:'cinderSigil',abilityRank:3},'Rank 3 · upgraded spell','The same position with a higher authored rank.'],
  [{cardId:'guardCounter',abilityRank:2},'Rank 2 · Counter','Action icon and name remain in the centered footer.'],
  [{cardId:'progression-ember-hew',abilityRank:4},'Rank 4 · combat maneuver','Primary icons remain above the label’s space.'],

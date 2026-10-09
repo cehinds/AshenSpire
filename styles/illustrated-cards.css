@@ -62,8 +62,19 @@
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-symbol {width:7cqw;height:7cqw;}
 :root .card.illustrated-card .card-rank {
   position:absolute;z-index:9;left:50%;right:auto;bottom:auto;transform:translateX(-50%);
-  width:max-content;max-width:70%;margin:0;padding:.35cqw 2.4cqw;border:0;border-radius:2cqw;
-  background:linear-gradient(90deg,#100d0900,#100d09eb 18%,#100d09eb 82%,#100d0900);
-  color:#f3dfb7;font:700 clamp(8px,5.6cqw,20px)/1.15 Georgia,serif;letter-spacing:.03em;
+  display:grid;place-items:center;width:42%;max-width:70%;height:8cqw;min-height:14px;margin:0;padding:0;border:0;border-radius:0;
+  background:none;filter:drop-shadow(0 .5cqw .65cqw #000);
+  color:#f3f6ff;font:700 clamp(8px,5.6cqw,20px)/1.15 Georgia,serif;letter-spacing:.03em;
   text-align:center;white-space:nowrap;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none;
 }
+:root .illustrated-card-face .card-rank-bar {
+  position:absolute;inset:0;background:linear-gradient(160deg,#c0dcee,#6e94bf 40%,#244968 60%,#88b6d1);
+  clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%);
+}
+:root .illustrated-card-face .card-rank-bar:not(:has([data-card-decoration])):not([data-custom-image])::before {
+  content:"";position:absolute;inset:.65cqw;
+  clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%);
+  background:linear-gradient(160deg,#6597c1 0%,#2c5d91 24%,#123a6a 48%,#092448 52%,#1b4d7b 83%,#407fa9 100%);
+  box-shadow:inset 0 .8cqw 1cqw #89bdde50,inset 0 -.6cqw .8cqw #020e25;
+}
+:root .illustrated-card-face .card-rank-text {position:relative;z-index:1;}
