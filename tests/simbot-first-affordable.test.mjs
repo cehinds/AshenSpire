@@ -18,6 +18,7 @@ function fight(classId,enemyIds,seed,select){
   const combat=combatFor(classId,enemyIds,seed),decisions=[];
   let guard=0;
   while(!combat.result&&guard++<8000&&combat.turn<=150){
+    if(combat.pendingReaction){const offerId=combat.pendingReaction.id;decisions.push(['skipReaction',offerId]);dispatch(combat,{type:'chooseReaction',offerId,optionId:null});continue;}
     const refused=refusalsFor(combat),card=select(reg,combat,refused);
     if(!card){decisions.push(['endTurn']);dispatch(combat,{type:'endTurn'});continue;}
     const targetId=botCardTargetId(reg,combat,card,combat.enemies.find(enemy=>enemy.alive)?.id);

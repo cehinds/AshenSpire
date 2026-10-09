@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Alternative animation atelier · AshenSpire</title><link rel="stylesheet" href="./preview.css"></head>
+<body>
+<header><a href="../index.html">ASHENSPIRE <span>POSES & EFFECTS</span></a><span class="tag">ALTERNATIVE / DEV · AUTHORING</span></header>
+<main>
+ <div class="heading"><div><p class="eyebrow">BASE ARMOUR · ANIMATION RENEWAL</p><h1>Every card has a motion.</h1><p class="muted">Attack, smash, sweep, counter, defend, spell and ranged actions at the current combat pace.</p></div><a class="button" id="workshop-project" href="./reaver-base.rig.json" download>Download Workshop project ↓</a></div>
+ <div class="layout">
+  <aside><p class="eyebrow">01 / CLASS</p><label>Class<select id="actor"></select></label><div class="status" id="coverage"></div><p class="muted">Card types select the motion. Each class keeps its base weapons; equipment combinations come later.</p><div class="divider"></div><p class="eyebrow">02 / CARD TYPE</p><div id="actions"></div><p class="muted" id="action-note"></p></aside>
+  <section class="workbench" aria-label="Animation preview">
+   <div class="toolbar"><label>Game pace<select id="pace"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option><option value="instant">Instant</option></select></label><label>Aura<select id="aura"><option value="stamina">Stamina</option><option value="mana">Mana</option><option value="hp">Health</option><option value="guard">Guard</option><option value="none">None</option></select></label><label>Effect<select id="effect"><option value="auto">Action effect</option><option value="slash">Slash</option><option value="starbolt">Starbolt</option><option value="shieldBash">Shield bash</option><option value="ward">Ward</option><option value="none">None</option></select></label><label>Raster<select id="quality"><option value="full">512 px</option><option value="lite">256 px · Lite</option></select></label></div>
+   <div class="stage"><canvas id="preview" width="1000" height="580" aria-label="Selected character animation with a separate translucent effect and silhouette aura"></canvas><span class="stage-label" id="stage-label">REAVER · WAYFARER PLATE · SWORD</span><span class="stage-caption">CLASS DEFAULTS · CARD TAGS</span></div>
+   <div class="transport"><button id="play" class="primary">▶ Play</button><button id="restart">↺ Restart</button><button id="hit">Test hit flash</button><label class="inline"><input type="checkbox" id="loop" checked> Loop</label><label class="inline"><input type="checkbox" id="slowmo">¼-speed inspection</label><label class="inline"><input type="checkbox" id="reduced">Reduced motion</label><output id="clock">0 / 260 ms</output></div>
+   <input id="scrub" type="range" min="0" max="260" value="0" aria-label="Animation playhead">
+   <div id="timeline" class="timeline"></div>
+   <div class="footer"><span id="metrics"></span><a id="edit" href="../index.html?renewal=attack">Edit effects in Pose Studio ↗</a></div>
+  </section>
+ </div>
+ <section class="review"><div><p class="eyebrow">PRODUCTION BOARD</p><h2 id="board-title">Card motions. Four classes.</h2><p class="muted">Reaver: greatsword / crossbow. Rogue: twin daggers / bow. Starseer: staff / open book. Herald: unarmed / open book.</p></div><div id="board"></div></section>
+ <p id="message" role="status">Loading the study…</p>
+</main><script type="module" src="./preview.mjs"></script>
+</body></html>

@@ -1,0 +1,32 @@
+{
+  "id": "starReader",
+  "prompt": "Edit the supplied Star Reader. Preserve elderly hooded identity, faded midnight robes, embroidered gold constellations, astrolabe in one hand and rolled chart in other, blue starstone trinkets. Back of hood/cloak dominant, instruments peeking around sides. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+  "kind": "sprite",
+  "sourceId": "starReader",
+  "reference": "../masters/starReader.png",
+  "resultFile": "sprites/starReader-rear.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-3da1a2dc-d634-40ed-9ab9-8c52729eeb84.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "bcb5fcf009618b07507b2cb8ba345df38fd653d6be59be6c3ec2b63748bcae08",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.5373140970865885,
+  "visibleBounds": [
+    129,
+    44,
+    893,
+    1489
+  ],
+  "alphaThreshold": 32,
+  "anchor": [
+    511.0,
+    1489
+  ]
+}

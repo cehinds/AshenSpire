@@ -282,7 +282,7 @@ export function foundationTransaction(ctx, execute, { advanceAction = true } = {
   const candidate = candidateState(ctx);
   candidate._foundationTransaction = true;
   if (candidate.foundation && advanceAction) {
-    candidate.foundation.actionSerial++;
+    candidate.foundation.actionSerial = Math.max(candidate.foundation.actionSerial, candidate.foundationNextSerial || 0) + 1;
     candidate.foundation.eventCount = 0;
     candidate.foundation.rolls = {}; candidate.foundation.counts = {};
   }
@@ -311,6 +311,7 @@ export function foundationTransaction(ctx, execute, { advanceAction = true } = {
       const old = ctx.players.get(id);
       if (!old) continue;
       next.entity = commitEntity(old.entity, next.entity);
+      for (const key of Object.keys(old)) if (!(key in next)) delete old[key];
       Object.assign(old, next);
       candidate.players.set(id, old);
     }
@@ -318,6 +319,7 @@ export function foundationTransaction(ctx, execute, { advanceAction = true } = {
   candidate.enemies = candidate.enemies.map((entity, i) => commitEntity(ctx.enemies[i], entity));
   if (candidate.players) candidate.player = entities.get(candidate.player) || candidate.player;
   for (const action of candidate.queue) for (const key of ['source', 'owner', 'target']) action[key] = entities.get(action[key]) || action[key];
+  for (const action of candidate.reactionResume?.queue || []) for (const key of ['source', 'owner', 'target']) action[key] = entities.get(action[key]) || action[key];
   // Keep the run's loadout object identity when committing an equipment change.
   if (!ctx.players && ctx.loadout && candidate.loadout) {
     for (const key of Object.keys(ctx.loadout)) delete ctx.loadout[key];

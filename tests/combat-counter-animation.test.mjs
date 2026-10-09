@@ -23,7 +23,7 @@ function mounted(version, seed = 11) {
   return { run, card };
 }
 const route = (definition, run, version) => resolveCombatAnimation(definition,
-  equippedPieces(registries, run.loadout, run.class), { combatExpansionVersion: version });
+  equippedPieces(registries, run.loadout, run.class), { combatExpansionVersion: version, classId: run.class, appearance: 'classic' });
 
 for (const version of [1, 2]) test(`actual mounted Shield Bash version ${version} uses the committed action and permanent instance`, () => {
   const { run, card } = mounted(version);
@@ -51,6 +51,10 @@ for (const version of [1, 2]) test(`actual mounted Shield Bash version ${version
     assert.equal(definition.upcastTier, 2);
     assert.deepEqual(definition.counterPayload, expected.counterPayload);
     assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'shieldGuard', 'shieldGuard']);
+    const alternative = resolveCombatAnimation(definition, equippedPieces(registries, run.loadout, run.class),
+      { combatExpansionVersion: version, classId: run.class, appearance: 'alternative' });
+    assert.deepEqual([alternative.group, alternative.technique, alternative.rest], ['defend', 'counter', 'counter'],
+      'the alternative class Counter braces without falling back to an attack');
     assert.equal(combat.enemies[0].hp, hp, 'preparation produces no immediate enemy attack');
     assert.equal(combat.player.combatCounter.charges, 1);
     assert.deepEqual(resolvePlayedCombatCard(combat, receipt, { cardId: 'strike' }).effects, expected.effects,

@@ -1,0 +1,96 @@
+AshenSpire combat art collection
+
+October 6 alternative/dev art continuation: open continuation/index.html for
+32 named settings with four separate layers and desktop/phone compositions.
+The catalog now selects rear-right versions of both companions and all five
+speakers. All earlier sprite masters remain available. See continuation/README.txt
+for the source inventory, generation receipts, scene catalog and validation.
+The earlier ZIP and package-sha256.txt describe the earlier export; they do not
+include this continuation. SHA256SUMS.txt describes the current source package.
+
+October 6 revision: all 19 hero/armor appearances now use rear three-quarter
+views. The Reaver sword grip was corrected. Earlier front/side originals remain
+in masters; catalog.json selects the new -rear.png files. Enemies are unchanged.
+The player starts 5% lower and enemies 3% farther left in the desktop review.
+
+Open editor/battlefield-wireframe-editor.html through the local preview server
+to use Combat Studio. The previous editor remains in editor/editor-legacy.html.
+
+- Placement and selection
+  - Drag artwork or select it in Layers. Four corners scale proportionally.
+  - Tight bounds remove transparent sprite padding. Uniform frames give every
+    combatant the same selectable frame dimensions without distorting art.
+  - Shift-click selects several. Scale selected or all combatants in the left
+    panel. Match height normalizes selected actors while preserving proportions.
+  - Snap uses the grid and nearby edges/centers; Alt-drag bypasses it.
+  - Arrows nudge 1px; Shift nudges 10px. Ctrl+Z undoes; Ctrl+Shift+Z redoes.
+- Layers and UI
+  - Drag rows to reorder, or use Forward/Backward. Each row has hide and lock.
+  - Scenery starts locked. Unlock it to move, resize or adjust motion depth.
+  - Select Entire game UI to move/scale all of it. Right-click to edit UI groups,
+    then enter HUD, cards or footer to edit their individual components.
+  - Right-click a combatant to edit its intent, information and nameplate.
+    Those panels remain attached to its head or feet. Return to scene exits.
+  - Card section fade uses the supplied texture. Adjust its height, tint and
+    opacity stop (default: fully opaque halfway down); cards and footer sit above.
+- Effects and assets
+  - Outline/glow controls support two colors, gradient angle, opacity, width,
+    softness, per-combatant overrides and shared defaults.
+  - Skill, power, attack and targeted conditions can be previewed from the top
+    menu. They are saved authoring conditions, not live gameplay event bindings.
+  - The searchable local library contains all 58 tracked background/environment/
+    map components plus the four generated scene layers. Replace or add layers.
+- Saving and preview
+  - Desktop and Phone have independent transforms, layers, UI overrides and
+    selection-frame settings. Changing devices never copies one over the other.
+  - Drafts autosave locally. Save writes a checkpoint. Export layouts produces
+    portable JSON with both device layouts, effects and component overrides.
+  - Import restores v2 layouts or migrates previous Battlefield v1 JSON.
+    editor/starting-layout-v2.json restores the initial two-device composition.
+  - Preview hides editor guides and demonstrates independently moving layers.
+  - The current game HUD/cards/footer require this folder in the game checkout.
+    No authoring edits write into production game configuration.
+
+Open index.html for the portable art gallery and moving scene. No installation
+or network connection is required for that view. Use the Sprite collection tab
+to filter by character, armor, enemy, companion or named speaker. Click a sprite
+for its original PNG download. Light and checker backdrops expose alpha edges.
+
+59 original transparent PNG sprites:
+  19 armor appearances, including the four default playable characters
+  33 enemies from the current AshenSpire roster
+  2 companions and 5 named speakers
+
+Four independent scenery PNGs: distant sky/castle, ruined arch, ground, and
+near trees/lantern. Atmosphere is an additional optional CSS layer. The layer
+checkboxes and motion controls demonstrate the depth separation.
+
+The current game interface preview requires this folder inside the AshenSpire
+checkout. Run python serve-preview.py from this folder, then open:
+http://127.0.0.1:4189/docs/design/combat-depth-2026-10-05/game-preview.html
+The server binds only to the local machine and uses the tracked light art for
+existing game UI. Optional music/SFX packs are absent in this checkout; the
+visual editor does not require them. That view loads the current game in screenshot mode, so it
+does not modify saves. It is a visual comparison; gameplay input is disabled.
+
+catalog.json contains canonical IDs, source catalog paths, exact prompts used,
+reference roles, alpha/dimension checks, hashes, and measured body-base anchors.
+The 16 shared armor rows reuse their named visual class and set; they do not
+represent 16 additional visual designs. Built-in image_gen produced the PNGs.
+Original generator pixels and alpha are retained unchanged in masters/.
+
+This delivery is idle artwork and a review composition. It has not been wired
+into production combat, and contains no attack/walk/hit animation strips or
+skeletal rigs. Body anchors are measured from visible bounds. Hand/action
+anchors and animated contact points require a later animation pass. The live
+HUD, cards and footer are rendered by the existing game, not reimplemented.
+
+Reference direction: the supplied combat image and colored depth markup,
+plus the local TheAshenedSpire repository. Identity and roster coverage:
+the current AshenSpire checkout. The new illustrations are reauthored assets,
+not literal pixel extractions from the supplied scene.
+
+review/ contains browser screenshots, contact sheets and validation reports.
+SHA256SUMS.txt covers package files. package-sha256.txt beside the ZIP records
+the package hash. Rebuilding scripts require the original checkout and local
+Pillow/Playwright dependencies; they are not needed to open the gallery.

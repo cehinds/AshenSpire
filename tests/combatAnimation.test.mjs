@@ -84,7 +84,9 @@ test('authoritative co-op digest carries accepted actor and equipment profile, p
   // The actor/profile receipt fixture replays the pre-expansion character setup.
   const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
   for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
-  host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
+  host.start();
+  for(const member of host.session.members.values())delete member.run.reactionRulesVersion;
+  for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
   const combat=host.live.combat,p= combat.players.get('p2');
   p.piles.hand.push({instanceId:'animation-guard',cardId:'defend',profileId:'shieldGuard',equipmentRole:'guard',upgraded:false});
   p.entity.energy=10;p.entity.stamina=100;

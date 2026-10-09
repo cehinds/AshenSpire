@@ -1,0 +1,70 @@
+{
+  "id": "reaver-oathsworn",
+  "name": "Gilded Oathsworn \u00b7 Reaver",
+  "family": "armor",
+  "classId": "reaver",
+  "outfitId": "oathsworn",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A battle-worn sellsword, closed steel helmet, heavy layered plate and chainmail, ragged rust-red scarf and cloak, worn leather straps, sword lowered diagonally. Recognizable as the knight on the left of the supplied reference. Outfit: Gilded Oathsworn. Lore: Kept bright by an oath unbroken. Material palette: plate #B39C5E, plateLt #E0CB8C, leather #5A4626, under #3A3020. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/reaver-oathsworn-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-92dadd94-65bf-4123-b092-5b2760ab9317.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5799109141031901,
+    "visibleBounds": [
+      19,
+      40,
+      1017,
+      1459
+    ],
+    "anchor": [
+      518.0,
+      1459
+    ],
+    "sha256": "31b05698659e6c991445e8effab478d83fbce349478b12f59681f5589b08e849"
+  },
+  "referenceImages": [
+    "masters/reaver-oathsworn.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/reaver-oathsworn.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5828984578450521,
+      "visibleBounds": [
+        47,
+        63,
+        1012,
+        1450
+      ],
+      "anchor": [
+        529.5,
+        1450
+      ],
+      "sha256": "c7e70daa8a4d99ce8d5aed49bd5311246331a6fbf288a851095cf1268ec78ef4"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A battle-worn sellsword, closed steel helmet, heavy layered plate and chainmail, ragged rust-red scarf and cloak, worn leather straps, sword lowered diagonally. Recognizable as the knight on the left of the supplied reference. Outfit: Gilded Oathsworn. Lore: Kept bright by an oath unbroken. Material palette: plate #B39C5E, plateLt #E0CB8C, leather #5A4626, under #3A3020. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

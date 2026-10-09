@@ -1,0 +1,31 @@
+{
+  "id": "drowned-coast-3-landmark",
+  "sceneId": "drowned-coast-3",
+  "name": "Starwatch Terrace",
+  "region": "drowned-coast",
+  "kind": "landmark",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "resultFile": "scenes/drowned-coast-3/landmark.png",
+  "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Starwatch Terrace'. Subject: ancient brass armillary sphere on coastal observatory plinth, broken stone balustrade and small dark-blue starstone sconces. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, stormy slate teal grey.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-425013e1-cb34-491c-b09b-58c59905aa08.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "0a21627141c65a2b38ed5fd53c5f60e8443e88fba5a60ab0125f163185d70eec",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6613216400146484,
+  "visibleBounds": [
+    24,
+    17,
+    1507,
+    656
+  ],
+  "alphaThreshold": 32
+}

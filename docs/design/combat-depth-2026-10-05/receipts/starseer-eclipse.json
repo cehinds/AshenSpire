@@ -1,0 +1,70 @@
+{
+  "id": "starseer-eclipse",
+  "name": "Eclipse Habit \u00b7 Starseer",
+  "family": "armor",
+  "classId": "starseer",
+  "outfitId": "eclipse",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Eclipse Habit. Lore: Worn only when the moon is eaten. Material palette: plate #1C1A2E, plateLt #2E2B47, leather #2A2118, under #17151F. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/starseer-eclipse-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-8e0966fd-c57a-4303-9717-377fcbde41f5.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.4992942810058594,
+    "visibleBounds": [
+      45,
+      20,
+      1004,
+      1506
+    ],
+    "anchor": [
+      524.5,
+      1506
+    ],
+    "sha256": "e3e27474f236279ad09732504f78769c5b53dbbabf6012b907caec0ef619d141"
+  },
+  "referenceImages": [
+    "masters/starseer-eclipse.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/starseer-eclipse.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.554498036702474,
+      "visibleBounds": [
+        47,
+        9,
+        957,
+        1507
+      ],
+      "anchor": [
+        502.0,
+        1507
+      ],
+      "sha256": "b98caadfeab2ab1ed1e6f5b48934bd76cd731b085a889bf45a2bfbdf39f0dee8"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Eclipse Habit. Lore: Worn only when the moon is eaten. Material palette: plate #1C1A2E, plateLt #2E2B47, leather #2A2118, under #17151F. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

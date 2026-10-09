@@ -1,0 +1,479 @@
+{
+  "url": "http://127.0.0.1:4197/continuation/index.html",
+  "title": "AshenSpire · Combat art continuation",
+  "scenes": 32,
+  "compositions": 64,
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "browser": "Chrome via Playwright; Browser plugin not available",
+  "checks": [
+    "identity",
+    "nonblank stage",
+    "all scene image loads",
+    "scene selection",
+    "independent layer toggles",
+    "distinct parallax transforms",
+    "actor switch",
+    "phone composition",
+    "no horizontal overflow"
+  ],
+  "errors": [],
+  "motion": [
+    "translateX(0.96px)",
+    "translateX(3.04px)",
+    "translateX(5.6px)",
+    "translateX(8.64px)"
+  ],
+  "results": [
+    {
+      "scene": "ashen-crown-1",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "ashen-crown-2",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "ashen-crown-3",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "ashen-crown-4",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-1",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-2",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-3",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-4",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-1",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-2",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-3",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-4",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-1",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-2",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-3",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-4",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-1",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-2",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-3",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-4",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-01",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-02",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-03",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-04",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-01",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-02",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-03",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-04",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-01",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-02",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-03",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-04",
+      "device": "desktop",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "ashen-crown-1",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "ashen-crown-2",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "ashen-crown-3",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "ashen-crown-4",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-1",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-2",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-3",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "hollow-weald-4",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-1",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-2",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-3",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "pale-marches-4",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-1",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-2",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-3",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "cinder-reach-4",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-1",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-2",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-3",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "drowned-coast-4",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-01",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-02",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-03",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "BS-ENV-04",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-01",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-02",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-03",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "HM-ENV-04",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-01",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-02",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-03",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    },
+    {
+      "scene": "FC-ENV-04",
+      "device": "phone",
+      "layers": 4,
+      "actors": true,
+      "images": 6
+    }
+  ]
+}

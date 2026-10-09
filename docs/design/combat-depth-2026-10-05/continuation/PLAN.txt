@@ -1,0 +1,18 @@
+Alternative combat art continuation — 2026-10-06
+
+Inventory before production: 59 actors, 32 combat scenes, 58 environment/library files.
+Retain 19 approved rear armor appearances and 33 left-facing enemies.
+Convert 2 companions and 5 speakers to rear three-quarter right; retain originals.
+Reaver red cloak and corrected sword master are protected by hash comparison.
+
+Produce each of 32 scenes as four independent layer references: far distance,
+unique landmark, registered ground, edge foreground. Share regional far/ground/
+foreground masters deliberately; each scene has its own landmark identity.
+Use separate phone framing and layer transforms, preserving clear actor space.
+No actor or UI baked into scenery. Keep alpha in landmarks/ground/foreground.
+
+Record original source, exact prompt, hashes, alpha bounds and anchor metadata.
+Validate roster/scene coverage, alpha separation, clearance, compositions and
+all relative paths. Review desktop and phone contact sheets and moving preview.
+Deliver dedicated alternative/dev-based branch and asset integration commit.
+Runtime gameplay, HUD, cards, footer, layout editing, CI and merges are excluded.
