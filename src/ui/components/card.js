@@ -9,7 +9,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardSummary } from '../../model/playingCard.js';
+import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardSummary, combatCardDamageLabel } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -155,6 +155,9 @@ export function renderCard(registries, ref, opts = {}) {
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
+  const fallbackDamageLabel = expanded && !faceSummary
+    && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
+    ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
   const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
@@ -262,9 +265,13 @@ export function renderCard(registries, ref, opts = {}) {
   const paint = (at) => {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
+    const authoredRules = def.weightClassPriced
+      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
+      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(faceSummary ? esc(faceSummary) : def.weightClassPriced ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.' : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences)),
+      rules: compactCardRules(faceSummary ? esc(faceSummary)
+        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,

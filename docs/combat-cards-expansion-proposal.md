@@ -895,6 +895,8 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - [The implementation contract](combat-expansion-contract.md) governs final values, ownership, rounding, card lifecycle, and compatibility.
   - Solo, co-op, enemies, card previews, and saved fights share those rules.
   - [Card sigils](combat-card-sigils.md) explain the action and school marks. Damage types remain written; inspection explains secondary tags.
+    - Keep the action name and sigil at the bottom. Put actual damage words in the effect: **5 Fire damage**, **3 Piercing damage**, or **4 Blunt damage**.
+    - Lightning uses Piercing and Force uses Blunt. Mixed contacts keep their types; Counter HP returns show their damage type separately from Poise or Ward impact.
 
 - **Loading a fight**
   - Ordinary combat actions preserve the latest durable checkpoint, initially the fight's entry.
