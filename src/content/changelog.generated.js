@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1768"
   },
   {
+    "id": "pr-1778",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "The shared card design loads without repeated master data",
+    "detail": "Keep the complete editable card structure while storing its shared components once in the game bundle. Browser checks follow optional reaction choices, current fighter motion and the combat layer order.",
+    "build": "0.7.1.1195",
+    "pullRequest": 1778,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1778"
+  },
+  {
     "id": "pr-1766",
     "date": "2026-10-09",
     "group": "2026-10-09",
@@ -21,6 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1193",
     "pullRequest": 1766,
     "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1740",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Alternative combat keeps its art with the complete tactical rules",
+    "detail": "The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.",
+    "build": "0.7.1.1191",
+    "pullRequest": 1740,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1740"
   },
   {
     "id": "pr-1775",
