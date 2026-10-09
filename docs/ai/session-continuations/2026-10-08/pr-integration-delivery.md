@@ -28,7 +28,7 @@ Primary Test source is `4000288bef3bb0c6284ef30c66b9a7bfd2d03e4c`:
 
 | Workflow | Run | Status |
 | --- | --- | --- |
-| Heavy CI | [37887222210](https://github.com/cehinds/AshenSpire/actions/runs/37887222210) | Pending final result |
+| Heavy CI | [37887222210](https://github.com/cehinds/AshenSpire/actions/runs/37887222210) | Success, all 68 jobs |
 | Tests | [37887222190](https://github.com/cehinds/AshenSpire/actions/runs/37887222190) | Success, all 8 jobs |
 | Preview | [37887222170](https://github.com/cehinds/AshenSpire/actions/runs/37887222170) | Success |
 | Windows installer | [37887222180](https://github.com/cehinds/AshenSpire/actions/runs/37887222180) | Success |
@@ -47,7 +47,7 @@ Alternative Test source is `1949fe1da6b11d9b580baa2ac18b60d880a3b2ca`:
 
 Alternative Dev dispatched workflows at runtime400 all passed: architecture [37887957228](https://github.com/cehinds/AshenSpire/actions/runs/37887957228), receipts [37887954942](https://github.com/cehinds/AshenSpire/actions/runs/37887954942), preview [37887944541](https://github.com/cehinds/AshenSpire/actions/runs/37887944541), map [37887950995](https://github.com/cehinds/AshenSpire/actions/runs/37887950995), quick screens [37887948785](https://github.com/cehinds/AshenSpire/actions/runs/37887948785), tests [37887946701](https://github.com/cehinds/AshenSpire/actions/runs/37887946701) and tutorial [37887952984](https://github.com/cehinds/AshenSpire/actions/runs/37887952984).
 
-Both heavy CI runs passed all 66 test jobs, including the layout/motion/mobile obstruction checks fixed in this task. Primary Test's platform comparison subsequently passed; its final boundary-summary job is queued. Alternative Test's platform comparison remains queued at this checkpoint. The three uploaded digest artifacts were also fetched and compared locally: all nine rows agree across Windows/macOS/Linux for each snapshot. They are preserved in `docs/qa/published-display-1167/ci-digests/`. That evidence does not mislabel either still-pending workflow as complete.
+Both heavy CI runs passed all 66 test jobs, including the layout/motion/mobile obstruction checks fixed in this task. Primary Test's platform comparison and final boundary-summary job also passed: that full workflow is successful with 68 jobs. Alternative Test's platform comparison remains queued at this checkpoint. The three uploaded digest artifacts were also fetched and compared locally: all nine rows agree across Windows/macOS/Linux for each snapshot. They are preserved in `docs/qa/published-display-1167/ci-digests/`. That evidence does not mislabel the still-pending Alternative workflow as complete.
 
 Development publication refresh [37890907828](https://github.com/cehinds/AshenSpire/actions/runs/37890907828) passed assembly and deployment on reviewed Dev `d18b3423d51b158b503e7e9c4a705c3b5d37dd92`, authenticated actor `cehinds`, through the normal owner guard. The published badges subsequently returned200 and **0.7.1.1167** on primary Dev/Test and Alternative Dev/Test. Release remains **0.7.1.1060** and Main **0.7.1.810**. All six playable pages and HTML downloads also returned200 in the link sweep; recheck after later owner publications if relying on the latest aliases. Source promotion and actual publication are separate recorded successes. Release/Main branches and tags were not changed.
 
@@ -75,7 +75,7 @@ Shared branch refs observed after the newer promotion: Dev `edfb6f18f0cc05829e7a
 
 ## Remaining actions
 
-1. Read live job results for both heavy matrices above. Fix concrete failures through an independently reviewed Dev PR, canonical receipt regeneration, architecture sync and fresh Test promotion; retain known-bad controls.
+1. Read the final Alternative heavy CI result above. Primary heavy CI is complete. Fix concrete failures through an independently reviewed Dev PR, canonical receipt regeneration, architecture sync and fresh Test promotion; retain known-bad controls.
 2. Repair the automatic development publication trigger in a separate reviewed change, preserving the owner-only manual guard. Publication and published browser checks for this 1167 delivery already passed. Leave Release/Main unchanged.
 3. Confirm current refs before reporting exact-head success. Save final results in this status document on the named reconciliation branch, push, and compare its origin SHA. An administrative handoff commit alone does not require another gameplay promotion.
 4. Keep later reaction/combat-owner CI repairs separate from the delivered appearance snapshot. Live LAN and physical-phone acceptance still require owner/device verification.
