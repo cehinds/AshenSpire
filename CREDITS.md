@@ -4,7 +4,7 @@
 
 | Source | License |
 | --- | --- |
-| Original project-authored monochrome SVG geometry in [combatSigils.js](https://github.com/cehinds/AshenSpire/blob/dev/src/content/combatSigils.js): ten primary actions and eight schools | CC0-1.0. These inline source primitives use no third-party artwork. |
+| Original project-authored monochrome SVG geometry in [combatSigils.js](https://github.com/cehinds/AshenSpire/blob/dev/src/content/combatSigils.js): ten primary actions and eight schools; approved solid B action and right-side tag geometry in [cardTagSymbols.js](https://github.com/cehinds/AshenSpire/blob/dev/src/ui/components/cardTagSymbols.js) | CC0-1.0. These inline source primitives use no third-party artwork. |
 
 ## Full card portrait library (2026-10-06)
 

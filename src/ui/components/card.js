@@ -1,3 +1,4 @@
+import { cardSideTags } from './cardTagSymbols.js';
 import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { cardActions } from '../../services/cardActions.js';
@@ -152,6 +153,7 @@ export function renderCard(registries, ref, opts = {}) {
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
+  model.sideTags = cardSideTags(model, def, registries);
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
@@ -159,6 +161,7 @@ export function renderCard(registries, ref, opts = {}) {
   const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
+    ...model.sideTags.map(tag => tag.label),
     model.abilityRank !== null && rawModel.type.label,
     model.abilityRank !== null && rawModel.type.subtype,
     model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rank > 1 && `rank ${model.rank}`,

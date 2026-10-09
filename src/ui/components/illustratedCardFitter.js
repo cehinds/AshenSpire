@@ -48,19 +48,29 @@ export function fitIllustratedCards(cards) {
   // Measure the whole batch before expanding any panel. No per-card search or
   // layout loop, and a resize starts from authored geometry rather than drift.
   const rules=texts.filter(row=>row.rules),narrow=[];
+  // Dense rules keep the same readable text floor with the taller base bay.
+  // Tighten only their artwork rail before measuring the expansion boundary.
+  for(const row of rules)row.face.dataset.rulesDense=String(row.text.scrollHeight>row.boxHeight*1.5);
   for(const row of rules){
     row.height=row.face.clientHeight;row.top=row.layer.offsetTop;row.panelTop=row.panel?.offsetTop;row.panelHeight=row.panel?.clientHeight;row.artTop=row.art?.offsetTop;
     const title=row.face.querySelector('[data-card-binding="name"]');
     // Offsets stay in layout pixels, including the native UI zoom and rotated
     // hand. Mixing a screen rectangle with offsetTop shrinks this boundary.
     const titleBottom=title?title.parentElement.offsetTop+title.offsetTop+title.offsetHeight:0;
-    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-titleBottom-Math.max(2,2*row.scale));
+    const rail=row.face.querySelector('.card-tag-rail');
+    const railBottom=rail?rail.offsetTop+rail.offsetHeight:0;
+    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-Math.max(titleBottom,railBottom)-Math.max(2,2*row.scale));
+    // The parchment border scales with its image. Preserve its authored
+    // interior margins as the panel grows, so text never sits on the ornament.
+    row.topInset=row.panelHeight?Math.max(0,(row.top-row.panelTop)/row.panelHeight):0;
+    const bottomInset=row.panelHeight?Math.max(0,(row.panelTop+row.panelHeight-row.top-row.boxHeight)/row.panelHeight):0;
+    row.interiorScale=Math.max(.5,1-row.topInset-bottomInset);
     row.authoredHeight=row.boxHeight;
-    if(row.text.scrollHeight>row.boxHeight+row.growthLimit+1){
+    if(row.text.scrollHeight>row.boxHeight+row.growthLimit*row.interiorScale+1){
       // Supported narrow shelves use the authored minimum only after the
       // preferred floor and all available artwork space have been spent.
       row.lo=Math.min(row.result,Number(row.text.dataset.minFont)*row.scale);
-      row.hi=row.result;row.boxHeight+=row.growthLimit;narrow.push(row);
+      row.hi=row.result;row.boxHeight+=row.growthLimit*row.interiorScale;narrow.push(row);
     }
   }
   for(let pass=0;pass<7&&narrow.length;pass++){
@@ -68,11 +78,11 @@ export function fitIllustratedCards(cards) {
     narrow.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of narrow){row.result=row.lo;row.text.style.fontSize=row.result+'px';row.text.dataset.fittedFont=String(row.result/row.scale);}
-  for(const row of rules){row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,row.text.scrollHeight-row.boxHeight));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));}
+  for(const row of rules){row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));}
   for(const row of rules){
     const {extra,height}=row;
     if(extra>1){
-      row.layer.style.top=(row.top-extra)/height*100+'%';row.layer.style.height=(row.boxHeight+extra)/height*100+'%';
+      row.layer.style.top=(row.top-extra*(1-row.topInset))/height*100+'%';row.layer.style.height=(row.boxHeight+extra*row.interiorScale)/height*100+'%';
       if(row.panel){row.panel.style.top=(row.panelTop-extra)/height*100+'%';row.panel.style.height=(row.panelHeight+extra)/height*100+'%';}
       if(row.art)row.art.style.height=Math.max(0,row.panelTop-extra-row.artTop)/height*100+'%';
     }
