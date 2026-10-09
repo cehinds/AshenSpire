@@ -2,8 +2,8 @@
 // distant enemy group do not change gameplay formation addresses or stature.
 export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
   if (previous?.key === layoutKey) return previous;
-  if (!Number.isFinite(left) || !Number.isFinite(top)) return null;
-  return { key: layoutKey, left, top };
+  if (!Number.isFinite(top)) return null;
+  return { key: layoutKey, left: Number.isFinite(left) ? left : 0, top };
 }
 
 // Text, selection and intent changes can repack controls without refitting the

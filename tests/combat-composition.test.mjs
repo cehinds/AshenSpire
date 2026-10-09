@@ -35,7 +35,10 @@ test('playing, hovering and emptying the hand do not move the initial compositio
     const next = stableHandAnchor(anchor, 'desktop', { left, top: 600 });
     assert.deepEqual(compose(next), before, 'hand changes preserve position, ground and scale');
   }
-  assert.equal(stableHandAnchor(null, 'desktop', { left: Infinity, top: 540 }), null, 'wait for the first hand to mount');
+  const empty = stableHandAnchor(null, 'desktop', { left: Infinity, top: 540 });
+  assert.deepEqual(empty, { key: 'desktop', left: 0, top: 540 }, 'empty hands still anchor to their mounted top');
+  assert.strictEqual(stableHandAnchor(empty, 'desktop', { left: 400, top: 600 }), empty, 'drawing after an empty-hand resize must not move the body');
+  assert.equal(stableHandAnchor(null, 'desktop', { left: Infinity, top: null }), null, 'wait for the hand host to mount');
   const resized = stableHandAnchor(anchor, 'phone', { left: 10, top: 440 });
   assert.deepEqual(resized, { key: 'phone', left: 10, top: 440 }, 'responsive resize gets a fresh anchor');
   assert.notDeepEqual(compose(resized), before);

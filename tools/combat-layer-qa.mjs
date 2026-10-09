@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { openCombatQa } from './rear-qa-runtime.mjs';
+import { pointerTargetExpression } from './pointer-target.mjs';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const base = process.env.COMBAT_QA_URL || 'http://localhost:8338/';
 const out = resolve(process.env.COMBAT_QA_OUT || '.codex/combat-layers');
@@ -96,7 +97,13 @@ try {
           `co-op receipt changed ${before.id} ${key}`);
       }
     }
-    await page.locator('.hand .card').first().click();
+    const clickCard = async card => {
+      await card.evaluate(node => node.dataset.layerQaCard = 'true');
+      const point = await page.evaluate(pointerTargetExpression('[data-layer-qa-card="true"]'));
+      await page.mouse.click(point.x, point.y);
+      await card.evaluate(node => delete node.dataset.layerQaCard);
+    };
+    await clickCard(page.locator('.hand .card').first());
     if (shot === 'coop') {
       assert(await page.evaluate(() => window.__coopSentForShot.some(message => message.t === 'playCard')),
         'co-op card clicks reach the local snapshot stub above the fade');
@@ -104,7 +111,7 @@ try {
       assert(await page.locator('.hand .card.selected').count() > 0, 'cards remain selectable above the fade');
     }
     const attack = page.locator('.hand .card.type-attack').first();
-    if (await attack.count()) await attack.click();
+    if (await attack.count()) await clickCard(attack);
     await page.screenshot({ path: resolve(out, `${shot}-${width}.png`), animations: 'disabled' });
     assert.deepEqual(errors, []);
     results.push({ shot, viewport: [width, height], runtime, layers, receiptStability, errors, failedRequests: failures });

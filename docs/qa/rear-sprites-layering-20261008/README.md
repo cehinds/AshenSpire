@@ -1,5 +1,8 @@
 # Rear sprites and combat layering continuation
 
+**Current integration:** [PR 1772 status](integration-1772.md) supersedes the
+checkpoint-only status below following the owner's merge request.
+
 The local implementation is complete on `codex/rear-sprites-layering-20261008` in
 `cehinds/AshenSpire`. This is a recoverable feature checkpoint, not a dev merge or
 test promotion. Reconcile the overlapping appearance and reaction work before
