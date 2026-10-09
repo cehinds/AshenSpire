@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1742",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Counters prepare the right action and Upcast stays reachable",
+    "detail": "Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.",
+    "build": "0.7.1.1148",
+    "pullRequest": 1742,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1742"
+  },
+  {
+    "id": "pr-1761",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Contract: defensive reactions and actor-turn presentation",
+    "detail": "Specify optional in-hand Counter and defensive Sweep choices, a separate successful Counter return, acting-enemy intent revelation, exact paused continuation, and the player widget's fixed gap above the art. This contract precedes runtime implementation.",
+    "build": "0.7.1.1145",
+    "pullRequest": 1761,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1761"
+  },
+  {
     "id": "pr-1759",
     "date": "2026-10-08",
     "group": "2026-10-08",

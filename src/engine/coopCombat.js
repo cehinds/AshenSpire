@@ -818,6 +818,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   C.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id, sourcePlayerId: C.playerKey,
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
+    ...(C.combatExpansionVersion === 2 ? { cardInstance: structuredClone(inst),
+      ...(def.upcast ? { upcastTier: def.upcastTier ?? def.upcast.baseTier } : {}) } : {}),
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.tags || [], derivedTags,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,

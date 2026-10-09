@@ -69,6 +69,7 @@ import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
+import { resolveCoopPlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
@@ -309,11 +310,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const member = snap.party.find(member => member.id === ownerId);
       let plan;
       if (event.type === 'cardPlayed' && member) {
-        const definition = resolveCard(registriesForClassMastery(registries,{...member,class:member.classId}), event);
+        const definition = resolveCoopPlayedCombatCard(registries, snap, event);
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
         const animation = equipmentAnimationForLoadout(registries, member.loadout, member.classId);
-        plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, action });
+        plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, action, combatExpansionVersion: scene.players.find(player => player.id === ownerId)?.combatExpansionVersion || 1 });
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
         plan.spriteEffect=combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},event);plan.targetId=event.targetId;plan.effectEvents=effectEvents;
