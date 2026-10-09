@@ -238,7 +238,7 @@ jobs:
         run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs tests/combatPose.test.mjs
 
       - name: Pose studio project schema and event bindings
-        run: node --test pose-studio/tests/model.test.mjs
+        run: node --test pose-studio/tests/model.test.mjs pose-studio/tests/renewal.test.mjs pose-studio/tests/base-actions.test.mjs
 
       - name: Collect the playable build
         id: collect

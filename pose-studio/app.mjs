@@ -3,8 +3,15 @@ import {combatEffectOpacity} from '../src/content/combatEffectPresentation.js';
 import {starter,clone,title,CUES,ANCHORS,history,sample,startTime,validate,resolveBindings} from './model.mjs';
 import {catalog,effectFrames,PAINTED_OUTFITS,labels,cards,cardContext,effectAnchors} from './catalog.mjs';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const KEY='ashenspire.pose-studio.draft.v1',GAME_KEY='ashenspire.pose-studio.active.v1';
+const renewalParam=new URLSearchParams(location.search).get('renewal');
+const cardStudy=new URLSearchParams(location.search).get('study')==='cards';
+const baseStudy=new URLSearchParams(location.search).get('study')==='base';
+const renewal=(cardStudy?['attack','smash','sweep','counter','defend','spell','ranged','rangedMagic']:baseStudy?['attack','defense','power']:['attack','power','spell']).includes(renewalParam)?renewalParam:null;
+const familyParam=new URLSearchParams(location.search).get('family');
+const renewalFamily=['rogue','starseer','herald'].includes(familyParam)?familyParam:'reaver';
+const KEY='ashenspire.pose-studio.draft.v1'+(renewal?'.renewal.'+(cardStudy?'cards.':baseStudy?'base.':'')+renewal+(renewalFamily==='reaver'?'':'.'+renewalFamily):''),GAME_KEY='ashenspire.pose-studio.active.v1';
 let initial=starter(),loadWarning='';try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&!validate(saved,catalog).length)initial=saved;}catch{loadWarning='The saved draft could not be read. A fresh project is open.';}
+if(renewal){try{if(!localStorage.getItem(KEY)){const response=await fetch('./renewal/'+(cardStudy?'cards/'+renewalFamily+'/':(renewalFamily==='reaver'?'':renewalFamily+'/')+(baseStudy?'base-':''))+renewal+'.pose.json');if(!response.ok)throw Error('Project unavailable');const imported=await response.json(),errors=validate(imported,catalog);if(errors.length)throw Error(errors.join('; '));initial=imported;}}catch(e){loadWarning='Could not open alternative study: '+e.message;}}
 let stack=history(initial),project=stack.value,selected=project.clips[0]?.id,binding=project.bindings[0]?.id,time=700,playing=false,last=0;
 let editing=null;
 const images=new Map(),canvas=$('#stage'),ctx=canvas.getContext('2d');

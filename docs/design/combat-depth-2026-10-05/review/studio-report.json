@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "errors": [],
+  "optionalAudioMissing": [
+    "HTTP 404 http://127.0.0.1:4189/music/manifest.json",
+    "HTTP 404 http://127.0.0.1:4189/assets/sfx/cardDraw.ogg",
+    "HTTP 404 http://127.0.0.1:4189/assets/sfx/nodeTravel.ogg",
+    "HTTP 404 http://127.0.0.1:4189/assets/sfx/turnStinger.ogg"
+  ],
+  "checks": [
+    "four corner handles and anchored proportional resizing",
+    "independent desktop and phone profiles",
+    "combatant component editing",
+    "fade opacity stop",
+    "gradient outline and shared trigger defaults",
+    "nested UI groups, components and drag under parent scaling",
+    "local library replace and add",
+    "layer order",
+    "uniform selection frames",
+    "scale all combatants",
+    "JSON export import and reload roundtrip",
+    "invalid import rejection",
+    "preview hides guides",
+    "desktop and phone screenshots"
+  ]
+}

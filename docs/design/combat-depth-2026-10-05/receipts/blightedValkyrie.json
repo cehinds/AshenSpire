@@ -1,0 +1,37 @@
+{
+  "id": "blightedValkyrie",
+  "name": "The Blighted Valkyrie",
+  "family": "enemy",
+  "act": 3,
+  "size": "large",
+  "source": "src/content/enemies/act3.js",
+  "facing": "left",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Majestic corrupted female valkyrie, weathered gilded armor, huge ragged wing silhouette, ember-blighted feather edges, long spear, dark torn mantle. Face LEFT toward the player. Use a canvas that contains the complete silhouette, wide 1536x1024 for broad beasts and winged figures, portrait 1024x1536 for upright figures. Lowest foot at 94 percent height; no clipped horns, wings, tails or weapons.",
+  "file": "masters/blightedValkyrie.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-256d6993-d24e-4374-886d-5bb7f46bb07e.png",
+  "validation": {
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5934295654296875,
+    "visibleBounds": [
+      73,
+      8,
+      1475,
+      1009
+    ],
+    "anchor": [
+      774.0,
+      1009
+    ],
+    "sha256": "ca5427acdad686b8069f4936306a2370e4a52438fa1884afa08eb5ebbdf5e1b8"
+  }
+}

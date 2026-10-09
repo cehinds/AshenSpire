@@ -1,0 +1,18 @@
+{
+  "url": "http://127.0.0.1:4189/docs/design/combat-depth-2026-10-05/",
+  "spriteCount": 59,
+  "issues": [],
+  "broken": [],
+  "checks": [
+    "desktop scene screenshot",
+    "independent layer toggles",
+    "pointer parallax",
+    "hero selection",
+    "armor catalog on light",
+    "search and detail dialog",
+    "enemy alpha checker",
+    "390px layout",
+    "reduced motion"
+  ],
+  "timestamp": "2026-10-06T15:17:46.926Z"
+}
