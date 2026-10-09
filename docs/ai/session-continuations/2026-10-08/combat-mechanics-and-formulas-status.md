@@ -5,6 +5,11 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Latest bounded lookahead candidate**
+  - Official 1180 / `8d979f99a2` completes all four aliases and package gates. The ordinary crowded phone target scene is clear, with health cues near their owners. The second deliberate-overlap scene still fails full clearance because an early greedy placement consumes a later slot; later native gates were not started.
+  - The follow-up retains at most two seeded alternatives per actor within the same 44-pixel target-only limit. It preserves the accepted ordinary positions, full target sizes, fixed sprites/intents, explicit impossible-space flags, and existing predicates/deadlines.
+  - Independent review is clear. Root hand/target suite: 100 passed, zero skipped; the exact overlap regression is included. Fresh package verification and promotion remain pending. [1180 retained failure](../../../qa/combat-promotion-polish-20261008/current-1180/README.md).
+
 - **Final bounded card/target source candidate**
   - The rank picker preserves an 88-pixel physical minimum so its complete label wraps below the card instead of clipping. Buttons retain 44-pixel minimums and cards retain their readable face.
   - A crowded field with the full player HUD has no collision-free solution in fixed footer columns. A deterministic fallback moves only foot targets and their health cues by at most 44 pixels; sprites, intent cards and formation columns remain fixed. Clear original placements remain exact, and impossible layouts remain explicitly obstructed.

@@ -50,13 +50,14 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
         && (Math.abs(candidate.y-source.y)<Math.abs(current.y-source.y)
           || Math.abs(candidate.y-source.y)===Math.abs(current.y-source.y)
             && distance(candidate,source)<distance(current,source));
-    const pack = (ordered, allowShift = false) => {
+    const pack = (ordered, allowShift = false, seed = null) => {
       const placed = [];
       for (const source of ordered) {
         const blockers = [...obstacles, ...placed.map(p => ({ left:p.x-p.width/2,
           right:p.x+p.width/2, top:p.y-half, bottom:p.y+half }))];
-        let control = place(source, source.x, blockers);
-        if (allowShift) {
+        const seeded = seed?.id===source.id;
+        let control = place(source, seeded ? seed.x : source.x, blockers);
+        if (allowShift && !seeded) {
           // Only the independent plate/footer can move. Try the nearest full
           // rectangle edges, including the visible HUD, within one tap width.
           // Each candidate reuses the bounded vertical search above.
@@ -98,11 +99,22 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
     const detached = result => result.filter(control => Math.abs(control.y
       - controls.find(source => source.id===control.id).y)>2*size).length;
     let result = original;
-    for (const repaired of [pack(controls.toSorted((a,b)=>a.y-b.y),true),
-      pack(controls.toSorted((a,b)=>b.y-a.y||b.width-a.width),true)]) {
+    const orders = [controls.toSorted((a,b)=>a.y-b.y),
+      controls.toSorted((a,b)=>b.y-a.y||b.width-a.width)];
+    const consider = repaired => {
       if (blocked(repaired)<blocked(result) || blocked(repaired)===blocked(result)
         && (detached(repaired)<detached(result) || detached(repaired)===detached(result)
           && movement(repaired)<movement(result))) result = repaired;
+    };
+    for (const ordered of orders) consider(pack(ordered,true));
+    if (blocked(result) || detached(result)) {
+      // A locally nearest plate can consume a later fighter's only slot.
+      // Retain at most two alternatives per actor, then reuse the same bounded
+      // searches for all others. This cannot evade an impossible-space flag.
+      for (const source of controls) for (const x of [source.x-shiftLimit,source.x+shiftLimit]) {
+        if (x-source.width/2<0 || x+source.width/2>width) continue;
+        for (const ordered of orders) consider(pack(ordered,true,{id:source.id,x}));
+      }
     }
     return result;
   }

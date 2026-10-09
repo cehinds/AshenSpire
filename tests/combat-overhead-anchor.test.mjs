@@ -416,6 +416,8 @@ test('actual 1178 crowded phone repairs only foot cues within one tap width of t
       a.id+'/'+b.id+' retain separate complete footer rectangles');
   }
   assert.equal(packed.find(t=>t.id==='e1').y,height-22,'first row returns to its foot band');
+  assert.equal(packed.find(t=>t.id==='e1').x,197.65625,'keep the accepted ordinary-scene repair exactly');
+  assert.equal(packed.find(t=>t.id==='e2').x,295.65625,'lookahead cannot perturb a completed clear pack');
   assert.equal(packed.find(t=>t.id==='e3').y,height-22-46,'other row stays one band above');
   assert.equal(packed.find(t=>t.id==='player').x,targets[0].x,'the clear player column stays fixed');
   assert.deepEqual(combatTargetAnchors({...input,maxShiftX:44}),packed,'no sampling/order randomness');
@@ -439,4 +441,50 @@ test('optional foot shift never changes clear ordinary placements or disguises i
   assert.equal(blocked[0].obstructed,true,'an impossible full-field obstacle still fails');
   assert.equal(blocked[0].x,60,'a useless repair does not drift the original cue');
   assert.ok(blocked[0].y-22>=0&&blocked[0].y+22<=60);
+});
+
+test('actual 1180 refitted overlap keeps an earlier cue from consuming the last fighter slot', () => {
+  const top=74.734375,height=275.203125;
+  const targets=[{id:'player',x:154.56300354003906,y:477.3125-top,width:44},
+    {id:'e1',x:195.00463104248047,y:271.52691650390625-top+54.390625/2,width:96},
+    {id:'e2',x:263.2421875,y:303.15625-top+54.390625/2,width:96},
+    {id:'e3',x:165.734375,y:259.109375-top+54.390625/2,width:96}];
+  const obstacles=[{left:113.25,right:209.25,top:195.453125-top,bottom:249.84375-top},
+    {left:146.80557250976562,right:242.80557250976562,
+      top:161.03619384765625-top,bottom:215.42681884765625-top},
+    {left:117.75,right:213.75,top:129.953125-top,bottom:184.34375-top},
+    // The 16px fixture's complete HUD remains above its displaced artwork.
+    {left:98.563,right:210.563,top:436.21-top,bottom:450.21-top},
+    {left:104,right:285,top:0,bottom:98-top}];
+  const input={width:390,height,size:44,targets,obstacles,lockX:true};
+  assert.ok(combatTargetAnchors(input).some(t=>t.obstructed),'the captured crowded column needs repair');
+  const before=structuredClone(targets),packed=combatTargetAnchors({...input,maxShiftX:44});
+  assert.deepEqual(targets,before,'the grown artwork and moved small player keep their authored fixture positions');
+  for(const target of packed){
+    const source=before.find(t=>t.id===target.id);
+    assert.equal(target.obstructed,false,target.id);
+    assert.ok(Math.abs(target.x-source.x)<=44,'horizontal repair stays within one physical tap width');
+    assert.ok(Math.abs(target.y-Math.min(source.y,height-22))<=88,'every owner cue remains near its feet');
+    assert.equal(target.width,source.width,'full enemy plate/footer widths are not weakened');
+    assert.ok(target.x-target.width/2>=0&&target.x+target.width/2<=390);
+    assert.ok(target.y-22>=0&&target.y+22<=height);
+    for(const obstacle of obstacles)assert.ok(target.x+target.width/2<=obstacle.left
+      || target.x-target.width/2>=obstacle.right || target.y+22<=obstacle.top
+      || target.y-22>=obstacle.bottom,target.id+' clears every full intent, HUD and ribbon rectangle');
+  }
+  for(let i=0;i<packed.length;i++)for(let j=i+1;j<packed.length;j++){
+    const a=packed[i],b=packed[j];
+    assert.ok(Math.abs(a.x-b.x)>=(a.width+b.width)/2||Math.abs(a.y-b.y)>=46,
+      'all actor footer bands and their 44px target cores remain separate');
+  }
+  const e1=packed.find(t=>t.id==='e1'),e3=packed.find(t=>t.id==='e3');
+  assert.equal(e1.x,targets[1].x+44,'retain a bounded earlier alternative instead of the locally nearest trap');
+  assert.equal(e3.x,e1.x-98,'the later full-width footer uses that freed edge with a two-pixel gap');
+  assert.equal(e3.y,height-22-46,'the later owner cue stays in the lower field');
+  assert.deepEqual(combatTargetAnchors({...input,maxShiftX:44}),packed,'bounded exploration is deterministic');
+  assert.deepEqual(combatTargetAnchors({...input,targets:packed,maxShiftX:44})
+    .toSorted((a,b)=>a.id.localeCompare(b.id)),packed.toSorted((a,b)=>a.id.localeCompare(b.id)),
+    'settled alternatives do not cause a new fitting feedback loop');
+  assert.ok(combatTargetAnchors({...input,maxShiftX:8}).some(t=>t.obstructed),
+    'exhausted alternatives preserve the insufficient-space flag');
 });
