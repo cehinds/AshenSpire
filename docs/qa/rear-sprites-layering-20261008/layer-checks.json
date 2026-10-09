@@ -1,0 +1,348 @@
+{
+  "base": "http://localhost:8338/build/rear-combat-preview/AshenSpire.html",
+  "results": [
+    {
+      "shot": "combat",
+      "viewport": [
+        650,
+        766
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/rear-combat-preview/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 133.3125,
+            "height": 16.171875
+          },
+          {
+            "width": 84.34375,
+            "height": 7
+          },
+          {
+            "width": 84.34375,
+            "height": 7
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/rear-combat-preview/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "combat",
+      "viewport": [
+        1440,
+        900
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/rear-combat-preview/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 158.265625,
+            "height": 19.1875
+          },
+          {
+            "width": 104.453125,
+            "height": 8.671875
+          },
+          {
+            "width": 104.453125,
+            "height": 8.671875
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/rear-combat-preview/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "combat",
+      "viewport": [
+        390,
+        844
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/rear-combat-preview/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 163.828125,
+            "height": 19.875
+          },
+          {
+            "width": 93.4375,
+            "height": 7.75
+          },
+          {
+            "width": 93.4375,
+            "height": 7.75
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/rear-combat-preview/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "combat",
+      "viewport": [
+        844,
+        390
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/rear-combat-preview/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 28.28125,
+            "height": 3.421875
+          },
+          {
+            "width": 35.359375,
+            "height": 2.9375
+          },
+          {
+            "width": 35.359375,
+            "height": 2.9375
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/rear-combat-preview/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "coop",
+      "viewport": [
+        1440,
+        900
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/rear-combat-preview/AshenSpire.html?shot=coop",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200,
+          201
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 45.875,
+            "height": 7.484375
+          },
+          {
+            "width": 61.734375,
+            "height": 7.484375
+          },
+          {
+            "width": 99.734375,
+            "height": 8.671875
+          },
+          {
+            "width": 99.734375,
+            "height": 8.671875
+          },
+          {
+            "width": 61.796875,
+            "height": 8.671875
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": {
+        "before": [
+          {
+            "id": "p1",
+            "x": 98.828125,
+            "y": 357.03125,
+            "width": 65.5625,
+            "height": 93.625
+          },
+          {
+            "id": "p2",
+            "x": 340.921875,
+            "y": 357.03125,
+            "width": 88.25,
+            "height": 93.625
+          },
+          {
+            "id": "e1",
+            "x": 1111.140625,
+            "y": 65.625,
+            "width": 148.96875,
+            "height": 207.265625
+          },
+          {
+            "id": "e2",
+            "x": 928.65625,
+            "y": 65.625,
+            "width": 148.96875,
+            "height": 207.265625
+          },
+          {
+            "id": "e3",
+            "x": 1117.875,
+            "y": 141.46875,
+            "width": 94.453125,
+            "height": 131.421875
+          }
+        ],
+        "after": [
+          {
+            "id": "p1",
+            "x": 98.828125,
+            "y": 357.03125,
+            "width": 65.5625,
+            "height": 93.625
+          },
+          {
+            "id": "p2",
+            "x": 340.921875,
+            "y": 357.03125,
+            "width": 88.25,
+            "height": 93.625
+          },
+          {
+            "id": "e1",
+            "x": 1111.140625,
+            "y": 65.625,
+            "width": 148.96875,
+            "height": 207.265625
+          },
+          {
+            "id": "e2",
+            "x": 928.65625,
+            "y": 65.625,
+            "width": 148.96875,
+            "height": 207.265625
+          },
+          {
+            "id": "e3",
+            "x": 1117.875,
+            "y": 141.46875,
+            "width": 94.453125,
+            "height": 131.421875
+          }
+        ],
+        "replacedField": true
+      },
+      "errors": [],
+      "failedRequests": []
+    }
+  ]
+}

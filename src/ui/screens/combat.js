@@ -312,7 +312,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       actorEl.dataset.actionMotion = plan.motion;
       // The painted Reaver sequence remains the specialized attack renderer.
       // Other actors use existing CSS and only sprite poses they actually ship.
-      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver') {
+      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver'
+        || !['slash', 'thrust', 'strike'].includes(plan.family)) {
         return playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack');
       }
       const figure = figureSpec(registries, run.loadout, run.class);
@@ -1419,7 +1420,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat' }),
       name: markMeterRow(labelStack({ label: run.customization?.name || runClassIdentity(registries, run).name, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,

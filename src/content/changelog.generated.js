@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Card actions and ranks stay readable over their artwork",
     "detail": "Cards separate their background, art, backdrops, trim, icons and text into explicit layers. Rank 1 and higher appear as Rank X centered above the effect panel; Rank 0 stays hidden. A dark title fade, solid action symbols and centered names keep the face readable. Smash uses a fist and Counter a shield crossed by a sword. Up to three primary symbols line the right edge; Information keeps every tag. Complete effects and their rank label adapt together.",
-    "build": "0.7.1.1174",
+    "build": "0.7.1.1177",
     "pullRequest": 1766,
     "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1772",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Stable rear sprites and clear battlefield layers",
+    "detail": "Keep character size and resting positions fixed as cards leave or return to the hand, including co-op updates and empty-hand resizing. Rear player artwork moves only for melee and returns to its anchor. Raise the player, move enemies back and right, and lower the footer fade behind characters while HUD, cards and selection controls retain their shared layer order.",
+    "build": "0.7.1.1175",
+    "pullRequest": 1772,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1772"
   },
   {
     "id": "pr-1767",
