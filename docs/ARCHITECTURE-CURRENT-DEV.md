@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `a8d0912cea4d8ee5c6ab563e04f31970a15013a2`
+- Source commit: `f1cfda22e775278da906f08ead4d108787059cfc`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **10977**.
-Extensions: `.bat` 1, `.cjs` 9, `.cmd` 3, `.css` 33, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 48, `.jpg` 190, `.js` 733, `.json` 430, `.log` 1, `.md` 197, `.mjs` 794, `.nojekyll` 1, `.nsi` 1, `.png` 1383, `.ps1` 10, `.py` 32, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 32, `.webp` 6272, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
+Tracked files: **10982**.
+Extensions: `.bat` 1, `.cjs` 9, `.cmd` 3, `.css` 33, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 48, `.jpg` 190, `.js` 733, `.json` 431, `.log` 1, `.md` 198, `.mjs` 794, `.nojekyll` 1, `.nsi` 1, `.png` 1386, `.ps1` 10, `.py` 32, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 32, `.webp` 6272, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

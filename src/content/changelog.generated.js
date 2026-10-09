@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Choose your game appearance",
     "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
-    "build": "0.7.1.1156",
+    "build": "0.7.1.1158",
     "pullRequest": 1757,
     "url": "https://github.com/cehinds/AshenSpire/pull/1757"
   },
@@ -31,6 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1146",
     "pullRequest": 1745,
     "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
+    "id": "pr-1759",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Finished runs record their outcome and phone title controls stay reachable",
+    "detail": "Successful run checkpoints allow completion to record the result and clear the finished slot. A refused checkpoint still preserves the run for retry. On small phone screens, the title menu scrolls below the wordmark so Continue and the remaining controls stay usable.",
+    "build": "0.7.1.1144",
+    "pullRequest": 1759,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1759"
   },
   {
     "id": "pr-1746",
