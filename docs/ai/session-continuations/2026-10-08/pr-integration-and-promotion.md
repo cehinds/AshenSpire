@@ -37,6 +37,17 @@ Latest Dev `f785dc0eb1271ae03849f00c165d0645dca308f0` (Molten River #1763 plus s
 
 The original appearance gallery remains accurately attributed to build 1163; the newer runtime changes affect map/reward presentation and the generated changelog, not the captured combat appearance. The portable capture recipe can check the current built artifact without changing that historical gallery. The latest card branch received independent source review at `3d5bea6fe5b979e4873fa09ce53ff02d95df7c24`: 42 tests plus 813 model assertions pass, and its missing rank preview was added. Conflict reconciliation, final packaged evidence and current-head CI are still required for #1766. #1767 reaction implementation is still an active owner delivery with failing/pending gates; do not merge it prematurely.
 
+### Dev delivery and Test-history reconciliation
+
+- [x] #1757 merged into Dev as `eefe18448528d631004ec05b038aa12c24de1d15`; GitHub also records #1756 merged through feature head `0332006844ccfe47fd22b23b56c9f31ab148d5bc`. All 13 fast checks passed, and the final feedback window had no new review findings.
+- [x] Architecture-sync [run 37884916962](https://github.com/cehinds/AshenSpire/actions/runs/37884916962) succeeded for that merge, producing Dev bot tip `b4205fc71ee313bdba1c36ab97f7caf9694b708f`.
+- [x] Portable packaged checks also pass all four solo/co-op desktop/phone cases and both resize checks on build1166; their tracked report is beside the build1163 gallery. Shipped integrity passes 12/12. Historical images remain correctly attributed.
+- [ ] Promotion [#1769](https://github.com/cehinds/AshenSpire/pull/1769) is initially blocked by GitHub's history conflict. Test tip `11fbaff51cd32d03166027c76611739b8b9fcf00` contains two promotion merges absent from Dev. Git2.55's merge tree equals Dev's tree `5d5033bc6beaf1dd2739b1ab7530e49734eb01ec`, but GitHub returned405.
+- [ ] Reconciliation [#1770](https://github.com/cehinds/AshenSpire/pull/1770), branch `codex/reconcile-test-history-20261008`, carries Test ancestry through ordinary merges. Source head `327ad5f50b18b3dd145618540bb33314d1fcff7a` has no gameplay changes relative to Dev; its final own receipt/build is **1167 / fe4bd6f5b5**, with shipped12/12, order877 and own2/2. Independent history/evidence/receipt review is clear. Verify its final origin head and fast CI, merge, settle the fresh architecture run, then reuse #1769.
+- [ ] Dev's separate selective alternative sync [run37884917040](https://github.com/cehinds/AshenSpire/actions/runs/37884917040) failed because its protected UI restoration removed newly imported `src/ui/displayAppearance.js` from the temporary merge. No failed merge was published. Check the full Test-triggered sync, which must deliver the reviewed shared snapshot while preserving any newer variant edits; after it succeeds, rerun the selective sync if needed and verify current alternative runs. Do not weaken protected-path checks to conceal this.
+
+Pull the named reconciliation branch for the latest delivery checkpoint. The original appearance feature branch remains preserved on origin. Test/alternative heavy CI, preview/installer delivery and owner/device acceptance are still pending.
+
 ### Durable source and reproduction
 
 - Appearance model/controller: `src/model/displayAppearance.js`, `src/ui/displayAppearance.js`; settings entry and UI strings use `classicAppearance` with the **Classic appearance** label.
