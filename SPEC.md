@@ -1112,6 +1112,13 @@ lands before its runtime implementation, which depends on the §4.8 runtime.
 
 ### 4.10 Defensive reaction choices and actor-turn presentation
 
+The reaction modal uses **Back, Play**; Back skips the offered reaction and
+resumes the incoming action. A combat-scoped, owned Reaction switch controls
+optional prompts. The right-side combat log unfolds in place, groups completed
+public actions by round, and supports Small, Medium and Large heights bounded
+below the menu controls. The detailed contract specifies persistence, privacy,
+accessibility and responsive geometry for these controls.
+
 [docs/combat-reaction-contract.md](docs/combat-reaction-contract.md) defines the
 owner's 2026-10-08 revision: sequential enemy action presentation with a distinct
 successful Counter return animation and impact, optional affordable in-hand
