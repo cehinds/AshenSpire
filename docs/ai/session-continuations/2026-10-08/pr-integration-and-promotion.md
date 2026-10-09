@@ -17,6 +17,50 @@ Finish the currently active appearance/defaults and README PR, reconcile eligibl
 - Preserve production player targets, artwork-only behavior, selection reachability, reduced motion and action canvas playback.
 - Review each eligible PR at its exact current head, resolve conflicts, regenerate derived metadata and monitor required CI. Never call queued, skipped, cancelled or older-head checks complete.
 
+## Verified checkpoint from this session - 2026-10-09 UTC
+
+- [x] Source implementation: alternative appearance is the default; the toggle is named **Classic appearance**, shown in Advanced only with the debug flag on. It preserves combat/run state. Classic, alternative and shared art libraries are under `assets-display/`.
+- [x] Verified origin checkpoint: `6071186d51dcd737f0ebb13a12e3a1f26fd7fc49` on `codex/readme-player-guide-20261008`, compared with `git ls-remote`. This worktree is `D:/repos/.codex/worktrees/readme-release-screenshots/AshenSpire`; the dirty original `73bc` checkout was preserved. The branch tracks its named origin branch.
+- [x] Independent reviews: hand-anchor resize coordination, incoming paid-card/reaction integration and the visible/hidden-frame fixture were reviewed. Scoped review checks passed 49/49; the fixture's 16 combinations passed separately.
+- [x] Local validation: focused integration tests 57/57, component catalog tests 48/48, shipped checks 12/12, own receipt 2/2, promotion receipts 25/25 and changelog ordering 874 checks. Both branch histories and 28 pinned historical ordering exceptions are retained. The two missing alternative promotion receipts (#1699/#1709) use verified merged builds 1060/1068.
+- [x] Packaged browser evidence: build **0.7.1.1163**, digest **9bf504e978**; desktop 1440x1000 and phone 390x844 switch both ways, retain run/combat state, play two cards per viewport and restore the resting anchor after resize. Co-op canned snapshots are identical. Ten image hashes match. The T14 motion probe passed 34/34 on this build, including all reduced-motion modes.
+- [ ] Latest-head GitHub gates: the fixture-only push restarted CI; verify PR #1757's current head. Its preceding 6071186d51 snapshot had 12/13 active checks green at the last read, with discovered group 3/4 still running and no failures. Required skips remain skips. Read fresh results before merging.
+- [ ] Merge #1757 into Dev, then settle architecture-sync and batch one Dev-to-Test promotion after eligible owners' deliveries.
+- [ ] Verify exact Test heavy CI, previews, installer and alternative sync/dispatched checks. Release/Main/tags stay owner-only.
+- [ ] Live LAN, native touch and owner/device acceptance were not established by the canned co-op and emulated phone capture.
+
+The shared prompt package is incorporated through a merge of `origin/codex/session-continuations-20261008` (both `7a317010d1` and `3178fd1b59`). This documentation changes no build identity. A newer checkpoint commit on the same named feature branch carries these notes; fetch that branch and verify its current SHA rather than treating the older recorded checkpoint as its permanent tip.
+
+### Durable source and reproduction
+
+- Appearance model/controller: `src/model/displayAppearance.js`, `src/ui/displayAppearance.js`; settings entry and UI strings use `classicAppearance` with the **Classic appearance** label.
+- Anchors and shared hand: `src/ui/components/battlefieldStage.js`, `src/ui/components/hand.js`, `src/ui/models/HandLayout.js`; `handlayoutchange` publishes completed matching geometry before the cached resting edge is updated.
+- Paid action identity: `src/ui/models/PlayedCombatCard.js`, `src/model/combatAnimation.js`, combat/coop screens. Alternative class actions retain priority; Classic Counter preparation uses the effective committed receipt and expansion version.
+- Reachability: `tools/screenreach.mjs`, `tests/screenreach-overlap-fixture.test.mjs`; hidden player plates are tested through reachable exposed artwork. Known-bad plants remain active.
+- Curated evidence and recipe: `docs/preview/display-appearance-0.7.1.1163/README.md`, `manifest.json`, `report.json`, ten PNGs and `capture.mjs`. Capture source commit is `8c5c0ee58583330f619096bcee85c7bb042177af`; subsequent test/document changes leave the runtime digest unchanged.
+- README Release gallery remains **0.7.1.1060** at `docs/preview/releases/0.7.1.1060/`. All six published-channel badges returned 200; do not relabel Dev evidence as Release. The README is compact and includes build links, images, checkbox features, AI acknowledgement and third-party/unresolved provenance.
+
+Run from the repository root, using a D: worktree and D: TEMP/TMP. Set `CHROME` to Edge/Chromium if auto-discovery needs help. These standard commands require no ignored memo/cache scripts:
+
+```text
+node tools/fetch-art.mjs
+node tools/launch.mjs --build-only
+node tools/verify-shipped.mjs
+node tools/about-changelog.mjs --check-order
+node tools/receipts.mjs --check --pr 1757
+node tools/receipts.mjs --check --since origin/test
+node tools/display-art-library.mjs
+node --test tests/screenreach-overlap-fixture.test.mjs tests/combat-counter-animation.test.mjs tests/display-appearance.test.mjs
+node tests/run-node.mjs --discovered-only --shard 2/4
+node docs/preview/display-appearance-0.7.1.1163/capture.mjs
+node tools/motion-probe.mjs --seed T14
+node tools/screenreach.mjs --dist --only 390x650
+```
+
+The recorded T14 run served the built artifact with the canonical motion sampler and waited for painted/decoded art; the standard motion command above serves the current source. Final Test CI must prove its own exact head. A local short-phone sweep saw no covered player controls in mounted combat states, but two unrelated screens timed out; do not quote that local sweep as a complete green gate.
+
+GitHub upload remediation: an HTTP 408 did not update origin. A verified successful retry used `git -c http.version=HTTP/1.1 -c http.postBuffer=524288000 -c http.lowSpeedLimit=1 -c http.lowSpeedTime=300 push origin codex/readme-player-guide-20261008`. Compare local HEAD with `git ls-remote origin refs/heads/codex/readme-player-guide-20261008` after every delivery.
+
 ## Current work and evidence
 
 PR #1757 was open on codex/readme-player-guide-20261008. Build 1163 and fresh desktop/phone captures were reported ready; a timed-out push was verified against origin and then successfully retried. CI exposed an outdated extracted screenreach fixture test; the chat is updating it to cover both visible frames and artwork-only targets.
