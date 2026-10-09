@@ -4865,7 +4865,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected,.gp-focus) {
   /* Keep horizontal reveal independent of the existing animated fan lift. */
-  translate: var(--hand-upcast-shift, 0px) 0;
+  translate: var(--hand-upcast-shift, 0px) var(--hand-upcast-rise, 0px);
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card.gp-focus {
   z-index: 51 !important;

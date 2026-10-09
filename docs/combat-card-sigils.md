@@ -1,22 +1,24 @@
 # Combat card sigils
 
-- Card bottoms show one large primary action sigil and a smaller school sigil where applicable.
-- Damage types remain written words, including Blunt, Piercing, Slashing, Cold, Fire, Lightning, Force, Holy and Necrotic.
-- Extra source, range, counter-mode, technique and theme tags stay in Information.
+- Card bottoms show the primary action sigil and its name, including Power, Skill and Status.
+- Version-2 effects keep damage types in words beside the damage amount: **5 Fire damage**, **3 Piercing damage**, or **4 Blunt damage**. Mixed contacts keep their actual types; Counter HP returns stay distinct from Poise and Ward impact.
+  - Lightning spells use Piercing; Force spells use Blunt. The school never substitutes for the actual damage type.
+  - Complex effects keep their full authored text with a short damage-type prefix. Historical version-1 face text stays unchanged.
+- School sigils and extra source, range, counter-mode, technique and theme tags stay in Information.
 - All marks use monochrome geometry. Colour is optional emphasis, never the only distinction.
 - Information repeats the mark, its name and its explanation. Cards retain accessible names, existing selection controls and focus restoration.
 - Effect text retains its numbers, conditions, targets and durations. Redundant damage verbs and layout whitespace are shortened. Long effects borrow room from the artwork instead of being cut off.
 
 ## Primary action legend
 
-- Attack: a diagonal blade pointing forward.
+- Attack: crossed blades.
 - Defend: a shield outline.
-- Counter: a returning circular arrow crossed by a blade.
+- Counter: a shield with a returning arrow.
 - Sweep: a broad arc with a horizontal arrow.
 - Ranged: a bow and arrow.
 - Smash: a hammer with impact marks.
-- Spell: a four-point arcane star.
-- Power: a crown; cast once and keep its buff for the combat. Expanded Powers Exhaust after casting.
+- Spell: a wand with an arcane orb.
+- Power: an upward buff arrow with sparks; cast once and keep its buff for the combat. Expanded Powers Exhaust after casting.
 - Skill: an open hand; reusable utility or buffs. Information includes any authored lifecycle exception.
 - Status: a warning triangle; injected status-effect cards, usually harmful.
 
@@ -34,12 +36,12 @@
 ## Implementation boundary
 
 - Identity follows the shared primary type supplied by the combat expansion and authored school metadata. A name, class colour or damage type never selects a school.
-- Expanded Powers show their Exhaust rule in Information. Historical saves retain their original removal rule; the common crown explanation describes cast-once behavior without changing that lifecycle.
+- Expanded Powers show their Exhaust rule in Information. Historical saves retain their original removal rule; the common Power explanation describes cast-once behavior without changing that lifecycle.
 - These are original inline vector marks in source; the existing paintings and artwork packages remain in use.
 - The editor inventory was checked at `e116cfd1414bce9effb2e12ed643a481342ee934`. Its card adapter handles data definitions; native layout and runtime renderer changes are separate. The shared vector renderer uses normal source tools.
 - Build identities, review, test results, desktop/phone captures and branch promotions are recorded with delivery evidence.
 
-## Browser evidence
+## Historical browser evidence
 
 - Source at `77a847ae6b`: 2,186 native faces on each viewport, covering base cards, upgrades, all authored ranks and equipment profiles in both authored and live expanded combat forms.
 - Desktop 1440×1000 and phone 390×844 with touch emulation: no clipped effects, title overlaps, damage footer overflow, added sigil tab stops, or runtime errors. All ten actions and eight schools are covered. Minimum catalog rule text is 12.22px desktop and 11.18px phone.
@@ -90,7 +92,7 @@
 - Standalone `0.7.1.1129` passes desktop and touch-phone native hand geometry, artwork, accessible names, sigil-position selection, Information, resource preservation and Escape/focus restoration. Captures wait for finite entrance animations to finish: [desktop](qa/combat-card-sigils/checkpoint-standalone/desktop-combat.png), [phone Information](qa/combat-card-sigils/checkpoint-standalone/phone-inspection.png), [report](qa/combat-card-sigils/checkpoint-standalone/report.json). All four launcher aliases, nine build-identity checks, twelve shipped-file checks and receipt ordering pass.
 - At committed source `ac7b84f7ec`, all eleven stock slot-load scenario assertions pass through a local Playwright CDP transport adapter. Removing only the initial production checkpoint call produces the intended expanded-entry failure while the other ten assertions pass: [checkpoint report](qa/combat-card-sigils/checkpoint-standalone/save-checkpoint-report.json). An earlier cold-boot attempt measured no verdict; it is not counted as passing. The full hosted seven-mutant corpus remains required separately.
 
-### Final hosted standalone: build 1130
+### Historical hosted standalone: build 1130
 
 The final regular artifact is `0.7.1.1130`, source digest `bdef3226d1`. Hosted preview run [37795823879](https://github.com/cehinds/AshenSpire/actions/runs/37795823879) built PR head `0f9821dddc541fabe825309cea8013bb5d309306` at synthetic merge `104fe6e68d6e23eda3b351b7f76aa151d85b89cf`; the merge differs only in the newer architecture inventory. Hosted unchanged-build and shipped-identity checks pass. Independent review confirms the artifact carries the unique expected SOURCE, ORDINAL and BUILT stamps.
 

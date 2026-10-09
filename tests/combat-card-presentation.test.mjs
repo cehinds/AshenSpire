@@ -19,12 +19,12 @@ test('Counter summary distinguishes protection from return and includes card Eva
 });
 test('new spell summary contains its explicit gauge pressure and chance', () => {
   const text = combatCardSummary(card('emberDart'), null, reg);
-  assert.match(text, /Deal 5 damage/); assert.match(text, /Add 4 Burn buildup \(50%\)/);
+  assert.match(text, /Deal 5 Fire damage/); assert.match(text, /Add 4 Burn buildup \(50%\)/);
 });
 test('summary uses live bindings and preserves full conditional effects', () => {
   const fire = card('emberDart');
   const text = combatCardSummary(fire, {tokens:{damage:9,burn:6}}, reg);
-  assert.match(text, /Deal 9 damage/); assert.match(text, /Add 6 Burn buildup/);
+  assert.match(text, /Deal 9 Fire damage/); assert.match(text, /Add 6 Burn buildup/);
   const lucid = combatCardSummary(card('lucidRecovery'), null, reg);
   assert.match(lucid, /you have Sleep/); assert.match(lucid, /Remove 1 Sleep/); assert.match(lucid, /gain 2 Barrier/);
 });

@@ -29,7 +29,7 @@
   opacity: var(--combat-state-opacity); filter: var(--combat-state-filter, none);
 }
 /* Shadows are siblings of the actors, never trapped inside a sprite's layer. */
-:root .combat[data-layout='formation'] .combatant .sprite::before { display: none; }
+/* The alternative retains its authored sprite::before ground shadows. */
 .combat-ground-shadows { position: absolute; inset: 0; z-index: var(--combat-layer-shadows); pointer-events: none; }
 .combat-ground-shadow {
   position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
@@ -47,14 +47,28 @@
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
   z-index: var(--combat-layer-selection) !important;
 }
+/* The painted plate stays below its readable name and HP. Its own children
+   must not split the physical tap area into strips: the transparent, centered
+   square belongs to the frame and uses the same fitted center/height. Keep it
+   narrower than a wide enemy plate so its outer name/HP remain inspectable.
+   Explicit overhead reading controls retain priority above this square. */
+:root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)::before {
+  content: ''; display: block; position: absolute;
+  left: var(--enemy-hit-x); top: var(--enemy-hit-y);
+  width: min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))));
+  height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
+  transform: translate(-50%, -50%); pointer-events: auto;
+  background: none; border: 0; box-shadow: none;
+  z-index: calc(var(--combat-layer-selection) + 2) !important;
+}
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) {
   z-index: calc(var(--combat-layer-selection) + 1) !important;
 }
 :root .combat[data-layout='formation'] .combatant .combatant-leading {
-  z-index: calc(var(--combat-layer-selection) + 2) !important;
+  z-index: calc(var(--combat-layer-selection) + 3) !important;
 }
 :root .combat[data-layout='formation'] :is(.combatant-inspector-host,.formation-move-controls,.position-guides,.combat-expansion-controls,.coop-arm-host) {
-  z-index: calc(var(--combat-layer-selection) + 3) !important;
+  z-index: calc(var(--combat-layer-selection) + 4) !important;
 }
 :root .combat[data-layout='formation'] .hand-overlay,
 :root .combat[data-layout='formation'] > .hand-area > .hand { z-index: var(--combat-layer-cards); }

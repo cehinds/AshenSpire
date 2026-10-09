@@ -1,0 +1,68 @@
+{
+  "reviewedAt": "2026-10-09T02:37:56.736Z",
+  "originalSha": "4e704a1be99011ba41876f4c4b5fd11c79cd4e004451c9ff67efb13807b05721",
+  "approvedHealthDeltaSha": "d5727a194510559373f3a1e622160052c8839dc00126913e0da65a2ab862df1d",
+  "currentDriverSha": "5e015d5cc2b655020728cd473b32275af4ecf61ae2c1b20548fbd967fc3529ff",
+  "classifierSha": "647c010d17b36d2784b7c2eb32cbad2e2924c009761c65658221ae610aea99e8",
+  "phaseOnlyVerification": "PASS",
+  "checks": [
+    {
+      "name": "unknown404",
+      "input": {
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "url": "http://127.0.0.1:8823/build/download/assets/unexpected.webp"
+      },
+      "expected": "unexpected-fatal",
+      "actual": "unexpected-fatal"
+    },
+    {
+      "name": "canvasWarning",
+      "input": {
+        "level": "warning",
+        "text": "Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true."
+      },
+      "expected": "unexpected-fatal",
+      "actual": "unexpected-fatal"
+    },
+    {
+      "name": "unknownError",
+      "input": {
+        "level": "error",
+        "text": "unexpected render failure"
+      },
+      "expected": "unexpected-fatal",
+      "actual": "unexpected-fatal"
+    },
+    {
+      "name": "nearPolicy",
+      "input": {
+        "level": "warning",
+        "text": "The AudioContext was not allowed to start. unexpected suffix"
+      },
+      "expected": "unexpected-fatal",
+      "actual": "unexpected-fatal"
+    },
+    {
+      "name": "nearAudioPath",
+      "input": {
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "url": "http://127.0.0.1:8823/build/download/assets/sfx/block.ogg.other"
+      },
+      "expected": "unexpected-fatal",
+      "actual": "unexpected-fatal"
+    },
+    {
+      "name": "exactAudio",
+      "input": {
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "url": "http://127.0.0.1:8823/build/download/assets/sfx/block.ogg"
+      },
+      "expected": "standalone-authored-audio-fallback",
+      "actual": "standalone-authored-audio-fallback"
+    }
+  ],
+  "boundary": "Source-level off-tree delta/classifier review only. No browser launched, no gameplay assertion, clock, deadline or source change. Exact allowed logs remain retained edition/activation limitations, not audio acceptance."
+}

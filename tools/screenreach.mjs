@@ -1,3 +1,4 @@
+import { frameOwnsHit } from './lib/combat-reach.mjs';
 // tools/screenreach.mjs — is every control on every screen reachable by a
 // finger, at the shapes we claim to support?
 //
@@ -149,15 +150,15 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.alternative-silhouette \[authored-neighbour\])/,
       },
       {
-        name: 'a silhouette loses its frame and attached plate tap areas',
+        name: 'a silhouette loses its frame-level tap area',
         file: 'styles/combat.css',
-        append: '.enemy-target-hitbox::after, .enemy-target-hitbox .combatant-card > :is(.nm,.meters), .enemy-target-hitbox .combatant-card > :is(.nm,.meters) * { pointer-events: none !important; }',
+        append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
-        name: 'a player loses its artwork, frame and mini HUD tap areas',
+        name: 'a player loses its exposed artwork or frame-level tap area',
         file: 'styles/combat.css',
-        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite *, .player .combatant-mini-hud, .player .combatant-mini-hud * { pointer-events: none !important; }',
+        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -269,7 +270,7 @@ const SETTINGS_CYCLE = `(async () => {
 // spacing: place the intent over a real neighbouring sprite. The
 // normal overhead layer must remain hittable; the frame-stacking plant below
 // must hide it. Both the clean and planted runs use this same fixture.
-const INTENT_OVERLAP = `(() => {
+const INTENT_OVERLAP = `(async () => {
   if (innerWidth !== 390 || innerHeight !== 650) return true;
   // Missing art uses a wider fallback figure in copied trees. Pin the small
   // player case below 24px when the visible plate supplies its tap area.
@@ -340,6 +341,21 @@ const INTENT_OVERLAP = `(() => {
   const centreHit = document.elementFromPoint(centreX, centreY);
   if (playerPlate && centreHit && playerFrame.contains(centreHit))
     throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
+  // Moving artwork above also moves fitted foot anchors. Let the production
+  // stage fit the changed geometry before probing it; an immediate snapshot
+  // otherwise judges the fixture's stale, manually overridden plate positions.
+  document.querySelector('.combat').dispatchEvent(new Event('combatantselectionchange', { bubbles: true }));
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const refittedPlayer = player.getBoundingClientRect();
+  const refittedSprite = sprite.getBoundingClientRect(), refittedIntent = intent.getBoundingClientRect();
+  if (playerPlate && refittedPlayer.width >= 24)
+    throw new Error('screenreach: refit erased the small-player fixture');
+  if (refittedSprite.left > refittedIntent.left || refittedSprite.right < refittedIntent.right
+      || refittedSprite.top > refittedIntent.top || refittedSprite.bottom < refittedIntent.bottom)
+    throw new Error('screenreach: refit erased the neighbouring intent cover');
+  const refittedCentreHit = document.elementFromPoint(centreX, centreY);
+  if (playerPlate && refittedCentreHit && playerFrame.contains(refittedCentreHit))
+    throw new Error('screenreach: refit erased the separate player foot patch');
   return true;
 })()`;
 
@@ -437,6 +453,7 @@ const PROBE = `(() => {
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
       && !e.closest('details:not([open]), [inert]');
   });
+  const frameOwnsHit = ${frameOwnsHit.toString()};
   const exposedPatch = (target, size, bounds = target?.getBoundingClientRect(), accepts = top => top === target || target.contains(top)) => {
     if (!target) return false;
     const half = size / 2;
@@ -455,11 +472,11 @@ const PROBE = `(() => {
     const r = c.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
-    if (hit && (hit === c || c.contains(hit))) continue;
+    if (!c.matches('.combatant[data-ui-component="combatant-frame"]') && hit && (hit === c || c.contains(hit))) continue;
     // Formation frames span a grid cell. Measure the actual 44 px frame tap
     // target: final fitting can pack it away from an overlapping sprite foot.
-    // Its attached name/HP plate belongs to the same fighter and can answer
-    // the hit test, just as it does for the ordinary centre test above.
+    // Name/HP and inspection surfaces are checked separately; they do not
+    // replace the independent frame-selection patch.
     // The frame centre may still sit beneath another fighter.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
@@ -472,12 +489,9 @@ const PROBE = `(() => {
       const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => top === c || c.contains(top))
+          top => frameOwnsHit(c, sprite, top))
         : exposedPatch(sprite, 24);
       if (reach) continue;
-      // The attached player details panel is another visible surface of this
-      // same clickable frame, and may cover its artwork on short XL layouts.
-      if (c.matches('.player') && exposedPatch(c.querySelector('.combatant-mini-hud'), 24)) continue;
     }
     // A tall neighbouring enemy can paint across an intent badge's centre on
     // short phones. It is still usable if a finger-sized patch of that button
