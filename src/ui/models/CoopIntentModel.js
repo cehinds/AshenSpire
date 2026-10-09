@@ -3,6 +3,9 @@ import { concealKnowledgeIntent } from '../../model/enemyIntentKnowledge.js';
 
 // Couch seat switches project the same host roll; reading never rolls again.
 export function coopEnemyIntent(enemy, seatId, profile = null) {
+  // Presentation-only carrier on the local paced snapshot. The authoritative
+  // next intent and private read remain concealed when playback completes.
+  if (enemy.executingCounterIntent) return enemy.executingCounterIntent;
   if (enemy.actorIntentRevealed) {
     const preview = enemy.intentPreviews?.[seatId] || enemy.intent || {};
     const identity = preview.profile || preview.combatProfile || profile || {};
@@ -24,4 +27,10 @@ export function coopEnemyIntent(enemy, seatId, profile = null) {
   if (preview.hidden && preview.kind !== 'staggered') return concealIntent(preview, previewIdentity);
   return { ...preview, profile: previewIdentity,
     stance: combatIntentStance(preview, previewIdentity), hidden: false, revealed: true };
+}
+
+export function publicCounterIntent(event) {
+  return { kind: 'attack', moveId: event.moveId, damage: event.amount, hits: 1,
+    counterDamage: event.amount, counterPoiseDamage: event.poiseDamage, counterWardDamage: event.wardDamage,
+    profile: event.combatProfile || {}, stance: 'countering', hidden: false, revealed: true };
 }

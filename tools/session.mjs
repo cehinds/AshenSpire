@@ -1053,6 +1053,12 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!live) return { ok: false, error: 'no combat' };
     let guard = 0;
     while (live && live.combat && !live.combat.result && live.combat.phase !== 'suspended' && guard++ < 400) {
+      if (live.combat.pendingReaction) {
+        const pending = live.combat.pendingReaction;
+        chooseReaction(live.combat, pending.ownerId, { offerId: pending.id });
+        settleCombat();
+        continue;
+      }
       for (const m of connectedMembers()) botTurnFn(live.combat, m.id);
       settleCombat();
     }

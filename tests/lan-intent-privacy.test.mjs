@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { broadcastLanSnapshot, lanMemberIds, projectLanSnapshot } from '../tools/lan-state.mjs';
-import { coopEnemyIntent } from '../src/ui/models/CoopIntentModel.js';
+import { coopEnemyIntent, publicCounterIntent } from '../src/ui/models/CoopIntentModel.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession } from '../tools/session.mjs';
@@ -27,6 +27,21 @@ function snapshot() {
     party: [{ id: 'warrior' }, { id: 'scout' }],
   };
 }
+
+test('local Counter playback shows its public carrier while retaining the concealed next action', () => {
+  const enemy = { id: 'e1', intent: { kind: 'unknown', moveId: null },
+    knowledgeAction: { serial: 4, reads: { p1: { visibility: 'unknown' } } } };
+  const before = structuredClone(enemy);
+  enemy.executingCounterIntent = publicCounterIntent({ moveId: 'publicReturn', amount: 8, poiseDamage: 2,
+    wardDamage: 0, combatProfile: { camp: 'physical', maneuver: 'counter' } });
+  const view = coopEnemyIntent(enemy, 'p1');
+  assert.equal(view.moveId, 'publicReturn'); assert.equal(view.counterDamage, 8);
+  assert.equal(view.hidden, false); assert.equal(view.stance, 'countering');
+  assert.deepEqual(enemy.knowledgeAction, before.knowledgeAction);
+  delete enemy.executingCounterIntent;
+  assert.equal(coopEnemyIntent(enemy, 'p1').hidden, true);
+  assert.equal(coopEnemyIntent(enemy, 'p1').moveId, null);
+});
 
 function wire(clients, source) {
   const received = new Map();
@@ -157,6 +172,9 @@ for (const combatExpansionVersion of [1, 2]) test(`version ${combatExpansionVers
   const host = createSession({ registries, seedString: 'GUARD2', combatExpansionVersion });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
+  // Historical expanded saves did not carry optional reaction rules; this
+  // fixture specifically verifies their next-turn defense priming lifecycle.
+  for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
   assert.equal(host.snapshot().scene.kind, 'combat');
   assert.equal(host.combatEndTurn('p1').ok, true);

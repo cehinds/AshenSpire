@@ -15,6 +15,16 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     || state.reactionCursor.index < 0 || state.reactionCursor.index >= state.enemies.length
     || !['start', 'payload', 'drain'].includes(state.reactionCursor.stage))) problems.push('Invalid enemy reaction cursor');
   if (state.reactionHandCleanup !== undefined && !record(state.reactionHandCleanup)) problems.push('Invalid pending hand cleanup');
+  const paused = state.pendingReaction || state.reactionResume;
+  const incoming = [...queue, ...(Array.isArray(state.reactionResume?.queue) ? state.reactionResume.queue : [])];
+  const enemyPayload = incoming.some(action => action.meta?.expansionGroup?.enemyMoveStart);
+  if (paused && (state.phase === 'enemy' || enemyPayload) && !state.reactionCursor) problems.push('Enemy reaction requires its turn cursor');
+  if (state.reactionCursor && !['enemy', 'suspended'].includes(state.phase)) problems.push('Enemy reaction cursor is outside its phase');
+  if (state.reactionCursor && !state.result) {
+    const cleanup = state.players instanceof Map
+      ? [...state.players.values()].some(seat => record(seat.reactionHandCleanup)) : record(state.reactionHandCleanup);
+    if (!cleanup) problems.push('Enemy reaction requires its pending hand cleanup');
+  }
   const pending = state.pendingReaction;
   if (pending !== undefined) {
     if (!record(pending) || !text(pending.id) || !text(pending.groupKey) || !ownerIds.has(pending.ownerId)
@@ -28,5 +38,15 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
   }
   if (state.reactionResume !== undefined && (!record(state.reactionResume) || !queued(state.reactionResume.queue)
     || !state.pendingAbilityDiscard || !state.pendingAbilityPlay)) problems.push('Paid reaction continuation requires its nested choice');
+  if (record(state.reactionResume)) {
+    const saved = state.reactionResume.foundation;
+    if (state.foundation ? !record(saved) : saved !== null) problems.push('Reaction continuation requires its retained foundation context');
+    if (record(saved) && (!Number.isSafeInteger(saved.actionSerial) || saved.actionSerial < 0
+      || !Number.isSafeInteger(saved.eventCount) || saved.eventCount < 0
+      || !record(saved.rolls) || Object.values(saved.rolls).some(value => typeof value !== 'boolean')
+      || !record(saved.counts) || Object.values(saved.counts).some(value => !Number.isSafeInteger(value) || value < 0))) {
+      problems.push('Invalid retained reaction foundation context');
+    }
+  }
   return problems;
 }

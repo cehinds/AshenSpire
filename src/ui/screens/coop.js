@@ -9,7 +9,7 @@ import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { coopEnemyIntent } from '../models/CoopIntentModel.js';
+import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { cardTargetPlan } from '../../model/cardTargets.js';
@@ -1941,6 +1941,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (event.type === 'enemyActorTurnStarted') {
           const enemy = entityFor(event.sourceId);
           if (enemy) {
+            delete enemy.executingCounterIntent;
             enemy.actorIntentRevealed = true; enemy.intent = event.intent;
             const profile = event.intent?.combatProfile || {};
             enemy.intentPreviews = Object.fromEntries(seats.map(id => [id, { ...event.intent, profile,
@@ -1949,9 +1950,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         }
         if (event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy') {
           const enemy = entityFor(event.sourceId);
-          if (enemy) enemy.intentPreviews = Object.fromEntries(seats.map(id => [id, { kind: 'attack', moveId: event.moveId,
-            damage: event.amount, hits: 1, counterDamage: event.amount, counterPoiseDamage: event.poiseDamage,
-            counterWardDamage: event.wardDamage, profile: event.combatProfile || {}, stance: 'countering', hidden: false, revealed: true }]));
+          if (enemy) enemy.executingCounterIntent = publicCounterIntent(event);
         }
       }
       snap = working; render();
