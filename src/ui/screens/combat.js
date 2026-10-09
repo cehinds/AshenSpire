@@ -107,6 +107,7 @@ import { formationMovePlan } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
+import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
@@ -259,7 +260,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // Resolve it before falling back to a live pile or bare legacy receipt.
       const playedInstance = played && (played.cardInstance || disp?.hand.find((card) => card.instanceId === played.cardInstanceId)
         || findInst(played.cardInstanceId) || { cardId: played.cardId });
-      let definition = played ? resolveCombatCard(combat, playedInstance, { upcastTier: played.upcastTier })
+      let definition = played ? resolvePlayedCombatCard(combat, played, playedInstance)
         : registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
       if (returned && definition) {
         const attackTags = (definition.cardTags || definition.tags || []).filter(tag => !tag.startsWith('kind:') && !tag.startsWith('maneuver:'));
@@ -277,7 +278,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         availablePoses: stage?.poses || [],
       });
       if (played && definition) {
-        const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), action: plan });
+        const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), action: plan, combatExpansionVersion: combat.combatExpansionVersion });
         const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         actorEl.dataset.actionGroup = grouped.group;
@@ -2264,12 +2265,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     appliedVisualEvents = new Set();
     visualPlans = new Map(events.filter(e => e.type === 'cardPlayed').map(event => {
       const instance = disp?.hand.find(card => card.instanceId === event.cardInstanceId) || findInst(event.cardInstanceId) || { cardId: event.cardId };
-      const definition = resolveCard(registries, instance);
+      const definition = resolvePlayedCombatCard(combat, event, instance);
       const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
       const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, action }) }];
+      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, action, combatExpansionVersion: combat.combatExpansionVersion }) }];
     }));
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases
