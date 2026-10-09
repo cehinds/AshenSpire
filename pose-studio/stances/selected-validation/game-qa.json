@@ -1,0 +1,21 @@
+{
+  "results": [
+    "reaver:offensive",
+    "reaver:defensive",
+    "reaver:casting",
+    "rogue:offensive",
+    "rogue:defensive",
+    "rogue:casting",
+    "starseer:offensive",
+    "starseer:defensive",
+    "starseer:casting",
+    "herald:offensive",
+    "herald:defensive",
+    "herald:casting"
+  ],
+  "errors": [],
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ]
+}
