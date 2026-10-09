@@ -67,7 +67,7 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
   const create = dom.document.createElement.bind(dom.document);
   dom.document.createElement = tag => {
     const node = create(tag);
-    if (tag === 'canvas') node.getContext = () => ({ clearRect() {}, save() {}, restore() {}, drawImage() {}, fillRect() {} });
+    if (tag === 'canvas') node.getContext = () => ({ clearRect() {}, save() {}, restore() {}, drawImage() {}, fillRect() {}, getImageData: () => ({ data: new Uint8ClampedArray(4) }) });
     return node;
   };
   const globals = { ...dom,
