@@ -40,6 +40,7 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - These types appear at the bottom of support and deck cards. Offensive and maneuver cards show their action type there.
   - Deck Status cards are separate from active status gauges and the recovery controls shown while incapacitated.
   - Each owned Power copy or legal Replica has its own paid cast; copying an effect does not count as a new card play.
+  - Fixed effects show their numbers. Effects that depend on status stacks explain what they count; combat previews show the current value.
 
 - **One active stance**
   - Attack, Defend, Counter, Sweep, Ranged, Smash, or Casting.

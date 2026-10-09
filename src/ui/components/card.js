@@ -114,11 +114,11 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
     const v = liveTokens[tok];
     if (v == null) return m;
     let cls = 'val';
-    if (baseTokens && typeof baseTokens[tok] === 'number') {
+    if (baseTokens && typeof v === 'number' && typeof baseTokens[tok] === 'number') {
       if (v > baseTokens[tok]) cls += ' up';
       else if (v < baseTokens[tok]) cls += ' down';
     }
-    return `<span class="${cls}">${v}</span>`;
+    return `<span class="${cls}">${esc(v)}</span>`;
   });
   // Light keyword coloring for readability.
   html = html

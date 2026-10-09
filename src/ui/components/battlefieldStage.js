@@ -150,7 +150,7 @@ export function wireBattlefieldStage(field, model) {
     });
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const handRect = combat.querySelector('.hand')?.getBoundingClientRect();
-    const handLeft = Math.min(...[...combat.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().left));
+    const handLeft = handRect?.left ?? fieldRect.left;
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
@@ -160,7 +160,7 @@ export function wireBattlefieldStage(field, model) {
     const fitFormation = () => {
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         handTop: handRect ? handRect.top - fieldRect.top + 22 : null,
-        handLeft: Number.isFinite(handLeft) ? handLeft - fieldRect.left : 0,
+        handLeft: handLeft - fieldRect.left,
         solo: solo && window.innerHeight > 480,
         sizes: fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
