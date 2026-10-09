@@ -72,6 +72,8 @@ The dev reconciliation builds as `0.7.1.1158` with source digest
 `5627ec489a` and pinned `hd-assets-v15`. Six native examples passed again
 after this art update. The final standalone build also passed desktop/phone hand geometry, complete effects, inspection and focus return; its report and screenshots are in `standalone/`. Final CI and independent review remain required.
 
+CI on `5231fe396e1ca92cd51ae144cfa4e294b085410c` passed preview, core, receipts and browser smoke checks. Discovered shard 0 caught one old equipment-card assertion that required the footer name to have no layer attribute. The assertion now verifies the new layer-8 name markup; the targeted equipment-card suite passes. Fresh CI on the following test-only commit remains required.
+
 ## Remaining gates
 
 1. Confirm the final origin head, current build receipt and current-head CI.
