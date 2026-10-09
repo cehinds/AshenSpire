@@ -1581,7 +1581,10 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-compact-continue:disabled { opacity: .58; cursor: default; }
 .reward-door .reward-compact-continue.is-ready { background: #2b7047; border-color: #71c990; color: #fff; }
 .reward-door .reward-compact-continue.is-ready:is(:hover, :focus-visible) { background: #368a59; border-color: #a0e6b6; }
-.reward-door .reward-menu { max-width: none; width: 100%; }
+.reward-door .reward-menu { max-width: none; min-width: 0; width: 100%; }
+/* A reward's intrinsic title width must not expand into the XP column. */
+.reward-door .reward-menu > .reward-kind { box-sizing: border-box; width: 100%; }
+.reward-door .reward-menu > .reward-kind h3 { white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
 /* W1t: reward choices beside their claim status; stacked on narrow hosts. */
 .reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
 :root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
@@ -4860,6 +4863,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   transform: rotate(var(--hand-card-angle)) !important;
   z-index: auto !important;
 }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected,.gp-focus) {
+  /* Keep horizontal reveal independent of the existing animated fan lift. */
+  translate: var(--hand-upcast-shift, 0px) 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card.gp-focus {
+  z-index: 51 !important;
+}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) {
   transform: translateY(calc(-1 * var(--hand-selection-lift))) !important;
   z-index: 50 !important;
@@ -6081,7 +6091,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .combat-expansion-controls { width:min(220px,46%); } .combat-recovery-controls button { min-height:44px; } }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,select) { pointer-events:auto; }
-@media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:44px; } }
+@media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:max(44px, var(--tap-floor)); } }
 
 /* Recovery and pending feat actions have no permanent protection box. */
 .field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; z-index:2600; }
@@ -6097,7 +6107,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat-hud > .combat-blight-hud:empty { display:none; }
 .combat-blight-hud > .ashen-blight { margin:0; padding:.35rem .6rem; border:0; background:#171411bd; }
 .combat-blight-hud .ashen-blight-heading { font-size:max(.8rem, calc(11px / var(--ui-zoom, 1))); line-height:1.2; }
-.combat-blight-hud .ashen-blight-track { height:calc(8px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
+.combat-blight-hud .ashen-blight-track { height:calc(18px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
 @media(max-width:700px) {
   .combat-hud > .combat-blight-hud { position:relative; top:auto; left:auto; transform:none; width:100%; margin:.25rem auto 0; }
   .combat.coop > .combat-hud { flex-wrap:wrap; }

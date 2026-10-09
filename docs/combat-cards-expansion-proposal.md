@@ -696,6 +696,10 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 ## Combos feats relics and replicas
 
+- **Implemented effects and further ideas**
+  - Drawing, discarding, Retain, Recall, temporary card generation and Replica support the current combo system.
+  - Scry's future-draw chooser, Patient Duelist and the named relic ideas below are optional suggestions for later content, rather than playable additions in this phase.
+
 - **Counter into follow-up**
   - An impact Counter breaks Poise and creates an opening.
   - A rarer HP Counter adds a printed return.
@@ -704,7 +708,7 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 - **Defense into preparation**
   - Maintain Defend to receive next-turn protection.
-  - Use neutral support to heal, Scry, or Recall without changing stance.
+  - Use neutral support to heal or Recall without changing stance; a future Scry card could use the same rule.
   - Finish with Smash or Counter when the enemy telegraph changes.
 
 - **Status sequences**
@@ -715,7 +719,7 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - Grounding and counter magic give the opponent answers.
 
 - **Deck effects**
-  - Scry: inspect and choose future draws.
+  - Scry (future suggestion): inspect and choose future draws.
   - Cycle: discard and redraw.
   - Retain: keep a chosen card.
   - Recall: retrieve from discard.
@@ -727,10 +731,10 @@ Read the enemy's stance, choose a response, and build openings through protectio
 - **Feat and relic rewards**
   - Guard break can grant Retain or cleansing.
   - Successful Evade can grant Scry or enable an explicitly printed Evasive Riposte.
-  - Copper Coil boosts Lightning buildup with backlash risk.
-  - Grounding Stone protects against electrical effects.
-  - Frostglass rewards shattering with temporary Barrier.
-  - Ash Seal rewards high Blight without removing its run cost.
+  - Suggested relic — Copper Coil: boost Lightning buildup with backlash risk.
+  - Suggested relic — Grounding Stone: protect against electrical effects.
+  - Suggested relic — Frostglass: reward shattering with temporary Barrier.
+  - Suggested relic — Ash Seal: reward high Blight without removing its run cost.
   - Enemies can use the same interactions with readable, narrower kits.
 
 - **Turning disadvantages into openings**

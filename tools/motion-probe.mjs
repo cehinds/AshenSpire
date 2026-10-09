@@ -124,7 +124,7 @@ if (argv.includes('--selftest')) {
     // seed's Reaver fights in the sword-and-shield set's outfit frames.
     extraCopy: ['assets/enemy-poses', 'assets/enemy-states', 'assets/defeated-poses', 'assets/painted-outfits',
       'assets/animations/sword-shield-outfits', 'assets/cards', 'assets/card-components',
-      'assets/player-polish/illustrations', 'assets/equipment', ...(ALTERNATIVE ? ['assets-alternative'] : [])],
+      'assets/player-polish/illustrations', 'assets/equipment', ...(ALTERNATIVE ? ['assets-display'] : [])],
     plants: [
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',

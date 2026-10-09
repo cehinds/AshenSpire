@@ -1110,6 +1110,28 @@ a future concealed action. Co-op authority owns private per-seat reads and
 learning receipts; profile writes remain durable and idempotent. The contract
 lands before its runtime implementation, which depends on the §4.8 runtime.
 
+### 4.10 Defensive reaction choices and actor-turn presentation
+
+The reaction modal uses **Back, Play**; Back skips the offered reaction and
+resumes the incoming action. A combat-scoped, owned Reaction switch controls
+optional prompts. The right-side combat log unfolds in place, groups completed
+public actions by round, and supports Small, Medium and Large heights bounded
+below the menu controls. The detailed contract specifies persistence, privacy,
+accessibility and responsive geometry for these controls.
+
+[docs/combat-reaction-contract.md](docs/combat-reaction-contract.md) defines the
+owner's 2026-10-08 revision: sequential enemy action presentation with a distinct
+successful Counter return animation and impact, optional affordable in-hand
+Counter/defensive Sweep choices during incoming attacks or Counter returns,
+and exact resumable solo/co-op continuation. New eligible expanded runs carry
+reaction rules version 1; historical runs retain their saved mechanical lifecycle.
+Public actor-start revelation preserves original private prediction/learning
+receipts and cannot mark a cancelled action executed. Next planning intents
+refresh at player-turn start. The player mini HUD sits above visible artwork
+with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
+This specification precedes the runtime implementation and does not claim that
+the new reaction system has shipped.
+
 ## 5. Content specification
 
 ### 5.1 Classes, creation presets, and levels

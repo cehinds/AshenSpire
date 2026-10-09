@@ -46,7 +46,7 @@ function sandbox({ pack = false } = {}) {
   // Branch-owned artwork is authored under the selected checkout, outside
   // the shared packs (artPath resolves non-pack paths against that root).
   // Portable variant builds read these bytes and validate their catalog hashes.
-  for (const d of ['src', 'styles', 'tools', 'content', 'assets-alternative', ...(pack ? ['asset-data'] : [])]) {
+  for (const d of ['src', 'styles', 'tools', 'content', 'assets-display', ...(pack ? ['asset-data'] : [])]) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
   copyPackTrees(dir, ['assets-mobile', 'assets/fonts', ...(pack ? ['music', 'map-detail'] : [])]);
@@ -334,7 +334,7 @@ function bundledSkillClaims(html, { restoreCycle = false } = {}) {
       const aliasMatch = html.match(/for \(const \[alias, key\] of (\[[^\n]+\])\) alternativeArtMap\[alias\] = alternativeArtMap\[key\];/);
       for (const [alias, key] of aliasMatch ? JSON.parse(aliasMatch[1]) : []) inlineArt[alias] = inlineArt[key];
       const mismatches = catalogHashes.filter(([file, hash]) => {
-        const payload = inlineArt[`assets-alternative/${file}`];
+        const payload = inlineArt[catalog.filePaths[file]];
         return !payload?.startsWith('data:image/webp;base64,')
           || createHash('sha256').update(Buffer.from(payload.slice('data:image/webp;base64,'.length), 'base64')).digest('hex') !== hash;
       });

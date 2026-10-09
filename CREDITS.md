@@ -1,4 +1,31 @@
 # Credits & Asset Licenses
+## Molten River Blight meter (2026-10-08)
+
+Original texture generated for AshenSpire with OpenAI image generation from the owner-selected Molten River concept. Runtime ID: `assets/ui/ashen-blight-molten-river.webp`; high and generated light twins ship through [AshenSpire-art](https://github.com/cehinds/AshenSpire-art), with the master and prompt in `art/molten-river-blight-20261008/`. No third-party artwork or license is claimed.
+
+
+## AI authorship and third-party exceptions
+
+The [classic, alternative and shared display libraries](assets-display/README.md)
+organize the same pinned pack assets and reviewed AI exports. Moving an export
+does not change its authorship or licence; their indexes retain original hashes.
+
+The original game's code, design, writing, artwork and composed score are
+AI-created under human direction. The [AI acknowledgement](src/content/aiDisclosure.js)
+describes that work. Third-party fonts, software and system glyphs are exceptions.
+
+| Exception / open record | Recorded source and status |
+| --- | --- |
+| Bundled fonts | IM Fell English, EB Garamond, Cormorant Garamond, Crimson Pro, Spectral, Libre Baskerville, Cinzel and Inter are third-party font designs. Their notices and SIL OFL 1.1 are in [asset-data/fonts/OFL.txt](asset-data/fonts/OFL.txt); the common art pack carries `licenses/OFL.txt`. [Official licence text](https://openfontlicense.org/open-font-license-official-text/). |
+| Emoji and fallback fonts | Supplied by the player's OS/browser; the game does not embed these font files or claim their glyphs as its artwork. |
+| Desktop software | The [Electron dependency](desktop/electron/package.json) is third-party software under [MIT](https://github.com/electron/electron/blob/main/LICENSE). Its bundled dependencies have separate notices. Development tools and platform runtimes retain their upstream terms; this is not a complete dependency licence audit. |
+| Flask art | Existing rows for `assets/ui/flasks/flask-{crimson,azure}.webp` do not record the supplied artwork's source or generator. Owner confirmation remains required. |
+| Crownfall landmark/local art | Existing rows for `assets/environments/crownfall-{landmark,local}.webp` do not record their source or generator. Owner confirmation remains required. |
+| Enemy poses/states and regional/world maps | AI generation is recorded, but existing rows leave some rights/licence declarations unrecorded. Those gaps remain open; no licence is inferred here. |
+
+The [project's MIT code licence](LICENSE) does not replace font or dependency
+licences. AI authorship is not a completed rights review. Planned sources below
+are proposals, not evidence that their assets are shipped.
 
 ## Combat card sigils (2026-10-07)
 
@@ -210,7 +237,10 @@ Runtime WebP exports are reproducible with tools/painted-outfits-ship.mjs (requi
 
 ## Assets in use
 
-**v1 ships zero *third-party* asset files.** The `.webp` files under `assets/` are this project's own, rendered by the Blender pipelines listed below — first-party, CC0, and each with a row here.
+This historical v1 inventory predates bundled fonts and later painted-art
+batches. Use the current attribution rows and exceptions above; today's build
+does not carry a blanket claim of zero third-party files, procedural-only art
+or a recorded CC0 declaration for every asset.
 
 > **One exception, disclosed rather than absorbed.** The class sprites
 > (`assets/sprites/{reaver,starseer,rogue,herald}_*.webp`) are not Blender

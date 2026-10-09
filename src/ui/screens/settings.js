@@ -614,6 +614,8 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: t('settings.row.musicFolder'),
     placeholder: t('settings.row.musicFolder.placeholder'),
     note: tFull('settings.row.musicFolder') },
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'classicAppearance', def: false,
+    label: t('settings.row.classicAppearance'), note: tFull('settings.row.classicAppearance') },
 
   { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: t('settings.row.touchFlickPlay'),
     note: tFull('settings.row.touchFlickPlay') },

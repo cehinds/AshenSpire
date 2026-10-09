@@ -160,7 +160,7 @@ test('every same-door variant plant still changes the current real source', asyn
     harness: async () => ({ resolveShard: () => null, doorSelftest: async options => { corpus = options; return 0; } }),
   });
   assert.equal(corpus.plants.length, 18, 'retain the complete corpus plus blank-canvas and canvas reduced-motion plants');
-  assert.ok(corpus.extraCopy.includes('assets-alternative'), 'clean and planted copies must contain the same variant artwork');
+  assert.ok(corpus.extraCopy.includes('assets-display'), 'clean and planted copies must contain the same variant artwork');
   for (const plant of corpus.plants) {
     for (const edit of plant.edits || [plant]) {
       const current = readFileSync(new URL(`../${edit.file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');

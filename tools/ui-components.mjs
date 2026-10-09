@@ -623,6 +623,9 @@ export function findings(r) {
       || !(/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors[,\s}]/.test(r.battlefieldStage)
         || (/import \{ alternativeFormation, fitAlternativeSprites \} from '\.\.\/models\/AlternativeFormationModel\.js';/.test(r.battlefieldStage)
           && /fitAlternativeSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors, narrow \}\)/.test(r.battlefieldStage)))
+      || (/alternativeFormation\(plan/.test(r.battlefieldStage)
+        && !(/import \{ alternativeFormation, fitAlternativeSprites \} from '\.\.\/models\/AlternativeFormationModel\.js';/.test(r.battlefieldStage)
+          && /fitAlternativeSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors, narrow \}\)/.test(r.battlefieldStage)))
       || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
       // A presentation multiplier (sprite scale settings) grows a figure after
       // this shared height, capped per side to the screen (2026-09-27).

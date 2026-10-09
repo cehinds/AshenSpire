@@ -1,6 +1,7 @@
 import { el, button } from '../kit/index.js';
 import { createPaintedStage } from '../paintedOutfits.js';
 import { createAlternativeCardStage } from '../alternativeCardStage.js';
+import { displayAppearance } from '../displayAppearance.js';
 import { alternativeCardAnimations } from '../../content/alternativeCardAnimations.js';
 import { sampleSequence, durationFor } from '../../model/alternativeCardAnimation.js';
 import { ANIM_SPEEDS, getAnimSpeed } from '../animationPace.js';
@@ -21,7 +22,7 @@ export function deckCardAnimationPlan(registries, run, ref) {
   const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
   const plan = resolveCombatAnimation({ ...definition, cardTags: tags,
     animationTags: combatEffectTags(registries, definition), sourceArmamentId: ref.sourceArmamentId,
-  }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class });
+  }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance() });
   const sequence = plan.alternative && alternativeCardAnimations.classes[run.class]?.sequences[plan.technique];
   if (sequence) return { animation: null, plan, sequence, frames: sequence.poses, armourId: 'default',
     duration: durationFor(sequence, ANIM_SPEEDS[getAnimSpeed()]), frameMs: 260 / sequence.poses.length };

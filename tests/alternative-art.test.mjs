@@ -17,7 +17,7 @@ test('all reviewed actors and both export tiers have pinned bytes and idle bound
   for (const [family, count] of Object.entries({ armor: 19, enemy: 33, companion: 2, speaker: 5 }))
     assert.equal(Object.values(catalog.sprites).filter(s => s.family === family).length, count);
   for (const [file, hash] of Object.entries(catalog.hashes)) {
-    const bytes = readFileSync(new URL('../assets-alternative/' + file, import.meta.url));
+    const bytes = readFileSync(new URL('../' + catalog.filePaths[file], import.meta.url));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), hash, file);
   }
   for (const [id, art] of Object.entries(catalog.sprites)) {
@@ -98,7 +98,7 @@ test('phone first paint references only phone scene exports before fitting', () 
   try {
     for (const id of Object.keys(catalog.scenes)) {
       const html = alternativeBackdropHtml(id);
-      const paths = [...html.matchAll(/assets-alternative\/[A-Za-z0-9-]+\.webp/g)].map(m => m[0]);
+      const paths = [...html.matchAll(/assets-display\/(?:alternative|shared)\/[A-Za-z0-9-]+\.webp/g)].map(m => m[0]);
       assert.equal(paths.length, 4); // Three scene layers and the hand fade.
       assert(paths.every(p => p.endsWith('-mobile.webp')), id);
     }
@@ -154,7 +154,7 @@ test('portable alternative exports share duplicate bytes and reject a corrupt so
   const rendered = build(bytes);
   assert.equal((rendered.match(/data:image\/webp;base64,/g) || []).length, 1);
   const map = runInNewContext(rendered + '\nalternativeArtMap;');
-  assert.equal(map['assets-alternative/actor.webp'], map['assets-alternative/actor-mobile.webp']);
-  assert.equal(Buffer.from(map['assets-alternative/actor.webp'].split(',')[1], 'base64').toString(), bytes.toString());
+  assert.equal(map['assets-display/alternative/actor.webp'], map['assets-display/alternative/actor-mobile.webp']);
+  assert.equal(Buffer.from(map['assets-display/alternative/actor.webp'].split(',')[1], 'base64').toString(), bytes.toString());
   assert.throws(() => build(Buffer.from('corrupt')), /Alternative art changed/);
 });

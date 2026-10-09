@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1770",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: Test promotion keeps its full history",
+    "detail": "The reviewed appearance and player-guide delivery retains the existing Test history so channel promotion can proceed. Fresh desktop, phone and co-op appearance checks are saved alongside the reproducible capture recipe.",
+    "build": "0.7.1.1167",
+    "pullRequest": 1770,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1770"
+  },
+  {
+    "id": "pr-1757",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Choose your game appearance",
+    "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
+    "build": "0.7.1.1166",
+    "pullRequest": 1757,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1757"
+  },
+  {
+    "id": "pr-1762",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ashen Blight flows through volcanic rock",
+    "detail": "The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.",
+    "build": "0.7.1.1154",
+    "pullRequest": 1762,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1762"
+  },
+  {
     "id": "pr-1751",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -13,6 +43,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1751"
   },
   {
+    "id": "pr-1763",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ashen Blight flows through volcanic rock",
+    "detail": "The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.",
+    "build": "0.7.1.1152",
+    "pullRequest": 1763,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1763"
+  },
+  {
+    "id": "pr-1765",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Contract: reaction controls and round combat log",
+    "detail": "Specify Back/Play skip behavior, an owned combat-scoped reaction switch, and the in-place public round log with three responsive sizes. This contract precedes runtime implementation.",
+    "build": "0.7.1.1149",
+    "pullRequest": 1765,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1765"
+  },
+  {
+    "id": "pr-1742",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Counters prepare the right action and Upcast stays reachable",
+    "detail": "Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.",
+    "build": "0.7.1.1148",
+    "pullRequest": 1742,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1742"
+  },
+  {
     "id": "pr-1745",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -21,6 +81,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1146",
     "pullRequest": 1745,
     "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
+    "id": "pr-1761",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Contract: defensive reactions and actor-turn presentation",
+    "detail": "Specify optional in-hand Counter and defensive Sweep choices, a separate successful Counter return, acting-enemy intent revelation, exact paused continuation, and the player widget's fixed gap above the art. This contract precedes runtime implementation.",
+    "build": "0.7.1.1145",
+    "pullRequest": 1761,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1761"
+  },
+  {
+    "id": "pr-1759",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Finished runs record their outcome and phone title controls stay reachable",
+    "detail": "Successful run checkpoints allow completion to record the result and clear the finished slot. A refused checkpoint still preserves the run for retry. On small phone screens, the title menu scrolls below the wordmark so Continue and the remaining controls stay usable.",
+    "build": "0.7.1.1144",
+    "pullRequest": 1759,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1759"
+  },
+  {
+    "id": "pr-1756",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Victory rewards stay clear and touch maps respond immediately",
+    "detail": "Long reward titles wrap inside their column, keeping progression readable on desktop. Selecting a map destination on a touch screen immediately reveals its details and enabled controls; desktop keeps its camera and tray sequence.",
+    "build": "0.7.1.1144",
+    "pullRequest": 1756,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1756"
   },
   {
     "id": "pr-1746",
@@ -353,6 +443,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1707"
   },
   {
+    "id": "pr-1709",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Behind the scenes: alternative class studies reach Test",
+    "detail": "The reviewed Rogue, Starseer and Herald animation studies join the Reaver atelier in Alternative Test. Gameplay bindings and the remaining base loadouts stay pending.",
+    "build": "0.7.1.1068",
+    "pullRequest": 1709,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1709"
+  },
+  {
     "id": "pr-1701",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -421,6 +521,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1060",
     "pullRequest": 1695,
     "url": "https://github.com/cehinds/AshenSpire/pull/1695"
+  },
+  {
+    "id": "pr-1699",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Behind the scenes: alternative atelier reaches Test",
+    "detail": "The reviewed Reaver sword, hurt, down, power and spell studies are promoted to Alternative Test as an authoring preview. Their gameplay bindings remain empty.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1699,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1699"
   },
   {
     "id": "pr-1692",

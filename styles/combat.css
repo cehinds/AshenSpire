@@ -1614,6 +1614,7 @@
 :root .combat[data-waist-overlap='true'] .player .combatant-card > :is(.nm,.meters) { visibility: hidden; }
 :root .combat[data-waist-overlap='true'] .player::after { display: none; }
 :root .combat[data-composition='option-c'] > .hand-area { position: relative; z-index: 3; pointer-events: none; }
-:root .combat[data-composition='option-c'] > .hand-area :is(.card,.combat-action-row) { pointer-events: auto; }
-/* Keep tutorial exits above HUD reading surfaces after a coach step moves. */
+:root .combat[data-composition='option-c'] > .hand-area :is(.hand,.hand-page,.card,.combat-action-row) { pointer-events: auto; }
+/* The raised HUD can reveal an HP tooltip where the next coach step moves.
+   Keep tutorial exits above those reading surfaces. */
 :root:has(.combat[data-composition='option-c']) .tut-veil { z-index: 1100; }
