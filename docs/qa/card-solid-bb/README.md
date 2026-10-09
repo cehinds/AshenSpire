@@ -30,3 +30,8 @@ the playing-card model suite. `git diff --check` passes. The full repository
 suite was stopped during long simulation tests; it is not a complete-suite
 pass. The preview has no page errors or broken artwork. Optional synthesized
 sound-effect sample 404s are recorded separately by browser QA.
+
+Packaged verification: the light standalone build 0.7.1.1150 passed desktop
+and phone hand geometry, complete title-fade coverage, inspection and focus
+checks. Its captures and provenance are in `standalone/`. Subsequent reconciliation
+with PR 1765 changes documentation and generated changelog metadata only.
