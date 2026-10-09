@@ -1,0 +1,5 @@
+  common, light packs pinned and present; 6515 objects listed, each present and named by its bytes; 116 map tiles and 13 tracks listed by the common index.
+verify-external: OK — 311 checks passed
+BOUNDARY: files on disk only. Runtime-built paths are covered only insofar as every
+          manifest id is in its index; a path that was already wrong is still wrong;
+          and nothing here loaded the page, drew a tile, played a track or played the game.

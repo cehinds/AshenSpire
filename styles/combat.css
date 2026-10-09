@@ -437,7 +437,8 @@
 }
 .fx-banner.blood { color: var(--ember); }
 .fx-banner.turn { font-size: 2.4rem; color: var(--parchment); text-shadow: 0 0 24px rgba(230, 220, 195, 0.5); }
-.combat.shake { animation: shake 200ms; }
+/* Impact feedback moves scenery and effects, never the actors or controls. */
+.combat.shake > .backdrop, .combat.shake .fx-layer { animation: shake 200ms; }
 /* Hit-stop (SPEC §7.4, content/combatFeel.js): the attacker's lunge and the
    target's recoil (animations on the figure's own host) hold for a beat; ui/fx.js
    removes the class. Not descendants: the idle bob keeps its clock. Painted frame
@@ -471,19 +472,16 @@
 .player .sprite.act-attack { animation: lunge-right 280ms ease-out; }
 .sprite.act-move { animation: act-step 260ms ease-out; }
 @keyframes lunge-left {
-  0% { transform: none; }
-  35% { transform: translateX(-26px) scale(1.06); filter: brightness(1.25); }
-  100% { transform: none; }
+  0%, 100% { translate: 0 0; }
+  35% { translate: -26px 0; filter: brightness(1.25); }
 }
 @keyframes lunge-right {
-  0% { transform: none; }
-  35% { transform: translateX(26px) scale(1.06); filter: brightness(1.25); }
-  100% { transform: none; }
+  0%, 100% { translate: 0 0; }
+  35% { translate: 26px 0; filter: brightness(1.25); }
 }
 @keyframes act-step {
-  0% { transform: none; }
-  40% { transform: translateY(-8px) scale(1.05); filter: brightness(1.35) drop-shadow(0 0 12px rgba(201, 162, 39, 0.55)); }
-  100% { transform: none; }
+  0%, 100% { filter: none; }
+  40% { filter: brightness(1.35) drop-shadow(0 0 12px rgba(201, 162, 39, 0.55)); }
 }
 .reduced-motion .sprite.act-attack,
 .reduced-motion .sprite.act-move { animation: none; }
@@ -497,28 +495,26 @@
 .sprite.act-move[data-action-motion="cast"] { animation-name: family-spell; }
 .sprite.act-move[data-action-motion="brace"] { animation-name: family-guard; }
 .sprite.act-move[data-action-motion="sidestep"] { animation-name: family-dodge; }
-/* The tilting families (sweep, impact, release) lean from the feet. With the
-   default centre pivot the feet slid sideways and the figure read as rocking. */
-.sprite:is(.act-attack, .act-move)[data-action-motion] { transform-origin: 50% 100%; }
+/* Only melee attacks travel. Animate the independent translation channel so
+   layout/painted-art transforms keep the same scale and registration. */
 @keyframes family-slash {
-  0%, 100% { transform: none; filter: none; }
-  22% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
-  55% { transform: translate(var(--action-travel, 26px), var(--action-lift, -8px)) rotate(var(--action-tilt, 12deg)); filter: brightness(1.25); }
+  0%, 100% { translate: 0 0; filter: none; }
+  22% { translate: var(--action-recoil, -12px) 0; }
+  55% { translate: var(--action-travel, 26px) 0; filter: brightness(1.25); }
 }
 @keyframes family-thrust {
-  0%, 100% { transform: none; filter: none; }
-  30% { transform: translateX(var(--action-recoil, -12px)); }
-  55%, 65% { transform: translateX(var(--action-travel, 26px)); filter: brightness(1.25); }
+  0%, 100% { translate: 0 0; filter: none; }
+  30% { translate: var(--action-recoil, -12px) 0; }
+  55%, 65% { translate: var(--action-travel, 26px) 0; filter: brightness(1.25); }
 }
 @keyframes family-strike {
-  0%, 100% { transform: none; filter: none; }
-  30% { transform: translateY(var(--action-lift, -8px)) rotate(var(--action-windup-tilt, -8deg)); }
-  55% { transform: translateY(7px) scaleY(0.96); filter: brightness(1.4); }
+  0%, 100% { translate: 0 0; filter: none; }
+  30% { translate: var(--action-recoil, -12px) 0; }
+  55% { translate: var(--action-travel, 26px) 0; filter: brightness(1.4); }
 }
 @keyframes family-projectile {
-  0%, 100% { transform: none; filter: none; }
-  40% { transform: none; filter: brightness(1.25); }
-  55% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
+  0%, 100% { filter: none; }
+  40%, 55% { filter: brightness(1.25); }
 }
 @keyframes family-spell {
   0%, 100% { filter: none; }
@@ -529,8 +525,8 @@
   35%, 70% { filter: brightness(1.2) drop-shadow(0 0 5px var(--parchment)); }
 }
 @keyframes family-dodge {
-  0%, 100% { transform: none; opacity: 1; }
-  40%, 60% { transform: translate(var(--action-recoil, -12px), var(--action-lift, -8px)); opacity: 0.65; }
+  0%, 100% { opacity: 1; }
+  40%, 60% { opacity: 0.65; }
 }
 .reduced-motion .sprite[data-action-motion].act-attack,
 .reduced-motion .sprite[data-action-motion].act-move { animation: none; }
@@ -632,6 +628,16 @@
   60% { transform: rotate(3deg); }
   80% { transform: rotate(-2deg); }
 }
+/* Rear stages own their travel inside the canvas. Hurt and stagger feedback
+   can tint that canvas, but must never translate, rotate or resize its root. */
+.player .sprite:is(.hitflash, .wobble) > .alternative-card-stage:first-child,
+.player .sprite.hitflash.hit-heavy > .alternative-card-stage:first-child {
+  animation-name: rear-reaction-flash;
+}
+@keyframes rear-reaction-flash {
+  0%, 100% { filter: none; }
+  33%, 66% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+}
 .relic.proc { animation: relicProc 300ms ease-out; }
 @keyframes relicProc {
   0% { transform: scale(1.45); box-shadow: 0 0 18px var(--gold); }
@@ -689,12 +695,12 @@
    stays put. */
 @keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
-.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
+.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
 /* A fallen combatant holds still: the idle bob kept every dead sprite on the
    compositor's per-frame list for the rest of the fight. A downed co-op
    player is fallen too (its Classic figure bobbed on .facing). */
-.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage),
-.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: none; }
+.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette),
+.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -708,17 +714,17 @@
   animation: none;
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
-.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-duration: 2.6s; }
+.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-duration: 2.6s; }
 /* WCF3: one glow over the whole selected assembly — intent, the delayed
    inspect control, art, name and lower stack — never one per child. */
 .combatant.context-selected > .combatant-stack {
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-delay: -0.9s; }
-.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-delay: -1.7s; }
-.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-delay: -2.3s; }
-.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: none; }
+.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
 /* ---------- short-wide combat composition (#27) ---------------------------

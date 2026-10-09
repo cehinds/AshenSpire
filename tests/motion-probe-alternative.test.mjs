@@ -159,7 +159,35 @@ test('every same-door variant plant still changes the current real source', asyn
     process: { exit() {} }, console: { log() {}, error() {}, info() {} },
     harness: async () => ({ resolveShard: () => null, doorSelftest: async options => { corpus = options; return 0; } }),
   });
-  assert.equal(corpus.plants.length, 18, 'retain the complete corpus plus blank-canvas and canvas reduced-motion plants');
+  const originalNames = [
+    'the idle bob goes back to the dead `.sprite > img` selector',
+    "the idle bob leaves out the Rendered style's painting",
+    'the Rendered style bobs its painting and its nested stage separately',
+    'the idle keyframes are flattened to one position',
+    'the idle keyframes fade instead of moving',
+    'the idle carriers are made transparent',
+    'the combatants are made transparent',
+    'the idle bob starts with its carrier instead of keeping the clock',
+    'the idle keyframes are flattened while a shake runs beside them',
+    'the idle carriers run another infinite animation, not the bob',
+    'the idle bob sits on the figure images instead of their layer',
+    'the class canvas paints no character pixels',
+    'the class canvas ignores reduced motion',
+    'the Reduced motion setting stops shortening CSS animations',
+    'the OS preference stops shortening CSS animations',
+    'the OS preference shortens CSS animations to 11 ms, not 0.01 ms',
+    'the card-play flight (Element.animate) ignores reduced motion',
+    'the combatant effect flipbook runs under reduced motion',
+  ];
+  assert.equal(corpus.plants.length, originalNames.length + 2, 'only the two additive fixed-rest negatives extend the corpus');
+  for (const name of originalNames) assert.equal(corpus.plants.filter(plant => plant.name === name).length, 1,
+    `${name}: retain the original known-bad exactly once`);
+  assert.equal(corpus.timeoutMs, 240000, 'the same-door deadline remains unchanged');
+  for (const plant of corpus.plants) {
+    const classicBob = /idle bob|idle keyframes|idle carriers|combatants are made transparent|Rendered style bobs/.test(plant.name);
+    assert.equal(plant.args?.includes('--classic') || false, classicBob,
+      `${plant.name}: bob defects exercise the real Classic appearance; Default canvas defects retain Default`);
+  }
   assert.ok(corpus.extraCopy.includes('assets-display'), 'clean and planted copies must contain the same variant artwork');
   for (const plant of corpus.plants) {
     for (const edit of plant.edits || [plant]) {
@@ -171,7 +199,7 @@ test('every same-door variant plant still changes the current real source', asyn
 });
 
 
-test('canvas figure requires painted pixels and exactly one clocked stage carrier', async () => {
+test('the retained canvas-bob predicate requires painted pixels and exactly one clocked stage carrier', async () => {
   const [clean] = await inspect({ canvas: true });
   assert.equal(clean.ok, true, clean.detail);
   assert.match(clean.detail, /canvas moved by sprite-idle on div.pose-stage.painted-stage/);

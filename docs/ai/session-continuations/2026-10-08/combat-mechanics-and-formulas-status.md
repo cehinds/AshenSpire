@@ -5,6 +5,14 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Current combined rear-artwork candidate**
+  - Normal inheritance of actual dev `ca11eb59ebc68a965a457db853a1cb38c68d9870` (rear sprites/layering #1772) is being reconciled. Both receipt histories and measured build boxes are preserved; #1766 remains separate open work.
+  - Independent review of the two reconciled stages is clear. Loaded-artwork and resting-hand caches coexist with first-pixel aura materialization, held stances, complete target packing, and visible HUD-before-obstacle measurements.
+  - Combined focused source checks: 132 passed, zero skipped. The incoming rear-stage fixture now models the required visible-canvas readback; its original assertions remain. The stage suite passes all 44 checks; the initial incomplete-fixture failure is retained.
+  - Artifact 1182 / `d21efc30bd` passes all three strict target fixtures. Default completes its four solo/eight projected owner scenarios but fails browser health on 60 exact pre-title AudioContext policy aliases. Later gates did not run. [Original pre-inheritance evidence](../../../qa/combat-promotion-polish-20261008/current-1182/README.md).
+  - Exact policy aliases are now accepted only in the recorded shot-before-title-activation phase. All unknown/Canvas/post-activation warnings remain fatal. Fresh compiled proof remains required; the original failed receipt is unchanged.
+  - The motion gate is being reconciled with #1772's approved stationary rear rest contract while retaining Classic idle animation checks and negative plants. New combined package, exact-head cloud checks and all four branch promotions remain pending.
+
 - **Latest bounded lookahead candidate**
   - Official 1180 / `8d979f99a2` completes all four aliases and package gates. The ordinary crowded phone target scene is clear, with health cues near their owners. The second deliberate-overlap scene still fails full clearance because an early greedy placement consumes a later slot; later native gates were not started.
   - The follow-up retains at most two seeded alternatives per actor within the same 44-pixel target-only limit. It preserves the accepted ordinary positions, full target sizes, fixed sprites/intents, explicit impossible-space flags, and existing predicates/deadlines.

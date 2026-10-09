@@ -292,7 +292,7 @@ const INTENT_OVERLAP = `(async () => {
       throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
   }
   const frames = [...document.querySelectorAll('.combatant.enemy')];
-  const depth = frame => Number(frame.querySelector('.combatant-card > .sprite').style.zIndex);
+  const depth = frame => Number(getComputedStyle(frame.querySelector('.combatant-card > .sprite')).zIndex);
   const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
   const high = frames.find(frame => depth(frame) > depth(low));
   const intent = low?.querySelector('.intent');
