@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Ordered counters, defensive reactions and combat controls** ([#1767](https://github.com/cehinds/AshenSpire/pull/1767), `0.7.1.1153`). Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.
+
 - **Contract: reaction controls and round combat log** ([#1765](https://github.com/cehinds/AshenSpire/pull/1765), `0.7.1.1149`). Specify Back/Play skip behavior, an owned combat-scoped reaction switch, and the in-place public round log with three responsive sizes. This contract precedes runtime implementation.
 
 - **Counters prepare the right action and Upcast stays reachable** ([#1742](https://github.com/cehinds/AshenSpire/pull/1742), `0.7.1.1148`). Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.
