@@ -30,10 +30,15 @@ renderer, appearance switching, HUD tracking, tools or reaction modal layers.
 - The separate sprite agent passed 58 renderer, appearance and reaction checks.
 - Five integrated source layouts passed, including exact co-op actor geometry
   across field remounts with taller intent controls and fewer cards.
-- Integrated package build 1173 passed four classes, 32 actions, 12 held stances,
+- Final package build 1175 passed four classes, 32 actions, 12 held stances,
   20 wrapped reaction checks, and three accepted card plays on desktop and phone.
-- The final receipt rebuild includes the empty-hand regression fix. Current-head
-  package verification and hosted gates are recorded in the PR before merge.
+- Empty-hand resize/draw checks reported zero actor drift on desktop and phone.
+  The package adapter waits for the mounted combat fixture after art loading.
+- Core suite, 314 package-integrity checks, nine build-identity checks, twelve
+  shipping checks and two receipt checks passed. The architecture-only dev merge
+  rebuilt without changing build 1175 or its digest `866e089aa9`.
+- Current package reports and desktop/phone captures are in
+  [integration-1175](integration-1175/). Hosted gates remain recorded in the PR.
 
 Reproduce using the commands in [README.md](README.md), with the official build
 command `node tools/launch.mjs --build-only` and package QA URL

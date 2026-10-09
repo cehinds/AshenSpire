@@ -19,5 +19,11 @@ export async function openCombatQa(page, base, shot) {
     });
   }
   await page.goto(url.href, { waitUntil: 'networkidle', timeout: 60000 });
+  // The packaged loader can be between asset-index network bursts while the
+  // page still says "Loading art". Combat QA needs its mounted screen, not just
+  // a quiet connection. Co-op retains its separate snapshot fixture contract.
+  if (shot === 'combat') await page.waitForFunction(() => window.__combat
+    && typeof window.__renderCombatForShot === 'function'
+    && document.querySelector('.player .sprite'), null, { timeout: 60000 });
   return { url: url.href, packaged, instrumented: packaged };
 }
