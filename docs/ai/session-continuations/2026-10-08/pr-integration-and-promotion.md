@@ -1,5 +1,7 @@
 # Continue PR integration and channel promotion
 
+**Latest delivery:** read [PR integration delivery](pr-integration-delivery.md) first. It supersedes the historical pending checkpoints below and records the merged Dev/Test/alternative source and exact-head workflows.
+
 Finish the currently active appearance/defaults and README PR, reconcile eligible current PRs and coordinate one verified dev-to-test promotion after the session deliveries land.
 
 ## Session and branch
