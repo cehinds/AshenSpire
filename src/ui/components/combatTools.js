@@ -67,7 +67,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault(); event.stopPropagation();
     const index = COMBAT_LOG_SIZES.indexOf(state.size);
-    state.size = event.key === 'Home' ? 'Small' : event.key === 'End' ? 'Large'
+    state.size = event.key === 'Home' ? COMBAT_LOG_SIZES[0] : event.key === 'End' ? COMBAT_LOG_SIZES.at(-1)
       : COMBAT_LOG_SIZES[Math.max(0, Math.min(2, index + (event.key === 'ArrowUp' ? 1 : -1)))];
     state.open = true; onViewChange();
   });
