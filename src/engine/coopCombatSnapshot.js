@@ -3,13 +3,15 @@ import { statusControlProblems } from '../model/combatStatusState.js';
 import { combatExpansionEntityProblems } from '../model/combatTacticsRules.js';
 import { combatExpansionRulesProblems } from '../model/combatExpansionRules.js';
 import { combatEnemyKnowledgeProblems } from '../model/enemyKnowledgeCombat.js';
+import { combatReactionProblems } from '../model/combatReactionState.js';
 import { perceptionProblems } from '../model/perception.js';
 
 // A reference table preserves queued ally/source references and Map identity.
 // Runtime callbacks, catalogue projections and RNG objects never enter the save.
 const forbidden = new Set(['__proto__', 'prototype', 'constructor']);
 export function serializeCoopCombatSnapshot(combat) {
-  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !combat.pendingAbilityDiscard)) throw new Error('Co-op combat is still resolving');
+  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !combat.pendingAbilityDiscard && !combat.pendingReaction
+    && !(combat.reactionCursor && combat.phase === 'suspended'))) throw new Error('Co-op combat is still resolving');
   const nodes = [], seen = new Map();
   function encode(value) {
     if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
@@ -115,5 +117,7 @@ export function decodeCoopCombatSnapshot(snapshot) {
     if (Object.hasOwn(combat.enemyKnowledge.owners, id)) knowledgeProblems.push(...perceptionProblems(seat.skills?.perception, combat.enemyKnowledge.rules.perception));
   }
   if (knowledgeProblems.length) throw new Error(knowledgeProblems.join('; '));
+  const reactionProblems = combatReactionProblems(combat, { ownerIds: new Set(combat.players.keys()) });
+  if (reactionProblems.length) throw new Error(reactionProblems.join('; '));
   return combat;
 }

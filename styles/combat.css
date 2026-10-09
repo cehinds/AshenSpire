@@ -161,6 +161,15 @@
   flex: 0 0 auto; min-height: 0; width: 100%;
 }
 .combatant-leading:empty { display: none; }
+.combatant-mini-hud {
+  display: flex; flex-direction: column; align-items: center; gap: calc(3px / var(--ui-zoom, 1));
+  width: calc(112px / var(--ui-zoom, 1)); flex: none; pointer-events: auto;
+}
+:root .combat[data-layout='formation'] .combatant.player .combatant-leading {
+  --player-hud-gap: 10px; flex-direction: column; bottom: auto;
+}
+.reaction-choice [data-reaction-option] { min-height: 44px; width: 100%; margin-block: 4px; }
+.reaction-choice [data-reaction-option][aria-pressed='true'] { outline: var(--focus-ring); }
 .combatant-card {
   position: absolute;
   top: var(--combatant-card-offset, 0);
@@ -1618,3 +1627,10 @@
 /* The raised HUD can reveal an HP tooltip where the next coach step moves.
    Keep tutorial exits above those reading surfaces. */
 :root:has(.combat[data-composition='option-c']) .tut-veil { z-index: 1100; }
+
+/* The player's complete widget grows upward in every formation layout. */
+:root .combat[data-layout='formation'] .combatant.player .combatant-leading {
+  flex-direction: column;
+  --player-hud-gap: 10px;
+}
+:root .combat[data-layout='formation'] .combatant-mini-hud .statuses:empty { display: none; }

@@ -14,6 +14,9 @@ const groups = {
 export const combatExpansionMartialOverlay = Object.fromEntries(Object.entries(groups)
   .flatMap(([maneuver, ids]) => ids.split(' ').map(id => [id, { maneuver }])));
 combatExpansionMartialOverlay.nockAndWait = { maneuver: 'counter', reach: 'near', counterMode: 'ranged' };
+// Defensive use still pays and resolves the card's printed effects.
+combatExpansionMartialOverlay.whirlingGuard.defensiveReaction = true;
+combatExpansionMartialOverlay.sweepingBlow.defensiveReaction = true;
 // A wide sweep disrupts footing through authored bodily pressure, rather than
 // granting every Sweep an automatic active status. Two base sweeps fill 6.
 combatExpansionMartialOverlay.sweepingBlow.buildup = {
@@ -87,6 +90,7 @@ export function applyCombatExpansionMartial(def) {
   const targeting = def.targeting || (role.maneuver === 'sweep' || AREA.has(def.id) ? 'area' : 'single');
   const rewritten = tagsFor(tags, role, reach, targeting);
   const card = { ...def, tags: rewritten, cardTags: rewritten, reach, targeting,
+    ...(row.defensiveReaction ? { defensiveReaction: true } : {}),
     effects: pressureEffects(def.effects), ...(role.maneuver === 'support' ? { stanceTrigger: false } : {}) };
   if (def.upgrade?.effects) card.upgrade = { ...def.upgrade, effects: pressureEffects(def.upgrade.effects) };
   if (row.buildup) {

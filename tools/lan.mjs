@@ -254,6 +254,7 @@ export function attachLan(server, { port, root }) {
       case 'recoverControl': progressionIntent(() => g.combatRecovery(id, msg.selections)); break;
       case 'chooseBlightFeat': progressionIntent(() => g.combatBlightFeat(id, { threshold: msg.threshold, path: msg.path })); break;
       case 'chooseDiscard': g.combatChooseDiscard(id, msg.cardInstanceIds); break;
+      case 'chooseReaction': progressionIntent(() => g.combatChooseReaction(id, { offerId: msg.offerId, optionId: msg.optionId ?? null })); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
       case 'chooseAbilityDraft': progressionIntent(()=>g.chooseAbilityDraft(id,msg.offerId,msg.choiceId,{catchup:msg.catchup===true,saveSession:persistRespecSnapshot})); break;

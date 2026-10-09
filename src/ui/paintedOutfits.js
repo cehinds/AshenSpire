@@ -88,6 +88,7 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   const idleBox = art.frames.idle.box;
   const height = Math.max(STAGE.floorY - idleBox.y0, ...Object.values(readyFrames).map(frame => STAGE.floorY - frame.box.y0));
   el.dataset.idleHeightRatio = String((STAGE.floorY - idleBox.y0) / height);
+  el.dataset.maximumHeightRatio = String(Math.max(...Object.values(frames).map(frame => (STAGE.floorY - frame.box.y0) / height)));
   // Twice the wider half-width, because the figure is centred on the canvas.
   const halfWidth = Math.max(STAGE.centerX - idleBox.x0, idleBox.x1 + 1 - STAGE.centerX);
   el.dataset.idleWidthRatio = String((halfWidth + halfWidth) / height);

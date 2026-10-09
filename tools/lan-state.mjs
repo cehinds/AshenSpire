@@ -14,6 +14,7 @@ export function projectLanSnapshot(snapshot, memberIds) {
   for (const seat of [...(view.party || []), ...(view.scene?.players || [])]) if (!owned.has(seat.id)) {
     for (const key of ['enemyKnowledge', 'enemyKnowledgeState', 'enemyKnowledgeRules']) delete seat[key];
     if (seat.skills) delete seat.skills.perception;
+    delete seat.pendingReaction;
     function concealPerception(receipt) {
       if (receipt?.xpBefore?.tracks) delete receipt.xpBefore.tracks.perception;
       if (receipt?.xpGains?.tracks) delete receipt.xpGains.tracks.perception;
@@ -37,7 +38,7 @@ export function projectLanSnapshot(snapshot, memberIds) {
     const reads = enemy.intentReads;
     const knowledgeAction = enemy.knowledgeAction;
     const canRead = id => owned.has(id) && (knowledgeAction ? knowledgeAction.reads?.[id]?.visibility === 'exact' : reads ? reads[id] === true : !profile.camp);
-    const publicIntent = intent.kind === 'staggered';
+    const publicIntent = enemy.actorIntentRevealed === true || intent.kind === 'staggered';
     const revealed = publicIntent || (!intent.hidden && [...owned].some(canRead));
     if (!revealed) enemy.intent = knowledgeAction ? concealKnowledgeIntent(null, knowledgeAction.serial) : concealIntent(intent, profile);
     if (knowledgeAction) {

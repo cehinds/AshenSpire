@@ -786,6 +786,7 @@ function evalRaw(ctx, action, value, dflt, target) {
 export function executeAction(ctx, action) {
   if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
+  if (action.meta?.expansionGroup?.cancelled) return;
   if (ctx.combatExpansionVersion === 2) Expanded.beginExpandedAction(ctx, action.meta?.expansionGroup, action.source);
   if (action.meta?.combatCounterReaction && (!action.source?.alive || action.meta.combatCounterInterrupted)) return;
   if (ctx.foundation) ctx._foundationAncestry = action.meta?.foundationAncestry || [];

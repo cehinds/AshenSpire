@@ -10,7 +10,7 @@ export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, 
   // opening checkpoint also saves the entry check and exact initial RNG state.
   const checkpoint = run.combatEntered;
   const savesKnowledge = run.enemyKnowledgeRules?.version === 1 || candidate.enemyKnowledge?.version === 1;
-  if (!savesKnowledge && candidate.combatExpansionVersion === 2 && !candidate.result
+  if (!savesKnowledge && candidate.reactionRulesVersion !== 1 && candidate.combatExpansionVersion === 2 && !candidate.result
     && checkpoint?.nodeId === nodeId && checkpoint.encounterId === encounterId && checkpoint.snapshot
     && JSON.stringify(run.ashenBlight) === JSON.stringify(candidate.player.ashenBlight)) {
     return { ok: true, durable: false };

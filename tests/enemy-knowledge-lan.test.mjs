@@ -73,6 +73,43 @@ test('host learning acknowledgment commits member and combat once, and refusal a
   assert.deepEqual(restored.live.combat.enemyKnowledge.owners.p1.pending.enemies, {});
 });
 
+test('actual reaction authority persists offers and hides unowned options', () => {
+  const { host, saved } = fixture('reaction-authority');
+  const C = host.live.combat;
+  assert.equal(C.reactionRulesVersion, 1);
+  for (const P of C.players.values()) {
+    P.piles.draw.push(...P.piles.hand);
+    P.piles.hand = [{ cardId: 'guardCounter', instanceId: `${P.id}:reaction`, upgraded: false }];
+    P.entity.energy = 8; P.entity.energyMax = 8; P.entity.block = 100;
+  }
+  assert.equal(host.combatEndTurn('p1').ok, true);
+  assert.equal(host.combatEndTurn('p2').ok, true);
+  assert.equal(host.live.combat.pendingReaction.ownerId, 'p1');
+  const offer = host.live.combat.pendingReaction;
+  const wire = projectLanSnapshot(host.snapshot(), ['p2']);
+  assert.equal(wire.scene.players.find(player => player.id === 'p1').pendingReaction, undefined);
+  assert.deepEqual(wire.scene.reactionWaiting, { id: offer.id, ownerId: 'p1' });
+  assert.ok(wire.scene.enemies.find(enemy => enemy.id === offer.sourceId).actorIntentRevealed);
+  const before = JSON.stringify(host.serialize());
+  assert.equal(host.combatChooseReaction('p2', { offerId: offer.id }).ok, false);
+  assert.equal(JSON.stringify(host.serialize()), before);
+  const counters = host.live.combat.rng.getCounters();
+  host.setCombatSave(() => false);
+  assert.equal(host.combatChooseReaction('p1', { offerId: offer.id }).ok, false);
+  assert.equal(JSON.stringify(host.serialize()), before);
+  assert.deepEqual(host.live.combat.rng.getCounters(), counters);
+  host.setCombatSave(() => true);
+  const restored = restoreSession(registries, saved());
+  assert.equal(restored.live.combat.pendingReaction.id, offer.id);
+  restored.setConnected('p1', true); restored.setConnected('p2', true);
+  const liveAnswer = host.combatChooseReaction('p1', { offerId: offer.id });
+  assert.equal(liveAnswer.ok, true, JSON.stringify(liveAnswer));
+  const restoredAnswer = restored.combatChooseReaction('p1', { offerId: offer.id });
+  assert.equal(restoredAnswer.ok, true, JSON.stringify(restoredAnswer));
+  assert.deepEqual(host.live.combat.rng.getCounters(), restored.live.combat.rng.getCounters());
+  assert.deepEqual(host.live.combat.pendingReaction, restored.live.combat.pendingReaction);
+});
+
 test('restored room authority refuses malformed ordinal, downgrade and member identity drift', () => {
   const { saved } = fixture();
   for (const ordinal of ['oops', -1, 1.5, Number.MAX_SAFE_INTEGER + 1, undefined, 0, 2]) {

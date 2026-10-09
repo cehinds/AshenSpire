@@ -22,6 +22,7 @@ import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
+import { openReactionChoiceModal } from '../components/reactionChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -78,7 +79,8 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds } from '../fx.js';
+import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
+import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -383,6 +385,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (shell && shell.close) shell.close();
   }
   const send = (obj,{progressionPopup=false}={}) => {
+    if (latestWireSnap?.scene?.reactionWaiting && ['playCard', 'endTurn', 'flaskIntent', 'recoverControl', 'chooseBlightFeat', 'predictIntent'].includes(obj.t)) { showPendingReaction(); return; }
     if (obj.t === 'playCard' && obj.upcastTier == null && upcastTiersByCard.has(upcastKey(obj.cardInstanceId))) obj = { ...obj, upcastTier: upcastTiersByCard.get(upcastKey(obj.cardInstanceId)) };
     if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
     if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
@@ -691,6 +694,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function teardown() {
     disposed = true;
+    reactionShell?.dismiss();
     snap = null;
     closeCombatantDoor();
     disposeProgression();
@@ -966,6 +970,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   let discardShell = null;
   function showPendingDiscard() {
+    showPendingReaction();
     const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
     const pending = player?.pendingAbilityDiscard;
     if (!pending || pending.playerId !== me || discardShell || pacing) return;
@@ -975,6 +980,24 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       cards: player.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
+    });
+  }
+
+  let reactionShell = null;
+  let reactionOfferId = null;
+  function showPendingReaction() {
+    const sc = latestWireSnap?.scene;
+    const owner = sc?.players?.find(player => seats.includes(player.id) && player.pendingReaction?.ownerId === player.id);
+    if (!owner || reactionShell || pacing || sc.players.some(player => player.pendingAbilityDiscard)) return;
+    const ownerId = owner.id;
+    reactionOfferId = owner.pendingReaction.id;
+    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction,
+      onClosed: () => { reactionShell = null; reactionOfferId = null; },
+      onAnswer: intent => {
+        if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
+          send({ t: 'chooseReaction', ...intent });
+      },
     });
   }
 
@@ -1159,7 +1182,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
     wireCoopActionRow(meP);
     const hand = area.querySelector('.hand');
-    hand.inert = pacing || !!meP?.ended;
+    hand.inert = pacing || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;
     hand.setAttribute('aria-disabled', String(hand.inert));
 
     // My hand — THE hand renderer, mounted fresh per snapshot render (this
@@ -1772,6 +1795,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function receiveSnapshot(s) {
     void bankOwnedLearning(s);
     latestWireSnap = s;
+    if (reactionShell && reactionOfferId !== s.scene?.reactionWaiting?.id) reactionShell.dismiss();
     receivedSnapshots += 1;
     if (pacing) {
       const seq = s.scene?.kind === 'combat' ? Number(s.scene.receiptSeq) || 0 : 0;
@@ -1780,6 +1804,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return;
     }
     const sc = s.scene;
+    if (sc?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
+      && (sc.events || []).some(event => ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'].includes(event.type))) {
+      paceReactionReceipts(s);
+      return;
+    }
     const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
     if (moves.length && prevCombat && sc.turn > prevCombat.turn && app.querySelector('.combat.coop')) {
       paceEnemyTurn(s, moves);
@@ -1854,6 +1883,114 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       render();
       if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
     }
+  }
+
+  function paceReactionReceipts(next) {
+    pacing = true;
+    const working = structuredClone(snap);
+    working.scene.events = [];
+    const events = (next.scene.events || []).map(event => ({ ...event,
+      sourceId: event.sourceId === 'player' ? event.sourcePlayerId || event.playerId : event.sourceId,
+      targetId: event.targetId === 'player' ? event.targetPlayerId || event.playerId : event.targetId }));
+    const anchorFor = id => app.querySelector(`[data-seat="${CSS.escape(String(id))}"] .sprite`)
+      || app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`);
+    const entityFor = id => [...working.scene.enemies, ...working.scene.players].find(entity => entity.id === id);
+    const apply = beat => {
+      for (const event of beat.events) {
+        const target = entityFor(event.targetId);
+        if (event.type === 'hpLost' && target) target.hp = Math.max(0, target.hp - event.amount);
+        if (event.type === 'healed' && target) target.hp = Math.min(target.maxHp, target.hp + event.amount);
+        if (event.type === 'blockGained' && target) target.block += event.amount;
+        if (event.type === 'damageDealt' && target) {
+          target.hp = Math.max(0, target.hp - Math.max(0, event.amount - (event.blocked || 0)));
+          if (event.blockRemaining !== undefined) target.block = event.blockRemaining;
+        }
+        if (event.type === 'cardPlayed') {
+          const owner = entityFor(event.sourcePlayerId || event.playerId);
+          if (owner) { owner.hand = owner.hand.filter(card => card.instanceId !== event.cardInstanceId);
+            owner.energy -= event.staminaSpent ?? event.energySpent ?? 0; owner.mana -= event.manaSpent || 0; }
+        }
+        if (['cardDrawn', 'cardDiscarded', 'cardExhausted'].includes(event.type)) {
+          const owner = entityFor(event.playerId || event.sourcePlayerId);
+          if (owner && event.type !== 'cardDrawn') owner.hand = owner.hand.filter(card => card.instanceId !== event.cardInstanceId);
+          const drawn = next.scene.players.find(player => player.id === owner?.id)?.hand.find(card => card.instanceId === event.cardInstanceId);
+          if (owner && drawn && !owner.hand.some(card => card.instanceId === drawn.instanceId)) owner.hand.push(drawn);
+        }
+        if (event.type === 'enemyDied' && target) { target.hp = 0; target.alive = false; }
+        if (event.type === 'impactDealt' && target && event.poiseMeter) target.poiseMeter = { ...event.poiseMeter };
+        if (event.type === 'enemyActorTurnStarted') {
+          const enemy = entityFor(event.sourceId);
+          if (enemy) {
+            enemy.actorIntentRevealed = true; enemy.intent = event.intent;
+            const profile = event.intent?.combatProfile || {};
+            enemy.intentPreviews = Object.fromEntries(seats.map(id => [id, { ...event.intent, profile,
+              stance: combatIntentStance(event.intent, profile), hidden: false, revealed: true }]));
+          }
+        }
+        if (event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy') {
+          const enemy = entityFor(event.sourceId);
+          if (enemy) enemy.intentPreviews = Object.fromEntries(seats.map(id => [id, { kind: 'attack', moveId: event.moveId,
+            damage: event.amount, hits: 1, profile: event.combatProfile || {}, stance: 'countering', hidden: false, revealed: true }]));
+        }
+      }
+      snap = working; render();
+    };
+    snap = working; render();
+    playTimeline(events, {
+      get layer() { return app.querySelector('.fx-layer'); },
+      get combatEl() { return app.querySelector('.combat'); }, anchorFor,
+      animateActor(beat, sprite, speed) {
+        const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
+        const played = returned?.sourceKind === 'player' ? returned : beat.events.find(event => event.type === 'cardPlayed');
+        const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => event.type === 'enemyMoveStarted');
+        if (!played && !moved) return null;
+        const stage = stageFor(sprite);
+        let pose = 'attack';
+        if (played) {
+          const ownerId = played.sourcePlayerId || played.playerId;
+          const member = next.party.find(member => member.id === ownerId);
+          const instance = played.cardInstance || working.scene.players.find(player => player.id === ownerId)?.hand.find(card => card.instanceId === played.cardInstanceId)
+            || { cardId: played.cardId };
+          let def = combatCardView({ registries: registriesForClassMastery(registries, { ...member, class: member?.classId }),
+            player: working.scene.players.find(player => player.id === ownerId), combatExpansionVersion: next.scene.combatExpansionVersion,
+            breakMeterVersion: next.scene.breakMeterVersion }, instance, played.upcastTier);
+          if (returned) {
+            const tags = (def.cardTags || def.tags || []).filter(tag => !tag.startsWith('kind:') && !tag.startsWith('maneuver:'));
+            def = { ...def, type: 'attack', kindIds: ['classification.attack'], cardTags: [...tags, 'maneuver:attack'] };
+          }
+          const plan = resolveCombatAnimation(def, equippedPieces(registries, member?.loadout, member?.classId),
+            { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId) });
+          pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
+        } else {
+          const definition = registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
+          const plan = resolveActionAnimation({ actorId: moved.enemyId, actionId: moved.moveId,
+            tags: definition?.tags || [], intent: moved.kind, availablePoses: stage?.poses || [] });
+          pose = moved.kind === 'attack' ? ['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack'
+            : moved.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+        }
+        const duration = stage?.actionTiming?.(pose, speed)?.totalMs || speed.lungeMs;
+        stage?.play(pose, duration);
+        return { impactMs: Math.min(speed.impactCapMs, duration / 2), totalMs: duration,
+          cancel: () => stage?.settle?.() };
+      },
+      onBeatApplied: apply,
+      onFlush() {
+        animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
+        lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
+        lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
+        snap = next; render();
+      },
+    }, () => {
+      animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
+      lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
+      lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
+      prevCombat = next.scene;
+      snap = next;
+      pacing = false;
+      render();
+      const queued = pendingSnaps; pendingSnaps = [];
+      for (const pending of queued) receiveSnapshot(pending);
+    });
   }
 
   function banner(text, small) {

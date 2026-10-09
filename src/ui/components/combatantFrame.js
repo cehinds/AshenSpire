@@ -26,18 +26,25 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   spriteHost.querySelector(':scope > .block-badge')?.remove();
   if (blockBadge) spriteHost.appendChild(blockBadge);
   for (const child of [...card.children]) if (child !== spriteHost) child.remove();
+  const widget = frame.classList.contains('player') ? playerWidget(leadingHost) : card;
   if (name) {
     markName(name, frame.classList.contains('player') ? 'player' : 'enemy');
-    card.appendChild(name);
+    widget.appendChild(name);
   }
-  if (meters) card.appendChild(meters);
-  appendAll(card, trailing.filter(n => n?.classList.contains('statuses')));
-  appendAll(card, trailing.filter(n => !n?.classList.contains('statuses')));
+  if (meters) widget.appendChild(meters);
+  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   return frame;
 }
 
 function appendAll(parent, nodes) {
   for (const node of nodes || []) if (node) parent.appendChild(node);
+}
+
+function playerWidget(leadingHost) {
+  const widget = document.createElement('div'); widget.className = 'combatant-mini-hud';
+  leadingHost.append(widget);
+  return widget;
 }
 
 // Snapshot clients keep their existing input listeners while adopting the
@@ -54,6 +61,10 @@ export function adoptCombatantFrame(frame) {
   if (name) markName(name, role);
   const sprite = card.querySelector(':scope > .sprite');
   if (sprite) markArtwork(sprite);
+  if (role === 'player') {
+    const widget = playerWidget(leading);
+    for (const child of [...card.children]) if (child !== sprite) widget.append(child);
+  }
 }
 
 function markArtwork(spriteHost) {
@@ -103,14 +114,14 @@ export function combatantFrame({
   spriteHost.appendChild(sprite);
   if (blockBadge) spriteHost.appendChild(blockBadge);
   card.appendChild(spriteHost);
-
+  const widget = role === 'player' ? playerWidget(leadingHost) : card;
   if (name) {
     markName(name, role);
-    card.appendChild(name);
+    widget.appendChild(name);
   }
-  if (meters) card.appendChild(meters);
-  appendAll(card, trailing.filter(n => n?.classList.contains('statuses')));
-  appendAll(card, trailing.filter(n => !n?.classList.contains('statuses')));
+  if (meters) widget.appendChild(meters);
+  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);
   return frame;

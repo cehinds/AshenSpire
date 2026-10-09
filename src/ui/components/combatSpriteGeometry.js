@@ -110,3 +110,31 @@ export function combatSpriteGeometry(sprite, refresh) {
   return { boxHeight, visibleHeight, visibleWidth: Math.max(1, width),
     footOffset: paintedEnemy ? 0 : boxHeight - ((boxHeight - img.naturalHeight * scale) / 2 + ground * scale) };
 }
+
+// Current pose ink, in physical screen pixels. Formation fitting continues to
+// use the stable idle envelope; only the overhead widget follows pose/lunge.
+export function currentSpriteArtBounds(sprite, refresh = () => {}) {
+  const images = [...sprite.querySelectorAll('.pose-frame, .pose-previous, .painted-presentation, .defeated-frame, .facing > img')];
+  const boxes = [];
+  for (const img of images) {
+    const style = getComputedStyle(img);
+    const rect = img.getBoundingClientRect();
+    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0 || !rect.width || !rect.height) continue;
+    let hidden = false;
+    for (let parent = img.parentElement; parent && parent !== sprite; parent = parent.parentElement) {
+      const parentStyle = getComputedStyle(parent);
+      if (parent.hidden || parentStyle.display === 'none' || parentStyle.visibility === 'hidden' || Number(parentStyle.opacity) === 0) { hidden = true; break; }
+    }
+    if (hidden) continue;
+    if (img.closest('.defeated') && img.closest('.pose-stage')?.dataset.pose !== 'defeated') continue;
+    const bounds = imageBounds(img, refresh);
+    if (!bounds) { boxes.push(rect); continue; }
+    const scale = Math.min(rect.width / img.naturalWidth, rect.height / img.naturalHeight);
+    boxes.push({ top: rect.top + (rect.height - img.naturalHeight * scale) / 2 + bounds.y0 * scale,
+      bottom: rect.top + (rect.height - img.naturalHeight * scale) / 2 + (bounds.y1 + 1) * scale,
+      left: rect.left + bounds.x0 * scale, right: rect.left + (bounds.x1 + 1) * scale });
+  }
+  if (!boxes.length) return sprite.getBoundingClientRect();
+  return { top: Math.min(...boxes.map(box => box.top)), bottom: Math.max(...boxes.map(box => box.bottom)),
+    left: Math.min(...boxes.map(box => box.left)), right: Math.max(...boxes.map(box => box.right)) };
+}

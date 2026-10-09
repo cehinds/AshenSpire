@@ -6,6 +6,7 @@ import { combatRatingProblems, ratingIds } from './combatRatings.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems } from './combatTacticsRules.js';
 import { statusControlProblems } from './combatStatusState.js';
 import { combatEnemyKnowledgeProblems } from './enemyKnowledgeCombat.js';
+import { combatReactionProblems } from './combatReactionState.js';
 import { perceptionProblems } from './perception.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
@@ -180,7 +181,8 @@ export function combatSnapshotProblems(snapshot) {
     if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
     else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
     if (!Array.isArray(snapshot.abilityQueue) || snapshot.abilityQueue.some(action => !record(action) || !record(action.effect) || !nonEmptyString(action.effect.op))) problems.push('abilityQueue must contain queued effects');
-  } else if (snapshot.abilityQueue !== undefined || snapshot.pendingAbilityPlay !== undefined) problems.push('saved ability queue requires a pending discard choice');
+  } else if ((snapshot.abilityQueue !== undefined && !snapshot.pendingReaction) || snapshot.pendingAbilityPlay !== undefined) problems.push('saved ability queue requires a pending choice');
+  problems.push(...combatReactionProblems(snapshot));
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.

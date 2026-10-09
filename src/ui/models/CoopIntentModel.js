@@ -3,6 +3,11 @@ import { concealKnowledgeIntent } from '../../model/enemyIntentKnowledge.js';
 
 // Couch seat switches project the same host roll; reading never rolls again.
 export function coopEnemyIntent(enemy, seatId, profile = null) {
+  if (enemy.actorIntentRevealed) {
+    const preview = enemy.intentPreviews?.[seatId] || enemy.intent || {};
+    const identity = preview.profile || preview.combatProfile || profile || {};
+    return { ...preview, profile: identity, stance: combatIntentStance(preview, identity), hidden: false, revealed: true };
+  }
   if (enemy.knowledgeAction && enemy.intent?.kind !== 'staggered') {
     const read = enemy.knowledgeAction.reads?.[seatId];
     return read?.visibility === 'exact' ? enemy.intentPreviews?.[seatId] || enemy.intent

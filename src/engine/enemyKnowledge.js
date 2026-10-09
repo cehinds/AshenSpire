@@ -113,7 +113,7 @@ export function knowledgeIntentProjection(combat, enemy, ownerId = combat.player
   if (!combat.enemyKnowledge) return null;
   // Staggered is a currently public status, even when it cancels an older
   // unread selected action; the old read is retained for committed responses.
-  if (enemy.intent?.kind === 'staggered') return { exact: true };
+  if (enemy.actorIntentRevealed || enemy.intent?.kind === 'staggered') return { exact: true };
   const action = enemy.knowledgeAction;
   const read = action?.reads[ownerId];
   return read?.visibility === 'exact' ? { exact: true, actionSerial: action.serial }
