@@ -143,6 +143,29 @@ test('pager focus and pointer selection choose one reveal owner without scroll o
   }
 });
 
+test('phone Upcast clears the footer at CSS zoom without accumulating lift', () => {
+  const properties = new Map();
+  const zoom = .74;
+  const hand = { clientWidth: 300, scrollLeft: 0, scrollTop: 17,
+    getBoundingClientRect: () => ({ left: 50, right: 272, width: 222, bottom: 688 }) };
+  const card = { classList: { contains: name => name === 'card' },
+    style: { getPropertyValue: key => properties.get(key) || '',
+      setProperty: (key, value) => properties.set(key, value), removeProperty: key => properties.delete(key) },
+    getBoundingClientRect: () => ({ left: 132, right: 266, width: 134 }) };
+  const control = { parentElement: card, getBoundingClientRect: () => {
+    const shift = (parseFloat(properties.get('--hand-upcast-rise')) || 0) * zoom;
+    return { left: 132, right: 266, width: 134, bottom: 719 + shift };
+  } };
+  revealHandUpcastControl(hand, control, 320);
+  assert.equal(control.getBoundingClientRect().bottom, 687, 'the complete chooser clears the hand/footer edge by a physical pixel');
+  const settled = properties.get('--hand-upcast-rise');
+  revealHandUpcastControl(hand, control, 320);
+  assert.equal(properties.get('--hand-upcast-rise'), settled, 'subsequent frames cannot restart or accumulate the lift');
+  assert.equal(hand.scrollTop, 17, 'the field and resting hand do not move');
+  revealHandUpcastControl(hand, card, 320);
+  assert.equal(properties.has('--hand-upcast-rise'), false, 'ordinary focus restores the authored card lift');
+});
+
 test('visible, hidden and detached-size controls leave hand position untouched', () => {
   const { hand, control } = scroller({ viewport: 1365, controlLeft: 200 });
   revealHandUpcastControl(hand, control, 1365);
