@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Alternative combat keeps its art with the complete tactical rules",
     "detail": "The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.",
-    "build": "0.7.1.1174",
+    "build": "0.7.1.1178",
     "pullRequest": 1740,
     "url": "https://github.com/cehinds/AshenSpire/pull/1740"
+  },
+  {
+    "id": "pr-1772",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Stable rear sprites and clear battlefield layers",
+    "detail": "Keep character size and resting positions fixed as cards leave or return to the hand, including co-op updates and empty-hand resizing. Rear player artwork moves only for melee and returns to its anchor. Raise the player, move enemies back and right, and lower the footer fade behind characters while HUD, cards and selection controls retain their shared layer order.",
+    "build": "0.7.1.1175",
+    "pullRequest": 1772,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1772"
   },
   {
     "id": "pr-1767",

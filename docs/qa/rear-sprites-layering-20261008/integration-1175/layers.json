@@ -1,0 +1,348 @@
+{
+  "base": "http://localhost:8338/build/AshenSpire.html",
+  "results": [
+    {
+      "shot": "combat",
+      "viewport": [
+        650,
+        766
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 110.453125,
+            "height": 21.5625
+          },
+          {
+            "width": 92.328125,
+            "height": 7
+          },
+          {
+            "width": 92.328125,
+            "height": 7
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "combat",
+      "viewport": [
+        1440,
+        900
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 136.796875,
+            "height": 26.703125
+          },
+          {
+            "width": 114.359375,
+            "height": 8.671875
+          },
+          {
+            "width": 114.359375,
+            "height": 8.671875
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "combat",
+      "viewport": [
+        390,
+        844
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 118.703125,
+            "height": 23.171875
+          },
+          {
+            "width": 80.65625,
+            "height": 6.109375
+          },
+          {
+            "width": 69.828125,
+            "height": 5.2968902587890625
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "combat",
+      "viewport": [
+        844,
+        390
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/AshenSpire.html?shot=combat",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 39.796875,
+            "height": 7.765625
+          },
+          {
+            "width": 38.703125,
+            "height": 2.9375
+          },
+          {
+            "width": 59.78125,
+            "height": 4.53125
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": null,
+      "errors": [],
+      "failedRequests": [
+        "404 http://localhost:8338/build/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "shot": "coop",
+      "viewport": [
+        1440,
+        900
+      ],
+      "runtime": {
+        "url": "http://localhost:8338/build/AshenSpire.html?shot=coop",
+        "packaged": true,
+        "instrumented": true
+      },
+      "layers": {
+        "scenery": 0,
+        "shadows": 100,
+        "enemies": [
+          201,
+          200,
+          201
+        ],
+        "player": 301,
+        "fade": 150,
+        "selection": 502,
+        "cards": 600,
+        "targetPlate": 500,
+        "targetHealth": 501,
+        "hud": 700,
+        "footer": 700,
+        "ancestors": [],
+        "railsBackground": "none",
+        "shadowBoxes": [
+          {
+            "width": 122.90625,
+            "height": 26.578125
+          },
+          {
+            "width": 136.796875,
+            "height": 26.703125
+          },
+          {
+            "width": 144.6875,
+            "height": 8.671875
+          },
+          {
+            "width": 144.6875,
+            "height": 8.671875
+          },
+          {
+            "width": 87.015625,
+            "height": 10.484375
+          }
+        ],
+        "entityTargets": true,
+        "missingArt": [],
+        "overflow": false
+      },
+      "receiptStability": {
+        "before": [
+          {
+            "id": "p1",
+            "x": 243.359375,
+            "y": 248.09375,
+            "width": 175.65625,
+            "height": 250.828125
+          },
+          {
+            "id": "p2",
+            "x": 334.25,
+            "y": 291.484375,
+            "width": 195.515625,
+            "height": 207.4375
+          },
+          {
+            "id": "e1",
+            "x": 871.8125,
+            "y": 191.578125,
+            "width": 206.703125,
+            "height": 108.484375
+          },
+          {
+            "id": "e2",
+            "x": 1110.28125,
+            "y": 164.390625,
+            "width": 206.703125,
+            "height": 108.484375
+          },
+          {
+            "id": "e3",
+            "x": 913,
+            "y": 164.390625,
+            "width": 124.3125,
+            "height": 131.171875
+          }
+        ],
+        "after": [
+          {
+            "id": "p1",
+            "x": 243.359375,
+            "y": 248.09375,
+            "width": 175.65625,
+            "height": 250.828125
+          },
+          {
+            "id": "p2",
+            "x": 334.25,
+            "y": 291.484375,
+            "width": 195.515625,
+            "height": 207.4375
+          },
+          {
+            "id": "e1",
+            "x": 871.8125,
+            "y": 191.578125,
+            "width": 206.703125,
+            "height": 108.484375
+          },
+          {
+            "id": "e2",
+            "x": 1110.28125,
+            "y": 164.390625,
+            "width": 206.703125,
+            "height": 108.484375
+          },
+          {
+            "id": "e3",
+            "x": 913,
+            "y": 164.390625,
+            "width": 124.3125,
+            "height": 131.171875
+          }
+        ],
+        "replacedField": true
+      },
+      "errors": [],
+      "failedRequests": []
+    }
+  ]
+}
