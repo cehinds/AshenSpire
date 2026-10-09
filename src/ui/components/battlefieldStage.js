@@ -49,6 +49,9 @@ export function wireBattlefieldStage(field, model) {
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
+    const vitality = hudBand?.querySelector('.resbars-host');
+    if (vitality) combat.style.setProperty('--combat-header-opaque-end',
+      `${Math.max(0, (vitality.getBoundingClientRect().bottom - hudBand.getBoundingClientRect().top) / zoom)}px`);
     // The turn ribbon hangs from the HUD band's bottom edge (player-polish.css
     // reads --turn-ribbon-top), so it never sits under a band taller than its
     // row. Its box, in the same screen px as the plan, is a second ceiling for
@@ -324,8 +327,9 @@ export function wireBattlefieldStage(field, model) {
     });
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
-    // Keep the painting within its atlas cell, with the same ground line as
-    // the formation. Continuing behind cards must not move that line.
+    // Fit the sky from the top of the combat screen, including the HUD.
+    // Extending a field-only crop upward can expose empty space above the
+    // painting. Continuing behind cards must not move the ground line.
     const backdrop = combat.querySelector('.environment-backdrop');
     // Its width is read BEFORE the two variables below are written: they are
     // set on the fight's root, so a read after them restyled the whole screen
@@ -335,11 +339,13 @@ export function wireBattlefieldStage(field, model) {
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
     fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop: (fieldRect.top - rect.top) / zoom, ground: plan.ground / zoom, narrow });
+    const fieldTop = (fieldRect.top - rect.top) / zoom;
+    const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
-      windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,
-      config: battlefieldBackdropConfig({ height: fieldRect.height / zoom,
-        fieldTop: 0, fieldHeight: fieldRect.height / zoom,
+      windowTop: 0, windowHeight: sceneHeight,
+      config: battlefieldBackdropConfig({ height: sceneHeight,
+        fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
