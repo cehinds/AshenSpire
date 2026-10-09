@@ -236,6 +236,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `combat-log-drawer` | `CombatToolsModel` + `combatLog.combatLogEntries` | `combatTools.mountCombatTools` | Solo and co-op combat | Public executed actions grouped by round; stable event IDs survive resync and reload. Unfolds upward with translucent background and scrollable entries. Small is half card height, Medium half visible viewport, Large ends below actual menu buttons; all sizes clamp to available space. |
 | `reaction-toggle` | `CombatToolsModel` | `combatTools.mountCombatTools` | Owned solo and co-op combat | Green enabled/red disabled fill, white black-outlined text and gold thumb/border. Explicit owned preference saves through the combat command door between actions; armed Counter remains active. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | The complete player name, resource, stance and status widget sits above current visible sprite pixels with a 10 physical pixel gap. Selection expands upward. Transparent margins, UI zoom, idle breathing and action poses are measured; formation fitting reserves authored pose headroom. |
+| `alternative-sprite-renewal` | Class-card registry + `ANIM_SPEEDS` + `combatAura` | `alternativeCardStage.js`, `pose-studio/renewal/preview.mjs` | Combat and animation authoring | Four base-armour classes with attack, smash, sweep, counter, defend, spell and physical/magic ranged actions. Card-type routing is shared by solo, co-op and deck preview; equipment combinations remain deferred. Alpha-shaped auras, red hit flash, reduced motion and portable Workshop/Pose Studio exports. [Interactive atelier](../pose-studio/renewal/index.html). |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
 | `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses, intermediate entry/exit sprites, subtle breathing glows, and fades that survive combat redraws. Reduced motion uses a steady glow. [Interactive miniature](../art/readiness-poses/preview.html). |
 | `combatant-nameplate` | `combatantFrame` child | `combatantFrame.js` | Combat cards | Combatant name label. |
@@ -253,7 +254,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
-| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Faces fan by overlap, grow up to 184 physical pixels wide when space permits, and remain visible, inert and dim during enemy turns. The 5:7 face is the card's one authored shape (`content/config/ui/components/card.json` `sizing.ratio`, projected as `--card-ratio` by `CardSizeModel`): this row said 5:7 while the hand actually drew 5:8, and `node tools/card-one-shape.mjs` now holds every surface to the one number. |
+| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Faces fan by overlap, grow up to 184 physical pixels wide when space permits, and remain visible, inert and dim during enemy turns. The resting rotated hand edge anchors the solo figure; card selection and pile changes leave that anchor steady, while a matching completed hand layout updates it after resize or text-scale changes. The 5:7 face is the card's one authored shape (`content/config/ui/components/card.json` `sizing.ratio`, projected as `--card-ratio` by `CardSizeModel`): this row said 5:7 while the hand actually drew 5:8, and `node tools/card-one-shape.mjs` now holds every surface to the one number. |
 | `combat-action-rail` | `componentModel` | `components/combatActionRow.js` (mounted by `combat.js` and `coop.js`) | Combat, Co-op combat | Single centered row: emerald stamina orb (`StaminaOrbModel` / `staminaOrb.js`) with independent number and SP label layers and an optional sapphire mana ring; flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. Co-op mounts the same row; its piles show counts (the host sends no cards) and its Potions list belongs to the seat that opened it. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
@@ -793,3 +794,20 @@ Advanced → Stats holds a topic for each rating's stat row, plus curves, impact
 `reactionChoiceModal.openReactionChoiceModal` composes the existing modal shell and standard button/footer controls in solo and co-op. Owned authoritative options include normal payment, card choice and Upcast. The first option receives focus; selection only selects; Play commits once; Back or Escape skips the offered reaction and resumes the incoming action. Silent disposal removes an obsolete offer without submitting an answer. Co-op receipts use the shared actor timeline with current effects-layer anchors and per-beat Health/Block updates.
 
 `combat-tools` composes `combat-log-drawer` and `reaction-toggle`. The log and sizing controls remain read-only during a timeline and do not skip animation. Both screens use the same renderer and model; co-op receives only public executed log entries and the active owned switch preference.
+
+Alternative battlefield art: `alternativeArtCatalog` and `alternativeArt.js`
+provide canonical idle actor lookup, desktop/phone exports, and independently
+fitted four-layer scenery for 32 named combat settings. `battlefield-stage`
+continues to own actor slots, floor alignment, HUD and intent clearance. The
+companion indicator uses the same catalog. No review-page HUD or action anchors
+are imported. The Combat Studio source package and its portable drafts remain
+separate from generated runtime exports.
+
+Both presentations now share those component IDs. `displayAppearance` selects
+the default alternative formation, layered scenery and class animations, or
+the previous classic art and fitting. **Classic appearance** is a saved boolean
+setting under Advanced diagnostics, visible only with the debug flag on.
+Changing it refreshes the mounted battlefield without changing combat rules or
+run state. UI, card controls and companion icons remain shared. The
+[display art libraries](../assets-display/README.md) separate classic,
+alternative and shared ownership while retaining canonical packed IDs.

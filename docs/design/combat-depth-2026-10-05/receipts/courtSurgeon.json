@@ -1,0 +1,37 @@
+{
+  "id": "courtSurgeon",
+  "name": "Court Surgeon",
+  "family": "enemy",
+  "act": 2,
+  "size": "medium",
+  "source": "src/content/enemies/act2.js",
+  "facing": "left",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Ominous royal surgeon in layered stained ivory robes and leather surgical apron, beaked metal mask, delicate long cutting tool and thread spools; no explicit gore. Face LEFT toward the player. Use a canvas that contains the complete silhouette, wide 1536x1024 for broad beasts and winged figures, portrait 1024x1536 for upright figures. Lowest foot at 94 percent height; no clipped horns, wings, tails or weapons.",
+  "file": "masters/courtSurgeon.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-0449abd9-3c02-41d2-9ef9-7971266ff569.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5952987670898438,
+    "visibleBounds": [
+      153,
+      26,
+      937,
+      1507
+    ],
+    "anchor": [
+      545.0,
+      1507
+    ],
+    "sha256": "86065d443bab4e4fdcd50d5df5ccbf1542e67df03794a679be7e56bcfca2ba32"
+  }
+}

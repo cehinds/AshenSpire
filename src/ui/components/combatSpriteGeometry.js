@@ -1,5 +1,6 @@
 // Read idle artwork once, excluding transparent padding. Cache by asset URL;
 // animation/stance changes must never resize the formation during a turn.
+import { stageFor } from '../services/PoseAnimator.js';
 const boundsCache = new Map();
 // Painted enemy art shares a floor at 364/384 of its canvas height. The light
 // tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
@@ -114,6 +115,18 @@ export function combatSpriteGeometry(sprite, refresh) {
 // Current pose ink, in physical screen pixels. Formation fitting continues to
 // use the stable idle envelope; only the overhead widget follows pose/lunge.
 export function currentSpriteArtBounds(sprite, refresh = () => {}) {
+  const painted = stageFor(sprite)?.currentArt;
+  if (painted) {
+    const bounds = imageBounds(painted.image, refresh);
+    if (bounds) {
+      const rect = painted.canvas.getBoundingClientRect();
+      const sx = rect.width / painted.canvas.width, sy = rect.height / painted.canvas.height;
+      return { top: rect.top + (painted.top + bounds.y0 * painted.height / painted.image.naturalHeight) * sy,
+        bottom: rect.top + (painted.top + (bounds.y1 + 1) * painted.height / painted.image.naturalHeight) * sy,
+        left: rect.left + (painted.left + bounds.x0 * painted.width / painted.image.naturalWidth) * sx,
+        right: rect.left + (painted.left + (bounds.x1 + 1) * painted.width / painted.image.naturalWidth) * sx };
+    }
+  }
   const images = [...sprite.querySelectorAll('.pose-frame, .pose-previous, .painted-presentation, .defeated-frame, .facing > img')];
   const boxes = [];
   for (const img of images) {

@@ -191,6 +191,8 @@ test('all 35 Progression hub rows remain protected after origin/dev contains the
   const permanent = migratedTexts(permanentMigratedIds());
   assert.ok(permanent.get('Progression')?.includes('progression.title.short'),
     'protect the title and its distinct settings-group ID allowance after promotion');
+  assert.ok(permanent.get('Character')?.includes('progression.tab.character.short'));
+  assert.ok(permanent.get('Skills')?.includes('progression.tab.skills.short'));
   assert.ok(permanent.get('Associated cards')?.includes('progression.cards.short'),
     'protect the hub inspection copy independently of git branch state');
 });

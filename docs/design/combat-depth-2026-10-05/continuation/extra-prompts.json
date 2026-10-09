@@ -1,0 +1,122 @@
+[
+  {
+    "id": "starwatch-far",
+    "kind": "far",
+    "transparent": false,
+    "resultFile": "scenes/shared/drowned-coast/starwatch-far.png",
+    "prompt": "Create one opaque distant background plate for Starwatch Terrace, AshenSpire, detailed dark fantasy painterly realism. Distant storm-dark sea with scattered stone sea stacks and tiny ruined spires at very low horizon y=47%, midnight blue star-filled sky with faint Milky Way and silver moonlight through thin clouds. Only distant sea and sky, subdued contrast. No near telescope, armillary, railing, floor, trees, characters or text. Wide 1536x1024, full bleed. Leave center open for separate transparent Gothic observatory architecture.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "undercroft-far",
+    "kind": "far",
+    "transparent": false,
+    "resultFile": "scenes/shared/ashen-crown/undercroft-far.png",
+    "prompt": "Create one opaque distant BACK WALL AND VAULT background plate for Throne Undercroft in AshenSpire. Vast underground Gothic crypt, deep recessed ribbed stone vaults and almost-black masonry, faint dust haze and tiny distant amber candle niches, dim warm grey shafts from small high ceiling apertures. Painterly weathered realistic dark fantasy matching reference. View horizontal through interior, low distant horizon y=44%, softer contrast farther away. No outdoor sky, sunset, city, trees, near columns, near throne, foreground floor details, characters or UI. Background fills whole 1536x1024 canvas; lower half falls into dark atmospheric interior distance.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "hollow-night-far",
+    "kind": "far",
+    "transparent": false,
+    "resultFile": "scenes/shared/hollow-weald/night-far.png",
+    "prompt": "Create one opaque distant background plate for the moonlit Hollow Weald in AshenSpire. Low distant dead forest and Gothic silhouettes across a misty valley, dim blue-grey full moon peeking through clouds upper right, slate night sky, subtle cool mist fills lower half. Detailed painterly dark fantasy, weathered realism. ONLY distant sky, remote forest and valley mist. No near trees, bridge, chapel, landmark, walkable ground, lantern, person, monster, UI or text. Full bleed wide 1536x1024. Neutral moonlight, faint muted umber remnants in distant foliage; no orange sunset.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "glass-lake-ground",
+    "kind": "ground",
+    "transparent": true,
+    "resultFile": "scenes/shared/pale-marches/glass-lake-ground.png",
+    "prompt": "Create one transparent ground layer for The Glass Lake combat stage, painterly dark fantasy realistic. Wide 1536x1024 registered canvas. Entire upper 43% fully transparent. From y=47% down, one continuous flat frozen lake surface of blue-grey glassy thick ice with fine white fracture patterns and subtle silver reflections. Fills bottom edge and both bottom corners completely with opaque ice. Tiny snow crystals only at extreme side edges. Broad open uninterrupted standing area across lower half, gentle downward eye-level perspective toward vanishing point x=60% y=43%. No paving, rocks in middle, architecture, sky, mountains, trees, characters, flames, orange lava, labels or floor cutaway. Actual transparent alpha above ice. This is a ground-only parallax plate.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "grave-ships-ground",
+    "kind": "ground",
+    "transparent": true,
+    "resultFile": "scenes/shared/drowned-coast/grave-ships-ground.png",
+    "prompt": "Create one transparent ground-only parallax layer for Grave of Ships combat stage, painterly weathered dark fantasy realism. Wide 1536x1024 registered canvas. Upper 43% completely transparent. Lower half continuous flat dark wet sand with delicate ripples, scattered shells and subtle shallow tide sheen; a few seaweed strands and rotten planks confined to outer edges. Opaque sand fills entire bottom and corners, not a floating platform. Broad clear level standing area across center lower half. Gentle downward perspective toward x=60% y=43%. Cold storm-grey slate palette, no sunset or lava. No horizon scenery, ships, mast, sky, characters, labels, UI. Actual transparent alpha above sand.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "ashen-crown-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "ashen-crown",
+    "transparent": true,
+    "resultFile": "scenes/shared/ashen-crown/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's ashen-crown combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY crumbling limestone balustrade fragments, dark cypress branches and a tarnished brass lantern. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "pale-marches-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "pale-marches",
+    "transparent": true,
+    "resultFile": "scenes/shared/pale-marches/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's pale-marches combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY jagged frost-coated stone and bare ice-encrusted branches, restrained silver-blue light. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Cold silver-blue light and frost, absolutely no fire or lava cracks.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "cinder-reach-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "cinder-reach",
+    "transparent": true,
+    "resultFile": "scenes/shared/cinder-reach/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's cinder-reach combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY black broken basalt columns and cooled slag rocks, one small banked ember lantern. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "drowned-coast-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "drowned-coast",
+    "transparent": true,
+    "resultFile": "scenes/shared/drowned-coast/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's drowned-coast combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY rotting ship timbers, barnacled dark stone and a hanging rusted chain at outer edges. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Cold salt-grey wet materials, no lava or flames.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "BS-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "BS",
+    "transparent": true,
+    "resultFile": "scenes/shared/BS/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's BS combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY gnarled thorny briar roots and chipped Gothic stone, small amber votive lantern. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "HM-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "HM",
+    "transparent": true,
+    "resultFile": "scenes/shared/HM/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's HM combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY shattered tarnished silver mirror frames and frost-crusted pillars at extreme edges. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Cold silver-blue light and frost, absolutely no fire or lava cracks.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "FC-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "FC",
+    "transparent": true,
+    "resultFile": "scenes/shared/FC/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's FC combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY burnt iron columns and slack heavy chains, blackened bronze censer at extreme edges. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+    "reference": "../references/composition.png"
+  },
+  {
+    "id": "hollow-weald-phone-foreground",
+    "kind": "foreground",
+    "phoneOnly": true,
+    "region": "hollow-weald",
+    "transparent": true,
+    "resultFile": "scenes/shared/hollow-weald/foreground-phone.png",
+    "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's hollow-weald combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY huge gnarled dark forest tree, exposed roots and small amber lantern at left edge, thinner dead tree at right edge. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+    "reference": "../references/composition.png"
+  }
+]

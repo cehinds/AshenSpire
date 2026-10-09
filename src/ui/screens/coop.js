@@ -4,12 +4,14 @@ import {mountCoopProgressionDoor,gateCoopProgressionControls} from '../component
 import { mountInitialClassMastery } from '../components/classMastery.js';
 import { registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.js';
+import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { cardTargetPlan } from '../../model/cardTargets.js';
@@ -82,7 +84,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
+import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
@@ -206,6 +208,7 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
   clearSelection();
   let disposed = false;
+  const releaseAppearance = onDisplayAppearanceChange(app, () => { if (!disposed && snap && !pacing) render(); });
   const banking = new Set();
   const bankFailures = new Map();
   const bankAttempts = new Map();
@@ -287,6 +290,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   const combatRests = new Map();
+  const heldStances = createStanceLedger();
   const readinessOrders = new Map();
   let posePresentations = new Map();
   let poseReactions = new Map();
@@ -316,16 +320,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (event.type === 'cardPlayed' && member) {
         const definition = resolveCoopPlayedCombatCard(registries, snap, event);
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
+        heldStances.accept(event, { ...definition, cardTags: tags });
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
         const animation = equipmentAnimationForLoadout(registries, member.loadout, member.classId);
-        plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, action, combatExpansionVersion: scene.players.find(player => player.id === ownerId)?.combatExpansionVersion || 1 });
+        plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, classId: member.classId, appearance: displayAppearance(), combatExpansionVersion: scene.players.find(player => player.id === ownerId)?.combatExpansionVersion || 1, action });
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
         plan.spriteEffect=combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},event);plan.targetId=event.targetId;plan.effectEvents=effectEvents;
         pendingAnimations.set(ownerId, plan);
       }
       combatRests.set(ownerId, combatRestAfterEvent(combatRests.get(ownerId) || 'idle', event, ownerId, plan));
-      if (event.type === 'playerTurnStart') pendingAnimations.delete(ownerId);
+      if (event.type === 'playerTurnStart') { pendingAnimations.delete(ownerId); heldStances.accept(event); }
     }
   }
   let pacing = false; // an enemy-turn replay is holding the render
@@ -700,6 +705,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    releaseAppearance();
     disposed = true;
     reactionShell?.dismiss();
     snap = null;
@@ -776,7 +782,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
-    else { combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
+    else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -1107,6 +1113,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId) }));
       const resume = posePresentations.get(p.id);
+      stageFor(sprite)?.setStance?.(heldStances.get(p.id));
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
       for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
       box.appendChild(sprite);
@@ -1328,7 +1335,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,ownerId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       const authoredTargets=presentationTargetIds(plan.effectEvents,ownerId,plan.spriteEffect?.bindingContext.objectId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       const pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
-      const duration = stage?.actionTiming?.(pose)?.totalMs || 420;
+      const duration = stage?.actionTiming?.(pose, ANIM_SPEEDS[getAnimSpeed()])?.totalMs ?? 420;
       if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
       stage?.play(pose, duration, plan.aura);
     }
@@ -1984,7 +1991,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             def = { ...def, type: 'attack', kindIds: ['classification.attack'], cardTags: [...tags, 'maneuver:attack'] };
           }
           const plan = resolveCombatAnimation(def, equippedPieces(registries, member?.loadout, member?.classId),
-            { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId) });
+            { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId), classId: member?.classId,
+              appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion });
           sprite.dataset.actionFamily = plan.family;
           sprite.dataset.actionMotion = plan.motion;
           pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';

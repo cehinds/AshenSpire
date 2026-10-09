@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "classId": "herald",
+  "armour": "default",
+  "referenceWeapon": "Unarmed \u00b7 open spellbook",
+  "equipmentIndependent": true,
+  "selection": "card-profile",
+  "frames": {
+    "attack-load": {
+      "path": "cards/herald/frames/attack-load.webp",
+      "lite": "cards/herald/frames/attack-load-lite.webp",
+      "bounds": [
+        109,
+        165,
+        364,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "attack-contact": {
+      "path": "cards/herald/frames/attack-contact.webp",
+      "lite": "cards/herald/frames/attack-contact-lite.webp",
+      "bounds": [
+        92,
+        172,
+        416,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ready": {
+      "path": "cards/herald/frames/ready.webp",
+      "lite": "cards/herald/frames/ready-lite.webp",
+      "bounds": [
+        104,
+        161,
+        361,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-load": {
+      "path": "cards/herald/frames/smash-load.webp",
+      "lite": "cards/herald/frames/smash-load-lite.webp",
+      "bounds": [
+        108,
+        133,
+        368,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-contact": {
+      "path": "cards/herald/frames/smash-contact.webp",
+      "lite": "cards/herald/frames/smash-contact-lite.webp",
+      "bounds": [
+        92,
+        206,
+        378,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-return": {
+      "path": "cards/herald/frames/smash-return.webp",
+      "lite": "cards/herald/frames/smash-return-lite.webp",
+      "bounds": [
+        108,
+        168,
+        359,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-load": {
+      "path": "cards/herald/frames/sweep-load.webp",
+      "lite": "cards/herald/frames/sweep-load-lite.webp",
+      "bounds": [
+        163,
+        185,
+        381,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-contact": {
+      "path": "cards/herald/frames/sweep-contact.webp",
+      "lite": "cards/herald/frames/sweep-contact-lite.webp",
+      "bounds": [
+        145,
+        194,
+        493,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-return": {
+      "path": "cards/herald/frames/sweep-return.webp",
+      "lite": "cards/herald/frames/sweep-return-lite.webp",
+      "bounds": [
+        105,
+        172,
+        356,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-rise": {
+      "path": "cards/herald/frames/guard-rise.webp",
+      "lite": "cards/herald/frames/guard-rise-lite.webp",
+      "bounds": [
+        92,
+        157,
+        348,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-brace": {
+      "path": "cards/herald/frames/guard-brace.webp",
+      "lite": "cards/herald/frames/guard-brace-lite.webp",
+      "bounds": [
+        102,
+        169,
+        348,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-return": {
+      "path": "cards/herald/frames/guard-return.webp",
+      "lite": "cards/herald/frames/guard-return-lite.webp",
+      "bounds": [
+        93,
+        162,
+        359,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-load": {
+      "path": "cards/herald/frames/counter-load.webp",
+      "lite": "cards/herald/frames/counter-load-lite.webp",
+      "bounds": [
+        94,
+        187,
+        363,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-parry": {
+      "path": "cards/herald/frames/counter-parry.webp",
+      "lite": "cards/herald/frames/counter-parry-lite.webp",
+      "bounds": [
+        77,
+        178,
+        360,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-contact": {
+      "path": "cards/herald/frames/counter-contact.webp",
+      "lite": "cards/herald/frames/counter-contact-lite.webp",
+      "bounds": [
+        94,
+        179,
+        394,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-load": {
+      "path": "cards/herald/frames/spell-load.webp",
+      "lite": "cards/herald/frames/spell-load-lite.webp",
+      "bounds": [
+        106,
+        155,
+        367,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-release": {
+      "path": "cards/herald/frames/spell-release.webp",
+      "lite": "cards/herald/frames/spell-release-lite.webp",
+      "bounds": [
+        104,
+        144,
+        355,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-return": {
+      "path": "cards/herald/frames/spell-return.webp",
+      "lite": "cards/herald/frames/spell-return-lite.webp",
+      "bounds": [
+        107,
+        162,
+        363,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-load": {
+      "path": "cards/herald/frames/ranged-load.webp",
+      "lite": "cards/herald/frames/ranged-load-lite.webp",
+      "bounds": [
+        100,
+        161,
+        355,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-aim": {
+      "path": "cards/herald/frames/ranged-aim.webp",
+      "lite": "cards/herald/frames/ranged-aim-lite.webp",
+      "bounds": [
+        93,
+        161,
+        390,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-release": {
+      "path": "cards/herald/frames/ranged-release.webp",
+      "lite": "cards/herald/frames/ranged-release-lite.webp",
+      "bounds": [
+        98,
+        165,
+        354,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    }
+  },
+  "sequences": {
+    "attack": {
+      "label": "Attack",
+      "poses": [
+        "ready",
+        "attack-load",
+        "attack-contact",
+        "attack-contact",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        80,
+        50,
+        0
+      ],
+      "effect": "impact",
+      "impact": 2,
+      "hold": false
+    },
+    "smash": {
+      "label": "Smash",
+      "poses": [
+        "ready",
+        "smash-load",
+        "smash-contact",
+        "smash-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -8,
+        60,
+        32,
+        0
+      ],
+      "effect": "impact",
+      "impact": 2,
+      "hold": false
+    },
+    "sweep": {
+      "label": "Sweep",
+      "poses": [
+        "ready",
+        "sweep-load",
+        "sweep-contact",
+        "sweep-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        55,
+        28,
+        0
+      ],
+      "effect": "impact",
+      "impact": 2,
+      "hold": false
+    },
+    "counter": {
+      "label": "Counter",
+      "poses": [
+        "ready",
+        "counter-load",
+        "counter-parry",
+        "counter-contact",
+        "ready"
+      ],
+      "durations": [
+        45,
+        40,
+        30,
+        95,
+        50
+      ],
+      "travel": [
+        0,
+        -12,
+        -8,
+        45,
+        0
+      ],
+      "effect": "parry",
+      "impact": 3,
+      "hold": false
+    },
+    "defend": {
+      "label": "Defend",
+      "poses": [
+        "ready",
+        "guard-rise",
+        "guard-brace",
+        "guard-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -3,
+        -6,
+        -3,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "spell": {
+      "label": "Spell",
+      "poses": [
+        "spell-return",
+        "spell-load",
+        "spell-release",
+        "spell-release",
+        "spell-return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "ranged": {
+      "label": "Ranged \u00b7 magic",
+      "poses": [
+        "ranged-load",
+        "ranged-load",
+        "ranged-aim",
+        "ranged-release",
+        "ranged-load"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        -4,
+        -2,
+        0
+      ],
+      "effect": "sacredbolt",
+      "impact": 2,
+      "hold": false
+    },
+    "rangedMagic": {
+      "label": "Ranged \u00b7 magic",
+      "poses": [
+        "ranged-load",
+        "ranged-load",
+        "ranged-aim",
+        "ranged-release",
+        "ranged-load"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "sacredbolt",
+      "impact": 2,
+      "hold": false
+    }
+  },
+  "bytes": {
+    "webp": 714104,
+    "lite": 199556
+  }
+}

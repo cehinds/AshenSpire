@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire · Combat art study</title><link rel="stylesheet" href="preview.css"></head>
+<body>
+<header><div><small>ASHENSPIRE / ART DIRECTION</small><h1>Combat, with depth.</h1></div><nav aria-label="Preview modes"><button data-tab="scene" aria-pressed="true">Battlefield</button><button data-tab="catalog">Sprite collection</button><button data-tab="reference">Reference</button></nav><span class="badge">ART PREVIEW</span></header>
+<main>
+<section id="scene" class="panel active">
+ <div class="toolbar"><label>Player <select id="hero"></select></label><label>Opponent <select id="enemy"></select></label><label><input type="checkbox" id="motion" checked> Depth motion</label><a href="game-preview.html" target="_blank" rel="noopener">View with current HUD ↗</a><button id="fullscreen">Expand scene</button><button id="reset">Reset view</button></div>
+ <div class="workspace"><div class="stage-wrap"><div id="stage" role="img" aria-label="Layered combat composition with independent scenery and combatants">
+  <img class="scenery far" data-layer="far" data-depth="0.15" src="layers/far.png" alt="Distant castle and sky">
+  <img class="scenery ruins" data-layer="ruins" data-depth="0.4" src="layers/ruins.png" alt="Ruined chapel and arch">
+  <div class="mist" data-layer="mist" data-depth="0.55"></div>
+  <img class="scenery ground" data-layer="ground" data-depth="0.7" src="layers/ground.png" alt="Battlefield ground">
+  <div id="hero-sprite" class="actor hero" data-layer="actors" data-depth="0.7"></div>
+  <div id="enemy-sprite" class="actor enemy" data-layer="actors" data-depth="0.7"></div>
+  <div id="hound-sprite" class="actor hound" data-layer="actors" data-depth="0.7"></div>
+  <img class="scenery foreground" data-layer="foreground" data-depth="1.1" src="layers/foreground.png" alt="Near trees and lantern">
+  <div class="vignette"></div>
+ </div><p class="caption">Move the pointer to inspect depth. Figures share measured foot anchors; scene movement does not move the interface.</p></div>
+ <aside><small>COMPOSITION</small><h2>Independent layers</h2><p class="aside-note">Toggle a layer to see what sits behind it.</p><div id="layers"></div><hr><label class="range-label">Motion strength <output id="strength-value">12 px</output><input id="strength" type="range" min="0" max="24" value="12"></label><label class="range-label">Player scale <output id="hero-value">100%</output><input id="hero-scale" type="range" min="60" max="130" value="100"></label><label class="range-label">Enemy scale <output id="enemy-value">100%</output><input id="enemy-scale" type="range" min="60" max="130" value="100"></label><hr><p class="aside-note">The current game HUD, cards and footer remain in their existing source files. This view isolates the proposed artwork and depth composition.</p><a href="game-preview.html" target="_blank" rel="noopener">Preview with the current game interface ↗</a></aside></div>
+</section>
+<section id="catalog" class="panel"><div class="toolbar"><label class="search">Find a sprite <input type="search" id="search" placeholder="Name, class or armor…"></label><label>Collection <select id="family"><option value="">All sprites</option><option value="armor">Characters & armor</option><option value="enemy">Enemies</option><option value="companion">Companions</option><option value="speaker">Named speakers</option></select></label><label>Backdrop <select id="backdrop"><option value="dark">Dark slate</option><option value="light">Light slate</option><option value="checker">Transparency grid</option></select></label><output id="count"></output></div><div id="grid" class="grid dark"></div></section>
+<section id="reference" class="panel"><div class="reference-grid"><figure><img src="references/composition.png" alt="User supplied combat style reference"><figcaption>Composition and material reference</figcaption></figure><figure><img src="references/depth-markup.png" alt="User supplied colored depth markup"><figcaption>Colored regions indicate independent scene depth and fixed interface</figcaption></figure></div><p class="caption">Additional project reference: <a href="https://github.com/cehinds/TheAshenedSpire">TheAshenedSpire</a>. Character identities and armor coverage follow this AshenSpire checkout’s canonical catalogs.</p></section>
+</main><footer><a href="editor/battlefield-wireframe-editor.html">Open battlefield position editor</a><span id="status">Loading collection…</span><span>Full-body idle cutouts · Original PNG masters · No animation or runtime replacement</span></footer>
+<dialog id="detail"><button id="close" aria-label="Close sprite details">Close ×</button><div class="detail-layout"><div class="detail-art checker"><img id="detail-image" alt=""></div><div><small id="detail-family"></small><h2 id="detail-name"></h2><p id="detail-meta"></p><a id="download" download>Download original PNG ↗</a><p class="aside-note">Generated with the built-in image tool. Dimensions, transparency, source and exact production prompt are retained in the collection manifest.</p></div></div></dialog>
+<script src="catalog-data.js"></script><script src="preview.js"></script>
+</body></html>
