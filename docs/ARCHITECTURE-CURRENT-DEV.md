@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `codex/combat-qa-reconcile-20261009`
-- Source commit: `782dceaeed2977644d3a5232361dd57606f8f9c2`
+- Source branch: `dev`
+- Source commit: `8e677d3e28aa7fcd03674640a3187c867ecac635`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
