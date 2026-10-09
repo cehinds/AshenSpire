@@ -66,9 +66,10 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
+import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 import { staminaAtCombatStart } from '../src/framework/resources.js';
@@ -679,6 +680,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const combat = createCoopCombat({
       combatKey: `${session.seed}:${session.actNumber}:${session.cursorId}:${encounterId}`,
       combatExpansionVersion: connectedMembers().some(member => member.run.combatExpansionVersion === 2) ? 2 : 1,
+      reactionRulesVersion: connectedMembers().every(member => member.run.reactionRulesVersion === 1) ? 1 : null,
       combatExpansionRules: connectedMembers().find(member => member.run.combatExpansionVersion === 2)?.run.combatExpansionRules || null,
       breakMeterVersion: session.advancedConfigSnapshot?.breakMeterVersion,
       registries, rng,
@@ -766,17 +768,21 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = [...(live.opening || []), ...c.eventLog.slice(live.evCursor || 0)]
-      .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'impactDealt', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
+        eventIndex: c.eventLog.indexOf(e),
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         sourcePlayerId: e.sourcePlayerId, targetPlayerId: e.targetPlayerId,
         energySpent: e.energySpent, manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
         cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,
         upgraded: e.upgraded, sourceArmamentId: e.sourceArmamentId,
-        ...(e.type === 'cardPlayed' && e.cardInstance ? { cardInstance: structuredClone(e.cardInstance) } : {}),
-        ...(e.type === 'cardPlayed' && Array.isArray(e.cardTags) ? { cardTags: [...e.cardTags] } : {}),
-        ...(e.type === 'cardPlayed' && Number.isInteger(e.upcastTier) ? { upcastTier: e.upcastTier } : {}),
+        sourceKind: e.sourceKind, intent: e.intent, combatProfile: e.combatProfile,
+        ...(['cardPlayed', 'combatCounterTriggered'].includes(e.type) && e.cardInstance ? { cardInstance: structuredClone(e.cardInstance) } : {}),
+        ...(['cardPlayed', 'combatCounterTriggered'].includes(e.type) && Array.isArray(e.cardTags) ? { cardTags: [...e.cardTags] } : {}),
+        ...(['cardPlayed', 'combatCounterTriggered'].includes(e.type) && Number.isInteger(e.upcastTier) ? { upcastTier: e.upcastTier } : {}),
+        abilityKind: e.abilityKind, poiseDamage: e.poiseDamage, wardDamage: e.wardDamage,
+        poiseMeter: e.poiseMeter, wardMeter: e.wardMeter,
         stance: e.stance, kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
         blockRemaining: e.blockRemaining, success: e.success, blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
@@ -793,6 +799,8 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       kind: 'combat',
       combatExpansionVersion: c.sharedExpansionVersion || 1,
+      reactionRulesVersion: c.reactionRulesVersion,
+      reactionWaiting: c.pendingReaction ? { id: c.pendingReaction.id, ownerId: c.pendingReaction.ownerId } : null,
       combatExpansionRules: c.combatExpansionRules, combatStatusRules: c.combatStatusRules,
       ...([1, 2].includes(c.breakMeterVersion) ? { breakMeterVersion: c.breakMeterVersion } : {}),
       ...(c.combatMatchupRules ? { combatMatchupRules: structuredClone(c.combatMatchupRules) } : {}),
@@ -801,6 +809,8 @@ export function createSession({ registries, seedString, endless = false, restore
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
+      combatLog: combatLogEntries(c.eventLog, { registries: c.registries,
+        players: [...c.players.keys()].map(id => ({ id, name: members.get(id)?.name })), enemies: c.enemies }),
       pool: live.pool,
       phase: c.phase,
       turn: c.turn,
@@ -812,6 +822,7 @@ export function createSession({ registries, seedString, endless = false, restore
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive: e.alive, intent: e.intent, intentReads: e.intentReads ? { ...e.intentReads } : undefined, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        ...(e.actorIntentRevealed ? { actorIntentRevealed: true } : {}),
         ...(e.knowledgeAction ? { knowledgeAction: structuredClone(e.knowledgeAction),
           intentPredictions: Object.fromEntries([...c.players.keys()].map(id => [id, knowledgePredictionModel(c, e, id)])) } : {}),
         intentPreviews: Object.fromEntries([...c.players.keys()].map(id => [id, previewCoopIntent(c, id, e.id)])),
@@ -838,6 +849,8 @@ export function createSession({ registries, seedString, endless = false, restore
         combatStance: P.entity.combatStance, persistentWard: P.entity.persistentWard, barrier: P.entity.barrier,
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
         pendingAbilityDiscard: c.pendingAbilityDiscard || null,
+        pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
+        ...(c.reactionRulesVersion === 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
@@ -907,6 +920,18 @@ export function createSession({ registries, seedString, endless = false, restore
   function combatChooseDiscard(memberId, cardInstanceIds) {
     if (!live) return { ok: false, error: 'no combat' };
     try { chooseDiscard(live.combat, memberId, cardInstanceIds); } catch (e) { return { ok: false, error: e.message }; }
+    return settleCombat();
+  }
+  function combatChooseReaction(memberId, intent) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { chooseReaction(live.combat, memberId, intent); }
+    catch (error) { return { ok: false, error: error.message }; }
+    return settleCombat();
+  }
+  function combatSetReactions(memberId, enabled) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { setReactions(live.combat, memberId, enabled); }
+    catch (error) { return { ok: false, error: error.message }; }
     return settleCombat();
   }
   function combatFlask(memberId, slot, targetId, chargeKind = null) {
@@ -1028,6 +1053,12 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!live) return { ok: false, error: 'no combat' };
     let guard = 0;
     while (live && live.combat && !live.combat.result && live.combat.phase !== 'suspended' && guard++ < 400) {
+      if (live.combat.pendingReaction) {
+        const pending = live.combat.pendingReaction;
+        chooseReaction(live.combat, pending.ownerId, { offerId: pending.id });
+        settleCombat();
+        continue;
+      }
       for (const m of connectedMembers()) botTurnFn(live.combat, m.id);
       settleCombat();
     }
@@ -1951,7 +1982,7 @@ export function createSession({ registries, seedString, endless = false, restore
     addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, chooseMasteryNode, resolveNode,
     previewMemberClassRespec,applyMemberClassRespec,cancelMemberClassRespec,
-    combatPlay, combatPredict, acknowledgeEnemyLearning, retainEnemyLearning, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat, setCombatSave, combatRecovery, combatBlightFeat,
+    combatPlay, combatPredict, acknowledgeEnemyLearning, retainEnemyLearning, combatChooseDiscard, combatChooseReaction, combatSetReactions, combatEndTurn, flaskIntent, autoResolveCombat, setCombatSave, combatRecovery, combatBlightFeat,
     chooseReward, chooseAbilityDraft,claimMemberSkillLevel,chooseClassMilestone,chooseMemberLevelCard, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },

@@ -22,6 +22,9 @@ import { controlGate, recoveryControls } from '../src/engine/combatStatusControl
 
 /** Required choices and affordable recovery are actions, never deck cards. */
 export function botControlAction(combat) {
+  // Optional prompts are deterministic skips for the existing leftmost-card
+  // policy. Resolve the choice before ordinary cards, flasks or End Turn.
+  if (combat.pendingReaction) return { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null };
   if (combat.combatExpansionVersion !== 2 || combat.result || combat.phase !== 'player') return null;
   const pending = combat.player.ashenBlight?.milestones?.find(row => row.path === null);
   if (pending) return { type: 'chooseBlightFeat', threshold: pending.threshold, path: 'martial' };

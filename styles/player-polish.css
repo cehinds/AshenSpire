@@ -439,7 +439,15 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
 :root[data-layout='narrow'] .title-screen .title-traveler { top:17%; height:28%; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand { overflow:visible; scrollbar-width:none; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand {
+ overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+ overscroll-behavior-x:contain;
+}
+/* Horizontal swipes scroll excess cards; vertical drags still aim a card. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] .card { touch-action:pan-x; }
+/* The selected card owns its rank chooser inside the clipped hand viewport. */
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls { top:auto; bottom:0; }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,select) { min-height:calc(44px / var(--ui-zoom,1)); }
 :root[data-layout='narrow'] .combat .turn-ribbon { font-size:1.2rem; }
 :root .combat .combatant-leading .intent { width:calc(96px / var(--ui-zoom,1)); min-width:calc(96px / var(--ui-zoom,1)); max-width:none; }
 :root .combat[data-composition='option-c'] > .combat-hud.shared-hud { background: none; }

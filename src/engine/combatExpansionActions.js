@@ -18,9 +18,13 @@ export function effectCarrier(carrier, effect) {
   return merged;
 }
 export function enqueueExpandedAction(ctx, actions, { source, target, carrier } = {}) {
-  if (ctx.combatExpansionVersion !== 2 || carrier?.combatReaction) {
+  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && ctx.reactionRulesVersion !== 1)) {
     for (const action of actions) ctx.enqueue(action);
     return null;
+  }
+  if (carrier?.combatReaction) {
+    carrier = { ...carrier, combatProfile: { ...carrier.combatProfile, maneuver: 'attack' } };
+    for (const action of actions) action.card = carrier;
   }
   Matchups.assertSingleActionCamp(carrier, actions.filter(action => ['damage', 'buildup', 'applyStatus'].includes(action.effect.op))
     .map(action => effectCarrier({ ...carrier, ...action.card }, action.effect).combatProfile));
@@ -39,7 +43,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
     action.meta = { ...action.meta, expansionGroup: group };
     const eff = action.effect;
     const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined } };
-    if (!['damage', 'buildup', 'applyStatus'].includes(eff.op)) {
+    if (!['damage', 'buildup', 'applyStatus', ...(carrier?.combatReaction ? ['poiseDamage', 'wardDamage'] : [])].includes(eff.op)) {
       Actions.executeAction(prefix, shadow);
       continue;
     }
@@ -61,14 +65,14 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
         const profile = contactCarrier.combatProfile;
         const base = evaluate(eff.amount ?? eff.stacks ?? 1, Actions.formulaCtxFor(prefix, shadow, projected));
         const tags = Actions.attackTagsFor({ ...action, card: contactCarrier }, eff, ctx.registries);
-        const crit = eff.op === 'damage' && !ctx._expansionPreview ? Actions.rollCrit(ctx, source, tags) : 0;
+        const crit = eff.op === 'damage' && !ctx._expansionPreview && !carrier?.combatReaction ? Actions.rollCrit(ctx, source, tags) : 0;
         if (crit) contactCarrier.critMultiplier = crit;
         let amount = eff.op === 'damage' ? Actions.computeAttackDamage(prefix, shadow.source, projected, base
           + (action.meta.abilityChargeDamageEffect || 0) + (h === 0 ? action.meta.abilityChargeDamage || 0 : 0),
         tags, contactCarrier, { matchups: false, beforeDefense: true }) : 0;
         if (crit) amount = Math.floor(amount * crit);
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, amount, ...(eff.op !== 'damage' ? { effect: 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, amount, ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);
@@ -91,14 +95,23 @@ export function expansionEntity(ctx, row) {
     : ctx.enemies?.find(entity => entity.id === row.id);
 }
 
+// Saved contacts retain their original target; a disconnected body is frozen.
+export function expansionTargetPresent(ctx, entity) {
+  if (!entity?.alive) return false;
+  const playerId = ctx.playerIdForEntity?.(entity);
+  return !ctx.players || !playerId || ctx.players.get(playerId)?.connected === true;
+}
+
 export function beginExpandedAction(ctx, group, source) {
   if (!group || group.begun) return;
   group.begun = true;
   for (const row of Object.values(group.targets)) {
     const target = expansionEntity(ctx, row);
-    if (!target) continue;
+    if (!expansionTargetPresent(ctx, target)) continue;
     const profile = row.contacts[0] || group.carrier?.combatProfile || {};
-    row.receipt = (ctx._expansionPreview ? Matchups.previewTacticalAction : Matchups.beginTacticalAction)(ctx, source, target, group.carrier, row.contacts,
+    const serial = group.manualCounterSerials?.[row.playerId || 'player'];
+    const carrier = serial ? { ...group.carrier, manualCounterSerial: serial } : group.carrier;
+    row.receipt = (ctx._expansionPreview ? Matchups.previewTacticalAction : Matchups.beginTacticalAction)(ctx, source, target, carrier, row.contacts,
       { ...Control.statusIncomingModifier(ctx, target, profile), contactModifiers: row.contacts.map(contact => Control.statusIncomingModifier(ctx, target, contact)), restrictions: Control.controlRestrictions(ctx, target) });
     row.interactions = { ...profile,
       containsFire: row.contacts.some(contact => contact.amount > 0 && (contact.school === 'fire' || contact.damageType === 'fire')),
@@ -126,10 +139,11 @@ export function previewExpandedActions(ctx, actions, options) {
 export function completeExpandedAction(ctx, action) {
   const group = action.meta?.expansionGroup;
   if (!group) return;
+  if (group.cancelled) { ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1); return; }
   beginExpandedAction(ctx, group, action.source);
   for (const row of Object.values(group.targets)) {
     const target = expansionEntity(ctx, row), receipt = row.receipt;
-    if (!target || !receipt) continue;
+    if (!expansionTargetPresent(ctx, target) || !receipt) continue;
     Matchups.completeTacticalAction(ctx, action.source, target, group.carrier, receipt,
       { restrictions: Control.controlRestrictions(ctx, target) });
     Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
