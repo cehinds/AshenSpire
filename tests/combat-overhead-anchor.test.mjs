@@ -381,3 +381,62 @@ test('actual desktop player plate clears its raised mini-HUD while enemy feet st
     .toSorted((a,b)=>a.id.localeCompare(b.id)),packed.toSorted((a,b)=>a.id.localeCompare(b.id)),
     'the final HUD rectangle yields idempotent anchors');
 });
+
+test('actual 1178 crowded phone repairs only foot cues within one tap width of their artwork column', () => {
+  const top=74.734375,height=275.203125;
+  const targets=[{id:'player',x:91.65625,y:462.046875-top,width:44},
+    {id:'e1',x:161.2421875,y:303.15625-top+54.390625/2,width:96},
+    {id:'e2',x:263.2421875,y:303.15625-top+54.390625/2,width:96},
+    {id:'e3',x:165.734375,y:259.109375-top+54.390625/2,width:96}];
+  const obstacles=[{left:113.25,right:209.25,top:195.453125-top,bottom:249.84375-top},
+    {left:215.25,right:311.25,top:195.453125-top,bottom:249.84375-top},
+    {left:117.75,right:213.75,top:129.953125-top,bottom:184.34375-top},
+    {left:35.65625,right:147.65625,top:321.40625-top,bottom:335.40625-top},
+    {left:104,right:285,top:0,bottom:98-top}];
+  const input={width:390,height,size:44,targets,obstacles,lockX:true};
+  assert.ok(combatTargetAnchors(input).some(t=>t.obstructed),
+    'full HUD and ribbon reproduce the old unsatisfied locked-column geometry');
+  const before=structuredClone(targets),packed=combatTargetAnchors({...input,maxShiftX:44});
+  assert.deepEqual(targets,before,'no actor geometry is changed');
+  for(const target of packed){
+    const source=before.find(t=>t.id===target.id);
+    assert.equal(target.obstructed,false,target.id);
+    assert.ok(Math.abs(target.x-source.x)<=44,'only the target/footer has a bounded horizontal shift');
+    assert.ok(Math.abs(target.y-Math.min(source.y,height-22))<=88,'cues stay near the clamped feet');
+    assert.equal(target.width,source.width,'complete 96px enemy bands are retained');
+    assert.ok(target.x-target.width/2>=0&&target.x+target.width/2<=390);
+    assert.ok(target.y-22>=0&&target.y+22<=height,'full 44px height remains in the field');
+    for(const obstacle of obstacles)assert.ok(target.x+target.width/2<=obstacle.left
+      || target.x-target.width/2>=obstacle.right || target.y+22<=obstacle.top
+      || target.y-22>=obstacle.bottom,target.id+' clears full HUD, intents and ribbon');
+  }
+  for(let i=0;i<packed.length;i++)for(let j=i+1;j<packed.length;j++){
+    const a=packed[i],b=packed[j];
+    assert.ok(Math.abs(a.x-b.x)>=(a.width+b.width)/2||Math.abs(a.y-b.y)>=46,
+      a.id+'/'+b.id+' retain separate complete footer rectangles');
+  }
+  assert.equal(packed.find(t=>t.id==='e1').y,height-22,'first row returns to its foot band');
+  assert.equal(packed.find(t=>t.id==='e3').y,height-22-46,'other row stays one band above');
+  assert.equal(packed.find(t=>t.id==='player').x,targets[0].x,'the clear player column stays fixed');
+  assert.deepEqual(combatTargetAnchors({...input,maxShiftX:44}),packed,'no sampling/order randomness');
+  assert.deepEqual(combatTargetAnchors({...input,targets:packed,maxShiftX:44})
+    .toSorted((a,b)=>a.id.localeCompare(b.id)),packed.toSorted((a,b)=>a.id.localeCompare(b.id)),
+    'settled target/footer positions remain idempotent');
+  const limited=combatTargetAnchors({...input,maxShiftX:8});
+  assert.ok(limited.some(t=>t.obstructed),'insufficient permitted clearance remains explicit');
+  assert.ok(limited.every(t=>Math.abs(t.x-targets.find(s=>s.id===t.id).x)<=8));
+});
+
+test('optional foot shift never changes clear ordinary placements or disguises impossible space', () => {
+  const input={width:390,height:240,size:44,lockX:true,
+    targets:[{id:'a',x:120,y:150,width:96},{id:'b',x:260,y:160,width:96}],
+    obstacles:[{left:80,right:300,top:0,bottom:70}]};
+  assert.deepEqual(combatTargetAnchors({...input,maxShiftX:44}),combatTargetAnchors(input),
+    'successful original vertical placement is exactly retained');
+  const blocked=combatTargetAnchors({width:120,height:60,size:44,lockX:true,maxShiftX:44,
+    targets:[{id:'a',x:60,y:38,width:96}],
+    obstacles:[{left:0,right:120,top:0,bottom:60}]});
+  assert.equal(blocked[0].obstructed,true,'an impossible full-field obstacle still fails');
+  assert.equal(blocked[0].x,60,'a useless repair does not drift the original cue');
+  assert.ok(blocked[0].y-22>=0&&blocked[0].y+22<=60);
+});

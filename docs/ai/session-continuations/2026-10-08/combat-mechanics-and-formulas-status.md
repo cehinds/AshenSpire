@@ -5,6 +5,13 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Final bounded card/target source candidate**
+  - The rank picker preserves an 88-pixel physical minimum so its complete label wraps below the card instead of clipping. Buttons retain 44-pixel minimums and cards retain their readable face.
+  - A crowded field with the full player HUD has no collision-free solution in fixed footer columns. A deterministic fallback moves only foot targets and their health cues by at most 44 pixels; sprites, intent cards and formation columns remain fixed. Clear original placements remain exact, and impossible layouts remain explicitly obstructed.
+  - Independent reviews are clear. Root combined suite: 99 passed, zero skipped. The unchanged combat mechanics suite remains 122 passed.
+  - Default and Classic 1178 each pass all four solo/eight projected owner scenarios without browser errors or warnings. Visual review retains the detached health-cue and clipped 390-pixel selector-label findings. The new additive owner-cue gate demonstrably fails 1178, while original hit-area predicates and deadlines remain. [Retained 1178 evidence](../../../qa/combat-promotion-polish-20261008/current-1178/README.md).
+  - Fresh final package and four-branch delivery remain pending.
+
 - **Compact controls and target follow-up: source acceptance**
   - The compact tool dock preserves labels while giving the full card and wrapped 44-pixel Upcast inputs enough space. Target fitting reserves the complete visible player status widget after final art placement.
   - Independent review is clear. Combined hand/target source suite: 96 passed, zero skipped. Combat mechanics suite remains 122 passed from the unchanged engine. Original 1176 failures remain retained below.

@@ -87,6 +87,52 @@ test('a native minimum-width change remeasures the complete wrapped chooser', ()
   }
 });
 
+test('a readable native tier label updates the wrapping reserve at phone and compact widths', () => {
+  const originalStyle = globalThis.getComputedStyle;
+  try {
+    for (const zoom of [.738, .83, 1]) for (const physicalWidth of [96, 148]) {
+      let pickerWidth = 44, clones = 0;
+      const button = {}, picker = { hidden: true };
+      const controls = { textContent: 'Upcast Base tier 0', querySelectorAll: () => [button, picker],
+        parentElement: { appendChild() {} },
+        cloneNode() {
+          clones++;
+          return { style: {}, setAttribute() {}, querySelectorAll: () => [], remove() {},
+            get offsetHeight() {
+              // A complete native row includes the button, arrow/label width,
+              // gap and borders. Browsers wrap the row rather than shrink it.
+              return (64 + 4 + pickerWidth + 8 <= physicalWidth ? 52 : 100) / zoom;
+            } };
+        } };
+      globalThis.getComputedStyle = node => node === picker || node === button ? {
+        font: `${12 / zoom}px Georgia`, minHeight: `${44 / zoom}px`,
+        minWidth: `${(node === picker ? pickerWidth : 44) / zoom}px`
+      } : { font: `${12 / zoom}px Georgia`, gap: `${4 / zoom}px` };
+      const options = { zoom, width: physicalWidth / zoom, cache: new WeakMap() };
+      const initial = measureHandUpcastHeight(controls, options);
+      pickerWidth = 88;
+      const height = measureHandUpcastHeight(controls, options);
+      assert.equal(height, 100 / zoom, 'the complete readable picker reserves both rows');
+      if (physicalWidth === 148) assert.ok(height > initial, 'a previously single row now wraps');
+      assert.equal(measureHandUpcastHeight(controls, options), height);
+      assert.equal(clones, 2, 'the changed native minimum width invalidates the old reserve once');
+      assert.equal(picker.hidden, true, 'measuring leaves the real picker and selection unchanged');
+      const plan = handLayout({ width: options.width, height: 234 / zoom, count: 8,
+        rem: 16 / zoom, zoom, controlsHeight: height });
+      assert.ok(plan.cardWidth * zoom >= 80 - 1e-7);
+      for (const slot of plan.cards) {
+        const top = plan.top + slot.y - plan.lift;
+        assert.ok(top >= 0);
+        assert.ok(top + plan.cardHeight + height <= 233 / zoom + 1e-7,
+          'the readable face and complete selector remain inside the hand');
+      }
+    }
+  } finally {
+    if (originalStyle === undefined) delete globalThis.getComputedStyle;
+    else globalThis.getComputedStyle = originalStyle;
+  }
+});
+
 test('native child touch-target style changes invalidate a reserve even when parent typography is unchanged', () => {
   const originalStyle=globalThis.getComputedStyle;
   let minHeight=32,clones=0;

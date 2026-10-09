@@ -451,6 +451,8 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
  right:auto; flex-wrap:wrap; box-sizing:border-box; font-size:calc(12px / var(--ui-zoom,1));
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,select) { min-height:calc(44px / var(--ui-zoom,1)); min-width:calc(44px / var(--ui-zoom,1)); font-size:inherit; }
+/* The native arrow and complete "Base tier 0" label need more than a tap square. */
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls select { min-width:calc(88px / var(--ui-zoom,1)); }
 /* Keep room for a readable face between two real44px pagers on compact
    phones. Labels remain visible; the Reaction track wraps below its label. */
 @media (max-width:359px) {

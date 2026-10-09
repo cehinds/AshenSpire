@@ -359,7 +359,9 @@ export function wireBattlefieldStage(field, model) {
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
     const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
-      lockX: true, size: 44,
+      // Crowded HUD/intent bands may leave no vertical slot. Only the plate
+      // and its visible footer may then shift by at most one physical target.
+      lockX: true, size: 44, maxShiftX: 44,
       obstacles: [...(ribbon ? [ribbon] : []), ...boxes.flatMap(box => box.controls.map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,

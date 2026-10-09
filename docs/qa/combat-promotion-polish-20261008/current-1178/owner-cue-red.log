@@ -1,0 +1,213 @@
+{
+  "shape": {
+    "w": 390,
+    "h": 650,
+    "mobile": true,
+    "overlap": false
+  },
+  "identity": {
+    "ordinal": "1178",
+    "source": "6e80d96fba"
+  },
+  "composition": {
+    "layout": "formation",
+    "turn": "player",
+    "combatGeometry": "supported",
+    "combatArrangement": "stacked",
+    "targetLayer": "idle",
+    "composition": "option-c",
+    "waistOverlap": "true",
+    "handPagerOwner": "active"
+  },
+  "frames": [
+    {
+      "id": "player",
+      "target": {
+        "x": 91.65622340425531,
+        "y": 296.2966941489362,
+        "w": 43.98876382978723,
+        "h": 43.98876382978723
+      },
+      "reachable": true,
+      "obstructed": "false",
+      "centreTop": {
+        "tag": "DIV",
+        "class": "field",
+        "rect": {
+          "x": 0,
+          "y": 74.734375,
+          "width": 390,
+          "height": 275.203125,
+          "top": 74.734375,
+          "right": 390,
+          "bottom": 349.9375,
+          "left": 0
+        },
+        "pointer": "auto",
+        "z": "1"
+      },
+      "targetTop": {
+        "tag": "ARTICLE",
+        "class": "combatant player player-target-hitbox",
+        "eid": "player",
+        "rect": {
+          "x": 48.75,
+          "y": 74.734375,
+          "width": 85.796875,
+          "height": 275.203125,
+          "top": 74.734375,
+          "right": 134.546875,
+          "bottom": 349.9375,
+          "left": 48.75
+        },
+        "pointer": "none",
+        "z": "auto"
+      }
+    },
+    {
+      "id": "e1",
+      "target": {
+        "x": 161.2421734042553,
+        "y": 105.95312819148936,
+        "w": 95.99061702127659,
+        "h": 43.98876382978723
+      },
+      "reachable": true,
+      "obstructed": "true",
+      "centreTop": {
+        "tag": "SPAN",
+        "class": "intent-stance",
+        "eid": "e1",
+        "rect": {
+          "x": 127.25,
+          "y": 202.453125,
+          "width": 67.984375,
+          "height": 14.390625,
+          "top": 202.453125,
+          "right": 195.234375,
+          "bottom": 216.84375,
+          "left": 127.25
+        },
+        "pointer": "auto",
+        "z": "auto"
+      },
+      "targetTop": {
+        "tag": "ARTICLE",
+        "class": "combatant enemy enemy-target-hitbox",
+        "eid": "e1",
+        "rect": {
+          "x": 118.34375,
+          "y": 74.734375,
+          "width": 85.796875,
+          "height": 275.203125,
+          "top": 74.734375,
+          "right": 204.140625,
+          "bottom": 349.9375,
+          "left": 118.34375
+        },
+        "pointer": "none",
+        "z": "auto"
+      }
+    },
+    {
+      "id": "e2",
+      "target": {
+        "x": 263.2421734042553,
+        "y": 327.93731117021275,
+        "w": 95.99061702127659,
+        "h": 43.98876382978723
+      },
+      "reachable": true,
+      "obstructed": "false",
+      "centreTop": {
+        "tag": "SPAN",
+        "class": "intent-stance",
+        "eid": "e2",
+        "rect": {
+          "x": 234.828125,
+          "y": 202.453125,
+          "width": 56.84375,
+          "height": 14.390625,
+          "top": 202.453125,
+          "right": 291.671875,
+          "bottom": 216.84375,
+          "left": 234.828125
+        },
+        "pointer": "auto",
+        "z": "auto"
+      },
+      "targetTop": {
+        "tag": "ARTICLE",
+        "class": "combatant enemy enemy-target-hitbox",
+        "eid": "e2",
+        "rect": {
+          "x": 220.34375,
+          "y": 74.734375,
+          "width": 85.796875,
+          "height": 275.203125,
+          "top": 74.734375,
+          "right": 306.140625,
+          "bottom": 349.9375,
+          "left": 220.34375
+        },
+        "pointer": "none",
+        "z": "auto"
+      }
+    },
+    {
+      "id": "e3",
+      "target": {
+        "x": 165.7343734042553,
+        "y": 286.30439627659575,
+        "w": 95.99061702127659,
+        "h": 43.98876382978723
+      },
+      "reachable": true,
+      "obstructed": "false",
+      "centreTop": {
+        "tag": "SPAN",
+        "class": "intent-stance",
+        "eid": "e1",
+        "rect": {
+          "x": 127.25,
+          "y": 202.453125,
+          "width": 67.984375,
+          "height": 14.390625,
+          "top": 202.453125,
+          "right": 195.234375,
+          "bottom": 216.84375,
+          "left": 127.25
+        },
+        "pointer": "auto",
+        "z": "auto"
+      },
+      "targetTop": {
+        "tag": "ARTICLE",
+        "class": "combatant enemy enemy-target-hitbox",
+        "eid": "e3",
+        "rect": {
+          "x": 122.84375,
+          "y": 74.734375,
+          "width": 85.796875,
+          "height": 275.203125,
+          "top": 74.734375,
+          "right": 208.640625,
+          "bottom": 349.9375,
+          "left": 122.84375
+        },
+        "pointer": "none",
+        "z": "auto"
+      }
+    }
+  ],
+  "health": []
+}
+file:///D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire/docs/qa/combat-promotion-polish-20261008/drivers/hit-target-qa.mjs:17
+if(data.identity.ordinal!==process.env.COMBAT_QA_ORDINAL||data.identity.source!==process.env.COMBAT_QA_SOURCE)throw Error('Rendered identity mismatch');if(data.frames.some(f=>!f.patches.some(p=>p.ok)))throw Error('Strict24px target unavailable');if(data.frames.some(f=>f.dataset.targetObstructed==='true'))throw Error('Full target/footer obstacle clearance failed');if(data.frames.filter(f=>f.intent).some(f=>Math.abs(f.target.y-Math.min(Math.max(f.sprite.rect.bottom+f.intent.rect.height/2,data.field.rect.top+22),data.field.rect.bottom-22))>88))throw Error('Enemy footer detached from its sprite');if(health.length)throw Error('Runtime/network failure');
+                                                                                                                                                                                                                                                                                                                        ^
+
+Error: Full target/footer obstacle clearance failed
+    at file:///D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire/docs/qa/combat-promotion-polish-20261008/drivers/hit-target-qa.mjs:17:313
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+Node.js v22.14.0
