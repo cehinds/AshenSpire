@@ -163,6 +163,7 @@ test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s 
   const host = createSession({ registries: reg, seedString: 'HAPT1' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
+  for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
   let heard = coopReceiptSounds(host.snapshot().scene, 0, ['p2']);
   const p = host.live.combat.players.get('p2'); p.entity.energy = 99;
@@ -380,6 +381,7 @@ test('co-op: an enemy turn held back by pacing while the fight ends still buzzes
   const host = createSession({ registries: createRegistries(contentBundle), seedString: 'HAPT1' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
+  for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
   const heard = coopReceiptSounds(host.snapshot().scene, 0, ['p1', 'p2']);
   host.combatEndTurn('p1'); host.combatEndTurn('p2');

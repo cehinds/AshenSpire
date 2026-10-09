@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1768",
+    "id": "pr-1740",
     "date": "2026-10-08",
     "group": "2026-10-08",
-    "summary": "Readable card effects and stable combat targets",
-    "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.",
+    "summary": "Alternative combat keeps its art with the complete tactical rules",
+    "detail": "The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.",
+    "build": "0.7.1.1174",
+    "pullRequest": 1740,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1740"
+  },
+  {
+    "id": "pr-1767",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ordered counters, defensive reactions and combat controls",
+    "detail": "Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.",
     "build": "0.7.1.1172",
-    "pullRequest": 1768,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1768"
+    "pullRequest": 1767,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1767"
   },
   {
     "id": "pr-1770",
@@ -31,16 +41,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1166",
     "pullRequest": 1757,
     "url": "https://github.com/cehinds/AshenSpire/pull/1757"
-  },
-  {
-    "id": "pr-1740",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
-    "summary": "Alternative combat keeps its art with the complete tactical rules",
-    "detail": "The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.",
-    "build": "0.7.1.1154",
-    "pullRequest": 1740,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1740"
   },
   {
     "id": "pr-1762",

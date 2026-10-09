@@ -86,6 +86,9 @@ ok(!/\.act\s*\|\|\s*1/.test(balanceSrc),
 const host = createSession({ registries: reg, seedString: 'GUARD2' });
 for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
 host.start();
+// This receipt verifies the historical performed-move snapshot contract. New
+// reaction behavior is exercised separately with resumable choice commands.
+for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
 const preFight = host.snapshot();
 ok(Array.isArray(preFight.seatOrder) && preFight.seatOrder.length === reg.seats.all().length,
   'the snapshot carries the drawn seat order');

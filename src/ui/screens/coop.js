@@ -10,7 +10,7 @@ import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { coopEnemyIntent } from '../models/CoopIntentModel.js';
+import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.js';
 import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
@@ -24,6 +24,7 @@ import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
+import { openReactionChoiceModal } from '../components/reactionChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -72,6 +73,8 @@ import { resourceAura } from '../combatAura.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import { resolveCoopPlayedCombatCard } from '../models/PlayedCombatCard.js';
+import { combatToolsModel } from '../models/CombatToolsModel.js';
+import { mountCombatTools } from '../components/combatTools.js';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
@@ -81,7 +84,8 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds } from '../fx.js';
+import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
+import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -338,6 +342,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let guardCoopTool = null; // query-gated real-wire browser control
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let combatLayout = null; // the layout adapter (components/combatLayout.js) for the mounted board
+  let combatTools = null;
+  const combatToolsState = { open: false, size: 'Small', followLatest: true };
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
   // The beat is the same on pointer, keyboard and pad since S7 went wide
   // (2026-08-17); the dial is the only switch. This line said "pointer-only;
@@ -389,6 +395,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (shell && shell.close) shell.close();
   }
   const send = (obj,{progressionPopup=false}={}) => {
+    if (latestWireSnap?.scene?.reactionWaiting && ['playCard', 'endTurn', 'flaskIntent', 'recoverControl', 'chooseBlightFeat', 'predictIntent'].includes(obj.t)) { showPendingReaction(); return; }
     if (obj.t === 'playCard' && obj.upcastTier == null && upcastTiersByCard.has(upcastKey(obj.cardInstanceId))) obj = { ...obj, upcastTier: upcastTiersByCard.get(upcastKey(obj.cardInstanceId)) };
     if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
     if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
@@ -619,6 +626,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   };
   const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
   const flaskKeyHandler = (ev) => {
+    if (ev.target?.closest?.('[data-combat-read-only]')) return;
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (cardChoiceShell) return;
     if (!snap || snap.scene.kind !== 'combat') return;
@@ -633,6 +641,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   };
   const keyHandler = (ev) => {
+    if (ev.target?.closest?.('[data-combat-read-only]')) return;
     if(progressionDoor?.choosing)return;
     if(isClassRespecOpen())return; // the reviewed class form owns Tab and Escape
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
@@ -698,6 +707,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function teardown() {
     releaseAppearance();
     disposed = true;
+    reactionShell?.dismiss();
     snap = null;
     closeCombatantDoor();
     disposeProgression();
@@ -719,6 +729,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
     if (handStrip) { handStrip.teardown(); handStrip = null; }
     if (combatLayout) { combatLayout.release(); combatLayout = null; }
+    if (combatTools) { combatTools.release(); combatTools = null; }
     if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
@@ -973,6 +984,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   let discardShell = null;
   function showPendingDiscard() {
+    showPendingReaction();
     const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
     const pending = player?.pendingAbilityDiscard;
     if (!pending || pending.playerId !== me || discardShell || pacing) return;
@@ -985,8 +997,27 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
   }
 
+  let reactionShell = null;
+  let reactionOfferId = null;
+  function showPendingReaction() {
+    const sc = latestWireSnap?.scene;
+    const owner = sc?.players?.find(player => seats.includes(player.id) && player.pendingReaction?.ownerId === player.id);
+    if (!owner || reactionShell || pacing || sc.players.some(player => player.pendingAbilityDiscard)) return;
+    const ownerId = owner.id;
+    reactionOfferId = owner.pendingReaction.id;
+    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction,
+      onClosed: () => { reactionShell = null; reactionOfferId = null; },
+      onAnswer: intent => {
+        if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
+          send({ t: 'chooseReaction', ...intent });
+      },
+    });
+  }
+
   function renderCombat() {
     const sc = snap.scene;
+    const focusedTool = combatTools?.focusedTool();
     const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
       || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
     let restoreFriendlyCardFocus = null;
@@ -1008,7 +1039,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const arming = armedFlask != null || armedFriendlyCard != null;
 
     app.innerHTML = `
-      <div class="combat coop" data-layout="formation" data-turn="${pacing ? 'enemy' : 'player'}">
+      <div class="combat coop" data-layout="formation" data-turn="${pacing || sc.phase === 'enemy' ? 'enemy' : 'player'}">
         <header class="topbar combat-hud">
           ${hudQuickSettingsHtml(hudQuickSettingsModel({
             place: 'combat',
@@ -1025,7 +1056,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
         ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}
-        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing ? 'Enemy Turn' : 'Player Turn'}</div>
+        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing || sc.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn'}</div>
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>
@@ -1165,9 +1196,18 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const area = app.querySelector('.hand-area');
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
+    combatTools?.release();
+    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion === 1,
+      enabled: meP?.reactionsEnabled !== false, disabled: pacing || sc.phase !== 'player' || !!sc.reactionWaiting
+        || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
+      ...combatToolsState, entries: sc.combatLog || [] }));
+    combatTools = mountCombatTools(app.querySelector('.combat'), { state: combatToolsState,
+      onViewChange: updateTools, onToggle: enabled => send({ t: 'setReactions', enabled }) });
+    updateTools();
+    combatTools.restoreFocus(focusedTool);
     wireCoopActionRow(meP);
     const hand = area.querySelector('.hand');
-    hand.inert = pacing || !!meP?.ended;
+    hand.inert = pacing || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;
     hand.setAttribute('aria-disabled', String(hand.inert));
 
     // My hand — THE hand renderer, mounted fresh per snapshot render (this
@@ -1780,6 +1820,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function receiveSnapshot(s) {
     void bankOwnedLearning(s);
     latestWireSnap = s;
+    if (reactionShell && reactionOfferId !== s.scene?.reactionWaiting?.id) reactionShell.dismiss();
     receivedSnapshots += 1;
     if (pacing) {
       const seq = s.scene?.kind === 'combat' ? Number(s.scene.receiptSeq) || 0 : 0;
@@ -1788,6 +1829,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return;
     }
     const sc = s.scene;
+    if (sc?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
+      && (sc.events || []).some(event => ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'].includes(event.type))) {
+      paceReactionReceipts(s);
+      return;
+    }
     const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
     if (moves.length && prevCombat && sc.turn > prevCombat.turn && app.querySelector('.combat.coop')) {
       paceEnemyTurn(s, moves);
@@ -1860,8 +1906,128 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : latest;
       pacing = false;
       render();
-      if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
     }
+  }
+
+  function paceReactionReceipts(next) {
+    pacing = true;
+    const working = structuredClone(snap);
+    working.scene.events = [];
+    const events = (next.scene.events || []).map(event => ({ ...event,
+      sourceId: event.sourceId === 'player' ? event.sourcePlayerId || event.playerId : event.sourceId,
+      targetId: event.targetId === 'player' ? event.targetPlayerId || event.playerId : event.targetId }));
+    const anchorFor = id => app.querySelector(`[data-seat="${CSS.escape(String(id))}"] .sprite`)
+      || app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`);
+    const entityFor = id => [...working.scene.enemies, ...working.scene.players].find(entity => entity.id === id);
+    const apply = beat => {
+      for (const event of beat.events) {
+        if (Number.isSafeInteger(event.eventIndex) && event.eventIndex >= 0)
+          working.scene.combatLog = (next.scene.combatLog || []).filter(entry => entry.id <= event.eventIndex);
+        const target = entityFor(event.targetId);
+        if (event.type === 'hpLost' && target) target.hp = Math.max(0, target.hp - event.amount);
+        if (event.type === 'healed' && target) target.hp = Math.min(target.maxHp, target.hp + event.amount);
+        if (event.type === 'blockGained' && target) target.block += event.amount;
+        if (event.type === 'damageDealt' && target) {
+          target.hp = Math.max(0, target.hp - Math.max(0, event.amount - (event.blocked || 0)));
+          if (event.blockRemaining !== undefined) target.block = event.blockRemaining;
+        }
+        if (event.type === 'cardPlayed') {
+          const owner = entityFor(event.sourcePlayerId || event.playerId);
+          if (owner) { owner.hand = owner.hand.filter(card => card.instanceId !== event.cardInstanceId);
+            owner.energy -= event.staminaSpent ?? event.energySpent ?? 0; owner.mana -= event.manaSpent || 0; }
+        }
+        if (['cardDrawn', 'cardDiscarded', 'cardExhausted'].includes(event.type)) {
+          const owner = entityFor(event.playerId || event.sourcePlayerId);
+          if (owner && event.type !== 'cardDrawn') owner.hand = owner.hand.filter(card => card.instanceId !== event.cardInstanceId);
+          const drawn = next.scene.players.find(player => player.id === owner?.id)?.hand.find(card => card.instanceId === event.cardInstanceId);
+          if (owner && drawn && !owner.hand.some(card => card.instanceId === drawn.instanceId)) owner.hand.push(drawn);
+        }
+        if (event.type === 'enemyDied' && target) { target.hp = 0; target.alive = false; }
+        if (event.type === 'impactDealt' && target && event.poiseMeter) target.poiseMeter = { ...event.poiseMeter };
+        if (event.type === 'enemyActorTurnStarted') {
+          const enemy = entityFor(event.sourceId);
+          if (enemy) {
+            delete enemy.executingCounterIntent;
+            enemy.actorIntentRevealed = true; enemy.intent = event.intent;
+            const profile = event.intent?.combatProfile || {};
+            enemy.intentPreviews = Object.fromEntries(seats.map(id => [id, { ...event.intent, profile,
+              stance: combatIntentStance(event.intent, profile), hidden: false, revealed: true }]));
+          }
+        }
+        if (event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy') {
+          const enemy = entityFor(event.sourceId);
+          if (enemy) enemy.executingCounterIntent = publicCounterIntent(event);
+        }
+      }
+      snap = working; render();
+    };
+    snap = working; render();
+    playTimeline(events, {
+      get layer() { return app.querySelector('.fx-layer'); },
+      get combatEl() { return app.querySelector('.combat'); }, anchorFor,
+      maxActorAnimationMs(speed) {
+        return Math.max(0, ...[...app.querySelectorAll('.sprite')].flatMap(sprite => {
+          const stage = stageFor(sprite);
+          return (stage?.poses || []).map(pose => stage.actionTiming?.(pose, speed)?.totalMs || 0);
+        }));
+      },
+      animateActor(beat, sprite, speed) {
+        const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
+        const played = returned?.sourceKind === 'player' ? returned : beat.events.find(event => event.type === 'cardPlayed');
+        const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => event.type === 'enemyMoveStarted');
+        if (!played && !moved) return null;
+        const stage = stageFor(sprite);
+        let pose = 'attack';
+        if (played) {
+          const ownerId = played.sourcePlayerId || played.playerId;
+          const member = next.party.find(member => member.id === ownerId);
+          const instance = played.cardInstance || working.scene.players.find(player => player.id === ownerId)?.hand.find(card => card.instanceId === played.cardInstanceId)
+            || { cardId: played.cardId };
+          let def = combatCardView({ registries: registriesForClassMastery(registries, { ...member, class: member?.classId }),
+            player: working.scene.players.find(player => player.id === ownerId), combatExpansionVersion: next.scene.combatExpansionVersion,
+            breakMeterVersion: next.scene.breakMeterVersion }, instance, played.upcastTier);
+          if (returned) {
+            const tags = (def.cardTags || def.tags || []).filter(tag => !tag.startsWith('kind:') && !tag.startsWith('maneuver:'));
+            def = { ...def, type: 'attack', kindIds: ['classification.attack'], cardTags: [...tags, 'maneuver:attack'] };
+          }
+          const plan = resolveCombatAnimation(def, equippedPieces(registries, member?.loadout, member?.classId),
+            { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId), classId: member?.classId,
+              appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion });
+          sprite.dataset.actionFamily = plan.family;
+          sprite.dataset.actionMotion = plan.motion;
+          pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
+        } else {
+          const definition = registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
+          const plan = resolveActionAnimation({ actorId: moved.enemyId, actionId: moved.moveId,
+            tags: definition?.tags || [], intent: moved.kind, availablePoses: stage?.poses || [] });
+          sprite.dataset.actionFamily = plan.family;
+          sprite.dataset.actionMotion = plan.motion;
+          pose = moved.kind === 'attack' ? ['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack'
+            : moved.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+        }
+        const duration = stage?.actionTiming?.(pose, speed)?.totalMs || speed.lungeMs;
+        stage?.play(pose, duration);
+        return { impactMs: Math.min(speed.impactCapMs, duration / 2), totalMs: duration,
+          cancel: () => stage?.settle?.() };
+      },
+      onBeatApplied: apply,
+      onFlush() {
+        animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
+        lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
+        lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
+        snap = next; render();
+      },
+    }, () => {
+      animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
+      lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
+      lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
+      prevCombat = next.scene;
+      snap = next;
+      pacing = false;
+      render();
+      const queued = pendingSnaps; pendingSnaps = [];
+      for (const pending of queued) receiveSnapshot(pending);
+    });
   }
 
   function banner(text, small) {
