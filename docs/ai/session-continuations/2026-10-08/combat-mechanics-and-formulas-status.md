@@ -5,6 +5,15 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Latest packaged proof and fresh development inheritance**
+  - Completed 1186 / 27612de170 passes all three original strict target scenes and every Default solo and projected multiplayer-owner scenario. Raw health events are retained with their original phases. [Retained 1186 evidence](../../../qa/combat-promotion-polish-20261008/current-1186/README.md).
+  - Classic stops at the first desktop solo Shield Counter: rank and payment pass, but the figure remains idle instead of holding the authored guard. Later Classic scenarios and the remaining native families were not run.
+  - The narrow sprite-factory correction permits animated combat views while portraits, menus and explicitly rendered previews remain still. Actual mounted Shield Guard and casting regressions pass; 15 focused checks, zero skips, and independent review are clear. Fresh packaged proof is required.
+  - Final local reconciliation passes 95 combined source checks and the 25-case Info/placement follow-up, zero skips. Independent review is clear. The core runner completed 149 passed, 0 failed and all twenty seeded class runs with zero crashes or soft-locks; this was a working-tree check, not packaged or immutable cloud acceptance.
+  - The player HUD reserves the complete adjacent Info button even while display:none, through authored border-box width converted with UI zoom. Phone and co-op union regressions pass.
+  - Newly merged dev 171a90f102 (#1773 attached enemy and player details) is normally inherited in the local source checkpoint. Its compact names, HP, body selection cells, landscape tools and beside-art player details are preserved while maintaining validated resting hand anchors and bounded full-size target packing. No new combined/native or cloud acceptance is claimed.
+  - Read-only alternative preparation covers 9f234b91d4 and architecture-only child c63e4524b2; live refs subsequently moved again and must be refreshed before source integration. All four branch delivery remains open.
+
 - **Current combined rear-artwork candidate**
   - Actual dev `ca11eb59eb` (#1772 rear sprites/layering) and concurrent same-branch checkpoint `5f066443b0` are normally inherited at `7ca6475f24`. Both parents, foreign receipts, original failed evidence, and stricter local hand/motion/health/depth checks are preserved; #1766 remains separate open work.
   - Build 1184 / `ce9685ca5e` completed all four aliases and passed identity 9, shipping 12, own receipt 2, and changelog order 880 checks. Its first ordinary phone target gate fails: own health footers at layer 501 split the physical plate at 500. Later target shapes and appearance gates were not run. [Retained actual failure](../../../qa/combat-promotion-polish-20261008/current-1184-target-red/README.md).

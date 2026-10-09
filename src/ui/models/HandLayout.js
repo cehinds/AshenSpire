@@ -51,10 +51,39 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, controlsH
     return card.x + cardWidth / 2 - (Math.abs(Math.cos(radians)) * cardWidth
       + Math.abs(Math.sin(radians)) * cardHeight) / 2;
   })) : 0;
-  return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift, restLeft, controlsReserve,
-    top: Math.max(0, Math.min(bottomLimit, Math.max(inset + lift, (height - controlsReserve - cardHeight - arc) / 2))),
+  const top = Math.max(0, Math.min(bottomLimit, Math.max(inset + lift, (height - controlsReserve - cardHeight - arc) / 2)));
+  const restTop = cards.length ? Math.min(...cards.map(card => {
+    const radians = card.angle * Math.PI / 180;
+    return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
+      + Math.abs(Math.cos(radians)) * cardHeight) / 2;
+  })) : 0;
+  // The chooser's bounded vertical correction may lift its owner to the hand
+  // clipping edge. Reserve that possible face before selection, not afterwards.
+  const clearanceTop = controlsHeight > 0 ? 0 : Math.min(restTop, Math.max(0, top - lift));
+  return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift, restLeft, restTop, clearanceTop, controlsReserve,
+    top,
     cards,
   });
+}
+
+export function handGeometryKey({ width, height, zoom, fontSize, left }) {
+  return [width, height, zoom, fontSize, left].join(':');
+}
+
+// Convert the authored resting fan, not live transformed cards, to screen px.
+// A stale or absent hand-layout receipt falls back to the finite hand viewport.
+export function restingHandEnvelope({ rect, clientWidth, clientHeight, fontSize, geometry, restLeft, restTop, clearanceTop }, previous) {
+  if (!rect || !Number.isFinite(rect.left) || !Number.isFinite(rect.top) || !(clientWidth > 0)
+    || !(rect.width > 0)) return null;
+  const zoom = rect.width / clientWidth;
+  const key = handGeometryKey({ width: clientWidth, height: clientHeight, zoom, fontSize, left: rect.left });
+  if (geometry !== key || !Number.isFinite(restLeft) || !Number.isFinite(restTop) || !Number.isFinite(clearanceTop)) {
+    return { key, validated: false, left: rect.left, top: rect.top, clearanceTop: rect.top };
+  }
+  if (previous?.key === key && previous.originTop === rect.top && previous.restLeft === restLeft && previous.restTop === restTop
+    && previous.localClearanceTop === clearanceTop) return previous;
+  return { key, validated: true, originTop: rect.top, restLeft, restTop, localClearanceTop: clearanceTop,
+    left: rect.left + restLeft * zoom, top: rect.top + restTop * zoom, clearanceTop: rect.top + clearanceTop * zoom };
 }
 
 // The reading door remains above its owner and outside the clipped hand.

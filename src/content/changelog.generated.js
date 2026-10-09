@@ -4,13 +4,23 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1768",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
     "summary": "Readable card effects and stable combat targets",
     "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.",
     "build": "0.7.1.1186",
     "pullRequest": 1768,
     "url": "https://github.com/cehinds/AshenSpire/pull/1768"
+  },
+  {
+    "id": "pr-1773",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Attached enemy targets and visible player details",
+    "detail": "Keep compact enemy selection cells on their sprites, shrink them before moving away, and preserve neighboring target order. Show enemy name and health below their bodies and place the player's name, level, health and live combat details beside the character, clear of cards. Pack co-op details without collisions and keep landscape combat tools out of targeting space.",
+    "build": "0.7.1.1184",
+    "pullRequest": 1773,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1773"
   },
   {
     "id": "pr-1772",

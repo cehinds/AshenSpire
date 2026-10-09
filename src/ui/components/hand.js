@@ -1,4 +1,4 @@
-import { handLayout, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
@@ -141,7 +141,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
       handEl.style.setProperty('--hand-rest-left', plan.restLeft + 'px');
-      handEl.dataset.handGeometry = [handEl.clientWidth, handEl.clientHeight, zoom, fontSize, rect.left].join(':');
+      handEl.style.setProperty('--hand-rest-top', plan.restTop + 'px');
+      handEl.style.setProperty('--hand-clearance-top', plan.clearanceTop + 'px');
+      handEl.dataset.handGeometry = handGeometryKey({ width: handEl.clientWidth, height: handEl.clientHeight, zoom, fontSize, left: rect.left });
       handEl.style.setProperty('--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {
         const slot = plan.cards[i];

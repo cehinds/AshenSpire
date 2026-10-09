@@ -17,6 +17,32 @@ import { presentationConfig } from '../../model/advancedConfig.js';
 import { combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { syncCombatGroundShadows } from './combatGroundShadows.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
+import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
+
+// Hidden panels can retain layout rectangles. Reserve only painted controls,
+// including visibility inherited from a hidden leading or combatant container.
+export function visibleCombatPanelRect(node, field) {
+  if (!node) return null;
+  for (let current = node; current; current = current.parentElement) {
+    const style = getComputedStyle(current);
+    if (current.hidden || style.display === 'none' || ['hidden', 'collapse'].includes(style.visibility)
+      || style.opacity === '0') return null;
+    if (current === field) break;
+  }
+  const rect = node.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0 ? rect : null;
+}
+
+export function combatControlWidth(node, zoom) {
+  if (!node) return 0;
+  const width = node.getBoundingClientRect().width;
+  if (width > 0) return width;
+  // Unselected Info doors are display:none. Their authored border-box width
+  // still resolves in computed style, so selecting the actor need not repack it.
+  const style = getComputedStyle(node);
+  return Math.max(0, parseFloat(style.width) || 0, parseFloat(style.minWidth) || 0) * zoom;
+}
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model, layoutState = {}) {
@@ -37,17 +63,40 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let frameRequest = 0;
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
+  function readRestingHand() {
+    const hand = field.closest('.combat').querySelector('.hand');
+    if (!hand) return null;
+    const envelope = restingHandEnvelope({ rect: hand.getBoundingClientRect(), clientWidth: hand.clientWidth,
+      clientHeight: hand.clientHeight, fontSize: getComputedStyle(document.documentElement).fontSize,
+      geometry: hand.dataset.handGeometry, restLeft: parseFloat(hand.style.getPropertyValue('--hand-rest-left')),
+      restTop: parseFloat(hand.style.getPropertyValue('--hand-rest-top')),
+      clearanceTop: parseFloat(hand.style.getPropertyValue('--hand-clearance-top')) }, layoutState.restHandAnchor);
+    if (envelope?.validated) layoutState.restHandAnchor = envelope;
+    return envelope;
+  }
   function placePlayerHud() {
     const zoom = uiZoom();
+    const panels = [...field.querySelectorAll('.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
+      .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+    const handTop = readRestingHand()?.clearanceTop;
     for (const player of field.querySelectorAll('.combatant.player')) {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
       if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) continue;
       const art = currentSpriteArtBounds(sprite, placePlayerHud);
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
-      const gap = parseFloat(getComputedStyle(leading).getPropertyValue('--player-hud-gap')) || 0;
-      const localTop = (art.top - stack.top - gap) / zoom;
-      const top = `${localTop}px`;
+      const combat = field.closest('.combat');
+      const viewport = combat.getBoundingClientRect();
+      const panel = leading.getBoundingClientRect();
+      const leftOverhang = combatControlWidth(leading.querySelector(':scope > .combatant-info'), zoom);
+      const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport,
+        handTop, leftOverhang,
+        hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
+      panels.push({ left: placement.left - leftOverhang, top: placement.top,
+        right: placement.left + panel.width, bottom: placement.top + panel.height });
+      const top = `${(placement.top - stack.top) / zoom}px`;
+      const left = `${(placement.left - stack.left) / zoom}px`;
       if (leading.style.top !== top) leading.style.top = top;
+      if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
@@ -173,13 +222,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
-      const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
+      const leadingHeight = !frame.classList.contains('player') ? (visibleCombatPanelRect(leadingHost, field)?.height || 0) / zoom : 0;
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
       const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control, :scope > .combatant-mini-hud')]
-        .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0) : [];
-      const leadingWidth = leadingRects.length ? (Math.max(...leadingRects.map(rect => rect.right))
+        .map(control => visibleCombatPanelRect(control, field)).filter(Boolean) : [];
+      const leadingWidth = leadingRects.length && !frame.classList.contains('player') ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
         * wireframeUi.formation.displayScale * (slot.characterScale || 1);
@@ -204,17 +253,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const hand = combat.querySelector('.hand');
     const handRect = hand?.getBoundingClientRect();
-    const restLeft = parseFloat(hand?.style.getPropertyValue('--hand-rest-left'));
     // Read the resting envelope, never a selected or horizontally panned card.
     // Keep it across screen remounts until viewport geometry or text scale changes.
     const handKey = handRect && hand.clientWidth > 0
-      ? [hand.clientWidth, hand.clientHeight, handRect.width / hand.clientWidth, getComputedStyle(document.documentElement).fontSize, handRect.left].join(':') : null;
-    if (Number.isFinite(restLeft) && handRect && hand.dataset.handGeometry === handKey
-      && layoutState.restHandAnchor?.key !== handKey) {
-      layoutState.restHandAnchor = { key: handKey, left: handRect.left + restLeft * handRect.width / hand.clientWidth };
-    }
-    const handLeft = layoutState.restHandAnchor?.key === handKey
-      ? layoutState.restHandAnchor.left : handRect?.left ?? fieldRect.left;
+      ? handGeometryKey({ width: hand.clientWidth, height: hand.clientHeight, zoom: handRect.width / hand.clientWidth,
+        fontSize: getComputedStyle(document.documentElement).fontSize, left: handRect.left }) : null;
+    const handLeft = readRestingHand()?.left ?? fieldRect.left;
     // Preserve the incoming remount cache's subpixel tolerance; raw geometry
     // still validates the hand's authored resting envelope above.
     const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value))
@@ -394,14 +438,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // than the frame it paints, which overhangs the host.
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
-        .map(footer => footer.getBoundingClientRect().width)),
+        .map(footer => visibleCombatPanelRect(footer, field)?.width || 0)),
       controls: [...frame.querySelectorAll('.combatant-leading button, .combatant-mini-hud')]
-        .filter(control => {
-          const style = getComputedStyle(control);
-          return !control.hidden && style.display !== 'none' && !['hidden','collapse'].includes(style.visibility);
-        })
-        .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
+        .map(control => visibleCombatPanelRect(control, field)).filter(Boolean),
     }));
+    const footerSize = 44;
     const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
       // Crowded HUD/intent bands may leave no vertical slot. Only the plate
       // and its visible footer may then shift by at most one physical target.
@@ -414,14 +455,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
         x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top + (box.intentRect ? box.intentRect.height / 2 : 0),
-        width: Math.max(box.footerWidth, box.intentRect?.width || 0),
+        y: box.hostRect.bottom - fieldRect.top + footerSize / 2,
+        width: Math.max(48, box.footerWidth),
       })) });
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
       if (intentRect) {
-        frame.style.setProperty('--enemy-hit-width', `${Math.max(44,intentRect.width) / zoom}px`);
+        frame.style.setProperty('--enemy-hit-width', `${Math.max(44,boxes[i].footerWidth) / zoom}px`);
         // Intent cards can be taller; the independent foot target keeps its
         // physical 44px minimum so two aligned footer bands fit a short stage.
         frame.style.setProperty('--enemy-hit-height', `${44 / zoom}px`);
@@ -435,7 +476,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom - (intentRect ? intentRect.height / 2 - 5 : 0), width: 0, height: 0 }, { zoom });
+          top: fieldRect.top + target.y - hostRect.bottom - footerSize / 2, width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
