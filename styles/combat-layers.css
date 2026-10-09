@@ -192,7 +192,7 @@
   padding: 0; box-shadow: 0 2px 6px #0006;
 }
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
-  --inspect-box: calc(32px / var(--ui-zoom,1));
+  --inspect-box: calc(22px / var(--ui-zoom,1));
 }
 
 :root .combat[data-layout='formation'] .combat-tools [data-combat-tool='log'] { touch-action: none; }
@@ -222,6 +222,9 @@
 :root .combat[data-layout='formation'] .hand-info-portal { transform: none; }
 
 /* Approved combat HUD: the actor owns every compact and expanded surface. */
+/* The legacy appearance adds a permanent faction-colored edge. Selection and
+   armed-target silhouettes now own that cue; idle artwork stays unoutlined. */
+:root .combat[data-layout='formation'] .combatant .alternative-silhouette { filter: none; }
 :root .combat[data-layout='formation'] .combatant { --combatant-highlight: #ef4949; }
 :root .combat[data-layout='formation'] .combatant.player { --combatant-highlight: #65df68; }
 :root .combat[data-layout='formation'] .combatant.context-selected .sprite {
@@ -233,11 +236,13 @@
   max-width: var(--inspect-box); max-height: var(--inspect-box); padding: 0;
   font-size: calc(14px / var(--ui-zoom,1)); border: 1px solid var(--gold);
 }
-:root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info { display: flex; visibility: visible; pointer-events: auto; }
+:root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
 :root .combat[data-layout='formation'] .context-selected .combatant-leading > .combatant-info {
   border-color: var(--combatant-highlight); color: var(--combatant-highlight); box-shadow: 0 0 3px var(--combatant-highlight);
 }
 :root .combat[data-layout='formation'] .enemy .combatant-leading { flex-direction: column; }
+:root .combat[data-layout='formation'] .enemy .combatant-leading .intent { width: calc(104px / var(--ui-zoom,1)); min-width: calc(104px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .enemy .combatant-leading .intent { width: calc(88px / var(--ui-zoom,1)); min-width: calc(88px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .enemy .combatant-leading > .intent { order: -1; }
 :root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-leading { padding-bottom: calc(22px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .intent-compact { display: none; align-items: center; gap: calc(3px / var(--ui-zoom,1)); }

@@ -400,7 +400,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       }
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
-      frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);
+      frame.style.setProperty('--overhead-top', `${-overheadGap / zoom}px`);
       frame.dataset.overheadClamped = 'false';
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
@@ -429,13 +429,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
-      footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+      footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')].filter(node => node.getBoundingClientRect().height > 0)
         .map(footer => footer.getBoundingClientRect().width)),
-      footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+      footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')].filter(node => node.getBoundingClientRect().height > 0)
         .reduce((height,footer)=>height+footer.getBoundingClientRect().height,0),
-      footerTop: Math.min(...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+      footerTop: Math.min(...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')].filter(node => node.getBoundingClientRect().height > 0)
         .map(footer => footer.getBoundingClientRect().top - (parseFloat(footer.style.translate.split(' ')[1]) || 0) * zoom)),
-      footerCenterX: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+      footerCenterX: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')].filter(node => node.getBoundingClientRect().height > 0)
         .map(footer => { const rect = footer.getBoundingClientRect(); return rect.left + rect.width / 2 - (parseFloat(footer.style.translate) || 0) * zoom; })[0],
       controls: [...frame.querySelectorAll('.combatant-leading button')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),

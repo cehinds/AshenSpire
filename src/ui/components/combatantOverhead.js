@@ -37,6 +37,10 @@ export function combatantInfo(name, open) {
   attachTooltip(node, () => `<div class="tt-title">${esc(name)}</div>Inspect resources, skills, and active effects.`, {
     selectionFirst: true, activate: open, intent: 'above', align: 'center',
   });
+  node.addEventListener('click', event => {
+    if (!node.closest('.combatant')?.classList.contains('context-selected')) return;
+    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip(); open(node);
+  }, true);
   return node;
 }
 

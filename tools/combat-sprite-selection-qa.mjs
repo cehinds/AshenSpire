@@ -21,7 +21,8 @@ try {
       return { id: frame.dataset.eid, selected: frame.classList.contains('context-selected'),
         x: rect.x, y: rect.y, width: rect.width, height: rect.height, bottom: rect.bottom,
         center: rect.x + rect.width / 2, depth: Number(style.zIndex), scale: style.scale,
-        fit: frame.dataset.baseSpriteScale, zoom: sprite.style.zoom };
+        fit: frame.dataset.baseSpriteScale, zoom: sprite.style.zoom, filter: style.filter,
+        artworkEdges: [...sprite.querySelectorAll('.alternative-silhouette')].map(art => getComputedStyle(art).filter) };
     }));
     try {
       const url = new URL(process.env.COMBAT_QA_URL || 'http://localhost:8338/');
@@ -41,6 +42,10 @@ try {
       await page.keyboard.press('Escape');
       const baseline = await snapshot();
       assert(baseline.length >= 3 && baseline.every(actor => !actor.selected));
+      for (const actor of baseline) {
+        assert.equal(actor.filter, 'none', 'idle sprite has no selection highlight');
+        assert(actor.artworkEdges.every(filter => filter === 'none'), 'idle alternative artwork has no permanent faction outline');
+      }
       for (const original of baseline) {
         const selector = `.combatant[data-eid="${original.id}"] ${original.id === 'player' ? '.sprite' : '.intent'}`;
         const point = await page.evaluate(pointerTargetExpression(selector));
@@ -60,6 +65,8 @@ try {
           near(selected.bottom, original.bottom, `${phase} ground anchor`);
           assert.equal(selected.fit, original.fit, 'selection must not alter the formation cache');
           assert.equal(selected.zoom, original.zoom, 'selection must not compound fitted zoom');
+          assert(selected.filter.includes('drop-shadow'), 'selected sprite retains its outline');
+          assert(selected.artworkEdges.every(filter => filter === 'none'), 'selection has one outline owner');
           assert(actors.filter(actor => actor.id !== selected.id).every(actor => selected.depth > actor.depth), 'selected sprite paints above every other sprite');
           for (const other of actors.filter(actor => actor.id !== selected.id)) {
             const before = baseline.find(actor => actor.id === other.id);
@@ -84,9 +91,29 @@ try {
           assert(!actor.selected);
           for (const key of ['x', 'y', 'width', 'height', 'depth']) near(actor[key], before[key], `restored ${actor.id} ${key}`);
           assert.equal(actor.scale, before.scale);
+          assert.equal(actor.filter, before.filter, 'deselection removes the temporary highlight');
         }
         records.push({ phase: 'deselected', id: original.id, actors: restored });
       }
+      // A deterministic legal enemy card tests the other outline owner with a
+      // real pointer input. It is armed only; no card command is injected.
+      await page.evaluate(() => {
+        window.__combat.piles.hand = [{ cardId: 'strike', instanceId: 'outline-qa', upgraded: false }];
+        window.__renderCombatForShot();
+      });
+      await page.waitForTimeout(300);
+      const cardPoint = await page.evaluate(pointerTargetExpression('.hand .card[data-instance-id="outline-qa"]'));
+      await page.mouse.click(cardPoint.x, cardPoint.y);
+      await page.waitForFunction(() => document.querySelectorAll('.enemy.aiming .aim-silho').length >= 2);
+      const armed = await page.evaluate(() => [...document.querySelectorAll('.enemy.aiming .aim-silho')].map(node => ({
+        relationship: node.dataset.targetRelationship,
+        visible: getComputedStyle(node).display !== 'none' && node.getBoundingClientRect().width > 0,
+      })));
+      assert(armed.every(target => target.relationship === 'enemy' && target.visible), 'armed targets retain real targeting silhouettes');
+      records.push({ phase: 'armed-target-outline', targets: armed });
+      await page.screenshot({ path: `${out}/${width}-armed.png` });
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.querySelector('.aim-silho'));
       assert.deepEqual(errors, []);
       results.push({ width, height, pass: true, baseline, records, errors });
     } catch (error) {
