@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `codex/combat-promotion-polish-20261008`
-- Source commit: `c7e7fa21e3a226bf4037ac7a571db23d78787724`
+- Source branch: `detached`
+- Source commit: `9f7fc79e6647180e68950c057c65f0e66b4f7eb6`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,17 +21,17 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 175 |
+| Domain models and contracts | `src/model/` | 177 |
 | Headless simulation/services | `src/engine/` | 42 |
 | Screen presenters/hosts | `src/ui/screens/` | 34 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 95 |
-| DOM components and observer adapters | `src/ui/components/` | 125 |
-| Code-side content adapters | `src/content/` | 156 |
+| DOM components and observer adapters | `src/ui/components/` | 126 |
+| Code-side content adapters | `src/content/` | 154 |
 | Authoritative JSON/CSV content | `content/source/` | 32 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 460 |
-| Architecture/tooling | `tools/` | 455 |
+| Tests | `tests/` | 461 |
+| Architecture/tooling | `tools/` | 460 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **13257**.
-Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 43, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 56, `.jpg` 282, `.js` 768, `.json` 865, `.jsonl` 1, `.log` 15, `.md` 252, `.mjs` 856, `.nojekyll` 1, `.nsi` 1, `.png` 1837, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.tap` 1, `.txt` 43, `.webp` 7338, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
+Tracked files: **13278**.
+Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 44, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 60, `.jpg` 282, `.js` 772, `.json` 858, `.jsonl` 1, `.log` 15, `.md` 252, `.mjs` 862, `.nojekyll` 1, `.nsi` 1, `.png` 1850, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.tap` 1, `.txt` 43, `.webp` 7338, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

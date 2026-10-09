@@ -3,14 +3,24 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {contentBundle} from '../src/content/index.js';
+import {validateCardAppearance} from '../src/model/cardAppearance.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export function compileCardComponents(template,cards,base=root){
+  validateCardAppearance(template);
   if(template.schemaVersion!==1||!Array.isArray(template.layers)||!template.layers.length)throw Error('Invalid card layout schema');
+  if(template.version!==undefined){
+    if(template.version!==1||template.coordinateSpace?.width!==template.width||template.coordinateSpace?.height!==template.height)throw Error('Invalid card preview coordinate space');
+    if(!Array.isArray(template.order)||template.order.length!==9||new Set(template.order).size!==9||template.order.some(n=>!Number.isInteger(n)||n<1||n>9))throw Error('Invalid card paint order');
+    if(!template.layouts?.[template.defaultLayout])throw Error('Missing shared card layout');
+    for(const rects of [template.referenceRects,...Object.values(template.layouts)])for(const r of Object.values(rects||{}))if(!r||['x','y','w','h'].some(k=>!Number.isFinite(r[k]))||r.w<=0||r.h<=0)throw Error('Invalid card component rectangle');
+    for(const group of Object.values(template.groups||{}))if(!Array.isArray(group.members)||!group.members.includes(group.parent))throw Error('Invalid card component group');
+  }
   for(const key of ['width','height'])if(!Number.isFinite(template[key])||template[key]<10||template[key]>4000)throw Error('Invalid card layout size');
   const manifestPath=resolve(base,'art-manifest.json');
   const manifest=existsSync(manifestPath)?JSON.parse(readFileSync(manifestPath,'utf8')):null;
   const hasAsset=href=>!!manifest?.assets?.[href] || existsSync(resolve(base,href));
+  for(const visual of [...Object.values(template.components||{}),...Object.values(template.symbols||{}).flatMap(c=>Object.values(c))])if(visual.href&&!hasAsset(visual.href))throw Error('Missing card component image: '+visual.href);
   const ids=new Set();
   for(const layer of template.layers){
     if(ids.has(layer.id)||!['image','text'].includes(layer.type))throw Error('Invalid or duplicate card layer');ids.add(layer.id);

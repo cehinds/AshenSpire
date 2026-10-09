@@ -1,4 +1,6 @@
+import { cardSideTags } from './cardTagSymbols.js';
 import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
+import {applyCardAppearance} from './cardAppearance.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
@@ -152,6 +154,7 @@ export function renderCard(registries, ref, opts = {}) {
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
+  model.sideTags = cardSideTags(model, def, registries);
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
@@ -162,9 +165,10 @@ export function renderCard(registries, ref, opts = {}) {
   const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
+    ...model.sideTags.map(tag => tag.label),
     model.abilityRank !== null && rawModel.type.label,
     model.abilityRank !== null && rawModel.type.subtype,
-    model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rank > 1 && `rank ${model.rank}`,
+    model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
   ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
@@ -278,10 +282,9 @@ export function renderCard(registries, ref, opts = {}) {
       artworkPosition:artwork?.position,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
+    applyCardAppearance(el.querySelector('.illustrated-card-face'));
     if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
-    // A ranked card (SPEC §13.4o) wears its rank in the top right of its art; the
-    // number it adds is already in the face's text.
-    if(model.rankBadge){const badge=document.createElement('span');badge.className='card-rank';badge.textContent=model.rankBadge;badge.title=model.rankHelp;el.appendChild(badge);}
+    // The illustrated face owns the rank label and keeps it above its fitted panel.
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
     for (const node of kept)el.append(node);
     el.dataset.level=at;
