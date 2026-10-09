@@ -98,7 +98,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const zoom = rect.width / handEl.clientWidth || 1;
       const fontSize = getComputedStyle(document.documentElement).fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
-      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight, count: cards.length, rem, zoom });
+      const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
+      const toolsHeight = 64 / zoom;
+      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight, count: cards.length, rem, zoom, compact });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
@@ -110,7 +112,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         el.style.setProperty('--hand-card-width', plan.cardWidth + 'px');
         el.style.setProperty('--hand-card-height', plan.cardHeight + 'px');
         el.style.setProperty('--hand-card-x', slot.x + 'px');
-        el.style.setProperty('--hand-card-y', (plan.top + slot.y) + 'px');
+        el.style.setProperty('--hand-card-y', (toolsHeight + plan.top + slot.y) + 'px');
         el.style.setProperty('--hand-card-angle', slot.angle + 'deg');
         el.style.setProperty('--hand-card-arc', slot.y + 'px');
         el.style.setProperty('--hand-hit-width', (i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px');

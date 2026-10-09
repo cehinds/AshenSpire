@@ -4976,8 +4976,14 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .combat-action-row[data-footer-compact='true'] button .footer-art-face { height: 58%; flex: 0 1 58%; }
 .combat-action-row[data-footer-compact='true'] .footer-compact-label {
   display: block; font: 600 max(.72rem, calc(12px / var(--ui-zoom, 1)))/1.12 Georgia, serif;
-  white-space: pre-line; text-align: center;
+  width: 100%; white-space: nowrap; text-align: center;
 }
+.combat-action-row[data-footer-compact='true'] .footer-compact-line { display: block; width: max-content; margin-inline: auto; white-space: nowrap; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile {
+  height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1))); min-height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1)));
+}
+.combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: 42%; flex: 0 1 42%; }
+.combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(11px / var(--ui-zoom, 1)); }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }

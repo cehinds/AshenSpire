@@ -1,13 +1,17 @@
 import { button, el } from '../kit/index.js';
 import { childModel } from '../models/ComponentModel.js';
-import { combatLogHeight, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
+import { combatLogHeight, combatLogSnapSize, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { t, tFull } from '../strings.js';
+import { trackGesture } from '../gesture.js';
 
 export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
+  logButton.style.touchAction = 'none';
+  logButton.style.userSelect = 'none';
+  logButton.setAttribute('aria-keyshortcuts', 'ArrowUp ArrowDown Home End');
   const reaction = markUiComponent(button({ label: '', attrs: { 'data-combat-tool': 'reaction', role: 'switch', 'aria-checked': 'true' } }), UI.reactionToggle);
   reaction.classList.add('reaction-switch');
   const label = el('span', { text: t('combat.reactions.label') });
@@ -17,46 +21,76 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   track.append(value, thumb); reaction.replaceChildren(label, track);
   const panel = markUiComponent(el('section', { id: 'combat-log', class: 'combat-log-panel', 'aria-label': t('combat.log.title'), hidden: true }), UI.combatLogDrawer);
   const title = el('div', { class: 'combat-log-heading', text: t('combat.log.title') });
-  const sizes = el('div', { class: 'combat-log-sizes', role: 'group', 'aria-label': t('combat.log.sizeLabel') });
-  for (const size of COMBAT_LOG_SIZES) {
-    const pick = button({ label: t(`combat.log.size.${size.toLowerCase()}`), attrs: { 'data-combat-tool': size, 'data-log-size': size, 'aria-pressed': 'false' } });
-    pick.addEventListener('click', () => { state.size = size; onViewChange(); root.querySelector(`[data-log-size="${size}"]`)?.focus(); });
-    sizes.append(pick);
-  }
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(title, sizes, list); root.append(panel, logButton, reaction); combatEl.append(root);
-  logButton.addEventListener('click', () => { state.open = !state.open; onViewChange(); });
+  panel.append(title, list); root.append(panel, logButton, reaction); combatEl.append(root);
+  let drag = null, suppressClick = false, released = false;
+  const snapHeights = () => {
+    const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
+    const space = { cardHeight: combatEl.querySelector('.hand .card')?.getBoundingClientRect().height || 250,
+      viewportHeight: window.visualViewport?.height || innerHeight, dockTop: root.getBoundingClientRect().top - 6,
+      menuBottom, gap: parseFloat(getComputedStyle(root).getPropertyValue('--combat-tools-gap')) || 8 };
+    return Object.fromEntries(COMBAT_LOG_SIZES.map(size => [size, combatLogHeight({ ...space, size })]));
+  };
+  logButton.addEventListener('click', event => {
+    if (suppressClick) { suppressClick = false; event.preventDefault(); event.stopPropagation(); return; }
+    state.open = !state.open; onViewChange();
+  });
+  logButton.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || drag) return;
+    suppressClick = false;
+    const heights = snapHeights();
+    const gesture = drag = { pointerId: event.pointerId, y: event.clientY, active: false,
+      open: state.open, size: state.size, height: state.open ? heights[state.size] : 0, heights };
+    const initialHeight = gesture.height;
+    trackGesture(event, {
+      onMove(move) {
+        if (released || drag !== gesture) return;
+        const delta = gesture.y - move.clientY;
+        if (!gesture.active && Math.abs(delta) < 6) return;
+        gesture.active = true; move.preventDefault();
+        gesture.height = Math.max(heights.Small, Math.min(heights.Large, initialHeight + delta));
+        root.dataset.logDragging = 'true'; state.open = true; onViewChange();
+      },
+      onEnd(_event, { cancelled }) {
+        if (released || drag !== gesture) return;
+        drag = null; delete root.dataset.logDragging;
+        if (!gesture.active) return;
+        suppressClick = true;
+        state.open = cancelled ? gesture.open : true;
+        state.size = cancelled ? gesture.size : combatLogSnapSize(gesture.height, heights);
+        onViewChange();
+      },
+    });
+  });
+  logButton.addEventListener('keydown', event => {
+    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault(); event.stopPropagation();
+    const index = COMBAT_LOG_SIZES.indexOf(state.size);
+    state.size = event.key === 'Home' ? 'Small' : event.key === 'End' ? 'Large'
+      : COMBAT_LOG_SIZES[Math.max(0, Math.min(2, index + (event.key === 'ArrowUp' ? 1 : -1)))];
+    state.open = true; onViewChange();
+  });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   let frame = 0, entryKey = '';
   function measure() {
     frame = 0;
     if (!root.isConnected) return;
     const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
-    const style = getComputedStyle(root);
-    const gap = parseFloat(style.getPropertyValue('--combat-tools-gap')) || 8;
-    const compact = innerHeight <= 480 && innerWidth >= 600;
-    const width = compact ? 120 : parseFloat(style.getPropertyValue('--combat-tools-physical-width')) || 136;
+    const hand = combatEl.querySelector('.hand');
+    const handBox = hand?.getBoundingClientRect();
+    const width = Math.min(220, (handBox?.width || innerWidth) - 12);
     const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
     root.style.width = `${localWidth.width}px`;
-    // Short landscape already gives the hand left/right footer rails. Put the
-    // tools in the left rail instead of subtracting its width a second time.
-    const reserve = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: compact ? 0 : width + gap + 4, height: 0 }, { zoom });
-    combatEl.style.setProperty('--combat-tools-reserve', `${reserve.width}px`);
-    const footerHost = combatEl.querySelector('.combat-action-row');
-    const footer = footerHost?.getBoundingClientRect();
-    // Landscape side rails span the whole hand. Dock above their actual
-    // buttons, not the transparent container that reaches into the battlefield.
-    const footerButtons = [...(footerHost?.querySelectorAll('button, [role="button"]') || [])]
-      .map(button=>button.getBoundingClientRect()).filter(rect=>rect.width && rect.height
-        && (!compact || rect.left < innerWidth / 2));
-    const bottom = (footerButtons.length ? Math.min(...footerButtons.map(rect=>rect.top)) : footer?.top ?? innerHeight) - gap;
-    const localDock = anchorLocalBox(combatEl, { left: 0, top: bottom - root.getBoundingClientRect().height, width: 0, height: 0 }, { zoom });
+    // A compact toolbar occupies the top of the card band. It never consumes
+    // hand width: doing that collapsed every card onto one slot on phones.
+    combatEl.style.setProperty('--combat-tools-reserve', '0px');
+    const localDock = anchorLocalBox(combatEl, { left: (handBox?.right || innerWidth) - width - 6,
+      top: (handBox?.top || 0) + 30, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
-    const menu = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
-    const card = combatEl.querySelector('.hand .card')?.getBoundingClientRect().height || 250;
-    const height = combatLogHeight({ size: state.size, cardHeight: card,
-      viewportHeight: window.visualViewport?.height || innerHeight, dockTop: root.getBoundingClientRect().top - 6, menuBottom: menu, gap });
+    root.style.left = `${localDock.left}px`;
+    root.style.right = 'auto';
+    const height = drag?.active ? drag.height : snapHeights()[state.size];
     const localPanel = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: 0, height }, { zoom });
     panel.style.height = `${localPanel.height}px`;
     root.dataset.logSize = state.size;
@@ -78,7 +112,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     reaction.dataset.enabled = String(toggle.enabled);
     value.textContent = stateLabel;
     panel.hidden = !log.open; logButton.setAttribute('aria-expanded', String(log.open));
-    sizes.querySelectorAll('[data-log-size]').forEach(pick => pick.setAttribute('aria-pressed', String(pick.dataset.logSize === log.size)));
+    logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
     const key = JSON.stringify(log.entries);
     if (key !== entryKey) {
       entryKey = key; list.replaceChildren();
@@ -95,5 +129,5 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   return { update,
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
-    release() { observer.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+    release() { released = true; observer.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }

@@ -69,10 +69,14 @@ export function mountHandInspectionOverlay(hand) {
     }
     if (!owner || !control) return;
     const anchor = owner.getBoundingClientRect();
+    const combat = !!hand.closest('.combat');
+    const button = control.getBoundingClientRect();
     const local = anchorLocalBox(hand.parentElement, {
-      left: anchor.left + anchor.width / 2,
+      // Combat's toolbar owns the space above the cards. Keep both the
+      // attached and portalled reading door inside its owning card instead.
+      left: combat ? anchor.right - button.width - 4 : anchor.left + anchor.width / 2,
       // WCB1: the control's size plus its gap, in physical px like the rect.
-      top: anchor.top - inspectControlRisePx(),
+      top: combat ? anchor.top + 4 : anchor.top - inspectControlRisePx(),
       width: 0,
       height: 0,
     });

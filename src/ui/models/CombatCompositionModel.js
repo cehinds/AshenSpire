@@ -27,7 +27,7 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
   // Full-grid fitting can leave a two-enemy encounter as thumbnails. Lift the
   // enemy group uniformly, preserving its relative stature and depth ratios.
-  const enemyFloor = Math.min(120, width * .17, height * .26);
+  const enemyFloor = Math.min(120, width * .17, Math.max(64, height * .26));
   const enemyFactor = Math.max(.5, enemyFloor / Math.min(...enemyFits.map(f => f.visibleHeight)));
   return sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
@@ -40,7 +40,7 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     const ground = player && solo && Number.isFinite(handTop)
       ? handTop + visibleHeight * .12
-      : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground) : height * .40);
+      : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground) : height * .34);
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio };
   });
 }

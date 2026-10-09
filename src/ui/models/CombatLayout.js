@@ -48,7 +48,16 @@ export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, l
 // yields height to the battlefield, but only down to one minimum-width card
 // with its lift, arc and insets. Card faces, text and targets keep their
 // minimums. A host that still cannot fit is reported, not squeezed.
-export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0 }, config = wireframeUi) {
+export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0, compact = false }, config = wireframeUi) {
+  if (compact) {
+    const physicalHeight = height * zoom;
+    const hud = Math.max(48, physicalHeight * .09) / zoom;
+    const hand = Math.max(176, Math.min(220, physicalHeight * .28)) / zoom;
+    const footer = 78 / zoom;
+    const battlefield = Math.max(0, height - hud - hand - footer);
+    return Object.freeze({ hud, battlefield, hand, footer, minimumBattlefield: 130 / zoom,
+      arrangement: 'stacked', rails: null, supported: battlefield * zoom >= 130 });
+  }
   // The stacked plan is the shared W4 plan: the battlefield is the scene band
   // and the hand is the context band.
   const minimumBattlefield = config.formation.minimumSpritePx / zoom + config.formation.detailReserveRem * rem;
@@ -94,6 +103,17 @@ export function minimumHandHeight(rem = 16, config = wireframeUi) {
 // and takes up to its envelope of what remains. The touch target and the
 // readable pile floor outrank the nominal pile envelope on narrow hosts.
 export function packCombatFooter({ width, height, zoom = 1, rem = 16 }, config = wireframeUi.footer) {
+  if (width * zoom <= 600) {
+    const target = config.minimumTargetPx / zoom;
+    const gap = Math.min(config.gapRem * rem, 4 / zoom);
+    const available = Math.max(0, width - gap * 4);
+    const diameter = Math.max(target, Math.min(52 / zoom, height * config.heightFraction));
+    const pileWidth = target;
+    const endWidth = Math.max(0, Math.min(76 / zoom, available - diameter * 2 - pileWidth * 2));
+    return Object.freeze({ gap, target, diameter, pileWidth, pileHeight: target, endWidth, endHeight: diameter,
+      groupWidth: diameter * 2 + pileWidth * 2 + endWidth + gap * 4,
+      supported: endWidth >= target && height >= target });
+  }
   const gap = config.gapRem * rem;
   const target = config.minimumTargetPx / zoom;
   const available = Math.max(0, width - gap * 4);

@@ -33,7 +33,7 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
       return xs.flatMap(x => ys.map(y => ({ ...start, x, y })))
         .filter(anchor => {
           const box = rect(anchor);
-          return box.left >= 0 && box.right <= width && box.top >= 0 && box.bottom <= height
+          return box.left >= 0 && box.right <= width && box.top >= 0 && box.bottom <= height && anchor.y >= (start.minY ?? 0)
             && obstacles.every(obstacle => clear(box, obstacle));
         })
         .sort((a, b) => (a.x - start.x) ** 2 + (a.y - start.y) ** 2
@@ -111,7 +111,7 @@ export function combatOverheadRibbonShift({ x, width, top, bottom, ribbon, clear
   return intersects ? Math.max(0, ribbon.bottom + clearance - top) : 0;
 }
 
-export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null }) {
+export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null, ribbonClearance = 14 }) {
   if (ribbon) {
     const adjusted = controls.map(control => ({ ...control, offsetY: 0 }));
     let anchors;
@@ -123,7 +123,7 @@ export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, rib
       let changed = false;
       for (const control of adjusted) {
         const x = anchors.find(anchor => anchor.id === control.id).x;
-        const shift = combatOverheadRibbonShift({ ...control, x, ribbon });
+        const shift = combatOverheadRibbonShift({ ...control, x, ribbon, clearance: ribbonClearance });
         if (!shift) continue;
         control.top += shift; control.bottom += shift; control.offsetY += shift;
         changed = true;

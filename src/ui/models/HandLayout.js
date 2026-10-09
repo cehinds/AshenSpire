@@ -13,13 +13,14 @@ export function moveHandInstance(order, id, slot) {
   return next;
 }
 
-export function handLayout({ width, height, count, rem = 16, zoom = 1 }, config = wireframeUi.hand) {
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
   const arc = config.arcRem * rem;
   const available = Math.max(0, height - inset * 2 - lift - arc);
-  const cardWidth = Math.max(config.minWidthRem * rem,
-    Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
+  const cardWidth = compact
+    ? Math.max(72 / zoom, Math.min(104 / zoom, available * wireframeUi.card.ratio))
+    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
   const progress = Math.max(0, Math.min(1,

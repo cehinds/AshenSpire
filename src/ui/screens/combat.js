@@ -1449,6 +1449,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (selfArm) playCard(selfArm, null);
       else if (!selected && selectedFlask == null) selectCombatant('player');
     });
+    if (!existing) box.addEventListener('click', event => {
+      if (!selfArm || !event.target.closest('.combatant-mini-hud')) return;
+      event.preventDefault(); event.stopPropagation();
+      playCard(selfArm, null);
+    }, true);
     if (!existing) zone.appendChild(box);
     stageFor(box)?.setStance?.(heldStances.get());
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
@@ -1461,7 +1466,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return combatantIntent(disp?.ents[enemy.id]?.intentPreview || previewIntent(combat, enemy.id), () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
-    }, registries);
+    }, registries, { onTarget: () => {
+      if (busy || !getEntity(combat, enemy.id)?.alive || selfArm) return false;
+      if (selected) playCard(selected, enemy.id);
+      else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
+      else selectCombatant(enemy.id);
+      return true;
+    } });
   }
 
   function renderEnemies() {
@@ -2086,7 +2097,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   combatEl.addEventListener('click', event => {
-    if (event.target.closest('.combatant, button, .card, .as-tip, .modal, input, [data-combat-read-only]')) return;
+    // Pointer capture can retarget a card's trailing touch click to its hand
+    // after pointerup lifts the selected card. That is still a card gesture.
+    if (event.target.closest('.combatant, button, .hand, .card, .as-tip, .modal, input, [data-combat-read-only]')) return;
     selected = null; selfArm = null; selectedFlask = null;
     syncCardSelection();
   });
