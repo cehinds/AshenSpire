@@ -27,7 +27,7 @@ Open PR inventory at review: #1767 reactions, #1766 cards, #1763 Molten River, #
 
 1. Finish and push the screenreach fixture test update. Confirm the exact remote SHA via ls-remote; HTTP timeouts alone do not prove upload.
 2. Refresh current PR states, required checks, reviews and conflicts. Identify overlapping changes in anchors, layered appearance, formula displays, reactions and receipts.
-3. Integrate the continuation package from codex/session-continuations-20261008 into dev through its documentation PR if it has not landed.
+3. Integrate the continuation package from codex/session-continuations-20261008 into dev if it has not landed. Cherry-pick its documentation commit into your existing reviewed integration PR, or open a separate documentation PR. Preserve review and receipt requirements in the PR that carries it.
 4. Establish a landing order from actual dependencies. Keep each feature owner responsible for its changes; do not silently overwrite local branches. Other sessions are being directly messaged with their prompt and origin delivery instructions.
 5. Review and merge #1757 and other eligible work with merge commits. If an owner branch still has failing gates, retain its remote recoverable checkpoint and report the precise blocker.
 6. After the final eligible dev merge, wait for latest architecture-sync success and verify the covered tip or its bot commit. Reuse any open dev-to-test PR and recheck immediately before merge.
@@ -82,4 +82,3 @@ A new AI should be able to fetch origin, create a D: worktree for the recorded b
 ## Completion report
 
 Report separate checkboxes for source implementation, verified origin push, independent review, current-head validation, dev or alternative/dev merge, test and alternative promotion/CI, and owner/device acceptance where needed. Cite exact SHAs, PRs and workflows. If a merge is blocked, keep the work pushed and give the precise failing gate and next fix; do not mislabel that checkpoint as integrated delivery.
-
