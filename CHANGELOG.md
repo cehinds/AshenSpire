@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
-- **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1176`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.
+- **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1178`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.
 
 - **Ordered counters, defensive reactions and combat controls** ([#1767](https://github.com/cehinds/AshenSpire/pull/1767), `0.7.1.1172`). Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.
 
