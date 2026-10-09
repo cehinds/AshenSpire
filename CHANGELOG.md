@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
-- **Ashen Blight flows through volcanic rock** ([#1763](https://github.com/cehinds/AshenSpire/pull/1763), `0.7.1.1144`). The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.
+- **Ashen Blight flows through volcanic rock** ([#1763](https://github.com/cehinds/AshenSpire/pull/1763), `0.7.1.1150`). The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.
 
 - **Counters prepare the right action and Upcast stays reachable** ([#1742](https://github.com/cehinds/AshenSpire/pull/1742), `0.7.1.1148`). Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.
 
