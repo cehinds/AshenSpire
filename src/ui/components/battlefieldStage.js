@@ -65,8 +65,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const inspect = leading.querySelector('.combatant-info');
       if (inspect) {
         const button = inspect.getBoundingClientRect();
-        inspect.style.left = `${((art.left + art.right) / 2 - button.width / 2 - placement.left) / zoom}px`;
-        inspect.style.top = `${(Math.max(viewport.top, art.top - button.height - 4) - placement.top) / zoom}px`;
+        const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, {
+          left: (art.left + art.right) / 2 - button.width / 2,
+          top: Math.max(viewport.top, art.top - button.height - 4),
+          width: button.width,
+          height: button.height,
+        }, { zoom });
+        inspect.style.left = `${local.left}px`;
+        inspect.style.top = `${local.top}px`;
       }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
