@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
+- **The shared card design loads without repeated master data** ([#1778](https://github.com/cehinds/AshenSpire/pull/1778), `0.7.1.1195`). Keep the complete editable card structure while storing its shared components once in the game bundle. Browser checks follow optional reaction choices, current fighter motion and the combat layer order.
+
 - **Card actions and ranks stay readable over their artwork** ([#1766](https://github.com/cehinds/AshenSpire/pull/1766), `0.7.1.1193`). Cards separate their background, art, backdrops, trim, icons and text into explicit layers. Rank 1 and higher appear as Rank X centered above the effect panel; Rank 0 stays hidden. A dark title fade, solid action symbols and centered names keep the face readable. Smash uses a fist and Counter a shield crossed by a sword. Up to three primary symbols line the right edge; Information keeps every tag. Complete effects and their blue rank bar adapt together. The shared master JSON controls component images, symbols, typography, layer order and geometry. The card layer explorer saves grouped move/scale edits directly to that game template and previews actual combat cards.
 
 - **Compact combat details stay clear of cards** ([#1775](https://github.com/cehinds/AshenSpire/pull/1775), `0.7.1.1189`). Pack enemy name and health plates around the visible hand and player details on short screens with enlarged text. Keep the sprites fixed while moving only crowded plates. Verify attacks through the visible target buttons and saved turns through the normal defensive-reaction controls.

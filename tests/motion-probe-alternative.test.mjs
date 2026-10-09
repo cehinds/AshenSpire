@@ -14,7 +14,7 @@ const idleSource = source.slice(source.indexOf('async function idle('), source.i
 // tree. Animation objects stand in for measured Web Animations state; the
 // same-door browser plants separately exercise real CSS and document clocks.
 async function inspect({ missing = false, duplicate = false, imageCarrier = false, flat = false,
-  offClock = false, unloaded = false, transparent = false, canvas = false, blank = false } = {}) {
+  offClock = false, unloaded = false, transparent = false, canvas = false, blank = false, canvasIdle = 'bob' } = {}) {
   const dom = rewardDom();
   const originalDocument = globalThis.document, originalImage = globalThis.Image;
   globalThis.document = dom.document;
@@ -57,7 +57,7 @@ async function inspect({ missing = false, duplicate = false, imageCarrier = fals
         animationName: carriers.includes(node) ? 'sprite-idle' : 'none' }) };
     const verdicts = [];
     const idle = runInNewContext(`${idleSource}\nidle`, { check: (ok, label, detail) => verdicts.push({ ok, label, detail }) });
-    await idle({ evaluate: expression => runInNewContext(expression, browser) }, 'IDLE');
+    await idle({ evaluate: expression => runInNewContext(expression, browser) }, 'IDLE', canvasIdle);
     return verdicts;
   } finally {
     if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
@@ -155,7 +155,7 @@ test('every same-door variant plant still changes the current real source', asyn
   const selftest = source.slice(source.indexOf("if (argv.includes('--selftest')) {"), source.indexOf('\nconst ROOT ='))
     .replace("await import('./doorplant.mjs')", 'await harness()');
   await runInNewContext(`(async () => { ${selftest} })()`, {
-    argv: ['--selftest'], ALTERNATIVE: true,
+    argv: ['--selftest'], ALTERNATIVE: true, CANVAS_IDLE: 'bob',
     process: { exit() {} }, console: { log() {}, error() {}, info() {} },
     harness: async () => ({ resolveShard: () => null, doorSelftest: async options => { corpus = options; return 0; } }),
   });
@@ -186,5 +186,14 @@ test('canvas figure requires painted pixels and exactly one clocked stage carrie
     const [verdict] = await inspect({ canvas: true, ...fault });
     assert.equal(verdict.ok, false, JSON.stringify(fault));
     assert.match(verdict.detail, reason);
+  }
+});
+
+test('primary anchored canvas is painted and has no external idle carrier', async () => {
+  const [held]=await inspect({canvas:true,missing:true,canvasIdle:'anchored'});
+  assert.equal(held.ok,true,held.detail);
+  for(const fault of [{blank:true,missing:true},{transparent:true,missing:true},{},{duplicate:true},{imageCarrier:true}]){
+    const [bad]=await inspect({canvas:true,canvasIdle:'anchored',...fault});
+    assert.equal(bad.ok,false,JSON.stringify(fault));
   }
 });
