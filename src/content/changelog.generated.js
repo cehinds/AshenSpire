@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-09",
     "summary": "Compact combat targeting and touch controls",
     "detail": "Show compact intent icons and health strips until selecting a combatant reveals its details. Keep player details beside the lower body and the small Information button above the sprite. Selected characters rise in front at 105% scale and restore their original size and layer when deselected. Target through sprites, intent badges and health strips; self-cast through the player HUD. Fit header HP up to Armoury with padding and proportional fill. Preserve cards and footer. Keep Log and Reaction above the cards and drag the log between three bounded sizes without inner buttons.",
-    "build": "0.7.1.1203",
+    "build": "0.7.1.1205",
     "pullRequest": 1776,
     "url": "https://github.com/cehinds/AshenSpire/pull/1776"
   },

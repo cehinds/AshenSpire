@@ -1,6 +1,6 @@
 # Approved combat HUD and mobile targeting
 
-The owner approved the refined header and three selection states on October 9, preserving the existing card fan and footer. Build 0.7.1.1203 adds the final HUD behavior and 105% selection emphasis.
+The owner approved the refined header and three selection states on October 9, preserving the existing card fan and footer. Build 0.7.1.1205 adds the final HUD behavior and 105% selection emphasis.
 
 ## Verified behavior
 
