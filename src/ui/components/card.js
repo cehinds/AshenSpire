@@ -164,7 +164,7 @@ export function renderCard(registries, ref, opts = {}) {
     ...model.sideTags.map(tag => tag.label),
     model.abilityRank !== null && rawModel.type.label,
     model.abilityRank !== null && rawModel.type.subtype,
-    model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rank > 1 && `rank ${model.rank}`,
+    model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
   ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
@@ -275,9 +275,7 @@ export function renderCard(registries, ref, opts = {}) {
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
-    // A ranked card (SPEC §13.4o) wears its rank in the top right of its art; the
-    // number it adds is already in the face's text.
-    if(model.rankBadge){const badge=document.createElement('span');badge.className='card-rank';badge.textContent=model.rankBadge;badge.title=model.rankHelp;el.appendChild(badge);}
+    // The illustrated face owns the rank label and keeps it above its fitted panel.
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
     for (const node of kept)el.append(node);
     el.dataset.level=at;

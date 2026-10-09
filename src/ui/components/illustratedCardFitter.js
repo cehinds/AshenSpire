@@ -16,11 +16,14 @@ export function fitIllustratedCards(cards) {
       const row={face,text,layer,scale,rules,lines:rules?Infinity:Number(text.dataset.maxLines)||1};
       if(rules){
         row.panel=face.querySelector('[data-component="panel"]');
+        row.panelTrim=face.querySelector('[data-component="panel-trim"]');
+        row.rank=face.querySelector('.card-rank');
         row.art=face.querySelector('[data-component="art"]');
         if(!ruleGeometry.has(layer))ruleGeometry.set(layer,{top:layer.style.top,height:layer.style.height,panelTop:row.panel?.style.top,panelHeight:row.panel?.style.height,artHeight:row.art?.style.height});
         const original=ruleGeometry.get(layer);
         layer.style.top=original.top;layer.style.height=original.height;
         if(row.panel){row.panel.style.top=original.panelTop;row.panel.style.height=original.panelHeight;}
+        if(row.panelTrim){row.panelTrim.style.top=original.panelTop;row.panelTrim.style.height=original.panelHeight;}
         if(row.art)row.art.style.height=original.artHeight;
         text.style.display='block';
       }
@@ -59,7 +62,10 @@ export function fitIllustratedCards(cards) {
     const titleBottom=title?title.parentElement.offsetTop+title.offsetTop+title.offsetHeight:0;
     const rail=row.face.querySelector('.card-tag-rail');
     const railBottom=rail?rail.offsetTop+rail.offsetHeight:0;
-    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-Math.max(titleBottom,railBottom)-Math.max(2,2*row.scale));
+    row.rankSpace=row.rank?row.rank.offsetHeight+Math.max(2,3*row.scale):0;
+    // The centered rank can share a horizontal row with the narrow right rail.
+    // Reserve its height below the title, while the panel stays below the rail.
+    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-Math.max(titleBottom+row.rankSpace,railBottom)-Math.max(2,2*row.scale));
     // The parchment border scales with its image. Preserve its authored
     // interior margins as the panel grows, so text never sits on the ornament.
     row.topInset=row.panelHeight?Math.max(0,(row.top-row.panelTop)/row.panelHeight):0;
@@ -84,8 +90,10 @@ export function fitIllustratedCards(cards) {
     if(extra>1){
       row.layer.style.top=(row.top-extra*(1-row.topInset))/height*100+'%';row.layer.style.height=(row.boxHeight+extra*row.interiorScale)/height*100+'%';
       if(row.panel){row.panel.style.top=(row.panelTop-extra)/height*100+'%';row.panel.style.height=(row.panelHeight+extra)/height*100+'%';}
+      if(row.panelTrim){row.panelTrim.style.top=row.panel.style.top;row.panelTrim.style.height=row.panel.style.height;}
       if(row.art)row.art.style.height=Math.max(0,row.panelTop-extra-row.artTop)/height*100+'%';
     }
+    if(row.rank)row.rank.style.top=((row.panelTop??row.top)-(extra>1?extra:0)-row.rankSpace)/height*100+'%';
     row.face.dataset.rulesExpanded=String(extra>1);row.text.dataset.rulesComplete='true';
   }
 }

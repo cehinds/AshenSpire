@@ -51,5 +51,5 @@ export function cardSideTags(model, def = {}, registries = null) {
 
 export function cardTagRailHtml(tags) {
   if(!tags?.length)return '';
-  return `<div class="card-tag-rail" aria-label="Primary card tags">${tags.map(tag => `<span class="card-tag-symbol" role="img" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg></span>`).join('')}</div>`;
+  return `<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">${tags.map(tag => `<span class="card-tag-symbol" role="img" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg></span>`).join('')}</div>`;
 }

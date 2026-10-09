@@ -9,10 +9,11 @@
 :root .illustrated-card-face .ic-text { flex-shrink:0; width:100%; height:auto; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.25; overflow:hidden; }
 :root .illustrated-card-face .ic-text .val,:root .illustrated-card-face .ic-text .kw { font:inherit; color:inherit; }
 :root .illustrated-card-face .card-title-fade {
-  position:absolute;left:6%;right:6%;top:3.5%;height:22%;pointer-events:none;
+  position:absolute;z-index:3;left:6%;right:6%;top:3.5%;height:22%;pointer-events:none;
   border-radius:3cqw 3cqw 0 0;
   background:linear-gradient(to bottom,#15110ff5 0%,#15110ff5 48%,#15110fb3 66%,#15110f00 100%);
 }
+:root .illustrated-card-face .card-footer-backdrop {position:absolute;z-index:3;left:6%;right:6%;top:85.3%;height:11.3%;background:linear-gradient(#100d0980,#08070540);pointer-events:none;}
 :root .illustrated-card-face [data-card-binding='name'] {
   paint-order:stroke fill;-webkit-text-stroke:.65cqw #100b06;
   text-shadow:0 .6cqw .8cqw #000,0 0 1.6cqw #000,0 0 2.5cqw #000;
@@ -36,8 +37,10 @@
 :root .illustrated-card-face .card-sigil-band {
   position:relative;box-sizing:border-box;padding:0 3cqw .6cqw;
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:4cqw;
-  color:#efd09a;filter:drop-shadow(0 .5cqw .5cqw #080604);
+  color:#efd09a;
 }
+:root .card-sigil-band .card-action-icon {position:relative;z-index:7;display:flex;flex:none;filter:drop-shadow(0 .5cqw .5cqw #080604);}
+:root .card-sigil-band .card-type-name {position:relative;z-index:8;text-shadow:0 .5cqw .5cqw #080604;}
 :root .illustrated-card-face .card-base-action-frame {position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
 :root .combat-sigil { display:inline-flex;align-items:center;justify-content:center;flex:none; }
 :root .combat-sigil svg { display:block;width:100%;height:100%;pointer-events:none; }
@@ -50,11 +53,17 @@
 :root .card-sigil-band .combat-sigil-action {width:11.5cqw;height:11.5cqw;max-height:100%;pointer-events:none;}
 :root .card-sigil-band .card-type-name {font:700 7cqw/1 Georgia,serif;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;}
 :root .illustrated-card-face .card-tag-rail {
-  position:absolute;right:9%;top:16%;display:flex;flex-direction:column;align-items:center;gap:2cqw;
+  position:absolute;z-index:7;right:9%;top:16%;display:flex;flex-direction:column;align-items:center;gap:2cqw;
   color:#e8bd78;pointer-events:none;
 }
 :root .card-tag-rail .card-tag-symbol {display:flex;width:8cqw;height:8cqw;flex:none;filter:drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000);}
 :root .card-tag-symbol svg {display:block;width:100%;height:100%;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-rail {top:13.9%;gap:.5cqw;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-symbol {width:7cqw;height:7cqw;}
-:root .card.illustrated-card .card-rank {right:22%;}
+:root .card.illustrated-card .card-rank {
+  position:absolute;z-index:9;left:50%;right:auto;bottom:auto;transform:translateX(-50%);
+  width:max-content;max-width:70%;margin:0;padding:.35cqw 2.4cqw;border:0;border-radius:2cqw;
+  background:linear-gradient(90deg,#100d0900,#100d09eb 18%,#100d09eb 82%,#100d0900);
+  color:#f3dfb7;font:700 clamp(8px,5.6cqw,20px)/1.15 Georgia,serif;letter-spacing:.03em;
+  text-align:center;white-space:nowrap;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none;
+}

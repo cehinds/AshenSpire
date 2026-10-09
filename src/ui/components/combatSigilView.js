@@ -12,7 +12,7 @@ export function cardSigilsHtml(identity) {
   if (!identity) return '';
   const mark = ACTION_SIGILS[identity.action];
   // The existing bottom layer owns the footer. School and other tags use the rail.
-  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}">${sigilHtml(identity.action, 'action', {tooltip:false})}<span class="card-type-name">${esc(mark.label)}</span></div>`;
+  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}"><span class="card-action-icon" data-card-layer="7">${sigilHtml(identity.action, 'action', {tooltip:false})}</span><span class="card-type-name" data-card-layer="8">${esc(mark.label)}</span></div>`;
 }
 
 export function sigilExplanationHtml(identity) {

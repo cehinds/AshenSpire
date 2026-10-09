@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1766",
     "date": "2026-10-08",
     "group": "2026-10-08",
-    "summary": "Card names and actions stay readable over their artwork",
-    "detail": "A dark title backdrop fades into the illustration. Larger solid action symbols and names sit inside the textured base frame, with a fist for Smash and a shield crossed by a sword for Counter. Up to three primary symbols line the right edge; Information keeps every tag and detail. Concise effects remain complete inside adaptive parchment panels.",
-    "build": "0.7.1.1154",
+    "summary": "Card actions and ranks stay readable over their artwork",
+    "detail": "Cards separate their background, art, backdrops, trim, icons and text into explicit layers. Rank 1 and higher appear as Rank X centered above the effect panel; Rank 0 stays hidden. A dark title fade, solid action symbols and centered names keep the face readable. Smash uses a fist and Counter a shield crossed by a sword. Up to three primary symbols line the right edge; Information keeps every tag. Complete effects and their rank label adapt together.",
+    "build": "0.7.1.1156",
     "pullRequest": 1766,
     "url": "https://github.com/cehinds/AshenSpire/pull/1766"
   },

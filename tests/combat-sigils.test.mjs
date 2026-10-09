@@ -43,7 +43,7 @@ test('marks preserve readable accessible names and inspection explanations', () 
   const html = cardSigilsHtml(identity);
   assert.match(html, /data-primary-sigil="spell"/);
   assert.match(html, /role="img" aria-label="Spell"/);
-  assert.match(html, /class="card-type-name">Spell<\/span>/);
+  assert.match(html, /class="card-type-name" data-card-layer="8">Spell<\/span>/);
   assert.doesNotMatch(html, /combat-sigil-school|card-damage-types/);
   assert.match(html, /focusable="false"/);
   assert.doesNotMatch(html, /tabindex=/);
@@ -58,7 +58,7 @@ test('card footer icons and corresponding intents use the same approved geometry
     assert.equal(INTENT_ICON_SHAPES[intent], ACTION_SIGILS[card].shape);
     const html=cardSigilsHtml({action:card});
     assert.ok(html.includes(ACTION_SIGILS[card].shape));
-    assert.ok(html.includes(`class="card-type-name">${ACTION_SIGILS[card].label}</span>`));
+    assert.ok(html.includes(`class="card-type-name" data-card-layer="8">${ACTION_SIGILS[card].label}</span>`));
   }
 });
 
@@ -91,7 +91,7 @@ test('approved solid footer symbols stay distinct and have a visible action name
   for(const id of ['smash','attack','counter','ranged','spell','defend']) {
     assert.equal(ACTION_SIGILS[id].solid,true);
     assert.match(sigilHtml(id),/fill="currentColor"/);
-    assert.match(cardSigilsHtml({action:id}),new RegExp('card-type-name">'+ACTION_SIGILS[id].label));
+    assert.match(cardSigilsHtml({action:id}),new RegExp('card-type-name" data-card-layer="8">'+ACTION_SIGILS[id].label));
   }
   assert.notEqual(ACTION_SIGILS.counter.shape,ACTION_SIGILS.defend.shape);
 });

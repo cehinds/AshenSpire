@@ -296,9 +296,10 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     ? abilityRank === 0 ? 'Cantrip' : 'Spell'
     : abilityRank === 0 ? 'Technique' : 'Combat Maneuver';
   const legacyRank = Number.isInteger(def.rank) && def.rank > 1 ? def.rank : 1;
-  const rankBadge = abilityRank !== null ? `R${abilityRank}` : legacyRank > 1 ? `R${legacyRank}` : null;
+  const visibleRank=abilityRank??(legacyRank>1||Number.isInteger(ref.rank)&&ref.rank>0?legacyRank:0);
+  const rankBadge = visibleRank > 0 ? `Rank ${visibleRank}` : null;
   const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
-    : legacyRank > 1 ? `Rank ${legacyRank}` : '';
+    : rankBadge || '';
 
   return freeze({
     id: def.id,
