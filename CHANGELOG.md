@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1154`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable.
+
 - **Alternative combat keeps its art with the complete tactical rules** ([#1740](https://github.com/cehinds/AshenSpire/pull/1740), `0.7.1.1154`). The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.
 
 - **Ashen Blight flows through volcanic rock** ([#1762](https://github.com/cehinds/AshenSpire/pull/1762), `0.7.1.1154`). The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.

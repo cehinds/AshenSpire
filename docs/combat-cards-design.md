@@ -1,8 +1,10 @@
 # Combat cards: rules and next suggestions
 
+**Earlier implementation notes:** the tables and examples below describe the original tagged-card candidate introduced in #1705. Expanded version-2 combat is implemented through #1723 and subsequent integration. Use [the updated bullet notes](combat-cards-expansion-proposal.md) and [implementation contract](combat-expansion-contract.md) for current Counter, Evade, Ward, status recovery, Power/Skill/Status, upcasting, and Ashen Blight behavior. Existing version-1 runs keep their saved rules; the historical values below do not override the version-2 contract.
+
 Implementation: [#1705](https://github.com/cehinds/AshenSpire/pull/1705). Contract: [SPEC §4.7](../SPEC.md#47-tagged-combat-cards-and-readable-enemy-stances). All 260 card families, 17 basic equipment profiles and 103 enemy moves receive authored tags. Suggestions below add no runtime behavior until implemented separately.
 
-The [next combat expansion proposal](combat-cards-expansion-proposal.md) records the latest rules and suggestions in grouped bullets: Physical (Martial)/Magical (Spell), single persistent stances, Evade, Counter coverage, persistent Ward, recovery cards, Sleep and Prone, tag combos, upcasting, and three Ashen Blight feat stages. It revises the future design; the existing contract below remains unchanged.
+The [updated combat expansion notes](combat-cards-expansion-proposal.md) record the current implemented rules and separately identified suggestions in grouped bullets: Physical (Martial)/Magical (Spell), single persistent stances, Evade, Counter coverage, persistent Ward, recovery cards, Sleep and Prone, tag combos, upcasting, and three Ashen Blight feat stages. The original tables below remain as design history.
 
 ## Core split
 

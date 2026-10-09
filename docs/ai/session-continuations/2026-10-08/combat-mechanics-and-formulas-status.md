@@ -5,13 +5,21 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Current regular candidate: PR #1768**
+  - [#1768](https://github.com/cehinds/AshenSpire/pull/1768) is ready/open against dev; normal inheritance and source reviews are clear. Final native validation and promotion remain pending.
+  - Official prelude `0.7.1.1153` / `0e078075c5` completed all four aliases. Shipping was accidentally invoked during alias refresh and failed four checks; that invocation is retained separately. Shipping after launcher exit passed all 12 checks.
+  - The guarded own-receipt writer used the actual #1768 and measured prelude plus one, preserving all 801 foreign receipt lines. Official projection and rebuild produced `0.7.1.1154` / `68a938d822`, with launcher exit 0 and all four aliases refreshed. Light download: 98,806,864 bytes.
+  - Final identity passed nine checks; receipt validation passed both checks; all 802 receipts are ordered. The earlier order check ran before the second build and correctly refused the one-build-ahead receipt; it is not final acceptance.
+  - Final local card/formula/field/v15 asset checks passed 45 tests, zero skips. Shipping after final launcher exit passed 12 checks.
+  - Fresh full source corpus, compiled Counter/Upcast, corrupted trim, strict target reachability, reduced motion, exact-head fast checks, and both test promotions remain pending.
+
 - **Repository and source**
   - Repository: `cehinds/AshenSpire`. Command checkout: `D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire`.
   - Regular branch: `codex/combat-promotion-polish-20261008`; reviewed source commit `2934beab9d2e517f9d9ff031299bc3cc9c40a62c` was pushed with upstream tracking and verified against `git ls-remote`.
   - The current documentation/build-metadata checkpoint follows that source commit. Fetch the named branch and compare its actual origin tip; a document cannot contain its own future commit hash.
   - Alternative branch: `codex/combat-expansion-alternative-20261007`, checkout `D:/repos/.codex/worktrees/combat-notes-alternative-sync-20261007`; reviewed source `3b7921f4b68e1743cf10a920768b281a7b34a6e7`, followed by tracked checkpoint notes. Its pushed origin tip `f082ea2657ab83c9f8f046b5e44560be3f87729c` was independently verified with `git ls-remote`; #1740's head matches that checkpoint.
   - Last observed shared refs: dev `c47f54d42dd04505b60ac6b478b314788a440ffe`; test `11fbaff51cd32d03166027c76611739b8b9fcf00`; alternative/dev `43221ee66f80055580dfe640418cac37137945f1`; alternative/test `e7a16d7850678016be02bd3dce3d7b2001cce6db`. Re-read origin before merging.
-  - Subsequent read/fetch observed dev `f785dc0eb1271ae03849f00c165d0645dca308f0`: [#1763](https://github.com/cehinds/AshenSpire/pull/1763) added the v15 Molten River art/material and its own receipt, followed by architecture sync. It is not yet inherited in source2934/preliminary1151. Reconcile it normally before final regular validation, preserve its receipt and the stronger full-card corrupted trim.
+  - Dev `f785dc0eb1271ae03849f00c165d0645dca308f0` is normally inherited at regular `25477baeb6453a95875ec65e6efa617b5e1b0e3a`, pushed and verified against origin. [#1763](https://github.com/cehinds/AshenSpire/pull/1763) added the v15 Molten River art/material and its own receipt, followed by architecture sync. Independent review confirmed unchanged reviewed combat/formula seams, exact incoming v15 pins/meter, unchanged full-card corrupted trim, and all 801 parsed receipt rows. Source2934/preliminary1151 predates this inheritance; a fresh official build is running before final validation.
   - Primary `D:/repos/AshenSpire` and other chats' checkouts remain untouched.
 
 - **Implemented inventory**
@@ -69,7 +77,7 @@
   - [#1742](https://github.com/cehinds/AshenSpire/pull/1742) merged to dev at `2ea1492325553b8e44e06d7f2467f084837ad28a`; architecture tip was `74fbff9a26e4fd6d7f3c6e5d12a928fe133fd138`.
   - [#1764](https://github.com/cehinds/AshenSpire/pull/1764) promoted to test at `11fbaff51cd32d03166027c76611739b8b9fcf00`. Seven workflow groups passed, but [CI 37870840004](https://github.com/cehinds/AshenSpire/actions/runs/37870840004) failed seven jobs: all reachability shards, mobile/five-layout checks and reduced-motion shard 2/3. Source fixes address observed causes, but fresh exact-head CI is still required.
   - [#1740](https://github.com/cehinds/AshenSpire/pull/1740) remains the existing alternative PR. Do not treat its old published head or stale receipt as the current finished build.
-  - Regular polish has no new PR at this checkpoint. Open a ready reviewed PR after current checks; use its actual number for an authored receipt, build then box-plus-one receipt, official changelog projection, rebuild, matching identity/order/shipping gates. Preserve every foreign receipt byte/order; never repoint #1742 or invent #1749's receipt.
+  - Regular polish now has actual ready [#1768](https://github.com/cehinds/AshenSpire/pull/1768) and its own measured receipt at 1154. Preserve every foreign receipt byte/order; never repoint #1742 or invent #1749's receipt. Finish current native proof and fresh checks before merge and promotion.
   - Normally inherit actual new dev changes before final validation. Overlaps: #1766 card layout/rank, #1767 reaction timing, #1757/rear-sprite target anchors, #1763 regular Blight art. Unmerged WIP is not inherited or claimed shipped.
   - Preserve alternative presentation and receipts during reconciliation. Normally merge the regular accepted source/receipt into the alternative branch, regenerate the official architecture, then perform its own #1740 receipt/build cycle and all five fresh native QA families.
   - Merge only with current required checks green; wait for latest architecture-sync and exact dev tip, then normal dev-to-test promotion. Check all fresh heavy workflow groups and protected alternative sync/promotions. Never force/admin merge or touch release/main/tags.

@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `codex/combat-expansion-alternative-20261007`
-- Source commit: `5534400c0bd552d80a813585b5acd7b1e56ed914`
+- Source commit: `077f3e12225733223baf356dd88b7dbc4da8e198`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
