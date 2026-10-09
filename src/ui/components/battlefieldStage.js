@@ -388,11 +388,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .map(footer => footer.getBoundingClientRect().width)),
+      footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .reduce((height,footer)=>height+footer.getBoundingClientRect().height,0),
       controls: [...frame.querySelectorAll('.combatant-leading button')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
-    const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
-      size: 44,
+    const footerSize = Math.max(44, ...boxes.map(box=>box.footerHeight));
+    const targets = combatTargetAnchors({ width: fieldRect.width, height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
+      size: footerSize,
       obstacles: boxes.flatMap(box => box.controls.map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
@@ -401,7 +404,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
         x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top + 22,
+        y: box.hostRect.bottom - fieldRect.top + footerSize / 2,
         width: Math.max(48, box.footerWidth),
       })) });
     placed.forEach(({ frame, sprite, scale }, i) => {
@@ -409,7 +412,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
       if (intentRect) {
         frame.style.setProperty('--enemy-hit-width', `${Math.max(48, boxes[i].footerWidth) / zoom}px`);
-        frame.style.setProperty('--enemy-hit-height', `${44 / zoom}px`);
+        frame.style.setProperty('--enemy-hit-height', `${footerSize / zoom}px`);
       }
       if (frameRect) {
         const target = targets.find(target => target.id === frame.dataset.eid);
@@ -420,7 +423,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom - 22, width: 0, height: 0 }, { zoom });
+          top: fieldRect.top + target.y - hostRect.bottom - footerSize / 2, width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {

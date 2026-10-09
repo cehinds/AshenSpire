@@ -9,10 +9,9 @@ const browser=await chromium.launch({channel:'msedge',headless:true});
 const results=[];
 const overlaps=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;
 try {
- for (const [width,height] of [[650,766],[390,844],[844,390],[1440,900]]) {
+ for (const [width,height] of [[650,766],[390,844],[844,390],[1440,900]].filter(([w])=>!process.env.QA_WIDTH || w===Number(process.env.QA_WIDTH))) {
   for(const count of [1,2,3]) {
   const page=await browser.newPage({viewport:{width,height}});
-  page.on('console',message=>{if(['warning','error','debug'].includes(message.type()))console.log(width,count,message.type(),message.text());});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await openCombatQa(page,process.env.COMBAT_QA_URL || 'http://localhost:8338/','combat');
   await page.evaluate(async()=>{
@@ -27,6 +26,9 @@ try {
    await page.evaluate(({seed,count,instanceId})=>{
     const c=window.__combat;
     c.enemies=Array.from({length:count},(_,i)=>({...structuredClone(seed[i%seed.length]),id:`e${i+1}`,hp:200,maxHp:200,alive:true}));
+    // Cloned crowd fixtures still need unique authored action serials; the
+    // engine correctly refuses a malformed snapshot on a real card command.
+    for(const enemy of c.enemies) if(enemy.knowledgeAction) enemy.knowledgeAction.serial=++c.enemyKnowledge.nextSerial;
     c.player.energy=10;c.player.stamina=20;c.player.mana=20;
     c.piles.hand=[{cardId:'strike',instanceId,upgraded:false}];
     window.__renderCombatForShot();
@@ -61,6 +63,8 @@ try {
    catch(error) {console.log('failed confirm',await page.evaluate(()=>({phase:window.__combat.phase,hand:window.__combat.piles.hand,pending:window.__combat.pendingReaction,modals:[...document.querySelectorAll('.modal-veil')].map(e=>e.textContent),focus:document.activeElement?.outerHTML,cursor:document.querySelector('.gp-focus')?.outerHTML})));throw error;}
    await page.waitForTimeout(2500);
    assert.deepEqual(errors,[]);
+   results.at(-1).played = true;
+   writeFileSync(`${out}/results.json`,JSON.stringify(results,null,2));
   await page.close();
   }
  }

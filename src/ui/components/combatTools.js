@@ -35,10 +35,11 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
     const style = getComputedStyle(root);
     const gap = parseFloat(style.getPropertyValue('--combat-tools-gap')) || 8;
-    const width = parseFloat(style.getPropertyValue('--combat-tools-physical-width')) || 136;
+    const compact = innerHeight <= 480 && innerWidth >= 600;
+    const width = compact ? 260 : parseFloat(style.getPropertyValue('--combat-tools-physical-width')) || 136;
     const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
     root.style.width = `${localWidth.width}px`;
-    const reserve = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: width + gap + 4, height: 0 }, { zoom });
+    const reserve = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: width + gap + (compact ? 148 : 4), height: 0 }, { zoom });
     combatEl.style.setProperty('--combat-tools-reserve', `${reserve.width}px`);
     const footerHost = combatEl.querySelector('.combat-action-row');
     const footer = footerHost?.getBoundingClientRect();
@@ -46,7 +47,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // buttons, not the transparent container that reaches into the battlefield.
     const footerButtons = [...(footerHost?.querySelectorAll('button, [role="button"]') || [])]
       .map(button=>button.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
-    const bottom = (footerButtons.length ? Math.min(...footerButtons.map(rect=>rect.top)) : footer?.top ?? innerHeight) - gap;
+    const bottom = compact ? combatEl.getBoundingClientRect().bottom - 12
+      : (footerButtons.length ? Math.min(...footerButtons.map(rect=>rect.top)) : footer?.top ?? innerHeight) - gap;
     const localDock = anchorLocalBox(combatEl, { left: 0, top: bottom - root.getBoundingClientRect().height, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
     const menu = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);

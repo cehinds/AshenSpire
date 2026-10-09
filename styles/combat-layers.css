@@ -96,6 +96,7 @@
   background: #1c1812ef; border: 1px solid #a48743; border-top: 0; border-radius: 0 0 4px 4px;
   margin-top: calc(-3px / var(--ui-zoom,1));
 }
+:root .combat[data-layout='formation'] .enemy .meters > :not([data-meter-row='hp']) { display: none; }
 :root .combat[data-layout='formation'] .player .combatant-leading {
   width: calc(128px / var(--ui-zoom,1)); align-items: stretch; transform: none;
   z-index: var(--combat-layer-hud) !important;
@@ -121,4 +122,9 @@
 }
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
   position: absolute; right: 100%; bottom: 0;
+}
+@media (max-height: 480px) and (min-width: 600px) {
+  :root .combat[data-layout='formation'] .combat-tools {
+    right: calc(148px / var(--ui-zoom,1)); grid-template-columns: 1fr 1fr;
+  }
 }
