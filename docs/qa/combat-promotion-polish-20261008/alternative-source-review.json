@@ -1,0 +1,32 @@
+{
+  "head": "3b7921f4b68e1743cf10a920768b281a7b34a6e7",
+  "source": "2934beab9d2e517f9d9ff031299bc3cc9c40a62c",
+  "target": "43221ee66f80055580dfe640418cac37137945f1",
+  "protectedCount": 2020,
+  "deliberateChanged": [
+    "CHANGELOG.md",
+    "docs/COMPONENT-CATALOG.md",
+    "docs/combat-card-sigils.md",
+    "docs/component-catalog.html",
+    "src/content/changelog.generated.js",
+    "src/ui/alternativeCardStage.js",
+    "src/ui/components/battlefieldStage.js",
+    "src/ui/screens/combat.js",
+    "src/ui/screens/coop.js",
+    "styles/combat.css",
+    "styles/corrupted-cards.css",
+    "styles/kit.css",
+    "tests/alternative-card-stage.test.mjs",
+    "tools/tutorial-reach.mjs"
+  ],
+  "unexpected": [],
+  "strictPinDrift": [],
+  "sourceDrift": [],
+  "hashes": {
+    "src/ui/alternativeAuraRenderer.js": "ccb69580bc836b01bbaefd0c90ab818cf8522fc802ff19ff8863b8cfc66ed856",
+    "src/ui/alternativeCardStage.js": "d04b399135e18a6e0f72a2387bd97e6c2873e4128398c5c49ff50124872d747f"
+  },
+  "receiptRowsMatched": 824,
+  "missingForeignReceiptRows": [],
+  "boundary": "Read-only source inheritance review; actual1155 artifact predates inheritance, final compiled proof remains required."
+}
