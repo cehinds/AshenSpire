@@ -59,7 +59,6 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
   async function preload(){
     const results=await Promise.allSettled(Object.entries(frames).map(async([name,frame])=>{
-      // Keep the foreground body sharp at its fixed display scale on phones too.
       images.set(name,await load(alternativeArtUrl(frame.path)).ready);
     }));
     if(disposed)return false;
@@ -154,8 +153,6 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       if(action==='defeated'){rest='defeated';settle();return true;}
       const key=aliases[action]||action, sequence=family.sequences[key];
       if(!sequence)return false;
-      // Confirmed card receipts own the held stance through setStance(). An
-      // automatic Counter can play an attack without replacing that stance.
       if(still||reducedMotionRequested()||ms<=0){settle();return true;}
       resources=aura||[];elapsed=0;holdUntil=0;playing={action:key,sequence,duration:ms};paint();wake();return true;
     },

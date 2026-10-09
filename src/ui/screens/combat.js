@@ -312,8 +312,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       actorEl.dataset.actionMotion = plan.motion;
       // The painted Reaver sequence remains the specialized attack renderer.
       // Other actors use existing CSS and only sprite poses they actually ship.
-      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver'
-        || !['slash', 'thrust', 'strike'].includes(plan.family)) {
+      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver') {
         return playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack');
       }
       const figure = figureSpec(registries, run.loadout, run.class);
@@ -1268,7 +1267,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Resources the WCF2 stack could not fit stay readable in the inspector.
     const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id));
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips, showLabels: entity.kind === 'player' });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
@@ -1420,8 +1419,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat' }),
-      name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
+      name: markMeterRow(labelStack({ label: run.customization?.name || runClassIdentity(registries, run).name, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
     };
