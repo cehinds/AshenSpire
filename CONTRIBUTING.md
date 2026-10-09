@@ -28,6 +28,7 @@ feature/* ──► dev ──► test ──► release ──► main
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Promoted from `test` (owner only), through an `rc/<version>` branch pinned at the tested RC SHA (docs/RELEASE-CHECKLIST.md), when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
 | `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
+| `alternative/dev`, `alternative/test` | Frozen historical branches (owner, 2026-10-09). Their approved combat perspective is now the default on regular `dev` and `test`. Bring all new work to `dev`; do not push, merge, sync or dispatch branch-writing jobs to either retired branch. Existing named variants retain their separate rules below. |
 | `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
 
@@ -143,8 +144,7 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
      component of `contentBundle.version`); only the owner names a new
      candidate ([docs/versioning.md](docs/versioning.md)).
    - Every `dev` → `test` promotion also starts `sync-alternatives.yml`.
-     Existing `alternative/dev` → `alternative/test` pairs (including named
-     variants such as `alternative/art/dev` → `alternative/art/test`) receive
+     Existing named pairs such as `alternative/art/dev` → `alternative/art/test` receive
      the promoted snapshot, then the alternative dev result is merged into its
      test branch. No missing branch is created. Both updates are pushed
      atomically, without force. Alternative-specific source paths, including
@@ -152,6 +152,9 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
      for review, even if Git could merge them. Only the generated build ordinal
      and architecture snapshot are regenerated. Reconcile a blocked sync while
      preserving the variant, then rerun it from `dev` or `test`.
+     The exact root pair `alternative/dev` → `alternative/test` is excluded;
+     both refs are frozen under the owner's October 9 decision. Never restore
+     the retired root sync workflow or bypass its branch-update restriction.
    - Alternative dev/test use the same stage-specific checks and build tiers as
      primary dev/test. The sync explicitly dispatches those workflows because
      bot pushes do not trigger them. Check the sync and alternative runs as well

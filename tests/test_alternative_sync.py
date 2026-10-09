@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -138,6 +139,59 @@ class SyncTests(unittest.TestCase):
         self.assertTrue(sync.protected('src/ui/alternativeCardStage.js', POLICY))
         self.assertTrue(sync.protected('src/ui/alternativeAuraRenderer.js', POLICY))
         self.assertFalse(sync.protected('src/content/enemyArt.js', POLICY))
+
+    def test_direct_cli_cannot_prepare_or_verify_frozen_root_targets(self):
+        self.git('branch', 'alternative/test')
+        self.write('src/engine/rules.js', 'incoming rule\n')
+        self.commit('incoming change')
+        report = self.repo / 'retired-report.json'
+
+        def snapshot():
+            return (self.git('show-ref'), self.git('symbolic-ref', 'HEAD'),
+                    self.git('ls-files', '--stage'), self.git('status', '--porcelain'),
+                    self.git('count-objects', '-v'),
+                    (self.repo / 'src/engine/rules.js').read_bytes())
+
+        before = snapshot()
+        targets = [None] + [prefix + branch
+                           for prefix in ('', 'origin/', 'refs/heads/', 'refs/remotes/origin/')
+                           for branch in ('alternative/dev', 'alternative/test')]
+        for target in targets:
+            for verify in (False, True):
+                with self.subTest(target=target, verify=verify):
+                    command = [sys.executable, str(ROOT / 'tools/alternative-sync.py'),
+                               '--source', 'dev', '--report', str(report),
+                               '--policy', str(self.repo / 'absent-policy.json')]
+                    if target:
+                        command += ['--target', target]
+                    if verify:
+                        command += ['--verify']
+                    result = subprocess.run(command, cwd=self.repo, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertIn('Root alternative/dev and alternative/test are frozen', result.stderr)
+                    self.assertFalse(report.exists(), 'retirement fails before any report or merge writes')
+                    self.assertEqual(snapshot(), before)
+
+    def test_named_target_cli_still_prepares_with_the_preservation_policy(self):
+        self.git('branch', 'alternative/art/dev')
+        before = self.git('rev-parse', 'alternative/art/dev')
+        self.write('src/ui/scene.js', 'upstream presentation\n')
+        self.write('src/engine/rules.js', 'incoming rule\n')
+        source = self.commit('incoming change')
+        report = self.repo / 'named-report.json'
+        result = subprocess.run([sys.executable, str(ROOT / 'tools/alternative-sync.py'),
+                                 '--source', 'dev', '--target', 'alternative/art/dev',
+                                 '--policy', str(ROOT / '.github/alternative-battlefield-policy.json'),
+                                 '--report', str(report)], cwd=self.repo, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        prepared = json.loads(report.read_text())
+        self.assertTrue(prepared['mergeNeeded'])
+        self.assertEqual(prepared['before'], before)
+        self.assertEqual(prepared['source'], source)
+        self.assertEqual(self.git('rev-parse', 'alternative/art/dev'), before)
+        self.assertEqual((self.repo / 'src/ui/scene.js').read_text(), 'base\n')
+        self.assertEqual((self.repo / 'src/engine/rules.js').read_text(), 'incoming rule\n')
+        sync.assert_preserved(self.repo, before, POLICY)
 
 
 if __name__ == '__main__':

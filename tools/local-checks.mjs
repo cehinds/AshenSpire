@@ -70,7 +70,7 @@ try {
     ownsNativeLock = true;
     await writeFile(path.join(nativeLock, 'owner.json'), JSON.stringify({ head, pid: process.pid, output }));
   }
-  const files = (await readdir(path.join(report.snapshot, 'tests'))).filter(name => /(?:local-checks-snapshot|combat-expansion|combat-matchups|counter|power-lifecycle|blight|enemy-knowledge|combat-card|class-sprite-combat-presentation|combat-attached-hand-envelope|combat-frame-reach|combat-target-layers|combat-overhead-anchor|player-details-placement|hand-controls|upcast).*\.test\.mjs$/.test(name)).sort();
+  const files = (await readdir(path.join(report.snapshot, 'tests'))).filter(name => /(?:alternative-branches|default-combat-perspective|alternative-composition|local-checks-snapshot|combat-expansion|combat-matchups|counter|power-lifecycle|blight|enemy-knowledge|combat-card|class-sprite-combat-presentation|combat-attached-hand-envelope|combat-frame-reach|combat-target-layers|combat-overhead-anchor|player-details-placement|hand-controls|upcast).*\.test\.mjs$/.test(name)).sort();
   const commands = suite === 'combat' ? [['combat', ['--test', ...files.map(name => `tests/${name}`)]]]
     : suite === 'core' ? [['core', ['tests/run-node.mjs', '--no-selftests']]]
     : suite === 'tools' ? [['tools', ['tests/run-node.mjs', '--selftests-only']]]

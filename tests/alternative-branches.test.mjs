@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { alternativePairs, channelRole, downloadChannel, promotionTarget, siteRoot } from '../tools/alternative-branches.mjs';
 import { mergeAlternative, syncAlternatives } from '../tools/sync-alternatives.mjs';
 import { branchIndex, rootIndex } from '../tools/pages-site.mjs';
@@ -23,7 +24,7 @@ function fixture(t) {
     git('add', '--', file); git('commit', '-m', `Update ${file}`);
   };
   commit('shared.txt', 'baseline\n');
-  git('branch', 'alternative/dev'); git('branch', 'alternative/test');
+  git('branch', 'alternative/art/dev'); git('branch', 'alternative/art/test');
   return { dir, git, commit };
 }
 
@@ -42,61 +43,61 @@ test('only complete alternative pairs are enrolled; names retain stage and nesti
 
 test('safe shared edits reach the variant without changing its files; retry is a no-op', (t) => {
   const { dir, git, commit } = fixture(t);
-  git('switch', 'alternative/dev'); commit('variant.txt', 'keep exactly\n');
+  git('switch', 'alternative/art/dev'); commit('variant.txt', 'keep exactly\n');
   const before = git('rev-parse', 'HEAD');
   git('switch', 'test'); commit('shared.txt', 'promoted fix\n');
-  const after = mergeAlternative(dir, 'test', 'alternative/dev');
+  const after = mergeAlternative(dir, 'test', 'alternative/art/dev');
   assert.equal(git('show', `${after}:variant.txt`), 'keep exactly');
   assert.equal(git('show', `${after}:shared.txt`), 'promoted fix');
-  assert.equal(git('rev-parse', 'alternative/dev'), before, 'preparation must not move a branch');
+  assert.equal(git('rev-parse', 'alternative/art/dev'), before, 'preparation must not move a branch');
   assert.equal(mergeAlternative(dir, 'test', after), after);
 });
 
 test('even a clean nonconflicting edit in an alternative-owned file is refused', (t) => {
   const { dir, git, commit } = fixture(t);
-  git('switch', 'alternative/dev'); commit('shared.txt', 'alternative rule\n');
+  git('switch', 'alternative/art/dev'); commit('shared.txt', 'alternative rule\n');
   git('switch', 'test'); commit('shared.txt', 'new primary rule\n');
-  assert.throws(() => mergeAlternative(dir, 'test', 'alternative/dev'), /overlap alternative changes:[\s\S]*shared.txt/);
-  assert.equal(git('show', 'alternative/dev:shared.txt'), 'alternative rule');
+  assert.throws(() => mergeAlternative(dir, 'test', 'alternative/art/dev'), /overlap alternative changes:[\s\S]*shared.txt/);
+  assert.equal(git('show', 'alternative/art/dev:shared.txt'), 'alternative rule');
 });
 
 test('alternative deletion and rename are protected', (t) => {
   const { dir, git, commit } = fixture(t);
-  git('switch', 'alternative/dev'); git('mv', 'shared.txt', 'renamed.txt'); git('commit', '-m', 'Alternative rename');
+  git('switch', 'alternative/art/dev'); git('mv', 'shared.txt', 'renamed.txt'); git('commit', '-m', 'Alternative rename');
   git('switch', 'test'); commit('shared.txt', 'primary edit\n');
-  assert.throws(() => mergeAlternative(dir, 'test', 'alternative/dev'), /shared.txt/);
+  assert.throws(() => mergeAlternative(dir, 'test', 'alternative/art/dev'), /shared.txt/);
 });
 
 test('alternative independent aura compositor remains a protected presentation implementation', (t) => {
   const { dir, git, commit } = fixture(t);
   mkdirSync(join(dir, 'src/ui'), { recursive: true });
-  git('switch', 'alternative/dev');
+  git('switch', 'alternative/art/dev');
   commit('src/ui/alternativeCardStage.js', 'authored class motions\n');
   commit('src/ui/alternativeAuraRenderer.js', 'stage-owned independent aura\n');
   git('switch', 'test');
   mkdirSync(join(dir, 'src/ui'), { recursive: true });
   commit('src/ui/alternativeAuraRenderer.js', 'incoming presentation replacement\n');
-  assert.throws(() => mergeAlternative(dir, 'test', 'alternative/dev'), /overlap alternative changes:[\s\S]*alternativeAuraRenderer/);
-  assert.equal(git('show', 'alternative/dev:src/ui/alternativeCardStage.js'), 'authored class motions');
-  assert.equal(git('show', 'alternative/dev:src/ui/alternativeAuraRenderer.js'), 'stage-owned independent aura');
+  assert.throws(() => mergeAlternative(dir, 'test', 'alternative/art/dev'), /overlap alternative changes:[\s\S]*alternativeAuraRenderer/);
+  assert.equal(git('show', 'alternative/art/dev:src/ui/alternativeCardStage.js'), 'authored class motions');
+  assert.equal(git('show', 'alternative/art/dev:src/ui/alternativeAuraRenderer.js'), 'stage-owned independent aura');
 });
 
 test('an identical shared edit is accepted and independent variant files remain', (t) => {
   const { dir, git, commit } = fixture(t);
-  git('switch', 'alternative/dev'); commit('shared.txt', 'same\n'); commit('variant.txt', 'kept');
+  git('switch', 'alternative/art/dev'); commit('shared.txt', 'same\n'); commit('variant.txt', 'kept');
   git('switch', 'test'); commit('shared.txt', 'same\n');
-  const after = mergeAlternative(dir, 'test', 'alternative/dev');
+  const after = mergeAlternative(dir, 'test', 'alternative/art/dev');
   assert.equal(git('show', `${after}:variant.txt`), 'kept');
 });
 
 test('a conflict on alternative test prevents publishing the otherwise safe dev result', (t) => {
   const { dir, git, commit } = fixture(t);
-  git('switch', 'alternative/test'); commit('shared.txt', 'test customization\n');
+  git('switch', 'alternative/art/test'); commit('shared.txt', 'test customization\n');
   git('switch', 'test'); commit('shared.txt', 'primary update\n');
-  for (const branch of ['test', 'alternative/dev', 'alternative/test']) git('update-ref', `refs/remotes/origin/${branch}`, branch);
+  for (const branch of ['test', 'alternative/art/dev', 'alternative/art/test']) git('update-ref', `refs/remotes/origin/${branch}`, branch);
   assert.throws(() => syncAlternatives(dir, { regenerate: false, push: true }), /overlap alternative changes/);
-  assert.equal(git('show', 'alternative/dev:shared.txt'), 'baseline');
-  assert.equal(git('show', 'alternative/test:shared.txt'), 'test customization');
+  assert.equal(git('show', 'alternative/art/dev:shared.txt'), 'baseline');
+  assert.equal(git('show', 'alternative/art/test:shared.txt'), 'test customization');
 });
 
 test('no alternative pairs is a successful no-op', (t) => {
@@ -104,13 +105,48 @@ test('no alternative pairs is a successful no-op', (t) => {
   assert.deepEqual(syncAlternatives(dir, { push: true, regenerate: false }), []);
 });
 
+test('frozen root pair is a no-write no-op through the API and direct publishing CLI', (t) => {
+  const { dir, git, commit } = fixture(t);
+  const remote = join(dir, 'remote.git');
+  git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
+  git('branch', 'alternative/dev'); git('branch', 'alternative/test');
+  git('switch', 'alternative/dev'); commit('shared.txt', 'frozen root presentation\n');
+  git('switch', 'test'); commit('shared.txt', 'new primary rule\n');
+  git('push', 'origin', 'test', 'alternative/dev', 'alternative/test');
+  const snapshot = () => ({ refs: git('show-ref'), head: git('symbolic-ref', 'HEAD'),
+    index: git('ls-files', '--stage'), status: git('status', '--porcelain'),
+    objects: git('count-objects', '-v'), remote: git('--git-dir', remote, 'show-ref') });
+  const before = snapshot();
+  // This formerly conflicting root must be filtered before preparation, even
+  // with regeneration and publication requested. No Git objects or refs move.
+  assert.deepEqual(syncAlternatives(dir, { push: true, regenerate: true }), []);
+  assert.deepEqual(snapshot(), before);
+  const output = execFileSync(process.execPath,
+    [fileURLToPath(new URL('../tools/sync-alternatives.mjs', import.meta.url)), '--push'],
+    { cwd: dir, encoding: 'utf8', env: { ...process.env, PROMOTED_SHA: 'test' } });
+  assert.match(output, /root alternative branches remain frozen/);
+  assert.deepEqual(snapshot(), before);
+});
+
+test('retired root writer and architecture job cannot update the historical root branch', () => {
+  const sync = readFileSync(new URL('../.github/workflows/alternative-sync.yml', import.meta.url), 'utf8');
+  assert.match(sync, /policy-tests:[\s\S]*python -m unittest discover -s tests -p test_alternative_sync\.py -v/);
+  assert.match(sync, /\n  sync:\s*\n    needs: policy-tests[\s\S]*?\n    if: \$\{\{ false \}\}/);
+  const architecture = readFileSync(new URL('../.github/workflows/architecture-sync.yml', import.meta.url), 'utf8');
+  assert.match(architecture, /if: github\.ref_name != 'alternative\/dev' &&/);
+  assert.match(architecture, /github\.ref_name == 'dev'/);
+  assert.match(architecture, /startsWith\(github\.ref_name, 'alternative\/'\) && endsWith\(github\.ref_name, '\/dev'\)/);
+});
+
 test('both alternative refs receive a safe promotion in one atomic push', (t) => {
   const { dir, git, commit } = fixture(t);
   const remote = join(dir, 'remote.git');
   git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
-  git('switch', 'alternative/dev'); commit('variant.txt', 'custom content');
+  git('switch', 'alternative/art/dev'); commit('variant.txt', 'custom content');
   git('switch', 'test'); commit('shared.txt', 'promoted');
-  git('push', 'origin', 'test', 'alternative/dev', 'alternative/test');
+  git('branch', 'alternative/dev'); git('branch', 'alternative/test');
+  git('push', 'origin', 'test', 'alternative/art/dev', 'alternative/art/test', 'alternative/dev', 'alternative/test');
+  const rootBefore = ['alternative/dev', 'alternative/test'].map(branch => git('--git-dir', remote, 'rev-parse', branch));
   const updates = syncAlternatives(dir, { push: true, regenerate: false });
   assert.equal(updates.length, 2);
   for (const { branch, sha } of updates) {
@@ -119,6 +155,8 @@ test('both alternative refs receive a safe promotion in one atomic push', (t) =>
     assert.equal(git('show', `${sha}:shared.txt`), 'promoted');
   }
   assert.equal(updates[0].sha, updates[1].sha, 'test can advance to the prepared dev result without rebuilding it');
+  assert.deepEqual(updates.map(({ branch }) => branch), ['alternative/art/dev', 'alternative/art/test']);
+  assert.deepEqual(['alternative/dev', 'alternative/test'].map(branch => git('--git-dir', remote, 'rev-parse', branch)), rootBefore);
 });
 
 test('a concurrent alternative test update rejects the entire push', (t) => {
@@ -126,16 +164,16 @@ test('a concurrent alternative test update rejects the entire push', (t) => {
   const remote = join(dir, 'remote.git');
   git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
   git('switch', 'test'); commit('shared.txt', 'promoted');
-  git('push', 'origin', 'test', 'alternative/dev', 'alternative/test');
-  const oldTest = git('rev-parse', 'origin/alternative/test');
-  const oldDev = git('rev-parse', 'origin/alternative/dev');
-  git('switch', 'alternative/test'); commit('variant.txt', 'concurrent owner edit');
-  git('push', 'origin', 'alternative/test');
+  git('push', 'origin', 'test', 'alternative/art/dev', 'alternative/art/test');
+  const oldTest = git('rev-parse', 'origin/alternative/art/test');
+  const oldDev = git('rev-parse', 'origin/alternative/art/dev');
+  git('switch', 'alternative/art/test'); commit('variant.txt', 'concurrent owner edit');
+  git('push', 'origin', 'alternative/art/test');
   const concurrent = git('rev-parse', 'HEAD');
-  git('update-ref', 'refs/remotes/origin/alternative/test', oldTest);
+  git('update-ref', 'refs/remotes/origin/alternative/art/test', oldTest);
   assert.throws(() => syncAlternatives(dir, { push: true, regenerate: false }), /atomic|rejected|failed/i);
-  assert.equal(git('--git-dir', remote, 'rev-parse', 'alternative/dev'), oldDev);
-  assert.equal(git('--git-dir', remote, 'rev-parse', 'alternative/test'), concurrent);
+  assert.equal(git('--git-dir', remote, 'rev-parse', 'alternative/art/dev'), oldDev);
+  assert.equal(git('--git-dir', remote, 'rev-parse', 'alternative/art/test'), concurrent);
 });
 
 test('generated conflicts are regenerated and the snapshot names the merged source', (t) => {
@@ -147,10 +185,10 @@ test('generated conflicts are regenerated and the snapshot names the merged sour
   commit('tools/update-architecture.mjs', "import {writeFileSync} from 'node:fs'; writeFileSync('docs/ARCHITECTURE-CURRENT-DEV.md',process.env.ARCHITECTURE_SOURCE_SHA);");
   commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 100 }));
   commit('docs/ARCHITECTURE-CURRENT-DEV.md', 'original');
-  git('branch', '-f', 'alternative/dev', 'HEAD');
-  git('switch', 'alternative/dev'); commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 101 })); commit('variant.txt', 'retained');
+  git('branch', '-f', 'alternative/art/dev', 'HEAD');
+  git('switch', 'alternative/art/dev'); commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 101 })); commit('variant.txt', 'retained');
   git('switch', 'test'); commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 103 })); commit('shared.txt', 'new primary');
-  const after = mergeAlternative(dir, 'test', 'alternative/dev', { regenerate: true });
+  const after = mergeAlternative(dir, 'test', 'alternative/art/dev', { regenerate: true });
   assert.deepEqual(JSON.parse(git('show', `${after}:buildordinal.json`)), { release: '0.7.1', ordinal: 104, digest: 'regenerated' });
   assert.equal(git('show', `${after}:variant.txt`), 'retained');
   const merged = git('rev-parse', `${after}^`);
@@ -169,14 +207,14 @@ for (const example of [
     commit('tools/update-architecture.mjs', "import {writeFileSync} from 'node:fs'; writeFileSync('docs/ARCHITECTURE-CURRENT-DEV.md',process.env.ARCHITECTURE_SOURCE_SHA);");
     commit('buildordinal.json', JSON.stringify({ release: '0.6.9', ordinal: 100 }));
     commit('docs/ARCHITECTURE-CURRENT-DEV.md', 'original');
-    git('branch', '-f', 'alternative/dev', 'HEAD');
-    git('switch', 'alternative/dev');
+    git('branch', '-f', 'alternative/art/dev', 'HEAD');
+    git('switch', 'alternative/art/dev');
     commit('buildordinal.json', JSON.stringify({ release: example.targetRelease, ordinal: example.targetOrdinal }));
     commit('variant.txt', 'retained');
     git('switch', 'test');
     commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 103 }));
     commit('shared.txt', 'promoted');
-    const after = mergeAlternative(dir, 'test', 'alternative/dev', { regenerate: true });
+    const after = mergeAlternative(dir, 'test', 'alternative/art/dev', { regenerate: true });
     assert.equal(JSON.parse(git('show', `${after}:buildordinal.json`)).ordinal, example.expected);
     assert.equal(git('show', `${after}:variant.txt`), 'retained');
   });
