@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Choose your game appearance",
     "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
-    "build": "0.7.1.1160",
+    "build": "0.7.1.1163",
     "pullRequest": 1757,
     "url": "https://github.com/cehinds/AshenSpire/pull/1757"
   },
@@ -413,6 +413,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1707"
   },
   {
+    "id": "pr-1709",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Behind the scenes: alternative class studies reach Test",
+    "detail": "The reviewed Rogue, Starseer and Herald animation studies join the Reaver atelier in Alternative Test. Gameplay bindings and the remaining base loadouts stay pending.",
+    "build": "0.7.1.1068",
+    "pullRequest": 1709,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1709"
+  },
+  {
     "id": "pr-1701",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -481,6 +491,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1060",
     "pullRequest": 1695,
     "url": "https://github.com/cehinds/AshenSpire/pull/1695"
+  },
+  {
+    "id": "pr-1699",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Behind the scenes: alternative atelier reaches Test",
+    "detail": "The reviewed Reaver sword, hurt, down, power and spell studies are promoted to Alternative Test as an authoring preview. Their gameplay bindings remain empty.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1699,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1699"
   },
   {
     "id": "pr-1692",
