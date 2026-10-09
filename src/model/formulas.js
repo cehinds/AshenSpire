@@ -57,6 +57,43 @@ export function evaluate(formula, ctx = {}) {
   return Math.floor(evaluateRaw(formula, ctx));
 }
 
+// Authored card faces have no actor or paid-action context. Prove the whole
+// tree constant before using the canonical evaluator; its runtime defaults
+// for energy and card counts are never evidence of a static zero.
+export function constantFormulaValue(formula) {
+  const constant = node => {
+    if (typeof node === 'number') return Number.isFinite(node);
+    return isFormula(node) && ['add', 'mul'].includes(node.f)
+      && Object.keys(node).every(key => ['f', 'args', 'min', 'max'].includes(key))
+      && ['min', 'max'].every(key => node[key] === undefined || Number.isFinite(node[key]))
+      && Array.isArray(node.args) && node.args.every(constant);
+  };
+  if (!constant(formula)) return undefined;
+  try {
+    const value = evaluate(formula);
+    return Number.isFinite(value) ? value : undefined;
+  } catch {
+    return undefined; // Finite literals can still overflow into a non-number.
+  }
+}
+
+/** State-dependent stack quantities on authored faces, without evaluating an actor. */
+export function describeFormula(formula) {
+  if (!isFormula(formula) || formula.f !== 'stacks'
+      || Object.keys(formula).some(key => !['f', 'status', 'of', 'per', 'min', 'max'].includes(key))
+      || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+  const location = { self: 'on you', owner: 'on the owner', target: 'on the target', enemy: 'on the enemy', player: 'on the player', allEnemies: 'across all enemies' };
+  if (!Object.hasOwn(location, formula.of) || typeof formula.status !== 'string' || !formula.status
+      || (formula.per !== undefined && (!Number.isFinite(formula.per) || formula.per <= 0))) return undefined;
+  const status = formula.status.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+  let text = `${status} stacks ${location[formula.of]}`;
+  if (formula.per !== undefined) text = `1 per ${formula.per} ${text} (whole groups)`;
+  if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+  if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+  if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+  return text;
+}
+
 /**
  * evaluateRaw(formula, ctx) → the UNFLOORED value (clamps applied). For the
  * one reader that multiplies the result before flooring — the run door's

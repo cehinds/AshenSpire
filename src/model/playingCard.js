@@ -33,8 +33,30 @@ import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor } from './combatCardProfile.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
+import { resolve as resolveTags } from '../content/tags.js';
+import { constantFormulaValue, describeFormula } from './formulas.js';
 
 const freeze = (value) => Object.freeze(value);
+
+/** Actual damage labels; a spell's school never substitutes for its damage. */
+export function combatCardDamageLabel(def, preview = null, registries = null, index = null) {
+  const service = registries && tagService(registries);
+  let contacts = index === null ? (def.effects || []).flatMap((effect, at) =>
+    effect.op === 'damage' ? [{ effect, live: preview?.values?.[at] }] : [])
+    : [{ effect: def.effects?.[index], live: preview?.values?.[index] }];
+  if (!contacts.length) contacts = (preview?.values || []).filter(row => row.op === 'damage').map(live => ({ live }));
+  if (!contacts.length) contacts = [{}];
+  const authored = def.cardTags ?? def.tags ?? (service ? service.idsOf('card', def)
+      : combatProfileFor(def).damageType ? [`damage:${combatProfileFor(def).damageType}`] : []);
+  const tags = contacts.flatMap(({ effect, live }) => {
+    if (live?.op === 'damage' && Array.isArray(live.tags)) return live.tags;
+    const attack = effect?.attack ?? def.attack;
+    return attack?.components ? attack.components.map(component => `damage:${component.type}`)
+      : attack?.damageType ? [`damage:${attack.damageType}`] : authored;
+  });
+  const ids = [...new Set(tags.filter(tag => tag.startsWith('damage:')))];
+  return (service ? service.resolve(ids) : resolveTags(ids)).map(tag => tag.label).join('/');
+}
 
 export function combatCardType(def) {
   const p = combatProfileFor(def);
@@ -50,11 +72,12 @@ export function combatCardType(def) {
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
 export function combatCardSummary(def, preview = null, registries = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = { ...staticCardTokens(def), ...preview?.tokens };
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def);
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
-    return tokens[token] ?? (live?.op === effect.op ? live.value : undefined) ?? (typeof effect[field] === 'number' ? effect[field] : '?');
+    return preview?.tokens?.[token] ?? (live?.op === effect.op ? live.value : undefined)
+      ?? tokens[token] ?? (typeof effect[field] === 'number' ? effect[field] : '?');
   };
   const title = id => registries?.statuses?.has(id) ? registries.statuses.get(id).name : id[0].toUpperCase() + id.slice(1);
   const condition = pred => {
@@ -93,8 +116,10 @@ export function combatCardSummary(def, preview = null, registries = null) {
         if (typeof hits !== 'number') return null;
         const sequence = live?.hitDamages;
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
-        const damage = unequal ? `${sequence.join(' + ')} damage (${live.totalDamage} total across ${sequence.length} hits)`
-          : `${n} damage${hits !== 1 ? ` ×${hits}` : ''}`;
+        const type = combatCardDamageLabel(def, preview, registries, index);
+        const word = `${type ? `${type} ` : ''}damage`;
+        const damage = unequal ? `${sequence.join(' + ')} ${word} (${live.totalDamage} total across ${sequence.length} hits)`
+          : `${n} ${word}${hits !== 1 ? ` ×${hits}` : ''}`;
         text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;
       }
       case 'block': text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Block`; break;
@@ -147,7 +172,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
       if (def.effects.some(effect => effect.op === op)) continue;
       const live = preview?.values?.find(row => row.op === op)?.value;
       const amount = live ?? payload[key];
-      if (typeof amount === 'number' && amount > 0) returns.push(`${amount} ${label}`);
+      const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
+      if (typeof amount === 'number' && amount > 0) returns.push(`${amount} ${type ? `${type} ` : ''}${label}`);
     }
     if (returns.length) parts.push(`Return ${returns.join(' + ')}`);
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
@@ -180,8 +206,13 @@ export function staticCardTokens(def) {
     return args.every(Number.isFinite) ? args.reduce((sum, item) => sum + item, 0) : undefined;
   };
   for (const binding of computeTokenBindings(effects)) {
-    const value = constant((effects[binding.index] || {})[binding.field]);
+    const raw = (effects[binding.index] || {})[binding.field];
+    const value = constant(raw);
     if (typeof value === 'number') tokens[binding.token] = value;
+    else {
+      const authored = constantFormulaValue(raw) ?? describeFormula(raw);
+      if (authored !== undefined) tokens[binding.token] = authored;
+    }
   }
   return tokens;
 }

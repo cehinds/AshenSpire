@@ -1,0 +1,14 @@
+[
+  {
+    "name": "hit-target",
+    "exit": 0,
+    "seconds": 30.21,
+    "log": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1182-hit-target.log"
+  },
+  {
+    "name": "default",
+    "exit": 1,
+    "seconds": 123.62,
+    "log": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1182-default.log"
+  }
+]

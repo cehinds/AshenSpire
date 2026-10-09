@@ -187,6 +187,24 @@ async function main() {
     await wait(300);
   };
 
+  const dismissFirstCombatTutorial = async () => {
+    const visible = await evalIn(`(() => {
+      const button = document.querySelector('.combat .tut-skip');
+      if (!button || button.hidden || button.disabled) return false;
+      const style = getComputedStyle(button), rect = button.getBoundingClientRect();
+      return style.display !== 'none' && !['hidden', 'collapse'].includes(style.visibility)
+        && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
+    })()`);
+    if (!visible) return false;
+    // The first Stamina callout can cover a self target. Spend a real, counted
+    // Skip before selecting a card; never hide the tutorial or change its flag.
+    await click('.combat .tut-skip', 'Skip the first-combat tutorial');
+    if (await evalIn(`!!document.querySelector('.combat .tut-skip')`)) {
+      throw new Error('the native tutorial Skip did not close the tutorial');
+    }
+    return true;
+  };
+
   // From wherever a new climb lands (the opening or the map) to the first card play.
   const toFirstCardPlay = async () => {
     await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening sequence, class tree or map');
@@ -223,6 +241,7 @@ async function main() {
     await wait(800);
     const played = () => evalIn(`window.__combat?.player?.counters?.cardsPlayedThisCombat || 0`);
     ok((await played()) === 0, 'the fight opens with no card played');
+    await dismissFirstCombatTutorial();
     const kind = await evalIn(`(() => {
       const hand = [...document.querySelectorAll('.hand .card')];
       hand.forEach((c) => delete c.dataset.qsCard);
