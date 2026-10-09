@@ -96,6 +96,9 @@ const MAX_ACTIVE_MS = 10;
 const SCRIPT_STEPS = 3;
 const SCRIPT_WINDOW_MS = 1000;
 const VIEWPORT = { width: 1440, height: 900 };
+// A cold local art cache can take longer than CI's mounted source tree. This
+// opt-in changes only boot readiness, never action deadlines or motion limits.
+const BOOT_TIMEOUT_MS = Math.max(20000, Math.min(120000, Number(process.env.MOTION_BOOT_TIMEOUT_MS) || 20000));
 const ALTERNATIVE = existsSync(new URL('../src/ui/alternativeArt.js', import.meta.url));
 const argv = process.argv.slice(2);
 const CLASSIC = argv.includes('--classic'); // original idle-bob plants use the actual Classic appearance
@@ -498,7 +501,7 @@ async function boot({ send, evaluate }, base, { setting, os, classic = CLASSIC }
   const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, classicAppearance: classic }));
   await send('Page.navigate', { url: `${base}?shot=combat&shotSeed=${encodeURIComponent(SEED)}&shotSettings=${settings}` });
   await wait(300);
-  await until(evaluate, `!!(window.__combat && window.__motionProbe && document.querySelector('.combatant.enemy') && document.querySelector('.hand .card') && document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled)`, 'combat to mount');
+  await until(evaluate, `!!(window.__combat && window.__motionProbe && document.querySelector('.combatant.enemy') && document.querySelector('.hand .card') && document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled)`, 'combat to mount', BOOT_TIMEOUT_MS);
   // The applied setting is the app's own, read back from the page.
   const applied = await evaluate(`({ cls: document.body.classList.contains('reduced-motion'), os: matchMedia('(prefers-reduced-motion: reduce)').matches, appearance: document.documentElement.dataset.displayAppearance })`);
   if (applied.cls !== setting || applied.os !== os) throw new Error(`reduced motion did not apply as asked: wanted setting=${setting} os=${os}, page has class=${applied.cls} media=${applied.os}`);
@@ -552,13 +555,21 @@ async function playTurn(s) {
   }
   await evaluate('window.__motionProbe.reset()');
   const before = await evaluate(`({ turn: window.__combat.turn, hand: window.__combat.piles.hand.length,
+    targetId: window.__combat.enemies.find(enemy => enemy.alive)?.id,
     hp: window.__combat.enemies.reduce((t, e) => t + (e.hp || 0) + (e.block || 0), 0) })`);
+  if (!before.targetId) throw new Error('no living enemy for the sampled attack');
+  // The target picker is the visible input surface above the artwork. Its
+  // button may cover the whole figure, so press the same enemy's legal button
+  // rather than searching behind it for an exposed combatant frame.
+  const targetSelector = await evaluate(`'.enemy-target-picker:not([hidden]) .enemy-target-button[data-eid="'
+    + CSS.escape(${JSON.stringify(before.targetId)}) + '"]:not([disabled])'`);
   // Select the card, then the target. A press that lands while the board is
   // still settling can be read as a hover; the pair is retried, never forced.
   for (let attempt = 1; ; attempt++) {
     await press(s, `.hand .card[data-card-id="${attack}"]`);
     await wait(300);
-    await press(s, '.combatant.enemy:not(.dead)');
+    await until(evaluate, `!!document.querySelector(${JSON.stringify(targetSelector)})`, 'the selected enemy target button to be ready');
+    await press(s, targetSelector);
     try {
       await until(evaluate, `window.__combat.piles.hand.length < ${before.hand}`, `${attack} to leave the hand`, 3000);
       break;

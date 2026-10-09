@@ -1,3 +1,4 @@
+import { frameOwnsHit } from './lib/combat-reach.mjs';
 // tools/screenreach.mjs — is every control on every screen reachable by a
 // finger, at the shapes we claim to support?
 //
@@ -452,6 +453,7 @@ const PROBE = `(() => {
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
       && !e.closest('details:not([open]), [inert]');
   });
+  const frameOwnsHit = ${frameOwnsHit.toString()};
   const exposedPatch = (target, size, bounds = target?.getBoundingClientRect(), accepts = top => top === target || target.contains(top)) => {
     if (!target) return false;
     const half = size / 2;
@@ -470,9 +472,11 @@ const PROBE = `(() => {
     const r = c.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
-    if (hit && (hit === c || c.contains(hit))) continue;
+    if (!c.matches('.combatant[data-ui-component="combatant-frame"]') && hit && (hit === c || c.contains(hit))) continue;
     // Formation frames span a grid cell. Measure the actual 44 px frame tap
     // target: final fitting can pack it away from an overlapping sprite foot.
+    // Name/HP and inspection surfaces are checked separately; they do not
+    // replace the independent frame-selection patch.
     // The frame centre may still sit beneath another fighter.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
@@ -485,7 +489,7 @@ const PROBE = `(() => {
       const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => top === c || top === sprite || sprite.contains(top))
+          top => frameOwnsHit(c, sprite, top))
         : exposedPatch(sprite, 24);
       if (reach) continue;
     }

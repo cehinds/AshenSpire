@@ -9,13 +9,54 @@ export function combatOverheadAnchorX({ width, x, controlWidth, inset = 6 }) {
 // Tap areas follow the measured feet until final sprite fitting brings two
 // formation rows together. Space only these targets, inside the stage, so a
 // neighbouring figure cannot take the owner's complete tap area.
-export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [], lockX = false, maxShiftX = 0 }) {
+export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [], lockX = false,
+  maxShiftX = 0, packWithinBounds = false }) {
   const half = size / 2;
   const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
     y: Math.min(Math.max(target.y, half), Math.max(half, height - half)) }));
   const intersects = (control, x, obstacle) => x - control.width / 2 < obstacle.right
     && x + control.width / 2 > obstacle.left
     && control.y - half < obstacle.bottom && control.y + half > obstacle.top;
+  if (packWithinBounds) {
+    const preferred = combatTargetAnchors({ width, height, targets, size, obstacles: [], lockX });
+    const rect = anchor => ({ left: anchor.x - anchor.width / 2, right: anchor.x + anchor.width / 2,
+      top: anchor.y - half, bottom: anchor.y + half });
+    const clear = (a, b) => a.right + 2 <= b.left || a.left >= b.right + 2
+      || a.bottom + 2 <= b.top || a.top >= b.bottom + 2;
+    const starts = preferred.map(anchor => ({ ...controls.find(control => control.id === anchor.id), ...anchor }));
+    const edges = [...obstacles, ...starts.map(rect)];
+    const unique = values => [...new Map(values.map(value => [Math.round(value * 64), value])).values()];
+    const options = starts.map(start => {
+      const xs = lockX ? [start.x] : unique([start.x, start.width / 2, width - start.width / 2,
+        ...edges.flatMap(box => [box.left - start.width / 2 - 2, box.right + start.width / 2 + 2])]);
+      const ys = unique([start.y, half, height - half,
+        ...edges.flatMap(box => [box.top - half - 2, box.bottom + half + 2])]);
+      return xs.flatMap(x => ys.map(y => ({ ...start, x, y })))
+        .filter(anchor => {
+          const box = rect(anchor);
+          return box.left >= 0 && box.right <= width && box.top >= 0 && box.bottom <= height
+            && obstacles.every(obstacle => clear(box, obstacle));
+        })
+        .sort((a, b) => (a.x - start.x) ** 2 + (a.y - start.y) ** 2
+          - ((b.x - start.x) ** 2 + (b.y - start.y) ** 2));
+    });
+    // Search the small fighter group together: a greedy first footer can use
+    // the only clear slot available to a later, wider plate.
+    let visits = 0;
+    const place = (index, placed) => {
+      if (index === options.length) return placed;
+      if (++visits > 20000) return null;
+      for (const candidate of options[index]) {
+        if (!placed.every(other => clear(rect(candidate), rect(other)))) continue;
+        if (!placed.every(other => Math.abs(candidate.y - other.y) >= size + 2
+          || (candidate.x - other.x) * (starts[index].x - starts.find(start => start.id === other.id).x) >= 0)) continue;
+        const result = place(index + 1, [...placed, candidate]);
+        if (result) return result;
+      }
+      return null;
+    };
+    return place(0, []) || starts.map(anchor => ({ ...anchor, obstructed: true }));
+  }
   if (lockX) {
     // Option C shares one vertical center line with the combatant and intent.
     // Resolve crowded footer rows vertically without detaching the plate.

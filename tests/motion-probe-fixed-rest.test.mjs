@@ -76,7 +76,7 @@ test('Classic bob checks boot the actual display appearance rather than only cha
   const bootCode = source.slice(source.indexOf('async function boot('), source.indexOf('\nconst point ='));
   for (const classic of [false, true]) {
     let navigation;
-    const boot = runInNewContext(`${bootCode}\nboot`, { CLASSIC: false, SEED: 'MOTION1',
+    const boot = runInNewContext(`${bootCode}\nboot`, { CLASSIC: false, SEED: 'MOTION1', BOOT_TIMEOUT_MS: 20000,
       wait: async () => {}, until: async () => {} });
     await boot({ send: async (method, options) => { if (method === 'Page.navigate') navigation = options.url; },
       evaluate: async () => ({ cls: false, os: false, appearance: classic ? 'classic' : 'alternative' }) },

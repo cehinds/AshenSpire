@@ -74,9 +74,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (envelope?.validated) layoutState.restHandAnchor = envelope;
     return envelope;
   }
-  function placePlayerHud() {
+  function placePlayerHud(reserveFirst = false) {
     const zoom = uiZoom();
-    const panels = [...field.querySelectorAll('.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
+    const panels = [...field.querySelectorAll(reserveFirst === true ? '.enemy .combatant-leading' : '.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
       .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
     const handTop = readRestingHand()?.clearanceTop;
     for (const player of field.querySelectorAll('.combatant.player')) {
@@ -439,18 +439,41 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .map(footer => visibleCombatPanelRect(footer, field)?.width || 0)),
+      footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .reduce((height, footer) => height + (visibleCombatPanelRect(footer, field)?.height || 0), 0),
       controls: [...frame.querySelectorAll('.combatant-leading button, .combatant-mini-hud')]
         .map(control => visibleCombatPanelRect(control, field)).filter(Boolean),
     }));
-    const footerSize = 44;
-    const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
+    // Reserve the player's readable panel before packing enemy footers. The
+    // final HUD pass can then keep this slot without competing with a footer.
+    placePlayerHud(true);
+    const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading')]
+      .map(node => {
+        const rect = visibleCombatPanelRect(node, combat);
+        if (!rect) return null;
+        // Footer packing supplies two pixels; reserve eight more around the
+        // panel to match the final player HUD pass's ten-pixel clearance.
+        const padding = node.matches('.player .combatant-leading') ? 8 : 0;
+        const door = node.matches('.player .combatant-leading') ? combatControlWidth(node.querySelector(':scope > .combatant-info'), pageZoom) : 0;
+        return { left: rect.left - padding - door, right: rect.right + padding,
+          top: rect.top - padding, bottom: rect.bottom + padding, width: rect.width, height: rect.height };
+      }).filter(Boolean);
+    const footerHandRect = combat.querySelector('.hand')?.getBoundingClientRect();
+    const handEnvelope = readRestingHand();
+    if (footerHandRect?.width > 0 && footerHandRect.height > 0) footerObstacles.push({
+      left: footerHandRect.left, right: footerHandRect.right, top: handEnvelope?.clearanceTop ?? footerHandRect.top, bottom: footerHandRect.bottom,
+    });
+    const footerSize = Math.max(44, ...boxes.map(box=>box.footerHeight));
+    const targets = combatTargetAnchors({ width: fieldRect.width,
+      height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
       // Crowded HUD/intent bands may leave no vertical slot. Only the plate
       // and its visible footer may then shift by at most one physical target.
-      lockX: true, size: 44, maxShiftX: 44,
-      obstacles: [...(ribbon ? [ribbon] : []), ...boxes.flatMap(box => box.controls.map(rect => ({
+      lockX: true, size: footerSize, maxShiftX: 44,
+      obstacles: [...footerObstacles, ...(ribbon ? [ribbon] : []),
+        ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls)].map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
-      })))],
+      })),
       targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
