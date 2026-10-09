@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `feature/card-solid-bb`
-- Source commit: `8b7aa93af7302af9d11dd0c9c045e159474552b3`
+- Source commit: `713f248791a23dc406f0802a8ac2a62ed2bb841d`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **13136**.
-Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 43, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 59, `.jpg` 282, `.js` 764, `.json` 807, `.jsonl` 1, `.log` 1, `.md` 241, `.mjs` 838, `.nojekyll` 1, `.nsi` 1, `.png` 1818, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.tap` 1, `.txt` 43, `.webp` 7338, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
+Tracked files: **13134**.
+Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 43, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 59, `.jpg` 282, `.js` 764, `.json` 807, `.jsonl` 1, `.log` 1, `.md` 239, `.mjs` 838, `.nojekyll` 1, `.nsi` 1, `.png` 1818, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.tap` 1, `.txt` 43, `.webp` 7338, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
