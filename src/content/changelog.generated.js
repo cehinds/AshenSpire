@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1757"
   },
   {
+    "id": "pr-1762",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ashen Blight flows through volcanic rock",
+    "detail": "The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.",
+    "build": "0.7.1.1154",
+    "pullRequest": 1762,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1762"
+  },
+  {
     "id": "pr-1751",
     "date": "2026-10-08",
     "group": "2026-10-08",

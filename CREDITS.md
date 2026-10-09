@@ -1,4 +1,8 @@
 # Credits & Asset Licenses
+## Molten River Blight meter (2026-10-08)
+
+Original texture generated for AshenSpire with OpenAI image generation from the owner-selected Molten River concept. Runtime ID: `assets/ui/ashen-blight-molten-river.webp`; high and generated light twins ship through [AshenSpire-art](https://github.com/cehinds/AshenSpire-art), with the master and prompt in `art/molten-river-blight-20261008/`. No third-party artwork or license is claimed.
+
 
 ## AI authorship and third-party exceptions
 

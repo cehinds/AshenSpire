@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "library": "alternative",
-  "pinnedRelease": "hd-assets-v14",
+  "pinnedRelease": "hd-assets-v15",
   "note": "Display-specific exports stored beside this index.",
   "assets": {
     "assets-display/alternative/ashheartDragon-mobile.webp": {

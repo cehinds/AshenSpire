@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "library": "shared",
-  "pinnedRelease": "hd-assets-v14",
+  "pinnedRelease": "hd-assets-v15",
   "note": "Canonical packed IDs retain their existing byte home; this index groups them without duplication.",
   "assets": {
     "assets/card-components/0949257201425783d7c8.webp": {
@@ -28632,6 +28632,25 @@
           "sha256": "35227850e0bff4ccc7629b25f3346221c4171aeed47e626a5c4a6ef8d2027cd4",
           "width": 1254,
           "height": 1254
+        }
+      }
+    },
+    "assets/ui/ashen-blight-molten-river.webp": {
+      "source": "pinned-art-pack",
+      "tiers": {
+        "light": {
+          "path": "assets-mobile/ui/ashen-blight-molten-river.webp",
+          "bytes": 30864,
+          "sha256": "c4e1797057561551d2021451bd2e42e4c83be55394190ff5ff4ac8d1eae13165",
+          "width": 720,
+          "height": 240
+        },
+        "high": {
+          "path": "assets/ui/ashen-blight-molten-river.webp",
+          "bytes": 117906,
+          "sha256": "e0871dbcbb314ad0ea4dcc9b5d450625219187c3312c1b7aa2eb22754bd1774d",
+          "width": 960,
+          "height": 320
         }
       }
     },

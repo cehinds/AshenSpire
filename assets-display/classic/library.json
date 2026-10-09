@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "library": "classic",
-  "pinnedRelease": "hd-assets-v14",
+  "pinnedRelease": "hd-assets-v15",
   "note": "Canonical packed IDs retain their existing byte home; this index groups them without duplication.",
   "assets": {
     "assets/animations/bow/herald-emberhabit/BOW-01.webp": {
