@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Card names and actions stay readable over their artwork** ([#1766](https://github.com/cehinds/AshenSpire/pull/1766), `0.7.1.1147`). A dark title backdrop fades into the illustration. Larger solid action symbols and names sit inside the textured base frame, with a fist for Smash and a shield crossed by a sword for Counter. Up to three primary symbols line the right edge; Information keeps every tag and detail. Concise effects remain complete inside adaptive parchment panels.
+
 - **Contract: defensive reactions and actor-turn presentation** ([#1761](https://github.com/cehinds/AshenSpire/pull/1761), `0.7.1.1145`). Specify optional in-hand Counter and defensive Sweep choices, a separate successful Counter return, acting-enemy intent revelation, exact paused continuation, and the player widget's fixed gap above the art. This contract precedes runtime implementation.
 
 - **Finished runs record their outcome and phone title controls stay reachable** ([#1759](https://github.com/cehinds/AshenSpire/pull/1759), `0.7.1.1144`). Successful run checkpoints allow completion to record the result and clear the finished slot. A refused checkpoint still preserves the run for retry. On small phone screens, the title menu scrolls below the wordmark so Continue and the remaining controls stay usable.
