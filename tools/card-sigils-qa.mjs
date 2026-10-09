@@ -21,14 +21,21 @@ function cardGeometry(cards){return cards.map(c=>{
  const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
  const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),panel=c.querySelector('[data-component="panel"]')?.getBoundingClientRect();
  const band=c.querySelector('[data-primary-sigil]'),mark=band?.querySelector('.combat-sigil-action'),label=band?.querySelector('.card-type-name'),b=band?.getBoundingClientRect();
+ const m=mark?.getBoundingClientRect(),l=label?.getBoundingClientRect();
  const within=(a,z)=>!!a&&!!z&&a.left>=z.left-1&&a.right<=z.right+1&&a.top>=z.top-1&&a.bottom<=z.bottom+1;
+ const horizontal=(a,z)=>!!a&&!!z&&a.left>=z.left-1&&a.right<=z.right+1;
+ const bounds=a=>a?{left:a.left,top:a.top,right:a.right,bottom:a.bottom,width:a.width,height:a.height}:null;
  const accessibleName=c.getAttribute('aria-label'),damageWords=accessibleName?.match(/(?:^|, )Damage: (.*?)(?=, (?:rank |Cantrip(?:,|$)|Technique(?:,|$)|Combat Maneuver(?:,|$)|Weapon Art(?:,|$)|Spell(?:,|$))|\. Enter|$)/)?.[1]?.split(', ')||[];
  const expectedDamageWords=JSON.parse(c.dataset.qaDamageWords||'[]');
  return {ref:c.dataset.qaRef||c.dataset.cardId,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
   school:c.dataset.combatSchool||null,schoolName:accessibleName?.match(/(?:^|, )([^,]+) school(?:,|$)/)?.[1]||null,
   clipped:text.scrollHeight>text.parentElement.clientHeight+1||text.scrollWidth>text.clientWidth+1,
   overlapsTitle:Math.min(r.top,panel?.top??r.top)<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),ruleTop:r.top-face.top,titleBottom:top.bottom-face.top,panelTop:panel?.top-face.top,
-  primaryBandOutside:!within(b,face)||!within(mark?.getBoundingClientRect(),b)||!within(label?.getBoundingClientRect(),b)||b.top<r.bottom-1,
+  // The authored 40/360 band is shorter than its centered 12cqw mark.
+  // Measure the actual mark/label boxes against the face and rules, while
+  // keeping their horizontal placement inside the nominal band.
+  primaryBandOutside:!within(b,face)||!within(m,face)||!within(l,face)||!horizontal(m,b)||!horizontal(l,b)||Math.min(m?.top??-Infinity,l?.top??-Infinity)<r.bottom-1,
+  bounds:{face:bounds(face),rules:bounds(r),band:bounds(b),mark:bounds(m),label:bounds(l)},
   primaryLabel:label?.textContent,primaryMarks:band?.querySelectorAll('.combat-sigil').length,
   secondaryFaceChips:c.querySelectorAll('.illustrated-card-face .combat-sigil-school,.illustrated-card-face .card-damage-types').length,
   rules:text.textContent,damageWords,expectedDamageWords,
