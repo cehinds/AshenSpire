@@ -5,6 +5,12 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Latest native-pan candidate: 1176 / `28544cb164`**
+  - Source `2c0423d584d549a6f0ef8af452beb9335bccccf6`, official architecture `bf827d7ac8f5d55cb1203a77c6ddf38926dae63e`; normal remote build checkpoint inheritance is preserved.
+  - Scroll now follows the Info portal without pulling the hand back to an older selected card. Explicit selection/focus/layout/resize still reveals the owner. Both native appearance drivers reach offscreen cards through genuine pagers or touch swipes and prove navigation leaves all combat state and RNG unchanged.
+  - Independent source review is clear. Root hand/target suite: 92 passed; combat expansion/Power/reaction suite: 122 passed; no skipped checks in either run. The pan regression demonstrably fails against the previous production helper.
+  - Prelude 1175 / `f6b5a403df` and final 1176 / `28544cb164` completed all four aliases. Own receipt update preserved all 830 foreign rows. Light package 115,934,491 bytes. Identity 9, shipping 12, receipt 2 and order 879 checks pass.
+  - Fresh frozen packaged native, target, card-hand, trim, motion and exact-head cloud acceptance are underway. The 1174 forced-target diagnostic and actual native pan failure remain retained; ordinary 1174 production all-four-target proof was green. Earlier sections below are historical checkpoints.
 - **Latest combined candidate: 1174 / `6af9ee0f62`**
   - Normal inheritance of merged reaction #1767 and settled dev architecture is committed. Source `97c35995f612f285281342a60992d53e0028489e`, official architecture `794fc36c1289ace26f8664e0992f11c41d32f20b`.
   - Under-card controls reserve their measured height before selection, preserve native horizontal scrolling, and keep complete card/control bounds. Info placement avoids visible fighter health and intent controls. Target packing keeps 44-pixel foot targets and retries only obstructed or greatly displaced layouts.
