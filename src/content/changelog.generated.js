@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Card actions and ranks stay readable over their artwork",
     "detail": "Cards separate their background, art, backdrops, trim, icons and text into explicit layers. Rank 1 and higher appear as Rank X centered above the effect panel; Rank 0 stays hidden. A dark title fade, solid action symbols and centered names keep the face readable. Smash uses a fist and Counter a shield crossed by a sword. Up to three primary symbols line the right edge; Information keeps every tag. Complete effects and their rank label adapt together.",
-    "build": "0.7.1.1156",
+    "build": "0.7.1.1158",
     "pullRequest": 1766,
     "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1763",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ashen Blight flows through volcanic rock",
+    "detail": "The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.",
+    "build": "0.7.1.1152",
+    "pullRequest": 1763,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1763"
   },
   {
     "id": "pr-1765",

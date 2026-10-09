@@ -30,8 +30,8 @@ test('the real stylesheets externalize fonts and scene/material art, inline vect
   assert.equal(ids.filter((id) => id.startsWith('assets/fonts/')).length, 15, 'every "AS Lore" face');
   assert.equal(ids.filter((id) => id.startsWith('assets/bg/')).length, 9, 'every backdrop id, once');
   assert.equal(ids.filter((id) => id.startsWith('assets/player-polish/')).length, 9, 'eight desktop/portrait scene IDs and one material, each once');
-  assert.equal(value.rules.length, 33);
-  assert.equal(template.urls, 137, 'fonts, canonical backdrops, player scenes/materials, shared combat texture and vector frame/mask uses');
+  assert.equal(value.rules.length, 34);
+  assert.equal(template.urls, 138, 'fonts, canonical backdrops, player scenes/materials, shared combat and Blight textures, and vector frame/mask uses');
   assert.equal(template.inlined, 93, 'canonical, footer, folio and file-play icon fallback vectors; close uses its single shared glyph');
   for (const { href, out } of sheets) {
     for (const m of out.matchAll(CSS_URL)) assert.match(m[2], /^data:image\/svg\+xml;base64,/, `${href}: only the masks stay as url()`);

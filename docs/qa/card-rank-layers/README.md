@@ -31,3 +31,11 @@ text space or change gameplay values, rank resolution, costs or payment.
 `corpus/report.json` records the source revision, uncommitted state and browser
 checks for the full card corpus. Reproduce with `node tools/card-sigils-qa.mjs`
 and `SIGIL_QA_OUT=docs/qa/card-rank-layers/corpus`.
+
+Regenerate the six illustrations and their desktop/phone checks with
+`node tools/card-rank-layers-qa.mjs`. Use `ASHEN_ART_SOURCE=cache` with the
+published pin, `PLAYWRIGHT_MODULE` for Playwright and `CHROME` for the browser
+when these are not on the default module/executable paths.
+
+[Continuation status and remaining gates](STATUS.md) records the pushed
+checkpoint, test commands, review status and delivery boundaries.
