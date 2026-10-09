@@ -34,6 +34,7 @@ import { balance } from '../content/balance.js';
 import { combatProfileFor } from './combatCardProfile.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
+import { constantFormulaValue, describeFormula } from './formulas.js';
 
 const freeze = (value) => Object.freeze(value);
 
@@ -70,11 +71,12 @@ export function combatCardType(def) {
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
 export function combatCardSummary(def, preview = null, registries = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = { ...staticCardTokens(def), ...preview?.tokens };
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def);
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
-    return tokens[token] ?? (live?.op === effect.op ? live.value : undefined) ?? (typeof effect[field] === 'number' ? effect[field] : '?');
+    return preview?.tokens?.[token] ?? (live?.op === effect.op ? live.value : undefined)
+      ?? tokens[token] ?? (typeof effect[field] === 'number' ? effect[field] : '?');
   };
   const title = id => registries?.statuses?.has(id) ? registries.statuses.get(id).name : id[0].toUpperCase() + id.slice(1);
   const condition = pred => {
@@ -197,6 +199,10 @@ export function staticCardTokens(def) {
   for (const binding of computeTokenBindings(effects)) {
     const value = (effects[binding.index] || {})[binding.field];
     if (typeof value === 'number') tokens[binding.token] = value;
+    else {
+      const authored = constantFormulaValue(value) ?? describeFormula(value);
+      if (authored !== undefined) tokens[binding.token] = authored;
+    }
   }
   return tokens;
 }
