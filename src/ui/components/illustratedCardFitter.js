@@ -1,3 +1,4 @@
+import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
 const ruleGeometry = new WeakMap();
 
 // Search every text in one batch. Complete effects use the authored readable
@@ -9,19 +10,27 @@ export function fitIllustratedCards(cards) {
   const texts=[];
   faces.forEach((face,i)=>{
     if(!widths[i])return;
+    resetCardLayout(face);
     const scale=widths[i]/Number(face.dataset.designWidth);
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
       const row={face,text,layer,scale,rules,lines:rules?Infinity:Number(text.dataset.maxLines)||1};
       if(rules){
+        row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
+        row.panelTrim=face.querySelector('[data-component="panel-trim"]');
+        row.rank=face.querySelector('.card-rank');
         row.art=face.querySelector('[data-component="art"]');
         if(!ruleGeometry.has(layer))ruleGeometry.set(layer,{top:layer.style.top,height:layer.style.height,panelTop:row.panel?.style.top,panelHeight:row.panel?.style.height,artHeight:row.art?.style.height});
         const original=ruleGeometry.get(layer);
         layer.style.top=original.top;layer.style.height=original.height;
         if(row.panel){row.panel.style.top=original.panelTop;row.panel.style.height=original.panelHeight;}
+        if(row.panelTrim){row.panelTrim.style.top=original.panelTop;row.panelTrim.style.height=original.panelHeight;}
         if(row.art)row.art.style.height=original.artHeight;
+        if(row.rank&&row.panel){
+          row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
+        }
         text.style.display='block';
       }
       row.low=rules?Math.max(Math.min(11,widths[i]/12),22*scale,Number(text.dataset.minFont)*scale):Number(text.dataset.minFont)*scale;
@@ -30,6 +39,18 @@ export function fitIllustratedCards(cards) {
     }
   });
   if(!texts.length)return;
+  // Reserve the rank header with separate measurement and mutation passes.
+  // A collection can contain thousands of cards; interleaving these forces a
+  // full layout for each card instead of once for the collection.
+  for(const row of texts){
+    if(!row.rank||!row.panel)continue;
+    row.rankInset=Math.max(0,row.rank.offsetTop+row.rank.offsetHeight+4*row.scale-row.layer.offsetTop);
+    row.rankTop=row.layer.offsetTop;row.rankHeight=row.layer.clientHeight;row.faceHeight=row.face.clientHeight;
+  }
+  for(const row of texts)if(row.rankInset){
+    row.layer.style.top=(row.rankTop+row.rankInset)/row.faceHeight*100+'%';
+    row.layer.style.height=Math.max(1,row.rankHeight-row.rankInset)/row.faceHeight*100+'%';
+  }
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}
@@ -48,19 +69,36 @@ export function fitIllustratedCards(cards) {
   // Measure the whole batch before expanding any panel. No per-card search or
   // layout loop, and a resize starts from authored geometry rather than drift.
   const rules=texts.filter(row=>row.rules),narrow=[];
+  // Dense rules keep the same readable text floor with the taller base bay.
+  // Tighten only their artwork rail before measuring the expansion boundary.
+  for(const row of rules)row.dense=row.text.scrollHeight>row.boxHeight*1.5;
+  for(const row of rules)row.face.dataset.rulesDense=String(row.dense);
   for(const row of rules){
     row.height=row.face.clientHeight;row.top=row.layer.offsetTop;row.panelTop=row.panel?.offsetTop;row.panelHeight=row.panel?.clientHeight;row.artTop=row.art?.offsetTop;
     const title=row.face.querySelector('[data-card-binding="name"]');
     // Offsets stay in layout pixels, including the native UI zoom and rotated
     // hand. Mixing a screen rectangle with offsetTop shrinks this boundary.
     const titleBottom=title?title.parentElement.offsetTop+title.offsetTop+title.offsetHeight:0;
-    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-titleBottom-Math.max(2,2*row.scale));
+    const rail=row.face.querySelector('.card-tag-rail');
+    const railBottom=rail?rail.offsetTop+rail.offsetHeight:0;
+    row.rankSpace=0;
+    // The centered rank can share a horizontal row with the narrow right rail.
+    // Reserve its height below the title, while the panel stays below the rail.
+    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-Math.max(titleBottom+row.rankSpace,railBottom)-Math.max(2,2*row.scale));
+    // The parchment border scales with its image. Preserve its authored
+    // interior margins as the panel grows, so text never sits on the ornament.
+    // The rank's reserved header is a fixed-height anchor. Only the authored
+    // parchment border grows with the panel; scaling the header again would
+    // waste the extra room and clip dense effects on narrow cards.
+    row.topInset=row.panelHeight?Math.max(0,(row.top-row.panelTop-row.rankInset)/row.panelHeight):0;
+    const bottomInset=row.panelHeight?Math.max(0,(row.panelTop+row.panelHeight-row.top-row.boxHeight)/row.panelHeight):0;
+    row.interiorScale=Math.max(.5,1-row.topInset-bottomInset);
     row.authoredHeight=row.boxHeight;
-    if(row.text.scrollHeight>row.boxHeight+row.growthLimit+1){
+    if(row.text.scrollHeight>row.boxHeight+row.growthLimit*row.interiorScale+1){
       // Supported narrow shelves use the authored minimum only after the
       // preferred floor and all available artwork space have been spent.
-      row.lo=Math.min(row.result,Number(row.text.dataset.minFont)*row.scale);
-      row.hi=row.result;row.boxHeight+=row.growthLimit;narrow.push(row);
+      row.lo=Math.min(row.result,Number(row.text.dataset.minFont)*row.scale,Math.max(7,18*row.scale));
+      row.hi=row.result;row.boxHeight+=row.growthLimit*row.interiorScale;narrow.push(row);
     }
   }
   for(let pass=0;pass<7&&narrow.length;pass++){
@@ -68,14 +106,17 @@ export function fitIllustratedCards(cards) {
     narrow.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of narrow){row.result=row.lo;row.text.style.fontSize=row.result+'px';row.text.dataset.fittedFont=String(row.result/row.scale);}
-  for(const row of rules){row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,row.text.scrollHeight-row.boxHeight));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));}
+  for(const row of rules){row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));}
   for(const row of rules){
     const {extra,height}=row;
     if(extra>1){
-      row.layer.style.top=(row.top-extra)/height*100+'%';row.layer.style.height=(row.boxHeight+extra)/height*100+'%';
+      row.layer.style.top=(row.top-extra*(1-row.topInset))/height*100+'%';row.layer.style.height=(row.boxHeight+extra*row.interiorScale)/height*100+'%';
       if(row.panel){row.panel.style.top=(row.panelTop-extra)/height*100+'%';row.panel.style.height=(row.panelHeight+extra)/height*100+'%';}
+      if(row.panelTrim){row.panelTrim.style.top=row.panel.style.top;row.panelTrim.style.height=row.panel.style.height;}
       if(row.art)row.art.style.height=Math.max(0,row.panelTop-extra-row.artTop)/height*100+'%';
     }
+    if(row.rank)row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
     row.face.dataset.rulesExpanded=String(extra>1);row.text.dataset.rulesComplete='true';
   }
+  applyCardLayouts(faces);
 }

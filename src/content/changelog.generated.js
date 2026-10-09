@@ -3,14 +3,34 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1740",
+    "id": "pr-1766",
     "date": "2026-10-09",
     "group": "2026-10-09",
-    "summary": "Alternative combat keeps its art with the complete tactical rules",
-    "detail": "The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.",
-    "build": "0.7.1.1191",
-    "pullRequest": 1740,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1740"
+    "summary": "Card actions and ranks stay readable over their artwork",
+    "detail": "Cards separate their background, art, backdrops, trim, icons and text into explicit layers. Rank 1 and higher appear as Rank X centered above the effect panel; Rank 0 stays hidden. A dark title fade, solid action symbols and centered names keep the face readable. Smash uses a fist and Counter a shield crossed by a sword. Up to three primary symbols line the right edge; Information keeps every tag. Complete effects and their blue rank bar adapt together. The shared master JSON controls component images, symbols, typography, layer order and geometry. The card layer explorer saves grouped move/scale edits directly to that game template and previews actual combat cards.",
+    "build": "0.7.1.1193",
+    "pullRequest": 1766,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1768",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Readable card effects and stable combat targets",
+    "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.",
+    "build": "0.7.1.1195",
+    "pullRequest": 1768,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1768"
+  },
+  {
+    "id": "pr-1775",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Compact combat details stay clear of cards",
+    "detail": "Pack enemy name and health plates around the visible hand and player details on short screens with enlarged text. Keep the sprites fixed while moving only crowded plates. Verify attacks through the visible target buttons and saved turns through the normal defensive-reaction controls.",
+    "build": "0.7.1.1189",
+    "pullRequest": 1775,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1775"
   },
   {
     "id": "pr-1773",
