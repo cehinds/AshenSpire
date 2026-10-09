@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `codex/combat-promotion-polish-20261008`
-- Source commit: `81c9af0ba861f9fb3f6dd0b4759d76f2525f4f5f`
+- Source commit: `2595b37c5702d9d340d1c2ff3578e32a9bc00a3f`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
