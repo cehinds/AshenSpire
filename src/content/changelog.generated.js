@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1761",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Contract: defensive reactions and actor-turn presentation",
+    "detail": "Specify optional in-hand Counter and defensive Sweep choices, a separate successful Counter return, acting-enemy intent revelation, exact paused continuation, and the player widget's fixed gap above the art. This contract precedes runtime implementation.",
+    "build": "0.7.1.1145",
+    "pullRequest": 1761,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1761"
+  },
+  {
     "id": "pr-1759",
     "date": "2026-10-08",
     "group": "2026-10-08",
