@@ -36,3 +36,45 @@ for (const [name, marker] of [
     assert.equal(done, 1, 'the capture handler removes itself after completion');
   });
 });
+
+
+test('tutorial controls navigate all steps and remove their independent overlay exactly once', () => {
+  withKitDom((dom) => {
+    const root = dom.document.createElement('main');
+    root.innerHTML = '<div class="energy-orb"></div><div class="enemy-row"><div class="intent"></div></div><div class="hand"><div class="card"></div></div><button class="end-turn"></button>';
+    dom.document.body.appendChild(root);
+    let done = 0;
+    mountTutorial(root, { onDone: () => { done++; } });
+    const veil = root.querySelector('.tut-veil'), row = root.querySelector('.tut-row');
+    assert.equal(row.parentNode, veil, 'the real controls use the veil coordinate space independently of prose');
+    assert.equal(veil.querySelector('.tut-next'), row.querySelector('.tut-next'));
+    const next = row.querySelector('.tut-next');
+    for (const label of ['Next (1/4)', 'Next (2/4)', 'Next (3/4)', 'Got it']) {
+      assert.equal(next.textContent, label, 'step labels follow the moved button');
+      assert.equal(done, 0);
+      next.dispatchEvent(new dom.Event('click', { target: next }));
+    }
+    assert.equal(done, 1);
+    assert.equal(root.querySelector('.tut-row'), null, 'completion removes the independent control layer');
+    assert.equal(root.querySelector('.tut-veil'), null);
+    next.dispatchEvent(new dom.Event('click', { target: next }));
+    assert.equal(done, 1);
+  });
+});
+
+test('tutorial Skip exits without advancing or leaving its control layer behind', () => {
+  withKitDom((dom) => {
+    const root = dom.document.createElement('main');
+    root.innerHTML = '<div class="energy-orb"></div>';
+    dom.document.body.appendChild(root);
+    let done = 0;
+    mountTutorial(root, { onDone: () => { done++; } });
+    const skip = root.querySelector('.tut-skip');
+    skip.dispatchEvent(new dom.Event('click', { target: skip }));
+    assert.equal(done, 1);
+    assert.equal(root.querySelector('.tut-row'), null);
+    assert.equal(root.querySelector('.tut-veil'), null);
+    skip.dispatchEvent(new dom.Event('click', { target: skip }));
+    assert.equal(done, 1);
+  });
+});

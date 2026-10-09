@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1768",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Readable card effects and stable combat targets",
+    "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.",
+    "build": "0.7.1.1197",
+    "pullRequest": 1768,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1768"
+  },
+  {
     "id": "pr-1766",
     "date": "2026-10-09",
     "group": "2026-10-09",

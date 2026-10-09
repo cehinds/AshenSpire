@@ -1,0 +1,96 @@
+{
+  "scope": "Pre-inheritance1182 candidate; not final combined1772 evidence",
+  "artifact": {
+    "ordinal": 1182,
+    "digest": "d21efc30bd"
+  },
+  "sourceHead": "76eff49d14",
+  "target": {
+    "exit": 0,
+    "fixtures": 3,
+    "actorsPerFixture": 4
+  },
+  "default": {
+    "exit": 1,
+    "rows": 50,
+    "errors": 60,
+    "warnings": 0
+  },
+  "rawHealth": {
+    "events": 96,
+    "unexpectedFatal": 60,
+    "phases": {
+      "shot-boot-before-title-activation": 60
+    },
+    "messages": {
+      "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. ": 60
+    },
+    "topFrames": {
+      "drone": 36,
+      "playNote": 12,
+      "thump": 12
+    }
+  },
+  "stoppedBefore": [
+    "Classic",
+    "standalone hand",
+    "trim128",
+    "T14 motion",
+    "full compiled screenreach",
+    "negative plants"
+  ],
+  "processBoundary": "Original sequential runner stopped at Default exit1; browser finally cleanup completed. No later stage launched.",
+  "files": [
+    {
+      "name": "1200x730-xl.json",
+      "sha256": "e9dba3e8aa488f3ccb52953db889ea8de185c620e9bc56653cf9a7df7d8d5078"
+    },
+    {
+      "name": "1200x730-xl.png",
+      "sha256": "e9a6c9e45d8960d2814bb1ca8a5fb4fe29edf94f690e5fe23e9f0a90c5007470"
+    },
+    {
+      "name": "390x650-overlap.json",
+      "sha256": "3a8cb4e3a8de142f8c969b413e16b025f9bcaf054499e3c9cce63623b40ff02e"
+    },
+    {
+      "name": "390x650-overlap.png",
+      "sha256": "42a4f9a4c60f4518dbdee5e64aa75707b73e64c6d823295fddbf7859587801ae"
+    },
+    {
+      "name": "390x650-xl.json",
+      "sha256": "0dd551195b3ba59cb1b70d27d3426bbe21df9928eea15134821b352b2ae410c8"
+    },
+    {
+      "name": "390x650-xl.png",
+      "sha256": "e6da95224bdd5832573793f3422f27d2320ad055c54d39d7b72c17fef00d4b1e"
+    },
+    {
+      "name": "browser-health.json",
+      "sha256": "dd2246206863fb760abb09be6223aed27898d18807a39f5040f71a9d5db0e000"
+    },
+    {
+      "name": "default-results.json",
+      "sha256": "1433e890d651093d758e0f05e1af9137ce1a1a1de6325aea779d2fb743197757"
+    },
+    {
+      "name": "gates.json",
+      "sha256": "eee881d62b1a4ce76de11ee1d4d97c82fb0829f63c2b9f958213416343889231"
+    },
+    {
+      "name": "phone-compact-native-tier-picker-open.png",
+      "sha256": "78b77c606cc6a31f5a7cbc21e97efb7a9d5699eea2f9beadf053596f1bf7985a"
+    },
+    {
+      "name": "phone-normal-native-tier-picker-open.png",
+      "sha256": "75fc8d59623de97dbc99c287306a03fcc492e322b666043976d44c1de2713b95"
+    }
+  ],
+  "gatesCuration": {
+    "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1182-gates.json",
+    "rawSha256": "c0b187b63a8d7814c570de8bc7e4eae215bca96d3289c70f08c87ae471933a31",
+    "curatedPath": "gates.json",
+    "curatedSha256": "eee881d62b1a4ce76de11ee1d4d97c82fb0829f63c2b9f958213416343889231",
+    "transformation": "CRLF to LF only; JSON values unchanged; raw original retained byte-exact"
+  }
+}

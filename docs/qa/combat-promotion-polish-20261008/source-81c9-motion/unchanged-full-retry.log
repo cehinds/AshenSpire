@@ -1,0 +1,255 @@
+
+  ▸ Ashen Spire is live at http://localhost:63205/
+    Serving D:\repos\.codex\worktrees\combat-expansion-runtime\AshenSpire
+    Press Ctrl+C to stop.
+
+OK  IDLE player#0 — Forsaken: canvas moved by sprite-idle on div.pose-stage.painted-stage
+OK  IDLE enemy#1 — Wandering Soldier: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE enemy#2 — Blight Hound: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE-BOARD — seed T14: 1 player(s) and 2 enemy(ies) on the board
+OK  TURN motion-on — strike landed, turn 2, 383 frames sampled
+  [dump motion-on]
+    CSSAnimation sprite-idle on div.pose-stage.painted-stage.alternative-card-stage (infinite, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (infinite, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (infinite, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSAnimation aimGlow on div.aim-silho (infinite, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (infinite, via getAnimations)
+    CSSAnimation aimGlow on div.aim-silho (infinite, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (infinite, via getAnimations)
+    CSSTransition border-bottom-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition border-left-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition border-right-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition border-top-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSAnimation aimGlow on div.aim-silho (infinite, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (infinite, via getAnimations)
+    CSSAnimation aimGlow on div.aim-silho (infinite, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (infinite, via getAnimations)
+    Animation (script) on div.card-flight (220 ms, via Element.animate)
+    Animation (script) on img.painted-combat-effect (110 ms, via Element.animate)
+    CSSTransition border-bottom-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition border-left-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition border-right-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition border-top-color on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    Animation (script) on img.painted-combat-effect (195 ms, via Element.animate)
+    CSSAnimation hit-enemy on div.alternative-figure (220 ms, via getAnimations)
+    CSSAnimation num-pop on div.float-num.dmg (540 ms, via getAnimations)
+    CSSAnimation slash-sweep on div.fx-slash (260 ms, via getAnimations)
+    CSSAnimation relicProc on div.as-pip.tray-icon.relic (300 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSAnimation pile-receive on button.as-btn.pile.spent (320 ms, via getAnimations)
+    CSSAnimation glyph-pop on div.fx-glyph (430 ms, via getAnimations)
+    Animation (script) on img.painted-combat-effect (260 ms, via Element.animate)
+    CSSAnimation family-strike on div.sprite.act-attack.enemy-attack-pose (187 ms, via getAnimations)
+    CSSAnimation num-pop on div.float-num.dmg.small (540 ms, via getAnimations)
+    CSSAnimation slash-sweep on div.fx-slash (260 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations)
+    CSSAnimation card-arrive on div.card.as-card.playing-poker-card (240 ms, via getAnimations)
+    CSSAnimation card-arrive on div.card.as-card.playing-poker-card (240 ms, via getAnimations)
+    CSSAnimation card-arrive on div.card.as-card.playing-poker-card (240 ms, via getAnimations)
+    scripted canvas canvas pixels on 20 frame(s), burst 11
+    scripted img.card-effect-layer style+src on 5 frame(s), burst 5
+    scripted img.card-effect-layer style+src on 5 frame(s), burst 5
+    scripted img.painted-combat-effect src on 5 frame(s), burst 5
+    scripted img.painted-combat-effect src on 4 frame(s), burst 4
+    scripted g.alternative-scene-layer style on 3 frame(s), burst 2
+    scripted g.alternative-scene-layer style on 3 frame(s), burst 2
+    scripted g.alternative-scene-layer style on 3 frame(s), burst 2
+    scripted div.combatant-stack style on 2 frame(s), burst 2
+    scripted img.painted-combat-effect src on 2 frame(s), burst 2
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.combatant-stack style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+OK  CONTROL — motion on: 44 animation(s) seen, 44 over 10 ms; finite CSS animation: CSSAnimation hit-enemy on div.alternative-figure (220 ms, via getAnimations); CSS transition: CSSTransition transform on div.card.as-card.playing-poker-card (140 ms, via getAnimations); Element.animate(): Animation (script) on div.card-flight (220 ms, via Element.animate)
+OK  IDLE-AFTER player#0 — Forsaken: canvas moved by sprite-idle on div.pose-stage.painted-stage
+OK  IDLE-AFTER enemy#1 — Wandering Soldier: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE-AFTER enemy#2 — Blight Hound: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE-ALTERNATIVE-IDENTITY — the approved alternative player art matches the current class
+OK  IDLE-rendered player#0 — Forsaken: canvas moved by sprite-idle on div.pose-stage.painted-stage
+OK  IDLE-rendered enemy#1 — Wandering Soldier: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE-rendered enemy#2 — Blight Hound: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE-rendered-BOARD — the player is on the board in the rendered style
+OK  IDLE-rendered-ONE-TIMELINE — .alternative-card-stage is the only idle carrier; nothing inside it bobs on its own
+OK  IDLE-classic player#0 — Forsaken: canvas moved by sprite-idle on div.pose-stage.painted-stage
+OK  IDLE-classic enemy#1 — Wandering Soldier: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE-classic enemy#2 — Blight Hound: img moved by sprite-idle on div.painted-stage.alternative-silhouette
+OK  IDLE-classic-BOARD — the player is on the board in the classic style
+OK  CANVAS-SAMPLER — painted canvas frames were sampled without read errors
+OK  CONTROL-CANVAS — normal action playback changes the authored canvas pixels
+OK  CONTROL-SCRIPT — motion on: 5 script-driven change burst(s) seen (e.g. canvas (canvas pixels changed 11 times within 1000 ms); img.card-effect-layer (style+src changed 5 times within 1000 ms); img.card-effect-layer (style+src changed 5 times within 1000 ms))
+OK  TURN setting+os — strike landed, turn 2, 232 frames sampled, 4 animation(s) seen
+  [dump setting+os]
+    CSSAnimation hit-enemy on div.alternative-figure (0 ms, via getAnimations)
+    CSSAnimation float-up on div.float-num.dmg (0 ms, via getAnimations)
+    CSSAnimation relicProc on div.as-pip.tray-icon.relic (0 ms, via getAnimations)
+    CSSAnimation float-up on div.float-num.dmg.small (0 ms, via getAnimations)
+    scripted div.combatant-stack style on 2 frame(s), burst 2
+    scripted canvas canvas pixels on 2 frame(s), burst 1
+    scripted g.alternative-scene-layer style on 1 frame(s), burst 1
+    scripted g.alternative-scene-layer style on 1 frame(s), burst 1
+    scripted g.alternative-scene-layer style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.combatant-stack style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+OK  REDUCED setting+os — nothing over 10 ms across 4 animation(s)
+OK  CANVAS-SAMPLER setting+os — painted canvas frames were sampled without read errors
+OK  REDUCED-SCRIPT setting+os — no element changed 3+ times within 1000 ms (31 element(s) changed at all)
+OK  TURN setting — strike landed, turn 2, 234 frames sampled, 4 animation(s) seen
+  [dump setting]
+    CSSAnimation hit-enemy on div.alternative-figure (0 ms, via getAnimations)
+    CSSAnimation float-up on div.float-num.dmg (0 ms, via getAnimations)
+    CSSAnimation relicProc on div.as-pip.tray-icon.relic (0 ms, via getAnimations)
+    CSSAnimation float-up on div.float-num.dmg.small (0 ms, via getAnimations)
+    scripted g.alternative-scene-layer style on 3 frame(s), burst 2
+    scripted g.alternative-scene-layer style on 3 frame(s), burst 2
+    scripted g.alternative-scene-layer style on 3 frame(s), burst 2
+    scripted div.combatant-stack style on 2 frame(s), burst 2
+    scripted canvas canvas pixels on 2 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.combatant-stack style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+OK  REDUCED setting — nothing over 10 ms across 4 animation(s)
+OK  CANVAS-SAMPLER setting — painted canvas frames were sampled without read errors
+OK  REDUCED-SCRIPT setting — no element changed 3+ times within 1000 ms (31 element(s) changed at all)
+OK  TURN os — strike landed, turn 2, 233 frames sampled, 12 animation(s) seen
+  [dump os]
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (0 ms, via animationend event)
+    CSSAnimation aimGlow on div.aim-silho (0 ms, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (0 ms, via getAnimations)
+    CSSAnimation aimGlow on div.aim-silho (0 ms, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (0 ms, via animationend event)
+    CSSAnimation aimGlow on div.aim-silho (0 ms, via getAnimations)
+    CSSAnimation sprite-idle on div.painted-stage.alternative-silhouette (0 ms, via getAnimations)
+    CSSAnimation aimGlow on div.aim-silho (0 ms, via getAnimations)
+    CSSAnimation hit-enemy on div.alternative-figure (0 ms, via getAnimations)
+    CSSAnimation num-pop on div.float-num.dmg (0 ms, via getAnimations)
+    CSSAnimation relicProc on div.as-pip.tray-icon.relic (0 ms, via getAnimations)
+    CSSAnimation num-pop on div.float-num.dmg.small (0 ms, via getAnimations)
+    scripted div.combatant-stack style on 2 frame(s), burst 2
+    scripted canvas canvas pixels on 2 frame(s), burst 1
+    scripted g.alternative-scene-layer style on 1 frame(s), burst 1
+    scripted g.alternative-scene-layer style on 1 frame(s), burst 1
+    scripted g.alternative-scene-layer style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted div.aim-silho style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted button.enemy-target-button style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.combatant-stack style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted span.as-labelstack.nm.nm-inspect style on 1 frame(s), burst 1
+    scripted div.as-meters.meters.tight style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+    scripted div.card.as-card.playing-poker-card style on 1 frame(s), burst 1
+OK  REDUCED os — nothing over 10 ms across 12 animation(s)
+OK  CANVAS-SAMPLER os — painted canvas frames were sampled without read errors
+OK  REDUCED-SCRIPT os — no element changed 3+ times within 1000 ms (31 element(s) changed at all)
+34 passed, 0 failed

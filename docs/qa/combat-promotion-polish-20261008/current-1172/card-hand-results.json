@@ -1,0 +1,573 @@
+{
+  "source": "8fae4e571580e38cd4c2a50c9a75cbd510a16f2e",
+  "build": "0.7.1.1172 / 43fb71b4ca",
+  "surface": "standalone",
+  "devices": [
+    {
+      "name": "desktop",
+      "hand": [
+        {
+          "ref": "defend",
+          "action": "defend",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 15.7593,
+          "ruleTop": 198.28594970703125,
+          "titleBottom": 38.62823486328125,
+          "panelTop": 171.02679443359375,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 359.0715026855469,
+              "top": 602.5034790039062,
+              "right": 548.1160278320312,
+              "bottom": 876.3870849609375,
+              "width": 189.04452514648438,
+              "height": 273.88360595703125
+            },
+            "rules": {
+              "left": 382.4834289550781,
+              "top": 800.7894287109375,
+              "right": 531.3574829101562,
+              "bottom": 830.846923828125,
+              "width": 148.87405395507812,
+              "height": 30.0574951171875
+            },
+            "band": {
+              "left": 399.6490173339844,
+              "top": 845.0479125976562,
+              "right": 523.7198486328125,
+              "bottom": 870.12744140625,
+              "width": 124.07083129882812,
+              "height": 25.07952880859375
+            },
+            "mark": {
+              "left": 421.5003356933594,
+              "top": 847.762451171875,
+              "right": 443.7059020996094,
+              "bottom": 869.968017578125,
+              "width": 22.20556640625,
+              "height": 22.20556640625
+            },
+            "label": {
+              "left": 448.2384033203125,
+              "top": 848.7515258789062,
+              "right": 501.6982116699219,
+              "bottom": 865.2481689453125,
+              "width": 53.459808349609375,
+              "height": 16.49664306640625
+            }
+          },
+          "primaryLabel": "Defend",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 9 Block.",
+          "damageWords": [],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Shield Defend, Defend",
+          "actionName": "Defend",
+          "extraTabStops": 0
+        },
+        {
+          "ref": "dodgeRoll",
+          "action": "counter",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 12.3757,
+          "ruleTop": 182.0242919921875,
+          "titleBottom": 34.44598388671875,
+          "panelTop": 170.8262939453125,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 540.4628295898438,
+              "top": 596.44140625,
+              "right": 721.9121704101562,
+              "bottom": 865.38671875,
+              "width": 181.4493408203125,
+              "height": 268.9453125
+            },
+            "rules": {
+              "left": 557.9026489257812,
+              "top": 778.4656982421875,
+              "right": 706.6806030273438,
+              "bottom": 836.252685546875,
+              "width": 148.7779541015625,
+              "height": 57.7869873046875
+            },
+            "band": {
+              "left": 574.0377197265625,
+              "top": 838.486572265625,
+              "right": 697.6395874023438,
+              "bottom": 859.9969482421875,
+              "width": 123.60186767578125,
+              "height": 21.5103759765625
+            },
+            "mark": {
+              "left": 592.5087280273438,
+              "top": 838.9205322265625,
+              "right": 614.1130981445312,
+              "bottom": 860.52490234375,
+              "width": 21.6043701171875,
+              "height": 21.6043701171875
+            },
+            "label": {
+              "left": 619.1666870117188,
+              "top": 841.505126953125,
+              "right": 679.116943359375,
+              "bottom": 856.5757446289062,
+              "width": 59.95025634765625,
+              "height": 15.07061767578125
+            }
+          },
+          "primaryLabel": "Counter",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 6 Block. Return 6 damage. Prepare one Evade.",
+          "damageWords": [],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Dodge Roll, Counter",
+          "actionName": "Counter",
+          "extraTabStops": 0
+        },
+        {
+          "ref": "shieldBash",
+          "action": "counter",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 15.7593,
+          "ruleTop": 186.21112060546875,
+          "titleBottom": 34.68280029296875,
+          "panelTop": 170.8258056640625,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 718.0722045898438,
+              "top": 596.44140625,
+              "right": 899.5215454101562,
+              "bottom": 865.38671875,
+              "width": 181.4493408203125,
+              "height": 268.9453125
+            },
+            "rules": {
+              "left": 733.3493041992188,
+              "top": 782.6525268554688,
+              "right": 882.0051879882812,
+              "bottom": 832.0498046875,
+              "width": 148.6558837890625,
+              "height": 49.39727783203125
+            },
+            "band": {
+              "left": 748.2035522460938,
+              "top": 838.57177734375,
+              "right": 871.805419921875,
+              "bottom": 860.0821533203125,
+              "width": 123.60186767578125,
+              "height": 21.5103759765625
+            },
+            "mark": {
+              "left": 766.6743774414062,
+              "top": 838.0594482421875,
+              "right": 788.2787475585938,
+              "bottom": 859.663818359375,
+              "width": 21.6043701171875,
+              "height": 21.6043701171875
+            },
+            "label": {
+              "left": 793.332763671875,
+              "top": 841.9773559570312,
+              "right": 853.2830200195312,
+              "bottom": 857.0479736328125,
+              "width": 59.95025634765625,
+              "height": 15.07061767578125
+            }
+          },
+          "primaryLabel": "Counter",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 6 Block. Return 4 Poise.",
+          "damageWords": [
+            "Blunt"
+          ],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Shield Bash, Counter, Damage: Blunt, Technique, rank 0",
+          "actionName": "Counter",
+          "extraTabStops": 0
+        },
+        {
+          "ref": "defend",
+          "action": "defend",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 15.7593,
+          "ruleTop": 197.828125,
+          "titleBottom": 32.34375,
+          "panelTop": 170.671875,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 897.59375,
+              "top": 590.25,
+              "right": 1075.1875,
+              "bottom": 856.640625,
+              "width": 177.59375,
+              "height": 266.390625
+            },
+            "rules": {
+              "left": 912.390625,
+              "top": 788.078125,
+              "right": 1060.375,
+              "bottom": 811.703125,
+              "width": 147.984375,
+              "height": 23.625
+            },
+            "band": {
+              "left": 927.65625,
+              "top": 831.96875,
+              "right": 1050.984375,
+              "bottom": 851.6875,
+              "width": 123.328125,
+              "height": 19.71875
+            },
+            "mark": {
+              "left": 949.5625,
+              "top": 831.1875,
+              "right": 970.859375,
+              "bottom": 852.484375,
+              "width": 21.296875,
+              "height": 21.296875
+            },
+            "label": {
+              "left": 976.171875,
+              "top": 834.71875,
+              "right": 1029.0625,
+              "bottom": 848.921875,
+              "width": 52.890625,
+              "height": 14.203125
+            }
+          },
+          "primaryLabel": "Defend",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 5 Block.",
+          "damageWords": [],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Weapon Guard, Defend",
+          "actionName": "Defend",
+          "extraTabStops": 0
+        }
+      ],
+      "typedDamageCoverage": "full source corpus; standalone hand retains authored accessibility metadata",
+      "errors": [],
+      "failed": [
+        "404 http://localhost:64985/assets/sfx/nodeTravel.ogg",
+        "404 http://localhost:64985/assets/sfx/cardDraw.ogg",
+        "404 http://localhost:64985/assets/sfx/turnStinger.ogg",
+        "404 http://localhost:64985/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "name": "phone",
+      "hand": [
+        {
+          "ref": "defend",
+          "action": "defend",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 17.25,
+          "ruleTop": 163.26788330078125,
+          "titleBottom": 31.767333984375,
+          "panelTop": 140.807861328125,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 0.9583130478858948,
+              "top": 525.2282104492188,
+              "right": 156.5885620713234,
+              "bottom": 750.7092895507812,
+              "width": 155.6302490234375,
+              "height": 225.4810791015625
+            },
+            "rules": {
+              "left": 20.223793029785156,
+              "top": 688.49609375,
+              "right": 142.78245544433594,
+              "bottom": 713.1979370117188,
+              "width": 122.55866241455078,
+              "height": 24.70184326171875
+            },
+            "band": {
+              "left": 34.365013122558594,
+              "top": 724.908447265625,
+              "right": 136.49215698242188,
+              "bottom": 745.555419921875,
+              "width": 102.12714385986328,
+              "height": 20.64697265625
+            },
+            "mark": {
+              "left": 52.351158142089844,
+              "top": 727.145263671875,
+              "right": 70.63042449951172,
+              "bottom": 745.424560546875,
+              "width": 18.279266357421875,
+              "height": 18.279296875
+            },
+            "label": {
+              "left": 74.36332702636719,
+              "top": 727.9591064453125,
+              "right": 118.36363220214844,
+              "bottom": 741.5499267578125,
+              "width": 44.00030517578125,
+              "height": 13.5908203125
+            }
+          },
+          "primaryLabel": "Defend",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 9 Block.",
+          "damageWords": [],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Shield Defend, Defend",
+          "actionName": "Defend",
+          "extraTabStops": 0
+        },
+        {
+          "ref": "dodgeRoll",
+          "action": "counter",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 13.7344,
+          "ruleTop": 149.61480712890625,
+          "titleBottom": 28.32440185546875,
+          "panelTop": 140.64276123046875,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 81.45977783203125,
+              "top": 518.7296752929688,
+              "right": 230.83709716796875,
+              "bottom": 740.1453247070312,
+              "width": 149.3773193359375,
+              "height": 221.4156494140625
+            },
+            "rules": {
+              "left": 95.80399322509766,
+              "top": 668.344482421875,
+              "right": 218.2928009033203,
+              "bottom": 716.4239501953125,
+              "width": 122.48880767822266,
+              "height": 48.0794677734375
+            },
+            "band": {
+              "left": 109.10139465332031,
+              "top": 717.9985961914062,
+              "right": 210.84239196777344,
+              "bottom": 735.7076416015625,
+              "width": 101.74099731445312,
+              "height": 17.70904541015625
+            },
+            "mark": {
+              "left": 124.29359436035156,
+              "top": 718.3583984375,
+              "right": 142.0779571533203,
+              "bottom": 736.1427612304688,
+              "width": 17.78436279296875,
+              "height": 17.78436279296875
+            },
+            "label": {
+              "left": 146.2397918701172,
+              "top": 720.4852905273438,
+              "right": 195.59230041503906,
+              "bottom": 732.902587890625,
+              "width": 49.352508544921875,
+              "height": 12.41729736328125
+            }
+          },
+          "primaryLabel": "Counter",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 6 Block. Return 6 damage. Prepare one Evade.",
+          "damageWords": [],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Dodge Roll, Counter",
+          "actionName": "Counter",
+          "extraTabStops": 0
+        },
+        {
+          "ref": "shieldBash",
+          "action": "counter",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 17.25,
+          "ruleTop": 153.34832763671875,
+          "titleBottom": 28.51934814453125,
+          "panelTop": 140.642333984375,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 158.83477783203125,
+              "top": 518.7296752929688,
+              "right": 308.21209716796875,
+              "bottom": 740.1453247070312,
+              "width": 149.3773193359375,
+              "height": 221.4156494140625
+            },
+            "rules": {
+              "left": 171.402587890625,
+              "top": 672.0780029296875,
+              "right": 293.7823181152344,
+              "bottom": 712.6582641601562,
+              "width": 122.37973022460938,
+              "height": 40.58026123046875
+            },
+            "band": {
+              "left": 183.64146423339844,
+              "top": 718.068603515625,
+              "right": 285.3824768066406,
+              "bottom": 735.7776489257812,
+              "width": 101.74101257324219,
+              "height": 17.70904541015625
+            },
+            "mark": {
+              "left": 198.8334503173828,
+              "top": 717.649169921875,
+              "right": 216.61781311035156,
+              "bottom": 735.4334716796875,
+              "width": 17.78436279296875,
+              "height": 17.7843017578125
+            },
+            "label": {
+              "left": 220.77987670898438,
+              "top": 720.8736572265625,
+              "right": 270.13238525390625,
+              "bottom": 733.2909545898438,
+              "width": 49.352508544921875,
+              "height": 12.41729736328125
+            }
+          },
+          "primaryLabel": "Counter",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 6 Block. Return 4 Poise.",
+          "damageWords": [
+            "Blunt"
+          ],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Shield Bash, Counter, Damage: Blunt, Technique, rank 0",
+          "actionName": "Counter",
+          "extraTabStops": 0
+        },
+        {
+          "ref": "defend",
+          "action": "defend",
+          "school": null,
+          "schoolName": null,
+          "clipped": false,
+          "overlapsTitle": false,
+          "font": 17.25,
+          "ruleTop": 162.890625,
+          "titleBottom": 26.59375,
+          "panelTop": 140.515625,
+          "primaryBandOutside": false,
+          "bounds": {
+            "face": {
+              "left": 237.796875,
+              "top": 512.3248291015625,
+              "right": 384,
+              "bottom": 731.6373291015625,
+              "width": 146.203125,
+              "height": 219.3125
+            },
+            "rules": {
+              "left": 249.96875,
+              "top": 675.2154541015625,
+              "right": 371.796875,
+              "bottom": 694.6217041015625,
+              "width": 121.828125,
+              "height": 19.40625
+            },
+            "band": {
+              "left": 262.546875,
+              "top": 711.3248291015625,
+              "right": 364.0625,
+              "bottom": 727.5592041015625,
+              "width": 101.515625,
+              "height": 16.234375
+            },
+            "mark": {
+              "left": 280.578125,
+              "top": 710.6842041015625,
+              "right": 298.109375,
+              "bottom": 728.2154541015625,
+              "width": 17.53125,
+              "height": 17.53125
+            },
+            "label": {
+              "left": 302.484375,
+              "top": 713.5904541015625,
+              "right": 346.015625,
+              "bottom": 725.2935791015625,
+              "width": 43.53125,
+              "height": 11.703125
+            }
+          },
+          "primaryLabel": "Defend",
+          "primaryMarks": 1,
+          "secondaryFaceChips": 0,
+          "rules": "Gain 5 Block.",
+          "damageWords": [],
+          "expectedDamageWords": [],
+          "damageWordsComplete": true,
+          "numbersComplete": true,
+          "expanded": false,
+          "accessibleName": "Weapon Guard, Defend",
+          "actionName": "Defend",
+          "extraTabStops": 0
+        }
+      ],
+      "typedDamageCoverage": "full source corpus; standalone hand retains authored accessibility metadata",
+      "errors": [],
+      "failed": [
+        "404 http://localhost:64985/assets/sfx/nodeTravel.ogg",
+        "404 http://localhost:64985/assets/sfx/cardDraw.ogg",
+        "404 http://localhost:64985/assets/sfx/turnStinger.ogg",
+        "404 http://localhost:64985/assets/sfx/holdTick.ogg"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "source": "be6326f7a5291d6fc3240d893effc95b82eb7d39",
+  "surface": "source",
+  "devices": [
+    {
+      "name": "desktop",
+      "faces": 2186,
+      "complete": 2186,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 9.14583
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.45069
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.9828
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
+      "actions": 10,
+      "schools": 8,
+      "nativeInformationAndEnterDoors": 16,
+      "focusAndMemento": true,
+      "runtimeErrors": [],
+      "raw404": [
+        "404 http://localhost:60412/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "name": "phone",
+      "faces": 2186,
+      "complete": 2186,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 9.14583
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.45069
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.9656
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
+      "actions": 10,
+      "schools": 8,
+      "nativeInformationAndEnterDoors": 16,
+      "focusAndMemento": true,
+      "runtimeErrors": [],
+      "raw404": [
+        "404 http://localhost:60412/assets/sfx/nodeTravel.ogg",
+        "404 http://localhost:60412/assets/sfx/cardDraw.ogg",
+        "404 http://localhost:60412/assets/sfx/turnStinger.ogg",
+        "404 http://localhost:60412/assets/sfx/holdTick.ogg"
+      ]
+    }
+  ],
+  "boundary": "Exact prior candidatebe6326f7 source corpus only; future inherited currentdev and compiled native timing/reach proof are separate. Original optional SFX policy retained; no audio/device acceptance or strict Log health claim."
+}

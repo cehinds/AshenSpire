@@ -9,7 +9,8 @@ export function combatOverheadAnchorX({ width, x, controlWidth, inset = 6 }) {
 // Tap areas follow the measured feet until final sprite fitting brings two
 // formation rows together. Space only these targets, inside the stage, so a
 // neighbouring figure cannot take the owner's complete tap area.
-export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [], lockX = false, packWithinBounds = false }) {
+export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [], lockX = false,
+  maxShiftX = 0, packWithinBounds = false }) {
   const half = size / 2;
   const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
     y: Math.min(Math.max(target.y, half), Math.max(half, height - half)) }));
@@ -59,20 +60,104 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
   if (lockX) {
     // Option C shares one vertical center line with the combatant and intent.
     // Resolve crowded footer rows vertically without detaching the plate.
-    const placed = [];
-    for (const control of controls.toSorted((a,b) => a.y-b.y)) {
-      const blockers = [...obstacles, ...placed.map(p => ({ left:p.x-p.width/2,
-        right:p.x+p.width/2, top:p.y-half, bottom:p.y+half }))];
+    const shiftLimit = Math.min(size, Math.max(0, maxShiftX));
+    const place = (source, x, blockers) => {
+      const control = { ...source, x };
+      let bottomExhausted = false;
       for (let pass=0;pass<=blockers.length;pass++) {
         const covered=blockers.filter(o => intersects(control,control.x,o));
         if (!covered.length) break;
         const nextY=Math.max(...covered.map(o => o.bottom+half+2));
-        if (nextY>height-half) break;
+        if (nextY>height-half) { bottomExhausted = true; break; }
         control.y=nextY;
       }
-      placed.push({ ...control, obstructed:blockers.some(o => intersects(control,control.x,o)) });
+      if (bottomExhausted) {
+        // Crowded feet can already be at the field floor. Search upward from
+        // the desired anchor rather than retain the earlier plate collision.
+        control.y = source.y;
+        for (let pass=0;pass<=blockers.length;pass++) {
+          const covered=blockers.filter(o => intersects(control,control.x,o));
+          if (!covered.length) break;
+          const nextY=Math.min(...covered.map(o => o.top-half-2));
+          if (nextY<half) break;
+          control.y=nextY;
+        }
+      }
+      return { ...control, obstructed:blockers.some(o => intersects(control,control.x,o)) };
+    };
+    const distance = (control, source) => Math.abs(control.y-source.y)+Math.abs(control.x-source.x);
+    const better = (candidate, current, source) => Number(candidate.obstructed)<Number(current.obstructed)
+      || candidate.obstructed===current.obstructed
+        && (Math.abs(candidate.y-source.y)<Math.abs(current.y-source.y)
+          || Math.abs(candidate.y-source.y)===Math.abs(current.y-source.y)
+            && distance(candidate,source)<distance(current,source));
+    const pack = (ordered, allowShift = false, seed = null) => {
+      const placed = [];
+      for (const source of ordered) {
+        const blockers = [...obstacles, ...placed.map(p => ({ left:p.x-p.width/2,
+          right:p.x+p.width/2, top:p.y-half, bottom:p.y+half }))];
+        const seeded = seed?.id===source.id;
+        let control = place(source, seeded ? seed.x : source.x, blockers);
+        if (allowShift && !seeded) {
+          // Only the independent plate/footer can move. Try the nearest full
+          // rectangle edges, including the visible HUD, within one tap width.
+          // Each candidate reuses the bounded vertical search above.
+          const xs = [...new Set([source.x-shiftLimit,source.x+shiftLimit,
+            source.width/2,width-source.width/2,
+            ...blockers.flatMap(o => [o.left-source.width/2-2,o.right+source.width/2+2])])]
+            .filter(x => Math.abs(x-source.x)<=shiftLimit && x-source.width/2>=0
+              && x+source.width/2<=width)
+            .toSorted((a,b) => Math.abs(a-source.x)-Math.abs(b-source.x) || a-b);
+          for (const x of xs) {
+            const candidate = place(source,x,blockers);
+            if (better(candidate,control,source)) control = candidate;
+          }
+        }
+        placed.push(control);
+      }
+      return placed;
+    };
+    const ascending = pack(controls.toSorted((a,b) => a.y-b.y));
+    const blocked = result => result.filter(control => control.obstructed).length;
+    const shift = result => result.reduce((sum, control) => sum
+      + Math.abs(control.y-controls.find(source => source.id===control.id).y),0);
+    const displaced = ascending.some(control => Math.abs(control.y
+      - controls.find(source => source.id===control.id).y)>2*size);
+    if (!blocked(ascending) && !displaced) return ascending;
+    // A first footer near the floor can consume the only downward slot for
+    // another fighter in the same column. Retry from the floor only when the
+    // usual placement fails or separates a cue far from its feet. Wide plates
+    // get a tied floor slot before narrow targets; ordinary clear layouts keep
+    // their exact anchors. Prefer fewer collisions, then less total movement.
+    const descending = pack(controls.toSorted((a,b) => b.y-a.y || b.width-a.width));
+    const original = blocked(descending) < blocked(ascending)
+      || blocked(descending)===blocked(ascending) && shift(descending)<shift(ascending)
+      ? descending : ascending;
+    if (!shiftLimit || !blocked(original) && !original.some(control => Math.abs(control.y
+      - controls.find(source => source.id===control.id).y)>2*size)) return original;
+    const movement = result => result.reduce((sum,control) => sum
+      + distance(control,controls.find(source => source.id===control.id)),0);
+    const detached = result => result.filter(control => Math.abs(control.y
+      - controls.find(source => source.id===control.id).y)>2*size).length;
+    let result = original;
+    const orders = [controls.toSorted((a,b)=>a.y-b.y),
+      controls.toSorted((a,b)=>b.y-a.y||b.width-a.width)];
+    const consider = repaired => {
+      if (blocked(repaired)<blocked(result) || blocked(repaired)===blocked(result)
+        && (detached(repaired)<detached(result) || detached(repaired)===detached(result)
+          && movement(repaired)<movement(result))) result = repaired;
+    };
+    for (const ordered of orders) consider(pack(ordered,true));
+    if (blocked(result) || detached(result)) {
+      // A locally nearest plate can consume a later fighter's only slot.
+      // Retain at most two alternatives per actor, then reuse the same bounded
+      // searches for all others. This cannot evade an impossible-space flag.
+      for (const source of controls) for (const x of [source.x-shiftLimit,source.x+shiftLimit]) {
+        if (x-source.width/2<0 || x+source.width/2>width) continue;
+        for (const ordered of orders) consider(pack(ordered,true,{id:source.id,x}));
+      }
     }
-    return placed;
+    return result;
   }
   let anchors;
   // A translated target can join another footer band; repack those final

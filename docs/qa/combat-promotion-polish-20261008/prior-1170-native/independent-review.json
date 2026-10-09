@@ -1,0 +1,373 @@
+{
+  "compiledIdentity": {
+    "path": "D:\\repos\\.codex\\worktrees\\combat-expansion-runtime\\AshenSpire\\build\\download\\AshenSpire.html",
+    "ordinal": "1170",
+    "source": "3cf2f2470c"
+  },
+  "resultsRows": 45,
+  "errors": [],
+  "warnings": [],
+  "healthRawEvents": 92,
+  "healthClassifications": [
+    {
+      "Name": "shot-before-title-activation",
+      "Count": 68
+    },
+    {
+      "Name": "standalone-authored-audio-fallback",
+      "Count": 24
+    }
+  ],
+  "canvasReadbackWarningCount": 0,
+  "coldShieldPassiveObservations": [
+    {
+      "shape": "desktop-normal",
+      "trustedClick": true,
+      "counterPoses": [
+        "counter-parry",
+        "counter-contact"
+      ],
+      "firstCounterAfterClickMs": 261.30000000074506,
+      "firstBlockFloatAfterClickMs": 333.3999999985099
+    },
+    {
+      "shape": "phone-normal",
+      "trustedClick": true,
+      "counterPoses": [
+        "counter-parry",
+        "counter-contact"
+      ],
+      "firstCounterAfterClickMs": 206.60000000149012,
+      "firstBlockFloatAfterClickMs": 223.90000000223517
+    },
+    {
+      "shape": "phone-compact",
+      "trustedClick": true,
+      "counterPoses": [
+        "counter-load",
+        "counter-parry",
+        "counter-contact"
+      ],
+      "firstCounterAfterClickMs": 190.59999999776483,
+      "firstBlockFloatAfterClickMs": 305
+    },
+    {
+      "shape": "phone-reduced",
+      "trustedClick": true,
+      "counterPoses": [],
+      "firstCounterAfterClickMs": null,
+      "firstBlockFloatAfterClickMs": 356.0999999977648
+    }
+  ],
+  "gateBoundary": "Original native gate requires at least one authored transient in each normal trace; all three Counter frames are not claimed across shapes. Reduced mode intentionally has no transient.",
+  "inspectedPngCount": 12,
+  "visualFindings": [
+    "Desktop selected Shield effects/action bottom and Upcast/Base tier fully visible.",
+    "Fire/Cold/Force damage words visible in desktop spell rules.",
+    "Phone390 and320 guard/body, card effects/action bottom, EndTurn/Draw/Discard/Potions visible.",
+    "Both phone tier-picker screenshots show control row extending behind fixed footer; Upcast/Base-tier text is covered. This is a visual blocker separately from passed native select mechanics."
+  ],
+  "pickerGeometry": [
+    {
+      "shape": "desktop-normal",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 1127.234375,
+            "y": 856.4559326171875,
+            "width": 177.46875,
+            "height": 45.28125,
+            "top": 856.4559326171875,
+            "right": 1304.703125,
+            "bottom": 901.7371826171875,
+            "left": 1127.234375
+          },
+          "viewport": 1365,
+          "pageWidth": 1365,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 53.109375,
+              "y": 577.390625,
+              "width": 1258.78125,
+              "height": 299.921875,
+              "top": 577.390625,
+              "right": 1311.890625,
+              "bottom": 877.3125,
+              "left": 53.109375
+            },
+            "clientWidth": 1104,
+            "scrollWidth": 1104,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 1218.0625,
+            "y": 860.8621826171875,
+            "width": 82.234375,
+            "height": 36.46875,
+            "top": 860.8621826171875,
+            "right": 1300.296875,
+            "bottom": 897.3309326171875,
+            "left": 1218.0625
+          },
+          "viewport": 1365,
+          "pageWidth": 1365,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 53.109375,
+              "y": 577.390625,
+              "width": 1258.78125,
+              "height": 299.921875,
+              "top": 577.390625,
+              "right": 1311.890625,
+              "bottom": 877.3125,
+              "left": 53.109375
+            },
+            "clientWidth": 1104,
+            "scrollWidth": 1104,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    },
+    {
+      "shape": "phone-normal",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 192.6556854248047,
+            "y": 731.6041259765625,
+            "width": 146.15626525878906,
+            "height": 51.375,
+            "top": 731.6041259765625,
+            "right": 338.81195068359375,
+            "bottom": 782.9791259765625,
+            "left": 192.6556854248047
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 264.98382568359375,
+            "y": 735.2916259765625,
+            "width": 70.140625,
+            "height": 44,
+            "top": 735.2916259765625,
+            "right": 335.12445068359375,
+            "bottom": 779.2916259765625,
+            "left": 264.98382568359375
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    },
+    {
+      "shape": "phone-compact",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 131.642578125,
+            "y": 668.100830078125,
+            "width": 133.453125,
+            "height": 50.4375,
+            "top": 668.100830078125,
+            "right": 265.095703125,
+            "bottom": 718.538330078125,
+            "left": 131.642578125
+          },
+          "viewport": 320,
+          "pageWidth": 320,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 49.90625,
+              "y": 454.109375,
+              "width": 220.1875,
+              "height": 233.984375,
+              "top": 454.109375,
+              "right": 270.09375,
+              "bottom": 688.09375,
+              "left": 49.90625
+            },
+            "clientWidth": 298,
+            "scrollWidth": 817,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 191.673828125,
+            "y": 671.319580078125,
+            "width": 70.203125,
+            "height": 44,
+            "top": 671.319580078125,
+            "right": 261.876953125,
+            "bottom": 715.319580078125,
+            "left": 191.673828125
+          },
+          "viewport": 320,
+          "pageWidth": 320,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 49.90625,
+              "y": 454.109375,
+              "width": 220.1875,
+              "height": 233.984375,
+              "top": 454.109375,
+              "right": 270.09375,
+              "bottom": 688.09375,
+              "left": 49.90625
+            },
+            "clientWidth": 298,
+            "scrollWidth": 817,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    },
+    {
+      "shape": "phone-reduced",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 192.43121337890625,
+            "y": 731.6041259765625,
+            "width": 146.15625,
+            "height": 51.375,
+            "top": 731.6041259765625,
+            "right": 338.58746337890625,
+            "bottom": 782.9791259765625,
+            "left": 192.43121337890625
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 264.75933837890625,
+            "y": 735.2916259765625,
+            "width": 70.140625,
+            "height": 44,
+            "top": 735.2916259765625,
+            "right": 334.89996337890625,
+            "bottom": 779.2916259765625,
+            "left": 264.75933837890625
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "acceptanceBoundary": "Runtime/native gate and health evidence clear for this artifact. Full visual acceptance withheld for phone tier-control occlusion; no new browser or source changes made."
+}

@@ -511,7 +511,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   // measured by tools/sigil-medallion.mjs; nothing on a FIGURE calls it.
   const applyMedallion = () => {};
   if (style === 'animated' || style === 'rendered') {
-    const stage = createPaintedStage(classId, armourId, { still: style === 'rendered' || Boolean(presentation.view), animation: presentation.animation, view: presentation.view || 'stand' });
+    const stage = createPaintedStage(classId, armourId, { still: style === 'rendered' || Boolean(presentation.view && presentation.view !== 'combat'), animation: presentation.animation, view: presentation.view || 'stand' });
     const art = stage?.el || paintedPresentation(classId, armourId, presentation.view || 'stand', presentation.animation);
     if (art) {
       const host = document.createElement('div');
@@ -772,7 +772,7 @@ export function playerSprite(customization = {}, classId, armourId = 'default', 
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && presentation.view !== 'portrait') {
-    const cardStage = createAlternativeCardStage(classId, { still: style === 'rendered' || Boolean(presentation.view) });
+    const cardStage = createAlternativeCardStage(classId, { still: style === 'rendered' || Boolean(presentation.view && presentation.view !== 'combat') });
     if (cardStage) { registerStage(cardStage.el, cardStage); return cardStage.el; }
     const alternative = alternativeSprite(alternativePlayerId(classId, armourId), 'player');
     if (alternative) return alternative;

@@ -132,7 +132,7 @@ test('pager focus and pointer selection choose one reveal owner without scroll o
     detached.parentElement = null;
     detached.getBoundingClientRect = () => { throw Error('A detached selected face must not defeat the live hand'); };
     selectedOwner = selectedCard;
-    events.get('scroll')(); frames.shift()();
+    events.get('handlayoutchange')(); frames.shift()();
     assert.ok(Math.abs(focusedCard.getBoundingClientRect().right - 320) < .001, 'a rerender releases the detached owner and restores the live focus');
     release();
   } finally {
@@ -141,6 +141,75 @@ test('pager focus and pointer selection choose one reveal owner without scroll o
       else delete globalThis[key];
     }
   }
+});
+
+test('native pan preserves its viewport after a browser cancellation with an older pager cursor', () => {
+  const { hand } = scroller({ viewport: 390, controlLeft: 0 });
+  hand.scrollLeft = 180;
+  const focused = { classList: { contains: name => name === 'card' },
+    style: { getPropertyValue: () => '', setProperty() {} }, closest() { return this; },
+    getBoundingClientRect: () => ({ left: 420 - hand.scrollLeft * .9,
+      right: 547 - hand.scrollLeft * .9, width: 127 }) };
+  hand.querySelector = selector => selector === '.card.gp-focus' ? focused : null;
+  const frames = new Map(), events = new Map(), windowEvents = new Map();
+  let nextFrame = 0;
+  hand.addEventListener = (type, fn) => events.set(type, fn);
+  hand.removeEventListener = type => events.delete(type);
+  const originals = new Map(['window', 'MutationObserver', 'requestAnimationFrame', 'cancelAnimationFrame']
+    .map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  Object.assign(globalThis, {
+    window: { innerWidth: 390, addEventListener: (type, fn) => windowEvents.set(type, fn), removeEventListener: type => windowEvents.delete(type) },
+    MutationObserver: class { observe() {} disconnect() {} },
+    requestAnimationFrame: fn => { frames.set(++nextFrame, fn); return nextFrame; },
+    cancelAnimationFrame: id => frames.delete(id),
+  });
+  const flush = () => { const batch = [...frames.values()]; frames.clear(); batch.forEach(fn => fn()); };
+  try {
+    const release = mountHandInspectionOverlay(hand);
+    events.get('pointerdown')({ pointerId: 1 });
+    windowEvents.get('pointercancel')({ pointerId: 1, type: 'pointercancel' });
+    // Chromium takes the horizontal pan, cancels the card drag, then emits
+    // scroll before the next frame. The retained focus must not undo it.
+    for (const scroll of [168.89, 151.11, 80, 0]) {
+      hand.scrollLeft = scroll;
+      events.get('scroll')(); flush();
+      assert.equal(hand.scrollLeft, scroll, 'browser pan owns its actual viewport');
+    }
+    assert.equal(hand.scrollTop, 17, 'horizontal navigation leaves the page and vertical hand untouched');
+    events.get('gpfocus')({ target: focused }); flush();
+    assert.ok(focused.getBoundingClientRect().right <= 390.001, 'a new explicit pager focus still reveals its card');
+    release();
+    assert.equal(events.size, 0);
+    assert.equal(windowEvents.size, 0);
+  } finally {
+    for (const [key, descriptor] of originals) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else delete globalThis[key];
+    }
+  }
+});
+
+test('phone Upcast clears the footer at CSS zoom without accumulating lift', () => {
+  const properties = new Map();
+  const zoom = .74;
+  const hand = { clientWidth: 300, scrollLeft: 0, scrollTop: 17,
+    getBoundingClientRect: () => ({ left: 50, right: 272, width: 222, bottom: 688 }) };
+  const card = { classList: { contains: name => name === 'card' },
+    style: { getPropertyValue: key => properties.get(key) || '',
+      setProperty: (key, value) => properties.set(key, value), removeProperty: key => properties.delete(key) },
+    getBoundingClientRect: () => ({ left: 132, right: 266, width: 134 }) };
+  const control = { parentElement: card, getBoundingClientRect: () => {
+    const shift = (parseFloat(properties.get('--hand-upcast-rise')) || 0) * zoom;
+    return { left: 132, right: 266, width: 134, bottom: 719 + shift };
+  } };
+  revealHandUpcastControl(hand, control, 320);
+  assert.equal(control.getBoundingClientRect().bottom, 687, 'the complete chooser clears the hand/footer edge by a physical pixel');
+  const settled = properties.get('--hand-upcast-rise');
+  revealHandUpcastControl(hand, control, 320);
+  assert.equal(properties.get('--hand-upcast-rise'), settled, 'subsequent frames cannot restart or accumulate the lift');
+  assert.equal(hand.scrollTop, 17, 'the field and resting hand do not move');
+  revealHandUpcastControl(hand, card, 320);
+  assert.equal(properties.has('--hand-upcast-rise'), false, 'ordinary focus restores the authored card lift');
 });
 
 test('visible, hidden and detached-size controls leave hand position untouched', () => {
