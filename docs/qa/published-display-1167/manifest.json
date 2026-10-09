@@ -1,0 +1,28 @@
+{
+  "captureDateUtc": "2026-10-09",
+  "capturedAtUtc": "2026-10-09T06:54:57.9313153Z",
+  "url": "https://cehinds.github.io/AshenSpire/test/1167/",
+  "publishedVersionVerified": "0.7.1.1167",
+  "source": "4000288bef3bb0c6284ef30c66b9a7bfd2d03e4c",
+  "digest": "fe4bd6f5b5",
+  "publicationRun": 37890907828,
+  "captureExitCode": 0,
+  "images": [
+    {
+      "name": "desktop-setting.png",
+      "sha256": "48270280555587573fef851a107e7601af516df3cadfe5b0d440e5c8029bc49d",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "name": "phone-alternative.png",
+      "sha256": "26eb4a854fc8d86484750bbad20ac4c1acff79f9e0331eb6b05c26ee98129a3b",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ]
+}

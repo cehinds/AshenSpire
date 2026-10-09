@@ -1,0 +1,171 @@
+{
+  "built": {
+    "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1167,
+    "digest": "fe4bd6f5b5",
+    "built": "2026-10-09"
+  },
+  "cases": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "statePreserved": true,
+      "default": "alternative",
+      "classicToggle": true,
+      "hiddenWithDebugOff": true,
+      "cardActions": 2
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "statePreserved": true,
+      "default": "alternative",
+      "classicToggle": true,
+      "hiddenWithDebugOff": true,
+      "cardActions": 2
+    },
+    {
+      "name": "desktop-coop",
+      "width": 1440,
+      "height": 1000,
+      "appearances": [
+        "alternative",
+        "classic"
+      ],
+      "sameSnapshot": true,
+      "transport": "canned screenshot state"
+    },
+    {
+      "name": "phone-coop",
+      "width": 390,
+      "height": 844,
+      "appearances": [
+        "alternative",
+        "classic"
+      ],
+      "sameSnapshot": true,
+      "transport": "canned screenshot state"
+    }
+  ],
+  "errors": [],
+  "network": [],
+  "httpErrors": [
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    }
+  ],
+  "resizeChecks": [
+    {
+      "name": "desktop",
+      "originalAnchor": {
+        "left": "374.166px",
+        "geometry": "1200:250:1.2:10px:0"
+      },
+      "resizedAnchor": {
+        "left": "340.934px",
+        "geometry": "1200:300:1:10px:0"
+      },
+      "restoredAnchor": {
+        "left": "374.166px",
+        "geometry": "1200:250:1.2:10px:0"
+      }
+    },
+    {
+      "name": "phone",
+      "originalAnchor": {
+        "left": "54.1667px",
+        "geometry": "433:281:0.9006928406466512:10px:0"
+      },
+      "resizedAnchor": {
+        "left": "54.2169px",
+        "geometry": "434:305:0.8294930875576036:10px:0"
+      },
+      "restoredAnchor": {
+        "left": "54.1667px",
+        "geometry": "433:281:0.9006928406466512:10px:0"
+      }
+    }
+  ],
+  "optionalSfxProbes": [
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "https://cehinds.github.io/AshenSpire/test/1167/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    }
+  ]
+}
