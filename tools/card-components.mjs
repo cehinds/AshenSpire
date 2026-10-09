@@ -67,11 +67,21 @@ export function importStudioLayout(file,base=root){
   compileCardComponents(next,contentBundle.cards,base);
   writeFileSync(resolve(base,'src/content/card-layout.json'),JSON.stringify(next,null,2)+'\n');
 }
+export function cardComponentsModule(data){
+  // Keep the editable master once in the bundle. Each exported card still has
+  // its own resolved object and layers, matching the standalone JSON exports.
+  const cards=Object.fromEntries(Object.entries(data.cards).map(([id,card])=>[id,
+    Object.fromEntries(Object.entries(card).filter(([key,value])=>value!==data.template[key]))]));
+  return '// Generated from src/content/card-layout.json by tools/card-components.mjs.\n'
+    +'const template = '+JSON.stringify(data.template)+';\n'
+    +'export const CARD_COMPONENTS = {schemaVersion:1,template,cards:Object.fromEntries(Object.entries('
+    +JSON.stringify(cards)+').map(([id,card])=>[id,{...template,...card}]))};\n';
+}
 export function generateCardComponents(base=root){
   const template=JSON.parse(readFileSync(resolve(base,'src/content/card-layout.json'),'utf8'));
   const data=compileCardComponents(template,contentBundle.cards,base);
   const path=resolve(base,'src/content/cardComponents.generated.js');
-  const source='// Generated from src/content/card-layout.json by tools/card-components.mjs.\nexport const CARD_COMPONENTS = '+JSON.stringify(data)+';\n';
+  const source=cardComponentsModule(data);
   if(!existsSync(path)||readFileSync(path,'utf8')!==source)writeFileSync(path,source);
   return data;
 }

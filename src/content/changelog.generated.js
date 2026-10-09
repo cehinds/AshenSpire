@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1776"
   },
   {
+    "id": "pr-1778",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "The shared card design loads without repeated master data",
+    "detail": "Keep the complete editable card structure while storing its shared components once in the game bundle. Browser checks follow optional reaction choices, current fighter motion and the combat layer order.",
+    "build": "0.7.1.1195",
+    "pullRequest": 1778,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1778"
+  },
+  {
     "id": "pr-1766",
     "date": "2026-10-09",
     "group": "2026-10-09",
