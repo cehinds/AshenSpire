@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
+- **Alternative combat perspective becomes the default** ([#1781](https://github.com/cehinds/AshenSpire/pull/1781), `0.7.1.1201`). Regular Dev/Test inherit the approved alternative battlefield, artwork and animations together with readable card effects, primary bottom-band actions, stance counters, persistent Ward, status stacks, Upcast, hidden intents, enemy knowledge and Ashen Blight. Compact hand, Info and fighter targets stay reachable. The former root alternative branches are frozen; future updates use regular Dev/Test.
+
 - **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1198`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.
 
 
