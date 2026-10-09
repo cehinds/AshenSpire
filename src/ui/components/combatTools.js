@@ -56,7 +56,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
         if (released || drag !== gesture) return;
         drag = null; delete root.dataset.logDragging;
         if (!gesture.active) return;
-        suppressClick = true;
+        suppressClick = !cancelled;
         state.open = cancelled ? gesture.open : true;
         state.size = cancelled ? gesture.size : combatLogSnapSize(gesture.height, heights);
         onViewChange();
