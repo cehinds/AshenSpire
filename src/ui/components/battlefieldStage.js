@@ -17,6 +17,7 @@ import { presentationConfig } from '../../model/advancedConfig.js';
 import { combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { syncCombatGroundShadows } from './combatGroundShadows.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model, layoutState = {}) {
@@ -39,15 +40,25 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let trackingRequest = 0;
   function placePlayerHud() {
     const zoom = uiZoom();
+    const panels = [...field.querySelectorAll('.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
+      .map(node=>node.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
     for (const player of field.querySelectorAll('.combatant.player')) {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
       if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) continue;
       const art = currentSpriteArtBounds(sprite, placePlayerHud);
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
-      const gap = parseFloat(getComputedStyle(leading).getPropertyValue('--player-hud-gap')) || 0;
-      const localTop = (art.top - stack.top - gap) / zoom;
-      const top = `${localTop}px`;
+      const combat = field.closest('.combat');
+      const viewport = combat.getBoundingClientRect();
+      const panel = leading.getBoundingClientRect();
+      const cards = [...combat.querySelectorAll('.hand .card')].map(card=>card.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
+      const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport,
+        handTop: cards.length ? Math.min(...cards.map(rect=>rect.top)) : combat.querySelector('.hand')?.getBoundingClientRect().top,
+        hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
+      panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
+      const top = `${(placement.top - stack.top) / zoom}px`;
+      const left = `${(placement.left - stack.left) / zoom}px`;
       if (leading.style.top !== top) leading.style.top = top;
+      if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
@@ -173,13 +184,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
-      const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
+      const leadingHeight = leadingHost && !frame.classList.contains('player') ? leadingHost.getBoundingClientRect().height / zoom : 0;
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
       const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control, :scope > .combatant-mini-hud')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0) : [];
-      const leadingWidth = leadingRects.length ? (Math.max(...leadingRects.map(rect => rect.right))
+      const leadingWidth = leadingRects.length && !frame.classList.contains('player') ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
         * wireframeUi.formation.displayScale * (slot.characterScale || 1);
@@ -395,6 +406,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .map(footer => footer.getBoundingClientRect().width)),
+      footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .reduce((height,footer)=>height+footer.getBoundingClientRect().height,0),
       controls: [...frame.querySelectorAll('.combatant-leading button, .combatant-mini-hud')]
         .filter(control => {
           const style = getComputedStyle(control);
@@ -402,10 +415,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         })
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
-    const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
+    const footerSize = Math.max(44, ...boxes.map(box=>box.footerHeight));
+    const targets = combatTargetAnchors({ width: fieldRect.width,
+      height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
       // Crowded HUD/intent bands may leave no vertical slot. Only the plate
       // and its visible footer may then shift by at most one physical target.
-      lockX: true, size: 44, maxShiftX: 44,
+      lockX: true, size: footerSize, maxShiftX: 44,
       obstacles: [...(ribbon ? [ribbon] : []), ...boxes.flatMap(box => box.controls.map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
@@ -414,17 +429,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
         x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top + (box.intentRect ? box.intentRect.height / 2 : 0),
-        width: Math.max(box.footerWidth, box.intentRect?.width || 0),
+        y: box.hostRect.bottom - fieldRect.top + footerSize / 2,
+        width: Math.max(48, box.footerWidth),
       })) });
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
       if (intentRect) {
-        frame.style.setProperty('--enemy-hit-width', `${Math.max(44,intentRect.width) / zoom}px`);
-        // Intent cards can be taller; the independent foot target keeps its
-        // physical 44px minimum so two aligned footer bands fit a short stage.
-        frame.style.setProperty('--enemy-hit-height', `${44 / zoom}px`);
+        frame.style.setProperty('--enemy-hit-width', `${Math.max(48, boxes[i].footerWidth) / zoom}px`);
+        frame.style.setProperty('--enemy-hit-height', `${footerSize / zoom}px`);
       }
       if (frameRect) {
         const target = targets.find(target => target.id === frame.dataset.eid);
@@ -435,7 +448,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom - (intentRect ? intentRect.height / 2 - 5 : 0), width: 0, height: 0 }, { zoom });
+          top: fieldRect.top + target.y - hostRect.bottom - footerSize / 2, width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
