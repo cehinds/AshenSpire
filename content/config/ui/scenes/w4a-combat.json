@@ -5,11 +5,18 @@
   "sizing": {
     "bands": { "hud": 10, "scene": 55, "context": 30, "footer": 5 },
     "floorPercent": 80,
-    "compact": {
-      "maxWidthPx": 600, "hudMinimumPx": 48, "hudFraction": 0.09,
-      "handMinimumPx": 176, "handMaximumPx": 220, "handFraction": 0.28,
-      "footerHeightPx": 78, "battlefieldMinimumPx": 130,
-      "footerGapPx": 4, "footerCirclePx": 52, "footerEndWidthPx": 76
+    "compactCombat": {
+      "maxWidthPx": 600,
+      "hudMinimumPx": 48,
+      "hudHeightFraction": 0.09,
+      "handMinimumPx": 176,
+      "handMaximumPx": 220,
+      "handHeightFraction": 0.28,
+      "footerPx": 78,
+      "minimumBattlefieldPx": 130,
+      "footerGapMaxPx": 4,
+      "footerDiameterMaxPx": 52,
+      "footerEndWidthMaxPx": 76
     },
     "hand": {
       "minimumHeightPx": 208,

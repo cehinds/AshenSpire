@@ -51,7 +51,7 @@ test('all 17 resolved equipment profiles show their sigils and retain tactical i
       card.dataset.combatSchool || null], expected, `${profile.id} attributes`);
     const model = playingCardModel(registries, ref), markup = markupFor(card);
     assert.ok(markup.includes(`data-primary-sigil="${model.sigils.action}"`), `${profile.id} primary sigil`);
-    assert.match(markup, /class="card-type-name">[^<]+<\/span>/);
+    assert.match(markup, /class="card-type-name" data-card-layer="8">[^<]+<\/span>/);
     const expectedLabels = expected.filter(Boolean).map(capitalized);
     if (['staffMagicAttack', 'sceptreArcaneAttack'].includes(profile.id)) expectedLabels.push('Force');
     if (profile.id === 'bowTechnique') expectedLabels.push('Ranged'); // Authored legacy weapon tag; no attack maneuver.

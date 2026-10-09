@@ -482,5 +482,809 @@
         }
       }
     }
+  },
+  "version": 1,
+  "order": [
+    9,
+    8,
+    7,
+    5,
+    6,
+    4,
+    3,
+    2,
+    1
+  ],
+  "coordinateSpace": {
+    "width": 360,
+    "height": 540
+  },
+  "defaultLayout": "shared",
+  "currentCard": "cinderSigil:rank-1",
+  "layouts": {
+    "shared": {
+      "rank-bar": {
+        "x": 110.98887724025559,
+        "y": 322.8620148642254,
+        "w": 137.98968943537986,
+        "h": 26.27597027154916
+      },
+      "rank-text": {
+        "x": 148.85058578312683,
+        "y": 326.15952524885745,
+        "w": 62.266174437908056,
+        "h": 19.666130562052942
+      }
+    }
+  },
+  "referenceRects": {
+    "panel": {
+      "h": 147,
+      "y": 313.06,
+      "w": 312,
+      "x": 24
+    }
+  },
+  "groups": {
+    "textBox": {
+      "members": [
+        "panel",
+        "panel-trim",
+        "rules",
+        "rank-bar",
+        "rank-text"
+      ],
+      "anchor": "top",
+      "parent": "panel"
+    }
+  },
+  "components": {
+    "base": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "art": {
+      "href": null,
+      "fit": "contain",
+      "style": {}
+    },
+    "panel": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "flag": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "title": {
+      "href": null,
+      "fit": "fill",
+      "style": {
+        "fontFamily": "Georgia",
+        "color": "#f3e8c9",
+        "WebkitTextStroke": ".65cqw #100b06",
+        "paintOrder": "stroke fill",
+        "textShadow": "0 .6cqw .8cqw #000,0 0 1.6cqw #000,0 0 2.5cqw #000"
+      }
+    },
+    "rules": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "energy-icon": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "energy-value": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "mana-icon": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "mana-value": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "stamina-icon": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "stamina-value": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "card-trim": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "panel-trim": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "flag-trim": {
+      "href": null,
+      "fit": "fill",
+      "style": {}
+    },
+    "tag-0": {
+      "href": null,
+      "fit": "fill",
+      "style": {
+        "color": "#e8bd78",
+        "filter": "drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000)"
+      }
+    },
+    "tag-1": {
+      "href": null,
+      "fit": "fill",
+      "style": {
+        "color": "#e8bd78",
+        "filter": "drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000)"
+      }
+    },
+    "tag-2": {
+      "href": null,
+      "fit": "fill",
+      "style": {
+        "color": "#e8bd78",
+        "filter": "drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000)"
+      }
+    },
+    "heading-fill": {
+      "href": null,
+      "fit": "fill",
+      "style": {
+        "left": "6%",
+        "right": "6%",
+        "top": "3.5%",
+        "height": "22%",
+        "borderRadius": "3cqw 3cqw 0 0",
+        "background": "linear-gradient(to bottom,#15110ff5 0%,#15110ff5 48%,#15110fb3 66%,#15110f00 100%)"
+      }
+    },
+    "footer-fill": {
+      "href": null,
+      "fit": "fill",
+      "style": {
+        "left": "6%",
+        "right": "6%",
+        "top": "85.3%",
+        "height": "11.3%",
+        "background": "linear-gradient(#100d0980,#08070540)"
+      }
+    },
+    "footer-trim": {
+      "href": null,
+      "fit": "fill",
+      "imageRect": {
+        "x": 16,
+        "y": 458,
+        "w": 328,
+        "h": 67
+      },
+      "svg": {
+        "viewBox": "0 0 360 540",
+        "fill": "none",
+        "body": "<path d=\"M16 460H344M16 458V483L48 525H312L344 483V458\" fill=\"none\" stroke=\"#17110b\" stroke-width=\"5\"/><path d=\"M17 460H343M17 458V483L49 525H311L343 483V458\" fill=\"none\" stroke=\"#a37b43\" stroke-width=\"2.4\"/><path d=\"M19 460H341M19 462V482L50 523H310L341 482V462\" fill=\"none\" stroke=\"#e0bc7c\" stroke-width=\".7\"/><path d=\"M20 467 39 482 20 501M340 467 321 482 340 501\" fill=\"none\" stroke=\"#21180e\" stroke-width=\"4\"/><path d=\"M20 467 39 482 20 501M340 467 321 482 340 501\" fill=\"none\" stroke=\"#a98247\" stroke-width=\"1.4\"/>"
+      },
+      "style": {}
+    },
+    "action-icon": {
+      "href": null,
+      "fit": "contain",
+      "style": {
+        "width": "11.5cqw",
+        "height": "11.5cqw",
+        "color": "#efd09a",
+        "filter": "drop-shadow(0 .5cqw .5cqw #080604)"
+      }
+    },
+    "action-text": {
+      "style": {
+        "color": "#efd09a",
+        "fontFamily": "Georgia, serif",
+        "fontWeight": "700",
+        "fontSize": "7cqw",
+        "lineHeight": "1",
+        "letterSpacing": ".085em",
+        "textTransform": "uppercase",
+        "textShadow": "0 .5cqw .5cqw #080604"
+      }
+    },
+    "rank-bar": {
+      "href": null,
+      "fit": "fill",
+      "style": {
+        "background": "linear-gradient(160deg,#c0dcee,#6e94bf 40%,#244968 60%,#88b6d1)",
+        "clipPath": "polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)"
+      },
+      "decorations": [
+        {
+          "style": {
+            "position": "absolute",
+            "inset": ".65cqw",
+            "clipPath": "polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%)",
+            "background": "linear-gradient(160deg,#6597c1 0%,#2c5d91 24%,#123a6a 48%,#092448 52%,#1b4d7b 83%,#407fa9 100%)",
+            "boxShadow": "inset 0 .8cqw 1cqw #89bdde50,inset 0 -.6cqw .8cqw #020e25"
+          }
+        }
+      ]
+    },
+    "rank-text": {
+      "style": {
+        "color": "#f3f6ff",
+        "fontFamily": "Georgia, serif",
+        "fontWeight": "700",
+        "letterSpacing": ".03em",
+        "textShadow": "0 1px 2px #000,0 0 3px #000"
+      }
+    }
+  },
+  "symbols": {
+    "actions": {
+      "attack": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m3 2 7 3 15 18-3 3L6 10Zm26 0-7 3L7 23l3 3L26 10ZM3 22l7 7 2-2-7-7Zm19 5 2 2 7-7-2-2ZM2 29l2 2 4-4-2-2Zm22-2 4 4 2-2-4-4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "defend": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "counter": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M15 2 26 6v3L7 28c-3-3-4-6-4-11V7Zm11 14v2c0 6-11 12-11 12l-4-2ZM28 2l2 1-1 6L12 26l-3-3ZM6 21l7 7-2 2-7-7ZM2 29l2 2 4-4-2-2Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "sweep": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M4 23q12-24 24 0M4 23h24M24 18l4 5-4 5\"/>",
+          "fill": "none",
+          "stroke": "currentColor",
+          "stroke-width": "2",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round"
+        }
+      },
+      "ranged": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m30 2-5 14-4-5L10 22v6l-5 3v-6H0l4-6h6L20 9l-5-3Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "smash": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M3 9q0-4 4-4h3q1-3 4-3h3q3 0 4 3h3q4 0 4 4v5l3 2v6l-7 6v4H10v-5l-7-7Zm6-1v8h2V8Zm7-3v11h2V5Zm7 3v8h2V8ZM8 19v3h11l6-5-2-2-5 4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "spell": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "power": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M13 28V13H8L16 3l8 10h-5v15ZM4 16v6m-3-3h6m19 1v8m-4-4h8\"/>",
+          "fill": "none",
+          "stroke": "currentColor",
+          "stroke-width": "2",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round"
+        }
+      },
+      "skill": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M5 17v-5l4-4 4 4v3l5-8 5 3-4 7h7v5l-9 6H9Z\"/>",
+          "fill": "none",
+          "stroke": "currentColor",
+          "stroke-width": "2",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round"
+        }
+      },
+      "status": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m16 3 13 25H3ZM16 11v7m0 5h.01\"/>",
+          "fill": "none",
+          "stroke": "currentColor",
+          "stroke-width": "2",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round"
+        }
+      }
+    },
+    "tags": {
+      "ritual": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 31 28H1Zm0 7L7 25h18Z\"/><circle cx=\"16\" cy=\"19\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "skill": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "bleed": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 1C13 8 5 15 5 21a11 11 0 0 0 22 0C27 15 19 8 16 1ZM9 21h3c0 4 2 5 5 5v3c-5 0-8-3-8-8Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "frost": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M14 1h4v8l6-5 3 3-8 7 10-1v4l-10 1 8 7-3 3-6-7v10h-4V21l-7 7-3-3 8-7-10-1v-4l10 1-8-7 3-3 7 5Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "lightning": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M18 1 3 19h11l-2 12L30 12H18l4-11Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "force": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "alteration": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "illusion": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M1 16Q16-3 31 16 16 35 1 16Zm8 0a7 7 0 1 0 14 0 7 7 0 1 0-14 0Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "divine": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m16 0 3 7 7-4-1 8 7 5-7 4 1 9-7-5-3 8-3-8-7 5 1-9-7-4 7-5-1-8 7 4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "decay": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 14C6 17 1 9 7 3l6 8ZM18 14l2-11c9 0 13 10 3 13ZM17 19l8 8c-5 8-17 5-15-5Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "slashing": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M26 1h5C26 16 16 24 1 31l5-7C16 17 23 8 26 1Zm2 15 3 3-10 11-3-3Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "piercing": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "blunt": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "guard": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "guile": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "attack": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m3 2 7 3 15 18-3 3L6 10Zm26 0-7 3L7 23l3 3L26 10ZM3 22l7 7 2-2-7-7Zm19 5 2 2 7-7-2-2ZM2 29l2 2 4-4-2-2Zm22-2 4 4 2-2-4-4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "defend": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "counter": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M15 2 26 6v3L7 28c-3-3-4-6-4-11V7Zm11 14v2c0 6-11 12-11 12l-4-2ZM28 2l2 1-1 6L12 26l-3-3ZM6 21l7 7-2 2-7-7ZM2 29l2 2 4-4-2-2Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "ranged": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m30 2-5 14-4-5L10 22v6l-5 3v-6H0l4-6h6L20 9l-5-3Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "smash": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M3 9q0-4 4-4h3q1-3 4-3h3q3 0 4 3h3q4 0 4 4v5l3 2v6l-7 6v4H10v-5l-7-7Zm6-1v8h2V8Zm7-3v11h2V5Zm7 3v8h2V8ZM8 19v3h11l6-5-2-2-5 4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "spell": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "fire": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "burn": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "cold": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M14 1h4v8l6-5 3 3-8 7 10-1v4l-10 1 8 7-3 3-6-7v10h-4V21l-7 7-3-3 8-7-10-1v-4l10 1-8-7 3-3 7 5Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "arcane": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "sacred": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m16 0 3 7 7-4-1 8 7 5-7 4 1 9-7-5-3 8-3-8-7 5 1-9-7-4 7-5-1-8 7 4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "holy": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m16 0 3 7 7-4-1 8 7 5-7 4 1 9-7-5-3 8-3-8-7 5 1-9-7-4 7-5-1-8 7 4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "necrotic": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 14C6 17 1 9 7 3l6 8ZM18 14l2-11c9 0 13 10 3 13ZM17 19l8 8c-5 8-17 5-15-5Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "crimsonBlight": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 14C6 17 1 9 7 3l6 8ZM18 14l2-11c9 0 13 10 3 13ZM17 19l8 8c-5 8-17 5-15-5Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "blight": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 14C6 17 1 9 7 3l6 8ZM18 14l2-11c9 0 13 10 3 13ZM17 19l8 8c-5 8-17 5-15-5Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "blood": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 1C13 8 5 15 5 21a11 11 0 0 0 22 0C27 15 19 8 16 1ZM9 21h3c0 4 2 5 5 5v3c-5 0-8-3-8-8Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "gorefire": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "blade": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M26 1h5C26 16 16 24 1 31l5-7C16 17 23 8 26 1Zm2 15 3 3-10 11-3-3Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "pierce": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "heavy": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "starstone": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "astral": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "venom": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 14C6 17 1 9 7 3l6 8ZM18 14l2-11c9 0 13 10 3 13ZM17 19l8 8c-5 8-17 5-15-5Z\"/><circle cx=\"16\" cy=\"16\" r=\"4\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "oath": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m16 0 3 7 7-4-1 8 7 5-7 4 1 9-7-5-3 8-3-8-7 5 1-9-7-4 7-5-1-8 7 4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "weak": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M18 1 3 19h11l-2 12L30 12H18l4-11Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "vulnerable": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "staggered": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "poise": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "precision": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m30 2-5 14-4-5L10 22v6l-5 3v-6H0l4-6h6L20 9l-5-3Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "cleave": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m3 2 7 3 15 18-3 3L6 10Zm26 0-7 3L7 23l3 3L26 10ZM3 22l7 7 2-2-7-7Zm19 5 2 2 7-7-2-2ZM2 29l2 2 4-4-2-2Zm22-2 4 4 2-2-4-4Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "flourish": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "prepared": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "concealed": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z\"/>",
+          "fill": "currentColor"
+        }
+      },
+      "ash": {
+        "href": null,
+        "fit": "contain",
+        "svg": {
+          "viewBox": "0 0 32 32",
+          "body": "<path d=\"M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z\"/>",
+          "fill": "currentColor"
+        }
+      }
+    }
   }
 }

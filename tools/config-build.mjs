@@ -355,7 +355,7 @@ export function generate({ config, sources }) {
     '  return value;',
     '};',
     '',
-    `export const uiConfig = deepFreeze(${JSON.stringify(config, null, 2)});`,
+    `export const uiConfig = deepFreeze(${JSON.stringify(config)});`,
     '',
   ].join('\n');
 }

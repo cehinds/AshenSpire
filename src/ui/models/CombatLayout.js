@@ -1,8 +1,6 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
-const compactCombat = uiConfig.scenes.w4a.sizing.compact;
-
 // The W4 bands, top to bottom.
 const SCENE_BANDS = Object.freeze(['hud', 'scene', 'context', 'footer']);
 
@@ -52,43 +50,53 @@ export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, l
 // with its lift, arc and insets. Card faces, text and targets keep their
 // minimums. A host that still cannot fit is reported, not squeezed.
 export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0, compact = false }, config = wireframeUi) {
+  let stacked;
+  let handShare;
+  let footerShare;
   if (compact) {
+    const compactConfig = uiConfig.scenes.w4a.sizing.compactCombat;
     const physicalHeight = height * zoom;
-    const hud = Math.max(compactCombat.hudMinimumPx, physicalHeight * compactCombat.hudFraction) / zoom;
-    const hand = Math.max(compactCombat.handMinimumPx, Math.min(compactCombat.handMaximumPx, physicalHeight * compactCombat.handFraction)) / zoom;
-    const footer = compactCombat.footerHeightPx / zoom;
+    const hud = Math.max(compactConfig.hudMinimumPx, physicalHeight * compactConfig.hudHeightFraction) / zoom;
+    const hand = Math.max(compactConfig.handMinimumPx,
+      Math.min(compactConfig.handMaximumPx, physicalHeight * compactConfig.handHeightFraction)) / zoom;
+    const footer = compactConfig.footerPx / zoom;
     const battlefield = Math.max(0, height - hud - hand - footer);
-    return Object.freeze({ hud, battlefield, hand, footer, minimumBattlefield: compactCombat.battlefieldMinimumPx / zoom,
-      arrangement: 'stacked', rails: null, supported: battlefield * zoom >= compactCombat.battlefieldMinimumPx });
+    const minimumBattlefield = compactConfig.minimumBattlefieldPx / zoom;
+    stacked = Object.freeze({ hud, battlefield, hand, footer, minimumBattlefield,
+      arrangement: 'stacked', rails: null, supported: battlefield >= minimumBattlefield });
+    handShare = compactConfig.handHeightFraction;
+    footerShare = compactConfig.footerPx / physicalHeight;
+  } else {
+    // The stacked plan is the shared W4 plan: the battlefield is the scene band
+    // and the hand is the context band.
+    const minimumBattlefield = config.formation.minimumSpritePx / zoom + config.formation.detailReserveRem * rem;
+    // Combat's bands and footer floor arrive as wireframeUi.combat; they are
+    // handed to the shared plan in the W4 scene-config shape.
+    const [hudBand, sceneBand, contextBand, footerBand] = config.combat.bands;
+    const plan = allocateSceneBands({ width, height, zoom, rem },
+      { sizing: { bands: { hud: hudBand, scene: sceneBand, context: contextBand, footer: footerBand } } },
+      { sizing: { minimums: { footerPx: Math.max(config.combat.footerMinimumPx, footerArtPx) } } },
+      { contextPx: config.hand.minimumHeightPx, scenePx: minimumBattlefield, label: 'combat' });
+    [, , handShare, footerShare] = plan.shares;
+    const { hud, context: hand, footer } = plan;
+    stacked = Object.freeze({
+      hud, battlefield: plan.scene, hand, footer, minimumBattlefield,
+      arrangement: 'stacked', rails: null,
+      supported: plan.supported,
+    });
   }
-  // The stacked plan is the shared W4 plan: the battlefield is the scene band
-  // and the hand is the context band.
-  const minimumBattlefield = config.formation.minimumSpritePx / zoom + config.formation.detailReserveRem * rem;
-  // Combat's bands and footer floor arrive as wireframeUi.combat; they are
-  // handed to the shared plan in the W4 scene-config shape.
-  const [hudBand, sceneBand, contextBand, footerBand] = config.combat.bands;
-  const plan = allocateSceneBands({ width, height, zoom, rem },
-    { sizing: { bands: { hud: hudBand, scene: sceneBand, context: contextBand, footer: footerBand } } },
-    { sizing: { minimums: { footerPx: Math.max(config.combat.footerMinimumPx, footerArtPx) } } },
-    { contextPx: config.hand.minimumHeightPx, scenePx: minimumBattlefield, label: 'combat' });
-  const [, , handShare, footerShare] = plan.shares;
-  const { hud, context: hand, footer } = plan;
-  const stacked = Object.freeze({
-    hud, battlefield: plan.scene, hand, footer, minimumBattlefield,
-    arrangement: 'stacked', rails: null,
-    supported: plan.supported,
-  });
   if (stacked.supported || !(width > 0) || !config.combat.shortHostRails) return stacked;
   const rails = packCombatRails({ width, zoom, rem }, config);
   if (!rails.supported) return stacked;
   const preferred = Math.max(height * (handShare + footerShare), config.hand.minimumHeightPx / zoom);
   const floor = Math.max(minimumHandHeight(rem, config), rails.height);
-  const railHand = Math.max(floor, Math.min(preferred, height - hud - minimumBattlefield));
-  const field = height - hud - railHand;
+  const railHand = Math.max(floor, Math.min(preferred, height - stacked.hud - stacked.minimumBattlefield));
+  const field = height - stacked.hud - railHand;
   return Object.freeze({
-    hud, battlefield: Math.max(0, field), hand: railHand, footer: 0, minimumBattlefield,
+    hud: stacked.hud, battlefield: Math.max(0, field), hand: railHand, footer: 0,
+    minimumBattlefield: stacked.minimumBattlefield,
     arrangement: 'rails', rails,
-    supported: field >= minimumBattlefield,
+    supported: field >= stacked.minimumBattlefield,
   });
 }
 
@@ -106,13 +114,16 @@ export function minimumHandHeight(rem = 16, config = wireframeUi) {
 // and takes up to its envelope of what remains. The touch target and the
 // readable pile floor outrank the nominal pile envelope on narrow hosts.
 export function packCombatFooter({ width, height, zoom = 1, rem = 16 }, config = wireframeUi.footer) {
-  if (width * zoom <= compactCombat.maxWidthPx) {
+  const compactConfig = uiConfig.scenes.w4a.sizing.compactCombat;
+  if (width * zoom <= compactConfig.maxWidthPx) {
     const target = config.minimumTargetPx / zoom;
-    const gap = Math.min(config.gapRem * rem, compactCombat.footerGapPx / zoom);
+    const gap = Math.min(config.gapRem * rem, compactConfig.footerGapMaxPx / zoom);
     const available = Math.max(0, width - gap * 4);
-    const diameter = Math.max(target, Math.min(compactCombat.footerCirclePx / zoom, height * config.heightFraction));
+    const diameter = Math.max(target,
+      Math.min(compactConfig.footerDiameterMaxPx / zoom, height * config.heightFraction));
     const pileWidth = target;
-    const endWidth = Math.max(0, Math.min(compactCombat.footerEndWidthPx / zoom, available - diameter * 2 - pileWidth * 2));
+    const endWidth = Math.max(0,
+      Math.min(compactConfig.footerEndWidthMaxPx / zoom, available - diameter * 2 - pileWidth * 2));
     return Object.freeze({ gap, target, diameter, pileWidth, pileHeight: target, endWidth, endHeight: diameter,
       groupWidth: diameter * 2 + pileWidth * 2 + endWidth + gap * 4,
       supported: endWidth >= target && height >= target });
