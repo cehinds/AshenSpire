@@ -36,7 +36,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Alternative combat opens up with option C** ([#1751](https://github.com/cehinds/AshenSpire/pull/1751), `0.7.1.1152`). The approved pointed shield and inner-loop Counter match the named card footers, with distinct HP and Poise damage symbols. Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.
 
+- **Counters prepare the right action and Upcast stays reachable** ([#1742](https://github.com/cehinds/AshenSpire/pull/1742), `0.7.1.1147`). Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.
+
 - **Alternative heroes hold their selected combat poses** ([#1745](https://github.com/cehinds/AshenSpire/pull/1745), `0.7.1.1146`). Reaver, Rogue, Starseer and Herald use the twelve chosen Attack, Defend and Prepare poses after card actions. Books and defensive guards follow the selected artwork. Each co-op player keeps their own pose until their next turn; counters keep their existing presentation for a later selection pass. The separate Block, Barrier and Ward box is removed. Ashen Blight now appears as a wider centered header bar only above zero, with its own row on phones.
+
+- **Contract: defensive reactions and actor-turn presentation** ([#1761](https://github.com/cehinds/AshenSpire/pull/1761), `0.7.1.1145`). Specify optional in-hand Counter and defensive Sweep choices, a separate successful Counter return, acting-enemy intent revelation, exact paused continuation, and the player widget's fixed gap above the art. This contract precedes runtime implementation.
+
+- **Finished runs record their outcome and phone title controls stay reachable** ([#1759](https://github.com/cehinds/AshenSpire/pull/1759), `0.7.1.1144`). Successful run checkpoints allow completion to record the result and clear the finished slot. A refused checkpoint still preserves the run for retry. On small phone screens, the title menu scrolls below the wordmark so Continue and the remaining controls stay usable.
 
 - **Alternative figures keep idle life and respect reduced motion** ([#1746](https://github.com/cehinds/AshenSpire/pull/1746), `0.7.1.1143`). Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.
 
@@ -51,8 +57,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Combat scenery reaches the top of the screen** ([#1748](https://github.com/cehinds/AshenSpire/pull/1748), `0.7.1.1136`). The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.
 
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
-
-- **Counters prepare the right action and Upcast stays reachable** ([#1742](https://github.com/cehinds/AshenSpire/pull/1742), `0.7.1.1134`). Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.
 
 - **Behind the scenes: alternative sync keeps the full history efficiently** ([#1747](https://github.com/cehinds/AshenSpire/pull/1747), `0.7.1.1133`). Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.
 
