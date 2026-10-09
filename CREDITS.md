@@ -41,7 +41,7 @@ part of this package. No new third-party artwork or licence is introduced.
 
 | Source | License |
 | --- | --- |
-| Original project-authored monochrome SVG geometry in [combatSigils.js](https://github.com/cehinds/AshenSpire/blob/dev/src/content/combatSigils.js): ten primary actions and eight schools | CC0-1.0. These inline source primitives use no third-party artwork. |
+| Original project-authored monochrome SVG geometry in [combatSigils.js](https://github.com/cehinds/AshenSpire/blob/dev/src/content/combatSigils.js): ten primary actions and eight schools; approved solid B action and right-side tag geometry in [cardTagSymbols.js](https://github.com/cehinds/AshenSpire/blob/dev/src/ui/components/cardTagSymbols.js) | CC0-1.0. These inline source primitives use no third-party artwork. |
 
 ## Alternative animation reference study (2026-10-06)
 
