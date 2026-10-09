@@ -3,6 +3,7 @@ import { alternativeSelectedStances } from '../content/alternativeSelectedStance
 import { durationFor, sampleSequence, hitFlashOpacity } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
+import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
 import { reducedMotionRequested } from './motion.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { assetUrl } from './assetmap.js';
@@ -48,18 +49,21 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   canvas.style.cssText = `position:absolute;max-width:none;width:${768*scale}px;height:${544*scale}px;left:calc(50% - ${384*scale}px);top:${190-480*scale}px;pointer-events:none;`;
   el.append(canvas);
   if (typeof canvas.getContext !== 'function') return null;
-  const ctx = canvas.getContext('2d');
+  // Action preparation deliberately materializes visible pixels before its clock.
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return null;
   const mask = document.createElement('canvas'); mask.width = mask.height = 512;
   const maskCtx = mask.getContext('2d');
   const lite = typeof matchMedia === 'function' && matchMedia('(max-width: 599px)').matches;
   const images = new Map();
+  const auraRenderer = createAlternativeAuraRenderer();
   const placeholder=document.createElement('span');placeholder.textContent='⚔';placeholder.hidden=true;
   placeholder.setAttribute('role','img');placeholder.setAttribute('aria-label',classId+' character');
   placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
   async function preload(){
     const results=await Promise.allSettled(Object.entries(frames).map(async([name,frame])=>{
-      images.set(name,await load(alternativeArtUrl(frame[lite?'lite':'path'])).ready);
+      const image = await load(alternativeArtUrl(frame[lite?'lite':'path'])).ready;
+      if (!disposed) images.set(name, image);
     }));
     if(disposed)return false;
     const failed=results.some(result=>result.status==='rejected');
@@ -68,11 +72,13 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     placeholder.hidden=images.has('ready');paint();return !failed;
   }
   let down = null;
-  if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { down=image; paint(); }).catch(()=>{});
+  if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { if (!disposed) { down=image; paint(); } }).catch(()=>{});
   let pose='ready', rest='idle', stance=null, playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, disposed=false;
   let resources=[], reactionTimer=null;
   const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : ['defend','guard','counter'].includes(rest) ? 'guard-brace' : 'ready';
-  function paint(now=performance.now()) {
+  const filterFor = (frame, action, paid = resources, active = !!action) =>
+    auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
+  function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
     ctx.clearRect(0,0,768,544);
     let x=0;
@@ -85,8 +91,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     const image=images.get(pose) || images.get('ready');
     if (!image) return;
     ctx.save();
-    ctx.filter=auraFilter(playing?.action==='spell'?'power2':pose, ['defend','counter'].includes(rest)?'guard':rest,resources,!!playing);
-    ctx.drawImage(image,128+x,16,512,512);ctx.restore();
+    auraRenderer.draw(ctx,image,filterFor(pose,playing?.action),128+x,16,512,512,{materialize});ctx.restore();
     const flash=hitFlashOpacity('hurt',flashAt===null?1:(now-flashAt)/260,{reduced:reducedMotionRequested()});
     if (flash) {
       maskCtx.clearRect(0,0,512,512);maskCtx.globalCompositeOperation='source-over';
@@ -103,7 +108,9 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       if (elapsed>=playing.duration || reducedMotionRequested()) { playing=null;resources=[];pose=restPose(); }
     }
     if (flashAt!==null && now-flashAt>=143) flashAt=null;
-    last=now;paint(now);
+    // A queued RAF can carry a timestamp from before synchronous first-paint
+    // work. Never move the action clock backwards and count that work twice.
+    last=Math.max(last,now);paint(now);
     if (playing || flashAt!==null) request=requestAnimationFrame(tick);
   }
   const wake=()=>{ if (request===null && !disposed) {last=performance.now();request=requestAnimationFrame(tick);} };
@@ -133,8 +140,15 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       rest=next;el.dataset.rest=next;
       if(resume?.action&&resume.rest===next&&!immediate&&!still&&!reducedMotionRequested()){
         const sequence=family.sequences[resume.action];
+        // A saved action remains wall-clock based: render work may legitimately
+        // expire an already stale presentation, and never extends its lifetime.
         elapsed=resume.elapsed+Math.max(0,Date.now()-resume.savedAt);
-        if(sequence&&elapsed<resume.duration){playing={action:resume.action,sequence,duration:resume.duration};resources=resume.resources||[];paint();wake();return;}
+        if(sequence&&elapsed<resume.duration){
+          playing={action:resume.action,sequence,duration:resume.duration};resources=resume.resources||[];
+          paint(performance.now(),true);
+          elapsed=resume.elapsed+Math.max(0,Date.now()-resume.savedAt);
+          if(elapsed<resume.duration){last=performance.now();wake();return;}
+        }
       }
       settle();
     },
@@ -150,10 +164,13 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       const key=aliases[action]||action, sequence=family.sequences[key];
       if(!sequence)return false;
       if(still||reducedMotionRequested()||ms<=0){settle();return true;}
-      resources=aura||[];elapsed=0;holdUntil=0;playing={action:key,sequence,duration:ms};paint();wake();return true;
+      // Materialize the first independent aura before the unchanged action clock,
+      // even when a preceding hurt effect already has a queued animation frame.
+      resources=aura||[];elapsed=0;holdUntil=0;playing={action:key,sequence,duration:ms};
+      paint(performance.now(),true);last=performance.now();wake();return true;
     },
     hold(ms){if(!playing||!(ms>0))return false;holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;},
     react(resource){clearTimeout(reactionTimer);el.dataset.poseReaction=resource;reactionTimer=setTimeout(()=>{el.dataset.poseReaction='';},180);},settle,
-    dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;}
+    dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;images.clear();down=null;auraRenderer.dispose();}
   });
 }
