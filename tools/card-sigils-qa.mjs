@@ -19,7 +19,9 @@ const requiredFailures=failed=>failed.filter(f=>!f.includes('favicon')&&!/^404 .
 function cardGeometry(cards){return cards.map(c=>{
  const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
  const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),panel=c.querySelector('[data-component="panel"]')?.getBoundingClientRect(),damage=c.querySelector('.card-damage-types'),words=c.querySelector('.card-sigil-band')?.getBoundingClientRect(),rail=c.querySelector('.card-tag-rail')?.getBoundingClientRect();
+ const fade=c.querySelector('.card-title-fade')?.getBoundingClientRect();
  return {ref:c.dataset.qaRef||c.dataset.cardId,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
+  titleCovered:!!fade&&fade.left<=top.left+1&&fade.right>=top.right-1&&fade.top<=top.top+1&&fade.top+fade.height*.48>=top.bottom-1,
   school:c.dataset.combatSchool||null,
   sideTags:c.querySelectorAll('.card-tag-symbol').length,
   railOverlap:!!rail && rail.bottom>Math.min(r.top,panel?.top??r.top)+1,
@@ -86,7 +88,7 @@ try {
   assert.equal(await page.evaluate(()=>JSON.stringify({plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'),energy:window.__combat.player.energy,mana:window.__combat.player.mana,stamina:window.__combat.player.stamina})),beforeInspect,'inspection spends no resources and plays no card');
   if(standalone){
    const geometry=await page.locator('.hand .card').evaluateAll(cardGeometry);
-   assert.ok(geometry.every(g=>!g.clipped&&!g.overlapsTitle&&!g.footerOutside&&!g.railOverlap&&g.sideTags<=3&&g.footerLabel),'standalone hand effects and damage words remain complete');
+   assert.ok(geometry.every(g=>!g.clipped&&!g.overlapsTitle&&!g.footerOutside&&g.titleCovered&&!g.railOverlap&&g.sideTags<=3&&g.footerLabel),'standalone hand effects and damage words remain complete');
    assert.ok(geometry.every(g=>g.accessibleName?.includes(g.actionName)&&(!g.schoolName||g.accessibleName.includes(g.schoolName))),'standalone action and school names remain accessible');
    assert.ok(geometry.every(g=>g.damageTypes.every(word=>g.accessibleName?.includes(word))),'standalone damage words remain accessible');
    assert.equal(errors.length,0,errors.join('\n'));
@@ -137,7 +139,7 @@ try {
   await page.waitForFunction(()=>[...document.querySelectorAll('.sigil-corpus [data-card-binding="rules"]')].every(text=>text.dataset.rulesComplete==='true'));
   const geometry=await page.locator('.sigil-corpus .card').evaluateAll(cardGeometry);
   await page.screenshot({path:resolve(output,name+'-cards.png'),clip:{x:0,y:0,width:phone?390:1440,height:phone?844:1000}});
-  const bad=geometry.filter(g=>g.clipped||g.overlapsTitle||g.footerOutside||g.railOverlap||g.sideTags>3||!g.footerLabel);
+  const bad=geometry.filter(g=>!g.titleCovered||g.clipped||g.overlapsTitle||g.footerOutside||g.railOverlap||g.sideTags>3||!g.footerLabel);
   writeFileSync(resolve(output,name+'-geometry.json'),JSON.stringify(geometry,null,2)+'\n');
   assert.equal(bad.length,0,JSON.stringify(bad.slice(0,6)));
   const widths=[];
@@ -149,7 +151,7 @@ try {
     await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
    },width);
    const resized=await page.locator('.sigil-corpus .card').evaluateAll(cardGeometry);
-   assert.equal(resized.filter(g=>g.clipped||g.overlapsTitle||g.footerOutside||g.railOverlap||g.sideTags>3||!g.footerLabel).length,0,JSON.stringify({width,bad:resized.filter(g=>g.clipped||g.overlapsTitle||g.footerOutside||g.railOverlap||g.sideTags>3||!g.footerLabel).slice(0,6)}));
+   assert.equal(resized.filter(g=>!g.titleCovered||g.clipped||g.overlapsTitle||g.footerOutside||g.railOverlap||g.sideTags>3||!g.footerLabel).length,0,JSON.stringify({width,bad:resized.filter(g=>!g.titleCovered||g.clipped||g.overlapsTitle||g.footerOutside||g.railOverlap||g.sideTags>3||!g.footerLabel).slice(0,6)}));
    if(width)widths.push({width,complete:resized.length,minFont:Math.min(...resized.map(g=>g.font))});
    else assert.ok(resized.every((g,i)=>Math.abs(g.ruleTop-geometry[i].ruleTop)<1&&Math.abs(g.font-geometry[i].font)<.1),'resize restores the original geometry');
   }

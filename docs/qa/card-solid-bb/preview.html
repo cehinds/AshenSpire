@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<base href="/">
+<title>Ashen Spire — B + B card preview</title>
+<link rel="stylesheet" href="/styles/base.css"><link rel="stylesheet" href="/styles/ui.css">
+<link rel="stylesheet" href="/styles/combat.css"><link rel="stylesheet" href="/styles/kit.css">
+<link rel="stylesheet" href="/styles/responsive-type.css"><link rel="stylesheet" href="/styles/player-polish.css">
+<link rel="stylesheet" href="/styles/illustrated-cards.css"><link rel="stylesheet" href="/styles/corrupted-cards.css">
+<style>
+html,body{height:auto;overflow:auto;min-height:100%;background:#17130f}
+body{margin:0;color:#ecdfc2;font-family:Georgia,serif}
+header{max-width:1080px;margin:36px auto 20px;padding:0 28px}
+h1{font-size:28px;font-weight:normal;margin:0 0 10px}p{color:#bbaa8c;line-height:1.5}
+a{color:#e8bd78}.gallery{max-width:1120px;margin:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:38px 30px;padding:30px;box-sizing:border-box}
+.gallery .card{width:100%!important;max-width:240px!important;margin:auto}
+@media(max-width:800px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 20px;padding:22px}}
+</style>
+</head>
+<body>
+<header><h1>B + B · Solid gold</h1><p>Current in-game frames. Action below; up to three symbols on the right. Select a card, then Information to see every tag.</p><a href="/index.html?shot=combat">Open combat preview</a></header>
+<main class="gallery"></main>
+<script type="module">
+import {contentBundle} from '/src/content/index.js';
+import {createRegistries} from '/src/model/registries.js';
+import {renderCard,scheduleCardFits} from '/src/ui/components/card.js';
+const registry=createRegistries(contentBundle),gallery=document.querySelector('.gallery');
+const refs=[{cardId:'shieldBash'},{cardId:'strike'},{cardId:'guardCounter'},{cardId:'ricochet'},
+{cardId:'cinderSigil'},{cardId:'defend',profileId:'sceptreGuard'},{cardId:'gorefireSlash'},{cardId:'radiantSpray',abilityRank:5}];
+for(const ref of refs){if(registry.cards.has(ref.cardId))gallery.append(renderCard(registry,ref,{level:'inspect'}));}
+await document.fonts.ready;scheduleCardFits(gallery.querySelectorAll('.card'));
+</script>
+</body></html>
