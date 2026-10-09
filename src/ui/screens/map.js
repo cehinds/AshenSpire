@@ -212,8 +212,16 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const trayTiming = wireframeUi.map.tray;
   let trayTimer = 0;
   const reduced = () => reducedMotionRequested();
-  const wait = (ms, fn) => { clearTimeout(trayTimer); trayTimer = setTimeout(fn, reduced() ? 0 : ms); };
-  const glideMs = () => (reduced() ? 0 : trayTiming.cameraMs);
+  // Touch destinations and their controls are visible on the selecting tap.
+  // The desktop presentation keeps its authored sequence.
+  const instantTray = () => reduced() || matchMedia('(pointer: coarse)').matches;
+  tray.dataset.instant = String(instantTray());
+  const wait = (ms, fn) => {
+    clearTimeout(trayTimer);
+    if (instantTray()) { fn(); return; }
+    trayTimer = setTimeout(fn, ms);
+  };
+  const glideMs = () => (instantTray() ? 0 : trayTiming.cameraMs);
   function openTray() {
     if (tray.dataset.open === 'true') {
       // Already open (or closing): stay open, and recentre on the new pick.

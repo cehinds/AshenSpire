@@ -1,0 +1,511 @@
+{
+  "results": [
+    {
+      "name": "combat-desktop",
+      "width": 1600,
+      "height": 900,
+      "art": {
+        "images": [
+          {
+            "alt": "",
+            "src": "./objects/a2/a26074db75d0937fe40d65bd1473f8238f195d1d886f399038dbf9ff90d97dda.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/40/404a7e5a56c9a2be6509f12a9d5eeab851c68baf22a050cdf46db1b04dfdd846.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a1/a18755b40ecdcab7d3bfacbc556414991111a96fb2914ebc188dc6fe83a761c3.webp",
+            "w": 256,
+            "h": 256,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/20/200916575584b3f3c3c4094846d454b3ee204bbb93cb05abdcd02af7cfe0a4bb.webp",
+            "w": 256,
+            "h": 256,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/66/66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/31/314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/50/50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/f4/f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "Wayfarer Plate · Reaver",
+            "src": "./objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382127.webp",
+            "w": 320,
+            "h": 480,
+            "loaded": true
+          },
+          {
+            "alt": "Stitched Hound",
+            "src": "./objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc.webp",
+            "w": 480,
+            "h": 320,
+            "loaded": true
+          },
+          {
+            "alt": "Stitched Hound",
+            "src": "./objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc.webp",
+            "w": 480,
+            "h": 320,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/b9/b9bcf82788f372e434c4fce88834c9362f570273cf6ec04759cc5f0280395714.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/b5/b5353dbba6f99792732acc423879492f4cd12e7867f94ff8d5a4a1941268ddf8.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/77/77c208d441821333462ac407325920ac9995d0182c29bde427214a635a2be200.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/23/237713ea3abaa8c09793728c2912f8f830175b56e6290c0b4dea03c7116d30b1.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/9e/9e89985a6a54018e4260cdc4278e4aa048c772d5b3ec0d3751cec00b78edf8e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/73/7357d71fb1bff3125b3a771f4136c4456098f8a16f7089c59e8cb9d5feb42a21.webp",
+            "w": 128,
+            "h": 128,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/57/578706065e0313beae44d4127a5efc2873e4610cd0c5360e38a041e72fe28017.webp",
+            "w": 128,
+            "h": 128,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/73/7357d71fb1bff3125b3a771f4136c4456098f8a16f7089c59e8cb9d5feb42a21.webp",
+            "w": 128,
+            "h": 128,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/75/752af1627a3c00b188a72a5a8539608a4fd546dfa78b88228e1cdd26f3cb3f5e.webp",
+            "w": 256,
+            "h": 256,
+            "loaded": true
+          }
+        ],
+        "alternative": 3,
+        "overflow": false
+      }
+    },
+    {
+      "name": "combat-phone",
+      "width": 390,
+      "height": 844,
+      "art": {
+        "images": [
+          {
+            "alt": "",
+            "src": "./objects/a2/a26074db75d0937fe40d65bd1473f8238f195d1d886f399038dbf9ff90d97dda.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/40/404a7e5a56c9a2be6509f12a9d5eeab851c68baf22a050cdf46db1b04dfdd846.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a1/a18755b40ecdcab7d3bfacbc556414991111a96fb2914ebc188dc6fe83a761c3.webp",
+            "w": 256,
+            "h": 256,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/20/200916575584b3f3c3c4094846d454b3ee204bbb93cb05abdcd02af7cfe0a4bb.webp",
+            "w": 256,
+            "h": 256,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/66/66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/31/314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/50/50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/f4/f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6.webp",
+            "w": 1279,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "Wayfarer Plate · Reaver",
+            "src": "./objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382127.webp",
+            "w": 320,
+            "h": 480,
+            "loaded": true
+          },
+          {
+            "alt": "Stitched Hound",
+            "src": "./objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc.webp",
+            "w": 480,
+            "h": 320,
+            "loaded": true
+          },
+          {
+            "alt": "Stitched Hound",
+            "src": "./objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc.webp",
+            "w": 480,
+            "h": 320,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/b9/b9bcf82788f372e434c4fce88834c9362f570273cf6ec04759cc5f0280395714.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/b5/b5353dbba6f99792732acc423879492f4cd12e7867f94ff8d5a4a1941268ddf8.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/77/77c208d441821333462ac407325920ac9995d0182c29bde427214a635a2be200.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/23/237713ea3abaa8c09793728c2912f8f830175b56e6290c0b4dea03c7116d30b1.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/07/07f6038771e865a3ebab866145da6e04df45ce47925c8cd307eff2431457c68f.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/9e/9e89985a6a54018e4260cdc4278e4aa048c772d5b3ec0d3751cec00b78edf8e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/58/5884f8b75934e167246824f5949a67c4c480140efbaf6ec634ed3d6d8e7f787e.webp",
+            "w": 720,
+            "h": 360,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/bc/bceea80b374d9ed5f15a9b4f3c3bdd0bc10f5b0ed0d21fbd657d1604d29994e2.webp",
+            "w": 480,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/a7/a7534f34dedacd7b5f446124720b45aed25848ac4554423ccaed417ccd0daf74.webp",
+            "w": 720,
+            "h": 720,
+            "loaded": true
+          },
+          {
+            "alt": "",
+            "src": "./objects/73/7357d71fb1bff3125b3a771f4136c4456098f8a16f7089c59e8cb9d5feb42a21.webp",
+            "w": 128,
+            "h": 128,
+            "loaded": true
+          }
+        ],
+        "alternative": 3,
+        "overflow": false
+      }
+    }
+  ],
+  "errors": [],
+  "badRequests": []
+}

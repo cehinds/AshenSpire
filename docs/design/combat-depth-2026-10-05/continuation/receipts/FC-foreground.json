@@ -1,0 +1,29 @@
+{
+  "id": "FC-foreground",
+  "region": "FC",
+  "kind": "foreground",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: burnt iron columns and slack heavy chains, blackened bronze censer at extreme edges. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+  "resultFile": "scenes/shared/FC/foreground.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-e8c8517c-7d09-4578-8274-fc41767d8f09.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "c166fee3a4f01d6ac85f0f942ee67cc6924ba72c775e2dded8a55893b8c1d978",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.7249501546223959,
+  "visibleBounds": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

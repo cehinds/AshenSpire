@@ -1,0 +1,31 @@
+{
+  "id": "HM-ENV-02-landmark",
+  "sceneId": "HM-ENV-02",
+  "name": "Shattered Conservatory",
+  "region": "HM",
+  "kind": "landmark",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "resultFile": "scenes/HM-ENV-02/landmark.png",
+  "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Shattered Conservatory'. Subject: broken glass conservatory ironwork, pointed window tracery, shattered frosted glass panels and empty stone planters. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-e90edee6-55b8-471a-aa47-93e201262b0b.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "cd058c40672073c285687503bd521da915996bb22f50c5ea923284cba6c9d329",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.5419076283772787,
+  "visibleBounds": [
+    20,
+    4,
+    1516,
+    702
+  ],
+  "alphaThreshold": 32
+}

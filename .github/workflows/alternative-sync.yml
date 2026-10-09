@@ -99,7 +99,8 @@ jobs:
           python docs/design/combat-depth-2026-10-05/pack.py
           if [ -f tools/alternative-art-build.py ]; then
             python tools/alternative-art-build.py
-            git add -- assets-alternative src/ui/alternativeArtCatalog.js
+            node tools/display-art-library.mjs --write
+            git add -- assets-display src/ui/alternativeArtCatalog.js
           fi
           node tools/about-changelog.mjs --write
           node tools/launch.mjs --build-only

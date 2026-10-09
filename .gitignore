@@ -581,3 +581,6 @@ build/windows-installer/
 /build/cards/
 /dist/cards/
 /build/**/cards/
+
+# Regenerable alternative combat art download.
+/docs/design/combat-depth-2026-10-05/ashenspire-combat-art.zip

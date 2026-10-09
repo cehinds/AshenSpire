@@ -1,0 +1,38 @@
+Art review completed 2026-10-06
+
+Coverage
+59 canonical idle actor appearances: 19 approved rear hero/armor appearances,
+33 approved opposing enemies, 2 converted rear companions and 5 rear speakers.
+52 existing selected sprites retained byte-for-byte; all earlier front/side
+originals also remain available. Reaver red cloak and corrected sword retained.
+32 canonical combat settings, each with four independent layer references.
+69 scene masters: 66 newly generated and 3 reused approved Hollow Weald layers.
+64 compositions: independent desktop 1536x1024 and phone 768x1024 art stages.
+8 dedicated portrait foreground masters; separate night/interior/ice/sand plates.
+
+Validation
+validation.json: full roster/scene coverage, file hashes, dimensions, real alpha,
+sprite clearance, visible bounds and idle anchors, terrain fill, foreground
+clearance, device transforms, independent depths, and art-package-only scope.
+../review/asset-report.json: existing parent validator passes after selection
+of the seven rear sprites. Original four-layer reference scene remains intact.
+review/browser-report.json: Chrome loaded all 64 scene/device combinations;
+no page/console/HTTP errors. Scene selection, layer hide/show, four distinct
+motion transforms, actor switching and 390x844 no-overflow layout passed.
+All eight scene contact sheets and the seven-sprite sheet were visually inspected.
+Browser desktop and phone screenshots were inspected during this review.
+
+Provenance
+All new PNG masters retain original built-in image_gen pixels. Exact prompts,
+reference paths, generated-source paths, alpha measurements and SHA256 hashes
+are in receipts/. The initial Nameless rear draft remains for provenance; the
+catalog selects the padded correction with clear sword-tip and cloak margins.
+
+Delivery boundary
+This is a reviewable art catalog integration based on alternative/dev.
+No live combat/gameplay, HUD, cards, footer, layout-editor or CI changes.
+No primary dev/test merge and no playable build publication.
+These are idle illustrations; animation rigs, action/hand anchors, runtime
+asset compression and live-game/device acceptance are outside this delivery.
+The parent ZIP and ZIP checksum describe the earlier export. The refreshed
+parent SHA256SUMS.txt covers this current source package.

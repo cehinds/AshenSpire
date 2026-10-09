@@ -6,6 +6,9 @@
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
 - **Current regular candidate: PR #1768**
+  - **Subsequent base update:** actual dev #1757 landed at `eefe18448528d631004ec05b038aa12c24de1d15`, followed by architecture child `b4205fc71ee313bdba1c36ab97f7caf9694b708f`. It changes the default to Alternative appearance and adds debug-only Classic. The earlier 1154 evidence below belongs to clean `be6326f7a5291d6fc3240d893effc95b82eb7d39`, not the new combined artifact. Normal reconciliation is in progress; actual incoming measured box is 1166/3f8943d50c. A new receipt/build cycle and native appearance checks are required.
+  - The complete prior source corpus passed: 2,186 faces on desktop and phone, all four widths plus restoration, all ten actions/eight schools, and native Information/Enter doors with focus/memento preservation. [Curated proof and exact boundaries](../../../qa/combat-promotion-polish-20261008/prior-1154-source/README.md).
+  - Fresh exact-be632 cloud core passed 149/0 including all 20 simulated runs. Current 1757 inheritance focused checks passed 68/68, zero skips; this is source integration evidence, not final compiled proof.
   - [#1768](https://github.com/cehinds/AshenSpire/pull/1768) is ready/open against dev; normal inheritance and source reviews are clear. Final native validation and promotion remain pending.
   - Official prelude `0.7.1.1153` / `0e078075c5` completed all four aliases. Shipping was accidentally invoked during alias refresh and failed four checks; that invocation is retained separately. Shipping after launcher exit passed all 12 checks.
   - The guarded own-receipt writer used the actual #1768 and measured prelude plus one, preserving all 801 foreign receipt lines. Official projection and rebuild produced `0.7.1.1154` / `68a938d822`, with launcher exit 0 and all four aliases refreshed. Light download: 98,806,864 bytes.
