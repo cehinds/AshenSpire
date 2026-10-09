@@ -63,6 +63,7 @@ try {
       const url = new URL(process.env.COMBAT_QA_URL || 'http://localhost:8338/?preview=rear-player');
       url.searchParams.set('shot', 'combat');
       await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout: 120000 });
+      result.url = page.url(); result.title = await page.title();
       await page.waitForSelector('.hand .card', { timeout: 120000 });
       await page.waitForTimeout(1500);
       await page.screenshot({ path: `${out}/${width}-initial.png` });
@@ -98,15 +99,15 @@ try {
         // Check the visible character, excluding transparent sprite padding.
         // Scan the rendered image independently, so this also checks packaged
         // builds without importing their source geometry implementation.
-        const art = [...playerSprite.querySelectorAll('img')].filter(image => {
-          if (!image.complete || !image.naturalWidth || !image.getBoundingClientRect().width) return false;
+        const art = [...playerSprite.querySelectorAll('img, canvas')].filter(image => {
+          if ((image.tagName === 'IMG' && (!image.complete || !image.naturalWidth)) || !image.getBoundingClientRect().width) return false;
           for (let node = image; node && node !== playerSprite; node = node.parentElement) {
             const style = getComputedStyle(node);
             if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
           }
           return true;
         }).map(image => {
-          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth || image.width; canvas.height = image.naturalHeight || image.height;
           const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
           const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
           let x0 = canvas.width, y0 = canvas.height, x1 = -1, y1 = -1;

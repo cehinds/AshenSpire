@@ -8,7 +8,7 @@ mkdirSync(out, { recursive: true });
 const results = [];
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 try {
-  for (const [width, height] of [[288, 513], [320, 568], [390, 844], [844, 390]]) {
+  for (const [width, height] of [[288, 513], [320, 568], [390, 844], [844, 390]].filter(([w]) => !process.env.QA_WIDTH || w === Number(process.env.QA_WIDTH))) {
     const page = await browser.newPage({ viewport: { width, height }, isMobile: true, hasTouch: true });
     const cdp = await page.context().newCDPSession(page);
     const result = { width, height, steps: [], errors: [] }; results.push(result);
@@ -37,6 +37,7 @@ try {
       const url = new URL(process.env.COMBAT_QA_URL || 'http://localhost:8338/?preview=rear-player');
       url.searchParams.set('shot', 'combat');
       await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout: 120000 });
+      result.url = page.url(); result.title = await page.title();
       await log.waitFor({ state: 'visible', timeout: 120000 });
       await page.waitForTimeout(1500);
       assert.equal(await page.locator('#combat-log button[data-log-size]').count(), 0, 'no inner size buttons');
@@ -78,5 +79,6 @@ try {
       throw error;
     } finally { await page.close(); }
   }
+  assert(results.length > 0, 'QA_WIDTH must select a supported viewport');
   console.log(`PASS native combat log tap/drag/cancel/keyboard at ${results.map(row => row.width).join(', ')}`);
 } finally { await browser.close(); }
