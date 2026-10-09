@@ -26,6 +26,10 @@ weapons naturally change silhouette.
 - Original detached base: `74fbff9a26e4fd6d7f3c6e5d12a928fe133fd138`.
 - Feature branch: `codex/rear-sprites-layering-20261008`; remote `origin`,
   `https://github.com/cehinds/AshenSpire.git`.
+- Implementation and tested runtime commit: `7da203eb33ee7a1a35cfe9c808272411d708da8f`.
+  Its origin branch was verified with `git ls-remote` after the successful push.
+  The following evidence/verifier commit preserves that runtime and adds these
+  durable reports; use the latest origin branch tip when continuing.
 - Latest dev observed before checkpoint: `c47f54d42dd04505b60ac6b478b314788a440ffe`.
 - Built runtime: `0.7.1.1151`, source digest `e4095c5de9`.
 - Shared handoff source: `codex/session-continuations-20261008` at
@@ -43,7 +47,7 @@ must be compared again before integration:
 | --- | --- | --- |
 | [1757](https://github.com/cehinds/AshenSpire/pull/1757) | `6071186d51dcd737f0ebb13a12e3a1f26fd7fc49` | Broader default alternative appearance, `assets-display/alternative`, anchors, renderer selection, asset packaging, combat/coop screens and screenreach. Prefer its canonical display-asset package over maintaining duplicate art systems. Port this checkpoint's owner placement, shared layer order and stability contracts deliberately. |
 | [1767](https://github.com/cehinds/AshenSpire/pull/1767) | `dd66519c475b93ef604dd4dd5865c6d565514042` | Reaction and Counter ordering, fx, battlefield/geometry and combat/coop screens. Preserve separate incoming defense and successful Counter-return beats. Do not replace that branch's newer runtime with these older screen files. |
-| [1766](https://github.com/cehinds/AshenSpire/pull/1766) | `602928f690264d95fe1fe6da9aa8abac159fc290` | Card layout and interaction. Keep its readability and targeting changes. |
+| [1766](https://github.com/cehinds/AshenSpire/pull/1766) | `3d5bea6fe5b979e4873fa09ce53ff02d95df7c24` | Card layout and interaction. Keep its readability and targeting changes. |
 
 ## Source and artwork
 
@@ -97,6 +101,7 @@ git pull --ff-only
 node tools/fetch-art.mjs --pack light,common
 node --test tests/rear-combat-art.test.mjs tests/asset-pack.test.mjs tests/combat-composition.test.mjs tests/combatAnimation.test.mjs tests/combat-sprite-scale.test.mjs tests/combat-overhead-anchor.test.mjs tests/wireframe-scene-layers.test.mjs tests/combat-counter-animation.test.mjs tests/art-restore.test.mjs
 node tools/bundle.mjs --light --out build/rear-combat-preview
+node tools/verify-external.mjs --dir build/rear-combat-preview
 node tools/serve.mjs --port 8338 --no-open --no-lan
 ```
 
@@ -130,19 +135,36 @@ also records a separate uninstrumented package boot and card selection.
 - Four classes, 32 actions and 12 held stances passed the compiled renderer
   checks. Every non-melee sample stays at its anchor; melee advances and returns;
   all frame drawing sizes remain fixed.
+- The final compiled package also passed all 20 wrapped reaction checks and
+  [311 package integrity checks](package-integrity.txt). The package verifier
+  now validates the same hash-checked rear catalog as the pack builder.
 - Independent review identified generic hurt/stagger CSS displacement and co-op
   fit loss across receipt remounts. Both are fixed. Source browser QA passed 20
   wrapped reaction checks; the co-op regression replaces the actual field,
   removes a card and enlarges intent controls, with zero actor geometry drift.
+  A final independent code/evidence review found no remaining correctness issue
+  in the fit persistence or combined catalog validation. It confirmed the known
+  solo audio 404 limitation below.
 - Source layout checks passed at 1440x900, 650x766, 390x844, 844x390 and co-op
   1440x900. Real three-card source playthroughs passed on desktop and phone;
   maximum resting geometry drift was 0 px and 0.109375 px respectively.
 - Uninstrumented packaged boot loaded rear artwork and accepted card selection
   without page exceptions. It still requested the pre-existing missing
   `assets/sfx/holdTick.ogg`. Do not claim a request-clean package.
-- Final compiled layout and real-card replay reports are recorded in the
-  checkpoint update after those probes finish. Co-op is a local snapshot stub,
-  not a real two-client LAN acceptance test.
+- Final compiled layout checks passed all five cases, including zero co-op
+  remount geometry drift: [layer report](layer-checks.json). The compiled
+  renderer report is [animation-checks.json](animation-checks.json).
+- Three accepted card plays passed on [desktop](card-desktop.json) and
+  [phone](card-phone.json), with no page exceptions. Maximum resting geometry
+  drift was 0 px on desktop and 0.109375 px on phone (browser layout rounding).
+  All commands above exited 0. Co-op is a local snapshot stub, not a real
+  two-client LAN acceptance test.
+
+The checked captures are [desktop](combat-1440.png), [owner-sized](combat-650.png),
+[phone](combat-390.png), [short landscape](combat-844.png), and
+[co-op](coop-1440.png). Real-play captures are [desktop](card-desktop.png) and
+[phone](card-phone.png). `packaged-combat.png` is the earlier uninstrumented build
+1150 capture; the other captures and compiled reports are build 1151.
 
 Before a ready PR, reconcile the three overlaps above, run current-head fast
 gates and a fresh package capture, and independently review the reconciled diff.

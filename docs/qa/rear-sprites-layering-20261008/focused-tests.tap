@@ -1,0 +1,375 @@
+TAP version 13
+# Subtest: relicIcon: a failed icon becomes its glyph, and the restore draws the icon again
+ok 1 - relicIcon: a failed icon becomes its glyph, and the restore draws the icon again
+  ---
+  duration_ms: 4.9124
+  ...
+# Subtest: enemySprite: a failed sprite becomes its placeholder, and the restore builds the sprite again
+ok 2 - enemySprite: a failed sprite becomes its placeholder, and the restore builds the sprite again
+  ---
+  duration_ms: 1.5037
+  ...
+# Subtest: classSprite: a failed figure falls back to its SVG, and the restore draws the same figure again
+ok 3 - classSprite: a failed figure falls back to its SVG, and the restore draws the same figure again
+  ---
+  duration_ms: 1.8116
+  ...
+# Subtest: rear player art joins the common pack and rejects modified source bytes
+ok 4 - rear player art joins the common pack and rejects modified source bytes
+  ---
+  duration_ms: 695.4442
+  ...
+# Subtest: a clean write verifies green, with the layout the plan names
+ok 5 - a clean write verifies green, with the layout the plan names
+  ---
+  duration_ms: 414.9017
+  ...
+# Subtest: determinism: two writes, and an LF and a CRLF checkout, give identical bytes
+ok 6 - determinism: two writes, and an LF and a CRLF checkout, give identical bytes
+  ---
+  duration_ms: 1705.0966
+  ...
+# Subtest: known-bad: an object whose bytes do not hash to its name is caught
+ok 7 - known-bad: an object whose bytes do not hash to its name is caught
+  ---
+  duration_ms: 251.0937
+  ...
+# Subtest: known-bad: an index whose recorded hash disagrees with the manifest, or a source that does, is caught
+ok 8 - known-bad: an index whose recorded hash disagrees with the manifest, or a source that does, is caught
+  ---
+  duration_ms: 378.1676
+  ...
+# Subtest: known-bad: a stray object, a stray pack file and a second index are caught
+ok 9 - known-bad: a stray object, a stray pack file and a second index are caught
+  ---
+  duration_ms: 353.8324
+  ...
+# Subtest: known-bad: a twin whose string does not match its index is caught
+ok 10 - known-bad: a twin whose string does not match its index is caught
+  ---
+  duration_ms: 416.3523
+  ...
+# Subtest: known-bad: a font sidecar face that differs from its common record is caught
+ok 11 - known-bad: a font sidecar face that differs from its common record is caught
+  ---
+  duration_ms: 288.3475
+  ...
+# Subtest: the real tree plans cleanly: the common pack holds the 15 faces, the licence, the score and the tiles
+ok 12 - the real tree plans cleanly: the common pack holds the 15 faces, the licence, the score and the tiles
+  ---
+  duration_ms: 1347.1866
+  ...
+# Subtest: --out: a directory inside the checkout named like `..cache` is refused, a real parent is not
+ok 13 - --out: a directory inside the checkout named like `..cache` is refused, a real parent is not
+  ---
+  duration_ms: 33.742
+  ...
+# Subtest: known-bad: a tree missing a whole pack is not green; a partial write checks green against its own selection
+ok 14 - known-bad: a tree missing a whole pack is not green; a partial write checks green against its own selection
+  ---
+  duration_ms: 307.1942
+  ...
+# Subtest: known-bad: a symlinked --out, or a symlinked packs/ inside it, never clears a tracked directory
+ok 15 - known-bad: a symlinked --out, or a symlinked packs/ inside it, never clears a tracked directory
+  ---
+  duration_ms: 148.5975
+  ...
+# Subtest: known-bad: an unmarked --out with its own packs/ or objects/ is refused, never cleared
+ok 16 - known-bad: an unmarked --out with its own packs/ or objects/ is refused, never cleared
+  ---
+  duration_ms: 397.5457
+  ...
+# Subtest: known-bad: --check reports a symlink under packs/ or objects/ instead of following it
+ok 17 - known-bad: --check reports a symlink under packs/ or objects/ instead of following it
+  ---
+  duration_ms: 171.6635
+  ...
+# Subtest: known-bad: --out or --pack without a value is refused before anything is written
+ok 18 - known-bad: --out or --pack without a value is refused before anything is written
+  ---
+  duration_ms: 568.4596
+  ...
+# Subtest: known-bad: a .asset-pack marker that is a symlink or a directory is refused, and nothing is written through it
+ok 19 - known-bad: a .asset-pack marker that is a symlink or a directory is refused, and nothing is written through it
+  ---
+  duration_ms: 88.0983
+  ...
+# Subtest: .gitignore keeps the store and its marker out of git at any depth under build/ and dist/
+ok 20 - .gitignore keeps the store and its marker out of git at any depth under build/ and dist/
+  ---
+  duration_ms: 162.8802
+  ...
+# Subtest: taller intent and Inspect controls cannot change settled artwork; explicit layout changes can
+ok 21 - taller intent and Inspect controls cannot change settled artwork; explicit layout changes can
+  ---
+  duration_ms: 10.7726
+  ...
+# Subtest: playing, hovering and emptying the hand do not move the initial composition anchor
+ok 22 - playing, hovering and emptying the hand do not move the initial composition anchor
+  ---
+  duration_ms: 1.5184
+  ...
+# Subtest: solo player is raised above the hand and enemies recede toward the upper right
+ok 23 - solo player is raised above the hand and enemies recede toward the upper right
+  ---
+  duration_ms: 1.1007
+  ...
+# Subtest: co-op does not push players beneath the hand and every painted figure stays in bounds
+ok 24 - co-op does not push players beneath the hand and every painted figure stays in bounds
+  ---
+  duration_ms: 3.4294
+  ...
+# Subtest: actual mounted Shield Bash version 1 uses the committed action and permanent instance
+ok 25 - actual mounted Shield Bash version 1 uses the committed action and permanent instance
+  ---
+  duration_ms: 111.3016
+  ...
+# Subtest: actual mounted Shield Bash version 2 uses the committed action and permanent instance
+ok 26 - actual mounted Shield Bash version 2 uses the committed action and permanent instance
+  ---
+  duration_ms: 79.3018
+  ...
+# Subtest: expanded Dodge and dagger Counter prepare defense; a Spell Counter prepares casting
+ok 27 - expanded Dodge and dagger Counter prepare defense; a Spell Counter prepares casting
+  ---
+  duration_ms: 21.6593
+  ...
+# Subtest: legacy kind priority and ordinary Power preparation stay unchanged
+ok 28 - legacy kind priority and ordinary Power preparation stay unchanged
+  ---
+  duration_ms: 0.6485
+  ...
+# Subtest: co-op p2 visual receipt uses its owner when p1 alone is Blighted
+ok 29 - co-op p2 visual receipt uses its owner when p1 alone is Blighted
+  ---
+  duration_ms: 89.6355
+  ...
+# Subtest: co-op p2 visual receipt uses its owner when p2 alone is Blighted
+ok 30 - co-op p2 visual receipt uses its owner when p2 alone is Blighted
+  ---
+  duration_ms: 125.0774
+  ...
+# Subtest: short-phone fitted feet keep separate full tap areas without changing the artwork
+ok 31 - short-phone fitted feet keep separate full tap areas without changing the artwork
+  ---
+  duration_ms: 12.0214
+  ...
+# Subtest: tap target packing preserves unconstrained feet and clamps only targets to stage edges
+ok 32 - tap target packing preserves unconstrained feet and clamps only targets to stage edges
+  ---
+  duration_ms: 0.7614
+  ...
+# Subtest: packed frame targets reserve their visible health footer as the owner cue
+ok 33 - packed frame targets reserve their visible health footer as the owner cue
+  ---
+  duration_ms: 0.7426
+  ...
+# Subtest: short landscape overheads pack intersecting rows despite a wide stage
+ok 34 - short landscape overheads pack intersecting rows despite a wide stage
+  ---
+  duration_ms: 13.1688
+  ...
+# Subtest: half-field mobile figures keep distinct reachable intent anchors in the short portrait field
+ok 35 - half-field mobile figures keep distinct reachable intent anchors in the short portrait field
+  ---
+  duration_ms: 16.4844
+  ...
+# Subtest: measured Inspect expansion preserves slot order and full overhead clearance
+ok 36 - measured Inspect expansion preserves slot order and full overhead clearance
+  ---
+  duration_ms: 1.4375
+  ...
+# Subtest: overhead offsets convert screen pixels once and retain the measured control box at UI zoom
+ok 37 - overhead offsets convert screen pixels once and retain the measured control box at UI zoom
+  ---
+  duration_ms: 0.551
+  ...
+# Subtest: full-height enemies from separate formation rows keep every intent reachable when their fitted bands coincide
+ok 38 - full-height enemies from separate formation rows keep every intent reachable when their fitted bands coincide
+  ---
+  duration_ms: 0.7441
+  ...
+# Subtest: an in-bounds reserved control anchor stays put independently of figure growth
+ok 39 - an in-bounds reserved control anchor stays put independently of figure growth
+  ---
+  duration_ms: 0.9524
+  ...
+# Subtest: ribbon clearance repacks the final physical bands without moving already clear controls
+ok 40 - ribbon clearance repacks the final physical bands without moving already clear controls
+  ---
+  duration_ms: 2.2139
+  ...
+# Subtest: actual 844x390 XL foot targets and health footers clear final intent boxes inside the 139.86px stage
+ok 41 - actual 844x390 XL foot targets and health footers clear final intent boxes inside the 139.86px stage
+  ---
+  duration_ms: 1.3531
+  ...
+# Subtest: intent clearance repacks a newly joined footer band without shifting clear targets
+ok 42 - intent clearance repacks a newly joined footer band without shifting clear targets
+  ---
+  duration_ms: 0.3237
+  ...
+# Subtest: insufficient stage room is reported rather than placing a target over another control or outside the stage
+ok 43 - insufficient stage room is reported rather than placing a target over another control or outside the stage
+  ---
+  duration_ms: 0.2303
+  ...
+# Subtest: aligned target plates resolve crowded footers vertically
+ok 44 - aligned target plates resolve crowded footers vertically
+  ---
+  duration_ms: 0.3578
+  ...
+# Subtest: light and full enemy art measure the same figure and floor
+ok 45 - light and full enemy art measure the same figure and floor
+  ---
+  duration_ms: 13.9368
+  ...
+# Subtest: a cached sprite still waits for the new image element to load
+ok 46 - a cached sprite still waits for the new image element to load
+  ---
+  duration_ms: 1.8737
+  ...
+# Subtest: unloaded sprite geometry cannot poison the shared formation fit
+ok 47 - unloaded sprite geometry cannot poison the shared formation fit
+  ---
+  duration_ms: 1.3585
+  ...
+# Subtest: the real roster keeps encounter classification and fits every elite/boss ratio
+ok 48 - the real roster keeps encounter classification and fits every elite/boss ratio
+  ---
+  duration_ms: 619.62
+  ...
+# Subtest: cramped screens shrink the shared player reference, preserving ratio and depth
+ok 49 - cramped screens shrink the shared player reference, preserving ratio and depth
+  ---
+  duration_ms: 9.6771
+  ...
+# Subtest: transparent padding does not consume overhead clearance or erase the visible size ratio
+ok 50 - transparent padding does not consume overhead clearance or erase the visible size ratio
+  ---
+  duration_ms: 0.5383
+  ...
+# Subtest: presentation growth is shared so a capped enemy never becomes smaller than the player
+ok 51 - presentation growth is shared so a capped enemy never becomes smaller than the player
+  ---
+  duration_ms: 0.8069
+  ...
+# Subtest: a phone cell no longer boxes the figure into a thumbnail
+ok 52 - a phone cell no longer boxes the figure into a thumbnail
+  ---
+  duration_ms: 0.4844
+  ...
+# Subtest: the narrow-layout floor keeps formation spacing and never makes enemies smaller than the player
+ok 53 - the narrow-layout floor keeps formation spacing and never makes enemies smaller than the player
+  ---
+  duration_ms: 3.5532
+  ...
+# Subtest: the floor never shrinks a figure below its plain fit (wide art keeps the plain fit)
+ok 54 - the floor never shrinks a figure below its plain fit (wide art keeps the plain fit)
+  ---
+  duration_ms: 2.2083
+  ...
+# Subtest: with no floor the fit is unchanged
+ok 55 - with no floor the fit is unchanged
+  ---
+  duration_ms: 0.6416
+  ...
+# Subtest: a phone player lift also grows enemies in multiple rows without shrinking any figure
+ok 56 - a phone player lift also grows enemies in multiple rows without shrinking any figure
+  ---
+  duration_ms: 0.8016
+  ...
+# Subtest: depth and independently configured scales cannot make enemies shorter than any friendly
+ok 57 - depth and independently configured scales cannot make enemies shorter than any friendly
+  ---
+  duration_ms: 3.1286
+  ...
+# Subtest: ranged attacks stay projectile motions even without a matching authored bow clip
+ok 58 - ranged attacks stay projectile motions even without a matching authored bow clip
+  ---
+  duration_ms: 2.2072
+  ...
+# Subtest: real shield equipment selects bash; dagger and lighting tools do not
+ok 59 - real shield equipment selects bash; dagger and lighting tools do not
+  ---
+  duration_ms: 8.1452
+  ...
+# Subtest: attack and Power kind precede guard tags; untagged skill casts
+ok 60 - attack and Power kind precede guard tags; untagged skill casts
+  ---
+  duration_ms: 0.5427
+  ...
+# Subtest: card tags select spell casting and Blade choreography across held weapons
+ok 61 - card tags select spell casting and Blade choreography across held weapons
+  ---
+  duration_ms: 106.8088
+  ...
+# Subtest: rest reducer is owner-relative and paced/flush reduction agree
+ok 62 - rest reducer is owner-relative and paced/flush reduction agree
+  ---
+  duration_ms: 0.7676
+  ...
+# Subtest: authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets
+ok 63 - authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets
+  ---
+  duration_ms: 1053.8894
+  ...
+# Subtest: rear class choreography follows resolved cards with stationary guard and ranged families
+ok 64 - rear class choreography follows resolved cards with stationary guard and ranged families
+  ---
+  duration_ms: 30.6854
+  ...
+# Subtest: confirmed card stances persist per player until their next turn
+ok 65 - confirmed card stances persist per player until their next turn
+  ---
+  duration_ms: 6.4626
+  ...
+# Subtest: all action and stance frames ship with verified hashes and a common foot anchor
+ok 66 - all action and stance frames ship with verified hashes and a common foot anchor
+  ---
+  duration_ms: 635.6522
+  ...
+# Subtest: authored scene layers paint sky, structures, then floor without mutating their catalog
+ok 67 - authored scene layers paint sky, structures, then floor without mutating their catalog
+  ---
+  duration_ms: 4.0554
+  ...
+# Subtest: full-screen backdrop grounds the figures using the battlefield window
+ok 68 - full-screen backdrop grounds the figures using the battlefield window
+  ---
+  duration_ms: 16.8634
+  ...
+# Subtest: WGS1: the plate covers the battlefield undistorted, its ground on the floor band
+ok 69 - WGS1: the plate covers the battlefield undistorted, its ground on the floor band
+  ---
+  duration_ms: 9.0705
+  ...
+# Subtest: WGS7 floor owns the formation: every foot stands on the floor band
+ok 70 - WGS7 floor owns the formation: every foot stands on the floor band
+  ---
+  duration_ms: 2.9424
+  ...
+# Subtest: layer toggles change the paint, never the feet
+ok 71 - layer toggles change the paint, never the feet
+  ---
+  duration_ms: 0.5939
+  ...
+# Subtest: WGC4: only living enemies are eligible, and only while a command is armed
+ok 72 - WGC4: only living enemies are eligible, and only while a command is armed
+  ---
+  duration_ms: 0.4304
+  ...
+# Subtest: WGC4: the target outline holds its physical minimum under the depth zoom
+ok 73 - WGC4: the target outline holds its physical minimum under the depth zoom
+  ---
+  duration_ms: 0.6548
+  ...
+1..73
+# tests 73
+# suites 0
+# pass 73
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8131.0843
