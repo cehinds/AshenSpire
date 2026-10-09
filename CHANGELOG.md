@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
+- **The historical Alternative Test promotion is recorded** ([#1783](https://github.com/cehinds/AshenSpire/pull/1783), `0.7.1.1205`). Restore the missing receipt for the reviewed alternative combat promotion without changing its original build identity or the surrounding history.
+
 - **Alternative combat perspective becomes the default** ([#1781](https://github.com/cehinds/AshenSpire/pull/1781), `0.7.1.1203`). Regular Dev/Test inherit the approved alternative battlefield, artwork and animations together with readable card effects, primary bottom-band actions, stance counters, persistent Ward, status stacks, Upcast, hidden intents, enemy knowledge and Ashen Blight. Compact hand, Info and fighter targets stay reachable. The former root alternative branches are frozen; future updates use regular Dev/Test.
 
 

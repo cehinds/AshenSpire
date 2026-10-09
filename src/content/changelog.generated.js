@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1783",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "The historical Alternative Test promotion is recorded",
+    "detail": "Restore the missing receipt for the reviewed alternative combat promotion without changing its original build identity or the surrounding history.",
+    "build": "0.7.1.1205",
+    "pullRequest": 1783,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1783"
+  },
+  {
     "id": "pr-1781",
     "date": "2026-10-09",
     "group": "2026-10-09",
@@ -221,6 +231,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1142",
     "pullRequest": 1750,
     "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1744",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative combat sigils and checkpoints reached Test",
+    "detail": "The reviewed alternative combat card sigils, complete effects, checkpoints and reachable tutorial controls were promoted to Alternative Test with the existing battlefield artwork and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1744,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1744"
   },
   {
     "id": "pr-1737",
