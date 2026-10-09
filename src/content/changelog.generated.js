@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-09",
     "summary": "Alternative combat perspective becomes the default",
     "detail": "Regular Dev/Test inherit the approved alternative battlefield, artwork and animations together with readable card effects, primary bottom-band actions, stance counters, persistent Ward, status stacks, Upcast, hidden intents, enemy knowledge and Ashen Blight. Compact hand, Info and fighter targets stay reachable. The former root alternative branches are frozen; future updates use regular Dev/Test.",
-    "build": "0.7.1.1201",
+    "build": "0.7.1.1202",
     "pullRequest": 1781,
     "url": "https://github.com/cehinds/AshenSpire/pull/1781"
   },
