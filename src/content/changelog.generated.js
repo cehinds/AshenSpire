@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Ordered counters, defensive reactions and combat controls",
     "detail": "Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.",
-    "build": "0.7.1.1168",
+    "build": "0.7.1.1172",
     "pullRequest": 1767,
     "url": "https://github.com/cehinds/AshenSpire/pull/1767"
+  },
+  {
+    "id": "pr-1770",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: Test promotion keeps its full history",
+    "detail": "The reviewed appearance and player-guide delivery retains the existing Test history so channel promotion can proceed. Fresh desktop, phone and co-op appearance checks are saved alongside the reproducible capture recipe.",
+    "build": "0.7.1.1167",
+    "pullRequest": 1770,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1770"
   },
   {
     "id": "pr-1757",

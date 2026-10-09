@@ -1,6 +1,6 @@
 # Enemy knowledge, reactions and combat controls audit
 
-Current source checkpoint: `1974b9b386440949a383522fd4cdea592df5104a`, including current dev combined appearances and artwork. Official packaged build: `0.7.1.1168`, source digest `e8982e69ab`. This checklist distinguishes implemented behavior from validation and delivery. Historical saves retain their previous rules. [Viewed packaged captures and reproducible measurements](qa/combat-reactions-2026-10-08/README.md).
+Reviewed runtime checkpoint: `ebebb6ba`, plus metadata-only dev reconciliation and independently reviewed fitted-hand clearance CSS (`4b10c88b690ae55be58c59a5441990138e5488ce`). Official packaged build: `0.7.1.1172`, source digest `da2a96e4e6`. This checklist distinguishes implemented behavior from validation and delivery. Historical saves retain their previous rules. [Viewed packaged captures and reproducible measurements](qa/combat-reactions-2026-10-08/README.md).
 
 Already implemented in the inherited enemy-knowledge runtime:
 
@@ -27,13 +27,15 @@ Implemented in this reaction runtime:
 Validation and delivery:
 
 - [x] Independent source review is clear after fixes for continuation, disconnected contacts, controls focus and per-seat hand cleanup.
-- [x] Independent review also cleared co-op authored animation timing and phone hand clearance, then the combined-appearance merge and canvas body tracking. Counter returns bypass cached preparation plans in both appearances.
+- [x] Independent review cleared co-op authored animation timing, the combined-appearance merge and canvas body tracking. Final evidence review found and then cleared the last-card dock overlap: fitted-hand scrolling, touch pan direction and visible Upcast controls were corrected. Counter returns bypass cached preparation plans in both appearances.
 - [x] Focused regression suite: 90 pass, 0 fail, 0 skip.
 - [x] CI corrections: terminal regression cases, explicit historical fixtures, current-rule bot and knowledge commands, canonical copy with permanent protection, shared zoom conversion and registered listener cleanup. Current-dev focused suite: 35 pass, 0 fail, 0 skip. Separate copy/simulation suite: 13 pass, 0 fail, 0 skip.
 - [x] Source-browser desktop and native-touch reaction sequencing, Back behavior, control sizing and selected HUD gap were exercised.
 - [x] Combined-appearance focused suite: 42 pass, 0 fail, 0 skip; component contracts: 22/22; copy baseline matches. The prior UI correction suite also passed 28 tests.
+- [x] Final hand regression suite: 29 pass, 0 fail. Packaged measurements check every card; real solo and LAN swipes reach the final card, Upcast remains usable, and source-browser vertical drag retains targeting.
 - [x] Final packaged desktop, touch emulation, reduced-motion, 320 px and real LAN checks. Counter timelines on desktop, touch, Classic and both LAN clients finished with zero watchdog completions; defensive Sweep was actually played under reduced motion. Page errors were zero; optional audio/reload network failures are recorded with the evidence.
-- [x] Prior source checkpoint `5f10b47222` full discovery completed: 381 files, 3,313 tests, 0 failed. This does not certify the later appearance merge or the still-running remainder of that full command.
+- [x] Prior source checkpoint `5f10b47222` full discovery completed: 381 files, 3,313 tests, 0 failed. The complete older command finished 167 pass/1 fail, solely the co-op copy baseline that was corrected afterward and separately verified. This does not certify the later appearance merge.
+- [x] Final current core lane (`--no-selftests --no-discovered`) completed: 149 checks passed, zero failed, actual exit 0.
 - [ ] Full Node suite actual successful completion.
 - [x] Official final build completed with all four matching aliases. Build identity, explicit PR #1767 receipt, shipping and changelog-order gates passed.
 - [ ] Exact ready PR/head review, fast CI and dev merge.

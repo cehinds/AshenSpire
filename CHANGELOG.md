@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
-- **Ordered counters, defensive reactions and combat controls** ([#1767](https://github.com/cehinds/AshenSpire/pull/1767), `0.7.1.1168`). Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.
+- **Ordered counters, defensive reactions and combat controls** ([#1767](https://github.com/cehinds/AshenSpire/pull/1767), `0.7.1.1172`). Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.
+
+- **Behind the scenes: Test promotion keeps its full history** ([#1770](https://github.com/cehinds/AshenSpire/pull/1770), `0.7.1.1167`). The reviewed appearance and player-guide delivery retains the existing Test history so channel promotion can proceed. Fresh desktop, phone and co-op appearance checks are saved alongside the reproducible capture recipe.
 
 - **Choose your game appearance** ([#1757](https://github.com/cehinds/AshenSpire/pull/1757), `0.7.1.1166`). The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.
 

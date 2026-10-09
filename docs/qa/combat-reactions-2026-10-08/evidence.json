@@ -1,804 +1,201 @@
 {
-  "sourceCheckpoint": "1974b9b386440949a383522fd4cdea592df5104a",
   "build": {
     "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
     "release": "0.7.1",
-    "ordinal": 1168,
-    "digest": "e8982e69ab",
+    "ordinal": 1172,
+    "digest": "da2a96e4e6",
     "built": "2026-10-09"
   },
   "aliases": [
     "dist/AshenSpire.html",
-    "dist/AshenSpire-0.7.1.1168.html",
+    "dist/AshenSpire-0.7.1.1172.html",
     "dist/download/AshenSpire.html",
     "AshenSpire.html"
   ],
-  "receipt": "- **Ordered counters, defensive reactions and combat controls** ([#1767](https://github.com/cehinds/AshenSpire/pull/1767), `0.7.1.1168`). Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.",
-  "scope": "Authored saved combat and production memory showcase; real UI and LAN commands, not a complete playthrough or physical-device acceptance",
+  "receipt": "- **Ordered counters, defensive reactions and combat controls** ([#1767](https://github.com/cehinds/AshenSpire/pull/1767), `0.7.1.1172`). Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.",
+  "scope": "Final packaged 1172 on reviewed reaction implementation plus metadata-only dev reconciliation and reviewed fitted-hand clearance CSS. Authored saved combat, production showcase and real UI/LAN commands; no physical-device acceptance.",
   "reports": {
-    "small-geometry": {
-      "desktop": {
-        "viewport": {
-          "width": 1440,
-          "height": 900,
-          "visibleHeight": 900
-        },
-        "touch": 0,
-        "tools": {
-          "x": 1292,
-          "y": 677.28125,
-          "width": 136,
-          "height": 92,
-          "top": 677.28125,
-          "bottom": 769.28125,
-          "right": 1428
-        },
-        "log": {
-          "x": 1128,
-          "y": 549.78125,
-          "width": 300,
-          "height": 121.5,
-          "top": 549.78125,
-          "bottom": 671.28125,
-          "right": 1428
-        },
-        "card": {
-          "x": 404.7165832519531,
-          "y": 533.23828125,
-          "width": 167.73867797851562,
-          "height": 243.0234375,
-          "top": 533.23828125,
-          "bottom": 776.26171875,
-          "right": 572.4552612304688
-        },
-        "hand": {
-          "x": 0,
-          "y": 507.28125,
-          "width": 1292,
-          "height": 270,
-          "top": 507.28125,
-          "bottom": 777.28125,
-          "right": 1292
-        },
-        "footer": {
-          "x": 420,
-          "y": 777.28125,
-          "width": 600,
-          "height": 122.71875,
-          "top": 777.28125,
-          "bottom": 900,
-          "right": 1020
-        },
-        "hud": {
-          "x": 446.3125,
-          "y": 446.578125,
-          "width": 112,
-          "height": 28.59375,
-          "top": 446.578125,
-          "bottom": 475.171875,
-          "right": 558.3125
-        },
-        "menuBottom": 56,
-        "artTop": 485.183884564568,
-        "hudGap": 10.012009564568018,
-        "controls": [
-          {
-            "text": "Small",
-            "height": 44
-          },
-          {
-            "text": "Medium",
-            "height": 44
-          },
-          {
-            "text": "Large",
-            "height": 44
-          },
-          {
-            "text": "Combat log",
-            "height": 44
-          },
-          {
-            "text": "Reactionenabled",
-            "height": 44
-          }
-        ],
-        "reaction": "true"
-      },
-      "native": {
-        "viewport": {
-          "width": 390,
-          "height": 844,
-          "visibleHeight": 844
-        },
-        "touch": 1,
-        "tools": {
-          "x": 242.109375,
-          "y": 651.5625,
-          "width": 135.890625,
-          "height": 92,
-          "top": 651.5625,
-          "bottom": 743.5625,
-          "right": 378
-        },
-        "log": {
-          "x": 78,
-          "y": 532.921875,
-          "width": 300,
-          "height": 112.640625,
-          "top": 532.921875,
-          "bottom": 645.5625,
-          "right": 378
-        },
-        "card": {
-          "x": 0.9586463570594788,
-          "y": 525.2442016601562,
-          "width": 155.61395263671875,
-          "height": 225.4647216796875,
-          "top": 525.2442016601562,
-          "bottom": 750.7089233398438,
-          "right": 156.57259899377823
-        },
-        "hand": {
-          "x": 0,
-          "y": 498.828125,
-          "width": 242.109375,
-          "height": 253.25,
-          "top": 498.828125,
-          "bottom": 752.078125,
-          "right": 242.109375
-        },
-        "footer": {
-          "x": 0,
-          "y": 752.078125,
-          "width": 390,
-          "height": 91.921875,
-          "top": 752.078125,
-          "bottom": 844,
-          "right": 390
-        },
-        "hud": {
-          "x": 35.65625,
-          "y": 455.546875,
-          "width": 112,
-          "height": 17.59375,
-          "top": 455.546875,
-          "bottom": 473.140625,
-          "right": 147.65625
-        },
-        "menuBottom": 53,
-        "artTop": 483.1415261661305,
-        "hudGap": 10.000901166130518,
-        "controls": [
-          {
-            "text": "Small",
-            "height": 44
-          },
-          {
-            "text": "Medium",
-            "height": 44
-          },
-          {
-            "text": "Large",
-            "height": 44
-          },
-          {
-            "text": "Combat log",
-            "height": 44
-          },
-          {
-            "text": "Reactionenabled",
-            "height": 44
-          }
-        ],
-        "reaction": "true"
-      }
-    },
-    "medium-geometry": {
-      "desktop": {
-        "viewport": {
-          "width": 1440,
-          "height": 900,
-          "visibleHeight": 900
-        },
-        "touch": 0,
-        "tools": {
-          "x": 1292,
-          "y": 677.28125,
-          "width": 136,
-          "height": 92,
-          "top": 677.28125,
-          "bottom": 769.28125,
-          "right": 1428
-        },
-        "log": {
-          "x": 1128,
-          "y": 221.28125,
-          "width": 300,
-          "height": 450,
-          "top": 221.28125,
-          "bottom": 671.28125,
-          "right": 1428
-        },
-        "card": {
-          "x": 404.7165832519531,
-          "y": 533.23828125,
-          "width": 167.73867797851562,
-          "height": 243.0234375,
-          "top": 533.23828125,
-          "bottom": 776.26171875,
-          "right": 572.4552612304688
-        },
-        "hand": {
-          "x": 0,
-          "y": 507.28125,
-          "width": 1292,
-          "height": 270,
-          "top": 507.28125,
-          "bottom": 777.28125,
-          "right": 1292
-        },
-        "footer": {
-          "x": 420,
-          "y": 777.28125,
-          "width": 600,
-          "height": 122.71875,
-          "top": 777.28125,
-          "bottom": 900,
-          "right": 1020
-        },
-        "hud": {
-          "x": 446.3125,
-          "y": 450.046875,
-          "width": 112,
-          "height": 28.59375,
-          "top": 450.046875,
-          "bottom": 478.640625,
-          "right": 558.3125
-        },
-        "menuBottom": 56,
-        "artTop": 488.65159696691177,
-        "hudGap": 10.010971966911768,
-        "controls": [
-          {
-            "text": "Small",
-            "height": 44
-          },
-          {
-            "text": "Medium",
-            "height": 44
-          },
-          {
-            "text": "Large",
-            "height": 44
-          },
-          {
-            "text": "Combat log",
-            "height": 44
-          },
-          {
-            "text": "Reactionenabled",
-            "height": 44
-          }
-        ],
-        "reaction": "true"
-      },
-      "native": {
-        "viewport": {
-          "width": 390,
-          "height": 844,
-          "visibleHeight": 844
-        },
-        "touch": 1,
-        "tools": {
-          "x": 242.109375,
-          "y": 651.5625,
-          "width": 135.890625,
-          "height": 92,
-          "top": 651.5625,
-          "bottom": 743.5625,
-          "right": 378
-        },
-        "log": {
-          "x": 78,
-          "y": 223.890625,
-          "width": 300,
-          "height": 421.671875,
-          "top": 223.890625,
-          "bottom": 645.5625,
-          "right": 378
-        },
-        "card": {
-          "x": 0.9586463570594788,
-          "y": 525.2442016601562,
-          "width": 155.61395263671875,
-          "height": 225.4647216796875,
-          "top": 525.2442016601562,
-          "bottom": 750.7089233398438,
-          "right": 156.57259899377823
-        },
-        "hand": {
-          "x": 0,
-          "y": 498.828125,
-          "width": 242.109375,
-          "height": 253.25,
-          "top": 498.828125,
-          "bottom": 752.078125,
-          "right": 242.109375
-        },
-        "footer": {
-          "x": 0,
-          "y": 752.078125,
-          "width": 390,
-          "height": 91.921875,
-          "top": 752.078125,
-          "bottom": 844,
-          "right": 390
-        },
-        "hud": {
-          "x": 35.65625,
-          "y": 458.5,
-          "width": 112,
-          "height": 17.59375,
-          "top": 458.5,
-          "bottom": 476.09375,
-          "right": 147.65625
-        },
-        "menuBottom": 53,
-        "artTop": 486.10386747472427,
-        "hudGap": 10.010117474724268,
-        "controls": [
-          {
-            "text": "Small",
-            "height": 44
-          },
-          {
-            "text": "Medium",
-            "height": 44
-          },
-          {
-            "text": "Large",
-            "height": 44
-          },
-          {
-            "text": "Combat log",
-            "height": 44
-          },
-          {
-            "text": "Reactionenabled",
-            "height": 44
-          }
-        ],
-        "reaction": "true"
-      }
-    },
-    "large-geometry": {
-      "desktop": {
-        "viewport": {
-          "width": 1440,
-          "height": 900,
-          "visibleHeight": 900
-        },
-        "touch": 0,
-        "tools": {
-          "x": 1292,
-          "y": 677.28125,
-          "width": 136,
-          "height": 92,
-          "top": 677.28125,
-          "bottom": 769.28125,
-          "right": 1428
-        },
-        "log": {
-          "x": 1128,
-          "y": 64,
-          "width": 300,
-          "height": 607.28125,
-          "top": 64,
-          "bottom": 671.28125,
-          "right": 1428
-        },
-        "card": {
-          "x": 404.7165832519531,
-          "y": 533.23828125,
-          "width": 167.73867797851562,
-          "height": 243.0234375,
-          "top": 533.23828125,
-          "bottom": 776.26171875,
-          "right": 572.4552612304688
-        },
-        "hand": {
-          "x": 0,
-          "y": 507.28125,
-          "width": 1292,
-          "height": 270,
-          "top": 507.28125,
-          "bottom": 777.28125,
-          "right": 1292
-        },
-        "footer": {
-          "x": 420,
-          "y": 777.28125,
-          "width": 600,
-          "height": 122.71875,
-          "top": 777.28125,
-          "bottom": 900,
-          "right": 1020
-        },
-        "hud": {
-          "x": 446.3125,
-          "y": 449.984375,
-          "width": 112,
-          "height": 28.59375,
-          "top": 449.984375,
-          "bottom": 478.578125,
-          "right": 558.3125
-        },
-        "menuBottom": 56,
-        "artTop": 488.59284468258124,
-        "hudGap": 10.014719682581244,
-        "controls": [
-          {
-            "text": "Small",
-            "height": 44
-          },
-          {
-            "text": "Medium",
-            "height": 44
-          },
-          {
-            "text": "Large",
-            "height": 44
-          },
-          {
-            "text": "Combat log",
-            "height": 44
-          },
-          {
-            "text": "Reactionenabled",
-            "height": 44
-          }
-        ],
-        "reaction": "true"
-      },
-      "native": {
-        "viewport": {
-          "width": 390,
-          "height": 844,
-          "visibleHeight": 844
-        },
-        "touch": 1,
-        "tools": {
-          "x": 242.109375,
-          "y": 651.5625,
-          "width": 135.890625,
-          "height": 92,
-          "top": 651.5625,
-          "bottom": 743.5625,
-          "right": 378
-        },
-        "log": {
-          "x": 78,
-          "y": 61.453125,
-          "width": 300,
-          "height": 584.109375,
-          "top": 61.453125,
-          "bottom": 645.5625,
-          "right": 378
-        },
-        "card": {
-          "x": 0.9586463570594788,
-          "y": 525.2442016601562,
-          "width": 155.61395263671875,
-          "height": 225.4647216796875,
-          "top": 525.2442016601562,
-          "bottom": 750.7089233398438,
-          "right": 156.57259899377823
-        },
-        "hand": {
-          "x": 0,
-          "y": 498.828125,
-          "width": 242.109375,
-          "height": 253.25,
-          "top": 498.828125,
-          "bottom": 752.078125,
-          "right": 242.109375
-        },
-        "footer": {
-          "x": 0,
-          "y": 752.078125,
-          "width": 390,
-          "height": 91.921875,
-          "top": 752.078125,
-          "bottom": 844,
-          "right": 390
-        },
-        "hud": {
-          "x": 35.65625,
-          "y": 458.5,
-          "width": 112,
-          "height": 17.59375,
-          "top": 458.5,
-          "bottom": 476.09375,
-          "right": 147.65625
-        },
-        "menuBottom": 53,
-        "artTop": 486.095993939568,
-        "hudGap": 10.002243939568018,
-        "controls": [
-          {
-            "text": "Small",
-            "height": 44
-          },
-          {
-            "text": "Medium",
-            "height": 44
-          },
-          {
-            "text": "Large",
-            "height": 44
-          },
-          {
-            "text": "Combat log",
-            "height": 44
-          },
-          {
-            "text": "Reactionenabled",
-            "height": 44
-          }
-        ],
-        "reaction": "true"
-      }
-    },
-    "desktop-freeze": {
-      "unchanged": true,
-      "focusTrap": true
-    },
-    "native-freeze": {
-      "unchanged": true
-    },
-    "native-mid": {
-      "hp": 63,
-      "enemies": [
-        91,
-        100
-      ],
-      "events": 1
-    },
-    "desktop-counter-timeline": {
-      "frames": [
+    "browser-health": {
+      "errors": [],
+      "failures": [
         {
-          "time": 119927.60000000149,
-          "hp": "3563/63",
-          "enemy": "100/100",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "1100/100"
-            }
-          ],
-          "intents": [
-            "Attacking6",
-            "Attacking6"
-          ],
-          "modal": true,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdTick_endTurn.ogg"
         },
         {
-          "time": 121192.30000000075,
-          "hp": "3563/63",
-          "enemy": "100/100",
-          "playerAction": "guard",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "1100/100"
-            }
-          ],
-          "intents": [
-            "Attacking6",
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/block.ogg"
         },
         {
-          "time": 121421.5,
-          "hp": "3563/63",
-          "enemy": "100/100",
-          "playerAction": "guard",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "1100/100"
-            }
-          ],
-          "intents": [
-            "Attacking6",
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/hit_medium.ogg"
         },
         {
-          "time": 121786.5,
-          "hp": "3563/63",
-          "enemy": "100/100",
-          "playerAction": "guard",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "1100/100",
-              "action": "slash"
-            }
-          ],
-          "intents": [
-            "Attacking6",
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/relic.ogg"
         },
         {
-          "time": 122099.10000000149,
-          "hp": "3363/63",
-          "enemy": "100/100",
-          "playerAction": "guard",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "1100/100",
-              "action": "slash"
-            }
-          ],
-          "intents": [
-            "Attacking6",
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/deckShuffle.ogg"
         },
         {
-          "time": 122572.80000000075,
-          "hp": "3363/63",
-          "enemy": "100/100",
-          "playerAction": "strike",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "1100/100",
-              "action": "slash"
-            }
-          ],
-          "intents": [
-            "Attacking6",
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/cardDraw.ogg"
         },
         {
-          "time": 123112.60000000149,
-          "hp": "3363/63",
-          "enemy": "100/100",
-          "playerAction": "strike",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "92/100",
-              "action": "slash"
-            }
-          ],
-          "intents": [
-            "Attacking6",
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 8 damage to Wandering Soldier (1 blocked)."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/turnStinger.ogg"
         },
         {
-          "time": 123516.10000000149,
-          "hp": "3363/63",
-          "enemy": "100/100",
-          "playerAction": "strike",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "92/100",
-              "action": "slash"
-            }
-          ],
-          "intents": [
-            "Attacking ?",
-            "Preparing ?"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 8 damage to Wandering Soldier (1 blocked)."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdTick_endTurn.ogg"
         },
         {
-          "time": 124071.90000000224,
-          "hp": "63/63",
-          "enemy": "100/100",
-          "playerAction": "strike",
-          "enemyAction": "slash",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "100/100",
-              "action": "slash"
-            },
-            {
-              "id": "e2",
-              "hp": "92/100",
-              "action": "slash"
-            }
-          ],
-          "intents": [
-            "Attacking ?",
-            "Preparing ?"
-          ],
-          "modal": false,
-          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 8 damage to Wandering Soldier (1 blocked)."
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/hit_light.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/hit_light.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdTick.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdCommit_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/hit_medium.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/relic.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/hit_medium.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/relic.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/turnStinger.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdTick_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/holdCommit_endTurn.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/block.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/hit_medium.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/relic.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/deckShuffle.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/cardDraw.ogg"
+        },
+        {
+          "status": 404,
+          "url": "http://localhost:63893/assets/sfx/turnStinger.ogg"
         }
-      ],
-      "fx": {
-        "open": 3,
-        "finished": 3,
-        "watchdog": 0
-      }
+      ]
     },
-    "native-counter-timeline": {
+    "classic-counter": {
       "frames": [
         {
-          "time": 141760.8999999985,
+          "time": 53391.800000000745,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -819,7 +216,7 @@
           "log": "Actions will appear here as the round unfolds."
         },
         {
-          "time": 143122.3999999985,
+          "time": 54504.199999999255,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -840,7 +237,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 143500.3999999985,
+          "time": 55086.60000000149,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -861,7 +258,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 143802.1000000015,
+          "time": 55611.39999999851,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -882,7 +279,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 144759.30000000075,
+          "time": 56977.300000000745,
           "hp": "4063/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -904,7 +301,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 144948,
+          "time": 57347.699999999255,
           "hp": "4063/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -926,7 +323,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
         },
         {
-          "time": 145093.19999999925,
+          "time": 57742.699999999255,
           "hp": "4063/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -950,7 +347,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
         },
         {
-          "time": 145340.1000000015,
+          "time": 58060.89999999851,
           "hp": "3863/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -974,7 +371,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
         },
         {
-          "time": 145595.69999999925,
+          "time": 58491.199999999255,
           "hp": "3863/63",
           "enemy": "100/100",
           "playerAction": "strike",
@@ -998,7 +395,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
         },
         {
-          "time": 145861.19999999925,
+          "time": 58952.300000000745,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1022,7 +419,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
         },
         {
-          "time": 146136.5,
+          "time": 59546.800000000745,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1046,7 +443,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
         },
         {
-          "time": 146434.69999999925,
+          "time": 59997.199999999255,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1070,7 +467,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
         },
         {
-          "time": 146919.30000000075,
+          "time": 60179.10000000149,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1095,7 +492,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction."
         },
         {
-          "time": 147166.8999999985,
+          "time": 60462.300000000745,
           "hp": "3363/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1120,7 +517,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
         },
         {
-          "time": 147626.5,
+          "time": 61393.199999999255,
           "hp": "3363/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1145,7 +542,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
         },
         {
-          "time": 148022.6000000015,
+          "time": 61921.60000000149,
           "hp": "63/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1176,10 +573,130 @@
         "watchdog": 0
       }
     },
-    "classic-timeline": {
+    "classic-selected": {
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "visibleHeight": 900
+      },
+      "touch": 0,
+      "tools": {
+        "x": 1292,
+        "y": 677.28125,
+        "width": 136,
+        "height": 92,
+        "top": 677.28125,
+        "bottom": 769.28125,
+        "right": 1428
+      },
+      "log": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "card": {
+        "x": 325.9197082519531,
+        "y": 533.23828125,
+        "width": 167.73870849609375,
+        "height": 243.0234375,
+        "top": 533.23828125,
+        "bottom": 776.26171875,
+        "right": 493.6584167480469
+      },
+      "hand": {
+        "x": 0,
+        "y": 507.28125,
+        "width": 1292,
+        "height": 270,
+        "top": 507.28125,
+        "bottom": 777.28125,
+        "right": 1292
+      },
+      "footer": {
+        "x": 420,
+        "y": 777.28125,
+        "width": 600,
+        "height": 122.71875,
+        "top": 777.28125,
+        "bottom": 900,
+        "right": 1020
+      },
+      "hud": {
+        "x": 434.03125,
+        "y": 416.046875,
+        "width": 112,
+        "height": 57.375,
+        "top": 416.046875,
+        "bottom": 473.421875,
+        "right": 546.03125
+      },
+      "cards": [
+        {
+          "id": "reaction-shot-2",
+          "left": 325.9197082519531,
+          "right": 493.6584167480469,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "visibleWidth": 167.73870849609375,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": 486.8831787109375,
+          "right": 647.8824462890625,
+          "top": 526.8822021484375,
+          "bottom": 765.5240478515625,
+          "visibleWidth": 160.999267578125,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:guard",
+          "left": 644.4769287109375,
+          "right": 805.4761962890625,
+          "top": 526.8822021484375,
+          "bottom": 765.5240478515625,
+          "visibleWidth": 160.999267578125,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:attack",
+          "left": 798.7009887695312,
+          "right": 966.4396362304688,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "visibleWidth": 167.7386474609375,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 1077,
+        "contentWidth": 1077,
+        "overflow": "auto"
+      },
+      "menuBottom": 56,
+      "artTop": 483.4277353922526,
+      "hudGap": 10.0058603922526,
+      "controls": [
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactionenabled",
+          "height": 44
+        }
+      ],
+      "reaction": "true"
+    },
+    "desktop-counter": {
       "frames": [
         {
-          "time": 36973.29999999702,
+          "time": 224040.20000000298,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -1200,7 +717,7 @@
           "log": "Actions will appear here as the round unfolds."
         },
         {
-          "time": 38123.699999999255,
+          "time": 225235.30000000075,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -1221,7 +738,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 38709.099999997765,
+          "time": 225814.30000000075,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -1242,7 +759,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 39211.5,
+          "time": 226337.70000000298,
           "hp": "4063/63",
           "enemy": "100/100",
           "enemies": [
@@ -1263,7 +780,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 40540.099999997765,
+          "time": 227861.90000000224,
           "hp": "4063/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -1285,7 +802,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "time": 40889,
+          "time": 228111.80000000075,
           "hp": "4063/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -1307,7 +824,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
         },
         {
-          "time": 41290,
+          "time": 228475.1000000015,
           "hp": "4063/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -1331,7 +848,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
         },
         {
-          "time": 41579.89999999851,
+          "time": 228798.40000000224,
           "hp": "3863/63",
           "enemy": "100/100",
           "playerAction": "guard",
@@ -1355,7 +872,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
         },
         {
-          "time": 42009.599999997765,
+          "time": 229332.20000000298,
           "hp": "3863/63",
           "enemy": "100/100",
           "playerAction": "strike",
@@ -1379,7 +896,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
         },
         {
-          "time": 42472,
+          "time": 229719.6000000015,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1403,7 +920,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
         },
         {
-          "time": 43062.39999999851,
+          "time": 230292.5,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1427,7 +944,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
         },
         {
-          "time": 43502.099999997765,
+          "time": 230766.20000000298,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1451,7 +968,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
         },
         {
-          "time": 44046.39999999851,
+          "time": 231132.6000000015,
           "hp": "3863/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1476,7 +993,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction."
         },
         {
-          "time": 44319.199999999255,
+          "time": 231472,
           "hp": "3363/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1501,7 +1018,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
         },
         {
-          "time": 45228.29999999702,
+          "time": 232386.40000000224,
           "hp": "3363/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1526,7 +1043,7 @@
           "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
         },
         {
-          "time": 45736.89999999851,
+          "time": 232928.40000000224,
           "hp": "63/63",
           "enemy": "91/100",
           "playerAction": "strike",
@@ -1557,265 +1074,142 @@
         "watchdog": 0
       }
     },
-    "lan-host-timeline": {
-      "frames": [
+    "desktop-log": {
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "visibleHeight": 900
+      },
+      "touch": 0,
+      "tools": {
+        "x": 1292,
+        "y": 677.28125,
+        "width": 136,
+        "height": 92,
+        "top": 677.28125,
+        "bottom": 769.28125,
+        "right": 1428
+      },
+      "log": {
+        "x": 1128,
+        "y": 221.28125,
+        "width": 300,
+        "height": 450,
+        "top": 221.28125,
+        "bottom": 671.28125,
+        "right": 1428
+      },
+      "card": {
+        "x": 325.9197082519531,
+        "y": 533.23828125,
+        "width": 167.73870849609375,
+        "height": 243.0234375,
+        "top": 533.23828125,
+        "bottom": 776.26171875,
+        "right": 493.6584167480469
+      },
+      "hand": {
+        "x": 0,
+        "y": 507.28125,
+        "width": 1292,
+        "height": 270,
+        "top": 507.28125,
+        "bottom": 777.28125,
+        "right": 1292
+      },
+      "footer": {
+        "x": 420,
+        "y": 777.28125,
+        "width": 600,
+        "height": 122.71875,
+        "top": 777.28125,
+        "bottom": 900,
+        "right": 1020
+      },
+      "hud": {
+        "x": 446.3125,
+        "y": 460.453125,
+        "width": 112,
+        "height": 14,
+        "top": 460.453125,
+        "bottom": 474.453125,
+        "right": 558.3125
+      },
+      "cards": [
         {
-          "time": 192189.90000000224,
-          "hp": "10063/63",
-          "enemy": "101/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking ?"
-          ],
-          "modal": false,
-          "log": "Actions will appear here as the round unfolds."
+          "id": "reaction-shot-2",
+          "left": 325.9197082519531,
+          "right": 493.6584167480469,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "visibleWidth": 167.73870849609375,
+          "dockOverlap": false
         },
         {
-          "time": 197511.40000000224,
-          "hp": "10063/63",
-          "enemy": "101/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": false,
-          "log": "Actions will appear here as the round unfolds."
+          "id": "kit:straightSword:guard",
+          "left": 486.8831787109375,
+          "right": 647.8824462890625,
+          "top": 526.8822021484375,
+          "bottom": 765.5240478515625,
+          "visibleWidth": 160.999267578125,
+          "dockOverlap": false
         },
         {
-          "time": 197986.69999999925,
-          "hp": "10063/63",
-          "enemy": "101/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": true,
-          "log": "Actions will appear here as the round unfolds."
+          "id": "kit:roundShield:guard",
+          "left": 644.4769287109375,
+          "right": 805.4761962890625,
+          "top": 526.8822021484375,
+          "bottom": 765.5240478515625,
+          "visibleWidth": 160.999267578125,
+          "dockOverlap": false
         },
         {
-          "time": 245363.5,
-          "hp": "10063/63",
-          "enemy": "101/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": false,
-          "log": "Actions will appear here as the round unfolds."
-        },
-        {
-          "time": 247354.90000000224,
-          "hp": "10063/63",
-          "enemy": "101/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP."
-        },
-        {
-          "time": 249413.69999999925,
-          "hp": "10063/63",
-          "enemy": "101/101",
-          "enemyAction": "strike",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101",
-              "action": "strike"
-            }
-          ],
-          "intents": [
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP."
-        },
-        {
-          "time": 249699.90000000224,
-          "hp": "10063/63",
-          "enemy": "101/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP."
-        },
-        {
-          "time": 249932.1000000015,
-          "hp": "9563/63",
-          "enemy": "101/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
-        },
-        {
-          "time": 250680,
-          "hp": "9563/63",
-          "enemy": "101/101",
-          "playerAction": "strike",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "101/101"
-            }
-          ],
-          "intents": [
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
-        },
-        {
-          "time": 251074.6000000015,
-          "hp": "9563/63",
-          "enemy": "97/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "97/101"
-            }
-          ],
-          "intents": [
-            "Attacking6"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
-        },
-        {
-          "time": 253192.19999999925,
-          "hp": "63/63",
-          "enemy": "97/101",
-          "enemyAction": "strike",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "97/101",
-              "action": "strike"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
-        },
-        {
-          "time": 253619.90000000224,
-          "hp": "9563/63",
-          "enemy": "97/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "97/101"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
-        },
-        {
-          "time": 254057.1000000015,
-          "hp": "9563/63",
-          "enemy": "97/101",
-          "playerAction": "strike",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "97/101"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
-        },
-        {
-          "time": 254415.40000000224,
-          "hp": "9563/63",
-          "enemy": "93/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "93/101"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
-        },
-        {
-          "time": 256404.40000000224,
-          "hp": "63/63",
-          "enemy": "97/101",
-          "enemies": [
-            {
-              "id": "e1",
-              "hp": "97/101"
-            }
-          ],
-          "intents": [
-            "Attacking12"
-          ],
-          "modal": false,
-          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+          "id": "kit:roundShield:attack",
+          "left": 798.7009887695312,
+          "right": 966.4396362304688,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "visibleWidth": 167.7386474609375,
+          "dockOverlap": false
         }
       ],
-      "fx": {
-        "open": 3,
-        "finished": 3,
-        "watchdog": 0
-      }
+      "handScroll": {
+        "left": 0,
+        "width": 1077,
+        "contentWidth": 1077,
+        "overflow": "auto"
+      },
+      "menuBottom": 56,
+      "artTop": 484.4679421817555,
+      "hudGap": 10.014817181755518,
+      "controls": [
+        {
+          "text": "Small",
+          "height": 44
+        },
+        {
+          "text": "Medium",
+          "height": 44
+        },
+        {
+          "text": "Large",
+          "height": 44
+        },
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactionenabled",
+          "height": 44
+        }
+      ],
+      "reaction": "true"
     },
-    "lan-guest-timeline": {
+    "lan-guest-counter": {
       "frames": [
         {
-          "time": 192180.80000000075,
+          "time": 94226.69999999925,
           "hp": "10063/63",
           "enemy": "101/101",
           "enemies": [
@@ -1831,7 +1225,7 @@
           "log": "Actions will appear here as the round unfolds."
         },
         {
-          "time": 197455.70000000298,
+          "time": 122349.09999999776,
           "hp": "10063/63",
           "enemy": "101/101",
           "enemies": [
@@ -1847,7 +1241,7 @@
           "log": "Actions will appear here as the round unfolds."
         },
         {
-          "time": 247372.20000000298,
+          "time": 130652,
           "hp": "10063/63",
           "enemy": "101/101",
           "enemies": [
@@ -1860,10 +1254,10 @@
             "Attacking12"
           ],
           "modal": true,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP."
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
         },
         {
-          "time": 248605.30000000075,
+          "time": 131792.59999999776,
           "hp": "10063/63",
           "enemy": "101/101",
           "enemies": [
@@ -1876,10 +1270,10 @@
             "Attacking12"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP."
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
         },
         {
-          "time": 249521.30000000075,
+          "time": 139147.5,
           "hp": "10063/63",
           "enemy": "101/101",
           "enemyAction": "strike",
@@ -1894,10 +1288,10 @@
             "Attacking12"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP."
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
         },
         {
-          "time": 249827.80000000075,
+          "time": 139529.5,
           "hp": "9563/63",
           "enemy": "101/101",
           "enemies": [
@@ -1910,10 +1304,10 @@
             "Attacking12"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
         },
         {
-          "time": 250017.6000000015,
+          "time": 139755.3999999985,
           "hp": "9563/63",
           "enemy": "101/101",
           "playerAction": "strike",
@@ -1927,10 +1321,10 @@
             "Attacking12"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
         },
         {
-          "time": 250369.90000000224,
+          "time": 140067.5,
           "hp": "9563/63",
           "enemy": "97/101",
           "enemies": [
@@ -1943,10 +1337,10 @@
             "Attacking12"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
         },
         {
-          "time": 251821.30000000075,
+          "time": 142364.3999999985,
           "hp": "63/63",
           "enemy": "97/101",
           "enemyAction": "strike",
@@ -1961,10 +1355,10 @@
             "Attacking ?"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
         },
         {
-          "time": 252135.40000000224,
+          "time": 142895.3999999985,
           "hp": "9563/63",
           "enemy": "97/101",
           "enemies": [
@@ -1977,10 +1371,10 @@
             "Attacking ?"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
         },
         {
-          "time": 252421.40000000224,
+          "time": 143111.59999999776,
           "hp": "9563/63",
           "enemy": "97/101",
           "playerAction": "strike",
@@ -1994,10 +1388,10 @@
             "Attacking ?"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
         },
         {
-          "time": 252934.70000000298,
+          "time": 143481.79999999702,
           "hp": "9563/63",
           "enemy": "93/101",
           "enemies": [
@@ -2010,10 +1404,10 @@
             "Attacking ?"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
         },
         {
-          "time": 254120.80000000075,
+          "time": 144984.19999999925,
           "hp": "63/63",
           "enemy": "97/101",
           "enemies": [
@@ -2026,7 +1420,7 @@
             "Attacking ?"
           ],
           "modal": false,
-          "log": "Round 1\nQA Host played Guard Counter · 1 SP.\nQA Guest skipped the reaction.\nAsh Revenant used Cinder Slash.\nQA Host blocked 5 damage.\nQA Guest blocked 11 damage.\nQA Host counterattacked Ash Revenant.\nQA Host dealt 4 damage to Ash Revenant."
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
         }
       ],
       "fx": {
@@ -2035,7 +1429,624 @@
         "watchdog": 0
       }
     },
-    "lan-log-geometry": {
+    "lan-hand": {
+      "host": {
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "visibleHeight": 900
+        },
+        "touch": 0,
+        "tools": {
+          "x": 1292,
+          "y": 677.28125,
+          "width": 136,
+          "height": 92,
+          "top": 677.28125,
+          "bottom": 769.28125,
+          "right": 1428
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": 325.9197082519531,
+          "y": 533.23828125,
+          "width": 167.73870849609375,
+          "height": 243.0234375,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "right": 493.6584167480469
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1292,
+          "height": 270,
+          "top": 507.28125,
+          "bottom": 777.28125,
+          "right": 1292
+        },
+        "footer": {
+          "x": 420,
+          "y": 777.28125,
+          "width": 600,
+          "height": 122.71875,
+          "top": 777.28125,
+          "bottom": 900,
+          "right": 1020
+        },
+        "hud": {
+          "x": 258,
+          "y": 189.171875,
+          "width": 112,
+          "height": 96,
+          "top": 189.171875,
+          "bottom": 285.171875,
+          "right": 370
+        },
+        "cards": [
+          {
+            "id": "weaponArt:roundShield:shieldBash",
+            "left": 325.9197082519531,
+            "right": 493.6584167480469,
+            "top": 533.23828125,
+            "bottom": 776.26171875,
+            "visibleWidth": 167.73870849609375,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:straightSword:guard",
+            "left": 486.8831787109375,
+            "right": 647.8824462890625,
+            "top": 526.8822021484375,
+            "bottom": 765.5240478515625,
+            "visibleWidth": 160.999267578125,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:roundShield:attack",
+            "left": 644.4769287109375,
+            "right": 805.4761962890625,
+            "top": 526.8822021484375,
+            "bottom": 765.5240478515625,
+            "visibleWidth": 160.999267578125,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:straightSword:attack",
+            "left": 798.7009887695312,
+            "right": 966.4396362304688,
+            "top": 533.23828125,
+            "bottom": 776.26171875,
+            "visibleWidth": 167.7386474609375,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 1077,
+          "contentWidth": 1077,
+          "overflow": "auto"
+        },
+        "menuBottom": 188.1875,
+        "artTop": 295.17626324821924,
+        "hudGap": 10.004388248219243,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
+      "guest": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "visibleHeight": 844
+        },
+        "touch": 1,
+        "tools": {
+          "x": 242.109375,
+          "y": 651.5625,
+          "width": 135.890625,
+          "height": 92,
+          "top": 651.5625,
+          "bottom": 743.5625,
+          "right": 378
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": 0.9586463570594788,
+          "y": 525.2442016601562,
+          "width": 155.61395263671875,
+          "height": 225.4647216796875,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "right": 156.57259899377823
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 242.109375,
+          "height": 253.25,
+          "top": 498.828125,
+          "bottom": 752.078125,
+          "right": 242.109375
+        },
+        "footer": {
+          "x": 0,
+          "y": 752.078125,
+          "width": 390,
+          "height": 91.921875,
+          "top": 752.078125,
+          "bottom": 844,
+          "right": 390
+        },
+        "hud": {
+          "x": 6,
+          "y": 266.71875,
+          "width": 112,
+          "height": 63.984375,
+          "top": 266.71875,
+          "bottom": 330.703125,
+          "right": 118
+        },
+        "cards": [
+          {
+            "id": "rc3",
+            "left": 0.9586463570594788,
+            "right": 156.57259899377823,
+            "top": 525.2442016601562,
+            "bottom": 750.7089233398438,
+            "visibleWidth": 155.61395263671875,
+            "dockOverlap": false
+          },
+          {
+            "id": "rc4",
+            "left": 48.08488845825195,
+            "right": 197.44636917114258,
+            "top": 518.7454223632812,
+            "bottom": 740.1452026367188,
+            "visibleWidth": 149.36148071289062,
+            "dockOverlap": false
+          },
+          {
+            "id": "weaponArt:roundShield:shieldBash",
+            "left": 92.08489227294922,
+            "right": 241.44637298583984,
+            "top": 518.7454223632812,
+            "bottom": 740.1452026367188,
+            "visibleWidth": 149.36148071289062,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:straightSword:guard",
+            "left": 132.95864868164062,
+            "right": 288.5726013183594,
+            "top": 525.2442016601562,
+            "bottom": 750.7089233398438,
+            "visibleWidth": 109.15072631835938,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 269,
+          "contentWidth": 328,
+          "overflow": "auto"
+        },
+        "menuBottom": 185.359375,
+        "artTop": 340.7038518120261,
+        "hudGap": 10.000726812026073,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      }
+    },
+    "lan-host-counter": {
+      "frames": [
+        {
+          "time": 94240.20000000298,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 122916.30000000075,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 123152.40000000224,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": true,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 127512.70000000298,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
+        },
+        {
+          "time": 130780.10000000149,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 139139.90000000224,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemyAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101",
+              "action": "strike"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 139496.20000000298,
+          "hp": "10063/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP."
+        },
+        {
+          "time": 139727.90000000224,
+          "hp": "9563/63",
+          "enemy": "101/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 140483.40000000224,
+          "hp": "9563/63",
+          "enemy": "101/101",
+          "playerAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "101/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 141208.70000000298,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 143512.30000000075,
+          "hp": "63/63",
+          "enemy": "97/101",
+          "enemyAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101",
+              "action": "strike"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 144066.80000000075,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 144604.40000000224,
+          "hp": "9563/63",
+          "enemy": "97/101",
+          "playerAction": "strike",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage."
+        },
+        {
+          "time": 145447.80000000075,
+          "hp": "9563/63",
+          "enemy": "93/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "93/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        },
+        {
+          "time": 147877.20000000298,
+          "hp": "63/63",
+          "enemy": "97/101",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "97/101"
+            }
+          ],
+          "intents": [
+            "Attacking12"
+          ],
+          "modal": false,
+          "log": "Round 1QA Host played Guard Counter · 1 SP.QA Guest skipped the reaction.Ash Revenant used Cinder Slash.QA Host blocked 5 damage.QA Guest blocked 11 damage.QA Host counterattacked Ash Revenant.QA Host dealt 4 damage to Ash Revenant."
+        }
+      ],
+      "fx": {
+        "open": 3,
+        "finished": 3,
+        "watchdog": 0
+      }
+    },
+    "lan-last-selected": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 524.1531372070312,
+        "width": 135.890625,
+        "height": 92,
+        "top": 524.1531372070312,
+        "bottom": 616.1531372070312,
+        "right": 378
+      },
+      "log": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "card": {
+        "x": -43.85560989379883,
+        "y": 397.8447265625,
+        "width": 155.24246215820312,
+        "height": 225.2261962890625,
+        "top": 397.8447265625,
+        "bottom": 623.0709228515625,
+        "right": 111.3868522644043
+      },
+      "hand": {
+        "x": 0,
+        "y": 371.30938720703125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 371.30938720703125,
+        "bottom": 624.5593872070312,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 624.5593872070312,
+        "width": 390,
+        "height": 91.921875,
+        "top": 624.5593872070312,
+        "bottom": 716.4812622070312,
+        "right": 390
+      },
+      "hud": {
+        "x": 6,
+        "y": 182.8718719482422,
+        "width": 112,
+        "height": 63.984375,
+        "top": 182.8718719482422,
+        "bottom": 246.8562469482422,
+        "right": 118
+      },
+      "cards": [
+        {
+          "id": "rc3",
+          "left": -43.85560989379883,
+          "right": 111.3868522644043,
+          "top": 397.8447265625,
+          "bottom": 623.0709228515625,
+          "visibleWidth": 111.3868522644043,
+          "dockOverlap": false
+        },
+        {
+          "id": "rc4",
+          "left": 3.0726730823516846,
+          "right": 152.30778050422668,
+          "top": 385.8688049316406,
+          "bottom": 607.1853637695312,
+          "visibleWidth": 149.235107421875,
+          "dockOverlap": false
+        },
+        {
+          "id": "weaponArt:roundShield:shieldBash",
+          "left": 47.22346496582031,
+          "right": 196.4585723876953,
+          "top": 385.8688049316406,
+          "bottom": 607.1853637695312,
+          "visibleWidth": 149.235107421875,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": 89.74813079833984,
+          "right": 241.7831039428711,
+          "top": 392.8234558105469,
+          "bottom": 620.8922119140625,
+          "visibleWidth": 152.03497314453125,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 50,
+        "width": 269,
+        "contentWidth": 319,
+        "overflow": "auto"
+      },
+      "menuBottom": 192.5593719482422,
+      "artTop": 256.86682207444136,
+      "hudGap": 10.010575126199171,
+      "controls": [
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactionenabled",
+          "height": 44
+        }
+      ],
+      "reaction": "true"
+    },
+    "lan-log": {
       "viewport": {
         "width": 390,
         "height": 844,
@@ -2089,16 +2100,60 @@
       },
       "hud": {
         "x": 6,
-        "y": 267.3125,
+        "y": 266.890625,
         "width": 112,
         "height": 63.984375,
-        "top": 267.3125,
-        "bottom": 331.296875,
+        "top": 266.890625,
+        "bottom": 330.875,
         "right": 118
       },
+      "cards": [
+        {
+          "id": "rc3",
+          "left": 0.9586463570594788,
+          "right": 156.57259899377823,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 155.61395263671875,
+          "dockOverlap": false
+        },
+        {
+          "id": "rc4",
+          "left": 48.08488845825195,
+          "right": 197.44636917114258,
+          "top": 518.7454223632812,
+          "bottom": 740.1452026367188,
+          "visibleWidth": 149.36148071289062,
+          "dockOverlap": false
+        },
+        {
+          "id": "weaponArt:roundShield:shieldBash",
+          "left": 92.08489227294922,
+          "right": 241.44637298583984,
+          "top": 518.7454223632812,
+          "bottom": 740.1452026367188,
+          "visibleWidth": 149.36148071289062,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": 132.95864868164062,
+          "right": 288.5726013183594,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 109.15072631835938,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 269,
+        "contentWidth": 328,
+        "overflow": "auto"
+      },
       "menuBottom": 185.359375,
-      "artTop": 341.2975149715648,
-      "hudGap": 10.000639971564794,
+      "artTop": 340.8896827697754,
+      "hudGap": 10.01468276977539,
       "controls": [
         {
           "text": "Small",
@@ -2123,21 +2178,373 @@
       ],
       "reaction": "true"
     },
-    "native-selected-off": {
+    "lan-opening": {
+      "host": {
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "visibleHeight": 900
+        },
+        "touch": 0,
+        "tools": {
+          "x": 1292,
+          "y": 686.8812255859375,
+          "width": 136,
+          "height": 92,
+          "top": 686.8812255859375,
+          "bottom": 778.8812255859375,
+          "right": 1428
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": 479.9200134277344,
+          "y": 543.7301025390625,
+          "width": 164.94119262695312,
+          "height": 241.22412109375,
+          "top": 543.7301025390625,
+          "bottom": 784.9542236328125,
+          "right": 644.8612060546875
+        },
+        "hand": {
+          "x": 0,
+          "y": 516.8812255859375,
+          "width": 1292,
+          "height": 270,
+          "top": 516.8812255859375,
+          "bottom": 786.8812255859375,
+          "right": 1292
+        },
+        "footer": {
+          "x": 420,
+          "y": 786.8812255859375,
+          "width": 600,
+          "height": 122.71875,
+          "top": 786.8812255859375,
+          "bottom": 909.5999755859375,
+          "right": 1020
+        },
+        "hud": {
+          "x": 258,
+          "y": 223.28750610351562,
+          "width": 112,
+          "height": 88.59375,
+          "top": 223.28750610351562,
+          "bottom": 311.8812561035156,
+          "right": 370
+        },
+        "cards": [
+          {
+            "id": "qa:p1:0",
+            "left": 479.9200134277344,
+            "right": 644.8612060546875,
+            "top": 543.7301025390625,
+            "bottom": 784.9542236328125,
+            "visibleWidth": 164.94119262695312,
+            "dockOverlap": false
+          },
+          {
+            "id": "qa:p1:1",
+            "left": 641.1875,
+            "right": 798.78125,
+            "top": 529.3530883789062,
+            "bottom": 765.7437133789062,
+            "visibleWidth": 157.59375,
+            "dockOverlap": false
+          },
+          {
+            "id": "qa:p1:2",
+            "left": 795.1231689453125,
+            "right": 960.0643310546875,
+            "top": 543.7301025390625,
+            "bottom": 784.9542236328125,
+            "visibleWidth": 164.941162109375,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 1077,
+          "contentWidth": 1077,
+          "overflow": "auto"
+        },
+        "menuBottom": 197.78750610351562,
+        "artTop": 321.88859675912295,
+        "hudGap": 10.007340655607322,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
+      "guest": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "visibleHeight": 844
+        },
+        "touch": 1,
+        "tools": {
+          "x": 243.359375,
+          "y": 7.199999809265137,
+          "width": 134.640625,
+          "height": 92,
+          "top": 7.199999809265137,
+          "bottom": 99.19999980926514,
+          "right": 378
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": 2.2635602951049805,
+          "y": 533.2704467773438,
+          "width": 153.01974487304688,
+          "height": 223.796630859375,
+          "top": 533.2704467773438,
+          "bottom": 757.0670776367188,
+          "right": 155.28330516815186
+        },
+        "hand": {
+          "x": 0,
+          "y": 506.02813720703125,
+          "width": 390,
+          "height": 253.25,
+          "top": 506.02813720703125,
+          "bottom": 759.2781372070312,
+          "right": 390
+        },
+        "footer": {
+          "x": 0,
+          "y": 759.2781372070312,
+          "width": 390,
+          "height": 91.921875,
+          "top": 759.2781372070312,
+          "bottom": 851.2000122070312,
+          "right": 390
+        },
+        "hud": {
+          "x": 6,
+          "y": 336.21563720703125,
+          "width": 112,
+          "height": 54.96875,
+          "top": 336.21563720703125,
+          "bottom": 391.18438720703125,
+          "right": 118
+        },
+        "cards": [
+          {
+            "id": "qa:p2:0",
+            "left": 2.2635602951049805,
+            "right": 155.28330516815186,
+            "top": 533.2704467773438,
+            "bottom": 757.0670776367188,
+            "visibleWidth": 153.01974487304688,
+            "dockOverlap": false
+          },
+          {
+            "id": "qa:p2:1",
+            "left": 121.734375,
+            "right": 267.9375,
+            "top": 520.5187377929688,
+            "bottom": 739.8312377929688,
+            "visibleWidth": 146.203125,
+            "dockOverlap": false
+          },
+          {
+            "id": "qa:p2:2",
+            "left": 234.38856506347656,
+            "right": 387.4083251953125,
+            "top": 533.2704467773438,
+            "bottom": 757.0670776367188,
+            "visibleWidth": 153.01976013183594,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 433,
+          "contentWidth": 437,
+          "overflow": "auto"
+        },
+        "menuBottom": 192.5593719482422,
+        "artTop": 401.727585736443,
+        "hudGap": 10.543198529411768,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 43.999996185302734
+          }
+        ],
+        "reaction": "true"
+      }
+    },
+    "lan-owned-modal": {
+      "host": 1,
+      "guest": 0
+    },
+    "lan-swipe": {
+      "before": 0,
+      "after": 58.88888931274414,
+      "measure": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "visibleHeight": 844
+        },
+        "touch": 1,
+        "tools": {
+          "x": 242.109375,
+          "y": 651.5625,
+          "width": 135.890625,
+          "height": 92,
+          "top": 651.5625,
+          "bottom": 743.5625,
+          "right": 378
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": -52.04135513305664,
+          "y": 525.2442016601562,
+          "width": 155.61395263671875,
+          "height": 225.4647216796875,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "right": 103.57259750366211
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 242.109375,
+          "height": 253.25,
+          "top": 498.828125,
+          "bottom": 752.078125,
+          "right": 242.109375
+        },
+        "footer": {
+          "x": 0,
+          "y": 752.078125,
+          "width": 390,
+          "height": 91.921875,
+          "top": 752.078125,
+          "bottom": 844,
+          "right": 390
+        },
+        "hud": {
+          "x": 6,
+          "y": 264.484375,
+          "width": 112,
+          "height": 63.984375,
+          "top": 264.484375,
+          "bottom": 328.46875,
+          "right": 118
+        },
+        "cards": [
+          {
+            "id": "rc3",
+            "left": -52.04135513305664,
+            "right": 103.57259750366211,
+            "top": 525.2442016601562,
+            "bottom": 750.7089233398438,
+            "visibleWidth": 103.57259750366211,
+            "dockOverlap": false
+          },
+          {
+            "id": "rc4",
+            "left": -4.915109634399414,
+            "right": 144.4463710784912,
+            "top": 518.7454223632812,
+            "bottom": 740.1452026367188,
+            "visibleWidth": 144.4463710784912,
+            "dockOverlap": false
+          },
+          {
+            "id": "weaponArt:roundShield:shieldBash",
+            "left": 39.08488845825195,
+            "right": 188.44636917114258,
+            "top": 518.7454223632812,
+            "bottom": 740.1452026367188,
+            "visibleWidth": 149.36148071289062,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:straightSword:guard",
+            "left": 79.95864868164062,
+            "right": 235.57260131835938,
+            "top": 525.2442016601562,
+            "bottom": 750.7089233398438,
+            "visibleWidth": 155.61395263671875,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 58.88888931274414,
+          "width": 269,
+          "contentWidth": 328,
+          "overflow": "auto"
+        },
+        "menuBottom": 185.359375,
+        "artTop": 338.4759465385886,
+        "hudGap": 10.007196538588573,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      }
+    },
+    "native-320-hand": {
       "viewport": {
-        "width": 390,
-        "height": 844,
-        "visibleHeight": 844
+        "width": 320,
+        "height": 740,
+        "visibleHeight": 740
       },
       "touch": 1,
       "tools": {
-        "x": 242.109375,
-        "y": 651.5625,
-        "width": 135.890625,
+        "x": 172.140625,
+        "y": 547.53125,
+        "width": 135.859375,
         "height": 92,
-        "top": 651.5625,
-        "bottom": 743.5625,
-        "right": 378
+        "top": 547.53125,
+        "bottom": 639.53125,
+        "right": 308
       },
       "log": {
         "x": 0,
@@ -2149,44 +2556,88 @@
         "right": 0
       },
       "card": {
-        "x": 0.9586463570594788,
-        "y": 525.2442016601562,
-        "width": 155.61395263671875,
-        "height": 225.4647216796875,
-        "top": 525.2442016601562,
-        "bottom": 750.7089233398438,
-        "right": 156.57259899377823
+        "x": 0.7957843542098999,
+        "y": 453.44488525390625,
+        "width": 133.65841674804688,
+        "height": 193.6414794921875,
+        "top": 453.44488525390625,
+        "bottom": 647.0863647460938,
+        "right": 134.45420110225677
       },
       "hand": {
         "x": 0,
-        "y": 498.828125,
-        "width": 242.109375,
-        "height": 253.25,
-        "top": 498.828125,
-        "bottom": 752.078125,
-        "right": 242.109375
+        "y": 426.09375,
+        "width": 172.140625,
+        "height": 222,
+        "top": 426.09375,
+        "bottom": 648.09375,
+        "right": 172.140625
       },
       "footer": {
         "x": 0,
-        "y": 752.078125,
-        "width": 390,
-        "height": 91.921875,
-        "top": 752.078125,
-        "bottom": 844,
-        "right": 390
+        "y": 648.09375,
+        "width": 320,
+        "height": 91.90625,
+        "top": 648.09375,
+        "bottom": 740,
+        "right": 320
       },
       "hud": {
-        "x": 35.65625,
-        "y": 418.25,
+        "x": 19.625,
+        "y": 393.265625,
         "width": 112,
-        "height": 57.328125,
-        "top": 418.25,
-        "bottom": 475.578125,
-        "right": 147.65625
+        "height": 13.984375,
+        "top": 393.265625,
+        "bottom": 407.25,
+        "right": 131.625
       },
-      "menuBottom": 53,
-      "artTop": 485.588669720818,
-      "hudGap": 10.010544720818018,
+      "cards": [
+        {
+          "id": "reaction-shot-2",
+          "left": 0.7957843542098999,
+          "right": 134.45420110225677,
+          "top": 453.44488525390625,
+          "bottom": 647.0863647460938,
+          "visibleWidth": 133.65841674804688,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": 47.54326248168945,
+          "right": 175.83174514770508,
+          "top": 446.64373779296875,
+          "bottom": 636.7937622070312,
+          "visibleWidth": 124.59736251831055,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:guard",
+          "left": 91.62139129638672,
+          "right": 219.90987396240234,
+          "top": 446.64373779296875,
+          "bottom": 636.7937622070312,
+          "visibleWidth": 80.51923370361328,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:attack",
+          "left": 132.99891662597656,
+          "right": 266.6573486328125,
+          "top": 453.44488525390625,
+          "bottom": 647.0863647460938,
+          "visibleWidth": 39.14170837402344,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 233,
+        "contentWidth": 368,
+        "overflow": "auto"
+      },
+      "menuBottom": 51.390625,
+      "artTop": 417.2547641080969,
+      "hudGap": 10.004764108096879,
       "controls": [
         {
           "text": "Combat log",
@@ -2253,16 +2704,60 @@
       },
       "hud": {
         "x": 19.625,
-        "y": 395.6875,
+        "y": 392.671875,
         "width": 112,
         "height": 13.984375,
-        "top": 395.6875,
-        "bottom": 409.671875,
+        "top": 392.671875,
+        "bottom": 406.65625,
         "right": 131.625
       },
+      "cards": [
+        {
+          "id": "reaction-shot-2",
+          "left": 0.7957843542098999,
+          "right": 134.45420110225677,
+          "top": 453.44488525390625,
+          "bottom": 647.0863647460938,
+          "visibleWidth": 133.65841674804688,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": 47.54326248168945,
+          "right": 175.83174514770508,
+          "top": 446.64373779296875,
+          "bottom": 636.7937622070312,
+          "visibleWidth": 124.59736251831055,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:guard",
+          "left": 91.62139129638672,
+          "right": 219.90987396240234,
+          "top": 446.64373779296875,
+          "bottom": 636.7937622070312,
+          "visibleWidth": 80.51923370361328,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:attack",
+          "left": 132.99891662597656,
+          "right": 266.6573486328125,
+          "top": 453.44488525390625,
+          "bottom": 647.0863647460938,
+          "visibleWidth": 39.14170837402344,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 233,
+        "contentWidth": 368,
+        "overflow": "auto"
+      },
       "menuBottom": 51.390625,
-      "artTop": 419.6734834558823,
-      "hudGap": 10.00160845588232,
+      "artTop": 416.6617465299719,
+      "hudGap": 10.005496529971879,
       "controls": [
         {
           "text": "Small",
@@ -2281,27 +2776,27 @@
           "height": 44
         },
         {
-          "text": "Reactionenabled",
+          "text": "Reactiondisabled",
           "height": 44
         }
       ],
-      "reaction": "true"
+      "reaction": "false"
     },
-    "classic-selected": {
+    "native-after-counter": {
       "viewport": {
-        "width": 1440,
-        "height": 900,
-        "visibleHeight": 900
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
       },
-      "touch": 0,
+      "touch": 1,
       "tools": {
-        "x": 1292,
-        "y": 677.28125,
-        "width": 136,
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
         "height": 92,
-        "top": 677.28125,
-        "bottom": 769.28125,
-        "right": 1428
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
       },
       "log": {
         "x": 0,
@@ -2313,44 +2808,88 @@
         "right": 0
       },
       "card": {
-        "x": 404.7165832519531,
-        "y": 533.23828125,
-        "width": 167.73867797851562,
-        "height": 243.0234375,
-        "top": 533.23828125,
-        "bottom": 776.26171875,
-        "right": 572.4552612304688
+        "x": 0.9643105864524841,
+        "y": 525.247802734375,
+        "width": 155.60263061523438,
+        "height": 225.45751953125,
+        "top": 525.247802734375,
+        "bottom": 750.705322265625,
+        "right": 156.56694120168686
       },
       "hand": {
         "x": 0,
-        "y": 507.28125,
-        "width": 1292,
-        "height": 270,
-        "top": 507.28125,
-        "bottom": 777.28125,
-        "right": 1292
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
       },
       "footer": {
-        "x": 420,
-        "y": 777.28125,
-        "width": 600,
-        "height": 122.71875,
-        "top": 777.28125,
-        "bottom": 900,
-        "right": 1020
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
       },
       "hud": {
-        "x": 434.03125,
-        "y": 401.25,
+        "x": 35.65625,
+        "y": 459.71875,
         "width": 112,
-        "height": 71.96875,
-        "top": 401.25,
-        "bottom": 473.21875,
-        "right": 546.03125
+        "height": 13.984375,
+        "top": 459.71875,
+        "bottom": 473.703125,
+        "right": 147.65625
       },
-      "menuBottom": 56,
-      "artTop": 483.23231608072916,
-      "hudGap": 10.013566080729163,
+      "cards": [
+        {
+          "id": "reaction-shot-2",
+          "left": 0.9643105864524841,
+          "right": 156.56694120168686,
+          "top": 525.247802734375,
+          "bottom": 750.705322265625,
+          "visibleWidth": 155.60263061523438,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": 48.08681869506836,
+          "right": 197.4444236755371,
+          "top": 518.7467041015625,
+          "bottom": 740.1439208984375,
+          "visibleWidth": 149.35760498046875,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:guard",
+          "left": 92.0868148803711,
+          "right": 241.44441986083984,
+          "top": 518.7467041015625,
+          "bottom": 740.1439208984375,
+          "visibleWidth": 149.35760498046875,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:attack",
+          "left": 132.9643096923828,
+          "right": 288.5669250488281,
+          "top": 525.247802734375,
+          "bottom": 750.705322265625,
+          "visibleWidth": 109.14506530761719,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 269,
+        "contentWidth": 328,
+        "overflow": "auto"
+      },
+      "menuBottom": 53,
+      "artTop": 483.703415814568,
+      "hudGap": 10.000290814568018,
       "controls": [
         {
           "text": "Combat log",
@@ -2363,204 +2902,1807 @@
       ],
       "reaction": "true"
     },
+    "native-counter": {
+      "frames": [
+        {
+          "time": 35891.099999997765,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 58123.79999999702,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
+        },
+        {
+          "time": 58318.5,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 58482.5,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP."
+        },
+        {
+          "time": 58704.29999999702,
+          "hp": "3863/63",
+          "enemy": "100/100",
+          "playerAction": "guard",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 59009.599999997765,
+          "hp": "3863/63",
+          "enemy": "100/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage."
+        },
+        {
+          "time": 59288.099999997765,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 59571.699999999255,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking7"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 59838.79999999702,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier."
+        },
+        {
+          "time": 60018.199999999255,
+          "hp": "3863/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction."
+        },
+        {
+          "time": 60239.39999999851,
+          "hp": "3363/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 60686.599999997765,
+          "hp": "3363/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        },
+        {
+          "time": 61096.29999999702,
+          "hp": "63/63",
+          "enemy": "91/100",
+          "playerAction": "strike",
+          "enemyAction": "slash",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "91/100",
+              "action": "slash"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100",
+              "action": "slash"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Guard Counter · 1 SP.Wandering Soldier used Slash.Forsaken blocked 2 damage.Forsaken counterattacked Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
+        }
+      ],
+      "fx": {
+        "open": 3,
+        "finished": 3,
+        "watchdog": 0
+      }
+    },
+    "native-last-selected": {
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "visibleHeight": 740
+      },
+      "touch": 1,
+      "tools": {
+        "x": 172.140625,
+        "y": 547.53125,
+        "width": 135.859375,
+        "height": 92,
+        "top": 547.53125,
+        "bottom": 639.53125,
+        "right": 308
+      },
+      "log": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "card": {
+        "x": -90.20421600341797,
+        "y": 453.44488525390625,
+        "width": 133.65843200683594,
+        "height": 193.6414794921875,
+        "top": 453.44488525390625,
+        "bottom": 647.0863647460938,
+        "right": 43.45421600341797
+      },
+      "hand": {
+        "x": 0,
+        "y": 426.09375,
+        "width": 172.140625,
+        "height": 222,
+        "top": 426.09375,
+        "bottom": 648.09375,
+        "right": 172.140625
+      },
+      "footer": {
+        "x": 0,
+        "y": 648.09375,
+        "width": 320,
+        "height": 91.90625,
+        "top": 648.09375,
+        "bottom": 740,
+        "right": 320
+      },
+      "hud": {
+        "x": 19.625,
+        "y": 393.71875,
+        "width": 112,
+        "height": 13.984375,
+        "top": 393.71875,
+        "bottom": 407.703125,
+        "right": 131.625
+      },
+      "cards": [
+        {
+          "id": "reaction-shot-2",
+          "left": -90.20421600341797,
+          "right": 43.45421600341797,
+          "top": 453.44488525390625,
+          "bottom": 647.0863647460938,
+          "visibleWidth": 43.45421600341797,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": -43.45673751831055,
+          "right": 84.83172988891602,
+          "top": 446.64373779296875,
+          "bottom": 636.7937622070312,
+          "visibleWidth": 84.83172988891602,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:guard",
+          "left": 0.6213891506195068,
+          "right": 128.90987181663513,
+          "top": 446.64373779296875,
+          "bottom": 636.7937622070312,
+          "visibleWidth": 128.28848266601562,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:attack",
+          "left": 46.046875,
+          "right": 171.609375,
+          "top": 440.0677795410156,
+          "bottom": 628.4114990234375,
+          "visibleWidth": 125.5625,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 122.97296905517578,
+        "width": 233,
+        "contentWidth": 355,
+        "overflow": "auto"
+      },
+      "menuBottom": 51.390625,
+      "artTop": 417.7175508386948,
+      "hudGap": 10.01442583869482,
+      "controls": [
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactiondisabled",
+          "height": 44
+        }
+      ],
+      "reaction": "false"
+    },
+    "native-log-Large": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
+        "height": 92,
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
+      },
+      "log": {
+        "x": 78,
+        "y": 61.453125,
+        "width": 300,
+        "height": 584.109375,
+        "top": 61.453125,
+        "bottom": 645.5625,
+        "right": 378
+      },
+      "card": {
+        "x": 0.9586463570594788,
+        "y": 525.2442016601562,
+        "width": 155.61395263671875,
+        "height": 225.4647216796875,
+        "top": 525.2442016601562,
+        "bottom": 750.7089233398438,
+        "right": 156.57259899377823
+      },
+      "hand": {
+        "x": 0,
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
+      },
+      "hud": {
+        "x": 35.65625,
+        "y": 457.796875,
+        "width": 112,
+        "height": 17.59375,
+        "top": 457.796875,
+        "bottom": 475.390625,
+        "right": 147.65625
+      },
+      "cards": [
+        {
+          "id": "reaction-shot-0",
+          "left": 0.9586463570594788,
+          "right": 156.57259899377823,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 155.61395263671875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-1",
+          "left": 49.671875,
+          "right": 195.859375,
+          "top": 518.734375,
+          "bottom": 738.03125,
+          "visibleWidth": 146.1875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-2",
+          "left": 88.95864868164062,
+          "right": 244.57260131835938,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 153.15072631835938,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 269,
+        "contentWidth": 279,
+        "overflow": "auto"
+      },
+      "menuBottom": 53,
+      "artTop": 485.39610380284927,
+      "hudGap": 10.005478802849268,
+      "controls": [
+        {
+          "text": "Small",
+          "height": 44
+        },
+        {
+          "text": "Medium",
+          "height": 44
+        },
+        {
+          "text": "Large",
+          "height": 44
+        },
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactiondisabled",
+          "height": 44
+        }
+      ],
+      "reaction": "false"
+    },
+    "native-log-Medium": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
+        "height": 92,
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
+      },
+      "log": {
+        "x": 78,
+        "y": 223.890625,
+        "width": 300,
+        "height": 421.671875,
+        "top": 223.890625,
+        "bottom": 645.5625,
+        "right": 378
+      },
+      "card": {
+        "x": 0.9586463570594788,
+        "y": 525.2442016601562,
+        "width": 155.61395263671875,
+        "height": 225.4647216796875,
+        "top": 525.2442016601562,
+        "bottom": 750.7089233398438,
+        "right": 156.57259899377823
+      },
+      "hand": {
+        "x": 0,
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
+      },
+      "hud": {
+        "x": 35.65625,
+        "y": 458.453125,
+        "width": 112,
+        "height": 17.59375,
+        "top": 458.453125,
+        "bottom": 476.046875,
+        "right": 147.65625
+      },
+      "cards": [
+        {
+          "id": "reaction-shot-0",
+          "left": 0.9586463570594788,
+          "right": 156.57259899377823,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 155.61395263671875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-1",
+          "left": 49.671875,
+          "right": 195.859375,
+          "top": 518.734375,
+          "bottom": 738.03125,
+          "visibleWidth": 146.1875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-2",
+          "left": 88.95864868164062,
+          "right": 244.57260131835938,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 153.15072631835938,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 269,
+        "contentWidth": 279,
+        "overflow": "auto"
+      },
+      "menuBottom": 53,
+      "artTop": 486.05148113475127,
+      "hudGap": 10.00460613475127,
+      "controls": [
+        {
+          "text": "Small",
+          "height": 44
+        },
+        {
+          "text": "Medium",
+          "height": 44
+        },
+        {
+          "text": "Large",
+          "height": 44
+        },
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactiondisabled",
+          "height": 44
+        }
+      ],
+      "reaction": "false"
+    },
+    "native-log-Small": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
+        "height": 92,
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
+      },
+      "log": {
+        "x": 78,
+        "y": 532.921875,
+        "width": 300,
+        "height": 112.640625,
+        "top": 532.921875,
+        "bottom": 645.5625,
+        "right": 378
+      },
+      "card": {
+        "x": 0.9586463570594788,
+        "y": 525.2442016601562,
+        "width": 155.61395263671875,
+        "height": 225.4647216796875,
+        "top": 525.2442016601562,
+        "bottom": 750.7089233398438,
+        "right": 156.57259899377823
+      },
+      "hand": {
+        "x": 0,
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
+      },
+      "hud": {
+        "x": 35.65625,
+        "y": 457.59375,
+        "width": 112,
+        "height": 17.59375,
+        "top": 457.59375,
+        "bottom": 475.1875,
+        "right": 147.65625
+      },
+      "cards": [
+        {
+          "id": "reaction-shot-0",
+          "left": 0.9586463570594788,
+          "right": 156.57259899377823,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 155.61395263671875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-1",
+          "left": 49.671875,
+          "right": 195.859375,
+          "top": 518.734375,
+          "bottom": 738.03125,
+          "visibleWidth": 146.1875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-2",
+          "left": 88.95864868164062,
+          "right": 244.57260131835938,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 153.15072631835938,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 269,
+        "contentWidth": 279,
+        "overflow": "auto"
+      },
+      "menuBottom": 53,
+      "artTop": 485.19590849034927,
+      "hudGap": 10.008408490349268,
+      "controls": [
+        {
+          "text": "Small",
+          "height": 44
+        },
+        {
+          "text": "Medium",
+          "height": 44
+        },
+        {
+          "text": "Large",
+          "height": 44
+        },
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactiondisabled",
+          "height": 44
+        }
+      ],
+      "reaction": "false"
+    },
+    "native-reaction": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
+        "height": 92,
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
+      },
+      "log": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "card": {
+        "x": 0.9586463570594788,
+        "y": 525.2442016601562,
+        "width": 155.61395263671875,
+        "height": 225.4647216796875,
+        "top": 525.2442016601562,
+        "bottom": 750.7089233398438,
+        "right": 156.57259899377823
+      },
+      "hand": {
+        "x": 0,
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
+      },
+      "hud": {
+        "x": 35.65625,
+        "y": 454.8125,
+        "width": 112,
+        "height": 17.59375,
+        "top": 454.8125,
+        "bottom": 472.40625,
+        "right": 147.65625
+      },
+      "cards": [
+        {
+          "id": "reaction-shot-0",
+          "left": 0.9586463570594788,
+          "right": 156.57259899377823,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 155.61395263671875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-1",
+          "left": 49.671875,
+          "right": 195.859375,
+          "top": 518.734375,
+          "bottom": 738.03125,
+          "visibleWidth": 146.1875,
+          "dockOverlap": false
+        },
+        {
+          "id": "reaction-shot-2",
+          "left": 88.95864868164062,
+          "right": 244.57260131835938,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 153.15072631835938,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 269,
+        "contentWidth": 279,
+        "overflow": "auto"
+      },
+      "menuBottom": 53,
+      "artTop": 482.41586101756377,
+      "hudGap": 10.00961101756377,
+      "controls": [
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactionenabled",
+          "height": 44
+        }
+      ],
+      "reaction": "true"
+    },
+    "native-selected-off": {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "visibleHeight": 844
+      },
+      "touch": 1,
+      "tools": {
+        "x": 242.109375,
+        "y": 651.5625,
+        "width": 135.890625,
+        "height": 92,
+        "top": 651.5625,
+        "bottom": 743.5625,
+        "right": 378
+      },
+      "log": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "card": {
+        "x": 0.9586463570594788,
+        "y": 525.2442016601562,
+        "width": 155.61395263671875,
+        "height": 225.4647216796875,
+        "top": 525.2442016601562,
+        "bottom": 750.7089233398438,
+        "right": 156.57259899377823
+      },
+      "hand": {
+        "x": 0,
+        "y": 498.828125,
+        "width": 242.109375,
+        "height": 253.25,
+        "top": 498.828125,
+        "bottom": 752.078125,
+        "right": 242.109375
+      },
+      "footer": {
+        "x": 0,
+        "y": 752.078125,
+        "width": 390,
+        "height": 91.921875,
+        "top": 752.078125,
+        "bottom": 844,
+        "right": 390
+      },
+      "hud": {
+        "x": 35.65625,
+        "y": 417.84375,
+        "width": 112,
+        "height": 57.328125,
+        "top": 417.84375,
+        "bottom": 475.171875,
+        "right": 147.65625
+      },
+      "cards": [
+        {
+          "id": "reaction-shot-2",
+          "left": 0.9586463570594788,
+          "right": 156.57259899377823,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 155.61395263671875,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:straightSword:guard",
+          "left": 48.08488845825195,
+          "right": 197.44636917114258,
+          "top": 518.7454223632812,
+          "bottom": 740.1452026367188,
+          "visibleWidth": 149.36148071289062,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:guard",
+          "left": 92.08489227294922,
+          "right": 241.44637298583984,
+          "top": 518.7454223632812,
+          "bottom": 740.1452026367188,
+          "visibleWidth": 149.36148071289062,
+          "dockOverlap": false
+        },
+        {
+          "id": "kit:roundShield:attack",
+          "left": 132.95864868164062,
+          "right": 288.5726013183594,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "visibleWidth": 109.15072631835938,
+          "dockOverlap": false
+        }
+      ],
+      "handScroll": {
+        "left": 0,
+        "width": 269,
+        "contentWidth": 328,
+        "overflow": "auto"
+      },
+      "menuBottom": 53,
+      "artTop": 485.18357938878677,
+      "hudGap": 10.011704388786768,
+      "controls": [
+        {
+          "text": "Combat log",
+          "height": 44
+        },
+        {
+          "text": "Reactiondisabled",
+          "height": 44
+        }
+      ],
+      "reaction": "false"
+    },
+    "native-swipe": {
+      "before": 0,
+      "after": 125.67567443847656,
+      "measure": {
+        "viewport": {
+          "width": 320,
+          "height": 740,
+          "visibleHeight": 740
+        },
+        "touch": 1,
+        "tools": {
+          "x": 172.140625,
+          "y": 547.53125,
+          "width": 135.859375,
+          "height": 92,
+          "top": 547.53125,
+          "bottom": 639.53125,
+          "right": 308
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": -92.20421600341797,
+          "y": 453.44488525390625,
+          "width": 133.65843200683594,
+          "height": 193.6414794921875,
+          "top": 453.44488525390625,
+          "bottom": 647.0863647460938,
+          "right": 41.45421600341797
+        },
+        "hand": {
+          "x": 0,
+          "y": 426.09375,
+          "width": 172.140625,
+          "height": 222,
+          "top": 426.09375,
+          "bottom": 648.09375,
+          "right": 172.140625
+        },
+        "footer": {
+          "x": 0,
+          "y": 648.09375,
+          "width": 320,
+          "height": 91.90625,
+          "top": 648.09375,
+          "bottom": 740,
+          "right": 320
+        },
+        "hud": {
+          "x": 19.625,
+          "y": 394.9375,
+          "width": 112,
+          "height": 13.984375,
+          "top": 394.9375,
+          "bottom": 408.921875,
+          "right": 131.625
+        },
+        "cards": [
+          {
+            "id": "reaction-shot-2",
+            "left": -92.20421600341797,
+            "right": 41.45421600341797,
+            "top": 453.44488525390625,
+            "bottom": 647.0863647460938,
+            "visibleWidth": 41.45421600341797,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:straightSword:guard",
+            "left": -45.45673751831055,
+            "right": 82.83172988891602,
+            "top": 446.64373779296875,
+            "bottom": 636.7937622070312,
+            "visibleWidth": 82.83172988891602,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:roundShield:guard",
+            "left": -1.3786108493804932,
+            "right": 126.90985655784607,
+            "top": 446.64373779296875,
+            "bottom": 636.7937622070312,
+            "visibleWidth": 126.90985655784607,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:roundShield:attack",
+            "left": 39.99890899658203,
+            "right": 173.6573257446289,
+            "top": 453.44488525390625,
+            "bottom": 647.0863647460938,
+            "visibleWidth": 132.14171600341797,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 125.67567443847656,
+          "width": 233,
+          "contentWidth": 368,
+          "overflow": "auto"
+        },
+        "menuBottom": 51.390625,
+        "artTop": 418.9266391080969,
+        "hudGap": 10.004764108096879,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactiondisabled",
+            "height": 44
+          }
+        ],
+        "reaction": "false"
+      }
+    },
+    "native-upcast": {
+      "measure": {
+        "viewport": {
+          "width": 320,
+          "height": 740,
+          "visibleHeight": 740
+        },
+        "touch": 1,
+        "tools": {
+          "x": 172.140625,
+          "y": 547.53125,
+          "width": 135.859375,
+          "height": 92,
+          "top": 547.53125,
+          "bottom": 639.53125,
+          "right": 308
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": 4.84375,
+          "y": 440.0677795410156,
+          "width": 125.5625,
+          "height": 188.34371948242188,
+          "top": 440.0677795410156,
+          "bottom": 628.4114990234375,
+          "right": 130.40625
+        },
+        "hand": {
+          "x": 0,
+          "y": 426.09375,
+          "width": 172.140625,
+          "height": 222,
+          "top": 426.09375,
+          "bottom": 648.09375,
+          "right": 172.140625
+        },
+        "footer": {
+          "x": 0,
+          "y": 648.09375,
+          "width": 320,
+          "height": 91.90625,
+          "top": 648.09375,
+          "bottom": 740,
+          "right": 320
+        },
+        "hud": {
+          "x": 19.625,
+          "y": 392.078125,
+          "width": 112,
+          "height": 17.59375,
+          "top": 392.078125,
+          "bottom": 409.671875,
+          "right": 131.625
+        },
+        "cards": [
+          {
+            "id": "reaction-shot-0",
+            "left": 4.84375,
+            "right": 130.40625,
+            "top": 440.0677795410156,
+            "bottom": 628.4114990234375,
+            "visibleWidth": 125.5625,
+            "dockOverlap": false
+          },
+          {
+            "id": "reaction-shot-1",
+            "left": 48.90625,
+            "right": 174.46875,
+            "top": 446.46875,
+            "bottom": 634.8125,
+            "visibleWidth": 123.234375,
+            "dockOverlap": false
+          },
+          {
+            "id": "reaction-shot-2",
+            "left": 88.93640899658203,
+            "right": 222.5948257446289,
+            "top": 453.44488525390625,
+            "bottom": 647.0863647460938,
+            "visibleWidth": 83.20421600341797,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 233,
+          "contentWidth": 309,
+          "overflow": "auto"
+        },
+        "menuBottom": 51.390625,
+        "artTop": 419.6734834558823,
+        "hudGap": 10.00160845588232,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
+      "controls": [
+        {
+          "rect": {
+            "x": 4.84375,
+            "y": 577.9739990234375,
+            "width": 125.5625,
+            "height": 50.4375,
+            "top": 577.9739990234375,
+            "right": 130.40625,
+            "bottom": 628.4114990234375,
+            "left": 4.84375
+          },
+          "inputs": [
+            {
+              "text": "Upcast +1",
+              "height": 44
+            }
+          ]
+        }
+      ]
+    },
+    "opening": {
+      "desktop": {
+        "viewport": {
+          "width": 1440,
+          "height": 900,
+          "visibleHeight": 900
+        },
+        "touch": 0,
+        "tools": {
+          "x": 1292,
+          "y": 677.28125,
+          "width": 136,
+          "height": 92,
+          "top": 677.28125,
+          "bottom": 769.28125,
+          "right": 1428
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": 404.7165832519531,
+          "y": 533.23828125,
+          "width": 167.73867797851562,
+          "height": 243.0234375,
+          "top": 533.23828125,
+          "bottom": 776.26171875,
+          "right": 572.4552612304688
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1292,
+          "height": 270,
+          "top": 507.28125,
+          "bottom": 777.28125,
+          "right": 1292
+        },
+        "footer": {
+          "x": 420,
+          "y": 777.28125,
+          "width": 600,
+          "height": 122.71875,
+          "top": 777.28125,
+          "bottom": 900,
+          "right": 1020
+        },
+        "hud": {
+          "x": 446.3125,
+          "y": 449.328125,
+          "width": 112,
+          "height": 28.59375,
+          "top": 449.328125,
+          "bottom": 477.921875,
+          "right": 558.3125
+        },
+        "cards": [
+          {
+            "id": "reaction-shot-0",
+            "left": 404.7165832519531,
+            "right": 572.4552612304688,
+            "top": 533.23828125,
+            "bottom": 776.26171875,
+            "visibleWidth": 167.73867797851562,
+            "dockOverlap": false
+          },
+          {
+            "id": "reaction-shot-1",
+            "left": 567.390625,
+            "right": 724.96875,
+            "top": 526.953125,
+            "bottom": 763.328125,
+            "visibleWidth": 157.578125,
+            "dockOverlap": false
+          },
+          {
+            "id": "reaction-shot-2",
+            "left": 719.9041137695312,
+            "right": 887.6427612304688,
+            "top": 533.23828125,
+            "bottom": 776.26171875,
+            "visibleWidth": 167.7386474609375,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 1077,
+          "contentWidth": 1077,
+          "overflow": "auto"
+        },
+        "menuBottom": 56,
+        "artTop": 487.93640523798325,
+        "hudGap": 10.014530237983251,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
+      "native": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "visibleHeight": 844
+        },
+        "touch": 1,
+        "tools": {
+          "x": 242.109375,
+          "y": 651.5625,
+          "width": 135.890625,
+          "height": 92,
+          "top": 651.5625,
+          "bottom": 743.5625,
+          "right": 378
+        },
+        "log": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "card": {
+          "x": 0.9586463570594788,
+          "y": 525.2442016601562,
+          "width": 155.61395263671875,
+          "height": 225.4647216796875,
+          "top": 525.2442016601562,
+          "bottom": 750.7089233398438,
+          "right": 156.57259899377823
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 242.109375,
+          "height": 253.25,
+          "top": 498.828125,
+          "bottom": 752.078125,
+          "right": 242.109375
+        },
+        "footer": {
+          "x": 0,
+          "y": 752.078125,
+          "width": 390,
+          "height": 91.921875,
+          "top": 752.078125,
+          "bottom": 844,
+          "right": 390
+        },
+        "hud": {
+          "x": 35.65625,
+          "y": 457.84375,
+          "width": 112,
+          "height": 17.59375,
+          "top": 457.84375,
+          "bottom": 475.4375,
+          "right": 147.65625
+        },
+        "cards": [
+          {
+            "id": "reaction-shot-0",
+            "left": 0.9586463570594788,
+            "right": 156.57259899377823,
+            "top": 525.2442016601562,
+            "bottom": 750.7089233398438,
+            "visibleWidth": 155.61395263671875,
+            "dockOverlap": false
+          },
+          {
+            "id": "reaction-shot-1",
+            "left": 49.671875,
+            "right": 195.859375,
+            "top": 518.734375,
+            "bottom": 738.03125,
+            "visibleWidth": 146.1875,
+            "dockOverlap": false
+          },
+          {
+            "id": "reaction-shot-2",
+            "left": 88.95864868164062,
+            "right": 244.57260131835938,
+            "top": 525.2442016601562,
+            "bottom": 750.7089233398438,
+            "visibleWidth": 153.15072631835938,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 269,
+          "contentWidth": 279,
+          "overflow": "auto"
+        },
+        "menuBottom": 53,
+        "artTop": 485.44981474034927,
+        "hudGap": 10.012314740349268,
+        "controls": [
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      }
+    },
+    "packaged-lan-fixture": {
+      "build": {
+        "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+        "release": "0.7.1",
+        "ordinal": 1172,
+        "digest": "da2a96e4e6",
+        "built": "2026-10-09"
+      },
+      "mode": "Authored saved combat, real LAN transport and production commands; not a full playthrough",
+      "enemyIds": [
+        "ashRevenant"
+      ]
+    },
     "reduced-motion": {
-      "reduced": true,
+      "measure": {
+        "viewport": {
+          "width": 320,
+          "height": 740,
+          "visibleHeight": 740
+        },
+        "touch": 1,
+        "tools": {
+          "x": 172.140625,
+          "y": 547.53125,
+          "width": 135.859375,
+          "height": 92,
+          "top": 547.53125,
+          "bottom": 639.53125,
+          "right": 308
+        },
+        "log": {
+          "x": 12,
+          "y": 444.8125,
+          "width": 296,
+          "height": 96.71875,
+          "top": 444.8125,
+          "bottom": 541.53125,
+          "right": 308
+        },
+        "card": {
+          "x": 0.7957843542098999,
+          "y": 453.44488525390625,
+          "width": 133.65841674804688,
+          "height": 193.6414794921875,
+          "top": 453.44488525390625,
+          "bottom": 647.0863647460938,
+          "right": 134.45420110225677
+        },
+        "hand": {
+          "x": 0,
+          "y": 426.09375,
+          "width": 172.140625,
+          "height": 222,
+          "top": 426.09375,
+          "bottom": 648.09375,
+          "right": 172.140625
+        },
+        "footer": {
+          "x": 0,
+          "y": 648.09375,
+          "width": 320,
+          "height": 91.90625,
+          "top": 648.09375,
+          "bottom": 740,
+          "right": 320
+        },
+        "hud": {
+          "x": 19.625,
+          "y": 395.6875,
+          "width": 112,
+          "height": 13.984375,
+          "top": 395.6875,
+          "bottom": 409.671875,
+          "right": 131.625
+        },
+        "cards": [
+          {
+            "id": "reaction-shot-2",
+            "left": 0.7957843542098999,
+            "right": 134.45420110225677,
+            "top": 453.44488525390625,
+            "bottom": 647.0863647460938,
+            "visibleWidth": 133.65841674804688,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:straightSword:guard",
+            "left": 47.54326248168945,
+            "right": 175.83174514770508,
+            "top": 446.64373779296875,
+            "bottom": 636.7937622070312,
+            "visibleWidth": 124.59736251831055,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:roundShield:guard",
+            "left": 91.62139129638672,
+            "right": 219.90987396240234,
+            "top": 446.64373779296875,
+            "bottom": 636.7937622070312,
+            "visibleWidth": 80.51923370361328,
+            "dockOverlap": false
+          },
+          {
+            "id": "kit:roundShield:attack",
+            "left": 132.99891662597656,
+            "right": 266.6573486328125,
+            "top": 453.44488525390625,
+            "bottom": 647.0863647460938,
+            "visibleWidth": 39.14170837402344,
+            "dockOverlap": false
+          }
+        ],
+        "handScroll": {
+          "left": 0,
+          "width": 233,
+          "contentWidth": 368,
+          "overflow": "auto"
+        },
+        "menuBottom": 51.390625,
+        "artTop": 419.6734834558823,
+        "hudGap": 10.00160845588232,
+        "controls": [
+          {
+            "text": "Small",
+            "height": 44
+          },
+          {
+            "text": "Medium",
+            "height": 44
+          },
+          {
+            "text": "Large",
+            "height": 44
+          },
+          {
+            "text": "Combat log",
+            "height": 44
+          },
+          {
+            "text": "Reactionenabled",
+            "height": 44
+          }
+        ],
+        "reaction": "true"
+      },
       "animation": "none"
     },
     "reduced-sweep": {
-      "hp": 63,
-      "enemies": [
-        87,
-        91
-      ],
-      "played": [
-        "sweepingBlow"
-      ]
-    },
-    "browser-health": {
-      "errors": [],
-      "failures": [
+      "frames": [
         {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
+          "time": 5142,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "100/100"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Actions will appear here as the round unfolds."
         },
         {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdCommit_endTurn.ogg"
+          "time": 5491.39999999851,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/block.ogg"
+          "time": 5642.300000000745,
+          "hp": "4063/63",
+          "enemy": "100/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "100/100"
+            },
+            {
+              "id": "e2",
+              "hp": "1100/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking ?"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block."
         },
         {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
+          "time": 5976.5,
+          "hp": "3563/63",
+          "enemy": "87/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "87/100"
+            },
+            {
+              "id": "e2",
+              "hp": "91/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Sweeping Blow · 1 SP.Forsaken dealt 13 damage to Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier (1 blocked).Wandering Soldier used Slash.Forsaken blocked 5 damage."
         },
         {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/relic.ogg"
+          "time": 6460,
+          "hp": "3563/63",
+          "enemy": "87/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "87/100"
+            },
+            {
+              "id": "e2",
+              "hp": "91/100"
+            }
+          ],
+          "intents": [
+            "Attacking6",
+            "Attacking6"
+          ],
+          "modal": true,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Sweeping Blow · 1 SP.Forsaken dealt 13 damage to Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier (1 blocked).Wandering Soldier used Slash.Forsaken blocked 5 damage."
         },
         {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/block.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/relic.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
-        },
-        {
-          "url": "http://localhost:62173/objects/16/163c659352139dcd8f23ae06ba925f05a24b702083d6faadaed7f18cf2fbad24.webp",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/block.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/block.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/hit_light.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/hit_light.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/nodeTravel.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/block.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/relic.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/nodeTravel.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/cardDraw.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/turnStinger.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdTick_endTurn.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/holdCommit_endTurn.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/block.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/hit_medium.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/relic.ogg"
-        },
-        {
-          "status": 404,
-          "url": "http://localhost:62173/assets/sfx/deckShuffle.ogg"
+          "time": 7053.699999999255,
+          "hp": "63/63",
+          "enemy": "87/100",
+          "enemies": [
+            {
+              "id": "e1",
+              "hp": "87/100"
+            },
+            {
+              "id": "e2",
+              "hp": "91/100"
+            }
+          ],
+          "intents": [
+            "Attacking ?",
+            "Preparing ?"
+          ],
+          "modal": false,
+          "log": "Round 1Wandering Soldier gained 1 Block.Forsaken played Sweeping Blow · 1 SP.Forsaken dealt 13 damage to Wandering Soldier.Forsaken dealt 9 damage to Wandering Soldier (1 blocked).Wandering Soldier used Slash.Forsaken blocked 5 damage.Forsaken skipped the reaction.Wandering Soldier used Slash.Forsaken blocked 5 damage."
         }
-      ]
+      ],
+      "fx": {
+        "open": 0,
+        "finished": 0,
+        "watchdog": 0
+      }
     }
   }
 }

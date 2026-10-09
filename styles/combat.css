@@ -1402,9 +1402,14 @@
 :root .combat[data-layout='formation'] .combat-action-row { min-height:0; }
 :root .combat[data-layout='formation'] .combat-action-row > * { max-height:100%; }
 
-/* The fitted fan has no scrollbars. A scrollbar appearing/disappearing when
-   the enemy-turn filter changes would shift the vertically centered cards. */
-:root .combat[data-layout='formation'] .hand { overflow:visible; }
+/* Keep excess cards reachable inside the reserved hand width. The fan already
+   reserves its selected lift vertically; its inspection button is portaled
+   outside this viewport. Hidden scrollbars keep turn filters from moving it. */
+:root .combat[data-layout='formation'] .hand {
+ overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+ overscroll-behavior-x:contain;
+}
+:root .combat[data-layout='formation'] .hand::-webkit-scrollbar { display:none; }
 
 /* Short landscape keeps meters inline in the left resource column.
    Relics remain below them; the compact band preserves battlefield space. */

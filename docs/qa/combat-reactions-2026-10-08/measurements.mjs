@@ -34,8 +34,19 @@ export async function measures(p) {
       if(y<canvas.height)art.push(r.top+(r.height-img.naturalHeight*scale)/2+y*scale);
     }
     const menuBottom=Math.max(0,...[...document.querySelectorAll('.topbar button')].map(e=>e.getBoundingClientRect().bottom));
+    const handElement=document.querySelector('.hand'), handBounds=handElement?.getBoundingClientRect();
+    const dock=document.querySelector('.combat-tools')?.getBoundingClientRect();
+    const clipsHand=handElement&&getComputedStyle(handElement).overflowX!=='visible';
+    const cards=[...document.querySelectorAll('.hand .card')].map(e=>{
+      const r=e.getBoundingClientRect();
+      const visible=handBounds?{left:clipsHand?Math.max(r.left,handBounds.left):r.left,right:clipsHand?Math.min(r.right,handBounds.right):r.right,top:clipsHand?Math.max(r.top,handBounds.top):r.top,bottom:clipsHand?Math.min(r.bottom,handBounds.bottom):r.bottom}:null;
+      return {id:e.dataset.instanceId,left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+        visibleWidth:visible?Math.max(0,visible.right-visible.left):0,
+        dockOverlap:!!(visible&&dock&&visible.right>visible.left&&visible.bottom>visible.top&&visible.right>dock.left&&visible.left<dock.right&&visible.bottom>dock.top&&visible.top<dock.bottom)};
+    });
     return {viewport:{width:innerWidth,height:innerHeight,visibleHeight:visualViewport?.height},touch:navigator.maxTouchPoints,
       tools:box('.combat-tools'),log:box('.combat-log-panel'),card:box('.hand .card'),hand:box('.hand-overlay')||box('.combat.coop > .hand-area > .hand'),footer:box('.combat-action-row'),hud:box('.combatant.player .combatant-mini-hud'),
+      cards,handScroll:handElement?{left:handElement.scrollLeft,width:handElement.clientWidth,contentWidth:handElement.scrollWidth,overflow:getComputedStyle(handElement).overflowX}:null,
       menuBottom,artTop:art.length?Math.min(...art):null,hudGap:art.length&&hud?Math.min(...art)-hud.getBoundingClientRect().bottom:null,
       controls:[...document.querySelectorAll('.combat-tools button')].filter(e=>e.getBoundingClientRect().height>0).map(e=>({text:e.textContent,height:e.getBoundingClientRect().height})),
       reaction:document.querySelector('[role="switch"]')?.getAttribute('aria-checked')};
