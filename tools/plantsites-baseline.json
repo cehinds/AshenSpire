@@ -67,6 +67,16 @@
       "id": "9fb86f9153777bc0"
     },
     {
+      "tool": "tools/hand-pager-threshold.mjs",
+      "target": "AshenSpire.html",
+      "id": "e8b7562d72a720da"
+    },
+    {
+      "tool": "tools/hybrid-input-parity.mjs",
+      "target": "AshenSpire.html",
+      "id": "10b27e1d20e4ffd9"
+    },
+    {
       "tool": "tools/menufit.mjs",
       "target": "styles/ui.css",
       "id": "7b52b505469be5a0"
@@ -97,9 +107,24 @@
       "id": "fecde7a543a0e80c"
     },
     {
+      "tool": "tools/tapsize.mjs",
+      "target": "dist/AshenSpire.html",
+      "id": "90a85c9d8c5dd3c9"
+    },
+    {
+      "tool": "tools/tapsize.mjs",
+      "target": "dist/AshenSpire.html",
+      "id": "90a85c9d8c5dd3c9"
+    },
+    {
       "tool": "tools/text-geometry.mjs",
       "target": "AshenSpire.html",
       "id": "1353252b7cd6554a"
+    },
+    {
+      "tool": "tools/text-geometry.mjs",
+      "target": "AshenSpire.html",
+      "id": "a4ca40665c6aa50c"
     },
     {
       "tool": "tools/text-geometry.mjs",
@@ -234,7 +259,7 @@
     },
     "tools/motion-probe.mjs": {
       "count": 22,
-      "digest": "6aee0486dc45460e"
+      "digest": "bd4d1ba11d28ac42"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,

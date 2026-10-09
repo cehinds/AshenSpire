@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1780",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Alternative cards keep their native battlefield presentation",
+    "detail": "Share the complete editable card design without repeating its master data, while preserving the alternative battlefield geometry, idle motion and correctly ordered scene layers. Card actions, ranks, symbols and effect text retain the promoted primary behavior.",
+    "build": "0.7.1.1198",
+    "pullRequest": 1780,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1780"
+  },
+  {
     "id": "pr-1778",
     "date": "2026-10-09",
     "group": "2026-10-09",
