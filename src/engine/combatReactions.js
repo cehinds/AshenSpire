@@ -86,6 +86,13 @@ export function beforeReactionAction(ctx, action, hooks) {
   return false;
 }
 
+export function finishReactions(ctx) {
+  for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup']) delete ctx[field];
+  for (const seat of ctx.players?.values() || []) delete seat.reactionHandCleanup;
+  ctx.pendingExpansionActions = 0;
+  ctx.queue.length = 0;
+}
+
 export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks) {
   const pending = ctx.pendingReaction;
   if (!pending || pending.id !== offerId || pending.ownerId !== ownerId) throw new Error('This reaction choice is unavailable');

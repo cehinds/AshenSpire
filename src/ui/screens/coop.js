@@ -1033,7 +1033,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const arming = armedFlask != null || armedFriendlyCard != null;
 
     app.innerHTML = `
-      <div class="combat coop" data-layout="formation" data-turn="${pacing ? 'enemy' : 'player'}">
+      <div class="combat coop" data-layout="formation" data-turn="${pacing || sc.phase === 'enemy' ? 'enemy' : 'player'}">
         <header class="topbar combat-hud">
           ${hudQuickSettingsHtml(hudQuickSettingsModel({
             place: 'combat',
@@ -1050,7 +1050,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
         ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}
-        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing ? 'Enemy Turn' : 'Player Turn'}</div>
+        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing || sc.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn'}</div>
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>
@@ -1899,7 +1899,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : latest;
       pacing = false;
       render();
-      if (snap.scene.kind === 'combat') app.querySelector('.turn-ribbon').textContent = 'Player Turn';
     }
   }
 

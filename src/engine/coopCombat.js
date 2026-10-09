@@ -550,6 +550,7 @@ function endCheck(C) {
 function finish(C, result) {
   C.result = result;
   C.phase = 'ended';
+  Reactions.finishReactions(C);
   C.queue.length = 0;
   C.emit('combatEnd', { victory: result === 'victory' });
   C.queue.length = 0;

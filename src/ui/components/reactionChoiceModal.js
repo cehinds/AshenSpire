@@ -1,19 +1,20 @@
 import { openModal, button, el } from '../kit/index.js';
+import { t, tFull } from '../strings.js';
 
 export function openReactionChoiceModal({ pending, onAnswer, onClosed }) {
   let selected = null;
   let settled = false;
   let dismissed = false;
-  const play = button({ label: 'Play', weight: 'primary', disabled: true });
-  const decline = button({ label: 'Back', role: 'exit' });
+  const play = button({ label: t('combat.reaction.play'), weight: 'primary', disabled: true });
+  const decline = button({ label: t('common.back'), role: 'exit' });
   const shell = openModal({
-    title: 'Respond to the incoming action', eyebrow: 'Defensive reaction', size: 'md',
-    className: 'reaction-choice', closeLabel: 'Back', secondary: [decline], primary: play,
+    title: t('combat.reaction.title'), eyebrow: t('combat.reaction.eyebrow'), size: 'md',
+    className: 'reaction-choice', closeLabel: t('common.back'), secondary: [decline], primary: play,
     body(host) {
-      host.append(el('p', { text: 'Choose a card to play before this action resolves. Back skips this reaction.' }));
+      host.append(el('p', { text: tFull('combat.reaction.help') }));
       for (const option of pending.options) {
         const tier = option.play.upcastTier;
-        const pick = button({ label: `${option.name}${tier ? ` · Upcast ${tier}` : ''}${option.choiceName ? ` · ${option.choiceName}` : ''} · ${option.staminaCost} SP${option.manaCost ? ` · ${option.manaCost} MP` : ''}`,
+        const pick = button({ label: `${option.name}${tier ? ` · ${t('combat.reaction.upcast', { tier })}` : ''}${option.choiceName ? ` · ${option.choiceName}` : ''} · ${t('combat.reaction.sp', { amount: option.staminaCost })}${option.manaCost ? ` · ${t('combat.reaction.mp', { amount: option.manaCost })}` : ''}`,
           attrs: { 'data-reaction-option': option.id, 'aria-pressed': 'false' } });
         pick.addEventListener('click', () => {
           selected = option.id;

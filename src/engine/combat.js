@@ -456,6 +456,7 @@ function endCheck(combat) {
 function finishCombat(combat, result) {
   combat.result = result;
   combat.phase = 'ended';
+  Reactions.finishReactions(combat);
   combat.queue.length = 0;
   combat.emit('combatEnd', { victory: result === 'victory' });
   combat.queue.length = 0; // combatEnd triggers cannot enqueue combat actions
@@ -1366,6 +1367,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
       p.energy -= check.energy; p.mana -= check.mana;
       combat.piles.hand.splice(idx, 1); combat.piles.exhaust.push(inst);
       p.hp = 0; p.alive = false; combat.phase = 'ended'; combat.result = 'defeat';
+      Reactions.finishReactions(combat);
       combat.emit('ashenBlightLost', { targetId: p.id, reason: 'threshold' }); return;
     }
   }

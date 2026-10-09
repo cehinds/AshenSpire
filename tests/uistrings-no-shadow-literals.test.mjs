@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,23 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/audio.js', 'disabled', 'stored music status value; not the optional reaction switch face'],
+  ['src/ui/components/coopProgressionDoor.js', 'disabled', 'DOM property key; not reaction switch copy'],
+  ['src/ui/components/holdconfirm.js', 'disabled', 'stored hold mode; not reaction switch copy'],
+  ['src/ui/components/optionDecision.js', 'disabled', 'stored hold mode; not reaction switch copy'],
+  ['src/ui/models/CombatToolsModel.js', 'Small', 'stable log size id; its rendered face reads combat.log.size.small'],
+  ['src/ui/models/CombatToolsModel.js', 'Medium', 'stable log size id; its rendered face reads combat.log.size.medium'],
+  ['src/ui/models/CombatToolsModel.js', 'Large', 'stable log size id; its rendered face reads combat.log.size.large'],
+  ['src/ui/models/WireframeChoiceModel.js', 'Medium', 'wireframe preview size, separate from the combat log size'],
+  ['src/ui/screens/combat.js', 'Small', 'stored log size id; the shared tools renderer supplies its face'],
+  ['src/ui/screens/combat.js', 'disabled', 'HTML disabled attribute; not reaction switch copy'],
+  ['src/ui/screens/combat.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
+  ['src/ui/screens/coop.js', 'Small', 'stored log size id; the shared tools renderer supplies its face'],
+  ['src/ui/screens/coop.js', 'disabled', 'HTML disabled attribute; not reaction switch copy'],
+  ['src/ui/screens/coop.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
+  ['src/ui/components/coopUpcastControl.js', 'Upcast', 'ordinary hand-card default label, separate from the reaction option tier sentence'],
+  ['src/ui/screens/settings.js', 'enabled', 'stored prologue property key; not reaction switch copy'],
+  ['src/ui/screens/worldAtlas.js', 'disabled', 'HTML disabled attributes; not reaction switch copy'],
   ['src/ui/components/friendlyTargets.js', 'Target', 'friendly-target accessibility prefix; not the numbered enemy target label row'],
   ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],

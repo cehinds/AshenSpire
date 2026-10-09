@@ -2,26 +2,28 @@ import { button, el } from '../kit/index.js';
 import { childModel } from '../models/ComponentModel.js';
 import { combatLogHeight, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
+import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { t, tFull } from '../strings.js';
 
 export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
-  const logButton = button({ label: 'Combat log', attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
+  const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
   const reaction = markUiComponent(button({ label: '', attrs: { 'data-combat-tool': 'reaction', role: 'switch', 'aria-checked': 'true' } }), UI.reactionToggle);
   reaction.classList.add('reaction-switch');
-  const label = el('span', { text: 'Reaction' });
+  const label = el('span', { text: t('combat.reactions.label') });
   const track = el('span', { class: 'reaction-switch-track' });
   const value = el('span', { class: 'reaction-switch-value' });
   const thumb = el('span', { class: 'reaction-switch-thumb', 'aria-hidden': 'true' });
   track.append(value, thumb); reaction.replaceChildren(label, track);
-  const panel = markUiComponent(el('section', { id: 'combat-log', class: 'combat-log-panel', 'aria-label': 'Combat log', hidden: true }), UI.combatLogDrawer);
-  const title = el('div', { class: 'combat-log-heading', text: 'Combat log' });
-  const sizes = el('div', { class: 'combat-log-sizes', role: 'group', 'aria-label': 'Log size' });
+  const panel = markUiComponent(el('section', { id: 'combat-log', class: 'combat-log-panel', 'aria-label': t('combat.log.title'), hidden: true }), UI.combatLogDrawer);
+  const title = el('div', { class: 'combat-log-heading', text: t('combat.log.title') });
+  const sizes = el('div', { class: 'combat-log-sizes', role: 'group', 'aria-label': t('combat.log.sizeLabel') });
   for (const size of COMBAT_LOG_SIZES) {
-    const pick = button({ label: size, attrs: { 'data-combat-tool': size, 'data-log-size': size, 'aria-pressed': 'false' } });
+    const pick = button({ label: t(`combat.log.size.${size.toLowerCase()}`), attrs: { 'data-combat-tool': size, 'data-log-size': size, 'aria-pressed': 'false' } });
     pick.addEventListener('click', () => { state.size = size; onViewChange(); root.querySelector(`[data-log-size="${size}"]`)?.focus(); });
     sizes.append(pick);
   }
-  const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': 'Actions by round' });
+  const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
   panel.append(title, sizes, list); root.append(panel, logButton, reaction); combatEl.append(root);
   logButton.addEventListener('click', () => { state.open = !state.open; onViewChange(); });
@@ -34,17 +36,20 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     const style = getComputedStyle(root);
     const gap = parseFloat(style.getPropertyValue('--combat-tools-gap')) || 8;
     const width = parseFloat(style.getPropertyValue('--combat-tools-physical-width')) || 136;
-    root.style.width = `${width / zoom}px`;
-    combatEl.style.setProperty('--combat-tools-reserve', `${(width + gap + 4) / zoom}px`);
+    const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
+    root.style.width = `${localWidth.width}px`;
+    const reserve = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: width + gap + 4, height: 0 }, { zoom });
+    combatEl.style.setProperty('--combat-tools-reserve', `${reserve.width}px`);
     const footer = combatEl.querySelector('.combat-action-row')?.getBoundingClientRect();
     const bottom = (footer?.top ?? innerHeight) - gap;
-    const box = combatEl.getBoundingClientRect();
-    root.style.top = `${(bottom - root.getBoundingClientRect().height - box.top) / zoom}px`;
+    const localDock = anchorLocalBox(combatEl, { left: 0, top: bottom - root.getBoundingClientRect().height, width: 0, height: 0 }, { zoom });
+    root.style.top = `${localDock.top}px`;
     const menu = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
     const card = combatEl.querySelector('.hand .card')?.getBoundingClientRect().height || 250;
     const height = combatLogHeight({ size: state.size, cardHeight: card,
       viewportHeight: window.visualViewport?.height || innerHeight, dockTop: root.getBoundingClientRect().top - 6, menuBottom: menu, gap });
-    panel.style.height = `${height / zoom}px`;
+    const localPanel = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: 0, height }, { zoom });
+    panel.style.height = `${localPanel.height}px`;
     root.dataset.logSize = state.size;
   }
   const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
@@ -59,9 +64,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     const log = childModel(model, UI.combatLogDrawer).properties;
     reaction.disabled = toggle.disabled;
     reaction.setAttribute('aria-checked', String(toggle.enabled));
-    reaction.setAttribute('aria-label', `Reaction ${toggle.enabled ? 'enabled' : 'disabled'}`);
+    const stateLabel = t(toggle.enabled ? 'combat.reactions.enabled' : 'combat.reactions.disabled');
+    reaction.setAttribute('aria-label', t('combat.reactions.state', { state: stateLabel }));
     reaction.dataset.enabled = String(toggle.enabled);
-    value.textContent = toggle.enabled ? 'enabled' : 'disabled';
+    value.textContent = stateLabel;
     panel.hidden = !log.open; logButton.setAttribute('aria-expanded', String(log.open));
     sizes.querySelectorAll('[data-log-size]').forEach(pick => pick.setAttribute('aria-pressed', String(pick.dataset.logSize === log.size)));
     const key = JSON.stringify(log.entries);
@@ -69,10 +75,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
       entryKey = key; list.replaceChildren();
       let round, items;
       for (const entry of log.entries) {
-        if (entry.round !== round) { round = entry.round; items = el('ol', {}); list.append(el('h3', { text: `Round ${round}` }), items); }
+        if (entry.round !== round) { round = entry.round; items = el('ol', {}); list.append(el('h3', { text: t('combat.log.round', { round }) }), items); }
         items.append(el('li', { text: entry.text }));
       }
-      if (!log.entries.length) list.append(el('p', { text: 'Actions will appear here as the round unfolds.' }));
+      if (!log.entries.length) list.append(el('p', { text: tFull('combat.log.empty') }));
       list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
     }
     schedule();

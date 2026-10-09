@@ -99,6 +99,7 @@ test('terminal Blight durable outcome survives production reload with projected 
 test('run validation gates corrupted state and refuses forged terminal outcome/history rollback', () => {
   const { run } = fixture();
   const legacy = structuredClone(run); delete legacy.combatExpansionVersion; delete legacy.ashenBlight;
+  delete legacy.reactionRulesVersion;
   delete legacy.combatExpansionRules; delete legacy.ashenBlightBasePools;
   assert.deepEqual(validateRunShape(legacy), []);
   const forged = structuredClone(run); forged.combatExpansionVersion = 3;

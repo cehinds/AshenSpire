@@ -11,6 +11,7 @@ import { createFoundation } from '../src/engine/combatRules.js';
 import { armCombatCounter } from '../src/engine/combatMatchups.js';
 import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { botControlAction } from '../tools/simbot.mjs';
+import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight.js';
 
 function fixture({ version = 1, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
@@ -350,6 +351,82 @@ test('disconnect settles the last owned offer and reconnect resumes the saved cu
   assert.equal(C.turn, 2);
   assert.deepEqual(decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)), decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(restored)));
   assert.deepEqual(C.rng.getCounters(), restored.rng.getCounters());
+});
+
+test('terminal reaction victory and defeat retire continuation before durable commit in both engines', () => {
+  for (const coop of [false, true]) for (const result of ['victory', 'defeat']) {
+    const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
+      ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 100, hits: 1, weight: 1,
+        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+    const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
+      stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
+      deck: [{ cardId: 'guardCounter', instanceId: 'terminal-counter', upgraded: false }] };
+    const combat = coop ? createCoopCombat({ registries, rng: createRng(701), players: [player], enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 })
+      : createCombat({ registries, rng: createRng(701), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
+    combat.foundation = createFoundation(combatRules);
+    const owner = coop ? combat.players.get('a').entity : combat.player;
+    owner.block = result === 'victory' ? 10000 : 0;
+    if (result === 'defeat') owner.hp = 1;
+    else combat.enemies[0].hp = 1;
+    const save = state => coop ? serializeCoopCombatSnapshot(state) : serializeCombatSnapshot(state);
+    let refused = false, terminalSave = null;
+    combat.beforeCombatCommit = candidate => {
+      const snapshot = save(candidate);
+      if (refused) throw new Error('Terminal save refused');
+      if (candidate.result) terminalSave = JSON.parse(JSON.stringify(snapshot));
+    };
+    if (coop) endTurn(combat, 'a'); else dispatch(combat, { type: 'endTurn' });
+    assert.ok(combat.pendingReaction);
+    const before = JSON.parse(JSON.stringify(save(combat))), counters = combat.rng.getCounters();
+    const intent = { offerId: combat.pendingReaction.id,
+      optionId: result === 'victory' ? combat.pendingReaction.options.find(option => option.cardId === 'guardCounter' && !option.play.upcastTier).id : null };
+    const answerTerminal = () => coop ? chooseReaction(combat, 'a', intent) : dispatch(combat, { type: 'chooseReaction', ...intent });
+    refused = true;
+    assert.throws(answerTerminal, /Terminal save refused/);
+    assert.deepEqual(JSON.parse(JSON.stringify(save(combat))), before);
+    assert.deepEqual(combat.rng.getCounters(), counters);
+    refused = false; answerTerminal();
+    assert.equal(combat.phase, 'ended'); assert.equal(combat.result, result);
+    assert.ok(terminalSave, 'the durable callback can serialize the terminal candidate before adoption');
+    for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup']) assert.equal(combat[field], undefined);
+    for (const seat of combat.players?.values() || []) assert.equal(seat.reactionHandCleanup, undefined);
+    assert.equal(combat.queue.length, 0); assert.equal(combat.pendingExpansionActions, 0);
+    assert.equal(combat.eventLog.filter(event => event.type === 'combatEnd').length, 1);
+    assert.equal(combat.eventLog.filter(event => event.type === 'enemyActorTurnStarted').length, 1);
+    assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed').length, result === 'victory' ? 1 : 0);
+    const restoredRng = createRng(701, combat.rng.getCounters());
+    const restored = coop ? createCoopCombat({ registries, rng: restoredRng, players: [player], enemyIds: [], snapshot: terminalSave })
+      : restoreCombatSnapshot({ registries, rng: restoredRng, snapshot: terminalSave });
+    const comparable = state => coop ? decodeCoopCombatSnapshot(save(state)) : save(state);
+    assert.deepEqual(JSON.parse(JSON.stringify(comparable(restored))), JSON.parse(JSON.stringify(comparable(combat))));
+    assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
+  }
+});
+
+test('a terminal Blight play saves ended combat under the new reaction rules', () => {
+  const seed = Array.from({ length: 100 }, (_, index) => index + 1).find(value => createRng(value).float('ashenBlight') < .9);
+  const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'guardCounter'
+    ? { ...card, ashenBlightCost: 12 } : card), enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
+    ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 1, weight: 1,
+      tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+  const combat = createCombat({ registries, rng: createRng(seed), enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2,
+    reactionRulesVersion: 1, player: { classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
+      stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1,
+      deck: [{ cardId: 'guardCounter', instanceId: 'blight-counter', upgraded: false }] } });
+  payAshenBlight({ combatExpansionVersion: 2, draw: () => .5 }, combat.player, { amount: 88, receiptId: 'prior', combatKey: 'previous' });
+  for (const threshold of [25, 50, 75]) chooseAshenBlightFeat(combat, combat.player, { threshold, path: 'survivor' });
+  let terminal;
+  combat.beforeCombatCommit = candidate => { if (candidate.result) terminal = JSON.parse(JSON.stringify(serializeCombatSnapshot(candidate))); };
+  assert.equal(combat.reactionRulesVersion, 1);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'blight-counter' });
+  assert.equal(combat.result, 'defeat'); assert.equal(combat.player.ashenBlight.thresholdOutcome, 'lost');
+  assert.ok(terminal); assert.equal(combat.queue.length, 0); assert.equal((terminal.queue || []).length, 0);
+  for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup']) assert.equal(terminal[field], undefined);
+  assert.equal(combat.eventLog.filter(event => event.type === 'enemyMoveStarted').length, 0);
+  const rng = createRng(seed, combat.rng.getCounters());
+  const restored = restoreCombatSnapshot({ registries, rng, snapshot: terminal });
+  assert.deepEqual(JSON.parse(JSON.stringify(serializeCombatSnapshot(restored))), terminal);
+  assert.deepEqual(rng.getCounters(), combat.rng.getCounters());
 });
 
 test('saved contacts skip disconnected bodies without spending Block or Counter, including suspended reload', () => {
