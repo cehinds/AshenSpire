@@ -14,7 +14,7 @@ import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, sy
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { buildManifest, serialize, MANIFEST_PATH } from '../tools/art-manifest.mjs';
-import { guardOut, planPacks, renderPacks, verifyPacks, writePacks, objectPath, PACKS } from '../tools/asset-pack.mjs';
+import { guardOut, planPacks, renderPacks, verifyPacks, writePacks, objectPath, PACKS, withRearPlayerArt } from '../tools/asset-pack.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 
@@ -85,6 +85,20 @@ function withPacks(fn, files = FILES) {
 }
 
 const packFile = (out, re) => readdirSync(join(out, 'packs')).find((f) => re.test(f));
+
+test('rear player art joins the common pack and rejects modified source bytes', () => {
+  const image = webp(512, 512);
+  const catalog = 'export const alternativeCardAnimations = ' + JSON.stringify({ hashes: { 'rear-ready.webp': sha(image) } }) + ';';
+  withPacks(({ root, out, manifest }) => {
+    const combined = withRearPlayerArt(manifest, root);
+    assert.deepEqual(verifyPacks(out, { manifest: combined }), []);
+    const plan = planPacks(root, ['common'], { source: 'trees' });
+    assert.deepEqual(plan.problems, []);
+    assert(plan.packs.common.entries['assets-alternative/rear-ready.webp']);
+    writeFileSync(join(root, 'assets-alternative/rear-ready.webp'), webp(512, 512, 1));
+    assert.throws(() => withRearPlayerArt(manifest, root), /hash mismatch/);
+  }, { ...FILES, 'src/content/alternativeCardAnimations.js': catalog, 'assets-alternative/rear-ready.webp': image });
+});
 
 test('a clean write verifies green, with the layout the plan names', () => {
   withPacks(({ out, manifest }) => {

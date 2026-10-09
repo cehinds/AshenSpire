@@ -20,7 +20,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
-import { writePacks, inBuildOrDist, objectPath } from './asset-pack.mjs';
+import { writePacks, inBuildOrDist, objectPath, rearPlayerArtRecords } from './asset-pack.mjs';
 import { artDir, artPath, treeOf } from './art-source.mjs';
 import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_HIGH, EDITION_LIGHT } from './buildversion.mjs';
@@ -504,6 +504,13 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
     }
     mapEntries += 1;
     mapBytes += buf.length;
+  }
+  // Reuse the approved rear-view class/stance package in both delivery shapes.
+  // The same catalog hashes are checked by the common-pack writer.
+  if (!EXTERNAL_ART) for (const id of Object.keys(rearPlayerArtRecords(ROOT))) {
+    const bytes = readFileSync(resolve(ROOT, id));
+    pairs.push(`  ${JSON.stringify(id)}: "data:image/webp;base64,${bytes.toString('base64')}"`);
+    mapEntries += 1; mapBytes += bytes.length;
   }
   const src = sources.get(ASSET_MAP_ID);
   if (!/\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//.test(src)) {

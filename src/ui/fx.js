@@ -15,6 +15,10 @@ import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
+import { ANIM_SPEEDS as sharedAnimSpeeds, getAnimSpeed as sharedGetAnimSpeed, setAnimSpeed as sharedSetAnimSpeed } from './animationPace.js';
+export const ANIM_SPEEDS = sharedAnimSpeeds;
+export function getAnimSpeed() { return sharedGetAnimSpeed(); }
+export function setAnimSpeed(value) { sharedSetAnimSpeed(value); }
 
 const STEP_MS = 80;
 
@@ -28,20 +32,6 @@ const STEP_MS = 80;
 // (model/equipmentAnimation.js animationTiming), so the hit, its number and its
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
-export const ANIM_SPEEDS = {
-  slow: { beatMs: 700, stepMs: 140, lungeMs: 340, impactCapMs: 420 },
-  normal: { beatMs: 400, stepMs: 90, lungeMs: 260, impactCapMs: 240 },
-  fast: { beatMs: 180, stepMs: 45, lungeMs: 160, impactCapMs: 140 },
-  instant: null,
-};
-
-let animSpeed = 'normal';
-export function setAnimSpeed(v) {
-  animSpeed = ANIM_SPEEDS[v] === undefined ? 'normal' : v;
-}
-export function getAnimSpeed() {
-  return animSpeed;
-}
 
 let pending = [];
 let flushRequested = false;
@@ -642,7 +632,7 @@ export function groupBeats(events) {
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
 
 export function playTimeline(events, ctx, done) {
-  const speed = ANIM_SPEEDS[animSpeed];
+  const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
   if (!speed || reduced) {
     if (ctx.onFlush) ctx.onFlush();

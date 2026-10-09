@@ -15,6 +15,7 @@ import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enem
 import { medallionAnchor } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
+import { createAlternativeCardStage } from './alternativeCardStage.js';
 import { assetUrl } from './assetmap.js';
 
 /** Shared book-shop chrome uses the asset-pack seam. Books use bookArt.js. */
@@ -767,6 +768,10 @@ function animatedEquippedFigure(classId, equip) {
 export function playerSprite(customization = {}, classId, armourId = 'default', presentation = {}) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
+  if (spritesEnabled && style !== 'glyph' && presentation.view === 'combat') {
+    const stage = createAlternativeCardStage(classId, { still: style === 'rendered' });
+    if (stage) { registerStage(stage.el, stage); return stage.el; }
+  }
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId, presentation);
   }

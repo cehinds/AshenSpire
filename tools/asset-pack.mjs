@@ -128,12 +128,36 @@ const FONTS_FN = '__ashenFonts';
  * `source` is 'trees' (this repository), 'cache' (the fetched release) or
  * 'auto' (each pack's verified cache, else its tree: tools/art-source.mjs).
  */
+export function rearPlayerArtRecords(root = ROOT) {
+  const records = {};
+  for (const name of ['alternativeCardAnimations', 'alternativeSelectedStances']) {
+    const file = resolve(root, `src/content/${name}.js`);
+    if (!existsSync(file)) continue;
+    const match = readFileSync(file, 'utf8').match(new RegExp(`export const ${name} = (.+);`));
+    if (!match) throw new Error(`Invalid rear player art catalog: ${name}`);
+    for (const [path, expected] of Object.entries(JSON.parse(match[1]).hashes)) {
+      if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(path)) throw new Error(`Invalid rear player art path: ${path}`);
+      const id = `assets-alternative/${path}`, bytes = readFileSync(resolve(root, id));
+      if (sha256(bytes) !== expected) throw new Error(`Rear player artwork hash mismatch: ${id}`);
+      if (records[id]) throw new Error(`Duplicate rear player artwork: ${id}`);
+      records[id] = { common: { path: id, sha256: expected, bytes: bytes.length } };
+    }
+  }
+  return records;
+}
+
+export function withRearPlayerArt(manifest, root = ROOT) {
+  const records = rearPlayerArtRecords(root);
+  for (const id of Object.keys(records)) if (manifest.assets[id]) throw new Error(`Rear player artwork collides with manifest: ${id}`);
+  return { ...manifest, assets: { ...manifest.assets, ...records } };
+}
+
 export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } = {}) {
   const problems = [];
   if (!SOURCES.includes(from)) return { packs: {}, fonts: null, problems: [`unknown source ${JSON.stringify(from)} (one of ${SOURCES.join(', ')})`] };
   const manifestFile = resolve(root, MANIFEST_PATH);
   if (!existsSync(manifestFile)) return { packs: {}, fonts: null, problems: [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`] };
-  const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'));
+  const manifest = withRearPlayerArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root);
   if (manifest.schema !== 2) problems.push(`${MANIFEST_PATH} is schema ${manifest.schema}; the pack format needs schema 2 (node tools/art-manifest.mjs --write)`);
   let sources = null;
   const treeSources = () => (sources = sources || new Map(commonSources(root).map((c) => [c.id, c.source])));
@@ -159,7 +183,9 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
       const mime = mimeOf(id);
       if (!mime) { problems.push(`${id}: no mime for ${extname(id) || 'a file without an extension'} — the pack cannot carry it`); continue; }
       let source;
-      if (cacheDir) {
+      if (id.startsWith('assets-alternative/')) {
+        source = resolve(root, rec.path);
+      } else if (cacheDir) {
         source = resolve(cacheDir, rec.path);
         if (!source.startsWith(cacheDir + sep)) { problems.push(`${id}: its ${pack} path ${rec.path} escapes the cache`); continue; }
       } else source = common ? treeSources().get(id) : resolve(root, rec.path);
@@ -486,7 +512,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const packs = packArg ? packArg.split(',').filter(Boolean) : PACKS;
   try {
     if (args.includes('--check')) {
-      const manifest = JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8'));
+      const manifest = withRearPlayerArt(JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8')));
       const problems = verifyPacks(out, { manifest, packs });
       if (problems.length) {
         console.error(`asset-pack: FAIL — ${problems.length} problem(s) in ${posix(relative(process.cwd(), out)) || '.'}:`);

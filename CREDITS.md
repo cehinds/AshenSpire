@@ -1,5 +1,15 @@
 # Credits & Asset Licenses
 
+## Rear combat players (2026-10-08)
+
+The four class action sets and selected offensive, defensive and casting stances
+in `assets-alternative/` reuse the project's approved first-party generated art
+from alternative/dev at `43221ee66f80055580dfe640418cac37137945f1`.
+Their desktop/mobile hashes and source references remain in
+`src/content/alternativeCardAnimations.js` and `src/content/alternativeSelectedStances.js`.
+These are base-armour class animations; equipment-specific combinations are not
+part of this package. No new third-party artwork or licence is introduced.
+
 ## Combat card sigils (2026-10-07)
 
 | Source | License |

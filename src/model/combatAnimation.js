@@ -1,4 +1,5 @@
 import { cardKind } from './tree.js';
+import { cardActionPlan } from './alternativeCardAnimation.js';
 // Owner-approved player presentation groups. Enemy motion remains governed by
 // actionAnimations.js. These plans never change card effects or combat state.
 export const COMBAT_SEQUENCES = Object.freeze({
@@ -9,7 +10,9 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation, combatExpansionVersion } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, combatExpansionVersion, classId } = {}) {
+  const rearAction = cardActionPlan(card, classId);
+  if (rearAction) return rearAction;
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
@@ -40,7 +43,8 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation, c
       && (tags.has('bow') || (card.sourceArmamentId === bow.id && tags.has('ranged')))
       && animation?.references?.bowAttack;
     const blade = !bash && !tags.has('ranged') && tags.has('blade') && animation?.references?.bladeAttack;
-    return { group: 'attack', technique: bash ? 'shieldBash' : bowShot ? 'bowAttack' : blade ? 'bladeAttack' : 'attack', rest: null, family: bowShot ? 'projectile' : 'strike', motion: bowShot ? 'release' : 'impact' };
+    const ranged = !bash && (bowShot || tags.has('ranged') || tags.has('reach:distance'));
+    return { group: 'attack', technique: bash ? 'shieldBash' : bowShot ? 'bowAttack' : blade ? 'bladeAttack' : 'attack', rest: null, family: ranged ? 'projectile' : 'strike', motion: ranged ? 'release' : 'impact' };
   }
   if (kind === 'power') return { group: 'cast', technique: 'power', rest: 'cast', family: 'spell', motion: 'cast' };
   if (kind === 'skill' && (tags.has('guard') || tags.has('block'))) {

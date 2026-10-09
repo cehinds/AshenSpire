@@ -46,6 +46,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
+import { createStanceLedger } from '../../model/alternativeStance.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
@@ -221,6 +222,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
+  const heldStances = createStanceLedger();
   let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
@@ -229,6 +231,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const event of events) {
       if (appliedVisualEvents.has(event)) continue;
       appliedVisualEvents.add(event);
+      heldStances.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
       readinessOrder = readinessAfterEvent(readinessOrder, event, 'player');
     }
@@ -270,7 +273,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         availablePoses: stage?.poses || [],
       });
       if (played && definition) {
-        const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), action: plan, combatExpansionVersion: combat.combatExpansionVersion });
+        const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), action: plan, combatExpansionVersion: combat.combatExpansionVersion, classId: run.class });
         const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         actorEl.dataset.actionGroup = grouped.group;
@@ -284,7 +287,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       actorEl.dataset.actionMotion = plan.motion;
       // The painted Reaver sequence remains the specialized attack renderer.
       // Other actors use existing CSS and only sprite poses they actually ship.
-      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver') {
+      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver'
+        || !['slash', 'thrust', 'strike'].includes(plan.family)) {
         return playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack');
       }
       const figure = figureSpec(registries, run.loadout, run.class);
@@ -324,7 +328,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       actorEl.classList.remove(actionClass);
       void actorEl.offsetWidth;
       for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
-      actorEl.classList.add(actionClass);
+      if (!stage?.ownsMotion) actorEl.classList.add(actionClass);
       // A damaging spell still needs its enemy attack drawing; its motion
       // family remains a cast rather than being changed into a melee lunge.
       if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
@@ -1309,7 +1313,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, heldStances.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1355,7 +1359,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat' }),
       name: markMeterRow(labelStack({ label: run.customization?.name || runClassIdentity(registries, run).name, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
@@ -1385,6 +1389,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else if (!selected && selectedFlask == null) selectCombatant('player');
     });
     if (!existing) zone.appendChild(box);
+    stageFor(box)?.setStance?.(heldStances.get());
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
     playerRenderKey = renderKey;
   }
@@ -2228,7 +2233,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
       const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, action, combatExpansionVersion: combat.combatExpansionVersion }) }];
+      return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, action, combatExpansionVersion: combat.combatExpansionVersion, classId: run.class }) }];
     }));
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases

@@ -1,0 +1,68 @@
+/* Combat paint order, back to front. Keep the field and hand wrappers out of
+   stacking contexts so controls, artwork and shadows can share this order. */
+:root .combat[data-layout='formation'] {
+  isolation: isolate;
+  --combat-layer-scenery: 0;
+  --combat-layer-shadows: 100;
+  --combat-layer-enemy: 200;
+  --combat-layer-player: 300;
+  --combat-layer-fade: 150;
+  --combat-layer-selection: 500;
+  --combat-layer-cards: 600;
+  --combat-layer-hud: 700;
+}
+:root .combat[data-layout='formation'] > :is(.field,.hand-area) { z-index: auto; }
+:root .combat[data-layout='formation'] > .backdrop { z-index: var(--combat-layer-scenery); }
+:root .combat[data-layout='formation'] .combatant .sprite {
+  z-index: calc(var(--combat-layer-enemy) + var(--combat-depth, 0)) !important;
+}
+:root .combat[data-layout='formation'] .combatant.player .sprite {
+  z-index: calc(var(--combat-layer-player) + var(--combat-depth, 0)) !important;
+}
+:root .combat[data-layout='formation'] .combatant.ended { --combat-state-opacity: .62; }
+:root .combat[data-layout='formation'] .combatant:is(.down,.away) { --combat-state-opacity: .45; }
+:root .combat[data-layout='formation'] .combatant.dead { --combat-state-opacity: .25; }
+:root .combat[data-layout='formation'] .combatant:is(.down,.dead) { --combat-state-filter: grayscale(1); }
+:root .combat[data-layout='formation'] .combatant:is(.dead,.ended,.down,.away) { opacity: 1; filter: none; }
+:root .combat[data-layout='formation'] .combatant:is(.dead,.ended,.down,.away) :is(.sprite,.combatant-leading,.nm,.meters,.statuses),
+:root .combat[data-layout='formation'] .combatant:is(.dead,.ended,.down,.away)::after {
+  opacity: var(--combat-state-opacity); filter: var(--combat-state-filter, none);
+}
+/* Shadows are siblings of the actors, never trapped inside a sprite's layer. */
+:root .combat[data-layout='formation'] .combatant .sprite::before { display: none; }
+.combat-ground-shadows { position: absolute; inset: 0; z-index: var(--combat-layer-shadows); pointer-events: none; }
+.combat-ground-shadow {
+  position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse, #0009, #0004 45%, transparent 72%);
+}
+:root .combat[data-layout='formation'] > .alternative-card-fade { z-index: var(--combat-layer-fade); }
+:root .combat[data-layout='formation'] .fx-layer { z-index: 400; }
+:root .combat[data-layout='formation']:has(> .environment-backdrop)::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  z-index: var(--combat-layer-fade);
+  background: linear-gradient(180deg, transparent 58%, #17130f 79%);
+}
+:root .combat[data-layout='formation'] > .environment-backdrop::before { display: none; }
+:root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
+  z-index: var(--combat-layer-selection) !important;
+}
+:root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) {
+  z-index: calc(var(--combat-layer-selection) + 1) !important;
+}
+:root .combat[data-layout='formation'] .combatant .combatant-leading {
+  z-index: calc(var(--combat-layer-selection) + 2) !important;
+}
+:root .combat[data-layout='formation'] :is(.combatant-inspector-host,.formation-move-controls,.position-guides,.combat-expansion-controls,.coop-arm-host) {
+  z-index: calc(var(--combat-layer-selection) + 3) !important;
+}
+:root .combat[data-layout='formation'] .hand-overlay,
+:root .combat[data-layout='formation'] > .hand-area > .hand { z-index: var(--combat-layer-cards); }
+:root .combat[data-layout='formation'] > .combat-hud,
+:root .combat[data-layout='formation'] .combat-recovery-controls,
+:root .combat[data-layout='formation'] .combat-action-row[data-footer-geometry],
+:root .combat[data-layout='formation'] .turn-ribbon { z-index: var(--combat-layer-hud) !important; }
+/* In landscape the footer spans the hand as side rails. Its full-row material
+   must not become an opaque sheet over the cards when its controls rise. */
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'] .combat-action-row {
+  background: transparent;
+}
