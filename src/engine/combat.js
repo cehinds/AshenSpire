@@ -40,6 +40,7 @@ import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import * as F from './combatRules.js';
+import * as Reactions from './combatReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
@@ -138,7 +139,7 @@ export function createCombat({
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
   recoveryRules = null,
-  knowledge = null,
+  knowledge = null, reactionRulesVersion = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
@@ -186,6 +187,7 @@ export function createCombat({
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
+    ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
     registries,
     equipmentProfileRuleSnapshot,
     // Carried from the run so a mid-combat swap can restamp against the quota
@@ -426,7 +428,9 @@ function drainQueue(combat) {
     if (++guard > QUEUE_GUARD) {
       throw new Error('Action queue did not drain (possible infinite trigger loop)');
     }
+    if (Reactions.beforeReactionAction(combat, combat.queue[0], { play: doPlayCard })) return;
     const action = combat.queue.shift();
+    Reactions.startQueuedEnemy(combat, action);
     A.executeAction(combat, action);
     if (combat.pendingAbilityDiscard) return;
     endCheck(combat);
@@ -452,6 +456,7 @@ function endCheck(combat) {
 function finishCombat(combat, result) {
   combat.result = result;
   combat.phase = 'ended';
+  Reactions.finishReactions(combat);
   combat.queue.length = 0;
   combat.emit('combatEnd', { victory: result === 'victory' });
   combat.queue.length = 0; // combatEnd triggers cannot enqueue combat actions
@@ -551,8 +556,18 @@ function endPlayerTurn(combat, discardIds = []) {
   // …then refresh ordinary cards, keeping Retain; Ethereal cards exhaust. The
   // fate of each card is the framework's call (src/framework/lifecycle.js);
   // this engine only moves the card and emits the receipt.
-  const keep = [];
   applyDiscardChoice(combat, discardIds);
+  if (Reactions.usesReactions(combat)) {
+    combat.reactionHandCleanup = { preserveLockedHand };
+    if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, p, combat.controlRecoveryChoice);
+    return;
+  }
+  finishPlayerHand(combat, preserveLockedHand);
+}
+
+function finishPlayerHand(combat, preserveLockedHand = false) {
+  const p = combat.player;
+  const keep = [];
   const toDiscard = [];
   const toExhaust = [];
   for (const card of combat.piles.hand) {
@@ -562,7 +577,7 @@ function endPlayerTurn(combat, discardIds = []) {
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
   }
-  if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, p, combat.controlRecoveryChoice);
+  if (combat.combatExpansionVersion === 2 && !combat.reactionHandCleanup) Control.endControlTurn(combat, p, combat.controlRecoveryChoice);
   combat.piles.hand = keep;
   for (const card of toExhaust) {
     combat.piles.exhaust.push(card);
@@ -576,6 +591,7 @@ function endPlayerTurn(combat, discardIds = []) {
 }
 
 function enemyPhase(combat) {
+  if (!combat.reactionCursor) {
   combat.phase = 'enemy';
   combat.emit('enemyTurnStart', { turn: combat.turn });
 
@@ -595,11 +611,15 @@ function enemyPhase(combat) {
   }
   drainQueue(combat);
   if (combat.result) return;
-
-  for (const enemy of combat.enemies) {
+  }
+  const cursor = combat.reactionCursor || { index: 0, stage: 'start' };
+  if (Reactions.usesReactions(combat)) combat.reactionCursor = cursor;
+  for (; cursor.index < combat.enemies.length; cursor.index++, cursor.stage = 'start') {
+    const enemy = combat.enemies[cursor.index];
     if (combat.result) return;
     if (!enemy.alive) continue;
-
+    if (cursor.stage === 'start') {
+    Reactions.revealActor(combat, enemy);
     // Owner-relative turn-start hooks (DoT ticks etc.).
     fireOwnerHooks(combat, enemy, 'ownerTurnStart');
     drainQueue(combat);
@@ -610,7 +630,10 @@ function enemyPhase(combat) {
       Control.recoverStatusesAtOwnerStart(combat, enemy, { cycle: enemy.combatOwnerCycle });
       Control.sleepRestoration(combat, enemy);
     }
-
+    cursor.stage = 'payload';
+    }
+    if (cursor.stage === 'payload') {
+    cursor.stage = 'drain';
     if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked || Control.consumeControlActionLoss(combat, enemy)) {
       // Staggered / skip: the telegraphed move does not happen.
       if (!enemy.pendingMove) cancelKnowledgeAction(combat, enemy);
@@ -658,7 +681,9 @@ function enemyPhase(combat) {
         executeMovePayload(combat, enemy, move, enemy.intent.moveId);
       }
     }
+    }
     drainQueue(combat);
+    if (Reactions.reactionPaused(combat)) return;
     if (combat.result) return;
 
     // Owner-relative turn-end hooks, then decay (perTurnEnd statuses the
@@ -674,6 +699,7 @@ function enemyPhase(combat) {
 
   combat.emit('enemyTurnEnd', { turn: combat.turn });
   drainQueue(combat);
+  delete combat.reactionCursor;
 }
 
 // Enqueue a move's payload as ordinary actions (SPEC §3.9: only executed
@@ -684,8 +710,11 @@ function executeMovePayload(combat, enemy, move, moveId) {
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
-  (enemy.performedMoves ||= []).push(moveId);
-  combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
+  const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent };
+  if (!Reactions.usesReactions(combat)) {
+    (enemy.performedMoves ||= []).push(moveId);
+    combat.emit('enemyMoveStarted', start);
+  }
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   const actions = [];
   if (move.damage != null && carrier.combatProfile.maneuver !== 'counter') {
@@ -715,7 +744,8 @@ function executeMovePayload(combat, enemy, move, moveId) {
   for (const eff of move.effects || []) {
     if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
-  enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
+  const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
+  if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
 }
 
 // ---------------------------------------------------------------------------
@@ -724,6 +754,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
 
 function rollIntents(combat, isFirstTurn = false) {
   for (const enemy of combat.enemies) {
+    delete enemy.actorIntentRevealed;
     if (!enemy.alive) continue;
     if (enemy.pendingMove) {
       // A committed delayed move stays telegraphed until it resolves.
@@ -817,12 +848,20 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
  * The action queue drains fully before this returns (SPEC §3.9).
  */
 export function dispatch(combat, intent) {
-  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type !== 'predictIntent' });
+  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: !['predictIntent', 'chooseReaction', 'chooseDiscard', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
+    if (combat.pendingReaction && intent.type !== 'chooseReaction') throw new Error('Answer the pending reaction first');
     if (intent.type !== 'chooseDiscard') R.assertNoAbilityChoice(combat);
     switch (intent.type) {
+      case 'setReactions':
+        Reactions.setReactionsEnabled(combat, combat.player, intent.enabled);
+        break;
+      case 'chooseReaction':
+        Reactions.answerReaction(combat, 'player', intent, { play: doPlayCard });
+        resumeEnemyTurn(combat);
+        break;
       case 'predictIntent':
         predictEnemyIntent(combat, combat.playerKey || 'player', intent.enemyInstanceId, intent.actionSerial, intent.maneuver);
         break;
@@ -847,6 +886,7 @@ export function dispatch(combat, intent) {
         R.chooseAbilityDiscard(combat, intent.cardInstanceIds);
         drainQueue(combat);
         finishAbilityPlay(combat);
+        if (Reactions.restoreReactionQueue(combat) || combat.reactionCursor) resumeEnemyTurn(combat);
         break;
       case 'moveCharacter': {
         const move = formationMovePlan(combat, intent.cell, intent.settings);
@@ -1243,7 +1283,7 @@ export function cardChoicePlan(combat, cardInstanceId) {
 }
 
 function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upcastRanks }) {
-  if (combat.phase !== 'player') throw new Error('Cards can only be played on the player turn');
+  if (combat.phase !== 'player' && !combat._reactionPlaying) throw new Error('Cards can only be played on the player turn');
   const p = combat.player;
   const idx = combat.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
@@ -1309,6 +1349,9 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
   Object.assign(cardRef, tacticalCarrier(def, cardRef, combat, p));
+  if (combat._reactionPlaying) cardRef.reactionDepth = 1;
+  cardRef.committedInstance = structuredClone(inst);
+  if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
   const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef);
   if (cardRef.combatProfile?.maneuver === 'counter' && sourceSnapshots?.size) {
     Object.assign(cardRef, sourceSnapshots.values().next().value);
@@ -1324,6 +1367,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
       p.energy -= check.energy; p.mana -= check.mana;
       combat.piles.hand.splice(idx, 1); combat.piles.exhaust.push(inst);
       p.hp = 0; p.alive = false; combat.phase = 'ended'; combat.result = 'defeat';
+      Reactions.finishReactions(combat);
       combat.emit('ashenBlightLost', { targetId: p.id, reason: 'threshold' }); return;
     }
   }
@@ -1432,7 +1476,25 @@ function doEndTurn(combat, discardIds = []) {
   endPlayerTurn(combat, discardIds);
   if (combat.result) return;
   enemyPhase(combat);
+  if (Reactions.reactionPaused(combat)) return;
   if (combat.result) return;
+  finishReactionPhase(combat);
+}
+
+function resumeEnemyTurn(combat) {
+  if (combat.pendingAbilityDiscard || combat.reactionResume) return;
+  if (!combat.reactionCursor) { drainQueue(combat); finishAbilityPlay(combat); return; }
+  enemyPhase(combat);
+  if (combat.result || Reactions.reactionPaused(combat)) return;
+  finishReactionPhase(combat);
+}
+
+function finishReactionPhase(combat) {
+  if (combat.reactionHandCleanup) {
+    finishPlayerHand(combat, combat.reactionHandCleanup.preserveLockedHand);
+    delete combat.reactionHandCleanup;
+    if (combat.result) return;
+  }
   rollIntents(combat); // (6) new intents rolled, then back to (2)
   startPlayerTurn(combat);
 }
@@ -1797,7 +1859,7 @@ export function previewIntent(combat, enemyInstanceId) {
   const profile = intent.combatProfile || {};
   const knowledge = knowledgeIntentProjection(combat, enemy);
   if (knowledge && !knowledge.exact) return knowledge.intent;
-  const revealed = enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false;
+  const revealed = enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
   if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
   const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   // The armed payload is public only after this observer's read gate. This is

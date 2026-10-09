@@ -161,6 +161,15 @@
   flex: 0 0 auto; min-height: 0; width: 100%;
 }
 .combatant-leading:empty { display: none; }
+.combatant-mini-hud {
+  display: flex; flex-direction: column; align-items: center; gap: calc(3px / var(--ui-zoom, 1));
+  width: calc(112px / var(--ui-zoom, 1)); flex: none; pointer-events: auto;
+}
+:root .combat[data-layout='formation'] .combatant.player .combatant-leading {
+  --player-hud-gap: 10px; flex-direction: column; bottom: auto;
+}
+.reaction-choice [data-reaction-option] { min-height: 44px; width: 100%; margin-block: 4px; }
+.reaction-choice [data-reaction-option][aria-pressed='true'] { outline: var(--focus-ring); }
 .combatant-card {
   position: absolute;
   top: var(--combatant-card-offset, 0);
@@ -1393,9 +1402,14 @@
 :root .combat[data-layout='formation'] .combat-action-row { min-height:0; }
 :root .combat[data-layout='formation'] .combat-action-row > * { max-height:100%; }
 
-/* The fitted fan has no scrollbars. A scrollbar appearing/disappearing when
-   the enemy-turn filter changes would shift the vertically centered cards. */
-:root .combat[data-layout='formation'] .hand { overflow:visible; }
+/* Keep excess cards reachable inside the reserved hand width. The fan already
+   reserves its selected lift vertically; its inspection button is portaled
+   outside this viewport. Hidden scrollbars keep turn filters from moving it. */
+:root .combat[data-layout='formation'] .hand {
+ overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+ overscroll-behavior-x:contain;
+}
+:root .combat[data-layout='formation'] .hand::-webkit-scrollbar { display:none; }
 
 /* Short landscape keeps meters inline in the left resource column.
    Relics remain below them; the compact band preserves battlefield space. */
@@ -1617,3 +1631,41 @@
 /* The raised HUD can reveal an HP tooltip where the next coach step moves.
    Keep tutorial exits above those reading surfaces. */
 :root:has(.combat[data-composition='option-c']) .tut-veil { z-index: 1100; }
+
+/* The player's complete widget grows upward in every formation layout. */
+:root .combat[data-layout='formation'] .combatant.player .combatant-leading {
+  flex-direction: column;
+  --player-hud-gap: 10px;
+}
+:root .combat[data-layout='formation'] .combatant-mini-hud .statuses:empty { display: none; }
+
+.combat-tools {
+  --combat-tools-gap: 8;
+  --combat-tools-physical-width: 136;
+  position: absolute; right: calc(12px / var(--ui-zoom,1));
+  display: grid; gap: calc(4px / var(--ui-zoom,1)); z-index: 65;
+  font-size: calc(12px / var(--ui-zoom,1));
+}
+.combat-tools > button { min-height: calc(44px / var(--ui-zoom,1)); padding: calc(5px / var(--ui-zoom,1)); font-size:inherit; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand-overlay,
+:root .combat.coop[data-layout='formation'] > .hand-area > .hand { width: calc(100% - var(--combat-tools-reserve, 0px)); }
+.combat-tools .reaction-switch { display:flex; align-items:center; justify-content:space-between; gap:4px; color:white; }
+.reaction-switch, .reaction-switch-value { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.reaction-switch-track { position:relative; display:flex; align-items:center; border:1px solid var(--gold); border-radius:20px; width:calc(72px / var(--ui-zoom,1)); height:calc(24px / var(--ui-zoom,1)); background:#397342; color:white; }
+.reaction-switch-value { padding-left:calc(6px / var(--ui-zoom,1)); font-size:calc(11px / var(--ui-zoom,1)); }
+.reaction-switch-thumb { position:absolute; right:calc(2px / var(--ui-zoom,1)); width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); border-radius:50%; background:var(--gold); box-shadow:0 0 0 1px #17120b; }
+.reaction-switch[data-enabled='false'] .reaction-switch-track { background:#923d36; }
+.reaction-switch[data-enabled='false'] .reaction-switch-thumb { right:auto; left:calc(2px / var(--ui-zoom,1)); }
+.reaction-switch[data-enabled='false'] .reaction-switch-value { padding-left:calc(23px / var(--ui-zoom,1)); }
+.combat-log-panel { position:absolute; right:0; bottom:calc(100% + 6px / var(--ui-zoom,1)); width:min(calc(300px / var(--ui-zoom,1)),calc(100vw / var(--ui-zoom,1) - 24px / var(--ui-zoom,1))); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; border:1px solid var(--gold); border-radius:4px; background:rgba(19,16,12,.82); color:#fff7e4; box-shadow:0 4px 18px #0008; }
+.combat-log-panel[hidden] { display:none; }
+.combat-log-heading { color:var(--gold); padding:4px 8px; font-family:var(--font-heading,serif); font-weight:bold; }
+.combat-log-sizes { display:flex; gap:3px; padding:0 4px 4px; }
+.combat-log-sizes > button { flex:1; min-width:0; min-height:calc(44px / var(--ui-zoom,1)); padding:2px; font-size:inherit; }
+.combat-log-sizes > button[aria-pressed='true'] { border-color:var(--gold); color:var(--gold); background:#3d3021; }
+.combat-log-entries { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:4px 8px; font-size:calc(12px / var(--ui-zoom,1)); line-height:1.4; }
+.combat-log-entries h3 { font-size:inherit; color:var(--gold); margin:4px 0; }
+.combat-log-entries ol { list-style:none; padding:0; margin:0; }
+.combat-log-entries li { border-bottom:1px solid #b4925438; padding:3px 0; }
+@media (prefers-reduced-motion:no-preference) { .combat-log-panel:not([hidden]) { animation:combat-log-open 120ms ease-out; } }
+@keyframes combat-log-open { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }

@@ -6,9 +6,9 @@ import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
+import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
 import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
-import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
@@ -34,6 +34,30 @@ export function wireBattlefieldStage(field, model) {
   field.style.setProperty('--combatant-stage-center', `${model.tokens.centerPct}%`);
 
   let frameRequest = 0;
+  let trackingRequest = 0;
+  function placePlayerHud() {
+    const zoom = uiZoom();
+    for (const player of field.querySelectorAll('.combatant.player')) {
+      const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
+      if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) continue;
+      const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
+      const gap = parseFloat(getComputedStyle(leading).getPropertyValue('--player-hud-gap')) || 0;
+      const localTop = (art.top - stack.top - gap) / zoom;
+      const top = `${localTop}px`;
+      if (leading.style.top !== top) leading.style.top = top;
+      leading.style.translate = 'none';
+      player.dataset.spriteArtTop = String(art.top);
+      player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
+    }
+  }
+  function trackPlayerHud() {
+    placePlayerHud();
+    // Idle breathing also moves the painted body. Keep the physical gap during
+    // those CSS transforms as well as explicit attack and movement poses.
+    trackingRequest = field.isConnected && field.querySelector('.combatant.player')
+      ? requestAnimationFrame(trackPlayerHud) : 0;
+  }
   let handAnchor = null;
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
@@ -135,6 +159,12 @@ export function wireBattlefieldStage(field, model) {
     const actors = slotFrames.map(({ slot, frame, sprite }) => {
       const stack = frame.querySelector('.combatant-stack');
       const geometry = combatSpriteGeometry(sprite, schedule);
+      // Reserve the tallest authored pose once. Following the current ink must
+      // not push the overhead into the ribbon or resize art during an attack.
+      if (frame.classList.contains('player')) {
+        const ratio = Number(sprite.querySelector('.painted-stage')?.dataset.maximumHeightRatio || 0);
+        geometry.visibleHeight = Math.max(geometry.visibleHeight, geometry.boxHeight * ratio);
+      }
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
@@ -142,7 +172,7 @@ export function wireBattlefieldStage(field, model) {
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
-      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control')]
+      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control, :scope > .combatant-mini-hud')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0) : [];
       const leadingWidth = leadingRects.length ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
@@ -279,7 +309,7 @@ export function wireBattlefieldStage(field, model) {
         const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
           ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
             top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon });
-        leadingHost.style.translate = `0 ${overheadShift / zoom}px`;
+        leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
       }
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
@@ -369,6 +399,7 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    placePlayerHud();
     const rect = combat.getBoundingClientRect();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
@@ -415,6 +446,11 @@ export function wireBattlefieldStage(field, model) {
       'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);
+  const poseObserver = new MutationObserver(() => {
+    if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
+  });
+  poseObserver.observe(field, { subtree: true, attributes: true,
+    attributeFilter: ['src', 'data-pose', 'data-animating', 'class'] });
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });
@@ -423,8 +459,10 @@ export function wireBattlefieldStage(field, model) {
     combatHost.removeEventListener('combatantselectionchange', schedule);
     combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
+    cancelAnimationFrame(trackingRequest);
     resizeObserver.disconnect();
     layoutObserver.disconnect();
+    poseObserver.disconnect();
     window.removeEventListener('resize', schedule);
     document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
     detachObserver.disconnect();
