@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1775",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Combat verification follows attached controls",
+    "detail": "Verify attacks through the visible enemy target buttons, recognize each character's attached details as part of its inspection surface, and decline defensive reactions through Back when checking saved combat turns.",
+    "build": "0.7.1.1185",
+    "pullRequest": 1775,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1775"
+  },
+  {
     "id": "pr-1773",
     "date": "2026-10-09",
     "group": "2026-10-09",
