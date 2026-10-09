@@ -1,7 +1,8 @@
 /* Procedural volcanic trim preserves the artwork and the readable center. */
 .card.corrupted-card { position: relative; isolation: isolate; }
-.card.corrupted-card::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+/* Match accent rarity specificity and replace its corner-pip dimensions. */
+:root .card.corrupted-card.corrupted-card::after {
+  content: ""; display: block; position: absolute; inset: 0; width: auto; height: auto; border-radius: inherit; pointer-events: none; z-index: 3;
   background:
     linear-gradient(126deg, transparent 0 8%, #ec783f99 8.25% 8.55%, transparent 8.8% 100%),
     linear-gradient(45deg, transparent 0 13%, #fa9b5377 13.2% 13.5%, transparent 13.75% 100%),
@@ -29,4 +30,4 @@
 .ashen-blight-benefit { color: #ead7bd; }
 .ashen-blight-drawback { color: #ffc5b7; }
 @media (max-width: 480px) { .ashen-blight-heading { font-size: .9rem; } .corrupted-card-label { font-size: .75rem; } }
-@media (forced-colors: active) { .card.corrupted-card::after { display: none; } .corrupted-card-label, .ashen-blight, .ashen-blight-pip { border-color: CanvasText; color: CanvasText; background: Canvas; } .ashen-blight-fill, .ashen-blight-pip.reached { background: Highlight; box-shadow: none; } }
+@media (forced-colors: active) { :root .card.corrupted-card.corrupted-card::after { display: none; } .corrupted-card-label, .ashen-blight, .ashen-blight-pip { border-color: CanvasText; color: CanvasText; background: Canvas; } .ashen-blight-fill, .ashen-blight-pip.reached { background: Highlight; box-shadow: none; } }

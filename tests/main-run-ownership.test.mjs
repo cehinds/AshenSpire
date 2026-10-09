@@ -3,22 +3,31 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { commitRunFinishAsync } from '../src/model/runCompletion.js';
 import { createRunStartOwner } from '../src/model/runStart.js';
+import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
 const deferred = () => { let resolve; const promise = new Promise(yes => { resolve = yes; }); return { promise, resolve }; };
 
-function finishFixture() {
+function finishFixture({ failCheckpoint = false } = {}) {
   const gate = deferred(), checkpoints = [], records = [], cleared = [];
   let banks = 0;
+  const memory = createMemoryStorage();
+  const manager = createSaveManager({
+    ...memory,
+    setItem(key, value) {
+      if (failCheckpoint && key === RUN_KEY) throw new Error('Run storage quota exceeded');
+      memory.setItem(key, value);
+    },
+  });
   const saves = {
-    loadMeta: () => ({}), saveRun: (run, rng, slot) => { checkpoints.push({ seed: run.seed, slot }); return { ok: true }; },
+    loadMeta: () => ({}), saveRun: (run, rng, slot) => { checkpoints.push({ seed: run.seed, slot }); return manager.saveRun(run, rng, slot); },
     bankEnemyKnowledge: () => { banks++; return gate.promise; },
     withProfile: callback => callback({ loadMeta: () => ({}), saveMeta: meta => { records.push(...meta.results); return { ok: true }; } }),
-    clearRun: slot => cleared.push(slot), hasRun: () => false,
+    clearRun: slot => { cleared.push(slot); manager.clearRun(slot); }, hasRun: slot => manager.hasRun(slot),
   };
   const fixture = new Function('commitRunFinishAsync', 'saves', `
     let run = { seed: 'A', classMasteryState: { receiptId: 'A' } }, activeSlot = 1;
-    const registries = { unlocks: [] }, rng = {}, shotState = false;
+    const registries = { unlocks: [] }, rng = { getCounters: () => ({}) }, shotState = false;
     const crypto = { randomUUID: () => 'unused' };
     const refreshRunClassMastery = () => {}, stampSkillBonuses = () => {}, hasClassMastery = () => false;
     const runResult = victory => ({ victory, seed: run.seed });
@@ -26,7 +35,7 @@ function finishFixture() {
     ${body('async function finishRun(', '\nasync function showFinishedRun(')}
     return { finish: finishRun, change: () => { run = { seed: 'B' }; activeSlot = 2; } };
   `)(commitRunFinishAsync, saves);
-  return { ...fixture, gate, checkpoints, records, cleared, banks: () => banks };
+  return { ...fixture, gate, checkpoints, records, cleared, banks: () => banks, savedRun: () => memory.getItem(RUN_KEY) };
 }
 
 test('actual terminal completion cannot record or clear a later adopted run after awaiting learning storage', async () => {
@@ -48,6 +57,17 @@ test('repeated terminal completion requests share one bank, result and original-
   assert.equal(fixture.banks(), 1); assert.equal(fixture.records.length, 1);
   assert.deepEqual(fixture.records[0], { victory: false, seed: 'A', finishId: 'A' });
   assert.deepEqual(fixture.cleared, [1]);
+  assert.equal(fixture.savedRun(), null);
+});
+
+test('actual terminal checkpoint preserves the save manager throwing failure contract', async () => {
+  const fixture = finishFixture({ failCheckpoint: true });
+  const result = await fixture.finish(false);
+  assert.equal(result.ok, false);
+  assert.match(result.error.message, /Run storage quota exceeded/);
+  assert.equal(fixture.banks(), 0);
+  assert.deepEqual(fixture.records, []);
+  assert.deepEqual(fixture.cleared, []);
 });
 
 test('actual screenshot new-run entry adopts its synchronous memory fixture before returning', () => {

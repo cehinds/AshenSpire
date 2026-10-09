@@ -434,7 +434,7 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Dodge already reveals its full rules through normal card selection. */
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'] > .card-more-button { display:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'][data-truncated='true'] .cname { padding-left:0; }
-:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; }
+:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; max-height:calc(100% - 12rem); overflow:auto; }
 :root[data-layout='narrow'] .title-screen .tm-name { position:absolute; top:5rem; left:0; width:100%; margin:0; font-size:3.5rem; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
