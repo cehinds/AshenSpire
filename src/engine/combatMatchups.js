@@ -2,6 +2,7 @@
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Avoidance from './combatAvoidance.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
+import { enqueueExpandedAction } from './combatExpansionActions.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -22,6 +23,10 @@ function isSpell(profile) {
 
 function eventCarrier(source, carrier) {
   return { sourceKind: source?.kind, cardId: carrier?.cardId,
+    enemyId: source?.enemyId, moveId: carrier?.moveId,
+    ...(carrier?.combatProfile ? { combatProfile: structuredClone(carrier.combatProfile) } : {}),
+    ...(carrier?.committedInstance ? { cardInstance: structuredClone(carrier.committedInstance) } : {}),
+    ...(Number.isInteger(carrier?.upcastTier) ? { upcastTier: carrier.upcastTier } : {}),
     cardInstanceId: carrier?.instanceId, cardType: carrier?.type,
     cardTags: carrier?.authoredTags || carrier?.tags || [], abilityKind: carrier?.abilityKind };
 }
@@ -310,7 +315,7 @@ export function counterCoverageMatches(coverage, profile, effect = 'damage') {
 
 function preparedCounter(ctx, target, carrier, options) {
   const counter = target?.combatCounter;
-  if (!counter?.charges || carrier?.combatReaction || restrictions(ctx, target, options).counterDisabled) return null;
+  if (!counter?.charges || (carrier?.combatReaction && carrier.manualCounterSerial !== counter.serial) || restrictions(ctx, target, options).counterDisabled) return null;
   if (target.combatStance?.maneuver !== 'counter') return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;
@@ -440,8 +445,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const enqueue = effect => {
     const action = { effect, source: target, owner: target, target: source,
       card: { ...receipt.counter.carrier, combatReaction: true, skipRatingBonus: true,
+        reactionDepth: Math.max(receipt.counter.carrier.reactionDepth || 0, carrier?.reactionDepth || 0),
         ...(effect.op === 'wardDamage' ? { combatWardEdgeApplied: true } : {}) }, meta: { combatCounterReaction: true, enemyKnowledgeActionSerial: source.knowledgeAction?.serial } };
-    queue.push(action); ctx.enqueue?.(action);
+    queue.push(action);
+    if (ctx.reactionRulesVersion !== 1) ctx.enqueue?.(action);
   };
   if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0 && target?.alive) {
     const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
@@ -477,10 +484,14 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const pierceWard = magical && counter.carrier.combatProfile?.damageType === 'piercing';
   const wardEdge = schoolEffect === 'ward' && schoolEdge !== 1 ? schoolEdge : pierceWard ? 1.25 : 1;
   payload.ward *= wardEdge;
-  ctx.emit?.('combatCounterTriggered', { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
-    sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 });
+  const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
+    sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
   if (payload.poise > 0) enqueue({ op: 'poiseDamage', amount: payload.poise });
   if (payload.ward > 0) enqueue({ op: 'wardDamage', amount: payload.ward });
+  if (ctx.reactionRulesVersion === 1 && queue.length) {
+    const group = enqueueExpandedAction(ctx, queue, { source: target, target: source, carrier: queue[0].card });
+    if (group) group.counterReturn = event;
+  } else ctx.emit?.('combatCounterTriggered', event);
   return queue;
 }

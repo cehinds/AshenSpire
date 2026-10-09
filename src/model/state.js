@@ -137,6 +137,7 @@ export function createRunState({
   registries,
   combatExpansionVersion = 2,
   enemyKnowledgeVersion = 1,
+  reactionRulesVersion = combatExpansionVersion === 2 ? 1 : null,
   attributeMode = undefined,
   attributes: requestedAttributes = undefined,
   derivedStatOptions = {},
@@ -150,6 +151,7 @@ export function createRunState({
 }) {
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
   if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
+  if (![null, 1].includes(reactionRulesVersion) || (reactionRulesVersion === 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
@@ -190,6 +192,7 @@ export function createRunState({
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
     combatExpansionVersion,
+    ...(reactionRulesVersion === 1 ? { reactionRulesVersion: 1 } : {}),
     ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
     advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
     schemaVersion: RUN_SCHEMA_VERSION,
@@ -939,6 +942,7 @@ export function levelProblems(level) {
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
+  if (run.reactionRulesVersion !== undefined && (run.reactionRulesVersion !== 1 || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
   if (run.advancedConfigSnapshot?.breakMeterVersion !== undefined && ![1, 2].includes(run.advancedConfigSnapshot.breakMeterVersion)) problems.push('advancedConfigSnapshot.breakMeterVersion must be 1 or 2');
   if (run.combatExpansionVersion === 2 && run.advancedConfigSnapshot?.breakMeterVersion !== 2) problems.push('Expanded runs require breakMeterVersion 2');
   if (run.combatExpansionVersion === 2) problems.push(...ashenBlightProblems(run.ashenBlight), ...combatExpansionRulesProblems(run.combatExpansionRules));
@@ -953,6 +957,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
     if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
     if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
+    if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
     problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
     const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
     if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
