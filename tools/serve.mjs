@@ -24,7 +24,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
-import {readCardLayout,saveCardLayout,refreshCardLayout} from './card-layout-save.mjs';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { existsSync } from 'node:fs';
 
@@ -82,11 +81,15 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
       if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
       // Direct edits to the master JSON become native card data on refresh.
-      if(editorWrite&&urlPath==='/src/content/cardComponents.generated.js')refreshCardLayout(rootResolved);
+      if(editorWrite&&urlPath==='/src/content/cardComponents.generated.js'){
+        const {refreshCardLayout}=await import('./card-layout-save.mjs');
+        refreshCardLayout(rootResolved);
+      }
       if(urlPath==='/__editor/card-layout'){
         const local=['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||''),host=req.headers.host||'';
         const reply=(status,body)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(body));};
         if(!editorWrite||!local||!/^(localhost|127\.0\.0\.1):\d+$/.test(host)){reply(403,{error:'Game editing is unavailable on this server.'});return;}
+        const {readCardLayout,saveCardLayout}=await import('./card-layout-save.mjs');
         if(req.method==='GET'){const saved=readCardLayout(rootResolved),download=new URL(req.url,`http://${host}`).searchParams.get('download');if(download){if(download!==saved.revision){reply(409,{error:'The game layout changed. Save again before exporting.'});return;}res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="ashen-card-layout.json"','Cache-Control':'no-store'});res.end(JSON.stringify(saved.document,null,2)+'\n');}else reply(200,{ok:true,...saved});return;}
         if(req.method!=='POST'||req.headers.origin!==`http://${host}`||!String(req.headers['content-type']).startsWith('application/json')){reply(403,{error:'Save from the local card editor.'});return;}
         try{const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>131072)throw Error('Card layout exceeds the save limit.');chunks.push(chunk);}reply(200,{ok:true,...saveCardLayout(rootResolved,JSON.parse(Buffer.concat(chunks).toString('utf8')))});}catch(error){reply(400,{error:error.message});}return;

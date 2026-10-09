@@ -3,10 +3,19 @@ import assert from 'node:assert/strict';
 import {readFileSync,mkdtempSync,existsSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {tmpdir} from 'node:os';
-import {compileCardComponents,writeCardObjects} from './card-components.mjs';
+import {compileCardComponents,writeCardObjects,cardComponentsModule} from './card-components.mjs';
 import {contentBundle} from '../src/content/index.js';
 import {illustratedCardHtml,illustratedArtwork} from '../src/ui/components/illustratedCard.js';
 const layout=JSON.parse(readFileSync(new URL('../src/content/card-layout.json',import.meta.url),'utf8'));
+
+test('compact runtime module preserves every resolved card without repeating the master',async()=>{
+ const data=compileCardComponents(layout,contentBundle.cards),source=cardComponentsModule(data);
+ const {CARD_COMPONENTS:runtime}=await import('data:text/javascript,'+encodeURIComponent(source));
+ assert.deepEqual(runtime,data);
+ assert.ok(Buffer.byteLength(source)<Buffer.byteLength(JSON.stringify(data))/2,'shared visual configuration should not be duplicated per card');
+ const cards=Object.values(runtime.cards);assert.notEqual(cards[0],cards[1]);assert.notEqual(cards[0].layers,cards[1].layers);
+ cards[0].layers[0].x+=10;assert.notEqual(cards[0].layers[0].x,cards[1].layers[0].x,'card layers remain independent');
+});
 test('every card has an independent resolved object with approved left-side costs',()=>{
  const data=compileCardComponents(layout,contentBundle.cards);
  assert.equal(Object.keys(data.cards).length,contentBundle.cards.length);
