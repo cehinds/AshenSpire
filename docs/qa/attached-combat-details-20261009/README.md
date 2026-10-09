@@ -41,9 +41,9 @@ one card, so all cards shared an x coordinate. The final correction places tools
 in the left footer rail and reserves no additional hand width. The unchanged
 Counter/Escape browser interaction then passed. Independent review verified
 five distinct cards, reachable controls, and an onscreen working log drawer at
-844x390 and 800x465. In very short co-op landscape, cards can still obscure some
-enemy name/HP plates according to the requested cards-over-selection layering;
-target buttons and player details remain reachable.
+844x390 and 800x465. This initial revision still allowed cards to obscure some
+enemy name/HP plates in very short landscape; PR 1775 addresses that collision
+with the bounded placement described below.
 The posed crowd uses 200 HP solely to survive interaction checks. Screenshots
 are test fixtures, not completed runs. Build, receipt, hosted checks, dev merge,
 architecture sync, test promotion and alternative sync are separate gates.
@@ -52,3 +52,36 @@ Reproduce with `node tools/combat-attached-details-qa.mjs`, setting
 `COMBAT_QA_URL=http://localhost:8338/build/AshenSpire.html` for the package and
 `COMBAT_QA_OUT` for output. `QA_WIDTH` optionally selects one viewport.
 Existing `tools/combat-card-stability-qa.mjs --phone` covers sequential plays.
+
+## Compact layout follow-up — PR 1775
+
+The final source for build **0.7.1.1189**, digest **b098ee2d88**, reserves the
+player details first and packs enemy name/HP bands around the actual hand,
+transformed cards, intents and player panel. Ten-pixel panel clearance matches
+the final HUD placement pass. Only crowded controls move; sprite anchors and
+size remain unchanged. The opt-in model preserves existing alternative callers.
+The component catalog documents this behavior.
+
+The exact screenreach probe, driven through Playwright against the source
+server, passed all 11 cases: normal and XL at 1200x730, 390x844, 390x650,
+360x640 and 844x390, plus the controlled intent-overlap fixture at 390x650.
+Enemy-tap, player-tap and intent-layer planted regressions still fail as intended.
+The 21 focused placement checks passed. An independent reviewer found no
+actionable blocker and checked phone, landscape and co-op targets.
+
+The default knowledge-enabled combat also passed a real-input saved-state check:
+End Turn, two defensive-reaction Back clicks, two advanced turns, then Quick
+Menu > Load > slot 1 > confirmation restored an identical combat/RNG snapshot.
+There were no page errors or failed requests. This covers the changed reaction
+path; it does not replace all legacy/refused-slot cases in the full door tool.
+
+Local raw-CDP probes timed out during source boot, before measuring their
+assertions, and the motion self-test copy could not run without the verified
+high-resolution art pack. These are unavailable results, not passes. Hosted
+verification, build completion and promotion are recorded separately in PR 1775.
+
+![Player details beside the character on a phone](compact-details-phone.png)
+![XL landscape enemy plates remain clear of cards](compact-details-landscape-xl.png)
+
+These source captures use the ordinary combat fixture and the XL crowd fixture,
+respectively. They demonstrate layout, not a completed playthrough.
