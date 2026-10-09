@@ -15,8 +15,9 @@ function visiblePointerTarget(selector) {
   const style = globalThis.getComputedStyle?.(el);
   const anchorX = Number.parseFloat(style?.getPropertyValue('--enemy-hit-x'));
   const anchorY = Number.parseFloat(style?.getPropertyValue('--enemy-hit-y'));
+  const pageZoom = Number.parseFloat(globalThis.getComputedStyle?.(document.body)?.zoom) || 1;
   const published = Number.isFinite(anchorX) && Number.isFinite(anchorY)
-    ? [{ x: b.x + anchorX, y: b.y + anchorY }]
+    ? [{ x: b.x + anchorX * pageZoom, y: b.y + anchorY * pageZoom }]
     : [];
   // Formation centers may be covered by nested intent or information buttons.
   const fractions = [0.5, 0.75, 0.25, 0.9, 0.1].flatMap(fy =>
