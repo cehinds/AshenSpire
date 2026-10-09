@@ -1931,7 +1931,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy') {
           const enemy = entityFor(event.sourceId);
           if (enemy) enemy.intentPreviews = Object.fromEntries(seats.map(id => [id, { kind: 'attack', moveId: event.moveId,
-            damage: event.amount, hits: 1, profile: event.combatProfile || {}, stance: 'countering', hidden: false, revealed: true }]));
+            damage: event.amount, hits: 1, counterDamage: event.amount, counterPoiseDamage: event.poiseDamage,
+            counterWardDamage: event.wardDamage, profile: event.combatProfile || {}, stance: 'countering', hidden: false, revealed: true }]));
         }
       }
       snap = working; render();

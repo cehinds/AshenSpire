@@ -2808,7 +2808,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     // The shot door's override, when parked (null otherwise — createCombat
     // then derives the threshold from the loadout receipt, the real path).
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
-    enemyIds: enc.enemies,
+    enemyIds: shotState === 'combat' && shotParams.get('shotReaction') === 'counter' ? ['wanderingSoldier', 'wanderingSoldier'] : enc.enemies,
     encounter: enc,
     hpMult: cm.hpMult,
     enemyDamageMult: cm.damageMult,
@@ -2871,6 +2871,20 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     if (['sleep', 'paralysis', 'dazed'].includes(control)) {
       combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: control, stacks: 2 }, source: combat.player, owner: combat.player, target: combat.player });
       while (combat.queue.length) executeAction(combat, combat.queue.shift());
+    }
+  }
+  if (shotState === 'combat' && shotParams.get('shotReaction') === 'counter') {
+    if (combat.reactionRulesVersion !== 1) throw new Error('shotReaction=counter requires reaction rules version 1');
+    // Memory-only validation pose; choices, payment and returns use production commands.
+    combat.piles.draw.push(...combat.piles.hand);
+    combat.piles.hand = ['guardCounter', 'sweepingBlow', 'strike'].map((cardId, index) => ({ cardId, instanceId: `reaction-shot-${index}`, upgraded: false }));
+    combat.player.energy = combat.player.energyMax = combat.player.maxStamina = 8;
+    combat.player.block = 40;
+    for (const enemy of combat.enemies) {
+      enemy.hp = enemy.maxHp = 100;
+      enemy.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1,
+        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
+      enemy.intentRevealed = false;
     }
   }
   if (shotState === 'combat' && shotParams.has('shotHand')) {

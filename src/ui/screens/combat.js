@@ -863,7 +863,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'combatCounterTriggered': {
           const actor = disp.ents[e.sourceId];
           if (actor && e.sourceKind === 'enemy') actor.intentPreview = { kind: 'attack', moveId: e.moveId,
-            damage: e.amount, hits: 1, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
+            damage: e.amount, hits: 1, counterDamage: e.amount, counterPoiseDamage: e.poiseDamage,
+            counterWardDamage: e.wardDamage, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
           break;
         }
         case 'enemyActorTurnStarted': {

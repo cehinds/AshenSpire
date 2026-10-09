@@ -95,12 +95,19 @@ export function expansionEntity(ctx, row) {
     : ctx.enemies?.find(entity => entity.id === row.id);
 }
 
+// Saved contacts retain their original target; a disconnected body is frozen.
+export function expansionTargetPresent(ctx, entity) {
+  if (!entity?.alive) return false;
+  const playerId = ctx.playerIdForEntity?.(entity);
+  return !ctx.players || !playerId || ctx.players.get(playerId)?.connected === true;
+}
+
 export function beginExpandedAction(ctx, group, source) {
   if (!group || group.begun) return;
   group.begun = true;
   for (const row of Object.values(group.targets)) {
     const target = expansionEntity(ctx, row);
-    if (!target) continue;
+    if (!expansionTargetPresent(ctx, target)) continue;
     const profile = row.contacts[0] || group.carrier?.combatProfile || {};
     const serial = group.manualCounterSerials?.[row.playerId || 'player'];
     const carrier = serial ? { ...group.carrier, manualCounterSerial: serial } : group.carrier;
@@ -136,7 +143,7 @@ export function completeExpandedAction(ctx, action) {
   beginExpandedAction(ctx, group, action.source);
   for (const row of Object.values(group.targets)) {
     const target = expansionEntity(ctx, row), receipt = row.receipt;
-    if (!target || !receipt) continue;
+    if (!expansionTargetPresent(ctx, target) || !receipt) continue;
     Matchups.completeTacticalAction(ctx, action.source, target, group.carrier, receipt,
       { restrictions: Control.controlRestrictions(ctx, target) });
     Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,

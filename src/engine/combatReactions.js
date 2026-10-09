@@ -90,7 +90,9 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   if (option) {
     const row = Object.values(group.targets).find(target => ctx.players ? target.playerId === ownerId : target.id === ctx.player.id);
     const canonical = optionsFor(ctx, row, group, hooks).find(current => current.id === optionId);
-    if (!canonical || JSON.stringify(canonical.play) !== JSON.stringify(option.play)) throw new Error('That reaction card is no longer playable');
+    if (!canonical || JSON.stringify(canonical.play) !== JSON.stringify(option.play)
+      || canonical.cardId !== option.cardId || canonical.staminaCost !== option.staminaCost
+      || canonical.manaCost !== option.manaCost) throw new Error('That reaction card is no longer playable');
     option = canonical;
   }
   group.reactionAnswered.push(ownerId);

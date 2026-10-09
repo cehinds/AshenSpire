@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { createCoopCombat, endTurn, chooseReaction, joinCombat, leaveCombat } from '../src/engine/coopCombat.js';
+import { createCoopCombat, endTurn, chooseReaction, joinCombat, leaveCombat, playCard, chooseDiscard } from '../src/engine/coopCombat.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createFoundation } from '../src/engine/combatRules.js';
 import { armCombatCounter } from '../src/engine/combatMatchups.js';
@@ -106,6 +106,17 @@ test('tampered saved reaction commands are rejected atomically', () => {
   assert.deepEqual(combat.rng.getCounters(), counters);
 });
 
+test('a saved offer with a changed price cannot silently charge the canonical cost', () => {
+  const { combat } = fixture({ enemyCount: 1 });
+  dispatch(combat, { type: 'endTurn' });
+  const option = combat.pendingReaction.options.find(row => row.cardId === 'guardCounter');
+  option.staminaCost += 1;
+  const before = serializeCombatSnapshot(combat), counters = combat.rng.getCounters();
+  assert.throws(() => answer(combat, option.id), /no longer playable/);
+  assert.deepEqual(serializeCombatSnapshot(combat), before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+});
+
 test('a defensive Sweep can cancel its attacker without executing its intent', () => {
   const { combat } = fixture();
   combat.enemies[0].hp = 1;
@@ -136,6 +147,46 @@ test('paid Counter reply to an automatic return terminates the chain', () => {
   assert.equal(combat.pendingExpansionActions, 0);
 });
 
+test('nested paid Sweep discard resumes a player-phase Counter return exactly after reload', () => {
+  for (const coop of [false, true]) {
+    const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'sweepingBlow'
+      ? { ...card, effects: [{ op: 'discard', choose: true, amount: 1 }, ...card.effects] } : card) });
+    const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
+      stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 3, combatExpansionVersion: 2,
+      deck: [{ cardId: 'guardCounter', instanceId: 'filler', upgraded: false },
+        { cardId: 'strike', instanceId: 'strike', upgraded: false }, { cardId: 'sweepingBlow', instanceId: 'sweep', upgraded: false }] };
+    const combat = coop ? createCoopCombat({ registries, rng: createRng(701), players: [player], enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 })
+      : createCombat({ registries, rng: createRng(701), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
+    const owner = coop ? combat.players.get('a').entity : combat.player;
+    owner.block = 100;
+    const enemy = combat.enemies[0]; enemy.block = 100;
+    enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
+    enemy.combatStance = { camp: 'physical', maneuver: 'counter', reach: 'contact', targeting: 'single' };
+    armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
+      tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
+      combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
+    if (coop) playCard(combat, 'a', 'strike', enemy.id);
+    else dispatch(combat, { type: 'playCard', cardInstanceId: 'strike', targetId: enemy.id });
+    const optionId = combat.pendingReaction.options.find(option => option.cardId === 'sweepingBlow').id;
+    if (coop) chooseReaction(combat, 'a', { offerId: combat.pendingReaction.id, optionId });
+    else answer(combat, optionId);
+    assert.ok(combat.reactionResume); assert.ok(combat.pendingAbilityDiscard); assert.equal(combat.reactionCursor, undefined);
+    const snapshot = JSON.parse(JSON.stringify(coop ? serializeCoopCombatSnapshot(combat) : serializeCombatSnapshot(combat)));
+    const rng = createRng(701, combat.rng.getCounters());
+    const restored = coop ? createCoopCombat({ registries, rng, players: [player], enemyIds: [], snapshot })
+      : restoreCombatSnapshot({ registries, rng, snapshot });
+    const settle = state => coop ? chooseDiscard(state, 'a', ['filler'])
+      : dispatch(state, { type: 'chooseDiscard', cardInstanceIds: ['filler'] });
+    assert.deepEqual(JSON.parse(JSON.stringify(settle(combat))), JSON.parse(JSON.stringify(settle(restored))));
+    const saved = state => coop ? decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(state)) : serializeCombatSnapshot(state);
+    assert.deepEqual(JSON.parse(JSON.stringify(saved(combat))), JSON.parse(JSON.stringify(saved(restored))));
+    assert.deepEqual(combat.rng.getCounters(), restored.rng.getCounters());
+    assert.equal(combat.queue.length, 0); assert.equal(combat.pendingExpansionActions, 0);
+    for (const key of ['pendingReaction', 'reactionResume', 'pendingAbilityDiscard', 'pendingAbilityPlay']) assert.equal(combat[key], undefined);
+    assert.equal(combat.phase, 'player');
+  }
+});
+
 test('disconnect settles the last owned offer and reconnect resumes the saved cursor', () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
@@ -164,6 +215,46 @@ test('disconnect settles the last owned offer and reconnect resumes the saved cu
   assert.equal(C.turn, 2);
   assert.deepEqual(decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)), decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(restored)));
   assert.deepEqual(C.rng.getCounters(), restored.rng.getCounters());
+});
+
+test('saved contacts skip disconnected bodies without spending Block or Counter, including suspended reload', () => {
+  for (const block of [0, 100]) for (const suspend of [false, true]) {
+    const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
+      ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 10, weight: 1,
+        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+    const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
+      maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
+      combatExpansionVersion: 2, deck: [{ cardId: 'guardCounter', instanceId: `${id}:counter`, upgraded: false }] }));
+    const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
+    const body = C.players.get('b').entity;
+    body.block = block;
+    body.combatStance = { camp: 'physical', maneuver: 'counter', damageType: 'blunt', reach: 'contact', targeting: 'single' };
+    armCombatCounter(C, body, { cardId: 'guardCounter', instanceId: 'b:armed',
+      tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
+      combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'blunt', reach: 'contact', targeting: 'single' } },
+    { payload: { hp: 1, poise: 0, ward: 0 } });
+    endTurn(C, 'a'); endTurn(C, 'b'); leaveCombat(C, 'b');
+    // The already accepted End Turn still owns hand/SP cleanup. Incoming
+    // contacts must leave the frozen body's defensive state untouched.
+    const defenses = state => {
+      const entity = state.players.get('b').entity;
+      return JSON.parse(JSON.stringify({ hp: entity.hp, block: entity.block, counter: entity.combatCounter,
+        statusControl: entity.statusControl, statuses: entity.statuses, returnedCycle: entity.combatCounterReturnedCycle }));
+    };
+    const before = defenses(C);
+    if (suspend) leaveCombat(C, 'a');
+    const snapshot = JSON.parse(JSON.stringify(serializeCoopCombatSnapshot(C)));
+    const restored = createCoopCombat({ registries, rng: createRng(709, C.rng.getCounters()), players, enemyIds: [], snapshot });
+    for (const state of [C, restored]) {
+      if (suspend) joinCombat(state, players[0]);
+      else chooseReaction(state, 'a', { offerId: state.pendingReaction.id });
+      assert.deepEqual(defenses(state), before);
+      assert.equal(state.eventLog.some(event => event.type === 'combatCounterTriggered' && event.sourcePlayerId === 'b'), false);
+      assert.equal(state.pendingReaction, undefined); assert.equal(state.queue.length, 0);
+    }
+    assert.deepEqual(C.rng.getCounters(), restored.rng.getCounters());
+    assert.deepEqual(decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)), decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(restored)));
+  }
 });
 
 test('co-op collects owned choices in saved seat order before either seat takes damage, with exact reload', () => {
