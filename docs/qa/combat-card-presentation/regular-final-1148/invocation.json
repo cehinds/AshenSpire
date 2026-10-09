@@ -1,0 +1,15 @@
+{
+  "ordinal": "1148",
+  "source": "6e54b35eb3",
+  "artifact": "D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire/build/download/AshenSpire.html",
+  "url": "http://127.0.0.1:8823/build/download/AshenSpire.html",
+  "fixtureSourceHead": "376e7af6286cf0713ee13e2b0bf2b45ab7744ccf",
+  "artifactSha256": "0cccb06800c9d933ffa03fba12df4b7b905ff446c5b7f9cf45038f9a43946c25",
+  "boundary": "Unmodified compiled artifact. Authored mounted solo fixture; production-source-generated canned co-op transport, not LAN/second-browser host acceptance.",
+  "shapes": [
+    "desktop-normal",
+    "phone-normal",
+    "phone-compact",
+    "phone-reduced"
+  ]
+}
