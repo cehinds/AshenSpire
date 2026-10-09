@@ -1,5 +1,16 @@
 # Card layers and rank continuation
 
+## October 9 — owner approved merging the master editor
+
+The owner approved the current master-component/game preview and requested
+merge. This supersedes the earlier visual rejection and merge hold below.
+The complete source, editor and curated native screenshots are committed;
+newer changes on the remote PR branch have been merged without conflicts.
+Independent reviewer `review_card_master` approved the authored PR diff at
+`cddfeb2076`, with no blocking findings and 20 focused tests passing. The owner
+explicitly authorized that reviewer. Current-head build and CI gates still apply.
+See `../card-layers/master/README.md` for the saved visual evidence.
+
 ## October 9 — master component appearance and real combat preview
 
 The master now exposes `components` (image paths, fit, styles, typography and
@@ -171,20 +182,15 @@ CI on `5231fe396e1ca92cd51ae144cfa4e294b085410c` passed preview, core, receipts 
 ## Remaining gates
 
 1. Confirm the final origin head, current build receipt and current-head CI.
-2. Obtain independent review. The prior automatic Codex reviewer reported its
-   usage limit. No independent review of the new layer/rank diff exists yet.
-   The session's developer instruction permits spawning agents only after an
-   explicit user request or an applicable AGENTS/skill instruction. An async
-   question asking the user to authorize a review agent or waive independent
-   review is pending; no answer has arrived. Do not claim that self-review is
-   independent review or silently bypass this requirement.
+2. Independent review is complete: `review_card_master` approved the authored
+   implementation at `cddfeb2076` with no blocking findings. The automatic PR
+   review bot remains quota-limited; the owner authorized the local reviewer.
 3. Fix verified findings, keep current with dev, regenerate metadata after
    source merges, then merge #1766 with a merge commit after all required gates.
 4. Coordinate the batched test promotion with the integration chat when human
    authorization permits messaging it. Check architecture sync, test heavy CI
    and alternative synchronization separately. No release/main/tag action.
-5. Owner visual acceptance of the new native rank placement remains distinct
-   from automated geometry checks and source integration.
+5. The owner approved the current native master-component preview and merge.
 
 The original eight-layer editable wireframe is saved at
 `docs/qa/card-layers/index.html`; the native nine-layer examples are
