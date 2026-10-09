@@ -367,7 +367,17 @@ async function endTurn() {
     await press('.end-turn', { hold: true, ms: 1000 });
     if (await ev(`(async () => { const end = Date.now() + 4000; while (Date.now() < end) { if (${moved}) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`)) break;
   }
-  await until(`(${combatOver}) || (window.__combat.turn > ${turn} && ${COMBAT_READY})`, `turn ${turn + 1} or the fight's end`, 40000);
+  // The enemy turn can pause for an optional defensive reaction. Decline via
+  // the player's Back control, preserving payment and enemy-turn continuation.
+  const done=`(${combatOver}) || (window.__combat.turn > ${turn} && ${COMBAT_READY})`;
+  const deadline=Date.now()+40000;
+  while(Date.now()<deadline){
+    if(await ev(done))return;
+    const decline='.reaction-choice [data-control-role="exit"]';
+    if(await has(decline))await press(decline);
+    else await wait(100);
+  }
+  throw new Error(`timed out waiting for turn ${turn+1} or the fight's end; screen ${JSON.stringify(await ev(SCREEN))}`);
 }
 async function playFight() {
   let played = 0;

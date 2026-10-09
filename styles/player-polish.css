@@ -521,6 +521,35 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 /* Enlarge the complete HP row while reserving its scaled height above relics. */
 :root .shared-hud .resbars-host { zoom:1.22; }
 
+/* Combat vitality occupies the available lane up to the quick-access tiles.
+   Its trough shows capacity; the shared meter retains the real current/max fill. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud > .hud-top {
+ grid-template-columns:minmax(0,1fr) auto;
+ grid-template-areas:'meters actions' 'rail actions';
+ column-gap:calc(12px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-vitals-panel { width:100%; max-width:none; padding:0; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resbars-host { zoom:1; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resbars { display:flex; flex-direction:column; width:100%; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resline { width:100%; min-width:0; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] {
+ flex-direction:column; align-items:stretch; gap:calc(4px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-plate {
+ justify-content:flex-start; align-items:center; gap:calc(6px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-label {
+ display:inline-flex; align-items:center; font-size:0; letter-spacing:0;
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-label .engraved-icon {
+ width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); font-size:calc(18px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-value { font-size:calc(14px / var(--ui-zoom,1)); line-height:1; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-well { width:100%; flex:none; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-track {
+ width:100% !important; height:calc(3px / var(--ui-zoom,1)); border-radius:0;
+}
+
 /* Thin black edges keep floating header items legible over bright artwork. */
 :root :is(.shared-hud, .atlas-header) {
  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;

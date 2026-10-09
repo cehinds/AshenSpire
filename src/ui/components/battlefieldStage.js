@@ -15,10 +15,12 @@ import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
-import { alternativeCombatComposition as combatComposition } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+
+import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 
 let releaseActiveStage = null;
-export function wireBattlefieldStage(field, model) {
+export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
   if (!field) throw new Error('battlefieldStage requires a field host');
   if (!model || model.component !== UI.battlefieldStage) throw new Error('battlefieldStage requires its Component Model');
@@ -35,18 +37,69 @@ export function wireBattlefieldStage(field, model) {
 
   let frameRequest = 0;
   let trackingRequest = 0;
+  const labelMeasure = document.createElement('canvas').getContext('2d');
+  function fitLabels() {
+    if (!labelMeasure) return;
+    for (const label of field.querySelectorAll('.nm .ls-label, .intent-stance')) {
+      const box = label.closest('.nm, .intent');
+      const width = box.clientWidth - 8 / uiZoom();
+      if (width <= 0) continue;
+      const style = getComputedStyle(label);
+      const maximum = 11 / uiZoom();
+      labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
+      const measured = labelMeasure.measureText(label.textContent).width;
+      label.style.fontSize = `${Math.max(8 / uiZoom(), maximum * Math.min(1, width / Math.max(1, measured)))}px`;
+    }
+  }
   function placePlayerHud() {
     const zoom = uiZoom();
+    const toolsBox = field.closest('.combat')?.querySelector('.combat-tools')?.getBoundingClientRect();
+    const panels = [...field.querySelectorAll('.enemy .combatant-leading, .enemy .nm, .enemy .meters, .enemy .sprite')]
+      .map(node=>node.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
+    if (toolsBox?.width && toolsBox?.height) panels.push(toolsBox);
     for (const player of field.querySelectorAll('.combatant.player')) {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
       if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) continue;
       const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      art.width = art.right - art.left;
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
-      const gap = parseFloat(getComputedStyle(leading).getPropertyValue('--player-hud-gap')) || 0;
-      const localTop = (art.top - stack.top - gap) / zoom;
-      const top = `${localTop}px`;
+      const combat = field.closest('.combat');
+      const viewport = combat.getBoundingClientRect();
+      const panel = leading.getBoundingClientRect();
+      const cards = [...combat.querySelectorAll('.hand .card')].map(card=>card.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
+      const inspect = leading.querySelector('.combatant-info');
+      const inspectBox = inspect?.getBoundingClientRect();
+      const inspectSize = inspectBox?.width ? {width:inspectBox.width,height:inspectBox.height} : null;
+      const expanded = player.classList.contains('context-selected');
+      const placement = expanded ? playerDetailsPlacement({ art: { ...art, top: art.bottom - panel.height }, width: panel.width, height: panel.height, viewport, gap: 4,
+        handTop: Math.min(toolsBox?.height ? toolsBox.top : Infinity, cards.length ? Math.min(...cards.map(rect=>rect.top)) : combat.querySelector('.hand')?.getBoundingClientRect().top ?? Infinity),
+        hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels })
+        : { left: Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4)),
+          top: Math.min(art.bottom + 3, (toolsBox?.top ?? Infinity) - panel.height - 4) };
+      panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
+      const top = `${(placement.top - stack.top) / zoom}px`;
+      const left = `${(placement.left - stack.left) / zoom}px`;
       if (leading.style.top !== top) leading.style.top = top;
+      if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
+      if (inspect) {
+        const button = inspect.getBoundingClientRect();
+        const inspectLocal = anchorLocalBox(leading.getBoundingClientRect(), {
+          left: art.left + art.width / 2 - button.width / 2,
+          top: art.top - button.height - 4, width: 0, height: 0,
+        }, { zoom });
+        inspect.style.left = `${inspectLocal.left}px`;
+        inspect.style.top = `${inspectLocal.top}px`;
+        if (inspectSize) panels.push(inspect.getBoundingClientRect());
+      }
+      const action = leading.querySelector('.player-action-intent');
+      if (action) {
+        const local = anchorLocalBox(leading.getBoundingClientRect(), {
+          left: art.left + art.width / 2 - (inspectBox?.width || 22) / 2 - 28,
+          top: art.top - 28, width: 0, height: 0,
+        }, { zoom });
+        action.style.left = `${local.left}px`; action.style.top = `${local.top}px`;
+      }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
     }
@@ -58,7 +111,8 @@ export function wireBattlefieldStage(field, model) {
     trackingRequest = field.isConnected && field.querySelector('.combatant.player')
       ? requestAnimationFrame(trackPlayerHud) : 0;
   }
-  let handAnchor = null;
+  let handAnchor = layoutState.handAnchor || null;
+  const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
@@ -74,7 +128,10 @@ export function wireBattlefieldStage(field, model) {
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
-    const fieldRect = field.getBoundingClientRect();
+    fitLabels();
+    const measuredField = field.getBoundingClientRect();
+    const fieldRect = { top: measuredField.top, left: measuredField.left,
+      width: Math.round(measuredField.width * 64) / 64, height: Math.round(measuredField.height * 64) / 64 };
     // clientWidth excludes a vertical scrollbar. Comparing it with the full
     // rendered box inflated zoom on phone co-op and lifted feet off the floor.
     const zoom = fieldRect.width / field.offsetWidth || 1;
@@ -158,7 +215,7 @@ export function wireBattlefieldStage(field, model) {
     });
     const actors = slotFrames.map(({ slot, frame, sprite }) => {
       const stack = frame.querySelector('.combatant-stack');
-      const geometry = combatSpriteGeometry(sprite, schedule);
+      let geometry = combatSpriteGeometry(sprite, schedule);
       // Reserve the tallest authored pose once. Following the current ink must
       // not push the overhead into the ribbon or resize art during an attack.
       if (frame.classList.contains('player')) {
@@ -178,7 +235,17 @@ export function wireBattlefieldStage(field, model) {
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
         * wireframeUi.formation.displayScale * (slot.characterScale || 1);
-      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
+      const stage = sprite.querySelector('.pose-stage');
+      const art = [sprite.firstElementChild.className, stage?.dataset.poseClass, stage?.dataset.animationSet,
+        sprite.querySelector('.enemy-pose-idle, .painted-presentation')?.getAttribute('src')];
+      // A replacement image briefly has no intrinsic pixels. Reuse its last
+      // loaded measurement instead of replacing the encounter fit with a box.
+      const geometryKey = JSON.stringify([art, sprite.offsetWidth, sprite.offsetHeight]);
+      const image = sprite.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
+      if (image && (!image.complete || !image.naturalWidth)) {
+        geometry = loadedGeometry.get(geometryKey) || geometry;
+      } else loadedGeometry.set(geometryKey, geometry);
+      return { slot, art, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth,
@@ -188,15 +255,21 @@ export function wireBattlefieldStage(field, model) {
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const hand = combat.querySelector('.hand');
     const handRect = hand?.getBoundingClientRect();
+    const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom, getComputedStyle(document.documentElement).fontSize].join(':');
     const restLeft = parseFloat(hand?.style.getPropertyValue('--hand-rest-left'));
     // Card selection and pile changes cannot move the battlefield. Re-anchor
     // only when the hand's viewport geometry or text scale actually changes.
     const handKey = handRect && hand.clientWidth > 0 ? [hand.clientWidth, hand.clientHeight,
       handRect.width / hand.clientWidth, getComputedStyle(document.documentElement).fontSize, handRect.left].join(':') : null;
-    if (Number.isFinite(restLeft) && handRect && hand.dataset.handGeometry === handKey
-      && (!handAnchor || handAnchor.key !== handKey)) {
-      handAnchor = { key: handKey, left: handRect.left + restLeft * handRect.width / hand.clientWidth };
+    const emptyHand = hand && !hand.querySelector('.card');
+    if (handRect && (emptyHand || (Number.isFinite(restLeft) && hand.dataset.handGeometry === handKey))
+      && (!handAnchor || handAnchor.layoutKey !== handLayoutKey)) {
+      // A resize with no cards still settles the new scene anchor. The first
+      // subsequent draw must not replace it with the card envelope's left edge.
+      handAnchor = { key: handKey, layoutKey: handLayoutKey,
+        left: emptyHand ? 0 : handRect.left + restLeft * handRect.width / hand.clientWidth };
     }
+    layoutState.handAnchor = handAnchor;
     const handLeft = handAnchor?.left ?? 0;
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
@@ -256,6 +329,21 @@ export function wireBattlefieldStage(field, model) {
         ({ sizes, growthFor, overheads } = fitFormation());
       }
     }
+    // Preserve this variant's initial composition, including its packed x.
+    // Expanded controls and card rerenders may move UI, never settled artwork.
+    const artworkFit = layoutState.artworkFit = stableCombatArtwork(layoutState.artworkFit, combatArtworkKey({
+      width: fieldRect.width, height: fieldRect.height, zoom: pageZoom, presentation,
+      appearance: displayAppearance(), handAnchor, actors }),
+      sizes.map(size => ({ ...size, x: overheads.find(control => control.id === size.id)?.x ?? size.x })));
+    sizes = artworkFit.sizes;
+    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, controls: actors.filter(actor => actor.leadingWidth > 0)
+      .map(actor => {
+        const fitted = sizes.find(size => size.id === actor.slot.id);
+        const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - 14;
+        return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
+          width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
+      }) });
+    combat.style.setProperty('--combat-selected-sprite-depth', String(Math.max(...plan.slots.map(slot => slot.layer)) + wireframeUi.formation.focusPriority + 1));
     const placed = [];
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
@@ -268,7 +356,7 @@ export function wireBattlefieldStage(field, model) {
       // screen (CombatSpriteScaleModel); only the selection growth is added.
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
       const scale = fitted.scale * growth;
-      const x = overheads.find(overhead => overhead.id === slot.id)?.x ?? fitted.x;
+      const x = fitted.x;
       const ground = fitted.ground ?? slot.ground;
       const visibleHeight = fitted.visibleHeight * growth;
       sprite.style.zoom = String(scale / zoom);
@@ -383,6 +471,18 @@ export function wireBattlefieldStage(field, model) {
           footer.style.translate = `${offset.left}px ${offset.top}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = '900';
+        }
+        if (frame.classList.contains('enemy') && !frame.classList.contains('context-selected')) {
+          const meter = frame.querySelector('.combatant-card > .meters');
+          if (meter) {
+            const rect = meter.getBoundingClientRect();
+            const leading = frame.querySelector('.combatant-leading').getBoundingClientRect();
+            const idleOffset = anchorLocalBox(VIEWPORT_ORIGIN, {
+              left: leading.left + (leading.width - rect.width) / 2 - rect.left,
+              top: leading.bottom - rect.height - rect.top, width: 0, height: 0,
+            }, { zoom });
+            meter.style.translate = `${offset.left + idleOffset.left}px ${offset.top + idleOffset.top}px`;
+          }
         }
       }
       sprite.style.setProperty('--sprite-zoom', String(scale / zoom));

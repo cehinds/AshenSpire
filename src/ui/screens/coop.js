@@ -279,7 +279,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
   }
   const dismissCombatant = event => {
-    if (!event.target.closest('.combatant, .combatant-door, .modal')) selectCombatant(null);
+    if (!event.target.closest('.combatant, .hand, .combatant-door, .modal')) selectCombatant(null);
   };
   const inspectCard = () => selectCombatant(null);
   app.addEventListener('click', dismissCombatant);
@@ -343,6 +343,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let combatLayout = null; // the layout adapter (components/combatLayout.js) for the mounted board
   let combatTools = null;
+  let battlefieldLayoutState = {};
   const combatToolsState = { open: false, size: 'Small', followLatest: true };
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
   // The beat is the same on pointer, keyboard and pad since S7 went wide
@@ -782,7 +783,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
-    else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
+    else { battlefieldLayoutState = {}; heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -858,7 +859,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wrap.className = 'meters';
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
-    const bars = resourceBars(plan, { surface: 'model' });
+    const bars = resourceBars(plan, { surface: 'model', showLabels: !isEnemy });
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
@@ -880,8 +881,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     return wrap;
   }
-  function intentEl(intent) {
-    return combatantIntent(intent, () => intentTooltip(intent), registries);
+  function intentEl(intent, onTarget) {
+    return combatantIntent(intent, () => intentTooltip(intent), registries, { onTarget });
   }
 
   function readEnemyIntent(entity, def) {
@@ -1137,14 +1138,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.appendChild(statusRow(p.statuses));
       if (friendly) {
         decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
-        box.addEventListener('click', () => {
+        const playOnSeat = () => {
           const cardInstanceId = armedFriendlyCard;
           if (!cardInstanceId) return;
           armedFriendlyCard = null;
           hideTooltip();
           render();
           send({ t: 'playCard', cardInstanceId, targetId: p.id });
-        });
+        };
+        box.addEventListener('click', playOnSeat);
+        box.addEventListener('click', event => {
+          if (!event.target.closest('.combatant-mini-hud')) return;
+          event.preventDefault(); event.stopPropagation(); playOnSeat();
+        }, true);
       } else if (armedFlask != null && p.alive && p.connected) {
         box.addEventListener('click', () => {
           sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id });
@@ -1169,7 +1175,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant enemy${dead ? ' dead' : ''}${!dead && e.id === selectedEnemy ? ' selected-target' : ''}`;
       box.dataset.eid = e.id;
       box.dataset.stature = statureFor(registries, def.id);
-      if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def)));
+      if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def), () => {
+        if (armedFriendlyCard) return false;
+        selectedEnemy = e.id;
+        const selected = meP?.hand.find(card => card.instanceId === litCard());
+        const selectedDef = selected && cardDef(selected);
+        if (!pacing && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
+          clearSelection();
+          send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: e.id });
+        } else { selectCombatant(e.id); render(); }
+        return true;
+      }));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));
@@ -1192,7 +1208,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       row.appendChild(box);
     }
 
-    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
     const area = app.querySelector('.hand-area');
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
@@ -1329,6 +1344,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : null;
       if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
     }
+    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), battlefieldLayoutState);
     for (const [ownerId, plan] of pendingAnimations) {
       const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
       const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
