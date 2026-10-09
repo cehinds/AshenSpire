@@ -1,0 +1,124 @@
+{
+  "scope": "Recoverable source checkpoint; not final artifact or merge acceptance",
+  "sourceHead": "3b7921f4b68e1743cf10a920768b281a7b34a6e7",
+  "acceptedRegularSource": "2934beab9d2e517f9d9ff031299bc3cc9c40a62c",
+  "actualAlternativeParent": "43221ee66f80055580dfe640418cac37137945f1",
+  "previousPublishedDraftHead": "95bef315ebfcd51163ce8e30a95139c31285da8d",
+  "sourceAncestor": true,
+  "alternativeAncestor": true,
+  "protectedPathCount": 2020,
+  "reviewedProtectedSeams": [
+    "CHANGELOG.md",
+    "docs/COMPONENT-CATALOG.md",
+    "docs/combat-card-sigils.md",
+    "docs/component-catalog.html",
+    "src/content/changelog.generated.js",
+    "src/ui/alternativeCardStage.js",
+    "src/ui/components/battlefieldStage.js",
+    "src/ui/screens/combat.js",
+    "src/ui/screens/coop.js",
+    "styles/combat.css",
+    "styles/corrupted-cards.css",
+    "styles/kit.css",
+    "tests/alternative-card-stage.test.mjs",
+    "tools/tutorial-reach.mjs"
+  ],
+  "unexpectedProtectedChanges": [],
+  "strictPins": {
+    "art-release.json": {
+      "alternativeBlob": "2909f1b7b2379b57d8c5702c3ddeb0db8fa5814b",
+      "checkpointBlob": "2909f1b7b2379b57d8c5702c3ddeb0db8fa5814b"
+    },
+    "art-manifest.json": {
+      "alternativeBlob": "d8b5b986d732fa6568fa151031dc4fc4ea0ef365",
+      "checkpointBlob": "d8b5b986d732fa6568fa151031dc4fc4ea0ef365"
+    },
+    "src/model/combatAnimation.js": {
+      "alternativeBlob": "6fee8271785e705719fe10b4e7a20b4547cb4565",
+      "checkpointBlob": "6fee8271785e705719fe10b4e7a20b4547cb4565"
+    },
+    "src/model/alternativeCardAnimation.js": {
+      "alternativeBlob": "62b5686f22c48dc18971fe4937084713e6f3db9c",
+      "checkpointBlob": "62b5686f22c48dc18971fe4937084713e6f3db9c"
+    },
+    "src/content/alternativeCardAnimations.js": {
+      "alternativeBlob": "85fd605b62ce0d2687d5eb1df8f57b213ba1e108",
+      "checkpointBlob": "85fd605b62ce0d2687d5eb1df8f57b213ba1e108"
+    },
+    "src/content/alternativeSelectedStances.js": {
+      "alternativeBlob": "cd575ee85f0507aa1d82fd72e13c9d8922b9b169",
+      "checkpointBlob": "cd575ee85f0507aa1d82fd72e13c9d8922b9b169"
+    },
+    "src/ui/alternativeArtCatalog.js": {
+      "alternativeBlob": "66954349477f1575dd51b6c2f773c4f6fbb53cb7",
+      "checkpointBlob": "66954349477f1575dd51b6c2f773c4f6fbb53cb7"
+    },
+    "src/model/alternativeStance.js": {
+      "alternativeBlob": "f83a367a0b6b1318473e58193c1696b91a3e8912",
+      "checkpointBlob": "f83a367a0b6b1318473e58193c1696b91a3e8912"
+    },
+    "styles/alternative-combat.css": {
+      "alternativeBlob": "112200cc138f381a7dae03f45acc34100549c40e",
+      "checkpointBlob": "112200cc138f381a7dae03f45acc34100549c40e"
+    }
+  },
+  "sharedExactSourcePaths": [
+    "src/ui/models/CombatOverheadModel.js",
+    "src/ui/components/handInspectionOverlay.js",
+    "src/ui/models/PlayedCombatCard.js",
+    "src/model/playingCard.js",
+    "src/ui/components/card.js",
+    "src/engine/combat.js",
+    "src/engine/coopCombat.js",
+    "src/engine/combatExpansionSave.js",
+    "src/engine/enemyKnowledge.js",
+    "src/engine/enemyKnowledgeSave.js",
+    "tools/session.mjs",
+    "tools/slot-load-door.mjs",
+    "tests/run-node.mjs"
+  ],
+  "sharedSourceDrift": [],
+  "receiptCount": 824,
+  "missingForeignReceiptLines": [],
+  "own1740ReceiptCount": 1,
+  "rendererHashes": {
+    "src/ui/alternativeAuraRenderer.js": "ccb69580bc836b01bbaefd0c90ab818cf8522fc802ff19ff8863b8cfc66ed856",
+    "src/ui/alternativeCardStage.js": "d04b399135e18a6e0f72a2387bd97e6c2873e4128398c5c49ff50124872d747f"
+  },
+  "corruptedOverlayGeometry": true,
+  "forcedColors": true,
+  "moltenRiver": true,
+  "measuredPrelude": {
+    "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1155,
+    "digest": "46b231ffb4",
+    "built": "2026-10-09"
+  },
+  "focusedValidation": {
+    "originalRun": {
+      "tests": 29,
+      "passed": 28,
+      "failed": 1,
+      "reason": "Sparse checkout lacked tracked selected source PNG; original failure retained"
+    },
+    "restoration": {
+      "exactHeadAbsentCleanTrackedPaths": 11
+    },
+    "identityRecheck": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "All 12 authored source and packaged Full/Lite identities"
+    },
+    "effectiveCoveredChecks": 29
+  },
+  "changedPathLfsAudit": {
+    "relativeTo": "95bef315ebfcd51163ce8e30a95139c31285da8d",
+    "pathCount": 635,
+    "filterLfsPaths": [],
+    "otherFilters": []
+  },
+  "boundary": "Measured1155 predates accepted2934 and v15/typed/field/formula integration. New final receipt/build/native QA/exact-head CI/promotions pending."
+}
