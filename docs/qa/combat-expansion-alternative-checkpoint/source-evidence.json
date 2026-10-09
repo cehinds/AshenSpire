@@ -1,7 +1,7 @@
 {
-  "recordedAt": "2026-10-09T05:21:40.830Z",
-  "head": "e8069ced0e01ea80941efb251962dfb567c0ca5c",
-  "source": "9c06715fa577b17de33549a8ece6c04edd015b67",
+  "recordedAt": "2026-10-09T05:34:09.327Z",
+  "head": "2b5c80f98519d9235cccd368209b3f29bc6aab71",
+  "source": "2595b37c5702d9d340d1c2ff3578e32a9bc00a3f",
   "previous": "aee51195f863227237e02d4b8cedec7396c381e4",
   "target": "43221ee66f80055580dfe640418cac37137945f1",
   "scope": "Approved alias-only/Classic compatibility source checkpoint; final build and native QA held.",
@@ -5314,7 +5314,7 @@
       "reason": "Actual accepted root author advanced its own1768 receipt1154→1170 after official prelude/final builds."
     }
   ],
-  "sourceHead": "e8069ced0e01ea80941efb251962dfb567c0ca5c",
+  "sourceHead": "2b5c80f98519d9235cccd368209b3f29bc6aab71",
   "mergeCommit": "29c1b85c2158d92a5a84b358c1038d1fdbab44a7",
   "probeAnchorCommit": "8d40e0a0005db06aa475a745032406677c725163",
   "settledBaseMerge": "c287cbcdce7c7dc2f9eb2d8953224924455d357f",
@@ -5338,6 +5338,22 @@
     "fail": 0,
     "skip": 0,
     "change": "Only the original blank-canvas plant find follows auraRenderer.draw; replacement, expected failure, corpus and deadlines unchanged."
+  },
+  "chooserLiftMerge": "2b5c80f98519d9235cccd368209b3f29bc6aab71",
+  "chooserLiftTests": {
+    "files": [
+      "tests/hand-upcast-visibility.test.mjs",
+      "tests/coop-upcast-control.test.mjs",
+      "tests/combat-upcast-cost-parity.test.mjs"
+    ],
+    "pass": 31,
+    "fail": 0,
+    "skip": 0
+  },
+  "nativeDriverBounds": {
+    "sha256": "6d4287f7bb6b13f89044d6d0749e237c5b17e13c597811c870e19aef8f13e856",
+    "change": "Adds full button/select containment within viewport and hand/footer edge; all prior shapes/owners/payment/Counter/negative controls/deadlines retained.",
+    "executed": false
   },
   "pinIdentityExceptions": {
     "src/model/combatAnimation.js": "Incoming pure appearance opt-out; default Alternative plans remain authored; Classic routes upstream guard/cast/attack.",
