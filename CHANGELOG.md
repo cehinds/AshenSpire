@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Behind the scenes: Test promotion keeps its full history** ([#1770](https://github.com/cehinds/AshenSpire/pull/1770), `0.7.1.1167`). The reviewed appearance and player-guide delivery retains the existing Test history so channel promotion can proceed. Fresh desktop, phone and co-op appearance checks are saved alongside the reproducible capture recipe.
+
 - **Choose your game appearance** ([#1757](https://github.com/cehinds/AshenSpire/pull/1757), `0.7.1.1166`). The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.
 
 - **Ashen Blight flows through volcanic rock** ([#1762](https://github.com/cehinds/AshenSpire/pull/1762), `0.7.1.1154`). The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.
