@@ -694,8 +694,10 @@ export function playTimeline(events, ctx, done) {
     removeEventListener('pointercancel', skipRelease, { capture: true });
     skipRelease = null;
   };
-  const skip = () => {
+  const skip = event => {
+    if (event?.target?.closest?.('[data-combat-read-only]')) return;
     if (finished) return;
+    removeEventListener('pointerdown', skip, { capture: true });
     flushed = true;
     clearHeldFigures();
     clearCombatEffects(ctx.layer);
@@ -712,7 +714,7 @@ export function playTimeline(events, ctx, done) {
     addEventListener('pointerup', skipRelease, { once: true, capture: true });
     addEventListener('pointercancel', skipRelease, { once: true, capture: true });
   };
-  addEventListener('pointerdown', skip, { once: true, capture: true });
+  addEventListener('pointerdown', skip, { capture: true });
   const finish = () => {
     if (finished) return;
     finished = true;

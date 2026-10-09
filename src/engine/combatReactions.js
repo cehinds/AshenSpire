@@ -11,6 +11,13 @@ import { cardTargetPlan } from '../model/cardTargets.js';
 export const usesReactions = ctx => ctx.reactionRulesVersion === 1;
 export const reactionPaused = ctx => !!(ctx.pendingReaction || ctx.reactionResume || ctx.pendingAbilityDiscard);
 
+export function setReactionsEnabled(ctx, entity, enabled) {
+  if (!usesReactions(ctx)) throw new Error('Optional reactions are unavailable in this saved combat');
+  if (typeof enabled !== 'boolean') throw new Error('Reaction preference must be enabled or disabled');
+  if (ctx.phase !== 'player' || reactionPaused(ctx)) throw new Error('Change reactions between actions on the player turn');
+  entity.reactionsEnabled = enabled;
+}
+
 function eligible(ctx, def, row) {
   const tags = def.cardTags || def.tags || [];
   if (tags.includes('maneuver:counter')) return row.contacts.some(contact =>
@@ -65,7 +72,7 @@ export function beforeReactionAction(ctx, action, hooks) {
     if (!row || !row.contacts.some(contact => contact.amount > 0 || contact.pressure > 0) || group.reactionAnswered.includes(id)) continue;
     const seat = ctx.players?.get(id);
     const entity = seat?.entity || ctx.player;
-    if (!entity.alive || (seat && !seat.connected)) { group.reactionAnswered.push(id); continue; }
+    if (!entity.alive || entity.reactionsEnabled === false || (seat && !seat.connected)) { group.reactionAnswered.push(id); continue; }
     const previous = ctx.playerKey;
     hooks.setOwner?.(ctx, id);
     const options = optionsFor(ctx, row, group, hooks);

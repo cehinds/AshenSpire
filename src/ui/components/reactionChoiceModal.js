@@ -5,12 +5,12 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed }) {
   let settled = false;
   let dismissed = false;
   const play = button({ label: 'Play', weight: 'primary', disabled: true });
-  const decline = button({ label: 'Decline', role: 'exit' });
+  const decline = button({ label: 'Back', role: 'exit' });
   const shell = openModal({
     title: 'Respond to the incoming action', eyebrow: 'Defensive reaction', size: 'md',
-    className: 'reaction-choice', closeLabel: 'Decline', secondary: [decline], primary: play,
+    className: 'reaction-choice', closeLabel: 'Back', secondary: [decline], primary: play,
     body(host) {
-      host.append(el('p', { text: 'Choose a card to play before this action resolves, or decline.' }));
+      host.append(el('p', { text: 'Choose a card to play before this action resolves. Back skips this reaction.' }));
       for (const option of pending.options) {
         const tier = option.play.upcastTier;
         const pick = button({ label: `${option.name}${tier ? ` · Upcast ${tier}` : ''}${option.choiceName ? ` · ${option.choiceName}` : ''} · ${option.staminaCost} SP${option.manaCost ? ` · ${option.manaCost} MP` : ''}`,

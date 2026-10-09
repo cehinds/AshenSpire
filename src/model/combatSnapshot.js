@@ -40,6 +40,7 @@ function nonEmptyString(value) {
 function entityProblems(entity, path, { player = false } = {}) {
   const problems = [];
   if (!record(entity)) return [`${path} must be an object`];
+  if (entity.reactionsEnabled !== undefined && typeof entity.reactionsEnabled !== 'boolean') problems.push(`${path}.reactionsEnabled must be boolean`);
   if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
   if (entity.intentRevealed !== undefined && typeof entity.intentRevealed !== 'boolean') problems.push(`${path}.intentRevealed must be boolean`);
   if (entity.intentReads !== undefined && (!record(entity.intentReads) || Object.entries(entity.intentReads).some(([id, value]) => !nonEmptyString(id) || typeof value !== 'boolean'))) problems.push(`${path}.intentReads must map player ids to booleans`);

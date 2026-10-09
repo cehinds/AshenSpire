@@ -952,6 +952,14 @@ const reactionHooks = {
   play: doPlayCard,
 };
 
+export function setReactions(C, playerId, enabled) {
+  const owner = C.players.get(playerId);
+  if (!owner?.connected || !owner.entity.alive) throw new Error('That reaction owner is unavailable');
+  if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => setReactions(candidate, playerId, enabled), { advanceAction: false });
+  Reactions.setReactionsEnabled(C, owner.entity, enabled);
+  return { events: [] };
+}
+
 export function chooseReaction(C, playerId, intent) {
   if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseReaction(candidate, playerId, intent), { advanceAction: false });
   const P = C.players.get(playerId);

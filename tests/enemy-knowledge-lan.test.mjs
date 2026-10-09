@@ -110,6 +110,25 @@ test('actual reaction authority persists offers and hides unowned options', () =
   assert.deepEqual(host.live.combat.pendingReaction, restored.live.combat.pendingReaction);
 });
 
+test('host reaction switch saves only its owner and a refused durable write adopts nothing', () => {
+  let refused = false;
+  const { host, saved } = fixture('reaction-switch-authority', () => !refused);
+  const before = host.serialize(), counters = host.live.combat.rng.getCounters();
+  refused = true;
+  assert.equal(host.combatSetReactions('p1', false).ok, false);
+  assert.deepEqual(host.serialize(), before);
+  assert.deepEqual(host.live.combat.rng.getCounters(), counters);
+  refused = false;
+  assert.equal(host.combatSetReactions('p1', false).ok, true);
+  assert.equal(host.live.combat.players.get('p1').entity.reactionsEnabled, false);
+  assert.equal(host.live.combat.players.get('p2').entity.reactionsEnabled, undefined);
+  assert.equal(host.combatSetReactions('foreign', false).ok, false);
+  const restored = restoreSession(registries, saved());
+  assert.equal(restored.live.combat.players.get('p1').entity.reactionsEnabled, false);
+  assert.equal(restored.live.combat.players.get('p2').entity.reactionsEnabled, undefined);
+  assert.deepEqual(restored.snapshot().scene.combatLog, host.snapshot().scene.combatLog);
+});
+
 test('restored room authority refuses malformed ordinal, downgrade and member identity drift', () => {
   const { saved } = fixture();
   for (const ordinal of ['oops', -1, 1.5, Number.MAX_SAFE_INTEGER + 1, undefined, 0, 2]) {

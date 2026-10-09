@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { createCoopCombat, endTurn, chooseReaction, joinCombat, leaveCombat, playCard, chooseDiscard } from '../src/engine/coopCombat.js';
+import { createCoopCombat, endTurn, chooseReaction, joinCombat, leaveCombat, playCard, chooseDiscard, setReactions } from '../src/engine/coopCombat.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createFoundation } from '../src/engine/combatRules.js';
 import { armCombatCounter } from '../src/engine/combatMatchups.js';
@@ -80,6 +80,68 @@ test('historical combat without carried reaction rules keeps immediate hand clea
   assert.equal(combat.pendingReaction, undefined);
   assert.equal(combat.phase, 'player');
   assert.equal(combat.turn, 2);
+});
+
+test('disabled optional prompts survive reload without disabling an armed Counter', () => {
+  const { combat, registries } = fixture({ enemyCount: 1 });
+  combat.foundation = createFoundation(combatRules);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });
+  const serial = combat.foundation.actionSerial, counters = combat.rng.getCounters(), events = combat.eventLog.length;
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  assert.equal(combat.foundation.actionSerial, serial);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+  assert.equal(combat.eventLog.length, events);
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, counters),
+    snapshot: JSON.parse(JSON.stringify(serializeCombatSnapshot(combat))) });
+  for (const state of [combat, restored]) {
+    const out = dispatch(state, { type: 'endTurn' });
+    assert.equal(state.player.reactionsEnabled, false);
+    assert.equal(state.pendingReaction, undefined);
+    assert.equal(out.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
+    assert.equal(state.turn, 2);
+  }
+  assert.deepEqual(JSON.parse(JSON.stringify(serializeCombatSnapshot(combat))), JSON.parse(JSON.stringify(serializeCombatSnapshot(restored))));
+});
+
+test('preference changes reject malformed and paused commands atomically', () => {
+  const { combat } = fixture();
+  for (const enabled of ['false', null, 0]) {
+    const before = serializeCombatSnapshot(combat), counters = combat.rng.getCounters();
+    assert.throws(() => dispatch(combat, { type: 'setReactions', enabled }));
+    assert.deepEqual(serializeCombatSnapshot(combat), before);
+    assert.deepEqual(combat.rng.getCounters(), counters);
+  }
+  dispatch(combat, { type: 'endTurn' });
+  const before = serializeCombatSnapshot(combat), counters = combat.rng.getCounters();
+  assert.throws(() => dispatch(combat, { type: 'setReactions', enabled: false }));
+  assert.deepEqual(serializeCombatSnapshot(combat), before);
+  assert.deepEqual(combat.rng.getCounters(), counters);
+});
+
+test('co-op preferences affect only their connected owner and survive the exact snapshot', () => {
+  const { registries } = fixture();
+  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
+    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
+    combatExpansionVersion: 2, deck: [{ cardId: 'guardCounter', instanceId: `${id}:counter`, upgraded: false }] }));
+  const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
+  for (const P of C.players.values()) P.entity.block = 100;
+  C.foundation = createFoundation(combatRules);
+  const serial = C.foundation.actionSerial, counters = C.rng.getCounters();
+  setReactions(C, 'a', false);
+  assert.equal(C.players.get('a').entity.reactionsEnabled, false);
+  assert.equal(C.players.get('b').entity.reactionsEnabled, undefined);
+  assert.equal(C.foundation.actionSerial, serial);
+  assert.deepEqual(C.rng.getCounters(), counters);
+  const before = serializeCoopCombatSnapshot(C);
+  assert.throws(() => setReactions(C, 'stranger', false));
+  assert.deepEqual(serializeCoopCombatSnapshot(C), before);
+  const restored = createCoopCombat({ registries, rng: createRng(709, counters), players, enemyIds: [],
+    snapshot: JSON.parse(JSON.stringify(before)) });
+  for (const state of [C, restored]) {
+    endTurn(state, 'a'); endTurn(state, 'b');
+    assert.equal(state.pendingReaction.ownerId, 'b');
+  }
+  assert.deepEqual(decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)), decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(restored)));
 });
 
 test('unaffordable and offensive-only cards do not offer a defensive reaction', () => {

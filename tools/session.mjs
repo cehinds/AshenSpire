@@ -66,9 +66,10 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
+import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 import { staminaAtCombatStart } from '../src/framework/resources.js';
@@ -770,6 +771,7 @@ export function createSession({ registries, seedString, endless = false, restore
       .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'impactDealt', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
+        eventIndex: c.eventLog.indexOf(e),
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         sourcePlayerId: e.sourcePlayerId, targetPlayerId: e.targetPlayerId,
         energySpent: e.energySpent, manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
@@ -807,6 +809,8 @@ export function createSession({ registries, seedString, endless = false, restore
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
+      combatLog: combatLogEntries(c.eventLog, { registries: c.registries,
+        players: [...c.players.keys()].map(id => ({ id, name: members.get(id)?.name })), enemies: c.enemies }),
       pool: live.pool,
       phase: c.phase,
       turn: c.turn,
@@ -846,6 +850,7 @@ export function createSession({ registries, seedString, endless = false, restore
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
         pendingAbilityDiscard: c.pendingAbilityDiscard || null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
+        ...(c.reactionRulesVersion === 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
@@ -920,6 +925,12 @@ export function createSession({ registries, seedString, endless = false, restore
   function combatChooseReaction(memberId, intent) {
     if (!live) return { ok: false, error: 'no combat' };
     try { chooseReaction(live.combat, memberId, intent); }
+    catch (error) { return { ok: false, error: error.message }; }
+    return settleCombat();
+  }
+  function combatSetReactions(memberId, enabled) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { setReactions(live.combat, memberId, enabled); }
     catch (error) { return { ok: false, error: error.message }; }
     return settleCombat();
   }
@@ -1965,7 +1976,7 @@ export function createSession({ registries, seedString, endless = false, restore
     addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, chooseMasteryNode, resolveNode,
     previewMemberClassRespec,applyMemberClassRespec,cancelMemberClassRespec,
-    combatPlay, combatPredict, acknowledgeEnemyLearning, retainEnemyLearning, combatChooseDiscard, combatChooseReaction, combatEndTurn, flaskIntent, autoResolveCombat, setCombatSave, combatRecovery, combatBlightFeat,
+    combatPlay, combatPredict, acknowledgeEnemyLearning, retainEnemyLearning, combatChooseDiscard, combatChooseReaction, combatSetReactions, combatEndTurn, flaskIntent, autoResolveCombat, setCombatSave, combatRecovery, combatBlightFeat,
     chooseReward, chooseAbilityDraft,claimMemberSkillLevel,chooseClassMilestone,chooseMemberLevelCard, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },

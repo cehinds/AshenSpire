@@ -1,0 +1,84 @@
+import { button, el } from '../kit/index.js';
+import { childModel } from '../models/ComponentModel.js';
+import { combatLogHeight, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
+import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
+
+export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
+  const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
+  const logButton = button({ label: 'Combat log', attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
+  const reaction = markUiComponent(button({ label: '', attrs: { 'data-combat-tool': 'reaction', role: 'switch', 'aria-checked': 'true' } }), UI.reactionToggle);
+  reaction.classList.add('reaction-switch');
+  const label = el('span', { text: 'Reaction' });
+  const track = el('span', { class: 'reaction-switch-track' });
+  const value = el('span', { class: 'reaction-switch-value' });
+  const thumb = el('span', { class: 'reaction-switch-thumb', 'aria-hidden': 'true' });
+  track.append(value, thumb); reaction.replaceChildren(label, track);
+  const panel = markUiComponent(el('section', { id: 'combat-log', class: 'combat-log-panel', 'aria-label': 'Combat log', hidden: true }), UI.combatLogDrawer);
+  const title = el('div', { class: 'combat-log-heading', text: 'Combat log' });
+  const sizes = el('div', { class: 'combat-log-sizes', role: 'group', 'aria-label': 'Log size' });
+  for (const size of COMBAT_LOG_SIZES) {
+    const pick = button({ label: size, attrs: { 'data-combat-tool': size, 'data-log-size': size, 'aria-pressed': 'false' } });
+    pick.addEventListener('click', () => { state.size = size; onViewChange(); root.querySelector(`[data-log-size="${size}"]`)?.focus(); });
+    sizes.append(pick);
+  }
+  const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': 'Actions by round' });
+  list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
+  panel.append(title, sizes, list); root.append(panel, logButton, reaction); combatEl.append(root);
+  logButton.addEventListener('click', () => { state.open = !state.open; onViewChange(); });
+  reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
+  let frame = 0, entryKey = '';
+  function measure() {
+    frame = 0;
+    if (!root.isConnected) return;
+    const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
+    const style = getComputedStyle(root);
+    const gap = parseFloat(style.getPropertyValue('--combat-tools-gap')) || 8;
+    const width = parseFloat(style.getPropertyValue('--combat-tools-physical-width')) || 136;
+    root.style.width = `${width / zoom}px`;
+    combatEl.style.setProperty('--combat-tools-reserve', `${(width + gap + 4) / zoom}px`);
+    const footer = combatEl.querySelector('.combat-action-row')?.getBoundingClientRect();
+    const bottom = (footer?.top ?? innerHeight) - gap;
+    const box = combatEl.getBoundingClientRect();
+    root.style.top = `${(bottom - root.getBoundingClientRect().height - box.top) / zoom}px`;
+    const menu = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
+    const card = combatEl.querySelector('.hand .card')?.getBoundingClientRect().height || 250;
+    const height = combatLogHeight({ size: state.size, cardHeight: card,
+      viewportHeight: window.visualViewport?.height || innerHeight, dockTop: root.getBoundingClientRect().top - 6, menuBottom: menu, gap });
+    panel.style.height = `${height / zoom}px`;
+    root.dataset.logSize = state.size;
+  }
+  const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
+  const observer = new ResizeObserver(schedule);
+  observer.observe(combatEl);
+  const footer = combatEl.querySelector('.combat-action-row'); if (footer) observer.observe(footer);
+  const hand = combatEl.querySelector('.hand-overlay'); if (hand) observer.observe(hand);
+  window.visualViewport?.addEventListener('resize', schedule);
+  addEventListener('resize', schedule);
+  function update(model) {
+    const toggle = childModel(model, UI.reactionToggle).properties;
+    const log = childModel(model, UI.combatLogDrawer).properties;
+    reaction.disabled = toggle.disabled;
+    reaction.setAttribute('aria-checked', String(toggle.enabled));
+    reaction.setAttribute('aria-label', `Reaction ${toggle.enabled ? 'enabled' : 'disabled'}`);
+    reaction.dataset.enabled = String(toggle.enabled);
+    value.textContent = toggle.enabled ? 'enabled' : 'disabled';
+    panel.hidden = !log.open; logButton.setAttribute('aria-expanded', String(log.open));
+    sizes.querySelectorAll('[data-log-size]').forEach(pick => pick.setAttribute('aria-pressed', String(pick.dataset.logSize === log.size)));
+    const key = JSON.stringify(log.entries);
+    if (key !== entryKey) {
+      entryKey = key; list.replaceChildren();
+      let round, items;
+      for (const entry of log.entries) {
+        if (entry.round !== round) { round = entry.round; items = el('ol', {}); list.append(el('h3', { text: `Round ${round}` }), items); }
+        items.append(el('li', { text: entry.text }));
+      }
+      if (!log.entries.length) list.append(el('p', { text: 'Actions will appear here as the round unfolds.' }));
+      list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
+    }
+    schedule();
+  }
+  return { update,
+    focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
+    restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
+    release() { observer.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+}

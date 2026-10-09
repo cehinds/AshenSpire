@@ -18,6 +18,9 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // number displayed comes from previewCard / previewIntent — no math here.
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { combatLogEntries } from '../../model/combatLog.js';
+import { combatToolsModel } from '../models/CombatToolsModel.js';
+import { mountCombatTools } from '../components/combatTools.js';
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
@@ -213,6 +216,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  const combatToolsState = { open: false, size: 'Small', followLatest: true };
+  const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
+    onViewChange: () => renderCombatTools(),
+    onToggle: enabled => {
+      try { dispatch(combat, { type: 'setReactions', enabled }); }
+      catch (error) { console.warn('[combat] reaction preference refused:', error.message); }
+      render();
+    },
+  });
   const potionReveal = resolveTooltipSettings(meta.settings);
   const actionRow = $('.combat-action-row');
   setPotionRevealTiming(actionRow, potionReveal);
@@ -846,7 +858,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    return { ents, hand: [...combat.piles.hand], arcaneEvents: [] };
+    return { ents, hand: [...combat.piles.hand], arcaneEvents: [], logLength: combat.eventLog.length };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -858,6 +870,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function applyBeatToDisp(beat) {
     if (!disp) return;
     for (const e of beat.events) {
+      const eventIndex = combat.eventLog.indexOf(e);
+      if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
       switch (e.type) {
         case 'combatCounterTriggered': {
@@ -1009,6 +1023,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderCombatantStage();
     renderHand();
     renderControls();
+    renderCombatTools();
     applyTargetLayer();
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
@@ -1017,6 +1032,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
     window.__renderCombatForShot = render;
     window.__combatRunForShot = run;
+  }
+
+  function renderCombatTools() {
+    combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion === 1,
+      enabled: combat.player.reactionsEnabled !== false,
+      disabled: busy || combat.phase !== 'player' || !!combat.pendingAbilityDiscard || !!combat.pendingReaction,
+      ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
+        { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }));
   }
 
   function renderTopbar() {
@@ -2045,13 +2068,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   combatEl.addEventListener('click', event => {
-    if (event.target.closest('.combatant, button, .card, .as-tip, .modal, input')) return;
+    if (event.target.closest('.combatant, button, .card, .as-tip, .modal, input, [data-combat-read-only]')) return;
     selected = null; selfArm = null; selectedFlask = null;
     syncCardSelection();
   });
 
   // Cancel targeting with right-click / Esc.
   combatEl.addEventListener('contextmenu', (ev) => {
+    if (ev.target.closest('[data-combat-read-only]')) return;
     if (selected || selectedFlask != null || selfArm) {
       ev.preventDefault();
       selected = null;
@@ -2070,6 +2094,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return;
     }
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    if (ev.target?.closest?.('[data-combat-read-only]')) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     // ANY veil owns input while it stands — not the menu overlay alone. This
@@ -2293,6 +2318,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       $('.hand').setAttribute('aria-disabled', 'true');
       $('.end-turn').disabled = true;
       $('.combat-expansion-controls').querySelectorAll('button').forEach(button => { button.disabled = true; });
+      renderCombatTools();
       syncCardSelection();
       formationMovement?.refresh();
     } catch (e) {
@@ -2309,6 +2335,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
           renderTopbar();
+          renderCombatTools();
           paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
         },
         onBeatApplied: (beat) => {
@@ -2326,6 +2353,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // flush and the terminal callback still render the whole board.
           if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
           renderControls();
+          renderCombatTools();
           showPileFeedback(beat.events);
         },
         onFlush: () => {
@@ -2760,6 +2788,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         battlefieldStage.release();
         formationMovement?.release();
         combatLayout.release();
+        combatTools.release();
         aimObserver?.disconnect();
         releaseSelectionWatch();
         expansionChoiceShell?.close?.(); expansionChoiceShell = null;

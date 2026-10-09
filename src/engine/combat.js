@@ -847,13 +847,16 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
  * The action queue drains fully before this returns (SPEC §3.9).
  */
 export function dispatch(combat, intent) {
-  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: !['predictIntent', 'chooseReaction', 'chooseDiscard'].includes(intent.type) });
+  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: !['predictIntent', 'chooseReaction', 'chooseDiscard', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
     if (combat.pendingReaction && intent.type !== 'chooseReaction') throw new Error('Answer the pending reaction first');
     if (intent.type !== 'chooseDiscard') R.assertNoAbilityChoice(combat);
     switch (intent.type) {
+      case 'setReactions':
+        Reactions.setReactionsEnabled(combat, combat.player, intent.enabled);
+        break;
       case 'chooseReaction':
         Reactions.answerReaction(combat, 'player', intent, { play: doPlayCard });
         resumeEnemyTurn(combat);

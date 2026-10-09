@@ -71,6 +71,8 @@ import { resourceAura } from '../combatAura.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import { resolveCoopPlayedCombatCard } from '../models/PlayedCombatCard.js';
+import { combatToolsModel } from '../models/CombatToolsModel.js';
+import { mountCombatTools } from '../components/combatTools.js';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
@@ -335,6 +337,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let guardCoopTool = null; // query-gated real-wire browser control
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let combatLayout = null; // the layout adapter (components/combatLayout.js) for the mounted board
+  let combatTools = null;
+  const combatToolsState = { open: false, size: 'Small', followLatest: true };
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
   // The beat is the same on pointer, keyboard and pad since S7 went wide
   // (2026-08-17); the dial is the only switch. This line said "pointer-only;
@@ -617,6 +621,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   };
   const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
   const flaskKeyHandler = (ev) => {
+    if (ev.target?.closest?.('[data-combat-read-only]')) return;
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (cardChoiceShell) return;
     if (!snap || snap.scene.kind !== 'combat') return;
@@ -631,6 +636,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   };
   const keyHandler = (ev) => {
+    if (ev.target?.closest?.('[data-combat-read-only]')) return;
     if(progressionDoor?.choosing)return;
     if(isClassRespecOpen())return; // the reviewed class form owns Tab and Escape
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
@@ -717,6 +723,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
     if (handStrip) { handStrip.teardown(); handStrip = null; }
     if (combatLayout) { combatLayout.release(); combatLayout = null; }
+    if (combatTools) { combatTools.release(); combatTools = null; }
     if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
@@ -1004,6 +1011,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function renderCombat() {
     const sc = snap.scene;
+    const focusedTool = combatTools?.focusedTool();
     const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
       || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
     let restoreFriendlyCardFocus = null;
@@ -1181,6 +1189,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const area = app.querySelector('.hand-area');
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
+    combatTools?.release();
+    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion === 1,
+      enabled: meP?.reactionsEnabled !== false, disabled: pacing || sc.phase !== 'player' || !!sc.reactionWaiting
+        || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
+      ...combatToolsState, entries: sc.combatLog || [] }));
+    combatTools = mountCombatTools(app.querySelector('.combat'), { state: combatToolsState,
+      onViewChange: updateTools, onToggle: enabled => send({ t: 'setReactions', enabled }) });
+    updateTools();
+    combatTools.restoreFocus(focusedTool);
     wireCoopActionRow(meP);
     const hand = area.querySelector('.hand');
     hand.inert = pacing || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;
@@ -1898,6 +1915,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const entityFor = id => [...working.scene.enemies, ...working.scene.players].find(entity => entity.id === id);
     const apply = beat => {
       for (const event of beat.events) {
+        if (Number.isSafeInteger(event.eventIndex) && event.eventIndex >= 0)
+          working.scene.combatLog = (next.scene.combatLog || []).filter(entry => entry.id <= event.eventIndex);
         const target = entityFor(event.targetId);
         if (event.type === 'hpLost' && target) target.hp = Math.max(0, target.hp - event.amount);
         if (event.type === 'healed' && target) target.hp = Math.min(target.maxHp, target.hp + event.amount);
