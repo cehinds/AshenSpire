@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
+import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
+
+test('alternative labeled targets keep their original 88 pixel cells', () => {
+  const targets = [{ id: 'a', x: 280, y: 190 }, { id: 'b', x: 350, y: 190 }];
+  const slots = alternativeEnemyTargetGrid({ width: 650, height: 400, targets });
+  assert.equal(slots.length, 2);
+  assert(slots.every(slot => slot.width === 88 && slot.height === 88));
+});
 
 test('alternative battlefield keeps its approved stature, center and hand overlap', () => {
   const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
