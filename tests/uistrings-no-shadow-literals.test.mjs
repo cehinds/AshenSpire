@@ -218,6 +218,20 @@ test('all three enemy target rows remain protected independently of origin/dev',
   assert.match(health.full, /\{hp\}.*\{maxHp\}/, 'the authored health row retains both live values');
 });
 
+test('all 19 reaction and log rows remain covered after promotion, including token-first prices', () => {
+  const frozen = frozenMigrationIds(1767), permanent = permanentMigratedIds();
+  assert.equal(new Set(frozen).size, 19);
+  for (const id of frozen) {
+    assert.ok(permanent.has(id), `missing permanent coverage for ${id}`);
+    assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
+  }
+  const renderer = stripComments(readFileSync(join(ROOT, 'src/ui/components/reactionChoiceModal.js'), 'utf8'));
+  for (const id of ['combat.reaction.sp', 'combat.reaction.mp']) {
+    assert.ok(renderer.includes(`t('${id}',`), `the token-first price must still consume ${id}`);
+    assert.match(uiStrings.find(row => row.id === id).short, /\{amount\}/);
+  }
+});
+
 test('no src/ui literal repaints a row #1489 moved into uiStrings.csv', () => {
   const allowed = new Set(ALLOWED.map(([file, text]) => `${file}\u0000${text}`));
   const shadows = sweep().filter((hit) => !allowed.has(`${hit.file}\u0000${hit.text}`));

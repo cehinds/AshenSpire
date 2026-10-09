@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Ordered counters, defensive reactions and combat controls",
     "detail": "Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.",
-    "build": "0.7.1.1153",
+    "build": "0.7.1.1155",
     "pullRequest": 1767,
     "url": "https://github.com/cehinds/AshenSpire/pull/1767"
+  },
+  {
+    "id": "pr-1763",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ashen Blight flows through volcanic rock",
+    "detail": "The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.",
+    "build": "0.7.1.1152",
+    "pullRequest": 1763,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1763"
   },
   {
     "id": "pr-1765",
