@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1773",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Attached enemy targets and visible player details",
+    "detail": "Keep compact enemy selection cells on their sprites, shrink them before moving away, and preserve neighboring target order. Show enemy name and health below their bodies and place the player's name, level, health and live combat details beside the character, clear of cards. Pack co-op details without collisions and keep landscape combat tools out of targeting space.",
+    "build": "0.7.1.1184",
+    "pullRequest": 1773,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1773"
+  },
+  {
     "id": "pr-1772",
     "date": "2026-10-08",
     "group": "2026-10-08",
