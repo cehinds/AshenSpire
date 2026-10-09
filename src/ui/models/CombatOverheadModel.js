@@ -23,12 +23,27 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
     for (const control of controls.toSorted((a,b) => a.y-b.y)) {
       const blockers = [...obstacles, ...placed.map(p => ({ left:p.x-p.width/2,
         right:p.x+p.width/2, top:p.y-half, bottom:p.y+half }))];
+      const desiredY = control.y;
+      let bottomExhausted = false;
       for (let pass=0;pass<=blockers.length;pass++) {
         const covered=blockers.filter(o => intersects(control,control.x,o));
         if (!covered.length) break;
         const nextY=Math.max(...covered.map(o => o.bottom+half+2));
-        if (nextY>height-half) break;
+        if (nextY>height-half) { bottomExhausted = true; break; }
         control.y=nextY;
+      }
+      if (bottomExhausted) {
+        // Crowded feet can already be at the field floor. Keep their column
+        // and search upward from the desired anchor rather than leave the
+        // later fighter's complete target covered by the earlier plate.
+        control.y = desiredY;
+        for (let pass=0;pass<=blockers.length;pass++) {
+          const covered=blockers.filter(o => intersects(control,control.x,o));
+          if (!covered.length) break;
+          const nextY=Math.min(...covered.map(o => o.top-half-2));
+          if (nextY<half) break;
+          control.y=nextY;
+        }
       }
       placed.push({ ...control, obstructed:blockers.some(o => intersects(control,control.x,o)) });
     }
