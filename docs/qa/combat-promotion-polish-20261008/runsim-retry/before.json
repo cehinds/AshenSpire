@@ -1,0 +1,20 @@
+{
+  "head": "2934beab9d2e517f9d9ff031299bc3cc9c40a62c",
+  "sourceHashes": {
+    "tools/runsim.mjs": "e4c64b4b48bdf060b9776243e0c0c86e1c3aeb64d0246e08a4fea9d7a7b4aa41",
+    "tools/simbot.mjs": "f7ad8f6c77b00798bee19a0bb799f9bd563713dded67166bc5c2e7d7284541f0",
+    "tools/simrun.mjs": "d2d50886e9d98284ebac88970469828a8474f705625a3ae048210ad94a1027fa",
+    "tools/runsim-selftest-policy.mjs": "01afa7f1e3ae26f2503ccbf94d804d82c5182ab671f8bfab5ed474f5b040051d",
+    "src/engine/combat.js": "cfd42e99e325338473bb72e7da5fb27eaae1a2316351da5c0f0f3be0cffdd013",
+    "src/engine/actions.js": "37492d6db1ec296fbb22fd659a0bfa794777c20b29bf42c086dcdcec6c3876af",
+    "src/model/formulas.js": "538ed67488bdcdb0a8a71773ca92c96c702331bb697a75835ba4e21994e01c17"
+  },
+  "load": {
+    "capturedAt": "2026-10-08T19:57:52.6418728-08:00",
+    "watchedProcesses": [],
+    "cpuPercent": 58,
+    "memoryAvailableMB": 16487,
+    "diskQueueLength": 0,
+    "diskBytesPerSecond": 55773094
+  }
+}
