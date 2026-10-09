@@ -5,18 +5,18 @@ import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { setAnimSpeed } from '../src/ui/fx.js';
 
 test('class stage owns travel, hit flashing, interruption, pause and disposal', async () => {
-  const dom=rewardDom(), raf=new Map(), paints=[];
+  const dom=rewardDom(), raf=new Map(), paints=[], contexts=[], readbacks=[];
   let time=1000, wallTime=1000, serial=0, reduced=false, failArt=false, materializeMs=0, deferArt=false;
   const pendingArt=[];
   const create=dom.document.createElement.bind(dom.document);
   dom.document.createElement=tag=>{
     const node=create(tag);
-    if(tag==='canvas')node.getContext=()=>({
+    if(tag==='canvas')node.getContext=(kind,options)=>{contexts.push({node,kind,options});return {
       clearRect(){},save(){},restore(){},
       drawImage(...args){paints.push({args,alpha:this.globalAlpha,filter:this.filter});},
       fillRect(){paints.push({fill:this.fillStyle,mode:this.globalCompositeOperation});},
-      getImageData(){time+=materializeMs;wallTime+=materializeMs;return {data:new Uint8ClampedArray(4)};},
-    });
+      getImageData(){readbacks.push(node);time+=materializeMs;wallTime+=materializeMs;return {data:new Uint8ClampedArray(4)};},
+    };};
     return node;
   };
   const NativeDate=Date;
@@ -33,6 +33,9 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
   try {
     setAnimSpeed('normal');
     stage=createAlternativeCardStage('reaver');await stage.ready;
+    const visible=stage.el.querySelector('canvas');
+    assert.deepEqual(contexts.find(c=>c.node===visible),{node:visible,kind:'2d',options:{willReadFrequently:true}});
+    assert.equal(contexts[1].options,undefined,'the flash mask keeps its existing context backend');
     assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
     stage.play('attack',260);step(115);
@@ -54,6 +57,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     const beforeWarm=time;
     materializeMs=400;
     stage.play('counter',260,['stamina','mana']);
+    assert.equal(readbacks.at(-1),visible,'action preparation still materializes the visible stage');
     assert.ok(time>beforeWarm,'the first aura is materialized before the action clock');
     assert.equal(stage.presentation.elapsed,0,'cold aura work is outside the action clock');
     const staleCallbacks=[...raf.values()];raf.clear();
@@ -63,7 +67,9 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.pose,'counter-load','queued hurt RAF does not skip Counter preparation after cold filter work');
     stage.setRestPose('defend');materializeMs=300;
     const resume=()=>({rest:'defend',action:'counter',elapsed:60,duration:260,resources:['hp','mana','stamina'],savedAt:wallTime});
+    const beforeResumeReads=readbacks.length;
     stage.setRestPose('defend',{resume:resume()});
+    assert.equal(readbacks.length,beforeResumeReads+1,'restoration also materializes before checking wall-clock expiry');
     assert.equal(stage.presentation.action,undefined,'cold restore work does not extend a stale wall-clock action');
     assert.equal(stage.pose,'guard-brace');
     materializeMs=0;stage.setRestPose('defend',{resume:resume()});

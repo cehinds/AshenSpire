@@ -47,7 +47,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   canvas.style.cssText = `position:absolute;max-width:none;width:${768*scale}px;height:${544*scale}px;left:calc(50% - ${384*scale}px);top:${190-480*scale}px;pointer-events:none;`;
   el.append(canvas);
   if (typeof canvas.getContext !== 'function') return null;
-  const ctx = canvas.getContext('2d');
+  // Action preparation deliberately materializes visible pixels before its clock.
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return null;
   const mask = document.createElement('canvas'); mask.width = mask.height = 512;
   const maskCtx = mask.getContext('2d');
