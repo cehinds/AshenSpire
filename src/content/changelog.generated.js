@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1763",
+    "id": "pr-1765",
     "date": "2026-10-08",
     "group": "2026-10-08",
-    "summary": "Ashen Blight flows through volcanic rock",
-    "detail": "The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.",
-    "build": "0.7.1.1150",
-    "pullRequest": 1763,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1763"
+    "summary": "Contract: reaction controls and round combat log",
+    "detail": "Specify Back/Play skip behavior, an owned combat-scoped reaction switch, and the in-place public round log with three responsive sizes. This contract precedes runtime implementation.",
+    "build": "0.7.1.1149",
+    "pullRequest": 1765,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1765"
   },
   {
     "id": "pr-1742",
