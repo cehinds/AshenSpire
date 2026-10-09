@@ -69,13 +69,13 @@ export function mountHandInspectionOverlay(hand) {
     }
     owner = control = null;
   };
-  const position = () => {
+  const position = (reveal = true) => {
     request = 0;
     const upcast = hand.querySelector('.card:is(.selected,.inspection-selected) > .card-upcast-controls');
     const focused = hand.querySelector('.card.gp-focus');
     // Inspection lights at hold start. Moving that face before release can
     // redirect a touch's trailing click or interfere with a card drag.
-    if (!pointers.size && !awaitingClick) {
+    if (reveal && !pointers.size && !awaitingClick) {
       const selectedOwner = hand.querySelector('.card:is(.selected,.inspection-selected)') || upcast?.parentElement;
       const active = revealOwner && (revealOwner === focused || revealOwner === selectedOwner ||
         revealOwner.parentElement === hand && revealOwner.matches?.('.selected,.inspection-selected'))
@@ -111,7 +111,11 @@ export function mountHandInspectionOverlay(hand) {
     control.style.left = `${local.left}px`;
     control.style.top = `${local.top}px`;
   };
-  const schedule = () => { cancelAnimationFrame(request); request = requestAnimationFrame(position); };
+  const schedule = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position()); };
+  // A browser-owned pan already chose the viewport. Following its scroll must
+  // not drag it back to an older pager cursor or selected card. Info still
+  // tracks its owner; explicit focus, selection and layout changes reveal.
+  const followScroll = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position(false)); };
   const press = event => { awaitingClick = false; pointers.add(event.pointerId); };
   const release = event => {
     if (!pointers.delete(event.pointerId)) return;
@@ -126,7 +130,7 @@ export function mountHandInspectionOverlay(hand) {
   const choose = event => { revealOwner = event.target.closest('.card'); schedule(); };
   const observer = new MutationObserver(schedule);
   observer.observe(hand, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden'] });
-  hand.addEventListener('scroll', schedule);
+  hand.addEventListener('scroll', followScroll);
   hand.addEventListener('handlayoutchange', schedule);
   hand.addEventListener('pointerdown', press, true);
   hand.addEventListener('gpfocus', choose, true);
@@ -139,7 +143,7 @@ export function mountHandInspectionOverlay(hand) {
   window.addEventListener('resize', schedule);
   return () => {
     observer.disconnect(); cancelAnimationFrame(request);
-    hand.removeEventListener('scroll', schedule);
+    hand.removeEventListener('scroll', followScroll);
     hand.removeEventListener('handlayoutchange', schedule);
     hand.removeEventListener('pointerdown', press, true);
     hand.removeEventListener('gpfocus', choose, true);

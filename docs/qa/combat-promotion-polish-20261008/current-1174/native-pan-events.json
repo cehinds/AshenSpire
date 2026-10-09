@@ -1,0 +1,141 @@
+[
+  {
+    "type": "pointerdown",
+    "at": 20561.5,
+    "scroll": 180,
+    "x": 20,
+    "y": 612.7906494140625,
+    "target": "hand-hit-lane",
+    "cancelled": false
+  },
+  {
+    "type": "pointermove",
+    "at": 20655.30000000447,
+    "scroll": 180,
+    "x": 45.263671875,
+    "y": 612.7906494140625,
+    "target": "card as-card playing-poker-card rarity-common cls-colorless type-attack illustrated-card expanded-combat-card card-inspection-target beat-hold drag-source",
+    "cancelled": false
+  },
+  {
+    "type": "pointercancel",
+    "at": 20657.20000000298,
+    "scroll": 180,
+    "x": 0,
+    "y": 0,
+    "target": "card as-card playing-poker-card rarity-common cls-colorless type-attack illustrated-card expanded-combat-card card-inspection-target beat-hold",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20674.90000000596,
+    "scroll": 168.88890075683594,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20697.30000000447,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20708.60000000149,
+    "scroll": 151.11111450195312,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20730.40000000596,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20758.70000000298,
+    "scroll": 152.22222900390625,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20781.10000000149,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20809.20000000298,
+    "scroll": 152.22222900390625,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20830.90000000596,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20876.10000000149,
+    "scroll": 152.22222900390625,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20897.80000000447,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20942.5,
+    "scroll": 151.11111450195312,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20963.80000000447,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 20992.40000000596,
+    "scroll": 152.22222900390625,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 21014.20000000298,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 21042.90000000596,
+    "scroll": 152.22222900390625,
+    "target": "hand",
+    "cancelled": false
+  },
+  {
+    "type": "scroll",
+    "at": 21064.70000000298,
+    "scroll": 180,
+    "target": "hand",
+    "cancelled": false
+  }
+]

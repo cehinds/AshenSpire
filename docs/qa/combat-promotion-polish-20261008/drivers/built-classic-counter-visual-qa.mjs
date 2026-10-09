@@ -64,6 +64,36 @@ const mounted=await ev(`(()=>{const c=window.__combat,run=window.__combatRunForS
 const before=await ev('({enemyHp:window.__combat.enemies.map(x=>x.hp),sp:window.__combat.player.energy,mana:window.__combat.player.mana,hand:window.__combat.piles.hand,counter:window.__combat.player.combatCounter,rng:window.__combat.rng.getCounters()})');
 const mountedSelector='[data-instance-id="'+mounted.instanceId+'"]';
 const reachable=selector=>ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;const b=e.getBoundingClientRect();for(const fy of [.3,.5,.1,.8])for(const fx of [.5,.15,.85])if(e.contains(document.elementFromPoint(b.x+b.width*fx,b.y+b.height*fy)))return true;return false;})()`);
+// Playing the outside Shield retires it and can hide the >7-card pagers.
+// Reach the next real card through native navigation, never DOM scrolling.
+const navigateHandCard=async selector=>{
+ const state=()=>ev('JSON.stringify({piles:window.__combat.piles,player:window.__combat.player,enemies:window.__combat.enemies,turn:window.__combat.turn,phase:window.__combat.phase,eventLog:window.__combat.eventLog,rng:window.__combat.rng.getCounters()})');
+ const beforeNavigation=await state(), steps=[];
+ const limit=await ev('document.querySelectorAll(".hand .card").length');
+ for(let step=0;!await reachable(selector);step++){
+  if(step>=limit)throw Error('Native navigation failed to expose card '+selector+' '+JSON.stringify(steps));
+  const geometry=await ev(`(()=>{const h=document.querySelector('.hand'),c=document.querySelector(${JSON.stringify(selector)});return{hand:h.getBoundingClientRect().toJSON(),card:c.getBoundingClientRect().toJSON(),scroll:h.scrollLeft,next:!!document.querySelector('.hand-next:not([hidden])'),previous:!!document.querySelector('.hand-prev:not([hidden])')};})()`);
+  const toLeft=geometry.card.left<Math.max(0,geometry.hand.left);
+  const pager=toLeft?'.hand-prev:not([hidden])':'.hand-next:not([hidden])';
+  if(toLeft?geometry.previous:geometry.next)await click(pager);
+  else{
+   if(!shape.mobile)throw Error('Offscreen desktop card has no native pager '+JSON.stringify(geometry));
+   const left=Math.max(0,geometry.hand.left)+20,right=Math.min(shape.width,geometry.hand.right)-20;
+   if(right<=left)throw Error('No visible native hand swipe lane '+JSON.stringify(geometry));
+   const start={x:toLeft?left:right,y:geometry.hand.top+geometry.hand.height*.45};
+   const end={x:toLeft?right:left,y:start.y};
+   if(!await ev(`document.querySelector('.hand').contains(document.elementFromPoint(${start.x},${start.y}))`))throw Error('Native hand swipe start is occluded '+JSON.stringify(start));
+   await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...start,id:11}]},sessionId);
+   for(let move=1;move<=8;move++){
+    await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x+(end.x-start.x)*move/8,y:start.y,id:11}]},sessionId);await wait(25);
+   }
+   await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},sessionId);await wait(250);
+  }
+  steps.push({...geometry,direction:toLeft?'previous':'next'});
+ }
+ if(await state()!==beforeNavigation)throw Error('Native card navigation changed combat/payment/hand/RNG state');
+ results.push({shape:shape.name,nativeNextCardNavigation:{selector,steps,engineStateUnchanged:true}});
+};
 const pageCount=await ev('document.querySelectorAll(".hand .card").length');
 const pager=[];
 for(let step=0;step<=pageCount&&!await reachable(mountedSelector);step++){
@@ -106,7 +136,7 @@ results.push({shape:shape.name,identity,mode:shape.reduced?'reduced-motion':'nor
 const spellId=await ev('window.__combat.piles.hand.find(x=>x.cardId==="barrageCounter").instanceId');
 const spellBefore=await ev(`(()=>{const c=window.__combat,n=document.querySelector('[data-instance-id="${spellId}"]');return{instance:structuredClone(c.piles.hand.find(x=>x.instanceId==='${spellId}')),sp:c.player.energy,mana:c.player.mana,barrier:c.player.barrier,ward:structuredClone(c.player.persistentWard),price:{sp:Number(n.querySelector('[data-card-binding=stamina]')?.textContent),mana:Number(n.querySelector('[data-card-binding=mana]')?.textContent)}};})()`);
 if(spellBefore.price.sp!==2||spellBefore.price.mana!==1)throw Error('Authored base Spell Counter badge mismatch');
-qaPhase=shape.name+':solo-spell-counter';await settled();await observe();await click('[data-instance-id="'+spellId+'"]');await click('.combatant.player.armed');await capture('spell-counter-cast-action');await settled();await wait(400);
+qaPhase=shape.name+':solo-spell-counter';await settled();await navigateHandCard('[data-instance-id="'+spellId+'"]');await observe();await click('[data-instance-id="'+spellId+'"]');await click('.combatant.player.armed');await capture('spell-counter-cast-action');await settled();await wait(400);
 const spell=await ev('({receipt:window.__combat.eventLog.filter(e=>e.type==="cardPlayed").at(-1),enemyHp:window.__combat.enemies.map(x=>x.hp),sp:window.__combat.player.energy,mana:window.__combat.player.mana,barrier:window.__combat.player.barrier,ward:window.__combat.player.persistentWard,counter:window.__combat.player.combatCounter})');
 if(JSON.stringify(spell.enemyHp)!==JSON.stringify(before.enemyHp))throw Error('Spell Counter preparation dealt immediate HP damage');
 if(spell.receipt.cardId!=='barrageCounter'||spell.receipt.upcastTier!==0||JSON.stringify(spell.receipt.cardInstance)!==JSON.stringify(spellBefore.instance)||spell.sp!==spellBefore.sp-spellBefore.price.sp||spell.mana!==spellBefore.mana-spellBefore.price.mana||spell.receipt.energySpent!==spellBefore.price.sp||spell.receipt.manaSpent!==spellBefore.price.mana||spell.counter?.charges!==1||spell.counter?.carrier?.combatProfile?.camp!=='spell'||spell.barrier!==spellBefore.barrier+6||JSON.stringify(spell.ward)!==JSON.stringify(spellBefore.ward))throw Error('Spell Counter paid receipt/charge/protection mismatch '+JSON.stringify({before:spellBefore,after:spell}));
