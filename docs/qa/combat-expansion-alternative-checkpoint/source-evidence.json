@@ -1,9 +1,9 @@
 {
   "scope": "Recoverable source checkpoint; not final artifact or merge acceptance",
-  "sourceHead": "255bba3b5690c13296b5d5f764d4912626a72ee6",
-  "acceptedRegularSource": "25477baeb6453a95875ec65e6efa617b5e1b0e3a",
+  "sourceHead": "7b3e55263ec5dcd26fee0af307dac53bc61ab1d4",
+  "acceptedRegularSource": "be6326f7a5291d6fc3240d893effc95b82eb7d39",
   "actualAlternativeParent": "43221ee66f80055580dfe640418cac37137945f1",
-  "previousPublishedCheckpoint": "f082ea2657ab83c9f8f046b5e44560be3f87729c",
+  "previousPublishedCheckpoint": "077f3e12225733223baf356dd88b7dbc4da8e198",
   "sourceAncestor": true,
   "alternativeAncestor": true,
   "protectedPathCount": 2020,
@@ -78,7 +78,7 @@
     "tests/run-node.mjs"
   ],
   "sharedSourceDrift": [],
-  "receiptCount": 825,
+  "receiptCount": 826,
   "missingForeignReceiptLines": [],
   "foreignReceiptOrder": {
     "regularParent": true,
@@ -100,6 +100,8 @@
     "built": "2026-10-09"
   },
   "focusedValidation": {
+    "checkedSourceHead": "255bba3b5690c13296b5d5f764d4912626a72ee6",
+    "runtimeSourceUnchanged": true,
     "tests": 33,
     "passed": 33,
     "failed": 0,
@@ -116,9 +118,9 @@
     "originalSparseMissingSourceFailureRetained": true
   },
   "changedPathLfsAudit": {
-    "relativeTo": "f082ea2657ab83c9f8f046b5e44560be3f87729c",
-    "pathCount": 36,
+    "relativeTo": "077f3e12225733223baf356dd88b7dbc4da8e198",
+    "pathCount": 5,
     "filteredPaths": []
   },
-  "boundary": "Measured1155 predates accepted25477 and latest inherited source. New root1768 receipt, final alternative receipt/build/native QA/exact-head CI/promotions pending."
+  "boundary": "Measured1155 is stale for current source. Actual final root1768 source/receipt inherited; resource greenlight, own1740 final receipt/build/native QA/exact-head CI/promotions pending."
 }
