@@ -4,7 +4,7 @@
 
 Implementation: [#1705](https://github.com/cehinds/AshenSpire/pull/1705). Contract: [SPEC §4.7](../SPEC.md#47-tagged-combat-cards-and-readable-enemy-stances). All 260 card families, 17 basic equipment profiles and 103 enemy moves receive authored tags. Suggestions below add no runtime behavior until implemented separately.
 
-The [next combat expansion proposal](combat-cards-expansion-proposal.md) records the latest rules and suggestions in grouped bullets: Physical (Martial)/Magical (Spell), single persistent stances, Evade, Counter coverage, persistent Ward, recovery cards, Sleep and Prone, tag combos, upcasting, and three Ashen Blight feat stages. It revises the future design; the existing contract below remains unchanged.
+The [updated combat expansion notes](combat-cards-expansion-proposal.md) record the current implemented rules and separately identified suggestions in grouped bullets: Physical (Martial)/Magical (Spell), single persistent stances, Evade, Counter coverage, persistent Ward, recovery cards, Sleep and Prone, tag combos, upcasting, and three Ashen Blight feat stages. The original tables below remain as design history.
 
 ## Core split
 

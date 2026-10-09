@@ -5,6 +5,14 @@
   - Preserve current art, animations, all card effects, readable bottom action labels, inspection, multiplayer ownership, and old saved runs.
   - This is a recoverable feature checkpoint, not completed promotion or owner/device acceptance.
 
+- **Current regular candidate: PR #1768**
+  - [#1768](https://github.com/cehinds/AshenSpire/pull/1768) is ready/open against dev; normal inheritance and source reviews are clear. Final native validation and promotion remain pending.
+  - Official prelude `0.7.1.1153` / `0e078075c5` completed all four aliases. Shipping was accidentally invoked during alias refresh and failed four checks; that invocation is retained separately. Shipping after launcher exit passed all 12 checks.
+  - The guarded own-receipt writer used the actual #1768 and measured prelude plus one, preserving all 801 foreign receipt lines. Official projection and rebuild produced `0.7.1.1154` / `68a938d822`, with launcher exit 0 and all four aliases refreshed. Light download: 98,806,864 bytes.
+  - Final identity passed nine checks; receipt validation passed both checks; all 802 receipts are ordered. The earlier order check ran before the second build and correctly refused the one-build-ahead receipt; it is not final acceptance.
+  - Final local card/formula/field/v15 asset checks passed 45 tests, zero skips. Shipping after final launcher exit passed 12 checks.
+  - Fresh full source corpus, compiled Counter/Upcast, corrupted trim, strict target reachability, reduced motion, exact-head fast checks, and both test promotions remain pending.
+
 - **Repository and source**
   - Repository: `cehinds/AshenSpire`. Command checkout: `D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire`.
   - Regular branch: `codex/combat-promotion-polish-20261008`; reviewed source commit `2934beab9d2e517f9d9ff031299bc3cc9c40a62c` was pushed with upstream tracking and verified against `git ls-remote`.
@@ -69,7 +77,7 @@
   - [#1742](https://github.com/cehinds/AshenSpire/pull/1742) merged to dev at `2ea1492325553b8e44e06d7f2467f084837ad28a`; architecture tip was `74fbff9a26e4fd6d7f3c6e5d12a928fe133fd138`.
   - [#1764](https://github.com/cehinds/AshenSpire/pull/1764) promoted to test at `11fbaff51cd32d03166027c76611739b8b9fcf00`. Seven workflow groups passed, but [CI 37870840004](https://github.com/cehinds/AshenSpire/actions/runs/37870840004) failed seven jobs: all reachability shards, mobile/five-layout checks and reduced-motion shard 2/3. Source fixes address observed causes, but fresh exact-head CI is still required.
   - [#1740](https://github.com/cehinds/AshenSpire/pull/1740) remains the existing alternative PR. Do not treat its old published head or stale receipt as the current finished build.
-  - Regular polish has no new PR at this checkpoint. Open a ready reviewed PR after current checks; use its actual number for an authored receipt, build then box-plus-one receipt, official changelog projection, rebuild, matching identity/order/shipping gates. Preserve every foreign receipt byte/order; never repoint #1742 or invent #1749's receipt.
+  - Regular polish now has actual ready [#1768](https://github.com/cehinds/AshenSpire/pull/1768) and its own measured receipt at 1154. Preserve every foreign receipt byte/order; never repoint #1742 or invent #1749's receipt. Finish current native proof and fresh checks before merge and promotion.
   - Normally inherit actual new dev changes before final validation. Overlaps: #1766 card layout/rank, #1767 reaction timing, #1757/rear-sprite target anchors, #1763 regular Blight art. Unmerged WIP is not inherited or claimed shipped.
   - Preserve alternative presentation and receipts during reconciliation. Normally merge the regular accepted source/receipt into the alternative branch, regenerate the official architecture, then perform its own #1740 receipt/build cycle and all five fresh native QA families.
   - Merge only with current required checks green; wait for latest architecture-sync and exact dev tip, then normal dev-to-test promotion. Check all fresh heavy workflow groups and protected alternative sync/promotions. Never force/admin merge or touch release/main/tags.
