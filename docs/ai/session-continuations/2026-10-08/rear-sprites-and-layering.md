@@ -1,5 +1,7 @@
 # Continue rear sprites and stable combat layers
 
+**Updated checkpoint:** See [the task status and reproducible QA](../../../qa/rear-sprites-layering-20261008/README.md). It supersedes the discovery-time status below. The source is now on `codex/rear-sprites-layering-20261008`; the package build completed at `0.7.1.1151`, source digest `e4095c5de9`. The original marked screenshot is preserved alongside that status.
+
 Finish and deliver the combat layer order, rear player sprites, enemy spacing, lower footer fade and stable sprite size/anchor during card play.
 
 ## Session and branch
@@ -80,4 +82,3 @@ A new AI should be able to fetch origin, create a D: worktree for the recorded b
 ## Completion report
 
 Report separate checkboxes for source implementation, verified origin push, independent review, current-head validation, dev or alternative/dev merge, test and alternative promotion/CI, and owner/device acceptance where needed. Cite exact SHAs, PRs and workflows. If a merge is blocked, keep the work pushed and give the precise failing gate and next fix; do not mislabel that checkpoint as integrated delivery.
-

@@ -772,7 +772,7 @@ export function playerSprite(customization = {}, classId, armourId = 'default', 
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && presentation.view !== 'portrait') {
-    const cardStage = createAlternativeCardStage(classId, { still: style === 'rendered' || Boolean(presentation.view) });
+    const cardStage = createAlternativeCardStage(classId, { still: style === 'rendered' || Boolean(presentation.view && presentation.view !== 'combat') });
     if (cardStage) { registerStage(cardStage.el, cardStage); return cardStage.el; }
     const alternative = alternativeSprite(alternativePlayerId(classId, armourId), 'player');
     if (alternative) return alternative;
