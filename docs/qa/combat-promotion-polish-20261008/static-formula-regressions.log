@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: constant authored formulas retain fractions until the canonical outer floor
+ok 1 - constant authored formulas retain fractions until the canonical outer floor
+  ---
+  duration_ms: 5.9941
+  ...
+# Subtest: context defaults and malformed formulas never become guessed static values
+ok 2 - context defaults and malformed formulas never become guessed static values
+  ---
+  duration_ms: 0.6616
+  ...
+# Subtest: stack descriptions distinguish whole-group counting from the amount cap
+ok 3 - stack descriptions distinguish whole-group counting from the amount cap
+  ---
+  duration_ms: 1.2573
+  ...
+# Subtest: all authored card variants resolve their supported formula placeholders without combat
+ok 4 - all authored card variants resolve their supported formula placeholders without combat
+  ---
+  duration_ms: 36.9884
+  ...
+# Subtest: summary quantities prefer explicit tokens, then matching live values, then authored values
+ok 5 - summary quantities prefer explicit tokens, then matching live values, then authored values
+  ---
+  duration_ms: 9.7329
+  ...
+# Subtest: symbolic authored quantities are escaped and live numeric tokens replace them
+ok 6 - symbolic authored quantities are escaped and live numeric tokens replace them
+  ---
+  duration_ms: 374.1781
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8084.3794

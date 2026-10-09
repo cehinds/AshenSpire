@@ -1,0 +1,266 @@
+{
+  "scope": "Frozen 1186 pre-inheritance QA: targets and full Default PASS; first Classic solo guard RED; no combined or final acceptance",
+  "sourceHead": "56dcc24e0b979006484d5ff369f1a762551a06e3",
+  "artifact": {
+    "ordinal": 1186,
+    "source": "27612de170",
+    "lightBytes": 115952203
+  },
+  "runner": {
+    "path": "D:/repos/.codex/outputs/combat-card-stances/run-final-regular-gates.ps1",
+    "sha256": "49a5ba0270d6ee34b06061c7681b98977694427f90c9f95a9bac66e01c59d666",
+    "exit": 1,
+    "node": "24.19.0",
+    "stoppedAt": "classic"
+  },
+  "gates": [
+    {
+      "name": "hit-target",
+      "status": "PASS",
+      "fixtures": 3,
+      "actorsPerFixture": 4,
+      "native24pxPatch": true,
+      "full44pxClearance": true,
+      "ownerCueBounds": true,
+      "health": []
+    },
+    {
+      "name": "default",
+      "status": "PASS",
+      "shapes": 4,
+      "sourceProjectedOwners": 8,
+      "resultRows": 49,
+      "errors": [],
+      "warnings": [],
+      "rawHealthEntries": 102,
+      "classifiedEditionAudio404": 24,
+      "classifiedActivationPolicies": 78,
+      "rawHealthPhases": {
+        "shotBootBeforeTitleActivation": 74,
+        "nativeInputStarted": 28
+      }
+    },
+    {
+      "name": "classic",
+      "status": "RED",
+      "scope": "First solo mounted rank1 Shield Bash, native tier2",
+      "resultRows": 5,
+      "error": "Missing actual player shield guard pose/rest",
+      "healthErrors": [],
+      "healthWarnings": [],
+      "resourcePayment": {
+        "staminaBefore": 6,
+        "staminaAfter": 3,
+        "manaBefore": 8,
+        "manaAfter": 5
+      },
+      "counter": {
+        "charges": 1,
+        "hpPayload": 0,
+        "poisePayload": 7
+      },
+      "poseTrace": "defend/guard/brace frame metadata, but outer idle and inner STANCE-READY with idle rest; no shield guard observed",
+      "failedShape": "desktop-normal"
+    }
+  ],
+  "notRun": [
+    "Standalone hand sigil QA",
+    "trim128",
+    "full T14 motion",
+    "compiled full screenreach",
+    "original negative plants 6/14 through 9/14",
+    "Supplementary native inspection doors"
+  ],
+  "cleanup": {
+    "originalDefaultLog": "EPERM profile removal after 12 attempts; exit0 preserved",
+    "ownedProfile": "D:/repos/.codex/tmp/v2qa-9AfItk",
+    "subsequentCheck": "Profile path absent and no matching msedge/chrome/node process; no deletion or termination performed",
+    "classicBrowser": "Canonical owned browser closed on assertion failure",
+    "httpServer": "Parent-owned 8823 left running"
+  },
+  "classicDiagnosis": {
+    "kind": "Read-only source and actual trace match; no runtime fix included in this evidence",
+    "callSite": "src/ui/screens/combat.js:1423 passes view combat",
+    "stillSelection": "src/ui/assets.js:514 treats Boolean(presentation.view) as still, including combat",
+    "restFilter": "src/ui/paintedOutfits.js:72 still wrapper maps shieldGuard to idle and only plays defeated",
+    "narrowCandidate": "Exclude combat from the still view condition, as the alternative branch already does; fresh native proof required"
+  },
+  "files": [
+    {
+      "file": "hit-target/390x650-xl.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-hit-target/390x650-xl.json",
+      "rawSha256": "9ac38e0c6189b92fd227247ae37168dd98f25561a3252c397c05a36ff6efc24d",
+      "curatedSha256": "9ac38e0c6189b92fd227247ae37168dd98f25561a3252c397c05a36ff6efc24d",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 99458
+    },
+    {
+      "file": "hit-target/390x650-xl.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-hit-target/390x650-xl.png",
+      "rawSha256": "ac7ab3dc050ea491a8f1bd0961390e9104aeec3ded5ee20793b13749974a804b",
+      "curatedSha256": "ac7ab3dc050ea491a8f1bd0961390e9104aeec3ded5ee20793b13749974a804b",
+      "curation": "byte-exact",
+      "bytes": 438962
+    },
+    {
+      "file": "hit-target/390x650-overlap.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-hit-target/390x650-overlap.json",
+      "rawSha256": "3edfdd17c04d9354c0530aaf2af5b88070fb270a118d5326ffec698f0fe759ba",
+      "curatedSha256": "3edfdd17c04d9354c0530aaf2af5b88070fb270a118d5326ffec698f0fe759ba",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 99182
+    },
+    {
+      "file": "hit-target/390x650-overlap.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-hit-target/390x650-overlap.png",
+      "rawSha256": "92eb0ca98c861dc8d0888d16881cb918342af483194e36f7e315f25dec782a5c",
+      "curatedSha256": "92eb0ca98c861dc8d0888d16881cb918342af483194e36f7e315f25dec782a5c",
+      "curation": "byte-exact",
+      "bytes": 439020
+    },
+    {
+      "file": "hit-target/1200x730-xl.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-hit-target/1200x730-xl.json",
+      "rawSha256": "cff8efdc577f6b7dcf00e02e225945741d4674446ae1616b38a82a829e581d12",
+      "curatedSha256": "cff8efdc577f6b7dcf00e02e225945741d4674446ae1616b38a82a829e581d12",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 98477
+    },
+    {
+      "file": "hit-target/1200x730-xl.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-hit-target/1200x730-xl.png",
+      "rawSha256": "869630eb5a9f145d53caec347f298c051becc483f6a10e3856ffa67a7bb98597",
+      "curatedSha256": "869630eb5a9f145d53caec347f298c051becc483f6a10e3856ffa67a7bb98597",
+      "curation": "byte-exact",
+      "bytes": 1318097
+    },
+    {
+      "file": "hit-target.log",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-hit-target.log",
+      "rawSha256": "6229edbce998327f09689cdbbc199ec706431825d1b13794a57d155987e75d56",
+      "curatedSha256": "85135f83d7f40d0dd27757629ec2c0e6e98085636fac08ea1ccc3e0e7377fde0",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 14349
+    },
+    {
+      "file": "default.log",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default.log",
+      "rawSha256": "ebd6ba515f9f47e50b91a300f15da417d002d39e511e037a0633a079ca4f74a2",
+      "curatedSha256": "f3f21c1ea9405456396ca437e3d3ada460478d472529ce5b07698941c67473a5",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 1759
+    },
+    {
+      "file": "classic.log",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-classic.log",
+      "rawSha256": "0bf46e1cf51b189e4a5e6904b920a6290ca25b156c76489446c8f3390c12c1eb",
+      "curatedSha256": "cbaf26b46cdceec2d7758d5d89707a409267a939d54eba348a30be091e447dca",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 65801
+    },
+    {
+      "file": "default/results.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/results.json",
+      "rawSha256": "97ef2bd70378b50fc11d77590913cad2e55bc1e887860d6d3b9c98f0ffdb5530",
+      "curatedSha256": "97ef2bd70378b50fc11d77590913cad2e55bc1e887860d6d3b9c98f0ffdb5530",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 6417539
+    },
+    {
+      "file": "default/browser-health.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/browser-health.json",
+      "rawSha256": "551b901bfc03167b06c99ff3daaaf81e64b24960007f62992209fbd6e3e9ff00",
+      "curatedSha256": "551b901bfc03167b06c99ff3daaaf81e64b24960007f62992209fbd6e3e9ff00",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 329469
+    },
+    {
+      "file": "classic/results.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-classic/results.json",
+      "rawSha256": "803c1493c6d151ee3b33f4fd5322d7962f3f8a5a1d07f3ed3c2b7821ae39c5fb",
+      "curatedSha256": "803c1493c6d151ee3b33f4fd5322d7962f3f8a5a1d07f3ed3c2b7821ae39c5fb",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 37024
+    },
+    {
+      "file": "classic/browser-health.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-classic/browser-health.json",
+      "rawSha256": "1cf717e0584c73c0b3ff6014fa6c30afc2ed6a25cb47e097f16d839a21b0c95e",
+      "curatedSha256": "1cf717e0584c73c0b3ff6014fa6c30afc2ed6a25cb47e097f16d839a21b0c95e",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 72580
+    },
+    {
+      "file": "default/desktop-normal-native-tier-picker-open.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/desktop-normal-native-tier-picker-open.png",
+      "rawSha256": "bc8b1565e190d6fb59c1cb04789fb04a5ca92cf1054e0bbba9dd9067fd5282f7",
+      "curatedSha256": "bc8b1565e190d6fb59c1cb04789fb04a5ca92cf1054e0bbba9dd9067fd5282f7",
+      "curation": "byte-exact",
+      "bytes": 1936157
+    },
+    {
+      "file": "default/desktop-normal-mounted-shield-tier-two-guard.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/desktop-normal-mounted-shield-tier-two-guard.png",
+      "rawSha256": "f7df6ffee22301aac9cf378bf82d2775a82745fcdfa1628dcc49a73dc9f9203f",
+      "curatedSha256": "f7df6ffee22301aac9cf378bf82d2775a82745fcdfa1628dcc49a73dc9f9203f",
+      "curation": "byte-exact",
+      "bytes": 1936600
+    },
+    {
+      "file": "default/phone-normal-native-tier-picker-open.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/phone-normal-native-tier-picker-open.png",
+      "rawSha256": "3c275e62477303986be7c669ae8f1b21457e967f40348fee7c1f1a3549971e5a",
+      "curatedSha256": "3c275e62477303986be7c669ae8f1b21457e967f40348fee7c1f1a3549971e5a",
+      "curation": "byte-exact",
+      "bytes": 509934
+    },
+    {
+      "file": "default/phone-compact-native-tier-picker-open.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/phone-compact-native-tier-picker-open.png",
+      "rawSha256": "58d5ca3edef8c1ed0619f672cf69ad2886dbb09d7009f442a0a009a74b63a7d5",
+      "curatedSha256": "58d5ca3edef8c1ed0619f672cf69ad2886dbb09d7009f442a0a009a74b63a7d5",
+      "curation": "byte-exact",
+      "bytes": 381018
+    },
+    {
+      "file": "default/phone-compact-mounted-shield-tier-two-guard.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/phone-compact-mounted-shield-tier-two-guard.png",
+      "rawSha256": "acf4b9e712ab3f3b3a42c8ac58a4fc9d770487ca83aa561ceb2f9c0b66317b5d",
+      "curatedSha256": "acf4b9e712ab3f3b3a42c8ac58a4fc9d770487ca83aa561ceb2f9c0b66317b5d",
+      "curation": "byte-exact",
+      "bytes": 400964
+    },
+    {
+      "file": "default/phone-reduced-mounted-shield-tier-two-guard.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-default/phone-reduced-mounted-shield-tier-two-guard.png",
+      "rawSha256": "d2bbf5f12cf808216f735dd99bd96b7daf47b08bca78461007d235dbe47f1d8e",
+      "curatedSha256": "d2bbf5f12cf808216f735dd99bd96b7daf47b08bca78461007d235dbe47f1d8e",
+      "curation": "byte-exact",
+      "bytes": 538237
+    },
+    {
+      "file": "classic/desktop-normal-native-tier-picker-open.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-classic/desktop-normal-native-tier-picker-open.png",
+      "rawSha256": "c98aa864259c2ae7aafaaace48ee676b43f076d17a973f7ef2ad59b7763727a5",
+      "curatedSha256": "c98aa864259c2ae7aafaaace48ee676b43f076d17a973f7ef2ad59b7763727a5",
+      "curation": "byte-exact",
+      "bytes": 1408744
+    },
+    {
+      "file": "classic/desktop-normal-mounted-shield-tier-two-action.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-classic/desktop-normal-mounted-shield-tier-two-action.png",
+      "rawSha256": "f77dadff8ab0527a96d021b858f536256ce0ced990c9134d8ef34dffe943629e",
+      "curatedSha256": "f77dadff8ab0527a96d021b858f536256ce0ced990c9134d8ef34dffe943629e",
+      "curation": "byte-exact",
+      "bytes": 1395279
+    },
+    {
+      "file": "gates.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1186-gates.json",
+      "rawSha256": "3caf7faeb82262eaec7dbe3e3e856df3509afa470feec1101cfc252e178316e8",
+      "curatedSha256": "23a0bc6f2fbdb7993d2a46a5998df01bf74d679376730d50770e7adb60a5e7f1",
+      "curation": "UTF-8 without BOM, CRLF normalized to LF; content retained",
+      "bytes": 478
+    }
+  ]
+}

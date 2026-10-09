@@ -1,0 +1,215 @@
+TAP version 13
+# Subtest: damage words describe actual types rather than the spell school
+ok 1 - damage words describe actual types rather than the spell school
+  ---
+  duration_ms: 10.2514
+  ...
+# Subtest: active renamed and absent metadata never fall back to shipped damage labels
+ok 2 - active renamed and absent metadata never fall back to shipped damage labels
+  ---
+  duration_ms: 200.7421
+  ...
+# Subtest: mixed contacts retain ordered types and unequal live hit numbers without mutation
+ok 3 - mixed contacts retain ordered types and unequal live hit numbers without mutation
+  ---
+  duration_ms: 0.7997
+  ...
+# Subtest: each contact follows its resolved preview, including explicitly empty tags
+ok 4 - each contact follows its resolved preview, including explicitly empty tags
+  ---
+  duration_ms: 0.8683
+  ...
+# Subtest: paid-tier Counter HP keeps its type while Poise and Ward remain distinct
+ok 5 - paid-tier Counter HP keeps its type while Poise and Ward remain distinct
+  ---
+  duration_ms: 0.5754
+  ...
+# Subtest: expanded complex card faces expose damage words and preserve v1 authored text
+ok 6 - expanded complex card faces expose damage words and preserve v1 authored text
+  ---
+  duration_ms: 19.069
+  ...
+# Subtest: large face labels match the maneuver while spell Counters remain Counter
+ok 7 - large face labels match the maneuver while spell Counters remain Counter
+  ---
+  duration_ms: 13.3694
+  ...
+# Subtest: Counter summary distinguishes protection from return and includes card Evade
+ok 8 - Counter summary distinguishes protection from return and includes card Evade
+  ---
+  duration_ms: 10.4745
+  ...
+# Subtest: new spell summary contains its explicit gauge pressure and chance
+ok 9 - new spell summary contains its explicit gauge pressure and chance
+  ---
+  duration_ms: 0.6676
+  ...
+# Subtest: summary uses live bindings and preserves full conditional effects
+ok 10 - summary uses live bindings and preserves full conditional effects
+  ---
+  duration_ms: 0.8357
+  ...
+# Subtest: complex passive cards preserve authored text rather than hiding trigger rules
+ok 11 - complex passive cards preserve authored text rather than hiding trigger rules
+  ---
+  duration_ms: 2.3161
+  ...
+# Subtest: summaries retain ally and random targets, removal quantities and resolved hit counts
+ok 12 - summaries retain ally and random targets, removal quantities and resolved hit counts
+  ---
+  duration_ms: 2.3401
+  ...
+# Subtest: expanded grade summaries retain added buildup together with authored limits
+ok 13 - expanded grade summaries retain added buildup together with authored limits
+  ---
+  duration_ms: 13.9865
+  ...
+# Subtest: temporary tier options keep nonzero base separate and never offer locked tiers
+ok 14 - temporary tier options keep nonzero base separate and never offer locked tiers
+  ---
+  duration_ms: 1132.0543
+  ...
+# Subtest: compact Counter face leaves complete delivery coverage in inspection
+ok 15 - compact Counter face leaves complete delivery coverage in inspection
+  ---
+  duration_ms: 235.9291
+  ...
+# Subtest: primary Power and Status labels precede camps; utility skills remain Skill
+ok 16 - primary Power and Status labels precede camps; utility skills remain Skill
+  ---
+  duration_ms: 1.2431
+  ...
+# Subtest: option C keeps a waist-overlapped solo player and a smaller centered enemy group
+ok 17 - option C keeps a waist-overlapped solo player and a smaller centered enemy group
+  ---
+  duration_ms: 3.2491
+  ...
+# Subtest: co-op does not push players beneath the hand and every painted figure stays in bounds
+ok 18 - co-op does not push players beneath the hand and every painted figure stays in bounds
+  ---
+  duration_ms: 0.681
+  ...
+# Subtest: short-phone fitted feet keep separate full tap areas without changing the artwork
+ok 19 - short-phone fitted feet keep separate full tap areas without changing the artwork
+  ---
+  duration_ms: 7.3219
+  ...
+# Subtest: tap target packing preserves unconstrained feet and clamps only targets to stage edges
+ok 20 - tap target packing preserves unconstrained feet and clamps only targets to stage edges
+  ---
+  duration_ms: 0.8835
+  ...
+# Subtest: packed frame targets reserve their visible health footer as the owner cue
+ok 21 - packed frame targets reserve their visible health footer as the owner cue
+  ---
+  duration_ms: 0.6466
+  ...
+# Subtest: short landscape overheads pack intersecting rows despite a wide stage
+ok 22 - short landscape overheads pack intersecting rows despite a wide stage
+  ---
+  duration_ms: 0.6789
+  ...
+# Subtest: half-field mobile figures keep distinct reachable intent anchors in the short portrait field
+ok 23 - half-field mobile figures keep distinct reachable intent anchors in the short portrait field
+  ---
+  duration_ms: 40.1504
+  ...
+# Subtest: measured Inspect expansion preserves slot order and full overhead clearance
+ok 24 - measured Inspect expansion preserves slot order and full overhead clearance
+  ---
+  duration_ms: 0.6923
+  ...
+# Subtest: overhead offsets convert screen pixels once and retain the measured control box at UI zoom
+ok 25 - overhead offsets convert screen pixels once and retain the measured control box at UI zoom
+  ---
+  duration_ms: 0.4942
+  ...
+# Subtest: full-height enemies from separate formation rows keep every intent reachable when their fitted bands coincide
+ok 26 - full-height enemies from separate formation rows keep every intent reachable when their fitted bands coincide
+  ---
+  duration_ms: 0.772
+  ...
+# Subtest: an in-bounds reserved control anchor stays put independently of figure growth
+ok 27 - an in-bounds reserved control anchor stays put independently of figure growth
+  ---
+  duration_ms: 0.6996
+  ...
+# Subtest: ribbon clearance repacks the final physical bands without moving already clear controls
+ok 28 - ribbon clearance repacks the final physical bands without moving already clear controls
+  ---
+  duration_ms: 4.2923
+  ...
+# Subtest: actual 844x390 XL foot targets and health footers clear final intent boxes inside the 139.86px stage
+ok 29 - actual 844x390 XL foot targets and health footers clear final intent boxes inside the 139.86px stage
+  ---
+  duration_ms: 1.814
+  ...
+# Subtest: intent clearance repacks a newly joined footer band without shifting clear targets
+ok 30 - intent clearance repacks a newly joined footer band without shifting clear targets
+  ---
+  duration_ms: 0.4952
+  ...
+# Subtest: insufficient stage room is reported rather than placing a target over another control or outside the stage
+ok 31 - insufficient stage room is reported rather than placing a target over another control or outside the stage
+  ---
+  duration_ms: 0.3012
+  ...
+# Subtest: aligned target plates resolve crowded footers vertically
+ok 32 - aligned target plates resolve crowded footers vertically
+  ---
+  duration_ms: 0.4137
+  ...
+# Subtest: actual 1200x730 XL floor targets find upward room without detaching their columns
+ok 33 - actual 1200x730 XL floor targets find upward room without detaching their columns
+  ---
+  duration_ms: 49.1796
+  ...
+# Subtest: waist-overlap player foot below the field retains a clamped 44px target
+ok 34 - waist-overlap player foot below the field retains a clamped 44px target
+  ---
+  duration_ms: 0.3861
+  ...
+# Subtest: upward fallback still reports obstruction when an overhead occupies all available space
+ok 35 - upward fallback still reports obstruction when an overhead occupies all available space
+  ---
+  duration_ms: 0.3121
+  ...
+# Subtest: constant authored formulas retain fractions until the canonical outer floor
+ok 36 - constant authored formulas retain fractions until the canonical outer floor
+  ---
+  duration_ms: 7.0208
+  ...
+# Subtest: context defaults and malformed formulas never become guessed static values
+ok 37 - context defaults and malformed formulas never become guessed static values
+  ---
+  duration_ms: 0.4996
+  ...
+# Subtest: stack descriptions distinguish whole-group counting from the amount cap
+ok 38 - stack descriptions distinguish whole-group counting from the amount cap
+  ---
+  duration_ms: 0.6754
+  ...
+# Subtest: all authored card variants resolve their supported formula placeholders without combat
+ok 39 - all authored card variants resolve their supported formula placeholders without combat
+  ---
+  duration_ms: 46.5584
+  ...
+# Subtest: summary quantities prefer explicit tokens, then matching live values, then authored values
+ok 40 - summary quantities prefer explicit tokens, then matching live values, then authored values
+  ---
+  duration_ms: 2.7747
+  ...
+# Subtest: symbolic authored quantities are escaped and live numeric tokens replace them
+ok 41 - symbolic authored quantities are escaped and live numeric tokens replace them
+  ---
+  duration_ms: 369.0224
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 41
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4861.7621

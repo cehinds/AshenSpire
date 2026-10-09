@@ -1,9 +1,7 @@
 import { tFull } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
-import { enemyTargetGrid } from '../models/EnemyTargetGridModel.js';
-import { currentSpriteArtBounds } from './combatSpriteGeometry.js';
-import { focusElement } from '../input.js';
+import { alternativeEnemyTargetGrid as enemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
 
 // Placement follows fitted figures without intercepting inspection controls.
 function watchTargetPlacement(host, picker) {
@@ -28,21 +26,14 @@ function watchTargetPlacement(host, picker) {
       ...host.querySelectorAll('.combatant-leading, .meters')]
       .filter(Boolean).map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height).map(localRect);
     const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
-    const hardObstacles = [playerRect,
-      ...[...combat.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card')].map(node=>node.getBoundingClientRect())]
-      .filter(rect=>rect?.width && rect?.height).map(localRect);
+    const hardObstacles = playerRect?.width && playerRect?.height ? [localRect(playerRect)] : [];
     const targets = [...picker.children].map(button => {
       const figure = [...host.querySelectorAll('.combatant.enemy')].find(node => node.dataset.eid === button.dataset.eid);
-      const sprite = figure?.querySelector('.sprite');
-      const rect = sprite ? currentSpriteArtBounds(sprite, schedule) : figure?.getBoundingClientRect();
-      return { id: button.dataset.eid, x: rect ? (rect.left + rect.right) / 2 - box.left : box.width / 2,
-        y: rect ? (rect.top + rect.bottom) / 2 - box.top : box.height / 2 };
+      const rect = (figure?.querySelector('.sprite') || figure)?.getBoundingClientRect();
+      return { id: button.dataset.eid, x: rect ? rect.left + rect.width / 2 - box.left : box.width / 2,
+        y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2 };
     });
-    const geometry = { width: box.width, height: box.height, targets, obstacles, hardObstacles };
-    const key = JSON.stringify(geometry, (_, value) => typeof value === 'number' ? Math.round(value * 4) / 4 : value);
-    if (picker.placementKey === key) return;
-    picker.placementKey = key;
-    const placements = enemyTargetGrid(geometry);
+    const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles });
     for (const placement of placements) {
       const button = [...picker.children].find(node => node.dataset.eid === placement.id);
       const local = anchorLocalBox(host, { left: box.left + placement.left, top: box.top + placement.top,
@@ -95,19 +86,16 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
         if (!button.disabled) picker.activate?.(button.dataset.eid);
       });
       for (const event of ['pointerenter', 'focus']) button.addEventListener(event, () => picker.preview?.(button.dataset.eid));
-      button.addEventListener('focus', () => focusElement(button));
       for (const event of ['pointerleave', 'blur']) button.addEventListener(event, () => picker.preview?.(null));
       picker.appendChild(button);
     }
     button.disabled = disabled;
-    button.dataset.number = String(index + 1);
     button.querySelector('.enemy-target-name').textContent = `${index + 1}. ${target.name}`;
     button.querySelector('.enemy-target-health').textContent = tFull('combat.enemyTarget.health', { hp: target.hp, maxHp: target.maxHp });
     button.setAttribute('aria-label', tFull('combat.enemyTarget.label', { number: index + 1, name: target.name, hp: target.hp, maxHp: target.maxHp }));
   });
   picker.activate = onActivate;
   picker.preview = onPreview;
-  picker.placementKey = null;
   if (picker.hidden) picker.placement?.dispose();
   else if (picker.placement) picker.placement.schedule();
   else watchTargetPlacement(host, picker);

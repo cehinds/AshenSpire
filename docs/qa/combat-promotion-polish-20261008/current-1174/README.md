@@ -1,0 +1,9 @@
+# Combined artifact 1174: retained failed validation
+
+- Artifact `0.7.1.1174` / source digest `6af9ee0f62`; source `97c35995`, architecture `794fc36c`, build-record commit `74af6dc5`.
+- The unchanged strict 24-pixel gate passes all four actors in ordinary 390 by 650 XL composition. Its deliberately overlapping composition fails a target; desktop is not completed. Raw JSON and actual failure screenshot are retained.
+- The complete Default native driver passes the desktop solo/two projected co-op owners and phone Shield scenario, including complete under-card controls. It then fails its native click on the next Spell card: card x=-104.95, width=127.96. Remaining phone/spell/co-op/compact/reduced cases are not completed. Raw results and actual phone chooser screenshot are retained.
+- Runtime errors and unexpected browser-health warnings are empty in this incomplete driver. This does not turn its failed native reachability gate green.
+- This artifact is not final delivery acceptance. Narrow target and hand corrections and fresh compiled verification are required. Prior successful artifacts remain separate historical evidence.
+- Independent diagnosis: the overlap setup directly overwrites player and enemy foot anchors after production fitting. Its immediate all-foot snapshot measures a forced stale collision, not a production candidate-selection defect. Ordinary production all-four-foot evidence remains green; the original screenreach predicate and a stable refitted overlap case need separate verification.
+- Actual native pan trace confirms a runtime bug: pointercancel is followed by scroll180 to168.89 or151.11, then the selection reveal resets180. The follow-up lets scroll reposition Info without revealing old focus. The new regression fails against the previous helper and passes against the fix. Root independent hand/target source checks pass92 with zero skips; mechanics checks pass122 with zero skips. Fresh compiled proof remains required.

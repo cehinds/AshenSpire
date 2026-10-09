@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
+const css = read('../styles/combat-layers.css');
+const battlefield = read('../src/ui/components/battlefieldStage.js');
+const hand = read('../src/ui/components/hand.js');
+const combat = read('../src/ui/screens/combat.js');
+const coop = read('../src/ui/screens/coop.js');
+
+test('formation controls retain 44px physical touch targets and active paging', () => {
+  assert.match(css, /\.combat-tools > button\s*\{[^}]*min-height:\s*calc\(44px \/ var\(--ui-zoom,1\)\);[^}]*height:\s*calc\(44px \/ var\(--ui-zoom,1\)\)/s);
+  assert.match(css, /--inspect-box:\s*calc\(44px \/ var\(--ui-zoom,1\)\)/);
+  assert.match(css, /\.combat-health-row\s*\{[^}]*min-height:\s*calc\(44px \/ var\(--ui-zoom,1\)\)/s);
+  assert.match(css, /\.hand-overlay > :is\(\.hand-prev,\.hand-next\)\s*\{\s*pointer-events:\s*auto;/);
+});
+
+test('expanded combat panels and selected details stay in the correct layer', () => {
+  assert.match(css, /\.combat-tools:has\(\.combat-log-panel:not\(\[hidden\]\)\)\s*\{[^}]*z-index:\s*calc\(var\(--combat-layer-hud\) \+ 1\)/s);
+  assert.match(css, /\.player:not\(\.context-selected\):not\(\.selected-target\)[^{]*\.statuses\s*\{\s*display:\s*none !important;/s);
+});
+
+test('compact geometry reserves the measured controls and overhead gaps', () => {
+  assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
+  assert.match(hand, /const toolsHeight = 34 \/ zoom;/);
+});
+
+test('unarmed intent taps preserve the selection-first tooltip path', () => {
+  assert.match(combat, /selectCombatant\(enemy\.id\);[\s\S]*?return false;/);
+  assert.match(coop, /selectCombatant\(e\.id\); render\(\);[\s\S]*?return false;/);
+});

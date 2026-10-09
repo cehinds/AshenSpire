@@ -1,0 +1,3566 @@
+{
+  "shape": {
+    "w": 1200,
+    "h": 730,
+    "mobile": false,
+    "overlap": false
+  },
+  "data": {
+    "identity": {
+      "ordinal": "1186",
+      "source": "27612de170"
+    },
+    "composition": {
+      "layout": "formation",
+      "turn": "player",
+      "combatGeometry": "supported",
+      "combatArrangement": "stacked",
+      "targetLayer": "idle",
+      "composition": "option-c",
+      "waistOverlap": "true",
+      "handPagerOwner": "active"
+    },
+    "zoom": 1,
+    "field": {
+      "tag": "DIV",
+      "class": "field",
+      "rect": {
+        "x": 0,
+        "y": 85.09375,
+        "width": 1200,
+        "height": 303.1875,
+        "top": 85.09375,
+        "right": 1200,
+        "bottom": 388.28125,
+        "left": 0
+      },
+      "pointer": "auto",
+      "z": "auto"
+    },
+    "frames": [
+      {
+        "frame": {
+          "tag": "ARTICLE",
+          "class": "combatant player player-target-hitbox",
+          "eid": "player",
+          "rect": {
+            "x": 306,
+            "y": 85.09375,
+            "width": 156,
+            "height": 303.1875,
+            "top": 85.09375,
+            "right": 462,
+            "bottom": 388.28125,
+            "left": 306
+          },
+          "pointer": "none",
+          "z": "auto"
+        },
+        "dataset": {
+          "eid": "player",
+          "uiComponent": "combatant-frame",
+          "uiVariant": "player",
+          "uiBackgroundComponent": "component-background",
+          "uiRoleComponent": "player-combatant-frame",
+          "focusable": "",
+          "formationRow": "back-row",
+          "formationDepth": "1",
+          "formationCell": "B1",
+          "baseSpriteScale": "0.7933026315789473",
+          "presentationScale": "0.9794612962870421",
+          "formationX": "276",
+          "groundY": "439.38725",
+          "groundRatio": "1.168562358276644",
+          "overheadClamped": "false",
+          "combatantScale": "1",
+          "spriteRatio": "1",
+          "spriteVisibleHeight": "242.55",
+          "spriteArtTop": "288.6428653492647",
+          "playerHudGap": "10.002240349264696",
+          "intentVisibility": "known",
+          "targetObstructed": "false"
+        },
+        "sprite": {
+          "tag": "DIV",
+          "class": "sprite",
+          "eid": "player",
+          "rect": {
+            "x": 312.96875,
+            "y": 288.640625,
+            "width": 142.0625,
+            "height": 150.71875,
+            "top": 288.640625,
+            "right": 455.03125,
+            "bottom": 439.359375,
+            "left": 312.96875
+          },
+          "pointer": "auto",
+          "z": "301"
+        },
+        "intent": null,
+        "art": {
+          "tag": "DIV",
+          "class": "pose-stage painted-stage alternative-card-stage",
+          "eid": "player",
+          "rect": {
+            "x": 312.96875,
+            "y": 288.640625,
+            "width": 142.0625,
+            "height": 150.71875,
+            "top": 288.640625,
+            "right": 455.03125,
+            "bottom": 439.359375,
+            "left": 312.96875
+          },
+          "pointer": "auto",
+          "z": "1"
+        },
+        "pseudo": {
+          "left": "78px",
+          "top": "281.188px",
+          "width": "44px",
+          "height": "44px",
+          "pointer": "auto",
+          "z": "500"
+        },
+        "target": {
+          "x": 384,
+          "y": 366.28175,
+          "w": 44,
+          "h": 44
+        },
+        "centreStack": [
+          {
+            "tag": "DIV",
+            "class": "field",
+            "rect": {
+              "x": 0,
+              "y": 85.09375,
+              "width": 1200,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 1200,
+              "bottom": 388.28125,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "combat",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "BODY",
+            "class": "hi-contrast map-compact",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "HTML",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "targetStack": [
+          {
+            "tag": "ARTICLE",
+            "class": "combatant player player-target-hitbox",
+            "eid": "player",
+            "rect": {
+              "x": 306,
+              "y": 85.09375,
+              "width": 156,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 462,
+              "bottom": 388.28125,
+              "left": 306
+            },
+            "pointer": "none",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "pose-stage painted-stage alternative-card-stage",
+            "eid": "player",
+            "rect": {
+              "x": 312.96875,
+              "y": 288.640625,
+              "width": 142.0625,
+              "height": 150.71875,
+              "top": 288.640625,
+              "right": 455.03125,
+              "bottom": 439.359375,
+              "left": 312.96875
+            },
+            "pointer": "auto",
+            "z": "1"
+          },
+          {
+            "tag": "DIV",
+            "class": "sprite",
+            "eid": "player",
+            "rect": {
+              "x": 312.96875,
+              "y": 288.640625,
+              "width": 142.0625,
+              "height": 150.71875,
+              "top": 288.640625,
+              "right": 455.03125,
+              "bottom": 439.359375,
+              "left": 312.96875
+            },
+            "pointer": "auto",
+            "z": "301"
+          },
+          {
+            "tag": "DIV",
+            "class": "field",
+            "rect": {
+              "x": 0,
+              "y": 85.09375,
+              "width": 1200,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 1200,
+              "bottom": 388.28125,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "combat",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "BODY",
+            "class": "hi-contrast map-compact",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "HTML",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "patches": [
+          {
+            "x": 374,
+            "y": 356.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 382,
+            "y": 356.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 390,
+            "y": 356.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 374,
+            "y": 364.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 382,
+            "y": 364.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 390,
+            "y": 364.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 374,
+            "y": 372.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 382,
+            "y": 372.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 390,
+            "y": 372.28175,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant player player-target-hitbox",
+              "eid": "player",
+              "rect": {
+                "x": 306,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 462,
+                "bottom": 388.28125,
+                "left": 306
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "frame": {
+          "tag": "ARTICLE",
+          "class": "combatant enemy enemy-target-hitbox",
+          "eid": "e1",
+          "rect": {
+            "x": 734.625,
+            "y": 85.09375,
+            "width": 156,
+            "height": 303.1875,
+            "top": 85.09375,
+            "right": 890.625,
+            "bottom": 388.28125,
+            "left": 734.625
+          },
+          "pointer": "none",
+          "z": "auto"
+        },
+        "dataset": {
+          "eid": "e1",
+          "uiComponent": "combatant-frame",
+          "uiVariant": "enemy",
+          "uiBackgroundComponent": "component-background",
+          "uiRoleComponent": "enemy-combatant-frame",
+          "stature": "normal",
+          "focusable": "",
+          "formationRow": "back-row",
+          "formationDepth": "1",
+          "formationCell": "B4",
+          "baseSpriteScale": "0.4148881578947368",
+          "presentationScale": "0.56888671875",
+          "formationX": "720",
+          "groundY": "265.500625",
+          "groundRatio": "0.5950340136054422",
+          "overheadClamped": "false",
+          "combatantScale": "1",
+          "spriteRatio": "1",
+          "spriteVisibleHeight": "78.82875",
+          "intentVisibility": "partial",
+          "targetObstructed": "false"
+        },
+        "sprite": {
+          "tag": "DIV",
+          "class": "sprite",
+          "eid": "e1",
+          "rect": {
+            "x": 737.53125,
+            "y": 186.671875,
+            "width": 150.171875,
+            "height": 78.828125,
+            "top": 186.671875,
+            "right": 887.703125,
+            "bottom": 265.5,
+            "left": 737.53125
+          },
+          "pointer": "auto",
+          "z": "201"
+        },
+        "intent": {
+          "tag": "BUTTON",
+          "class": "intent overhead-control dashed",
+          "eid": "e1",
+          "rect": {
+            "x": 662.625,
+            "y": 118.28125,
+            "width": 96,
+            "height": 54.390625,
+            "top": 118.28125,
+            "right": 758.625,
+            "bottom": 172.671875,
+            "left": 662.625
+          },
+          "pointer": "auto",
+          "z": "auto"
+        },
+        "art": {
+          "tag": "IMG",
+          "class": "",
+          "eid": "e1",
+          "rect": {
+            "x": 725.84375,
+            "y": 165.7467498779297,
+            "width": 166.3125,
+            "height": 110.87501525878906,
+            "top": 165.7467498779297,
+            "right": 892.15625,
+            "bottom": 276.62176513671875,
+            "left": 725.84375
+          },
+          "pointer": "auto",
+          "z": "auto"
+        },
+        "pseudo": {
+          "left": "77.9922px",
+          "top": "230.68px",
+          "width": "96px",
+          "height": "44px",
+          "pointer": "auto",
+          "z": "500"
+        },
+        "target": {
+          "x": 812.6172,
+          "y": 315.77375,
+          "w": 96,
+          "h": 44
+        },
+        "centreStack": [
+          {
+            "tag": "IMG",
+            "class": "",
+            "eid": "e3",
+            "rect": {
+              "x": 746.78125,
+              "y": 157.52076721191406,
+              "width": 130.765625,
+              "height": 87.17185974121094,
+              "top": 157.52076721191406,
+              "right": 877.546875,
+              "bottom": 244.692626953125,
+              "left": 746.78125
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-crop",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.13014221191406,
+              "width": 78.75,
+              "height": 83.09373474121094,
+              "top": 159.13014221191406,
+              "right": 852,
+              "bottom": 242.223876953125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "painted-stage alternative-silhouette",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.13014221191406,
+              "width": 78.75,
+              "height": 83.09373474121094,
+              "top": 159.13014221191406,
+              "right": 852,
+              "bottom": 242.223876953125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-figure",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.484375,
+              "width": 78.75,
+              "height": 83.09375,
+              "top": 159.484375,
+              "right": 852,
+              "bottom": 242.578125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "1"
+          },
+          {
+            "tag": "DIV",
+            "class": "sprite",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.484375,
+              "width": 78.75,
+              "height": 83.09375,
+              "top": 159.484375,
+              "right": 852,
+              "bottom": 242.578125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "201"
+          },
+          {
+            "tag": "IMG",
+            "class": "",
+            "eid": "e1",
+            "rect": {
+              "x": 725.84375,
+              "y": 165.7467498779297,
+              "width": 166.3125,
+              "height": 110.87501525878906,
+              "top": 165.7467498779297,
+              "right": 892.15625,
+              "bottom": 276.62176513671875,
+              "left": 725.84375
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-crop",
+            "eid": "e1",
+            "rect": {
+              "x": 737.53125,
+              "y": 185.0123748779297,
+              "width": 150.171875,
+              "height": 78.82814025878906,
+              "top": 185.0123748779297,
+              "right": 887.703125,
+              "bottom": 263.84051513671875,
+              "left": 737.53125
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "painted-stage alternative-silhouette",
+            "eid": "e1",
+            "rect": {
+              "x": 737.53125,
+              "y": 185.0123748779297,
+              "width": 150.171875,
+              "height": 78.82814025878906,
+              "top": 185.0123748779297,
+              "right": 887.703125,
+              "bottom": 263.84051513671875,
+              "left": 737.53125
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "targetStack": [
+          {
+            "tag": "ARTICLE",
+            "class": "combatant enemy enemy-target-hitbox",
+            "eid": "e1",
+            "rect": {
+              "x": 734.625,
+              "y": 85.09375,
+              "width": 156,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 890.625,
+              "bottom": 388.28125,
+              "left": 734.625
+            },
+            "pointer": "none",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "field",
+            "rect": {
+              "x": 0,
+              "y": 85.09375,
+              "width": 1200,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 1200,
+              "bottom": 388.28125,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "combat",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "BODY",
+            "class": "hi-contrast map-compact",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "HTML",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "patches": [
+          {
+            "x": 776.6172,
+            "y": 305.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e1",
+              "rect": {
+                "x": 756.625,
+                "y": 296.578125,
+                "width": 112,
+                "height": 14,
+                "top": 296.578125,
+                "right": 868.625,
+                "bottom": 310.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 784.6172,
+            "y": 305.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e1",
+              "rect": {
+                "x": 756.625,
+                "y": 296.578125,
+                "width": 112,
+                "height": 14,
+                "top": 296.578125,
+                "right": 868.625,
+                "bottom": 310.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 792.6172,
+            "y": 305.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 800.6172,
+            "y": 305.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 808.6172,
+            "y": 305.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 816.6172,
+            "y": 305.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 824.6172,
+            "y": 305.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 832.6172,
+            "y": 305.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 840.6172,
+            "y": 305.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e1",
+              "rect": {
+                "x": 756.625,
+                "y": 296.578125,
+                "width": 112,
+                "height": 14,
+                "top": 296.578125,
+                "right": 868.625,
+                "bottom": 310.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 848.6172,
+            "y": 305.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e1",
+              "rect": {
+                "x": 756.625,
+                "y": 296.578125,
+                "width": 112,
+                "height": 14,
+                "top": 296.578125,
+                "right": 868.625,
+                "bottom": 310.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 776.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 784.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 792.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 800.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 808.6172,
+            "y": 313.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 816.6172,
+            "y": 313.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 824.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 832.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 840.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 848.6172,
+            "y": 313.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 776.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 784.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 792.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 800.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 808.6172,
+            "y": 321.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 816.6172,
+            "y": 321.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 824.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 832.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 840.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 848.6172,
+            "y": 321.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e1",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "frame": {
+          "tag": "ARTICLE",
+          "class": "combatant enemy enemy-target-hitbox",
+          "eid": "e2",
+          "rect": {
+            "x": 933.359375,
+            "y": 85.09375,
+            "width": 156,
+            "height": 303.1875,
+            "top": 85.09375,
+            "right": 1089.359375,
+            "bottom": 388.28125,
+            "left": 933.359375
+          },
+          "pointer": "none",
+          "z": "auto"
+        },
+        "dataset": {
+          "eid": "e2",
+          "uiComponent": "combatant-frame",
+          "uiVariant": "enemy",
+          "uiBackgroundComponent": "component-background",
+          "uiRoleComponent": "enemy-combatant-frame",
+          "stature": "normal",
+          "focusable": "",
+          "formationRow": "front-row",
+          "formationDepth": "1",
+          "formationCell": "B3",
+          "baseSpriteScale": "0.4148881578947368",
+          "presentationScale": "0.56888671875",
+          "formationX": "996",
+          "groundY": "238.313125",
+          "groundRatio": "0.5053617810760669",
+          "overheadClamped": "false",
+          "combatantScale": "1",
+          "spriteRatio": "1",
+          "spriteVisibleHeight": "78.82875",
+          "intentVisibility": "known",
+          "targetObstructed": "false"
+        },
+        "sprite": {
+          "tag": "DIV",
+          "class": "sprite",
+          "eid": "e2",
+          "rect": {
+            "x": 936.265625,
+            "y": 159.484375,
+            "width": 150.171875,
+            "height": 78.828125,
+            "top": 159.484375,
+            "right": 1086.4375,
+            "bottom": 238.3125,
+            "left": 936.265625
+          },
+          "pointer": "auto",
+          "z": "200"
+        },
+        "intent": {
+          "tag": "BUTTON",
+          "class": "intent overhead-control",
+          "eid": "e2",
+          "rect": {
+            "x": 963.359375,
+            "y": 91.09375,
+            "width": 96,
+            "height": 54.390625,
+            "top": 91.09375,
+            "right": 1059.359375,
+            "bottom": 145.484375,
+            "left": 963.359375
+          },
+          "pointer": "auto",
+          "z": "auto"
+        },
+        "art": {
+          "tag": "IMG",
+          "class": "",
+          "eid": "e2",
+          "rect": {
+            "x": 924.578125,
+            "y": 139.8999481201172,
+            "width": 166.3125,
+            "height": 110.875,
+            "top": 139.8999481201172,
+            "right": 1090.890625,
+            "bottom": 250.7749481201172,
+            "left": 924.578125
+          },
+          "pointer": "auto",
+          "z": "auto"
+        },
+        "pseudo": {
+          "left": "77.9922px",
+          "top": "180.414px",
+          "width": "96px",
+          "height": "44px",
+          "pointer": "auto",
+          "z": "500"
+        },
+        "target": {
+          "x": 1011.351575,
+          "y": 265.50775,
+          "w": 96,
+          "h": 44
+        },
+        "centreStack": [
+          {
+            "tag": "IMG",
+            "class": "",
+            "eid": "e2",
+            "rect": {
+              "x": 924.578125,
+              "y": 139.8999481201172,
+              "width": 166.3125,
+              "height": 110.875,
+              "top": 139.8999481201172,
+              "right": 1090.890625,
+              "bottom": 250.7749481201172,
+              "left": 924.578125
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-crop",
+            "eid": "e2",
+            "rect": {
+              "x": 936.265625,
+              "y": 159.1655731201172,
+              "width": 150.171875,
+              "height": 78.828125,
+              "top": 159.1655731201172,
+              "right": 1086.4375,
+              "bottom": 237.9936981201172,
+              "left": 936.265625
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "painted-stage alternative-silhouette",
+            "eid": "e2",
+            "rect": {
+              "x": 936.265625,
+              "y": 159.1655731201172,
+              "width": 150.171875,
+              "height": 78.828125,
+              "top": 159.1655731201172,
+              "right": 1086.4375,
+              "bottom": 237.9936981201172,
+              "left": 936.265625
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-figure",
+            "eid": "e2",
+            "rect": {
+              "x": 936.265625,
+              "y": 159.484375,
+              "width": 150.171875,
+              "height": 78.828125,
+              "top": 159.484375,
+              "right": 1086.4375,
+              "bottom": 238.3125,
+              "left": 936.265625
+            },
+            "pointer": "auto",
+            "z": "1"
+          },
+          {
+            "tag": "DIV",
+            "class": "sprite",
+            "eid": "e2",
+            "rect": {
+              "x": 936.265625,
+              "y": 159.484375,
+              "width": 150.171875,
+              "height": 78.828125,
+              "top": 159.484375,
+              "right": 1086.4375,
+              "bottom": 238.3125,
+              "left": 936.265625
+            },
+            "pointer": "auto",
+            "z": "200"
+          },
+          {
+            "tag": "DIV",
+            "class": "field",
+            "rect": {
+              "x": 0,
+              "y": 85.09375,
+              "width": 1200,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 1200,
+              "bottom": 388.28125,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "combat",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "targetStack": [
+          {
+            "tag": "ARTICLE",
+            "class": "combatant enemy enemy-target-hitbox",
+            "eid": "e2",
+            "rect": {
+              "x": 933.359375,
+              "y": 85.09375,
+              "width": 156,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 1089.359375,
+              "bottom": 388.28125,
+              "left": 933.359375
+            },
+            "pointer": "none",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "field",
+            "rect": {
+              "x": 0,
+              "y": 85.09375,
+              "width": 1200,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 1200,
+              "bottom": 388.28125,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "combat",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "BODY",
+            "class": "hi-contrast map-compact",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "HTML",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "patches": [
+          {
+            "x": 975.351575,
+            "y": 255.50775,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e2",
+              "rect": {
+                "x": 955.359375,
+                "y": 246.3125,
+                "width": 112,
+                "height": 14,
+                "top": 246.3125,
+                "right": 1067.359375,
+                "bottom": 260.3125,
+                "left": 955.359375
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 983.351575,
+            "y": 255.50775,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e2",
+              "rect": {
+                "x": 955.359375,
+                "y": 246.3125,
+                "width": 112,
+                "height": 14,
+                "top": 246.3125,
+                "right": 1067.359375,
+                "bottom": 260.3125,
+                "left": 955.359375
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 991.351575,
+            "y": 255.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 999.351575,
+            "y": 255.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1007.351575,
+            "y": 255.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1015.351575,
+            "y": 255.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1023.351575,
+            "y": 255.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1031.3515750000001,
+            "y": 255.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1039.3515750000001,
+            "y": 255.50775,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e2",
+              "rect": {
+                "x": 955.359375,
+                "y": 246.3125,
+                "width": 112,
+                "height": 14,
+                "top": 246.3125,
+                "right": 1067.359375,
+                "bottom": 260.3125,
+                "left": 955.359375
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1047.3515750000001,
+            "y": 255.50775,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e2",
+              "rect": {
+                "x": 955.359375,
+                "y": 246.3125,
+                "width": 112,
+                "height": 14,
+                "top": 246.3125,
+                "right": 1067.359375,
+                "bottom": 260.3125,
+                "left": 955.359375
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 975.351575,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 983.351575,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 991.351575,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 999.351575,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1007.351575,
+            "y": 263.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1015.351575,
+            "y": 263.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1023.351575,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1031.3515750000001,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1039.3515750000001,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1047.3515750000001,
+            "y": 263.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 975.351575,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 983.351575,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 991.351575,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 999.351575,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1007.351575,
+            "y": 271.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1015.351575,
+            "y": 271.50775,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1023.351575,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1031.3515750000001,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1039.3515750000001,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 1047.3515750000001,
+            "y": 271.50775,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e2",
+              "rect": {
+                "x": 933.359375,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 1089.359375,
+                "bottom": 388.28125,
+                "left": 933.359375
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "frame": {
+          "tag": "ARTICLE",
+          "class": "combatant enemy enemy-target-hitbox",
+          "eid": "e3",
+          "rect": {
+            "x": 734.625,
+            "y": 85.09375,
+            "width": 156,
+            "height": 303.1875,
+            "top": 85.09375,
+            "right": 890.625,
+            "bottom": 388.28125,
+            "left": 734.625
+          },
+          "pointer": "none",
+          "z": "auto"
+        },
+        "dataset": {
+          "eid": "e3",
+          "uiComponent": "combatant-frame",
+          "uiVariant": "enemy",
+          "uiBackgroundComponent": "component-background",
+          "uiRoleComponent": "enemy-combatant-frame",
+          "stature": "normal",
+          "focusable": "",
+          "formationRow": "back-row",
+          "formationDepth": "0",
+          "formationCell": "A4",
+          "baseSpriteScale": "0.4373712999755859",
+          "presentationScale": "0.56888671875",
+          "formationX": "720",
+          "groundY": "242.5849219953613",
+          "groundRatio": "0.5194514021698167",
+          "overheadClamped": "false",
+          "combatantScale": "1",
+          "spriteRatio": "1",
+          "spriteVisibleHeight": "83.10054699536131",
+          "intentVisibility": "partial",
+          "targetObstructed": "false"
+        },
+        "sprite": {
+          "tag": "DIV",
+          "class": "sprite",
+          "eid": "e3",
+          "rect": {
+            "x": 773.25,
+            "y": 159.484375,
+            "width": 78.75,
+            "height": 83.09375,
+            "top": 159.484375,
+            "right": 852,
+            "bottom": 242.578125,
+            "left": 773.25
+          },
+          "pointer": "auto",
+          "z": "201"
+        },
+        "intent": {
+          "tag": "BUTTON",
+          "class": "intent overhead-control dashed",
+          "eid": "e3",
+          "rect": {
+            "x": 764.625,
+            "y": 126.28125,
+            "width": 96,
+            "height": 54.390625,
+            "top": 126.28125,
+            "right": 860.625,
+            "bottom": 180.671875,
+            "left": 764.625
+          },
+          "pointer": "auto",
+          "z": "auto"
+        },
+        "art": {
+          "tag": "IMG",
+          "class": "",
+          "eid": "e3",
+          "rect": {
+            "x": 746.78125,
+            "y": 157.52076721191406,
+            "width": 130.765625,
+            "height": 87.17185974121094,
+            "top": 157.52076721191406,
+            "right": 877.546875,
+            "bottom": 244.692626953125,
+            "left": 746.78125
+          },
+          "pointer": "auto",
+          "z": "auto"
+        },
+        "pseudo": {
+          "left": "78px",
+          "top": "184.68px",
+          "width": "96px",
+          "height": "44px",
+          "pointer": "auto",
+          "z": "500"
+        },
+        "target": {
+          "x": 812.625,
+          "y": 269.77375,
+          "w": 96,
+          "h": 44
+        },
+        "centreStack": [
+          {
+            "tag": "IMG",
+            "class": "",
+            "eid": "e3",
+            "rect": {
+              "x": 746.78125,
+              "y": 157.52076721191406,
+              "width": 130.765625,
+              "height": 87.17185974121094,
+              "top": 157.52076721191406,
+              "right": 877.546875,
+              "bottom": 244.692626953125,
+              "left": 746.78125
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-crop",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.13014221191406,
+              "width": 78.75,
+              "height": 83.09373474121094,
+              "top": 159.13014221191406,
+              "right": 852,
+              "bottom": 242.223876953125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "painted-stage alternative-silhouette",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.13014221191406,
+              "width": 78.75,
+              "height": 83.09373474121094,
+              "top": 159.13014221191406,
+              "right": 852,
+              "bottom": 242.223876953125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-figure",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.484375,
+              "width": 78.75,
+              "height": 83.09375,
+              "top": 159.484375,
+              "right": 852,
+              "bottom": 242.578125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "1"
+          },
+          {
+            "tag": "DIV",
+            "class": "sprite",
+            "eid": "e3",
+            "rect": {
+              "x": 773.25,
+              "y": 159.484375,
+              "width": 78.75,
+              "height": 83.09375,
+              "top": 159.484375,
+              "right": 852,
+              "bottom": 242.578125,
+              "left": 773.25
+            },
+            "pointer": "auto",
+            "z": "201"
+          },
+          {
+            "tag": "IMG",
+            "class": "",
+            "eid": "e1",
+            "rect": {
+              "x": 725.84375,
+              "y": 165.7467498779297,
+              "width": 166.3125,
+              "height": 110.87501525878906,
+              "top": 165.7467498779297,
+              "right": 892.15625,
+              "bottom": 276.62176513671875,
+              "left": 725.84375
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "alternative-crop",
+            "eid": "e1",
+            "rect": {
+              "x": 737.53125,
+              "y": 185.0123748779297,
+              "width": 150.171875,
+              "height": 78.82814025878906,
+              "top": 185.0123748779297,
+              "right": 887.703125,
+              "bottom": 263.84051513671875,
+              "left": 737.53125
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "painted-stage alternative-silhouette",
+            "eid": "e1",
+            "rect": {
+              "x": 737.53125,
+              "y": 185.0123748779297,
+              "width": 150.171875,
+              "height": 78.82814025878906,
+              "top": 185.0123748779297,
+              "right": 887.703125,
+              "bottom": 263.84051513671875,
+              "left": 737.53125
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "targetStack": [
+          {
+            "tag": "ARTICLE",
+            "class": "combatant enemy enemy-target-hitbox",
+            "eid": "e3",
+            "rect": {
+              "x": 734.625,
+              "y": 85.09375,
+              "width": 156,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 890.625,
+              "bottom": 388.28125,
+              "left": 734.625
+            },
+            "pointer": "none",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "field",
+            "rect": {
+              "x": 0,
+              "y": 85.09375,
+              "width": 1200,
+              "height": 303.1875,
+              "top": 85.09375,
+              "right": 1200,
+              "bottom": 388.28125,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "DIV",
+            "class": "combat",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "BODY",
+            "class": "hi-contrast map-compact",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          },
+          {
+            "tag": "HTML",
+            "class": "",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 1200,
+              "height": 730,
+              "top": 0,
+              "right": 1200,
+              "bottom": 730,
+              "left": 0
+            },
+            "pointer": "auto",
+            "z": "auto"
+          }
+        ],
+        "patches": [
+          {
+            "x": 776.625,
+            "y": 259.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e3",
+              "rect": {
+                "x": 756.625,
+                "y": 250.578125,
+                "width": 112,
+                "height": 14,
+                "top": 250.578125,
+                "right": 868.625,
+                "bottom": 264.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 784.625,
+            "y": 259.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e3",
+              "rect": {
+                "x": 756.625,
+                "y": 250.578125,
+                "width": 112,
+                "height": 14,
+                "top": 250.578125,
+                "right": 868.625,
+                "bottom": 264.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 792.625,
+            "y": 259.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 800.625,
+            "y": 259.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 808.625,
+            "y": 259.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 816.625,
+            "y": 259.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 824.625,
+            "y": 259.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 832.625,
+            "y": 259.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 840.625,
+            "y": 259.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e3",
+              "rect": {
+                "x": 756.625,
+                "y": 250.578125,
+                "width": 112,
+                "height": 14,
+                "top": 250.578125,
+                "right": 868.625,
+                "bottom": 264.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 848.625,
+            "y": 259.77375,
+            "ok": false,
+            "top": {
+              "tag": "I",
+              "class": "m-fill fill",
+              "eid": "e3",
+              "rect": {
+                "x": 756.625,
+                "y": 250.578125,
+                "width": 112,
+                "height": 14,
+                "top": 250.578125,
+                "right": 868.625,
+                "bottom": 264.578125,
+                "left": 756.625
+              },
+              "pointer": "auto",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 776.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 784.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 792.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 800.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 808.625,
+            "y": 267.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 816.625,
+            "y": 267.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 824.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 832.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 840.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 848.625,
+            "y": 267.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 776.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 784.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 792.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 800.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 808.625,
+            "y": 275.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 816.625,
+            "y": 275.77375,
+            "ok": true,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 824.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 832.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 840.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          },
+          {
+            "x": 848.625,
+            "y": 275.77375,
+            "ok": false,
+            "top": {
+              "tag": "ARTICLE",
+              "class": "combatant enemy enemy-target-hitbox",
+              "eid": "e3",
+              "rect": {
+                "x": 734.625,
+                "y": 85.09375,
+                "width": 156,
+                "height": 303.1875,
+                "top": 85.09375,
+                "right": 890.625,
+                "bottom": 388.28125,
+                "left": 734.625
+              },
+              "pointer": "none",
+              "z": "auto"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "health": []
+}

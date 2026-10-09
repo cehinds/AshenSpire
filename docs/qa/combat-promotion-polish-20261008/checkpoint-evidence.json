@@ -1,0 +1,112 @@
+{
+  "sourceHead": "2934beab9d2e517f9d9ff031299bc3cc9c40a62c",
+  "boundary": "Reviewed source and preliminary measured build; not final browser acceptance or current-head CI.",
+  "files": [
+    {
+      "file": "focused-card-field.log",
+      "sha256": "766ffd11529d82b8dc1eb44040397c5b0e9608e23508f2f4c14479e2833421eb"
+    },
+    {
+      "file": "static-formula-regressions.log",
+      "sha256": "252bff995eee2066caa30b64a099fbeee2bfcc50ed5b2283da40292f9904845d"
+    },
+    {
+      "file": "core-local-timeout.log",
+      "sha256": "4ea82ccc9a57883244f3b5202613876e1571dfea69e0ffb01f873e68b210eb18"
+    },
+    {
+      "file": "prelude-1151-build.log",
+      "sha256": "d68433765a357734c347bcfd82bb54a9101826c194fbf4d0ba4fce5f96572bff"
+    },
+    {
+      "file": "prelude-1151-identity.log",
+      "sha256": "abb31e3a5ef4ed1c8f93457c137497ef091ea9d40a82ce500f74d62255a36643"
+    },
+    {
+      "file": "prelude-1151-shipping.log",
+      "sha256": "7e0f6953fdac4c6d67aec07962adb6a305cd320b1b375323231fb4a88ac0129c"
+    },
+    {
+      "file": "former-86-projection.json",
+      "sha256": "013a299d71b98d7f4bc95c5f1ff6e18aa53e720a327de34afe85fa0d1d7cd257"
+    },
+    {
+      "file": "alternative-source-review.json",
+      "sha256": "15190e0fb58d2eb5911049978523abc0d57aaad31e1a516a03d338d2701c4730"
+    },
+    {
+      "file": "regular-health-driver-review.json",
+      "sha256": "a7eb3a994c2566b73a505267b23f70cbf0397d83139ee4b53bb3e75536a7c5c6"
+    },
+    {
+      "file": "drivers/built-counter-visual-qa.mjs",
+      "originalSha256": "5e015d5cc2b655020728cd473b32275af4ecf61ae2c1b20548fbd967fc3529ff",
+      "sha256": "e0b58d70caa2177ea3a999215262235e50f9e3e29fae9bf3d217f5654a17e9c1",
+      "delta": "Only the root worktree gains COMBAT_QA_ROOT override; assertions and waits unchanged."
+    },
+    {
+      "file": "drivers/artifact-health-classification.mjs",
+      "originalSha256": "647c010d17b36d2784b7c2eb32cbad2e2924c009761c65658221ae610aea99e8",
+      "sha256": "647c010d17b36d2784b7c2eb32cbad2e2924c009761c65658221ae610aea99e8",
+      "delta": "exact copy"
+    },
+    {
+      "file": "drivers/hit-target-qa.mjs",
+      "originalSha256": "0754be25fba1caa6412d8b12dc95091861e038f39d492bb5d083201a8153bfd1",
+      "sha256": "216fba159602d36cb04c8b3d7ccf5f8e64a7bca9fc4fad152bfcdfe60dfc58ac",
+      "delta": "Only the root worktree gains COMBAT_QA_ROOT override; assertions and waits unchanged."
+    },
+    {
+      "file": "drivers/reduced-motion-qa.mjs",
+      "originalSha256": "ec15df5a58ed602ff4d30fa2baf5f786d2658e351e243038bb3fc53ed2c96a3d",
+      "sha256": "d752a1547c5c863801e330cb53fb69ee7bf2821071fe561cdcc9f55333027927",
+      "delta": "Only the root worktree gains COMBAT_QA_ROOT override; assertions and waits unchanged."
+    },
+    {
+      "file": "drivers/prepare-counter-visual-wire.mjs",
+      "sha256": "9f6823e2beabb29ea1f034ee073a3d43b7587164e4c016c6afd9b778e4377913",
+      "delta": "Original driver; only root worktree override when absent. Existing required environment and assertions preserved."
+    },
+    {
+      "file": "drivers/corrupted-trim-final-artifact-qa.mjs",
+      "sha256": "c97a83ca4ed1cac7480bcaafa8064d7d98f1cb0b0a45c428caf91284d7b71581",
+      "delta": "Original driver; only root worktree override when absent. Existing required environment and assertions preserved."
+    },
+    {
+      "file": "runsim-retry/README.md",
+      "sha256": "08f24d2f859efa10d6cf9896880cd56104f640d4372f1f1733cb701dabe6fe30"
+    },
+    {
+      "file": "runsim-retry/receipt.json",
+      "sha256": "c1bfbbc79989e21d225152c8da47e137ab3e621a30733b33e06233dd189dd834"
+    },
+    {
+      "file": "runsim-retry/stdout.log",
+      "sha256": "5d69943b95d6dffda0db0867e944ae9fd86d475d3d3e00734578f67db111b772"
+    },
+    {
+      "file": "runsim-retry/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "runsim-retry/before.json",
+      "sha256": "e98aa4493b3b719509717f7c7b0f633ea5d404ab0a8e9f9512f54587d07b7447"
+    },
+    {
+      "file": "runsim-retry/after.json",
+      "sha256": "9fb21e5e2224901b3a1ab8650419ecc55e3a7abda16f6d00e692cf29bb7bce8e"
+    },
+    {
+      "file": "runsim-retry/during-load.json",
+      "sha256": "7555c4e09fb4d0530d9025a7f05845145d95f82306731d7ed3edef6237ee239f"
+    },
+    {
+      "file": "runsim-retry/quiet-runner.mjs",
+      "sha256": "b5e7246f05cfc60316cb7bf0a18fe4c9a44f6ff07dbc7cfca1f37635c51ba4f0"
+    },
+    {
+      "file": "focused-combined-41.log",
+      "sha256": "949471c66b04b017043184c081b3c831a129ebe48091a8317b781a37d9d435d8"
+    }
+  ]
+}

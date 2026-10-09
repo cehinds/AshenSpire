@@ -1,0 +1,1240 @@
+{
+  "boundary": "Read-only source projection of the exact86 legacy faces flagged by the first native run; no browser, fitting, glyph, or native acceptance claim.",
+  "hashes": {
+    "src/model/formulas.js": "538ed67488bdcdb0a8a71773ca92c96c702331bb697a75835ba4e21994e01c17",
+    "src/model/playingCard.js": "c20406c2995d3d27702cc08b9cf5f77d9bc76a6110bce1f7f12436f2bbaf66d6",
+    "src/ui/components/card.js": "5cd9a700feabb8de58f17ac8439874439087cb380e83a1d1adb408d10d309e20"
+  },
+  "count": 86,
+  "unresolved": [],
+  "rows": [
+    {
+      "ref": {
+        "cardId": "cometFragment",
+        "abilityRank": 2
+      },
+      "originalNativeText": "4 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 4 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "cometFragment",
+        "abilityRank": 3
+      },
+      "originalNativeText": "7 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "cometFragment",
+        "abilityRank": 4
+      },
+      "originalNativeText": "10 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 10 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 10,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "cometFragment",
+        "abilityRank": 5
+      },
+      "originalNativeText": "14 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 14 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 14,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starbladePhalanx",
+        "abilityRank": 2
+      },
+      "originalNativeText": "4 damage to target. If you have starstoneCharge: 4 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 4 damage to the selected enemy. If you have starstoneCharge: Deal 4 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 4,
+        "damage.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starbladePhalanx",
+        "abilityRank": 3
+      },
+      "originalNativeText": "7 damage to target. If you have starstoneCharge: 4 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to the selected enemy. If you have starstoneCharge: Deal 4 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "damage.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starbladePhalanx",
+        "abilityRank": 4
+      },
+      "originalNativeText": "10 damage to target. If you have starstoneCharge: 4 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 10 damage to the selected enemy. If you have starstoneCharge: Deal 4 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 10,
+        "damage.2": 4,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starbladePhalanx",
+        "abilityRank": 5
+      },
+      "originalNativeText": "14 damage to target. If you have starstoneCharge: 4 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 14 damage to the selected enemy. If you have starstoneCharge: Deal 4 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 14,
+        "damage.2": 4,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "crystalBarrier",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Gain 5 Block. If you have starstoneCharge: Gain 4 Block. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Gain 5 Block. If you have starstoneCharge: Gain 4 Block. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "block": 5,
+        "block.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "crystalBarrier",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Gain 8 Block. If you have starstoneCharge: Gain 4 Block. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Gain 8 Block. If you have starstoneCharge: Gain 4 Block. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "block": 8,
+        "block.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "crystalBarrier",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Gain 11 Block. If you have starstoneCharge: Gain 4 Block. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Gain 11 Block. If you have starstoneCharge: Gain 4 Block. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "block": 11,
+        "block.2": 4,
+        "starstoneCharge": 1,
+        "block.3": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "crystalBarrier",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Gain 15 Block. If you have starstoneCharge: Gain 4 Block. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Gain 15 Block. If you have starstoneCharge: Gain 4 Block. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "block": 15,
+        "block.2": 4,
+        "starstoneCharge": 1,
+        "block.3": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starShower"
+      },
+      "originalNativeText": "3 damage to target, 3 times. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 3 damage to the selected enemy, 3 times. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 3,
+        "hits": 3,
+        "damage.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starShower",
+        "upgraded": true
+      },
+      "originalNativeText": "3 damage to target, 3 times. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 3 damage to the selected enemy, 3 times. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 3,
+        "hits": 3,
+        "damage.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starShower",
+        "abilityRank": 2
+      },
+      "originalNativeText": "3 damage to target, 3 times. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 3 damage to the selected enemy, 3 times. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 3,
+        "hits": 3,
+        "damage.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starShower",
+        "abilityRank": 3
+      },
+      "originalNativeText": "4 damage to target, 3 times. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 4 damage to the selected enemy, 3 times. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 4,
+        "hits": 3,
+        "damage.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starShower",
+        "abilityRank": 4
+      },
+      "originalNativeText": "6 damage to target, 3 times. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 6 damage to the selected enemy, 3 times. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 6,
+        "hits": 3,
+        "damage.2": 3,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starShower",
+        "abilityRank": 5
+      },
+      "originalNativeText": "8 damage to target, 3 times. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 8 damage to the selected enemy, 3 times. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 8,
+        "hits": 3,
+        "damage.2": 3,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "scholarsInsight",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Draw 2 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Draw 2 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "draw": 2,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "scholarsInsight",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Draw 3 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Draw 3 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "draw": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "scholarsInsight",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Draw 3 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Draw 3 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "draw": 3,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "scholarsInsight",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Draw 4 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Draw 4 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "draw": 4,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw.2": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "frostNova"
+      },
+      "originalNativeText": "4 damage to target. Apply 4 frost to target. If you have starstoneCharge: Apply 3 frost to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 4,
+        "frost": 4,
+        "frost.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "frostNova",
+        "upgraded": true
+      },
+      "originalNativeText": "4 damage to target. Apply 4 frost to target. If you have starstoneCharge: Apply 3 frost to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 4,
+        "frost": 4,
+        "frost.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "frostNova",
+        "abilityRank": 2
+      },
+      "originalNativeText": "4 damage to target. Apply 4 frost to target. If you have starstoneCharge: Apply 3 frost to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 4,
+        "frost": 4,
+        "frost.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "frostNova",
+        "abilityRank": 3
+      },
+      "originalNativeText": "7 damage to target. Apply 4 frost to target. If you have starstoneCharge: Apply 3 frost to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "frost": 4,
+        "frost.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "frostNova",
+        "abilityRank": 4
+      },
+      "originalNativeText": "10 damage to target. Apply 4 frost to target. If you have starstoneCharge: Apply 3 frost to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 10 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 10,
+        "frost": 4,
+        "frost.2": 3,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "frostNova",
+        "abilityRank": 5
+      },
+      "originalNativeText": "14 damage to target. Apply 4 frost to target. If you have starstoneCharge: Apply 3 frost to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 14 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 14,
+        "frost": 4,
+        "frost.2": 3,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starstoneArc",
+        "abilityRank": 2
+      },
+      "originalNativeText": "7 damage to target. If you have starstoneCharge: Apply 1 vulnerable to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to the selected enemy. If you have starstoneCharge: Apply 1 vulnerable to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "vulnerable": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starstoneArc",
+        "abilityRank": 3
+      },
+      "originalNativeText": "10 damage to target. If you have starstoneCharge: Apply 1 vulnerable to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 10 damage to the selected enemy. If you have starstoneCharge: Apply 1 vulnerable to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 10,
+        "vulnerable": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starstoneArc",
+        "abilityRank": 4
+      },
+      "originalNativeText": "13 damage to target. If you have starstoneCharge: Apply 1 vulnerable to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 13 damage to the selected enemy. If you have starstoneCharge: Apply 1 vulnerable to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 13,
+        "vulnerable": 1,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starstoneArc",
+        "abilityRank": 5
+      },
+      "originalNativeText": "17 damage to target. If you have starstoneCharge: Apply 1 vulnerable to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 17 damage to the selected enemy. If you have starstoneCharge: Apply 1 vulnerable to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 17,
+        "vulnerable": 1,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "gravityWell"
+      },
+      "originalNativeText": "Apply 2 vulnerable to all enemies. If you have starstoneCharge: Apply 1 weak to all enemies. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Apply 2 vulnerable to every living enemy. If you have starstoneCharge: Apply 1 weak to every living enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "vulnerable": 2,
+        "weak": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "gravityWell",
+        "upgraded": true
+      },
+      "originalNativeText": "Apply 2 vulnerable to all enemies. If you have starstoneCharge: Apply 1 weak to all enemies. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Apply 2 vulnerable to every living enemy. If you have starstoneCharge: Apply 1 weak to every living enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "vulnerable": 2,
+        "weak": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "gravityWell",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Apply 2 vulnerable to target. If you have starstoneCharge: Apply 1 weak to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Apply 2 vulnerable to the selected enemy. If you have starstoneCharge: Apply 1 weak to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "vulnerable": 2,
+        "weak": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "gravityWell",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Apply 2 vulnerable to all enemies. If you have starstoneCharge: Apply 1 weak to all enemies. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Apply 2 vulnerable to every living enemy. If you have starstoneCharge: Apply 1 weak to every living enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "vulnerable": 2,
+        "weak": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "gravityWell",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Apply 3 vulnerable to all enemies. If you have starstoneCharge: Apply 1 weak to all enemies. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Apply 3 vulnerable to every living enemy. If you have starstoneCharge: Apply 1 weak to every living enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "vulnerable": 3,
+        "weak": 1,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "gravityWell",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Apply 3 vulnerable to all enemies. If you have starstoneCharge: Apply 1 weak to all enemies. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Apply 3 vulnerable to every living enemy. If you have starstoneCharge: Apply 1 weak to every living enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "vulnerable": 3,
+        "weak": 1,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "radiantSpray"
+      },
+      "originalNativeText": "7 damage to all enemies. Apply 1 vulnerable to all enemies. If you have starstoneCharge: 4 damage to all enemies. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to every living enemy. Apply 1 vulnerable to every living enemy. If you have starstoneCharge: Deal 4 damage to every living enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "vulnerable": 1,
+        "damage.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "radiantSpray",
+        "upgraded": true
+      },
+      "originalNativeText": "7 damage to all enemies. Apply 1 vulnerable to all enemies. If you have starstoneCharge: 4 damage to all enemies. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to every living enemy. Apply 1 vulnerable to every living enemy. If you have starstoneCharge: Deal 4 damage to every living enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "vulnerable": 1,
+        "damage.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "radiantSpray",
+        "abilityRank": 2
+      },
+      "originalNativeText": "4 damage to target. Apply 1 vulnerable to target. If you have starstoneCharge: 4 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 4 damage to the selected enemy. Apply 1 vulnerable to the selected enemy. If you have starstoneCharge: Deal 4 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 4,
+        "vulnerable": 1,
+        "damage.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "radiantSpray",
+        "abilityRank": 3
+      },
+      "originalNativeText": "7 damage to all enemies. Apply 1 vulnerable to all enemies. If you have starstoneCharge: 4 damage to all enemies. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to every living enemy. Apply 1 vulnerable to every living enemy. If you have starstoneCharge: Deal 4 damage to every living enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "vulnerable": 1,
+        "damage.2": 4,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "radiantSpray",
+        "abilityRank": 4
+      },
+      "originalNativeText": "10 damage to all enemies. Apply 1 vulnerable to all enemies. If you have starstoneCharge: 4 damage to all enemies. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 10 damage to every living enemy. Apply 1 vulnerable to every living enemy. If you have starstoneCharge: Deal 4 damage to every living enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 10,
+        "vulnerable": 1,
+        "damage.2": 4,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "radiantSpray",
+        "abilityRank": 5
+      },
+      "originalNativeText": "14 damage to all enemies. Apply 1 vulnerable to all enemies. If you have starstoneCharge: 4 damage to all enemies. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 14 damage to every living enemy. Apply 1 vulnerable to every living enemy. If you have starstoneCharge: Deal 4 damage to every living enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 14,
+        "vulnerable": 1,
+        "damage.2": 4,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starPath",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Draw 1 cards. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Draw 1 card(s). If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "draw": 1,
+        "draw.2": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starPath",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Draw 2 cards. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Draw 2 card(s). If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "draw": 2,
+        "draw.2": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starPath",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Draw 2 cards. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Draw 2 card(s). If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "draw": 2,
+        "draw.2": 1,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "starPath",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Draw 3 cards. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Draw 3 card(s). If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "draw": 3,
+        "draw.2": 1,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw.3": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "cinderSigil",
+        "abilityRank": 2
+      },
+      "originalNativeText": "7 damage to target. If you have starstoneCharge: Apply 2 burn to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 7 damage to the selected enemy. If you have starstoneCharge: Apply 2 burn to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 7,
+        "burn": 2,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "cinderSigil",
+        "abilityRank": 3
+      },
+      "originalNativeText": "10 damage to target. If you have starstoneCharge: Apply 2 burn to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 10 damage to the selected enemy. If you have starstoneCharge: Apply 2 burn to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 10,
+        "burn": 2,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "cinderSigil",
+        "abilityRank": 4
+      },
+      "originalNativeText": "13 damage to target. If you have starstoneCharge: Apply 2 burn to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 13 damage to the selected enemy. If you have starstoneCharge: Apply 2 burn to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 13,
+        "burn": 2,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "cinderSigil",
+        "abilityRank": 5
+      },
+      "originalNativeText": "17 damage to target. If you have starstoneCharge: Apply 2 burn to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 17 damage to the selected enemy. If you have starstoneCharge: Apply 2 burn to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 17,
+        "burn": 2,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "ashenMote",
+        "abilityRank": 2
+      },
+      "originalNativeText": "5 damage to target. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 5 damage to the selected enemy. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 5,
+        "damage.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "ashenMote",
+        "abilityRank": 3
+      },
+      "originalNativeText": "8 damage to target. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Deal 8 damage to the selected enemy. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "damage": 8,
+        "damage.2": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "ashenMote",
+        "abilityRank": 4
+      },
+      "originalNativeText": "11 damage to target. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Deal 11 damage to the selected enemy. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "damage": 11,
+        "damage.2": 3,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "ashenMote",
+        "abilityRank": 5
+      },
+      "originalNativeText": "15 damage to target. If you have starstoneCharge: 3 damage to target. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Deal 15 damage to the selected enemy. If you have starstoneCharge: Deal 3 damage to the selected enemy. Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "damage": 15,
+        "damage.2": 3,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "emberVigil",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Gain 5 Block. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Gain 5 Block. If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "block": 5,
+        "draw": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "emberVigil",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Gain 8 Block. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Gain 8 Block. If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "block": 8,
+        "draw": 1,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "emberVigil",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Gain 11 Block. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Gain 11 Block. If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "block": 11,
+        "draw": 1,
+        "starstoneCharge": 1,
+        "block.2": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "emberVigil",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Gain 15 Block. If you have starstoneCharge: Draw 1 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Gain 15 Block. If you have starstoneCharge: Draw 1 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "block": 15,
+        "draw": 1,
+        "starstoneCharge": 1,
+        "block.2": 2,
+        "draw.2": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "readTheAsh",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Draw 2 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Draw 2 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "draw": 2,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "readTheAsh",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Draw 3 cards. Apply {starstoneCharge} starstoneCharge to yourself.",
+      "projected": "Draw 3 card(s). Apply 1 starstoneCharge to yourself.",
+      "tokens": {
+        "draw": 3,
+        "starstoneCharge": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "readTheAsh",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Draw 3 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Draw 3 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "draw": 3,
+        "starstoneCharge": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "readTheAsh",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Draw 4 cards. Apply {starstoneCharge} starstoneCharge to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Draw 4 card(s). Apply 1 starstoneCharge to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "draw": 4,
+        "starstoneCharge": 1,
+        "block": 2,
+        "draw.2": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation"
+      },
+      "originalNativeText": "Heal {heal} HP.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 5) HP.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 5)"
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation",
+        "upgraded": true
+      },
+      "originalNativeText": "Heal {heal} HP.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 5) HP.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 5)"
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation",
+        "abilityRank": 0
+      },
+      "originalNativeText": "Heal {heal} HP.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 2) HP.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 2)"
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation",
+        "abilityRank": 1
+      },
+      "originalNativeText": "Heal {heal} HP.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 3) HP.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 3)"
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Heal {heal} HP.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 5) HP.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 5)"
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Heal {heal} HP.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 7) HP.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 7)"
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Heal {heal} HP. Gain 2 Block, once per turn per family.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 9) HP. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 9)",
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "reclamation",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Heal {heal} HP. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Heal 1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 12) HP. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "heal": "1 per 2 Crimson Blight stacks across all enemies (whole groups) (maximum 12)",
+        "block": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "feint",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Draw 1 cards. Apply {prepared} prepared to yourself.",
+      "projected": "Draw 1 card(s). Apply 1 prepared to yourself.",
+      "tokens": {
+        "draw": 1,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "feint",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Draw 2 cards. Apply {prepared} prepared to yourself.",
+      "projected": "Draw 2 card(s). Apply 1 prepared to yourself.",
+      "tokens": {
+        "draw": 2,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "feint",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Draw 2 cards. Apply {prepared} prepared to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Draw 2 card(s). Apply 1 prepared to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "draw": 2,
+        "prepared": 1,
+        "block": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "feint",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Draw 3 cards. Apply {prepared} prepared to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Draw 3 card(s). Apply 1 prepared to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "draw": 3,
+        "prepared": 1,
+        "block": 2,
+        "draw.2": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "backstep",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Gain 6 Block. Apply {prepared} prepared to yourself.",
+      "projected": "Gain 6 Block. Apply 1 prepared to yourself.",
+      "tokens": {
+        "block": 6,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "backstep",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Gain 9 Block. Apply {prepared} prepared to yourself.",
+      "projected": "Gain 9 Block. Apply 1 prepared to yourself.",
+      "tokens": {
+        "block": 9,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "backstep",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Gain 12 Block. Apply {prepared} prepared to yourself. Gain 2 Block, once per turn per family.",
+      "projected": "Gain 12 Block. Apply 1 prepared to yourself. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "block": 12,
+        "prepared": 1,
+        "block.2": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "backstep",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Gain 16 Block. Apply {prepared} prepared to yourself. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Gain 16 Block. Apply 1 prepared to yourself. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "block": 16,
+        "prepared": 1,
+        "block.2": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "vanish"
+      },
+      "originalNativeText": "Gain 8 Block. Apply {prepared} prepared to yourself. Add a Smoke Pellet to your hand.",
+      "projected": "Gain 8 Block. Apply 1 prepared to yourself. Add a Smoke Pellet to your hand.",
+      "tokens": {
+        "block": 8,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "vanish",
+        "upgraded": true
+      },
+      "originalNativeText": "Gain 8 Block. Apply {prepared} prepared to yourself. Add a Smoke Pellet to your hand.",
+      "projected": "Gain 8 Block. Apply 1 prepared to yourself. Add a Smoke Pellet to your hand.",
+      "tokens": {
+        "block": 8,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "vanish",
+        "abilityRank": 2
+      },
+      "originalNativeText": "Gain 8 Block. Apply {prepared} prepared to yourself. Add a Smoke Pellet to your hand.",
+      "projected": "Gain 8 Block. Apply 1 prepared to yourself. Add a Smoke Pellet to your hand.",
+      "tokens": {
+        "block": 8,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "vanish",
+        "abilityRank": 3
+      },
+      "originalNativeText": "Gain 11 Block. Apply {prepared} prepared to yourself. Add a Smoke Pellet to your hand.",
+      "projected": "Gain 11 Block. Apply 1 prepared to yourself. Add a Smoke Pellet to your hand.",
+      "tokens": {
+        "block": 11,
+        "prepared": 1
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "vanish",
+        "abilityRank": 4
+      },
+      "originalNativeText": "Gain 14 Block. Apply {prepared} prepared to yourself. Add a Smoke Pellet to your hand. Gain 2 Block, once per turn per family.",
+      "projected": "Gain 14 Block. Apply 1 prepared to yourself. Add a Smoke Pellet to your hand. Gain 2 Block, once per turn from this family.",
+      "tokens": {
+        "block": 14,
+        "prepared": 1,
+        "block.2": 2
+      },
+      "unresolved": []
+    },
+    {
+      "ref": {
+        "cardId": "vanish",
+        "abilityRank": 5
+      },
+      "originalNativeText": "Gain 18 Block. Apply {prepared} prepared to yourself. Add a Smoke Pellet to your hand. Gain 2 Block, once per turn per family. Draw 1 cards, once per turn per family.",
+      "projected": "Gain 18 Block. Apply 1 prepared to yourself. Add a Smoke Pellet to your hand. Gain 2 Block, once per turn from this family. Draw 1 card(s), once per turn from this family.",
+      "tokens": {
+        "block": 18,
+        "prepared": 1,
+        "block.2": 2,
+        "draw": 1
+      },
+      "unresolved": []
+    }
+  ]
+}

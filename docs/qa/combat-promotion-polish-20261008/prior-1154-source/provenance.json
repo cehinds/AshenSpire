@@ -1,0 +1,48 @@
+{
+  "surface": "actual served source; compiled sidecar is separate historical provenance",
+  "originalBootDeadlineMs": 120000,
+  "expectedFacesPerDevice": 2186,
+  "widths": [
+    120,
+    124,
+    144,
+    200,
+    "restore"
+  ],
+  "expectedSchoolInformationAndEnterDoorsPerDevice": 16,
+  "output": "D:/repos/.codex/outputs/combat-card-stances/regular-final-1154-source-card-corpus",
+  "before": {
+    "at": "2026-10-09T04:30:54.846Z",
+    "head": "be6326f7a5291d6fc3240d893effc95b82eb7d39",
+    "status": "",
+    "digest": "68a938d822",
+    "compiledSidecar": {
+      "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+      "release": "0.7.1",
+      "ordinal": 1154,
+      "digest": "68a938d822",
+      "built": "2026-10-09"
+    },
+    "sigilProfiles": []
+  },
+  "toolSha256": "0de734ac9c8ebde1ea690f84a260c2b967a3bc8572d13ad9dc96dca474085e88",
+  "qaPid": 20992,
+  "after": {
+    "at": "2026-10-09T04:35:14.804Z",
+    "head": "be6326f7a5291d6fc3240d893effc95b82eb7d39",
+    "status": "",
+    "digest": "68a938d822",
+    "compiledSidecar": {
+      "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+      "release": "0.7.1",
+      "ordinal": 1154,
+      "digest": "68a938d822",
+      "built": "2026-10-09"
+    },
+    "sigilProfiles": []
+  },
+  "exitCode": 0,
+  "signal": null,
+  "sourceUnchanged": true,
+  "newProfilesRemaining": []
+}

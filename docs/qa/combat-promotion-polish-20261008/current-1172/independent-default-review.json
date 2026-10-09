@@ -1,0 +1,332 @@
+{
+  "identity": {
+    "path": "D:\\repos\\.codex\\worktrees\\combat-expansion-runtime\\AshenSpire\\build\\download\\AshenSpire.html",
+    "ordinal": "1172",
+    "source": "43fb71b4ca"
+  },
+  "resultRows": 45,
+  "errors": [],
+  "warnings": [],
+  "healthClassifications": [
+    {
+      "Name": "shot-before-title-activation",
+      "Count": 68
+    },
+    {
+      "Name": "standalone-authored-audio-fallback",
+      "Count": 24
+    }
+  ],
+  "canvasReadbackWarningCount": 0,
+  "pickerGeometry": [
+    {
+      "shape": "desktop-normal",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 1127.234375,
+            "y": 831.0311889648438,
+            "width": 177.46875,
+            "height": 45.28131103515625,
+            "top": 831.0311889648438,
+            "right": 1304.703125,
+            "bottom": 876.3125,
+            "left": 1127.234375
+          },
+          "viewport": 1365,
+          "pageWidth": 1365,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 53.109375,
+              "y": 577.390625,
+              "width": 1258.78125,
+              "height": 299.921875,
+              "top": 577.390625,
+              "right": 1311.890625,
+              "bottom": 877.3125,
+              "left": 53.109375
+            },
+            "clientWidth": 1104,
+            "scrollWidth": 1104,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 1218.0625,
+            "y": 835.4375,
+            "width": 82.234375,
+            "height": 36.46875,
+            "top": 835.4375,
+            "right": 1300.296875,
+            "bottom": 871.90625,
+            "left": 1218.0625
+          },
+          "viewport": 1365,
+          "pageWidth": 1365,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 53.109375,
+              "y": 577.390625,
+              "width": 1258.78125,
+              "height": 299.921875,
+              "top": 577.390625,
+              "right": 1311.890625,
+              "bottom": 877.3125,
+              "left": 53.109375
+            },
+            "clientWidth": 1104,
+            "scrollWidth": 1104,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    },
+    {
+      "shape": "phone-normal",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 192.6556854248047,
+            "y": 695.650390625,
+            "width": 146.15626525878906,
+            "height": 51.375,
+            "top": 695.650390625,
+            "right": 338.81195068359375,
+            "bottom": 747.025390625,
+            "left": 192.6556854248047
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 264.98382568359375,
+            "y": 699.337890625,
+            "width": 70.140625,
+            "height": 44,
+            "top": 699.337890625,
+            "right": 335.12445068359375,
+            "bottom": 743.337890625,
+            "left": 264.98382568359375
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    },
+    {
+      "shape": "phone-compact",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 131.642578125,
+            "y": 634.3692626953125,
+            "width": 133.453125,
+            "height": 50.4375,
+            "top": 634.3692626953125,
+            "right": 265.095703125,
+            "bottom": 684.8067626953125,
+            "left": 131.642578125
+          },
+          "viewport": 320,
+          "pageWidth": 320,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 49.90625,
+              "y": 454.109375,
+              "width": 220.1875,
+              "height": 233.984375,
+              "top": 454.109375,
+              "right": 270.09375,
+              "bottom": 688.09375,
+              "left": 49.90625
+            },
+            "clientWidth": 298,
+            "scrollWidth": 817,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 191.673828125,
+            "y": 637.5880126953125,
+            "width": 70.203125,
+            "height": 44,
+            "top": 637.5880126953125,
+            "right": 261.876953125,
+            "bottom": 681.5880126953125,
+            "left": 191.673828125
+          },
+          "viewport": 320,
+          "pageWidth": 320,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 49.90625,
+              "y": 454.109375,
+              "width": 220.1875,
+              "height": 233.984375,
+              "top": 454.109375,
+              "right": 270.09375,
+              "bottom": 688.09375,
+              "left": 49.90625
+            },
+            "clientWidth": 298,
+            "scrollWidth": 817,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    },
+    {
+      "shape": "phone-reduced",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 192.43121337890625,
+            "y": 699.6615600585938,
+            "width": 146.15625,
+            "height": 51.375,
+            "top": 699.6615600585938,
+            "right": 338.58746337890625,
+            "bottom": 751.0365600585938,
+            "left": 192.43121337890625
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 264.75933837890625,
+            "y": 703.3490600585938,
+            "width": 70.140625,
+            "height": 44,
+            "top": 703.3490600585938,
+            "right": 334.89996337890625,
+            "bottom": 747.3490600585938,
+            "left": 264.75933837890625
+          },
+          "viewport": 390,
+          "pageWidth": 390,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 51.1875,
+              "y": 498.828125,
+              "width": 287.625,
+              "height": 253.25,
+              "top": 498.828125,
+              "right": 338.8125,
+              "bottom": 752.078125,
+              "left": 51.1875
+            },
+            "clientWidth": 320,
+            "scrollWidth": 468,
+            "scrollLeft": 0,
+            "overflowX": "visible",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "inspectedPngCount": 7,
+  "visualFindings": [
+    "Prior footer clipping is resolved on actual390/320/reduced390 anddesktop: completeUpcast andBase tier0 labels visible beneath the selectedShieldcard.",
+    "SelectedShield Gain6Block/Return5Poise andCounterbottom remain fully visible.",
+    "Recorded phone select bounds are44px high; native completebutton/select bound gates passed per zero-error result.",
+    "Field/enemybar/footer positions appear stable versus prior1170 screenshots; no continuous field-motion claim is made from still images.",
+    "Phone390 normal raised Information circle visually covers rightenemyHP text while card selected; reduced390 Information circle sits below thatbar."
+  ],
+  "scopeBoundary": "Actual frozen1172/43fb71b4ca only. Future owner1767 clippedscroller/inside-face control changes are unverified; under-card placement remains the required contract. Native normal gate supports at least one authored Counter transient, not all three in everyshape."
+}

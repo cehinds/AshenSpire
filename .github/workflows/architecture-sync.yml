@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   refresh:
-    if: (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[architecture-sync]'))
+    if: github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[architecture-sync]'))
     runs-on: ubuntu-latest
     steps:
       - name: Check out the merged dev tree

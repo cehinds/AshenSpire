@@ -71,7 +71,6 @@ import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
-
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import { resolveCoopPlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { combatToolsModel } from '../models/CombatToolsModel.js';
@@ -290,9 +289,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const upcastTiersByCard = new Map();
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
-  // Receipt renders replace the field DOM, but keep the encounter's fitted art.
-  // The stage invalidates this cache when viewport, formation or artwork changes.
-  let combatLayoutState = {};
   const combatRests = new Map();
   const heldStances = createStanceLedger();
   const readinessOrders = new Map();
@@ -805,7 +801,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // would sit over the reward or map and send a stale playCard on a pick
     // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
-      combatLayoutState = {};
       closeCardChoice();
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
@@ -863,8 +858,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wrap.className = 'meters';
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
-    const bars = resourceBars(plan, { surface: 'model', showLabels: !isEnemy });
-    if (!isEnemy) for (const row of bars.children) row.dataset.meterRow = row.dataset.res === 'hp' ? 'hp' : 'resource';
+    const bars = resourceBars(plan, { surface: 'model' });
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
@@ -1117,7 +1111,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId), view: 'combat' }));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId) }));
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setStance?.(heldStances.get(p.id));
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
@@ -1188,8 +1182,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (!pacing && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
           clearSelection();
           send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: e.id });
-        } else { selectCombatant(e.id); render(); }
-        return true;
+          return true;
+        }
+        selectCombatant(e.id); render();
+        // Leave unarmed taps to the intent's selection-first tooltip.
+        return false;
       }));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
@@ -1213,6 +1210,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       row.appendChild(box);
     }
 
+    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
     const area = app.querySelector('.hand-area');
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
@@ -1349,8 +1347,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : null;
       if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
     }
-    // Fit only after the replacement hand/footer establish the final field size.
-    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
     for (const [ownerId, plan] of pendingAnimations) {
       const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
       const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);

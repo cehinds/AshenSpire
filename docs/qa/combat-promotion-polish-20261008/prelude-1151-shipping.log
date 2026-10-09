@@ -1,0 +1,47 @@
+  artifact       : dist\AshenSpire.html sha256 2d7bee24d44e (14741261 bytes)
+  provenance     : measured dist\AshenSpire.html@c1306d2171 2026-09-26 while HEAD is 2934beab9d — 2980 commit(s) since this file was last written.
+                   NOT A VERDICT AND NOT A FAILURE: those commits may not touch anything
+                   this artifact contains. It is the question a reader must answer before
+                   quoting the result below. Rebuild to remove the question.
+  artifact       : dist\download\AshenSpire.html sha256 15a009de1269 (98723033 bytes)
+  provenance     : measured dist\download\AshenSpire.html@null while HEAD is 2934beab9d.
+                   NOT A VERDICT AND NOT A FAILURE: those commits may not touch anything
+                   this artifact contains. It is the question a reader must answer before
+                   quoting the result below. Rebuild to remove the question.
+  artifact       : AshenSpire.html sha256 15a009de1269 (98723033 bytes)
+  provenance     : measured AshenSpire.html@c1306d2171 2026-09-26 while HEAD is 2934beab9d — 2980 commit(s) since this file was last written.
+                   NOT A VERDICT AND NOT A FAILURE: those commits may not touch anything
+                   this artifact contains. It is the question a reader must answer before
+                   quoting the result below. Rebuild to remove the question.
+verify-shipped: checking the file a player is handed.
+
+  PASS  [PACKS] build/AshenSpire.html pins 2 pack(s) (default tier light), each index and twin beside it at its pin, the font sidecar too; no inlined media but the SVG masks
+  PASS  [EDITION] build/AshenSpire.html is the 'light' edition
+  PASS  [PACKS] dist/AshenSpire.html pins 2 pack(s) (default tier light), each index and twin beside it at its pin, the font sidecar too; no inlined media but the SVG masks
+  PASS  [DRIFT] dist/AshenSpire.html is byte-identical to build/AshenSpire.html (14741261 bytes)
+  PASS  [NO_ART] build/download/AshenSpire.html: ASSET_MAP present, 6165 entries (floor 64), 6289 inlined images
+  PASS  [EDITION] build/download/AshenSpire.html is the 'light' edition
+  note        build/download/AshenSpire.html is 98723033 bytes, 1276967 under the retired mobile file's 100000000-byte budget (not gated; an owner question)
+  PASS  [NO_ART] dist/download/AshenSpire.html: ASSET_MAP present, 6165 entries (floor 64), 6289 inlined images
+  PASS  [DRIFT] dist/download/AshenSpire.html is byte-identical to build/download/AshenSpire.html (98723033 bytes)
+  PASS  [NO_ART] AshenSpire.html: ASSET_MAP present, 6165 entries (floor 64), 6289 inlined images
+  PASS  [DRIFT] AshenSpire.html is byte-identical to build/download/AshenSpire.html (98723033 bytes)
+  PASS  [STAMPED_TWIN] dist/ tracks only the allowlist [README.md] — no twin, stamped or otherwise
+  PASS  [TRACKED_BUILD] no built HTML is tracked in AshenSpire.html, AshenSpire-mobile.html, build
+  note        untracked in dist/ (expected, launcher output): AshenSpire-0.7.1.1151.html, AshenSpire.html
+
+BOUNDARY — what a green from this tool does NOT mean:
+  · nothing rendered it. ASSET_MAP present and 101 data: URIs is not "the art appears"
+    — that needs a browser and a seeing seat, and this tool has neither
+  · nothing played it. This says the shipped file IS this source, never that this
+    source is a good game, balanced, or even winnable
+  · no statement about the tutorial lockout either way. This tool compares bytes, so
+    it cannot tell a bundle whose coach marks are reachable from one whose are not —
+    that is tools/tutorial-reach.mjs, and it needs a browser at a real --ui-zoom
+  · reproducibility across machines is not checked here — that is the git-diff step
+    in .github/workflows/ci.yml running on three runners
+  · the light single file is held to no byte budget (an owner question since step 8e),
+    and whether its shrunken art reads well on a phone is a seeing seat's call
+  · check P reads the pins and the indexes, not the objects — that is verify-external
+
+verify-shipped: OK — 12 checks passed.

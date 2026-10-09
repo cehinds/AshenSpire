@@ -1,0 +1,17 @@
+{
+  "ownReceiptUnchanged": true,
+  "mergedForeignRows": 828,
+  "checks": [
+    {
+      "parent": "be6326f7a5291d6fc3240d893effc95b82eb7d39",
+      "foreignRows": 801,
+      "exactContentAndRelativeOrder": true
+    },
+    {
+      "parent": "eefe18448528d631004ec05b038aa12c24de1d15",
+      "foreignRows": 828,
+      "exactContentAndRelativeOrder": true
+    }
+  ],
+  "boundary": "Exact canonical receipt line bytes and parent relative order, excluding own #1768; not an EOL-style assertion."
+}
