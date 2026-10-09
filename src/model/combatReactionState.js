@@ -21,8 +21,10 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
   if (paused && (state.phase === 'enemy' || enemyPayload) && !state.reactionCursor) problems.push('Enemy reaction requires its turn cursor');
   if (state.reactionCursor && !['enemy', 'suspended'].includes(state.phase)) problems.push('Enemy reaction cursor is outside its phase');
   if (state.reactionCursor && !state.result) {
-    const cleanup = state.players instanceof Map
-      ? [...state.players.values()].some(seat => record(seat.reactionHandCleanup)) : record(state.reactionHandCleanup);
+    const owed = state.players instanceof Map ? [...state.players.values()].filter(seat =>
+      (seat.endedBeforeDisconnect ?? seat.ended) === true) : null;
+    const cleanup = owed ? owed.length > 0 && owed.every(seat => record(seat.reactionHandCleanup)
+      && typeof seat.reactionHandCleanup.locked === 'boolean') : record(state.reactionHandCleanup);
     if (!cleanup) problems.push('Enemy reaction requires its pending hand cleanup');
   }
   const pending = state.pendingReaction;

@@ -182,6 +182,33 @@ test('co-op preferences affect only their connected owner and survive the exact 
   assert.deepEqual(decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)), decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(restored)));
 });
 
+test('every owed co-op hand cleanup is required, with unended frozen and newly joined seats exempt', () => {
+  const { registries } = fixture();
+  const player = id => ({ id, classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
+    maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 4, combatExpansionVersion: 2,
+    deck: Array.from({ length: 8 }, (_, i) => ({ cardId: 'guardCounter', instanceId: `${id}:${i}`, upgraded: false })) });
+  const create = () => createCoopCombat({ registries, rng: createRng(709), players: [player('a'), player('b')],
+    enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
+  const C = create();
+  for (const P of C.players.values()) P.entity.block = 100;
+  endTurn(C, 'a'); endTurn(C, 'b');
+  const corrupt = JSON.parse(JSON.stringify(serializeCoopCombatSnapshot(C)));
+  const seat = corrupt.nodes.find(node => node.kind === 'object' && node.entries.some(([key, value]) => key === 'id' && value === 'b'));
+  assert.ok(seat.entries.some(([key]) => key === 'reactionHandCleanup'));
+  seat.entries = seat.entries.filter(([key]) => key !== 'reactionHandCleanup');
+  assert.throws(() => decodeCoopCombatSnapshot(corrupt), /pending hand cleanup/);
+  while (C.pendingReaction) chooseReaction(C, C.pendingReaction.ownerId, { offerId: C.pendingReaction.id });
+  assert.equal(C.players.get('a').piles.hand.length, 4);
+  assert.equal(C.players.get('b').piles.hand.length, 4);
+  const frozen = create();
+  for (const P of frozen.players.values()) P.entity.block = 100;
+  leaveCombat(frozen, 'b'); endTurn(frozen, 'a'); joinCombat(frozen, player('c'));
+  assert.equal(frozen.players.get('b').endedBeforeDisconnect, false);
+  assert.equal(frozen.players.get('c').ended, false);
+  assert.equal(frozen.players.get('c').opened, undefined);
+  assert.doesNotThrow(() => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(frozen)));
+});
+
 test('unaffordable and offensive-only cards do not offer a defensive reaction', () => {
   for (const cardIds of [['strike'], ['guardCounter', 'sweepingBlow']]) {
     const { combat } = fixture({ enemyCount: 1, cardIds });
