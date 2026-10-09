@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Shared finite local QA payload. Launch through Codex Process Jobs for background
-// execution. Tests use a separate Git checkout so later edits cannot mix heads.
+// Shared finite local QA payload. Run in an owned background worker when needed.
+// Tests use a separate Git checkout so later edits cannot mix heads.
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { mkdir, writeFile, readFile, readdir, rm, cp, access, rename } from 'node:fs/promises';
@@ -43,7 +43,10 @@ await save();
 let nativeLock, ownsNativeLock = false;
 try {
   // Own index/history for Git-dependent gates; object sharing is read-only.
-  await capture('git', ['clone', '--shared', '--no-checkout', '--', root, report.snapshot]);
+  // Set checkout policy locally before the first checkout. Author-repository
+  // configuration is not inherited by clones; a global Windows autocrlf=true
+  // otherwise changes LF source and breaks format-sensitive production tests.
+  await capture('git', ['clone', '--config', 'core.autocrlf=false', '--config', 'core.eol=lf', '--shared', '--no-checkout', '--', root, report.snapshot]);
   await capture('git', ['-c', 'core.fscache=false', '-c', 'core.preloadIndex=false', '-c', 'index.threads=1', 'checkout', '--detach', head], report.snapshot);
   if (suite !== 'combat') {
     const pin = JSON.parse(await readFile(path.join(report.snapshot, 'art-release.json'), 'utf8'));
@@ -67,7 +70,7 @@ try {
     ownsNativeLock = true;
     await writeFile(path.join(nativeLock, 'owner.json'), JSON.stringify({ head, pid: process.pid, output }));
   }
-  const files = (await readdir(path.join(report.snapshot, 'tests'))).filter(name => /(?:combat-expansion|combat-matchups|counter|power-lifecycle|blight|enemy-knowledge|combat-card|class-sprite-combat-presentation|combat-attached-hand-envelope|combat-frame-reach|combat-target-layers|combat-overhead-anchor|player-details-placement|hand-controls|upcast).*\.test\.mjs$/.test(name)).sort();
+  const files = (await readdir(path.join(report.snapshot, 'tests'))).filter(name => /(?:local-checks-snapshot|combat-expansion|combat-matchups|counter|power-lifecycle|blight|enemy-knowledge|combat-card|class-sprite-combat-presentation|combat-attached-hand-envelope|combat-frame-reach|combat-target-layers|combat-overhead-anchor|player-details-placement|hand-controls|upcast).*\.test\.mjs$/.test(name)).sort();
   const commands = suite === 'combat' ? [['combat', ['--test', ...files.map(name => `tests/${name}`)]]]
     : suite === 'core' ? [['core', ['tests/run-node.mjs', '--no-selftests']]]
     : suite === 'tools' ? [['tools', ['tests/run-node.mjs', '--selftests-only']]]
