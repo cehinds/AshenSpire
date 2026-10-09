@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Choose your game appearance",
     "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
-    "build": "0.7.1.1158",
+    "build": "0.7.1.1160",
     "pullRequest": 1757,
     "url": "https://github.com/cehinds/AshenSpire/pull/1757"
   },
@@ -31,6 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1146",
     "pullRequest": 1745,
     "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
+    "id": "pr-1761",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Contract: defensive reactions and actor-turn presentation",
+    "detail": "Specify optional in-hand Counter and defensive Sweep choices, a separate successful Counter return, acting-enemy intent revelation, exact paused continuation, and the player widget's fixed gap above the art. This contract precedes runtime implementation.",
+    "build": "0.7.1.1145",
+    "pullRequest": 1761,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1761"
   },
   {
     "id": "pr-1759",
