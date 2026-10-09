@@ -125,6 +125,9 @@
 }
 @media (max-height: 480px) and (min-width: 600px) {
   :root .combat[data-layout='formation'] .combat-tools {
-    right: calc(148px / var(--ui-zoom,1)); grid-template-columns: 1fr 1fr;
+    right: auto; left: calc(8px / var(--ui-zoom,1)); grid-template-columns: 1fr;
+  }
+  :root .combat[data-layout='formation'] .combat-tools .combat-log-panel {
+    left: 0; right: auto;
   }
 }

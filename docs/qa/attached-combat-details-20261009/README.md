@@ -10,7 +10,7 @@ independent of these controls.
 
 Selection cells use 48–64 physical pixels, preserve enemy order and keep full
 accessible names/HP. Native button focus updates the shared keyboard cursor.
-Landscape tools use a compact lower row and reserve space in the hand scroller.
+Landscape tools use the left footer rail without subtracting the hand width twice.
 Clipped card overflow is not a visible collision.
 
 ## Review and verification
@@ -28,12 +28,22 @@ labels and plate reservation height. Final review found no actionable blocker.
 - The crowd fixture gives each cloned enemy a unique knowledge-action serial;
   duplicate serials are correctly rejected by the engine, not bypassed.
 
-Final package **0.7.1.1182**, source digest **e56f8d6209**, passed all 12
+Initial package **0.7.1.1182**, source digest **e56f8d6209**, passed all 12
 responsive layouts and legal keyboard card plays. The packaged phone run also
 passed three sequential card plays and empty-hand resize/draw stability. Reports
 and representative screenshots are stored beside this record. External art
 verification passed 314 checks, shipped-alias verification 12, build identity 9,
 and the PR receipt 2. Hosted checks and promotion are reported separately in the PR.
+
+The hosted 800x465 tutorial subsequently exposed a five-card hand collapse:
+subtracting the landscape dock's complete right offset left capacity for only
+one card, so all cards shared an x coordinate. The final correction places tools
+in the left footer rail and reserves no additional hand width. The unchanged
+Counter/Escape browser interaction then passed. Independent review verified
+five distinct cards, reachable controls, and an onscreen working log drawer at
+844x390 and 800x465. In very short co-op landscape, cards can still obscure some
+enemy name/HP plates according to the requested cards-over-selection layering;
+target buttons and player details remain reachable.
 The posed crowd uses 200 HP solely to survive interaction checks. Screenshots
 are test fixtures, not completed runs. Build, receipt, hosted checks, dev merge,
 architecture sync, test promotion and alternative sync are separate gates.
