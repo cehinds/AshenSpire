@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Readable card effects and stable combat targets",
     "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable.",
-    "build": "0.7.1.1168",
+    "build": "0.7.1.1170",
     "pullRequest": 1768,
     "url": "https://github.com/cehinds/AshenSpire/pull/1768"
   },
