@@ -34,11 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1168`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable.
+
 - **Choose your game appearance** ([#1757](https://github.com/cehinds/AshenSpire/pull/1757), `0.7.1.1166`). The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.
 
 - **Ashen Blight flows through volcanic rock** ([#1762](https://github.com/cehinds/AshenSpire/pull/1762), `0.7.1.1154`). The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.
-
-- **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1154`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable.
 
 - **Alternative combat opens up with option C** ([#1751](https://github.com/cehinds/AshenSpire/pull/1751), `0.7.1.1152`). The approved pointed shield and inner-loop Counter match the named card footers, with distinct HP and Poise damage symbols. Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.
 

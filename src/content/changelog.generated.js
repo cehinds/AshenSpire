@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1768",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Readable card effects and stable combat targets",
+    "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable.",
+    "build": "0.7.1.1168",
+    "pullRequest": 1768,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1768"
+  },
+  {
     "id": "pr-1757",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -21,16 +31,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1154",
     "pullRequest": 1762,
     "url": "https://github.com/cehinds/AshenSpire/pull/1762"
-  },
-  {
-    "id": "pr-1768",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
-    "summary": "Readable card effects and stable combat targets",
-    "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable.",
-    "build": "0.7.1.1154",
-    "pullRequest": 1768,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1768"
   },
   {
     "id": "pr-1751",
