@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1770",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: Test promotion keeps its full history",
+    "detail": "The reviewed appearance and player-guide delivery retains the existing Test history so channel promotion can proceed. Fresh desktop, phone and co-op appearance checks are saved alongside the reproducible capture recipe.",
+    "build": "0.7.1.1167",
+    "pullRequest": 1770,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1770"
+  },
+  {
     "id": "pr-1757",
     "date": "2026-10-08",
     "group": "2026-10-08",

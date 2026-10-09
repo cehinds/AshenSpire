@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Behind the scenes: Test promotion keeps its full history** ([#1770](https://github.com/cehinds/AshenSpire/pull/1770), `0.7.1.1167`). The reviewed appearance and player-guide delivery retains the existing Test history so channel promotion can proceed. Fresh desktop, phone and co-op appearance checks are saved alongside the reproducible capture recipe.
+
 - **Choose your game appearance** ([#1757](https://github.com/cehinds/AshenSpire/pull/1757), `0.7.1.1166`). The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.
 
 - **Alternative combat keeps its art with the complete tactical rules** ([#1740](https://github.com/cehinds/AshenSpire/pull/1740), `0.7.1.1154`). The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.
