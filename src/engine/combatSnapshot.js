@@ -42,7 +42,7 @@ function carryRelicGateKeys(entries) {
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
-  if (combat._buffer !== null || (combat.queue && combat.queue.length && !combat.pendingAbilityDiscard)) {
+  if (combat._buffer !== null || (combat.queue && combat.queue.length && !combat.pendingAbilityDiscard && !combat.pendingReaction)) {
     throw new Error('Combat is still resolving; wait for the action to finish before saving');
   }
   const snapshot = structuredClone({
@@ -52,6 +52,12 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
+    ...(combat.reactionRulesVersion === 1 ? { reactionRulesVersion: 1,
+      ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
+      ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
+      ...(combat.reactionHandCleanup ? { reactionHandCleanup: combat.reactionHandCleanup } : {}),
+      ...(combat.pendingReaction ? { pendingReaction: combat.pendingReaction } : {}),
+      ...(combat.reactionResume ? { reactionResume: { ...combat.reactionResume, queue: combat.reactionResume.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })) } } : {}) } : {}),
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
@@ -89,9 +95,8 @@ export function serializeCombatSnapshot(combat) {
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
     piles: combat.piles,
-    ...(combat.pendingAbilityDiscard ? {
-      pendingAbilityDiscard: combat.pendingAbilityDiscard,
-      pendingAbilityPlay: combat.pendingAbilityPlay,
+    ...(combat.pendingAbilityDiscard || combat.pendingReaction ? {
+      ...(combat.pendingAbilityDiscard ? { pendingAbilityDiscard: combat.pendingAbilityDiscard, pendingAbilityPlay: combat.pendingAbilityPlay } : {}),
       abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
     } : {}),
     eventLog: combat.eventLog,
@@ -233,9 +238,12 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
+  for (const key of ['reactionRulesVersion', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume']) {
+    if (saved[key] !== undefined) combat[key] = saved[key];
+  }
   if (saved.abilityQueue) {
     const groups = new Map();
-    for (const action of saved.abilityQueue) {
+    for (const action of [...saved.abilityQueue, ...(saved.reactionResume?.queue || [])]) {
       const group = action.meta?.expansionGroup;
       if (!group) continue;
       if (!groups.has(group.key)) groups.set(group.key, group);
@@ -243,6 +251,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     }
     const entity = id => id === combat.player.id ? combat.player : combat.enemies.find(e => e.id === id);
     combat.queue = saved.abilityQueue.map(({ sourceId, ownerId, targetId, ...action }) => ({ ...action, source: entity(sourceId), owner: entity(ownerId), target: entity(targetId) || null }));
+    if (combat.reactionResume) combat.reactionResume.queue = combat.reactionResume.queue.map(({ sourceId, ownerId, targetId, ...action }) => ({ ...action, source: entity(sourceId), owner: entity(ownerId), target: entity(targetId) || null }));
   }
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   if (combat.combatExpansionVersion === 2) {

@@ -20,6 +20,15 @@ import { combatEnemyKnowledgeProblems } from '../src/model/enemyKnowledgeCombat.
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createSaveManager } from '../src/engine/save.js';
 
+function skipReactions(combat) {
+  let skipped = 0;
+  while (combat.pendingReaction) {
+    assert.ok(skipped++ < 64, 'reaction continuation is bounded');
+    dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  }
+  return skipped;
+}
+
 test('knowledge opted-in predictions and resolved XP retain exact durable checkpoints and refused writes roll back', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
@@ -51,7 +60,11 @@ test('knowledge opted-in predictions and resolved XP retain exact durable checkp
   let restored = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters), snapshot: loaded.combatEntered.snapshot });
   assert.deepEqual(restored.enemyKnowledge, combat.enemyKnowledge);
   dispatch(combat, { type: 'endTurn' });
-  assert.equal(writes, 3, 'resolved learning and next reads write despite unchanged Blight');
+  assert.equal(writes, 3, 'paused incoming turn writes despite unchanged Blight');
+  assert.equal(run.skills.perception.xp, 0, 'a paused action has not earned prediction credit');
+  const skipped = skipReactions(combat);
+  assert.ok(skipped > 0, 'new rules offer a real defensive reaction before execution');
+  assert.equal(writes, 3 + skipped, 'answers and resolved learning write despite unchanged Blight');
   assert.equal(run.skills.perception.xp, 1);
   loaded = saves.loadRun(registries);
   restored = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters), snapshot: loaded.combatEntered.snapshot });
@@ -88,6 +101,7 @@ test('real Counter preparation and previews are inert; executed return pays one 
     assert.equal(owner.earnedXp, 0, 'arming a response is not a mechanical success');
     assert.equal(owner.pending.enemies[enemy.enemyId].receipts[receiptId].bonus, false);
     dispatch(combat, { type: 'endTurn' });
+    skipReactions(combat);
     assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 1);
     assert.equal(combat.enemyKnowledge.owners.player.pending.enemies[enemy.enemyId].receipts[receiptId].bonus, true);
     runCombatEnd(run, combat); runCombatEnd(run, combat);
@@ -102,6 +116,7 @@ test('real tactical replies earn definition learning at any visibility, but exac
   assert.equal(enemy.knowledgeAction.reads.player.visibility, 'exact');
   dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
   dispatch(combat, { type: 'endTurn' });
+  skipReactions(combat);
   const owner = combat.enemyKnowledge.owners.player;
   assert.equal(owner.earnedXp, 0);
   assert.equal(owner.pending.enemies[enemy.enemyId].receipts[receiptId].bonus, true);
@@ -119,6 +134,7 @@ test('a committed successful evade against a multi-hit wholly unknown action cre
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 0);
   const prepared = structuredClone(combat.player.combatEvade);
   dispatch(combat, { type: 'endTurn' });
+  skipReactions(combat);
   assert.ok(combat.eventLog.some(event => event.type === 'combatAvoidanceResolved' && event.evade?.success), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 1);
   const owner = combat.enemyKnowledge.owners.player;
@@ -171,6 +187,7 @@ test('actual solo dispatch awards only executed predictions and reconciles clone
   for (let i = 0; i < 10; i++) previewIntent(combat, 'e1');
   assert.deepEqual(rng.getCounters(), counters);
   dispatch(combat, { type: 'endTurn' });
+  skipReactions(combat);
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 1);
   assert.equal(run.skills.perception.xp, 0, 'combat owns its cloned ledger');
   runCombatEnd(run, combat); runCombatEnd(run, combat);
