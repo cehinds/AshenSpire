@@ -83,6 +83,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1142`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
 
+- **Alternative combat sigils and checkpoints reached Test** ([#1744](https://github.com/cehinds/AshenSpire/pull/1744), `0.7.1.1140`). The reviewed alternative combat card sigils, complete effects, checkpoints and reachable tutorial controls were promoted to Alternative Test with the existing battlefield artwork and animations.
+
 - **Alternative tutorial controls stay reachable** ([#1737](https://github.com/cehinds/AshenSpire/pull/1737), `0.7.1.1140`). Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.
 
 - **Combat shows Blight only when it matters** ([#1755](https://github.com/cehinds/AshenSpire/pull/1755), `0.7.1.1138`). The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.
