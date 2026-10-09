@@ -1,7 +1,7 @@
 import { tFull } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
-import { enemyTargetGrid } from '../models/EnemyTargetGridModel.js';
+import { alternativeEnemyTargetGrid as enemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
 
 // Placement follows fitted figures without intercepting inspection controls.
 function watchTargetPlacement(host, picker) {

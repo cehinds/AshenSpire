@@ -31,6 +31,20 @@ test('isolated enemy uses its nearest free grid center', () => {
   assert.deepEqual(enemyTargetGrid({ width: 420, height: 420, targets: [] }), []);
 });
 
+test('adjacent hounds shrink locally instead of swapping to a distant empty cell', () => {
+  const targets = [{ id:'left',x:440,y:145 },{id:'right',x:548,y:118}];
+  const slots = enemyTargetGrid({width:650,height:337,targets,obstacles:[
+    {left:398,top:33,width:84,height:55},{left:506,top:6,width:84,height:55},
+    {left:398,top:197,width:84,height:14},{left:506,top:170,width:84,height:14},
+  ]});
+  assert.equal(slots.length,2);
+  assert.ok(slots[0].left < slots[1].left,'screen order follows enemy order');
+  for (const [index,slot] of slots.entries()) {
+    assert.ok(slot.width<=64 && slot.width>=48);
+    assert.ok(Math.hypot(slot.left+slot.width/2-targets[index].x,slot.top+slot.height/2-targets[index].y)<40,'stays on its own body');
+  }
+});
+
 test('shifted grid fits narrow free band between intent and health controls', () => {
   const targets = [480, 600, 720].map((x, index) => ({ id: `e${index}`, x, y: 75 }));
   const obstacles = [{ left: 0, top: 0, width: 844, height: 35 }, { left: 0, top: 115, width: 844, height: 35 }];

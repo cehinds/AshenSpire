@@ -2,23 +2,13 @@
 const overlaps = (a, b, gap) => a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
   && a.top < b.top + b.height + gap && a.top + a.height + gap > b.top;
 
-export function enemyTargetGrid({ width, height, targets, obstacles = [], hardObstacles = [], size = 64, gap = 4, inset = 8 }) {
+export function alternativeEnemyTargetGrid({ width, height, targets, obstacles = [], hardObstacles = [], size = 88, gap = 6, inset = 8 }) {
   if (!targets.length || width <= 0 || height <= 0) return [];
-  let cells = [], best = Infinity;
-  const match = grid => {
-    const available = [...grid];
-    const ordered = [...targets].sort((a,b) => a.x-b.x || a.y-b.y);
-    const chosen = ordered.map(target => {
-      available.sort((a,b) => distance(target,a)-distance(target,b));
-      return available.shift();
-    }).sort((a,b) => a.left-b.left || a.top-b.top);
-    return ordered.map((target,i) => ({id:target.id,...chosen[i]}));
-  };
-  const distance = (target,cell) => (cell.left+cell.width/2-target.x)**2+(cell.top+cell.height/2-target.y)**2;
+  let cells = [];
   // Shift the entire lattice when an intent row leaves a narrow free band.
   // Anchored origins also let a lone target sit exactly on its enemy center.
   for (const blocks of [[...obstacles, ...hardObstacles], hardObstacles]) {
-  for (const edge of [...new Set([size, 56, 48].filter(value => value <= size))]) {
+  for (const edge of [...new Set([size, 72, 56, 48].filter(value => value <= size))]) {
     const pitch = edge + gap;
     const origins = (span, anchors, blocks, start, length) => [...new Set([
       inset, (span - edge) / 2, ...anchors.map(value => value - edge / 2),
@@ -26,6 +16,7 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
     ].map(value => inset + ((value - inset) % pitch + pitch) % pitch))];
     const xs = origins(width, targets.map(target => target.x), blocks, 'left', 'width');
     const ys = origins(height, targets.map(target => target.y), blocks, 'top', 'height');
+    let score = Infinity;
     for (const startX of xs) for (const startY of ys) {
       const grid = [];
       for (let top = startY; top + edge <= height - inset; top += pitch) {
@@ -35,11 +26,11 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
         }
       }
       if (grid.length < targets.length) continue;
-      const assigned = match(grid);
-      const score = assigned.reduce((sum,cell) => sum + distance(targets.find(t=>t.id===cell.id),cell),0)
-        + targets.length * (size-edge)**2 * .15;
-      if (score < best) { best = score; cells = assigned; }
+      const distance = targets.reduce((sum, target) => sum + Math.min(...grid.map(cell =>
+        (cell.left + edge / 2 - target.x) ** 2 + (cell.top + edge / 2 - target.y) ** 2)), 0);
+      if (distance < score) { score = distance; cells = grid; }
     }
+    if (cells.length >= targets.length) break;
   }
   if (cells.length >= targets.length) break;
   }
@@ -56,7 +47,6 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
       }
     }
   }
-  if (cells.length && cells[0].id !== undefined) return targets.map(t=>cells.find(c=>c.id===t.id));
   // Match closest pairs first so an already-centered foe keeps its own cell.
   const pairs = targets.flatMap((target, index) => cells.map((cell, slot) => ({ index, slot,
     distance: (cell.left + cell.width / 2 - target.x) ** 2 + (cell.top + cell.height / 2 - target.y) ** 2,

@@ -15,7 +15,7 @@ import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
-import { combatComposition } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition } from '../models/CombatCompositionModel.js';
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
