@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1765",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Contract: reaction controls and round combat log",
+    "detail": "Specify Back/Play skip behavior, an owned combat-scoped reaction switch, and the in-place public round log with three responsive sizes. This contract precedes runtime implementation.",
+    "build": "0.7.1.1149",
+    "pullRequest": 1765,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1765"
+  },
+  {
     "id": "pr-1742",
     "date": "2026-10-08",
     "group": "2026-10-08",
