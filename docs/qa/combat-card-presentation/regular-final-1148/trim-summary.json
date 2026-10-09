@@ -1,0 +1,2041 @@
+{
+  "results": [
+    {
+      "localBuildMetadataForComparison": {
+        "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+        "release": "0.7.1",
+        "ordinal": 1148,
+        "digest": "6e54b35eb3",
+        "built": "2026-10-09"
+      },
+      "compiledIdentity": {
+        "path": "D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire/build/download/AshenSpire.html",
+        "ordinal": "1148",
+        "source": "6e54b35eb3"
+      }
+    },
+    {
+      "shape": "desktop",
+      "matrix": [
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 319.997,
+          "height": 479.989,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 318.243,
+          "height": 478.235,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        }
+      ],
+      "forcedMatrix": [
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        }
+      ],
+      "evidence": {
+        "artifact": {
+          "ordinal": "1148",
+          "source": "6e54b35eb3"
+        },
+        "stage": "final-compiled",
+        "cssInjection": false
+      },
+      "baseline": {
+        "width": "155.674px",
+        "height": "233.525px",
+        "cardWidth": 156,
+        "cardHeight": 234,
+        "insets": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "borderRadius": "0px",
+        "cardRadius": "0px",
+        "motif": "accent",
+        "className": "card as-card playing-poker-card rarity-rare cls-colorless type-skill illustrated-card corrupted-card expanded-combat-card card-inspection-target beat-hold inspection-selected",
+        "display": "block",
+        "pointerEvents": "none",
+        "zIndex": "3",
+        "background": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+        "mask": "radial-gradient(rgba(0, 0, 0, 0) 37%, rgba(0, 0, 0, 0.467) 63%, rgb(0, 0, 0) 88%)",
+        "label": "Corrupted +12 Blight",
+        "rules": "Gain 3 SP. Draw 2. Exhaust.",
+        "name": "Blighted Transmute, Skill, Alteration school",
+        "costs": [
+          {
+            "binding": "name",
+            "text": "Blighted Transmute"
+          },
+          {
+            "binding": "rules",
+            "text": "Gain 3 SP. Draw 2. Exhaust."
+          },
+          {
+            "binding": "stamina",
+            "text": "0"
+          },
+          {
+            "binding": "tags",
+            "text": "Skill"
+          }
+        ],
+        "overflow": false
+      },
+      "after": {
+        "width": "155.674px",
+        "height": "233.525px",
+        "cardWidth": 156,
+        "cardHeight": 234,
+        "insets": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "borderRadius": "0px",
+        "cardRadius": "0px",
+        "motif": "accent",
+        "className": "card as-card playing-poker-card rarity-rare cls-colorless type-skill illustrated-card corrupted-card expanded-combat-card card-inspection-target beat-hold inspection-selected inspection-info-visible",
+        "display": "block",
+        "pointerEvents": "none",
+        "zIndex": "3",
+        "background": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+        "mask": "radial-gradient(rgba(0, 0, 0, 0) 37%, rgba(0, 0, 0, 0.467) 63%, rgb(0, 0, 0) 88%)",
+        "label": "Corrupted +12 Blight",
+        "rules": "Gain 3 SP. Draw 2. Exhaust.",
+        "name": "Blighted Transmute, Skill, Alteration school",
+        "costs": [
+          {
+            "binding": "name",
+            "text": "Blighted Transmute"
+          },
+          {
+            "binding": "rules",
+            "text": "Gain 3 SP. Draw 2. Exhaust."
+          },
+          {
+            "binding": "stamina",
+            "text": "0"
+          },
+          {
+            "binding": "tags",
+            "text": "Skill"
+          }
+        ],
+        "overflow": false
+      },
+      "inspection": {
+        "width": "319.997px",
+        "height": "479.989px",
+        "cardWidth": 320,
+        "cardHeight": 480,
+        "insets": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "borderRadius": "0px",
+        "cardRadius": "0px",
+        "motif": "accent",
+        "className": "card as-card playing-poker-card rarity-rare cls-colorless type-skill illustrated-card corrupted-card expanded-combat-card",
+        "display": "block",
+        "pointerEvents": "none",
+        "zIndex": "3",
+        "background": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+        "mask": "radial-gradient(rgba(0, 0, 0, 0) 37%, rgba(0, 0, 0, 0.467) 63%, rgb(0, 0, 0) 88%)",
+        "label": "Corrupted +12 Blight",
+        "rules": "Gain 3 SP. Draw 2. Exhaust.",
+        "name": "Blighted Transmute, Skill, Alteration school",
+        "costs": [
+          {
+            "binding": "name",
+            "text": "Blighted Transmute"
+          },
+          {
+            "binding": "rules",
+            "text": "Gain 3 SP. Draw 2. Exhaust."
+          },
+          {
+            "binding": "stamina",
+            "text": "0"
+          },
+          {
+            "binding": "tags",
+            "text": "Skill"
+          }
+        ],
+        "overflow": false
+      },
+      "forcedColorsHidden": true,
+      "realInformationClick": true,
+      "escapeAtomic": true
+    },
+    {
+      "shape": "phone",
+      "matrix": [
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "block",
+          "width": 320,
+          "height": 480,
+          "cardWidth": 320,
+          "cardHeight": 480,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "0px",
+          "cardRadius": "0px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "block",
+          "width": 317.778,
+          "height": 477.778,
+          "cardWidth": 318,
+          "cardHeight": 478,
+          "insets": [
+            "0px",
+            "0px",
+            "0px",
+            "0px"
+          ],
+          "radius": "8px",
+          "cardRadius": "8px",
+          "gradient": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+          "pointerEvents": "none",
+          "ok": true
+        }
+      ],
+      "forcedMatrix": [
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "off",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "wash",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "accent",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": true,
+          "rarity": "special",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "common",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "uncommon",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "rare",
+          "display": "none"
+        },
+        {
+          "motif": "band",
+          "illustrated": false,
+          "rarity": "special",
+          "display": "none"
+        }
+      ],
+      "evidence": {
+        "artifact": {
+          "ordinal": "1148",
+          "source": "6e54b35eb3"
+        },
+        "stage": "final-compiled",
+        "cssInjection": false
+      },
+      "baseline": {
+        "width": "162.396px",
+        "height": "243.611px",
+        "cardWidth": 162,
+        "cardHeight": 244,
+        "insets": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "borderRadius": "0px",
+        "cardRadius": "0px",
+        "motif": "accent",
+        "className": "card as-card playing-poker-card rarity-rare cls-colorless type-skill illustrated-card corrupted-card expanded-combat-card card-inspection-target beat-hold inspection-selected",
+        "display": "block",
+        "pointerEvents": "none",
+        "zIndex": "3",
+        "background": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+        "mask": "radial-gradient(rgba(0, 0, 0, 0) 37%, rgba(0, 0, 0, 0.467) 63%, rgb(0, 0, 0) 88%)",
+        "label": "Corrupted +12 Blight",
+        "rules": "Gain 3 SP. Draw 2. Exhaust.",
+        "name": "Blighted Transmute, Skill, Alteration school",
+        "costs": [
+          {
+            "binding": "name",
+            "text": "Blighted Transmute"
+          },
+          {
+            "binding": "rules",
+            "text": "Gain 3 SP. Draw 2. Exhaust."
+          },
+          {
+            "binding": "stamina",
+            "text": "0"
+          },
+          {
+            "binding": "tags",
+            "text": "Skill"
+          }
+        ],
+        "overflow": false
+      },
+      "after": {
+        "width": "162.396px",
+        "height": "243.611px",
+        "cardWidth": 162,
+        "cardHeight": 244,
+        "insets": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "borderRadius": "0px",
+        "cardRadius": "0px",
+        "motif": "accent",
+        "className": "card as-card playing-poker-card rarity-rare cls-colorless type-skill illustrated-card corrupted-card expanded-combat-card card-inspection-target beat-hold inspection-selected inspection-info-visible",
+        "display": "block",
+        "pointerEvents": "none",
+        "zIndex": "3",
+        "background": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+        "mask": "radial-gradient(rgba(0, 0, 0, 0) 37%, rgba(0, 0, 0, 0.467) 63%, rgb(0, 0, 0) 88%)",
+        "label": "Corrupted +12 Blight",
+        "rules": "Gain 3 SP. Draw 2. Exhaust.",
+        "name": "Blighted Transmute, Skill, Alteration school",
+        "costs": [
+          {
+            "binding": "name",
+            "text": "Blighted Transmute"
+          },
+          {
+            "binding": "rules",
+            "text": "Gain 3 SP. Draw 2. Exhaust."
+          },
+          {
+            "binding": "stamina",
+            "text": "0"
+          },
+          {
+            "binding": "tags",
+            "text": "Skill"
+          }
+        ],
+        "overflow": false
+      },
+      "inspection": {
+        "width": "320px",
+        "height": "480px",
+        "cardWidth": 320,
+        "cardHeight": 480,
+        "insets": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "borderRadius": "0px",
+        "cardRadius": "0px",
+        "motif": "accent",
+        "className": "card as-card playing-poker-card rarity-rare cls-colorless type-skill illustrated-card corrupted-card expanded-combat-card",
+        "display": "block",
+        "pointerEvents": "none",
+        "zIndex": "3",
+        "background": "linear-gradient(126deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8%, rgba(236, 120, 63, 0.6) 8.25%, rgba(236, 120, 63, 0.6) 8.55%, rgba(0, 0, 0, 0) 8.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(45deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 13%, rgba(250, 155, 83, 0.467) 13.2%, rgba(250, 155, 83, 0.467) 13.5%, rgba(0, 0, 0, 0) 13.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(232deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 17%, rgba(225, 100, 54, 0.467) 17.2%, rgba(225, 100, 54, 0.467) 17.5%, rgba(0, 0, 0, 0) 17.75%, rgba(0, 0, 0, 0) 100%), linear-gradient(304deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(245, 148, 80, 0.467) 10.2%, rgba(245, 148, 80, 0.467) 10.5%, rgba(0, 0, 0, 0) 10.75%, rgba(0, 0, 0, 0) 100%), radial-gradient(rgba(0, 0, 0, 0) 46%, rgba(16, 13, 11, 0.85) 82%, rgb(8, 7, 7) 100%)",
+        "mask": "radial-gradient(rgba(0, 0, 0, 0) 37%, rgba(0, 0, 0, 0.467) 63%, rgb(0, 0, 0) 88%)",
+        "label": "Corrupted +12 Blight",
+        "rules": "Gain 3 SP. Draw 2. Exhaust.",
+        "name": "Blighted Transmute, Skill, Alteration school",
+        "costs": [
+          {
+            "binding": "name",
+            "text": "Blighted Transmute"
+          },
+          {
+            "binding": "rules",
+            "text": "Gain 3 SP. Draw 2. Exhaust."
+          },
+          {
+            "binding": "stamina",
+            "text": "0"
+          },
+          {
+            "binding": "tags",
+            "text": "Skill"
+          }
+        ],
+        "overflow": false
+      },
+      "forcedColorsHidden": true,
+      "realInformationClick": true,
+      "escapeAtomic": true
+    }
+  ],
+  "errors": []
+}

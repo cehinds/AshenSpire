@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Card names and actions stay readable over their artwork",
     "detail": "A dark title backdrop fades into the illustration. Larger solid action symbols and names sit inside the textured base frame, with a fist for Smash and a shield crossed by a sword for Counter. Up to three primary symbols line the right edge; Information keeps every tag and detail. Concise effects remain complete inside adaptive parchment panels.",
-    "build": "0.7.1.1147",
+    "build": "0.7.1.1150",
     "pullRequest": 1766,
     "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1742",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Counters prepare the right action and Upcast stays reachable",
+    "detail": "Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.",
+    "build": "0.7.1.1148",
+    "pullRequest": 1742,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1742"
   },
   {
     "id": "pr-1761",

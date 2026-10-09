@@ -9,7 +9,7 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, combatExpansionVersion } = {}) {
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
@@ -19,6 +19,14 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation } 
   const bow = equipment.find(item => item.id === 'shortbow');
   const parry = equipment.some(item => item.id === 'parryDagger');
   const shieldIntent = visuals.has('fx:shield') || tags.has('shield') || card.equipmentProfileId === 'shieldGuard';
+  // Expanded maneuvers describe the paid action independently of its legacy
+  // Attack/Skill lifecycle kind. Preparing a Counter never swings a weapon.
+  if (combatExpansionVersion === 2 && tags.has('maneuver:counter')) {
+    if (tags.has('camp:spell')) return { group: 'cast', technique: 'cast', rest: 'cast', family: 'spell', motion: 'cast' };
+    const technique = shield && card.sourceArmamentId !== 'parryDagger' ? 'shieldGuard'
+      : parry ? 'parry' : 'guard';
+    return { group: 'defend', technique, rest: technique, family: 'guard', motion: 'brace' };
+  }
   if (kind === 'attack') {
     // Spell source is the card's attack identity, regardless of which focus or
     // physical weapon happens to be held. A selected set supplies its cast clip;
