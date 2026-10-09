@@ -68,6 +68,31 @@ const ZOOM_SUPPORTED = typeof CSS !== 'undefined' && typeof CSS.supports === 'fu
 // asserting a property nobody writes.
 export const FAN_LIFT_PROP = '--fan-lift';
 
+export function measureHandUpcastHeight(controls, { zoom, width, cache }) {
+  const style = getComputedStyle(controls);
+  const inputs = [...(controls.querySelectorAll?.('button,select') || [])].map(node => {
+    const input = getComputedStyle(node);
+    return [input.font, input.minHeight, input.minWidth, input.paddingTop, input.paddingBottom,
+      input.borderTopWidth, input.borderBottomWidth];
+  });
+  const key = JSON.stringify([zoom, width, style.font, style.paddingTop, style.paddingBottom,
+    style.borderTopWidth, style.borderBottomWidth, style.gap, controls.textContent, inputs]);
+  const prior = cache.get(controls);
+  if (prior?.key === key) return prior.height;
+  const sample = controls.cloneNode(true);
+  sample.setAttribute('aria-hidden', 'true');
+  sample.inert = true;
+  Object.assign(sample.style, { display: 'flex', visibility: 'hidden', pointerEvents: 'none', minWidth: '0', maxWidth: `${width}px` });
+  sample.querySelectorAll('[hidden]').forEach(node => { node.hidden = false; });
+  controls.parentElement.appendChild(sample);
+  // offsetHeight is already local layout px and excludes the owning fan's
+  // rotation/zoom. Its reserve cannot change when selection flattens that fan.
+  const height = sample.offsetHeight;
+  sample.remove();
+  cache.set(controls, { key, height });
+  return height;
+}
+
 export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true, reuseCards = false }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
@@ -88,18 +113,31 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   const renderedCards = new Map();
   let presentationOrder = [];
   let lastRender = null;
+  const upcastMeasurements = new WeakMap();
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
     if (fitFan) {
       const cards = handEls.filter(el => el.parentNode === handEl);
       if (!cards.length || !handEl.isConnected) return;
+      // Scoped physical touch targets must apply on the very first measure.
+      handEl.dataset.wireframeHand = 'true';
       const rect = handEl.getBoundingClientRect();
       const zoom = rect.width / handEl.clientWidth || 1;
       const fontSize = getComputedStyle(document.documentElement).fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
-      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight, count: cards.length, rem, zoom });
-      handEl.dataset.wireframeHand = 'true';
+      handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
+      // Measure the complete row, including the normally hidden native picker.
+      // Hidden, inert clones reserve its space before a press selects a face;
+      // selection must never resize the fan underneath that pointer.
+      let controlsHeight = 0;
+      for (const card of cards) {
+        const controls = card.querySelector('.card-upcast-controls');
+        if (!controls) continue;
+        controlsHeight = Math.max(controlsHeight, measureHandUpcastHeight(controls,
+          { zoom, width: Math.max(0, handEl.clientWidth - 2 / zoom), cache: upcastMeasurements }));
+      }
+      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight, count: cards.length, rem, zoom, controlsHeight });
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
       handEl.style.setProperty('--hand-rest-left', plan.restLeft + 'px');

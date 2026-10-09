@@ -347,14 +347,18 @@ export function wireBattlefieldStage(field, model) {
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .map(footer => footer.getBoundingClientRect().width)),
       controls: [...frame.querySelectorAll('.combatant-leading button')]
+        .filter(control => {
+          const style = getComputedStyle(control);
+          return !control.hidden && style.display !== 'none' && !['hidden','collapse'].includes(style.visibility);
+        })
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
     const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
-      lockX: true, size: Math.max(44, ...boxes.map(box => box.intentRect?.height || 0)),
-      obstacles: boxes.flatMap(box => box.controls.map(rect => ({
+      lockX: true, size: 44,
+      obstacles: [...(ribbon ? [ribbon] : []), ...boxes.flatMap(box => box.controls.map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
-      }))),
+      })))],
       targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
@@ -366,8 +370,10 @@ export function wireBattlefieldStage(field, model) {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
       if (intentRect) {
-        frame.style.setProperty('--enemy-hit-width', `${intentRect.width / zoom}px`);
-        frame.style.setProperty('--enemy-hit-height', `${intentRect.height / zoom}px`);
+        frame.style.setProperty('--enemy-hit-width', `${Math.max(44,intentRect.width) / zoom}px`);
+        // Intent cards can be taller; the independent foot target keeps its
+        // physical 44px minimum so two aligned footer bands fit a short stage.
+        frame.style.setProperty('--enemy-hit-height', `${44 / zoom}px`);
       }
       if (frameRect) {
         const target = targets.find(target => target.id === frame.dataset.eid);

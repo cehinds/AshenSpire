@@ -278,3 +278,49 @@ test('upward fallback still reports obstruction when an overhead occupies all av
   assert.equal(placed[0].obstructed,true);assert.equal(placed[0].x,60);
   assert.ok(placed[0].y-22>=0&&placed[0].y+22<=60);
 });
+
+test('actual 390x650 XL aligned feet fit complete 44px targets below visible intents', () => {
+  const top=74.734375,height=275.203125;
+  const targets=[{id:'player',x:91.65625,y:462.046875-top,width:44},
+    {id:'e1',x:161.2421875,y:303.15625-top+54.390625/2,width:96},
+    {id:'e2',x:263.2421875,y:303.15625-top+54.390625/2,width:96},
+    {id:'e3',x:165.734375,y:259.109375-top+54.390625/2,width:96}];
+  const obstacles=[{left:113.25,right:209.25,top:195.453125-top,bottom:249.84375-top},
+    {left:215.25,right:311.25,top:195.453125-top,bottom:249.84375-top},
+    {left:117.75,right:213.75,top:129.953125-top,bottom:184.34375-top}];
+  const before=structuredClone(targets);
+  const packed=combatTargetAnchors({width:390,height,size:44,targets,obstacles,lockX:true});
+  assert.deepEqual(targets,before,'the retry never mutates measured feet');
+  for(const target of packed){
+    assert.equal(target.x,before.find(t=>t.id===target.id).x,'canonical columns do not move');
+    assert.equal(target.obstructed,false,target.id);
+    assert.ok(target.y-22>=0&&target.y+22<=height,target.id+' stays inside the field');
+    for(const obstacle of obstacles)assert.ok(target.x+target.width/2<=obstacle.left
+      || target.x-target.width/2>=obstacle.right || target.y+22<=obstacle.top
+      || target.y-22>=obstacle.bottom,target.id+' clears every visible intent');
+  }
+  for(let i=0;i<packed.length;i++)for(let j=i+1;j<packed.length;j++){
+    const a=packed[i],b=packed[j];
+    assert.ok(Math.abs(a.x-b.x)>=(a.width+b.width)/2||Math.abs(a.y-b.y)>=46,
+      a.id+'/'+b.id+' complete target/footer rectangles remain separate');
+  }
+  const byId=id=>packed.find(t=>t.id===id);
+  assert.equal(byId('e1').y,height-22,'the crowded column keeps its floor target');
+  assert.equal(byId('e3').y,byId('e1').y-46,'the other row fills the remaining lower slot');
+  assert.equal(byId('player').y,byId('e1').y-46,'a narrow player target clears the wider tied floor plate');
+  assert.deepEqual(combatTargetAnchors({width:390,height,size:44,targets,lockX:true,
+    obstacles:[...obstacles,{left:120,right:270,top:0,bottom:26}]}),packed,
+    'a visible ribbon ceiling cannot force a target away from the available lower slots');
+  assert.deepEqual(combatTargetAnchors({width:390,height,size:44,targets:packed,obstacles,lockX:true})
+    .toSorted((a,b)=>a.id.localeCompare(b.id)),packed.toSorted((a,b)=>a.id.localeCompare(b.id)),
+    'a repeated refresh keeps the settled packing');
+});
+
+test('bounded floor retry does not trade an impossible stage for outside or overlapping targets', () => {
+  const targets=[{id:'a',x:60,y:58,width:44},{id:'b',x:60,y:60,width:44}];
+  const packed=combatTargetAnchors({width:120,height:80,size:44,targets,lockX:true});
+  assert.equal(packed.filter(t=>t.obstructed).length,1,'insufficient room remains explicitly obstructed');
+  for(const target of packed){assert.equal(target.x,60);assert.ok(target.y-22>=0&&target.y+22<=80);}
+  assert.deepEqual(combatTargetAnchors({width:120,height:80,size:44,targets,lockX:true}),packed,
+    'the two bounded attempts are deterministic');
+});

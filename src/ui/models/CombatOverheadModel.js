@@ -19,8 +19,10 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
   if (lockX) {
     // Option C shares one vertical center line with the combatant and intent.
     // Resolve crowded footer rows vertically without detaching the plate.
+    const pack = ordered => {
     const placed = [];
-    for (const control of controls.toSorted((a,b) => a.y-b.y)) {
+    for (const source of ordered) {
+      const control = { ...source };
       const blockers = [...obstacles, ...placed.map(p => ({ left:p.x-p.width/2,
         right:p.x+p.width/2, top:p.y-half, bottom:p.y+half }))];
       const desiredY = control.y;
@@ -48,6 +50,23 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
       placed.push({ ...control, obstructed:blockers.some(o => intersects(control,control.x,o)) });
     }
     return placed;
+    };
+    const ascending = pack(controls.toSorted((a,b) => a.y-b.y));
+    const blocked = result => result.filter(control => control.obstructed).length;
+    const shift = result => result.reduce((sum, control) => sum
+      + Math.abs(control.y-controls.find(source => source.id===control.id).y),0);
+    const displaced = ascending.some(control => Math.abs(control.y
+      - controls.find(source => source.id===control.id).y)>2*size);
+    if (!blocked(ascending) && !displaced) return ascending;
+    // A first footer near the floor can consume the only downward slot for
+    // another fighter in the same column. Retry from the floor only when the
+    // usual placement fails or separates a cue far from its feet. Wide plates
+    // get a tied floor slot before narrow targets; ordinary clear layouts keep
+    // their exact anchors. Prefer fewer collisions, then less total movement.
+    const descending = pack(controls.toSorted((a,b) => b.y-a.y || b.width-a.width));
+    return blocked(descending) < blocked(ascending)
+      || blocked(descending)===blocked(ascending) && shift(descending)<shift(ascending)
+      ? descending : ascending;
   }
   let anchors;
   // A translated target can join another footer band; repack those final

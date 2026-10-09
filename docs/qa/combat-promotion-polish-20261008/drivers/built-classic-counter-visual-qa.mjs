@@ -78,8 +78,14 @@ await click('[data-instance-id="'+mounted.instanceId+'"]');
 await click('[data-instance-id="'+mounted.instanceId+'"] .card-upcast');
 await until('!!document.querySelector(".card-upcast-rank:not([hidden])")');
 await capture('native-tier-picker-open');results.push({shape:shape.name,pickerGeometry:await ev('Array.from(document.querySelectorAll(".card-upcast-controls,.card-upcast-rank:not([hidden])")).filter(n=>n.getBoundingClientRect().width).map(n=>({className:n.className,rect:n.getBoundingClientRect().toJSON(),viewport:innerWidth,pageWidth:document.documentElement.scrollWidth,scrollX,focused:n===document.activeElement,hand:(()=>{const h=n.closest(".hand");if(!h)return null;const c=getComputedStyle(h);return{rect:h.getBoundingClientRect().toJSON(),clientWidth:h.clientWidth,scrollWidth:h.scrollWidth,scrollLeft:h.scrollLeft,overflowX:c.overflowX,position:c.position,wireframe:h.dataset.wireframeHand}})()}))')});
-const chooserFits = await ev(`Array.from(document.querySelectorAll('.card-upcast-controls button,.card-upcast-controls select')).filter(n=>n.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect(),h=n.closest('.hand').getBoundingClientRect();return r.left>=Math.max(0,h.left)-1&&r.right<=Math.min(innerWidth,h.right)+1&&r.top>=0&&r.bottom<=Math.min(innerHeight,h.bottom)+1;})`);
+const chooserFits = await ev(`Array.from(document.querySelectorAll('.card-upcast-controls button,.card-upcast-controls select')).filter(n=>n.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect(),h=n.closest('.hand').getBoundingClientRect();return r.left>=Math.max(0,h.left)-1&&r.right<=Math.min(innerWidth,h.right)+1&&r.top>=Math.max(0,h.top)-1&&r.bottom<=Math.min(innerHeight,h.bottom)+1;})`);
 if (!chooserFits) throw Error('Complete native Upcast controls must clear the hand/footer edge');
+const selectedFaceFits = await ev(`Array.from(document.querySelectorAll('.hand .card:is(.selected,.inspection-selected)')).filter(n=>n.querySelector('.card-upcast-controls')?.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect(),h=n.closest('.hand').getBoundingClientRect(),u=n.querySelector('.card-upcast-controls').getBoundingClientRect();return r.left>=Math.max(0,h.left)-1&&r.right<=Math.min(innerWidth,h.right)+1&&r.top>=Math.max(0,h.top)-1&&r.bottom<=Math.min(innerHeight,h.bottom)+1&&u.top>=r.bottom-1;})`);
+if (!selectedFaceFits) throw Error('Whole selected card must fit the clipped hand with Upcast below its face');
+const nativeControlsLargeEnough = await ev(`Array.from(document.querySelectorAll('.card-upcast-controls button,.card-upcast-controls select')).filter(n=>n.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect();return r.width>=43.9&&r.height>=43.9;})`);
+if (!nativeControlsLargeEnough) throw Error('Every visible native Upcast input must retain a 44px tap target');
+
+
 // Open and select the real native tier picker with keyboard events; do not
 // assign its value or dispatch a synthetic change through the DOM.
 await click('[data-instance-id="'+mounted.instanceId+'"] .card-upcast-rank');
