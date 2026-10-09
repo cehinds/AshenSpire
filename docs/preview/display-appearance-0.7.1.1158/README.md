@@ -1,4 +1,4 @@
-# Appearance comparison - development build 0.7.1.1156
+# Appearance comparison - development build 0.7.1.1158
 
 This is local development evidence for PR #1757. The README release gallery remains Release 0.7.1.1060. [Capture identity and image hashes](manifest.json) - [Browser results](report.json).
 
