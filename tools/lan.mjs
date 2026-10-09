@@ -233,7 +233,7 @@ export function attachLan(server, { port, root }) {
     if (!g) return;
     // Couch co-op: `as` lets a client act for any seat it OWNS (validated).
     const id = msg.as && memberIdsOf(pl).includes(msg.as) ? msg.as : pl.id;
-    if (['predictIntent', 'knowledgeBanked', 'knowledgeBankFailed'].includes(msg.t) && msg.as && !memberIdsOf(pl).includes(msg.as)) return;
+    if (['predictIntent', 'knowledgeBanked', 'knowledgeBankFailed', 'setReactions', 'chooseReaction'].includes(msg.t) && msg.as && !memberIdsOf(pl).includes(msg.as)) return;
     if((msg.t.startsWith('classRespec')||['claimSkillLevel','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(msg.t)) && msg.as && !memberIdsOf(pl).includes(msg.as))return;
     const progressionIntent=operation=>{const result=operation();for(const [socket,client] of session.clients)if(client===pl)socket.write(wsEncode(JSON.stringify({t:'progressionResult',memberId:id,ok:result.ok,error:result.error})));};
     switch (msg.t) {
@@ -254,6 +254,8 @@ export function attachLan(server, { port, root }) {
       case 'recoverControl': progressionIntent(() => g.combatRecovery(id, msg.selections)); break;
       case 'chooseBlightFeat': progressionIntent(() => g.combatBlightFeat(id, { threshold: msg.threshold, path: msg.path })); break;
       case 'chooseDiscard': g.combatChooseDiscard(id, msg.cardInstanceIds); break;
+      case 'chooseReaction': progressionIntent(() => g.combatChooseReaction(id, { offerId: msg.offerId, optionId: msg.optionId ?? null })); break;
+      case 'setReactions': progressionIntent(() => g.combatSetReactions(id, msg.enabled)); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
       case 'chooseAbilityDraft': progressionIntent(()=>g.chooseAbilityDraft(id,msg.offerId,msg.choiceId,{catchup:msg.catchup===true,saveSession:persistRespecSnapshot})); break;

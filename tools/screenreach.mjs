@@ -76,6 +76,8 @@ if (process.argv.includes('--selftest')) {
     tool: 'screenreach.mjs',
     args: ['--only', '390x650'],
     timeoutMs: 600000,
+    // Variant hit-test carriers require the authored figures in the copy.
+    extraCopy: ['assets-display'],
     plants: [
       {
         // #28 moved the bar BELOW the map, so re-floating it is not one
@@ -144,18 +146,18 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.alternative-silhouette \[authored-neighbour\])/,
       },
       {
-        name: 'a silhouette loses its frame-level tap area',
+        name: 'a silhouette loses its frame and attached plate tap areas',
         file: 'styles/combat.css',
-        append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
+        append: '.enemy-target-hitbox::after, .enemy-target-hitbox .combatant-card > :is(.nm,.meters), .enemy-target-hitbox .combatant-card > :is(.nm,.meters) * { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
-        name: 'a small player sprite loses its frame-level tap area',
+        name: 'a player loses its artwork, frame and mini HUD tap areas',
         file: 'styles/combat.css',
-        append: '.player-target-hitbox::after { pointer-events: none !important; }',
+        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite *, .player .combatant-mini-hud, .player .combatant-mini-hud * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -270,22 +272,27 @@ const SETTINGS_CYCLE = `(async () => {
 const INTENT_OVERLAP = `(() => {
   if (innerWidth !== 390 || innerHeight !== 650) return true;
   // Missing art uses a wider fallback figure in copied trees. Pin the small
-  // player case below the probe's 24px patch size in both clean and bad runs.
+  // player case below 24px when the visible plate supplies its tap area.
+  // Waist-overlap players use exposed artwork and retain their authored size.
   const player = document.querySelector('.combatant.player .combatant-card > .sprite');
   const playerBefore = player?.getBoundingClientRect();
   if (!playerBefore || !Number.isFinite(playerBefore.width) || playerBefore.width <= 0)
     throw new Error('screenreach: small-player fixture is missing its sprite');
-  player.style.transformOrigin = 'center bottom';
-  player.style.scale = String(Math.min(1, 16 / playerBefore.width));
-  // Artwork may overhang its host. Keep this deliberately small fixture's
-  // actual hit surface inside the measured 16px host.
-  player.style.overflow = 'clip';
-  const playerAfter = player.getBoundingClientRect();
-  if (playerAfter.width >= 24 || Math.abs(playerAfter.bottom - playerBefore.bottom) > 1
-      || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
-    throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
+  const playerPlate = getComputedStyle(player.closest('.combatant'), '::after').display !== 'none';
+  let playerAfter = playerBefore;
+  if (playerPlate) {
+    player.style.transformOrigin = 'center bottom';
+    player.style.scale = String(Math.min(1, 16 / playerBefore.width));
+    // Artwork may overhang its host. Keep this deliberately small fixture's
+    // actual hit surface inside the measured 16px host.
+    player.style.overflow = 'clip';
+    playerAfter = player.getBoundingClientRect();
+    if (playerAfter.width >= 24 || Math.abs(playerAfter.bottom - playerBefore.bottom) > 1
+        || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
+      throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
+  }
   const frames = [...document.querySelectorAll('.combatant.enemy')];
-  const depth = frame => Number(frame.querySelector('.combatant-card > .sprite').style.zIndex);
+  const depth = frame => Number(getComputedStyle(frame.querySelector('.combatant-card > .sprite')).zIndex);
   const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
   const high = frames.find(frame => depth(frame) > depth(low));
   const intent = low?.querySelector('.intent');
@@ -307,15 +314,17 @@ const INTENT_OVERLAP = `(() => {
   const centreX = playerFrameBox.left + playerFrameBox.width / 2, centreY = playerFrameBox.top + playerFrameBox.height / 2;
   // This fixture moves only sideways; keep the production target's fitted
   // vertical anchor, which may already be clamped above the hand.
-  const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::after').top) * zoom;
-  const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
-  playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
-  const playerMoved = player.getBoundingClientRect(), playerMovedFrameBox = playerFrame.getBoundingClientRect();
-  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerMovedFrameBox.left) / zoom) + 'px');
-  playerFrame.style.setProperty('--enemy-hit-y', ((playerHitY - playerMovedFrameBox.top) / zoom) + 'px');
-  if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
-      || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
-    throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
+  if (playerPlate) {
+    const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::after').top) * zoom;
+    const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
+    playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
+    const playerMoved = player.getBoundingClientRect(), playerMovedFrameBox = playerFrame.getBoundingClientRect();
+    playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerMovedFrameBox.left) / zoom) + 'px');
+    playerFrame.style.setProperty('--enemy-hit-y', ((playerHitY - playerMovedFrameBox.top) / zoom) + 'px');
+    if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
+        || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
+      throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
+  }
   // Stage the pair in the clear centre so neither existing fighter's target
   // becomes an accidental second obstruction in this controlled scene.
   sprite.style.translate = ((fieldBox.left + fieldBox.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
@@ -329,7 +338,7 @@ const INTENT_OVERLAP = `(() => {
   if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
     throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
   const centreHit = document.elementFromPoint(centreX, centreY);
-  if (centreHit && playerFrame.contains(centreHit))
+  if (playerPlate && centreHit && playerFrame.contains(centreHit))
     throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
   return true;
 })()`;
@@ -449,6 +458,8 @@ const PROBE = `(() => {
     if (hit && (hit === c || c.contains(hit))) continue;
     // Formation frames span a grid cell. Measure the actual 44 px frame tap
     // target: final fitting can pack it away from an overlapping sprite foot.
+    // Its attached name/HP plate belongs to the same fighter and can answer
+    // the hit test, just as it does for the ordinary centre test above.
     // The frame centre may still sit beneath another fighter.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
@@ -456,12 +467,17 @@ const PROBE = `(() => {
       const targetStyle = getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
-      const reach = c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
+      // Waist-overlap players expose their artwork; their plate is hidden.
+      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none';
+      const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => top === c || top === sprite || sprite.contains(top))
+          top => top === c || c.contains(top))
         : exposedPatch(sprite, 24);
       if (reach) continue;
+      // The attached player details panel is another visible surface of this
+      // same clickable frame, and may cover its artwork on short XL layouts.
+      if (c.matches('.player') && exposedPatch(c.querySelector('.combatant-mini-hud'), 24)) continue;
     }
     // A tall neighbouring enemy can paint across an intent badge's centre on
     // short phones. It is still usable if a finger-sized patch of that button
@@ -527,7 +543,16 @@ const PROBE = `(() => {
         + ' (travel ' + Math.round(travelX) + 'x' + Math.round(travelY) + ', at ' + Math.round(port.scrollLeft) + ',' + Math.round(port.scrollTop) + ')');
       continue;
     }
-    covered.push(name(c) + '  <-  ' + name(hit));
+    // Identify an authored neighbouring figure without treating an arbitrary
+    // image, a failed-art placeholder, or this intent's own enemy as that defect.
+    const intentOwner = c.matches('.intent') ? c.closest('.combatant.enemy') : null;
+    const silhouette = hit?.closest('.alternative-silhouette');
+    const actor = silhouette?.closest('[data-alternative-sprite]');
+    const blockerOwner = actor?.closest('.combatant.enemy');
+    const authoredNeighbour = intentOwner && blockerOwner && intentOwner !== blockerOwner
+      && hit.tagName === 'IMG' && hit.complete && hit.naturalWidth > 0 && hit.naturalHeight > 0;
+    covered.push(name(c) + '  <-  ' + name(hit)
+      + (authoredNeighbour ? ' via .alternative-silhouette [authored-neighbour]' : ''));
   }
   const visual = [];
   // The shared class-pick narrow composition expects one cp-body text
@@ -647,7 +672,7 @@ async function main() {
       const tail = sc.overlay ? `  (overlay screen: ${sc.overlay})` : '';
       console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED${tail}`);
       for (const c of r.covered) console.log(`               ✗ ${c}`);
-      if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered[0]}`);
+      if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered.join('; ')}`);
       for (const finding of r.visual) console.log(`               ✗ ${finding}`);
       if (r.visual.length) fails.push(`${shape} ${sc.name}: ${r.visual[0]}`);
     }

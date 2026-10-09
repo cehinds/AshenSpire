@@ -36,6 +36,26 @@ combat.protection.block,,Block,Absorbs attack damage.,Block
 combat.protection.ward,,Arcane Ward,Block granted by magical guards. Absorbs attack damage after ordinary Block.,Arcane Ward
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard
+# ---- optional defensive reactions and public combat receipts --------------
+combat.log.title,,Combat log,,
+combat.log.sizeLabel,,Log size,,
+combat.log.size.small,,Small,,
+combat.log.size.medium,,Medium,,
+combat.log.size.large,,Large,,
+combat.log.actions,,Actions by round,,
+combat.log.round,,Round {round},,
+combat.log.empty,,,Actions will appear here as the round unfolds.,
+combat.reactions.label,,Reaction,,
+combat.reactions.enabled,,enabled,,
+combat.reactions.disabled,,disabled,,
+combat.reactions.state,,Reaction {state},,
+combat.reaction.title,,Respond to the incoming action,,
+combat.reaction.eyebrow,,Defensive reaction,,
+combat.reaction.help,,,Choose a card to play before this action resolves. Back skips this reaction.,
+combat.reaction.play,,Play,,
+combat.reaction.upcast,,Upcast {tier},,
+combat.reaction.sp,,{amount} SP,,
+combat.reaction.mp,,{amount} MP,,
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue
@@ -882,6 +902,7 @@ settings.defaults.local,,Keep local settings,,
 settings.defaults.use,,Use defaults,,
 settings.defaults.failed,,Your settings could not be saved. Your previous settings are still in use. Please try again.,,
 settings.row.useSprites,,Character sprites,Show a drawn class figure in combat instead of your chosen sigil.,
+settings.row.classicAppearance,,Classic appearance,Use the previous character art and battlefield layout. Turn off for the layered appearance. This choice changes visuals only.,
 settings.row.animSpeed,,Combat pacing,Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.,
 settings.row.performanceMode,,Rendering quality,"Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.",
 settings.row.titleCityHold,,Lit city pause,Pause with the city fully lit before fading to the menu. Reduced motion skips this pause.,

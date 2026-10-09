@@ -1,0 +1,70 @@
+{
+  "id": "reaver-warden",
+  "name": "Warden Mail \u00b7 Reaver",
+  "family": "armor",
+  "classId": "reaver",
+  "outfitId": "warden",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A battle-worn sellsword, closed steel helmet, heavy layered plate and chainmail, ragged rust-red scarf and cloak, worn leather straps, sword lowered diagonally. Recognizable as the knight on the left of the supplied reference. Outfit: Warden Mail. Lore: Issued, not chosen. Material palette: plate #3F4C5A, plateLt #64798E, leather #3A3226, under #24272A. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/reaver-warden-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-ebce3652-979d-443f-813a-9b6959f54013.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6173686981201172,
+    "visibleBounds": [
+      42,
+      78,
+      1008,
+      1415
+    ],
+    "anchor": [
+      525.0,
+      1415
+    ],
+    "sha256": "6db203257872770d4efba36b304bc6ed2a895acfcba1c33e752fef3d4dfd4dce"
+  },
+  "referenceImages": [
+    "masters/reaver-warden.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/reaver-warden.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5881868998209635,
+      "visibleBounds": [
+        47,
+        70,
+        996,
+        1451
+      ],
+      "anchor": [
+        521.5,
+        1451
+      ],
+      "sha256": "05b628432847ea97820acf99ccf089248ce3ed8df352ea0df0cd12b709ef392f"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A battle-worn sellsword, closed steel helmet, heavy layered plate and chainmail, ragged rust-red scarf and cloak, worn leather straps, sword lowered diagonally. Recognizable as the knight on the left of the supplied reference. Outfit: Warden Mail. Lore: Issued, not chosen. Material palette: plate #3F4C5A, plateLt #64798E, leather #3A3226, under #24272A. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

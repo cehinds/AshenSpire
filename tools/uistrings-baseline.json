@@ -6,13 +6,13 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 295,
-  "distinct": 249,
+  "sites": 294,
+  "distinct": 248,
   "files": {
     "src/ui/screens/customize.js": 43,
     "src/ui/screens/lobby.js": 23,
     "src/ui/components/offlinePlay.js": 20,
-    "src/ui/screens/coop.js": 20,
+    "src/ui/screens/coop.js": 19,
     "src/ui/screens/customRun.js": 19,
     "src/ui/screens/settings.js": 15,
     "src/ui/screens/profileNotice.js": 12,

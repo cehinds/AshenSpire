@@ -1308,3 +1308,31 @@ Settings → Advanced → Progression controls starting stat pools, class attrib
 ### Combat hit-stop validation
 
 Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.
+
+### Alternative combat art
+
+`python tools/alternative-art-build.py` exports the reviewed package identified
+by `sourceCommit` in `src/ui/alternativeArtCatalog.js`. It checks source hashes,
+keeps original alpha at desktop resolution, verifies decoded export alpha, and
+creates smaller phone derivatives. The generated catalog has explicit canonical
+actor IDs and 32 settings with independent desktop/phone layer transforms.
+Runtime class/armor lookup prefers an exact appearance, then the outfit table's
+explicit visual class/set alias. Shared armor retains the reviewed package's
+mapping; future class-by-armor artwork can add exact IDs without replacing this
+collection or changing gameplay equipment definitions.
+
+Solo and co-op use `combatEnvironment` / saved dungeon selection through
+`combatBackdropHtml`. `fitAlternativeBackdrop` fits each art canvas to the
+battlefield and its formation ground; it does not import review-page HUD or
+actor positions. Companion art decorates the existing ally indicators. Named
+speaker rear sprites are addressable by their canonical IDs for combat
+presentation; dialogue keeps its existing portraits. These are idle images,
+with no action/hand anchors, pose strips or invented animation coverage.
+
+Check `node --test tests/alternative-art.test.mjs tests/environment-art.test.mjs
+tests/alternative-formation.test.mjs`. `node tools/alternative-art-qa.mjs` walks
+all 32 settings at desktop and phone sizes, co-op, a mounted resize, and real
+Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
+`COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built
+portable file. Outputs and temporary/browser storage must stay on D: locally.
+

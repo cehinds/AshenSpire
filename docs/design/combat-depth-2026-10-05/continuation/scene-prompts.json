@@ -1,0 +1,543 @@
+[
+  {
+    "id": "ashen-crown-far",
+    "region": "ashen-crown",
+    "kind": "far",
+    "reference": "../references/composition.png",
+    "transparent": false,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: ruined royal capital, distant Gothic towers and aqueduct silhouettes under smoky amber dusk, weathered grey limestone, russet leaves. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+    "resultFile": "scenes/shared/ashen-crown/far.png"
+  },
+  {
+    "id": "ashen-crown-ground",
+    "region": "ashen-crown",
+    "kind": "ground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: worn grey limestone courtyard paving and cracked cobbles with sparse russet leaves. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/ashen-crown/ground.png"
+  },
+  {
+    "id": "ashen-crown-foreground",
+    "region": "ashen-crown",
+    "kind": "foreground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: crumbling limestone balustrade fragments, dark cypress branches and a tarnished brass lantern. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/ashen-crown/foreground.png"
+  },
+  {
+    "id": "pale-marches-far",
+    "region": "pale-marches",
+    "kind": "far",
+    "reference": "../references/composition.png",
+    "transparent": false,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: cold desolate mountain kingdom, distant jagged snowy peaks, icy mist and blue-grey overcast sky, silver light, no warm sunset. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+    "resultFile": "scenes/shared/pale-marches/far.png"
+  },
+  {
+    "id": "pale-marches-ground",
+    "region": "pale-marches",
+    "kind": "ground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: dark slate paving with thin snow, flat frost and subtle cracked ice, no high snowdrifts in standing area. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/pale-marches/ground.png"
+  },
+  {
+    "id": "pale-marches-foreground",
+    "region": "pale-marches",
+    "kind": "foreground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: jagged frost-coated stone and bare ice-encrusted branches, restrained silver-blue light. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/pale-marches/foreground.png"
+  },
+  {
+    "id": "cinder-reach-far",
+    "region": "cinder-reach",
+    "kind": "far",
+    "reference": "../references/composition.png",
+    "transparent": false,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: volcanic wasteland, distant basalt ridges, smoky orange horizon and ash-filled charcoal sky, restrained tiny lava glows far away. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+    "resultFile": "scenes/shared/cinder-reach/far.png"
+  },
+  {
+    "id": "cinder-reach-ground",
+    "region": "cinder-reach",
+    "kind": "ground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: flat black basalt paving, scattered ash and banked ember cracks at outer edges, no lava beneath standing area. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/cinder-reach/ground.png"
+  },
+  {
+    "id": "cinder-reach-foreground",
+    "region": "cinder-reach",
+    "kind": "foreground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: black broken basalt columns and cooled slag rocks, one small banked ember lantern. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/cinder-reach/foreground.png"
+  },
+  {
+    "id": "drowned-coast-far",
+    "region": "drowned-coast",
+    "kind": "far",
+    "reference": "../references/composition.png",
+    "transparent": false,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: stormbound grey sea with distant sea stacks and drowned Gothic spires, misty low horizon, desaturated slate teal and pewter cloud light. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+    "resultFile": "scenes/shared/drowned-coast/far.png"
+  },
+  {
+    "id": "drowned-coast-ground",
+    "region": "drowned-coast",
+    "kind": "ground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: broad flat wet dark coastal flagstones, shallow reflective tide pools only at edges, salt and seaweed. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/drowned-coast/ground.png"
+  },
+  {
+    "id": "drowned-coast-foreground",
+    "region": "drowned-coast",
+    "kind": "foreground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: rotting ship timbers, barnacled dark stone and a hanging rusted chain at outer edges. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/drowned-coast/foreground.png"
+  },
+  {
+    "id": "BS-far",
+    "region": "BS",
+    "kind": "far",
+    "reference": "../references/composition.png",
+    "transparent": false,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: Briar Sanctum, remote Gothic chapel ruins lost within autumnal tangled forest, pale fog behind dense distant boughs, weathered umber stone, deep olive, rust red leaves. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+    "resultFile": "scenes/shared/BS/far.png"
+  },
+  {
+    "id": "BS-ground",
+    "region": "BS",
+    "kind": "ground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: flat old mossy chapel flagstones with creeping fine roots and scattered rust-red leaves at edges. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/BS/ground.png"
+  },
+  {
+    "id": "BS-foreground",
+    "region": "BS",
+    "kind": "foreground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: gnarled thorny briar roots and chipped Gothic stone, small amber votive lantern. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/BS/foreground.png"
+  },
+  {
+    "id": "HM-far",
+    "region": "HM",
+    "kind": "far",
+    "reference": "../references/composition.png",
+    "transparent": false,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: Hall of Mirrors, ruined frozen royal palace beyond a deep courtyard, distant silver Gothic walls and ice mountains, misted cold blue-grey light. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+    "resultFile": "scenes/shared/HM/far.png"
+  },
+  {
+    "id": "HM-ground",
+    "region": "HM",
+    "kind": "ground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: flat dark marble tiles with subtle silver reflections and thin rime, no actual mirrors or tall objects in standing area. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/HM/ground.png"
+  },
+  {
+    "id": "HM-foreground",
+    "region": "HM",
+    "kind": "foreground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: shattered tarnished silver mirror frames and frost-crusted pillars at extreme edges. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/HM/foreground.png"
+  },
+  {
+    "id": "FC-far",
+    "region": "FC",
+    "kind": "far",
+    "reference": "../references/composition.png",
+    "transparent": false,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: Furnace Chapel, immense distant blackened cathedral-industrial vaults, smoke and a few tiny banked-orange furnace apertures, worn bronze and soot-dark basalt. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+    "resultFile": "scenes/shared/FC/far.png"
+  },
+  {
+    "id": "FC-ground",
+    "region": "FC",
+    "kind": "ground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: flat soot-stained iron plates and worn blackened chapel stone, subtle amber seams at distant boundary. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/FC/ground.png"
+  },
+  {
+    "id": "FC-foreground",
+    "region": "FC",
+    "kind": "foreground",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent foreground framing parallax layer. Objects: burnt iron columns and slack heavy chains, blackened bronze censer at extreme edges. All visible objects confined to outermost 12 percent left and right edges, and bottom corners. Entire central 74% must be truly transparent top to bottom, including bottom center. No sky, ground plane, distant structures, fog rectangle or backing. Object shapes may meet outer canvas edges intentionally. Actual transparent alpha outside only the specified objects, including holes.",
+    "resultFile": "scenes/shared/FC/foreground.png"
+  },
+  {
+    "id": "ashen-crown-1-landmark",
+    "sceneId": "ashen-crown-1",
+    "name": "King’s Causeway",
+    "region": "ashen-crown",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/ashen-crown-1/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'King’s Causeway'. Subject: broken elevated Gothic aqueduct and royal gateway, two weathered limestone piers and a low balustrade. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "ashen-crown-2-landmark",
+    "sceneId": "ashen-crown-2",
+    "name": "Bell Court",
+    "region": "ashen-crown",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/ashen-crown-2/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Bell Court'. Subject: ruined square belfry with one enormous old bronze bell, low courtyard arcade, rust-red creepers. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "ashen-crown-3-landmark",
+    "sceneId": "ashen-crown-3",
+    "name": "Ashfall Gardens",
+    "region": "ashen-crown",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/ashen-crown-3/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Ashfall Gardens'. Subject: weathered garden fountain, broken stone urns and three slender dark cypress trees in overgrown royal gardens. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "ashen-crown-4-landmark",
+    "sceneId": "ashen-crown-4",
+    "name": "Throne Undercroft",
+    "region": "ashen-crown",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/ashen-crown-4/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Throne Undercroft'. Subject: vast dark Gothic undercroft arches and recessed ruined throne, stone rib vaults across upper frame, tiny amber sconces, opaque dark interior walls except open side arches. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "hollow-weald-1-landmark",
+    "sceneId": "hollow-weald-1",
+    "name": "Lanternwood Crossing",
+    "region": "hollow-weald",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/hollow-weald-1/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Lanternwood Crossing'. Subject: small mossy stone footbridge between ancient arching forest trunks, two small hanging amber lanterns. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "hollow-weald-2-landmark",
+    "sceneId": "hollow-weald-2",
+    "name": "Drowned Hamlet",
+    "region": "hollow-weald",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/hollow-weald-2/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Drowned Hamlet'. Subject: abandoned half-timbered cottage silhouettes and broken village steeple on rotten waterside pilings. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "hollow-weald-3-landmark",
+    "sceneId": "hollow-weald-3",
+    "name": "Roots of the Elder",
+    "region": "hollow-weald",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/hollow-weald-3/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Roots of the Elder'. Subject: immense intertwined elder tree roots making an open arch, old carved shrine embedded at root base. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "hollow-weald-4-landmark",
+    "sceneId": "hollow-weald-4",
+    "name": "Hunter’s Moon Clearing",
+    "region": "hollow-weald",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/hollow-weald-4/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Hunter’s Moon Clearing'. Subject: crumbling lonely forest chapel wall and tall standing stones on the outer sides of a moonlit clearing, sparse bare branches. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "pale-marches-1-landmark",
+    "sceneId": "pale-marches-1",
+    "name": "Frostgate Pass",
+    "region": "pale-marches",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/pale-marches-1/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Frostgate Pass'. Subject: broken pointed Gothic gate wedged between frost-crusted rock spires, snow on narrow ledges. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "pale-marches-2-landmark",
+    "sceneId": "pale-marches-2",
+    "name": "Frozen Pilgrim Road",
+    "region": "pale-marches",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/pale-marches-2/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Frozen Pilgrim Road'. Subject: a row of old pilgrim shrine pillars receding along the far boundary, frost-bound lantern niches, collapsed stone signpost without lettering. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "pale-marches-3-landmark",
+    "sceneId": "pale-marches-3",
+    "name": "Monastery of Silence",
+    "region": "pale-marches",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/pale-marches-3/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Monastery of Silence'. Subject: snow-filled Gothic monastery cloister with open lancet windows, crumbled frozen buttresses, no glass panes. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "pale-marches-4-landmark",
+    "sceneId": "pale-marches-4",
+    "name": "The Glass Lake",
+    "region": "pale-marches",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/pale-marches-4/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'The Glass Lake'. Subject: jagged translucent ice spires and ruined snowy watchtower along a remote frozen lakeshore, very low open central sightline. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "cinder-reach-1-landmark",
+    "sceneId": "cinder-reach-1",
+    "name": "Basalt Stair",
+    "region": "cinder-reach",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/cinder-reach-1/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Basalt Stair'. Subject: massive hexagonal basalt columns on both sides and broken black stone stairway receding at center, tiny distant ember fissures. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  },
+  {
+    "id": "cinder-reach-2-landmark",
+    "sceneId": "cinder-reach-2",
+    "name": "The Dead Foundry",
+    "region": "cinder-reach",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/cinder-reach-2/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'The Dead Foundry'. Subject: ruined foundry arches, two immense hanging crucibles and slack chains, banked orange furnace openings, soot-dark architecture. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  },
+  {
+    "id": "cinder-reach-3-landmark",
+    "sceneId": "cinder-reach-3",
+    "name": "Caldera Rim",
+    "region": "cinder-reach",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/cinder-reach-3/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Caldera Rim'. Subject: broken volcanic ridge rim and black cooling lava spires, tiny lava cascades only behind the ridge at far boundary. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  },
+  {
+    "id": "cinder-reach-4-landmark",
+    "sceneId": "cinder-reach-4",
+    "name": "Ember Mine Mouth",
+    "region": "cinder-reach",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/cinder-reach-4/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Ember Mine Mouth'. Subject: abandoned mine entrance braced with charred timbers in basalt cliff, rusty ore track ends at background edge, tiny warm light inside mine. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  },
+  {
+    "id": "drowned-coast-1-landmark",
+    "sceneId": "drowned-coast-1",
+    "name": "Tidebound Chapel",
+    "region": "drowned-coast",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/drowned-coast-1/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Tidebound Chapel'. Subject: ruined coastal chapel apse with open rose window and broken sea-worn buttresses, barnacles and salt stains. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, stormy slate teal grey."
+  },
+  {
+    "id": "drowned-coast-2-landmark",
+    "sceneId": "drowned-coast-2",
+    "name": "The Salt Causeway",
+    "region": "drowned-coast",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/drowned-coast-2/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'The Salt Causeway'. Subject: broken seawall and causeway towers in shallow tide, eroded stone rail and salt-crusted arch. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, stormy slate teal grey."
+  },
+  {
+    "id": "drowned-coast-3-landmark",
+    "sceneId": "drowned-coast-3",
+    "name": "Starwatch Terrace",
+    "region": "drowned-coast",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/drowned-coast-3/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Starwatch Terrace'. Subject: ancient brass armillary sphere on coastal observatory plinth, broken stone balustrade and small dark-blue starstone sconces. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, stormy slate teal grey."
+  },
+  {
+    "id": "drowned-coast-4-landmark",
+    "sceneId": "drowned-coast-4",
+    "name": "Grave of Ships",
+    "region": "drowned-coast",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/drowned-coast-4/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Grave of Ships'. Subject: two shipwreck ribs and snapped mast silhouettes framing open middle distance, sea-worn planks, rusted anchor at base. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, stormy slate teal grey."
+  },
+  {
+    "id": "BS-ENV-01-landmark",
+    "sceneId": "BS-ENV-01",
+    "name": "Gate of Unkept Names",
+    "region": "BS",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/BS-ENV-01/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Gate of Unkept Names'. Subject: thorn-swallowed Gothic entry gate with weathered empty stone name niches and ragged crimson pennants. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "BS-ENV-02-landmark",
+    "sceneId": "BS-ENV-02",
+    "name": "Chapel of Small Mercies",
+    "region": "BS",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/BS-ENV-02/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Chapel of Small Mercies'. Subject: small ruined chapel apse under enormous briar roots, carved votive niches, modest amber candles. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "BS-ENV-03-landmark",
+    "sceneId": "BS-ENV-03",
+    "name": "Bridge of Bound Vows",
+    "region": "BS",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/BS-ENV-03/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Bridge of Bound Vows'. Subject: narrow old stone bridge balustrade with root-bound piers and frayed faded crimson vow ribbons, tangled branches. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "BS-ENV-04-landmark",
+    "sceneId": "BS-ENV-04",
+    "name": "Heart of Briar Sanctum",
+    "region": "BS",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/BS-ENV-04/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Heart of Briar Sanctum'. Subject: great root-entwined Gothic shrine and empty altar under tall broken arches, dense thorn crown woven into upper architecture. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber."
+  },
+  {
+    "id": "HM-ENV-01-landmark",
+    "sceneId": "HM-ENV-01",
+    "name": "Gate of Second Faces",
+    "region": "HM",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/HM-ENV-01/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Gate of Second Faces'. Subject: ruined royal palace gate with paired blank stone face sculptures and tarnished silver window frames, frost and icicles. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "HM-ENV-02-landmark",
+    "sceneId": "HM-ENV-02",
+    "name": "Shattered Conservatory",
+    "region": "HM",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/HM-ENV-02/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Shattered Conservatory'. Subject: broken glass conservatory ironwork, pointed window tracery, shattered frosted glass panels and empty stone planters. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "HM-ENV-03-landmark",
+    "sceneId": "HM-ENV-03",
+    "name": "Bridge of Courtesy",
+    "region": "HM",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/HM-ENV-03/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Bridge of Courtesy'. Subject: elegant frozen palace bridge with carved silver-grey balustrades and collapsed Gothic arches, fine icicles. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "HM-ENV-04-landmark",
+    "sceneId": "HM-ENV-04",
+    "name": "Hall of Mirrors",
+    "region": "HM",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/HM-ENV-04/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Hall of Mirrors'. Subject: towering cracked silver mirror portals and weathered marble throne niche, dark reflective glass in portals, tall frozen Gothic ribs. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey."
+  },
+  {
+    "id": "FC-ENV-01-landmark",
+    "sceneId": "FC-ENV-01",
+    "name": "Gate of Banked Coals",
+    "region": "FC",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/FC-ENV-01/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Gate of Banked Coals'. Subject: massive blackened cathedral gate with iron portcullis and a subdued banked orange furnace deep behind it, scorched Gothic pillars. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  },
+  {
+    "id": "FC-ENV-02-landmark",
+    "sceneId": "FC-ENV-02",
+    "name": "Quenching Yard",
+    "region": "FC",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/FC-ENV-02/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Quenching Yard'. Subject: ruined furnace yard with two iron quenching vats, pipes, hanging chain crane and soot-dark chapel wall. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  },
+  {
+    "id": "FC-ENV-03-landmark",
+    "sceneId": "FC-ENV-03",
+    "name": "Iron Viaduct",
+    "region": "FC",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/FC-ENV-03/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Iron Viaduct'. Subject: black iron bridge girders and ruined industrial Gothic viaduct arches, slack chains and small ember lanterns. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  },
+  {
+    "id": "FC-ENV-04-landmark",
+    "sceneId": "FC-ENV-04",
+    "name": "Furnace Chapel",
+    "region": "FC",
+    "kind": "landmark",
+    "reference": "../references/composition.png",
+    "transparent": true,
+    "resultFile": "scenes/FC-ENV-04/landmark.png",
+    "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Furnace Chapel'. Subject: vast furnace cathedral apse with glowing circular furnace altar, soot-black Gothic columns and worn bronze ribs. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, subtle banked amber against charcoal."
+  }
+]

@@ -127,6 +127,7 @@ import { BUILD_VERSION } from './buildversion.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
+import { applyDisplayAppearance, publishDisplayAppearanceChange } from './ui/displayAppearance.js';
 import { mountClassRespec } from './ui/components/classRespec.js';
 import { applyClassRespec, classRespecAvailability, resetClassTree } from './model/classRespec.js';
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
@@ -822,6 +823,7 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  const appearanceChanged = applyDisplayAppearance(settings);
   // Art quality: lay a local high-res source over the built-in art, or clear
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
   // resolves use the new tier, and anything the source lacks stays built-in.
@@ -975,6 +977,10 @@ function applyDisplaySettings(settings) {
   restampModalWireframes(document);
   restampWorkspaceFrames(document);
   replanCategoryNavs();
+  if (appearanceChanged) {
+    clearPosePreloads();
+    publishDisplayAppearanceChange();
+  }
 }
 // A new high-res source (Art quality) must not be undercut by pose preloads,
 // which are keyed by pose, not URL, and would keep serving the old art.
@@ -1194,6 +1200,11 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   const enemyKnowledgeVersion = shotKnowledgeVersion === null
     ? legacyArcaneShot || shotCombatVersion === '1' ? null : 1
     : shotKnowledgeVersion === '0' ? null : 1;
+  const shotReactionVersion = shotState === 'combat' ? shotParams.get('shotReactionVersion') : null;
+  if (shotReactionVersion !== null && !['0', '1'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0 or 1');
+  const reactionRulesVersion = shotReactionVersion === null
+    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 1
+    : shotReactionVersion === '0' ? null : 1;
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
@@ -1202,7 +1213,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion,
+    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -2355,7 +2366,7 @@ function showDraft() {
  * Potions action re-read the meta it was mounted with
  * (tools/flask-menu-probe.mjs, persistence).
  */
-const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'classicAppearance'];
 // Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
 // has no Potions control, and a remount drops its selected destination
 // (#1474 review).
@@ -2803,7 +2814,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     // The shot door's override, when parked (null otherwise — createCombat
     // then derives the threshold from the loadout receipt, the real path).
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
-    enemyIds: enc.enemies,
+    enemyIds: shotState === 'combat' && shotParams.get('shotReaction') === 'counter' ? ['wanderingSoldier', 'wanderingSoldier'] : enc.enemies,
     encounter: enc,
     hpMult: cm.hpMult,
     enemyDamageMult: cm.damageMult,
@@ -2866,6 +2877,20 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     if (['sleep', 'paralysis', 'dazed'].includes(control)) {
       combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: control, stacks: 2 }, source: combat.player, owner: combat.player, target: combat.player });
       while (combat.queue.length) executeAction(combat, combat.queue.shift());
+    }
+  }
+  if (shotState === 'combat' && shotParams.get('shotReaction') === 'counter') {
+    if (combat.reactionRulesVersion !== 1) throw new Error('shotReaction=counter requires reaction rules version 1');
+    // Memory-only validation pose; choices, payment and returns use production commands.
+    combat.piles.draw.push(...combat.piles.hand);
+    combat.piles.hand = ['guardCounter', 'sweepingBlow', 'strike'].map((cardId, index) => ({ cardId, instanceId: `reaction-shot-${index}`, upgraded: false }));
+    combat.player.energy = combat.player.energyMax = combat.player.maxStamina = 8;
+    combat.player.block = 40;
+    for (const enemy of combat.enemies) {
+      enemy.hp = enemy.maxHp = 100;
+      enemy.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1,
+        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
+      enemy.intentRevealed = false;
     }
   }
   if (shotState === 'combat' && shotParams.has('shotHand')) {

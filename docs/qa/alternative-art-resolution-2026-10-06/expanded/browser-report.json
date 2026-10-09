@@ -1,0 +1,4127 @@
+{
+  "base": "http://localhost:4296/build/AshenSpire.html",
+  "scenes": [
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.7638854980469,
+            "groundY": 500.7776431274414,
+            "baselineError": 0.013757629394547166,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.0295104980469,
+            "groundY": 459.0495181274414,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.0295104980469,
+            "groundY": 459.0495181274414,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-1",
+      "device": "desktop",
+      "layers": [
+        "ashen-crown-far",
+        "ashen-crown-1-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.0914306640625,
+            "groundY": 502.1051806640625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.3570556640625,
+            "groundY": 460.3770556640625,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.3570556640625,
+            "groundY": 460.3770556640625,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-2",
+      "device": "desktop",
+      "layers": [
+        "ashen-crown-far",
+        "ashen-crown-2-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 503.6629638671875,
+            "groundY": 503.6767138671875,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.9285888671875,
+            "groundY": 461.9485888671875,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.9285888671875,
+            "groundY": 461.9485888671875,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-3",
+      "device": "desktop",
+      "layers": [
+        "ashen-crown-far",
+        "ashen-crown-3-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 504.52880859375,
+            "groundY": 504.54255859375,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79443359375,
+            "groundY": 462.81443359375,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79443359375,
+            "groundY": 462.81443359375,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-4",
+      "device": "desktop",
+      "layers": [
+        "undercroft-far",
+        "ashen-crown-4-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.09417724609375,
+            "groundY": 502.10792724609377,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.35980224609375,
+            "groundY": 460.37980224609373,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.35980224609375,
+            "groundY": 460.37980224609373,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-1",
+      "device": "desktop",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-1-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 504.52976989746094,
+            "groundY": 504.54351989746095,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79541015625,
+            "groundY": 462.8153948974609,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79541015625,
+            "groundY": 462.8153948974609,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-2",
+      "device": "desktop",
+      "layers": [
+        "hollow-night-far",
+        "hollow-weald-2-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 505.4433135986328,
+            "groundY": 505.4570635986328,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 463.70892333984375,
+            "groundY": 463.7289385986328,
+            "baselineError": 0.02001525878904431,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 463.70892333984375,
+            "groundY": 463.7289385986328,
+            "baselineError": 0.02001525878904431,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-3",
+      "device": "desktop",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-3-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 503.6602478027344,
+            "groundY": 503.6739678955078,
+            "baselineError": 0.013720092773439774,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.9258728027344,
+            "groundY": 461.9458459472656,
+            "baselineError": 0.0199731445312068,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.9258728027344,
+            "groundY": 461.9458459472656,
+            "baselineError": 0.0199731445312068,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-4",
+      "device": "desktop",
+      "layers": [
+        "hollow-night-far",
+        "hollow-weald-4-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 504.5277862548828,
+            "groundY": 504.5415362548828,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.7934265136719,
+            "groundY": 462.8134112548828,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.7934265136719,
+            "groundY": 462.8134112548828,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-1",
+      "device": "desktop",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-1-landmark",
+        "pale-marches-ground",
+        "pale-marches-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 505.44676208496094,
+            "groundY": 505.46051208496095,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 463.7123718261719,
+            "groundY": 463.7323870849609,
+            "baselineError": 0.02001525878904431,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 463.7123718261719,
+            "groundY": 463.7323870849609,
+            "baselineError": 0.02001525878904431,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-2",
+      "device": "desktop",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-2-landmark",
+        "pale-marches-ground",
+        "pale-marches-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-3",
+      "device": "desktop",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-3-landmark",
+        "pale-marches-ground",
+        "pale-marches-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 254
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-4",
+      "device": "desktop",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-4-landmark",
+        "glass-lake-ground",
+        "pale-marches-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 504.52976989746094,
+            "groundY": 504.54351989746095,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79541015625,
+            "groundY": 462.8153948974609,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79541015625,
+            "groundY": 462.8153948974609,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-1",
+      "device": "desktop",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-1-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 504.5311584472656,
+            "groundY": 504.54493835449216,
+            "baselineError": 0.013779907226535215,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.7967834472656,
+            "groundY": 462.8168103027343,
+            "baselineError": 0.020026855468699978,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.7967834472656,
+            "groundY": 462.8168103027343,
+            "baselineError": 0.020026855468699978,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-2",
+      "device": "desktop",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-2-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 504.53363037109375,
+            "groundY": 504.54737274169923,
+            "baselineError": 0.013742370605484666,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79925537109375,
+            "groundY": 462.8192477416992,
+            "baselineError": 0.01999237060545056,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.79925537109375,
+            "groundY": 462.8192477416992,
+            "baselineError": 0.01999237060545056,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-3",
+      "device": "desktop",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-3-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.0938720703125,
+            "groundY": 502.1076220703125,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.3594970703125,
+            "groundY": 460.3794970703125,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.3594970703125,
+            "groundY": 460.3794970703125,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-4",
+      "device": "desktop",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-4-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 251
+          }
+        ]
+      },
+      "scene": "drowned-coast-1",
+      "device": "desktop",
+      "layers": [
+        "drowned-coast-far",
+        "drowned-coast-1-landmark",
+        "drowned-coast-ground",
+        "drowned-coast-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 251
+          }
+        ]
+      },
+      "scene": "drowned-coast-2",
+      "device": "desktop",
+      "layers": [
+        "drowned-coast-far",
+        "drowned-coast-2-landmark",
+        "drowned-coast-ground",
+        "drowned-coast-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 501.3948059082031,
+            "groundY": 501.4085635375977,
+            "baselineError": 0.013757629394547166,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.6604309082031,
+            "groundY": 459.68043853759764,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.6604309082031,
+            "groundY": 459.68043853759764,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 251
+          }
+        ]
+      },
+      "scene": "drowned-coast-3",
+      "device": "desktop",
+      "layers": [
+        "starwatch-far",
+        "drowned-coast-3-landmark",
+        "drowned-coast-ground",
+        "drowned-coast-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.9354248046875,
+            "groundY": 498.9491748046875,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.2010498046875,
+            "groundY": 457.2210498046875,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.2010498046875,
+            "groundY": 457.2210498046875,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "drowned-coast-4",
+      "device": "desktop",
+      "layers": [
+        "drowned-coast-far",
+        "drowned-coast-4-landmark",
+        "grave-ships-ground",
+        "drowned-coast-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 499.7316589355469,
+            "groundY": 499.7454089355469,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.9972839355469,
+            "groundY": 458.01728393554686,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.9972839355469,
+            "groundY": 458.01728393554686,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "BS-ENV-01",
+      "device": "desktop",
+      "layers": [
+        "BS-far",
+        "BS-ENV-01-landmark",
+        "BS-ground",
+        "BS-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "BS-ENV-02",
+      "device": "desktop",
+      "layers": [
+        "BS-far",
+        "BS-ENV-02-landmark",
+        "BS-ground",
+        "BS-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "BS-ENV-03",
+      "device": "desktop",
+      "layers": [
+        "BS-far",
+        "BS-ENV-03-landmark",
+        "BS-ground",
+        "BS-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "BS-ENV-04",
+      "device": "desktop",
+      "layers": [
+        "BS-far",
+        "BS-ENV-04-landmark",
+        "BS-ground",
+        "BS-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-01",
+      "device": "desktop",
+      "layers": [
+        "HM-far",
+        "HM-ENV-01-landmark",
+        "HM-ground",
+        "HM-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.76524353027344,
+            "groundY": 500.779001159668,
+            "baselineError": 0.013757629394547166,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.0308837890625,
+            "groundY": 459.05087615966795,
+            "baselineError": 0.01999237060545056,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.0308837890625,
+            "groundY": 459.05087615966795,
+            "baselineError": 0.01999237060545056,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-02",
+      "device": "desktop",
+      "layers": [
+        "HM-far",
+        "HM-ENV-02-landmark",
+        "HM-ground",
+        "HM-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 501.39381408691406,
+            "groundY": 501.4075640869141,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.6594543457031,
+            "groundY": 459.67943908691404,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.6594543457031,
+            "groundY": 459.67943908691404,
+            "baselineError": 0.01998474121091931,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-03",
+      "device": "desktop",
+      "layers": [
+        "HM-far",
+        "HM-ENV-03-landmark",
+        "HM-ground",
+        "HM-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 501.39959716796875,
+            "groundY": 501.4133547973633,
+            "baselineError": 0.013757629394547166,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.66522216796875,
+            "groundY": 459.68522979736326,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.66522216796875,
+            "groundY": 459.68522979736326,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-04",
+      "device": "desktop",
+      "layers": [
+        "HM-far",
+        "HM-ENV-04-landmark",
+        "HM-ground",
+        "HM-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-01",
+      "device": "desktop",
+      "layers": [
+        "FC-far",
+        "FC-ENV-01-landmark",
+        "FC-ground",
+        "FC-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.0926513671875,
+            "groundY": 502.1064013671875,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.3582763671875,
+            "groundY": 460.3782763671875,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.3582763671875,
+            "groundY": 460.3782763671875,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-02",
+      "device": "desktop",
+      "layers": [
+        "FC-far",
+        "FC-ENV-02-landmark",
+        "FC-ground",
+        "FC-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 499.07666015625,
+            "groundY": 499.09041015625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.34228515625,
+            "groundY": 457.36228515625,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.34228515625,
+            "groundY": 457.36228515625,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-03",
+      "device": "desktop",
+      "layers": [
+        "FC-far",
+        "FC-ENV-03-landmark",
+        "FC-ground",
+        "FC-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 499.0765380859375,
+            "groundY": 499.09029571533205,
+            "baselineError": 0.013757629394547166,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3421630859375,
+            "groundY": 457.362170715332,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3421630859375,
+            "groundY": 457.362170715332,
+            "baselineError": 0.02000762939451306,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-04",
+      "device": "desktop",
+      "layers": [
+        "FC-far",
+        "FC-ENV-04-landmark",
+        "FC-ground",
+        "FC-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-1",
+      "device": "phone",
+      "layers": [
+        "ashen-crown-far",
+        "ashen-crown-1-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.9920654296875,
+            "groundY": 499.14830780029297,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.6326904296875,
+            "groundY": 457.7061203002929,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.6326904296875,
+            "groundY": 457.7061203002929,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-2",
+      "device": "phone",
+      "layers": [
+        "ashen-crown-far",
+        "ashen-crown-2-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.7884521484375,
+            "groundY": 498.94469451904297,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.4290771484375,
+            "groundY": 457.5025070190429,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.4290771484375,
+            "groundY": 457.5025070190429,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-3",
+      "device": "phone",
+      "layers": [
+        "ashen-crown-far",
+        "ashen-crown-3-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "ashen-crown-4",
+      "device": "phone",
+      "layers": [
+        "undercroft-far",
+        "ashen-crown-4-landmark",
+        "ashen-crown-ground",
+        "ashen-crown-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-1",
+      "device": "phone",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-1-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-2",
+      "device": "phone",
+      "layers": [
+        "hollow-night-far",
+        "hollow-weald-2-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.8784484863281,
+            "groundY": 503.0346908569336,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.5190734863281,
+            "groundY": 461.59250335693355,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.5190734863281,
+            "groundY": 461.59250335693355,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-3",
+      "device": "phone",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-3-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.8778076171875,
+            "groundY": 503.03404235839844,
+            "baselineError": 0.1562347412109375,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.5184326171875,
+            "groundY": 461.5918548583984,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.5184326171875,
+            "groundY": 461.5918548583984,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-4",
+      "device": "phone",
+      "layers": [
+        "hollow-night-far",
+        "hollow-weald-4-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-1",
+      "device": "phone",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-1-landmark",
+        "pale-marches-ground",
+        "pale-marches-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-2",
+      "device": "phone",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-2-landmark",
+        "pale-marches-ground",
+        "pale-marches-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 499.27972412109375,
+            "groundY": 499.4359893798828,
+            "baselineError": 0.1562652587890625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.92034912109375,
+            "groundY": 457.99380187988277,
+            "baselineError": 0.07345275878901703,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.92034912109375,
+            "groundY": 457.99380187988277,
+            "baselineError": 0.07345275878901703,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-3",
+      "device": "phone",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-3-landmark",
+        "pale-marches-ground",
+        "pale-marches-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.229736328125,
+            "groundY": 502.385986328125,
+            "baselineError": 0.15625,
+            "groundAlpha": 254
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.870361328125,
+            "groundY": 460.94379882812495,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.870361328125,
+            "groundY": 460.94379882812495,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "pale-marches-4",
+      "device": "phone",
+      "layers": [
+        "pale-marches-far",
+        "pale-marches-4-landmark",
+        "glass-lake-ground",
+        "pale-marches-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.05377197265625,
+            "groundY": 500.2100143432617,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.69439697265625,
+            "groundY": 458.7678268432617,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.69439697265625,
+            "groundY": 458.7678268432617,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-1",
+      "device": "phone",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-1-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 503.5677490234375,
+            "groundY": 503.72399139404297,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.2083740234375,
+            "groundY": 462.2818038940429,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.2083740234375,
+            "groundY": 462.2818038940429,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-2",
+      "device": "phone",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-2-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.879638671875,
+            "groundY": 503.035888671875,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.520263671875,
+            "groundY": 461.59370117187495,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.520263671875,
+            "groundY": 461.59370117187495,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-3",
+      "device": "phone",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-3-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.0533447265625,
+            "groundY": 500.20958709716797,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6939697265625,
+            "groundY": 458.7673995971679,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6939697265625,
+            "groundY": 458.7673995971679,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "cinder-reach-4",
+      "device": "phone",
+      "layers": [
+        "cinder-reach-far",
+        "cinder-reach-4-landmark",
+        "cinder-reach-ground",
+        "cinder-reach-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.0533447265625,
+            "groundY": 500.20958709716797,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6939697265625,
+            "groundY": 458.7673995971679,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6939697265625,
+            "groundY": 458.7673995971679,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 251
+          }
+        ]
+      },
+      "scene": "drowned-coast-1",
+      "device": "phone",
+      "layers": [
+        "drowned-coast-far",
+        "drowned-coast-1-landmark",
+        "drowned-coast-ground",
+        "drowned-coast-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.2283630371094,
+            "groundY": 502.3846206665039,
+            "baselineError": 0.15625762939453125,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.8689880371094,
+            "groundY": 460.94243316650386,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.8689880371094,
+            "groundY": 460.94243316650386,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 251
+          }
+        ]
+      },
+      "scene": "drowned-coast-2",
+      "device": "phone",
+      "layers": [
+        "drowned-coast-far",
+        "drowned-coast-2-landmark",
+        "drowned-coast-ground",
+        "drowned-coast-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 502.8786926269531,
+            "groundY": 503.03492736816406,
+            "baselineError": 0.1562347412109375,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.5193176269531,
+            "groundY": 461.592739868164,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 461.5193176269531,
+            "groundY": 461.592739868164,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 251
+          }
+        ]
+      },
+      "scene": "drowned-coast-3",
+      "device": "phone",
+      "layers": [
+        "starwatch-far",
+        "drowned-coast-3-landmark",
+        "drowned-coast-ground",
+        "drowned-coast-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.0550842285156,
+            "groundY": 500.2113265991211,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6957092285156,
+            "groundY": 458.76913909912105,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6957092285156,
+            "groundY": 458.76913909912105,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "drowned-coast-4",
+      "device": "phone",
+      "layers": [
+        "drowned-coast-far",
+        "drowned-coast-4-landmark",
+        "grave-ships-ground",
+        "drowned-coast-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.0542907714844,
+            "groundY": 500.2105484008789,
+            "baselineError": 0.15625762939453125,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6949157714844,
+            "groundY": 458.76836090087886,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.6949157714844,
+            "groundY": 458.76836090087886,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 250
+          }
+        ]
+      },
+      "scene": "BS-ENV-01",
+      "device": "phone",
+      "layers": [
+        "BS-far",
+        "BS-ENV-01-landmark",
+        "BS-ground",
+        "BS-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.6820373535156,
+            "groundY": 498.83827209472656,
+            "baselineError": 0.1562347412109375,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3226623535156,
+            "groundY": 457.3960845947265,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3226623535156,
+            "groundY": 457.3960845947265,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 250
+          }
+        ]
+      },
+      "scene": "BS-ENV-02",
+      "device": "phone",
+      "layers": [
+        "BS-far",
+        "BS-ENV-02-landmark",
+        "BS-ground",
+        "BS-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.05419921875,
+            "groundY": 500.21044158935547,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.69482421875,
+            "groundY": 458.7682540893554,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.69482421875,
+            "groundY": 458.7682540893554,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 250
+          }
+        ]
+      },
+      "scene": "BS-ENV-03",
+      "device": "phone",
+      "layers": [
+        "BS-far",
+        "BS-ENV-03-landmark",
+        "BS-ground",
+        "BS-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 503.5679016113281,
+            "groundY": 503.72415924072266,
+            "baselineError": 0.15625762939453125,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.2085266113281,
+            "groundY": 462.2819717407226,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 250
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 462.2085266113281,
+            "groundY": 462.2819717407226,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 250
+          }
+        ]
+      },
+      "scene": "BS-ENV-04",
+      "device": "phone",
+      "layers": [
+        "BS-far",
+        "BS-ENV-04-landmark",
+        "BS-ground",
+        "BS-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.3125,
+            "groundY": 457.38593749999995,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-01",
+      "device": "phone",
+      "layers": [
+        "HM-far",
+        "HM-ENV-01-landmark",
+        "HM-ground",
+        "HM-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.054931640625,
+            "groundY": 500.21118927001953,
+            "baselineError": 0.15625762939453125,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.695556640625,
+            "groundY": 458.7690017700195,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.695556640625,
+            "groundY": 458.7690017700195,
+            "baselineError": 0.07344512939448578,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-02",
+      "device": "phone",
+      "layers": [
+        "HM-far",
+        "HM-ENV-02-landmark",
+        "HM-ground",
+        "HM-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 501.620361328125,
+            "groundY": 501.776611328125,
+            "baselineError": 0.15625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.260986328125,
+            "groundY": 460.33442382812495,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 460.260986328125,
+            "groundY": 460.33442382812495,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-03",
+      "device": "phone",
+      "layers": [
+        "HM-far",
+        "HM-ENV-03-landmark",
+        "HM-ground",
+        "HM-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 501.0501403808594,
+            "groundY": 501.20640563964844,
+            "baselineError": 0.1562652587890625,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.6907653808594,
+            "groundY": 459.7642181396484,
+            "baselineError": 0.07345275878901703,
+            "groundAlpha": 252
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.6907653808594,
+            "groundY": 459.7642181396484,
+            "baselineError": 0.07345275878901703,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "HM-ENV-04",
+      "device": "phone",
+      "layers": [
+        "HM-far",
+        "HM-ENV-04-landmark",
+        "HM-ground",
+        "HM-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 498.68218994140625,
+            "groundY": 498.8384323120117,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.32281494140625,
+            "groundY": 457.3962448120117,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.32281494140625,
+            "groundY": 457.3962448120117,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-01",
+      "device": "phone",
+      "layers": [
+        "FC-far",
+        "FC-ENV-01-landmark",
+        "FC-ground",
+        "FC-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 500.5281066894531,
+            "groundY": 500.6843566894531,
+            "baselineError": 0.15625,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.1687316894531,
+            "groundY": 459.2421691894531,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 459.1687316894531,
+            "groundY": 459.2421691894531,
+            "baselineError": 0.07343749999995453,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-02",
+      "device": "phone",
+      "layers": [
+        "FC-far",
+        "FC-ENV-02-landmark",
+        "FC-ground",
+        "FC-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 499.2775573730469,
+            "groundY": 499.4337921142578,
+            "baselineError": 0.1562347412109375,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.9181823730469,
+            "groundY": 457.99160461425777,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 457.9181823730469,
+            "groundY": 457.99160461425777,
+            "baselineError": 0.07342224121089203,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-03",
+      "device": "phone",
+      "layers": [
+        "FC-far",
+        "FC-ENV-03-landmark",
+        "FC-ground",
+        "FC-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "reaver-default",
+            "bottom": 499.63751220703125,
+            "groundY": 499.7937545776367,
+            "baselineError": 0.15624237060546875,
+            "groundAlpha": 251
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.27813720703125,
+            "groundY": 458.3515670776367,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 253
+          },
+          {
+            "id": "stitchedHound",
+            "bottom": 458.27813720703125,
+            "groundY": 458.3515670776367,
+            "baselineError": 0.07342987060542328,
+            "groundAlpha": 253
+          }
+        ]
+      },
+      "scene": "FC-ENV-04",
+      "device": "phone",
+      "layers": [
+        "FC-far",
+        "FC-ENV-04-landmark",
+        "FC-ground",
+        "FC-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        },
+        {
+          "id": "stitchedHound",
+          "source": "http://localhost:4296/build/objects/2d/2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba27",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    }
+  ],
+  "layouts": [
+    {
+      "phase": "coop",
+      "viewport": "desktop",
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "starseer-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 252
+          },
+          {
+            "id": "reaver-default",
+            "bottom": 498.921875,
+            "groundY": 498.935625,
+            "baselineError": 0.013750000000015916,
+            "groundAlpha": 250
+          },
+          {
+            "id": "blightHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "blightHound",
+            "bottom": 457.1875,
+            "groundY": 457.2075,
+            "baselineError": 0.01999999999998181,
+            "groundAlpha": 252
+          },
+          {
+            "id": "graveWisp",
+            "bottom": 407.125,
+            "groundY": 407.1337500000001,
+            "baselineError": 0.008750000000077307,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-3",
+      "device": "desktop",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-3-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-foreground"
+      ],
+      "actors": [
+        {
+          "id": "starseer-default",
+          "source": "http://localhost:4296/build/objects/9c/9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1",
+          "mobileSelected": true
+        },
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "graveWisp",
+          "source": "http://localhost:4296/build/objects/97/9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba9",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "phase": "resize",
+      "from": "desktop",
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "starseer-default",
+            "bottom": 498.640625,
+            "groundY": 498.828125,
+            "baselineError": 0.1875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 250
+          },
+          {
+            "id": "blightHound",
+            "bottom": 457.78125,
+            "groundY": 457.84218749999997,
+            "baselineError": 0.060937499999965894,
+            "groundAlpha": 252
+          },
+          {
+            "id": "blightHound",
+            "bottom": 457.78125,
+            "groundY": 457.84218749999997,
+            "baselineError": 0.060937499999965894,
+            "groundAlpha": 252
+          },
+          {
+            "id": "graveWisp",
+            "bottom": 392.171875,
+            "groundY": 392.2646875,
+            "baselineError": 0.09281249999997954,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-3",
+      "device": "phone",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-3-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "starseer-default",
+          "source": "http://localhost:4296/build/objects/9c/9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1",
+          "mobileSelected": true
+        },
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "graveWisp",
+          "source": "http://localhost:4296/build/objects/97/9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba9",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "phase": "coop",
+      "viewport": "phone",
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "starseer-default",
+            "bottom": 498.640625,
+            "groundY": 498.828125,
+            "baselineError": 0.1875,
+            "groundAlpha": 252
+          },
+          {
+            "id": "reaver-default",
+            "bottom": 498.671875,
+            "groundY": 498.828125,
+            "baselineError": 0.15625,
+            "groundAlpha": 250
+          },
+          {
+            "id": "blightHound",
+            "bottom": 457.78125,
+            "groundY": 457.84218749999997,
+            "baselineError": 0.060937499999965894,
+            "groundAlpha": 252
+          },
+          {
+            "id": "blightHound",
+            "bottom": 457.78125,
+            "groundY": 457.84218749999997,
+            "baselineError": 0.060937499999965894,
+            "groundAlpha": 252
+          },
+          {
+            "id": "graveWisp",
+            "bottom": 392.171875,
+            "groundY": 392.2646875,
+            "baselineError": 0.09281249999997954,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-3",
+      "device": "phone",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-3-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-phone-foreground"
+      ],
+      "actors": [
+        {
+          "id": "starseer-default",
+          "source": "http://localhost:4296/build/objects/9c/9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1",
+          "mobileSelected": true
+        },
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "graveWisp",
+          "source": "http://localhost:4296/build/objects/97/9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba9",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    },
+    {
+      "phase": "resize",
+      "from": "phone",
+      "grounding": {
+        "sections": [
+          "far",
+          "landmark",
+          "ground",
+          "foreground"
+        ],
+        "feet": [
+          {
+            "id": "starseer-default",
+            "bottom": 460.203125,
+            "groundY": 460.29812499999997,
+            "baselineError": 0.09499999999997044,
+            "groundAlpha": 252
+          },
+          {
+            "id": "reaver-default",
+            "bottom": 460.203125,
+            "groundY": 460.29812499999997,
+            "baselineError": 0.09499999999997044,
+            "groundAlpha": 250
+          },
+          {
+            "id": "blightHound",
+            "bottom": 421.890625,
+            "groundY": 421.94499999999994,
+            "baselineError": 0.054374999999936335,
+            "groundAlpha": 252
+          },
+          {
+            "id": "blightHound",
+            "bottom": 421.890625,
+            "groundY": 421.94499999999994,
+            "baselineError": 0.054374999999936335,
+            "groundAlpha": 252
+          },
+          {
+            "id": "graveWisp",
+            "bottom": 375.84375,
+            "groundY": 375.92125,
+            "baselineError": 0.07749999999998636,
+            "groundAlpha": 252
+          }
+        ]
+      },
+      "scene": "hollow-weald-3",
+      "device": "desktop",
+      "layers": [
+        "hollow-weald-far",
+        "hollow-weald-3-landmark",
+        "hollow-weald-ground",
+        "hollow-weald-foreground"
+      ],
+      "actors": [
+        {
+          "id": "starseer-default",
+          "source": "http://localhost:4296/build/objects/9c/9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1",
+          "mobileSelected": true
+        },
+        {
+          "id": "reaver-default",
+          "source": "http://localhost:4296/build/objects/82/820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "blightHound",
+          "source": "http://localhost:4296/build/objects/84/84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43",
+          "mobileSelected": true
+        },
+        {
+          "id": "graveWisp",
+          "source": "http://localhost:4296/build/objects/97/9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba9",
+          "mobileSelected": true
+        }
+      ],
+      "overflow": false
+    }
+  ],
+  "play": [],
+  "errors": [],
+  "httpErrors": [],
+  "optionalSourceRequests": []
+}

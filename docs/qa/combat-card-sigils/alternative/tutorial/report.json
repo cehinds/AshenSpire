@@ -1,0 +1,160 @@
+{
+  "source": "a0eac39785014bcf6d66ed1a9d4c6bac702de65f",
+  "boundary": "Source tutorial input and all exits in Edge; full hosted tutorial corpus remains required.",
+  "cases": [
+    {
+      "width": 800,
+      "height": 465,
+      "phone": false,
+      "hit": {
+        "x": 186.14062118530273,
+        "y": 374.2421875,
+        "hit": "hand-hit-lane",
+        "blocked": false,
+        "bubbleEvents": "none"
+      },
+      "steps": [
+        "Next (1/4)",
+        "Next (2/4)",
+        "Next (3/4)",
+        "Got it"
+      ],
+      "handInput": true,
+      "allNextSteps": true,
+      "skip": true,
+      "errors": []
+    },
+    {
+      "width": 1024,
+      "height": 640,
+      "phone": false,
+      "hit": {
+        "x": 279.2578125,
+        "y": 426.66404724121094,
+        "hit": "hand-hit-lane",
+        "blocked": false,
+        "bubbleEvents": "none"
+      },
+      "steps": [
+        "Next (1/4)",
+        "Next (2/4)",
+        "Next (3/4)",
+        "Got it"
+      ],
+      "handInput": true,
+      "allNextSteps": true,
+      "skip": true,
+      "errors": []
+    },
+    {
+      "width": 1200,
+      "height": 730,
+      "phone": false,
+      "hit": {
+        "x": 352.796875,
+        "y": 510.96092224121094,
+        "hit": "hand-hit-lane",
+        "blocked": false,
+        "bubbleEvents": "none"
+      },
+      "steps": [
+        "Next (1/4)",
+        "Next (2/4)",
+        "Next (3/4)",
+        "Got it"
+      ],
+      "handInput": true,
+      "allNextSteps": true,
+      "skip": true,
+      "errors": []
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "phone": false,
+      "hit": {
+        "x": 365.0703125,
+        "y": 569.9453125,
+        "hit": "hand-hit-lane",
+        "blocked": false,
+        "bubbleEvents": "none"
+      },
+      "steps": [
+        "Next (1/4)",
+        "Next (2/4)",
+        "Next (3/4)",
+        "Got it"
+      ],
+      "handInput": true,
+      "allNextSteps": true,
+      "skip": true,
+      "errors": []
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "phone": false,
+      "hit": {
+        "x": 421.2109375,
+        "y": 543.015625,
+        "hit": "hand-hit-lane",
+        "blocked": false,
+        "bubbleEvents": "none"
+      },
+      "steps": [
+        "Next (1/4)",
+        "Next (2/4)",
+        "Next (3/4)",
+        "Got it"
+      ],
+      "handInput": true,
+      "allNextSteps": true,
+      "skip": true,
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "phone": false,
+      "hit": {
+        "x": 404.796875,
+        "y": 654.7421875,
+        "hit": "hand-hit-lane",
+        "blocked": false,
+        "bubbleEvents": "none"
+      },
+      "steps": [
+        "Next (1/4)",
+        "Next (2/4)",
+        "Next (3/4)",
+        "Got it"
+      ],
+      "handInput": true,
+      "allNextSteps": true,
+      "skip": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "phone": true,
+      "hit": {
+        "x": 78.77343755960464,
+        "y": 637.96875,
+        "hit": "hand-hit-lane",
+        "blocked": false,
+        "bubbleEvents": "none"
+      },
+      "steps": [
+        "Next (1/4)",
+        "Next (2/4)",
+        "Next (3/4)",
+        "Got it"
+      ],
+      "handInput": true,
+      "allNextSteps": true,
+      "skip": true,
+      "errors": []
+    }
+  ]
+}

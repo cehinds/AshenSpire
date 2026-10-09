@@ -1,0 +1,2338 @@
+{
+  "schema": 1,
+  "library": "alternative",
+  "pinnedRelease": "hd-assets-v15",
+  "note": "Display-specific exports stored beside this index.",
+  "assets": {
+    "assets-display/alternative/ashheartDragon-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0a88786a00e158633a2f550b84caf6074f8436ff4eac67f63784ea83b63733e2",
+      "bytes": 11668
+    },
+    "assets-display/alternative/ashheartDragon.webp": {
+      "source": "reviewed-export",
+      "sha256": "0a88786a00e158633a2f550b84caf6074f8436ff4eac67f63784ea83b63733e2",
+      "bytes": 11668
+    },
+    "assets-display/alternative/ashRevenant-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "a470e1c9392aa55f4f0fc85d908c65eb6a4aba5700a62d642790093023ac4620",
+      "bytes": 7448
+    },
+    "assets-display/alternative/ashRevenant.webp": {
+      "source": "reviewed-export",
+      "sha256": "a470e1c9392aa55f4f0fc85d908c65eb6a4aba5700a62d642790093023ac4620",
+      "bytes": 7448
+    },
+    "assets-display/alternative/bellKeeper-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ebcbf13bb9ea595b4b16e9b963838eceedb408a25cefad7dde4b4d324113fdf8",
+      "bytes": 7410
+    },
+    "assets-display/alternative/bellKeeper.webp": {
+      "source": "reviewed-export",
+      "sha256": "ebcbf13bb9ea595b4b16e9b963838eceedb408a25cefad7dde4b4d324113fdf8",
+      "bytes": 7410
+    },
+    "assets-display/alternative/blightedValkyrie-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "18e6fb2b4a81376cc3e11597a8932bdcf87062bf993b90d215290d4b5c665831",
+      "bytes": 11794
+    },
+    "assets-display/alternative/blightedValkyrie.webp": {
+      "source": "reviewed-export",
+      "sha256": "18e6fb2b4a81376cc3e11597a8932bdcf87062bf993b90d215290d4b5c665831",
+      "bytes": 11794
+    },
+    "assets-display/alternative/blightHound-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43a9d",
+      "bytes": 9432
+    },
+    "assets-display/alternative/blightHound.webp": {
+      "source": "reviewed-export",
+      "sha256": "84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43a9d",
+      "bytes": 9432
+    },
+    "assets-display/alternative/briarHermit-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8cb9060942142353a3eec26a470a73bf4f2ee2b2c2b64420ea9111c420f032b7",
+      "bytes": 10440
+    },
+    "assets-display/alternative/briarHermit.webp": {
+      "source": "reviewed-export",
+      "sha256": "8cb9060942142353a3eec26a470a73bf4f2ee2b2c2b64420ea9111c420f032b7",
+      "bytes": 10440
+    },
+    "assets-display/alternative/card-herald-attack-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "120670a08cdc5572e9a7de0f218abdfed033a86531eca1255ef1455688725f78",
+      "bytes": 10102
+    },
+    "assets-display/alternative/card-herald-attack-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "e19b894c25edd7291a03cae50b9d72ebed8123bba52201ce1455caae25f390cb",
+      "bytes": 36552
+    },
+    "assets-display/alternative/card-herald-attack-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f3a86a332e0b87536e6be3038d553cb4cfec5d73d49d828011e2db90d5bb694c",
+      "bytes": 9050
+    },
+    "assets-display/alternative/card-herald-attack-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "5f92a1cc248f8dea0d9deb1bb302c9aaf1ad0c4e21e5875882f62a74804b7bbf",
+      "bytes": 33328
+    },
+    "assets-display/alternative/card-herald-counter-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0b1c92fde00ebe941c2907e5eb256ffd939cd82035d68ce36f99df49100c5f7e",
+      "bytes": 9704
+    },
+    "assets-display/alternative/card-herald-counter-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "871f869adaece393505002dfa448eaa7d93b7e0e858d2c53c3d7b89c3a1a4ef1",
+      "bytes": 33978
+    },
+    "assets-display/alternative/card-herald-counter-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "73b9425f6d6768cfda86d8304329912cce6af4dc76a48399e5fc5018ab2e045f",
+      "bytes": 9220
+    },
+    "assets-display/alternative/card-herald-counter-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "a2d288925de35c2248ca41290cc2d1b82b352b78a65c1eb4ed062711b558d058",
+      "bytes": 32350
+    },
+    "assets-display/alternative/card-herald-counter-parry-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "76353778fb362e59bc3d53c5c9b34d046e85154feefa2de146d0c0b0c957fcf0",
+      "bytes": 9758
+    },
+    "assets-display/alternative/card-herald-counter-parry.webp": {
+      "source": "reviewed-export",
+      "sha256": "200fb086e801516be10e5a6c394b82e3c31610eb183810fee4fee59c07b7b41e",
+      "bytes": 34164
+    },
+    "assets-display/alternative/card-herald-guard-brace-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b1a7177b22ac34a00269593bb5f2b8f43fc4d2c20b7a2da268a071315f3f6e52",
+      "bytes": 9374
+    },
+    "assets-display/alternative/card-herald-guard-brace.webp": {
+      "source": "reviewed-export",
+      "sha256": "bdbb51aff5894cea08266cdce7f2c4b3be88463ce230781b489b3b51da6680cd",
+      "bytes": 32538
+    },
+    "assets-display/alternative/card-herald-guard-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "236e58546561bb91eb1bdd8a52ab8ccc9f12a1cac448191053b26c1190d4dba9",
+      "bytes": 9586
+    },
+    "assets-display/alternative/card-herald-guard-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "011fc2c4696d45f31fb8499c49d8b8cec8ac7dfd55d005efa29999ca9c877bdf",
+      "bytes": 33056
+    },
+    "assets-display/alternative/card-herald-guard-rise-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0b3522328e13d29563314b3d25d77e80a11c0657782c9f047dca61f4e65d63c3",
+      "bytes": 9596
+    },
+    "assets-display/alternative/card-herald-guard-rise.webp": {
+      "source": "reviewed-export",
+      "sha256": "ba1c1d1cc8e0552163c3082580423b60f37f1005400f3aae5fdbd90f93b10035",
+      "bytes": 33906
+    },
+    "assets-display/alternative/card-herald-ranged-aim-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c2b2ca1c0aca2246f9613ca124884f12d7be52689d35ebb4f18ee3afb6e04ba5",
+      "bytes": 10568
+    },
+    "assets-display/alternative/card-herald-ranged-aim.webp": {
+      "source": "reviewed-export",
+      "sha256": "73bcc8dd6d88b0a2cd9abe96202775827c538b62dda6c9cc1b33eab6b9aa26e0",
+      "bytes": 37496
+    },
+    "assets-display/alternative/card-herald-ranged-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b00debfc817c2bcbf969b918990e70c5d74dbd36274fabc57a43d7b7a76ca748",
+      "bytes": 10112
+    },
+    "assets-display/alternative/card-herald-ranged-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "03df56514e2bd160b580f3afd2e27a15c47896a732d164ddaca0d4f331b59a54",
+      "bytes": 35816
+    },
+    "assets-display/alternative/card-herald-ranged-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "63d8ca7d7ee20702c3072fe79086fbcbcda91c03f92ba6a093529e07f18fbb0a",
+      "bytes": 9868
+    },
+    "assets-display/alternative/card-herald-ranged-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "43720a83dcb282226b0fb420accdf0dca00fd83c663fd2bd6cd754522dc8a960",
+      "bytes": 35376
+    },
+    "assets-display/alternative/card-herald-ready-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "bff8a93491651ce5f103871170e7e85245eaae6665e01eed6f4024af132e4e29",
+      "bytes": 9002
+    },
+    "assets-display/alternative/card-herald-ready.webp": {
+      "source": "reviewed-export",
+      "sha256": "81f7ea4c26fa3795e8747b332ceec16a7ae4b9323765e68a60edfc285d36d787",
+      "bytes": 33222
+    },
+    "assets-display/alternative/card-herald-smash-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "4c45a5db2773a4d46ceff4ebae3aec6c41aed9ce67e4f38011457dcf4d582a3c",
+      "bytes": 9064
+    },
+    "assets-display/alternative/card-herald-smash-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "de9e97601631000d050ab84e113e6a8ec34149aa69d1370f14c2a3f3222affe6",
+      "bytes": 33292
+    },
+    "assets-display/alternative/card-herald-smash-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f38131ed6af96e460dc83ab9893a7344d53d5e03f43f02a2ad942a8c241f7865",
+      "bytes": 9494
+    },
+    "assets-display/alternative/card-herald-smash-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "d9801bfd2b1c872098d31cf3c0d98e6eecd5f53a30263bd9ed631566e423aed9",
+      "bytes": 35122
+    },
+    "assets-display/alternative/card-herald-smash-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ac1a4355d1916887268eb1d2752b1eec4883fae772ba7cf675822ee636eb92c0",
+      "bytes": 8854
+    },
+    "assets-display/alternative/card-herald-smash-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "1d61e7c69813dc99311dfe14fdcd860ff49567dceb7a8b2a5bb2dbab0e26e8a1",
+      "bytes": 32376
+    },
+    "assets-display/alternative/card-herald-spell-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "bbc453955d393a38af11124634afc31b3a87653ed04cb83ba9afa87d78bc2581",
+      "bytes": 9918
+    },
+    "assets-display/alternative/card-herald-spell-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "1ce92f86bb6e5dafb2ac8e5871fead5e88381cec3bcae037f8b62c28c3ead519",
+      "bytes": 35120
+    },
+    "assets-display/alternative/card-herald-spell-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "07c967bd55d11eb343c6d6a563ed7a2e2fb4ce8557795fb8b2137736804dd474",
+      "bytes": 10576
+    },
+    "assets-display/alternative/card-herald-spell-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "c18a01dcc81520eb7f2ef4e213dddb9c1ffa8e51039e324310a9002d1a4572b6",
+      "bytes": 37326
+    },
+    "assets-display/alternative/card-herald-spell-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "4b444d05f532e74ef3e1f9508a0ff0a9aa87060fa1d826f6b2252c6c1a4e983f",
+      "bytes": 9762
+    },
+    "assets-display/alternative/card-herald-spell-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "61f31060f95e29e01405777969dc4f045719b503e02663b63e3413771bd2ef96",
+      "bytes": 34676
+    },
+    "assets-display/alternative/card-herald-sweep-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "2397401d64677f042a306979edc2e9ee03fd479e847659381183896d462f3cb9",
+      "bytes": 9312
+    },
+    "assets-display/alternative/card-herald-sweep-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "49988fc9f477d062c178ffee7a862c1cae30846c50a9391223e5f77a3aedb2ac",
+      "bytes": 33532
+    },
+    "assets-display/alternative/card-herald-sweep-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d3fc1afa54d656adcd5a322af5438a69c65b708f0b043dab70b0e8ecdcbd8742",
+      "bytes": 8090
+    },
+    "assets-display/alternative/card-herald-sweep-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "e43790fbd497f7c8765cb1049cbc5bba84f353fb6e537b702c0b03a338b33197",
+      "bytes": 29518
+    },
+    "assets-display/alternative/card-herald-sweep-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c6ad61c8e3d6603a895771e01241e3a2e7a347f8908678ba606194a28f948118",
+      "bytes": 8546
+    },
+    "assets-display/alternative/card-herald-sweep-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "f6022ea80af62d0f08a3b9cf0797d2d403c8f838bb1069179dfe47f4f7f09893",
+      "bytes": 31360
+    },
+    "assets-display/alternative/card-reaver-attack-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b251f607c9bbd05659964babe1494a101441fcd9d762c76e866593f75842227c",
+      "bytes": 8052
+    },
+    "assets-display/alternative/card-reaver-attack-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "f9c81b34f8b2a51a696d9b8e560dd059f1fb1e4078f0cbc38d8cd6d07f7b29d6",
+      "bytes": 28522
+    },
+    "assets-display/alternative/card-reaver-attack-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "cc4b77ca51d02300db188b38c927051269f4b349e3228e6453d13a88599fe48b",
+      "bytes": 7684
+    },
+    "assets-display/alternative/card-reaver-attack-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "f6a997a77f312f008ee69376bc45ea55012e2710f448402da55eb292de56b4b3",
+      "bytes": 27178
+    },
+    "assets-display/alternative/card-reaver-counter-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "47c74885177c3bac05b4e54de8d93989e621dd7b896b036382584fd75802c084",
+      "bytes": 6458
+    },
+    "assets-display/alternative/card-reaver-counter-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "7d21e5d92b32f178d6454c9e15ab66a9d39fdf22ff6dae0a32fdfe780474655c",
+      "bytes": 20244
+    },
+    "assets-display/alternative/card-reaver-counter-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "cdfb79dd4d5756fc51a07df207d31cdc10d83309e20666a81d4081b99c07135c",
+      "bytes": 6456
+    },
+    "assets-display/alternative/card-reaver-counter-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "de7fe644776a54ba84431c0016cf125f8e08a3f10129d4215402d414d6c27183",
+      "bytes": 21322
+    },
+    "assets-display/alternative/card-reaver-counter-parry-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "28b0741df4ba0c3f8c8f54427f671b3944f6fe77b1f7f13d3e131d997ece0bee",
+      "bytes": 7064
+    },
+    "assets-display/alternative/card-reaver-counter-parry.webp": {
+      "source": "reviewed-export",
+      "sha256": "ebefabeafefeeb3a3efac3447d852080c494fad4b46548893e93828d4af82c4b",
+      "bytes": 23108
+    },
+    "assets-display/alternative/card-reaver-guard-brace-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "63d4bfb21cec147b78b67dc216fdef0244b517c11042586c6cab94d8edaec223",
+      "bytes": 7366
+    },
+    "assets-display/alternative/card-reaver-guard-brace.webp": {
+      "source": "reviewed-export",
+      "sha256": "91df648df90a4ed76613d621245bddfb4fd9bad9a654687617f11a852d0c5b96",
+      "bytes": 23930
+    },
+    "assets-display/alternative/card-reaver-guard-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3390fa60fbc24639f6ec3ffffd55ca6d764986790b18f8452f266eb2ed533e81",
+      "bytes": 7118
+    },
+    "assets-display/alternative/card-reaver-guard-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "fe21bbe98afcac88dd3d25e2313b76b39a81e8c00f3c4b2552a822ad9c2528c0",
+      "bytes": 23286
+    },
+    "assets-display/alternative/card-reaver-guard-rise-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "33a5e317f2bae5a6208e697c1af9655109f2b814697d6c6798157377292f2c16",
+      "bytes": 7438
+    },
+    "assets-display/alternative/card-reaver-guard-rise.webp": {
+      "source": "reviewed-export",
+      "sha256": "3de5f117b4e2772e4f096b395bed3baf40ff9327b0bc6dbc60e5db9d82f79b3e",
+      "bytes": 24168
+    },
+    "assets-display/alternative/card-reaver-magic-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "37be5d5b40b2a2cb35f9e2e4c574c1916a9e5d11b12be901f016db21877de337",
+      "bytes": 6288
+    },
+    "assets-display/alternative/card-reaver-magic-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "5dcc4357fc9195b9921bb8854cbc30af38de442e171912e69ed9760019e9962e",
+      "bytes": 21860
+    },
+    "assets-display/alternative/card-reaver-magic-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "67212b098d72c26c26f87f5085add60cf6d6a668a292e0a55daed24760a68da8",
+      "bytes": 6336
+    },
+    "assets-display/alternative/card-reaver-magic-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "e72c8b6024fcd0cabc56bd1670be9d1b0fbe4620b7ae70fc5c47e9fdae41de62",
+      "bytes": 22078
+    },
+    "assets-display/alternative/card-reaver-magic-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8d1c07b091ad59ae5b7d8a8bcfae9d842b72cbf767bf99b3f1c6f4fc9284caa2",
+      "bytes": 5808
+    },
+    "assets-display/alternative/card-reaver-magic-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "19e77e9898166cbc9e544d979e283e3c1b348fd01df3dd653edec471ad7054d6",
+      "bytes": 20224
+    },
+    "assets-display/alternative/card-reaver-ranged-aim-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d6617a41928870746a4d7b809f160ead1d14d48349cd72bcd413183f4aedcd26",
+      "bytes": 6530
+    },
+    "assets-display/alternative/card-reaver-ranged-aim.webp": {
+      "source": "reviewed-export",
+      "sha256": "ad50dcb0562353c5879fe38d05f91fec2c606cb1323679abd56005d0ec301a53",
+      "bytes": 22452
+    },
+    "assets-display/alternative/card-reaver-ranged-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "2da0f6ddaf81ab2aa3f20ccf86c75405c6ed347bffb59680f72ae7f1cb8ee4e5",
+      "bytes": 6368
+    },
+    "assets-display/alternative/card-reaver-ranged-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "522141caaf5fd2a5bcfd2f15ecbf58d8e1b26ccc4c0ed947bf9e87aafa9c1944",
+      "bytes": 22320
+    },
+    "assets-display/alternative/card-reaver-ranged-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "83abdba242208c9d66f79b4f3afbf79091ab2c5d67c70e97688c90356b06cac6",
+      "bytes": 6484
+    },
+    "assets-display/alternative/card-reaver-ranged-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "1900820b67c732b7309cc6136d1a438ba8902300ebd0d8ae36483dd25f1c8340",
+      "bytes": 22412
+    },
+    "assets-display/alternative/card-reaver-ready-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+      "bytes": 6980
+    },
+    "assets-display/alternative/card-reaver-ready.webp": {
+      "source": "reviewed-export",
+      "sha256": "31fd67608185090de2f838a1872c2043f08a451e9eff9b7a7671b829b558a350",
+      "bytes": 24822
+    },
+    "assets-display/alternative/card-reaver-smash-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "871155250e2a85a2c8f70d03a98c9ddeeaf533f2877fe8446c4a7f095ad91253",
+      "bytes": 7600
+    },
+    "assets-display/alternative/card-reaver-smash-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "2329858858eb09ee413bc4c169e1fa208eff23f3c238d2503cbd6e38ce6ec8a5",
+      "bytes": 27874
+    },
+    "assets-display/alternative/card-reaver-smash-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3534450d8b0a5683aef06b003b0b839e9e1041cc76822532b2fa8c3a2ea7b153",
+      "bytes": 8632
+    },
+    "assets-display/alternative/card-reaver-smash-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "853b8dfcf429e7b3c6d6fa6c01427727e2f143d958febe28ae2cd90e862e3d4d",
+      "bytes": 31300
+    },
+    "assets-display/alternative/card-reaver-smash-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "52d1a2fdd41673705fb441bcc24c377070fdaadb12c362d6cd72ad62c7a24357",
+      "bytes": 7104
+    },
+    "assets-display/alternative/card-reaver-smash-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "0b1a9e0f1cc5d3085d83d3fea0a7c71d59025e0260045c3db794e757aae01ebf",
+      "bytes": 25406
+    },
+    "assets-display/alternative/card-reaver-spell-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "19a3095b85fdfe8dc35c76303de56cf187c4d59b3fcbda3c12a832bf8e71bac3",
+      "bytes": 5678
+    },
+    "assets-display/alternative/card-reaver-spell-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "4e33b102962660591e3ee34caf918f39ba9fc77900ca4b3ff89e24eb84db222d",
+      "bytes": 19610
+    },
+    "assets-display/alternative/card-reaver-spell-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b8824026bdc2e2e1e7e49c37b973a6168e56352dd21c8067028bd01f2a528a60",
+      "bytes": 6052
+    },
+    "assets-display/alternative/card-reaver-spell-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "296288db6ea2cbdeba0f9c6cd799c5ef3390eac4a8e8030110e1c49c33f17d47",
+      "bytes": 20868
+    },
+    "assets-display/alternative/card-reaver-spell-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "890e59095dab560eca88beb0ca8b86e6d364d30a3edd5d9e6aca12d465f50e99",
+      "bytes": 6080
+    },
+    "assets-display/alternative/card-reaver-spell-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "55367796e53c341245dc76a0e81084c55548e20c8e12598bb00cf721676d9a52",
+      "bytes": 21286
+    },
+    "assets-display/alternative/card-reaver-sweep-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3ee0c773d944b625ce0584e97e4b00c7fc88f8fe277660e8de75766690488dee",
+      "bytes": 7482
+    },
+    "assets-display/alternative/card-reaver-sweep-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "25648c500702f6199135fc10d70b53c9c3fa876153d2db63f94a4392e09b168c",
+      "bytes": 27622
+    },
+    "assets-display/alternative/card-reaver-sweep-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "7114bbd4685185ef14b72e04389e84038d66741d4d1e4ce1197dc7dc0b649d4f",
+      "bytes": 7272
+    },
+    "assets-display/alternative/card-reaver-sweep-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "7cb208d539950a04858ef4370d6bf79355ee87723daac8e1266ebad6f5f05cf8",
+      "bytes": 26294
+    },
+    "assets-display/alternative/card-reaver-sweep-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "7a2bf10ff116f9966547893a821a8d6abb96328df0f55e3490aa4090aa1eb340",
+      "bytes": 6376
+    },
+    "assets-display/alternative/card-reaver-sweep-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "df069a1dcc5714fe7e1c762c308ea668938ee8c36ea2e968aa3dc197111f7413",
+      "bytes": 22894
+    },
+    "assets-display/alternative/card-rogue-attack-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8da06d05a7668010063c8a3ec27d397daf1a05c85c4cf2bb762be7641f04e08b",
+      "bytes": 12450
+    },
+    "assets-display/alternative/card-rogue-attack-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "45595656289516762ee4099101c7b04d91029b90b3fa9525aec351c39a448b53",
+      "bytes": 44430
+    },
+    "assets-display/alternative/card-rogue-attack-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5815819d1dc9682000b922be3a9435db3ed7da6c64193c316c4fad2d1dba1d8f",
+      "bytes": 11686
+    },
+    "assets-display/alternative/card-rogue-attack-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "6675366b330c2f385de432ca517103bc343eff9c25326eda578feb55cb5d111d",
+      "bytes": 41954
+    },
+    "assets-display/alternative/card-rogue-counter-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "02357da4752f47b8f184c97c095e14eacbf56d533c77d84632a6ae97ed19457e",
+      "bytes": 11534
+    },
+    "assets-display/alternative/card-rogue-counter-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "f46eb15d86de4acaeb1e73bb496aac2c200c2ca46ea911e6c6a678c14e96ed33",
+      "bytes": 40190
+    },
+    "assets-display/alternative/card-rogue-counter-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "47ae410a4766d26dd85179e6a26757345d9f2d61340a039959e0eda82373a78b",
+      "bytes": 10666
+    },
+    "assets-display/alternative/card-rogue-counter-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "8f917b6c351caa176acd0c9b263a99011a1d9c151cf37d5ecd2c9e82983108cd",
+      "bytes": 37356
+    },
+    "assets-display/alternative/card-rogue-counter-parry-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8b07fe538433480704e7b966f1359c0a266228aa8f575e88b99222216bcb67b1",
+      "bytes": 11660
+    },
+    "assets-display/alternative/card-rogue-counter-parry.webp": {
+      "source": "reviewed-export",
+      "sha256": "a06e44fa2429d4d58c0488b4156555612e60b57fe141a908c8b8fa33eb90b37c",
+      "bytes": 40144
+    },
+    "assets-display/alternative/card-rogue-guard-brace-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "246275a9ce3a99d12e7aee1c78ff14d50c6ec2ff6392f4106b993c307a579158",
+      "bytes": 10754
+    },
+    "assets-display/alternative/card-rogue-guard-brace.webp": {
+      "source": "reviewed-export",
+      "sha256": "131e66bfd5bac7dd9cf4dec75dfbd67d6f81959ea11b4df93dfcc5d44260a598",
+      "bytes": 36986
+    },
+    "assets-display/alternative/card-rogue-guard-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "79255402e030edec472b72047543c6819483f62fbb141e46b81cb745f81222ed",
+      "bytes": 11806
+    },
+    "assets-display/alternative/card-rogue-guard-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "94b7c769f9286f9f6d42be15d06510f6dc38f5ac38c51d9bc9ad31ffb35c67f6",
+      "bytes": 41198
+    },
+    "assets-display/alternative/card-rogue-guard-rise-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ab77f004cc5987c1d05097c919123e12324ef87cdab60744fcfecbd15de8c871",
+      "bytes": 11796
+    },
+    "assets-display/alternative/card-rogue-guard-rise.webp": {
+      "source": "reviewed-export",
+      "sha256": "2d9b448a90eb289239330b2842bf734e3b1e96ebc4d743e987258a662b4ca342",
+      "bytes": 40568
+    },
+    "assets-display/alternative/card-rogue-magic-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0c197dcddce86fe6006e653f288354a245ec44391eb6be0c4e852da39575160a",
+      "bytes": 11102
+    },
+    "assets-display/alternative/card-rogue-magic-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "0aea260bb0df464d0806082da13fdc15a84865f8b5ffdf74edf5d31eee855d72",
+      "bytes": 40524
+    },
+    "assets-display/alternative/card-rogue-magic-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "abba45a1b225fb4624bb9b7ac8d96315f5211f8868aea5d2efbd9e2d32b4f229",
+      "bytes": 11534
+    },
+    "assets-display/alternative/card-rogue-magic-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "87a6e3974555a788a80e90923d19165c5f3881e7a017994eee040e38e325b01d",
+      "bytes": 42146
+    },
+    "assets-display/alternative/card-rogue-magic-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "59429656c07ef70f60d897db5837c5658aea36dbd271ef0080ccd275b8014c21",
+      "bytes": 10482
+    },
+    "assets-display/alternative/card-rogue-magic-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "ee86c56cdc273f3cc39b9c05666ff14171314b9d8120ac54e6b2145b111d4115",
+      "bytes": 38204
+    },
+    "assets-display/alternative/card-rogue-ranged-aim-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "2143929cc6d2ff73da5dc9fd152b878606b6d50a3999c20329dcc21b13541ce4",
+      "bytes": 13458
+    },
+    "assets-display/alternative/card-rogue-ranged-aim.webp": {
+      "source": "reviewed-export",
+      "sha256": "5f6e583b11057f795b52bc895bd41aa05d0fd8844d0df4e0c38e16c710f98b71",
+      "bytes": 48414
+    },
+    "assets-display/alternative/card-rogue-ranged-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "feb23ed771e5501d34e6f44865fba4ae4d2b8d02a3a508bb8da8982d129c4efd",
+      "bytes": 13328
+    },
+    "assets-display/alternative/card-rogue-ranged-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "23ef26853273262432c69dafa4b8ea7aab21ee72ce4c65ddf00ca5b62205326e",
+      "bytes": 47840
+    },
+    "assets-display/alternative/card-rogue-ranged-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f2f5ad521dcbcc578dec1281e80ffedef96e53554780d6ae16d299bf7d4ded0e",
+      "bytes": 12852
+    },
+    "assets-display/alternative/card-rogue-ranged-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "85486a4b78c17e39cc4bc8b9d148a017f95dec463e5551977c7c5b2c53a670f4",
+      "bytes": 46094
+    },
+    "assets-display/alternative/card-rogue-ready-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "689dd8d9f6f4b938a55d99ecfca450bdb73bf43df76cf8120a89ac41c8ed3b00",
+      "bytes": 11324
+    },
+    "assets-display/alternative/card-rogue-ready.webp": {
+      "source": "reviewed-export",
+      "sha256": "da1887f6b90bd2b2fdce24596c5602783c73ee95f4fdb143c77dd717da828e5d",
+      "bytes": 40906
+    },
+    "assets-display/alternative/card-rogue-smash-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5dcd4961b249b7518a0d28a81277dc21f4ad7e085686b69947a6c50748dac470",
+      "bytes": 12150
+    },
+    "assets-display/alternative/card-rogue-smash-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "6b76824f449903c0ba0609e775f1ef0f6018e723ddde28092b756ed92a8129e4",
+      "bytes": 44096
+    },
+    "assets-display/alternative/card-rogue-smash-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "dcf86eab9b7d55aacc628517439b4e8dcaa3a0622f09c73e1808a75a4c027f7e",
+      "bytes": 13422
+    },
+    "assets-display/alternative/card-rogue-smash-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "c473f0894129208a4c14e514fa7cdd779441710f64981b2237af6462d31653bb",
+      "bytes": 48414
+    },
+    "assets-display/alternative/card-rogue-smash-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "20120cf7183ca5a5bd182bca770b2ff7dc7463fc24929364ae9e884c41a72c2f",
+      "bytes": 12062
+    },
+    "assets-display/alternative/card-rogue-smash-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "163145dd10b902d08183ac998b0d143100d4fcf929b7b03ff6a8cd762f73c48c",
+      "bytes": 43480
+    },
+    "assets-display/alternative/card-rogue-spell-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "463882eb88295a4acc2dcf632174998f138fc12ae21197c50739eb2da57e48b6",
+      "bytes": 10372
+    },
+    "assets-display/alternative/card-rogue-spell-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "217492ca1abb3dae93aa499f4804a0f7201aff8f5ce49280f77711683de50538",
+      "bytes": 38204
+    },
+    "assets-display/alternative/card-rogue-spell-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "885fbf016a6be847d331c17cd0c742f6f99b3645ec80fb0a9a784dfd56e3bb0d",
+      "bytes": 11262
+    },
+    "assets-display/alternative/card-rogue-spell-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "24147ea05118f89319b5da3a225ad244604e4dfbba61e864b57b9ac403bfe698",
+      "bytes": 40834
+    },
+    "assets-display/alternative/card-rogue-spell-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "6a6003cb18bce1a433b0c43e7f1c0382c7e2958bda83eab8355b3f2aca83046e",
+      "bytes": 11136
+    },
+    "assets-display/alternative/card-rogue-spell-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "99877ea083b1da2326488ad3c54087fde0b9d58d37e89a41e17d5eaab3b12373",
+      "bytes": 40634
+    },
+    "assets-display/alternative/card-rogue-sweep-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "76c5aed33a60347266ae99c17f60b558eaad56562bae90ea975e8f075132627b",
+      "bytes": 13504
+    },
+    "assets-display/alternative/card-rogue-sweep-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "f1b90852bc65eadcd91b3c526fc0e46e9e41f95988bc41ad1bb36fc513b29f37",
+      "bytes": 48944
+    },
+    "assets-display/alternative/card-rogue-sweep-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "75290481b0e33fc14bec009b157613b0d0bb8ae446eea13562b10aaec607ebae",
+      "bytes": 11016
+    },
+    "assets-display/alternative/card-rogue-sweep-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "627ebaca2850141eaee2b0ad61bcab4cff88fe82e4d8e3994fb78cf0de9c8be3",
+      "bytes": 40026
+    },
+    "assets-display/alternative/card-rogue-sweep-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "434b4bf8c6e6429d9d14c6dba8da4eb18e2a580854643d8e2796d6f943e016ce",
+      "bytes": 11410
+    },
+    "assets-display/alternative/card-rogue-sweep-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "0ccc616f785204658b1030676f2cfb1a25d56c748c4d35632eb36aafc72db806",
+      "bytes": 41094
+    },
+    "assets-display/alternative/card-section-texture-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "e7924c6fa91148f022c78c13acc934c94a591777bfa4a82635c560bd3583a312",
+      "bytes": 14472
+    },
+    "assets-display/alternative/card-section-texture.webp": {
+      "source": "reviewed-export",
+      "sha256": "e7924c6fa91148f022c78c13acc934c94a591777bfa4a82635c560bd3583a312",
+      "bytes": 14472
+    },
+    "assets-display/alternative/card-starseer-attack-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8e0213cc5fbc53ddb91d3c25f8666256497b0ebd4e42de25a05dbf331066c11b",
+      "bytes": 10354
+    },
+    "assets-display/alternative/card-starseer-attack-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "715c70afcd38e3e6dd5fb8c27122a6f95a1e3110d2da10b843980b2189040766",
+      "bytes": 37364
+    },
+    "assets-display/alternative/card-starseer-attack-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "eeb3af71eff027382503f9fec71db5005a58f5d9eba5c92bdca109fa5bdbf040",
+      "bytes": 9618
+    },
+    "assets-display/alternative/card-starseer-attack-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "7cf25807d46a6a7b11e198967a75fdfaae7346488a82ec545613426a2ad9ab27",
+      "bytes": 34450
+    },
+    "assets-display/alternative/card-starseer-counter-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "e0a8671d85ac59c0f503c8447c9d74d135b3e2d436843d3f9b5a40bd193428a4",
+      "bytes": 11028
+    },
+    "assets-display/alternative/card-starseer-counter-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "95cd64cab9800fb2f15a455ee28e0ee7bb32aa383a1f3c63a437b1ea49790bf5",
+      "bytes": 38944
+    },
+    "assets-display/alternative/card-starseer-counter-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ba5b70ab4f5ef52c71597e86fa75d45a137e965fc608831747e39fe3f83fa252",
+      "bytes": 10810
+    },
+    "assets-display/alternative/card-starseer-counter-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "a66e9602a2786664d65bcb8a0628003c7f08e3d5a7ef1da3d71a9299e444545b",
+      "bytes": 38622
+    },
+    "assets-display/alternative/card-starseer-counter-parry-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f230bbf794be0793dc37ad2b25d00b053c43e1865e698f2ef13a5d109225b8d9",
+      "bytes": 10630
+    },
+    "assets-display/alternative/card-starseer-counter-parry.webp": {
+      "source": "reviewed-export",
+      "sha256": "d00aa054886148b0f8ced325279f06d3f7ddb5acc147d352b9bd3f10b8177eaf",
+      "bytes": 37464
+    },
+    "assets-display/alternative/card-starseer-guard-brace-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f03a74fbe5fd061fccaac6f109ae7ce88e108b782ef328b5c97837e438122cce",
+      "bytes": 11002
+    },
+    "assets-display/alternative/card-starseer-guard-brace.webp": {
+      "source": "reviewed-export",
+      "sha256": "f4369207d194abedc20929092de5f13ed651387aae528556e7fd0bc32c377b8c",
+      "bytes": 38988
+    },
+    "assets-display/alternative/card-starseer-guard-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "769f9749a1caac46224bd2ef9456cdbfa60633178d852c5a5fe1583385e10855",
+      "bytes": 10864
+    },
+    "assets-display/alternative/card-starseer-guard-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "9485250bf9c31ea8e27824e7103d33eb83485cfe7427183f19ee4b92b034c0f3",
+      "bytes": 38730
+    },
+    "assets-display/alternative/card-starseer-guard-rise-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c60bf79fc2295d411f29c8f9d3029a448e42f9ec99b469314d8135213a47401d",
+      "bytes": 11746
+    },
+    "assets-display/alternative/card-starseer-guard-rise.webp": {
+      "source": "reviewed-export",
+      "sha256": "2496e0c21c9e6df3cc6e2bab13212d3b416107c38fc3b70689bfbca3f6b158a5",
+      "bytes": 41650
+    },
+    "assets-display/alternative/card-starseer-ranged-aim-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b20186c2f60f70ce233e8aaa07e626f4a115a62b46a567a1d2a24ad7e36aaac9",
+      "bytes": 10342
+    },
+    "assets-display/alternative/card-starseer-ranged-aim.webp": {
+      "source": "reviewed-export",
+      "sha256": "baf0ee45e3c2b67ed977637f8fd51dd3ab3392553ae7f758394900bb8affddb2",
+      "bytes": 35198
+    },
+    "assets-display/alternative/card-starseer-ranged-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "7291b049a83500bc7b076c2443674df8fa517427aa2367fdce751d0c45594826",
+      "bytes": 9684
+    },
+    "assets-display/alternative/card-starseer-ranged-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "c1d3816a20d021d37c68b15d8921f4dbb824fef22b189889c23f602f077e63ba",
+      "bytes": 33226
+    },
+    "assets-display/alternative/card-starseer-ranged-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "2bcf88a5c01de2c6386aedbd6dafd85a147aeab18d0de79a648490d7d19ee632",
+      "bytes": 9726
+    },
+    "assets-display/alternative/card-starseer-ranged-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "8987679408038d1e44f4fa420a58e950021d0051428036cc087740fadf223b17",
+      "bytes": 33962
+    },
+    "assets-display/alternative/card-starseer-ready-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+      "bytes": 9316
+    },
+    "assets-display/alternative/card-starseer-ready.webp": {
+      "source": "reviewed-export",
+      "sha256": "efde15de855d95c7b24132647b5ac1fa82028ae385aa1f9fbf7b2df9e94c94e7",
+      "bytes": 33196
+    },
+    "assets-display/alternative/card-starseer-smash-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "cf60ae3028f3f2447bc17faa34021d8b91bc88c7e7b1bb2f70e6b244c72ac67e",
+      "bytes": 9204
+    },
+    "assets-display/alternative/card-starseer-smash-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "217d9ba5443caef1b197a145b39d5022a8c0a7af951524a988b6e4729115d8cc",
+      "bytes": 33302
+    },
+    "assets-display/alternative/card-starseer-smash-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "eb033e39fae14d2d991f5b1c7b6a8c1c5a9780d00476ceb3d087a1c90149791a",
+      "bytes": 10306
+    },
+    "assets-display/alternative/card-starseer-smash-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "3c9d322e64867550c01b39ac45d107fa4a10db45d4994d25466cec44a4b8d016",
+      "bytes": 36712
+    },
+    "assets-display/alternative/card-starseer-smash-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8f8635181b709644bfd98d2cac86da2504e77a6dcb8f0d48f643e5c3b2645b7c",
+      "bytes": 9034
+    },
+    "assets-display/alternative/card-starseer-smash-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "2ae4b70fd07e39403093298afcf0c1cc819f9dd648fb92bb04a101826221e934",
+      "bytes": 32274
+    },
+    "assets-display/alternative/card-starseer-spell-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "cbfff06077f94687031cc97058601d1aed2c8c999eb240a182035e1b04fd7138",
+      "bytes": 9794
+    },
+    "assets-display/alternative/card-starseer-spell-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "4743e89d12ca43868d5b901d963c930cd7f3a8a7e880be0da711036b62a0c2bf",
+      "bytes": 33492
+    },
+    "assets-display/alternative/card-starseer-spell-release-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f369c513f4f48d97e0d643bd7e3a0abdc9c8de6f70ec8577bfba5f4996cbd8b9",
+      "bytes": 10018
+    },
+    "assets-display/alternative/card-starseer-spell-release.webp": {
+      "source": "reviewed-export",
+      "sha256": "1dc79983219a1690545bda182d565a39cfbdd65d37e040d6db7a338ddf7e8465",
+      "bytes": 34238
+    },
+    "assets-display/alternative/card-starseer-spell-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "45f0bdb3c4cd91904aef3777e2e13e227815f6ad782e9fc562fabd1ede6f0513",
+      "bytes": 9780
+    },
+    "assets-display/alternative/card-starseer-spell-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "666afc6c0e069b24a57e60e2535b2fecce790d1b593b2efef04b2e148b2541a4",
+      "bytes": 33778
+    },
+    "assets-display/alternative/card-starseer-sweep-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b212c0405ec07f2451ab37523cfbb4a7b628474c127227329d2cec62b62ab553",
+      "bytes": 9454
+    },
+    "assets-display/alternative/card-starseer-sweep-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "a4a68720a6587c9e9e558ff15275907460355e22a70382478ea9e225f5cd9135",
+      "bytes": 34074
+    },
+    "assets-display/alternative/card-starseer-sweep-load-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b1debbdce5bc3d823535b3f635a98a098e32611ae7020f43e23be5186c51999b",
+      "bytes": 8418
+    },
+    "assets-display/alternative/card-starseer-sweep-load.webp": {
+      "source": "reviewed-export",
+      "sha256": "4e262765b5d15f05c4461e732003e14371ff4eb4593dc2bab4aa47f951790fbc",
+      "bytes": 29870
+    },
+    "assets-display/alternative/card-starseer-sweep-return-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "502cf13afd0e6bf51fa3509faa74a5718a12ea7dbdc1f5e9b9763da6462de32c",
+      "bytes": 8714
+    },
+    "assets-display/alternative/card-starseer-sweep-return.webp": {
+      "source": "reviewed-export",
+      "sha256": "3eadb8526cc48ee826d006d0ff0dbcdc9e0eae07594e9201d4899f89e90fef24",
+      "bytes": 31130
+    },
+    "assets-display/alternative/chainScavenger-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "751d653eb55b7ae69ae043bb4c3ae5d07241942af2e8471f97fc92ee18187928",
+      "bytes": 8028
+    },
+    "assets-display/alternative/chainScavenger.webp": {
+      "source": "reviewed-export",
+      "sha256": "751d653eb55b7ae69ae043bb4c3ae5d07241942af2e8471f97fc92ee18187928",
+      "bytes": 8028
+    },
+    "assets-display/alternative/charredColossus-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c4dc0b8dbb023a26606adb2115c8be3b7d5cbd8a9d1950d6517fa6bce81d0db2",
+      "bytes": 9736
+    },
+    "assets-display/alternative/charredColossus.webp": {
+      "source": "reviewed-export",
+      "sha256": "c4dc0b8dbb023a26606adb2115c8be3b7d5cbd8a9d1950d6517fa6bce81d0db2",
+      "bytes": 9736
+    },
+    "assets-display/alternative/cinderMantis-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0ed882e815a61244a9e2a67252ffe99d9730b52a756a44d45db9376c30ecb61c",
+      "bytes": 9116
+    },
+    "assets-display/alternative/cinderMantis.webp": {
+      "source": "reviewed-export",
+      "sha256": "0ed882e815a61244a9e2a67252ffe99d9730b52a756a44d45db9376c30ecb61c",
+      "bytes": 9116
+    },
+    "assets-display/alternative/courtDuelist-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5ed0867ab2e0680004d982cd7e8bb8cdc13e38a09aee85eb9055afd83c7ca3e4",
+      "bytes": 7122
+    },
+    "assets-display/alternative/courtDuelist.webp": {
+      "source": "reviewed-export",
+      "sha256": "5ed0867ab2e0680004d982cd7e8bb8cdc13e38a09aee85eb9055afd83c7ca3e4",
+      "bytes": 7122
+    },
+    "assets-display/alternative/courtMarionette-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5b5784b44960fc6bef4a867e959efe1a8238b5b4165f556e618ef405993af619",
+      "bytes": 8314
+    },
+    "assets-display/alternative/courtMarionette.webp": {
+      "source": "reviewed-export",
+      "sha256": "5b5784b44960fc6bef4a867e959efe1a8238b5b4165f556e618ef405993af619",
+      "bytes": 8314
+    },
+    "assets-display/alternative/courtSurgeon-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5eee30e8026a290b30a8d0e154c2e90b344ca635e8676ac63769f224320398f3",
+      "bytes": 8934
+    },
+    "assets-display/alternative/courtSurgeon.webp": {
+      "source": "reviewed-export",
+      "sha256": "5eee30e8026a290b30a8d0e154c2e90b344ca635e8676ac63769f224320398f3",
+      "bytes": 8934
+    },
+    "assets-display/alternative/eclipseCantor-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "9865aaef1b59576de0572a781312028e6f8d89c5305b00d6fc16158c4a45329d",
+      "bytes": 13020
+    },
+    "assets-display/alternative/eclipseCantor.webp": {
+      "source": "reviewed-export",
+      "sha256": "9865aaef1b59576de0572a781312028e6f8d89c5305b00d6fc16158c4a45329d",
+      "bytes": 13020
+    },
+    "assets-display/alternative/emberStarvedPilgrim-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "342fe1c8bedf8b7e1f38957723c4708e2988ee71b9e6271ffa84f46bb3261c17",
+      "bytes": 5106
+    },
+    "assets-display/alternative/emberStarvedPilgrim.webp": {
+      "source": "reviewed-export",
+      "sha256": "342fe1c8bedf8b7e1f38957723c4708e2988ee71b9e6271ffa84f46bb3261c17",
+      "bytes": 5106
+    },
+    "assets-display/alternative/far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
+      "bytes": 31670
+    },
+    "assets-display/alternative/far.webp": {
+      "source": "reviewed-export",
+      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
+      "bytes": 31670
+    },
+    "assets-display/alternative/fellWarden-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "9244fbbd428a4a63a3d222eeaa7b4da02848d3e712a2bf7d41192f49b2b80a05",
+      "bytes": 6370
+    },
+    "assets-display/alternative/fellWarden.webp": {
+      "source": "reviewed-export",
+      "sha256": "9244fbbd428a4a63a3d222eeaa7b4da02848d3e712a2bf7d41192f49b2b80a05",
+      "bytes": 6370
+    },
+    "assets-display/alternative/foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
+      "bytes": 138988
+    },
+    "assets-display/alternative/foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
+      "bytes": 138988
+    },
+    "assets-display/alternative/furnaceSaint-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5cad93eaf39a21ef5468c7c81297ab51f5373f53e8f39e638e659ab3b209329c",
+      "bytes": 11706
+    },
+    "assets-display/alternative/furnaceSaint.webp": {
+      "source": "reviewed-export",
+      "sha256": "5cad93eaf39a21ef5468c7c81297ab51f5373f53e8f39e638e659ab3b209329c",
+      "bytes": 11706
+    },
+    "assets-display/alternative/gildedKnight-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "cc1a56f5d562487600a822c2620e2b98e695ca994944d0a1eab83a61a5ea5b1c",
+      "bytes": 11654
+    },
+    "assets-display/alternative/gildedKnight.webp": {
+      "source": "reviewed-export",
+      "sha256": "cc1a56f5d562487600a822c2620e2b98e695ca994944d0a1eab83a61a5ea5b1c",
+      "bytes": 11654
+    },
+    "assets-display/alternative/glassRegent-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ab529f0829c0e32cba23ced137cd94be7d7bc5b02741c08749d1629454b931cd",
+      "bytes": 15086
+    },
+    "assets-display/alternative/glassRegent.webp": {
+      "source": "reviewed-export",
+      "sha256": "ab529f0829c0e32cba23ced137cd94be7d7bc5b02741c08749d1629454b931cd",
+      "bytes": 15086
+    },
+    "assets-display/alternative/graveWisp-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba99b4",
+      "bytes": 9832
+    },
+    "assets-display/alternative/graveWisp.webp": {
+      "source": "reviewed-export",
+      "sha256": "9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba99b4",
+      "bytes": 9832
+    },
+    "assets-display/alternative/ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
+      "bytes": 139846
+    },
+    "assets-display/alternative/ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
+      "bytes": 139846
+    },
+    "assets-display/alternative/herald-default-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "6af0340e5ea13994798fd1fce5aec5c42b15c3d9ccd1532f44c59367f9e7368e",
+      "bytes": 11314
+    },
+    "assets-display/alternative/herald-default.webp": {
+      "source": "reviewed-export",
+      "sha256": "6af0340e5ea13994798fd1fce5aec5c42b15c3d9ccd1532f44c59367f9e7368e",
+      "bytes": 11314
+    },
+    "assets-display/alternative/herald-emberhabit-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8cd1c96d4e3242ccfc06665eec2d25c6ddb4dbe3ea87abec31c231459a28d01c",
+      "bytes": 12608
+    },
+    "assets-display/alternative/herald-emberhabit.webp": {
+      "source": "reviewed-export",
+      "sha256": "8cd1c96d4e3242ccfc06665eec2d25c6ddb4dbe3ea87abec31c231459a28d01c",
+      "bytes": 12608
+    },
+    "assets-display/alternative/herald-ossuary-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5cfb57bbb04c5829b18595f45a5bb40426c4052bd1651128534b0945b01ca167",
+      "bytes": 12452
+    },
+    "assets-display/alternative/herald-ossuary.webp": {
+      "source": "reviewed-export",
+      "sha256": "5cfb57bbb04c5829b18595f45a5bb40426c4052bd1651128534b0945b01ca167",
+      "bytes": 12452
+    },
+    "assets-display/alternative/herald-pilgrim-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "992c18b69dd7a86e7a9ec083bc15f0305f18037483383084c6b289c461b75481",
+      "bytes": 11498
+    },
+    "assets-display/alternative/herald-pilgrim.webp": {
+      "source": "reviewed-export",
+      "sha256": "992c18b69dd7a86e7a9ec083bc15f0305f18037483383084c6b289c461b75481",
+      "bytes": 11498
+    },
+    "assets-display/alternative/hollowAstronomer-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c14a3bf207ad50c07c81597da6e913edb075c92a0bdae2668776063eec0091ed",
+      "bytes": 7238
+    },
+    "assets-display/alternative/hollowAstronomer.webp": {
+      "source": "reviewed-export",
+      "sha256": "c14a3bf207ad50c07c81597da6e913edb075c92a0bdae2668776063eec0091ed",
+      "bytes": 7238
+    },
+    "assets-display/alternative/huskBrute-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "20c26242e270844a9db5af3aca34d696700fb86676a340e3a9801126c5c1da9b",
+      "bytes": 9242
+    },
+    "assets-display/alternative/huskBrute.webp": {
+      "source": "reviewed-export",
+      "sha256": "20c26242e270844a9db5af3aca34d696700fb86676a340e3a9801126c5c1da9b",
+      "bytes": 9242
+    },
+    "assets-display/alternative/keeperOfTheNameless-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "7dd253432ab1373fd54e89b1cc5a8c61a3c1925ee0721741bd1a677f175b73bb",
+      "bytes": 9516
+    },
+    "assets-display/alternative/keeperOfTheNameless.webp": {
+      "source": "reviewed-export",
+      "sha256": "7dd253432ab1373fd54e89b1cc5a8c61a3c1925ee0721741bd1a677f175b73bb",
+      "bytes": 9516
+    },
+    "assets-display/alternative/lanternMoth-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "fa7b9af5650b944d98ef69506d5c0e5b5d743a513cb403dfdb9530c06e529e78",
+      "bytes": 11006
+    },
+    "assets-display/alternative/lanternMoth.webp": {
+      "source": "reviewed-export",
+      "sha256": "fa7b9af5650b944d98ef69506d5c0e5b5d743a513cb403dfdb9530c06e529e78",
+      "bytes": 11006
+    },
+    "assets-display/alternative/livingArmor-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5a63eee64db59676b9018aa9369ea45532fdf4e7a0fdbb2d267270ecd6f82d4c",
+      "bytes": 7278
+    },
+    "assets-display/alternative/livingArmor.webp": {
+      "source": "reviewed-export",
+      "sha256": "5a63eee64db59676b9018aa9369ea45532fdf4e7a0fdbb2d267270ecd6f82d4c",
+      "bytes": 7278
+    },
+    "assets-display/alternative/marrowOrganist-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d017847d6b6966c3aba3ac1cac2835200c3714338dd2dfd2f7b445e6fc87406b",
+      "bytes": 6848
+    },
+    "assets-display/alternative/marrowOrganist.webp": {
+      "source": "reviewed-export",
+      "sha256": "d017847d6b6966c3aba3ac1cac2835200c3714338dd2dfd2f7b445e6fc87406b",
+      "bytes": 6848
+    },
+    "assets-display/alternative/mirrorScribe-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f800ff2869b929821a2db8c1211c437c00bad505f49d419b75046b9a71ed3d81",
+      "bytes": 5148
+    },
+    "assets-display/alternative/mirrorScribe.webp": {
+      "source": "reviewed-export",
+      "sha256": "f800ff2869b929821a2db8c1211c437c00bad505f49d419b75046b9a71ed3d81",
+      "bytes": 5148
+    },
+    "assets-display/alternative/reaver-bastion-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "1a066998e273cccfc5fad9e0521ebba096c530f5d532a1f6addd3b2269926f41",
+      "bytes": 10702
+    },
+    "assets-display/alternative/reaver-bastion.webp": {
+      "source": "reviewed-export",
+      "sha256": "1a066998e273cccfc5fad9e0521ebba096c530f5d532a1f6addd3b2269926f41",
+      "bytes": 10702
+    },
+    "assets-display/alternative/reaver-default-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382127",
+      "bytes": 11302
+    },
+    "assets-display/alternative/reaver-default.webp": {
+      "source": "reviewed-export",
+      "sha256": "820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382127",
+      "bytes": 11302
+    },
+    "assets-display/alternative/reaver-oathsworn-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "48dc4c86cd0428c8fb7de4a9ea06331b538581c282d4ecbc5795a0b0cf6a42f9",
+      "bytes": 11308
+    },
+    "assets-display/alternative/reaver-oathsworn.webp": {
+      "source": "reviewed-export",
+      "sha256": "48dc4c86cd0428c8fb7de4a9ea06331b538581c282d4ecbc5795a0b0cf6a42f9",
+      "bytes": 11308
+    },
+    "assets-display/alternative/reaver-vigil-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3f383008b60555bb0bb0aacdb950940b9388d6ec4899dd46b482180093110306",
+      "bytes": 9536
+    },
+    "assets-display/alternative/reaver-vigil.webp": {
+      "source": "reviewed-export",
+      "sha256": "3f383008b60555bb0bb0aacdb950940b9388d6ec4899dd46b482180093110306",
+      "bytes": 9536
+    },
+    "assets-display/alternative/reaver-warden-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "87d9172863817031e241eaaf49f81edc0468d5210a0e87df0a5cf2ba6797426f",
+      "bytes": 9990
+    },
+    "assets-display/alternative/reaver-warden.webp": {
+      "source": "reviewed-export",
+      "sha256": "87d9172863817031e241eaaf49f81edc0468d5210a0e87df0a5cf2ba6797426f",
+      "bytes": 9990
+    },
+    "assets-display/alternative/roadWarden-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0dbfea233b6bc8774f690bda0d7c4a4022ed0343398c6d7851b29f007976b9c6",
+      "bytes": 9032
+    },
+    "assets-display/alternative/roadWarden.webp": {
+      "source": "reviewed-export",
+      "sha256": "0dbfea233b6bc8774f690bda0d7c4a4022ed0343398c6d7851b29f007976b9c6",
+      "bytes": 9032
+    },
+    "assets-display/alternative/rogue-default-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b0e0603c06b85f12896e049010c3d7d6b60a27149d9ed4badfc48cc6059be1b5",
+      "bytes": 10018
+    },
+    "assets-display/alternative/rogue-default.webp": {
+      "source": "reviewed-export",
+      "sha256": "b0e0603c06b85f12896e049010c3d7d6b60a27149d9ed4badfc48cc6059be1b5",
+      "bytes": 10018
+    },
+    "assets-display/alternative/rogue-duelist-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f3baad77b4c8cbb47a0b5e25036f49e3cd4b25c6d85284e9ba77b3c367da3531",
+      "bytes": 10220
+    },
+    "assets-display/alternative/rogue-duelist.webp": {
+      "source": "reviewed-export",
+      "sha256": "f3baad77b4c8cbb47a0b5e25036f49e3cd4b25c6d85284e9ba77b3c367da3531",
+      "bytes": 10220
+    },
+    "assets-display/alternative/rogue-nightveil-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d6f477bbcc98b5ea55dc3e832e34f25389effffe2b15890bfedc78244c6122bf",
+      "bytes": 10224
+    },
+    "assets-display/alternative/rogue-nightveil.webp": {
+      "source": "reviewed-export",
+      "sha256": "d6f477bbcc98b5ea55dc3e832e34f25389effffe2b15890bfedc78244c6122bf",
+      "bytes": 10224
+    },
+    "assets-display/alternative/rogue-shadow-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c4fbf72a0655399dce54470add70abf26ed41c50ed89ecc188e36f67224f7ce6",
+      "bytes": 11126
+    },
+    "assets-display/alternative/rogue-shadow.webp": {
+      "source": "reviewed-export",
+      "sha256": "c4fbf72a0655399dce54470add70abf26ed41c50ed89ecc188e36f67224f7ce6",
+      "bytes": 11126
+    },
+    "assets-display/alternative/rogue-waywatcher-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f015762a0784c18a6a5f22b895f49e30189f14789bb2dc23bce8b7125ad7c8a0",
+      "bytes": 10014
+    },
+    "assets-display/alternative/rogue-waywatcher.webp": {
+      "source": "reviewed-export",
+      "sha256": "f015762a0784c18a6a5f22b895f49e30189f14789bb2dc23bce8b7125ad7c8a0",
+      "bytes": 10014
+    },
+    "assets-display/alternative/ruins-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f",
+      "bytes": 140666
+    },
+    "assets-display/alternative/ruins.webp": {
+      "source": "reviewed-export",
+      "sha256": "314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f",
+      "bytes": 140666
+    },
+    "assets-display/alternative/scene-ashen-crown-1-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3cc1b04323121ab9cb2ade97577b2dab505f9ca31b50e65467655c866139b0fb",
+      "bytes": 129318
+    },
+    "assets-display/alternative/scene-ashen-crown-1-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "3cc1b04323121ab9cb2ade97577b2dab505f9ca31b50e65467655c866139b0fb",
+      "bytes": 129318
+    },
+    "assets-display/alternative/scene-ashen-crown-2-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "334a9e8f3a3db01b30a24d5f5dcde92b40c039105afd9f78175a0bead97ea39e",
+      "bytes": 131492
+    },
+    "assets-display/alternative/scene-ashen-crown-2-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "334a9e8f3a3db01b30a24d5f5dcde92b40c039105afd9f78175a0bead97ea39e",
+      "bytes": 131492
+    },
+    "assets-display/alternative/scene-ashen-crown-3-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ff611e485d23f5f5cc749dd4542f03e252caec5b9bd4f455d612eb05b7a4c895",
+      "bytes": 125446
+    },
+    "assets-display/alternative/scene-ashen-crown-3-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "ff611e485d23f5f5cc749dd4542f03e252caec5b9bd4f455d612eb05b7a4c895",
+      "bytes": 125446
+    },
+    "assets-display/alternative/scene-ashen-crown-4-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "09486cb297693d3b1818af7930877f9c8b3e62dd0a99c283f96031e1336e6d3a",
+      "bytes": 109916
+    },
+    "assets-display/alternative/scene-ashen-crown-4-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "09486cb297693d3b1818af7930877f9c8b3e62dd0a99c283f96031e1336e6d3a",
+      "bytes": 109916
+    },
+    "assets-display/alternative/scene-ashen-crown-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "a147074138672067f3e90900131649dd39f730a7d3ec17fd4488fa72673766e7",
+      "bytes": 34236
+    },
+    "assets-display/alternative/scene-ashen-crown-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "a147074138672067f3e90900131649dd39f730a7d3ec17fd4488fa72673766e7",
+      "bytes": 34236
+    },
+    "assets-display/alternative/scene-ashen-crown-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f036099f207c90b082fdb28ecf1b836721a4e13c5f5d4a19538f09352b28594c",
+      "bytes": 92296
+    },
+    "assets-display/alternative/scene-ashen-crown-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "f036099f207c90b082fdb28ecf1b836721a4e13c5f5d4a19538f09352b28594c",
+      "bytes": 92296
+    },
+    "assets-display/alternative/scene-ashen-crown-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "38e7c5a220506c456bea2e1d158848e659e65dd807d5a71e077dcdfb06a943a1",
+      "bytes": 133350
+    },
+    "assets-display/alternative/scene-ashen-crown-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "38e7c5a220506c456bea2e1d158848e659e65dd807d5a71e077dcdfb06a943a1",
+      "bytes": 133350
+    },
+    "assets-display/alternative/scene-ashen-crown-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "72f318f66220548adadb38f173c8ffb17edafd5484faa6cd1be1019fef21ca73",
+      "bytes": 53726
+    },
+    "assets-display/alternative/scene-ashen-crown-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "72f318f66220548adadb38f173c8ffb17edafd5484faa6cd1be1019fef21ca73",
+      "bytes": 53726
+    },
+    "assets-display/alternative/scene-BS-ENV-01-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "00919a7182b8beec6c4a5f082a42a472a97ec6750f45c464e18b2ccba1d79f70",
+      "bytes": 144178
+    },
+    "assets-display/alternative/scene-BS-ENV-01-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "00919a7182b8beec6c4a5f082a42a472a97ec6750f45c464e18b2ccba1d79f70",
+      "bytes": 144178
+    },
+    "assets-display/alternative/scene-BS-ENV-02-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "466d72f5a7a61b3b35d984e666363e7af73c074c459fdcfcbd6031b93f865cf3",
+      "bytes": 161578
+    },
+    "assets-display/alternative/scene-BS-ENV-02-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "466d72f5a7a61b3b35d984e666363e7af73c074c459fdcfcbd6031b93f865cf3",
+      "bytes": 161578
+    },
+    "assets-display/alternative/scene-BS-ENV-03-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5212247b35f66c88c104096c6c6b05ce88eb6177b790a3de70fdfcd1680958c5",
+      "bytes": 148110
+    },
+    "assets-display/alternative/scene-BS-ENV-03-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "5212247b35f66c88c104096c6c6b05ce88eb6177b790a3de70fdfcd1680958c5",
+      "bytes": 148110
+    },
+    "assets-display/alternative/scene-BS-ENV-04-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d317051183511f09e38ef434b176076693b2dfdd187d3b68377d48f7ec1c74fd",
+      "bytes": 134772
+    },
+    "assets-display/alternative/scene-BS-ENV-04-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "d317051183511f09e38ef434b176076693b2dfdd187d3b68377d48f7ec1c74fd",
+      "bytes": 134772
+    },
+    "assets-display/alternative/scene-BS-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5db1d52c52a910599f689a1a4aad824c96591f5f67b34398bfa10f347d24328e",
+      "bytes": 70728
+    },
+    "assets-display/alternative/scene-BS-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "5db1d52c52a910599f689a1a4aad824c96591f5f67b34398bfa10f347d24328e",
+      "bytes": 70728
+    },
+    "assets-display/alternative/scene-BS-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ca10b5e0d223417a032831befade7b341ab697db2b889a84b3e8fb262810df7b",
+      "bytes": 92840
+    },
+    "assets-display/alternative/scene-BS-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "ca10b5e0d223417a032831befade7b341ab697db2b889a84b3e8fb262810df7b",
+      "bytes": 92840
+    },
+    "assets-display/alternative/scene-BS-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "05d2c60837ff815a9dcebdfda7691cb28fc52bbc8654545d0b26ebd161e9b766",
+      "bytes": 120918
+    },
+    "assets-display/alternative/scene-BS-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "05d2c60837ff815a9dcebdfda7691cb28fc52bbc8654545d0b26ebd161e9b766",
+      "bytes": 120918
+    },
+    "assets-display/alternative/scene-BS-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8d4aa0161247aadb5e7b4841a4a741023e161ad25d961d78a90a49b03e9bdbda",
+      "bytes": 46944
+    },
+    "assets-display/alternative/scene-BS-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "8d4aa0161247aadb5e7b4841a4a741023e161ad25d961d78a90a49b03e9bdbda",
+      "bytes": 46944
+    },
+    "assets-display/alternative/scene-cinder-reach-1-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "08a122eab3fd5f6f5a5ca88a96b8dced73b68cc5822c598788ab39544aed0dd0",
+      "bytes": 103184
+    },
+    "assets-display/alternative/scene-cinder-reach-1-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "08a122eab3fd5f6f5a5ca88a96b8dced73b68cc5822c598788ab39544aed0dd0",
+      "bytes": 103184
+    },
+    "assets-display/alternative/scene-cinder-reach-2-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "38ceb909327ac907c2aa8044538b5c82406ae5ed53338d7b894e29f193da2b84",
+      "bytes": 126572
+    },
+    "assets-display/alternative/scene-cinder-reach-2-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "38ceb909327ac907c2aa8044538b5c82406ae5ed53338d7b894e29f193da2b84",
+      "bytes": 126572
+    },
+    "assets-display/alternative/scene-cinder-reach-3-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "29517324cb8828236d13f83adef990489c71b2d6109b21fbefbe5b2677f1823d",
+      "bytes": 101946
+    },
+    "assets-display/alternative/scene-cinder-reach-3-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "29517324cb8828236d13f83adef990489c71b2d6109b21fbefbe5b2677f1823d",
+      "bytes": 101946
+    },
+    "assets-display/alternative/scene-cinder-reach-4-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "80181e26b295c250790a7a61014ce431c7401dcd5bc2d0c3bbf0b22587bbc495",
+      "bytes": 106232
+    },
+    "assets-display/alternative/scene-cinder-reach-4-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "80181e26b295c250790a7a61014ce431c7401dcd5bc2d0c3bbf0b22587bbc495",
+      "bytes": 106232
+    },
+    "assets-display/alternative/scene-cinder-reach-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "316e7df5c9967e7bf4289d919560070d2d3b41766ae581d6eb0c04139f0aba1a",
+      "bytes": 40998
+    },
+    "assets-display/alternative/scene-cinder-reach-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "316e7df5c9967e7bf4289d919560070d2d3b41766ae581d6eb0c04139f0aba1a",
+      "bytes": 40998
+    },
+    "assets-display/alternative/scene-cinder-reach-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "05bfc6b10978ed0fcba0d06e6a2f542937c75d9fdbd30b957bc67042388385fb",
+      "bytes": 82394
+    },
+    "assets-display/alternative/scene-cinder-reach-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "05bfc6b10978ed0fcba0d06e6a2f542937c75d9fdbd30b957bc67042388385fb",
+      "bytes": 82394
+    },
+    "assets-display/alternative/scene-cinder-reach-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "a51a8d08986640168616db3f87d643bea515779af1cc8a33f60d44947928bb69",
+      "bytes": 118818
+    },
+    "assets-display/alternative/scene-cinder-reach-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "a51a8d08986640168616db3f87d643bea515779af1cc8a33f60d44947928bb69",
+      "bytes": 118818
+    },
+    "assets-display/alternative/scene-cinder-reach-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "4b202dd539d3ef3e1460f0773fbf5c7bd6b016f93d881b93b965b374108cbb17",
+      "bytes": 37682
+    },
+    "assets-display/alternative/scene-cinder-reach-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "4b202dd539d3ef3e1460f0773fbf5c7bd6b016f93d881b93b965b374108cbb17",
+      "bytes": 37682
+    },
+    "assets-display/alternative/scene-drowned-coast-1-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "e6593a2568fc59cb24b6dc37191357a1acbd1e6bd4b9c06c4c7a39d82e01985c",
+      "bytes": 120000
+    },
+    "assets-display/alternative/scene-drowned-coast-1-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "e6593a2568fc59cb24b6dc37191357a1acbd1e6bd4b9c06c4c7a39d82e01985c",
+      "bytes": 120000
+    },
+    "assets-display/alternative/scene-drowned-coast-2-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c0b6fca43274abfca03349106f4d8f4206c62440c31843ff95dc7aa6720ae8ae",
+      "bytes": 119608
+    },
+    "assets-display/alternative/scene-drowned-coast-2-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "c0b6fca43274abfca03349106f4d8f4206c62440c31843ff95dc7aa6720ae8ae",
+      "bytes": 119608
+    },
+    "assets-display/alternative/scene-drowned-coast-3-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "77818cdef73ec3461b241574d037c6f0302895d6a0b7aadd06caa247649a25cf",
+      "bytes": 112188
+    },
+    "assets-display/alternative/scene-drowned-coast-3-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "77818cdef73ec3461b241574d037c6f0302895d6a0b7aadd06caa247649a25cf",
+      "bytes": 112188
+    },
+    "assets-display/alternative/scene-drowned-coast-4-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "2576c5d556d1b8cee0d7fbc448897d0aaf78316bff4c4fe63813e388f365bcd7",
+      "bytes": 128770
+    },
+    "assets-display/alternative/scene-drowned-coast-4-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "2576c5d556d1b8cee0d7fbc448897d0aaf78316bff4c4fe63813e388f365bcd7",
+      "bytes": 128770
+    },
+    "assets-display/alternative/scene-drowned-coast-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "885c63c0272ca5501b5e79bb014bc4c6c54726ad0dd844f8442c4caf4fddc06d",
+      "bytes": 70266
+    },
+    "assets-display/alternative/scene-drowned-coast-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "885c63c0272ca5501b5e79bb014bc4c6c54726ad0dd844f8442c4caf4fddc06d",
+      "bytes": 70266
+    },
+    "assets-display/alternative/scene-drowned-coast-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "59ae6e9c2b58978c797345c83419ccfbe1e99c74661d1d0da0107f0de55e532b",
+      "bytes": 81862
+    },
+    "assets-display/alternative/scene-drowned-coast-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "59ae6e9c2b58978c797345c83419ccfbe1e99c74661d1d0da0107f0de55e532b",
+      "bytes": 81862
+    },
+    "assets-display/alternative/scene-drowned-coast-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f3c234277e82755b4c48763b47157a2e1edcfec99c2f9a58b87e1db5d8bb0ba5",
+      "bytes": 119980
+    },
+    "assets-display/alternative/scene-drowned-coast-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "f3c234277e82755b4c48763b47157a2e1edcfec99c2f9a58b87e1db5d8bb0ba5",
+      "bytes": 119980
+    },
+    "assets-display/alternative/scene-drowned-coast-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5895671b5014f9726f98549e2ec74d5f49c127c1aca2d77ceab5066e4ef394cf",
+      "bytes": 48276
+    },
+    "assets-display/alternative/scene-drowned-coast-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "5895671b5014f9726f98549e2ec74d5f49c127c1aca2d77ceab5066e4ef394cf",
+      "bytes": 48276
+    },
+    "assets-display/alternative/scene-FC-ENV-01-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0c9388f80dc809e7e8dc443fdf1b0f3ab4ac6bddcd06737c098ce3d96d57e5ee",
+      "bytes": 106764
+    },
+    "assets-display/alternative/scene-FC-ENV-01-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "0c9388f80dc809e7e8dc443fdf1b0f3ab4ac6bddcd06737c098ce3d96d57e5ee",
+      "bytes": 106764
+    },
+    "assets-display/alternative/scene-FC-ENV-02-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f2b20e5e9adf7c2f12dd43e109134a1c1b4d719708b3a383e8c51e85786e3122",
+      "bytes": 130954
+    },
+    "assets-display/alternative/scene-FC-ENV-02-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "f2b20e5e9adf7c2f12dd43e109134a1c1b4d719708b3a383e8c51e85786e3122",
+      "bytes": 130954
+    },
+    "assets-display/alternative/scene-FC-ENV-03-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ec5d75f0455888c6b174831fd1efa2215a5b28b79c69ed9c970107091e99ad45",
+      "bytes": 115552
+    },
+    "assets-display/alternative/scene-FC-ENV-03-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "ec5d75f0455888c6b174831fd1efa2215a5b28b79c69ed9c970107091e99ad45",
+      "bytes": 115552
+    },
+    "assets-display/alternative/scene-FC-ENV-04-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b8a5f5d7c4c0eb9ce614352e761be93c214247c8e0f4c17db90b480d0da1dcc5",
+      "bytes": 136440
+    },
+    "assets-display/alternative/scene-FC-ENV-04-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "b8a5f5d7c4c0eb9ce614352e761be93c214247c8e0f4c17db90b480d0da1dcc5",
+      "bytes": 136440
+    },
+    "assets-display/alternative/scene-FC-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "4e040815c624586c2268533bfb4e7794445313d7bfa630c6fcc6088b39f4c698",
+      "bytes": 32886
+    },
+    "assets-display/alternative/scene-FC-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "4e040815c624586c2268533bfb4e7794445313d7bfa630c6fcc6088b39f4c698",
+      "bytes": 32886
+    },
+    "assets-display/alternative/scene-FC-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "01bb6743d3c4fb48a9615c4f6ed4200fbdba8008011f3d1c384eafb424136ae5",
+      "bytes": 88876
+    },
+    "assets-display/alternative/scene-FC-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "01bb6743d3c4fb48a9615c4f6ed4200fbdba8008011f3d1c384eafb424136ae5",
+      "bytes": 88876
+    },
+    "assets-display/alternative/scene-FC-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "a37ef244d95ae4753b1b9076b13158ff1e36c4102aaf25c3ffd2422cfd291ea4",
+      "bytes": 138492
+    },
+    "assets-display/alternative/scene-FC-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "a37ef244d95ae4753b1b9076b13158ff1e36c4102aaf25c3ffd2422cfd291ea4",
+      "bytes": 138492
+    },
+    "assets-display/alternative/scene-FC-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3397e13266393d42520f2f1c5eb2698b448bb4ac15ac2090be9307d7ccdc647e",
+      "bytes": 43094
+    },
+    "assets-display/alternative/scene-FC-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "3397e13266393d42520f2f1c5eb2698b448bb4ac15ac2090be9307d7ccdc647e",
+      "bytes": 43094
+    },
+    "assets-display/alternative/scene-glass-lake-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "260899fdf29538b75c99c065d7c198d9e0e982935447a109841f939719a00695",
+      "bytes": 121174
+    },
+    "assets-display/alternative/scene-glass-lake-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "260899fdf29538b75c99c065d7c198d9e0e982935447a109841f939719a00695",
+      "bytes": 121174
+    },
+    "assets-display/alternative/scene-grave-ships-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "608c369a91054ae644b68c5653cca32b835f191f5e0e410cf1a6a544ba8e2cce",
+      "bytes": 101132
+    },
+    "assets-display/alternative/scene-grave-ships-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "608c369a91054ae644b68c5653cca32b835f191f5e0e410cf1a6a544ba8e2cce",
+      "bytes": 101132
+    },
+    "assets-display/alternative/scene-HM-ENV-01-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "12bc07b09a90fea884538d2ac249fc4be1dd129b2281369e20847ab233eed740",
+      "bytes": 138724
+    },
+    "assets-display/alternative/scene-HM-ENV-01-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "12bc07b09a90fea884538d2ac249fc4be1dd129b2281369e20847ab233eed740",
+      "bytes": 138724
+    },
+    "assets-display/alternative/scene-HM-ENV-02-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c97b55fe959f391065ecb8aa402f5c9d2e448ef729d8143b87a0d4f96cbcaebd",
+      "bytes": 165058
+    },
+    "assets-display/alternative/scene-HM-ENV-02-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "c97b55fe959f391065ecb8aa402f5c9d2e448ef729d8143b87a0d4f96cbcaebd",
+      "bytes": 165058
+    },
+    "assets-display/alternative/scene-HM-ENV-03-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "e80784c4176e37cba099bb93326c91a5139651e4017658d4bdff8b195862c9e2",
+      "bytes": 140390
+    },
+    "assets-display/alternative/scene-HM-ENV-03-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "e80784c4176e37cba099bb93326c91a5139651e4017658d4bdff8b195862c9e2",
+      "bytes": 140390
+    },
+    "assets-display/alternative/scene-HM-ENV-04-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8c2cd8f8b439fb9a932a9323041ff18f9ef1f280238eea71e3e899f027596d03",
+      "bytes": 135474
+    },
+    "assets-display/alternative/scene-HM-ENV-04-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "8c2cd8f8b439fb9a932a9323041ff18f9ef1f280238eea71e3e899f027596d03",
+      "bytes": 135474
+    },
+    "assets-display/alternative/scene-HM-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "dcb5ffb0dfe85dc0b125a6e6b0edef774c38108f72fa67bf6a33c82004398d04",
+      "bytes": 92034
+    },
+    "assets-display/alternative/scene-HM-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "dcb5ffb0dfe85dc0b125a6e6b0edef774c38108f72fa67bf6a33c82004398d04",
+      "bytes": 92034
+    },
+    "assets-display/alternative/scene-HM-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ce469f629ada316cd1b97b1d8d10775fa1845ee8136ff2a9e2b7314fc5478f93",
+      "bytes": 103482
+    },
+    "assets-display/alternative/scene-HM-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "ce469f629ada316cd1b97b1d8d10775fa1845ee8136ff2a9e2b7314fc5478f93",
+      "bytes": 103482
+    },
+    "assets-display/alternative/scene-HM-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "445cb1e698f32f6798466f5f151d838ccc5d8402185aa01f6c65ca66f9426c78",
+      "bytes": 112452
+    },
+    "assets-display/alternative/scene-HM-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "445cb1e698f32f6798466f5f151d838ccc5d8402185aa01f6c65ca66f9426c78",
+      "bytes": 112452
+    },
+    "assets-display/alternative/scene-HM-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "088f05406ee82fbdcbb8040e02996692f796a0a95aa0d7d97c72658b7e88eda4",
+      "bytes": 61554
+    },
+    "assets-display/alternative/scene-HM-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "088f05406ee82fbdcbb8040e02996692f796a0a95aa0d7d97c72658b7e88eda4",
+      "bytes": 61554
+    },
+    "assets-display/alternative/scene-hollow-night-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "efbb28c7dc84b3334a1793a110479bf7243ec88259a77de19b312e053b9c17ca",
+      "bytes": 33236
+    },
+    "assets-display/alternative/scene-hollow-night-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "efbb28c7dc84b3334a1793a110479bf7243ec88259a77de19b312e053b9c17ca",
+      "bytes": 33236
+    },
+    "assets-display/alternative/scene-hollow-weald-1-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "93868f1d4e7b037749a333689b328d89ec31bb77695c6b5822519094fb31bccf",
+      "bytes": 160642
+    },
+    "assets-display/alternative/scene-hollow-weald-1-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "93868f1d4e7b037749a333689b328d89ec31bb77695c6b5822519094fb31bccf",
+      "bytes": 160642
+    },
+    "assets-display/alternative/scene-hollow-weald-2-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "4e6af11f5caf715e89233f870fb97d39a889aefb653e1091779d4f1f6a15c2ce",
+      "bytes": 103282
+    },
+    "assets-display/alternative/scene-hollow-weald-2-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "4e6af11f5caf715e89233f870fb97d39a889aefb653e1091779d4f1f6a15c2ce",
+      "bytes": 103282
+    },
+    "assets-display/alternative/scene-hollow-weald-3-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "28df1be1a1466988a4bd2a3eb963566200f86798038a3788cd36bb5562664a3d",
+      "bytes": 135112
+    },
+    "assets-display/alternative/scene-hollow-weald-3-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "28df1be1a1466988a4bd2a3eb963566200f86798038a3788cd36bb5562664a3d",
+      "bytes": 135112
+    },
+    "assets-display/alternative/scene-hollow-weald-4-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3cf5824c175608371e07b1594ccecacb2a9599f6dd8da8a9f721812b3039e966",
+      "bytes": 126820
+    },
+    "assets-display/alternative/scene-hollow-weald-4-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "3cf5824c175608371e07b1594ccecacb2a9599f6dd8da8a9f721812b3039e966",
+      "bytes": 126820
+    },
+    "assets-display/alternative/scene-hollow-weald-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
+      "bytes": 31670
+    },
+    "assets-display/alternative/scene-hollow-weald-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
+      "bytes": 31670
+    },
+    "assets-display/alternative/scene-hollow-weald-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
+      "bytes": 138988
+    },
+    "assets-display/alternative/scene-hollow-weald-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
+      "bytes": 138988
+    },
+    "assets-display/alternative/scene-hollow-weald-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
+      "bytes": 139846
+    },
+    "assets-display/alternative/scene-hollow-weald-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
+      "bytes": 139846
+    },
+    "assets-display/alternative/scene-hollow-weald-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "6ec01506ed43f3823f143bdef2731adbfdfb57e1bc7b50cae8691d948abf8836",
+      "bytes": 57360
+    },
+    "assets-display/alternative/scene-hollow-weald-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "6ec01506ed43f3823f143bdef2731adbfdfb57e1bc7b50cae8691d948abf8836",
+      "bytes": 57360
+    },
+    "assets-display/alternative/scene-pale-marches-1-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "12ff63b430171f5b0975227db8ee6e613231a19f39e77a240e24cdb4af7da64b",
+      "bytes": 112864
+    },
+    "assets-display/alternative/scene-pale-marches-1-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "12ff63b430171f5b0975227db8ee6e613231a19f39e77a240e24cdb4af7da64b",
+      "bytes": 112864
+    },
+    "assets-display/alternative/scene-pale-marches-2-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "32e442e288ace3e2224b3daf3f033d2b6057c0da0e3ce98b1896fa651f84d564",
+      "bytes": 132154
+    },
+    "assets-display/alternative/scene-pale-marches-2-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "32e442e288ace3e2224b3daf3f033d2b6057c0da0e3ce98b1896fa651f84d564",
+      "bytes": 132154
+    },
+    "assets-display/alternative/scene-pale-marches-3-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "df55aad8371eb3dc7eb68bea2db83280dd7ac89e731d6f3161b99be255342358",
+      "bytes": 142792
+    },
+    "assets-display/alternative/scene-pale-marches-3-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "df55aad8371eb3dc7eb68bea2db83280dd7ac89e731d6f3161b99be255342358",
+      "bytes": 142792
+    },
+    "assets-display/alternative/scene-pale-marches-4-landmark-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "353da5ce44f053d69e1bc014a9ddc9e0a7746e0e9c8a88d12f026b2b839930b5",
+      "bytes": 113700
+    },
+    "assets-display/alternative/scene-pale-marches-4-landmark.webp": {
+      "source": "reviewed-export",
+      "sha256": "353da5ce44f053d69e1bc014a9ddc9e0a7746e0e9c8a88d12f026b2b839930b5",
+      "bytes": 113700
+    },
+    "assets-display/alternative/scene-pale-marches-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "222a581eeb0bc8641bb4b0b2c7c4c38dbce73d4c354c769acb23d871da5c77e9",
+      "bytes": 41538
+    },
+    "assets-display/alternative/scene-pale-marches-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "222a581eeb0bc8641bb4b0b2c7c4c38dbce73d4c354c769acb23d871da5c77e9",
+      "bytes": 41538
+    },
+    "assets-display/alternative/scene-pale-marches-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "22dada40d6f0a096e8227fe8afb27d48ccddfe2f3f5d855fc44abad2187c2c6e",
+      "bytes": 129774
+    },
+    "assets-display/alternative/scene-pale-marches-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "22dada40d6f0a096e8227fe8afb27d48ccddfe2f3f5d855fc44abad2187c2c6e",
+      "bytes": 129774
+    },
+    "assets-display/alternative/scene-pale-marches-ground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c89440a4e1c96c6f8872f8d803bdb26bb2e491e42dcbeb4a00e9ee3f120891c5",
+      "bytes": 130092
+    },
+    "assets-display/alternative/scene-pale-marches-ground.webp": {
+      "source": "reviewed-export",
+      "sha256": "c89440a4e1c96c6f8872f8d803bdb26bb2e491e42dcbeb4a00e9ee3f120891c5",
+      "bytes": 130092
+    },
+    "assets-display/alternative/scene-pale-marches-phone-foreground-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "782bec9946e3047fc359dc9d309ae59284528fc6f9d15df0e45ad9aa49faeb62",
+      "bytes": 61762
+    },
+    "assets-display/alternative/scene-pale-marches-phone-foreground.webp": {
+      "source": "reviewed-export",
+      "sha256": "782bec9946e3047fc359dc9d309ae59284528fc6f9d15df0e45ad9aa49faeb62",
+      "bytes": 61762
+    },
+    "assets-display/alternative/scene-starwatch-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c9f95a42e5ddb78f87874d675607718b8aaaf9156d151b118faebb2e91712edb",
+      "bytes": 53374
+    },
+    "assets-display/alternative/scene-starwatch-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "c9f95a42e5ddb78f87874d675607718b8aaaf9156d151b118faebb2e91712edb",
+      "bytes": 53374
+    },
+    "assets-display/alternative/scene-undercroft-far-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "f859588245284352c2ff08baaa42b19b92f554f69f796b84b655d6e69be79e0e",
+      "bytes": 23446
+    },
+    "assets-display/alternative/scene-undercroft-far.webp": {
+      "source": "reviewed-export",
+      "sha256": "f859588245284352c2ff08baaa42b19b92f554f69f796b84b655d6e69be79e0e",
+      "bytes": 23446
+    },
+    "assets-display/alternative/stances/herald/casting-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "9e07fb484c03998ce69ebabb3bb5f60ca47c9f6ea4d4224e11359a0e0491682a",
+      "bytes": 18784
+    },
+    "assets-display/alternative/stances/herald/casting.webp": {
+      "source": "reviewed-export",
+      "sha256": "6085fd6b2d5e050ee73c274ef8f01e6529b640cad752c4428de356d8610e2691",
+      "bytes": 64790
+    },
+    "assets-display/alternative/stances/herald/defensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "90550d3667cbfbf786054230e39449c030aa68b1f4c5f29930837de6c7d20737",
+      "bytes": 15082
+    },
+    "assets-display/alternative/stances/herald/defensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "1ec67936d9187df8963294d058141025234881670ab3f694fe9abb12876c7ce4",
+      "bytes": 55262
+    },
+    "assets-display/alternative/stances/herald/offensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "8bc808afae8a43deb4bbec908c02ad37bc9ddf6462755332399df81d88564a0f",
+      "bytes": 16094
+    },
+    "assets-display/alternative/stances/herald/offensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "642ad3ed8784c7b67d1e89211a6a761c909d9d269b536152d38eb35d504751fc",
+      "bytes": 57364
+    },
+    "assets-display/alternative/stances/reaver/casting-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "9a6b8295963ff65e06f525cd81d83cb306d92da9962f07d841caa3c7c72d4b41",
+      "bytes": 14826
+    },
+    "assets-display/alternative/stances/reaver/casting.webp": {
+      "source": "reviewed-export",
+      "sha256": "af3e75e953f0d394bd8a8a205d712cd85180bc13e51e4f2b101702b83318d742",
+      "bytes": 53430
+    },
+    "assets-display/alternative/stances/reaver/defensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "06cb45583fdc525df8e15d5c7e887794e31d03cb0ba5ba6b1b9e0005cde936c1",
+      "bytes": 10172
+    },
+    "assets-display/alternative/stances/reaver/defensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "d544d5694d5d8a62ab8235b2c119b7e1f1157e8765d8c9d4c973dadd839dcb8a",
+      "bytes": 33662
+    },
+    "assets-display/alternative/stances/reaver/offensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+      "bytes": 11230
+    },
+    "assets-display/alternative/stances/reaver/offensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "d6ea45ecf1ef9019c5562f20371abaff35e6882932cce235f1674b550b05389e",
+      "bytes": 38240
+    },
+    "assets-display/alternative/stances/rogue/casting-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "6cce8547c352aa76d135c88bc2663d197a340d4e4f25f166227e620ffac02ad2",
+      "bytes": 11938
+    },
+    "assets-display/alternative/stances/rogue/casting.webp": {
+      "source": "reviewed-export",
+      "sha256": "c77fb4589d559b630cad4aea54ee2cbbe8d393c24965eec0057adcc2b54dbbc8",
+      "bytes": 43756
+    },
+    "assets-display/alternative/stances/rogue/defensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "301fab06270f119fe2fea2227e3ad9ebfaa7ab672b327413446281bb19d6644a",
+      "bytes": 19458
+    },
+    "assets-display/alternative/stances/rogue/defensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "a326fdc07dd649377bdf140772473949aa60e625d320edda02e13e7abda6e562",
+      "bytes": 70248
+    },
+    "assets-display/alternative/stances/rogue/offensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "3d4e79805e4afc3c23452fda14ef5e31c16d12fe4ead8e14c27e41cce6586657",
+      "bytes": 12386
+    },
+    "assets-display/alternative/stances/rogue/offensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "005a0e0f6ef9c1f39aaf6a31c959770c39070b2642857357a6644b26718ce153",
+      "bytes": 44258
+    },
+    "assets-display/alternative/stances/starseer/casting-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "088cf317a421d51936625df8277cc21ffbe58f39b863d9dd9d02c9ef087c10ed",
+      "bytes": 13916
+    },
+    "assets-display/alternative/stances/starseer/casting.webp": {
+      "source": "reviewed-export",
+      "sha256": "2210af298280fe4d4782685966242a6b6a3cf766e65ae620af0b43e6462191f0",
+      "bytes": 51184
+    },
+    "assets-display/alternative/stances/starseer/defensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "cc022196050cf017c7663ace9dd5cdd13f383c0bdca616320ab575db801898a8",
+      "bytes": 16668
+    },
+    "assets-display/alternative/stances/starseer/defensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "f3af722405890ece52159ec2af3b8caadd61270062f76985bf48059eec4b876c",
+      "bytes": 62210
+    },
+    "assets-display/alternative/stances/starseer/offensive-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "ed77fe06fe5c8624410005f9cd2aae73afa9a26be21794383a2bc8580ddfdaf0",
+      "bytes": 16488
+    },
+    "assets-display/alternative/stances/starseer/offensive.webp": {
+      "source": "reviewed-export",
+      "sha256": "9271db910ee7485b2f613e0aa8af45ec75364da3e2936f0db585456ada0fc39f",
+      "bytes": 61334
+    },
+    "assets-display/alternative/starReader-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0f65152b523af3d5a1afa862974d67b18ad99ce4a4948abb664bc45ba0a15475",
+      "bytes": 9526
+    },
+    "assets-display/alternative/starReader.webp": {
+      "source": "reviewed-export",
+      "sha256": "0f65152b523af3d5a1afa862974d67b18ad99ce4a4948abb664bc45ba0a15475",
+      "bytes": 9526
+    },
+    "assets-display/alternative/starseer-astral-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "5c7e7965cb7a32186693ede83f9a12cf3f151d0b240ba2637ec42a68bb798c17",
+      "bytes": 12266
+    },
+    "assets-display/alternative/starseer-astral.webp": {
+      "source": "reviewed-export",
+      "sha256": "5c7e7965cb7a32186693ede83f9a12cf3f151d0b240ba2637ec42a68bb798c17",
+      "bytes": 12266
+    },
+    "assets-display/alternative/starseer-default-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1e6e",
+      "bytes": 11330
+    },
+    "assets-display/alternative/starseer-default.webp": {
+      "source": "reviewed-export",
+      "sha256": "9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1e6e",
+      "bytes": 11330
+    },
+    "assets-display/alternative/starseer-eclipse-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "58c3cb781f77dc8a9976a75ecc53357b1283dc7c79a5f1c84377b829c2841641",
+      "bytes": 12360
+    },
+    "assets-display/alternative/starseer-eclipse.webp": {
+      "source": "reviewed-export",
+      "sha256": "58c3cb781f77dc8a9976a75ecc53357b1283dc7c79a5f1c84377b829c2841641",
+      "bytes": 12360
+    },
+    "assets-display/alternative/starseer-rimeweave-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "a49ea47d2e365a129d363a7ef610a48a17da2a2f090e5197152e0b2b17479f68",
+      "bytes": 13088
+    },
+    "assets-display/alternative/starseer-rimeweave.webp": {
+      "source": "reviewed-export",
+      "sha256": "a49ea47d2e365a129d363a7ef610a48a17da2a2f090e5197152e0b2b17479f68",
+      "bytes": 13088
+    },
+    "assets-display/alternative/starseer-starlit-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "78b053c4b1b5a5f812ce0647f58daa2758a025d3431f707cbb330c2b18a613a3",
+      "bytes": 12480
+    },
+    "assets-display/alternative/starseer-starlit.webp": {
+      "source": "reviewed-export",
+      "sha256": "78b053c4b1b5a5f812ce0647f58daa2758a025d3431f707cbb330c2b18a613a3",
+      "bytes": 12480
+    },
+    "assets-display/alternative/stitchCrab-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "1bba05cd91b856c894a933d8308db70083bb442b5e4b64c9d249dfd447bcfdbf",
+      "bytes": 9498
+    },
+    "assets-display/alternative/stitchCrab.webp": {
+      "source": "reviewed-export",
+      "sha256": "1bba05cd91b856c894a933d8308db70083bb442b5e4b64c9d249dfd447bcfdbf",
+      "bytes": 9498
+    },
+    "assets-display/alternative/stitchedHound-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc",
+      "bytes": 9908
+    },
+    "assets-display/alternative/stitchedHound.webp": {
+      "source": "reviewed-export",
+      "sha256": "2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc",
+      "bytes": 9908
+    },
+    "assets-display/alternative/stitchedKing-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "01b996c92c60e77afbfc1c485eb3f1cd2dc77abc273d94cbf2acb448228ff7d2",
+      "bytes": 8584
+    },
+    "assets-display/alternative/stitchedKing.webp": {
+      "source": "reviewed-export",
+      "sha256": "01b996c92c60e77afbfc1c485eb3f1cd2dc77abc273d94cbf2acb448228ff7d2",
+      "bytes": 8584
+    },
+    "assets-display/alternative/swordSaint-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "4d4ad0d103221c0acb04b0e69ce17e2fde9014ac592966542cffc07544333209",
+      "bytes": 9242
+    },
+    "assets-display/alternative/swordSaint.webp": {
+      "source": "reviewed-export",
+      "sha256": "4d4ad0d103221c0acb04b0e69ce17e2fde9014ac592966542cffc07544333209",
+      "bytes": 9242
+    },
+    "assets-display/alternative/theNameless-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "a0925ed73e9156706f8a2c7fca53b1df41a949633a10312da508be15ac5ef857",
+      "bytes": 10170
+    },
+    "assets-display/alternative/theNameless.webp": {
+      "source": "reviewed-export",
+      "sha256": "a0925ed73e9156706f8a2c7fca53b1df41a949633a10312da508be15ac5ef857",
+      "bytes": 10170
+    },
+    "assets-display/alternative/thornMatriarch-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "e63d6820c44a15acb60bb10cb192a6760d33bd96f43acc0e9f60abde24c353fa",
+      "bytes": 8842
+    },
+    "assets-display/alternative/thornMatriarch.webp": {
+      "source": "reviewed-export",
+      "sha256": "e63d6820c44a15acb60bb10cb192a6760d33bd96f43acc0e9f60abde24c353fa",
+      "bytes": 8842
+    },
+    "assets-display/alternative/valkyrieShade-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "c3f06c3ede511a587484d180c1bdf9d7a85dfb5e03524ee98f900a0c5a95f5a3",
+      "bytes": 9126
+    },
+    "assets-display/alternative/valkyrieShade.webp": {
+      "source": "reviewed-export",
+      "sha256": "c3f06c3ede511a587484d180c1bdf9d7a85dfb5e03524ee98f900a0c5a95f5a3",
+      "bytes": 9126
+    },
+    "assets-display/alternative/wanderingSoldier-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "aa45b02f734d793ef71a883c99cceda8a306c826c2d5ad1cfa07ade16a9645e7",
+      "bytes": 6048
+    },
+    "assets-display/alternative/wanderingSoldier.webp": {
+      "source": "reviewed-export",
+      "sha256": "aa45b02f734d793ef71a883c99cceda8a306c826c2d5ad1cfa07ade16a9645e7",
+      "bytes": 6048
+    },
+    "assets-display/alternative/wyrmAspirant-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "0b822c2201517ab84664dc216e553b0cde0a2c2a2a15f9f516bc7b28bd288905",
+      "bytes": 8072
+    },
+    "assets-display/alternative/wyrmAspirant.webp": {
+      "source": "reviewed-export",
+      "sha256": "0b822c2201517ab84664dc216e553b0cde0a2c2a2a15f9f516bc7b28bd288905",
+      "bytes": 8072
+    },
+    "assets-display/alternative/wyrmLord-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "43b26f9cb456f4cb7aedda0f9af95d22267adffe9b48ccb365683c521055c7a0",
+      "bytes": 11642
+    },
+    "assets-display/alternative/wyrmLord.webp": {
+      "source": "reviewed-export",
+      "sha256": "43b26f9cb456f4cb7aedda0f9af95d22267adffe9b48ccb365683c521055c7a0",
+      "bytes": 11642
+    }
+  }
+}

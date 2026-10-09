@@ -4,13 +4,93 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1766",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
     "summary": "Card actions and ranks stay readable over their artwork",
     "detail": "Cards separate their background, art, backdrops, trim, icons and text into explicit layers. Rank 1 and higher appear as Rank X centered above the effect panel; Rank 0 stays hidden. A dark title fade, solid action symbols and centered names keep the face readable. Smash uses a fist and Counter a shield crossed by a sword. Up to three primary symbols line the right edge; Information keeps every tag. Complete effects and their rank label adapt together.",
-    "build": "0.7.1.1158",
+    "build": "0.7.1.1191",
     "pullRequest": 1766,
     "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1775",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Compact combat details stay clear of cards",
+    "detail": "Pack enemy name and health plates around the visible hand and player details on short screens with enlarged text. Keep the sprites fixed while moving only crowded plates. Verify attacks through the visible target buttons and saved turns through the normal defensive-reaction controls.",
+    "build": "0.7.1.1189",
+    "pullRequest": 1775,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1775"
+  },
+  {
+    "id": "pr-1773",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Attached enemy targets and visible player details",
+    "detail": "Keep compact enemy selection cells on their sprites, shrink them before moving away, and preserve neighboring target order. Show enemy name and health below their bodies and place the player's name, level, health and live combat details beside the character, clear of cards. Pack co-op details without collisions and keep landscape combat tools out of targeting space.",
+    "build": "0.7.1.1184",
+    "pullRequest": 1773,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1773"
+  },
+  {
+    "id": "pr-1772",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Stable rear sprites and clear battlefield layers",
+    "detail": "Keep character size and resting positions fixed as cards leave or return to the hand, including co-op updates and empty-hand resizing. Rear player artwork moves only for melee and returns to its anchor. Raise the player, move enemies back and right, and lower the footer fade behind characters while HUD, cards and selection controls retain their shared layer order.",
+    "build": "0.7.1.1175",
+    "pullRequest": 1772,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1772"
+  },
+  {
+    "id": "pr-1767",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ordered counters, defensive reactions and combat controls",
+    "detail": "Pause incoming actions for owned affordable Counter and defensive Sweep choices, then resume after Back or the paid response. Reveal each actor's current intent at its turn start, pace counter return animations, preserve exact save and co-op ownership, and add the reaction switch and three-size round log. Keep the player mini HUD 10 screen pixels above visible sprite art, including expanded status bars.",
+    "build": "0.7.1.1172",
+    "pullRequest": 1767,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1767"
+  },
+  {
+    "id": "pr-1770",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: Test promotion keeps its full history",
+    "detail": "The reviewed appearance and player-guide delivery retains the existing Test history so channel promotion can proceed. Fresh desktop, phone and co-op appearance checks are saved alongside the reproducible capture recipe.",
+    "build": "0.7.1.1167",
+    "pullRequest": 1770,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1770"
+  },
+  {
+    "id": "pr-1757",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Choose your game appearance",
+    "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
+    "build": "0.7.1.1166",
+    "pullRequest": 1757,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1757"
+  },
+  {
+    "id": "pr-1762",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Ashen Blight flows through volcanic rock",
+    "detail": "The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.",
+    "build": "0.7.1.1154",
+    "pullRequest": 1762,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1762"
+  },
+  {
+    "id": "pr-1751",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative combat opens up with option C",
+    "detail": "The approved pointed shield and inner-loop Counter match the named card footers, with distinct HP and Poise damage symbols. Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
+    "build": "0.7.1.1152",
+    "pullRequest": 1751,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1751"
   },
   {
     "id": "pr-1763",
@@ -43,6 +123,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1742"
   },
   {
+    "id": "pr-1745",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative heroes hold their selected combat poses",
+    "detail": "Reaver, Rogue, Starseer and Herald use the twelve chosen Attack, Defend and Prepare poses after card actions. Books and defensive guards follow the selected artwork. Each co-op player keeps their own pose until their next turn; counters keep their existing presentation for a later selection pass. The separate Block, Barrier and Ward box is removed. Ashen Blight now appears as a wider centered header bar only above zero, with its own row on phones.",
+    "build": "0.7.1.1146",
+    "pullRequest": 1745,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
     "id": "pr-1761",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -63,6 +153,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1759"
   },
   {
+    "id": "pr-1756",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Victory rewards stay clear and touch maps respond immediately",
+    "detail": "Long reward titles wrap inside their column, keeping progression readable on desktop. Selecting a map destination on a touch screen immediately reveals its details and enabled controls; desktop keeps its camera and tray sequence.",
+    "build": "0.7.1.1144",
+    "pullRequest": 1756,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1756"
+  },
+  {
+    "id": "pr-1746",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative figures keep idle life and respect reduced motion",
+    "detail": "Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.",
+    "build": "0.7.1.1143",
+    "pullRequest": 1746,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1746"
+  },
+  {
     "id": "pr-1750",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -71,6 +181,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1142",
     "pullRequest": 1750,
     "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1737",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative tutorial controls stay reachable",
+    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1737,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
   },
   {
     "id": "pr-1755",
@@ -91,6 +211,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1136",
     "pullRequest": 1748,
     "url": "https://github.com/cehinds/AshenSpire/pull/1748"
+  },
+  {
+    "id": "pr-1731",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative cards show action and school sigils",
+    "detail": "Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.",
+    "build": "0.7.1.1134",
+    "pullRequest": 1731,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1731"
   },
   {
     "id": "pr-1747",
@@ -183,6 +313,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1723"
   },
   {
+    "id": "pr-1727",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Cards animate with each class's base weapons",
+    "detail": "Alternative combat now plays attack, smash, sweep, counter, defend, spell and ranged motions from the card type. Reaver uses a two-handed greatsword and crossbow, Rogue twin daggers and bow, Starseer staff and open book, and Herald unarmed strikes and book casting. Attacks advance and return, hits flash red, and the atelier and deck preview share the new motions. Equipment-tag combinations and stance families remain separate work.",
+    "build": "0.7.1.1106",
+    "pullRequest": 1727,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1727"
+  },
+  {
     "id": "pr-1725",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -193,6 +333,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1725"
   },
   {
+    "id": "pr-1721",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative previews document the current published release",
+    "detail": "Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.",
+    "build": "0.7.1.1102",
+    "pullRequest": 1721,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1721"
+  },
+  {
     "id": "pr-1726",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -201,6 +351,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1102",
     "pullRequest": 1726,
     "url": "https://github.com/cehinds/AshenSpire/pull/1726"
+  },
+  {
+    "id": "pr-1719",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Base class actions are ready to preview",
+    "detail": "The alternative animation atelier offers a dashing strike, defense and power for each class in base armour. Equipped weapons share the class's default animation. Reaver wears a full cape, Herald keeps the shield left and sword right, and the preview includes a red hit flash. These are editable animation studies; live combat integration and weapon-tag combinations come later.",
+    "build": "0.7.1.1101",
+    "pullRequest": 1719,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1719"
+  },
+  {
+    "id": "pr-1715",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates retain combat plans and starting choices",
+    "detail": "The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.",
+    "build": "0.7.1.1100",
+    "pullRequest": 1715,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1715"
   },
   {
     "id": "pr-1718",
@@ -243,6 +413,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1714"
   },
   {
+    "id": "pr-1712",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative Counters retain readable clauses and charges",
+    "detail": "Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.",
+    "build": "0.7.1.1095",
+    "pullRequest": 1712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1712"
+  },
+  {
     "id": "pr-1713",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -261,6 +441,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1093",
     "pullRequest": 1711,
     "url": "https://github.com/cehinds/AshenSpire/pull/1711"
+  },
+  {
+    "id": "pr-1706",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative combat gains tactical cards and readable stances",
+    "detail": "Physical and spell cards, damage effects and guarded Counters now follow the shared combat rules. Hidden enemy moves keep their stances visible, and co-op reads stay private to each character. The alternative battlefield retains its figures, layered scenery, motion and update history.",
+    "build": "0.7.1.1092",
+    "pullRequest": 1706,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1706"
   },
   {
     "id": "pr-1705",
@@ -293,6 +483,56 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1702"
   },
   {
+    "id": "pr-1707",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "More class animations to preview",
+    "detail": "The alternative animation atelier adds Rogue twin daggers, Starseer staff and Herald sword-and-shield studies. The Herald keeps the sword in the right hand and shield on the left arm through attacks and reactions. Current attack timing, forward movement and return, red hit flashes, down poses and casting are available in the preview. These are authoring studies; gameplay integration and the remaining base loadouts are still pending.",
+    "build": "0.7.1.1068",
+    "pullRequest": 1707,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1707"
+  },
+  {
+    "id": "pr-1709",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Behind the scenes: alternative class studies reach Test",
+    "detail": "The reviewed Rogue, Starseer and Herald animation studies join the Reaver atelier in Alternative Test. Gameplay bindings and the remaining base loadouts stay pending.",
+    "build": "0.7.1.1068",
+    "pullRequest": 1709,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1709"
+  },
+  {
+    "id": "pr-1701",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Both game versions retain their updates",
+    "detail": "Alternative updates preserve the reviewed artwork checks, skill Level Up repairs and both changelog histories while accepting the latest promoted primary build.",
+    "build": "0.7.1.1067",
+    "pullRequest": 1701,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1701"
+  },
+  {
+    "id": "pr-1689",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative figures recover and keep moving",
+    "detail": "Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.",
+    "build": "0.7.1.1065",
+    "pullRequest": 1689,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1689"
+  },
+  {
+    "id": "pr-1691",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1065",
+    "pullRequest": 1691,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
     "id": "pr-1704",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -323,6 +563,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1698"
   },
   {
+    "id": "pr-1695",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Preview the new alternative character animations",
+    "detail": "The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1695,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1695"
+  },
+  {
+    "id": "pr-1699",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Behind the scenes: alternative atelier reaches Test",
+    "detail": "The reviewed Reaver sword, hurt, down, power and spell studies are promoted to Alternative Test as an authoring preview. Their gameplay bindings remain empty.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1699,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1699"
+  },
+  {
     "id": "pr-1692",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -331,6 +591,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1059",
     "pullRequest": 1692,
     "url": "https://github.com/cehinds/AshenSpire/pull/1692"
+  },
+  {
+    "id": "pr-1694",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Lighter alternative characters, clearer scenery",
+    "detail": "The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1694,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1694"
+  },
+  {
+    "id": "pr-1684",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative battles use the completed art collection",
+    "detail": "All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place. Sprite feet remain grounded when co-op battles resize between desktop and phone.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1684,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1684"
   },
   {
     "id": "pr-1693",
@@ -361,6 +641,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1054",
     "pullRequest": 1688,
     "url": "https://github.com/cehinds/AshenSpire/pull/1688"
+  },
+  {
+    "id": "pr-1686",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative builds gain class progression and retraining",
+    "detail": "Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1686,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1686"
   },
   {
     "id": "pr-1676",
@@ -403,6 +693,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1679"
   },
   {
+    "id": "pr-1683",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative characters keep pace",
+    "detail": "The alternative preview gains the ready-to-play character defaults, compact class cards, stat and relic detail dialogs, and continuous Smith upgrades. Its own battlefield and artwork stay intact, with both update histories preserved.",
+    "build": "0.7.1.1045",
+    "pullRequest": 1683,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1683"
+  },
+  {
     "id": "pr-1681",
     "date": "2026-10-06",
     "group": "2026-10-06",
@@ -443,6 +743,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1675"
   },
   {
+    "id": "pr-1673",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative artwork loads from the web packs",
+    "detail": "The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.",
+    "build": "0.7.1.1038",
+    "pullRequest": 1673,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1673"
+  },
+  {
     "id": "pr-1671",
     "date": "2026-10-06",
     "group": "2026-10-06",
@@ -471,6 +781,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1033",
     "pullRequest": 1667,
     "url": "https://github.com/cehinds/AshenSpire/pull/1667"
+  },
+  {
+    "id": "pr-1670",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative combat faces the battlefield",
+    "detail": "The alternative build uses rear-view hero armor, detailed facing enemies, thin gold and red outlines, and a layered Hollow Weald scene. The existing cards, HUD and footer stay playable above a fading textured base, with separate phone and desktop combat placement.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1670,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1670"
   },
   {
     "id": "pr-1666",

@@ -1,5 +1,6 @@
 // Read idle artwork once, excluding transparent padding. Cache by asset URL;
 // animation/stance changes must never resize the formation during a turn.
+import { stageFor } from '../services/PoseAnimator.js';
 const boundsCache = new Map();
 // Painted enemy art shares a floor at 364/384 of its canvas height. The light
 // tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
@@ -109,4 +110,44 @@ export function combatSpriteGeometry(sprite, refresh) {
   const width = 2 * Math.max(img.naturalWidth / 2 - bounds.x0, bounds.x1 + 1 - img.naturalWidth / 2) * scale;
   return { boxHeight, visibleHeight, visibleWidth: Math.max(1, width),
     footOffset: paintedEnemy ? 0 : boxHeight - ((boxHeight - img.naturalHeight * scale) / 2 + ground * scale) };
+}
+
+// Current pose ink, in physical screen pixels. Formation fitting continues to
+// use the stable idle envelope; only the overhead widget follows pose/lunge.
+export function currentSpriteArtBounds(sprite, refresh = () => {}) {
+  const painted = stageFor(sprite)?.currentArt;
+  if (painted) {
+    const bounds = imageBounds(painted.image, refresh);
+    if (bounds) {
+      const rect = painted.canvas.getBoundingClientRect();
+      const sx = rect.width / painted.canvas.width, sy = rect.height / painted.canvas.height;
+      return { top: rect.top + (painted.top + bounds.y0 * painted.height / painted.image.naturalHeight) * sy,
+        bottom: rect.top + (painted.top + (bounds.y1 + 1) * painted.height / painted.image.naturalHeight) * sy,
+        left: rect.left + (painted.left + bounds.x0 * painted.width / painted.image.naturalWidth) * sx,
+        right: rect.left + (painted.left + (bounds.x1 + 1) * painted.width / painted.image.naturalWidth) * sx };
+    }
+  }
+  const images = [...sprite.querySelectorAll('.pose-frame, .pose-previous, .painted-presentation, .defeated-frame, .facing > img')];
+  const boxes = [];
+  for (const img of images) {
+    const style = getComputedStyle(img);
+    const rect = img.getBoundingClientRect();
+    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0 || !rect.width || !rect.height) continue;
+    let hidden = false;
+    for (let parent = img.parentElement; parent && parent !== sprite; parent = parent.parentElement) {
+      const parentStyle = getComputedStyle(parent);
+      if (parent.hidden || parentStyle.display === 'none' || parentStyle.visibility === 'hidden' || Number(parentStyle.opacity) === 0) { hidden = true; break; }
+    }
+    if (hidden) continue;
+    if (img.closest('.defeated') && img.closest('.pose-stage')?.dataset.pose !== 'defeated') continue;
+    const bounds = imageBounds(img, refresh);
+    if (!bounds) { boxes.push(rect); continue; }
+    const scale = Math.min(rect.width / img.naturalWidth, rect.height / img.naturalHeight);
+    boxes.push({ top: rect.top + (rect.height - img.naturalHeight * scale) / 2 + bounds.y0 * scale,
+      bottom: rect.top + (rect.height - img.naturalHeight * scale) / 2 + (bounds.y1 + 1) * scale,
+      left: rect.left + bounds.x0 * scale, right: rect.left + (bounds.x1 + 1) * scale });
+  }
+  if (!boxes.length) return sprite.getBoundingClientRect();
+  return { top: Math.min(...boxes.map(box => box.top)), bottom: Math.max(...boxes.map(box => box.bottom)),
+    left: Math.min(...boxes.map(box => box.left)), right: Math.max(...boxes.map(box => box.right)) };
 }

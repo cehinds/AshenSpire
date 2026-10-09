@@ -37,12 +37,19 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1 }, config 
   const angle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
   const rotatedExtra = Math.max(0, (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2);
   const bottomLimit = height - cardHeight - (count > 1 ? arc + rotatedExtra : 0) - 1 / zoom;
-  return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift,
+  const cards = Array.from({ length: count }, (_, index) => ({
+    x: start + index * step,
+    angle: count > 1 ? (index - middle) / Math.max(1, middle) * config.fanAngleDegrees : 0,
+    y: count > 1 ? Math.pow((index - middle) / Math.max(1, middle), 2) * arc : 0,
+  }));
+  // The resting rotated edge is independent of hover and selected-card lift.
+  const restLeft = cards.length ? Math.min(...cards.map(card => {
+    const radians = card.angle * Math.PI / 180;
+    return card.x + cardWidth / 2 - (Math.abs(Math.cos(radians)) * cardWidth
+      + Math.abs(Math.sin(radians)) * cardHeight) / 2;
+  })) : 0;
+  return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift, restLeft,
     top: Math.max(0, Math.min(bottomLimit, Math.max(inset + lift, (height - cardHeight - arc) / 2))),
-    cards: Array.from({ length: count }, (_, index) => ({
-      x: start + index * step,
-      angle: count > 1 ? (index - middle) / Math.max(1, middle) * config.fanAngleDegrees : 0,
-      y: count > 1 ? Math.pow((index - middle) / Math.max(1, middle), 2) * arc : 0,
-    })),
+    cards,
   });
 }

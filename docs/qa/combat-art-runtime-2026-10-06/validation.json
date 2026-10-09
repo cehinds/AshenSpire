@@ -1,0 +1,1946 @@
+{
+  "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+  "sceneSweep": {
+    "cases": [
+      {
+        "scene": "ashen-crown-1",
+        "device": "desktop",
+        "layers": [
+          "ashen-crown-far",
+          "ashen-crown-1-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "ashen-crown-2",
+        "device": "desktop",
+        "layers": [
+          "ashen-crown-far",
+          "ashen-crown-2-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "ashen-crown-3",
+        "device": "desktop",
+        "layers": [
+          "ashen-crown-far",
+          "ashen-crown-3-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "ashen-crown-4",
+        "device": "desktop",
+        "layers": [
+          "undercroft-far",
+          "ashen-crown-4-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-1",
+        "device": "desktop",
+        "layers": [
+          "hollow-weald-far",
+          "hollow-weald-1-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-2",
+        "device": "desktop",
+        "layers": [
+          "hollow-night-far",
+          "hollow-weald-2-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-3",
+        "device": "desktop",
+        "layers": [
+          "hollow-weald-far",
+          "hollow-weald-3-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-4",
+        "device": "desktop",
+        "layers": [
+          "hollow-night-far",
+          "hollow-weald-4-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-1",
+        "device": "desktop",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-1-landmark",
+          "pale-marches-ground",
+          "pale-marches-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-2",
+        "device": "desktop",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-2-landmark",
+          "pale-marches-ground",
+          "pale-marches-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-3",
+        "device": "desktop",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-3-landmark",
+          "pale-marches-ground",
+          "pale-marches-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-4",
+        "device": "desktop",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-4-landmark",
+          "glass-lake-ground",
+          "pale-marches-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-1",
+        "device": "desktop",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-1-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-2",
+        "device": "desktop",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-2-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-3",
+        "device": "desktop",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-3-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-4",
+        "device": "desktop",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-4-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-1",
+        "device": "desktop",
+        "layers": [
+          "drowned-coast-far",
+          "drowned-coast-1-landmark",
+          "drowned-coast-ground",
+          "drowned-coast-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-2",
+        "device": "desktop",
+        "layers": [
+          "drowned-coast-far",
+          "drowned-coast-2-landmark",
+          "drowned-coast-ground",
+          "drowned-coast-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-3",
+        "device": "desktop",
+        "layers": [
+          "starwatch-far",
+          "drowned-coast-3-landmark",
+          "drowned-coast-ground",
+          "drowned-coast-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-4",
+        "device": "desktop",
+        "layers": [
+          "drowned-coast-far",
+          "drowned-coast-4-landmark",
+          "grave-ships-ground",
+          "drowned-coast-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-01",
+        "device": "desktop",
+        "layers": [
+          "BS-far",
+          "BS-ENV-01-landmark",
+          "BS-ground",
+          "BS-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-02",
+        "device": "desktop",
+        "layers": [
+          "BS-far",
+          "BS-ENV-02-landmark",
+          "BS-ground",
+          "BS-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-03",
+        "device": "desktop",
+        "layers": [
+          "BS-far",
+          "BS-ENV-03-landmark",
+          "BS-ground",
+          "BS-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-04",
+        "device": "desktop",
+        "layers": [
+          "BS-far",
+          "BS-ENV-04-landmark",
+          "BS-ground",
+          "BS-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-01",
+        "device": "desktop",
+        "layers": [
+          "HM-far",
+          "HM-ENV-01-landmark",
+          "HM-ground",
+          "HM-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-02",
+        "device": "desktop",
+        "layers": [
+          "HM-far",
+          "HM-ENV-02-landmark",
+          "HM-ground",
+          "HM-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-03",
+        "device": "desktop",
+        "layers": [
+          "HM-far",
+          "HM-ENV-03-landmark",
+          "HM-ground",
+          "HM-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-04",
+        "device": "desktop",
+        "layers": [
+          "HM-far",
+          "HM-ENV-04-landmark",
+          "HM-ground",
+          "HM-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-01",
+        "device": "desktop",
+        "layers": [
+          "FC-far",
+          "FC-ENV-01-landmark",
+          "FC-ground",
+          "FC-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-02",
+        "device": "desktop",
+        "layers": [
+          "FC-far",
+          "FC-ENV-02-landmark",
+          "FC-ground",
+          "FC-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-03",
+        "device": "desktop",
+        "layers": [
+          "FC-far",
+          "FC-ENV-03-landmark",
+          "FC-ground",
+          "FC-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-04",
+        "device": "desktop",
+        "layers": [
+          "FC-far",
+          "FC-ENV-04-landmark",
+          "FC-ground",
+          "FC-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "ashen-crown-1",
+        "device": "phone",
+        "layers": [
+          "ashen-crown-far",
+          "ashen-crown-1-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "ashen-crown-2",
+        "device": "phone",
+        "layers": [
+          "ashen-crown-far",
+          "ashen-crown-2-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "ashen-crown-3",
+        "device": "phone",
+        "layers": [
+          "ashen-crown-far",
+          "ashen-crown-3-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "ashen-crown-4",
+        "device": "phone",
+        "layers": [
+          "undercroft-far",
+          "ashen-crown-4-landmark",
+          "ashen-crown-ground",
+          "ashen-crown-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-1",
+        "device": "phone",
+        "layers": [
+          "hollow-weald-far",
+          "hollow-weald-1-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-2",
+        "device": "phone",
+        "layers": [
+          "hollow-night-far",
+          "hollow-weald-2-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-3",
+        "device": "phone",
+        "layers": [
+          "hollow-weald-far",
+          "hollow-weald-3-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "hollow-weald-4",
+        "device": "phone",
+        "layers": [
+          "hollow-night-far",
+          "hollow-weald-4-landmark",
+          "hollow-weald-ground",
+          "hollow-weald-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-1",
+        "device": "phone",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-1-landmark",
+          "pale-marches-ground",
+          "pale-marches-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-2",
+        "device": "phone",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-2-landmark",
+          "pale-marches-ground",
+          "pale-marches-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-3",
+        "device": "phone",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-3-landmark",
+          "pale-marches-ground",
+          "pale-marches-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "pale-marches-4",
+        "device": "phone",
+        "layers": [
+          "pale-marches-far",
+          "pale-marches-4-landmark",
+          "glass-lake-ground",
+          "pale-marches-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-1",
+        "device": "phone",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-1-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-2",
+        "device": "phone",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-2-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-3",
+        "device": "phone",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-3-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "cinder-reach-4",
+        "device": "phone",
+        "layers": [
+          "cinder-reach-far",
+          "cinder-reach-4-landmark",
+          "cinder-reach-ground",
+          "cinder-reach-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-1",
+        "device": "phone",
+        "layers": [
+          "drowned-coast-far",
+          "drowned-coast-1-landmark",
+          "drowned-coast-ground",
+          "drowned-coast-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-2",
+        "device": "phone",
+        "layers": [
+          "drowned-coast-far",
+          "drowned-coast-2-landmark",
+          "drowned-coast-ground",
+          "drowned-coast-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-3",
+        "device": "phone",
+        "layers": [
+          "starwatch-far",
+          "drowned-coast-3-landmark",
+          "drowned-coast-ground",
+          "drowned-coast-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "drowned-coast-4",
+        "device": "phone",
+        "layers": [
+          "drowned-coast-far",
+          "drowned-coast-4-landmark",
+          "grave-ships-ground",
+          "drowned-coast-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-01",
+        "device": "phone",
+        "layers": [
+          "BS-far",
+          "BS-ENV-01-landmark",
+          "BS-ground",
+          "BS-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-02",
+        "device": "phone",
+        "layers": [
+          "BS-far",
+          "BS-ENV-02-landmark",
+          "BS-ground",
+          "BS-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-03",
+        "device": "phone",
+        "layers": [
+          "BS-far",
+          "BS-ENV-03-landmark",
+          "BS-ground",
+          "BS-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "BS-ENV-04",
+        "device": "phone",
+        "layers": [
+          "BS-far",
+          "BS-ENV-04-landmark",
+          "BS-ground",
+          "BS-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-01",
+        "device": "phone",
+        "layers": [
+          "HM-far",
+          "HM-ENV-01-landmark",
+          "HM-ground",
+          "HM-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-02",
+        "device": "phone",
+        "layers": [
+          "HM-far",
+          "HM-ENV-02-landmark",
+          "HM-ground",
+          "HM-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-03",
+        "device": "phone",
+        "layers": [
+          "HM-far",
+          "HM-ENV-03-landmark",
+          "HM-ground",
+          "HM-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "HM-ENV-04",
+        "device": "phone",
+        "layers": [
+          "HM-far",
+          "HM-ENV-04-landmark",
+          "HM-ground",
+          "HM-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-01",
+        "device": "phone",
+        "layers": [
+          "FC-far",
+          "FC-ENV-01-landmark",
+          "FC-ground",
+          "FC-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-02",
+        "device": "phone",
+        "layers": [
+          "FC-far",
+          "FC-ENV-02-landmark",
+          "FC-ground",
+          "FC-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-03",
+        "device": "phone",
+        "layers": [
+          "FC-far",
+          "FC-ENV-03-landmark",
+          "FC-ground",
+          "FC-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      },
+      {
+        "scene": "FC-ENV-04",
+        "device": "phone",
+        "layers": [
+          "FC-far",
+          "FC-ENV-04-landmark",
+          "FC-ground",
+          "FC-phone-foreground"
+        ],
+        "actors": [
+          {
+            "id": "reaver-default",
+            "source": "http://localhost:4296/assets-alternative/reaver-default-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          },
+          {
+            "id": "stitchedHound",
+            "source": "http://localhost:4296/assets-alternative/stitchedHound-mobile.webp"
+          }
+        ],
+        "overflow": false
+      }
+    ],
+    "pageErrors": [],
+    "note": "All 64 scene cases, two co-op mounts and both mounted resizes passed. The later phone input stage was rerun after adding tutorial Skip and enabled-control readiness to the harness."
+  },
+  "sourcePlay": {
+    "base": "http://localhost:4296/",
+    "scenes": [],
+    "play": [
+      {
+        "device": "desktop",
+        "turn": 2,
+        "cardsPlayed": 1
+      },
+      {
+        "device": "phone",
+        "turn": 2,
+        "cardsPlayed": 1
+      }
+    ],
+    "errors": [],
+    "httpErrors": [],
+    "optionalSourceRequests": [
+      {
+        "status": 404,
+        "url": "http://localhost:4296/api/lan/info"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/nodeTravel.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/cardDraw.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/turnStinger.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/holdTick.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/cardPlay.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/hit_medium.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/relic.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/holdTick_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/holdCommit_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/deckShuffle.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/playerHurt.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/api/lan/info"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/nodeTravel.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/cardDraw.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/turnStinger.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/holdTick.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/cardPlay.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/hit_light.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/relic.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/holdTick_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/holdCommit_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/deckShuffle.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/playerHurt.ogg"
+      }
+    ]
+  },
+  "portablePlay": {
+    "base": "file:///D:/repos/.codex/worktrees/combat-art-runtime/AshenSpire/build/download/AshenSpire.html",
+    "scenes": [],
+    "play": [
+      {
+        "device": "desktop",
+        "turn": 2,
+        "cardsPlayed": 1
+      },
+      {
+        "device": "phone",
+        "turn": 2,
+        "cardsPlayed": 1
+      }
+    ],
+    "errors": [],
+    "httpErrors": [],
+    "optionalSourceRequests": []
+  },
+  "build": {
+    "_": "DERIVED \u00e2\u20ac\u201d written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1046,
+    "digest": "6c2378998c",
+    "built": "2026-10-07"
+  },
+  "packPlay": {
+    "base": "http://localhost:4296/build/AshenSpire.html",
+    "scenes": [],
+    "play": [
+      {
+        "device": "desktop",
+        "turn": 2,
+        "cardsPlayed": 1
+      },
+      {
+        "device": "phone",
+        "turn": 2,
+        "cardsPlayed": 1
+      }
+    ],
+    "errors": [],
+    "httpErrors": [],
+    "optionalSourceRequests": [
+      {
+        "status": 404,
+        "url": "http://localhost:4296/api/lan/info"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/nodeTravel.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardDraw.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/turnStinger.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardPlay.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/hit_medium.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/relic.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdCommit_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/deckShuffle.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/heal.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/block.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/playerHurt.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/api/lan/info"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/nodeTravel.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardDraw.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/turnStinger.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardPlay.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/hit_medium.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/relic.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdCommit_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/deckShuffle.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/playerHurt.ogg"
+      }
+    ]
+  },
+  "integrationBase": "fdd992dc6740f2f5ae0dbf97c15dff7566203c3a",
+  "sceneSweepBase": "c448cb31c",
+  "rebasedSceneRetry": {
+    "result": "incomplete",
+    "reason": "Navigation to ashen-crown-3 exceeded 45 seconds waiting for networkidle during concurrent build. First two desktop scenes passed; no page or HTTP errors.",
+    "report": {
+      "base": "http://localhost:4296/",
+      "scenes": [
+        {
+          "scene": "ashen-crown-1",
+          "device": "desktop",
+          "layers": [
+            "ashen-crown-far",
+            "ashen-crown-1-landmark",
+            "ashen-crown-ground",
+            "ashen-crown-foreground"
+          ],
+          "actors": [
+            {
+              "id": "reaver-default",
+              "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            }
+          ],
+          "overflow": false
+        },
+        {
+          "scene": "ashen-crown-2",
+          "device": "desktop",
+          "layers": [
+            "ashen-crown-far",
+            "ashen-crown-2-landmark",
+            "ashen-crown-ground",
+            "ashen-crown-foreground"
+          ],
+          "actors": [
+            {
+              "id": "reaver-default",
+              "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            }
+          ],
+          "overflow": false
+        }
+      ],
+      "play": [],
+      "errors": [],
+      "httpErrors": [],
+      "optionalSourceRequests": []
+    }
+  },
+  "sourcePlayBase": "fdd992dc6740f2f5ae0dbf97c15dff7566203c3a",
+  "changelogCheck": {
+    "orderingChecksPassed": 812,
+    "generatedReceipts": 766,
+    "browserCheck": "failed: source title Settings control unreachable after timeout; readyState interactive, empty body; repeated after rebase"
+  }
+}

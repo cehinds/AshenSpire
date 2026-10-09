@@ -6,16 +6,21 @@ import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
-import { combatSpriteGeometry } from './combatSpriteGeometry.js';
+import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
+import { classicAppearance, displayAppearance } from '../displayAppearance.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { combatComposition } from '../models/CombatCompositionModel.js';
+import { combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { syncCombatGroundShadows } from './combatGroundShadows.js';
+import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 
 let releaseActiveStage = null;
-export function wireBattlefieldStage(field, model) {
+export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
   if (!field) throw new Error('battlefieldStage requires a field host');
   if (!model || model.component !== UI.battlefieldStage) throw new Error('battlefieldStage requires its Component Model');
@@ -31,18 +36,63 @@ export function wireBattlefieldStage(field, model) {
   field.style.setProperty('--combatant-stage-center', `${model.tokens.centerPct}%`);
 
   let frameRequest = 0;
+  const loadedGeometry = layoutState.loadedGeometry ||= new Map();
+  let trackingRequest = 0;
+  function placePlayerHud(reserveFirst = false) {
+    const zoom = uiZoom();
+    const panels = [...field.querySelectorAll(reserveFirst === true ? '.enemy .combatant-leading' : '.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
+      .map(node=>node.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
+    for (const player of field.querySelectorAll('.combatant.player')) {
+      const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
+      if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) continue;
+      const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
+      const combat = field.closest('.combat');
+      const viewport = combat.getBoundingClientRect();
+      const panel = leading.getBoundingClientRect();
+      const cards = [...combat.querySelectorAll('.hand .card')].map(card=>card.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
+      const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport,
+        handTop: cards.length ? Math.min(...cards.map(rect=>rect.top)) : combat.querySelector('.hand')?.getBoundingClientRect().top,
+        hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
+      panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
+      const top = `${(placement.top - stack.top) / zoom}px`;
+      const left = `${(placement.left - stack.left) / zoom}px`;
+      if (leading.style.top !== top) leading.style.top = top;
+      if (leading.style.left !== left) leading.style.left = left;
+      leading.style.translate = 'none';
+      player.dataset.spriteArtTop = String(art.top);
+      player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
+    }
+  }
+  function trackPlayerHud() {
+    placePlayerHud();
+    // Idle breathing also moves the painted body. Keep the physical gap during
+    // those CSS transforms as well as explicit attack and movement poses.
+    trackingRequest = field.isConnected && field.querySelector('.combatant.player')
+      ? requestAnimationFrame(trackPlayerHud) : 0;
+  }
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
     if (!field.isConnected) return;
     const combat = field.closest('.combat');
+    if (wiredAppearance !== displayAppearance()) {
+      releaseBackdrop();
+      releaseBackdrop = wireAlternativeBackdrop(combat);
+      wiredAppearance = displayAppearance();
+    }
     combat.dataset.layout = 'formation';
     // No combatants yet (the wiring's own call, before the first render): there
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
-    const fieldRect = field.getBoundingClientRect();
-    const zoom = fieldRect.width / field.clientWidth || 1;
+    const measuredField = field.getBoundingClientRect();
+    // CSS zoom can report float noise across equivalent DOM remounts. Snap the
+    // dimensions before deriving formation coordinates, not only its cache key.
+    const fieldRect = { top: measuredField.top, left: measuredField.left,
+      width: Math.round(measuredField.width * 64) / 64,
+      height: Math.round(measuredField.height * 64) / 64 };
+    const zoom = fieldRect.width / field.offsetWidth || 1;
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
@@ -78,11 +128,13 @@ export function wireBattlefieldStage(field, model) {
       footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
+    if (!classicAppearance()) alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow');
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     const grid = field.querySelector('.formation-grid');
     if (grid) {
       grid.dataset.shape = presentation.gridShape;
-      grid.style.zIndex = String(presentation.gridLayer === 'above' ? 2000 : Math.min(-1, ...plan.slots.map(slot => slot.layer - 1)));
+      grid.style.zIndex = presentation.gridLayer === 'above'
+        ? 'var(--combat-layer-selection)' : 'calc(var(--combat-layer-shadows) - 1)';
       grid.style.setProperty('--player-grid-color', presentation.playerGridColor);
       grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
       const occupied = new Set(plan.slots.map(slot => slot.cell));
@@ -122,21 +174,38 @@ export function wireBattlefieldStage(field, model) {
     });
     const actors = slotFrames.map(({ slot, frame, sprite }) => {
       const stack = frame.querySelector('.combatant-stack');
-      const geometry = combatSpriteGeometry(sprite, schedule);
+      let geometry = combatSpriteGeometry(sprite, schedule);
+      // Reserve the tallest authored pose once. Following the current ink must
+      // not push the overhead into the ribbon or resize art during an attack.
+      if (frame.classList.contains('player')) {
+        const ratio = Number(sprite.querySelector('.painted-stage')?.dataset.maximumHeightRatio || 0);
+        geometry.visibleHeight = Math.max(geometry.visibleHeight, geometry.boxHeight * ratio);
+      }
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
-      const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
+      const leadingHeight = leadingHost && !frame.classList.contains('player') ? leadingHost.getBoundingClientRect().height / zoom : 0;
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
-      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control')]
+      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control, :scope > .combatant-mini-hud')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0) : [];
-      const leadingWidth = leadingRects.length ? (Math.max(...leadingRects.map(rect => rect.right))
+      const leadingWidth = leadingRects.length && !frame.classList.contains('player') ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
         * wireframeUi.formation.displayScale * (slot.characterScale || 1);
-      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, multiplier, ...geometry, leadingHost,
+      const stage = sprite.querySelector('.pose-stage');
+      const art = [sprite.firstElementChild.className, stage?.dataset.poseClass, stage?.dataset.animationSet,
+        sprite.querySelector('.enemy-pose-idle, .painted-presentation')?.getAttribute('src')];
+      // A replacement image briefly has no intrinsic pixels. Reuse its last
+      // loaded measurement instead of replacing the encounter fit with a box.
+      const geometryKey = JSON.stringify([art, sprite.offsetWidth, sprite.offsetHeight]);
+      const image = sprite.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
+      if (image && (!image.complete || !image.naturalWidth)) {
+        geometry = loadedGeometry.get(geometryKey) || geometry;
+      } else loadedGeometry.set(geometryKey, geometry);
+      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
+        art,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth,
@@ -146,20 +215,30 @@ export function wireBattlefieldStage(field, model) {
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const handRect = combat.querySelector('.hand')?.getBoundingClientRect();
     const handLeft = Math.min(...[...combat.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().left));
+    // A centered hand gets narrower after each play. Its first card must not
+    // become a new actor anchor on every refresh (or hover enlargement): that
+    // walked the player right across the battlefield. Keep the initial hand
+    // envelope until the responsive layout actually changes, even at zero cards.
+    const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':');
+    const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
+      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top + 22 : null,
+    });
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
     // Short landscape needs a lower foot line to reserve the full intent row.
-    if (window.innerHeight <= 480) for (const actor of actors) {
+    if (classicAppearance() && window.innerHeight <= 480) for (const actor of actors) {
       actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
     }
     const fitFormation = () => {
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
-        handTop: handRect ? handRect.top - fieldRect.top + 22 : null,
-        handLeft: Number.isFinite(handLeft) ? handLeft - fieldRect.left : 0,
+        handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
+        handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && window.innerHeight > 480,
-        sizes: fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
-          minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 }) });
+        sizes: classicAppearance()
+          ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
+            minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
+          : fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
         .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
       const growthFor = (actor, fitted) => {
@@ -202,7 +281,21 @@ export function wireBattlefieldStage(field, model) {
         ({ sizes, growthFor, overheads } = fitFormation());
       }
     }
+    const artworkFit = layoutState.artworkFit = stableCombatArtwork(layoutState.artworkFit, combatArtworkKey({ width: fieldRect.width,
+      height: fieldRect.height, zoom: pageZoom, presentation, appearance: displayAppearance(), handAnchor, actors }), sizes);
+    sizes = artworkFit.sizes;
+    // Intent/Inspect controls still respond to their current text and selection,
+    // but their changing headroom cannot resize or move the settled artwork.
+    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon,
+      controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
+        const fitted = sizes.find(size => size.id === actor.slot.id);
+        const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - 14;
+        return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
+          width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
+      }) });
     const placed = [];
+    const shadows = [];
+    const depthOrder = [...new Set(plan.slots.map(slot => slot.layer))].sort((a, b) => a - b);
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
       // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
@@ -214,7 +307,8 @@ export function wireBattlefieldStage(field, model) {
       // screen (CombatSpriteScaleModel); only the selection growth is added.
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
       const scale = fitted.scale * growth;
-      const x = overheads.find(overhead => overhead.id === slot.id)?.x ?? fitted.x;
+      // Packing inspection/intent controls must never move the body underneath.
+      const x = fitted.x;
       const ground = fitted.ground ?? slot.ground;
       const visibleHeight = fitted.visibleHeight * growth;
       sprite.style.zoom = String(scale / zoom);
@@ -229,7 +323,11 @@ export function wireBattlefieldStage(field, model) {
       // Keep depth on the artwork. A z-index on the whole frame traps its
       // overhead buttons below a neighbouring frame's sprite on short phones.
       frame.style.zIndex = '';
-      sprite.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
+      // Depth stays within a role's plane: players always paint over enemies.
+      sprite.style.setProperty('--combat-depth', String(depthOrder.indexOf(slot.layer)));
+      shadows.push({ id: slot.id, x: x / zoom, ground: ground / zoom,
+        width: actor.visibleWidth * scale / zoom, height: visibleHeight / zoom,
+        dead: frame.classList.contains('dead') });
       frame.dataset.formationRow = slot.formationRow;
       frame.dataset.formationDepth = String(slot.row);
       frame.dataset.formationCell = slot.cell;
@@ -255,7 +353,7 @@ export function wireBattlefieldStage(field, model) {
         const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
           ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
             top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon });
-        leadingHost.style.translate = `0 ${overheadShift / zoom}px`;
+        leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
       }
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
@@ -290,28 +388,43 @@ export function wireBattlefieldStage(field, model) {
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .map(footer => footer.getBoundingClientRect().width)),
+      footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .reduce((height,footer)=>height+footer.getBoundingClientRect().height,0),
       controls: [...frame.querySelectorAll('.combatant-leading button')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
-    const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
-      lockX: true, size: Math.max(44, ...boxes.map(box => box.intentRect?.height || 0)),
-      obstacles: boxes.flatMap(box => box.controls.map(rect => ({
+    // Reserve the player's readable panel before packing enemy footers. The
+    // final HUD pass can then keep this slot without competing with a footer.
+    placePlayerHud(true);
+    const footerObstacles = [...combat.querySelectorAll('.hand, .hand .card, .combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading')]
+      .map(node => {
+        const rect = node.getBoundingClientRect();
+        // Footer packing supplies two pixels; reserve eight more around the
+        // panel to match the final player HUD pass's ten-pixel clearance.
+        const padding = node.matches('.player .combatant-leading') ? 8 : 0;
+        return { left: rect.left - padding, right: rect.right + padding,
+          top: rect.top - padding, bottom: rect.bottom + padding, width: rect.width, height: rect.height };
+      }).filter(rect => rect.width && rect.height);
+    const footerSize = Math.max(44, ...boxes.map(box=>box.footerHeight));
+    const targets = combatTargetAnchors({ width: fieldRect.width, height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
+      size: footerSize, packWithinBounds: true,
+      obstacles: [...footerObstacles, ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls)].map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
-      }))),
+      })),
       targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
         x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top + (box.intentRect ? box.intentRect.height / 2 : 0),
-        width: Math.max(box.footerWidth, box.intentRect?.width || 0),
+        y: box.hostRect.bottom - fieldRect.top + footerSize / 2,
+        width: Math.max(48, box.footerWidth),
       })) });
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
       if (intentRect) {
-        frame.style.setProperty('--enemy-hit-width', `${intentRect.width / zoom}px`);
-        frame.style.setProperty('--enemy-hit-height', `${intentRect.height / zoom}px`);
+        frame.style.setProperty('--enemy-hit-width', `${Math.max(48, boxes[i].footerWidth) / zoom}px`);
+        frame.style.setProperty('--enemy-hit-height', `${footerSize / zoom}px`);
       }
       if (frameRect) {
         const target = targets.find(target => target.id === frame.dataset.eid);
@@ -322,13 +435,13 @@ export function wireBattlefieldStage(field, model) {
         frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom - (intentRect ? intentRect.height / 2 - 5 : 0), width: 0, height: 0 }, { zoom });
+          top: fieldRect.top + target.y - hostRect.bottom - footerSize / 2, width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
           footer.style.translate = `${offset.left}px ${offset.top}px`;
           footer.style.position = 'relative';
-          footer.style.zIndex = '900';
+          footer.style.zIndex = 'var(--combat-layer-selection)';
         }
       }
       sprite.style.setProperty('--sprite-zoom', String(scale / zoom));
@@ -342,7 +455,9 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
+    syncCombatGroundShadows(field, shadows);
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    placePlayerHud();
     const rect = combat.getBoundingClientRect();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
@@ -355,19 +470,27 @@ export function wireBattlefieldStage(field, model) {
     combat.style.setProperty('--environment-top', '0px');
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
     const fieldTop = (fieldRect.top - rect.top) / zoom;
-    const sceneHeight = fieldTop + fieldRect.height / zoom;
+    // Continue real ground past the lowered footer fade, including on phones
+    // where the hand consumes much of the viewport. Keep the same horizon.
+    const sceneHeight = Math.max(fieldTop + fieldRect.height / zoom, rect.height / zoom * .82);
+    if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
+      fieldTop, ground: plan.ground / zoom, narrow });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
-      config: battlefieldBackdropConfig({ height: sceneHeight,
+      config: battlefieldBackdropConfig({ height: sceneHeight, appearance: displayAppearance(),
         fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
+    if (backdrop) combat.style.setProperty('--combat-scene-paint-bottom', backdrop.style.getPropertyValue('--scene-paint-bottom'));
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };
   const combatHost = field.closest('.combat');
+  let wiredAppearance = displayAppearance();
+  let releaseBackdrop = wireAlternativeBackdrop(combatHost);
   combatHost.addEventListener('combatantselectionchange', schedule);
+  combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
   // CSS zoom can move the rendered floor without changing the observed
@@ -384,14 +507,23 @@ export function wireBattlefieldStage(field, model) {
       'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);
+  const poseObserver = new MutationObserver(() => {
+    if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
+  });
+  poseObserver.observe(field, { subtree: true, attributes: true,
+    attributeFilter: ['src', 'data-pose', 'data-animating', 'class'] });
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });
   const release = () => {
+    releaseBackdrop();
     combatHost.removeEventListener('combatantselectionchange', schedule);
+    combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
+    cancelAnimationFrame(trackingRequest);
     resizeObserver.disconnect();
     layoutObserver.disconnect();
+    poseObserver.disconnect();
     window.removeEventListener('resize', schedule);
     document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
     detachObserver.disconnect();

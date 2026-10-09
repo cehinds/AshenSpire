@@ -1,0 +1,1284 @@
+{
+  "baseRevision": "3108ae00a8778df6924b8402d043b1a9ee3ce62f",
+  "scope": "Artwork and catalog only; no runtime/editor/workflow changes",
+  "sprites": [
+    {
+      "id": "reaver-default",
+      "family": "armor",
+      "file": "masters/reaver-default-rear.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "reaver-vigil",
+      "family": "armor",
+      "file": "masters/reaver-vigil-rear.png",
+      "sha256": "0ea2072827f114f3facc1bd74633b946f98401509ede6dd94e5a2317e9761590",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "reaver-oathsworn",
+      "family": "armor",
+      "file": "masters/reaver-oathsworn-rear.png",
+      "sha256": "31b05698659e6c991445e8effab478d83fbce349478b12f59681f5589b08e849",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "reaver-warden",
+      "family": "armor",
+      "file": "masters/reaver-warden-rear.png",
+      "sha256": "6db203257872770d4efba36b304bc6ed2a895acfcba1c33e752fef3d4dfd4dce",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "starseer-default",
+      "family": "armor",
+      "file": "masters/starseer-default-rear.png",
+      "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "starseer-eclipse",
+      "family": "armor",
+      "file": "masters/starseer-eclipse-rear.png",
+      "sha256": "e3e27474f236279ad09732504f78769c5b53dbbabf6012b907caec0ef619d141",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "starseer-starlit",
+      "family": "armor",
+      "file": "masters/starseer-starlit-rear.png",
+      "sha256": "df5c433da0aa083356035c50da83989b5ab9009fc6d957694faadd89444d72ae",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "starseer-astral",
+      "family": "armor",
+      "file": "masters/starseer-astral-rear.png",
+      "sha256": "f7a3232b48353379a69dcec117bdbf955f056f76099c5bb3065dc67e3e16c912",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "herald-default",
+      "family": "armor",
+      "file": "masters/herald-default-rear.png",
+      "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "herald-ossuary",
+      "family": "armor",
+      "file": "masters/herald-ossuary-rear.png",
+      "sha256": "76b8e571ec7a222d3136c15128c156cb16803fd5f6c767ad65f7fade06dcba34",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "herald-emberhabit",
+      "family": "armor",
+      "file": "masters/herald-emberhabit-rear.png",
+      "sha256": "a1b7daca07f7470328d5da75056148706d063ae4449bd628e08bad3654c7bd2d",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "herald-pilgrim",
+      "family": "armor",
+      "file": "masters/herald-pilgrim-rear.png",
+      "sha256": "34b41bffa58038d69b2078891d67ccd2c7f52a545f22803f5d5a9c711ff95bf4",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "rogue-default",
+      "family": "armor",
+      "file": "masters/rogue-default-rear.png",
+      "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "rogue-nightveil",
+      "family": "armor",
+      "file": "masters/rogue-nightveil-rear.png",
+      "sha256": "9bd7343290398f669bac9cedb7c86478fd9378d148797871867e699d5b8054ba",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "rogue-duelist",
+      "family": "armor",
+      "file": "masters/rogue-duelist-rear.png",
+      "sha256": "99b7aa0af1f86fdcc940201769c72cd625cf96d6f1fd05a51de3ad3e6e69c740",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "rogue-shadow",
+      "family": "armor",
+      "file": "masters/rogue-shadow-rear.png",
+      "sha256": "e1a83f561882bacdf2ed3425eaecadcea7b89949cac96c146609559a671471bd",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "reaver-bastion",
+      "family": "armor",
+      "file": "masters/reaver-bastion-rear.png",
+      "sha256": "4dbe14232ad65ac9c0ea72246015496be001342550aaad348656188c20a185d9",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "starseer-rimeweave",
+      "family": "armor",
+      "file": "masters/starseer-rimeweave-rear.png",
+      "sha256": "baa94519df47d5a86b78038c5201da69a784563120399c069f0090f28fd97c1f",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "rogue-waywatcher",
+      "family": "armor",
+      "file": "masters/rogue-waywatcher-rear.png",
+      "sha256": "d6c56261778dacb4a5703279be824be65f48b3f18ec3ceba757856f452ca9924",
+      "decision": "retain-approved",
+      "reason": "Approved rear hero silhouette",
+      "status": "reviewed"
+    },
+    {
+      "id": "wanderingSoldier",
+      "family": "enemy",
+      "file": "masters/wanderingSoldier.png",
+      "sha256": "50141b09e941bc8a8a151f2b18bd973d424847aa80bfca7e58fb2ef2aca15bbe",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "blightHound",
+      "family": "enemy",
+      "file": "masters/blightHound.png",
+      "sha256": "bcbd56be26b844d18e61d84b51872a9de3890c5ace4e39d3f6fb3cd7abf568cf",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "huskBrute",
+      "family": "enemy",
+      "file": "masters/huskBrute.png",
+      "sha256": "440d2bc218a0e174de8c24753f4b029c7b1bb22508235ae033bf325376f1545f",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "graveWisp",
+      "family": "enemy",
+      "file": "masters/graveWisp.png",
+      "sha256": "9a1099c0e99856139a91edf38638de8d37fce21829c8bcf73277b1afb23d70e2",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "wyrmAspirant",
+      "family": "enemy",
+      "file": "masters/wyrmAspirant.png",
+      "sha256": "15bc3fabfc122b0366deab1e83ab76966c64c07fea2991eb1b981523c0421ca8",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "fellWarden",
+      "family": "enemy",
+      "file": "masters/fellWarden.png",
+      "sha256": "b9810c89a90dcc8b6d450f3560cdddb66ff8e3b23c428ff17caa05e849fa17f8",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "lanternMoth",
+      "family": "enemy",
+      "file": "masters/lanternMoth.png",
+      "sha256": "e5dac87e3156576acf3280988506511849cf2d697f23e4a0f4337929b621fc8f",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "briarHermit",
+      "family": "enemy",
+      "file": "masters/briarHermit.png",
+      "sha256": "d1fe447aef80fb8427e813b64303d92ea1198c1a3cc8f9e7219fcb5f84218a62",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "chainScavenger",
+      "family": "enemy",
+      "file": "masters/chainScavenger.png",
+      "sha256": "ef259ce7cc0eab8b51696fab35f71fd2804fa67a5fc358eb40af08072ca7aa13",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "bellKeeper",
+      "family": "enemy",
+      "file": "masters/bellKeeper.png",
+      "sha256": "af96a4b68e330015db5181131cf7369ae2e50bf5895c6ced37aff970170c2dbe",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "thornMatriarch",
+      "family": "enemy",
+      "file": "masters/thornMatriarch.png",
+      "sha256": "4b9c5272506b57e5de0901dcc73139ead36fcbec9da6359b01d3d2e795379865",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "gildedKnight",
+      "family": "enemy",
+      "file": "masters/gildedKnight.png",
+      "sha256": "831b5f1d444006b4d48dd2aca4ee33b4fd4239cc65d2fd7d5acf00d4dc3bf6ea",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "courtSurgeon",
+      "family": "enemy",
+      "file": "masters/courtSurgeon.png",
+      "sha256": "86065d443bab4e4fdcd50d5df5ccbf1542e67df03794a679be7e56bcfca2ba32",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "stitchedHound",
+      "family": "enemy",
+      "file": "masters/stitchedHound.png",
+      "sha256": "4ff7b197a99ab46ed7d9581d62a847f504728dfee950322c0edda55a07418057",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "courtMarionette",
+      "family": "enemy",
+      "file": "masters/courtMarionette.png",
+      "sha256": "8a85943bbbe1b5bdeaa4393c1f82a203073988ff662c7e22bb350dcec0b67137",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "livingArmor",
+      "family": "enemy",
+      "file": "masters/livingArmor.png",
+      "sha256": "ceac600f2cc3f8027a054279cf44374c03c288dffeb6b872ec6f9388cdf32766",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "courtDuelist",
+      "family": "enemy",
+      "file": "masters/courtDuelist.png",
+      "sha256": "7153f80e41e546d92c79c0275c0cb0070f618aae4985b8663e2dd2c741ebb1c1",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "stitchedKing",
+      "family": "enemy",
+      "file": "masters/stitchedKing.png",
+      "sha256": "378ba7fb35669a800bae9fdc0433f035858831e24d76ec0caec04f7fd239c092",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "mirrorScribe",
+      "family": "enemy",
+      "file": "masters/mirrorScribe.png",
+      "sha256": "34572ab1fe6f07132d103f2e25a8097bb78abba265113a18d253fb724b7ec7c4",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "stitchCrab",
+      "family": "enemy",
+      "file": "masters/stitchCrab.png",
+      "sha256": "2f2efcd86098f06fc6ee18bc6f67411d8cf1b471374b85e9556291ad0174b58e",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "glassRegent",
+      "family": "enemy",
+      "file": "masters/glassRegent.png",
+      "sha256": "4a4525d5e458c113b950fd46f442c345deff86accf002a60ee1a4f9b4674b3e4",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "marrowOrganist",
+      "family": "enemy",
+      "file": "masters/marrowOrganist.png",
+      "sha256": "abb27aa77efd16e521e1e81169649dd81fb827b81f7e4dd38bd9ab8a762425fa",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "ashRevenant",
+      "family": "enemy",
+      "file": "masters/ashRevenant.png",
+      "sha256": "eaca0ae2d9ad995b2fae3f1c7646b4321c57047925d63c65df2f185fe8c30f65",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "emberStarvedPilgrim",
+      "family": "enemy",
+      "file": "masters/emberStarvedPilgrim.png",
+      "sha256": "315e1bc6af727f61a3e41d44b94e7a5b70f3c49503c95cdf4020241114f76fff",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "valkyrieShade",
+      "family": "enemy",
+      "file": "masters/valkyrieShade.png",
+      "sha256": "4c19f49eac43285c0d4ae574994aa07f4d9bd1c1cc42fac20f710d654ea7d152",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "charredColossus",
+      "family": "enemy",
+      "file": "masters/charredColossus.png",
+      "sha256": "0515f259276256761fb89e629d643c52581c96a35b5a6424bfc9d42007ff78cf",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "wyrmLord",
+      "family": "enemy",
+      "file": "masters/wyrmLord.png",
+      "sha256": "596cda9d2710fd1e918544d72ff1715bc363886af1c8fe99094fe21c9d643369",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "blightedValkyrie",
+      "family": "enemy",
+      "file": "masters/blightedValkyrie.png",
+      "sha256": "ca5427acdad686b8069f4936306a2370e4a52438fa1884afa08eb5ebbdf5e1b8",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "cinderMantis",
+      "family": "enemy",
+      "file": "masters/cinderMantis.png",
+      "sha256": "360674169c54f7edd27806a437d6a0675bd241658a339962b62fe6ee71541962",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "eclipseCantor",
+      "family": "enemy",
+      "file": "masters/eclipseCantor.png",
+      "sha256": "7c2e29913960693044caee3afd56ef5f3bdf70403183a0554fad09a96b629571",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "furnaceSaint",
+      "family": "enemy",
+      "file": "masters/furnaceSaint.png",
+      "sha256": "1203f35de7ea2bae25a424cdd2e226a602e6e086ae3c27de1a642c59a95a5f9b",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "hollowAstronomer",
+      "family": "enemy",
+      "file": "masters/hollowAstronomer.png",
+      "sha256": "a92914068c4e20f15196acfa78e389459d35b66fd301c412f044f49765c6d5dc",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "ashheartDragon",
+      "family": "enemy",
+      "file": "masters/ashheartDragon.png",
+      "sha256": "674fb757893f0d2af899b66c61d96a6926b2aca9aa9b0d86bf20128c213721e4",
+      "decision": "retain-approved",
+      "reason": "Left-facing enemy matches opposing depth view",
+      "status": "reviewed"
+    },
+    {
+      "id": "hollowSquire",
+      "family": "companion",
+      "file": "masters/hollowSquire.png",
+      "sha256": "1a1334d754d083111a0dd534b49cc6e953c10f89f63639d938337f6e8950dd6f",
+      "decision": "rear-view-required",
+      "reason": "Side/front ally needs rear three-quarter view",
+      "status": "planned"
+    },
+    {
+      "id": "emberHound",
+      "family": "companion",
+      "file": "masters/emberHound.png",
+      "sha256": "66dd9a8bf65b1d263a5bce3962bf4e008a351bb0d2e3bc49b85e0e3364f7ad08",
+      "decision": "rear-view-required",
+      "reason": "Side/front ally needs rear three-quarter view",
+      "status": "planned"
+    },
+    {
+      "id": "theNameless",
+      "family": "speaker",
+      "file": "masters/theNameless.png",
+      "sha256": "fbff521cd60d0528f2629500dd5b56e57a3d9e0c967f93e1a0c461cd8bae55bd",
+      "decision": "rear-view-required",
+      "reason": "Side/front ally needs rear three-quarter view",
+      "status": "planned"
+    },
+    {
+      "id": "keeperOfTheNameless",
+      "family": "speaker",
+      "file": "masters/keeperOfTheNameless.png",
+      "sha256": "30a29762143e859db67d30840d82af62634833388534587624747f6b97808ab0",
+      "decision": "rear-view-required",
+      "reason": "Side/front ally needs rear three-quarter view",
+      "status": "planned"
+    },
+    {
+      "id": "roadWarden",
+      "family": "speaker",
+      "file": "masters/roadWarden.png",
+      "sha256": "8e469ce8710db403f4a0c563070e7a1d085d2be63ffffd146ad9d60080011e54",
+      "decision": "rear-view-required",
+      "reason": "Side/front ally needs rear three-quarter view",
+      "status": "planned"
+    },
+    {
+      "id": "swordSaint",
+      "family": "speaker",
+      "file": "masters/swordSaint.png",
+      "sha256": "dcb8ab14ed2a9c6421b727b67bf0ce29091d1c06f733ec91981a3d265e913a5d",
+      "decision": "rear-view-required",
+      "reason": "Side/front ally needs rear three-quarter view",
+      "status": "planned"
+    },
+    {
+      "id": "starReader",
+      "family": "speaker",
+      "file": "masters/starReader.png",
+      "sha256": "3c63b19bb037700fb4a6ea0aa56b3dfb552cd529bbcb20189d5d0db1f0fd4484",
+      "decision": "rear-view-required",
+      "reason": "Side/front ally needs rear three-quarter view",
+      "status": "planned"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "ashen-crown-1",
+      "name": "King’s Causeway",
+      "region": "ashen-crown",
+      "source": "assets/environments/ashen-crown-combat.webp",
+      "box": [
+        0,
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "ashen-crown-2",
+      "name": "Bell Court",
+      "region": "ashen-crown",
+      "source": "assets/environments/ashen-crown-combat.webp",
+      "box": [
+        "$paneWidth",
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "ashen-crown-3",
+      "name": "Ashfall Gardens",
+      "region": "ashen-crown",
+      "source": "assets/environments/ashen-crown-combat.webp",
+      "box": [
+        0,
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "ashen-crown-4",
+      "name": "Throne Undercroft",
+      "region": "ashen-crown",
+      "source": "assets/environments/ashen-crown-combat.webp",
+      "box": [
+        "$paneWidth",
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "hollow-weald-1",
+      "name": "Lanternwood Crossing",
+      "region": "hollow-weald",
+      "source": "assets/environments/hollow-weald-combat.webp",
+      "box": [
+        0,
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "hollow-weald-2",
+      "name": "Drowned Hamlet",
+      "region": "hollow-weald",
+      "source": "assets/environments/hollow-weald-combat.webp",
+      "box": [
+        "$paneWidth",
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "hollow-weald-3",
+      "name": "Roots of the Elder",
+      "region": "hollow-weald",
+      "source": "assets/environments/hollow-weald-combat.webp",
+      "box": [
+        0,
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "hollow-weald-4",
+      "name": "Hunter’s Moon Clearing",
+      "region": "hollow-weald",
+      "source": "assets/environments/hollow-weald-combat.webp",
+      "box": [
+        "$paneWidth",
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "pale-marches-1",
+      "name": "Frostgate Pass",
+      "region": "pale-marches",
+      "source": "assets/environments/pale-marches-combat.webp",
+      "box": [
+        0,
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "pale-marches-2",
+      "name": "Frozen Pilgrim Road",
+      "region": "pale-marches",
+      "source": "assets/environments/pale-marches-combat.webp",
+      "box": [
+        "$paneWidth",
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "pale-marches-3",
+      "name": "Monastery of Silence",
+      "region": "pale-marches",
+      "source": "assets/environments/pale-marches-combat.webp",
+      "box": [
+        0,
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "pale-marches-4",
+      "name": "The Glass Lake",
+      "region": "pale-marches",
+      "source": "assets/environments/pale-marches-combat.webp",
+      "box": [
+        "$paneWidth",
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "cinder-reach-1",
+      "name": "Basalt Stair",
+      "region": "cinder-reach",
+      "source": "assets/environments/cinder-reach-combat.webp",
+      "box": [
+        0,
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "cinder-reach-2",
+      "name": "The Dead Foundry",
+      "region": "cinder-reach",
+      "source": "assets/environments/cinder-reach-combat.webp",
+      "box": [
+        "$paneWidth",
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "cinder-reach-3",
+      "name": "Caldera Rim",
+      "region": "cinder-reach",
+      "source": "assets/environments/cinder-reach-combat.webp",
+      "box": [
+        0,
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "cinder-reach-4",
+      "name": "Ember Mine Mouth",
+      "region": "cinder-reach",
+      "source": "assets/environments/cinder-reach-combat.webp",
+      "box": [
+        "$paneWidth",
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "drowned-coast-1",
+      "name": "Tidebound Chapel",
+      "region": "drowned-coast",
+      "source": "assets/environments/drowned-coast-combat.webp",
+      "box": [
+        0,
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "drowned-coast-2",
+      "name": "The Salt Causeway",
+      "region": "drowned-coast",
+      "source": "assets/environments/drowned-coast-combat.webp",
+      "box": [
+        "$paneWidth",
+        0,
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "drowned-coast-3",
+      "name": "Starwatch Terrace",
+      "region": "drowned-coast",
+      "source": "assets/environments/drowned-coast-combat.webp",
+      "box": [
+        0,
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "drowned-coast-4",
+      "name": "Grave of Ships",
+      "region": "drowned-coast",
+      "source": "assets/environments/drowned-coast-combat.webp",
+      "box": [
+        "$paneWidth",
+        "$paneHeight",
+        "$paneWidth",
+        "$paneHeight"
+      ],
+      "kind": "regional",
+      "status": "planned"
+    },
+    {
+      "id": "BS-ENV-01",
+      "name": "Gate of Unkept Names",
+      "region": "BS",
+      "source": "assets/environments/legacy/BS-ENV-01-background.webp",
+      "floor": "assets/environments/legacy/BS-ENV-01-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "BS-ENV-02",
+      "name": "Chapel of Small Mercies",
+      "region": "BS",
+      "source": "assets/environments/legacy/BS-ENV-02-background.webp",
+      "floor": "assets/environments/legacy/BS-ENV-02-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "BS-ENV-03",
+      "name": "Bridge of Bound Vows",
+      "region": "BS",
+      "source": "assets/environments/legacy/BS-ENV-03-background.webp",
+      "floor": "assets/environments/legacy/BS-ENV-03-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "BS-ENV-04",
+      "name": "Heart of Briar Sanctum — Boss Arena",
+      "region": "BS",
+      "source": "assets/environments/legacy/BS-ENV-04-background.webp",
+      "floor": "assets/environments/legacy/BS-ENV-04-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "HM-ENV-01",
+      "name": "Gate of Second Faces",
+      "region": "HM",
+      "source": "assets/environments/legacy/HM-ENV-01-background.webp",
+      "floor": "assets/environments/legacy/HM-ENV-01-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "HM-ENV-02",
+      "name": "Shattered Conservatory",
+      "region": "HM",
+      "source": "assets/environments/legacy/HM-ENV-02-background.webp",
+      "floor": "assets/environments/legacy/HM-ENV-02-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "HM-ENV-03",
+      "name": "Bridge of Courtesy",
+      "region": "HM",
+      "source": "assets/environments/legacy/HM-ENV-03-background.webp",
+      "floor": "assets/environments/legacy/HM-ENV-03-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "HM-ENV-04",
+      "name": "Hall of Mirrors — Boss Arena",
+      "region": "HM",
+      "source": "assets/environments/legacy/HM-ENV-04-background.webp",
+      "floor": "assets/environments/legacy/HM-ENV-04-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "FC-ENV-01",
+      "name": "Gate of Banked Coals",
+      "region": "FC",
+      "source": "assets/environments/legacy/FC-ENV-01-background.webp",
+      "floor": "assets/environments/legacy/FC-ENV-01-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "FC-ENV-02",
+      "name": "Quenching Yard",
+      "region": "FC",
+      "source": "assets/environments/legacy/FC-ENV-02-background.webp",
+      "floor": "assets/environments/legacy/FC-ENV-02-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "FC-ENV-03",
+      "name": "Iron Viaduct",
+      "region": "FC",
+      "source": "assets/environments/legacy/FC-ENV-03-background.webp",
+      "floor": "assets/environments/legacy/FC-ENV-03-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    },
+    {
+      "id": "FC-ENV-04",
+      "name": "Furnace Chapel — Boss Arena",
+      "region": "FC",
+      "source": "assets/environments/legacy/FC-ENV-04-background.webp",
+      "floor": "assets/environments/legacy/FC-ENV-04-floor.webp",
+      "kind": "dungeon",
+      "status": "planned"
+    }
+  ],
+  "environmentFiles": [
+    {
+      "file": "assets/bg/bg_act1.webp",
+      "mobile": "assets-mobile/bg/bg_act1.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/bg_act2.webp",
+      "mobile": "assets-mobile/bg/bg_act2.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/bg_act3.webp",
+      "mobile": "assets-mobile/bg/bg_act3.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/river-citadel-lit.webp",
+      "mobile": "assets-mobile/bg/river-citadel-lit.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/river-citadel-unlit.webp",
+      "mobile": "assets-mobile/bg/river-citadel-unlit.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/title-city-tower.webp",
+      "mobile": "assets-mobile/bg/title-city-tower.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/tower-city-background-unlit.webp",
+      "mobile": "assets-mobile/bg/tower-city-background-unlit.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/tower-city-background.webp",
+      "mobile": "assets-mobile/bg/tower-city-background.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/tower-door-mask-phone.svg",
+      "mobile": "assets-mobile/bg/tower-door-mask-phone.svg",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/tower-door-mask.svg",
+      "mobile": "assets-mobile/bg/tower-door-mask.svg",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/tower-entrance-hall-phone.webp",
+      "mobile": "assets-mobile/bg/tower-entrance-hall-phone.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/bg/tower-entrance-hall.webp",
+      "mobile": "assets-mobile/bg/tower-entrance-hall.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/ashen-crown-combat.webp",
+      "mobile": "assets-mobile/environments/ashen-crown-combat.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/ashen-crown-map.webp",
+      "mobile": "assets-mobile/environments/ashen-crown-map.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/cinder-reach-combat.webp",
+      "mobile": "assets-mobile/environments/cinder-reach-combat.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/cinder-reach-map.webp",
+      "mobile": "assets-mobile/environments/cinder-reach-map.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/crownfall-landmark.webp",
+      "mobile": "assets-mobile/environments/crownfall-landmark.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/crownfall-local.webp",
+      "mobile": "assets-mobile/environments/crownfall-local.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/drowned-coast-combat.webp",
+      "mobile": "assets-mobile/environments/drowned-coast-combat.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/drowned-coast-map.webp",
+      "mobile": "assets-mobile/environments/drowned-coast-map.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/fractured-realm-square.webp",
+      "mobile": "assets-mobile/environments/fractured-realm-square.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/hollow-weald-combat.webp",
+      "mobile": "assets-mobile/environments/hollow-weald-combat.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/hollow-weald-map.webp",
+      "mobile": "assets-mobile/environments/hollow-weald-map.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-01-background.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-01-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-01-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-01-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-02-background.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-02-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-02-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-02-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-03-background.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-03-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-03-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-03-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-04-background.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-04-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/BS-ENV-04-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/BS-ENV-04-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-01-background.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-01-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-01-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-01-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-02-background.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-02-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-02-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-02-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-03-background.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-03-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-03-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-03-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-04-background.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-04-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/FC-ENV-04-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/FC-ENV-04-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-01-background.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-01-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-01-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-01-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-02-background.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-02-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-02-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-02-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-03-background.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-03-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-03-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-03-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-04-background.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-04-background.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/HM-ENV-04-floor.webp",
+      "mobile": "assets-mobile/environments/legacy/HM-ENV-04-floor.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/legacy/MAP-01-briar-sanctum.webp",
+      "mobile": "assets-mobile/environments/legacy/MAP-01-briar-sanctum.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/legacy/MAP-02-hall-of-mirrors.webp",
+      "mobile": "assets-mobile/environments/legacy/MAP-02-hall-of-mirrors.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/legacy/MAP-03-furnace-chapel.webp",
+      "mobile": "assets-mobile/environments/legacy/MAP-03-furnace-chapel.webp",
+      "purpose": "title/prologue/legacy act backdrop",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/pale-marches-combat.webp",
+      "mobile": "assets-mobile/environments/pale-marches-combat.webp",
+      "purpose": "combat source",
+      "decision": "replace-in-art-catalog"
+    },
+    {
+      "file": "assets/environments/pale-marches-map.webp",
+      "mobile": "assets-mobile/environments/pale-marches-map.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/the-fivefold-frontier-world.webp",
+      "mobile": "assets-mobile/environments/the-fivefold-frontier-world.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/the-fractured-realm-world.webp",
+      "mobile": "assets-mobile/environments/the-fractured-realm-world.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/environments/the-shattered-gulf-world.webp",
+      "mobile": "assets-mobile/environments/the-shattered-gulf-world.webp",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/map/parchment_act1.svg",
+      "mobile": "assets-mobile/map/parchment_act1.svg",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/map/parchment_act2.svg",
+      "mobile": "assets-mobile/map/parchment_act2.svg",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    },
+    {
+      "file": "assets/map/parchment_act3.svg",
+      "mobile": "assets-mobile/map/parchment_act3.svg",
+      "purpose": "map navigation",
+      "decision": "retain-outside-combat-view"
+    }
+  ],
+  "counts": {
+    "sprites": 59,
+    "retain": 52,
+    "convert": 7,
+    "scenes": 32,
+    "environmentFiles": 58
+  }
+}

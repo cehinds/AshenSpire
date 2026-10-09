@@ -1581,7 +1581,10 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-compact-continue:disabled { opacity: .58; cursor: default; }
 .reward-door .reward-compact-continue.is-ready { background: #2b7047; border-color: #71c990; color: #fff; }
 .reward-door .reward-compact-continue.is-ready:is(:hover, :focus-visible) { background: #368a59; border-color: #a0e6b6; }
-.reward-door .reward-menu { max-width: none; width: 100%; }
+.reward-door .reward-menu { max-width: none; min-width: 0; width: 100%; }
+/* A reward's intrinsic title width must not expand into the XP column. */
+.reward-door .reward-menu > .reward-kind { box-sizing: border-box; width: 100%; }
+.reward-door .reward-menu > .reward-kind h3 { white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
 /* W1t: reward choices beside their claim status; stacked on narrow hosts. */
 .reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
 :root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
@@ -2820,12 +2823,13 @@ button.beat-hold:active, .as-btn.beat-hold:active {
 .beat-confirm .beat-actions button { min-height: var(--tap-floor); min-width: var(--tap-floor); }
 
 /* ═══ SPOTLIGHT — a coaching bubble over a live board ══════════════════════ */
-/* The veil takes no input: the board beneath keeps answering. Only the bubble
-   (a Popover with a Title·S, prose and a ButtonRow) is pressable. */
+/* The veil and the bubble's static copy take no input: the board beneath keeps
+   answering even when a compact layout leaves no rectangle large enough to
+   keep the whole Popover clear of the hand. Only the ButtonRow is pressable. */
 .as-spot-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
 .as-spot { position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 0 9999px rgba(0, 0, 0, 0.55); pointer-events: none; transition: left 200ms, top 200ms, width 200ms, height 200ms; }
-.as-spot-veil > .as-pop { position: absolute; pointer-events: auto; padding: 1.35rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
-.as-spot-veil > .as-pop > .as-btnrow { margin-top: 0.6rem; margin-left: auto; }
+.as-spot-veil > .as-pop { position: absolute; pointer-events: none; padding: 1.35rem 1.5rem calc(var(--tap-floor) + 2.7rem); display: flex; flex-direction: column; gap: 0.75rem; }
+.as-spot-veil > .tut-row { position: absolute; z-index: 1; pointer-events: auto; max-width: calc(100% - 24px); }
 .reduced-motion .as-spot { transition: none; }
 
 /* ═══ PILL TONES · STATPAIR SIZES · KEYCAP FLOAT · BUTTONROW WIDE ══════════ */

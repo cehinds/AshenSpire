@@ -1,0 +1,10 @@
+{
+  "ids": [
+    "combat.log.title", "combat.log.sizeLabel", "combat.log.size.small",
+    "combat.log.size.medium", "combat.log.size.large", "combat.log.actions",
+    "combat.log.round", "combat.log.empty", "combat.reactions.label",
+    "combat.reactions.enabled", "combat.reactions.disabled", "combat.reactions.state",
+    "combat.reaction.title", "combat.reaction.eyebrow", "combat.reaction.help",
+    "combat.reaction.play", "combat.reaction.upcast", "combat.reaction.sp", "combat.reaction.mp"
+  ]
+}

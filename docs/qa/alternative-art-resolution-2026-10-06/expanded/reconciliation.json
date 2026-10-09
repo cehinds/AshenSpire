@@ -1,0 +1,12 @@
+{
+  "before": "c52d200b7c39aa37d8c5e22920518679308de20d",
+  "source": "9636b5f183bd968f2ec941abd3f64c890f7b9d53",
+  "protectedCount": 726,
+  "remainingConflicts": [
+    "CHANGELOG.md"
+  ],
+  "protectedVerification": {
+    "unchangedExcept": "src/ui/models/CombatOverheadModel.js",
+    "exception": "Additive, currently unused combatTargetAnchors function from the common branch; all existing model code and variant renderer files preserved."
+  }
+}

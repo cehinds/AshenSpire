@@ -1,0 +1,68 @@
+{
+  "status": "four-reference-families-authoring",
+  "target": "alternative/dev",
+  "branch": "codex/alternative-rogue-motion",
+  "draftFamilies": 4,
+  "pendingBaseFamilies": 36,
+  "decodedImages": 144,
+  "checks": {
+    "poseStudioAndRenewalTests": {
+      "passed": 16,
+      "failed": 0
+    },
+    "workshopSchema": "passed",
+    "browserConsoleErrors": 0,
+    "phoneViewport": [
+      390,
+      844
+    ],
+    "phoneDocumentWidth": 390,
+    "normalMs": 260,
+    "fastMs": 160,
+    "downHolds": true,
+    "redHitFlash": "alpha-masked tint verified in browser; fades before recovery; suppressed for reduced motion",
+    "workshopPlayback": "Reaver and Rogue verified in Workshop; all four projects pass schema validation.",
+    "poseStudioImportAndPlayback": "Reaver, Rogue and Starseer verified; Herald portable projects pass model validation.",
+    "phoneEvidenceScope": "Reaver baseline only; additional families inspected at the normal in-app browser viewport.",
+    "heraldBrowser": [
+      "sword contact and separate slash",
+      "red hurt silhouette",
+      "Fast down holds at 160 ms",
+      "spell release with shield retained",
+      "no console errors"
+    ],
+    "localToolSelftests": {
+      "passed": 18,
+      "failed": 0
+    },
+    "heraldHandednessReview": "herald/handedness-review.json"
+  },
+  "remaining": [
+    "36 base class/loadout families",
+    "Additional enemy and armour animation sets",
+    "Cast draw/sheath transition artwork and helmet margin correction",
+    "Separate painted body, weapon and hand components",
+    "Runtime routing, combat effects integration, release asset manifests and gameplay validation"
+  ],
+  "screenshots": [
+    ".codex/renewal-contact.jpg",
+    ".codex/renewal-phone.jpg",
+    "herald/preview-attack.jpg",
+    "herald/preview-hit.jpg",
+    "herald/preview-cast.jpg",
+    "herald/preview-handedness.jpg"
+  ],
+  "mergedBaseline": {
+    "pr": 1695,
+    "branch": "alternative/dev",
+    "commit": "da3c7135f683a091224354f7daabee43463e74a7",
+    "families": [
+      "reaver/sword"
+    ],
+    "testPromotion": {
+      "pr": 1699,
+      "branch": "alternative/test",
+      "commit": "c46ccd898c2c2dd6ec0d5880c19115efb419594b"
+    }
+  }
+}

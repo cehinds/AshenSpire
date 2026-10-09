@@ -1,0 +1,70 @@
+{
+  "id": "herald-pilgrim",
+  "name": "Pilgrim Wrap \u00b7 Herald",
+  "family": "armor",
+  "classId": "herald",
+  "outfitId": "pilgrim",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Pilgrim Wrap. Lore: Road dust worked into the weave. Material palette: plate #44483A, plateLt #747A5C, leather #3A3226, under #2A2418. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/herald-pilgrim-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-f79142de-2218-44ff-b020-d508a4561995.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5209293365478516,
+    "visibleBounds": [
+      47,
+      32,
+      1015,
+      1498
+    ],
+    "anchor": [
+      531.0,
+      1498
+    ],
+    "sha256": "34b41bffa58038d69b2078891d67ccd2c7f52a545f22803f5d5a9c711ff95bf4"
+  },
+  "referenceImages": [
+    "masters/herald-pilgrim.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/herald-pilgrim.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5332361857096354,
+      "visibleBounds": [
+        91,
+        46,
+        949,
+        1492
+      ],
+      "anchor": [
+        520.0,
+        1492
+      ],
+      "sha256": "f8470889f59dc335e6d522856ce19fbc0cc201dd35f5356abf9758275230147a"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Pilgrim Wrap. Lore: Road dust worked into the weave. Material palette: plate #44483A, plateLt #747A5C, leather #3A3226, under #2A2418. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

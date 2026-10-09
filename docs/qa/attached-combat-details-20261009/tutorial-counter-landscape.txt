@@ -1,0 +1,74 @@
+[
+  {
+    id: 'defend',
+    rect: {
+      x: 124.26753997802734,
+      y: 284.594482421875,
+      width: 123.74616241455078,
+      height: 179.29541015625,
+      top: 284.594482421875,
+      right: 248.01370239257812,
+      bottom: 463.889892578125,
+      left: 124.26753997802734
+    },
+    hit: '<span class="hand-hit-lane" aria-hidden="true"></span>'
+  },
+  {
+    id: 'dodgeRoll',
+    rect: {
+      x: 233.08042907714844,
+      y: 278.59649658203125,
+      width: 120.02662658691406,
+      height: 176.8851318359375,
+      top: 278.59649658203125,
+      right: 353.1070556640625,
+      bottom: 455.48162841796875,
+      left: 233.08042907714844
+    },
+    hit: '<span class="hand-hit-lane" aria-hidden="true"></span>'
+  },
+  {
+    id: 'shieldBash',
+    rect: {
+      x: 341.921875,
+      y: 277.4375,
+      width: 116.25,
+      height: 174.390625,
+      top: 277.4375,
+      right: 458.171875,
+      bottom: 451.828125,
+      left: 341.921875
+    },
+    hit: '<span class="hand-hit-lane" aria-hidden="true"></span>'
+  },
+  {
+    id: 'defend',
+    rect: {
+      x: 446.9866638183594,
+      y: 278.59649658203125,
+      width: 120.02664184570312,
+      height: 176.8851318359375,
+      top: 278.59649658203125,
+      right: 567.0133056640625,
+      bottom: 455.48162841796875,
+      left: 446.9866638183594
+    },
+    hit: '<span class="hand-hit-lane" aria-hidden="true"></span>'
+  },
+  {
+    id: 'strike',
+    rect: {
+      x: 552.080078125,
+      y: 284.594482421875,
+      width: 123.74615478515625,
+      height: 179.29541015625,
+      top: 284.594482421875,
+      right: 675.8262329101562,
+      bottom: 463.889892578125,
+      left: 552.080078125
+    },
+    hit: '<span class="hand-hit-lane" aria-hidden="true"></span>'
+  }
+]
+Counter armed: 1
+Cancelled with tutorial retained: 1 0

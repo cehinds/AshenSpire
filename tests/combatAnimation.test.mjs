@@ -12,6 +12,15 @@ import { paintedOutfit } from '../src/model/paintedOutfitArt.js';
 const reg=createRegistries(contentBundle);
 const items=ids=>reg.equipment.armaments.filter(item=>ids.includes(item.id));
 const card=(id,profileId)=>{const def=resolveCard(reg,{cardId:id,profileId});return {...def,cardTags:def.cardTags?.length?def.cardTags:tagService(reg).tagsOf('card',def)};};
+test('ranged attacks stay projectile motions even without a matching authored bow clip',()=>{
+  for (const tags of [['ranged'], ['reach:distance']]) {
+    const plan=route({kindIds:['classification.attack'],tags});
+    assert.equal(plan.family,'projectile');
+    assert.equal(plan.motion,'release');
+  }
+  assert.equal(route({kindIds:['classification.attack'],tags:['blade']}).family,'strike');
+});
+
 test('real shield equipment selects bash; dagger and lighting tools do not',()=>{
   for(const id of ['buckler','kiteShield','towerShield','roundShield','spikedShield']) {
     assert.equal(route(card('shieldBash'),items([id])).technique,'shieldBash');
@@ -84,7 +93,9 @@ test('authoritative co-op digest carries accepted actor and equipment profile, p
   // The actor/profile receipt fixture replays the pre-expansion character setup.
   const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
   for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
-  host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
+  host.start();
+  for(const member of host.session.members.values())delete member.run.reactionRulesVersion;
+  for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
   const combat=host.live.combat,p= combat.players.get('p2');
   p.piles.hand.push({instanceId:'animation-guard',cardId:'defend',profileId:'shieldGuard',equipmentRole:'guard',upgraded:false});
   p.entity.energy=10;p.entity.stamina=100;
