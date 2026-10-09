@@ -1385,6 +1385,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   enqueueCounterWard(combat, p, cardRef, meta);
   combat.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id,
+    ...(combat.combatExpansionVersion === 2 ? { cardInstance: structuredClone(inst),
+      ...(def.upcast ? { upcastTier: def.upcastTier ?? def.upcast.baseTier } : {}) } : {}),
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
     cardType: kind,
