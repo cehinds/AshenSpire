@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `codex/combat-expansion-alternative-20261007`
-- Source commit: `944d52fa7c309f9d4f3d3a7c66e98262e8640d7e`
+- Source commit: `59f47161cfbe6b260e42d3270c549656f61927f4`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **12979**.
-Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 44, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 56, `.jpg` 282, `.js` 754, `.json` 777, `.log` 1, `.md` 218, `.mjs` 823, `.nojekyll` 1, `.nsi` 1, `.png` 1747, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.txt` 40, `.webp` 7337, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
+Tracked files: **12991**.
+Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 42, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 56, `.jpg` 282, `.js` 754, `.json` 782, `.log` 1, `.md` 219, `.mjs` 823, `.nojekyll` 1, `.nsi` 1, `.png` 1755, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.txt` 40, `.webp` 7337, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
