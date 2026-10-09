@@ -6,7 +6,8 @@ import { setAnimSpeed } from '../src/ui/fx.js';
 
 test('class stage owns travel, hit flashing, interruption, pause and disposal', async () => {
   const dom=rewardDom(), raf=new Map(), paints=[];
-  let time=1000, serial=0, reduced=false, failArt=false;
+  let time=1000, wallTime=1000, serial=0, reduced=false, failArt=false, materializeMs=0, deferArt=false;
+  const pendingArt=[];
   const create=dom.document.createElement.bind(dom.document);
   dom.document.createElement=tag=>{
     const node=create(tag);
@@ -14,11 +15,13 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
       clearRect(){},save(){},restore(){},
       drawImage(...args){paints.push({args,alpha:this.globalAlpha,filter:this.filter});},
       fillRect(){paints.push({fill:this.fillStyle,mode:this.globalCompositeOperation});},
+      getImageData(){time+=materializeMs;wallTime+=materializeMs;return {data:new Uint8ClampedArray(4)};},
     });
     return node;
   };
-  const globals={...dom, performance:{now:()=>time},
-    Image:class {set src(value){this.url=value;queueMicrotask(()=>failArt?this.onerror?.():this.onload?.());}},
+  const NativeDate=Date;
+  const globals={...dom, performance:{now:()=>time}, Date:class extends NativeDate {static now(){return wallTime;}},
+    Image:class {set src(value){this.url=value;const finish=()=>failArt?this.onerror?.():this.onload?.();if(deferArt)pendingArt.push(finish);else queueMicrotask(finish);}},
     matchMedia:query=>({matches:query.includes('reduced-motion')&&reduced}),
     requestAnimationFrame:fn=>{raf.set(++serial,fn);return serial;},
     cancelAnimationFrame:id=>raf.delete(id),
@@ -26,7 +29,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
   const saved=Object.fromEntries(Object.keys(globals).map(key=>[key,globalThis[key]]));
   Object.assign(globalThis,globals);
   let stage;
-  const step=ms=>{time+=ms;const callbacks=[...raf.values()];raf.clear();callbacks.forEach(fn=>fn(time));};
+  const step=ms=>{time+=ms;wallTime+=ms;const callbacks=[...raf.values()];raf.clear();callbacks.forEach(fn=>fn(time));};
   try {
     setAnimSpeed('normal');
     stage=createAlternativeCardStage('reaver');await stage.ready;
@@ -42,10 +45,31 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.setRestPose('idle');
     stage.play('attack',260,['stamina']);step(115);
     assert.equal(stage.pose,'attack-contact');
-    assert.equal(paints.at(-1).args[1],208,'the figure has advanced 80 pixels');
+    assert.ok(paints.some(p=>p.args[0]?.url?.includes('attack-contact')&&p.args[1]===208&&p.args[2]===16),'the source figure advances 80 pixels at the authored floor anchor');
     stage.hold(60);step(50);assert.equal(stage.presentation.elapsed,115);
     step(155);assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
-    assert.equal(paints.at(-1).args[1],128,'return to the original floor anchor');
+    assert.equal(paints.at(-1).args[1],128,'unfiltered rest returns to the original floor anchor');
+    stage.play('hit');
+    assert.equal(raf.size,1,'an earlier hurt effect already owns a queued frame');
+    const beforeWarm=time;
+    materializeMs=400;
+    stage.play('counter',260,['stamina','mana']);
+    assert.ok(time>beforeWarm,'the first aura is materialized before the action clock');
+    assert.equal(stage.presentation.elapsed,0,'cold aura work is outside the action clock');
+    const staleCallbacks=[...raf.values()];raf.clear();
+    materializeMs=0;staleCallbacks.forEach(fn=>fn(time-300));
+    assert.equal(stage.presentation.elapsed,0,'a pre-materialization RAF timestamp cannot move the fresh clock backwards');
+    materializeMs=0;step(60);
+    assert.equal(stage.pose,'counter-load','queued hurt RAF does not skip Counter preparation after cold filter work');
+    stage.setRestPose('defend');materializeMs=300;
+    const resume=()=>({rest:'defend',action:'counter',elapsed:60,duration:260,resources:['hp','mana','stamina'],savedAt:wallTime});
+    stage.setRestPose('defend',{resume:resume()});
+    assert.equal(stage.presentation.action,undefined,'cold restore work does not extend a stale wall-clock action');
+    assert.equal(stage.pose,'guard-brace');
+    materializeMs=0;stage.setRestPose('defend',{resume:resume()});
+    assert.equal(stage.presentation.elapsed,60,'a valid restoration keeps its saved elapsed time');
+    step(30);assert.equal(stage.pose,'counter-parry');
+    stage.setRestPose('idle');
     stage.play('smash');step(60);stage.setRestPose('defend');
     assert.equal(stage.pose,'guard-brace','a rest change cancels the prior action');
     step(300);assert.equal(stage.pose,'guard-brace');
@@ -69,6 +93,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.el.hasAttribute('data-art-placeholder'),false);
     assert.equal(stage.el.querySelector('span').hidden,true,'Retry restores the class art');
     assert.equal(stage.pose,'ready');
+    stage.dispose();deferArt=true;stage=createAlternativeCardStage('rogue');
+    stage.dispose();const beforeLate=paints.length;
+    pendingArt.splice(0).forEach(finish=>finish());
+    assert.equal(await stage.ready,false,'a disposed stage ignores late artwork');
+    assert.equal(paints.length,beforeLate,'late image loads cannot repaint a disposed canvas');
   } finally {
     stage?.dispose();setAnimSpeed('normal');
     for(const [key,value]of Object.entries(saved))if(value===undefined)delete globalThis[key];else globalThis[key]=value;

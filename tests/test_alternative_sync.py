@@ -135,6 +135,8 @@ class SyncTests(unittest.TestCase):
         self.assertTrue(sync.protected(ART + 'editor/starting-layout-v2.json', POLICY))
         self.assertTrue(sync.protected('content/config/ui/components/card.json', POLICY))
         self.assertTrue(sync.protected('src/config/generated/ui.js', POLICY))
+        self.assertTrue(sync.protected('src/ui/alternativeCardStage.js', POLICY))
+        self.assertTrue(sync.protected('src/ui/alternativeAuraRenderer.js', POLICY))
         self.assertFalse(sync.protected('src/content/enemyArt.js', POLICY))
 
 

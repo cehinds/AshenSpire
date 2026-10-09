@@ -1,0 +1,94 @@
+{
+  "scope": "Uncommitted independent source-alpha compositor; native and final compiled acceptance pending",
+  "source": "cae98a00f816fc15f05387e2c6606a41353c0e3b",
+  "target": "6875bfe970c3266864dd52acfe52723fcda295e0",
+  "head": "491419144ca1dda1bd1896375e61841f9144f8dc",
+  "protectedCount": 2045,
+  "overlaps": [
+    "CHANGELOG.md",
+    "docs/COMPONENT-CATALOG.md",
+    "docs/component-catalog.html",
+    "src/content/changelog.generated.js",
+    "src/engine/combat.js",
+    "src/model/combatAnimation.js",
+    "src/ui/screens/combat.js",
+    "src/ui/screens/coop.js",
+    "styles/kit.css"
+  ],
+  "committedSharedSeams": [
+    "CHANGELOG.md",
+    "docs/COMPONENT-CATALOG.md",
+    "docs/component-catalog.html",
+    "src/content/changelog.generated.js",
+    "src/engine/combat.js",
+    "src/ui/screens/combat.js",
+    "src/ui/screens/coop.js",
+    "styles/kit.css",
+    "tools/tutorial-reach.mjs"
+  ],
+  "pins": [
+    {
+      "file": "src/model/combatAnimation.js",
+      "before": "6fee8271785e705719fe10b4e7a20b4547cb4565",
+      "current": "6fee8271785e705719fe10b4e7a20b4547cb4565"
+    },
+    {
+      "file": "src/model/alternativeCardAnimation.js",
+      "before": "62b5686f22c48dc18971fe4937084713e6f3db9c",
+      "current": "62b5686f22c48dc18971fe4937084713e6f3db9c"
+    },
+    {
+      "file": "src/content/alternativeCardAnimations.js",
+      "before": "85fd605b62ce0d2687d5eb1df8f57b213ba1e108",
+      "current": "85fd605b62ce0d2687d5eb1df8f57b213ba1e108"
+    },
+    {
+      "file": "src/content/alternativeSelectedStances.js",
+      "before": "cd575ee85f0507aa1d82fd72e13c9d8922b9b169",
+      "current": "cd575ee85f0507aa1d82fd72e13c9d8922b9b169"
+    },
+    {
+      "file": "src/ui/alternativeArtCatalog.js",
+      "before": "66954349477f1575dd51b6c2f773c4f6fbb53cb7",
+      "current": "66954349477f1575dd51b6c2f773c4f6fbb53cb7"
+    },
+    {
+      "file": "src/model/alternativeStance.js",
+      "before": "f83a367a0b6b1318473e58193c1696b91a3e8912",
+      "current": "f83a367a0b6b1318473e58193c1696b91a3e8912"
+    }
+  ],
+  "receipts": [
+    {
+      "ref": "6875bfe970c3266864dd52acfe52723fcda295e0",
+      "total": 818,
+      "missing": []
+    },
+    {
+      "ref": "cae98a00f816fc15f05387e2c6606a41353c0e3b",
+      "total": 795,
+      "missing": []
+    },
+    {
+      "ref": "dd1730abd1bf9fc7178b370ccb0f9a68232652e4",
+      "total": 815,
+      "missing": []
+    },
+    {
+      "ref": "66a808092b7abebdb8cf5821f97f00f811476764",
+      "total": 795,
+      "missing": []
+    }
+  ],
+  "policyChanged": false,
+  "rendererFiles": [
+    {
+      "file": "src/ui/alternativeAuraRenderer.js",
+      "sha256": "ccb69580bc836b01bbaefd0c90ab818cf8522fc802ff19ff8863b8cfc66ed856"
+    },
+    {
+      "file": "src/ui/alternativeCardStage.js",
+      "sha256": "40268b101c9b5d958a69a309a603a44c1248aef29e0c30d27e479314c2e8799e"
+    }
+  ]
+}

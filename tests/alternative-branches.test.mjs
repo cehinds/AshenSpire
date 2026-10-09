@@ -67,6 +67,20 @@ test('alternative deletion and rename are protected', (t) => {
   assert.throws(() => mergeAlternative(dir, 'test', 'alternative/dev'), /shared.txt/);
 });
 
+test('alternative independent aura compositor remains a protected presentation implementation', (t) => {
+  const { dir, git, commit } = fixture(t);
+  mkdirSync(join(dir, 'src/ui'), { recursive: true });
+  git('switch', 'alternative/dev');
+  commit('src/ui/alternativeCardStage.js', 'authored class motions\n');
+  commit('src/ui/alternativeAuraRenderer.js', 'stage-owned independent aura\n');
+  git('switch', 'test');
+  mkdirSync(join(dir, 'src/ui'), { recursive: true });
+  commit('src/ui/alternativeAuraRenderer.js', 'incoming presentation replacement\n');
+  assert.throws(() => mergeAlternative(dir, 'test', 'alternative/dev'), /overlap alternative changes:[\s\S]*alternativeAuraRenderer/);
+  assert.equal(git('show', 'alternative/dev:src/ui/alternativeCardStage.js'), 'authored class motions');
+  assert.equal(git('show', 'alternative/dev:src/ui/alternativeAuraRenderer.js'), 'stage-owned independent aura');
+});
+
 test('an identical shared edit is accepted and independent variant files remain', (t) => {
   const { dir, git, commit } = fixture(t);
   git('switch', 'alternative/dev'); commit('shared.txt', 'same\n'); commit('variant.txt', 'kept');
