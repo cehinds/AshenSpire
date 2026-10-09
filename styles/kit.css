@@ -6097,7 +6097,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat-hud > .combat-blight-hud:empty { display:none; }
 .combat-blight-hud > .ashen-blight { margin:0; padding:.35rem .6rem; border:0; background:#171411bd; }
 .combat-blight-hud .ashen-blight-heading { font-size:max(.8rem, calc(11px / var(--ui-zoom, 1))); line-height:1.2; }
-.combat-blight-hud .ashen-blight-track { height:calc(8px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
+.combat-blight-hud .ashen-blight-track { height:calc(18px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
 @media(max-width:700px) {
   .combat-hud > .combat-blight-hud { position:relative; top:auto; left:auto; transform:none; width:100%; margin:.25rem auto 0; }
   .combat.coop > .combat-hud { flex-wrap:wrap; }

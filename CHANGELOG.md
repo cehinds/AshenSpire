@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Ashen Blight flows through volcanic rock** ([#1762](https://github.com/cehinds/AshenSpire/pull/1762), `0.7.1.1154`). The owner-selected Molten River material fills the centered meter with a glowing orange lava channel between black basalt banks. A taller track keeps it readable on phones; zero Blight stays hidden, and high-contrast mode uses the system highlight.
+
 - **Alternative combat opens up with option C** ([#1751](https://github.com/cehinds/AshenSpire/pull/1751), `0.7.1.1152`). The approved pointed shield and inner-loop Counter match the named card footers, with distinct HP and Poise damage symbols. Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.
 
 - **Alternative heroes hold their selected combat poses** ([#1745](https://github.com/cehinds/AshenSpire/pull/1745), `0.7.1.1146`). Reaver, Rogue, Starseer and Herald use the twelve chosen Attack, Defend and Prepare poses after card actions. Books and defensive guards follow the selected artwork. Each co-op player keeps their own pose until their next turn; counters keep their existing presentation for a later selection pass. The separate Block, Barrier and Ward box is removed. Ashen Blight now appears as a wider centered header bar only above zero, with its own row on phones.

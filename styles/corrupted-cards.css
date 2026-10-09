@@ -16,10 +16,11 @@
 .ashen-blight { --blight-value: 0%; color: #f0d8c8; background: #1b1413; border: 1px solid #80513e; border-radius: .5rem; padding: .65rem .8rem; }
 .ashen-blight-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; font-size: 1rem; }
 .ashen-blight-heading strong { font-variant-numeric: tabular-nums; }
-.ashen-blight-track { position: relative; height: .6rem; margin: .6rem 0; background: #090807; border: 1px solid #745341; border-radius: .3rem; }
-.ashen-blight-fill { display: block; width: var(--blight-value); height: 100%; border-radius: inherit; background: linear-gradient(90deg, #854c36, #d57b47, #ffc181); }
-.ashen-blight-pip { position: absolute; top: -.25rem; height: 1rem; width: .3rem; transform: translateX(-50%); border: 1px solid #aa8570; border-radius: .2rem; background: #241c18; }
-.ashen-blight-pip.reached { background: #ffd6a7; border-color: #f0b37e; }
+.ashen-blight-track { position: relative; height: .9rem; margin: .6rem 0; background: linear-gradient(180deg, #19191b, #060708); border: 1px solid #51433d; border-radius: .3rem; box-shadow: inset 0 1px 3px #000; }
+/* Molten River uses the shared art-pack texture at a fixed scale as Blight grows. */
+.ashen-blight-fill { display: block; width: var(--blight-value); height: 100%; border-radius: inherit; background-color: #a6370c; background-image: url('../assets/ui/ashen-blight-molten-river.webp'); background-size: 160px 100%; background-repeat: repeat-x; box-shadow: inset 0 1px 2px #0505059c, inset 0 -1px 2px #050505c9, 1px 0 3px #ff671c9e; }
+.ashen-blight-pip { position: absolute; top: -.2rem; height: calc(100% + .4rem); width: .3rem; transform: translateX(-50%); border: 1px solid #aa8570; border-radius: .2rem; background: #241c18; }
+.ashen-blight-pip.reached { background: #ffad42; border-color: #f65b19; box-shadow: 0 0 4px #ff5a1a66; }
 .ashen-blight-help { margin: .25rem 0 0; font-size: .9rem; line-height: 1.4; }
 .ashen-blight-compact { padding: .35rem .6rem; }
 .ashen-blight-choice-row { margin-bottom: 1rem; padding: .8rem; border: 1px solid #81503a; border-radius: .4rem; }
@@ -28,4 +29,4 @@
 .ashen-blight-benefit { color: #ead7bd; }
 .ashen-blight-drawback { color: #ffc5b7; }
 @media (max-width: 480px) { .ashen-blight-heading { font-size: .9rem; } .corrupted-card-label { font-size: .75rem; } }
-@media (forced-colors: active) { .card.corrupted-card::after { display: none; } .corrupted-card-label, .ashen-blight, .ashen-blight-pip { border-color: CanvasText; color: CanvasText; background: Canvas; } .ashen-blight-fill, .ashen-blight-pip.reached { background: Highlight; } }
+@media (forced-colors: active) { .card.corrupted-card::after { display: none; } .corrupted-card-label, .ashen-blight, .ashen-blight-pip { border-color: CanvasText; color: CanvasText; background: Canvas; } .ashen-blight-fill, .ashen-blight-pip.reached { background: Highlight; box-shadow: none; } }
