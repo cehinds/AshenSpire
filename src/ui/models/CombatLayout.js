@@ -1,4 +1,5 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { uiConfig } from '../../config/generated/ui.js';
 
 // The W4 bands, top to bottom.
 const SCENE_BANDS = Object.freeze(['hud', 'scene', 'context', 'footer']);
@@ -50,13 +51,16 @@ export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, l
 // minimums. A host that still cannot fit is reported, not squeezed.
 export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0, compact = false }, config = wireframeUi) {
   if (compact) {
+    const compactConfig = uiConfig.scenes.w4a.sizing.compactCombat;
     const physicalHeight = height * zoom;
-    const hud = Math.max(48, physicalHeight * .09) / zoom;
-    const hand = Math.max(176, Math.min(220, physicalHeight * .28)) / zoom;
-    const footer = 78 / zoom;
+    const hud = Math.max(compactConfig.hudMinimumPx, physicalHeight * compactConfig.hudHeightFraction) / zoom;
+    const hand = Math.max(compactConfig.handMinimumPx,
+      Math.min(compactConfig.handMaximumPx, physicalHeight * compactConfig.handHeightFraction)) / zoom;
+    const footer = compactConfig.footerPx / zoom;
     const battlefield = Math.max(0, height - hud - hand - footer);
-    return Object.freeze({ hud, battlefield, hand, footer, minimumBattlefield: 130 / zoom,
-      arrangement: 'stacked', rails: null, supported: battlefield * zoom >= 130 });
+    const minimumBattlefield = compactConfig.minimumBattlefieldPx / zoom;
+    return Object.freeze({ hud, battlefield, hand, footer, minimumBattlefield,
+      arrangement: 'stacked', rails: null, supported: battlefield >= minimumBattlefield });
   }
   // The stacked plan is the shared W4 plan: the battlefield is the scene band
   // and the hand is the context band.
@@ -103,13 +107,16 @@ export function minimumHandHeight(rem = 16, config = wireframeUi) {
 // and takes up to its envelope of what remains. The touch target and the
 // readable pile floor outrank the nominal pile envelope on narrow hosts.
 export function packCombatFooter({ width, height, zoom = 1, rem = 16 }, config = wireframeUi.footer) {
-  if (width * zoom <= 600) {
+  const compactConfig = uiConfig.scenes.w4a.sizing.compactCombat;
+  if (width * zoom <= compactConfig.maxWidthPx) {
     const target = config.minimumTargetPx / zoom;
-    const gap = Math.min(config.gapRem * rem, 4 / zoom);
+    const gap = Math.min(config.gapRem * rem, compactConfig.footerGapMaxPx / zoom);
     const available = Math.max(0, width - gap * 4);
-    const diameter = Math.max(target, Math.min(52 / zoom, height * config.heightFraction));
+    const diameter = Math.max(target,
+      Math.min(compactConfig.footerDiameterMaxPx / zoom, height * config.heightFraction));
     const pileWidth = target;
-    const endWidth = Math.max(0, Math.min(76 / zoom, available - diameter * 2 - pileWidth * 2));
+    const endWidth = Math.max(0,
+      Math.min(compactConfig.footerEndWidthMaxPx / zoom, available - diameter * 2 - pileWidth * 2));
     return Object.freeze({ gap, target, diameter, pileWidth, pileHeight: target, endWidth, endHeight: diameter,
       groupWidth: diameter * 2 + pileWidth * 2 + endWidth + gap * 4,
       supported: endWidth >= target && height >= target });
