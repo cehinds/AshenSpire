@@ -33,7 +33,7 @@ function watchTargetPlacement(host, picker) {
       return { id: button.dataset.eid, x: rect ? rect.left + rect.width / 2 - box.left : box.width / 2,
         y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2 };
     });
-    const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles });
+    const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles, cellSize: 88 });
     for (const placement of placements) {
       const button = [...picker.children].find(node => node.dataset.eid === placement.id);
       const local = anchorLocalBox(host, { left: box.left + placement.left, top: box.top + placement.top,

@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-09
+
+- **Attached enemy targets and visible player details** ([#1773](https://github.com/cehinds/AshenSpire/pull/1773), `0.7.1.1184`). Keep compact enemy selection cells on their sprites, shrink them before moving away, and preserve neighboring target order. Show enemy name and health below their bodies and place the player's name, level, health and live combat details beside the character, clear of cards. Pack co-op details without collisions and keep landscape combat tools out of targeting space.
+
 ## 2026-10-08
 
 - **Stable rear sprites and clear battlefield layers** ([#1772](https://github.com/cehinds/AshenSpire/pull/1772), `0.7.1.1175`). Keep character size and resting positions fixed as cards leave or return to the hand, including co-op updates and empty-hand resizing. Rear player artwork moves only for melee and returns to its anchor. Raise the player, move enemies back and right, and lower the footer fade behind characters while HUD, cards and selection controls retain their shared layer order.

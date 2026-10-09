@@ -53,14 +53,13 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   if (!ctx) return null;
   const mask = document.createElement('canvas'); mask.width = mask.height = 512;
   const maskCtx = mask.getContext('2d');
-  const lite = typeof matchMedia === 'function' && matchMedia('(max-width: 599px)').matches;
   const images = new Map();
   const placeholder=document.createElement('span');placeholder.textContent='⚔';placeholder.hidden=true;
   placeholder.setAttribute('role','img');placeholder.setAttribute('aria-label',classId+' character');
   placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
   async function preload(){
     const results=await Promise.allSettled(Object.entries(frames).map(async([name,frame])=>{
-      images.set(name,await load(alternativeArtUrl(frame[lite?'lite':'path'])).ready);
+      images.set(name,await load(alternativeArtUrl(frame.path)).ready);
     }));
     if(disposed)return false;
     const failed=results.some(result=>result.status==='rejected');
@@ -80,7 +79,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     let x=0;
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
-      pose=playing.sequence.poses[sampled.index]; x=sampled.x;
+      pose=playing.sequence.poses[sampled.index];
+      x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
     }
     el.dataset.pose=pose;
     if (pose==='defeated' && down) { currentArt={canvas,image:down,left:128,top:16,width:512,height:512};ctx.drawImage(down,128,16,512,512); return; }
