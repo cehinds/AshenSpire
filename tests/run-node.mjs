@@ -1161,13 +1161,15 @@ if (CORE) {
 // Seeds are runsim's fixed formula, so the run is the same every time; it takes
 // a few seconds. The selftest plants a throw inside a fight, a stalled fight and
 // a boss-less map cycle, and requires a clean fleet to repeat seed for seed.
-{
+if (CORE || (SELFTESTS && selftestInGroup(options.selftestGroup, 'runsim'))) {
   const { execFileSync } = await import('node:child_process');
+  const { RUNSIM_FLEET_TIMEOUT_MS, RUNSIM_SELFTEST_TIMEOUT_MS } = await import('../tools/runsim-selftest-policy.mjs');
   const runSim = (args) => {
     try {
-      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 }), code: 0 };
+      const timeout = args.includes('--selftest') ? RUNSIM_SELFTEST_TIMEOUT_MS : RUNSIM_FLEET_TIMEOUT_MS;
+      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout }), code: 0 };
     } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+      return { out: `${e.stdout || ''}${e.stderr || ''}\nsubprocess: exit ${e.status ?? 'none'}, signal ${e.signal || 'none'}, error ${e.code || 'none'}\n`, code: e.status ?? 1 };
     }
   };
   const lanes = [];
@@ -1177,7 +1179,9 @@ if (CORE) {
     const r = runSim(lane.args);
     const result = (r.out.match(/^RESULT: (.*)$/m) || [])[1];
     const ok = r.code === 0 && result && !/^FAILED/.test(result);
-    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${result || `runsim ${lane.args.join(' ')} (exit ${r.code}): no RESULT line\n${r.out.slice(-800)}`}`);
+    const detail = result && r.code === 0 ? result
+      : `runsim ${lane.args.join(' ')} (exit ${r.code}): ${result || 'no RESULT line'}\n${r.out.slice(-800)}`;
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${detail}`);
     if (ok) zoomPassed++;
     else zoomExtra++;
   }

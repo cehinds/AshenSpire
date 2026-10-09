@@ -4860,6 +4860,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   transform: rotate(var(--hand-card-angle)) !important;
   z-index: auto !important;
 }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected,.gp-focus) {
+  /* Keep horizontal reveal independent of the existing animated fan lift. */
+  translate: var(--hand-upcast-shift, 0px) 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card.gp-focus {
+  z-index: 51 !important;
+}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) {
   transform: translateY(calc(-1 * var(--hand-selection-lift))) !important;
   z-index: 50 !important;
@@ -6081,7 +6088,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .combat-expansion-controls { width:min(220px,46%); } .combat-recovery-controls button { min-height:44px; } }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,select) { pointer-events:auto; }
-@media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:44px; } }
+@media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:max(44px, var(--tap-floor)); } }
 
 /* Recovery and pending feat actions have no permanent protection box. */
 .field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; z-index:2600; }

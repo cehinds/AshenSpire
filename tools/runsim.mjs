@@ -55,6 +55,7 @@ import { resolveStartingKit } from '../src/model/startingKits.js';
 import { xpToNext as xpToNextLevel } from '../src/model/levelup.js';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { RUNSIM_PLANTS as PLANTS, RUNSIM_PLANT_TIMEOUT_MS, RUNSIM_FLEET_TIMEOUT_MS, completedFleet, repeatedCompleteFleets } from './runsim-selftest-policy.mjs';
 
 const argv = process.argv.slice(2);
 // THE XP-CURVE A/B (plan phase 6). Constantine's acceptance test for
@@ -215,7 +216,6 @@ const STALEMATE_TURNS = 150; // a fight still open this long is conceded (botFig
 // a run that stops making progress — a fight whose actions never resolve it, or
 // a map walk that never reaches its boss. Both exit 1. Neither number below is
 // game balance: they are the simulator's own patience, and both are flags.
-const PLANTS = ['fight-throw', 'combat-stall', 'map-cycle'];
 const PLANT = (argv.find((a) => a.startsWith('--plant=')) || '').slice('--plant='.length) || null;
 if (PLANT && !PLANTS.includes(PLANT)) throw new Error(`--plant=${PLANT} is not a plant (${PLANTS.join(', ')})`);
 const STEP_BUDGET_ARG = (argv.find((a) => a.startsWith('--step-budget=')) || '').slice('--step-budget='.length);
@@ -738,22 +738,24 @@ if (argv.includes('--selftest')) {
 // have hung CI instead of failing it.
 function selftest() {
   const self = fileURLToPath(import.meta.url);
-  const runSelf = (args) => spawnSync(process.execPath, [self, ...args], { encoding: 'utf8', timeout: 60000 });
+  const runSelf = (args, timeout) => spawnSync(process.execPath, [self, ...args], { encoding: 'utf8', timeout });
   const expect = { 'fight-throw': 'CRASH', 'combat-stall': 'SOFT-LOCK', 'map-cycle': 'SOFT-LOCK' };
   const bad = [];
   for (const plant of PLANTS) {
-    const r = runSelf([`--plant=${plant}`, '1']);
+    const r = runSelf([`--plant=${plant}`, '1'], RUNSIM_PLANT_TIMEOUT_MS);
     const kind = expect[plant];
     const said = new RegExp(`^${kind} `, 'm').test(r.stderr || '');
     if (r.error || r.status !== 1 || !said) {
       bad.push(`${plant}: wanted exit 1 and a ${kind} line, got ${r.error ? r.error.code || r.error.message : `exit ${r.status}`}${said ? '' : `, no ${kind} line`}`);
     } else console.log(`  caught  ${plant} → ${kind}`);
   }
-  const a = runSelf(['2']);
-  const b = runSelf(['2']);
-  if (a.status !== 0) bad.push(`clean control: wanted exit 0, got exit ${a.status}\n${a.stderr}`);
+  // Clean fleets get the ordinary fleet budget; plant deadlines remain strict.
+  const a = runSelf(['2'], RUNSIM_FLEET_TIMEOUT_MS);
+  const b = runSelf(['2'], RUNSIM_FLEET_TIMEOUT_MS);
+  const diagnostic = (r) => `exit ${r.status}, signal ${r.signal || 'none'}, error ${r.error?.code || 'none'}`;
+  if (!completedFleet(a)) bad.push(`clean control: wanted exit 0 and a complete RESULT, got ${diagnostic(a)}\n${a.stderr || ''}`);
   else console.log('  green   clean control (2 seeds a class) exits 0');
-  if (a.stdout !== b.stdout) bad.push('determinism: two fleets on the same seeds printed different reports');
+  if (!repeatedCompleteFleets(a, b)) bad.push(`determinism: both fleets must finish successfully with complete identical reports; first ${diagnostic(a)}; second ${diagnostic(b)}`);
   else console.log('  same    two fleets on the same seeds print the same report');
   if (bad.length) {
     for (const line of bad) console.error(`SELFTEST FAIL ${line}`);

@@ -1,0 +1,849 @@
+{
+  "identity": {
+    "ordinal": "1134",
+    "source": "a573db6da0"
+  },
+  "health": {
+    "failures": [],
+    "errors": [],
+    "warnings": []
+  },
+  "solo": [
+    {
+      "shape": "desktop-normal",
+      "identity": {
+        "ordinal": "1134",
+        "source": "a573db6da0"
+      },
+      "badge": {
+        "sp": "3",
+        "mana": "3"
+      },
+      "instance": {
+        "breakMeterVersion": 2,
+        "instanceId": "weaponArt:roundShield:shieldBash",
+        "cardId": "shieldBash",
+        "upgraded": false,
+        "abilityRank": 1,
+        "damageSchool": "physical",
+        "exposureBuildupPerHit": 0,
+        "equipmentRole": "weaponArt",
+        "grantedBy": "roundShield",
+        "grantSource": "from:weapon"
+      },
+      "beforeSP": 6,
+      "afterSP": 3,
+      "beforeMana": 8,
+      "afterMana": 5,
+      "upcastTier": 2,
+      "counterCharges": 1,
+      "guard": [
+        {
+          "rest": "shieldGuard",
+          "pose": "shieldGuard3"
+        }
+      ]
+    },
+    {
+      "shape": "phone-normal",
+      "identity": {
+        "ordinal": "1134",
+        "source": "a573db6da0"
+      },
+      "badge": {
+        "sp": "3",
+        "mana": "3"
+      },
+      "instance": {
+        "breakMeterVersion": 2,
+        "instanceId": "weaponArt:roundShield:shieldBash",
+        "cardId": "shieldBash",
+        "upgraded": false,
+        "abilityRank": 1,
+        "damageSchool": "physical",
+        "exposureBuildupPerHit": 0,
+        "equipmentRole": "weaponArt",
+        "grantedBy": "roundShield",
+        "grantSource": "from:weapon"
+      },
+      "beforeSP": 6,
+      "afterSP": 3,
+      "beforeMana": 8,
+      "afterMana": 5,
+      "upcastTier": 2,
+      "counterCharges": 1,
+      "guard": [
+        {
+          "rest": "shieldGuard",
+          "pose": "shieldGuard3"
+        }
+      ]
+    },
+    {
+      "shape": "phone-compact",
+      "identity": {
+        "ordinal": "1134",
+        "source": "a573db6da0"
+      },
+      "badge": {
+        "sp": "3",
+        "mana": "3"
+      },
+      "instance": {
+        "breakMeterVersion": 2,
+        "instanceId": "weaponArt:roundShield:shieldBash",
+        "cardId": "shieldBash",
+        "upgraded": false,
+        "abilityRank": 1,
+        "damageSchool": "physical",
+        "exposureBuildupPerHit": 0,
+        "equipmentRole": "weaponArt",
+        "grantedBy": "roundShield",
+        "grantSource": "from:weapon"
+      },
+      "beforeSP": 6,
+      "afterSP": 3,
+      "beforeMana": 8,
+      "afterMana": 5,
+      "upcastTier": 2,
+      "counterCharges": 1,
+      "guard": [
+        {
+          "rest": "shieldGuard",
+          "pose": "shieldGuard3"
+        }
+      ]
+    },
+    {
+      "shape": "phone-reduced",
+      "identity": {
+        "ordinal": "1134",
+        "source": "a573db6da0"
+      },
+      "badge": {
+        "sp": "3",
+        "mana": "3"
+      },
+      "instance": {
+        "breakMeterVersion": 2,
+        "instanceId": "weaponArt:roundShield:shieldBash",
+        "cardId": "shieldBash",
+        "upgraded": false,
+        "abilityRank": 1,
+        "damageSchool": "physical",
+        "exposureBuildupPerHit": 0,
+        "equipmentRole": "weaponArt",
+        "grantedBy": "roundShield",
+        "grantSource": "from:weapon"
+      },
+      "beforeSP": 6,
+      "afterSP": 3,
+      "beforeMana": 8,
+      "afterMana": 5,
+      "upcastTier": 2,
+      "counterCharges": 1,
+      "guard": [
+        {
+          "rest": "shieldGuard",
+          "pose": "shieldGuard3"
+        }
+      ]
+    }
+  ],
+  "spells": [
+    {
+      "shape": "desktop-normal",
+      "cardId": "barrageCounter",
+      "upcastTier": 0,
+      "SPPaid": 2,
+      "ManaPaid": 1,
+      "barrier": 6,
+      "counterCharges": 1,
+      "enemyHP": [
+        18,
+        22
+      ]
+    },
+    {
+      "shape": "phone-normal",
+      "cardId": "barrageCounter",
+      "upcastTier": 0,
+      "SPPaid": 2,
+      "ManaPaid": 1,
+      "barrier": 6,
+      "counterCharges": 1,
+      "enemyHP": [
+        18,
+        22
+      ]
+    },
+    {
+      "shape": "phone-compact",
+      "cardId": "barrageCounter",
+      "upcastTier": 0,
+      "SPPaid": 2,
+      "ManaPaid": 1,
+      "barrier": 6,
+      "counterCharges": 1,
+      "enemyHP": [
+        18,
+        22
+      ]
+    },
+    {
+      "shape": "phone-reduced",
+      "cardId": "barrageCounter",
+      "upcastTier": 0,
+      "SPPaid": 2,
+      "ManaPaid": 1,
+      "barrier": 6,
+      "counterCharges": 1,
+      "enemyHP": [
+        18,
+        22
+      ]
+    }
+  ],
+  "cooperative": [
+    {
+      "shape": "desktop-normal",
+      "convertedSeat": "p1",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": false,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 17,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    },
+    {
+      "shape": "desktop-normal",
+      "convertedSeat": "p2",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": true,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10.25
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 18,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    },
+    {
+      "shape": "phone-normal",
+      "convertedSeat": "p1",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": false,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 17,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    },
+    {
+      "shape": "phone-normal",
+      "convertedSeat": "p2",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": true,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10.25
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 18,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    },
+    {
+      "shape": "phone-compact",
+      "convertedSeat": "p1",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": false,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 17,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    },
+    {
+      "shape": "phone-compact",
+      "convertedSeat": "p2",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": true,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10.25
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 18,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    },
+    {
+      "shape": "phone-reduced",
+      "convertedSeat": "p1",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": false,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 17,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    },
+    {
+      "shape": "phone-reduced",
+      "convertedSeat": "p2",
+      "expected": {
+        "ownerId": "p2",
+        "tier": 2,
+        "converted": true,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10.25
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ],
+        "counterPayload": {
+          "hp": 0,
+          "poise": 7,
+          "ward": 0,
+          "hpRating": false,
+          "smashPoiseBonus": 2
+        },
+        "technique": "shieldGuard"
+      },
+      "state": {
+        "players": [
+          {
+            "id": "p1",
+            "attributes": {
+              "strength": 10,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": null,
+            "energy": 20,
+            "mana": 20
+          },
+          {
+            "id": "p2",
+            "attributes": {
+              "strength": 3,
+              "dexterity": 1,
+              "constitution": 2,
+              "wisdom": 1,
+              "intelligence": 1
+            },
+            "converted": "survived",
+            "energy": 18,
+            "mana": 17
+          }
+        ],
+        "poses": [
+          {
+            "id": "p1",
+            "stages": [
+              {
+                "rest": "idle",
+                "pose": "STANCE-READY"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "stages": [
+              {
+                "rest": "shieldGuard",
+                "pose": "shieldGuard3"
+              }
+            ]
+          }
+        ]
+      },
+      "boundary": "production source-engine generated canned transport; compiled client handles real receipt, no LAN/second-browser claim"
+    }
+  ]
+}
