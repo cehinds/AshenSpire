@@ -12,11 +12,11 @@ http.createServer((req,res)=>(async()=>{
   const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
   if(name.includes('\\')||name.includes('\0')||name.split('/').some(part=>part.startsWith('.'))){res.writeHead(403);res.end();return;}
   const rel=name==='/'?'pose-studio/stances/index.html':name.slice(1);
-  if(!/^(pose-studio|src|assets-mobile|assets|assets-alternative)\//.test(rel)){res.writeHead(404);res.end();return;}
+  if(!/^(pose-studio|src|assets-mobile|assets|assets-display)\//.test(rel)){res.writeHead(404);res.end();return;}
   let target=path.resolve(root,rel);
   if(!target.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}
   try{await stat(target);}catch{
-    if(/^(assets-mobile|assets|assets-alternative)\//.test(rel)){
+    if(/^(assets-mobile|assets|assets-display)\//.test(rel)){
       target=path.resolve(assets,rel);
       try{await stat(target);}catch{if(rel.startsWith('assets/'))target=path.resolve(assets,'assets-mobile/'+rel.slice(7));}
     }

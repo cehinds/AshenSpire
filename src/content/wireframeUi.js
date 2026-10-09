@@ -39,7 +39,8 @@ export const wireframeUi = freeze({
     // holds the same duration) while the camera glides cameraMs to recentre the
     // node; then the context and Back / Enter fade in. Closing fades them out
     // for fadeMs, then the tray drops and the camera recentres on the map.
-    // Reduced motion takes every one of these to zero. The numbers live in
+    // Touch/coarse pointers show the tray and frame its node immediately.
+    // Reduced motion also takes every timing to zero. The numbers live in
     // content/config/ui/scenes/w4b-map.json, like every other scene number.
     tray: {
       openDelayMs: w4b.behavior.tray.openDelayMs,

@@ -251,7 +251,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
-| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Faces fan by overlap, grow up to 184 physical pixels wide when space permits, and remain visible, inert and dim during enemy turns. The 5:7 face is the card's one authored shape (`content/config/ui/components/card.json` `sizing.ratio`, projected as `--card-ratio` by `CardSizeModel`): this row said 5:7 while the hand actually drew 5:8, and `node tools/card-one-shape.mjs` now holds every surface to the one number. |
+| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Faces fan by overlap, grow up to 184 physical pixels wide when space permits, and remain visible, inert and dim during enemy turns. The resting rotated hand edge anchors the solo figure; card selection and pile changes leave that anchor steady, while a matching completed hand layout updates it after resize or text-scale changes. The 5:7 face is the card's one authored shape (`content/config/ui/components/card.json` `sizing.ratio`, projected as `--card-ratio` by `CardSizeModel`): this row said 5:7 while the hand actually drew 5:8, and `node tools/card-one-shape.mjs` now holds every surface to the one number. |
 | `combat-action-rail` | `componentModel` | `components/combatActionRow.js` (mounted by `combat.js` and `coop.js`) | Combat, Co-op combat | Single centered row: emerald stamina orb (`StaminaOrbModel` / `staminaOrb.js`) with independent number and SP label layers and an optional sapphire mana ring; flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. Co-op mounts the same row; its piles show counts (the host sends no cards) and its Potions list belongs to the seat that opened it. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
@@ -793,3 +793,12 @@ continues to own actor slots, floor alignment, HUD and intent clearance. The
 companion indicator uses the same catalog. No review-page HUD or action anchors
 are imported. The Combat Studio source package and its portable drafts remain
 separate from generated runtime exports.
+
+Both presentations now share those component IDs. `displayAppearance` selects
+the default alternative formation, layered scenery and class animations, or
+the previous classic art and fitting. **Classic appearance** is a saved boolean
+setting under Advanced diagnostics, visible only with the debug flag on.
+Changing it refreshes the mounted battlefield without changing combat rules or
+run state. UI, card controls and companion icons remain shared. The
+[display art libraries](../assets-display/README.md) separate classic,
+alternative and shared ownership while retaining canonical packed IDs.

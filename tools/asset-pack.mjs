@@ -134,28 +134,34 @@ export function withAlternativeArt(manifest, root = ROOT) {
   const match = readFileSync(catalogFile, 'utf8').match(/^export const alternativeArtCatalog = (.+);\r?$/m);
   if (!match) throw new Error('Alternative art catalog must be generated before packing');
   const catalog = JSON.parse(match[1]);
+  catalog.filePaths ||= {};
   const actionsFile = resolve(root, 'src/content/alternativeCardAnimations.js');
   if (existsSync(actionsFile)) {
     const actions = readFileSync(actionsFile, 'utf8').match(/^export const alternativeCardAnimations = (.+);\r?$/m);
     if (!actions) throw new Error('Alternative card actions must be generated before packing');
-    for (const [file, hash] of Object.entries(JSON.parse(actions[1]).hashes)) {
+    const actionCatalog = JSON.parse(actions[1]);
+    for (const [file, hash] of Object.entries(actionCatalog.hashes)) {
       if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
       catalog.hashes[file] = hash;
+      if (actionCatalog.filePaths?.[file]) catalog.filePaths[file] = actionCatalog.filePaths[file];
     }
   }
   const stancesFile = resolve(root, 'src/content/alternativeSelectedStances.js');
   if (existsSync(stancesFile)) {
     const stances = readFileSync(stancesFile, 'utf8').match(/^export const alternativeSelectedStances = (.+);\r?$/m);
     if (!stances) throw new Error('Selected stances must be exported before packing');
-    for (const [file, hash] of Object.entries(JSON.parse(stances[1]).hashes)) {
+    const stancesCatalog = JSON.parse(stances[1]);
+    for (const [file, hash] of Object.entries(stancesCatalog.hashes)) {
       if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
       catalog.hashes[file] = hash;
+      if (stancesCatalog.filePaths?.[file]) catalog.filePaths[file] = stancesCatalog.filePaths[file];
     }
   }
   const assets = { ...manifest.assets };
   for (const [file, expected] of Object.entries(catalog.hashes)) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
-    const id = `assets-alternative/${file}`;
+    const id = catalog.filePaths[file] || `assets-display/alternative/${file}`;
+    if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(id) || !id.endsWith('/' + file)) throw new Error(`Invalid display art path: ${id}`);
     const bytes = readFileSync(resolve(root, id));
     if (sha256(bytes) !== expected) throw new Error(`Alternative art changed: ${file}; regenerate its catalog`);
     if (assets[id]) throw new Error(`Alternative art ID collides with a pinned pack: ${id}`);
@@ -195,7 +201,7 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
       const mime = mimeOf(id);
       if (!mime) { problems.push(`${id}: no mime for ${extname(id) || 'a file without an extension'} — the pack cannot carry it`); continue; }
       let source;
-      if (id.startsWith('assets-alternative/')) {
+      if (id.startsWith('assets-display/')) {
         source = resolve(root, rec.path);
       } else if (cacheDir) {
         source = resolve(cacheDir, rec.path);

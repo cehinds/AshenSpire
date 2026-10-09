@@ -1,0 +1,7 @@
+# Complete source card corpus before appearance inheritance
+
+- Tested source: `be6326f7a5291d6fc3240d893effc95b82eb7d39`, clean before and after; digest `68a938d822`. This is prior-candidate source evidence, not compiled acceptance of the later #1757 appearance merge.
+- Original `tools/card-sigils-qa.mjs`: exit 0, 2,186 complete faces on desktop and phone, widths 120/124/144/200 and restoration, ten exact action labels, eight schools, eight native Information and eight Enter doors on each device. No clipping, title/action-band overlap, unresolved numbers, or missing typed damage words. Smallest measured rules font at 120 px: 9.14583 px.
+- Inspection preserved focus and the engine memento. Owned browser profiles were removed. The source tool retained optional SFX 404s for holdTick, nodeTravel, cardDraw and turnStinger under its original policy; this does not establish compiled audio or full raw browser-log acceptance.
+- Both full geometry records, the concise report, independent review, provenance, and representative inspected screenshots are retained here. They can be reproduced from the named Git source and published art pins; no built HTML or local cache is committed.
+- Subsequent #1757 receipt reconciliation preserves exact canonical foreign receipt content and relative order from both actual parents. Incoming CRLF/EOF whitespace diagnostics are inherited data, not newly authored polish; owned conflict and polish paths pass the scoped whitespace check.

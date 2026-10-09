@@ -1581,7 +1581,10 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-compact-continue:disabled { opacity: .58; cursor: default; }
 .reward-door .reward-compact-continue.is-ready { background: #2b7047; border-color: #71c990; color: #fff; }
 .reward-door .reward-compact-continue.is-ready:is(:hover, :focus-visible) { background: #368a59; border-color: #a0e6b6; }
-.reward-door .reward-menu { max-width: none; width: 100%; }
+.reward-door .reward-menu { max-width: none; min-width: 0; width: 100%; }
+/* A reward's intrinsic title width must not expand into the XP column. */
+.reward-door .reward-menu > .reward-kind { box-sizing: border-box; width: 100%; }
+.reward-door .reward-menu > .reward-kind h3 { white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
 /* W1t: reward choices beside their claim status; stacked on narrow hosts. */
 .reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
 :root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: 2vh; }

@@ -551,12 +551,14 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
   const aliases = [];
   const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
   const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+  catalog.filePaths ||= {};
   const cardSource = sources.get('src/content/alternativeCardAnimations.js');
   if (cardSource) {
     const cards = JSON.parse(cardSource.match(/^export const alternativeCardAnimations = (.+);$/m)[1]);
     for (const [file, hash] of Object.entries(cards.hashes)) {
       if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
       catalog.hashes[file] = hash;
+      if (cards.filePaths?.[file]) catalog.filePaths[file] = cards.filePaths[file];
     }
   }
   const stanceSource = sources.get('src/content/alternativeSelectedStances.js');
@@ -565,15 +567,17 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
     for (const [file, hash] of Object.entries(stances.hashes)) {
       if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
       catalog.hashes[file] = hash;
+      if (stances.filePaths?.[file]) catalog.filePaths[file] = stances.filePaths[file];
     }
   }
   for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
-    const bytes = readFileSync(resolve(ROOT, 'assets-alternative', file));
+    const path = catalog.filePaths[file] || `assets-display/alternative/${file}`;
+    if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(path) || !path.endsWith('/' + file)) fail(`Invalid display art path: ${path}`);
+    const bytes = readFileSync(resolve(ROOT, path));
     if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
       fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
     }
-    const path = `assets-alternative/${file}`;
     if (firstPathOf.has(expectedHash)) aliases.push([path, firstPathOf.get(expectedHash)]);
     else {
       firstPathOf.set(expectedHash, path);

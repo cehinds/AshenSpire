@@ -3,6 +3,14 @@ import assert from 'node:assert/strict';
 import { rewardDom } from './helpers/reward-dom.mjs';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { setAnimSpeed } from '../src/ui/fx.js';
+import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
+
+test('Classic appearance leaves its upstream stage in charge without allocating an alternative canvas', () => {
+  try {
+    applyDisplayAppearance({ classicAppearance: true });
+    assert.equal(createAlternativeCardStage('reaver'), null);
+  } finally { applyDisplayAppearance({}); }
+});
 
 test('class stage owns travel, hit flashing, interruption, pause and disposal', async () => {
   const dom=rewardDom(), raf=new Map(), paints=[], contexts=[], readbacks=[];

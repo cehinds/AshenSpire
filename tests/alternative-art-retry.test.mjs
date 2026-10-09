@@ -77,14 +77,14 @@ test('actual enemy and player figures become marked placeholders and Retry resto
 });
 
 test('a mounted bare variant URL moves to its verified common object after Retry, unknown URLs stay unchanged',()=>{
-  const id='assets-alternative/graveWisp.webp';
+  const id='assets-display/alternative/graveWisp.webp';
   const image=new Image();image.src=id;root.append(image);
-  const unknown=new Image();unknown.src='assets-alternative/unlisted.webp';root.append(unknown);
+  const unknown=new Image();unknown.src='assets-display/alternative/unlisted.webp';root.append(unknown);
   const map=new Map([[id,objectFor(id)]]);setBuiltInSource(map);
   assert.equal(builtInArtArrived(map),1);
   assert.equal(image.src,objectFor(id));
   assert.equal(currentArtUrl(id),objectFor(id));
-  assert.equal(unknown.src,'assets-alternative/unlisted.webp');
+  assert.equal(unknown.src,'assets-display/alternative/unlisted.webp');
   assert.equal(currentArtUrl(unknown.src),unknown.src);
 });
 
@@ -156,7 +156,7 @@ test('tier arrival refreshes mounted phone and desktop sources while preserving 
   alternatives.srcset=`  ${art.mobilePath} 1x ,\t${art.path} 2x  `;
   root.append(alternatives);
   const unknown=new Element('source');
-  const untouched='https://example.test/unlisted.webp 1x, data:image/webp;base64,AAAA 2x, assets-alternative/unlisted.webp 3x';
+  const untouched='https://example.test/unlisted.webp 1x, data:image/webp;base64,AAAA 2x, assets-display/alternative/unlisted.webp 3x';
   unknown.srcset=untouched;root.append(unknown);
   const map=new Map([[art.path,objectFor(art.path)],[art.mobilePath,objectFor(art.mobilePath)]]);
   setBuiltInSource(map);

@@ -227,6 +227,8 @@
 .map-tray[data-open="true"] > .map-tray-reveal { border-top-width: 1px; }
 .map-tray-reveal > * { opacity: 0; transition: opacity 180ms ease; }
 .map-tray[data-shown="true"] > .map-tray-reveal > * { opacity: 1; }
+.map-tray[data-instant="true"] > .map-tray-reveal,
+.map-tray[data-instant="true"] > .map-tray-reveal > * { transition: none; }
 .map-tray-reveal > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(20dvh / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem 2.5vw 0; }
 .map-tray-reveal > .map-context > * { margin: 0; }
 .mapscreen .map-context-title { font: 600 1.5rem/1.2 var(--font-display); color: var(--parchment); }

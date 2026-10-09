@@ -8,6 +8,7 @@ import { reducedMotionRequested } from './motion.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { assetUrl } from './assetmap.js';
 import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
+import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 
 const aliases = { idle: 'ready', guard: 'defend', guardHit: 'defend', cast: 'spell', power: 'spell', buff: 'spell' };
@@ -27,6 +28,7 @@ function load(url) {
 
 /** Branch-owned base armour animation. Equipment never changes its choreography. */
 export function createAlternativeCardStage(classId, { still = false } = {}) {
+  if (classicAppearance()) return null;
   const family = alternativeCardAnimations.classes[classId];
   if (!family) return null;
   const heldFrames = alternativeSelectedStances.classes[classId]?.frames || {};

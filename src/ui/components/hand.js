@@ -96,11 +96,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       if (!cards.length || !handEl.isConnected) return;
       const rect = handEl.getBoundingClientRect();
       const zoom = rect.width / handEl.clientWidth || 1;
-      const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+      const fontSize = getComputedStyle(document.documentElement).fontSize;
+      const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight, count: cards.length, rem, zoom });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
+      handEl.style.setProperty('--hand-rest-left', plan.restLeft + 'px');
+      handEl.dataset.handGeometry = [handEl.clientWidth, handEl.clientHeight, zoom, fontSize, rect.left].join(':');
       handEl.style.setProperty('--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {
         const slot = plan.cards[i];
@@ -122,6 +125,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         el.style.marginLeft = '0px';
         el.style.transform = 'rotate(' + slot.angle + 'deg)';
       });
+      handEl.dispatchEvent(new Event('handlayoutchange', { bubbles: true }));
       return;
     }
     if (handLayoutWord() !== 'overlap') return;

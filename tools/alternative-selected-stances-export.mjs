@@ -32,13 +32,14 @@ try{
  const catalog={schemaVersion:1,selections:review+'selections.json',classes:{},hashes:{}};
  for(const e of exports){
   const actor=e.choice.actor,stance={attack:'offensive',defend:'defensive',casting:'casting'}[e.choice.stance];
-  const dir='assets-alternative/stances/'+actor;mkdirSync(root+dir,{recursive:true});
+  const dir='assets-display/alternative/stances/'+actor;mkdirSync(root+dir,{recursive:true});
   const path=dir+'/'+stance+'.webp',lite=dir+'/'+stance+'-mobile.webp',full=Buffer.from(e.full,'base64'),small=Buffer.from(e.lite,'base64');
   writeFileSync(root+path,full);writeFileSync(root+lite,small);
-  catalog.hashes[path.replace('assets-alternative/','')]=sha(full);catalog.hashes[lite.replace('assets-alternative/','')]=sha(small);
+  catalog.hashes[path.replace('assets-display/alternative/','')]=sha(full);catalog.hashes[lite.replace('assets-display/alternative/','')]=sha(small);
   const item=catalog.classes[actor]??={frames:{}};
   item.frames[stance]={path,lite,size:[512,512],bounds:e.bounds,anchor:[256,464],sha256:sha(full),liteSha256:sha(small),sourceOption:e.choice.sourceOption,source:e.choice.source,sourceBounds:e.sourceBounds,scale:e.scale};
  }
+ catalog.filePaths=Object.fromEntries(Object.keys(catalog.hashes).map(file=>[file,'assets-display/alternative/'+file]));
  writeFileSync(root+'src/content/alternativeSelectedStances.js','// Owner-selected held poses, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n');
  mkdirSync(root+'pose-studio/stances/selected-projects',{recursive:true});
  for(const [actor,{frames}]of Object.entries(catalog.classes)){
