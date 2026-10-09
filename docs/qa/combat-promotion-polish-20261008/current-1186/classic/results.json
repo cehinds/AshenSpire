@@ -1,0 +1,1207 @@
+{
+  "results": [
+    {
+      "localBuildMetadataForComparison": {
+        "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+        "release": "0.7.1",
+        "ordinal": 1186,
+        "digest": "27612de170",
+        "built": "2026-10-09"
+      },
+      "compiledIdentity": {
+        "path": "D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire/build/download/AshenSpire.html",
+        "ordinal": "1186",
+        "source": "27612de170"
+      }
+    },
+    {
+      "shape": "desktop-normal",
+      "nativePager": []
+    },
+    {
+      "shape": "desktop-normal",
+      "pickerGeometry": [
+        {
+          "className": "card-upcast-controls",
+          "rect": {
+            "x": 956.875,
+            "y": 820.5221557617188,
+            "width": 207.046875,
+            "height": 52.8125,
+            "top": 820.5221557617188,
+            "right": 1163.921875,
+            "bottom": 873.3346557617188,
+            "left": 956.875
+          },
+          "viewport": 1365,
+          "pageWidth": 1365,
+          "scrollX": 0,
+          "focused": false,
+          "hand": {
+            "rect": {
+              "x": 53.109375,
+              "y": 577.390625,
+              "width": 1110.8125,
+              "height": 299.921875,
+              "top": 577.390625,
+              "right": 1163.921875,
+              "bottom": 877.3125,
+              "left": 53.109375
+            },
+            "clientWidth": 974,
+            "scrollWidth": 1016,
+            "scrollLeft": 41.22806930541992,
+            "overflowX": "auto",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        },
+        {
+          "className": "card-upcast-rank",
+          "rect": {
+            "x": 1042.515625,
+            "y": 824.9284057617188,
+            "width": 117,
+            "height": 44,
+            "top": 824.9284057617188,
+            "right": 1159.515625,
+            "bottom": 868.9284057617188,
+            "left": 1042.515625
+          },
+          "viewport": 1365,
+          "pageWidth": 1365,
+          "scrollX": 0,
+          "focused": true,
+          "hand": {
+            "rect": {
+              "x": 53.109375,
+              "y": 577.390625,
+              "width": 1110.8125,
+              "height": 299.921875,
+              "top": 577.390625,
+              "right": 1163.921875,
+              "bottom": 877.3125,
+              "left": 53.109375
+            },
+            "clientWidth": 974,
+            "scrollWidth": 1016,
+            "scrollLeft": 41.22806930541992,
+            "overflowX": "auto",
+            "position": "relative",
+            "wireframe": "true"
+          }
+        }
+      ]
+    },
+    {
+      "diagnosticShield": {
+        "shape": "desktop-normal",
+        "before": {
+          "enemyHp": [
+            18,
+            22
+          ],
+          "sp": 6,
+          "mana": 8,
+          "hand": [
+            {
+              "cardId": "emberDart",
+              "instanceId": "expansion-shot-0",
+              "upgraded": false
+            },
+            {
+              "cardId": "barrageCounter",
+              "instanceId": "expansion-shot-1",
+              "upgraded": false
+            },
+            {
+              "cardId": "rimeNeedle",
+              "instanceId": "expansion-shot-2",
+              "upgraded": false
+            },
+            {
+              "cardId": "drowsingMote",
+              "instanceId": "expansion-shot-3",
+              "upgraded": false
+            },
+            {
+              "breakMeterVersion": 2,
+              "instanceId": "weaponArt:roundShield:shieldBash",
+              "cardId": "shieldBash",
+              "upgraded": false,
+              "abilityRank": 1,
+              "damageSchool": "physical",
+              "exposureBuildupPerHit": 0,
+              "equipmentRole": "weaponArt",
+              "grantedBy": "roundShield",
+              "grantSource": "from:weapon"
+            },
+            {
+              "cardId": "dodgeRoll",
+              "instanceId": "expansion-shot-5",
+              "upgraded": false
+            },
+            {
+              "cardId": "blightedTransmute",
+              "instanceId": "expansion-shot-6",
+              "upgraded": false
+            },
+            {
+              "cardId": "shatterOpportunity",
+              "instanceId": "expansion-shot-7",
+              "upgraded": false
+            }
+          ],
+          "rng": {
+            "map": 107,
+            "shuffle": 10,
+            "cardRewards": 0,
+            "relicRewards": 0,
+            "flaskRewards": 0,
+            "armaments": 0,
+            "enemyAI": 3,
+            "enemyHP": 2,
+            "events": 8,
+            "shop": 0,
+            "misc": 0,
+            "smith": 0,
+            "combatProcs": 0,
+            "seats": 2,
+            "rewardRolls": 0,
+            "shopOffers": 0,
+            "sigils": 0,
+            "enemyIntentVisibility": 2,
+            "combatAvoidance": 0,
+            "statusRecovery": 0,
+            "statusPressure": 0,
+            "ashenBlight": 0,
+            "enemyIntentClue": 2
+          }
+        },
+        "beforeCommit": {
+          "enemyHp": [
+            18,
+            22
+          ],
+          "sp": 6,
+          "mana": 8,
+          "hand": [
+            {
+              "cardId": "emberDart",
+              "instanceId": "expansion-shot-0",
+              "upgraded": false
+            },
+            {
+              "cardId": "barrageCounter",
+              "instanceId": "expansion-shot-1",
+              "upgraded": false
+            },
+            {
+              "cardId": "rimeNeedle",
+              "instanceId": "expansion-shot-2",
+              "upgraded": false
+            },
+            {
+              "cardId": "drowsingMote",
+              "instanceId": "expansion-shot-3",
+              "upgraded": false
+            },
+            {
+              "breakMeterVersion": 2,
+              "instanceId": "weaponArt:roundShield:shieldBash",
+              "cardId": "shieldBash",
+              "upgraded": false,
+              "abilityRank": 1,
+              "damageSchool": "physical",
+              "exposureBuildupPerHit": 0,
+              "equipmentRole": "weaponArt",
+              "grantedBy": "roundShield",
+              "grantSource": "from:weapon"
+            },
+            {
+              "cardId": "dodgeRoll",
+              "instanceId": "expansion-shot-5",
+              "upgraded": false
+            },
+            {
+              "cardId": "blightedTransmute",
+              "instanceId": "expansion-shot-6",
+              "upgraded": false
+            },
+            {
+              "cardId": "shatterOpportunity",
+              "instanceId": "expansion-shot-7",
+              "upgraded": false
+            }
+          ],
+          "rng": {
+            "map": 107,
+            "shuffle": 10,
+            "cardRewards": 0,
+            "relicRewards": 0,
+            "flaskRewards": 0,
+            "armaments": 0,
+            "enemyAI": 3,
+            "enemyHP": 2,
+            "events": 8,
+            "shop": 0,
+            "misc": 0,
+            "smith": 0,
+            "combatProcs": 0,
+            "seats": 2,
+            "rewardRolls": 0,
+            "shopOffers": 0,
+            "sigils": 0,
+            "enemyIntentVisibility": 2,
+            "combatAvoidance": 0,
+            "statusRecovery": 0,
+            "statusPressure": 0,
+            "ashenBlight": 0,
+            "enemyIntentClue": 2
+          }
+        },
+        "after": {
+          "receipt": {
+            "type": "cardPlayed",
+            "abilityBefore": {
+              "cardsPlayed": 0,
+              "tagPlays": {},
+              "distinctTagPlays": {},
+              "manaSpent": 0,
+              "discarded": 0,
+              "hpLostSinceTurnStart": 0,
+              "hpLostThisRound": 0,
+              "offeringsPaid": 0,
+              "previousSpell": 0,
+              "turnStartHpPct": 100,
+              "charges": {},
+              "once": {},
+              "sameCardPlays": {},
+              "attacksPlayed": 0,
+              "cardPlaysCombat": 0
+            },
+            "abilityEntities": {
+              "player": {
+                "id": "player",
+                "kind": "player",
+                "classId": "reaver",
+                "hp": 63,
+                "maxHp": 63,
+                "mana": 8,
+                "maxMana": 8,
+                "stamina": 6,
+                "maxStamina": 6,
+                "block": 0,
+                "energy": 6,
+                "energyMax": 6,
+                "drawPerTurn": 4,
+                "statuses": {},
+                "stanceId": null,
+                "relicIds": [
+                  "forsakenMedallion",
+                  "ashenGrip"
+                ],
+                "itemUpgradeLevels": {},
+                "damageBySchoolAdd": {
+                  "physical": 0,
+                  "magic": 0,
+                  "arcane": 0,
+                  "holy": 0,
+                  "fire": 0
+                },
+                "flasks": [
+                  {
+                    "flaskId": "crimsonFlask"
+                  },
+                  {
+                    "flaskId": "blightCoating"
+                  }
+                ],
+                "flaskCharges": {
+                  "capacity": 3,
+                  "base": 3,
+                  "hp": 2,
+                  "mana": 1,
+                  "hpCurrent": 2,
+                  "manaCurrent": 1,
+                  "grown": {
+                    "hp": 0,
+                    "mana": 0
+                  },
+                  "granted": 0
+                },
+                "counters": {
+                  "cardsPlayedThisTurn": 0,
+                  "cardsPlayedThisCombat": 0,
+                  "attacksPlayedThisCombat": 0,
+                  "staminaSpentThisTurn": 0
+                },
+                "alive": true,
+                "poiseMeter": {
+                  "value": 0,
+                  "max": 11,
+                  "growths": 0
+                },
+                "armorClass": "medium",
+                "damageResistanceFlat": {
+                  "piercing": 1,
+                  "slashing": 1
+                },
+                "damageWeaknessPercent": {},
+                "combatTraits": {
+                  "conductive": true
+                },
+                "ashenBlight": {
+                  "schemaVersion": 1,
+                  "value": 0,
+                  "thresholdOutcome": null,
+                  "convertedAtCombat": null,
+                  "milestones": [],
+                  "payments": [],
+                  "entries": []
+                },
+                "attributes": {
+                  "strength": 3,
+                  "dexterity": 1,
+                  "constitution": 2,
+                  "wisdom": 1,
+                  "intelligence": 1
+                },
+                "combatExpansionVersion": 2,
+                "baseResourceMaxima": {
+                  "maxHp": 63,
+                  "maxMana": 1,
+                  "maxStamina": 3
+                },
+                "allocatedAttributes": {
+                  "strength": 3,
+                  "dexterity": 1,
+                  "constitution": 2,
+                  "wisdom": 1,
+                  "intelligence": 1
+                },
+                "ratings": {
+                  "ar": 5,
+                  "dr": 9,
+                  "pr": 1,
+                  "poise": 11,
+                  "ward": 2
+                },
+                "ratingSources": [
+                  {
+                    "name": "Attributes",
+                    "kind": "attribute",
+                    "ar": 3,
+                    "dr": 1,
+                    "pr": 1,
+                    "poise": 3,
+                    "ward": 2
+                  },
+                  {
+                    "name": "Straight Sword",
+                    "kind": "equipment",
+                    "sourceId": "straightSword",
+                    "ar": 2,
+                    "dr": 2,
+                    "pr": 0,
+                    "poise": 0,
+                    "ward": 0,
+                    "effectiveRatings": {
+                      "ar": 2,
+                      "dr": 2,
+                      "pr": 2,
+                      "poise": 0,
+                      "ward": 2
+                    }
+                  },
+                  {
+                    "name": "Round Shield",
+                    "kind": "equipment",
+                    "sourceId": "roundShield",
+                    "ar": 0,
+                    "dr": 5,
+                    "pr": 0,
+                    "poise": 0,
+                    "ward": 0,
+                    "effectiveRatings": {
+                      "ar": 0,
+                      "dr": 5,
+                      "pr": 0,
+                      "poise": 0,
+                      "ward": 5
+                    }
+                  },
+                  {
+                    "name": "Wayfarer Plate",
+                    "kind": "equipment",
+                    "sourceId": "default",
+                    "ar": 0,
+                    "dr": 1,
+                    "pr": 0,
+                    "poise": 8,
+                    "ward": 0,
+                    "effectiveRatings": {
+                      "ar": 0,
+                      "dr": 1,
+                      "pr": 0,
+                      "poise": 8,
+                      "ward": 1
+                    }
+                  },
+                  {
+                    "name": "Forsaken Medallion",
+                    "kind": "relic",
+                    "sourceId": "forsakenMedallion",
+                    "poise": 0,
+                    "ar": 0,
+                    "dr": 0,
+                    "pr": 0,
+                    "ward": 0
+                  },
+                  {
+                    "name": "Ashen Grip",
+                    "kind": "relic",
+                    "sourceId": "ashenGrip",
+                    "poise": 0,
+                    "ar": 0,
+                    "dr": 0,
+                    "pr": 0,
+                    "ward": 0
+                  }
+                ],
+                "wardMeter": {
+                  "value": 0,
+                  "max": 2,
+                  "growths": 0
+                },
+                "persistentWard": {
+                  "max": 2,
+                  "value": 2
+                },
+                "statusControl": {
+                  "version": 1,
+                  "gauges": {},
+                  "sleepHpRestored": 0,
+                  "sleepWardGranted": false,
+                  "sleepWardContribution": 0,
+                  "wardRestoreCarry": 0,
+                  "wardDamageCarry": 0,
+                  "wardAllowances": {},
+                  "resolveNextTurn": false,
+                  "resolveActive": false,
+                  "ownerCycle": 1,
+                  "lastRecoveryCycle": 1,
+                  "completedActions": {}
+                },
+                "barrier": 0,
+                "abilityRiders": {
+                  "cardsPlayed": 0,
+                  "tagPlays": {},
+                  "distinctTagPlays": {},
+                  "manaSpent": 0,
+                  "discarded": 0,
+                  "hpLostSinceTurnStart": 0,
+                  "hpLostThisRound": 0,
+                  "offeringsPaid": 0,
+                  "previousSpell": 0,
+                  "turnStartHpPct": 100,
+                  "charges": {},
+                  "once": {},
+                  "sameCardPlays": {},
+                  "attacksPlayed": 0,
+                  "cardPlaysCombat": 0
+                },
+                "combatOwnerCycle": 1,
+                "ashenBlightCombat": {
+                  "cycleKey": "1",
+                  "used": {
+                    "martial": false,
+                    "spell": false,
+                    "survivor": false
+                  },
+                  "wardCarry": 0
+                },
+                "pendingActionLoss": 0
+              },
+              "e1": {
+                "id": "e1",
+                "kind": "enemy",
+                "enemyId": "ashRevenant",
+                "level": 14,
+                "hp": 18,
+                "maxHp": 18,
+                "block": 0,
+                "statuses": {},
+                "poiseMeter": {
+                  "value": 0,
+                  "max": 10,
+                  "growths": 0
+                },
+                "movesHistory": [
+                  "reform"
+                ],
+                "performedMoves": [],
+                "intent": {
+                  "combatProfile": {
+                    "camp": "spell",
+                    "maneuver": "defend",
+                    "school": "alteration",
+                    "damageType": null,
+                    "counterMode": null,
+                    "reach": "near",
+                    "targeting": "single",
+                    "traits": []
+                  },
+                  "kind": "buff",
+                  "moveId": "reform",
+                  "damage": null,
+                  "hits": null,
+                  "block": null,
+                  "barrier": null,
+                  "delayed": false,
+                  "pending": false
+                },
+                "pendingMove": null,
+                "skipNextTurn": false,
+                "unlockedMoves": [],
+                "alive": true,
+                "armorClass": "medium",
+                "damageResistanceFlat": {},
+                "damageWeaknessPercent": {
+                  "blunt": 25,
+                  "frost": 25
+                },
+                "combatTraits": {},
+                "ratings": {
+                  "ar": 0,
+                  "dr": 0,
+                  "pr": 0,
+                  "poise": 10,
+                  "ward": 10
+                },
+                "wardMeter": {
+                  "value": 0,
+                  "max": 10,
+                  "growths": 0
+                },
+                "persistentWard": {
+                  "max": 10,
+                  "value": 10
+                },
+                "statusControl": {
+                  "version": 1,
+                  "gauges": {},
+                  "sleepHpRestored": 0,
+                  "sleepWardGranted": false,
+                  "sleepWardContribution": 0,
+                  "wardRestoreCarry": 0,
+                  "wardDamageCarry": 0,
+                  "wardAllowances": {},
+                  "resolveNextTurn": false,
+                  "resolveActive": false,
+                  "ownerCycle": 0,
+                  "lastRecoveryCycle": -1,
+                  "completedActions": {}
+                },
+                "barrier": 0,
+                "combatStance": {
+                  "maneuver": "defend",
+                  "camp": "spell",
+                  "reach": "near",
+                  "school": "alteration"
+                },
+                "knowledgeAction": {
+                  "serial": 1,
+                  "category": "Defend",
+                  "executed": false,
+                  "reads": {
+                    "player": {
+                      "visibility": "clue",
+                      "label": "Preparing?",
+                      "prediction": null,
+                      "resolved": false,
+                      "correct": null,
+                      "credited": false
+                    }
+                  }
+                }
+              },
+              "e2": {
+                "id": "e2",
+                "kind": "enemy",
+                "enemyId": "valkyrieShade",
+                "level": 16,
+                "hp": 22,
+                "maxHp": 22,
+                "block": 0,
+                "statuses": {},
+                "poiseMeter": {
+                  "value": 0,
+                  "max": 14,
+                  "growths": 0
+                },
+                "movesHistory": [
+                  "spiralLance"
+                ],
+                "performedMoves": [],
+                "intent": {
+                  "combatProfile": {
+                    "camp": "physical",
+                    "maneuver": "attack",
+                    "school": null,
+                    "damageType": "piercing",
+                    "counterMode": null,
+                    "reach": "contact",
+                    "targeting": "single",
+                    "traits": [
+                      "caster"
+                    ]
+                  },
+                  "kind": "attack",
+                  "moveId": "spiralLance",
+                  "damage": 5,
+                  "hits": 2,
+                  "block": null,
+                  "barrier": null,
+                  "delayed": false,
+                  "pending": false
+                },
+                "pendingMove": null,
+                "skipNextTurn": false,
+                "unlockedMoves": [],
+                "alive": true,
+                "armorClass": "light",
+                "damageResistanceFlat": {},
+                "damageWeaknessPercent": {
+                  "piercing": 25,
+                  "sacred": 25
+                },
+                "combatTraits": {
+                  "caster": true
+                },
+                "ratings": {
+                  "ar": 0,
+                  "dr": 0,
+                  "pr": 0,
+                  "poise": 14,
+                  "ward": 14
+                },
+                "wardMeter": {
+                  "value": 0,
+                  "max": 14,
+                  "growths": 0
+                },
+                "persistentWard": {
+                  "max": 14,
+                  "value": 14
+                },
+                "statusControl": {
+                  "version": 1,
+                  "gauges": {},
+                  "sleepHpRestored": 0,
+                  "sleepWardGranted": false,
+                  "sleepWardContribution": 0,
+                  "wardRestoreCarry": 0,
+                  "wardDamageCarry": 0,
+                  "wardAllowances": {},
+                  "resolveNextTurn": false,
+                  "resolveActive": false,
+                  "ownerCycle": 0,
+                  "lastRecoveryCycle": -1,
+                  "completedActions": {}
+                },
+                "barrier": 0,
+                "combatStance": {
+                  "maneuver": "attack",
+                  "camp": "physical",
+                  "reach": "contact"
+                },
+                "knowledgeAction": {
+                  "serial": 2,
+                  "category": "Attack",
+                  "executed": false,
+                  "reads": {
+                    "player": {
+                      "visibility": "clue",
+                      "label": "Attack?",
+                      "prediction": null,
+                      "resolved": false,
+                      "correct": null,
+                      "credited": false
+                    }
+                  }
+                }
+              }
+            },
+            "cardTargetsAllEnemies": false,
+            "abilityKind": "maneuver",
+            "printedManaCost": 1,
+            "sourceId": "player",
+            "cardInstance": {
+              "breakMeterVersion": 2,
+              "instanceId": "weaponArt:roundShield:shieldBash",
+              "cardId": "shieldBash",
+              "upgraded": false,
+              "abilityRank": 1,
+              "damageSchool": "physical",
+              "exposureBuildupPerHit": 0,
+              "equipmentRole": "weaponArt",
+              "grantedBy": "roundShield",
+              "grantSource": "from:weapon"
+            },
+            "upcastTier": 2,
+            "cardInstanceId": "weaponArt:roundShield:shieldBash",
+            "cardId": "shieldBash",
+            "cardType": "attack",
+            "cardTags": [
+              "guard",
+              "blade",
+              "delivery:melee",
+              "source:weapon",
+              "camp:physical",
+              "damage:blunt",
+              "maneuver:counter",
+              "reach:contact",
+              "targeting:single",
+              "counter:melee"
+            ],
+            "derivedTags": [],
+            "targetId": null,
+            "ordinalThisTurn": 1,
+            "ordinalThisCombat": 1,
+            "energySpent": 3,
+            "manaSpent": 3,
+            "staminaSpent": 3
+          },
+          "enemyHp": [
+            18,
+            22
+          ],
+          "sp": 3,
+          "mana": 5,
+          "counter": {
+            "version": 2,
+            "charges": 1,
+            "serial": 1,
+            "mode": "melee",
+            "coverage": {
+              "camps": [
+                "physical"
+              ],
+              "reaches": [
+                "contact"
+              ],
+              "targeting": [
+                "single"
+              ],
+              "effects": [
+                "damage"
+              ],
+              "maneuvers": [
+                "attack",
+                "smash"
+              ]
+            },
+            "payload": {
+              "hp": 0,
+              "poise": 7,
+              "ward": 0,
+              "smashPoiseBonus": 2
+            },
+            "expiresOnOwnerCycle": 2,
+            "carrier": {
+              "abilityKind": "maneuver",
+              "abilityFamily": "shieldBash",
+              "abilityRank": 1,
+              "ratingId": "dr",
+              "equipmentRole": "weaponArt",
+              "instanceId": "weaponArt:roundShield:shieldBash",
+              "cardId": "shieldBash",
+              "upgraded": false,
+              "type": "attack",
+              "tags": [
+                "guard",
+                "blade",
+                "delivery:melee",
+                "source:weapon",
+                "camp:physical",
+                "damage:blunt",
+                "maneuver:counter",
+                "reach:contact",
+                "targeting:single",
+                "counter:melee"
+              ],
+              "derivedTags": [],
+              "authoredTags": [
+                "guard",
+                "blade",
+                "delivery:melee",
+                "source:weapon",
+                "camp:physical",
+                "damage:blunt",
+                "maneuver:counter",
+                "reach:contact",
+                "targeting:single",
+                "counter:melee"
+              ],
+              "grantedBy": "roundShield",
+              "damageSchool": "physical",
+              "exposureBuildupPerHit": 0,
+              "cardRatingValues": {
+                "poise": 1
+              },
+              "reach": "contact",
+              "targeting": "single",
+              "counterCoverage": {
+                "camps": [
+                  "physical"
+                ],
+                "reaches": [
+                  "contact"
+                ],
+                "targeting": [
+                  "single"
+                ],
+                "effects": [
+                  "damage"
+                ],
+                "maneuvers": [
+                  "attack",
+                  "smash"
+                ]
+              },
+              "counterPayload": {
+                "hp": 0,
+                "poise": 7,
+                "ward": 0,
+                "hpRating": false,
+                "smashPoiseBonus": 2
+              },
+              "upcast": {
+                "baseTier": 0,
+                "unlockedTiers": [
+                  1,
+                  2,
+                  3
+                ],
+                "maximumTier": 3,
+                "blockPerRank": 2,
+                "poisePerRank": 1
+              },
+              "appliedStatuses": [],
+              "appliedStatusEffects": [],
+              "appliedBuildupStatuses": [],
+              "combatRiderTargets": [],
+              "combatProfile": {
+                "camp": "physical",
+                "maneuver": "counter",
+                "school": null,
+                "damageType": "blunt",
+                "counterMode": "melee",
+                "reach": "contact",
+                "targeting": "single",
+                "counterCoverage": {
+                  "camps": [
+                    "physical"
+                  ],
+                  "reaches": [
+                    "contact"
+                  ],
+                  "targeting": [
+                    "single"
+                  ],
+                  "effects": [
+                    "damage"
+                  ],
+                  "maneuvers": [
+                    "attack",
+                    "smash"
+                  ]
+                },
+                "counterPayload": {
+                  "hp": 0,
+                  "poise": 7,
+                  "ward": 0,
+                  "hpRating": false,
+                  "smashPoiseBonus": 2
+                },
+                "upcast": {
+                  "baseTier": 0,
+                  "unlockedTiers": [
+                    1,
+                    2,
+                    3
+                  ],
+                  "maximumTier": 3,
+                  "blockPerRank": 2,
+                  "poisePerRank": 1
+                },
+                "traits": [
+                  "conductive"
+                ]
+              },
+              "committedInstance": {
+                "breakMeterVersion": 2,
+                "instanceId": "weaponArt:roundShield:shieldBash",
+                "cardId": "shieldBash",
+                "upgraded": false,
+                "abilityRank": 1,
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0,
+                "equipmentRole": "weaponArt",
+                "grantedBy": "roundShield",
+                "grantSource": "from:weapon"
+              },
+              "upcastTier": 2
+            }
+          },
+          "stages": [
+            {
+              "rest": "idle",
+              "pose": "idle"
+            },
+            {
+              "rest": "idle",
+              "pose": "STANCE-READY"
+            }
+          ]
+        },
+        "trace": [
+          {
+            "at": 36419.20000000298,
+            "state": [
+              {
+                "owner": "player",
+                "group": null,
+                "family": null,
+                "motion": null,
+                "stages": [
+                  {
+                    "pose": "idle",
+                    "rest": "idle",
+                    "set": null
+                  },
+                  {
+                    "pose": "STANCE-READY",
+                    "rest": "idle",
+                    "set": "reaverSwordShield"
+                  },
+                  {
+                    "pose": "idle",
+                    "rest": "idle",
+                    "set": null
+                  },
+                  {
+                    "pose": "STANCE-READY",
+                    "rest": "idle",
+                    "set": "reaverSwordShield"
+                  }
+                ],
+                "attackClass": false
+              }
+            ],
+            "changes": []
+          },
+          {
+            "at": 36487.29999999702,
+            "changes": [
+              {
+                "owner": "player",
+                "attribute": "class",
+                "oldValue": "combatant player player-target-hitbox armed aiming aim-self",
+                "value": "combatant player player-target-hitbox"
+              },
+              {
+                "owner": "player",
+                "attribute": "class",
+                "oldValue": "combatant player player-target-hitbox armed",
+                "value": "combatant player player-target-hitbox"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-action-group",
+                "oldValue": null,
+                "value": "defend"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-action-family",
+                "oldValue": null,
+                "value": "guard"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-action-motion",
+                "oldValue": null,
+                "value": "brace"
+              },
+              {
+                "owner": "player",
+                "attribute": "class",
+                "oldValue": "sprite",
+                "value": "sprite act-move"
+              },
+              {
+                "owner": "player",
+                "attribute": "class",
+                "oldValue": "sprite",
+                "value": "sprite act-move"
+              }
+            ],
+            "state": [
+              {
+                "owner": "player",
+                "group": "defend",
+                "family": "guard",
+                "motion": "brace",
+                "stages": [
+                  {
+                    "pose": "idle",
+                    "rest": "idle",
+                    "set": null
+                  },
+                  {
+                    "pose": "STANCE-READY",
+                    "rest": "idle",
+                    "set": "reaverSwordShield"
+                  }
+                ],
+                "attackClass": false
+              }
+            ]
+          },
+          {
+            "at": 36937.09999999404,
+            "changes": [
+              {
+                "owner": "player",
+                "attribute": "class",
+                "oldValue": "sprite act-move",
+                "value": "sprite"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-rest",
+                "oldValue": "idle",
+                "value": "idle"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-pose",
+                "oldValue": "STANCE-READY",
+                "value": "STANCE-READY"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-pose",
+                "oldValue": "idle",
+                "value": "idle"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-rest",
+                "oldValue": "idle",
+                "value": "idle"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-rest",
+                "oldValue": "idle",
+                "value": "idle"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-pose",
+                "oldValue": "STANCE-READY",
+                "value": "STANCE-READY"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-pose",
+                "oldValue": "idle",
+                "value": "idle"
+              }
+            ],
+            "state": [
+              {
+                "owner": "player",
+                "group": "defend",
+                "family": "guard",
+                "motion": "brace",
+                "stages": [
+                  {
+                    "pose": "idle",
+                    "rest": "idle",
+                    "set": null
+                  },
+                  {
+                    "pose": "STANCE-READY",
+                    "rest": "idle",
+                    "set": "reaverSwordShield"
+                  }
+                ],
+                "attackClass": false
+              }
+            ]
+          },
+          {
+            "at": 37386.79999999702,
+            "changes": [
+              {
+                "owner": "player",
+                "attribute": "data-rest",
+                "oldValue": "idle",
+                "value": "idle"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-rest",
+                "oldValue": "idle",
+                "value": "idle"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-pose",
+                "oldValue": "STANCE-READY",
+                "value": "STANCE-READY"
+              },
+              {
+                "owner": "player",
+                "attribute": "data-pose",
+                "oldValue": "idle",
+                "value": "idle"
+              }
+            ],
+            "state": [
+              {
+                "owner": "player",
+                "group": "defend",
+                "family": "guard",
+                "motion": "brace",
+                "stages": [
+                  {
+                    "pose": "idle",
+                    "rest": "idle",
+                    "set": null
+                  },
+                  {
+                    "pose": "STANCE-READY",
+                    "rest": "idle",
+                    "set": "reaverSwordShield"
+                  }
+                ],
+                "attackClass": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "error": "Error: Missing actual player shield guard pose/rest\n    at checkTrace (file:///D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire/docs/qa/combat-promotion-polish-20261008/drivers/built-classic-counter-visual-qa.mjs:55:135)\n    at file:///D:/repos/.codex/worktrees/combat-expansion-runtime/AshenSpire/docs/qa/combat-promotion-polish-20261008/drivers/built-classic-counter-visual-qa.mjs:134:136",
+      "requests": []
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

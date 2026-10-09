@@ -1,0 +1,14 @@
+# Shared local background checks
+
+- Use `node tools/local-checks.mjs --suite combat --output D:/repos/.codex/outputs/local-qa/<unique-name>` from the checkout's Node runtime.
+  - `combat`: discovered combat/card/status/knowledge/presentation regressions.
+  - `core`: repository fast core/discovered checks, using `--no-selftests`.
+  - `tools`: full tool self-tests, with a shared native lock at `D:/repos/.codex/tmp/shared-native-qa.lock` on Windows.
+  - `build`: official standalone build, identity and shipping checks in the independent Git snapshot.
+- Launch that finite command through **Codex Process Jobs** when running in the background. It stays in the foreground of its worker and propagates failure.
+- The runner creates a separate Git checkout at an exact commit before checking. It has its own index and history; object sharing is read-only. Uncommitted edits are excluded; commit changes first, or supply `--ref <existing-commit>`.
+- Core/tool/build suites copy the pinned cache into their own snapshot and validate it with the frozen checkout's fetch tool; missing packs are fetched there. Cache writes never reach the author checkout.
+- Each new output directory contains `result.json`, individual logs and the immutable source snapshot. The report names the exact tested head; it remains valid when another session edits, merges or advances a branch.
+- Never reuse an evidence directory or delete another session's native lock. Source/core suites can run together; native self-tests share one owner. Interactive/manual browser QA must also honor that lock. A pre-existing lock produces a blocked report and is preserved, even if its owner record is malformed.
+- Required fast PR checks still gate normal merges. The owner permits long local checks to run alongside merge/promotion work; report them as pending until their result is recorded. A red requires a normal fix PR, fresh checks and another promotion. Do not mark four-channel delivery complete while heavy or published gameplay acceptance remains pending.
+- The build suite verifies a snapshot package; it does not advance the author checkout's receipt, commit generated metadata or publish anything. Delivery uses the normal official receipt/build sequence separately.

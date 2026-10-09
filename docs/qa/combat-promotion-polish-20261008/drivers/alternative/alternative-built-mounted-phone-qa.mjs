@@ -16,7 +16,7 @@ const {launchBrowser,resolveBrowser}=await import(pathToFileURL(root+'/tools/bro
 const server=await serve({root,port:0,open:false,quiet:true});
 const browser=await launchBrowser({prefix:'v2qa-',headless:'--headless=new',args:['--disable-background-networking','--no-default-browser-check'],browser:resolveBrowser(['C:/Program Files (x86)/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'])});
 const ws=new WebSocket(browser.wsUrl),pending=new Map(),errors=[],warnings=[],requests=new Map(); let serial=0;
-ws.addEventListener('message', e=>{const m=JSON.parse(e.data);if(m.method==='Log.entryAdded'){const classification=artifactLogClassification(m.params.entry);browserHealth.push({...m.params.entry,qaClassification:classification,qaPhase});if(classification==='unexpected-fatal')errors.push('BrowserLog '+m.params.entry.text);}if(m.method==='Network.requestWillBeSent')requests.set(m.params.requestId,m.params.request.url);if(['Network.loadingFinished','Network.loadingFailed'].includes(m.method))requests.delete(m.params.requestId);if(m.method==='Network.loadingFailed')errors.push('Network '+m.params.errorText);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='warning'){const warning=m.params.args.map(x=>x.value||x.description).join(' ');warnings.push(warning);errors.push('ConsoleWarning '+warning);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(x=>x.value||x.description).join(' '));const p=pending.get(m.id);if(!p)return;pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);});
+ws.addEventListener('message', e=>{const m=JSON.parse(e.data);if(m.method==='Log.entryAdded'){const classification=artifactLogClassification(m.params.entry,qaPhase);browserHealth.push({...m.params.entry,qaClassification:classification,qaPhase});if(classification==='unexpected-fatal')errors.push('BrowserLog '+m.params.entry.text);}if(m.method==='Network.requestWillBeSent')requests.set(m.params.requestId,m.params.request.url);if(['Network.loadingFinished','Network.loadingFailed'].includes(m.method))requests.delete(m.params.requestId);if(m.method==='Network.loadingFailed')errors.push('Network '+m.params.errorText);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='warning'){const warning=m.params.args.map(x=>x.value||x.description).join(' ');warnings.push(warning);errors.push('ConsoleWarning '+warning);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(x=>x.value||x.description).join(' '));const p=pending.get(m.id);if(!p)return;pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);});
 await new Promise((r,j)=>{ws.addEventListener('open',r);ws.addEventListener('error',j)});
 const send=(method,params={},sessionId)=>new Promise((resolve,reject)=>{if(method==='Page.navigate')qaPhase='shot-boot-before-title-activation';else if(method.startsWith('Input.'))qaPhase='native-input-started';const id=++serial;const timeout=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},method==='Page.navigate'?60000:method==='Runtime.evaluate'?120000:15000);pending.set(id,{resolve:r=>{clearTimeout(timeout);resolve(r)},reject:e=>{clearTimeout(timeout);reject(e)}});ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -69,6 +69,36 @@ const mounted=await ev(`(()=>{const c=window.__combat,run=window.__combatRunForS
 const before=await ev('({enemyHp:window.__combat.enemies.map(x=>x.hp),sp:window.__combat.player.energy,mana:window.__combat.player.mana,hand:window.__combat.piles.hand,counter:window.__combat.player.combatCounter,rng:window.__combat.rng.getCounters()})');
 const mountedSelector='[data-instance-id="'+mounted.instanceId+'"]';
 const reachable=selector=>ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;const b=e.getBoundingClientRect();for(const fy of [.3,.5,.1,.8])for(const fx of [.5,.15,.85])if(e.contains(document.elementFromPoint(b.x+b.width*fx,b.y+b.height*fy)))return true;return false;})()`);
+// Playing the outside Shield retires it and can hide the >7-card pagers.
+// Reach the next real card through native navigation, never DOM scrolling.
+const navigateHandCard=async selector=>{
+ const state=()=>ev('JSON.stringify({piles:window.__combat.piles,player:window.__combat.player,enemies:window.__combat.enemies,turn:window.__combat.turn,phase:window.__combat.phase,eventLog:window.__combat.eventLog,rng:window.__combat.rng.getCounters()})');
+ const beforeNavigation=await state(), steps=[];
+ const limit=await ev('document.querySelectorAll(".hand .card").length');
+ for(let step=0;!await reachable(selector);step++){
+  if(step>=limit)throw Error('Native navigation failed to expose card '+selector+' '+JSON.stringify(steps));
+  const geometry=await ev(`(()=>{const h=document.querySelector('.hand'),c=document.querySelector(${JSON.stringify(selector)});return{hand:h.getBoundingClientRect().toJSON(),card:c.getBoundingClientRect().toJSON(),scroll:h.scrollLeft,next:!!document.querySelector('.hand-next:not([hidden])'),previous:!!document.querySelector('.hand-prev:not([hidden])')};})()`);
+  const toLeft=geometry.card.left<Math.max(0,geometry.hand.left);
+  const pager=toLeft?'.hand-prev:not([hidden])':'.hand-next:not([hidden])';
+  if(toLeft?geometry.previous:geometry.next)await click(pager);
+  else{
+   if(!shape.mobile)throw Error('Offscreen desktop card has no native pager '+JSON.stringify(geometry));
+   const left=Math.max(0,geometry.hand.left)+20,right=Math.min(shape.width,geometry.hand.right)-20;
+   if(right<=left)throw Error('No visible native hand swipe lane '+JSON.stringify(geometry));
+   const start={x:toLeft?left:right,y:geometry.hand.top+geometry.hand.height*.45};
+   const end={x:toLeft?right:left,y:start.y};
+   if(!await ev(`document.querySelector('.hand').contains(document.elementFromPoint(${start.x},${start.y}))`))throw Error('Native hand swipe start is occluded '+JSON.stringify(start));
+   await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...start,id:11}]},sessionId);
+   for(let move=1;move<=8;move++){
+    await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x+(end.x-start.x)*move/8,y:start.y,id:11}]},sessionId);await wait(25);
+   }
+   await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},sessionId);await wait(250);
+  }
+  steps.push({...geometry,direction:toLeft?'previous':'next'});
+ }
+ if(await state()!==beforeNavigation)throw Error('Native card navigation changed combat/payment/hand/RNG state');
+ results.push({shape:shape.name,nativeNextCardNavigation:{selector,steps,engineStateUnchanged:true}});
+};
 const pageCount=await ev('document.querySelectorAll(".hand .card").length');
 const pager=[];
 for(let step=0;step<=pageCount&&!await reachable(mountedSelector);step++){
@@ -83,8 +113,14 @@ await click('[data-instance-id="'+mounted.instanceId+'"]');
 await click('[data-instance-id="'+mounted.instanceId+'"] .card-upcast');
 await until('!!document.querySelector(".card-upcast-rank:not([hidden])")');
 await capture('native-tier-picker-open');results.push({shape:shape.name,pickerGeometry:await ev('Array.from(document.querySelectorAll(".card-upcast-controls,.card-upcast-rank:not([hidden])")).filter(n=>n.getBoundingClientRect().width).map(n=>({className:n.className,rect:n.getBoundingClientRect().toJSON(),viewport:innerWidth,pageWidth:document.documentElement.scrollWidth,scrollX,focused:n===document.activeElement,hand:(()=>{const h=n.closest(".hand");if(!h)return null;const c=getComputedStyle(h);return{rect:h.getBoundingClientRect().toJSON(),clientWidth:h.clientWidth,scrollWidth:h.scrollWidth,scrollLeft:h.scrollLeft,overflowX:c.overflowX,position:c.position,wireframe:h.dataset.wireframeHand}})()}))')});
-const chooserFits = await ev(`Array.from(document.querySelectorAll('.card-upcast-controls button,.card-upcast-controls select')).filter(n=>n.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect(),h=n.closest('.hand').getBoundingClientRect();return r.left>=Math.max(0,h.left)-1&&r.right<=Math.min(innerWidth,h.right)+1&&r.top>=0&&r.bottom<=Math.min(innerHeight,h.bottom)+1;})`);
+const chooserFits = await ev(`Array.from(document.querySelectorAll('.card-upcast-controls button,.card-upcast-controls select')).filter(n=>n.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect(),h=n.closest('.hand').getBoundingClientRect();return r.left>=Math.max(0,h.left)-1&&r.right<=Math.min(innerWidth,h.right)+1&&r.top>=Math.max(0,h.top)-1&&r.bottom<=Math.min(innerHeight,h.bottom)+1;})`);
 if (!chooserFits) throw Error('Complete native Upcast controls must clear the hand/footer edge');
+const selectedFaceFits = await ev(`Array.from(document.querySelectorAll('.hand .card:is(.selected,.inspection-selected)')).filter(n=>n.querySelector('.card-upcast-controls')?.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect(),h=n.closest('.hand').getBoundingClientRect(),u=n.querySelector('.card-upcast-controls').getBoundingClientRect();return r.left>=Math.max(0,h.left)-1&&r.right<=Math.min(innerWidth,h.right)+1&&r.top>=Math.max(0,h.top)-1&&r.bottom<=Math.min(innerHeight,h.bottom)+1&&u.top>=r.bottom-1;})`);
+if (!selectedFaceFits) throw Error('Whole selected card must fit the clipped hand with Upcast below its face');
+const nativeControlsLargeEnough = await ev(`Array.from(document.querySelectorAll('.card-upcast-controls button,.card-upcast-controls select')).filter(n=>n.getBoundingClientRect().width).every(n=>{const r=n.getBoundingClientRect();return r.width>=43.9&&r.height>=43.9;})`);
+if (!nativeControlsLargeEnough) throw Error('Every visible native Upcast input must retain a 44px tap target');
+
+
 // Open and select the real native tier picker with keyboard events; do not
 // assign its value or dispatch a synthetic change through the DOM.
 await click('[data-instance-id="'+mounted.instanceId+'"] .card-upcast-rank');
@@ -117,7 +153,7 @@ results.push({shape:shape.name,identity,mode:shape.reduced?'reduced-motion':'nor
 const spellId=await ev('window.__combat.piles.hand.find(x=>x.cardId==="barrageCounter").instanceId');
 const spellBefore=await ev(`(()=>{const c=window.__combat,n=document.querySelector('[data-instance-id="${spellId}"]');return{instance:structuredClone(c.piles.hand.find(x=>x.instanceId==='${spellId}')),sp:c.player.energy,mana:c.player.mana,barrier:c.player.barrier,ward:structuredClone(c.player.persistentWard),price:{sp:Number(n.querySelector('[data-card-binding=stamina]')?.textContent),mana:Number(n.querySelector('[data-card-binding=mana]')?.textContent)}};})()`);
 if(spellBefore.price.sp!==2||spellBefore.price.mana!==1)throw Error('Authored base Spell Counter badge mismatch');
-await settled();await observe();await click('[data-instance-id="'+spellId+'"]');await click('.combatant.player.armed');await settled();await wait(400);
+await settled();await navigateHandCard('[data-instance-id="'+spellId+'"]');await observe();await click('[data-instance-id="'+spellId+'"]');await click('.combatant.player.armed');await settled();await wait(400);
 const spell=await ev('({receipt:window.__combat.eventLog.filter(e=>e.type==="cardPlayed").at(-1),enemyHp:window.__combat.enemies.map(x=>x.hp),sp:window.__combat.player.energy,mana:window.__combat.player.mana,barrier:window.__combat.player.barrier,ward:window.__combat.player.persistentWard,counter:window.__combat.player.combatCounter})');
 if(JSON.stringify(spell.enemyHp)!==JSON.stringify(before.enemyHp))throw Error('Spell Counter preparation dealt immediate HP damage');
 if(spell.receipt.cardId!=='barrageCounter'||spell.receipt.upcastTier!==0||JSON.stringify(spell.receipt.cardInstance)!==JSON.stringify(spellBefore.instance)||spell.sp!==spellBefore.sp-spellBefore.price.sp||spell.mana!==spellBefore.mana-spellBefore.price.mana||spell.receipt.energySpent!==spellBefore.price.sp||spell.receipt.manaSpent!==spellBefore.price.mana||spell.counter?.charges!==1||spell.counter?.carrier?.combatProfile?.camp!=='spell'||spell.barrier!==spellBefore.barrier+6||JSON.stringify(spell.ward)!==JSON.stringify(spellBefore.ward))throw Error('Spell Counter paid receipt/charge/protection mismatch '+JSON.stringify({before:spellBefore,after:spell}));

@@ -10,12 +10,14 @@ const fallbackPaths = new Set([
   '/build/download/assets/sfx/turnStinger.ogg',
   '/build/download/music/manifest.json',
 ]);
-const policies = new Set([
+const autoplayPolicies = new Set([
   'The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio',
-  "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+  'The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.',
+  'The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. ',
 ]);
-export function artifactLogClassification(entry) {
-  if (policies.has(entry.text)) return 'shot-before-title-activation';
+export function artifactLogClassification(entry, qaPhase) {
+  if (qaPhase === 'shot-boot-before-title-activation' && autoplayPolicies.has(entry.text)) return 'shot-before-title-activation';
+  if (entry.text === "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.") return 'shot-before-title-activation';
   if (entry.text === 'Failed to load resource: the server responded with a status of 404 (Not Found)') {
     try { if (fallbackPaths.has(new URL(entry.url).pathname)) return 'standalone-authored-audio-fallback'; } catch {}
   }

@@ -1,0 +1,171 @@
+{
+  "scope": "Actual frozen1184 first-target failure; no combined native PASS",
+  "sourceHead": "c03fe59989db9ad8ad9528219be2e0dc37dfb161",
+  "artifact": {
+    "ordinal": "1184",
+    "source": "ce9685ca5e"
+  },
+  "runnerExit": 1,
+  "failedGate": "hit-target",
+  "error": "Strict24px target unavailable",
+  "plannedTargetFixtures": 3,
+  "completedTargetFixtures": 1,
+  "failedFixture": "Ordinary390x650XL",
+  "health": [],
+  "actors": [
+    {
+      "id": "player",
+      "passingPatches": 9,
+      "targetObstructed": "false",
+      "target": {
+        "x": 124.79684840425531,
+        "y": 327.93731117021275,
+        "w": 43.98876382978723,
+        "h": 43.98876382978723
+      },
+      "firstSampleTop": {
+        "tag": "ARTICLE",
+        "class": "combatant player player-target-hitbox",
+        "eid": "player",
+        "rect": {
+          "x": 81.890625,
+          "y": 74.734375,
+          "width": 85.796875,
+          "height": 275.203125,
+          "top": 74.734375,
+          "right": 167.6875,
+          "bottom": 349.9375,
+          "left": 81.890625
+        },
+        "pointer": "none",
+        "z": "auto"
+      }
+    },
+    {
+      "id": "e1",
+      "passingPatches": 0,
+      "targetObstructed": "false",
+      "target": {
+        "x": 261.29684840425534,
+        "y": 264.97637499999996,
+        "w": 95.99061702127659,
+        "h": 43.98876382978723
+      },
+      "firstSampleTop": {
+        "tag": "I",
+        "class": "m-fill fill",
+        "eid": "e1",
+        "rect": {
+          "x": 219.28125,
+          "y": 245.78253173828125,
+          "width": 84.015625,
+          "height": 14,
+          "top": 245.78253173828125,
+          "right": 303.296875,
+          "bottom": 259.78253173828125,
+          "left": 219.28125
+        },
+        "pointer": "auto",
+        "z": "auto"
+      }
+    },
+    {
+      "id": "e2",
+      "passingPatches": 0,
+      "targetObstructed": "false",
+      "target": {
+        "x": 320.84372340425534,
+        "y": 310.976460106383,
+        "w": 95.99061702127659,
+        "h": 43.98876382978723
+      },
+      "firstSampleTop": {
+        "tag": "I",
+        "class": "m-fill fill",
+        "eid": "e2",
+        "rect": {
+          "x": 278.828125,
+          "y": 291.7943115234375,
+          "width": 84.015625,
+          "height": 14,
+          "top": 291.7943115234375,
+          "right": 362.84375,
+          "bottom": 305.7943115234375,
+          "left": 278.828125
+        },
+        "pointer": "auto",
+        "z": "auto"
+      }
+    },
+    {
+      "id": "e3",
+      "passingPatches": 0,
+      "targetObstructed": "false",
+      "target": {
+        "x": 261.2890484042553,
+        "y": 218.97628989361704,
+        "w": 95.99061702127659,
+        "h": 43.98876382978723
+      },
+      "firstSampleTop": {
+        "tag": "I",
+        "class": "m-fill fill",
+        "eid": "e3",
+        "rect": {
+          "x": 219.28125,
+          "y": 199.76144409179688,
+          "width": 84.015625,
+          "height": 14,
+          "top": 199.76144409179688,
+          "right": 303.296875,
+          "bottom": 213.76144409179688,
+          "left": 219.28125
+        },
+        "pointer": "auto",
+        "z": "auto"
+      }
+    }
+  ],
+  "notRun": [
+    "390x650 deliberate-overlap target fixture",
+    "1200x730 target fixture",
+    "Default four solo/eight projected owners",
+    "Classic four solo/eight projected owners",
+    "Standalone hand",
+    "Trim128",
+    "T14 motion",
+    "Full compiled screenreach",
+    "Negative plants6/14..9/14"
+  ],
+  "ownedProcessClosure": "Runner session52688 exited1; awaited browser.close finally; no owned targetdiag/driver processes remained on identity-filtered process check",
+  "files": [
+    {
+      "name": "390x650-xl.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1184-hit-target/390x650-xl.json",
+      "rawSha256": "e14658a7f09ea4adf36efbb65ce2619a581db096d61dfb64ddc8115591ac10b5",
+      "curatedSha256": "e14658a7f09ea4adf36efbb65ce2619a581db096d61dfb64ddc8115591ac10b5",
+      "curation": "CRLF to LF only; raw original unchanged"
+    },
+    {
+      "name": "390x650-xl.png",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1184-hit-target/390x650-xl.png",
+      "rawSha256": "40a77ed5979228f8d5b9e700ee831e789abe3cb84ab9555ec956c461925bac2f",
+      "curatedSha256": "40a77ed5979228f8d5b9e700ee831e789abe3cb84ab9555ec956c461925bac2f",
+      "curation": "Byte-exact PNG"
+    },
+    {
+      "name": "hit-target.log",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1184-hit-target.log",
+      "rawSha256": "9bae863029d0bc486b9e0d3d26f8bbfe119a4f451c4a17fd97e8f33c0202e6ed",
+      "curatedSha256": "df4cce95c8e1511a58c77b330c83e207ac86ed64fb2cdb89894174ded1074cc9",
+      "curation": "CRLF to LF only; raw original unchanged"
+    },
+    {
+      "name": "gates.json",
+      "rawPath": "D:/repos/.codex/outputs/combat-card-stances/regular-1768-1184-gates.json",
+      "rawSha256": "7a3b51e0585aac91b34ea7f5181d0173e42a9cb872dce505e3845c1724325e72",
+      "curatedSha256": "4d78aa138f2269429b01f97b2facf0275ad31937df0e408be8c561e10096144a",
+      "curation": "CRLF to LF only; raw original unchanged"
+    }
+  ]
+}

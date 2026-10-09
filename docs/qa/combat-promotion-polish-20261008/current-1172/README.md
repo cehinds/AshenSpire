@@ -1,0 +1,13 @@
+# Packaged candidate 1172 — acceptance boundaries
+
+- Artifact: `0.7.1.1172` / `43fb71b4ca`, built from reviewed source `8fae4e571580e38cd4c2a50c9a75cbd510a16f2e`. The subsequent `85a61dcc177e11b6fb9c7f7224c2c99502445d43` commit regenerates only the motion-test plant baseline, outside the runtime digest.
+- Default and Classic native drivers both exit 0. Each completes four solo viewport/motion cases and eight source-session-generated projected co-op ownership cases. All existing Counter preparation/payment, reaction presentation, spell, and deadline assertions remain; complete Upcast control bounds are additionally required.
+  - These projected cases do not establish live LAN or physical-device acceptance.
+  - Independent PNG review confirms the complete under-card chooser clears the footer. An Information circle intersects enemy health text on selected phone cards; final combined hand reconciliation must assess this.
+- The standalone card-sigil driver exits 0 on desktop and phone: mounted hand effects and bottom action band fit, Information/Enter inspection is atomic, focus restores, and required resources load. Optional authored audio fallbacks are retained in its report. This is the current mounted hand, not a fresh full-card corpus.
+- Corrupted trim driver exits 0 on desktop and phone, including forced-colors behavior, real Information click, and Escape atomicity. The captured phone inspection shows the dark volcanic edge, thin inward veins, readable complete effect and Skill label. No CSS was injected into the artifact.
+- **Strict hit-target driver exits 1** at the first `390×650`, XL-text legacy fixture: enemy `e1` has no unobstructed 24-pixel hit patch. The original failure and actual screenshot are retained. Later viewports were not completed. This candidate is not accepted for final promotion.
+- Source head `8fae4e57` cloud tests passed core 149/0 and 393 discovered files / 3,361 tests with zero failures. Preview failed only on the moved blank-canvas mutation site's baseline identity. The official baseline regeneration passes all 431 sites locally; fresh exact-head cloud checks remain required.
+- Reaction PR #1767 is still separate pending integration. Its clipped horizontal hand requires revalidation of the entire selected card and the below-card controls; these 1172 results do not accept a future combined artifact.
+
+Files here retain the full driver results and representative actual captures. Raw health, remaining captures, logs, and independent review are preserved in the corresponding D: output directories and selectively copied alongside this record.

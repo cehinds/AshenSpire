@@ -36,6 +36,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Alternative combat keeps its art with the complete tactical rules** ([#1740](https://github.com/cehinds/AshenSpire/pull/1740), `0.7.1.1191`). The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.
 
+- **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1191`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.
+
+- **Compact combat details stay clear of cards** ([#1775](https://github.com/cehinds/AshenSpire/pull/1775), `0.7.1.1189`). Pack enemy name and health plates around the visible hand and player details on short screens with enlarged text. Keep the sprites fixed while moving only crowded plates. Verify attacks through the visible target buttons and saved turns through the normal defensive-reaction controls.
+
 - **Attached enemy targets and visible player details** ([#1773](https://github.com/cehinds/AshenSpire/pull/1773), `0.7.1.1184`). Keep compact enemy selection cells on their sprites, shrink them before moving away, and preserve neighboring target order. Show enemy name and health below their bodies and place the player's name, level, health and live combat details beside the character, clear of cards. Pack co-op details without collisions and keep landscape combat tools out of targeting space.
 
 ## 2026-10-08
