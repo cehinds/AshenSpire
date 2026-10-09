@@ -1612,7 +1612,6 @@
 :root .combat[data-composition='option-c'] .enemy .meters { width: calc(var(--enemy-hit-width) - 12px / var(--ui-zoom, 1)); max-width: none; align-self: center; }
 :root .combat[data-composition='option-c'] .enemy:is(.context-selected,.hover-target)::after { box-shadow: 0 0 8px var(--enemy-intent-accent); }
 :root .combat[data-waist-overlap='true'] .player .combatant-card > :is(.nm,.meters) { visibility: hidden; }
-:root .combat[data-waist-overlap='true'] .player::after { display: none; }
 :root .combat[data-composition='option-c'] > .hand-area { position: relative; z-index: 3; pointer-events: none; }
 :root .combat[data-composition='option-c'] > .hand-area :is(.card,.hand-page,.combat-action-row) { pointer-events: auto; }
 /* The raised HUD can reveal an HP tooltip where the next coach step moves.
