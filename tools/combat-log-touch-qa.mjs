@@ -15,6 +15,7 @@ try {
     page.on('pageerror', error => result.errors.push(error.message));
     const save = () => writeFileSync(`${out}/results.json`, JSON.stringify(results, null, 2));
     const log = page.locator('[data-combat-tool="log"]');
+    let dragScale = 1;
     const snapshot = () => page.evaluate(() => {
       const root = document.querySelector('.combat-tools'), panel = document.querySelector('#combat-log');
       return { size: root.dataset.logSize, open: !panel.hidden, rect: panel.getBoundingClientRect().toJSON(),
@@ -24,9 +25,10 @@ try {
     const drag = async (delta, cancel = false) => {
       const r = await log.boundingBox(); assert(r);
       const x = r.x + r.width / 2, y = r.y + r.height / 2;
+      assert(y - delta / dragScale >= 1 && y - delta / dragScale < height - 1, 'native drag stays inside viewport');
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
       for (let step = 1; step <= 10; step++) {
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - delta * step / 10 }] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - delta / dragScale * step / 10 }] });
         await page.waitForTimeout(18);
       }
       await cdp.send('Input.dispatchTouchEvent', { type: cancel ? 'touchCancel' : 'touchEnd', touchPoints: [] });
@@ -40,12 +42,21 @@ try {
       result.url = page.url(); result.title = await page.title();
       await log.waitFor({ state: 'visible', timeout: 120000 });
       await page.waitForTimeout(1500);
+      await page.evaluate(() => {
+        window.__qaLogEvents = [];
+        for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'click']) document.addEventListener(type, event => {
+          window.__qaLogEvents.push({ type, target: event.target.closest?.('[data-combat-tool]')?.dataset.combatTool || event.target.className,
+            button: event.button, pointer: event.pointerId, x: event.clientX, y: event.clientY,
+            open: !document.querySelector('#combat-log').hidden, size: document.querySelector('.combat-tools').dataset.logSize });
+        }, true);
+      });
       assert.equal(await page.locator('#combat-log button[data-log-size]').count(), 0, 'no inner size buttons');
       await log.tap(); await page.waitForTimeout(250);
       const small = await snapshot(); assert(small.open && small.size === 'Small');
       assert(Math.abs(small.hand.right - small.tools.right - 6) < 1, 'toolbar aligned to hand right');
       assert(Math.abs(small.tools.top - small.hand.top - 30) < 1, 'toolbar lowered in card band');
-      const maxDelta = small.tools.top - small.menuBottom - 8 - small.rect.height;
+      const maxDelta = small.tools.top - 6 - small.menuBottom - 8 - small.rect.height;
+      dragScale = Math.max(1, maxDelta / Math.max(24, Math.min(120, height - small.tools.bottom - 8)));
       const large = await drag(maxDelta);
       assert(large.open && large.size === 'Large', 'upward touch drag opens Large and trailing click does not close');
       assert(large.rect.top >= large.menuBottom - 1, 'drawer clears menu');
@@ -58,6 +69,7 @@ try {
       assert(cancelled.open && cancelled.size === 'Medium', 'cancel restores prior size');
       const smallAgain = await drag(small.rect.height - medium.rect.height);
       assert(smallAgain.open && smallAgain.size === 'Small', 'downward touch drag snaps Small');
+      result.steps.push({ route: 'touch-snaps', small, medium, large, cancelled, smallAgain });
       await log.tap(); await page.waitForTimeout(200);
       assert(!(await snapshot()).open, 'fresh tap closes after completed drag');
       await log.tap(); await page.waitForTimeout(200);
@@ -67,14 +79,15 @@ try {
       assert.equal((await snapshot()).size, 'Large', 'keyboard End resizes');
       await log.tap(); await page.waitForTimeout(200);
       assert(!(await snapshot()).open);
-      const dragOpened = await drag(large.rect.height);
+      const dragOpened = await drag(large.rect.height - small.rect.height);
       assert(dragOpened.open && dragOpened.size === 'Large', 'dragging a closed handle opens and sizes the drawer');
       result.steps.push({ route: 'tap-touch-drag-cancel-keyboard', small, medium, large });
       assert.deepEqual(result.errors, []);
       await page.screenshot({ path: `${out}/${width}-large.png` });
       result.pass = true; save();
     } catch (error) {
-      result.error = error.stack; save();
+      result.error = error.stack; result.gestureTrace = await page.evaluate(() => window.__qaLogEvents);
+      result.last = await snapshot(); save();
       await page.screenshot({ path: `${out}/${width}-failure.png` });
       throw error;
     } finally { await page.close(); }

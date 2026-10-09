@@ -38,6 +38,20 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let frameRequest = 0;
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
+  const labelMeasure = document.createElement('canvas').getContext('2d');
+  function fitLabels() {
+    if (!labelMeasure) return;
+    for (const label of field.querySelectorAll('.nm .ls-label, .intent-stance')) {
+      const box = label.closest('.nm, .intent');
+      const width = box.clientWidth - 8 / uiZoom();
+      if (width <= 0) continue;
+      const style = getComputedStyle(label);
+      const maximum = 11 / uiZoom();
+      labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
+      const measured = labelMeasure.measureText(label.textContent).width;
+      label.style.fontSize = `${Math.max(8 / uiZoom(), maximum * Math.min(1, width / Math.max(1, measured)))}px`;
+    }
+  }
   function placePlayerHud() {
     const zoom = uiZoom();
     const toolsBox = field.closest('.combat')?.querySelector('.combat-tools')?.getBoundingClientRect();
@@ -48,25 +62,44 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
       if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) continue;
       const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      art.width = art.right - art.left;
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
       const combat = field.closest('.combat');
       const viewport = combat.getBoundingClientRect();
       const panel = leading.getBoundingClientRect();
       const cards = [...combat.querySelectorAll('.hand .card')].map(card=>card.getBoundingClientRect()).filter(rect=>rect.width && rect.height);
-      const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport, gap: 4,
+      const inspect = leading.querySelector('.combatant-info');
+      const inspectBox = inspect?.getBoundingClientRect();
+      const inspectSize = inspectBox?.width ? {width:inspectBox.width,height:inspectBox.height} : null;
+      const expanded = player.classList.contains('context-selected');
+      const placement = expanded ? playerDetailsPlacement({ art: { ...art, top: art.bottom - panel.height }, width: panel.width, height: panel.height, viewport, gap: 4,
         handTop: Math.min(toolsBox?.height ? toolsBox.top : Infinity, cards.length ? Math.min(...cards.map(rect=>rect.top)) : combat.querySelector('.hand')?.getBoundingClientRect().top ?? Infinity),
-        hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
+        hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels })
+        : { left: Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4)),
+          top: Math.min(art.bottom + 3, (toolsBox?.top ?? Infinity) - panel.height - 4) };
       panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
       const top = `${(placement.top - stack.top) / zoom}px`;
       const left = `${(placement.left - stack.left) / zoom}px`;
       if (leading.style.top !== top) leading.style.top = top;
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
-      const inspect = leading.querySelector('.combatant-info');
       if (inspect) {
         const button = inspect.getBoundingClientRect();
-        inspect.style.left = `${((art.left + art.right) / 2 - button.width / 2 - placement.left) / zoom}px`;
-        inspect.style.top = `${(Math.max(viewport.top, art.top - button.height - 4) - placement.top) / zoom}px`;
+        const inspectLocal = anchorLocalBox(leading.getBoundingClientRect(), {
+          left: art.left + art.width / 2 - button.width / 2,
+          top: art.top - button.height - 4, width: 0, height: 0,
+        }, { zoom });
+        inspect.style.left = `${inspectLocal.left}px`;
+        inspect.style.top = `${inspectLocal.top}px`;
+        if (inspectSize) panels.push(inspect.getBoundingClientRect());
+      }
+      const action = leading.querySelector('.player-action-intent');
+      if (action) {
+        const local = anchorLocalBox(leading.getBoundingClientRect(), {
+          left: art.left + art.width / 2 - (inspectBox?.width || 22) / 2 - 28,
+          top: art.top - 28, width: 0, height: 0,
+        }, { zoom });
+        action.style.left = `${local.left}px`; action.style.top = `${local.top}px`;
       }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
@@ -94,6 +127,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
+    fitLabels();
     const measuredField = field.getBoundingClientRect();
     // CSS zoom can report float noise across equivalent DOM remounts. Snap the
     // dimensions before deriving formation coordinates, not only its cache key.
@@ -448,6 +482,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           footer.style.translate = `${offset.left}px ${offset.top}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = 'var(--combat-layer-selection)';
+        }
+        if (frame.classList.contains('enemy') && !frame.classList.contains('context-selected')) {
+          const meter = frame.querySelector('.combatant-card > .meters');
+          if (meter) {
+            const rect = meter.getBoundingClientRect();
+            const leading = frame.querySelector('.combatant-leading').getBoundingClientRect();
+            const idleOffset = anchorLocalBox(VIEWPORT_ORIGIN, {
+              left: leading.left + (leading.width - rect.width) / 2 - rect.left,
+              top: leading.bottom - rect.height - rect.top, width: 0, height: 0,
+            }, { zoom });
+            meter.style.translate = `${offset.left + idleOffset.left}px ${offset.top + idleOffset.top}px`;
+          }
         }
       }
       sprite.style.setProperty('--sprite-zoom', String(scale / zoom));

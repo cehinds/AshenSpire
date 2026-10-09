@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
-- **Compact combat targeting and touch controls** ([#1776](https://github.com/cehinds/AshenSpire/pull/1776), `0.7.1.1192`). Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.
+- **Compact combat targeting and touch controls** ([#1776](https://github.com/cehinds/AshenSpire/pull/1776), `0.7.1.1194`). Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it within the screen to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.
 
 
 - **Compact combat details stay clear of cards** ([#1775](https://github.com/cehinds/AshenSpire/pull/1775), `0.7.1.1189`). Pack enemy name and health plates around the visible hand and player details on short screens with enlarged text. Keep the sprites fixed while moving only crowded plates. Verify attacks through the visible target buttons and saved turns through the normal defensive-reaction controls.

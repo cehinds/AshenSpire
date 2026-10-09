@@ -41,7 +41,7 @@
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
-// source content/config/ui/scenes/w4a-combat.json c1f9b8d5c1d51fe6
+// source content/config/ui/scenes/w4a-combat.json f27454bf764841e1
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json b44124e6a29150d9
@@ -98,6 +98,19 @@ export const uiConfig = deepFreeze({
           "footer": 5
         },
         "floorPercent": 80,
+        "compact": {
+          "maxWidthPx": 600,
+          "hudMinimumPx": 48,
+          "hudFraction": 0.09,
+          "handMinimumPx": 176,
+          "handMaximumPx": 220,
+          "handFraction": 0.28,
+          "footerHeightPx": 78,
+          "battlefieldMinimumPx": 130,
+          "footerGapPx": 4,
+          "footerCirclePx": 52,
+          "footerEndWidthPx": 76
+        },
         "hand": {
           "minimumHeightPx": 208,
           "minWidthRem": 5,

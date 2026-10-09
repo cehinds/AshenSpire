@@ -1,6 +1,6 @@
 import { button, el } from '../kit/index.js';
 import { childModel } from '../models/ComponentModel.js';
-import { combatLogHeight, combatLogSnapSize, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
+import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { t, tFull } from '../strings.js';
@@ -40,8 +40,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     if (event.button !== 0 || drag) return;
     suppressClick = false;
     const heights = snapHeights();
+    const dragScale = combatLogDragScale({ heights, viewportHeight: window.visualViewport?.height || innerHeight,
+      handleBottom: root.getBoundingClientRect().bottom });
     const gesture = drag = { pointerId: event.pointerId, y: event.clientY, active: false,
-      open: state.open, size: state.size, height: state.open ? heights[state.size] : 0, heights };
+      open: state.open, size: state.size, height: state.open ? heights[state.size] : heights.Small, heights };
     const initialHeight = gesture.height;
     trackGesture(event, {
       onMove(move) {
@@ -49,7 +51,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
         const delta = gesture.y - move.clientY;
         if (!gesture.active && Math.abs(delta) < 6) return;
         gesture.active = true; move.preventDefault();
-        gesture.height = Math.max(heights.Small, Math.min(heights.Large, initialHeight + delta));
+        gesture.height = Math.max(heights.Small, Math.min(heights.Large, initialHeight + delta * dragScale));
         root.dataset.logDragging = 'true'; state.open = true; onViewChange();
       },
       onEnd(_event, { cancelled }) {
@@ -67,7 +69,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault(); event.stopPropagation();
     const index = COMBAT_LOG_SIZES.indexOf(state.size);
-    state.size = event.key === 'Home' ? 'Small' : event.key === 'End' ? 'Large'
+    state.size = event.key === 'Home' ? COMBAT_LOG_SIZES[0] : event.key === 'End' ? COMBAT_LOG_SIZES.at(-1)
       : COMBAT_LOG_SIZES[Math.max(0, Math.min(2, index + (event.key === 'ArrowUp' ? 1 : -1)))];
     state.open = true; onViewChange();
   });
