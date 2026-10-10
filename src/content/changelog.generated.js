@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1811",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Abandoned fights restart, and four engine fixes",
+    "detail": "Closing the game mid-fight without saving restarts that fight from the start or your last save again, instead of resuming after your last card or reaction. Solo fights count a discard chosen after an ability card as a new action, the same as co-op. Swapping class cards no longer grants a second set of feats or attribute points: a run's six feat slots and four points are shared by every class you equip. With a per-fight level cap, XP banked by an earlier fight is no longer thrown away.",
+    "build": "0.7.1.1262",
+    "pullRequest": 1811,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1811"
+  },
+  {
     "id": "pr-1813",
     "date": "2026-10-10",
     "group": "2026-10-10",
