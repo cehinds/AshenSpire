@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
-- **Clicking a target no longer shuffles enemy labels** ([#1825](https://github.com/cehinds/AshenSpire/pull/1825), `0.7.1.1276`). Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Keyboard focus still moves the cursor to the target.
+- **Clicking a target no longer shuffles enemy labels** ([#1825](https://github.com/cehinds/AshenSpire/pull/1825), `0.7.1.1280`). Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put. Keyboard focus still moves the cursor to the target.
+- **Reduced motion keeps combat controls still** ([#1824](https://github.com/cehinds/AshenSpire/pull/1824), `0.7.1.1279`). When reduced motion is enabled in the game or operating system, the battlefield no longer rewrites the settled Inspect and fighter-detail positions every frame. Changing that preference during a fight settles the controls once or resumes normal tracking. Normal motion still tracks moving artwork, while reduced motion keeps the controls fixed.
+
 - **Discard and Draw counts fit again on mid-size and landscape phone footers** ([#1823](https://github.com/cehinds/AshenSpire/pull/1823), `0.7.1.1275`). On 601–680px screens and short landscape layouts, the Draw and Discard piles once more use the smaller icon and counts that fit their size, instead of an oversized icon that pushed the counts out.
 - **Every fighter's Inspect button is always shown and holds still; bigger footer piles on phones** ([#1818](https://github.com/cehinds/AshenSpire/pull/1818), `0.7.1.1273`). Every enemy and the player now show an Inspect "i" at all times, and it no longer bobs with the idle animation; when space is tight it moves beside the enemy's intent or onto the enemy's own art instead of hiding under the top bar. On phones the Draw, Discard and Potions controls are larger with bigger icons and counts, and an enemy's intent and health no longer sit over the player's head.
 

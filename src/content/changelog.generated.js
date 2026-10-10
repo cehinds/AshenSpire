@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-10",
     "group": "2026-10-10",
     "summary": "Clicking a target no longer shuffles enemy labels",
-    "detail": "Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Keyboard focus still moves the cursor to the target.",
-    "build": "0.7.1.1276",
+    "detail": "Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put. Keyboard focus still moves the cursor to the target.",
+    "build": "0.7.1.1280",
     "pullRequest": 1825,
     "url": "https://github.com/cehinds/AshenSpire/pull/1825"
+  },
+  {
+    "id": "pr-1824",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Reduced motion keeps combat controls still",
+    "detail": "When reduced motion is enabled in the game or operating system, the battlefield no longer rewrites the settled Inspect and fighter-detail positions every frame. Changing that preference during a fight settles the controls once or resumes normal tracking. Normal motion still tracks moving artwork, while reduced motion keeps the controls fixed.",
+    "build": "0.7.1.1279",
+    "pullRequest": 1824,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1824"
   },
   {
     "id": "pr-1823",
