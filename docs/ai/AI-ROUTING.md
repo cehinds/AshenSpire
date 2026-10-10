@@ -3,8 +3,10 @@
 **Status:** These are the owner's operating instructions for AI sessions working in this
 repository. They were rewritten on 2026-10-10 at the owner's request. The split itself
 is the owner's standing rule: the main session runs on Opus 5.5 and manages Haiku 5.5
-subagents, which do the work. The details below (brief shape, wave sizes, escalation)
-are advisory. It never overrides [SPEC.md](../../SPEC.md)
+subagents, which do the work. Model names here mean the newest model of that tier;
+when a new one ships, update the names in this file and CLAUDE.md, and the agent
+files' tier aliases pick it up without edits. The details below (brief shape, wave
+sizes, escalation) are advisory. It never overrides [SPEC.md](../../SPEC.md)
 (mechanics), [CONTRIBUTING.md](../../CONTRIBUTING.md) (branching, review, merge,
 promotion) or [DEVELOPER.md](../../DEVELOPER.md) (build and test). Where they disagree,
 those files win. Guided-learning work follows
@@ -141,6 +143,10 @@ from a missing file, a vague brief or the wrong model, fix that cause. The Agent
 
 - **Workers:** `Agent({ subagent_type: "ashen-worker", isolation: "worktree", run_in_background: true, prompt: <brief> })`.
   The agent file pins `model: haiku`. With a generic agent type, pass `model: "haiku"`.
+  Agent files load when the session starts; if `ashen-worker` is not found (the session
+  started on a branch without it), use `general-purpose` with `model: "haiku"` and point
+  the brief at `.claude/agents/ashen-worker.md`.
+- **Worktree cleanup:** worker worktrees cost disk. Once a worker's branch is merged or abandoned, `git worktree remove <path>` and delete the local branch; at session start and end run `git worktree list`, `git worktree prune`, and remove each worktree whose branch is merged into `origin/dev` or deleted on the remote. Never remove one with uncommitted or unpushed work.
 - **Reviewer:** `Agent({ subagent_type: "ashen-reviewer", prompt: <PR number + diff + risks> })`,
   pinned to `model: opus` and to read-only tools (no Edit/Write). For a mechanical diff, use
   `Agent({ subagent_type: "general-purpose", model: "haiku", prompt: <read-only review brief: PR number + diff + risks + "do not edit"> })`.
