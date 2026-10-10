@@ -102,7 +102,7 @@ test('idle overhead HP and an artwork-owned player reserve no hidden footers',()
   const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargets = targets;',begin);
   const ids=['player','idle','selected'];
   const boxes=ids.map((_id,i)=>({hostRect:{left:30+i*90,width:80,bottom:225},footerWidth:88,frameRect:{},controls:[]}));
-  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||id==='selected'&&role==='context-selected'}}}));
+  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='selected'||id==='player')&&role==='context-selected'}}}));
   let packed,reserved;
   runInNewContext(source.slice(begin,end),{fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,combatFrameTarget,
     combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:513})},readFooterObstacles:()=>[],
