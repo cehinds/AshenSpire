@@ -1,3 +1,4 @@
+import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -305,8 +306,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         actorEl.dataset.actionGroup = grouped.group;
       }
       if (moved && stage?.enemy) {
-        const pose = moved.kind === 'attack' ? (['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack')
-          : moved.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+        const pose = enemyActionPose(moved.kind, plan);
         plan = { ...plan, pose };
       }
       actorEl.dataset.actionFamily = plan.family;

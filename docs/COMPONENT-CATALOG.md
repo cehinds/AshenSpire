@@ -811,3 +811,12 @@ Changing it refreshes the mounted battlefield without changing combat rules or
 run state. UI, card controls and companion icons remain shared. The
 [display art libraries](../assets-display/README.md) separate classic,
 alternative and shared ownership while retaining canonical packed IDs.
+
+### Enemy expansion stage (2026-10-09)
+
+`enemyExpansionStage.js` supplies the enemy sprite body inside `combatant-frame`.
+Its 512-square frames share floor y=480, face toward the viewer/screen-left,
+and retain a stable idle envelope while action images change. Existing overhead
+and formation owners retain layout control. Six sequence families and current
+state reactions use the art-pack resolver; reduced motion remains static.
+See `docs/ai/ENEMY-SPRITE-HANDOFF-2026-10-09.md` for visual acceptance gaps.
