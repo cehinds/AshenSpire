@@ -157,5 +157,10 @@ export function wireAlternativeBackdrop(combat) {
   combat.addEventListener('pointermove', move);
   combat.addEventListener('pointerleave', reset);
   reduced.addEventListener('change', reset);
-  return () => { combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); };
+  // Turning on the in-game setting toggles a body class; settle at once rather
+  // than leaving the layers offset until the next pointer move snaps them.
+  const setting = typeof MutationObserver === 'function'
+    ? new MutationObserver(() => { if (reducedMotionRequested()) reset(); }) : null;
+  setting?.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  return () => { combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); setting?.disconnect(); };
 }
