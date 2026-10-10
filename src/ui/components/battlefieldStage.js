@@ -631,7 +631,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
           footer.style.translate = `${offset.left}px ${offset.top}px`;
           footer.style.position = 'relative';
-          footer.style.zIndex = 'var(--combat-layer-selection)';
+          // A fallen footer no longer reserves space; keep it beneath living ones.
+          footer.style.zIndex = frame.classList.contains('dead') ? '' : 'var(--combat-layer-selection)';
         }
         if (frame.classList.contains('enemy') && !frame.classList.contains('context-selected')) {
           const meter = frame.querySelector('.combatant-card > .meters');
