@@ -142,12 +142,15 @@ if (process.argv.includes('--selftest')) {
         append: '.combatant-leading .intent { pointer-events: none !important; }',
         expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
       },
+      // Once enemies stand apart (#1806), the restacked frame can carry its own
+      // intent over the neighbour's: an intent trapped under another frame's
+      // intent is the same defect as one trapped under its sprite.
       {
         name: 'whole fighter frames once again trap intent badges under neighbouring sprites',
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.enemy-expansion-bob|\.enemy-expansion-placeholder|\.alternative-silhouette \[authored-neighbour\])/,
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.enemy-expansion-bob|\.enemy-expansion-placeholder|\.intent|\.alternative-silhouette \[authored-neighbour\])/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
