@@ -54,6 +54,17 @@ export function combatPlayerInfoRect(node, art, viewport, zoom) {
   return { left, top, right: left + width, bottom: top + height, width, height };
 }
 
+// The selected-card action is independent of the reading panel, like Info.
+export function combatPlayerActionRect(node, infoRect, art, zoom) {
+  if (!node) return null;
+  const width = combatControlWidth(node, zoom);
+  const height = node.getBoundingClientRect().height || width;
+  if (!(width > 0 && height > 0)) return null;
+  const left = (art.left + art.right) / 2 - (infoRect?.width || 22) / 2 - 28;
+  const top = art.top - 28;
+  return { left, top, right: left + width, bottom: top + height, width, height };
+}
+
 // A readable player panel can consume the only near-foot slot for another
 // actor. Retry its placement once with those actors' physical cores reserved;
 // retain the first layout unless the full footer pack actually improves.
@@ -109,6 +120,20 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let trackingRequest = 0;
   let settledTargets = [], settledFooterSize = 44;
   let playerInfoRects = [];
+  const labelMeasure = document.createElement('canvas').getContext('2d');
+  function fitLabels() {
+    if (!labelMeasure) return;
+    for (const label of field.querySelectorAll('.nm .ls-label, .intent-stance')) {
+      const box = label.closest('.nm, .intent');
+      const width = box.clientWidth - 8 / uiZoom();
+      if (width <= 0) continue;
+      const style = getComputedStyle(label);
+      const maximum = 11 / uiZoom();
+      labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
+      const measured = labelMeasure.measureText(label.textContent).width;
+      label.style.fontSize = `${Math.max(8 / uiZoom(), maximum * Math.min(1, width / Math.max(1, measured)))}px`;
+    }
+  }
   function readRestingHand() {
     const hand = field.closest('.combat').querySelector('.hand');
     if (!hand) return null;
@@ -123,13 +148,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   function placePlayerHud(reserveFirst = false, targetCores = []) {
     const zoom = uiZoom();
     const combat = field.closest('.combat');
-    const panels = [...field.querySelectorAll(reserveFirst === true ? '.enemy .combatant-leading' : '.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
+    const panels = [...field.querySelectorAll(reserveFirst === true
+      ? '.enemy .intent, .enemy .combatant-info, .enemy .sprite, .turn-ribbon'
+      : '.enemy .intent, .enemy .combatant-info, .enemy .nm, .enemy .meters, .enemy .sprite, .turn-ribbon')]
       .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
     const toolsBox = visibleCombatPanelRect(combat?.querySelector('.combat-tools'), combat);
     if (toolsBox) panels.push(toolsBox);
     panels.push(...targetCores);
-    // Pose/load tracking must respect the same complete footer footprints as
-    // the pack, not only the name/HP children currently painted inside them.
+    // Tracking reserves complete settled targets in the field's current coordinates.
     if (reserveFirst !== true && settledTargets.length) panels.push(
       ...combatTargetHudFootprints(settledTargets, field.getBoundingClientRect(), settledFooterSize));
     const handTop = readRestingHand()?.clearanceTop;
@@ -137,35 +163,42 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
       if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) return [];
       const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      art.width = art.right - art.left;
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
       const viewport = combat.getBoundingClientRect();
       const panel = leading.getBoundingClientRect();
-      // The incoming Info door is anchored above the art, independently of
-      // the reading panel. Reserve its actual future box even while hidden.
       const inspect = leading.querySelector('.combatant-info');
+      const action = leading.querySelector('.player-action-intent');
       const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom);
-      return [{ player, leading, art, stack, viewport, panel, inspect, infoRect }];
+      const actionRect = combatPlayerActionRect(action, infoRect, art, zoom);
+      return [{ player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect }];
     });
-    // Reserve every co-op door before placing any reading panel, including a
-    // later player's hidden door whose artwork already defines its anchor.
-    playerInfoRects = players.map(player => player.infoRect).filter(Boolean);
+    // Reserve every seat's intended Info/action doors before placing any panel,
+    // including selectable doors that have not painted yet.
+    playerInfoRects = players.flatMap(({ infoRect, actionRect }) => [infoRect, actionRect]).filter(Boolean);
     panels.push(...playerInfoRects);
-    for (const { player, leading, art, stack, viewport, panel, inspect, infoRect } of players) {
-      const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport, gap: 4,
+    for (const { player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect } of players) {
+      const expanded = player.classList.contains('context-selected');
+      const panelGap = expanded && viewport.width <= 320 ? 3 : 4;
+      const idleLeft = Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4));
+      const idleTop = Math.min(art.bottom + 3, Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity) - panel.height - 4);
+      const placement = playerDetailsPlacement({
+        art: expanded ? { ...art, top: art.bottom - panel.height } : { ...art, right: idleLeft - 4, top: idleTop - 16 },
+        width: panel.width, height: panel.height, viewport, gap: panelGap,
         handTop: Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity),
         previous: reserveFirst === true ? undefined : { left: panel.left, top: panel.top },
         hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
-      panels.push({ left: placement.left, top: placement.top,
-        right: placement.left + panel.width, bottom: placement.top + panel.height });
+      panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
       const top = `${(placement.top - stack.top) / zoom}px`;
       const left = `${(placement.left - stack.left) / zoom}px`;
       if (leading.style.top !== top) leading.style.top = top;
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
-      if (infoRect) {
-        const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, infoRect, { zoom });
-        inspect.style.left = `${local.left}px`;
-        inspect.style.top = `${local.top}px`;
+      for (const [door, rect] of [[inspect, infoRect], [action, actionRect]]) {
+        if (!rect) continue;
+        const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
+        door.style.left = `${local.left}px`;
+        door.style.top = `${local.top}px`;
       }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
@@ -193,6 +226,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
+    fitLabels();
     const measuredField = field.getBoundingClientRect();
     // CSS zoom can report float noise across equivalent DOM remounts. Snap the
     // dimensions before deriving formation coordinates, not only its cache key.
@@ -509,8 +543,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .reduce((height, footer) => height + (visibleCombatPanelRect(footer, field)?.height || 0), 0),
       footerTop: Math.min(...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .filter(footer => visibleCombatPanelRect(footer, field))
         .map(footer => footer.getBoundingClientRect().top - (parseFloat(footer.style.translate.split(' ')[1]) || 0) * zoom)),
-      footerCenterX: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+      footerCenterX: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')].filter(node => visibleCombatPanelRect(node, field))
         .map(footer => { const rect = footer.getBoundingClientRect(); return rect.left + rect.width / 2 - (parseFloat(footer.style.translate) || 0) * zoom; })[0],
       controls: [...frame.querySelectorAll('.combatant-leading button, .combatant-mini-hud')]
         .map(control => visibleCombatPanelRect(control, field)).filter(Boolean),
@@ -519,7 +554,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // final HUD pass can then keep this slot without competing with a footer.
     placePlayerHud(true);
     const readFooterObstacles = () => {
-      const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading, .player .combatant-info')]
+      const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading, .player .combatant-info, .player .player-action-intent')]
         .map(node => {
           const rect = visibleCombatPanelRect(node, combat);
           if (!rect) return null;
@@ -541,13 +576,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       });
       return footerObstacles;
     };
-    const footerSize = Math.max(44, ...boxes.map(box=>box.footerHeight));
+    const footerSize = Math.max(44, ...boxes.filter((box, index) => placed[index].frame.classList.contains('context-selected')).map(box=>box.footerHeight));
     const packTargets = () => combatTargetAnchors({ width: fieldRect.width,
       height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
       // Crowded HUD/intent bands may leave no vertical slot. Only the plate
       // and its visible footer may then shift by at most one physical target.
       lockX: true, size: footerSize, maxShiftX: 44,
-      obstacles: [...readFooterObstacles(), ...(ribbon ? [ribbon] : []),
+      obstacles: [...readFooterObstacles(),
         ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls)].map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
@@ -577,7 +612,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.style.setProperty('--enemy-hit-height', `${44 / zoom}px`);
       }
       if (frameRect) {
-        const target = targets.find(target => target.id === frame.dataset.eid);
+        const target = targets.find(target => target.id === frame.dataset.eid) || combatFrameTarget({
+          ...boxes[i], id: frame.dataset.eid, fieldRect, footerSize, player: frame.classList.contains('player'),
+        });
         const local = anchorLocalBox(frameRect, { left: fieldRect.left + target.x,
           top: fieldRect.top + target.y, width: 44, height: 44 }, { zoom });
         frame.style.setProperty('--enemy-hit-x', `${local.left}px`);
@@ -592,6 +629,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           footer.style.translate = `${offset.left}px ${offset.top}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = 'var(--combat-layer-selection)';
+        }
+        if (frame.classList.contains('enemy') && !frame.classList.contains('context-selected')) {
+          const meter = frame.querySelector('.combatant-card > .meters');
+          if (meter) {
+            const rect = meter.getBoundingClientRect();
+            const leading = frame.querySelector('.combatant-leading').getBoundingClientRect();
+            const idleOffset = anchorLocalBox(VIEWPORT_ORIGIN, {
+              left: leading.left + (leading.width - rect.width) / 2 - rect.left,
+              top: leading.bottom - rect.height - rect.top, width: 0, height: 0,
+            }, { zoom });
+            meter.style.translate = `${offset.left + idleOffset.left}px ${offset.top + idleOffset.top}px`;
+          }
         }
       }
       sprite.style.setProperty('--sprite-zoom', String(scale / zoom));

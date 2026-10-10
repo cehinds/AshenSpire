@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {combatPlayerInfoRect,combatTargetHudFootprints,visibleCombatPanelRect} from '../src/ui/components/battlefieldStage.js';
+import {combatPlayerInfoRect,combatPlayerActionRect,combatTargetHudFootprints,visibleCombatPanelRect} from '../src/ui/components/battlefieldStage.js';
 import {playerDetailsPlacement} from '../src/ui/models/PlayerDetailsPlacementModel.js';
 
 test('current HUD tracking and footer reads reserve the incoming independent Info and sibling toolbar across a fade',()=>{
@@ -18,19 +18,19 @@ test('current HUD tracking and footer reads reserve the incoming independent Inf
   const tools={style:{},parentElement:combat,getBoundingClientRect:()=>({left:164,right:384,top:356+delta,bottom:400+delta,width:220,height:44})};
   const field={style:{},parentElement:combat,getBoundingClientRect:fieldRect,closest:()=>combat};
   const leading={style:{},parentElement:field,getBoundingClientRect:()=>({left:parseFloat(leading.style.left)*zoom||134,
-    top:parseFloat(leading.style.top)*zoom||246+delta,width:112,height:55}),querySelector:selector=>selector.includes('combatant-info')?info:{}};
+    top:parseFloat(leading.style.top)*zoom||246+delta,width:112,height:55}),querySelector:selector=>selector.includes('combatant-info')?info:selector==='.player-action-intent'?null:{}};
   const info={style:{},parentElement:leading,getBoundingClientRect:()=>visible?{width:44,height:44,
     left:leading.getBoundingClientRect().left+(parseFloat(info.style.left)||0)*zoom,
     top:leading.getBoundingClientRect().top+(parseFloat(info.style.top)||0)*zoom}:{width:0,height:0}};
-  const sprite={},player={dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
+  const sprite={},player={classList:{contains:()=>false},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
     selector==='.combatant-leading'?leading:{getBoundingClientRect:()=>({left:0,top:0})}};
   combat.querySelector=selector=>selector==='.combat-tools'?tools:selector==='.combat-hud'?{getBoundingClientRect:()=>({bottom:80+delta})}:null;
   combat.querySelectorAll=()=>[]; // The hidden reading door has no painted DOM rectangle.
   field.querySelectorAll=selector=>selector==='.combatant.player'?[player]:[];
   const settledTargets=[{id:'e1',x:264,y:200,width:88},{id:'e3',x:264,y:154,width:88}];
   const context={field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
-    combatPlayerInfoRect,visibleCombatPanelRect,uiZoom:()=>zoom,
-    currentSpriteArtBounds:()=>({left:50,right:130,top:230+delta}),readRestingHand:()=>({clearanceTop:404+delta}),
+    combatPlayerInfoRect,combatPlayerActionRect,visibleCombatPanelRect,uiZoom:()=>zoom,
+    currentSpriteArtBounds:()=>({left:50,right:130,top:230+delta,bottom:300+delta}),readRestingHand:()=>({clearanceTop:404+delta}),
     playerDetailsPlacement:input=>{options=input;return playerDetailsPlacement(input);},
     anchorLocalBox:(host,rect,{zoom})=>({left:(rect.left-host.left)/zoom,top:(rect.top-host.top)/zoom}),
     combat};
@@ -70,16 +70,16 @@ test('the first co-op panel reserves every later independently anchored Info bef
   const players=infos.map((infoRect,index)=>{
     const sprite={index},inspect={style:{},infoRect};
     const leading={style:{},getBoundingClientRect:()=>({left:130+index*280,top:230,width:100,height:55}),
-      querySelector:selector=>selector==='.combatant-info'?inspect:{}};
-    return {dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
+      querySelector:selector=>selector==='.combatant-info'?inspect:selector==='.player-action-intent'?null:{}};
+    return {classList:{contains:()=>true},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
       selector==='.combatant-leading'?leading:{getBoundingClientRect:()=>({left:0,top:0})}};
   });
   const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),
     querySelectorAll:selector=>selector==='.combatant.player'?players:[]};
   const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{
     field,uiZoom:()=>1,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,
-    readRestingHand:()=>null,currentSpriteArtBounds:sprite=>({left:60+sprite.index*280,right:104+sprite.index*280,top:224}),
-    combatPlayerInfoRect:node=>node.infoRect,combatTargetHudFootprints,playerInfoRects:[],
+    readRestingHand:()=>null,currentSpriteArtBounds:sprite=>({left:60+sprite.index*280,right:104+sprite.index*280,top:224,bottom:300}),
+    combatPlayerInfoRect:node=>node.infoRect,combatPlayerActionRect,combatTargetHudFootprints,playerInfoRects:[],
     playerDetailsPlacement:options=>{calls.push([...options.obstacles]);return {left:130+calls.length*10,top:230};},
     anchorLocalBox:(host,rect)=>({left:rect.left-host.left,top:rect.top-host.top}),
   });

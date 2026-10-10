@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
 import { playerDetailsPlacement } from '../src/ui/models/PlayerDetailsPlacementModel.js';
-import { packCombatTargetsWithHud, combatTargetHudFootprints } from '../src/ui/components/battlefieldStage.js';
+import { packCombatTargetsWithHud, combatTargetHudFootprints, combatPlayerActionRect } from '../src/ui/components/battlefieldStage.js';
 
 test('historical1209 phone geometry packs full footers beside its original reserved HUD and hand layout', () => {
   // Native1209 original RED and separate passive logpoints. These are screen
@@ -77,11 +77,16 @@ test('historical1209 phone geometry packs full footers beside its original reser
   assert.ok(start>=0&&end>start);
   let delta=0,lastInput;
   const rect=()=>({left:0,top:fieldTop+delta});
-  const leading={style:{},querySelector:selector=>selector.includes('combatant-info')?null:{},
+  const leading={style:{},querySelector:selector=>selector.includes('combatant-info')||selector==='.player-action-intent'?null:{},
     getBoundingClientRect:()=>({left:parseFloat(leading.style.left)||hud.left,
       top:parseFloat(leading.style.top)||hud.top+delta,width:128,height:placement.height})};
+  // Complete the VM's artwork box for the new idle-panel preference. These
+  // left/bottom values reconstruct the captured target receipt, not a claim
+  // that native1209 captured the internal currentSpriteArtBounds result.
+  const trackingArt={...placement.art,left:targets[0].x*2-placement.art.right,
+    bottom:fieldTop+targets[0].y-22};
   const sprite={};
-  const player={dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
+  const player={classList:{contains:()=>false},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
     selector==='.combatant-leading'?leading:{getBoundingClientRect:()=>({left:0,top:0})}};
   const combat={getBoundingClientRect:()=>({...placement.viewport,top:placement.viewport.top+delta,
     bottom:placement.viewport.bottom+delta}),querySelector:selector=>selector==='.combat-tools'?null:{getBoundingClientRect:()=>({bottom:fieldTop+delta})}};
@@ -89,9 +94,9 @@ test('historical1209 phone geometry packs full footers beside its original reser
     querySelectorAll:selector=>selector==='.combatant.player'?[player]:intents.map(box=>({...box,
       top:box.top+delta,bottom:box.bottom+delta}))};
   const tracking=runInNewContext(stage.slice(start,end)+'\nplacePlayerHud',{
-    field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,
+    field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,playerInfoRects:[],combatPlayerActionRect,
     uiZoom:()=>1,visibleCombatPanelRect:node=>node,combatPlayerInfoRect:()=>null,
-    currentSpriteArtBounds:()=>({...placement.art,top:placement.art.top+delta}),
+    currentSpriteArtBounds:()=>({...trackingArt,top:trackingArt.top+delta,bottom:trackingArt.bottom+delta}),
     readRestingHand:()=>({clearanceTop:handTop+delta}),
     playerDetailsPlacement:options=>{lastInput=options;return playerDetailsPlacement(options);},
   });

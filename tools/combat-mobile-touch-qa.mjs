@@ -66,6 +66,18 @@ try {
       result.url = page.url(); result.title = await page.title();
       await page.waitForSelector('.hand .card', { timeout: 120000 });
       await page.waitForTimeout(1500);
+      const overlaps = (a, b) => a.left < b.right - .5 && a.right > b.left + .5 && a.top < b.bottom - .5 && a.bottom > b.top + .5;
+      const idleEnemies = await page.evaluate(() => [...document.querySelectorAll('.enemy:not(.dead)')].map(enemy => ({
+        id: enemy.dataset.eid, body: enemy.querySelector('.sprite').getBoundingClientRect().toJSON(),
+        hp: enemy.querySelector('.combat-health-row').getBoundingClientRect().toJSON(),
+        nameHidden: getComputedStyle(enemy.querySelector('.nm')).display === 'none',
+        compactVisible: getComputedStyle(enemy.querySelector('.intent-compact')).display !== 'none',
+      })));
+      assert(idleEnemies.every(enemy => enemy.nameHidden && enemy.compactVisible && enemy.hp.bottom <= enemy.body.top + .5),
+        `${width}: idle enemy must have compact intent and HP above body, with name hidden`);
+      assert(idleEnemies.every((enemy, index) => idleEnemies.slice(index + 1).every(other => !overlaps(enemy.hp, other.hp))),
+        `${width}: idle enemy health controls overlap`);
+      result.steps.push({ route: 'idle-enemy-controls', enemies: idleEnemies }); save();
       await page.screenshot({ path: `${out}/${width}-initial.png` });
       await tap('[data-combat-tool="log"]');
       assert(await page.locator('#combat-log').isVisible(), 'combat log opens on touch');
@@ -95,50 +107,41 @@ try {
           body: enemy.querySelector('.sprite').getBoundingClientRect().toJSON(),
           name: enemy.querySelector('.nm').getBoundingClientRect().toJSON() }));
         const inspect = document.querySelector('.player .combatant-info').getBoundingClientRect().toJSON();
-        const playerSprite = document.querySelector('.player .sprite');
-        // Check the visible character, excluding transparent sprite padding.
-        // Scan the rendered image independently, so this also checks packaged
-        // builds without importing their source geometry implementation.
-        const art = [...playerSprite.querySelectorAll('img, canvas')].filter(image => {
-          if ((image.tagName === 'IMG' && (!image.complete || !image.naturalWidth)) || !image.getBoundingClientRect().width) return false;
-          for (let node = image; node && node !== playerSprite; node = node.parentElement) {
-            const style = getComputedStyle(node);
-            if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
-          }
-          return true;
-        }).map(image => {
-          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth || image.width; canvas.height = image.naturalHeight || image.height;
-          const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
-          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-          let x0 = canvas.width, y0 = canvas.height, x1 = -1, y1 = -1;
-          for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
-            if (pixels[(y * canvas.width + x) * 4 + 3] < 40) continue;
-            x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-          }
-          const r = image.getBoundingClientRect(), scale = Math.min(r.width / canvas.width, r.height / canvas.height);
-          return { left: r.left + (r.width - canvas.width * scale) / 2 + x0 * scale,
-            right: r.left + (r.width - canvas.width * scale) / 2 + (x1 + 1) * scale,
-            top: r.top + (r.height - canvas.height * scale) / 2 + y0 * scale,
-            bottom: r.top + (r.height - canvas.height * scale) / 2 + (y1 + 1) * scale };
-        });
-        const playerBody = art.length ? { left: Math.min(...art.map(r => r.left)), right: Math.max(...art.map(r => r.right)),
-          top: Math.min(...art.map(r => r.top)), bottom: Math.max(...art.map(r => r.bottom)) } : playerSprite.getBoundingClientRect().toJSON();
-        return { panel: panel.toJSON(), obstacles, resources, enemies, inspect, playerBody };
+        const player = document.querySelector('.player');
+        return { panel: panel.toJSON(), obstacles, resources, enemies, inspect,
+          playerBody: player.querySelector('.sprite').getBoundingClientRect().toJSON(), artTop: Number(player.dataset.spriteArtTop) };
       });
-      const overlaps = (a, b) => a.left < b.right - .5 && a.right > b.left + .5 && a.top < b.bottom - .5 && a.bottom > b.top + .5;
       result.steps.push({ route: 'player-details', revealed: true, geometry: details }); save();
       const covered = details.obstacles.filter(obstacle => overlaps(details.panel, obstacle.rect));
       assert.equal(covered.length, 0, `${width}: selected character details overlap ${covered.map(obstacle => obstacle.label).join(', ')}`);
       assert(details.resources.every((resource, index) => details.resources.slice(index + 1)
         .every(other => !overlaps(resource.rect, other.rect))), `${width}: selected character resource labels overlap`);
-      assert(details.enemies.every(enemy => enemy.name.top >= enemy.body.bottom - .5), `${width}: enemy nameplates cover their own bodies`);
-      assert(Math.abs((details.inspect.left + details.inspect.right) / 2 - (details.playerBody.left + details.playerBody.right) / 2) <= 2,
-        `${width}: player Inspect is not centered over its body`);
-      assert(!overlaps(details.inspect, details.panel), `${width}: player Inspect overlaps character details`);
+      const inspectCenter = (details.inspect.left + details.inspect.right) / 2;
+      assert(Math.abs(inspectCenter - (details.playerBody.left + details.playerBody.right) / 2) < details.playerBody.width * .2,
+        `${width}: player Inspect is not over the visible character`);
+      assert(details.inspect.bottom <= details.artTop + .5, `${width}: player Inspect is not above its sprite`);
+      assert(!overlaps(details.inspect, details.panel), `${width}: player Inspect overlaps details`);
+      assert(details.obstacles.every(obstacle => !overlaps(details.inspect, obstacle.rect)), `${width}: player Inspect overlaps enemy art, plates or toolbar`);
       await page.screenshot({ path: `${out}/${width}-details.png` });
-      await tap('.enemy:not(.dead) .nm');
+      await tap('.player .combatant-info');
       await page.locator('.combatant-door').waitFor();
-      result.steps.push({ route: 'enemy-footer-inspection', opened: true }); save();
+      result.steps.push({ route: 'player-panel-inspection', opened: true }); save();
+      await page.locator('.combatant-door').getByRole('button', { name: 'Close', exact: true }).tap();
+      await page.waitForTimeout(350);
+      await tap('.enemy:not(.dead) .combat-health-row');
+      assert(await page.locator('.enemy.context-selected').count(), 'enemy HP selects its actor');
+      const selectedEnemy = await page.evaluate(() => {
+        const enemy = document.querySelector('.enemy.context-selected');
+        return { body: enemy.querySelector('.sprite').getBoundingClientRect().toJSON(),
+          name: enemy.querySelector('.nm').getBoundingClientRect().toJSON() };
+      });
+      assert(selectedEnemy.name.height > 0 && selectedEnemy.name.top >= selectedEnemy.body.bottom - .5,
+        `${width}: selected enemy name must appear below its body`);
+      await page.locator('.enemy.context-selected[data-inspect-ready="true"] .combatant-info').waitFor({ state: 'visible' });
+      await page.screenshot({ path: `${out}/${width}-enemy-selected.png` });
+      await tap('.enemy.context-selected .combatant-info');
+      await page.locator('.combatant-door').waitFor();
+      result.steps.push({ route: 'enemy-hp-selection-inspection', opened: true, ...selectedEnemy }); save();
       await page.locator('.combatant-door').getByRole('button', { name: 'Close', exact: true }).tap();
       await page.waitForTimeout(350);
       // The real starting hand has defensive cards. A tap selects; a second
@@ -146,6 +149,10 @@ try {
       const self = (await hand())[0];
       await tap(cardSelector(self));
       assert(await page.locator(`${cardSelector(self)}.selected`).count(), 'trailing touch click must retain card selection');
+      const stance = page.locator('.player-action-intent');
+      assert(await stance.isVisible(), 'armed defend card reveals player stance icon');
+      assert.match(await stance.getAttribute('aria-label'), /defend/i, 'stance derives from the selected defend action');
+      assert(await stance.locator('svg path').count(), 'stance icon has visible authored geometry');
       const cardInspect = page.locator('.card-info-button:visible').filter({ visible: true });
       await cardInspect.first().waitFor({ state: 'visible' });
       const cardInspectGeometry = await page.evaluate(() => {

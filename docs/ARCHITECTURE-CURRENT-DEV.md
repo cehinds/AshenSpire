@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `codex/combat-hud-contract-repair-20261009`
-- Source commit: `33c053524b09fab4c64a5b1b9b2818134068c77d`
+- Source branch: `codex/combat-hud-latest-reconcile-20261009`
+- Source commit: `32c945f006137360699aeff5617a0bb377ff03d0`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -30,8 +30,8 @@
 | Code-side content adapters | `src/content/` | 154 |
 | Authoritative JSON/CSV content | `content/source/` | 32 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 473 |
-| Architecture/tooling | `tools/` | 464 |
+| Tests | `tests/` | 475 |
+| Architecture/tooling | `tools/` | 466 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **13339**.
-Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 44, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 60, `.jpg` 282, `.js` 772, `.json` 873, `.jsonl` 1, `.log` 15, `.md` 262, `.mjs` 878, `.nojekyll` 1, `.nsi` 1, `.png` 1870, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.tap` 1, `.txt` 43, `.webp` 7338, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
+Tracked files: **13369**.
+Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 44, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 60, `.jpg` 282, `.js` 772, `.json` 883, `.jsonl` 1, `.log` 15, `.md` 262, `.mjs` 882, `.nojekyll` 1, `.nsi` 1, `.png` 1886, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.tap` 1, `.txt` 43, `.webp` 7338, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

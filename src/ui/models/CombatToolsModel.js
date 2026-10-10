@@ -19,6 +19,10 @@ export function combatLogHeight({ size = 'Small', cardHeight, viewportHeight, do
 export function combatLogSnapSize(height, heights) {
   return COMBAT_LOG_SIZES.reduce((nearest, size) => Math.abs(heights[size] - height) < Math.abs(heights[nearest] - height) ? size : nearest, 'Small');
 }
+export function combatLogDragScale({ heights, viewportHeight, handleBottom }) {
+  const travel = Math.max(24, Math.min(120, viewportHeight - handleBottom - 8));
+  return Math.max(1, (heights.Large - heights.Small) / travel);
+}
 export function combatToolsModel({ supported, enabled, disabled = false, open = false, size = 'Small', entries = [] }) {
   return componentModel(UI.combatTools, { children: [
     componentModel(UI.combatLogDrawer, { properties: { open, size, entries }, behaviors: [

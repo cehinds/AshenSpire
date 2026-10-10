@@ -37,6 +37,10 @@ export function combatantInfo(name, open) {
   attachTooltip(node, () => `<div class="tt-title">${esc(name)}</div>Inspect resources, skills, and active effects.`, {
     selectionFirst: true, activate: open, intent: 'above', align: 'center',
   });
+  node.addEventListener('click', event => {
+    if (!node.closest('.combatant')?.classList.contains('context-selected')) return;
+    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip(); open(node);
+  }, true);
   return node;
 }
 
@@ -50,6 +54,11 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   node.dataset.intentVisibility = badge.visibility;
   node.dataset.stance = badge.stance;
   node.dataset.intentHidden = String(!!intent?.hidden);
+  const compact = document.createElement('span');
+  compact.className = 'intent-compact';
+  if (badge.parts[0]) compact.append(intentIcon(badge.parts[0].icon));
+  if (badge.visibility !== 'known') compact.append(document.createTextNode(' ?'));
+  node.append(compact);
   node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}`);
   {
     const stanceNode = document.createElement('span');
@@ -86,5 +95,19 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
     if (onTarget() === false) return;
     event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
   }, true);
+  return node;
+}
+
+// Selected card previews use authored action identity, never card-name guesses.
+export function playerActionIntent(profile, onTarget) {
+  if (!profile?.maneuver) return null;
+  const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'attack', ranged: 'attack', casting: 'cast' })[profile.maneuver]
+    || (profile.camp === 'spell' ? 'cast' : null);
+  if (!icon) return null;
+  const node = document.createElement('button');
+  node.type = 'button'; node.className = 'player-action-intent overhead-control';
+  node.setAttribute('aria-label', `Selected action: ${profile.maneuver}`);
+  node.append(intentIcon(icon));
+  node.addEventListener('click', event => { event.stopPropagation(); onTarget(); });
   return node;
 }

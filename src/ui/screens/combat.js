@@ -1,6 +1,7 @@
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
@@ -627,12 +628,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const player = $('.combatant.player');
     player?.classList.toggle('armed', !!selfArm);
     if (player) { player.tabIndex = selfArm ? 0 : -1; player.setAttribute('aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }
-    const def = active && resolveCard(registries, findInst(active));
+    const inst = active && findInst(active);
+    const def = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     player?.classList.toggle('skill-selected', cardKind(def) === 'skill');
+    syncPlayerActionIntent(player, inst);
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
     refreshAim();
+  }
+
+  function syncPlayerActionIntent(player, inst) {
+    const leading = player?.querySelector('.combatant-leading');
+    if (!leading) return;
+    leading.querySelector('.player-action-intent')?.remove();
+    const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
+    const action = playerActionIntent(def ? combatProfileFor(def) : null, () => {
+      if (selfArm) playCard(selfArm, null);
+      else selectCombatant('player');
+    });
+    if (action) leading.append(action);
+    combatEl.dispatchEvent(new CustomEvent('combatantselectionchange'));
   }
 
   function armSelf(instanceId) {
@@ -1465,6 +1481,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       playCard(selfArm, null);
     }, true);
     if (!existing) zone.appendChild(box);
+    const activeCard = findInst(selected || selfArm);
+    syncPlayerActionIntent(box, activeCard);
     stageFor(box)?.setStance?.(heldStances.get());
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
     playerRenderKey = renderKey;
@@ -1530,7 +1548,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (!getEntity(combat, enemy.id)?.alive) return;
         if (selected) playCard(selected, enemy.id);
         else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-        else openCombatantDoor(combatantSubject('enemy', enemy));
+        else selectCombatant(enemy.id);
       };
       nm.addEventListener('click', openThisRead);
       nm.addEventListener('keydown', (event) => {
