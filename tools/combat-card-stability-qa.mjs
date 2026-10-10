@@ -33,7 +33,12 @@ try {
   const id=await card.getAttribute('data-card-id');await card.evaluate(e=>e.dataset.probeCard='true');const pt=await page.evaluate(pointerTargetExpression('[data-probe-card="true"]'));await page.mouse.click(pt.x,pt.y);
   await page.waitForTimeout(150);records.push({state:'selected '+id,geometry:await geometry()});
   await page.evaluate(()=>{window.__samples=[];let until=performance.now()+1400;const take=()=>{const s=document.querySelector('.combatant.player .sprite'),r=s.getBoundingClientRect(),cs=getComputedStyle(s);window.__samples.push({x:r.x,y:r.y,w:r.width,h:r.height,transform:cs.transform,translate:cs.translate,action:s.dataset.actionMotion});if(performance.now()<until)requestAnimationFrame(take);};take();});
-  const sel=await page.locator('.combatant.player.armed').count()?'.combatant.player.armed':'.combatant.enemy.targetable';
+  let sel='.combatant.player.armed';
+  if(!await page.locator(sel).count()) {
+   const targetId=await page.locator('.combatant.enemy.targetable').first().getAttribute('data-eid');
+   assert(targetId,'armed enemy card has a legal target');
+   sel=await page.evaluate(id=>`.enemy-target-picker:not([hidden]) .enemy-target-button[data-eid="${CSS.escape(id)}"]:not([disabled])`,targetId);
+  }
   if(await page.locator(sel).count()){const tp=await page.evaluate(pointerTargetExpression(sel));await page.mouse.click(tp.x,tp.y);}
   await page.waitForTimeout(1800);records.push({state:'after '+id,geometry:await geometry(),samples:await page.evaluate(()=>window.__samples),count:await page.evaluate(()=>window.__combat?.player?.counters?.cardsPlayedThisCombat)});
  }

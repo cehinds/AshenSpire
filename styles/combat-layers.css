@@ -19,6 +19,13 @@
 :root .combat[data-layout='formation'] .combatant.player .sprite {
   z-index: calc(var(--combat-layer-player) + var(--combat-depth, 0)) !important;
 }
+/* Reading selection is a temporary visual emphasis. Independent scale leaves
+   the fitted zoom, action transforms and cached artwork dimensions untouched. */
+:root .combat[data-layout='formation'] .combatant.context-selected .sprite {
+  scale: 1.05;
+  transform-origin: center bottom;
+  z-index: calc(var(--combat-layer-player) + 50 + var(--combat-depth, 0)) !important;
+}
 :root .combat[data-layout='formation'] .combatant.ended { --combat-state-opacity: .62; }
 :root .combat[data-layout='formation'] .combatant:is(.down,.away) { --combat-state-opacity: .45; }
 :root .combat[data-layout='formation'] .combatant.dead { --combat-state-opacity: .25; }
@@ -138,7 +145,7 @@
   display: inline-flex; align-items: center; font-size: calc(9px / var(--ui-zoom,1)); gap: 2px;
 }
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
-  position: absolute; right: 100%; bottom: 0;
+  position: absolute; right: auto; bottom: auto;
 }
 @media (max-height: 480px) and (min-width: 600px) {
   :root .combat[data-layout='formation'] .combat-tools {
@@ -147,4 +154,169 @@
   :root .combat[data-layout='formation'] .combat-tools .combat-log-panel {
     left: 0; right: auto;
   }
+}
+
+/* The hand owns a slim tool row; no side panel steals a phone's card slots. */
+:root .combat[data-layout='formation'] .combat-tools {
+  display: grid; grid-template-columns: 1fr 1.25fr; gap: calc(8px / var(--ui-zoom,1));
+  padding: 0; border: 0; background: none; box-shadow: none;
+}
+:root .combat[data-layout='formation'] .combat-tools > button {
+  min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
+  padding: 0; border: 0; background: none; box-shadow: none;
+  font-size: calc(11px / var(--ui-zoom,1)); white-space: nowrap;
+}
+:root .combat[data-layout='formation'] .combat-tools .reaction-switch-track {
+  width: calc(60px / var(--ui-zoom,1)); height: calc(19px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(9px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: 0; right: auto; }
+
+/* Health remains available as a self-target; additional details unfold only
+   for the selected character in a compact readable panel. */
+:root .combat[data-layout='formation'] .player .combatant-leading { width: calc(112px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combatant-mini-hud {
+  border: 0; border-radius: 0; background: none; box-shadow: none; padding: 0;
+  pointer-events: auto; cursor: pointer;
+}
+:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud > .nm,
+:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='resource'],
+:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='stance'],
+:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud .statuses { display: none !important; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: calc(11px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { background: none; border: 0; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { min-height: 0; line-height: calc(13px / var(--ui-zoom,1)); margin: 0; padding: 0; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { display: grid; grid-template-columns: 1fr 1fr; gap: calc(2px / var(--ui-zoom,1)); padding: 0; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row { grid-column: 1 / -1; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] { gap: 1px; height: calc(12px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] .m-track { display: none; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] :is(.m-label,.m-plate) { font-size: calc(9px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] :is(.m-well,.engraved-icon) { display: none; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] .m-plate { width: 100%; min-width: 0; gap: 1px; justify-content: space-between; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] :is(.m-label,.m-value) { font-size: calc(9px / var(--ui-zoom,1)); white-space: nowrap; }
+:root .combat[data-compact-combat='true'] .combatant-leading .intent {
+  width: calc(74px / var(--ui-zoom,1)); min-width: calc(74px / var(--ui-zoom,1)); min-height: calc(42px / var(--ui-zoom,1));
+  padding: calc(3px / var(--ui-zoom,1)); gap: calc(2px / var(--ui-zoom,1));
+  font-size: calc(16px / var(--ui-zoom,1)); border-width: 1px;
+}
+:root .combat[data-compact-combat='true'] .intent .intent-stance { font-size: calc(10px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .intent .intent-icon { width: calc(16px / var(--ui-zoom,1)); height: calc(16px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .enemy .combatant-card > :is(.nm,.meters) { width: calc(88px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .enemy .combatant-card > .nm { height: calc(15px / var(--ui-zoom,1)); line-height: calc(15px / var(--ui-zoom,1)); font-size: calc(10px / var(--ui-zoom,1)); }
+
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud {
+  background: #1c1812f2; border: 1px solid #a48743; border-radius: 4px;
+  padding: 0; box-shadow: 0 2px 6px #0006;
+}
+:root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
+  --inspect-box: calc(22px / var(--ui-zoom,1));
+}
+
+:root .combat[data-layout='formation'] .combat-tools [data-combat-tool='log'] { touch-action: none; }
+:root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: auto; right: 0; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row {
+  --health-row-h: calc(16px / var(--ui-zoom,1));
+  min-height: calc(44px / var(--ui-zoom,1)); align-items: center;
+}
+
+/* A selected card and its Inspect control remain above the hand toolbar. */
+:root .combat[data-layout='formation'] .combat-tools { z-index: calc(var(--combat-layer-cards) - 1) !important; }
+:root .combat[data-layout='formation'] .combat-tools:has(.combat-log-panel:not([hidden])) {
+  z-index: calc(var(--combat-layer-hud) + 1) !important;
+}
+
+:root .combat[data-layout='formation'] :is(.hand-overlay,.hand) { pointer-events: none !important; }
+:root .combat[data-layout='formation'] .hand :is(.card,.card-info-button) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next,.hand-info-portal) { pointer-events: auto; }
+
+:root .combat[data-layout="formation"] .hand[data-wireframe-hand="true"] .card > .card-info-button { pointer-events: auto; }
+
+/* Combat leaves the toolbar outside the card and the reading door inside it.
+   Other card surfaces retain their shared above-card Inspect placement. */
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-info-button {
+  top: calc(4px / var(--ui-zoom, 1)); right: calc(4px / var(--ui-zoom, 1)); left: auto; bottom: auto;
+  transform: none; z-index: 21;
+}
+:root .combat[data-layout='formation'] :is(.card > .card-info-button,.hand-info-portal) {
+  --inspect-box: calc(44px / var(--ui-zoom, 1));
+  width: var(--inspect-box); height: var(--inspect-box);
+  min-width: var(--inspect-box); min-height: var(--inspect-box);
+  max-width: var(--inspect-box); max-height: var(--inspect-box);
+}
+:root .combat[data-layout='formation'] .hand-info-portal { transform: none; }
+
+/* Approved combat HUD: the actor owns every compact and expanded surface. */
+/* The legacy appearance adds a permanent faction-colored edge. Selection and
+   armed-target silhouettes now own that cue; idle artwork stays unoutlined. */
+:root .combat[data-layout='formation'] .combatant .alternative-silhouette { filter: none; }
+:root .combat[data-layout='formation'] .combatant { --combatant-highlight: #ef4949; }
+:root .combat[data-layout='formation'] .combatant.player { --combatant-highlight: #65df68; }
+:root .combat[data-layout='formation'] .combatant.context-selected .sprite {
+  filter: drop-shadow(1px 0 0 var(--combatant-highlight)) drop-shadow(-1px 0 0 var(--combatant-highlight)) drop-shadow(0 1px 2px var(--combatant-highlight));
+}
+:root .combat[data-layout='formation'] .combatant-leading > .combatant-info {
+  --inspect-box: calc(22px / var(--ui-zoom,1));
+  width: var(--inspect-box); height: var(--inspect-box); min-width: var(--inspect-box); min-height: var(--inspect-box);
+  max-width: var(--inspect-box); max-height: var(--inspect-box); padding: 0;
+  font-size: calc(14px / var(--ui-zoom,1)); border: 1px solid var(--gold);
+}
+:root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
+:root .combat[data-layout='formation'] .context-selected .combatant-leading > .combatant-info {
+  border-color: var(--combatant-highlight); color: var(--combatant-highlight); box-shadow: 0 0 3px var(--combatant-highlight);
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading { flex-direction: column; }
+:root .combat[data-layout='formation'] .enemy .combatant-leading .intent { width: calc(104px / var(--ui-zoom,1)); min-width: calc(104px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .enemy .combatant-leading .intent { width: calc(88px / var(--ui-zoom,1)); min-width: calc(88px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .intent { order: -1; }
+:root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-leading { padding-bottom: calc(22px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .intent-compact { display: none; align-items: center; gap: calc(3px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
+  background: none; border: 0; box-shadow: none; padding: 0;
+  min-height: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1));
+  color: #ffe7ab; font-size: calc(16px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact) { display: none; }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent .intent-compact { display: inline-flex; }
+:root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--combatant-highlight); }
+:root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-card > .nm { display: none !important; }
+:root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-card > .meters {
+  background: none; border: 0; padding: 0; margin: 0;
+}
+:root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > :is(.nm,.meters) { border-color: var(--combatant-highlight); }
+:root .combat[data-layout='formation'] .enemy:not(.context-selected)::after { display: none; }
+:root .combat[data-compact-combat='true'] .enemy.context-selected .combat-health-row { --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); }
+:root .combat[data-compact-combat='true'] .enemy.context-selected .combatant-card > .meters { padding: calc(2px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud {
+  border-color: var(--combatant-highlight); padding: calc(4px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player-action-intent {
+  position: absolute; display: grid; place-items: center;
+  width: calc(24px / var(--ui-zoom,1)); height: calc(24px / var(--ui-zoom,1));
+  min-width: 0; min-height: 0; padding: 0; border: 0; background: none; box-shadow: none; color: var(--gold);
+}
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); min-height: var(--health-row-h); padding-bottom: calc(12px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
+
+/* Compact details keep all three rows readable without a 44px empty HP slot. */
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(128px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { padding: 0; gap: 0; }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm { height: calc(13px / var(--ui-zoom,1)); min-height: 0; }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { gap: 0 calc(4px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row {
+  --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h);
+  --combatant-value-text: calc(11px / var(--ui-zoom,1));
+  height: var(--health-row-h); min-height: var(--health-row-h);
+}
+@media (max-width: 320px) {
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(4px / var(--ui-zoom,1)); }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm {
+    grid-column: 1; grid-row: 1; height: calc(12px / var(--ui-zoom,1));
+    font-size: calc(9px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
+  }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { display: contents; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row { grid-column: 2; grid-row: 1; min-width: 0; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud [data-meter-row='resource'] { grid-row: 2; min-width: 0; }
 }

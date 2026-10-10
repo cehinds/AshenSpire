@@ -1,0 +1,466 @@
+[
+  {
+    "width": 288,
+    "height": 513,
+    "steps": [
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.9375,
+            "y": 227.5,
+            "width": 264,
+            "height": 55.484375,
+            "top": 227.5,
+            "right": 281.9375,
+            "bottom": 282.984375,
+            "left": 17.9375
+          },
+          "tools": {
+            "x": 61.984375,
+            "y": 288.984375,
+            "width": 219.953125,
+            "height": 29.984375,
+            "top": 288.984375,
+            "right": 281.9375,
+            "bottom": 318.96875,
+            "left": 61.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.9375,
+            "y": 143.015625,
+            "width": 264,
+            "height": 139.96875,
+            "top": 143.015625,
+            "right": 281.9375,
+            "bottom": 282.984375,
+            "left": 17.9375
+          },
+          "tools": {
+            "x": 61.984375,
+            "y": 288.984375,
+            "width": 219.953125,
+            "height": 29.984375,
+            "top": 288.984375,
+            "right": 281.9375,
+            "bottom": 318.96875,
+            "left": 61.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 17.9375,
+            "y": 58.546875,
+            "width": 264,
+            "height": 224.4375,
+            "top": 58.546875,
+            "right": 281.9375,
+            "bottom": 282.984375,
+            "left": 17.9375
+          },
+          "tools": {
+            "x": 61.984375,
+            "y": 288.984375,
+            "width": 219.953125,
+            "height": 29.984375,
+            "top": 288.984375,
+            "right": 281.9375,
+            "bottom": 318.96875,
+            "left": 61.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        }
+      }
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "steps": [
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.65625,
+            "y": 282.5,
+            "width": 296,
+            "height": 55.40625,
+            "top": 282.5,
+            "right": 313.65625,
+            "bottom": 337.90625,
+            "left": 17.65625
+          },
+          "tools": {
+            "x": 93.890625,
+            "y": 343.90625,
+            "width": 219.765625,
+            "height": 30,
+            "top": 343.90625,
+            "right": 313.65625,
+            "bottom": 373.90625,
+            "left": 93.890625
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.65625,
+            "y": 170.984375,
+            "width": 296,
+            "height": 166.921875,
+            "top": 170.984375,
+            "right": 313.65625,
+            "bottom": 337.90625,
+            "left": 17.65625
+          },
+          "tools": {
+            "x": 93.890625,
+            "y": 343.90625,
+            "width": 219.765625,
+            "height": 30,
+            "top": 343.90625,
+            "right": 313.65625,
+            "bottom": 373.90625,
+            "left": 93.890625
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 17.65625,
+            "y": 59.46875,
+            "width": 296,
+            "height": 278.4375,
+            "top": 59.46875,
+            "right": 313.65625,
+            "bottom": 337.90625,
+            "left": 17.65625
+          },
+          "tools": {
+            "x": 93.890625,
+            "y": 343.90625,
+            "width": 219.765625,
+            "height": 30,
+            "top": 343.90625,
+            "right": 313.65625,
+            "bottom": 373.90625,
+            "left": 93.890625
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        }
+      }
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "steps": [
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 507.09375,
+            "width": 300,
+            "height": 62.6875,
+            "top": 507.09375,
+            "right": 383.6875,
+            "bottom": 569.78125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 163.859375,
+            "y": 575.78125,
+            "width": 219.828125,
+            "height": 30,
+            "top": 575.78125,
+            "right": 383.6875,
+            "bottom": 605.78125,
+            "left": 163.859375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 148.109375,
+            "width": 300,
+            "height": 421.671875,
+            "top": 148.109375,
+            "right": 383.6875,
+            "bottom": 569.78125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 163.859375,
+            "y": 575.78125,
+            "width": 219.828125,
+            "height": 30,
+            "top": 575.78125,
+            "right": 383.6875,
+            "bottom": 605.78125,
+            "left": 163.859375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 61.40625,
+            "width": 300,
+            "height": 508.375,
+            "top": 61.40625,
+            "right": 383.6875,
+            "bottom": 569.78125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 163.859375,
+            "y": 575.78125,
+            "width": 219.828125,
+            "height": 30,
+            "top": 575.78125,
+            "right": 383.6875,
+            "bottom": 605.78125,
+            "left": 163.859375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        }
+      }
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "steps": [
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 414.28125,
+            "y": 153.984375,
+            "width": 300,
+            "height": 56.96875,
+            "top": 153.984375,
+            "right": 714.28125,
+            "bottom": 210.953125,
+            "left": 414.28125
+          },
+          "tools": {
+            "x": 494.34375,
+            "y": 216.953125,
+            "width": 219.9375,
+            "height": 30,
+            "top": 216.953125,
+            "right": 714.28125,
+            "bottom": 246.953125,
+            "left": 494.34375
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 414.28125,
+            "y": 97.015625,
+            "width": 300,
+            "height": 113.9375,
+            "top": 97.015625,
+            "right": 714.28125,
+            "bottom": 210.953125,
+            "left": 414.28125
+          },
+          "tools": {
+            "x": 494.34375,
+            "y": 216.953125,
+            "width": 219.9375,
+            "height": 30,
+            "top": 216.953125,
+            "right": 714.28125,
+            "bottom": 246.953125,
+            "left": 494.34375
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 414.28125,
+            "y": 40.046875,
+            "width": 300,
+            "height": 170.90625,
+            "top": 40.046875,
+            "right": 714.28125,
+            "bottom": 210.953125,
+            "left": 414.28125
+          },
+          "tools": {
+            "x": 494.34375,
+            "y": 216.953125,
+            "width": 219.9375,
+            "height": 30,
+            "top": 216.953125,
+            "right": 714.28125,
+            "bottom": 246.953125,
+            "left": 494.34375
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        }
+      }
+    ],
+    "errors": [],
+    "pass": true
+  }
+]

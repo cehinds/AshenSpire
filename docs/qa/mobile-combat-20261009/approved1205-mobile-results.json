@@ -1,0 +1,968 @@
+[
+  {
+    "width": 288,
+    "height": 513,
+    "steps": [
+      {
+        "route": "idle-enemy-controls",
+        "enemies": [
+          {
+            "id": "e1",
+            "body": {
+              "x": 153.84375,
+              "y": 140.78125,
+              "width": 78.203125,
+              "height": 51.921875,
+              "top": 140.78125,
+              "right": 232.046875,
+              "bottom": 192.703125,
+              "left": 153.84375
+            },
+            "hp": {
+              "x": 100.00955200195312,
+              "y": 117.82550811767578,
+              "width": 88,
+              "height": 18.98436737060547,
+              "top": 117.82550811767578,
+              "right": 188.00955200195312,
+              "bottom": 136.80987548828125,
+              "left": 100.00955200195312
+            },
+            "nameHidden": true,
+            "compactVisible": true
+          },
+          {
+            "id": "e2",
+            "body": {
+              "x": 207.9375,
+              "y": 140.78125,
+              "width": 73.703125,
+              "height": 48.9375,
+              "top": 140.78125,
+              "right": 281.640625,
+              "bottom": 189.71875,
+              "left": 207.9375
+            },
+            "hp": {
+              "x": 193.99322509765625,
+              "y": 117.82498168945312,
+              "width": 88,
+              "height": 18.984375,
+              "top": 117.82498168945312,
+              "right": 281.99322509765625,
+              "bottom": 136.80935668945312,
+              "left": 193.99322509765625
+            },
+            "nameHidden": true,
+            "compactVisible": true
+          }
+        ]
+      },
+      {
+        "route": "combat-tools",
+        "logOpened": true,
+        "reactionToggled": true
+      },
+      {
+        "route": "player-details",
+        "revealed": true,
+        "geometry": {
+          "panel": {
+            "x": 138,
+            "y": 222.046875,
+            "width": 146,
+            "height": 62.9375,
+            "top": 222.046875,
+            "right": 284,
+            "bottom": 284.984375,
+            "left": 138
+          },
+          "obstacles": [
+            {
+              "label": "sprite",
+              "rect": {
+                "x": 153.84375,
+                "y": 140.78125,
+                "width": 78.203125,
+                "height": 51.921875,
+                "top": 140.78125,
+                "right": 232.046875,
+                "bottom": 192.703125,
+                "left": 153.84375
+              }
+            },
+            {
+              "label": "as-meters meters tight",
+              "rect": {
+                "x": 100.00955200195312,
+                "y": 117.82550811767578,
+                "width": 88,
+                "height": 18.98436737060547,
+                "top": 117.82550811767578,
+                "right": 188.00955200195312,
+                "bottom": 136.80987548828125,
+                "left": 100.00955200195312
+              }
+            },
+            {
+              "label": "sprite",
+              "rect": {
+                "x": 207.9375,
+                "y": 140.78125,
+                "width": 73.703125,
+                "height": 48.9375,
+                "top": 140.78125,
+                "right": 281.640625,
+                "bottom": 189.71875,
+                "left": 207.9375
+              }
+            },
+            {
+              "label": "as-meters meters tight",
+              "rect": {
+                "x": 193.99322509765625,
+                "y": 117.82498931884766,
+                "width": 88,
+                "height": 18.98436737060547,
+                "top": 117.82498931884766,
+                "right": 281.99322509765625,
+                "bottom": 136.80935668945312,
+                "left": 193.99322509765625
+              }
+            },
+            {
+              "label": "combat-tools",
+              "rect": {
+                "x": 61.984375,
+                "y": 288.984375,
+                "width": 219.953125,
+                "height": 29.984375,
+                "top": 288.984375,
+                "right": 281.9375,
+                "bottom": 318.96875,
+                "left": 61.984375
+              }
+            }
+          ],
+          "resources": [
+            {
+              "label": "POISE0/11",
+              "rect": {
+                "x": 142.984375,
+                "y": 267.5,
+                "width": 67.015625,
+                "height": 12,
+                "top": 267.5,
+                "right": 210,
+                "bottom": 279.5,
+                "left": 142.984375
+              }
+            },
+            {
+              "label": "WARD0/2",
+              "rect": {
+                "x": 211.984375,
+                "y": 267.5,
+                "width": 67.03125,
+                "height": 12,
+                "top": 267.5,
+                "right": 279.015625,
+                "bottom": 279.5,
+                "left": 211.984375
+              }
+            }
+          ],
+          "enemies": [
+            {
+              "id": "e1",
+              "body": {
+                "x": 153.84375,
+                "y": 140.78125,
+                "width": 78.203125,
+                "height": 51.921875,
+                "top": 140.78125,
+                "right": 232.046875,
+                "bottom": 192.703125,
+                "left": 153.84375
+              },
+              "name": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "e2",
+              "body": {
+                "x": 207.9375,
+                "y": 140.78125,
+                "width": 73.703125,
+                "height": 48.9375,
+                "top": 140.78125,
+                "right": 281.640625,
+                "bottom": 189.71875,
+                "left": 207.9375
+              },
+              "name": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "inspect": {
+            "x": 82.640625,
+            "y": 176.109375,
+            "width": 22,
+            "height": 22,
+            "top": 176.109375,
+            "right": 104.640625,
+            "bottom": 198.109375,
+            "left": 82.640625
+          },
+          "playerBody": {
+            "x": 46.59609603881836,
+            "y": 202.10000610351562,
+            "width": 91.12030029296875,
+            "height": 96.66561889648438,
+            "top": 202.10000610351562,
+            "right": 137.7163963317871,
+            "bottom": 298.765625,
+            "left": 46.59609603881836
+          },
+          "artTop": 202.10670342164883
+        }
+      },
+      {
+        "route": "player-panel-inspection",
+        "opened": true
+      },
+      {
+        "route": "enemy-hp-selection-inspection",
+        "opened": true,
+        "body": {
+          "x": 151.888671875,
+          "y": 138.18515014648438,
+          "width": 82.11328125,
+          "height": 54.517974853515625,
+          "top": 138.18515014648438,
+          "right": 234.001953125,
+          "bottom": 192.703125,
+          "left": 151.888671875
+        },
+        "name": {
+          "x": 110.00003051757812,
+          "y": 192.703125,
+          "width": 88,
+          "height": 14.984375,
+          "top": 192.703125,
+          "right": 198.00003051757812,
+          "bottom": 207.6875,
+          "left": 110.00003051757812
+        }
+      },
+      {
+        "route": "card-inspect-clearance",
+        "tools": {
+          "x": 61.984375,
+          "y": 288.984375,
+          "width": 219.953125,
+          "height": 29.984375,
+          "top": 288.984375,
+          "right": 281.9375,
+          "bottom": 318.96875,
+          "left": 61.984375
+        },
+        "info": [
+          {
+            "rect": {
+              "x": 27.984375,
+              "y": 320.6121520996094,
+              "width": 44,
+              "height": 44,
+              "top": 320.6121520996094,
+              "right": 71.984375,
+              "bottom": 364.6121520996094,
+              "left": 27.984375
+            },
+            "ownsCenter": true
+          }
+        ]
+      },
+      {
+        "route": "player-hp",
+        "consumed": "kit:roundShield:guard"
+      },
+      {
+        "route": "end-turn",
+        "turn": 2
+      },
+      {
+        "route": "enemy-intent",
+        "consumed": "rc1"
+      },
+      {
+        "route": "enemy-target",
+        "consumed": "kit:straightSword:attack"
+      }
+    ],
+    "errors": [],
+    "url": "http://localhost:8338/dist/AshenSpire.html?preview=rear-player&shot=combat",
+    "title": "Ashen Spire",
+    "passed": true
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "steps": [
+      {
+        "route": "idle-enemy-controls",
+        "enemies": [
+          {
+            "id": "e1",
+            "body": {
+              "x": 166.203125,
+              "y": 143.4375,
+              "width": 96.359375,
+              "height": 63.984375,
+              "top": 143.4375,
+              "right": 262.5625,
+              "bottom": 207.421875,
+              "left": 166.203125
+            },
+            "hp": {
+              "x": 132.02940368652344,
+              "y": 120.5400161743164,
+              "width": 88,
+              "height": 18.99999237060547,
+              "top": 120.5400161743164,
+              "right": 220.02940368652344,
+              "bottom": 139.54000854492188,
+              "left": 132.02940368652344
+            },
+            "nameHidden": true,
+            "compactVisible": true
+          },
+          {
+            "id": "e2",
+            "body": {
+              "x": 231.078125,
+              "y": 143.4375,
+              "width": 81.828125,
+              "height": 54.34375,
+              "top": 143.4375,
+              "right": 312.90625,
+              "bottom": 197.78125,
+              "left": 231.078125
+            },
+            "hp": {
+              "x": 226.00979614257812,
+              "y": 120.53036499023438,
+              "width": 88,
+              "height": 19,
+              "top": 120.53036499023438,
+              "right": 314.0097961425781,
+              "bottom": 139.53036499023438,
+              "left": 226.00979614257812
+            },
+            "nameHidden": true,
+            "compactVisible": true
+          }
+        ]
+      },
+      {
+        "route": "combat-tools",
+        "logOpened": true,
+        "reactionToggled": true
+      },
+      {
+        "route": "player-details",
+        "revealed": true,
+        "geometry": {
+          "panel": {
+            "x": 164.5,
+            "y": 276.90625,
+            "width": 146,
+            "height": 63,
+            "top": 276.90625,
+            "right": 310.5,
+            "bottom": 339.90625,
+            "left": 164.5
+          },
+          "obstacles": [
+            {
+              "label": "sprite",
+              "rect": {
+                "x": 166.203125,
+                "y": 143.4375,
+                "width": 96.359375,
+                "height": 63.984375,
+                "top": 143.4375,
+                "right": 262.5625,
+                "bottom": 207.421875,
+                "left": 166.203125
+              }
+            },
+            {
+              "label": "as-meters meters tight",
+              "rect": {
+                "x": 132.02940368652344,
+                "y": 120.54000854492188,
+                "width": 88,
+                "height": 19,
+                "top": 120.54000854492188,
+                "right": 220.02940368652344,
+                "bottom": 139.54000854492188,
+                "left": 132.02940368652344
+              }
+            },
+            {
+              "label": "sprite",
+              "rect": {
+                "x": 231.078125,
+                "y": 143.4375,
+                "width": 81.828125,
+                "height": 54.34375,
+                "top": 143.4375,
+                "right": 312.90625,
+                "bottom": 197.78125,
+                "left": 231.078125
+              }
+            },
+            {
+              "label": "as-meters meters tight",
+              "rect": {
+                "x": 226.00979614257812,
+                "y": 120.53036499023438,
+                "width": 88,
+                "height": 19,
+                "top": 120.53036499023438,
+                "right": 314.0097961425781,
+                "bottom": 139.53036499023438,
+                "left": 226.00979614257812
+              }
+            },
+            {
+              "label": "combat-tools",
+              "rect": {
+                "x": 93.890625,
+                "y": 343.90625,
+                "width": 219.765625,
+                "height": 30,
+                "top": 343.90625,
+                "right": 313.65625,
+                "bottom": 373.90625,
+                "left": 93.890625
+              }
+            }
+          ],
+          "resources": [
+            {
+              "label": "POISE0/11",
+              "rect": {
+                "x": 169.5,
+                "y": 322.40625,
+                "width": 67,
+                "height": 12,
+                "top": 322.40625,
+                "right": 236.5,
+                "bottom": 334.40625,
+                "left": 169.5
+              }
+            },
+            {
+              "label": "WARD0/2",
+              "rect": {
+                "x": 238.5,
+                "y": 322.40625,
+                "width": 67,
+                "height": 12,
+                "top": 322.40625,
+                "right": 305.5,
+                "bottom": 334.40625,
+                "left": 238.5
+              }
+            }
+          ],
+          "enemies": [
+            {
+              "id": "e1",
+              "body": {
+                "x": 166.203125,
+                "y": 143.4375,
+                "width": 96.359375,
+                "height": 63.984375,
+                "top": 143.4375,
+                "right": 262.5625,
+                "bottom": 207.421875,
+                "left": 166.203125
+              },
+              "name": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "e2",
+              "body": {
+                "x": 231.078125,
+                "y": 143.4375,
+                "width": 81.828125,
+                "height": 54.34375,
+                "top": 143.4375,
+                "right": 312.90625,
+                "bottom": 197.78125,
+                "left": 231.078125
+              },
+              "name": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "inspect": {
+            "x": 93.28125,
+            "y": 209.4375,
+            "width": 22,
+            "height": 22,
+            "top": 209.4375,
+            "right": 115.28125,
+            "bottom": 231.4375,
+            "left": 93.28125
+          },
+          "playerBody": {
+            "x": 44.263675689697266,
+            "y": 235.42422485351562,
+            "width": 116.23828125,
+            "height": 123.32577514648438,
+            "top": 235.42422485351562,
+            "right": 160.50195693969727,
+            "bottom": 358.75,
+            "left": 44.263675689697266
+          },
+          "artTop": 235.43278615614946
+        }
+      },
+      {
+        "route": "player-panel-inspection",
+        "opened": true
+      },
+      {
+        "route": "enemy-hp-selection-inspection",
+        "opened": true,
+        "body": {
+          "x": 163.7941436767578,
+          "y": 140.23828125,
+          "width": 101.17735290527344,
+          "height": 67.18359375,
+          "top": 140.23828125,
+          "right": 264.97149658203125,
+          "bottom": 207.421875,
+          "left": 163.7941436767578
+        },
+        "name": {
+          "x": 137.9921875,
+          "y": 207.42189025878906,
+          "width": 88,
+          "height": 15,
+          "top": 207.42189025878906,
+          "right": 225.9921875,
+          "bottom": 222.42189025878906,
+          "left": 137.9921875
+        }
+      },
+      {
+        "route": "card-inspect-clearance",
+        "tools": {
+          "x": 93.890625,
+          "y": 343.90625,
+          "width": 219.765625,
+          "height": 30,
+          "top": 343.90625,
+          "right": 313.65625,
+          "bottom": 373.90625,
+          "left": 93.890625
+        },
+        "info": [
+          {
+            "rect": {
+              "x": 39.890625,
+              "y": 375.7972412109375,
+              "width": 44,
+              "height": 44,
+              "top": 375.7972412109375,
+              "right": 83.890625,
+              "bottom": 419.7972412109375,
+              "left": 39.890625
+            },
+            "ownsCenter": true
+          }
+        ]
+      },
+      {
+        "route": "player-hp",
+        "consumed": "kit:roundShield:guard"
+      },
+      {
+        "route": "end-turn",
+        "turn": 2
+      },
+      {
+        "route": "enemy-intent",
+        "consumed": "rc1"
+      },
+      {
+        "route": "enemy-target",
+        "consumed": "kit:straightSword:attack"
+      }
+    ],
+    "errors": [],
+    "url": "http://localhost:8338/dist/AshenSpire.html?preview=rear-player&shot=combat",
+    "title": "Ashen Spire",
+    "passed": true
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "steps": [
+      {
+        "route": "idle-enemy-controls",
+        "enemies": [
+          {
+            "id": "e1",
+            "body": {
+              "x": 203.6875,
+              "y": 159.265625,
+              "width": 115.21875,
+              "height": 76.515625,
+              "top": 159.265625,
+              "right": 318.90625,
+              "bottom": 235.78125,
+              "left": 203.6875
+            },
+            "hp": {
+              "x": 193.51089477539062,
+              "y": 136.3577423095703,
+              "width": 88,
+              "height": 19,
+              "top": 136.3577423095703,
+              "right": 281.5108947753906,
+              "bottom": 155.3577423095703,
+              "left": 193.51089477539062
+            },
+            "nameHidden": true,
+            "compactVisible": true
+          },
+          {
+            "id": "e2",
+            "body": {
+              "x": 281.625,
+              "y": 169.546875,
+              "width": 99.75,
+              "height": 66.234375,
+              "top": 169.546875,
+              "right": 381.375,
+              "bottom": 235.78125,
+              "left": 281.625
+            },
+            "hp": {
+              "x": 287.4921875,
+              "y": 146.63108825683594,
+              "width": 88,
+              "height": 19,
+              "top": 146.63108825683594,
+              "right": 375.4921875,
+              "bottom": 165.63108825683594,
+              "left": 287.4921875
+            },
+            "nameHidden": true,
+            "compactVisible": true
+          }
+        ]
+      },
+      {
+        "route": "combat-tools",
+        "logOpened": true,
+        "reactionToggled": true
+      },
+      {
+        "route": "player-details",
+        "revealed": true,
+        "geometry": {
+          "panel": {
+            "x": 217.859375,
+            "y": 508.78125,
+            "width": 146,
+            "height": 63,
+            "top": 508.78125,
+            "right": 363.859375,
+            "bottom": 571.78125,
+            "left": 217.859375
+          },
+          "obstacles": [
+            {
+              "label": "sprite",
+              "rect": {
+                "x": 203.6875,
+                "y": 159.265625,
+                "width": 115.21875,
+                "height": 76.515625,
+                "top": 159.265625,
+                "right": 318.90625,
+                "bottom": 235.78125,
+                "left": 203.6875
+              }
+            },
+            {
+              "label": "as-meters meters tight",
+              "rect": {
+                "x": 193.51089477539062,
+                "y": 136.35772705078125,
+                "width": 88,
+                "height": 19,
+                "top": 136.35772705078125,
+                "right": 281.5108947753906,
+                "bottom": 155.35772705078125,
+                "left": 193.51089477539062
+              }
+            },
+            {
+              "label": "sprite",
+              "rect": {
+                "x": 281.625,
+                "y": 169.546875,
+                "width": 99.75,
+                "height": 66.234375,
+                "top": 169.546875,
+                "right": 381.375,
+                "bottom": 235.78125,
+                "left": 281.625
+              }
+            },
+            {
+              "label": "as-meters meters tight",
+              "rect": {
+                "x": 287.4921875,
+                "y": 146.63107299804688,
+                "width": 88,
+                "height": 19,
+                "top": 146.63107299804688,
+                "right": 375.4921875,
+                "bottom": 165.63107299804688,
+                "left": 287.4921875
+              }
+            },
+            {
+              "label": "combat-tools",
+              "rect": {
+                "x": 163.859375,
+                "y": 575.78125,
+                "width": 219.828125,
+                "height": 30,
+                "top": 575.78125,
+                "right": 383.6875,
+                "bottom": 605.78125,
+                "left": 163.859375
+              }
+            }
+          ],
+          "resources": [
+            {
+              "label": "POISE0/11",
+              "rect": {
+                "x": 222.859375,
+                "y": 554.28125,
+                "width": 67,
+                "height": 12,
+                "top": 554.28125,
+                "right": 289.859375,
+                "bottom": 566.28125,
+                "left": 222.859375
+              }
+            },
+            {
+              "label": "WARD0/2",
+              "rect": {
+                "x": 291.859375,
+                "y": 554.28125,
+                "width": 67,
+                "height": 12,
+                "top": 554.28125,
+                "right": 358.859375,
+                "bottom": 566.28125,
+                "left": 291.859375
+              }
+            }
+          ],
+          "enemies": [
+            {
+              "id": "e1",
+              "body": {
+                "x": 203.6875,
+                "y": 159.265625,
+                "width": 115.21875,
+                "height": 76.515625,
+                "top": 159.265625,
+                "right": 318.90625,
+                "bottom": 235.78125,
+                "left": 203.6875
+              },
+              "name": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            },
+            {
+              "id": "e2",
+              "body": {
+                "x": 281.625,
+                "y": 169.546875,
+                "width": 99.75,
+                "height": 66.234375,
+                "top": 169.546875,
+                "right": 381.375,
+                "bottom": 235.78125,
+                "left": 281.625
+              },
+              "name": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              }
+            }
+          ],
+          "inspect": {
+            "x": 116.6875,
+            "y": 387.765625,
+            "width": 22,
+            "height": 22,
+            "top": 387.765625,
+            "right": 138.6875,
+            "bottom": 409.765625,
+            "left": 116.6875
+          },
+          "playerBody": {
+            "x": 35.711334228515625,
+            "y": 413.76483154296875,
+            "width": 178.15545654296875,
+            "height": 189.01641845703125,
+            "top": 413.76483154296875,
+            "right": 213.86679077148438,
+            "bottom": 602.78125,
+            "left": 35.711334228515625
+          },
+          "artTop": 413.7648129182703
+        }
+      },
+      {
+        "route": "player-panel-inspection",
+        "opened": true
+      },
+      {
+        "route": "enemy-hp-selection-inspection",
+        "opened": true,
+        "body": {
+          "x": 200.80703735351562,
+          "y": 155.43984985351562,
+          "width": 120.97967529296875,
+          "height": 80.34140014648438,
+          "top": 155.43984985351562,
+          "right": 321.7867126464844,
+          "bottom": 235.78125,
+          "left": 200.80703735351562
+        },
+        "name": {
+          "x": 197.49996948242188,
+          "y": 235.78125,
+          "width": 88,
+          "height": 15,
+          "top": 235.78125,
+          "right": 285.4999694824219,
+          "bottom": 250.78125,
+          "left": 197.49996948242188
+        }
+      },
+      {
+        "route": "card-inspect-clearance",
+        "tools": {
+          "x": 163.859375,
+          "y": 575.78125,
+          "width": 219.828125,
+          "height": 30,
+          "top": 575.78125,
+          "right": 383.6875,
+          "bottom": 605.78125,
+          "left": 163.859375
+        },
+        "info": [
+          {
+            "rect": {
+              "x": 65.453125,
+              "y": 627.7623291015625,
+              "width": 44,
+              "height": 44,
+              "top": 627.7623291015625,
+              "right": 109.453125,
+              "bottom": 671.7623291015625,
+              "left": 65.453125
+            },
+            "ownsCenter": true
+          }
+        ]
+      },
+      {
+        "route": "player-hp",
+        "consumed": "kit:roundShield:guard"
+      },
+      {
+        "route": "end-turn",
+        "turn": 2
+      },
+      {
+        "route": "enemy-intent",
+        "consumed": "rc1"
+      },
+      {
+        "route": "enemy-target",
+        "consumed": "kit:straightSword:attack"
+      }
+    ],
+    "errors": [],
+    "url": "http://localhost:8338/dist/AshenSpire.html?preview=rear-player&shot=combat",
+    "title": "Ashen Spire",
+    "passed": true
+  }
+]

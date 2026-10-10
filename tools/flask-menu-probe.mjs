@@ -953,8 +953,10 @@ async function planProbe(cdp, base, check) {
   // THE RUN HUD's room rail, turned on through the config row it reads.
   const configPath = 'src/config/generated/ui.js';
   const configBody = readFileSync(resolve(ROOT, configPath), 'utf8');
-  const railOn = configBody.replace('"roomRail": false', '"roomRail": true');
-  if (railOn === configBody && !configBody.includes('"roomRail": true')) {
+  const roomRailOff = /("roomRail"\s*:\s*)false/;
+  const roomRailOn = /"roomRail"\s*:\s*true/;
+  const railOn = configBody.replace(roomRailOff, '$1true');
+  if (railOn === configBody && !roomRailOn.test(configBody)) {
     check('plan: run HUD, the room-rail config row is where this probe turns it on', false, `${configPath} has no "roomRail" row`);
     return;
   }

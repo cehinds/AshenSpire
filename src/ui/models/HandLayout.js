@@ -1,5 +1,10 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 
+// The combat hand reserves a 30px compact row plus four physical pixels of
+// separation before card geometry begins. Keep the band allocator and the
+// renderer on the same physical floor.
+export const COMBAT_TOOLS_HEIGHT_PX = 34;
+
 // Presentation order is local, keyed by instance, and never mutates a pile.
 export function reconcileHandOrder(previous, current) {
   const live = new Set(current);
@@ -13,7 +18,7 @@ export function moveHandInstance(order, id, slot) {
   return next;
 }
 
-export function handLayout({ width, height, count, rem = 16, zoom = 1, controlsHeight = 0 }, config = wireframeUi.hand) {
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0 }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
   // The selected face already rises by lift. Reserve only the additional
@@ -21,8 +26,9 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, controlsH
   const controlsReserve = Math.max(0, controlsHeight - lift);
   const arc = config.arcRem * rem;
   const available = Math.max(0, height - inset * 2 - lift - arc - controlsReserve);
-  const cardWidth = Math.max(config.minWidthRem * rem,
-    Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
+  const cardWidth = compact
+    ? Math.max(72 / zoom, Math.min(104 / zoom, available * wireframeUi.card.ratio))
+    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
   const progress = Math.max(0, Math.min(1,

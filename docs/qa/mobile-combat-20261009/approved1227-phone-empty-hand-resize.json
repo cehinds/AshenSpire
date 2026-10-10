@@ -1,0 +1,114 @@
+{
+  "runtime": {
+    "url": "http://localhost:8338/dist/AshenSpire.html?preview=rear-player&shot=combat",
+    "packaged": true,
+    "instrumented": true
+  },
+  "initialViewport": {
+    "width": 390,
+    "height": 844
+  },
+  "resizedViewport": {
+    "width": 430,
+    "height": 844
+  },
+  "beforeResize": [
+    {
+      "id": "player",
+      "x": 6.8125,
+      "y": 532.921875,
+      "width": 169.671875,
+      "height": 180.015625,
+      "scale": "0.9482011173184361",
+      "ground": "720.38927065916",
+      "pose": "ready",
+      "classes": "sprite"
+    },
+    {
+      "id": "e1",
+      "x": 112.75,
+      "y": 395.828125,
+      "width": 105.984375,
+      "height": 70.390625,
+      "scale": "0.3707688658265383",
+      "ground": "473.4892156982421",
+      "classes": "sprite"
+    },
+    {
+      "id": "e2",
+      "x": 217.359375,
+      "y": 405.296875,
+      "width": 91.765625,
+      "height": 60.9375,
+      "scale": "0.32099747961452957",
+      "ground": "473.4892156982421",
+      "classes": "sprite"
+    }
+  ],
+  "afterResize": [
+    {
+      "id": "player",
+      "x": 7.4375,
+      "y": 529.171875,
+      "width": 187.21875,
+      "height": 198.625,
+      "scale": "1.0454525139664805",
+      "ground": "727.8220509856803",
+      "pose": "ready",
+      "classes": "sprite"
+    },
+    {
+      "id": "e1",
+      "x": 124.265625,
+      "y": 388.40625,
+      "width": 116.953125,
+      "height": 77.65625,
+      "scale": "0.4087964418087473",
+      "ground": "466.09203124999993",
+      "classes": "sprite"
+    },
+    {
+      "id": "e2",
+      "x": 239.203125,
+      "y": 398.296875,
+      "width": 102.078125,
+      "height": 67.78125,
+      "scale": "0.3567881393624908",
+      "ground": "466.09203124999993",
+      "classes": "sprite"
+    }
+  ],
+  "afterDraw": [
+    {
+      "id": "player",
+      "x": 7.4375,
+      "y": 529.171875,
+      "width": 187.21875,
+      "height": 198.625,
+      "scale": "1.0454525139664805",
+      "ground": "727.8220509856803",
+      "pose": "ready",
+      "classes": "sprite"
+    },
+    {
+      "id": "e1",
+      "x": 124.265625,
+      "y": 388.40625,
+      "width": 116.953125,
+      "height": 77.65625,
+      "scale": "0.4087964418087473",
+      "ground": "466.09203124999993",
+      "classes": "sprite"
+    },
+    {
+      "id": "e2",
+      "x": 239.203125,
+      "y": 398.296875,
+      "width": 102.078125,
+      "height": 67.78125,
+      "scale": "0.3567881393624908",
+      "ground": "466.09203124999993",
+      "classes": "sprite"
+    }
+  ]
+}

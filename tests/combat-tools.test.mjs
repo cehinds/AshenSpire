@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatLogEntries } from '../src/model/combatLog.js';
-import { combatLogHeight, combatToolsModel } from '../src/ui/models/CombatToolsModel.js';
+import { combatLogHeight, combatLogSnapSize, combatLogDragScale, combatToolsModel, COMBAT_LOG_SIZES } from '../src/ui/models/CombatToolsModel.js';
 import { childModel } from '../src/ui/models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../src/ui/models/UiComponentId.js';
 
@@ -30,8 +30,33 @@ test('three log heights use physical card, visible viewport and actual menu clea
   assert.equal(combatLogHeight({ ...space, size: 'Small' }), 125);
   assert.equal(combatLogHeight({ ...space, size: 'Medium' }), 450);
   assert.equal(combatLogHeight({ ...space, size: 'Large' }), 632);
-  assert.equal(combatLogHeight({ ...space, size: 'Medium', dockTop: 120 }), 52);
+  assert.equal(combatLogHeight({ ...space, size: 'Medium', dockTop: 120 }), (52 / 3 + 52) / 2);
   assert.equal(combatLogHeight({ ...space, size: 'Large', dockTop: 20 }), 0);
+});
+
+test('compressed log has distinct ordered stops and gestures snap to the nearest stop', () => {
+  const space = { cardHeight: 110, viewportHeight: 513, dockTop: 270, menuBottom: 62, gap: 8 };
+  const heights = Object.fromEntries(COMBAT_LOG_SIZES.map(size => [size, combatLogHeight({ ...space, size })]));
+  assert(heights.Small < heights.Medium && heights.Medium < heights.Large);
+  assert.equal(heights.Large, 200);
+  for (const size of COMBAT_LOG_SIZES) assert.equal(combatLogSnapSize(heights[size], heights), size);
+  assert.equal(combatLogSnapSize((heights.Small + heights.Medium) / 2 - 1, heights), 'Small');
+  assert.equal(combatLogSnapSize((heights.Small + heights.Medium) / 2 + 1, heights), 'Medium');
+  assert.equal(combatLogSnapSize((heights.Medium + heights.Large) / 2 + 1, heights), 'Large');
+  assert.equal(combatLogSnapSize(-100, heights), 'Small');
+  assert.equal(combatLogSnapSize(1000, heights), 'Large');
+});
+
+test('log drag can traverse every size without leaving the physical viewport', () => {
+  const heights = { Small: 60, Medium: 260, Large: 460 };
+  const scale = combatLogDragScale({ heights, viewportHeight: 844, handleBottom: 606 });
+  assert.equal(scale, 400 / 120);
+  assert.equal((heights.Large - heights.Small) / scale, 120);
+  const short = combatLogDragScale({ heights, viewportHeight: 390, handleBottom: 340 });
+  assert.equal(short, 400 / 42);
+  assert.equal((heights.Large - heights.Small) / short, 42);
+  assert.equal(combatLogDragScale({ heights: { Small: 20, Large: 50 }, viewportHeight: 844, handleBottom: 606 }), 1);
+  assert.equal(combatLogDragScale({ heights, viewportHeight: 390, handleBottom: 380 }), 400 / 24);
 });
 
 test('unsupported historical combat has a disabled switch and immutable public log model', () => {

@@ -34,6 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
+- **Selected combatants come forward with a compact HUD** ([#1787](https://github.com/cehinds/AshenSpire/pull/1787), `0.7.1.1227`). Keep the existing cards and footer while showing compact intent icons and HP strips. Selecting a sprite, intent or HP reveals that character's details, outlines enemies red and players green, and brings the sprite forward at 105% scale. Deselect restores its exact size and layer. Small Information controls stay above the sprite, self-cast cards work through player HP, selected cards show their action icon, and header HP fills proportionally toward Armoury. On narrow phones, compact selected details and the log toolbar stay clear of target controls and cards.
+
+- **Compact combat targeting and touch controls** ([#1776](https://github.com/cehinds/AshenSpire/pull/1776), `0.7.1.1225`). Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.
+
 - **Enemy names remain inspectable beside fighter targets** ([#1785](https://github.com/cehinds/AshenSpire/pull/1785), `0.7.1.1209`). The full enemy name opens inspection beside an independent 44px fighter-selection core within the existing footer. Native input uses the actual side-core geometry while retaining keyboard inspection, conditional card/flask targeting, full obstacle footprints, artwork and hand positions.
 
 - **Crowded combat targets keep a clear HUD slot** ([#1784](https://github.com/cehinds/AshenSpire/pull/1784), `0.7.1.1207`). When the player panel blocks enemy footers on short phone screens, one bounded placement retry clears more targets while preserving full HUD and Info footprints, artwork, hand positions and honest obstruction reporting.
@@ -45,7 +49,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 
 - **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1198`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.
-
 
 - **The shared card design loads without repeated master data** ([#1778](https://github.com/cehinds/AshenSpire/pull/1778), `0.7.1.1195`). Keep the complete editable card structure while storing its shared components once in the game bundle. Browser checks follow optional reaction choices, current fighter motion and the combat layer order.
 

@@ -279,7 +279,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
   }
   const dismissCombatant = event => {
-    if (!event.target.closest('.combatant, .combatant-door, .modal')) selectCombatant(null);
+    if (!event.target.closest('.combatant, .hand, .combatant-door, .modal')) selectCombatant(null);
   };
   const inspectCard = () => selectCombatant(null);
   app.addEventListener('click', dismissCombatant);
@@ -880,8 +880,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     return wrap;
   }
-  function intentEl(intent) {
-    return combatantIntent(intent, () => intentTooltip(intent), registries);
+  function intentEl(intent, onTarget) {
+    return combatantIntent(intent, () => intentTooltip(intent), registries, { onTarget });
   }
 
   function readEnemyIntent(entity, def) {
@@ -1137,14 +1137,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.appendChild(statusRow(p.statuses));
       if (friendly) {
         decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
-        box.addEventListener('click', () => {
+        const playOnSeat = () => {
           const cardInstanceId = armedFriendlyCard;
           if (!cardInstanceId) return;
           armedFriendlyCard = null;
           hideTooltip();
           render();
           send({ t: 'playCard', cardInstanceId, targetId: p.id });
-        });
+        };
+        box.addEventListener('click', playOnSeat);
+        box.addEventListener('click', event => {
+          if (!event.target.closest('.combatant-mini-hud')) return;
+          event.preventDefault(); event.stopPropagation(); playOnSeat();
+        }, true);
       } else if (armedFlask != null && p.alive && p.connected) {
         box.addEventListener('click', () => {
           sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id });
@@ -1169,7 +1174,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant enemy${dead ? ' dead' : ''}${!dead && e.id === selectedEnemy ? ' selected-target' : ''}`;
       box.dataset.eid = e.id;
       box.dataset.stature = statureFor(registries, def.id);
-      if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def)));
+      if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def), () => {
+        if (armedFriendlyCard) return false;
+        selectedEnemy = e.id;
+        const selected = meP?.hand.find(card => card.instanceId === litCard());
+        const selectedDef = selected && cardDef(selected);
+        if (!pacing && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
+          clearSelection();
+          send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: e.id });
+          return true;
+        }
+        selectCombatant(e.id);
+        // Leave unarmed taps to the intent's selection-first tooltip.
+        return false;
+      }));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));
