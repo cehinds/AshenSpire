@@ -29,7 +29,7 @@ function skipReactions(combat) {
   return skipped;
 }
 
-test('knowledge opted-in predictions and resolved XP retain exact durable checkpoints and refused writes roll back', () => {
+test('knowledge opted-in predictions stay unsaved, pauses write exactly, resolved XP banks without moving the checkpoint', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
   Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
@@ -40,38 +40,44 @@ test('knowledge opted-in predictions and resolved XP retain exact durable checkp
   const saves = createSaveManager({ getItem: key => entries.get(key) ?? null,
     setItem: (key, value) => entries.set(key, value), removeItem: key => entries.delete(key) });
   const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
-  let refused = false, writes = 0;
+  let refused = false, writes = 0, checkpointWrites = 0, checkpointCounters = null;
   const durable = candidate => commitExpansionCandidate({ run, candidate, nodeId, encounterId,
     saveCandidate: (next, committedRng) => {
       if (refused) return { ok: false, error: 'Knowledge checkpoint refused' };
-      writes++; return saves.saveRun(next, committedRng);
+      writes++;
+      if (committedRng) { checkpointWrites++; checkpointCounters = committedRng.getCounters(); }
+      return saves.saveRun(next, committedRng);
     } });
   durable(combat); combat.beforeCombatCommit = durable;
+  const opening = saves.loadRun(registries).combatEntered.snapshot;
+  // SPEC §3.12/§9: an accepted prediction is an ordinary action. It earns
+  // nothing until the action executes, so nothing is written and abandoning
+  // still restarts the fight from its entry checkpoint.
+  dispatch(combat, { type: 'predictIntent', enemyInstanceId: 'e1', actionSerial: combat.enemies[0].knowledgeAction.serial,
+    maneuver: combat.enemies[0].knowledgeAction.category });
+  assert.equal(writes, 1, 'an accepted prediction does not replace the entry checkpoint');
+  assert.deepEqual(saves.loadRun(registries).combatEntered.snapshot, opening);
+  // A reaction pause is persisted exactly (combat-reaction contract); a refused
+  // write rolls the whole command back.
   const before = serializeCombatSnapshot(combat), beforeRun = structuredClone(run), beforeRng = rng.getCounters();
-  const intent = { type: 'predictIntent', enemyInstanceId: 'e1', actionSerial: combat.enemies[0].knowledgeAction.serial,
-    maneuver: combat.enemies[0].knowledgeAction.category };
   refused = true;
-  assert.throws(() => dispatch(combat, intent), /Knowledge checkpoint refused/);
+  assert.throws(() => dispatch(combat, { type: 'endTurn' }), /Knowledge checkpoint refused/);
   assert.deepEqual(serializeCombatSnapshot(combat), before);
   assert.deepEqual(run, beforeRun); assert.deepEqual(rng.getCounters(), beforeRng);
-  refused = false; dispatch(combat, intent);
-  assert.equal(writes, 2, 'accepted prediction writes despite unchanged Blight');
-  let loaded = saves.loadRun(registries);
-  let restored = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters), snapshot: loaded.combatEntered.snapshot });
-  assert.deepEqual(restored.enemyKnowledge, combat.enemyKnowledge);
-  dispatch(combat, { type: 'endTurn' });
-  assert.equal(writes, 3, 'paused incoming turn writes despite unchanged Blight');
+  refused = false; dispatch(combat, { type: 'endTurn' });
+  assert.equal(writes, 2, 'the paused incoming turn writes its exact continuation');
+  assert.ok(combat.pendingReaction, 'new rules offer a real defensive reaction before execution');
   assert.equal(run.skills.perception.xp, 0, 'a paused action has not earned prediction credit');
-  const skipped = skipReactions(combat);
-  assert.ok(skipped > 0, 'new rules offer a real defensive reaction before execution');
-  assert.equal(writes, 3 + skipped, 'answers and resolved learning write despite unchanged Blight');
+  skipReactions(combat);
   assert.equal(run.skills.perception.xp, 1);
-  loaded = saves.loadRun(registries);
-  restored = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters), snapshot: loaded.combatEntered.snapshot });
+  const loaded = saves.loadRun(registries);
+  // Resolved learning is banked to the run, but neither the checkpoint snapshot
+  // nor its RNG counters move past the last exact write.
   assert.deepEqual(loaded.skills.perception, run.skills.perception);
-  assert.deepEqual(restored.enemyKnowledge, combat.enemyKnowledge);
-  assert.deepEqual(restored.enemies[0].knowledgeAction, combat.enemies[0].knowledgeAction);
-  assert.deepEqual(restored.rng.getCounters(), rng.getCounters());
+  assert.deepEqual(loaded.enemyKnowledgeState, run.enemyKnowledgeState);
+  assert.ok(writes > checkpointWrites, 'resolved XP was banked without a checkpoint write');
+  assert.equal(loaded.combatEntered.snapshot.turn, 1);
+  assert.deepEqual(loaded.streamCounters, checkpointCounters);
 });
 
 function fixture({ registries = createRegistries(contentBundle), enemyId = 'wanderingSoldier', counter = false, responseCard = 'shieldBash', exact = false } = {}) {

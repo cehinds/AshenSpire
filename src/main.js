@@ -2825,13 +2825,15 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
         saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
-      if (committed.ok && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
-        const learningRun = run, learningRng = rng, learningSlot = activeSlot;
+      if (committed.ok && (committed.durable !== false || committed.knowledge) && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
+        const learningRun = run, learningSlot = activeSlot;
         saves.bankEnemyKnowledge(learningRun).then(result => {
           // The accepted action already saved the complete pending ledger.
           // A failed profile bank keeps it intact; successful acknowledgments
           // are checkpointed without reopening the encounter or rolling reads.
-          if (run === learningRun) saves.saveRun(learningRun, learningRng, learningSlot);
+          // No rng: the saved counters stay those of the combat checkpoint,
+          // which ordinary unsaved actions never move (SPEC §3.12).
+          if (run === learningRun) saves.saveRun(learningRun, null, learningSlot);
           if (!result.ok) showSettingsNotice(`Enemy learning remains pending: ${result.reason}`, 'profile');
         }).catch(error => showSettingsNotice(`Enemy learning remains pending: ${error.message}`, 'profile'));
       }
