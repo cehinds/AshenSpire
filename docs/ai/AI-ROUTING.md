@@ -146,7 +146,7 @@ from a missing file, a vague brief or the wrong model, fix that cause. The Agent
   Agent files load when the session starts; if `ashen-worker` is not found (the session
   started on a branch without it), use `general-purpose` with `model: "haiku"` and point
   the brief at `.claude/agents/ashen-worker.md`.
-- **Worktree cleanup:** worker worktrees cost disk. Once a worker's branch is merged or abandoned, `git worktree remove <path>` and delete the local branch; at session start and end run `git worktree list`, `git worktree prune`, and remove each worktree whose branch is merged into `origin/dev` or deleted on the remote. Remove one only when `git status --porcelain` is empty in it and `git log <branch> --not --remotes` is empty; delete branches with `git branch -d`, never `-D`.
+- **Worktree cleanup:** worker worktrees cost disk. At session start and end run `git fetch --prune origin` and `git worktree prune`, then `git worktree remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that is clean (`git status --porcelain` empty) and whose branch is merged into `origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep every other worktree; ask the owner before discarding unmerged work.
 - **Reviewer:** `Agent({ subagent_type: "ashen-reviewer", prompt: <PR number + diff + risks> })`,
   pinned to `model: opus` and to read-only tools (no Edit/Write). For a mechanical diff, use
   `Agent({ subagent_type: "general-purpose", model: "haiku", prompt: <read-only review brief: PR number + diff + risks + "do not edit"> })`.

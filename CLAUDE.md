@@ -42,14 +42,13 @@ run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
 on the newest Opus (Opus 5.5 today). Agent files pin the tier aliases
 (`model: haiku` / `model: opus`), which resolve to the newest model. When a new
 model ships, update the "today" names here and in docs/ai/AI-ROUTING.md, nothing
-else. Remove old local worktrees to save disk space: after a worker's branch is
-merged or abandoned, `git worktree remove <path>`; at session start and end, run
-`git worktree prune` and remove any worktree whose branch is merged into
-`origin/dev` or gone from the remote. Remove one only when `git status
---porcelain` is empty and it has no commits missing from `origin` (`git log
-<branch> --not --remotes` is empty); delete branches with `git branch -d`,
-never `-D`. The loop, brief template and escalation rules are
-in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
+else. Remove old local worktrees to save disk space: at session start and end,
+run `git fetch --prune origin` and `git worktree prune`, then `git worktree
+remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that
+is clean (`git status --porcelain` empty) and whose branch is merged into
+`origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep any
+other worktree; ask the owner before discarding unmerged work. The loop, brief
+template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).
 Both are advisory and never override SPEC.md, CONTRIBUTING.md, or DEVELOPER.md.
