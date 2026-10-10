@@ -6,7 +6,7 @@ import { combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
 import { playerDetailsPlacement } from '../src/ui/models/PlayerDetailsPlacementModel.js';
 import { packCombatTargetsWithHud, combatTargetHudFootprints } from '../src/ui/components/battlefieldStage.js';
 
-test('captured 1209 phone geometry packs full footers beside the reserved HUD after final hand layout', () => {
+test('historical1209 phone geometry packs full footers beside its original reserved HUD and hand layout', () => {
   // Native1209 original RED and separate passive logpoints. These are screen
   // pixels, including the common screen-in translation at the original fit.
   const fieldTop=81.37437438964844, handTop=361.1208793242812;
@@ -77,20 +77,20 @@ test('captured 1209 phone geometry packs full footers beside the reserved HUD af
   assert.ok(start>=0&&end>start);
   let delta=0,lastInput;
   const rect=()=>({left:0,top:fieldTop+delta});
-  const leading={style:{},querySelector:selector=>selector===':scope > .combatant-info'?{}:{},
+  const leading={style:{},querySelector:selector=>selector.includes('combatant-info')?null:{},
     getBoundingClientRect:()=>({left:parseFloat(leading.style.left)||hud.left,
       top:parseFloat(leading.style.top)||hud.top+delta,width:128,height:placement.height})};
   const sprite={};
   const player={dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
     selector==='.combatant-leading'?leading:{getBoundingClientRect:()=>({left:0,top:0})}};
   const combat={getBoundingClientRect:()=>({...placement.viewport,top:placement.viewport.top+delta,
-    bottom:placement.viewport.bottom+delta}),querySelector:()=>({getBoundingClientRect:()=>({bottom:fieldTop+delta})})};
+    bottom:placement.viewport.bottom+delta}),querySelector:selector=>selector==='.combat-tools'?null:{getBoundingClientRect:()=>({bottom:fieldTop+delta})}};
   const field={getBoundingClientRect:rect,closest:()=>combat,
     querySelectorAll:selector=>selector==='.combatant.player'?[player]:intents.map(box=>({...box,
       top:box.top+delta,bottom:box.bottom+delta}))};
   const tracking=runInNewContext(stage.slice(start,end)+'\nplacePlayerHud',{
     field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,
-    uiZoom:()=>1,visibleCombatPanelRect:node=>node,combatControlWidth:()=>placement.leftOverhang,
+    uiZoom:()=>1,visibleCombatPanelRect:node=>node,combatPlayerInfoRect:()=>null,
     currentSpriteArtBounds:()=>({...placement.art,top:placement.art.top+delta}),
     readRestingHand:()=>({clearanceTop:handTop+delta}),
     playerDetailsPlacement:options=>{lastInput=options;return playerDetailsPlacement(options);},
@@ -100,7 +100,7 @@ test('captured 1209 phone geometry packs full footers beside the reserved HUD af
     tracking();
     const full=combatTargetHudFootprints(result,rect(),44);
     assert.deepEqual(structuredClone(lastInput.obstacles.slice(intents.length,intents.length+full.length)),full);
-    assert.ok(full.every(box=>clear({left:parseFloat(leading.style.left)-placement.leftOverhang,
+    assert.ok(full.every(box=>clear({left:parseFloat(leading.style.left),
       right:parseFloat(leading.style.left)+128,top:parseFloat(leading.style.top),
       bottom:parseFloat(leading.style.top)+placement.height},box)),
       'actual tracking cannot replace a full target reservation with stale child measurements');

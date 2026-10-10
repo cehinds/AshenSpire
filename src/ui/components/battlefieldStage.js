@@ -44,6 +44,16 @@ export function combatControlWidth(node, zoom) {
   return Math.max(0, parseFloat(style.width) || 0, parseFloat(style.minWidth) || 0) * zoom;
 }
 
+export function combatPlayerInfoRect(node, art, viewport, zoom) {
+  if (!node) return null;
+  const width = combatControlWidth(node, zoom);
+  const height = node.getBoundingClientRect().height || width;
+  if (!(width > 0 && height > 0)) return null;
+  const left = (art.left + art.right) / 2 - width / 2;
+  const top = Math.max(viewport.top, art.top - height - 4);
+  return { left, top, right: left + width, bottom: top + height, width, height };
+}
+
 // A readable player panel can consume the only near-foot slot for another
 // actor. Retry its placement once with those actors' physical cores reserved;
 // retain the first layout unless the full footer pack actually improves.
@@ -88,6 +98,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
   let settledTargets = [], settledFooterSize = 44;
+  let playerInfoRects = [];
   function readRestingHand() {
     const hand = field.closest('.combat').querySelector('.hand');
     if (!hand) return null;
@@ -101,34 +112,51 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   }
   function placePlayerHud(reserveFirst = false, targetCores = []) {
     const zoom = uiZoom();
+    const combat = field.closest('.combat');
     const panels = [...field.querySelectorAll(reserveFirst === true ? '.enemy .combatant-leading' : '.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
       .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+    const toolsBox = visibleCombatPanelRect(combat?.querySelector('.combat-tools'), combat);
+    if (toolsBox) panels.push(toolsBox);
     panels.push(...targetCores);
     // Pose/load tracking must respect the same complete footer footprints as
     // the pack, not only the name/HP children currently painted inside them.
     if (reserveFirst !== true && settledTargets.length) panels.push(
       ...combatTargetHudFootprints(settledTargets, field.getBoundingClientRect(), settledFooterSize));
     const handTop = readRestingHand()?.clearanceTop;
-    for (const player of field.querySelectorAll('.combatant.player')) {
+    const players = [...field.querySelectorAll('.combatant.player')].flatMap(player => {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
-      if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) continue;
+      if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) return [];
       const art = currentSpriteArtBounds(sprite, placePlayerHud);
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
-      const combat = field.closest('.combat');
       const viewport = combat.getBoundingClientRect();
       const panel = leading.getBoundingClientRect();
-      const leftOverhang = combatControlWidth(leading.querySelector(':scope > .combatant-info'), zoom);
-      const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport,
-        handTop, leftOverhang,
+      // The incoming Info door is anchored above the art, independently of
+      // the reading panel. Reserve its actual future box even while hidden.
+      const inspect = leading.querySelector('.combatant-info');
+      const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom);
+      return [{ player, leading, art, stack, viewport, panel, inspect, infoRect }];
+    });
+    // Reserve every co-op door before placing any reading panel, including a
+    // later player's hidden door whose artwork already defines its anchor.
+    playerInfoRects = players.map(player => player.infoRect).filter(Boolean);
+    panels.push(...playerInfoRects);
+    for (const { player, leading, art, stack, viewport, panel, inspect, infoRect } of players) {
+      const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport, gap: 4,
+        handTop: Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity),
         previous: reserveFirst === true ? undefined : { left: panel.left, top: panel.top },
         hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
-      panels.push({ left: placement.left - leftOverhang, top: placement.top,
+      panels.push({ left: placement.left, top: placement.top,
         right: placement.left + panel.width, bottom: placement.top + panel.height });
       const top = `${(placement.top - stack.top) / zoom}px`;
       const left = `${(placement.left - stack.left) / zoom}px`;
       if (leading.style.top !== top) leading.style.top = top;
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
+      if (infoRect) {
+        const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, infoRect, { zoom });
+        inspect.style.left = `${local.left}px`;
+        inspect.style.top = `${local.top}px`;
+      }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
     }
@@ -164,6 +192,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const zoom = fieldRect.width / field.offsetWidth || 1;
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
+    const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
     const vitality = hudBand?.querySelector('.resbars-host');
     if (vitality) combat.style.setProperty('--combat-header-opaque-end',
@@ -279,7 +308,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth,
         // Reading controls do not change the unselected fitting envelope.
-        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
+        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap) };
     });
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const hand = combat.querySelector('.hand');
@@ -324,10 +353,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
       };
-      const overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon,
+      const overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap,
         controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
-          const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - 14;
+          const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - overheadGap;
           return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
             width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
         }) });
@@ -342,7 +371,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // its fighters to a ribbon none of them stands under.
     if (ribbon) {
       const crosses = (centre, width) => centre - width / 2 < ribbon.right && centre + width / 2 > ribbon.left;
-      const ribbonLeading = actor => actor.leadingHeight * zoom + ribbon.bottom + 14;
+      const ribbonLeading = actor => actor.leadingHeight * zoom + ribbon.bottom + overheadGap;
       for (let pass = 0; pass < actors.length; pass++) {
         const moved = actors.filter(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
@@ -361,10 +390,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     sizes = artworkFit.sizes;
     // Intent/Inspect controls still respond to their current text and selection,
     // but their changing headroom cannot resize or move the settled artwork.
-    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon,
+    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap,
       controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
         const fitted = sizes.find(size => size.id === actor.slot.id);
-        const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - 14;
+        const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - overheadGap;
         return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
           width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
       }) });
@@ -420,15 +449,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // Full-height artwork may reach its final ground before the fitter
         // can reserve more ribbon headroom. Move only the readable controls,
         // including a packed cross-row control, clear of the ribbon.
-        const overheadTop = ground - visibleHeight - 14 - actor.leadingHeight * zoom;
+        const overheadTop = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
         const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
           ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
-            top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon });
+            top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
         leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
       }
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
-      frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);
+      frame.style.setProperty('--overhead-top', `${-overheadGap / zoom}px`);
       frame.dataset.overheadClamped = 'false';
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
@@ -469,6 +498,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         .map(footer => visibleCombatPanelRect(footer, field)?.width || 0)),
       footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .reduce((height, footer) => height + (visibleCombatPanelRect(footer, field)?.height || 0), 0),
+      footerTop: Math.min(...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .map(footer => footer.getBoundingClientRect().top - (parseFloat(footer.style.translate.split(' ')[1]) || 0) * zoom)),
+      footerCenterX: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .map(footer => { const rect = footer.getBoundingClientRect(); return rect.left + rect.width / 2 - (parseFloat(footer.style.translate) || 0) * zoom; })[0],
       controls: [...frame.querySelectorAll('.combatant-leading button, .combatant-mini-hud')]
         .map(control => visibleCombatPanelRect(control, field)).filter(Boolean),
     }));
@@ -476,17 +509,21 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // final HUD pass can then keep this slot without competing with a footer.
     placePlayerHud(true);
     const readFooterObstacles = () => {
-      const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading')]
+      const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading, .player .combatant-info')]
         .map(node => {
           const rect = visibleCombatPanelRect(node, combat);
           if (!rect) return null;
           // Footer packing supplies two pixels; reserve eight more around the
-          // panel to match the final player HUD pass's ten-pixel clearance.
-          const padding = node.matches('.player .combatant-leading') ? 8 : 0;
-          const door = node.matches('.player .combatant-leading') ? combatControlWidth(node.querySelector(':scope > .combatant-info'), pageZoom) : 0;
-          return { left: rect.left - padding - door, right: rect.right + padding,
+          // panel and its independently positioned Inspect control.
+          const playerControl = node.matches('.player .combatant-leading, .player .combatant-info');
+          const padding = playerControl ? 8 : 0;
+          return { left: rect.left - padding, right: rect.right + padding,
             top: rect.top - padding, bottom: rect.bottom + padding, width: rect.width, height: rect.height };
         }).filter(Boolean);
+      // A hidden but selectable Info door occupies this same art-centered
+      // footprint when exposed. It is no longer an overhang of the HUD panel.
+      for (const rect of playerInfoRects) footerObstacles.push({ ...rect,
+        left: rect.left - 8, right: rect.right + 8, top: rect.top - 8, bottom: rect.bottom + 8 });
       const footerHandRect = combat.querySelector('.hand')?.getBoundingClientRect();
       const handEnvelope = readRestingHand();
       if (footerHandRect?.width > 0 && footerHandRect.height > 0) footerObstacles.push({
@@ -510,6 +547,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         id: box.id,
         x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
         y: box.hostRect.bottom - fieldRect.top + footerSize / 2,
+        minY: box.hostRect.bottom - fieldRect.top + footerSize / 2,
         width: Math.max(48, box.footerWidth),
       })) });
     const targets = packCombatTargetsWithHud({ pack: packTargets,
@@ -540,8 +578,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
         frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
-          left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom - footerSize / 2, width: 0, height: 0 }, { zoom });
+          left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
+          top: fieldRect.top + target.y - footerSize / 2 - (Number.isFinite(boxes[i].footerTop) ? boxes[i].footerTop : hostRect.bottom), width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {

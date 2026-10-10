@@ -1,0 +1,13 @@
+# Combat prepaint and settled HUD reconciliation
+
+This source correction normally reconciles PR1776's compact top-band toolbar and independent art-centered player Information control. Its zero hand-width reserve, four-pixel panel gap, current target body-bottom floor, layout dimensions and touch behavior are retained.
+
+Full combat rendering creates the frames, controls and tools, lays out the hand, synchronously measures the toolbar, then performs one final battlefield and formation fit. Action-only replacement frames retain their synchronous fit. The sibling toolbar is measured at the combat screen's common fade boundary; hidden controls and independently transparent descendants remain excluded.
+
+The player Information control reserves its computed physical footprint even before selection exposes it. Every co-op Information footprint is collected before any player reading panel is placed. The Information position remains above and centered on the artwork, independently of the panel. Footer packing reserves this full future footprint as well as the visible panel, controls, hand and ribbon. Later HUD tracking reserves complete settled footer rectangles translated from current field coordinates, and a previous panel candidate is retained only while it remains bounded and clear.
+
+The affected source run passed 107 tests with zero failures or skips. The actual-render VM verifies hand-before-tools measurement, single final fitting and the unchanged action-only path. Actual stage functions verify hidden-to-visible Information, common screen translation, sibling toolbar visibility and co-op precollection. Original no-room and control-obstruction cases remain active. The current test filename `combat-hud-prepaint.test.mjs` and affected incoming toolbar, touch, footer and wireframe suites are included in shared combat discovery.
+
+`combat-target-hud-1209.test.mjs` keeps the captured 1209 layout as a historical regression; it does not assert that PR1776's top-band geometry matches that former width-reserving toolbar. The original 1209 native target failure and passive reproduction remain RED. A separately recorded timing-perturbed logpoint diagnostic is causal evidence only. No corrected screenshot, packaged target clearance, full native pipeline or device acceptance is claimed here.
+
+Evidence is saved under `D:/repos/.codex/outputs/combat-card-stances/target-hud-settle-1776-reconciliation-source-evidence`. Fresh official packaging must be followed by the unchanged strict target gate, original affected screenreach/overlap checks, inspection doors, full native pipeline and screenshot review. The separate 1209 CI overlap failures are not assumed fixed from these source tests.

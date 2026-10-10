@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handLayout, handGeometryKey, restingHandEnvelope } from '../src/ui/models/HandLayout.js';
 import { playerDetailsPlacement } from '../src/ui/models/PlayerDetailsPlacementModel.js';
-import { visibleCombatPanelRect, combatControlWidth, packCombatTargetsWithHud, combatTargetHudFootprints } from '../src/ui/components/battlefieldStage.js';
+import { visibleCombatPanelRect, combatControlWidth, combatPlayerInfoRect, packCombatTargetsWithHud, combatTargetHudFootprints } from '../src/ui/components/battlefieldStage.js';
 import { combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
 
 test('actual 1203 phone XL blocked feet obtain a full clear footer pack after one HUD retry', () => {
@@ -239,4 +239,37 @@ test('the display-none Info door reserves its authored physical width before con
   } finally {
     if (original === undefined) delete globalThis.getComputedStyle; else globalThis.getComputedStyle = original;
   }
+});
+
+test('sibling tools reserve their full top band during a common combat fade without accepting hidden descendants',()=>{
+  const original=globalThis.getComputedStyle;
+  const combat={style:{opacity:'0'},parentElement:null};
+  const field={style:{},parentElement:combat};
+  const rect={left:164,right:384,top:356,bottom:400,width:220,height:44};
+  const tools={style:{},parentElement:combat,getBoundingClientRect:()=>rect};
+  globalThis.getComputedStyle=node=>({display:'block',visibility:'visible',opacity:'1',...node.style});
+  try{
+    assert.equal(visibleCombatPanelRect(tools,field),null,'the sibling field is not the common boundary');
+    assert.equal(visibleCombatPanelRect(tools,combat),rect,'use the actual shared combat boundary');
+    tools.style={opacity:'0'};assert.equal(visibleCombatPanelRect(tools,combat),null);
+    tools.style={};combat.style={opacity:'0',visibility:'hidden'};
+    assert.equal(visibleCombatPanelRect(tools,combat),null);
+  }finally{if(original===undefined)delete globalThis.getComputedStyle;else globalThis.getComputedStyle=original;}
+});
+
+test('the independent art-centered Info footprint stays identical when hidden, visible or translated',()=>{
+  const original=globalThis.getComputedStyle,zoom=.738;
+  let visible=false;
+  const node={getBoundingClientRect:()=>({width:visible?44:0,height:visible?44:0})};
+  const art={left:50,right:130,top:230},viewport={top:0};
+  globalThis.getComputedStyle=()=>({width:String(44/zoom),minWidth:String(44/zoom)});
+  try{
+    const hidden=combatPlayerInfoRect(node,art,viewport,zoom);
+    assert.deepEqual(hidden,{left:68,top:182,right:112,bottom:226,width:44,height:44});
+    visible=true;assert.deepEqual(combatPlayerInfoRect(node,art,viewport,zoom),hidden);
+    assert.deepEqual(combatPlayerInfoRect(node,{left:art.left+8,right:art.right+8,top:art.top+8},{top:8},zoom),
+      {...hidden,left:76,right:120,top:190,bottom:234});
+    assert.equal(combatPlayerInfoRect(node,{...art,top:20},viewport,zoom).top,0,'keep incoming viewport-top clamp');
+    assert.equal(combatPlayerInfoRect(null,art,viewport,zoom),null);
+  }finally{if(original===undefined)delete globalThis.getComputedStyle;else globalThis.getComputedStyle=original;}
 });

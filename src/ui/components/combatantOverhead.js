@@ -40,7 +40,7 @@ export function combatantInfo(name, open) {
   return node;
 }
 
-export function combatantIntent(intent, content, registries = null) {
+export function combatantIntent(intent, content, registries = null, { onTarget = null } = {}) {
   const badge = combatIntentPresentation(intent);
   const stanceLabel = badge.title;
   const node = document.createElement('button');
@@ -80,5 +80,11 @@ export function combatantIntent(intent, content, registries = null) {
     return `${body || ''}${counter}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
   };
   attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });
+  // A visible intent is also the owning enemy's target control. Resolve that
+  // action before the tooltip's selecting tap can consume it on touch.
+  if (onTarget) node.addEventListener('click', event => {
+    if (onTarget() === false) return;
+    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
+  }, true);
   return node;
 }
