@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1808",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "AI sessions: an Opus orchestrator directs Haiku workers",
+    "detail": "Development-process change only, nothing in the game changes. The main session plans, verifies, reviews and lands work, and scoped implementation runs on Haiku worker agents.",
+    "build": "0.7.1.1256",
+    "pullRequest": 1808,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1808"
+  },
+  {
     "id": "pr-1806",
     "date": "2026-10-10",
     "group": "2026-10-10",
