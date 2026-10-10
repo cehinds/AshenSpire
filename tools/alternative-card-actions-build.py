@@ -170,10 +170,12 @@ def projects(actor, frames, seqs):
     write_json(folder/(actor+'-cards.rig.json'), rig, True)
 
 
-def build(diagnostic=False, only=None):
+def build(diagnostic=False, only=None, export_only=False):
     (ROOT/'assets-display/alternative').mkdir(parents=True, exist_ok=True)
     families, runtime, hashes = {}, {}, {}
     for actor, weapon in CLASSES.items():
+        if export_only:
+            continue
         if only and actor not in only:
             continue
         frames, recipes = {}, {}
@@ -201,14 +203,18 @@ def build(diagnostic=False, only=None):
         families[actor] = {'manifest': f'cards/{actor}/manifest.json', 'rig': f'cards/{actor}/{actor}-cards.rig.json', 'folder': f'cards/{actor}/'}
         runtime[actor] = {**manifest, 'frames': {}}
         for name, frame in frames.items():
-            exported = {**frame}
+            exported = {**frame, 'rasterSize': [256, 256]}
             for key, suffix in [('path', ''), ('lite', '-mobile')]:
                 filename = f'card-{actor}-{name}{suffix}.webp'
-                data = (BASE/frame[key]).read_bytes()
+                # Both runtime paths use the reviewed 256px export. Bounds and
+                # anchors remain in the shared 512px choreography canvas.
+                data = (BASE/frame['lite']).read_bytes()
                 (ROOT/'assets-display/alternative'/filename).write_bytes(data)
                 hashes[filename] = hashlib.sha256(data).hexdigest()
                 exported[key] = 'assets-display/alternative/'+filename
             runtime[actor]['frames'][name] = exported
+        runtime[actor]['bytes'] = {tier: sum((ROOT / frame[key]).stat().st_size for frame in runtime[actor]['frames'].values())
+                                  for tier, key in [('webp', 'path'), ('lite', 'lite')]}
         print(actor, len(frames), 'poses', manifest['bytes'])
     write_json(OUT/'registry.json', {'schemaVersion': 1, 'selection': 'card-profile', 'equipmentIndependent': True,
         'classes': list(CLASSES), 'actions': ACTIONS, 'families': families})
@@ -220,5 +226,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--diagnostic', action='store_true')
     parser.add_argument('--classes', nargs='+', choices=list(CLASSES))
+    parser.add_argument('--export-only', action='store_true', help='Export existing reviewed frames without renormalizing authoring sources')
     args = parser.parse_args()
-    build(args.diagnostic, args.classes)
+    build(args.diagnostic, args.classes, args.export_only)

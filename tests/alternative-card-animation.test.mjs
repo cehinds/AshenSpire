@@ -9,6 +9,7 @@ import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSe
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
 import { validate } from '../pose-studio/model.mjs';
+import { webpDimensions } from '../tools/mobileart-policy.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const json=path=>JSON.parse(readFileSync(resolve(root,path)));
@@ -84,6 +85,9 @@ test('every runtime frame ships in both tiers with matching recorded hashes and 
   assert.ok(frame.bounds.every(n=>n>0&&n<512));
   for(const path of [frame.path,frame.lite]){
    const bytes=readFileSync(resolve(root,path));
+   const {width,height}=webpDimensions(bytes);
+   assert.deepEqual([width,height],frame.rasterSize);
+   assert.ok(Math.max(width,height)<=256);
    assert.equal(createHash('sha256').update(bytes).digest('hex'),catalog.hashes[path.split('/').at(-1)]);
   }
  }

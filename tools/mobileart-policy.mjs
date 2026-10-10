@@ -35,10 +35,10 @@ export const MOBILE_ASSET_DIR = 'assets-mobile';
  * Non-webp art (svg) is copied verbatim. Authoring-only trees are excluded by
  * the same runtimeAsset() rule the full build uses.
  *
- * Runtime exports target 480px figures and 720p scenery. Scenery fits within
- * 1280x720, preserving aspect ratio; portrait art stays at most 720px tall.
- * A four-scene combat atlas has two rows, so its ceiling is 2160x1440:
- * 1080x720 per scene. Smaller originals are never enlarged. Sprite encoding
+ * Runtime exports cap sprites and backgrounds at 256px on the longer side.
+ * Aspect ratios and smaller originals are preserved; card portraits keep their own rule.
+ * Four-scene atlases share the same 256px ceiling (128px per tile).
+ * Smaller originals are never enlarged. Sprite encoding
  * spends fewer bytes on figures so maps and backgrounds retain more detail.
  * Source masters remain untouched; these rules apply to delivered twins.
  */
@@ -48,14 +48,14 @@ export const POLICY = Object.freeze({
   alphaQuality: 50,
   // First match wins.
   overrides: Object.freeze([
-    Object.freeze({ prefixes: Object.freeze(['ashen-crown', 'cinder-reach', 'drowned-coast', 'hollow-weald', 'pale-marches'].map(id => `environments/${id}-combat.webp`)), maxEdge: 2160, maxHeight: 1440, quality: 78, alphaQuality: 80 }),
-    Object.freeze({ prefixes: Object.freeze(['bg/', 'environments/', 'prologue/', 'player-polish/scenes/']), maxEdge: 1280, maxHeight: 720, quality: 78, alphaQuality: 80 }),
+    Object.freeze({ prefixes: Object.freeze(['ashen-crown', 'cinder-reach', 'drowned-coast', 'hollow-weald', 'pale-marches'].map(id => `environments/${id}-combat.webp`)), maxEdge: 256, maxHeight: 256, quality: 78, alphaQuality: 80 }),
+    Object.freeze({ prefixes: Object.freeze(['bg/', 'environments/', 'prologue/', 'player-polish/scenes/']), maxEdge: 256, maxHeight: 256, quality: 78, alphaQuality: 80 }),
     // Full portrait cards retain 720px resolution; a small compression change
     // keeps the complete roster inside the owner's 100 MB download maximum.
     Object.freeze({ prefixes: Object.freeze(['cards/extended/']), maxEdge: 720, quality: 44, alphaQuality: 50 }),
     // Every figure, frame and effect uses the same reduction, including small
     // cropped poses. Registration and playback timing remain in native units.
-    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), maxEdge: 480, quality: 12, alphaQuality: 25 }),
+    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), maxEdge: 256, quality: 12, alphaQuality: 25 }),
   ]),
 });
 
@@ -79,7 +79,7 @@ export function policyFor(rel, policy = POLICY) {
 export const MOBILE_BUNDLE_BUDGET_BYTES = 100_000_000;
 
 /**
- * Mobile art's share of the owner's 100 MB maximum, reserving 17 MB for code, CSS and alternative artwork
+ * Mobile art's share of the owner's 100 MB maximum, reserving 18.5 MB for code, CSS and alternative artwork
  * and counting base64 growth (4/3). The complete portrait library exceeds the
  * preferred 69 MB art target (80 MB including code), while retaining the
  * 720px card resolution. Delivery validation must also measure the
@@ -89,9 +89,9 @@ export const MOBILE_BUNDLE_BUDGET_BYTES = 100_000_000;
  * (`distinctInlinedBytes`), since the bundler aliases byte-identical files.
  */
 // The complete card portrait library uses the owner's already-approved 100 MB
-// maximum. Reserve 17 MB for code, CSS and alternative artwork and measure the finished file at delivery.
+// maximum. Reserve 18.5 MB for code, CSS and alternative artwork and measure the finished file at delivery.
 // 69 MB remains the preferred art target (80 MB including code), not the cap.
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 83_000_000;
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 81_500_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {

@@ -3,7 +3,7 @@
 Thirty-two sequences add four painted phases for eight weapon families across
 Reaver, Starseer, Herald and Rogue. All four spear candidates remain excluded.
 The default combat stage retains its class identity, shared 512px canvas and
-floor at 464px. The new attacks add no engine state or combat effects.
+floor at 464px. Runtime display images and light-tier sprites/backgrounds use a 256px maximum edge; those pixel sizes do not change the logical canvas, crop ratios or floor anchor. Cards keep their separate resolution rule. The new attacks add no engine state or combat effects.
 
 Ordinary attacks select an explicitly supported equipped shape. Unknown or
 unsupported combinations retain the existing class action; shield-source bashes
