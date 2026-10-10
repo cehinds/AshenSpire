@@ -27,5 +27,8 @@ docs/design/player-components-2026-10-03/**/*.txt text eol=lf
 # The local light tier is hashed byte for byte against art-manifest.json.
 assets-mobile/** -text
 
+# Normalize the catalog exported by the cross-platform art authoring tool.
+src/content/playerAttackSprites.js text eol=lf
+
 # Preserve the alternative combat art package's byte-for-byte source receipts.
 docs/design/combat-depth-2026-10-05/** -text

@@ -2022,9 +2022,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           sprite.dataset.actionMotion = plan.motion;
           pose = enemyActionPose(moved.kind, plan);
         }
-        const duration = stage?.actionTiming?.(pose, speed)?.totalMs || speed.lungeMs;
+        const timing = stage?.actionTiming?.(pose, speed);
+        const duration = timing?.totalMs ?? speed.lungeMs;
         stage?.play(pose, duration);
-        return { impactMs: Math.min(speed.impactCapMs, duration / 2), totalMs: duration,
+        return { impactMs: timing?.impactMs ?? Math.min(speed.impactCapMs, duration / 2), totalMs: duration,
           cancel: () => stage?.settle?.() };
       },
       onBeatApplied: apply,
