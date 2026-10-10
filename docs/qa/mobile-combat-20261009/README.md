@@ -2,7 +2,7 @@
 
 The [approved three-state design reference](approved-selection-design-reference.png) was supplied again by the owner for the remote merge. It defines idle, player-selected and enemy-selected presentation while preserving the existing cards and footer. It is an illustration; the screenshots and package records below are runtime evidence.
 
-The owner approved the refined header and three selection states on October 9, preserving the existing card fan and footer. The final package tested here is **0.7.1.1227**, digest `73455e1bea`. It includes the consolidated primary battlefield geometry/renderers, approved HUD and 105% selection emphasis, bounded footer packing, and the duplicate self-target activation fix integrated from dev.
+The owner approved the refined header and three selection states on October 9, preserving the existing card fan and footer. The historical packaged checkpoint below is **0.7.1.1227**, digest `73455e1bea`. It includes the consolidated primary battlefield geometry/renderers, approved HUD and 105% selection emphasis, bounded footer packing, and the duplicate self-target activation fix integrated from dev. Subsequent FixUI source checkpoints are recorded at the end of this page.
 
 ## Verified behavior
 
@@ -29,3 +29,28 @@ The 320 × 568 run is included in the final results. The selected enemy footer a
 These are local packaged-browser checks with emulated touch, not physical-phone, hosted deployment, live co-op, or owner acceptance. The mobile matrix verifies HP selection and intent/body-target card play; it does not independently prove every unarmed sprite selection route. Hosted CI and dev/test promotion are reported separately.
 
 Files marked `1191`, `approved1205-*`, and the earlier unversioned screenshots record prior layouts. `approved1227-*` records the final package after primary battlefield consolidation. Generated illustration approvals are design references, not gameplay evidence.
+
+## FixUI follow-up — October 10
+
+The [commit checklist](FixUI-checklist.md) links a playable preview for each focused fix pushed to `origin/feature/FixUI`. Current source checkpoint 5a is `2900824566f`; it incorporates the positioning, floor, selected HUD and compact tool-row fixes plus concurrent branch updates. The snapshots share the verified `hd-assets-v18` art cache. These are local source checks, not a new packaged release.
+
+The player is fully above the hand; enemies occupy the upper field on portrait phones. Hidden enemy footers no longer reserve space that pushes selected player details away. The small Information control remains over the sprite, and selected details fit beside the player. The tool row spans the card band with Log left and Reaction right. Existing card sizing, fan and footer controls retain their code and layout.
+
+| Viewport | Idle | Player selected | Enemy selected |
+| --- | --- | --- | --- |
+| 288 × 513 | [Actual](fixui-288-idle.png) | [Actual](fixui-288-player.png) | [Actual](fixui-288-enemy.png) |
+| 390 × 844 | [Actual](fixui-390-idle.png) | [Actual](fixui-390-player.png) | [Actual](fixui-390-enemy.png) |
+
+These posed captures used `?shot=combat&preview=rear-player` after artwork and fonts loaded. The [interactive comparison](hud-comparison.html) shows these actual states against the approved illustration; it does not claim pixel fidelity.
+
+Validation:
+
+- Native emulated touch at 288, 320 and 390 pixels: [selection, inspection, real card targeting/self-cast and End Turn](fixui-mobile-results.json). The [post-predicate 288 rerun](fixui-final288-results.json) also passes.
+- Independent reviewer `/root/layout_ci_review`: reach sweep at 288 × 513, 390 × 650 and 844 × 390 for normal, XL text and overlap fixtures; zero covered controls. The XL native ownership audit confirms packed cores hit their own owner and leave foreign sprite bounds clear. Actual overlapping artwork receives taps for the top painted owner.
+- [Selection geometry](fixui-selection-results.json) at 390 and 1440 pixels: 105% enlargement around the ground anchor, front depth, stable rerenders and exact size/depth restoration.
+- [Log touch gestures](fixui-log-results.json) at 288, 320, 390 and 844 pixels: bounded Small/Medium/Large snapping, cancellation, subsequent taps and keyboard resizing; no inner size buttons.
+- [Real card-play stability](fixui-stability-results.json): defensive and melee plays, return to original anchors, empty-hand resize and next draw.
+- Engine/tool invariant runner: `node tests/run-node.mjs --no-selftests --no-discovered`, 149 passed, zero failed. Fast discovered runner: `node tests/run-node.mjs --discovered-only --no-slow`, 416 files, 3,541 tests, zero failed. The runner reports its existing exclusions and slow lane separately. No test was quarantined for this change.
+- Focused ownership/proxy/target/composition tests: 19 passed. Actual geometry/default-perspective tests: six passed. Art-pack/book-art/music-score tests: 26 passed after fetching and verifying the new pinned release.
+
+Independent review found the selected portrait player still entering footer reservations; `fa25c9be002` corrected the predicate and added a regression fixture. The final review found no remaining actionable blocker. Browser emulation does not establish physical-phone, hosted-deployment or owner positioning acceptance; those remain open on the checklist. Feature-branch delivery is separate from dev/test promotion and required hosted CI.

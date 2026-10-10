@@ -1,6 +1,6 @@
 # FixUI handoff
 
-This branch preserves the approved combat HUD work for continued implementation. It is a work-in-progress checkpoint, not a declaration that the visual composition or post-merge browser checks are finished.
+The approved combat HUD follow-up is implemented on `feature/FixUI` in `D:/repos/.codex/worktrees/fix-ui/AshenSpire`. The [checkbox checklist with a playable preview per commit](../qa/mobile-combat-20261009/FixUI-checklist.md) records each focused fix and its delivery state. Preserve the original dirty checkout at `D:/repos/.codex/worktrees/9628/AshenSpire`.
 
 ## Reference and actual result
 
@@ -8,7 +8,7 @@ This branch preserves the approved combat HUD work for continued implementation.
 - [Interactive reference versus actual comparison](../qa/mobile-combat-20261009/hud-comparison.html).
 - Actual build 1227 evidence: [QA record](../qa/mobile-combat-20261009/README.md).
 
-The actual layout has too much empty space above enemies, places the player too far behind the cards, and separates selected details too far from their characters. Match the approved framing and relative character positions while preserving the existing cards, fan, artwork, hotkeys and footer.
+The historical build 1227 had too much empty space above enemies, placed the player behind the cards and detached selected details. FixUI raises the enemies, keeps the player above the hand, attaches selected details beside the player and fits the existing Log/Reaction controls across the card band. Cards, fan, hotkeys and footer are preserved. The current comparison uses actual source screenshots and labels the illustration separately.
 
 ## Required behavior
 
@@ -16,13 +16,13 @@ Idle enemies show compact intent symbols with a question mark when unknown, HP a
 
 Selected sprites temporarily scale to 105 percent around their ground anchor and rise above other sprites. Deselect restores exact size and depth. Card play never permanently resizes or moves a sprite; melee returns to its original anchor. Header HP is proportional and leaves padding before Armoury. Compact Log and Reaction sit directly above cards; vertical log dragging snaps to three sizes without inner size buttons. Text fits its available width with padding.
 
-## Unfinished changes preserved here
+## Target ownership and regression checks
 
-The snapshot includes uncommitted follow-up work from codex/approved-hud-ci-followup: transparent target-core packing in battlefieldStage.js/CombatOverheadModel.js/combat-layers.css, revised screenreach fixtures, and a motion-probe correction with tests. Inspect and validate it before merging.
+The target-core packing follow-up is committed. The actual stage adapter checks foreign artwork ownership, reserves selected enemy cores and disables stale packed pseudo-element hit areas. Selected portrait player foot proxies and hidden idle enemy footers do not reserve space in player HUD packing.
 
-A review found an 844x390 XL-text case where enemy e3's transparent core intercepted enemy e1's visible body. Subsequent packing changes were still being investigated. Verify the current snapshot fixes ownership rather than assuming that a zero-covered-controls result proves correct routing. A separate assertion expects the old target-coordinate CSS literal and may need a semantic update. Do not weaken reachability or known-bad tests to obtain a green result.
+Independent browser review covers native taps and ownership, in addition to covered-control counts. Where character art overlaps, the top painted owner receives the tap. Transparent target squares must leave other sprites selectable. Focused regression fixtures cover foreign artwork, fixed selected cores, unused footers and geometry restoration; the checklist records final validation.
 
-The motion sampler correction ignores elements with no client rectangles, such as display:none name labels, while preserving detection of transparent, transformed and offscreen motion. Focused tests and real-turn planted canvas/image motion checks passed before this handoff. Full final validation of this combined snapshot remains outstanding.
+The motion sampler correction ignores elements with no client rectangles, such as display:none name labels, while preserving detection of transparent, transformed and offscreen motion. Native card-play checks exercise real turns, melee return, empty-hand resizing and next draw. Physical-phone acceptance remains separate from browser emulation.
 
 ## Delivery
 
