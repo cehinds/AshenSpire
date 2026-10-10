@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
-import { focusElement, focusFirst } from '../src/ui/input.js';
+import { clearFocus, focusElement, focusFirst } from '../src/ui/input.js';
 
 test('the keyboard/gamepad cursor rejects inert fighters and their controls, then restores them on disarm', () => {
   withKitDom(() => {
@@ -20,6 +20,8 @@ test('the keyboard/gamepad cursor rejects inert fighters and their controls, the
       enemy.removeAttribute('inert');
       assert.equal(focusElement(enemy), true, 'disarming restores normal combatant navigation');
       assert.equal(focusElement(info), true);
+      clearFocus();
+      assert.equal(document.querySelector('.gp-focus'), null, 'pointer mode can clear the unified cursor');
       self.setAttribute('inert', '');
       assert.equal(focusElement(self), false, 'hostile aiming excludes the player');
     } finally {

@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-10",
     "group": "2026-10-10",
     "summary": "Clicking a target no longer shuffles enemy labels",
-    "detail": "Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put. Keyboard focus still moves the cursor to the target.",
-    "build": "0.7.1.1280",
+    "detail": "Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Switching from keyboard navigation to a pointer clears the old cursor before the click, while keyboard focus still moves the cursor to the target.",
+    "build": "0.7.1.1281",
     "pullRequest": 1825,
     "url": "https://github.com/cehinds/AshenSpire/pull/1825"
   },

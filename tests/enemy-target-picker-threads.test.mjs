@@ -15,6 +15,7 @@ test('a pointer press on a target button does not move the unified cursor', () =
   // Unguarded, the press moved the cursor onto the button; restore after the
   // play then selected the enemy and refit the stage under reduced motion.
   assert.doesNotMatch(picker, /addEventListener\('focus', \(\) => focusElement\(button\)\)/);
+  assert.match(picker, /addEventListener\('pointerdown', \(\) => \{[\s\S]*?if \(button\.classList\.contains\('gp-focus'\)\) clearFocus\(\);[\s\S]*?\}\);/);
 });
 
 test('target buttons carry data-number for the formation ::before label', () => {
