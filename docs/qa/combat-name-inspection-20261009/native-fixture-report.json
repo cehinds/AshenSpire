@@ -1,0 +1,250 @@
+{
+  "scope": "Source-only composed native CSS fixture; not a game build or whole-game acceptance",
+  "startedAt": "2026-10-10T00:10:22.965Z",
+  "pid": 25780,
+  "root": "D:/repos/.codex/worktrees/combat-name-inspection-reach-20261009/AshenSpire",
+  "cssSha256": "0954a972c8f34b1ea09dd038aba0344c25c99a8216ec64da50bec4f9d6bf44f6",
+  "cases": [
+    {
+      "zoom": 0.65,
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "name": {
+        "x": 116,
+        "y": 219.984375,
+        "width": 104,
+        "height": 18,
+        "top": 219.984375,
+        "right": 220,
+        "bottom": 237.984375,
+        "left": 116
+      },
+      "frame": {
+        "x": 20,
+        "y": 119.984375,
+        "width": 350,
+        "height": 400,
+        "top": 119.984375,
+        "right": 370,
+        "bottom": 519.984375,
+        "left": 20
+      },
+      "core": {
+        "left": 115.99959885748672,
+        "right": 159.99959885748672,
+        "top": 219.98407042883252,
+        "bottom": 263.9840704288325
+      },
+      "nameCenter": {
+        "x": 168,
+        "y": 228.984375,
+        "owned": true
+      },
+      "patch": true,
+      "events": [
+        {
+          "action": "inspect",
+          "trusted": true
+        },
+        {
+          "action": "select",
+          "trusted": true
+        },
+        {
+          "action": "inspect-keyboard",
+          "trusted": true
+        }
+      ],
+      "destination": {
+        "x": 137.99959885748672,
+        "y": 241.98407042883252
+      },
+      "screenshot": "fixture-0.65.png",
+      "blockerRejected": true
+    },
+    {
+      "zoom": 0.738,
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "name": {
+        "x": 116,
+        "y": 219.984375,
+        "width": 104,
+        "height": 18,
+        "top": 219.984375,
+        "right": 220,
+        "bottom": 237.984375,
+        "left": 116
+      },
+      "frame": {
+        "x": 20,
+        "y": 119.984375,
+        "width": 350,
+        "height": 400,
+        "top": 119.984375,
+        "right": 370,
+        "bottom": 519.984375,
+        "left": 20
+      },
+      "core": {
+        "left": 116.00023194273123,
+        "right": 160.00023194273123,
+        "top": 219.98456477132555,
+        "bottom": 263.98456477132555
+      },
+      "nameCenter": {
+        "x": 168,
+        "y": 228.984375,
+        "owned": true
+      },
+      "patch": true,
+      "events": [
+        {
+          "action": "inspect",
+          "trusted": true
+        },
+        {
+          "action": "select",
+          "trusted": true
+        },
+        {
+          "action": "inspect-keyboard",
+          "trusted": true
+        }
+      ],
+      "destination": {
+        "x": 138.00023194273123,
+        "y": 241.98456477132555
+      },
+      "screenshot": "fixture-0.738.png",
+      "blockerRejected": true
+    },
+    {
+      "zoom": 1,
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "name": {
+        "x": 116,
+        "y": 220,
+        "width": 104,
+        "height": 18,
+        "top": 220,
+        "right": 220,
+        "bottom": 238,
+        "left": 116
+      },
+      "frame": {
+        "x": 20,
+        "y": 120,
+        "width": 350,
+        "height": 400,
+        "top": 120,
+        "right": 370,
+        "bottom": 520,
+        "left": 20
+      },
+      "core": {
+        "left": 116,
+        "right": 160,
+        "top": 220,
+        "bottom": 264
+      },
+      "nameCenter": {
+        "x": 168,
+        "y": 229,
+        "owned": true
+      },
+      "patch": true,
+      "events": [
+        {
+          "action": "inspect",
+          "trusted": true
+        },
+        {
+          "action": "select",
+          "trusted": true
+        },
+        {
+          "action": "inspect-keyboard",
+          "trusted": true
+        }
+      ],
+      "destination": {
+        "x": 138,
+        "y": 242
+      },
+      "screenshot": "fixture-1.png",
+      "blockerRejected": true
+    },
+    {
+      "zoom": 1.5,
+      "viewport": {
+        "width": 390,
+        "height": 650
+      },
+      "name": {
+        "x": 116,
+        "y": 220,
+        "width": 104,
+        "height": 18,
+        "top": 220,
+        "right": 220,
+        "bottom": 238,
+        "left": 116
+      },
+      "frame": {
+        "x": 20,
+        "y": 120,
+        "width": 350,
+        "height": 400,
+        "top": 120,
+        "right": 370,
+        "bottom": 520,
+        "left": 20
+      },
+      "core": {
+        "left": 116.00021857174085,
+        "right": 160.00021857174085,
+        "top": 220.00012428589184,
+        "bottom": 264.00012428589184
+      },
+      "nameCenter": {
+        "x": 168,
+        "y": 229,
+        "owned": true
+      },
+      "patch": true,
+      "events": [
+        {
+          "action": "inspect",
+          "trusted": true
+        },
+        {
+          "action": "select",
+          "trusted": true
+        },
+        {
+          "action": "inspect-keyboard",
+          "trusted": true
+        }
+      ],
+      "destination": {
+        "x": 138.00021857174085,
+        "y": 242.00012428589184
+      },
+      "screenshot": "fixture-1.5.png",
+      "blockerRejected": true
+    }
+  ],
+  "browserPid": 34128,
+  "profile": "D:\\repos\\.codex\\tmp\\nm1203-HtYUjA",
+  "health": [],
+  "status": "PASS source-native fixture",
+  "finishedAt": "2026-10-10T00:10:45.330Z"
+}

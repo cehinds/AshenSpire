@@ -1493,9 +1493,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The nameplate is a LabelStack: the name, and under it what kind of
       // thing it is (its stature reads from the frame, so the hint is the tags).
       const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
-      // The name is the way into the full read on touch, where there is no `I`.
-      // It stops the frame's own click so tapping the name never plays a card
-      // or retargets — the door is a reading, not a move.
+      // With no card/flask selected, the name opens the full read directly;
+      // the separate side core selects the fighter's contextual explanation.
+      // During targeting both retain the existing card/flask commit behavior.
+      // Stop bubbling so the name never invokes the frame's handler as well.
       if (enemy.alive) {
         nm.classList.add('nm-inspect');
         nm.setAttribute('role', 'button');

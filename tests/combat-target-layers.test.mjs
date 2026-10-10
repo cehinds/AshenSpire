@@ -19,6 +19,7 @@ const pick = predicate => {
   const rule = all.find(predicate); assert.ok(rule, 'required combat layer rule exists'); return rule;
 };
 const proxy = pick(r => r.selector.includes('.combatant:is(') && r.selector.endsWith('::before'));
+const enemyProxy = pick(r => r.selector.includes('.combatant.enemy-target-hitbox') && r.selector.endsWith('::before'));
 const visual = pick(r => r.selector.includes('.enemy-target-hitbox') && r.selector.endsWith('::after'));
 const reading = pick(r => r.selector.includes(':is(.nm,.meters,.statuses)') && r.declarations['z-index']);
 const leading = pick(r => r.selector.endsWith('.combatant-leading'));
@@ -46,10 +47,10 @@ const reachAt = reachSource.indexOf('  const exposedPatch = ');
 assert.ok(reachAt >= 0);
 const reachCode = reachSource.slice(reachAt, reachSource.indexOf('\n  for (const c of all)', reachAt)) + '\nexposedPatch';
 
-function fixture({ zoom = 1, includeProxy = true, higherControl = false } = {}) {
+function fixture({ zoom = 1, includeProxy = true, higherControl = false, enemy = false, plateWidth = 104 } = {}) {
   const vars = { '--ui-zoom': zoom, '--enemy-hit-x': `${148 / zoom}px`, '--enemy-hit-y': `${122 / zoom}px`,
-    '--enemy-hit-width': `${96 / zoom}px`, '--enemy-hit-height': `${44 / zoom}px` };
-  const bounds = { left: 100, right: 196, top: 100, bottom: 144 };
+    '--enemy-hit-width': `${plateWidth / zoom}px`, '--enemy-hit-height': `${44 / zoom}px` };
+  const bounds = { left: 148 - plateWidth / 2, right: 148 + plateWidth / 2, top: 100, bottom: 144 };
   const frame = {}, name = {}, hp = {}, statuses = {}, control = {};
   const surfaces = [
     { node: frame, bounds, z: z(visual) },
@@ -59,7 +60,7 @@ function fixture({ zoom = 1, includeProxy = true, higherControl = false } = {}) 
   ];
   const width = numeric(proxy.declarations.width, vars) * zoom;
   const height = numeric(proxy.declarations.height, vars) * zoom;
-  const x = numeric(proxy.declarations.left, vars) * zoom, y = numeric(proxy.declarations.top, vars) * zoom;
+  const x = numeric((enemy ? enemyProxy : proxy).declarations.left, vars) * zoom, y = numeric(proxy.declarations.top, vars) * zoom;
   if (includeProxy) surfaces.push({ node: frame, z: z(proxy),
     bounds: { left: x - width / 2, right: x + width / 2, top: y - height / 2, bottom: y + height / 2 } });
   if (higherControl) surfaces.push({ node: control, z: z(leading), bounds });
@@ -67,8 +68,27 @@ function fixture({ zoom = 1, includeProxy = true, higherControl = false } = {}) 
     .sort((a, b) => b.z - a.z)[0]?.node;
   const patch = runInNewContext(reachCode, { innerWidth: 390, innerHeight: 650,
     document: { elementFromPoint: hit } });
-  return { patch: () => patch(frame, 24, bounds, top => top === frame), hit, frame, name, hp, control, width, height };
+  return { patch: () => patch(frame, 24, bounds, top => top === frame), hit, frame, name, hp, control, width, height, x, y, bounds };
 }
+
+test('enemy name center inspects beside a full frame-owned square within the original footer', () => {
+  const old = fixture();
+  assert.equal(old.hit(148, 110), old.frame, 'the old centered cap intercepts the name center');
+  for (const zoom of [0.65, 0.738, 1, 1.5]) {
+    for (const plateWidth of [96, 104]) {
+      const f = fixture({ zoom, enemy: true, plateWidth });
+      assert.equal(f.hit(148, 110), f.name, 'unchanged name-button center owns its real hit');
+      assert.equal(f.hit(f.x, f.y), f.frame);
+      assert.equal(f.width, 44); assert.equal(f.height, 44);
+      assert.equal(f.patch(), true, 'original five-point24px patch predicate still passes');
+      assert.ok(Math.abs(f.x - 22 - f.bounds.left) < 1e-9, 'core left edge shares the footer edge within arithmetic precision');
+      assert.ok(f.x + 22 <= f.bounds.right + 1e-9);
+      assert.equal(f.y, 122); assert.equal(f.hit(186, 125), f.hp);
+    }
+  }
+  const covered = fixture({ enemy: true, higherControl: true });
+  assert.equal(covered.patch(), false, 'explicit overlapping inspection controls remain obstructing');
+});
 
 test('the transparent frame square restores the original 24px predicate over its own HP strips', () => {
   assert.equal(fixture({ includeProxy: false }).patch(), false, 'old own-name/HP/status strips leave no frame-owned patch');
@@ -89,7 +109,7 @@ test('inspection and leading controls keep priority over the tap square', () => 
   assert.equal(f.patch(), false, 'the strict predicate still rejects an overlapping explicit control');
 });
 
-test('the proxy paints nothing and shares the fitted center, height and transform', () => {
+test('the player proxy paints nothing and shares the fitted center, height and transform', () => {
   for (const property of ['left', 'top', 'height', 'transform']) assert.equal(proxy.declarations[property], plate.declarations[property]);
   assert.equal(proxy.declarations.background, 'none');
   assert.equal(proxy.declarations.border, '0');
