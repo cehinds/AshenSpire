@@ -9,17 +9,20 @@ import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSe
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
 import { validate } from '../pose-studio/model.mjs';
+import { webpDimensions } from '../tools/mobileart-policy.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const json=path=>JSON.parse(readFileSync(resolve(root,path)));
 const card=(maneuver,camp='physical')=>({id:'test',cardTags:['camp:'+camp,'maneuver:'+maneuver]});
 
-test('card identity selects class-default motions independently of equipped weapons',()=>{
+test('card identity preserves class actions while reviewed weapons specialize attacks',()=>{
  for(const classId of CARD_ACTION_CLASSES){
   for(const maneuver of ['attack','smash','sweep','counter','defend','ranged']){
    for(const equipment of [[],[{id:'shortbow'}],[{id:'greatsword'}],[{id:'buckler',kind:'shield',geom:'round'}]]){
     const result=resolveCombatAnimation(card(maneuver),equipment,{classId});
-    assert.equal(result.technique,maneuver);
+    const specialized = maneuver === 'attack' && equipment[0]?.id === 'greatsword' ? 'weapon:attack:greatsword'
+      : maneuver === 'ranged' && equipment[0]?.id === 'shortbow' ? 'weapon:ranged:bow' : maneuver;
+    assert.equal(result.technique,specialized);
     assert.equal(result.alternative,true);
    }
   }
@@ -82,6 +85,9 @@ test('every runtime frame ships in both tiers with matching recorded hashes and 
   assert.ok(frame.bounds.every(n=>n>0&&n<512));
   for(const path of [frame.path,frame.lite]){
    const bytes=readFileSync(resolve(root,path));
+   const {width,height}=webpDimensions(bytes);
+   assert.deepEqual([width,height],frame.rasterSize);
+   assert.ok(Math.max(width,height)<=256);
    assert.equal(createHash('sha256').update(bytes).digest('hex'),catalog.hashes[path.split('/').at(-1)]);
   }
  }

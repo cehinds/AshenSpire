@@ -113,7 +113,7 @@ test('smaller exports preserve the original crop registration and scene resoluti
     const bytes=readFileSync(new URL('../'+sprite.path,import.meta.url));
     const {width,height}=webpDimensions(bytes);
     assert.deepEqual([width,height],sprite.size,sprite.name);
-    assert(Math.max(width,height)<=480,sprite.name);
+    assert(Math.max(width,height)<=256,sprite.name);
     assert(width<=sprite.sourceSize[0] && height<=sprite.sourceSize[1],sprite.name);
     sprite.bounds.forEach((value,index)=>assert(Math.abs(value/sprite.size[index%2]
       -sprite.sourceBounds[index]/sprite.sourceSize[index%2])<1e-12,`${sprite.name}: crop registration`));
@@ -121,13 +121,13 @@ test('smaller exports preserve the original crop registration and scene resoluti
   for(const [id,path] of Object.entries(catalog.layers)) {
     const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
     assert.deepEqual([width,height],catalog.layerSizes[id],id);
-    assert(width<=1280 && height<=720,id);
+    assert(width<=256 && height<=256,id);
   }
   for(const [id,art] of Object.entries(catalog.sceneLayers)) {
     for(const path of [art.path,art.mobilePath]) {
       const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
       assert.deepEqual([width,height],art.size,id);
-      assert(width<=1280 && height<=720,id);
+      assert(width<=256 && height<=256,id);
     }
   }
   for(const art of Object.values(catalog.sprites)) {
