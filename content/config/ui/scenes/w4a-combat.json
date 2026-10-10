@@ -16,7 +16,11 @@
       "minimumBattlefieldPx": 130,
       "footerGapMaxPx": 4,
       "footerDiameterMaxPx": 64,
-      "footerEndWidthMaxPx": 96
+      "footerEndWidthMaxPx": 96,
+      "endWidthMinPx": 56,
+      "pileWidthPx": 50,
+      "spentWidthPx": 64,
+      "pileHeightPx": 60
     },
     "hand": {
       "minimumHeightPx": 208,

@@ -4916,9 +4916,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    the same adapter (owner, 2026-10-01). */
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']{
   --combat-control-size: var(--footer-circle) !important;
-  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-pile-width) var(--footer-circle);
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-spent-width) var(--footer-circle);
   justify-content: center; align-items: center; gap: var(--footer-gap);
   width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
+}
+/* Discard/Exhaust is wider than Draw: two 13px counts sit beside the icon. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .pile.spent {
+  width: var(--footer-spent-width); min-width: var(--footer-spent-width);
 }
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> * {
   grid-column: span 1; grid-row: 1;
@@ -4982,8 +4986,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile {
   height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1))); min-height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1)));
 }
-.combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: 42%; flex: 0 1 42%; }
-.combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(11px / var(--ui-zoom, 1)); }
+/* Piles on a compact host (<= 600px, packCombatFooter's compact branch): a 28px
+   icon over 13px counts, the minimum legible size on a phone. Discard/Exhaust's
+   two lines are the tallest content, and the pile height (pileHeightPx) is sized
+   for them. Scoped to .combat[data-compact-combat] because 600-680px keeps the
+   44px piles, which cannot hold this stack. */
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: calc(28px / var(--ui-zoom, 1)); flex: 0 0 auto; }
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(13px / var(--ui-zoom, 1)); }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
@@ -4997,7 +5006,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] {
   grid-area: 1 / 1 / 2 / 4; z-index: 2; pointer-events: none;
-  grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-pile-width) var(--footer-circle);
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-spent-width) var(--footer-circle);
   grid-template-rows: minmax(0, 1fr) var(--footer-circle) var(--footer-circle);
   row-gap: var(--footer-gap); align-content: stretch;
 }
