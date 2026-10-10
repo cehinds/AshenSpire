@@ -3,6 +3,7 @@ import { createPaintedStage } from '../paintedOutfits.js';
 import { createAlternativeCardStage } from '../alternativeCardStage.js';
 import { displayAppearance } from '../displayAppearance.js';
 import { alternativeCardAnimations } from '../../content/alternativeCardAnimations.js';
+import { playerCounterSweepSprites } from '../../content/playerCounterSweepSprites.js';
 import { playerAttackSequence } from '../../model/playerAttackSprites.js';
 import { sampleSequence, durationFor } from '../../model/alternativeCardAnimation.js';
 import { ANIM_SPEEDS, getAnimSpeed } from '../animationPace.js';
@@ -24,7 +25,7 @@ export function deckCardAnimationPlan(registries, run, ref) {
   const plan = resolveCombatAnimation({ ...definition, cardTags: tags,
     animationTags: combatEffectTags(registries, definition), sourceArmamentId: ref.sourceArmamentId,
   }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance() });
-  const sequence = plan.alternative && (playerAttackSequence(run.class, plan.technique) || alternativeCardAnimations.classes[run.class]?.sequences[plan.technique]);
+  const sequence = plan.alternative && (playerAttackSequence(run.class, plan.technique) || playerCounterSweepSprites[run.class]?.sequences[plan.technique] || alternativeCardAnimations.classes[run.class]?.sequences[plan.technique]);
   if (sequence) return { animation: null, plan, sequence, frames: sequence.poses, armourId: 'default',
     duration: durationFor(sequence, ANIM_SPEEDS[getAnimSpeed()]), frameMs: 260 / sequence.poses.length };
   const clip = animationClip(animation, plan.technique);

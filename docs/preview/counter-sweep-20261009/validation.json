@@ -1,0 +1,10 @@
+{
+  "clips": 8,
+  "contactAndRecoveryEffects": true,
+  "originalIdle": true,
+  "heldStances": true,
+  "defeatPriority": true,
+  "reduceFlashes": true,
+  "reducedMotion": true,
+  "errors": []
+}

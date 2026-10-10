@@ -604,3 +604,14 @@ identify each source and reused pose. Runtime exports live under
 `assets/animations/player-attacks/`; light twins follow the art repository policy.
 The four provisional spear sequences are excluded. No third-party artwork was
 downloaded and no third-party license is claimed.
+
+### Selected counter and sweep clips (2026-10-09)
+
+Eight owner selections retain their transparent PNGs, generated source sheets and
+exact prompts, authored SVG effects, editable Sprite Workshop projects and playback
+preview in [the art source package](https://github.com/cehinds/AshenSpire-art/tree/main/art/player-counter-sweep-2026-10-09).
+Option 01 reuses existing first-party card paintings; other selected variants use
+OpenAI image generation. Separate steel, arcane staff, gold palm and paired dagger
+effects follow the attack and recovery. The pinned art release ships
+`assets/animations/player-counter-sweep/`. No third-party artwork was downloaded
+and no third-party license is claimed.

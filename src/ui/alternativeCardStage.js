@@ -1,4 +1,5 @@
 import { alternativeCardAnimations } from '../content/alternativeCardAnimations.js';
+import { playerCounterSweepSprites } from '../content/playerCounterSweepSprites.js';
 import { playerAttackSprites } from '../content/playerAttackSprites.js';
 import { alternativeSelectedStances } from '../content/alternativeSelectedStances.js';
 import { durationFor, sampleSequence, hitFlashOpacity } from '../model/alternativeCardAnimation.js';
@@ -32,13 +33,15 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   if (classicAppearance()) return null;
   const base = alternativeCardAnimations.classes[classId];
   if (!base) return null;
+  const selected = playerCounterSweepSprites[classId];
   const attacks = Object.entries(playerAttackSprites[classId] || {});
   const family = { ...base,
-    frames: { ...base.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
-    sequences: { ...base.sequences, ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
+    frames: { ...base.frames, ...selected.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
+    sequences: { ...base.sequences, ...selected.sequences, ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
       ['attack', 'spell', 'ranged', 'rangedMagic'].map(action => [`weapon:${action}:${name}`, { ...entry.sequence, action }]))) },
   };
-  const heldFrames = alternativeSelectedStances.classes[classId]?.frames || {};
+  const heldFrames = { ...alternativeSelectedStances.classes[classId]?.frames,
+    ...Object.fromEntries(Object.entries(selected.stances).map(([action, pose]) => [action, selected.frames[pose]])) };
   const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
   const el = document.createElement('div');
   el.className = 'pose-stage painted-stage alternative-card-stage';
@@ -68,7 +71,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   placeholder.setAttribute('role','img');placeholder.setAttribute('aria-label',classId+' character');
   placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
   async function preload(){
-    const results=await Promise.allSettled(Object.entries(frames).map(async([name,frame])=>{
+    const results=await Promise.allSettled(Object.entries({ ...frames, ...selected.effects }).map(async([name,frame])=>{
       // Keep the foreground body sharp at its fixed display scale on phones too.
       const image = await load(alternativeArtUrl(frame.path)).ready;
       if (!disposed) images.set(name, image);
@@ -83,17 +86,19 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { if (!disposed) { down=image; paint(); } }).catch(()=>{});
   let pose='ready', rest='idle', stance=null, playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, disposed=false;
   let resources=[], reactionTimer=null, currentArt=null;
-  const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : ['defend','guard','counter'].includes(rest) ? 'guard-brace' : 'ready';
+  const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? selected.stances.counter : ['defend','guard'].includes(rest) ? 'guard-brace' : 'ready';
   const filterFor = (frame, action, paid = resources, active = !!action) =>
     auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
     ctx.clearRect(0,0,768,544);
     currentArt=null;
-    let x=0;
+    let x=0, effect=null;
+    el.dataset.effect='';
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
+      effect=playing.sequence.effects?.[sampled.index];
       x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
     }
     el.dataset.pose=pose;
@@ -103,6 +108,11 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     currentArt={canvas,image,left:128+x,top:16,width:512,height:512};
     ctx.save();
     auraRenderer.draw(ctx,image,filterFor(pose,playing?.sequence.action || playing?.action),128+x,16,512,512,{materialize});ctx.restore();
+    // Trails share body registration, but never enter its aura or hit mask.
+    if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
+      const overlay=images.get(effect);
+      if(overlay){ctx.drawImage(overlay,128+x,16,512,512);el.dataset.effect=effect;}
+    }
     const flash=hitFlashOpacity('hurt',flashAt===null?1:(now-flashAt)/260,{reduced:reducedMotionRequested()});
     if (flash) {
       maskCtx.clearRect(0,0,512,512);maskCtx.globalCompositeOperation='source-over';
