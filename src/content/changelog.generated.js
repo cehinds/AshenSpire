@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1788",
     "date": "2026-10-09",
     "group": "2026-10-09",
-    "summary": "Reserve combat HUD and targets before their first paint",
-    "detail": "The full combat render authors the hand, measures the incoming zero-width-reserve top-band toolbar, then fits the stage once. Shared screen fading retains HUD obstacles, and later tracking reserves complete settled footers and all independently art-centered player Info footprints, including selectable hidden doors. Incoming compact geometry, independent 44px selection, name inspection, clocks and input rules are retained.",
-    "build": "0.7.1.1227",
+    "summary": "Reserve combat HUD targets and keep self-cast proxies reachable",
+    "detail": "The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.",
+    "build": "0.7.1.1229",
     "pullRequest": 1788,
     "url": "https://github.com/cehinds/AshenSpire/pull/1788"
   },
