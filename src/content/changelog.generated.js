@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1813",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Combat and Shrine fixes from the October review",
+    "detail": "Leaving the Smith after an upgrade at a normal Shrine now ends the visit instead of also allowing a Rest. Upcasting an area card such as Contagion plays it at once at the chosen rank. Co-op fighters keep their fitted layout through the encounter. Enemy tap areas stay a full finger-width apart. Tapping an enemy's name opens its full read again. Counter hits of 6 HP or more hit-stop like attacks. A card's upcast offset resets after a resize or rotation.",
+    "build": "0.7.1.1260",
+    "pullRequest": 1813,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1813"
+  },
+  {
     "id": "pr-1812",
     "date": "2026-10-10",
     "group": "2026-10-10",
