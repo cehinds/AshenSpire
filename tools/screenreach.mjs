@@ -482,11 +482,12 @@ const PROBE = `(() => {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
       // The transparent ::before proxy is the actual tap surface; the painted
-      // ::after plate is hidden on unselected enemies. Measure whichever one
-      // the browser actually hit-tests, never a plate that is not drawn.
+      // ::after plate is hidden on unselected enemies. Whenever the proxy is
+      // drawn it is measured, so a proxy that stops taking hits is a failure,
+      // never a quiet fallback to the artwork.
       const proxyStyle = getComputedStyle(c, '::before');
       const targetStyle = proxyStyle.display !== 'none' && proxyStyle.content !== 'none'
-        && proxyStyle.pointerEvents !== 'none' ? proxyStyle : getComputedStyle(c, '::after');
+        ? proxyStyle : getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
       // Waist-overlap players expose their artwork; their plate is hidden.
