@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Newly painted enemies fall back and come back cleanly",
     "detail": "When their art cannot load, the new enemies show their name in place of the picture, and Retry paints them again; taps on them always reach the enemy, never an inner layer.",
-    "build": "0.7.1.1249",
+    "build": "0.7.1.1251",
     "pullRequest": 1804,
     "url": "https://github.com/cehinds/AshenSpire/pull/1804"
   },
