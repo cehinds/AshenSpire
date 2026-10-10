@@ -97,7 +97,7 @@ Stopped because (only if it stopped):
 | UI layout, CSS, docs, tools, tests only, mechanical renames | Haiku 5.5 reviewer |
 | Security, destructive git, CI permissions | `ashen-reviewer`, and the orchestrator reads the diff line by line |
 
-Give the reviewer the task, the constraints, the diff (`git diff origin/dev...<branch>`),
+Give the reviewer the PR number (CONTRIBUTING requires it), the task, the constraints, the diff (`git diff origin/dev...<branch>`),
 the affected files and the specific risks. Do not give it the repo. Every finding is a
 claim the orchestrator verifies. Fix what stands (with a worker or directly), and record
 in the PR who reviewed, what changed, and what was declined and why.
@@ -141,9 +141,9 @@ from a missing file, a vague brief or the wrong model, fix that cause. The Agent
 
 - **Workers:** `Agent({ subagent_type: "ashen-worker", isolation: "worktree", run_in_background: true, prompt: <brief> })`.
   The agent file pins `model: haiku`. With a generic agent type, pass `model: "haiku"`.
-- **Reviewer:** `Agent({ subagent_type: "ashen-reviewer", prompt: <diff + risks> })`,
-  pinned to `model: opus`. For a mechanical diff, use
-  `Agent({ subagent_type: "general-purpose", model: "haiku", prompt: <read-only review brief: diff + risks + "do not edit"> })`.
+- **Reviewer:** `Agent({ subagent_type: "ashen-reviewer", prompt: <PR number + diff + risks> })`,
+  pinned to `model: opus` and to read-only tools (no Edit/Write). For a mechanical diff, use
+  `Agent({ subagent_type: "general-purpose", model: "haiku", prompt: <read-only review brief: PR number + diff + risks + "do not edit"> })`.
 - **Escalation:** `Agent({ subagent_type: "general-purpose", model: "opus", ... })` with
   the original brief.
 - **Searches only:** the built-in `Explore` agent with `model: "haiku"`, for "where is X"
