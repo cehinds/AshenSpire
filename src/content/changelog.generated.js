@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1780",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Alternative cards keep their native battlefield presentation",
+    "detail": "Share the complete editable card design without repeating its master data, while preserving the alternative battlefield geometry, idle motion and correctly ordered scene layers. Card actions, ranks, symbols and effect text retain the promoted primary behavior. The editor protects card-supplied text and exports only accepted saves; compact combat packs name and health plates clear of the hand, cards and player details.",
+    "build": "0.7.1.1200",
+    "pullRequest": 1780,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1780"
+  },
+  {
+    "id": "pr-1778",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "The shared card design loads without repeated master data",
+    "detail": "Keep the complete editable card structure while storing its shared components once in the game bundle. Browser checks follow optional reaction choices, current fighter motion and the combat layer order.",
+    "build": "0.7.1.1195",
+    "pullRequest": 1778,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1778"
+  },
+  {
+    "id": "pr-1766",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Card actions and ranks stay readable over their artwork",
+    "detail": "Cards separate their background, art, backdrops, trim, icons and text into explicit layers. Rank 1 and higher appear as Rank X centered above the effect panel; Rank 0 stays hidden. A dark title fade, solid action symbols and centered names keep the face readable. Smash uses a fist and Counter a shield crossed by a sword. Up to three primary symbols line the right edge; Information keeps every tag. Complete effects and their blue rank bar adapt together. The shared master JSON controls component images, symbols, typography, layer order and geometry. The card layer explorer saves grouped move/scale edits directly to that game template and previews actual combat cards.",
+    "build": "0.7.1.1193",
+    "pullRequest": 1766,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1775",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Compact combat details stay clear of cards",
+    "detail": "Pack enemy name and health plates around the visible hand and player details on short screens with enlarged text. Keep the sprites fixed while moving only crowded plates. Verify attacks through the visible target buttons and saved turns through the normal defensive-reaction controls.",
+    "build": "0.7.1.1189",
+    "pullRequest": 1775,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1775"
+  },
+  {
     "id": "pr-1773",
     "date": "2026-10-09",
     "group": "2026-10-09",
