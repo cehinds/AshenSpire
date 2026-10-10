@@ -301,7 +301,7 @@
 :root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud {
   border-color: var(--combatant-highlight); padding: calc(4px / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player.context-selected .combatant-leading { width: calc(220px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .player-action-intent {
   position: absolute; display: grid; place-items: center;
   width: calc(24px / var(--ui-zoom,1)); height: calc(24px / var(--ui-zoom,1));
@@ -311,7 +311,7 @@
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
 
 /* Compact details keep all three rows readable without a 44px empty HP slot. */
-:root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(128px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(176px / var(--ui-zoom,1)); }
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { padding: 0; gap: 0; }
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm { height: calc(13px / var(--ui-zoom,1)); min-height: 0; }
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { gap: 0 calc(4px / var(--ui-zoom,1)); }
