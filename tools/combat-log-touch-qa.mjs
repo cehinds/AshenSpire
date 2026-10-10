@@ -44,7 +44,7 @@ try {
       await log.tap(); await page.waitForTimeout(250);
       const small = await snapshot(); assert(small.open && small.size === 'Small');
       assert(Math.abs(small.hand.right - small.tools.right - 6) < 1, 'toolbar aligned to hand right');
-      assert(Math.abs(small.tools.top - small.hand.top - 30) < 1, 'toolbar lowered in card band');
+      assert(Math.abs(small.tools.top - small.hand.top) < 1, 'toolbar aligned to hand top');
       const maxDelta = small.tools.top - small.menuBottom - 8 - small.rect.height;
       const large = await drag(maxDelta);
       assert(large.open && large.size === 'Large', 'upward touch drag opens Large and trailing click does not close');

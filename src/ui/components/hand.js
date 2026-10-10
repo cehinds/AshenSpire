@@ -147,8 +147,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
       handEl.style.setProperty('--hand-rest-left', plan.restLeft + 'px');
-      handEl.style.setProperty('--hand-rest-top', plan.restTop + 'px');
-      handEl.style.setProperty('--hand-clearance-top', plan.clearanceTop + 'px');
+      handEl.style.setProperty('--hand-rest-top', (toolsHeight + plan.restTop) + 'px');
+      handEl.style.setProperty('--hand-clearance-top', (toolsHeight + plan.clearanceTop) + 'px');
       handEl.dataset.handGeometry = handGeometryKey({ width: handEl.clientWidth, height: handEl.clientHeight, zoom, fontSize, left: rect.left });
       handEl.style.setProperty('--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {

@@ -25,6 +25,8 @@ test('expanded combat panels and selected details stay in the correct layer', ()
 test('compact geometry reserves the measured controls and overhead gaps', () => {
   assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
   assert.match(hand, /const toolsHeight = 48 \/ zoom;/);
+  assert.match(hand, /setProperty\('--hand-rest-top', \(toolsHeight \+ plan\.restTop\) \+ 'px'\)/);
+  assert.match(hand, /setProperty\('--hand-clearance-top', \(toolsHeight \+ plan\.clearanceTop\) \+ 'px'\)/);
   assert.match(tools, /top: handBox\?\.top \|\| 0/);
   assert.doesNotMatch(tools, /top: \(handBox\?\.top \|\| 0\) \+ 30/);
 });
