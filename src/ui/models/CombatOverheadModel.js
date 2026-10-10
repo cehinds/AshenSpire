@@ -202,7 +202,53 @@ export function combatOverheadRibbonShift({ x, width, top, bottom, ribbon, clear
   return intersects ? Math.max(0, ribbon.bottom + clearance - top) : 0;
 }
 
-export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null, ribbonClearance = 14 }) {
+// Enemy overheads pack among themselves first. Obstacles (the player's art and
+// its controls) are then cleared per overhead: it keeps its packed anchor when
+// clear, otherwise moves up or sideways to the cheapest clear slot. An obstacle
+// never blocks its own owner. No clear slot is reported, not hidden: the anchor
+// stays put with `obstructed: true`.
+export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null, ribbonClearance = 14,
+  obstacles = [], height = Infinity }) {
+  const anchors = packCombatOverheadAnchors({ width, controls, inset, gap, ribbon, ribbonClearance });
+  return obstacles.length ? clearCombatOverheads({ width, height, controls, anchors, inset, gap, obstacles }) : anchors;
+}
+
+function clearCombatOverheads({ width, height, controls, anchors, inset, gap, obstacles }) {
+  const placed = [];
+  return anchors.map(anchor => {
+    const control = controls.find(source => source.id === anchor.id);
+    if (!control || !Number.isFinite(control.top) || !Number.isFinite(control.bottom)) return anchor;
+    const baseY = anchor.offsetY ?? 0;
+    const top = control.top + baseY, bottom = control.bottom + baseY, half = control.width / 2;
+    const walls = [...obstacles, ...placed];
+    const isOwn = wall => wall.ownerId != null && wall.ownerId === control.id;
+    const overlaps = (box, wall) => box.left < wall.right && box.right > wall.left
+      && box.top < wall.bottom && box.bottom > wall.top;
+    const clear = (x, dy) => {
+      const box = { left: x - half, right: x + half, top: top + dy, bottom: bottom + dy };
+      return box.top >= 0 && box.bottom <= height && walls.every(wall => isOwn(wall) || !overlaps(box, wall));
+    };
+    // Keep the owner inside the field's horizontal inset when a side slot exists.
+    const minX = inset + half, maxX = width - inset - half;
+    const clampX = x => minX <= maxX ? Math.min(Math.max(x, minX), maxX) : anchor.x;
+    const xs = [anchor.x, ...walls.flatMap(wall => [clampX(wall.right + gap + half), clampX(wall.left - gap - half)])];
+    const dys = [0, ...walls.flatMap(wall => [wall.top - gap - bottom, wall.bottom + gap - top])];
+    // Up and right are the preferred moves: a bare overhead drifts up before
+    // it moves sideways, and a downward move (toward the feet) is last resort.
+    const cost = ({ x, dy }) => Math.abs(x - anchor.x) * (x < anchor.x ? 1.5 : 1)
+      + Math.abs(dy) * (dy > 0 ? 2 : 1);
+    const best = xs.flatMap(x => dys.map(dy => ({ x, dy })))
+      .filter(({ x, dy }) => clear(x, dy))
+      .sort((a, b) => cost(a) - cost(b))[0];
+    if (!best) return { ...anchor, obstructed: true };
+    placed.push({ ownerId: control.id, left: best.x - half, right: best.x + half,
+      top: top + best.dy, bottom: bottom + best.dy });
+    if (best.x === anchor.x && best.dy === 0) return anchor;
+    return { ...anchor, x: best.x, offsetY: baseY + best.dy };
+  });
+}
+
+function packCombatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null, ribbonClearance = 14 }) {
   if (ribbon) {
     const adjusted = controls.map(control => ({ ...control, offsetY: 0 }));
     let anchors;

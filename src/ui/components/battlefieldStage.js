@@ -437,14 +437,34 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     sizes = artworkFit.sizes;
     // Intent/Inspect controls still respond to their current text and selection,
     // but their changing headroom cannot resize or move the settled artwork.
-    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap,
-      controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
-        const fitted = sizes.find(size => size.id === actor.slot.id);
-        const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - overheadGap;
-        return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
-          width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
-      }) });
+    const overheadControls = actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
+      const fitted = sizes.find(size => size.id === actor.slot.id);
+      const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - overheadGap;
+      return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
+        width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
+    });
+    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap, controls: overheadControls });
     const placed = [];
+    const leadingWrites = [];
+    // Writes one readable overhead at its anchor. Called again once the
+    // player's settled art and controls are measured (see below).
+    const placeLeading = ({ actor, frame, leadingHost, id, x, ground, visibleHeight }, anchors) => {
+      const anchor = anchors.find(overhead => overhead.id === id);
+      const overheadX = anchor?.x ?? x;
+      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+        { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
+      leadingHost.style.left = `${overheadLocal.left}px`;
+      // Full-height artwork may reach its final ground before the fitter
+      // can reserve more ribbon headroom. Move only the readable controls,
+      // including a packed cross-row control, clear of the ribbon.
+      const overheadTop = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
+      const overheadShift = anchor?.offsetY
+        ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
+          top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
+      leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
+      // An overhead with no clear slot stays at its anchor, reported, not hidden.
+      frame.dataset.overheadObstructed = String(!!anchor?.obstructed);
+    };
     const depthOrder = [...new Set(plan.slots.map(slot => slot.layer))].sort((a, b) => a - b);
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
@@ -488,20 +508,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // centre. Their intent/Inspect controls retain their distinct reserved
       // slots instead of following that inward art clamp. Measured collisions
       // also occur on short landscape screens; clear anchors stay unchanged.
-      const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
-      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
-        { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
-      if (leadingHost) {
-        leadingHost.style.left = `${overheadLocal.left}px`;
-        // Full-height artwork may reach its final ground before the fitter
-        // can reserve more ribbon headroom. Move only the readable controls,
-        // including a packed cross-row control, clear of the ribbon.
-        const overheadTop = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
-        const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
-          ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
-            top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
-        leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
-      }
+      if (leadingHost) leadingWrites.push({ actor, frame, leadingHost, id: slot.id, x, ground, visibleHeight });
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
       frame.style.setProperty('--overhead-top', `${-overheadGap / zoom}px`);
@@ -515,6 +522,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       frame.classList.toggle('player-target-hitbox', frame.classList.contains('player'));
       placed.push({ frame, sprite, scale });
     }
+    for (const entry of leadingWrites) placeLeading(entry, overheads);
     // WCO2: the guard badge lives inside this zoomed host. Publish the zoom
     // and the visible artwork's box (local px, relative to the host) so the
     // badge can counter-zoom and anchor to the art rather than inheriting
@@ -532,6 +540,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     settledTargets = [];
     placePlayerHud();
+    // Enemy overheads pack around the player's measured art and controls. An
+    // obstacle never blocks its own owner, and the fitted artwork does not move.
+    const playerObstacles = placed.filter(({ frame }) => frame.classList.contains('player')).flatMap(({ frame, sprite }) => {
+      const art = currentSpriteArtBounds(sprite, refresh);
+      const controls = [...frame.querySelectorAll('.combatant-leading, .combatant-info, .player-action-intent, .combatant-mini-hud')]
+        .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+      return [art, ...controls].map(rect => ({ ownerId: frame.dataset.eid, left: rect.left - fieldRect.left,
+        right: rect.right - fieldRect.left, top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top }));
+    });
+    overheads = combatOverheadAnchors({ width: fieldRect.width, height: fieldRect.height, ribbon,
+      ribbonClearance: overheadGap, controls: overheadControls, obstacles: playerObstacles });
+    for (const entry of leadingWrites) placeLeading(entry, overheads);
     const boxes = placed.map(({ frame, sprite }) => ({
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
