@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {combatPlayerInfoRect,combatPlayerActionRect,combatFrameTarget,combatTargetHudFootprints} from '../src/ui/components/battlefieldStage.js';
+import {COMBAT_TARGET_HIT_PX,combatTargetPackSize} from '../src/ui/models/CombatOverheadModel.js';
 
 const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
 
@@ -48,7 +49,7 @@ test('the actual footer pack keeps an unselected armed player and every enemy ph
     {hostRect:{left:600,width:100,bottom:400},frameRect:{},footerWidth:104,footerHeight:24,controls:[]}];
   const placed=boxes.map((_box,index)=>({frame:{dataset:{eid:index?'enemy':'player'},classList:{contains:role=>role===(index?'enemy':'player')||role==='context-selected'&&!!index}}}));
   let packInput;
-  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,combatFrameTarget,COMBAT_TARGET_HIT_PX,combatTargetPackSize,
     combat:{getBoundingClientRect:()=>({bottom:900})},readFooterObstacles:()=>[],placePlayerHud:()=>{},
     combatTargetAnchors:input=>{packInput=input;return input.targets;},packCombatTargetsWithHud:input=>input.pack()});
   assert.equal(packInput.size,44,'compact24px painting cannot shrink the physical proxy');

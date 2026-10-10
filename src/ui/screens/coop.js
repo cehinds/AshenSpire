@@ -15,7 +15,7 @@ import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.
 import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
-import { cardTargetPlan } from '../../model/cardTargets.js';
+import { cardTargetPlan, upcastNextStep } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { combatCardView } from '../models/CombatCardView.js';
@@ -290,6 +290,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const upcastTiersByCard = new Map();
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  // Receipt renders replace the field DOM, but keep the encounter's fitted art.
+  // The stage invalidates this cache when viewport, formation or artwork changes.
+  let combatLayoutState = {};
   const combatRests = new Map();
   const heldStances = createStanceLedger();
   const readinessOrders = new Map();
@@ -417,7 +420,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             const chosen = cardDef(inst);
             const plan = cardTargetPlan(chosen, me, scene?.enemies, scene?.players);
             const previousTarget = obj.targetId ?? (plan.mode === 'friendly' ? me : null);
-            if (!plan.legalIds.includes(previousTarget)) {
+            // An area card (allEnemies) has no single destination: send it now.
+            const step = upcastNextStep(plan, cardNeedsEnemyTarget(chosen), previousTarget);
+            if (step === 'playUntargeted') { send({ ...obj, targetId: undefined, upcastTier: Number(ranks) }); return; }
+            if (step === 'retarget') {
               if (plan.mode === 'friendly') { armFriendlyTargeting(inst.instanceId); return; }
               armedFriendlyCard = null; render();
               const targetShell = openCardChoiceModal({ cardName: chosen.name,
@@ -802,6 +808,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // would sit over the reward or map and send a stale playCard on a pick
     // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
+      combatLayoutState = {};
       closeCardChoice();
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
@@ -1211,7 +1218,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       row.appendChild(box);
     }
 
-    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
     const area = app.querySelector('.hand-area');
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
@@ -1348,6 +1354,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : null;
       if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
     }
+    // Fit only after the replacement hand/footer establish the final field size.
+    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
     for (const [ownerId, plan] of pendingAnimations) {
       const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
       const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
