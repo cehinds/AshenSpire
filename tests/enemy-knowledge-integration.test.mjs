@@ -29,7 +29,7 @@ function skipReactions(combat) {
   return skipped;
 }
 
-test('knowledge opted-in predictions stay unsaved, pauses write exactly, resolved XP banks without moving the checkpoint', () => {
+test('knowledge opted-in predictions and reaction pauses stay unsaved, resolved XP banks without moving the checkpoint', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
   Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
@@ -57,26 +57,27 @@ test('knowledge opted-in predictions stay unsaved, pauses write exactly, resolve
     maneuver: combat.enemies[0].knowledgeAction.category });
   assert.equal(writes, 1, 'an accepted prediction does not replace the entry checkpoint');
   assert.deepEqual(saves.loadRun(registries).combatEntered.snapshot, opening);
-  // A reaction pause is persisted exactly (combat-reaction contract); a refused
-  // write rolls the whole command back.
-  const before = serializeCombatSnapshot(combat), beforeRun = structuredClone(run), beforeRng = rng.getCounters();
+  // SPEC §3.12/§9 (owner ruling 2026-10-10): a reaction pause is not an
+  // automatic durable boundary either. Nothing is written on the way into it
+  // (a storage that would refuse is never asked), so abandoning there restarts
+  // the fight from its entry checkpoint; its exact save is the player's Save Game.
   refused = true;
-  assert.throws(() => dispatch(combat, { type: 'endTurn' }), /Knowledge checkpoint refused/);
-  assert.deepEqual(serializeCombatSnapshot(combat), before);
-  assert.deepEqual(run, beforeRun); assert.deepEqual(rng.getCounters(), beforeRng);
-  refused = false; dispatch(combat, { type: 'endTurn' });
-  assert.equal(writes, 2, 'the paused incoming turn writes its exact continuation');
+  dispatch(combat, { type: 'endTurn' });
+  refused = false;
+  assert.equal(writes, 1, 'the paused incoming turn does not replace the entry checkpoint');
+  assert.deepEqual(saves.loadRun(registries).combatEntered.snapshot, opening);
   assert.ok(combat.pendingReaction, 'new rules offer a real defensive reaction before execution');
   assert.equal(run.skills.perception.xp, 0, 'a paused action has not earned prediction credit');
   skipReactions(combat);
   assert.equal(run.skills.perception.xp, 1);
   const loaded = saves.loadRun(registries);
   // Resolved learning is banked to the run, but neither the checkpoint snapshot
-  // nor its RNG counters move past the last exact write.
+  // nor its RNG counters move past the entry write.
   assert.deepEqual(loaded.skills.perception, run.skills.perception);
   assert.deepEqual(loaded.enemyKnowledgeState, run.enemyKnowledgeState);
   assert.ok(writes > checkpointWrites, 'resolved XP was banked without a checkpoint write');
-  assert.equal(loaded.combatEntered.snapshot.turn, 1);
+  assert.equal(checkpointWrites, 1, 'only the opening checkpoint stamped RNG counters');
+  assert.deepEqual(loaded.combatEntered.snapshot, opening);
   assert.deepEqual(loaded.streamCounters, checkpointCounters);
 });
 

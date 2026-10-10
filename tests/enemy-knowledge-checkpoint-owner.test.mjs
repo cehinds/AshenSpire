@@ -72,14 +72,14 @@ test('production browser wrapper banks opted-in learning without moving the entr
   await settle();
   const loaded = f.saves.loadRun(f.registries);
   assert.equal(f.combat.turn, 2);
-  // SPEC §3.12/§9: the ordinary turn change never replaces the checkpoint, and
-  // the asynchronous profile bank re-saves without stamping live RNG counters.
+  // SPEC §3.12/§9 (owner ruling 2026-10-10): neither the turn change nor any
+  // reaction pause on the way replaces the checkpoint, and the asynchronous
+  // profile bank re-saves without stamping live RNG counters.
   assert.equal(loaded.combatEntered.snapshot.turn, 1);
-  assert.ok(f.banks() >= 1 + choices, 'each exact reaction pause banks its own checkpoint');
-  if (!choices) {
-    assert.deepEqual(loaded.combatEntered.snapshot, entry.combatEntered.snapshot);
-    assert.deepEqual(loaded.streamCounters, entry.streamCounters);
-  }
+  assert.ok(f.banks() >= 1, 'the opening checkpoint banked its learning');
+  assert.deepEqual(loaded.combatEntered.snapshot, entry.combatEntered.snapshot,
+    `the entry checkpoint survives ${choices} reaction pause(s)`);
+  assert.deepEqual(loaded.streamCounters, entry.streamCounters);
   assert.deepEqual(loaded.skills.perception, f.run.skills.perception);
   assert.deepEqual(f.notices, []);
 });

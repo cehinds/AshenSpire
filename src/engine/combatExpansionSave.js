@@ -1,20 +1,19 @@
 import { commitCombatSnapshot, serializeCombatSnapshot } from './combatSnapshot.js';
 import { reconcileCombatKnowledge } from './enemyKnowledge.js';
-import { reactionPaused } from './combatReactions.js';
 
 /** Irreversible changes are saved before adoption, animation or terminal presentation. */
 export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, saveCandidate }) {
-  // SPEC §3.12/§9: ordinary actions never replace the entry/explicit Save Game
-  // checkpoint, in any run, so abandoning mid-combat restarts that combat.
-  // Exact writes remain only where a contract needs them: a pending reaction
-  // pause and its continuation (combat-reaction-contract), Blight receipts,
-  // choices and zero-delta converted payments (irreversible, so compare the
-  // complete state rather than just its meter value), and terminal results.
-  // The first opening checkpoint also saves the entry check and exact initial
-  // RNG state.
+  // SPEC §3.12/§9: nothing automatic replaces the entry/explicit Save Game
+  // checkpoint, in any run, so abandoning mid-combat restarts that combat
+  // (owner ruling 2026-10-10). That includes a reaction pause: its exact
+  // save/restore (combat-reaction-contract) is the player's explicit Save Game
+  // or Save and Quit at the pause, never an automatic write here. Exact writes
+  // remain only for Blight receipts, choices and zero-delta converted payments
+  // (irreversible, so compare the complete state rather than just its meter
+  // value) and terminal results. The first opening checkpoint also saves the
+  // entry check and exact initial RNG state.
   const checkpoint = run.combatEntered;
-  const paused = candidate.reactionRulesVersion === 1 && (reactionPaused(candidate) || !!candidate.reactionCursor);
-  if (!paused && candidate.combatExpansionVersion === 2 && !candidate.result
+  if (candidate.combatExpansionVersion === 2 && !candidate.result
     && checkpoint?.nodeId === nodeId && checkpoint.encounterId === encounterId && checkpoint.snapshot
     && JSON.stringify(run.ashenBlight) === JSON.stringify(candidate.player.ashenBlight)) {
     return bankKnowledgeOnly({ run, candidate, saveCandidate });
