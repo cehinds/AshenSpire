@@ -34,3 +34,41 @@ test('portrait composition keeps the player above cards and enemies in the upper
   assert.equal((result[1].x + result[2].x) / 2, 390 * .66);
   assert.equal(result[2].x - result[1].x, 91);
 });
+
+test('enemies sharing a formation column are spread so neither hides the other', () => {
+  const actors = ['p', 'a', 'b', 'c'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: 300 } }));
+  // a and c share a column (front and back rank), as in the 3-enemy phone fight.
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [60, 210, 290, 210][i],
+    visibleHeight: 120, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width: 360, height: 250, handTop: 440 });
+  const enemies = fit.slice(1).sort((l, r) => l.x - r.x);
+  const half = enemy => 60 * enemy.scale / 2;
+  for (let i = 1; i < enemies.length; i++)
+    assert(enemies[i].x - enemies[i - 1].x >= (half(enemies[i]) + half(enemies[i - 1])) - 1e-9,
+      'neighbouring enemies no longer overlap');
+  assert(enemies.every(enemy => enemy.x - half(enemy) >= 6 - 1e-9 && enemy.x + half(enemy) <= 360 - 6 + 1e-9),
+    'the group stays on stage');
+});
+
+test('a short landscape stage keeps depth ranks stacked for their overhead lanes', () => {
+  const actors = ['p', 'a', 'c'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: 120 } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [80, 500, 500][i], visibleHeight: 60, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width: 844, height: 140, handTop: 200 });
+  assert.equal(fit[1].x, fit[2].x);
+});
+
+test('a crowded narrow row shares overlap among enemies instead of crossing the player', () => {
+  // Review scenario: 320x568 phone, three wide enemies, player at the left.
+  const actors = ['p', 'a', 'b', 'c'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 120, leading: 40, slot: { id, ground: 230 } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [60, 200, 260, 200][i], visibleHeight: 120, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width: 320, height: 248, handTop: 400 });
+  const player = fit[0];
+  for (const enemy of fit.slice(1)) {
+    const half = 120 * enemy.scale / 2;
+    assert(enemy.x - half >= player.x - 1e-9, `${enemy.id} stays right of the player's centre line`);
+    assert(enemy.x + half <= 320 - 6 + 1e-9, `${enemy.id} stays on stage`);
+  }
+});

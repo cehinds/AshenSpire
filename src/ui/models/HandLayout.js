@@ -27,7 +27,7 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const arc = config.arcRem * rem;
   const available = Math.max(0, height - inset * 2 - lift - arc - controlsReserve);
   const cardWidth = compact
-    ? Math.max(72 / zoom, Math.min(104 / zoom, available * wireframeUi.card.ratio))
+    ? Math.max(72 / zoom, Math.min(100 / zoom, available * wireframeUi.card.ratio))
     : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
