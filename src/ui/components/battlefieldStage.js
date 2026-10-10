@@ -243,30 +243,27 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // read after the refit; it moves to the intent's left or right only when the
   // 44 px tap area above would sit under the HUD, the turn ribbon, or another
   // combatant's control. Nothing here reserves room in the fitted envelope.
+  // Reads every box first, then writes only the sides that change, so a pass
+  // costs one layout read and no forced re-layout between enemies.
   function placeEnemyInspect() {
     const zoom = uiZoom();
     const combat = field.closest('.combat');
     const infos = [...field.querySelectorAll('.combatant.enemy:not(.dead) > .combatant-stack > .combatant-leading > .combatant-info')];
     if (!infos.length || !combat) return;
-    for (const info of infos) info.removeAttribute('data-inspect-side');
     const viewport = combat.getBoundingClientRect();
     const hudBoxes = [...combat.ownerDocument.querySelectorAll('.topbar, .combat-hud, .turn-ribbon, .combat-tools')]
       .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
     const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     const pad = 11 * zoom, gap = 4 * zoom;
-    // What a spot must keep clear of the neighbours' controls. The raised spots
-    // use the tap pad; the far one clears only its painted mark, because its
-    // pad would reach a neighbour's Inspect without covering it.
-    const reach = (name, at, tap, size) => name === 'right-far-up'
-      ? { left: at.left, top: at.top, right: at.left + size, bottom: at.top + size }
-      : name.endsWith('-up') ? { left: tap.left - pad, right: tap.right + pad, top: tap.top - pad, bottom: tap.bottom } : tap;
-    for (const info of infos) {
-      const size = info.getBoundingClientRect().width;
-      // The CSS positions the Inspect against its leading stack, not the
-      // intent inside it: a moved intent must not move the placement's frame.
-      const anchor = info.parentElement;
-      const box = anchor.getBoundingClientRect();
-      if (!(size > 0) || !(box.width > 0)) continue;
+    // Other combatants' controls, excluding Inspect marks: those are placed by
+    // this pass and tracked from their planned boxes below.
+    const controls = [...field.querySelectorAll('.combatant-leading > .intent, .combatant-leading > .player-action-intent, .combatant.player .combatant-leading > .combatant-info, .combatant-mini-hud, .combatant-card > .nm, .combatant-card > .meters')]
+      .map(node => ({ node, rect: visibleCombatPanelRect(node, combat) })).filter(entry => entry.rect);
+    const measured = infos.map(info => ({ info, size: info.getBoundingClientRect().width,
+      anchor: info.parentElement, box: info.parentElement.getBoundingClientRect() }));
+    const planned = [], sides = [];
+    for (const { info, size, anchor, box } of measured) {
+      if (!(size > 0) || !(box.width > 0)) { sides.push(null); continue; }
       // Each spot with its 44 px tap box. A side spot never reaches into the intent.
       const centre = box.left + box.width / 2;
       const spots = [
@@ -290,28 +287,33 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         ['below', { left: centre - size / 2, top: box.bottom + gap },
           { left: centre - size / 2 - pad, right: centre + size / 2 + pad, top: box.bottom + gap - pad, bottom: box.bottom + gap + size + pad }],
       ];
-      // Other controls as they stand now: intents, Inspect marks already
-      // placed this pass, the player's HUD and each footer. Our own intent is the anchor.
-      const others = [...field.querySelectorAll('.combatant-leading > .intent, .combatant-leading > .combatant-info, .combatant-leading > .player-action-intent, .combatant-mini-hud, .combatant-card > .nm, .combatant-card > .meters')]
-        .filter(node => node !== info && !(node.matches('.intent') && node.parentElement === anchor))
-        .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
+      // Our own intent is the anchor; every tap pad must clear everything else,
+      // including the Inspect marks already planned this pass.
+      const others = [...controls.filter(({ node }) => !(node.matches('.intent') && node.parentElement === anchor)).map(({ rect }) => rect),
+        ...planned];
+      const mark = at => ({ left: at.left, top: at.top, right: at.left + size, bottom: at.top + size });
       // The painted 22 px mark must clear the HUD; its tap pad must clear the
       // other combatants' controls.
-      const pick = spots.find(([name, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
-        && !hudBoxes.some(hud => overlaps({ left: at.left, top: at.top, right: at.left + size, bottom: at.top + size }, hud))
-        && !others.some(rect => overlaps(reach(name, at, tap, size), rect)));
+      const pick = spots.find(([, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
+        && !hudBoxes.some(hud => overlaps(mark(at), hud)) && !others.some(rect => overlaps(tap, rect)));
       // With every spot taken (a back-row figure wedged under the ribbon),
       // keep the mark reachable on the figure's own art rather than hidden.
-      const side = pick ? pick[0] : hudBoxes.some(hud => overlaps({ left: spots[0][1].left, top: spots[0][1].top,
-        right: spots[0][1].left + size, bottom: spots[0][1].top + size }, hud)) ? 'below' : '';
-      if (side) info.dataset.inspectSide = side;
+      const chosen = pick || (hudBoxes.some(hud => overlaps(mark(spots[0][1]), hud)) ? spots.at(-1) : spots[0]);
+      planned.push(chosen[2]);
+      sides.push(chosen[0]);
     }
+    measured.forEach(({ info }, i) => {
+      if (sides[i] == null) return;
+      if (sides[i]) { if (info.dataset.inspectSide !== sides[i]) info.dataset.inspectSide = sides[i]; }
+      else if (info.hasAttribute('data-inspect-side')) info.removeAttribute('data-inspect-side');
+    });
   }
+  let inspectTick = 0;
   function trackPlayerHud() {
     placePlayerHud(false, [], true);
-    // A neighbour's intent that moves between refits re-picks the spot; the
-    // Inspect itself never follows the body's bob.
-    placeEnemyInspect();
+    // A neighbour's intent that moves between refits re-picks the spot about
+    // four times a second; the Inspect itself never follows the body's bob.
+    if (++inspectTick % 15 === 0) placeEnemyInspect();
     // Idle breathing also moves the painted body. Keep the physical gap during
     // those CSS transforms as well as explicit attack and movement poses.
     trackingRequest = field.isConnected && field.querySelector('.combatant.player')

@@ -210,7 +210,12 @@ export function combatOverheadRibbonShift({ x, width, top, bottom, ribbon, clear
 export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null, ribbonClearance = 14,
   obstacles = [], height = Infinity }) {
   const anchors = packCombatOverheadAnchors({ width, controls, inset, gap, ribbon, ribbonClearance });
-  return obstacles.length ? clearCombatOverheads({ width, height, controls, anchors, inset, gap, obstacles }) : anchors;
+  if (!obstacles.length) return anchors;
+  // A move off the player must keep the ribbon clearance the pack guaranteed:
+  // the ribbon and its clearance band block every overhead.
+  const walls = ribbon ? [...obstacles, { left: ribbon.left, right: ribbon.right,
+    top: ribbon.top, bottom: ribbon.bottom + ribbonClearance }] : obstacles;
+  return clearCombatOverheads({ width, height, controls, anchors, inset, gap, obstacles: walls });
 }
 
 function clearCombatOverheads({ width, height, controls, anchors, inset, gap, obstacles }) {

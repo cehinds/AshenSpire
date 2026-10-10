@@ -95,6 +95,25 @@ test('an overhead never blocks itself, and unobstructed anchors are unchanged', 
     combatOverheadAnchors({ width: 320, controls }), 'a distant obstacle leaves the packed anchor alone');
 });
 
+test('moving an overhead off the player keeps the turn ribbon clearance', () => {
+  // Review case: the upward move from the 320-wide player clash landed the
+  // intent at 105.6-153.6, under a ribbon spanning 90-130.
+  const controls = [{ id: 'e1', side: 'enemy', x: 77, width: 70.4, top: 152.7, bottom: 200.7 }];
+  const obstacles = [
+    { ownerId: 'player', left: 33.5, right: 116.9, top: 185.3, bottom: 273.8 },
+    { ownerId: 'player', left: 65.2, right: 87.2, top: 159.6, bottom: 181.6 },
+    { ownerId: 'player', left: 20.2, right: 132.2, top: 276.1, bottom: 295.1 },
+  ];
+  const ribbon = { left: 0, right: 320, top: 90, bottom: 130 }, ribbonClearance = 14;
+  const [anchor] = combatOverheadAnchors({ width: 320, controls, obstacles, ribbon, ribbonClearance, height: 400 });
+  const box = overheadBox(controls[0], anchor);
+  if (!anchor.obstructed) {
+    assert.equal(overlapsBox(box, { ...ribbon, bottom: ribbon.bottom + ribbonClearance }), false,
+      'a moved overhead never sits under the ribbon or inside its clearance');
+    for (const obstacle of obstacles) assert.equal(overlapsBox(box, obstacle), false);
+  }
+});
+
 test('an enemy overhead with no clear slot is reported obstructed rather than hidden', () => {
   const controls = [{ id: 'e1', side: 'enemy', x: 77, width: 70.4, top: 152.7, bottom: 200.7 }];
   const [anchor] = combatOverheadAnchors({ width: 320, controls, height: 400,
