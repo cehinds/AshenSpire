@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1794",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Fallen enemies no longer crowd living targets",
+    "detail": "A defeated enemy stays on the field for its defeat pose but no longer reserves an invisible tap target or shows its faded name and health plate, so living fighters' footers keep their places without a ghost plate over them and the HUD no longer shifts around it.",
+    "build": "0.7.1.1234",
+    "pullRequest": 1794,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1794"
+  },
+  {
+    "id": "pr-1792",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Reserve combat HUD targets and keep self-cast proxies reachable",
+    "detail": "The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.",
+    "build": "0.7.1.1232",
+    "pullRequest": 1792,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1792"
+  },
+  {
     "id": "pr-1789",
     "date": "2026-10-09",
     "group": "2026-10-09",

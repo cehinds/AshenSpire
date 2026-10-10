@@ -32,9 +32,16 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-10
+
+- **Fallen enemies no longer crowd living targets** ([#1794](https://github.com/cehinds/AshenSpire/pull/1794), `0.7.1.1234`). A defeated enemy stays on the field for its defeat pose but no longer reserves an invisible tap target or shows its faded name and health plate, so living fighters' footers keep their places without a ghost plate over them and the HUD no longer shifts around it.
+
+- **Reserve combat HUD targets and keep self-cast proxies reachable** ([#1792](https://github.com/cehinds/AshenSpire/pull/1792), `0.7.1.1232`). The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.
+
 ## 2026-10-09
 
 - **Weapon attacks use four painted phases** ([#1789](https://github.com/cehinds/AshenSpire/pull/1789), `0.7.1.1229`). Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded. Smaller 256 px sprites and backgrounds reduce the standalone download while keeping the same on-screen placement.
+
 - **Selected combatants come forward with a compact HUD** ([#1787](https://github.com/cehinds/AshenSpire/pull/1787), `0.7.1.1227`). Keep the existing cards and footer while showing compact intent icons and HP strips. Selecting a sprite, intent or HP reveals that character's details, outlines enemies red and players green, and brings the sprite forward at 105% scale. Deselect restores its exact size and layer. Small Information controls stay above the sprite, self-cast cards work through player HP, selected cards show their action icon, and header HP fills proportionally toward Armoury. On narrow phones, compact selected details and the log toolbar stay clear of target controls and cards.
 
 - **Compact combat targeting and touch controls** ([#1776](https://github.com/cehinds/AshenSpire/pull/1776), `0.7.1.1225`). Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.
