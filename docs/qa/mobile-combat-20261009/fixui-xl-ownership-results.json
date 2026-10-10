@@ -1,0 +1,198 @@
+[
+  {
+    "viewport": {
+      "width": 390,
+      "height": 650
+    },
+    "result": {
+      "z": 0.83,
+      "local": "470x783",
+      "total": 22,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "geometry": [
+      {
+        "id": "e1",
+        "core": {
+          "x": 194.034423,
+          "y": 318.334335,
+          "w": 44.000043,
+          "h": 44.000043
+        },
+        "override": "51.69811698717949px",
+        "sprite": {
+          "x": 154.65625,
+          "y": 153.921875,
+          "w": 78.734375,
+          "h": 94.625
+        },
+        "hit": "e1",
+        "css": {
+          "left": "51.6981px",
+          "top": "294.887px",
+          "display": "block"
+        },
+        "foreignBodies": []
+      },
+      {
+        "id": "e2",
+        "core": {
+          "x": 320.784423,
+          "y": 270.597715,
+          "w": 44.000043,
+          "h": 44.000043
+        },
+        "override": "51.69811698717949px",
+        "sprite": {
+          "x": 281.40625,
+          "y": 153.921875,
+          "w": 78.734375,
+          "h": 94.625
+        },
+        "hit": "e2",
+        "css": {
+          "left": "51.6981px",
+          "top": "237.373px",
+          "display": "block"
+        },
+        "foreignBodies": []
+      },
+      {
+        "id": "e3",
+        "core": {
+          "x": 194.026621,
+          "y": 272.322455,
+          "w": 44.000043,
+          "h": 44.000043
+        },
+        "override": "51.68870192307693px",
+        "sprite": {
+          "x": 159.25,
+          "y": 153.921875,
+          "w": 69.53125,
+          "h": 87.34375
+        },
+        "hit": "e3",
+        "css": {
+          "left": "51.6887px",
+          "top": "239.451px",
+          "display": "block"
+        },
+        "foreignBodies": []
+      }
+    ],
+    "foreignTap": {
+      "point": {
+        "x": 164.65625,
+        "y": 201.234375
+      },
+      "hit": {
+        "owner": "e3",
+        "tag": "DIV",
+        "class": "enemy-pose-stage enemy-expansion-stage",
+        "artOwner": "e3"
+      },
+      "selected": "e3"
+    }
+  },
+  {
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "result": {
+      "z": 0.62,
+      "local": "1361x629",
+      "total": 22,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "geometry": [
+      {
+        "id": "e1",
+        "core": {
+          "x": 446.854064,
+          "y": 164.92933,
+          "w": 43.98435,
+          "h": 43.98435
+        },
+        "override": "40.087200000000045px",
+        "sprite": {
+          "x": 466.046875,
+          "y": 138.390625,
+          "w": 21.625,
+          "h": 25.984375
+        },
+        "hit": "e1",
+        "css": {
+          "left": "40.0872px",
+          "top": "180.884px",
+          "display": "block"
+        },
+        "foreignBodies": []
+      },
+      {
+        "id": "e2",
+        "core": {
+          "x": 640.963439,
+          "y": 164.92933,
+          "w": 43.98435,
+          "h": 43.98435
+        },
+        "override": "40.087200000000045px",
+        "sprite": {
+          "x": 654.296875,
+          "y": 121.40625,
+          "w": 33.34375,
+          "h": 40.078125
+        },
+        "hit": "e2",
+        "css": {
+          "left": "40.0872px",
+          "top": "180.884px",
+          "display": "block"
+        },
+        "foreignBodies": []
+      },
+      {
+        "id": "e3",
+        "core": {
+          "x": 402.863452,
+          "y": 164.92933,
+          "w": 43.98435,
+          "h": 43.98435
+        },
+        "override": "-30.86540663507105px",
+        "sprite": {
+          "x": 471.640625,
+          "y": 138.390625,
+          "w": 10.4375,
+          "h": 13.109375
+        },
+        "hit": "e3",
+        "css": {
+          "left": "-30.8654px",
+          "top": "180.884px",
+          "display": "block"
+        },
+        "foreignBodies": []
+      }
+    ],
+    "foreignTap": {
+      "point": {
+        "x": 476.046875,
+        "y": 151.3828125
+      },
+      "hit": {
+        "owner": "e3",
+        "tag": "DIV",
+        "class": "enemy-pose-stage enemy-expansion-stage",
+        "artOwner": "e3"
+      },
+      "selected": "e3"
+    }
+  }
+]

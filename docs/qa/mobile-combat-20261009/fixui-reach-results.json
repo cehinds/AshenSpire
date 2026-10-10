@@ -1,0 +1,302 @@
+[
+  {
+    "width": 390,
+    "height": 650,
+    "mode": "combat",
+    "original": {
+      "z": 0.83,
+      "local": "470x783",
+      "total": 20,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "before": {
+      "z": 0.83,
+      "local": "470x783",
+      "total": 20,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "frames": [
+      {
+        "id": "player",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "block",
+          "pointer": "auto"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e1",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e2",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "height": 650,
+    "mode": "combat-xl",
+    "original": {
+      "z": 0.83,
+      "local": "470x783",
+      "total": 22,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "before": {
+      "z": 0.83,
+      "local": "470x783",
+      "total": 22,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "frames": [
+      {
+        "id": "player",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "block",
+          "pointer": "auto"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e1",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e2",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e3",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "height": 650,
+    "mode": "combat-overlap",
+    "original": {
+      "z": 0.83,
+      "local": "470x783",
+      "total": 22,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "before": {
+      "z": 0.83,
+      "local": "470x783",
+      "total": 22,
+      "covered": [],
+      "scrolledOut": 0,
+      "visual": []
+    },
+    "frames": [
+      {
+        "id": "player",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "block",
+          "pointer": "auto"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e1",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e2",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      },
+      {
+        "id": "e3",
+        "selected": false,
+        "name": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          },
+          "display": "none"
+        },
+        "after": {
+          "display": "none",
+          "pointer": "none"
+        },
+        "before": {
+          "display": "block",
+          "pointer": "auto"
+        }
+      }
+    ]
+  }
+]
