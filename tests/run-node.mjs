@@ -4,12 +4,14 @@
 // No flags run the original whole corpus. CI may schedule the same work as:
 //   --no-selftests --no-discovered   engine and tool verdicts
 //   --discovered-only --shard i/n   deterministic shards of discovered tests
+//   --no-slow | --slow-only          with --discovered-only: leave out, or run
+//                                    only, SLOW_DISCOVERED (run-node-lanes.mjs)
 //   --selftests-only --selftest-group link|other   exhaustive corpus groups
 // Selftests that write mutants must run in a separate checkout from tree gates.
 // tools/gatelist.mjs and tools/testnumbers.mjs still read this invocation list.
 
 import { runTests } from './engine.test.js';
-import { parseRunNodeOptions, discoveryShardFiles, selftestInGroup } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup } from './run-node-lanes.mjs';
 
 let options;
 try {
@@ -139,7 +141,7 @@ if (DISCOVER) {
   const stale = [...NOT_SPAWNED.keys()].filter(file => !existsSync(join(root, file)));
   let files;
   try {
-    files = discoveryShardFiles(found.filter(file => !NOT_SPAWNED.has(file)), options.shard);
+    files = discoveryShardFiles(discoverySpeedFiles(found.filter(file => !NOT_SPAWNED.has(file)), options.slow), options.shard);
   } catch (error) {
     console.error(`run-node: ${error.message}`);
     process.exit(2);
@@ -162,6 +164,7 @@ if (DISCOVER) {
   }
   console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${files.length} files, ${count('tests')} tests, ${count('fail')} failed` +
     ` (${NOT_SPAWNED.size} run elsewhere, each with its reason in NOT_SPAWNED)` +
+    (options.slow === 'exclude' ? ` (${SLOW_DISCOVERED.size} slow files left to --slow-only)` : options.slow === 'only' ? ' [slow files only]' : '') +
     (options.shard ? ` [shard ${options.shard.index}/${options.shard.count}]` : ''));
   if (ok) zoomPassed++;
   else zoomExtra++;

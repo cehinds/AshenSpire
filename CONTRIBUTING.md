@@ -111,7 +111,8 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
    A PR into `dev` is gated by the fast checks only (about five minutes or
-   less); the heavy suites — `tests.yml`'s self-tests and parse gate, `ci.yml`'s
+   less); the heavy suites — `tests.yml`'s slow simulation tests, self-tests and
+   parse gate, `ci.yml`'s
    jobs (3-OS, real-browser and Fullscreen-first), and `dev-preview.yml`'s
    reachability gates — run
    on every push to `test` and `release` (owner, 2026-09-26). DEVELOPER.md

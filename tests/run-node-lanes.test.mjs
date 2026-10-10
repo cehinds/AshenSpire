@@ -1,20 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdirSync, mkdtempSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, mkdtempSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { parseRunNodeOptions, discoveryShardFiles, selftestInGroup } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup } from './run-node-lanes.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const RUNNER = readFileSync(join(ROOT, 'tests/run-node.mjs'), 'utf8');
 
 test('default and old lane flags retain their complete original work', () => {
-  assert.deepEqual(parseRunNodeOptions([]), { core: true, selftests: true, discovered: true, shard: null, selftestGroup: null });
-  assert.deepEqual(parseRunNodeOptions(['--no-selftests']), { core: true, selftests: false, discovered: true, shard: null, selftestGroup: null });
-  assert.deepEqual(parseRunNodeOptions(['--selftests-only']), { core: false, selftests: true, discovered: false, shard: null, selftestGroup: null });
-  assert.deepEqual(parseRunNodeOptions(['--no-selftests', '--no-discovered']), { core: true, selftests: false, discovered: false, shard: null, selftestGroup: null });
-  assert.deepEqual(parseRunNodeOptions(['--discovered-only', '--shard', '1/4']), { core: false, selftests: false, discovered: true, shard: { index: 1, count: 4 }, selftestGroup: null });
+  assert.deepEqual(parseRunNodeOptions([]), { core: true, selftests: true, discovered: true, shard: null, selftestGroup: null, slow: 'include' });
+  assert.deepEqual(parseRunNodeOptions(['--no-selftests']), { core: true, selftests: false, discovered: true, shard: null, selftestGroup: null, slow: 'include' });
+  assert.deepEqual(parseRunNodeOptions(['--selftests-only']), { core: false, selftests: true, discovered: false, shard: null, selftestGroup: null, slow: 'include' });
+  assert.deepEqual(parseRunNodeOptions(['--no-selftests', '--no-discovered']), { core: true, selftests: false, discovered: false, shard: null, selftestGroup: null, slow: 'include' });
+  assert.deepEqual(parseRunNodeOptions(['--discovered-only', '--shard', '1/4']), { core: false, selftests: false, discovered: true, shard: { index: 1, count: 4 }, selftestGroup: null, slow: 'include' });
 });
 
 test('malformed, duplicate, unknown and incompatible selections are refused', () => {
@@ -25,6 +25,8 @@ test('malformed, duplicate, unknown and incompatible selections are refused', ()
     ['--selftests-only', '--no-selftests'], ['--selftest-group'], ['--selftest-group', 'link'],
     ['--selftests-only', '--selftest-group', 'typo'],
     ['--selftests-only', '--selftest-group', 'link', '--selftest-group', 'other'],
+    ['--no-slow'], ['--slow-only'], ['--no-selftests', '--no-slow'], ['--selftests-only', '--slow-only'],
+    ['--discovered-only', '--no-slow', '--slow-only'], ['--discovered-only', '--no-slow', '--no-slow'],
   ];
   for (const value of ['', 'all', '1', '4/4', '0/0', '-1/4', '01/4', '1/04', '1/2/3', ' 1/2', '0/9007199254740992']) {
     bad.push(['--discovered-only', '--shard', value]);
@@ -48,6 +50,29 @@ test('discovered shards preserve order and cover each original file exactly once
   }
   assert.throws(() => discoveryShardFiles([], null), /zero-work/);
   assert.throws(() => discoveryShardFiles(['one'], { index: 1, count: 2 }), /zero-work/);
+});
+
+test('slow selection splits the discovered corpus exactly in two and composes with shards', () => {
+  assert.deepEqual(parseRunNodeOptions(['--discovered-only', '--no-slow', '--shard', '0/4']).slow, 'exclude');
+  assert.deepEqual(parseRunNodeOptions(['--discovered-only', '--slow-only']).slow, 'only');
+  const files = ['tests/a.test.mjs', ...SLOW_DISCOVERED.keys(), 'tests/z.test.mjs'].sort();
+  const fast = discoverySpeedFiles(files, 'exclude');
+  const slow = discoverySpeedFiles(files, 'only');
+  assert.deepEqual(discoverySpeedFiles(files, 'include'), files);
+  assert.deepEqual(slow, [...SLOW_DISCOVERED.keys()].sort());
+  assert.deepEqual([...fast, ...slow].sort(), files);
+  assert.equal(fast.filter(file => slow.includes(file)).length, 0);
+  const sharded = Array.from({ length: 2 }, (_, index) => discoveryShardFiles(fast, { index, count: 2 }));
+  assert.deepEqual(sharded.flat().sort(), fast);
+  assert.throws(() => discoverySpeedFiles(files, 'typo'), /include, exclude or only/);
+});
+
+test('every SLOW_DISCOVERED entry names a discovered test file with a reason', () => {
+  for (const [file, reason] of SLOW_DISCOVERED) {
+    assert.match(file, /\.test\.mjs$/);
+    assert.ok(existsSync(join(ROOT, file)), `${file} is gone; remove its SLOW_DISCOVERED entry`);
+    assert.ok(reason.length > 10, `${file} needs its reason`);
+  }
 });
 
 test('every existing selftest site participates in the exhaustive link/other partition', () => {
