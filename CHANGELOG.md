@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
-- **Bigger cards and footer on phones; enemies no longer hide each other** ([#1806](https://github.com/cehinds/AshenSpire/pull/1806), `0.7.1.1253`). Phone cards are about a fifth larger and the footer's action orb and End Turn button grow. In fights where two enemies share a formation column, a phone no longer draws one wholly behind the other; each stands under its own intent and health. The victory banner now plays above the fighters and the hand instead of behind the player.
+- **Bigger cards and footer on phones; enemies no longer hide each other** ([#1806](https://github.com/cehinds/AshenSpire/pull/1806), `0.7.1.1255`). Phone cards are about a fifth larger and the footer's action orb and End Turn button grow. In fights where two enemies share a formation column, a phone no longer draws one wholly behind the other; each stands under its own intent and health. The victory banner now plays above the fighters and the hand instead of behind the player.
 
 - **Newly painted enemies fall back and come back cleanly** ([#1804](https://github.com/cehinds/AshenSpire/pull/1804), `0.7.1.1251`). When their art cannot load, the new enemies show their name in place of the picture, and Retry paints them again; taps on them always reach the enemy, never an inner layer.
 
