@@ -14,7 +14,30 @@ export function queueClassMilestone(registries, run, classId, level, { veteran =
   const grants = Object.keys(cadence).filter(kind => cadence[kind].includes(level));
   const receipt = { classId, level, skillXpPaid: !veteran, veteran, grants: Object.fromEntries(grants.map(kind => [kind, { id: milestoneReceiptId(classId, level, kind), state: 'pending' }])) };
   run.classMilestones[id] = receipt;
+  capRunClassGrants(registries, run, classId);
   return receipt;
+}
+// SPEC §13.4r: feat slots and class attribute points are a per-run budget
+// (reached milestones, up to six and four), not a per-class one. A second
+// class's milestones may use only what the run has not already taken, so a
+// class swap cannot replay or stack them. Excess pending grants are spent.
+export const RUN_BUDGET_KINDS = ['feat', 'attribute'];
+export function runGrantsTaken(run, kind) {
+  return Object.values(run.classMilestones || {}).filter(row => row.grants?.[kind]?.state === 'taken').length;
+}
+export function capRunClassGrants(registries, run, classId = run.class) {
+  const rows = Object.values(run.classMilestones || {}).filter(row => row.classId === classId).sort((a, b) => a.level - b.level);
+  const level = Math.max(run.skills?.[`class:${classId}`]?.level || 0, ...rows.map(row => row.level));
+  const budget = classRewardBudget(registries, level);
+  for (const kind of RUN_BUDGET_KINDS) {
+    let used = runGrantsTaken(run, kind);
+    for (const row of rows) {
+      const grant = row.grants[kind];
+      if (grant?.state !== 'pending') continue;
+      if (used >= (budget[kind] || 0)) { grant.state = 'spent'; grant.spentReason = 'run budget'; }
+      else used++;
+    }
+  }
 }
 export function pendingClassMilestones(run, classId = run.class) {
   return Object.values(run.classMilestones || {}).filter(row => row.classId === classId).flatMap(row =>
