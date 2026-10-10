@@ -147,7 +147,16 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.enemy-expansion-bob|\.enemy-expansion-placeholder|\.alternative-silhouette \[authored-neighbour\])/,
+        // The red names the covering element by what the hit-test finds. The
+        // plant's authored alternatives were neighbouring artwork (.enemy-pose-
+        // stage, .enemy-expansion-bob, ...). On the current tree, at 390x650, the
+        // raised frame's neighbour answers with its OWN intent badge
+        // (`?Preparing ? .intent`; the `?` only when that intent is hidden, so it
+        // is not required) instead. Same mechanism: a whole-frame z-index
+        // lets a neighbouring fighter's overhead control paint over this intent.
+        // Matched under combat-overlap only, with the covered element still
+        // required to be `.intent`.
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.enemy-expansion-bob|\.enemy-expansion-placeholder|\.alternative-silhouette \[authored-neighbour\]|\.intent)/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
