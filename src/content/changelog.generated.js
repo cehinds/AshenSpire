@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1799",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Art retry verification recognizes reusable sprite stages",
+    "detail": "The blocked-art browser check accepts a marked placeholder that retains its hidden failed image, while still requiring visible art to return after Retry. Game behavior is unchanged.",
+    "build": "0.7.1.1237",
+    "pullRequest": 1799,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1799"
+  },
+  {
     "id": "pr-1795",
     "date": "2026-10-10",
     "group": "2026-10-10",
