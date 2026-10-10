@@ -9,7 +9,7 @@ Owner request: integrate the current package into the game on `dev`, merge what 
 - Six sequences use a 260 ms authoring duration; runtime scales to the existing action window. The stage introduces no gameplay delay or mechanical events.
 - All exported frames use a 512-square canvas and floor at y=480. Source cells are smaller and have been upscaled; these are not native 512-detail paintings.
 - Runtime paths: `assets/enemy-poses/expansion/<enemyId>/<pose>.webp`, resolved through the existing art-pack loader.
-- Art authoring location: `AshenSpire-art/art/enemy-expansion-2026-10-09/`. Projects contain embedded whole-pose layers, not articulated anatomy or weapon rigs.
+- Art authoring location: `AshenSpire-art/art/enemy-expansion-2026-10-09/`. The rebuild tool generates projects with embedded whole-pose layers, not articulated anatomy or weapon rigs.
 - Local complete package: `D:/repos/.codex/outputs/sprite-expansion-2026-10-09/enemies`. Original preview at `http://127.0.0.1:8807/` while its local server runs.
 
 ## Runtime and coverage boundary
@@ -55,3 +55,7 @@ Follow the art repository's normal PR/automatic pack publication, then pin the r
 ### Actual combat smoke check
 
 After integrating current dev/player attacks, 14 focused tests passed. Source combat ran at 1440×1000 and 390×844 in Edge. The test confirmed End Turn, declined reaction offers, and advanced turn 1 → 2 (event log 12 → 45) in both viewports. Enemy art requests and page execution had no errors. Four optional audio probes returned 404; those IDs are absent from the pinned manifest and retain existing procedural fallbacks. Screenshots and the machine-readable receipt are under `docs/preview/enemy-expansion-2026-10-09/`. This supersedes the earlier renderer-only coverage statement; phone emulation is still not a physical-phone test.
+
+### Transfer layout
+
+Runtime high/light frames, source sheets, overrides, references and the rebuild script are committed to the art repository. Generated PNG exports, contact sheets and embedded projects remain in the complete local package and are reproducible with `node build.cjs` plus Sharp. The full ready-to-open export snapshot is additionally preserved locally on art branch `codex/enemy-sprite-expansion` at `f1ecc42`; the lean merge branch is `codex/enemy-sprite-runtime-integration`. This avoids transferring duplicate embedded copies of every painted frame and does not change the runtime pack hashes.
