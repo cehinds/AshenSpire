@@ -1,5 +1,7 @@
 # Approved combat HUD and mobile targeting
 
+The [approved three-state design reference](approved-selection-design-reference.png) was supplied again by the owner for the remote merge. It defines idle, player-selected and enemy-selected presentation while preserving the existing cards and footer. It is an illustration; the screenshots and package records below are runtime evidence.
+
 The owner approved the refined header and three selection states on October 9, preserving the existing card fan and footer. The final package tested here is **0.7.1.1227**, digest `73455e1bea`. It includes the consolidated primary battlefield geometry/renderers, approved HUD and 105% selection emphasis, bounded footer packing, and the duplicate self-target activation fix integrated from dev.
 
 ## Verified behavior

@@ -618,6 +618,46 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
+    // Idle names do not reserve footer rows, but their independent tap cores
+    // still need separate space when two formation rows meet on a short field.
+    // Move only these transparent cores; keep art and readable plates fixed.
+    for (const { frame } of placed) {
+      frame.style.removeProperty('--enemy-core-x');
+      frame.style.removeProperty('--enemy-core-y');
+      delete frame.dataset.coreObstructed;
+    }
+    const idleCores = placed.filter(({frame}) => frame.matches('.enemy:not(.context-selected):not(.dead)'))
+      .map(({frame, sprite}) => {
+        const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
+        const art = sprite.getBoundingClientRect();
+        return { id: frame.dataset.eid, frame, box, art,
+          x: box.left + parseFloat(style.left) * zoom - fieldRect.left,
+          y: box.top + parseFloat(style.top) * zoom - fieldRect.top, width: 44 };
+      });
+    if (idleCores.some((core, i) => idleCores.slice(i + 1)
+      .some(other => Math.abs(core.x-other.x) < 44 && Math.abs(core.y-other.y) < 44))) {
+      const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
+        readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
+      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm')]
+        .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
+        .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
+          top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
+      for (const {frame, sprite} of placed) {
+        const box = currentSpriteArtBounds(sprite, refresh);
+        obstacles.push({ ownerId:frame.dataset.eid, left:box.left-fieldRect.left,
+          right:box.right-fieldRect.left, top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top });
+      }
+      const cores = combatTargetAnchors({ width:fieldRect.width, height:boundary-fieldRect.top,
+        size:44, lockX:true, maxShiftX:44,
+        targets:idleCores.map(core => ({ ...core, x:core.art.width >= 44
+          ? core.art.left+core.art.width/2-fieldRect.left : core.x })), obstacles });
+      for (const core of cores) {
+        const { frame, box } = idleCores.find(source => source.id === core.id);
+        frame.style.setProperty('--enemy-core-x', `${(fieldRect.left+core.x-box.left)/zoom}px`);
+        frame.style.setProperty('--enemy-core-y', `${(fieldRect.top+core.y-box.top)/zoom}px`);
+        frame.dataset.coreObstructed = String(!!core.obstructed);
+      }
+    }
     const rect = combat.getBoundingClientRect();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the

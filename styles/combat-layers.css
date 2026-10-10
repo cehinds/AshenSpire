@@ -61,7 +61,7 @@
    Explicit overhead reading controls retain priority above this square. */
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)::before {
   content: ''; display: block; position: absolute;
-  left: var(--enemy-hit-x); top: var(--enemy-hit-y);
+  left: var(--enemy-core-x, var(--enemy-hit-x)); top: var(--enemy-core-y, var(--enemy-hit-y));
   width: min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))));
   height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
   transform: translate(-50%, -50%); pointer-events: auto;
@@ -69,7 +69,13 @@
   z-index: calc(var(--combat-layer-selection) + 2) !important;
 }
 :root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)::before {
-  left: calc(var(--enemy-hit-x) - (var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))) - min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))))) / 2);
+  left: var(--enemy-core-x, calc(var(--enemy-hit-x) - (var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))) - min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))))) / 2));
+}
+/* Waist-overlap players are selected through their exposed artwork. Their
+   foot is behind the cards, so no invisible selection patch belongs there. */
+:root .combat[data-layout='formation'][data-waist-overlap='true'] .combatant.player-target-hitbox::before,
+:root .combat[data-layout='formation'][data-waist-overlap='true'] .combatant.player-target-hitbox::after {
+  display: none;
 }
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) {
   z-index: calc(var(--combat-layer-selection) + 1) !important;

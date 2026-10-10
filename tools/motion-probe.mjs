@@ -69,8 +69,11 @@
 // between two frames (no frame sees it, no end event fires) is not measured;
 // nor is motion from a video or canvases outside the alternative card stage.
 // The card stage is sampled through its final painted pixels. Other script motion is seen as
-// writes to an element's inline style or an image's src: a timer or rAF loop
-// that moves an element by toggling CLASSES (static rules, no transition) is
+// writes to an element's inline style or an image's src when it has a layout
+// box. Display-none elements (including hidden ancestors) and detached nodes
+// cannot paint and do not count; zero opacity
+// and transformed/offscreen boxes still count so fades and travel stay tested.
+// A timer or rAF loop that moves an element by toggling CLASSES (static rules, no transition) is
 // not seen. No combat code moves that way today (its flipbooks and tweens
 // write src/style: presentationSequence.js, combatantEffectLayers.js, the
 // pose animators), so the observer does not watch `class`, whose ordinary
@@ -399,6 +402,10 @@ const SAMPLER = `(() => {
   const changes = new Map();
   const lastStyle = new WeakMap();
   const note = (el, what) => {
+    // Hidden compact-HUD labels still receive stage positioning updates, but
+    // updating their future anchor cannot animate pixels. Do not exempt zero
+    // opacity or transformed boxes: those can be steps of a visible tween.
+    if (!el.getClientRects().length) return;
     let c = changes.get(el);
     if (!c) { c = { frames: new Set(), times: [], what: new Set() }; changes.set(el, c); }
     if (!c.frames.has(frames)) c.times.push(Math.round(performance.now()));
