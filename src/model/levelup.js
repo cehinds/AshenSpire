@@ -158,7 +158,10 @@ export function bankLevelXp(registries, run, amount) {
   if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
   const before = characterLevel(run);
   const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
-  const discarded = gain ? climbLevels(registries, { level: before, xp: run.level.xp, gain }).discarded : 0;
+  // The per-fight cap counts only the levels this fight's XP earns: the levels
+  // banked XP already pays for (pendingLevelCount) start the count after them.
+  const fightFrom = before + pendingLevelCount(registries, run);
+  const discarded = gain ? climbLevels(registries, { level: before, xp: run.level.xp, gain, fightFrom }).discarded : 0;
   if (gain) run.level.xp += gain - discarded;
   return { before, after: before, levelUps: 0, pendingLevelUps: pendingLevelCount(registries, run), points: 0, thresholds: 0, gained: gain, discarded };
 }
@@ -194,13 +197,18 @@ export function claimBankedLevel(registries, run, { pointsPerLevel = null, grant
  *     most one XP short of the next step and a progress bar never reads past
  *     full.
  * `capped` says a ceiling, not the XP, stopped the climb, and `cappedBy`
- * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `discarded` is
+ * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `fightFrom`
+ * (default `level`) is the level the allowance counts from, so levels the
+ * ledger already paid for before this award do not use it up. `discarded` is
  * the XP the per-fight cap threw away (0 otherwise). `awardLevelXp`
  * writes this to the run; `levelPace` reads it for the Levelling preview, so
  * the preview cannot describe a climb play does not make.
  */
-export function climbLevels(registries, { level = 1, xp = 0, gain = 0 } = {}) {
+export function climbLevels(registries, { level = 1, xp = 0, gain = 0, fightFrom = null } = {}) {
   const start = Number.isInteger(level) && level >= 1 ? level : 1;
+  // The level the per-award allowance counts from: `start` unless the caller
+  // says XP already banked pays for levels first (bankLevelXp).
+  const from = Number.isInteger(fightFrom) && fightFrom >= start ? fightFrom : start;
   const t = grantTable(registries);
   const ceiling = Number.isInteger(t.maxLevels) ? t.maxLevels : null;
   const perAward = perAwardCap(registries);
@@ -213,7 +221,7 @@ export function climbLevels(registries, { level = 1, xp = 0, gain = 0 } = {}) {
     // The per-award cap first: once this award has climbed its allowance the
     // rest is discarded, whichever ceiling would also stop it here — so a
     // capped award always leaves xp ≤ xpToNext − 1 (review, #1349).
-    if (perAward !== null && lv - start >= perAward) { cappedBy = 'fight'; discarded = bank - (cost - 1); bank = cost - 1; break; }
+    if (perAward !== null && lv - from >= perAward) { cappedBy = 'fight'; discarded = bank - (cost - 1); bank = cost - 1; break; }
     if (ceiling !== null && lv >= ceiling) { cappedBy = 'level'; break; }
     bank -= cost;
     lv += 1;
