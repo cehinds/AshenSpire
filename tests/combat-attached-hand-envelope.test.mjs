@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handLayout, handGeometryKey, restingHandEnvelope } from '../src/ui/models/HandLayout.js';
 import { playerDetailsPlacement } from '../src/ui/models/PlayerDetailsPlacementModel.js';
-import { visibleCombatPanelRect, combatControlWidth, packCombatTargetsWithHud } from '../src/ui/components/battlefieldStage.js';
+import { visibleCombatPanelRect, combatControlWidth, packCombatTargetsWithHud, combatTargetHudFootprints } from '../src/ui/components/battlefieldStage.js';
 import { combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
 
 test('actual 1203 phone XL blocked feet obtain a full clear footer pack after one HUD retry', () => {
@@ -73,6 +73,17 @@ test('actual 1203 phone XL blocked feet obtain a full clear footer pack after on
     ...after.filter(t=>t.id!=='player').map(t=>{const box=rect(t);
       return {...box,top:box.top+fieldTop,bottom:box.bottom+fieldTop};})]});
   assert.deepEqual(settledHud,hud,'the subsequent HUD tracking pass keeps the same slot beside the complete settled footers');
+  // A load/pose callback may see the old or replacing name/HP children. The
+  // packed footer receipt, rather than those DOM children, is its reservation.
+  const oldTracking=playerDetailsPlacement({...placement,obstacles:intents});
+  const footprints=combatTargetHudFootprints(after,{left:0,top:fieldTop},44);
+  const tracked=playerDetailsPlacement({...placement,previous:hud,obstacles:[...intents,...footprints]});
+  const hudRect=p=>({left:p.left-door,right:p.left+128,top:p.top,bottom:p.top+79.9375});
+  assert.ok(footprints.some(foot=>!clear(hudRect(oldTracking),foot)),
+    'tracking only current readable children can overwrite a successfully packed target');
+  assert.deepEqual(tracked,hud,'tracking retains a clear accepted panel beside all settled full-width plates');
+  for(let frame=0;frame<60;frame++)assert.deepEqual(playerDetailsPlacement({...placement,
+    previous:tracked,obstacles:[...intents,...footprints]}),tracked,'repeated tracking cannot undo the target pack');
   assert.deepEqual({targets,fixed,placement},originalInputs,'artwork anchors, panel inputs and existing obstacles never mutate');
   assert.deepEqual(fit(),after,'settled retry is idempotent');
   assert.equal(hudCount,1,'an already-clear pack does not move the HUD again');
@@ -196,6 +207,20 @@ test('hidden enemy and HUD ancestors never reserve ghost rectangles, while visib
     assert.equal(visibleCombatPanelRect(panel, field), null);
     field.style = {};
     assert.equal(visibleCombatPanelRect(panel, field).width, 104);
+    field.style = {opacity:'0'};
+    assert.equal(visibleCombatPanelRect(panel, field).width,104,
+      'a common screen fade must reserve the full panel that paints when it finishes');
+    panel.style = {opacity:'0'};
+    assert.equal(visibleCombatPanelRect(panel, field),null,'an individually transparent panel is still excluded');
+    panel.style = {}; leading.style = {opacity:'0'};
+    assert.equal(visibleCombatPanelRect(panel, field),null,'an intermediate transparent leading is still excluded');
+    leading.style = {};
+    for(const hidden of [{display:'none'},{visibility:'hidden'},{visibility:'collapse'}]){
+      field.style={opacity:'0',...hidden};
+      assert.equal(visibleCombatPanelRect(panel,field),null,'a hidden common boundary is still excluded');
+    }
+    field.style={opacity:'0'};field.hidden=true;
+    assert.equal(visibleCombatPanelRect(panel,field),null);
   } finally {
     if (original === undefined) delete globalThis.getComputedStyle; else globalThis.getComputedStyle = original;
   }

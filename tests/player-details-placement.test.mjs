@@ -47,3 +47,17 @@ test('a later co-op panel avoids the entire earlier reading and Info footprint',
   assert.ok(result.left+128+10<=occupied.left || result.left-44>=occupied.right+10
     || result.top+80+10<=occupied.top || result.top>=occupied.bottom+10);
 });
+
+test('tracking can reuse a complete accepted panel position but never an offscreen or covered one',()=>{
+  const base={art:{right:175,top:230},width:128,height:80,leftOverhang:44,
+    viewport:{left:0,top:0,right:390,bottom:650},handTop:445,hudBottom:80,
+    obstacles:[{left:94,top:200,right:266,bottom:300}]};
+  const accepted=playerDetailsPlacement(base);
+  assert.deepEqual(playerDetailsPlacement({...base,previous:accepted}),accepted);
+  for(const previous of [{left:0,top:0},{left:138,top:230},{left:Infinity,top:NaN}]){
+    const result=playerDetailsPlacement({...base,previous});
+    assert.ok(result.left-44>=10&&result.left+128<=380&&result.top>=90&&result.top+80<=435);
+    assert.ok(base.obstacles.every(o=>result.left+128+10<=o.left||result.left-44>=o.right+10
+      ||result.top+80+10<=o.top||result.top>=o.bottom+10));
+  }
+});

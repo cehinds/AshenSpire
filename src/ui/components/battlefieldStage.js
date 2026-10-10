@@ -19,14 +19,15 @@ import { alternativeFormation, fitAlternativeSprites } from '../models/Alternati
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 
-// Hidden panels can retain layout rectangles. Reserve only painted controls,
-// including visibility inherited from a hidden leading or combatant container.
+// Hidden panels can retain layout rectangles. Reserve controls that will paint
+// together at the layout boundary, including during its common screen fade.
+// Individually hidden children and intermediate ancestors remain excluded.
 export function visibleCombatPanelRect(node, field) {
   if (!node) return null;
   for (let current = node; current; current = current.parentElement) {
     const style = getComputedStyle(current);
     if (current.hidden || style.display === 'none' || ['hidden', 'collapse'].includes(style.visibility)
-      || style.opacity === '0') return null;
+      || (style.opacity === '0' && current !== field)) return null;
     if (current === field) break;
   }
   const rect = node.getBoundingClientRect();
@@ -58,6 +59,15 @@ export function packCombatTargetsWithHud({ pack, placeHud, targetCores }) {
   return original;
 }
 
+export function combatTargetHudFootprints(targets, fieldRect, size) {
+  return targets.map(target => ({
+    left: fieldRect.left + target.x - target.width / 2,
+    right: fieldRect.left + target.x + target.width / 2,
+    top: fieldRect.top + target.y - size / 2,
+    bottom: fieldRect.top + target.y + size / 2,
+  }));
+}
+
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
@@ -77,6 +87,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let frameRequest = 0;
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
+  let settledTargets = [], settledFooterSize = 44;
   function readRestingHand() {
     const hand = field.closest('.combat').querySelector('.hand');
     if (!hand) return null;
@@ -93,6 +104,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const panels = [...field.querySelectorAll(reserveFirst === true ? '.enemy .combatant-leading' : '.enemy .combatant-leading, .enemy .nm, .enemy .meters')]
       .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
     panels.push(...targetCores);
+    // Pose/load tracking must respect the same complete footer footprints as
+    // the pack, not only the name/HP children currently painted inside them.
+    if (reserveFirst !== true && settledTargets.length) panels.push(
+      ...combatTargetHudFootprints(settledTargets, field.getBoundingClientRect(), settledFooterSize));
     const handTop = readRestingHand()?.clearanceTop;
     for (const player of field.querySelectorAll('.combatant.player')) {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
@@ -105,6 +120,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const leftOverhang = combatControlWidth(leading.querySelector(':scope > .combatant-info'), zoom);
       const placement = playerDetailsPlacement({ art, width: panel.width, height: panel.height, viewport,
         handTop, leftOverhang,
+        previous: reserveFirst === true ? undefined : { left: panel.left, top: panel.top },
         hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
       panels.push({ left: placement.left - leftOverhang, top: placement.top,
         right: placement.left + panel.width, bottom: placement.top + panel.height });
@@ -438,6 +454,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // reserving target space. Its hit-testable health row and ability badges
     // must not split the independent frame plate's complete tap area.
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    settledTargets = [];
     placePlayerHud();
     const boxes = placed.map(({ frame, sprite }) => ({
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
@@ -504,6 +521,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         bottom: box.hostRect.bottom + footerSize / 2 + 22,
       })),
     });
+    settledTargets = targets;
+    settledFooterSize = footerSize;
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';

@@ -1016,15 +1016,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   // ---------- rendering ----------
-  function renderCombatantStage() {
+  function renderCombatantStage({ fit = true } = {}) {
     $('.field').dataset.playerCell = combat.player.formationCell || '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
     renderPlayer();
     renderEnemies();
-    battlefieldStage.refresh();
-    formationMovement?.refresh();
+    if (fit) {
+      battlefieldStage.refresh();
+      formationMovement?.refresh();
+    }
   }
 
   function render() {
@@ -1035,10 +1037,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     renderTopbar();
     renderPotionTray();
-    renderCombatantStage();
-    renderHand();
+    renderCombatantStage({ fit: false });
     renderControls();
     renderCombatTools();
+    // The dock reserve changes the hand viewport. Author its resting receipt
+    // before the single full-board fit can reserve HUD and footer tap space.
+    combatTools.flushGeometry();
+    renderHand();
+    battlefieldStage.refresh();
+    formationMovement?.refresh();
     applyTargetLayer();
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
