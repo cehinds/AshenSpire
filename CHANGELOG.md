@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
+- **Steadier names under reduced motion and reachable Info on phones** ([#1796](https://github.com/cehinds/AshenSpire/pull/1796), `0.7.1.1235`). With Reduced motion on, enemy names and health no longer twitch by fractions of a pixel as the board settles, and moving the pointer no longer drifts the backdrop. The player's Info and action buttons stay above the hand instead of slipping under it when the character stands low on narrow phones.
+
 - **Fallen enemies no longer crowd living targets** ([#1794](https://github.com/cehinds/AshenSpire/pull/1794), `0.7.1.1234`). A defeated enemy stays on the field for its defeat pose but no longer reserves an invisible tap target or shows its faded name and health plate, so living fighters' footers keep their places without a ghost plate over them and the HUD no longer shifts around it.
 
 - **Reserve combat HUD targets and keep self-cast proxies reachable** ([#1792](https://github.com/cehinds/AshenSpire/pull/1792), `0.7.1.1232`). The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.
