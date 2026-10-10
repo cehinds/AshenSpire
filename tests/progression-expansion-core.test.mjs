@@ -12,6 +12,8 @@ import { createRng } from '../src/engine/rng.js';
 import { recordSkillXp, skillXpReceipt } from '../src/engine/skillXp.js';
 import { rewardPlan, resolveContinue, pickIds } from '../src/model/rewardplan.js';
 import { composeProgressionContent } from '../src/model/progressionContent.js';
+import { equipClassCard } from '../src/model/classLibrary.js';
+import { learnClassCard } from '../src/model/classLibraryState.js';
 
 const source = createRegistries(contentBundle);
 function fresh(meta = {}) {
@@ -61,6 +63,36 @@ test('veteran allocations preserve budgets without replaying class-to-skill XP o
   assert.equal(pendingClassMilestones(run).filter(row=>row.kind==='attribute').length,4);
   assert.equal(activateAbilitySkill(run,'combatManeuvers'),false);
   assert.deepEqual(validateRunShape(run),[]);
+});
+
+test('a class swap shares the run feat and attribute budget instead of replaying veteran grants (#1676, #1658)',()=>{
+  const meta={classMastery:{reaver:{xp:100000,level:20,unlockedRows:[]},herald:{xp:100000,level:20,unlockedRows:[]}}};
+  const run=createRunState({registries:source,classId:'reaver',seed:71});
+  openRunClassMastery(source,run,meta,{receiptId:'swap-budget'});
+  let reg=registriesForClassMastery(source,run);
+  const rng=createRng(5);
+  const before={...run.attributes};
+  const take=kind=>rollClassMilestoneRewards(reg,rng,run,{meta}).filter(offer=>offer.rewardKind===kind)
+    .filter(offer=>(offer.choiceIds||offer.options).some(choice=>claimClassMilestoneReward(reg,run,offer.receiptId,choice,{meta}))).length;
+  const taken=kind=>Object.values(run.classMilestones).filter(row=>row.grants[kind]?.state==='taken').length;
+  assert.equal(take('attribute'),4);
+  assert.equal(run.skillAttributePoints,4);
+  learnClassCard(reg,run,'herald');
+  equipClassCard(reg,run,'herald');
+  reg=registriesForClassMastery(source,run);
+  assert.equal(pendingClassMilestones(run).filter(row=>row.kind==='attribute').length,0,'the run budget of four points is already used');
+  assert.equal(take('attribute'),0);
+  assert.equal(take('feat'),6,'feats the run has not taken stay available to the equipped class');
+  equipClassCard(reg,run,'reaver');
+  reg=registriesForClassMastery(source,run);
+  assert.equal(pendingClassMilestones(run).filter(row=>['feat','attribute'].includes(row.kind)).length,0,'swapping back replays nothing');
+  assert.equal(take('feat'),0);
+  assert.equal(run.skillAttributePoints,4);
+  assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b,0)-Object.values(before).reduce((a,b)=>a+b,0),4);
+  assert.equal(taken('attribute'),4);
+  assert.equal(taken('feat'),6);
+  assert.deepEqual(validateRunShape(run),[]);
+  assert.deepEqual(validateRunShape(deserializeRun(serializeRun(run))),[]);
 });
 
 test('ability activation plus nine linear steps costs 2700 XP and queues ten lessons without legacy rank-ups',()=>{
