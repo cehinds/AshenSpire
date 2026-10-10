@@ -463,7 +463,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
       leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
       // An overhead with no clear slot stays at its anchor, reported, not hidden.
-      frame.dataset.overheadObstructed = String(!!anchor?.obstructed);
+      if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
+      else delete frame.dataset.overheadObstructed;
     };
     const depthOrder = [...new Set(plan.slots.map(slot => slot.layer))].sort((a, b) => a - b);
     for (const actor of actors) {
@@ -549,9 +550,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       return [art, ...controls].map(rect => ({ ownerId: frame.dataset.eid, left: rect.left - fieldRect.left,
         right: rect.right - fieldRect.left, top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top }));
     });
-    overheads = combatOverheadAnchors({ width: fieldRect.width, height: fieldRect.height, ribbon,
+    // Only a clash re-packs: a layout where no overhead reaches the player keeps
+    // the anchors above, so it is written exactly as before.
+    const repacked = combatOverheadAnchors({ width: fieldRect.width, height: fieldRect.height, ribbon,
       ribbonClearance: overheadGap, controls: overheadControls, obstacles: playerObstacles });
-    for (const entry of leadingWrites) placeLeading(entry, overheads);
+    if (repacked.some(anchor => { const before = overheads.find(overhead => overhead.id === anchor.id);
+      return anchor.x !== before?.x || (anchor.offsetY ?? 0) !== (before?.offsetY ?? 0) || !!anchor.obstructed !== !!before?.obstructed; })) {
+      overheads = repacked;
+      for (const entry of leadingWrites) placeLeading(entry, overheads);
+    }
     const boxes = placed.map(({ frame, sprite }) => ({
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
