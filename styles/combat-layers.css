@@ -280,7 +280,28 @@
 :root .combat[data-layout='formation'] .enemy .combatant-leading .intent { width: calc(104px / var(--ui-zoom,1)); min-width: calc(104px / var(--ui-zoom,1)); }
 :root .combat[data-compact-combat='true'] .enemy .combatant-leading .intent { width: calc(88px / var(--ui-zoom,1)); min-width: calc(88px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .enemy .combatant-leading > .intent { order: -1; }
+/* The unselected stack keeps the band beneath the intent that its HP footer
+   packs into; the Inspect "i" never uses it. */
 :root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-leading { padding-bottom: calc(22px / var(--ui-zoom,1)); }
+/* An enemy's Inspect "i" hangs above its intent. It is outside the stack's
+   flow, so the fitted envelope never reserves its band. battlefieldStage moves
+   it to the intent's left or right (data-inspect-side) only when the spot
+   above is under the HUD, the turn ribbon, or another combatant's control. */
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info {
+  position: absolute; top: auto; left: 50%; right: auto; bottom: calc(100% + 4px / var(--ui-zoom,1));
+  translate: -50% 0; margin: 0;
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info::before {
+  /* 44 px tap area around the 22 px mark; it stops at the intent's top edge. */
+  content: ''; position: absolute;
+  inset: calc(-11px / var(--ui-zoom,1)) calc(-11px / var(--ui-zoom,1)) calc(-4px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='left'] {
+  left: auto; right: calc(100% + 4px / var(--ui-zoom,1)); top: 0; bottom: auto; translate: none;
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='right'] {
+  left: calc(100% + 4px / var(--ui-zoom,1)); right: auto; top: 0; bottom: auto; translate: none;
+}
 :root .combat[data-layout='formation'] .intent-compact { display: none; align-items: center; gap: calc(3px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
   background: none; border: 0; box-shadow: none; padding: 0;

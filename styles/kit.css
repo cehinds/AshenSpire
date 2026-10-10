@@ -5117,8 +5117,6 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root[data-card-door='stacked'] .card-inspection-modal .modal-body {
   overflow-y: auto; overflow-x: hidden;
 }
-:root .combat[data-layout='formation'] .combatant .combatant-info { visibility: hidden; pointer-events: none; }
-:root .combat[data-layout='formation'] .combatant[data-inspect-ready='true'] .combatant-info { visibility: visible; pointer-events: auto; }
 /* Solo combat reads the configured selected-only list (WCM0, data-selected-only);
    co-op keeps its name-only rule. */
 :root .combat.coop[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }

@@ -148,6 +148,27 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     return envelope;
   }
   function placePlayerHud(reserveFirst = false, targetCores = []) {
+    // A player's Inspect over the head must not hide an enemy's intent or
+    // Inspect. It takes the head's left, the field's left edge, or the head's
+    // right before accepting an overlap. Declared here so the placement source
+    // stays one self-contained unit.
+    const clearOfEnemyControls = (rect, art, viewport, zoom) => {
+      if (!rect) return rect;
+      const controls = [...field.querySelectorAll('.enemy .combatant-leading > .intent, .enemy .combatant-leading > .combatant-info')]
+        .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+      const hits = box => controls.some(c => box.left < c.right && box.right > c.left && box.top < c.bottom && box.bottom > c.top);
+      if (!hits(rect)) return rect;
+      const gap = 4 * zoom;
+      // Head's left, the field's left edge, then the head's right; each on the
+      // head's row first, then one row higher.
+      const lefts = [art.left - gap - rect.width, viewport.left + gap, art.right + gap];
+      const tops = [rect.top, rect.top - rect.height - gap];
+      for (const top of tops) for (const left of lefts) {
+        const moved = { ...rect, left, right: left + rect.width, top, bottom: top + rect.height };
+        if (left >= viewport.left && moved.right <= viewport.right && top >= viewport.top && !hits(moved)) return moved;
+      }
+      return rect;
+    };
     const zoom = uiZoom();
     const combat = field.closest('.combat');
     const panels = [...field.querySelectorAll(reserveFirst === true
@@ -172,7 +193,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const inspect = leading.querySelector('.combatant-info');
       const action = leading.querySelector('.player-action-intent');
       const doorFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
-      const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor);
+      const infoRect = clearOfEnemyControls(combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor), art, viewport, zoom);
       const actionRect = combatPlayerActionRect(action, infoRect, art, zoom, doorFloor);
       return [{ player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect }];
     });
@@ -205,6 +226,49 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
+    }
+  }
+  // Every living enemy's Inspect hangs above its intent. The default spot is
+  // read after the refit; it moves to the intent's left or right only when the
+  // 44 px tap area above would sit under the HUD, the turn ribbon, or another
+  // combatant's control. Nothing here reserves room in the fitted envelope.
+  function placeEnemyInspect() {
+    const zoom = uiZoom();
+    const combat = field.closest('.combat');
+    const infos = [...field.querySelectorAll('.combatant.enemy:not(.dead) > .combatant-stack > .combatant-leading > .combatant-info')];
+    if (!infos.length || !combat) return;
+    for (const info of infos) info.removeAttribute('data-inspect-side');
+    const viewport = combat.getBoundingClientRect();
+    const hudBoxes = [...combat.ownerDocument.querySelectorAll('.topbar, .combat-hud, .turn-ribbon, .combat-tools')]
+      .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
+    const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const pad = 11 * zoom, gap = 4 * zoom;
+    for (const info of infos) {
+      const size = info.getBoundingClientRect().width;
+      const anchor = info.parentElement.querySelector(':scope > .intent') || info.parentElement;
+      const box = anchor.getBoundingClientRect();
+      if (!(size > 0) || !(box.width > 0)) continue;
+      // Each spot with its 44 px tap box. A side spot never reaches into the intent.
+      const centre = box.left + box.width / 2;
+      const spots = [
+        ['', { left: centre - size / 2, top: box.top - gap - size },
+          { left: centre - size / 2 - pad, right: centre + size / 2 + pad, top: box.top - gap - size - pad, bottom: box.top }],
+        ['left', { left: box.left - gap - size, top: box.top },
+          { left: box.left - gap - size - pad, right: box.left - gap, top: box.top - pad, bottom: box.top + size + pad }],
+        ['right', { left: box.right + gap, top: box.top },
+          { left: box.right + gap, right: box.right + gap + size + pad, top: box.top - pad, bottom: box.top + size + pad }],
+      ];
+      // Other controls as they stand now: intents, Inspect marks already
+      // placed this pass, the player's HUD and each footer. Our own intent is the anchor.
+      const others = [...field.querySelectorAll('.combatant-leading > .intent, .combatant-leading > .combatant-info, .combatant-leading > .player-action-intent, .combatant-mini-hud, .combatant-card > .nm, .combatant-card > .meters')]
+        .filter(node => node !== info && node !== anchor)
+        .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
+      // The painted 22 px mark must clear the HUD; its tap pad must clear the
+      // other combatants' controls.
+      const pick = spots.find(([, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
+        && !hudBoxes.some(hud => overlaps({ left: at.left, top: at.top, right: at.left + size, bottom: at.top + size }, hud))
+        && !others.some(rect => overlaps(tap, rect)));
+      if (pick?.[0]) info.dataset.inspectSide = pick[0];
     }
   }
   function trackPlayerHud() {
@@ -333,7 +397,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
-      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control, :scope > .combatant-mini-hud')]
+      // An enemy's Inspect sits above its intent outside the fitted envelope
+      // (placeEnemyInspect), so it never widens or heightens the stack.
+      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control:not(.combatant-info), :scope > .combatant-mini-hud')]
         .map(control => visibleCombatPanelRect(control, field)).filter(Boolean) : [];
       const leadingWidth = leadingRects.length && !frame.classList.contains('player') ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
@@ -758,6 +824,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       }
     }
     const rect = combat.getBoundingClientRect();
+    // Last layout write of the refit: the HUD, ribbon and intents are settled.
+    // The combat box above is unchanged by the Inspect marks.
+    placeEnemyInspect();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
     // painting. Continuing behind cards must not move the ground line.

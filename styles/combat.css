@@ -1539,8 +1539,7 @@
   pointer-events: auto; cursor: pointer; flex: none;
   touch-action: manipulation;
 }
-/* Match the card Information motif; hidden controls leave no empty grid cell. */
-.combatant:not(.context-selected) .combatant-leading > .combatant-info { display: none; }
+/* Match the card Information motif. Every living combatant shows its Inspect control. */
 .combatant-leading > .combatant-info { box-shadow: none; }
 .combatant-leading .intent {
   --intent-accent: #ef4949;
