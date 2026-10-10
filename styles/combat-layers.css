@@ -302,6 +302,18 @@
 :root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='right'] {
   left: calc(100% + 4px / var(--ui-zoom,1)); right: auto; top: 0; bottom: auto; translate: none;
 }
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='left-up'] {
+  left: auto; right: calc(100% + 4px / var(--ui-zoom,1)); bottom: auto; translate: none;
+  top: calc(-1 * (var(--inspect-box) + 4px / var(--ui-zoom,1)));
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='right-up'] {
+  left: calc(100% + 4px / var(--ui-zoom,1)); right: auto; bottom: auto; translate: none;
+  top: calc(-1 * (var(--inspect-box) + 4px / var(--ui-zoom,1)));
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='right-far-up'] {
+  left: calc(100% + 4px / var(--ui-zoom,1) + var(--inspect-box)); right: auto; bottom: auto; translate: none;
+  top: calc(-1 * (var(--inspect-box) + 4px / var(--ui-zoom,1)));
+}
 :root .combat[data-layout='formation'] .intent-compact { display: none; align-items: center; gap: calc(3px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
   background: none; border: 0; box-shadow: none; padding: 0;

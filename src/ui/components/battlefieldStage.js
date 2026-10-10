@@ -147,7 +147,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (envelope?.validated) layoutState.restHandAnchor = envelope;
     return envelope;
   }
-  function placePlayerHud(reserveFirst = false, targetCores = []) {
+  function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
     // A player's Inspect over the head must not hide an enemy's intent or
     // Inspect. It takes the head's left, the field's left edge, or the head's
     // right before accepting an overlap. Declared here so the placement source
@@ -156,13 +156,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (!rect) return rect;
       const controls = [...field.querySelectorAll('.enemy .combatant-leading > .intent, .enemy .combatant-leading > .combatant-info')]
         .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
-      const hits = box => controls.some(c => box.left < c.right && box.right > c.left && box.top < c.bottom && box.bottom > c.top);
+      // The 44 px tap pad counts: a neighbour's control must not sit under it.
+      const pad = 11 * zoom;
+      const hits = box => controls.some(c => box.left - pad < c.right && box.right + pad > c.left
+        && box.top - pad < c.bottom && box.bottom + pad > c.top);
       if (!hits(rect)) return rect;
       const gap = 4 * zoom;
       // Head's left, the field's left edge, then the head's right; each on the
-      // head's row first, then one row higher.
+      // head's row first, then one and two rows higher.
       const lefts = [art.left - gap - rect.width, viewport.left + gap, art.right + gap];
-      const tops = [rect.top, rect.top - rect.height - gap];
+      const tops = [rect.top, rect.top - rect.height - gap, rect.top - 2 * (rect.height + gap)];
       for (const top of tops) for (const left of lefts) {
         const moved = { ...rect, left, right: left + rect.width, top, bottom: top + rect.height };
         if (left >= viewport.left && moved.right <= viewport.right && top >= viewport.top && !hits(moved)) return moved;
@@ -193,7 +196,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const inspect = leading.querySelector('.combatant-info');
       const action = leading.querySelector('.player-action-intent');
       const doorFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
-      const infoRect = clearOfEnemyControls(combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor), art, viewport, zoom);
+      // The Info door keeps its offset from the figure's stack, which only a
+      // layout refit moves. Idle bob and pose motion read the live artwork, so
+      // they never move the door; the frame tick (tick = true) follows the stack.
+      const offset = tick ? player.inspectOffset : null;
+      const infoRect = offset && inspect ? { left: stack.left + offset.x, top: stack.top + offset.y, width: offset.width,
+        height: offset.height, right: stack.left + offset.x + offset.width, bottom: stack.top + offset.y + offset.height }
+        : clearOfEnemyControls(combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor), art, viewport, zoom);
+      if (!tick) player.inspectOffset = infoRect ? { x: infoRect.left - stack.left, y: infoRect.top - stack.top,
+        width: infoRect.width, height: infoRect.height } : null;
       const actionRect = combatPlayerActionRect(action, infoRect, art, zoom, doorFloor);
       return [{ player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect }];
     });
@@ -243,9 +254,17 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
     const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     const pad = 11 * zoom, gap = 4 * zoom;
+    // What a spot must keep clear of the neighbours' controls. The raised spots
+    // use the tap pad; the far one clears only its painted mark, because its
+    // pad would reach a neighbour's Inspect without covering it.
+    const reach = (name, at, tap, size) => name === 'right-far-up'
+      ? { left: at.left, top: at.top, right: at.left + size, bottom: at.top + size }
+      : name.endsWith('-up') ? { left: tap.left - pad, right: tap.right + pad, top: tap.top - pad, bottom: tap.bottom } : tap;
     for (const info of infos) {
       const size = info.getBoundingClientRect().width;
-      const anchor = info.parentElement.querySelector(':scope > .intent') || info.parentElement;
+      // The CSS positions the Inspect against its leading stack, not the
+      // intent inside it: a moved intent must not move the placement's frame.
+      const anchor = info.parentElement;
       const box = anchor.getBoundingClientRect();
       if (!(size > 0) || !(box.width > 0)) continue;
       // Each spot with its 44 px tap box. A side spot never reaches into the intent.
@@ -257,22 +276,34 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           { left: box.left - gap - size - pad, right: box.left - gap, top: box.top - pad, bottom: box.top + size + pad }],
         ['right', { left: box.right + gap, top: box.top },
           { left: box.right + gap, right: box.right + gap + size + pad, top: box.top - pad, bottom: box.top + size + pad }],
+        // Beside the intent's top corners, for a back-row figure wedged between
+        // neighbouring intents, where the ribbon ends.
+        ['left-up', { left: box.left - gap - size, top: box.top - gap - size },
+          { left: box.left - gap - size - pad, right: box.left - gap, top: box.top - gap - size - pad, bottom: box.top - gap }],
+        ['right-up', { left: box.right + gap, top: box.top - gap - size },
+          { left: box.right + gap, right: box.right + gap + size + pad, top: box.top - gap - size - pad, bottom: box.top - gap }],
+        // One mark further out, past a turn ribbon that ends beside the intent.
+        ['right-far-up', { left: box.right + gap + size, top: box.top - gap - size },
+          { left: box.right + gap + size - pad, right: box.right + gap + 2 * size + pad, top: box.top - gap - size - pad, bottom: box.top - gap }],
       ];
       // Other controls as they stand now: intents, Inspect marks already
       // placed this pass, the player's HUD and each footer. Our own intent is the anchor.
       const others = [...field.querySelectorAll('.combatant-leading > .intent, .combatant-leading > .combatant-info, .combatant-leading > .player-action-intent, .combatant-mini-hud, .combatant-card > .nm, .combatant-card > .meters')]
-        .filter(node => node !== info && node !== anchor)
+        .filter(node => node !== info && !(node.matches('.intent') && node.parentElement === anchor))
         .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
       // The painted 22 px mark must clear the HUD; its tap pad must clear the
       // other combatants' controls.
-      const pick = spots.find(([, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
+      const pick = spots.find(([name, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
         && !hudBoxes.some(hud => overlaps({ left: at.left, top: at.top, right: at.left + size, bottom: at.top + size }, hud))
-        && !others.some(rect => overlaps(tap, rect)));
+        && !others.some(rect => overlaps(reach(name, at, tap, size), rect)));
       if (pick?.[0]) info.dataset.inspectSide = pick[0];
     }
   }
   function trackPlayerHud() {
-    placePlayerHud();
+    placePlayerHud(false, [], true);
+    // A neighbour's intent that moves between refits re-picks the spot; the
+    // Inspect itself never follows the body's bob.
+    placeEnemyInspect();
     // Idle breathing also moves the painted body. Keep the physical gap during
     // those CSS transforms as well as explicit attack and movement poses.
     trackingRequest = field.isConnected && field.querySelector('.combatant.player')
