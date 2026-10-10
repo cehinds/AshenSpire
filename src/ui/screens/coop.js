@@ -15,7 +15,7 @@ import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.
 import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
-import { cardTargetPlan } from '../../model/cardTargets.js';
+import { cardTargetPlan, upcastNextStep } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { combatCardView } from '../models/CombatCardView.js';
@@ -417,7 +417,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             const chosen = cardDef(inst);
             const plan = cardTargetPlan(chosen, me, scene?.enemies, scene?.players);
             const previousTarget = obj.targetId ?? (plan.mode === 'friendly' ? me : null);
-            if (!plan.legalIds.includes(previousTarget)) {
+            // An area card (allEnemies) has no single destination: send it now.
+            const step = upcastNextStep(plan, cardNeedsEnemyTarget(chosen), previousTarget);
+            if (step === 'playUntargeted') { send({ ...obj, targetId: undefined, upcastTier: Number(ranks) }); return; }
+            if (step === 'retarget') {
               if (plan.mode === 'friendly') { armFriendlyTargeting(inst.instanceId); return; }
               armedFriendlyCard = null; render();
               const targetShell = openCardChoiceModal({ cardName: chosen.name,

@@ -7,7 +7,7 @@ import { combatBackdropHtml } from '../components/environmentArt.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
-import { cardTargetPlan, forbiddenCardDrop } from '../../model/cardTargets.js';
+import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/cardTargets.js';
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -2556,13 +2556,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           upcastRanksByCard.set(instanceId, Number(selectedRank));
           const plan = cardTargets(instanceId);
           const previousTarget = targetId ?? (plan.mode === 'friendly' ? combat.player.id : null);
-          if (!plan.legalIds.includes(previousTarget)) {
+          // An area card (allEnemies) has no single destination: play it now.
+          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank)).needsTarget, previousTarget);
+          if (step === 'retarget') {
             selected = plan.mode === 'enemy' ? instanceId : null;
             selfArm = plan.mode === 'friendly' ? instanceId : null;
             handRenderKey = null; renderHand(); syncCardSelection();
             return;
           }
-          playCard(instanceId, targetId, choice, Number(selectedRank));
+          playCard(instanceId, step === 'play' ? targetId : null, choice, Number(selectedRank));
         } });
       return;
     }
