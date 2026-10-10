@@ -285,6 +285,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // One mark further out, past a turn ribbon that ends beside the intent.
         ['right-far-up', { left: box.right + gap + size, top: box.top - gap - size },
           { left: box.right + gap + size - pad, right: box.right + gap + 2 * size + pad, top: box.top - gap - size - pad, bottom: box.top - gap }],
+        // Last resort, below the overhead on this enemy's own art: a tap that
+        // misses the mark still selects this same enemy.
+        ['below', { left: centre - size / 2, top: box.bottom + gap },
+          { left: centre - size / 2 - pad, right: centre + size / 2 + pad, top: box.bottom + gap - pad, bottom: box.bottom + gap + size + pad }],
       ];
       // Other controls as they stand now: intents, Inspect marks already
       // placed this pass, the player's HUD and each footer. Our own intent is the anchor.
@@ -296,7 +300,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const pick = spots.find(([name, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
         && !hudBoxes.some(hud => overlaps({ left: at.left, top: at.top, right: at.left + size, bottom: at.top + size }, hud))
         && !others.some(rect => overlaps(reach(name, at, tap, size), rect)));
-      if (pick?.[0]) info.dataset.inspectSide = pick[0];
+      // With every spot taken (a back-row figure wedged under the ribbon),
+      // keep the mark reachable on the figure's own art rather than hidden.
+      const side = pick ? pick[0] : hudBoxes.some(hud => overlaps({ left: spots[0][1].left, top: spots[0][1].top,
+        right: spots[0][1].left + size, bottom: spots[0][1].top + size }, hud)) ? 'below' : '';
+      if (side) info.dataset.inspectSide = side;
     }
   }
   function trackPlayerHud() {
