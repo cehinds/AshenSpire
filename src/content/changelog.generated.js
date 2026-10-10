@@ -6,11 +6,41 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1799",
     "date": "2026-10-10",
     "group": "2026-10-10",
-    "summary": "Art retry verification recognizes reusable sprite stages",
-    "detail": "The blocked-art browser check accepts a marked placeholder that retains its hidden failed image, while still requiring visible art to return after Retry. Game behavior is unchanged.",
-    "build": "0.7.1.1237",
+    "summary": "Art retry verification requires a visible fallback",
+    "detail": "The blocked-art browser check accepts a marked placeholder that retains its hidden failed image only when its fallback is visibly laid out, while still requiring visible art to return after Retry. Game behavior is unchanged.",
+    "build": "0.7.1.1248",
     "pullRequest": 1799,
     "url": "https://github.com/cehinds/AshenSpire/pull/1799"
+  },
+  {
+    "id": "pr-1797",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Pull requests into dev are checked in about five minutes",
+    "detail": "The four full-simulation tests that held one shard at 8m19s now run on every push to test and release instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.",
+    "build": "0.7.1.1247",
+    "pullRequest": 1797,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1797"
+  },
+  {
+    "id": "pr-1796",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Steadier names under reduced motion and reachable Info on phones",
+    "detail": "With Reduced motion on, enemy names and health no longer twitch by fractions of a pixel as the board settles, and moving the pointer no longer drifts the backdrop. The player's Info and action buttons stay above the hand instead of slipping under it when the character stands low on narrow phones. Newly painted enemies bob while idle again, and a hit no longer knocks their bob out of step.",
+    "build": "0.7.1.1245",
+    "pullRequest": 1796,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1796"
+  },
+  {
+    "id": "pr-1800",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Selected counters and sweeps carry their weapon effects",
+    "detail": "Reaver, Starseer, Herald and Rogue use the eight selected stance-to-attack clips with steel slashes, staff trails, palm impacts and dagger effects. Four phases return to the original ready frame, and combat and card previews share the same timing. Confirmed counters and physical sweeps keep their chosen preparation stance between actions; original idle, attack, defend and casting artwork stays intact. Reduced motion and reduced flashes clear the separate effect layers.",
+    "build": "0.7.1.1244",
+    "pullRequest": 1800,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1800"
   },
   {
     "id": "pr-1795",

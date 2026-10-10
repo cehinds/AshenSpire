@@ -10,10 +10,11 @@ export function stanceForCard(card = {}) {
   const resolvedTags = card.cardTags ?? card.tags;
   if (resolvedTags) card = { ...card, cardTags: resolvedTags.map(tag => typeof tag === 'string' ? tag : tag.id) };
   const profile = combatProfileFor(card);
-  // Counter artwork is a separate owner pass; retain its existing presentation.
-  if (profile.maneuver === 'counter') return null;
+  // Player-only reviewed counter/sweep families; public enemy intent stays broad.
+  if (profile.maneuver === 'counter') return 'counter';
   if (defensive.has(profile.maneuver)) return 'defensive';
   if (profile.camp === 'spell') return 'casting';
+  if (profile.maneuver === 'sweep') return 'sweep';
   if (offensive.has(profile.maneuver)) return 'offensive';
   const tags = new Set(card.cardTags ?? card.tags ?? []);
   if (tags.has('source:spell') || card.abilityKind === 'spell' || card.type === 'spell') return 'casting';

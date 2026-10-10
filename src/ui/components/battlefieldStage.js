@@ -14,7 +14,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
@@ -44,24 +44,26 @@ export function combatControlWidth(node, zoom) {
   return Math.max(0, parseFloat(style.width) || 0, parseFloat(style.minWidth) || 0) * zoom;
 }
 
-export function combatPlayerInfoRect(node, art, viewport, zoom) {
+export function combatPlayerInfoRect(node, art, viewport, zoom, floor = Infinity) {
   if (!node) return null;
   const width = combatControlWidth(node, zoom);
   const height = node.getBoundingClientRect().height || width;
   if (!(width > 0 && height > 0)) return null;
   const left = (art.left + art.right) / 2 - width / 2;
-  const top = Math.max(viewport.top, art.top - height - 4);
+  // Art whose top sits low (a waist-overlap player) must not carry the door
+  // down under the resting hand or tools, which would take every tap on it.
+  const top = Math.max(viewport.top, Math.min(art.top - height - 4, floor - height - 4));
   return { left, top, right: left + width, bottom: top + height, width, height };
 }
 
 // The selected-card action is independent of the reading panel, like Info.
-export function combatPlayerActionRect(node, infoRect, art, zoom) {
+export function combatPlayerActionRect(node, infoRect, art, zoom, floor = Infinity) {
   if (!node) return null;
   const width = combatControlWidth(node, zoom);
   const height = node.getBoundingClientRect().height || width;
   if (!(width > 0 && height > 0)) return null;
   const left = (art.left + art.right) / 2 - (infoRect?.width || 22) / 2 - 28;
-  const top = art.top - 28;
+  const top = Math.min(art.top - 28, floor - height - 4);
   return { left, top, right: left + width, bottom: top + height, width, height };
 }
 
@@ -128,7 +130,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const width = box.clientWidth - 8 / uiZoom();
       if (width <= 0) continue;
       const style = getComputedStyle(label);
-      const maximum = 11 / uiZoom();
+      const maximum = (label.closest('.player.context-selected') && window.innerWidth > 320 ? 12 : 11) / uiZoom();
       labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
       const measured = labelMeasure.measureText(label.textContent).width;
       label.style.fontSize = `${Math.max(8 / uiZoom(), maximum * Math.min(1, width / Math.max(1, measured)))}px`;
@@ -169,8 +171,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const panel = leading.getBoundingClientRect();
       const inspect = leading.querySelector('.combatant-info');
       const action = leading.querySelector('.player-action-intent');
-      const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom);
-      const actionRect = combatPlayerActionRect(action, infoRect, art, zoom);
+      const doorFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
+      const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor);
+      const actionRect = combatPlayerActionRect(action, infoRect, art, zoom, doorFloor);
       return [{ player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect }];
     });
     // Reserve every seat's intended Info/action doors before placing any panel,
@@ -369,7 +372,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
     const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
     const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
-      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top + 22 : null,
+      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top : null,
     });
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
@@ -587,7 +590,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
       })),
-      targets: boxes.flatMap((box, i) => box.frameRect && !placed[i].frame.classList.contains('dead') ? [combatFrameTarget({
+      // Idle enemies read above their bodies. Reserve below-body footers only
+      // when they paint, so hidden plates cannot displace the player's HUD.
+      targets: boxes.flatMap((box, i) => box.frameRect && !placed[i].frame.classList.contains('dead')
+        && (placed[i].frame.classList.contains('player') ? combat.dataset?.waistOverlap !== 'true'
+          : placed[i].frame.classList.contains('context-selected')) ? [combatFrameTarget({
         ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
         player: placed[i].frame.classList.contains('player'),
       })] : []) });
@@ -596,7 +603,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // A fallen frame survives for its defeat pose but paints no target
       // proxy, so it neither competes for footer space nor blocks the HUD.
       targetCores: boxes.flatMap((box, i) => {
-        if (placed[i].frame.classList.contains('dead')) return [];
+        if (placed[i].frame.classList.contains('dead') || (placed[i].frame.classList.contains('player')
+          ? combat.dataset?.waistOverlap === 'true' : !placed[i].frame.classList.contains('context-selected'))) return [];
         const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
           player: placed[i].frame.classList.contains('player') });
         return [{ id: target.id, left: fieldRect.left + target.x - 22, right: fieldRect.left + target.x + 22,
@@ -623,13 +631,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.style.setProperty('--enemy-hit-x', `${local.left}px`);
         frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
         frame.dataset.targetObstructed = String(!!target.obstructed);
+        // Each refresh reads the footer back through its own translate, so
+        // float error re-wrote it a few thousandths of a pixel apart on every
+        // settle. Round to a hundredth: a still footer then writes the same
+        // value, and reduced motion sees no script-driven drift.
+        const settledPx = value => Math.round(value * 100) / 100 || 0;
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
           top: fieldRect.top + target.y - footerSize / 2 - (Number.isFinite(boxes[i].footerTop) ? boxes[i].footerTop : hostRect.bottom), width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
-          footer.style.translate = `${offset.left}px ${offset.top}px`;
+          footer.style.translate = `${settledPx(offset.left)}px ${settledPx(offset.top)}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = 'var(--combat-layer-selection)';
           // A fallen footer reserves no space, so a living one may pack onto
@@ -645,7 +658,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
               left: leading.left + (leading.width - rect.width) / 2 - rect.left,
               top: leading.bottom - rect.height - rect.top, width: 0, height: 0,
             }, { zoom });
-            meter.style.translate = `${offset.left + idleOffset.left}px ${offset.top + idleOffset.top}px`;
+            meter.style.translate = `${settledPx(offset.left + idleOffset.left)}px ${settledPx(offset.top + idleOffset.top)}px`;
           }
         }
       }
@@ -660,6 +673,63 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
+    // Idle names do not reserve footer rows, but their independent tap cores
+    // still need separate space when two formation rows meet on a short field.
+    // Move only these transparent cores; keep art and readable plates fixed.
+    for (const { frame } of placed) {
+      frame.style.removeProperty('--enemy-core-x');
+      frame.style.removeProperty('--enemy-core-y');
+      delete frame.dataset.coreObstructed;
+    }
+    const idleCores = placed.filter(({frame}) => frame.matches('.enemy:not(.context-selected):not(.dead)'))
+      .map(({frame, sprite}) => {
+        const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
+        const art = sprite.getBoundingClientRect();
+        return { id: frame.dataset.eid, frame, box, art,
+          x: box.left + parseFloat(style.left) * zoom - fieldRect.left,
+          y: box.top + parseFloat(style.top) * zoom - fieldRect.top, width: 44 };
+      });
+    const actorArt = placed.map(({frame, sprite}) => {
+      const box = currentSpriteArtBounds(sprite, refresh);
+      return { ownerId:frame.dataset.eid, left:box.left-fieldRect.left,
+        right:box.right-fieldRect.left, top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top };
+    });
+    const stealsArtwork = core => actorArt.some(box => box.ownerId !== core.id
+      && core.x + 22 > box.left && core.x - 22 < box.right
+      && core.y + 22 > box.top && core.y - 22 < box.bottom);
+    // A context-selected enemy and the player keep their fitted cores. They are
+    // not repacked, but an idle core must leave them room rather than sit over
+    // them (the player's square takes self-cast cards).
+    const fixedCores = placed.filter(({frame}) => frame.matches('.enemy.context-selected:not(.dead), .player:not(.dead)'))
+      .map(({frame}) => {
+        const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
+        if (style.display === 'none' || style.pointerEvents === 'none') return null;
+        const x = box.left + parseFloat(style.left) * zoom - fieldRect.left;
+        const y = box.top + parseFloat(style.top) * zoom - fieldRect.top;
+        return Number.isFinite(x) && Number.isFinite(y)
+          ? { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 } : null;
+      }).filter(Boolean);
+    const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
+    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
+      || idleCores.slice(i + 1).some(other => near(core, other)))) {
+      const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
+        readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
+      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm')]
+        .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
+        .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
+          top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
+      obstacles.push(...actorArt, ...fixedCores);
+      const cores = combatTargetAnchors({ width:fieldRect.width, height:boundary-fieldRect.top,
+        size:44, lockX:true, maxShiftX:44,
+        targets:idleCores.map(core => ({ ...core, x:core.art.width >= 44
+          ? core.art.left+core.art.width/2-fieldRect.left : core.x })), obstacles });
+      for (const core of cores) {
+        const { frame, box } = idleCores.find(source => source.id === core.id);
+        frame.style.setProperty('--enemy-core-x', `${(fieldRect.left+core.x-box.left)/zoom}px`);
+        frame.style.setProperty('--enemy-core-y', `${(fieldRect.top+core.y-box.top)/zoom}px`);
+        frame.dataset.coreObstructed = String(!!core.obstructed);
+      }
+    }
     const rect = combat.getBoundingClientRect();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
@@ -676,7 +746,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // where the hand consumes much of the viewport. Keep the same horizon.
     const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
-      fieldTop, ground: plan.ground / zoom, narrow });
+      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom, narrow, coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,

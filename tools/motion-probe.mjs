@@ -69,8 +69,11 @@
 // between two frames (no frame sees it, no end event fires) is not measured;
 // nor is motion from a video or canvases outside the alternative card stage.
 // The card stage is sampled through its final painted pixels. Other script motion is seen as
-// writes to an element's inline style or an image's src: a timer or rAF loop
-// that moves an element by toggling CLASSES (static rules, no transition) is
+// writes to an element's inline style or an image's src when it has a layout
+// box. Display-none elements (including hidden ancestors) and detached nodes
+// cannot paint and do not count; zero opacity
+// and transformed/offscreen boxes still count so fades and travel stay tested.
+// A timer or rAF loop that moves an element by toggling CLASSES (static rules, no transition) is
 // not seen. No combat code moves that way today (its flipbooks and tweens
 // write src/style: presentationSequence.js, combatantEffectLayers.js, the
 // pose animators), so the observer does not watch `class`, whose ordinary
@@ -137,7 +140,7 @@ if (argv.includes('--selftest')) {
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
         replace: '.combatant .sprite > img { animation: sprite-idle',
         expectRed: /RED IDLE player#\d+ — .*no idle animation/,
       },
@@ -146,7 +149,7 @@ if (argv.includes('--selftest')) {
         // painting was in it, so that figure never bobbed.
         name: 'the idle bob leaves out the Rendered style\'s painting',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
         replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer) { animation: sprite-idle',
         expectRed: ALTERNATIVE ? /RED IDLE-rendered player#\d+ — .*no idle animation/
           : /RED IDLE-rendered player#\d+ — .*img\.painted-presentation: no idle animation/,
@@ -156,7 +159,7 @@ if (argv.includes('--selftest')) {
         // stage, so the hidden nested stage started its own timeline.
         name: 'the Rendered style bobs its painting and its nested stage separately',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
         replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
         expectRed: /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline/,
       },
@@ -181,7 +184,7 @@ if (argv.includes('--selftest')) {
         // it is not a visible figure the bob could be credited for.
         name: 'the idle carriers are made transparent',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
         replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { opacity: 0; animation: sprite-idle 3.1s ease-in-out infinite;',
         expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
       },
@@ -190,8 +193,8 @@ if (argv.includes('--selftest')) {
         // too, though every layer inside it is opaque.
         name: 'the combatants are made transparent',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite;',
-        replace: '.combatant { opacity: 0 !important; }\n.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        replace: '.combatant { opacity: 0 !important; }\n.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
         expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
       },
       {
@@ -212,8 +215,8 @@ if (argv.includes('--selftest')) {
             find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
             replace: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 0; } }' },
           { file: 'styles/combat.css',
-            find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite;',
-            replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite, shake 3.1s infinite;' },
+            find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
+            replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite, shake 3.1s infinite;' },
         ],
         expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
       },
@@ -222,7 +225,7 @@ if (argv.includes('--selftest')) {
         // bob. The carriers run the gold pulse instead of sprite-idle.
         name: 'the idle carriers run another infinite animation, not the bob',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
         replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: pulse-gold 3.1s ease-in-out infinite;',
         expectRed: /RED IDLE \w+#\d+ — .*no idle animation on it or its layers/,
       },
@@ -239,9 +242,11 @@ if (argv.includes('--selftest')) {
         // by handle, so that symptom is gone; the defect is not.)
         name: 'the idle bob sits on the figure images instead of their layer',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
         replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
-        expectRed: /RED IDLE-AFTER enemy#\d+ — .*img\.enemy-pose-state: no idle animation on it or its layers[\s\S]*RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame/,
+        // #1795's painted enemies use img.pose-frame, so this plant now bobs
+        // them on the image; the defect still shows on the player's layers.
+        expectRed: /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame[\s\S]*RED IDLE-classic player#\d+ — .*svg: no idle animation on it or its layers/,
       },
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
@@ -261,14 +266,14 @@ if (argv.includes('--selftest')) {
       }, {
         name: 'the fixed rear stage gains an idle translation',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n.combatant .sprite > .alternative-card-stage { animation: sprite-idle 3.1s ease-in-out infinite; }',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n.combatant .sprite > .alternative-card-stage { animation: sprite-idle 3.1s ease-in-out infinite; }',
         expectRed: /RED IDLE player#\d+ — .*fixed rest/,
       }, {
         name: 'the fixed rear stage changes scale while resting',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n@keyframes broken-rear-scale { from { transform: scale(1); } to { transform: scale(1.1); } }\n.combatant .sprite > .alternative-card-stage { animation: broken-rear-scale 1s linear infinite alternate; }',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n@keyframes broken-rear-scale { from { transform: scale(1); } to { transform: scale(1.1); } }\n.combatant .sprite > .alternative-card-stage { animation: broken-rear-scale 1s linear infinite alternate; }',
         expectRed: /RED IDLE player#\d+ — .*fixed rest/,
       }] : []),
       {
@@ -399,6 +404,10 @@ const SAMPLER = `(() => {
   const changes = new Map();
   const lastStyle = new WeakMap();
   const note = (el, what) => {
+    // Hidden compact-HUD labels still receive stage positioning updates, but
+    // updating their future anchor cannot animate pixels. Do not exempt zero
+    // opacity or transformed boxes: those can be steps of a visible tween.
+    if (!el.getClientRects().length) return;
     let c = changes.get(el);
     if (!c) { c = { frames: new Set(), times: [], what: new Set() }; changes.set(el, c); }
     if (!c.frames.has(frames)) c.times.push(Math.round(performance.now()));

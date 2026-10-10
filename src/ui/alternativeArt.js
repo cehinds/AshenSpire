@@ -3,6 +3,7 @@ import { assetUrl } from './assetmap.js';
 import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
 import { classicAppearance } from './displayAppearance.js';
+import { reducedMotionRequested } from './motion.js';
 
 /* ALTERNATIVE_ART_START */
 const alternativeArtMap = {};
@@ -108,7 +109,7 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, narrow }) {
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, narrow, coverFloor = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
   if (!scene || width <= 0 || height <= 0) return;
@@ -116,13 +117,18 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
   const scale = Math.max(width / device.width, height / device.height);
+  // Combat follows the fitted enemies while keeping the floor canvas beneath
+  // the entire battlefield; moving it farther up exposes its lower edge.
+  // Other callers (dialogue) keep their own floor line.
+  const cameraGround = coverFloor
+    ? Math.max(ground, height - (1 - device.groundAnchor) * device.height * scale) : ground;
   const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
-    : fieldTop + ground - device.groundAnchor * device.height * scale;
+    : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;
-  [...svg.children].forEach((group, index) => {
+  [...svg.querySelectorAll(':scope > .alternative-scene-layer')].forEach((group, index) => {
     const layer = combatSceneLayers(device)[index];
     const art = alternativeArtCatalog.sceneLayers[layer.id];
     const image = group.firstElementChild;
@@ -142,7 +148,8 @@ export function wireAlternativeBackdrop(combat) {
   if (!layers.length) return () => {};
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const move = event => {
-    const off = reduced.matches || document.documentElement.dataset.ambient === 'off' || event.pointerType === 'touch';
+    // The in-game Reduced motion setting counts as much as the OS preference.
+    const off = reducedMotionRequested() || document.documentElement.dataset.ambient === 'off' || event.pointerType === 'touch';
     const bounds = combat.getBoundingClientRect();
     const x = off ? 0 : (event.clientX - bounds.left) / bounds.width * 2 - 1;
     const y = off ? 0 : (event.clientY - bounds.top) / bounds.height * 2 - 1;
@@ -155,5 +162,10 @@ export function wireAlternativeBackdrop(combat) {
   combat.addEventListener('pointermove', move);
   combat.addEventListener('pointerleave', reset);
   reduced.addEventListener('change', reset);
-  return () => { combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); };
+  // Turning on the in-game setting toggles a body class; settle at once rather
+  // than leaving the layers offset until the next pointer move snaps them.
+  const setting = typeof MutationObserver === 'function'
+    ? new MutationObserver(() => { if (reducedMotionRequested()) reset(); }) : null;
+  setting?.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  return () => { combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); setting?.disconnect(); };
 }

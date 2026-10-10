@@ -88,8 +88,10 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
   api.schedule(); api.flushGeometry();
   assert.deepEqual(canceled,[1]); assert.equal(callbacks.size,0);
   assert.equal(properties.get('--combat-tools-reserve'),'0px');
-  assert.ok(Math.abs(parseFloat(root.style.width)*.83-220)<1e-9);
-  assert.ok(Math.abs(parseFloat(root.style.left)*.83-164)<1e-9);
+  assert.ok(Math.abs(parseFloat(root.style.width)*.83-378)<1e-9,
+    'the tool row spans the hand minus its 12px outer padding');
+  assert.ok(Math.abs(parseFloat(root.style.left)*.83-6)<1e-9,
+    'the measured hand dock keeps 6px padding on either side');
   assert.ok(Math.abs(parseFloat(root.style.top)*.83-hand.getBoundingClientRect().top)<1e-9);
   api.schedule(); assert.equal(callbacks.size,1,'ordinary observer updates still schedule normally');
 });

@@ -46,3 +46,13 @@ test('an armed self-target HUD click reaches only one frame listener', () => {
   assert.match(combat,
     /if \(!selfArm \|\| !event\.target\.closest\('\.combatant-mini-hud'\)\) return;[\s\S]*?event\.stopImmediatePropagation\(\);[\s\S]*?playCard\(selfArm, null\);/);
 });
+
+test('the log drawer opens beside the left-aligned Log button', () => {
+  const css = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const top = css.replace(/@media[^{]*\{(?:[^{}]*\{[^}]*\})*[^{}]*\}/g, '');
+  const panels = [...top.matchAll(/\.combat-tools \.combat-log-panel\s*\{([^}]*)\}/g)].map(match => match[1]);
+  assert.ok(panels.length, 'the drawer has a formation anchor');
+  const last = panels.at(-1);
+  assert.match(last, /left:\s*0/); assert.match(last, /right:\s*auto/);
+  assert.match(top, /\.combat-tools > \[data-combat-tool='log'\]\s*\{\s*justify-self:\s*start/);
+});

@@ -152,13 +152,13 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'a silhouette loses its frame-level tap area',
         file: 'styles/combat.css',
-        append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
+        append: '.enemy-target-hitbox::before, .enemy-target-hitbox::after { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
         name: 'a player loses its exposed artwork or frame-level tap area',
         file: 'styles/combat.css',
-        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
+        append: '.player-target-hitbox::before, .player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite *, .combat[data-waist-overlap="true"] .player .combatant-mini-hud, .combat[data-waist-overlap="true"] .player .combatant-mini-hud * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -266,6 +266,26 @@ const SETTINGS_CYCLE = `(async () => {
   return true;
 })()`;
 
+// A small fighter still needs a usable frame-selection patch. Keep one real
+// actor below the 24px artwork threshold so the plate-loss plant cannot pass
+// through an unrelated portion of its full-size sprite. Its foot stays fixed.
+const SMALL_ENEMY_TARGET = `(async () => {
+  if (innerWidth !== 390 || innerHeight !== 650) return true;
+  const sprite = document.querySelectorAll('.combatant.enemy .combatant-card > .sprite')[1];
+  if (!sprite) throw new Error('screenreach: small-enemy fixture is missing its sprite');
+  const before = sprite.getBoundingClientRect();
+  sprite.style.transformOrigin = 'center bottom';
+  sprite.style.scale = String(Math.min(1, 16 / before.width));
+  sprite.style.overflow = 'clip';
+  document.querySelector('.combat').dispatchEvent(new Event('combatantselectionchange', { bubbles: true }));
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const after = sprite.getBoundingClientRect();
+  if (after.width >= 24 || Math.abs(after.bottom - before.bottom) > 1
+      || Math.abs(after.left + after.width / 2 - before.left - before.width / 2) > 1)
+    throw new Error('screenreach: small-enemy fixture changed its foot anchor or is not small');
+  return true;
+})()`;
+
 // Keep the overlap regression independent of sprite proportions and formation
 // spacing: place the intent over a real neighbouring sprite. The
 // normal overhead layer must remain hittable; the frame-stacking plant below
@@ -279,7 +299,10 @@ const INTENT_OVERLAP = `(async () => {
   const playerBefore = player?.getBoundingClientRect();
   if (!playerBefore || !Number.isFinite(playerBefore.width) || playerBefore.width <= 0)
     throw new Error('screenreach: small-player fixture is missing its sprite');
-  const playerPlate = getComputedStyle(player.closest('.combatant'), '::after').display !== 'none';
+  // Key on the layout state itself, not on whether a CSS rule hides the
+  // proxy: the waist-overlap player keeps its packed proxy and its size.
+  const playerPlate = player.closest('.combat')?.dataset.waistOverlap !== 'true'
+    && getComputedStyle(player.closest('.combatant'), '::before').display !== 'none';
   let playerAfter = playerBefore;
   if (playerPlate) {
     player.style.transformOrigin = 'center bottom';
@@ -316,7 +339,7 @@ const INTENT_OVERLAP = `(async () => {
   // This fixture moves only sideways; keep the production target's fitted
   // vertical anchor, which may already be clamped above the hand.
   if (playerPlate) {
-    const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::after').top) * zoom;
+    const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::before').top) * zoom;
     const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
     playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
     const playerMoved = player.getBoundingClientRect(), playerMovedFrameBox = playerFrame.getBoundingClientRect();
@@ -370,7 +393,7 @@ const SCREENS = [
   { name: 'menu-cycle', q: '?shot=map', ready: `!!document.querySelector('.map-node')`, setup: SETTINGS_CYCLE,
     overlay: 'the Armoury opened by the preserved equipment shortcut covers the map on purpose' },
   { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.combat .hand .card')` },
-  { name: 'combat-xl', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length` },
+  { name: 'combat-xl', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length`, setup: SMALL_ENEMY_TARGET },
   { name: 'combat-overlap', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length`, setup: INTENT_OVERLAP },
   { name: 'death', q: '?shot=death', ready: `!!document.querySelector('#app button')` },
   // EldenSpire#29 slice 1. Added the day the state existed. This file's own
@@ -473,23 +496,35 @@ const PROBE = `(() => {
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (!c.matches('.combatant[data-ui-component="combatant-frame"]') && hit && (hit === c || c.contains(hit))) continue;
-    // Formation frames span a grid cell. Measure the actual 44 px frame tap
-    // target: final fitting can pack it away from an overlapping sprite foot.
-    // Name/HP and inspection surfaces are checked separately; they do not
-    // replace the independent frame-selection patch.
+    // Formation frames span a grid cell. Either their artwork or actual
+    // frame-owned tap patch must expose 24px. The painted ::after plate is
+    // not the independent ::before input surface. Name/HP and inspection
+    // controls are checked separately and cannot satisfy this route.
     // The frame centre may still sit beneath another fighter.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
-      const targetStyle = getComputedStyle(c, '::after');
+      // The transparent ::before proxy is the actual tap surface; the painted
+      // ::after plate is hidden on unselected enemies. Whenever the proxy is
+      // drawn it is measured, so a proxy that stops taking hits is a failure,
+      // never a quiet fallback to the artwork.
+      const proxyStyle = getComputedStyle(c, '::before');
+      const targetStyle = proxyStyle.display !== 'none' && proxyStyle.content !== 'none'
+        ? proxyStyle : getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
       // Waist-overlap players expose their artwork; their plate is hidden.
-      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none';
+      // A core that packing explicitly gave up (data-core-obstructed) takes no
+      // input by design; that enemy is reached through its artwork.
+      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none'
+        && c.dataset.coreObstructed !== 'true';
       const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => frameOwnsHit(c, sprite, top))
+          // The player's own mini-HUD runs the same frame action (select, or
+          // play the armed self-cast card: combat.js), so it owns the hit too.
+          top => frameOwnsHit(c, sprite, top)
+            || c.matches('.player') && c.contains(top) && !!top.closest('.combatant-mini-hud'))
         : exposedPatch(sprite, 24);
       if (reach) continue;
     }

@@ -34,7 +34,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
-- **Art retry verification recognizes reusable sprite stages** ([#1799](https://github.com/cehinds/AshenSpire/pull/1799), `0.7.1.1237`). The blocked-art browser check accepts a marked placeholder that retains its hidden failed image, while still requiring visible art to return after Retry. Game behavior is unchanged.
+- **Art retry verification requires a visible fallback** ([#1799](https://github.com/cehinds/AshenSpire/pull/1799), `0.7.1.1248`). The blocked-art browser check accepts a marked placeholder that retains its hidden failed image only when its fallback is visibly laid out, while still requiring visible art to return after Retry. Game behavior is unchanged.
+
+- **Pull requests into dev are checked in about five minutes** ([#1797](https://github.com/cehinds/AshenSpire/pull/1797), `0.7.1.1247`). The four full-simulation tests that held one shard at 8m19s now run on every push to `test` and `release` instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.
+
+- **Steadier names under reduced motion and reachable Info on phones** ([#1796](https://github.com/cehinds/AshenSpire/pull/1796), `0.7.1.1245`). With Reduced motion on, enemy names and health no longer twitch by fractions of a pixel as the board settles, and moving the pointer no longer drifts the backdrop. The player's Info and action buttons stay above the hand instead of slipping under it when the character stands low on narrow phones. Newly painted enemies bob while idle again, and a hit no longer knocks their bob out of step.
+
+- **Selected counters and sweeps carry their weapon effects** ([#1800](https://github.com/cehinds/AshenSpire/pull/1800), `0.7.1.1244`). Reaver, Starseer, Herald and Rogue use the eight selected stance-to-attack clips with steel slashes, staff trails, palm impacts and dagger effects. Four phases return to the original ready frame, and combat and card previews share the same timing. Confirmed counters and physical sweeps keep their chosen preparation stance between actions; original idle, attack, defend and casting artwork stays intact. Reduced motion and reduced flashes clear the separate effect layers.
 
 - **Enemy combat art gains painted action sets** ([#1795](https://github.com/cehinds/AshenSpire/pull/1795), `0.7.1.1236`). Integrate 33 enemy sets with melee, ranged, spell, guard and reaction frames through the shared art loader. Preserve existing action timing and reduced-motion behavior. The continuation handoff records remaining angle, clipping and halo review.
 
