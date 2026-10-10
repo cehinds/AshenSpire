@@ -936,6 +936,23 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   poseObserver.observe(field, { subtree: true, attributes: true,
     attributeFilter: ['src', 'data-pose', 'data-animating', 'class'] });
+  // Both accessibility inputs can change while a fight is on screen. Settle
+  // once after motion is disabled, and resume frame tracking only after it is
+  // enabled again; otherwise the HUD can retain the last idle-frame offset.
+  let reduced = reducedMotionRequested();
+  const reducedMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const reconcileReducedMotion = () => {
+    const next = reducedMotionRequested();
+    if (next === reduced) return;
+    reduced = next;
+    cancelAnimationFrame(trackingRequest);
+    trackingRequest = 0;
+    schedule();
+    if (!next) trackingRequest = requestAnimationFrame(trackPlayerHud);
+  };
+  reducedMedia?.addEventListener('change', reconcileReducedMotion);
+  const reducedSettingObserver = new MutationObserver(reconcileReducedMotion);
+  reducedSettingObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });
@@ -948,6 +965,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     resizeObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();
+    reducedMedia?.removeEventListener('change', reconcileReducedMotion);
+    reducedSettingObserver.disconnect();
     window.removeEventListener('resize', schedule);
     document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
     detachObserver.disconnect();
