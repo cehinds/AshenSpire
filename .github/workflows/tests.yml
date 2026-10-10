@@ -11,16 +11,26 @@
 # WHERE IT RUNS, by the owner's ruling of 2026-09-26: a pull request into `dev`
 # is gated by fast checks only (about five minutes or less), and the heavy
 # suites run when code is pushed to `test` and `release`.
-#   pull_request into dev    — `core` only (about 4 min). `selftests` (about
-#                              6 min) and `parse-gate` (about 13 min) are
-#                              skipped by their job-level `if:`, which reports
-#                              them as skipped rather than absent.
-#   push to dev              — `core` only, so the merged tree is read at once:
-#                              two PRs each green alone can break together.
-#   push to test / release   — all three jobs.
-#   workflow_dispatch        — all three jobs, on any ref.
+#   pull_request into dev    — `core` and the four `discovered` shards, which
+#                              leave out SLOW_DISCOVERED (--no-slow). Each is
+#                              about four minutes or less. `discovered-slow`,
+#                              `selftests` (about 6 min) and `parse-gate`
+#                              (about 13 min) are skipped by their job-level
+#                              `if:`, which reports them as skipped rather than
+#                              absent.
+#   push to dev              — the same as a pull request, so the merged tree
+#                              is read at once: two PRs each green alone can
+#                              break together.
+#   push to test / release   — every job.
+#   workflow_dispatch        — every job, on any ref.
 # Nothing was removed: every original check runs on every push
 # to `test` and `release`.
+#
+# SLOW_DISCOVERED (tests/run-node-lanes.mjs) names the four discovered files
+# that spawn full simulation runs. They were over half of all discovered-test
+# time, and balance-doc alone held one shard at 8m19s (run 38028766946, a
+# 9m31s wall on a PR into dev). They run in `discovered-slow`, and in ci.yml's
+# discovered shards, which pass neither --no-slow nor --slow-only.
 #
 # WHAT IT COSTS. Linux only, no LFS (no test here reads an LFS-tracked
 # artifact; they are the built HTML files), and 50 commits of history plus
@@ -30,7 +40,9 @@
 #
 # PARALLEL JOBS, so a slow corpus cannot hold the fast answer hostage and
 # no job reads a tree another is mutating:
-#   core       — the art release fetch first (step 12: the suite reads the
+#   core       — on the lean checkout ci.yml's `test` job uses (no
+#                history blobs, no source PNGs; its header has the strace),
+#                the art release fetch first (step 12: the suite reads the
 #                packs), the engine suite, each
 #                tool's verdict on the tree as it stands (tests/run-node.mjs),
 #                the no-browser CHANGELOG ordering check with its own
@@ -54,7 +66,7 @@ name: tests
 
 on:
   pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev'] # fast core + discovered shards
+    branches: [dev, alternative/dev, 'alternative/**/dev'] # fast core + discovered shards (--no-slow)
   push:
     branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test'] # core + discovered shards on dev; see the header
   workflow_dispatch:
@@ -88,6 +100,15 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 50 # zoomunits (37) reads `git merge-base origin/dev HEAD`
+          # The lean checkout ci.yml's `test` job runs this same suite on: no
+          # history blobs, and no source PNGs, which no step here opens.
+          lfs: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - name: The base branch, for the tools that measure against it
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
@@ -170,8 +191,36 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
 
-      - name: Every discovered test file, partitioned without omissions
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --shard ${{ matrix.shard }}
+      - name: Every discovered test file but the slow ones, partitioned without omissions
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard ${{ matrix.shard }}
+
+  discovered-slow:
+    name: discovered tests (slow simulations)
+    # SLOW_DISCOVERED (tests/run-node-lanes.mjs): over the dev-PR budget, so it
+    # runs on push to test and release (and on dispatch), as `selftests` does.
+    if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 50
+          lfs: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
+
+      - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - name: The slow discovered test files (full simulation runs)
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --slow-only
 
   selftests:
     name: tool self-tests (${{ matrix.group }})

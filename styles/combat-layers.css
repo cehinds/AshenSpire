@@ -61,7 +61,7 @@
    Explicit overhead reading controls retain priority above this square. */
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)::before {
   content: ''; display: block; position: absolute;
-  left: var(--enemy-hit-x); top: var(--enemy-hit-y);
+  left: var(--enemy-core-x, var(--enemy-hit-x)); top: var(--enemy-core-y, var(--enemy-hit-y));
   width: min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))));
   height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
   transform: translate(-50%, -50%); pointer-events: auto;
@@ -69,7 +69,12 @@
   z-index: calc(var(--combat-layer-selection) + 2) !important;
 }
 :root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)::before {
-  left: calc(var(--enemy-hit-x) - (var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))) - min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))))) / 2);
+  left: var(--enemy-core-x, calc(var(--enemy-hit-x) - (var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))) - min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))))) / 2));
+}
+/* An impossible auxiliary square must not steal another actor's artwork.
+   The actor's own sprite and explicit reading controls keep their routes. */
+:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)[data-core-obstructed='true']::before {
+  pointer-events: none;
 }
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) {
   z-index: calc(var(--combat-layer-selection) + 1) !important;
@@ -158,9 +163,11 @@
 
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
-  display: grid; grid-template-columns: 1fr 1.25fr; gap: calc(8px / var(--ui-zoom,1));
+  display: grid; grid-template-columns: 1fr 1fr; gap: calc(8px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
 }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
@@ -171,6 +178,7 @@
 }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(9px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); }
+/* The toolbar spans the hand with Log at its left; open the drawer beside it. */
 :root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: 0; right: auto; }
 
 /* Health remains available as a self-target; additional details unfold only
@@ -214,7 +222,6 @@
 }
 
 :root .combat[data-layout='formation'] .combat-tools [data-combat-tool='log'] { touch-action: none; }
-:root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: auto; right: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row {
   --health-row-h: calc(16px / var(--ui-zoom,1));
   min-height: calc(44px / var(--ui-zoom,1)); align-items: center;
@@ -290,7 +297,7 @@
 :root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud {
   border-color: var(--combatant-highlight); padding: calc(4px / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player.context-selected .combatant-leading { width: calc(220px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .player-action-intent {
   position: absolute; display: grid; place-items: center;
   width: calc(24px / var(--ui-zoom,1)); height: calc(24px / var(--ui-zoom,1));
@@ -300,7 +307,7 @@
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
 
 /* Compact details keep all three rows readable without a 44px empty HP slot. */
-:root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(128px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(176px / var(--ui-zoom,1)); }
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { padding: 0; gap: 0; }
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm { height: calc(13px / var(--ui-zoom,1)); min-height: 0; }
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { gap: 0 calc(4px / var(--ui-zoom,1)); }

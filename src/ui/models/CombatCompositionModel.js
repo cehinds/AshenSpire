@@ -21,6 +21,12 @@ export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
 }
 
+export function combatSceneryGround(sizes, actors, fallback) {
+  const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
+  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.ground)).map(size => size.ground);
+  return grounds.length ? Math.min(...grounds) : fallback;
+}
+
 export function combatComposition({ sizes, actors, width, height, handTop, solo = true }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
@@ -45,9 +51,8 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
   });
 }
 
-// Preserve the alternative branch's approved formation and hand overlap.
-// Approved option C. These are presentation transforms after the shared art
-// fit, so enemy stature and formation addresses remain gameplay facts.
+// Attach the foreground player's feet to the battlefield edge, above the
+// health strip and card-band tools. Selection never changes this resting fit.
 export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
@@ -55,15 +60,21 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
   return sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
-    const factor = player ? (solo ? 1.28 : 1) : .8;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7));
+    const spacious = height > 300;
+    const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
+    const availablePlayerHeight = player && solo && Number.isFinite(handTop)
+      ? Math.max(1, handTop - actor.leading - 32) : Infinity;
+    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight);
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
-    const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x) : size.x - center + width * .55;
+    const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
+      : (size.x - center) * (spacious ? 1.3 : 1) + width * (spacious ? .66 : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     const ground = player && solo && Number.isFinite(handTop)
-      ? handTop + visibleHeight * .5
-      : Math.max(visibleHeight + actor.leading + 6, (size.ground ?? actor.slot.ground) - (player ? 0 : height * .07));
+      ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
+      : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground)
+        : spacious ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
+          : (size.ground ?? actor.slot.ground) - height * .07);
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio };
   });
 }
