@@ -838,7 +838,7 @@ export function playTimeline(events, ctx, done) {
         }
         if (vi < visuals.length) {
           const event = visualEvents[vi];
-          const holdMs = beat.kind === 'attack' && event.type === 'damageDealt'
+          const holdMs = (beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
             ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0;
           const held = holdMs > 0;
           const v = visuals[vi++];
