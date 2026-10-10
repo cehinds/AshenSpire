@@ -18,7 +18,9 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     page.on('response', response => { if (response.status() >= 400) failures.push(`${response.status()} ${response.url()}`); });
     const runtime = await openCombatQa(page, base, shot);
-    await page.waitForFunction(() => document.querySelectorAll('.combat-ground-shadow').length >= 3);
+    // Ground shadows are each sprite's ::before (combat.css / kit.css); the
+    // separate shadow layer was removed with combatGroundShadows.js.
+    await page.waitForFunction(() => document.querySelectorAll('.combatant .sprite').length >= 1);
     await page.evaluate(() => document.fonts.ready);
     await page.evaluate(async () => {
       const { stageFor } = window.__combatQaRuntime || await import('/src/ui/services/PoseAnimator.js');
@@ -40,7 +42,7 @@ try {
         return bad;
       });
       return {
-        scenery: z('.backdrop'), shadows: z('.combat-ground-shadows'),
+        scenery: z('.backdrop'),
         enemies: [...document.querySelectorAll('.enemy .sprite')].map(el => Number(getComputedStyle(el).zIndex)),
         player: z('.player .sprite'), fade: document.querySelector('.alternative-card-fade') ? z('.alternative-card-fade') : z('.combat', '::before'),
         selection: z('.enemy .combatant-leading'), cards: z('.hand-overlay, .hand-area > .hand'),
@@ -48,15 +50,19 @@ try {
         hud: z('.combat-hud'), footer: z('.combat-action-row'), ancestors,
         railsBackground: combat.dataset.combatArrangement === 'rails'
           ? getComputedStyle(document.querySelector('.combat-action-row')).backgroundImage : 'none',
-        shadowBoxes: [...document.querySelectorAll('.combat-ground-shadow')].map(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height })),
-        entityTargets: [...document.querySelectorAll('.combat-ground-shadow')].every(el =>
-          !el.hasAttribute('data-eid') && document.querySelector(`[data-eid="${CSS.escape(el.dataset.shadowFor)}"]`)?.classList.contains('combatant')),
+        // A pseudo-element has no box of its own: read its used size from computed style.
+        shadowBoxes: [...document.querySelectorAll('.combatant .sprite')].map(el => {
+          const s = getComputedStyle(el, '::before');
+          return { content: s.content, width: parseFloat(s.width), height: parseFloat(s.height) };
+        }),
+        entityTargets: [...document.querySelectorAll('.combatant .sprite')].every(el =>
+          getComputedStyle(el, '::before').pointerEvents === 'none'),
         missingArt: [...document.querySelectorAll('.combatant .enemy-pose-idle, .combatant .pose-frame[src]:not(.pose-previous)')].filter(img => !img.complete || !img.naturalWidth).map(img => img.src),
         overflow: document.documentElement.scrollWidth > innerWidth,
       };
     });
-    assert(layers.scenery < layers.shadows && layers.shadows < Math.min(...layers.enemies));
-    assert(layers.shadows < layers.fade && layers.fade < Math.min(...layers.enemies));
+    assert(layers.scenery < Math.min(...layers.enemies));
+    assert(layers.fade < Math.min(...layers.enemies));
     assert(Math.max(...layers.enemies) < layers.player && layers.player < layers.selection);
     assert(layers.selection < layers.cards);
     assert((layers.targetPlate === null || layers.targetPlate < layers.targetHealth) && layers.targetHealth < layers.selection,
@@ -64,7 +70,7 @@ try {
     assert(layers.cards < layers.hud && layers.cards < layers.footer);
     assert.deepEqual(layers.ancestors, [], 'shared wrappers must not trap artwork or selection controls');
     assert.equal(layers.railsBackground, 'none', 'footer rails must not paint an opaque sheet over cards');
-    assert(layers.shadowBoxes.every(box => box.width > 0 && box.height > 0));
+    assert(layers.shadowBoxes.length > 0 && layers.shadowBoxes.every(box => box.content !== 'none' && box.width > 0 && box.height > 0));
     assert(layers.entityTargets, 'decorative shadows must never intercept combatant lookup');
     assert.deepEqual(layers.missingArt, []);
     assert.equal(layers.overflow, false);

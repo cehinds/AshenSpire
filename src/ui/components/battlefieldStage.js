@@ -14,7 +14,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
@@ -120,7 +120,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let frameRequest = 0;
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
-  let settledTargets = [], settledFooterSize = 44;
+  let settledTargets = [], settledFooterSize = 44, settledTargetCores = [];
   let playerInfoRects = [];
   const labelMeasure = document.createElement('canvas').getContext('2d');
   function fitLabels() {
@@ -208,7 +208,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }
   }
   function trackPlayerHud() {
-    placePlayerHud();
+    // Keep the settled target cores reserved, or the HUD can snap back over the player target.
+    placePlayerHud(false, settledTargetCores);
     // Idle breathing also moves the painted body. Keep the physical gap during
     // those CSS transforms as well as explicit attack and movement poses.
     trackingRequest = field.isConnected && field.querySelector('.combatant.player')
@@ -382,6 +383,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
     }
     const fitFormation = () => {
+      // Classic and alternative compositions differ; choose per fit, not at import.
+      const combatComposition = classicAppearance() ? classicCombatComposition : alternativeCombatComposition;
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
@@ -531,6 +534,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // must not split the independent frame plate's complete tap area.
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     settledTargets = [];
+    settledTargetCores = [];
     placePlayerHud();
     const boxes = placed.map(({ frame, sprite }) => ({
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
@@ -600,11 +604,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
         player: placed[i].frame.classList.contains('player'),
       })] : []) });
-    const targets = packCombatTargetsWithHud({ pack: packTargets,
-      placeHud: cores => placePlayerHud(true, cores),
-      // A fallen frame survives for its defeat pose but paints no target
-      // proxy, so it neither competes for footer space nor blocks the HUD.
-      targetCores: boxes.flatMap((box, i) => {
+    // A fallen frame survives for its defeat pose but paints no target
+    // proxy, so it neither competes for footer space nor blocks the HUD.
+    const targetCores = boxes.flatMap((box, i) => {
         if (placed[i].frame.classList.contains('dead') || (placed[i].frame.classList.contains('player')
           ? combat.dataset?.waistOverlap === 'true' : !placed[i].frame.classList.contains('context-selected'))) return [];
         const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
@@ -612,9 +614,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const half = COMBAT_TARGET_HIT_PX / 2;
         return [{ id: target.id, left: fieldRect.left + target.x - half, right: fieldRect.left + target.x + half,
           top: fieldRect.top + target.y - half, bottom: fieldRect.top + target.y + half }];
-      }),
+    });
+    const targets = packCombatTargetsWithHud({ pack: packTargets,
+      placeHud: cores => placePlayerHud(true, cores),
+      targetCores,
     });
     settledTargets = targets;
+    settledTargetCores = targetCores;
     settledFooterSize = footerSize;
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
