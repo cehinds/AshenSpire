@@ -158,7 +158,7 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'a player loses its exposed artwork or frame-level tap area',
         file: 'styles/combat.css',
-        append: '.player-target-hitbox::before, .player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
+        append: '.player-target-hitbox::before, .player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite *, .combat[data-waist-overlap="true"] .player .combatant-mini-hud, .combat[data-waist-overlap="true"] .player .combatant-mini-hud * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -521,7 +521,10 @@ const PROBE = `(() => {
       const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => frameOwnsHit(c, sprite, top))
+          // The player's own mini-HUD runs the same frame action (select, or
+          // play the armed self-cast card: combat.js), so it owns the hit too.
+          top => frameOwnsHit(c, sprite, top)
+            || c.matches('.player') && c.contains(top) && !!top.closest('.combatant-mini-hud'))
         : exposedPatch(sprite, 24);
       if (reach) continue;
     }
