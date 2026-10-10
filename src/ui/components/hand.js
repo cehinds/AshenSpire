@@ -127,7 +127,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const fontSize = getComputedStyle(document.documentElement).fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
-      // The compact toolbar occupies a 44px touch row at the top of the hand.
+      // The compact toolbar occupies a 30px compact row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
       const toolsHeight = COMBAT_TOOLS_HEIGHT_PX / zoom;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);

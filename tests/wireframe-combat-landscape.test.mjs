@@ -32,12 +32,13 @@ test('short landscape phones plan rails, supported', () => {
   }
 });
 
-test('shorter landscape rails report unsupported instead of clipping the hand', () => {
-  for (const [width, height, zoom] of [[740, 360, 0.62], [667, 375, 0.62]]) {
+test('short landscape support follows the remaining battlefield after the compact toolbar', () => {
+  for (const [width, height, zoom, supported] of [[740, 360, 0.62, false], [667, 375, 0.62, true]]) {
     const bands = plan(width, height, zoom);
     const at = `${width}x${height}@${zoom}`;
     assert.equal(bands.arrangement, 'rails', at);
-    assert.equal(bands.supported, false, at);
+    assert.equal(bands.supported, supported, at);
+    assert.equal(bands.supported, bands.battlefield >= bands.minimumBattlefield, `${at}: no clipped battlefield is accepted`);
     assert.ok(bands.hand >= minimumHandHeight(16 / zoom) + COMBAT_TOOLS_HEIGHT_PX / zoom - 1e-6,
       `${at}: unsupported geometry retains the complete hand floor`);
   }
