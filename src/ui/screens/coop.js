@@ -2010,7 +2010,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           }
           const plan = resolveCombatAnimation(def, equippedPieces(registries, member?.loadout, member?.classId),
             { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId), classId: member?.classId,
-              appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion });
+              appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion, counterTriggered: !!returned });
           sprite.dataset.actionFamily = plan.family;
           sprite.dataset.actionMotion = plan.motion;
           pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';

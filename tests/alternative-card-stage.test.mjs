@@ -4,6 +4,7 @@ import { rewardDom } from './helpers/reward-dom.mjs';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { setAnimSpeed } from '../src/ui/fx.js';
 import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
+import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
 
 test('Classic appearance leaves its upstream stage in charge without allocating an alternative canvas', () => {
   try {
@@ -55,7 +56,13 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.currentArt.image,paints.at(-1).args[0],'HUD ink source follows the held pose');
     stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
-    stage.setStance(null);stage.setRestPose('counter');assert.equal(stage.pose,'guard-brace','counter remains unchanged');
+    stage.setStance(null);stage.setRestPose('counter');assert.equal(stage.pose,'reaver.counter.stance','counter uses the selected preparation');
+    stage.setRestPose('idle');
+    const preparation=resolveCombatAnimation({cardTags:['camp:physical','maneuver:counter']},[],{classId:'reaver'});
+    stage.setRestPose(preparation.rest);stage.play(preparation.technique,260);step(100);
+    assert.equal(stage.pose,'reaver.counter.stance','preparation holds the selected stance without swinging');
+    assert.equal(stage.el.dataset.effect,'','preparation never emits the counter impact trail');
+    step(160);assert.equal(stage.pose,'reaver.counter.stance','confirmed preparation remains held after its beat');
     stage.setRestPose('idle');
     stage.play('attack',260,['stamina']);step(115);
     assert.equal(stage.pose,'attack-contact');
@@ -76,8 +83,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     const staleCallbacks=[...raf.values()];raf.clear();
     materializeMs=0;staleCallbacks.forEach(fn=>fn(time-300));
     assert.equal(stage.presentation.elapsed,0,'a pre-materialization RAF timestamp cannot move the fresh clock backwards');
-    materializeMs=0;step(60);
-    assert.equal(stage.pose,'counter-load','queued hurt RAF does not skip Counter preparation after cold filter work');
+    materializeMs=0;step(50);
+    assert.equal(stage.pose,'reaver.counter.stance','queued hurt RAF does not skip Counter preparation after cold filter work');
+    assert.equal(stage.el.dataset.effect,'');
+    step(10);assert.equal(stage.pose,'reaver.counter.contact');
+    assert.equal(stage.el.dataset.effect,'reaver.counter.effect-1');
     stage.setRestPose('defend');materializeMs=300;
     const resume=()=>({rest:'defend',action:'counter',elapsed:60,duration:260,resources:['hp','mana','stamina'],savedAt:wallTime});
     const beforeResumeReads=readbacks.length;
@@ -87,7 +97,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.pose,'guard-brace');
     materializeMs=0;stage.setRestPose('defend',{resume:resume()});
     assert.equal(stage.presentation.elapsed,60,'a valid restoration keeps its saved elapsed time');
-    step(30);assert.equal(stage.pose,'counter-parry');
+    step(30);assert.equal(stage.pose,'reaver.counter.contact');
     stage.setRestPose('idle');
     stage.play('smash');step(60);stage.setRestPose('defend');
     assert.equal(stage.pose,'guard-brace','a rest change cancels the prior action');
@@ -95,7 +105,14 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('hit');step(10);
     assert.ok(paints.some(p=>p.fill==='#ff2424'&&p.mode==='source-in'),'red mask follows sprite alpha');
     step(150);assert.equal(raf.size,0,'hit flash terminates');
-    stage.seek('sweep',115);assert.equal(stage.pose,'sweep-contact');assert.equal(raf.size,0);
+    stage.seek('sweep',70);assert.equal(stage.pose,'reaver.sweep.contact');assert.equal(raf.size,0);
+    assert.equal(stage.el.dataset.effect,'reaver.sweep.effect-1');
+    assert.ok(paints.at(-1).args[0].url.endsWith('/effect-1.webp'));
+    assert.ok(stage.currentArt.image.url.endsWith('/contact.webp'),'body footprint excludes the slash layer');
+    stage.seek('sweep',130);assert.equal(stage.el.dataset.effect,'reaver.sweep.effect-2');
+    stage.seek('sweep',200);assert.equal(stage.pose,'ready');assert.equal(stage.el.dataset.effect,'');
+    document.body.classList.add('reduce-flashes');stage.seek('sweep',70);assert.equal(stage.el.dataset.effect,'');
+    document.body.classList.remove('reduce-flashes');
     const timing=stage.actionTiming('weapon:attack:greatsword',{lungeMs:260,impactCapMs:120});
     assert.ok(timing.impactMs<=120.00001);
     stage.seek('weapon:attack:greatsword',timing.impactMs+.01,timing.totalMs);

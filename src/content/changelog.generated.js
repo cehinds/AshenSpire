@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Pull requests into dev are checked in about five minutes",
     "detail": "The four full-simulation tests that held one shard at 8m19s now run on every push to test and release instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.",
-    "build": "0.7.1.1248",
+    "build": "0.7.1.1245",
     "pullRequest": 1797,
     "url": "https://github.com/cehinds/AshenSpire/pull/1797"
+  },
+  {
+    "id": "pr-1800",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Selected counters and sweeps carry their weapon effects",
+    "detail": "Reaver, Starseer, Herald and Rogue use the eight selected stance-to-attack clips with steel slashes, staff trails, palm impacts and dagger effects. Four phases return to the original ready frame, and combat and card previews share the same timing. Confirmed counters and physical sweeps keep their chosen preparation stance between actions; original idle, attack, defend and casting artwork stays intact. Reduced motion and reduced flashes clear the separate effect layers.",
+    "build": "0.7.1.1244",
+    "pullRequest": 1800,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1800"
   },
   {
     "id": "pr-1795",
