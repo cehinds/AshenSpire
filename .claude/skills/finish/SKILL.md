@@ -45,7 +45,7 @@ accepts it. An accepted target that changes a contract lands as a spec PR first.
 12. **CI** — PR checks <10 min and green on the release candidate.
 13. **Release readiness** — version, changelog, save migrations, store/web metadata drafted (owner tags and publishes).
 Mark each line `[ ]` / `[~]` / `[x]` with its PR link. Add an **Owner decisions** section.
-Open FINISH.md itself as the first PR, ready for review; the owner merges it.
+Open FINISH.md itself as the first PR, ready for review, and land it like any other (CONTRIBUTING rule 6).
 
 ## Phase 2 — Plan
 Order the gaps: blockers (crashes, soft-locks, save loss) → spec gaps →
@@ -65,20 +65,20 @@ c. Make the smallest change that fixes it; content goes in data, not code.
 d. Run only the checks DEVELOPER.md names (e.g. the `node --test` suites, content
    validation, the receipts gate) and play the affected flow. Never invent or add a
    toolchain the repo doesn't use.
-e. Write receipts and derived files with the repo's tooling, in the order the
-   CHANGELOG.md header gives, never by hand. In this repo that means:
+e. **Orchestrator, at landing:** write receipts and derived files with the repo's tooling, in the order the
+   CHANGELOG.md header gives, never by hand. Task agents never touch them. In this repo that means:
    1. `node tools/launch.mjs --build-only`
    2. set the CHANGELOG receipt to `buildordinal.json` + 1
    3. `node tools/about-changelog.mjs --write`
    4. rebuild
    Parallel PRs all claim the same ordinal, so leave receipts until a PR is next
    to merge, or re-point each one after every merge to `dev`.
-f. Open a PR, ready for review. The body says what changed and how it was
+f. The orchestrator opens the PR, ready for review. The body says what changed and how it was
    verified, and names anything unverified. UI changes add a screenshot or GIF
    and the component catalog per CONTRIBUTING.
 Then, per PR:
 g. A separate **reviewer agent** verifies findings against the diff.
-h. The author agent fixes what stands and notes the outcome in the PR: who
+h. The orchestrator (or a worker it briefs) fixes what stands and notes the outcome in the PR: who
    reviewed, what changed, and what was declined and why.
 Serialize anything that touches shared systems or generated files.
 After **every** merge to `dev`, for each open FINISH branch:
@@ -89,8 +89,8 @@ While PRs stay open, schedule an hourly re-check. If two PRs touch the same
 code, agree which lands first. Update FINISH.md.
 Every 2 waves, a **QA agent** plays full runs end-to-end and files new bugs
 into FINISH.md as blockers.
-Merge to `dev` only if the owner has asked you to land work; otherwise leave
-finished, green PRs for the owner. Never merge to `release` or `main`.
+Merge each reviewed, green PR into `dev` yourself and promote `dev` to `test` once
+per wave (CONTRIBUTING rule 6). Never merge to `release` or `main`.
 
 ## Phase 4 — Release candidate
 Freeze features (the owner cuts `release`; agents don't). Run 3 full runs per class, the soft-lock sweep, perf and

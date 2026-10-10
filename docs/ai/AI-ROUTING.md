@@ -1,9 +1,10 @@
 # AI routing: an Opus orchestrator directing Haiku workers
 
 **Status:** These are the owner's operating instructions for AI sessions working in this
-repository. They were rewritten on 2026-10-10 at the owner's request: the main session
-runs on Opus 5.5 and manages Haiku 5.5 subagents, which do the work. The file is
-advisory about how work is *routed*. It never overrides [SPEC.md](../../SPEC.md)
+repository. They were rewritten on 2026-10-10 at the owner's request. The split itself
+is the owner's standing rule: the main session runs on Opus 5.5 and manages Haiku 5.5
+subagents, which do the work. The details below (brief shape, wave sizes, escalation)
+are advisory. It never overrides [SPEC.md](../../SPEC.md)
 (mechanics), [CONTRIBUTING.md](../../CONTRIBUTING.md) (branching, review, merge,
 promotion) or [DEVELOPER.md](../../DEVELOPER.md) (build and test). Where they disagree,
 those files win. Guided-learning work follows
@@ -20,10 +21,10 @@ reporting.
 |---|---|---|---|
 | **Orchestrator** (the main session) | Opus 5.5 (`claude-opus-5-5`) | Understanding the request; reading SPEC and the contracts; splitting the work; writing worker briefs; choosing models and isolation; verifying every result; deciding review findings; CHANGELOG receipts and `buildordinal.json`; opening, merging and promoting PRs (CONTRIBUTING rule 6); talking to the owner | Bulk reading, broad searches, mechanical edits or long test runs that a worker could do from a brief |
 | **Worker** | Haiku 5.5 (`claude-haiku-5-5`), the `ashen-worker` agent | One scoped task in its own worktree and branch: find, edit, test, commit, push, report | Merging, opening or merging PRs, promoting, editing CHANGELOG / `buildordinal.json` / `src/content/changelog.generated.js`, changing SPEC unless the brief says so, widening scope |
-| **Reviewer** | Opus 5.5 subagent (`ashen-reviewer`) for risky diffs; Haiku 5.5 for mechanical ones | The independent review CONTRIBUTING rule 2 requires, from the diff and a list of risks | Re-implementing; reading the whole repo |
+| **Reviewer** | Opus 5.5 subagent (`ashen-reviewer`) for risky diffs; Haiku 5.5 for mechanical ones | The independent review CONTRIBUTING requires (*A pull request is not done…*, item 2), from the diff and a list of risks | Re-implementing; reading the whole repo |
 | **Escalation worker** | Opus 5.5 subagent | A task that a Haiku worker failed, or one that needs judgement the orchestrator cannot put into a brief | Becoming the default |
 
-Sonnet and the other providers are not part of the default loop (owner preference, §8).
+Sonnet and the other providers are not part of the default loop (owner preference).
 
 **When the orchestrator does the work itself.** Do it yourself only when writing the
 brief would cost more than doing the work: a lookup of one known file, an edit of a few
@@ -60,8 +61,9 @@ wanders when it is not. Every brief carries the following, in this order:
    readings are possible; if the worker finds a real conflict, it must stop and report
    rather than guess.
 5. **The acceptance test.** The regression to add (file and assertion), the suites to run
-   and the known environmental failures to ignore. At the time of writing these are
-   music-score, the common-pack plan and the layer-assets tests, which need art packs.
+   and how to clear environmental failures. Tests that need art fail until
+   `node tools/fetch-art.mjs --pack light,common` has run, so run it first rather than
+   ignoring them.
 6. **Boundaries.** The files it must not touch (CHANGELOG.md, `buildordinal.json`,
    `src/content/changelog.generated.js`, built HTML), no PR, no merge.
 7. **Commit and push.** The subject rule (imperative, at most 72 characters), the
@@ -87,7 +89,7 @@ Changelog line (player's words, 1–2 sentences):
 Stopped because (only if it stopped):
 ```
 
-## 5. Review (CONTRIBUTING rule 2)
+## 5. Review (CONTRIBUTING, *A pull request is not done…*, item 2)
 
 | Diff touches | Reviewer |
 |---|---|
@@ -140,7 +142,8 @@ from a missing file, a vague brief or the wrong model, fix that cause. The Agent
 - **Workers:** `Agent({ subagent_type: "ashen-worker", isolation: "worktree", run_in_background: true, prompt: <brief> })`.
   The agent file pins `model: haiku`. With a generic agent type, pass `model: "haiku"`.
 - **Reviewer:** `Agent({ subagent_type: "ashen-reviewer", prompt: <diff + risks> })`,
-  pinned to `model: opus`.
+  pinned to `model: opus`. For a mechanical diff, use
+  `Agent({ subagent_type: "general-purpose", model: "haiku", prompt: <read-only review brief: diff + risks + "do not edit"> })`.
 - **Escalation:** `Agent({ subagent_type: "general-purpose", model: "opus", ... })` with
   the original brief.
 - **Searches only:** the built-in `Explore` agent with `model: "haiku"`, for "where is X"
