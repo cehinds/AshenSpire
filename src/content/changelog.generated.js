@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1815",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Targeting, co-op HUD and footer fixes",
+    "detail": "Pressing Enter on a focused enemy now targets that enemy instead of a stale card. Formation target cells show their numbers again, never sit under cards or buttons, and an enemy whose cell cannot fit is targeted by its figure. Classic appearance keeps its own layout and target order. The player panel stays clear of the selected target. Co-op shows resource labels and each seat's level again. Footer art lines up with its buttons, and the compact End Turn shows its key.",
+    "build": "0.7.1.1265",
+    "pullRequest": 1815,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1815"
+  },
+  {
     "id": "pr-1816",
     "date": "2026-10-10",
     "group": "2026-10-10",
