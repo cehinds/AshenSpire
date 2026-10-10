@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1785",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Enemy names remain inspectable beside fighter targets",
+    "detail": "The full enemy name opens inspection beside an independent 44px fighter-selection core within the existing footer. Native input uses the actual side-core geometry while retaining keyboard inspection, conditional card/flask targeting, full obstacle footprints, artwork and hand positions.",
+    "build": "0.7.1.1209",
+    "pullRequest": 1785,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1785"
+  },
+  {
     "id": "pr-1784",
     "date": "2026-10-09",
     "group": "2026-10-09",
