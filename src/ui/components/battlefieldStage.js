@@ -369,7 +369,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
     const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
     const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
-      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top + 22 : null,
+      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top : null,
     });
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
