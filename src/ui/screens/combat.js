@@ -1536,6 +1536,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // With no card/flask selected, the name opens the full read directly;
       // the separate side core selects the fighter's contextual explanation.
       // During targeting both retain the existing card/flask commit behavior.
+      // (Sprite, intent and HP select; the name never only selects —
+      // docs/combat-target-pointer-behavior.md.)
       // Stop bubbling so the name never invokes the frame's handler as well.
       if (enemy.alive) {
         nm.classList.add('nm-inspect');
@@ -1548,7 +1550,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (!getEntity(combat, enemy.id)?.alive) return;
         if (selected) playCard(selected, enemy.id);
         else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-        else selectCombatant(enemy.id);
+        else openCombatantDoor(combatantSubject('enemy', enemy), nm);
       };
       nm.addEventListener('click', openThisRead);
       nm.addEventListener('keydown', (event) => {
