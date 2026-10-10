@@ -5,3 +5,6 @@
 - Strict 24-pixel hit patches pass all four actors in all three target fixtures. Visual review nevertheless finds an obstructed wide footer moved too far from its owner in the crowded four-actor phone case. Reachability is passing; final target-layout acceptance is not.
 - The compact 320-pixel chooser is complete and readable. The 390-pixel inline rank picker still clips its label. A physical 88-pixel selector minimum is required.
 - These observations require fresh artifact verification after the narrow target-only packing and selector-width follow-ups. They do not complete branch promotion or device acceptance.
+
+
+**Raw files removed from the tree (2026-10-10, #1812).** `classic-results.json`, `default-results.json` were removed under the QA-evidence rule (CONTRIBUTING.md, *QA evidence goes to CI artifacts, not the tree*). Statements or manifests here that name them describe the original run; the bytes live in history: `git log --diff-filter=D -- <path>` finds the removing commit and `git show <commit>^:<path>` restores them.

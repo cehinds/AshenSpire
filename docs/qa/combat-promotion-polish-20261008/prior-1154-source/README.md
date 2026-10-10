@@ -5,3 +5,6 @@
 - Inspection preserved focus and the engine memento. Owned browser profiles were removed. The source tool retained optional SFX 404s for holdTick, nodeTravel, cardDraw and turnStinger under its original policy; this does not establish compiled audio or full raw browser-log acceptance.
 - Both full geometry records, the concise report, independent review, provenance, and representative inspected screenshots are retained here. They can be reproduced from the named Git source and published art pins; no built HTML or local cache is committed.
 - Subsequent #1757 receipt reconciliation preserves exact canonical foreign receipt content and relative order from both actual parents. Incoming CRLF/EOF whitespace diagnostics are inherited data, not newly authored polish; owned conflict and polish paths pass the scoped whitespace check.
+
+
+**Raw files removed from the tree (2026-10-10, #1812).** `desktop-geometry.json`, `phone-geometry.json` were removed under the QA-evidence rule (CONTRIBUTING.md, *QA evidence goes to CI artifacts, not the tree*). Statements or manifests here that name them describe the original run; the bytes live in history: `git log --diff-filter=D -- <path>` finds the removing commit and `git show <commit>^:<path>` restores them.

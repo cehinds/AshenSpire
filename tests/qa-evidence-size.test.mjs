@@ -92,4 +92,8 @@ test(`no tracked evidence JSON exceeds ${LIMIT_BYTES / 1024} KiB unless allowlis
   );
   const stale = [...ALLOWED.keys()].filter((p) => !tracked.has(p));
   assert.deepEqual(stale, [], 'ALLOWED names files that are no longer tracked; remove them from the list');
+  // An exemption that no longer exempts anything would let that path grow back unchecked.
+  const sizes = new Map(entries.map(({ path, size }) => [path, size]));
+  const needless = [...ALLOWED.keys()].filter((p) => tracked.has(p) && !(sizes.get(p) > LIMIT_BYTES));
+  assert.deepEqual(needless, [], `ALLOWED names files that are now ${LIMIT_BYTES / 1024} KiB or less (or no longer evidence JSON); remove them from the list`);
 });
