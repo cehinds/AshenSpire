@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1794",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Fallen enemies no longer crowd living targets",
+    "detail": "A defeated enemy stays on the field for its defeat pose but no longer reserves an invisible tap target, so living fighters' name and health footers keep their places and the HUD no longer shifts around it.",
+    "build": "0.7.1.1233",
+    "pullRequest": 1794,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1794"
+  },
+  {
     "id": "pr-1792",
     "date": "2026-10-10",
     "group": "2026-10-10",
