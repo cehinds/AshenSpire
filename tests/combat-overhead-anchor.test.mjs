@@ -121,6 +121,40 @@ test('an enemy overhead with no clear slot is reported obstructed rather than hi
   assert.equal(anchor.obstructed, true);
   assert.equal(anchor.x, 77, 'the reported anchor keeps its packed position');
 });
+
+test('a failed overhead fallback keeps its packed slot clear of earlier relocations', () => {
+  const controls = [
+    { id: 'mover', side: 'enemy', row: 0, x: 50, width: 40, top: 100, bottom: 140 },
+    { id: 'blocked', side: 'enemy', row: 0, x: 120, width: 40, top: 100, bottom: 140 },
+  ];
+  const anchors = combatOverheadAnchors({ width: 200, height: 200, inset: 0, gap: 0, controls,
+    obstacles: [
+      { ownerId: 'mover', left: 0, right: 200, top: 0, bottom: 200 },
+      { ownerId: 'blocked', left: 30, right: 62, top: 90, bottom: 150 },
+    ] });
+  const boxes = controls.map(control => overheadBox(control, anchors.find(anchor => anchor.id === control.id)));
+  assert.equal(anchors.find(anchor => anchor.id === 'blocked').obstructed, true);
+  assert.equal(anchors.find(anchor => anchor.id === 'blocked').x, 120, 'the failed control retains its packed origin');
+  assert.equal(overlapsBox(boxes[0], boxes[1]), false,
+    'an earlier relocation cannot consume a later failed fallback');
+});
+
+test('a successful relocation releases its reservation for a later control', () => {
+  const controls = [
+    { id: 'a', side: 'player', row: 0, x: 30, width: 60, top: 100, bottom: 140 },
+    { id: 'b', side: 'player', row: 0, x: 120, width: 40, top: 100, bottom: 140 },
+  ];
+  const anchors = combatOverheadAnchors({ width: 140, height: 150, inset: 0, gap: 6, controls,
+    obstacles: [
+      { ownerId: 'b', left: 0, right: 60, top: 90, bottom: 150 },
+      { ownerId: 'a', left: 100, right: 140, top: 0, bottom: 150 },
+    ] });
+  const moved = anchors.find(anchor => anchor.id === 'a');
+  const reused = anchors.find(anchor => anchor.id === 'b');
+  assert.notEqual(moved.offsetY ?? 0, 0, 'the first owner vacates its packed origin');
+  assert.equal(reused.obstructed, undefined, 'the later owner finds space after the reservation is released');
+  assert.equal(overlapsBox(overheadBox(controls[0], moved), overheadBox(controls[1], reused)), false);
+});
 import { presentationConfig } from '../src/model/advancedConfig.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../src/ui/fx.js';
 

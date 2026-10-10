@@ -231,12 +231,22 @@ export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, rib
 
 function clearCombatOverheads({ width, height, controls, anchors, inset, gap, obstacles }) {
   const placed = [];
+  // Keep each packed origin available until its owner has a result. Failed
+  // owners retain that fallback; successful owners release the origin and
+  // reserve only their actual placed box for the remaining controls.
+  const reserved = new Map(anchors.flatMap(anchor => {
+    const control = controls.find(source => source.id === anchor.id);
+    if (!control || !Number.isFinite(control.top) || !Number.isFinite(control.bottom)) return [];
+    const offsetY = anchor.offsetY ?? 0, half = control.width / 2;
+    return [[control.id, { ownerId: control.id, left: anchor.x - half, right: anchor.x + half,
+      top: control.top + offsetY, bottom: control.bottom + offsetY }]];
+  }));
   return anchors.map(anchor => {
     const control = controls.find(source => source.id === anchor.id);
     if (!control || !Number.isFinite(control.top) || !Number.isFinite(control.bottom)) return anchor;
     const baseY = anchor.offsetY ?? 0;
     const top = control.top + baseY, bottom = control.bottom + baseY, half = control.width / 2;
-    const walls = [...obstacles, ...placed];
+    const walls = [...obstacles, ...placed, ...reserved.values()];
     const isOwn = wall => wall.ownerId != null && wall.ownerId === control.id;
     const overlaps = (box, wall) => box.left < wall.right && box.right > wall.left
       && box.top < wall.bottom && box.bottom > wall.top;
@@ -257,6 +267,7 @@ function clearCombatOverheads({ width, height, controls, anchors, inset, gap, ob
       .filter(({ x, dy }) => clear(x, dy))
       .sort((a, b) => cost(a) - cost(b))[0];
     if (!best) return { ...anchor, obstructed: true };
+    reserved.delete(control.id);
     placed.push({ ownerId: control.id, left: best.x - half, right: best.x + half,
       top: top + best.dy, bottom: bottom + best.dy });
     if (best.x === anchor.x && best.dy === 0) return anchor;
