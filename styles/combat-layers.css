@@ -178,6 +178,7 @@
 }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(9px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); }
+/* The toolbar spans the hand with Log at its left; open the drawer beside it. */
 :root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: 0; right: auto; }
 
 /* Health remains available as a self-target; additional details unfold only
@@ -221,7 +222,6 @@
 }
 
 :root .combat[data-layout='formation'] .combat-tools [data-combat-tool='log'] { touch-action: none; }
-:root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: auto; right: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row {
   --health-row-h: calc(16px / var(--ui-zoom,1));
   min-height: calc(44px / var(--ui-zoom,1)); align-items: center;
