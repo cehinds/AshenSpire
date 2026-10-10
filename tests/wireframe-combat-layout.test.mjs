@@ -1,9 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allocateCombatBands, packCombatFooter } from '../src/ui/models/CombatLayout.js';
+import { allocateCombatBands, minimumHandHeight, packCombatFooter } from '../src/ui/models/CombatLayout.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
+import { COMBAT_TOOLS_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-6;
+
+test('compact phones reserve a tool row and distinct smaller resting card slots', () => {
+  for (const [width, height, zoom] of [[288, 513, .65], [320, 568, .75], [390, 844, .9]]) {
+    const bands = allocateCombatBands({width:width/zoom,height:height/zoom,zoom,compact:true});
+    assert.equal(bands.supported, true);
+    assert.ok(bands.battlefield * zoom >= 130);
+    const hand = handLayout({width:width/zoom,height:bands.hand-34/zoom,count:5,zoom,rem:16/zoom,compact:true});
+    assert.ok(hand.cardWidth * zoom <= 104);
+    assert.ok(hand.step * zoom >= 44, 'each card keeps its own finger-sized lane');
+    assert.equal(new Set(hand.cards.map(card=>card.x)).size,5);
+    assert.ok((hand.top+hand.cardHeight+34/zoom)*zoom <= bands.hand*zoom+.1);
+  }
+});
 
 test('tall hosts receive the nominal 10/55/30/5 bands', () => {
   const bands = allocateCombatBands({ height: 2000 });
@@ -23,10 +37,31 @@ test('hand and footer keep physical minimums; the battlefield absorbs them', () 
 });
 
 test('compact landscape is reported, not silently squeezed', () => {
-  // 844x390: the minimums leave too little battlefield for one readable actor.
+  // Without a width, the minimums leave too little battlefield for one readable actor.
   const bands = allocateCombatBands({ height: 390 });
   assert.equal(bands.supported, false);
   assert.ok(bands.hand >= 208 && bands.footer >= 56);
+});
+
+test('compact landscape folds its footer into rails before reporting failure', () => {
+  const bands = allocateCombatBands({ width: 600, height: 390, compact: true });
+  assert.equal(bands.arrangement, 'rails');
+  assert.equal(bands.supported, true);
+  assert.equal(bands.footer, 0);
+  assert.ok(bands.battlefield >= 130, 'one compact combatant remains readable');
+  assert.ok(bands.hand >= minimumHandHeight() + COMBAT_TOOLS_HEIGHT_PX,
+    'the hand keeps its toolbar plus one whole minimum card');
+  assert.ok(bands.rails.supported, 'the controls and five exposed cards fit beside the hand');
+});
+
+test('short rail hosts reserve the toolbar or report unsupported geometry', () => {
+  for (const [width, height, compact] of [[600, 360, true], [844, 340, false]]) {
+    const bands = allocateCombatBands({ width, height, compact });
+    assert.equal(bands.arrangement, 'rails');
+    assert.equal(bands.supported, false, `${width}x${height} cannot clip cards to claim support`);
+    assert.ok(bands.hand >= minimumHandHeight() + COMBAT_TOOLS_HEIGHT_PX,
+      `${width}x${height} keeps the toolbar outside the card floor`);
+  }
 });
 
 test('band shares must describe the whole host', () => {
@@ -43,7 +78,11 @@ test('footer tracks respect envelopes, touch targets, and never exceed the host'
     const available = local - plan.gap * 4;
     assert.ok(plan.diameter * zoom >= 44 - 1e-9, `circle ${width}@${zoom}`);
     assert.ok(plan.pileWidth * zoom >= 44 - 1e-9 && plan.pileHeight * zoom >= 44 - 1e-9);
-    assert.ok(plan.pileWidth >= config.pileMinimumRem * rem - 1e-9, 'pile keeps its readable floor');
+    if (width > 600) assert.ok(plan.pileWidth >= config.pileMinimumRem * rem - 1e-9, 'wide pile keeps its authored readable floor');
+    else {
+      assert.ok(near(plan.pileWidth, plan.target), 'compact pile keeps its full touch target with fitted labels');
+      assert.ok(plan.diameter > plan.pileWidth && plan.endWidth > plan.pileWidth, 'primary controls receive the larger compact tracks');
+    }
     assert.ok(plan.diameter <= Math.max(plan.target, height * config.heightFraction) + 1e-9);
     assert.ok(plan.endWidth <= available * config.endMaxFraction + 1e-9);
     assert.ok(near(plan.endHeight, plan.diameter), 'End Turn shares the circle height');
@@ -60,8 +99,7 @@ test('wide footers stay packed at their envelopes', () => {
 });
 
 test('a host too narrow for the floors is reported, not overflowed', () => {
-  // ~260 px physical (a fold cover screen): circles, pile floors and End Turn
-  // cannot all keep their minimums, so the packed grid must not apply.
-  const plan = packCombatFooter({ width: 260, height: 56, rem: 16 });
+  // Even the compact five-target arrangement cannot fit in 220 physical px.
+  const plan = packCombatFooter({ width: 220, height: 56, rem: 16 });
   assert.equal(plan.supported, false);
 });

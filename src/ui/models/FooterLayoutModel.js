@@ -33,6 +33,9 @@ export function footerText(item, values) {
 // The decorated footer gets space without stealing the battlefield's floor.
 // Small hosts retain the existing rails and touch-target geometry.
 export function footerArtHeight(width, zoom = 1) {
+  // Compact controls keep their own artwork faces and readable labels; they
+  // do not need the authored desktop rail's full vertical canvas.
+  if (width * zoom < 680) return 64 / zoom;
   const bounds = footerLayoutModel(footerLayout).bounds;
   return Math.max(footerSizing.minimumHeightPx / zoom, footerArtWidth(width, zoom) * bounds.h / bounds.w);
 }

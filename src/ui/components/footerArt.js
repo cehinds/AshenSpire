@@ -54,6 +54,7 @@ export function installFooterArt(row) {
 // that frame paints: a render from an event or a timer never shows a word
 // uncapped.
 const pendingCaps = new Map();
+const pendingCompactRows = new Set();
 let capFrame = 0;
 function capLongWords() {
   capFrame = 0;
@@ -64,11 +65,28 @@ function capLongWords() {
   // Marked only once measured: a word dropped here because it was detached is
   // measured again by the next paint that finds it.
   for (const [node] of list) node.dataset.measured = 'true';
+  const lines = [...pendingCompactRows].filter(row => row.isConnected && row.dataset.footerCompact === 'true')
+    .flatMap(row => [...row.querySelectorAll('.footer-compact-line')]);
+  pendingCompactRows.clear();
+  for (const line of lines) line.style.removeProperty('font-size');
+  const sizes = lines.map(line => ({ line, width: line.getBoundingClientRect().width,
+    available: line.parentElement.getBoundingClientRect().width,
+    font: parseFloat(getComputedStyle(line).fontSize) }));
+  for (const { line, width, available, font } of sizes) {
+    if (width > available && available > 0) line.style.fontSize = `${font * available / width}px`;
+  }
 }
 function scheduleCaps() {
-  if (!pendingCaps.size || capFrame) return;
+  if ((!pendingCaps.size && !pendingCompactRows.size) || capFrame) return;
   if (typeof requestAnimationFrame !== 'function') { capLongWords(); return; }
   capFrame = requestAnimationFrame(capLongWords);
+}
+// The layout adapter calls this after resizing; count changes use the same
+// batch. Measure complete lines so Discard/Exhaust never break inside a word.
+export function fitFooterCompactLabels(row) {
+  if (!row) return;
+  pendingCompactRows.add(row);
+  scheduleCaps();
 }
 export function paintFooterArt(row, values = {}) {
   if (!row?.dataset?.footerArt) return;
@@ -92,8 +110,17 @@ export function paintFooterArt(row, values = {}) {
   // The authored face remains separate from these readable narrow-host labels.
   for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
     const label = row.querySelector(`${selectors[role]} .footer-compact-label`);
-    if (label) label.textContent = text;
+    if (label && label.dataset.labelText !== text) {
+      label.replaceChildren(...text.split('\n').map(value => {
+        const line = document.createElement('span');
+        line.className = 'footer-compact-line';
+        line.textContent = value;
+        return line;
+      }));
+      label.dataset.labelText = text;
+    }
   }
+  fitFooterCompactLabels(row);
   // Refresh references after switching between light and high-resolution packs.
   for (const image of row.querySelectorAll('[data-footer-asset]')) image.setAttribute('href', assetUrl(footerAssets[image.dataset.footerAsset]));
 }

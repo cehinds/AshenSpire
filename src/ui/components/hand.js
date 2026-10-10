@@ -1,4 +1,4 @@
-import { handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { COMBAT_TOOLS_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
@@ -126,6 +126,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const zoom = rect.width / handEl.clientWidth || 1;
       const fontSize = getComputedStyle(document.documentElement).fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
+      const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
+      // The compact toolbar occupies a 44px touch row at the top of the hand.
+      // Keep four physical pixels between that row and the resting card fan.
+      const toolsHeight = COMBAT_TOOLS_HEIGHT_PX / zoom;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
       // Hidden, inert clones reserve its space before a press selects a face;
@@ -137,12 +141,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         controlsHeight = Math.max(controlsHeight, measureHandUpcastHeight(controls,
           { zoom, width: Math.max(0, handEl.clientWidth - 2 / zoom), cache: upcastMeasurements }));
       }
-      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight, count: cards.length, rem, zoom, controlsHeight });
+      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
+        count: cards.length, rem, zoom, compact, controlsHeight });
+      handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
       handEl.style.setProperty('--hand-rest-left', plan.restLeft + 'px');
-      handEl.style.setProperty('--hand-rest-top', plan.restTop + 'px');
-      handEl.style.setProperty('--hand-clearance-top', plan.clearanceTop + 'px');
+      handEl.style.setProperty('--hand-rest-top', (toolsHeight + plan.restTop) + 'px');
+      handEl.style.setProperty('--hand-clearance-top', (toolsHeight + plan.clearanceTop) + 'px');
       handEl.dataset.handGeometry = handGeometryKey({ width: handEl.clientWidth, height: handEl.clientHeight, zoom, fontSize, left: rect.left });
       handEl.style.setProperty('--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {
@@ -150,7 +156,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         el.style.setProperty('--hand-card-width', plan.cardWidth + 'px');
         el.style.setProperty('--hand-card-height', plan.cardHeight + 'px');
         el.style.setProperty('--hand-card-x', slot.x + 'px');
-        el.style.setProperty('--hand-card-y', (plan.top + slot.y) + 'px');
+        el.style.setProperty('--hand-card-y', (toolsHeight + plan.top + slot.y) + 'px');
         el.style.setProperty('--hand-card-angle', slot.angle + 'deg');
         el.style.setProperty('--hand-card-arc', slot.y + 'px');
         el.style.setProperty('--hand-hit-width', (i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px');

@@ -534,3 +534,28 @@ test('bounded footer packing reports an impossible panel without fabricating a c
   assert.ok(anchors[0].x >= 52 && anchors[0].x <= 68);
   assert.ok(anchors[0].y >= 22 && anchors[0].y <= 58);
 });
+
+test('a card cannot push an enemy footer above its body-bottom constraint', () => {
+  const target = { id: 'enemy', x: 150, y: 180, minY: 180, width: 104 };
+  const options = { width: 360, height: 300, size: 44, packWithinBounds: true,
+    obstacles: [{ left: 90, right: 210, top: 170, bottom: 240 }] };
+  const [unconstrained] = combatTargetAnchors({ ...options, targets: [{ ...target, minY: undefined }] });
+  assert.ok(unconstrained.y < target.minY, 'the nearer free slot would otherwise overlap the actor');
+  const [placed] = combatTargetAnchors({ ...options, targets: [target] });
+  assert.ok(!placed.obstructed, 'a lateral or lower clear slot exists');
+  assert.ok(placed.y >= target.minY, 'the footer never rises into the owning sprite');
+  assert.ok(placed.x + placed.width / 2 <= 88 || placed.x - placed.width / 2 >= 212
+    || placed.y - 22 >= 242, 'the entire footer still clears the real card');
+  assert.deepEqual(target, { id: 'enemy', x: 150, y: 180, minY: 180, width: 104 });
+});
+
+test('lock-X upward fallback honors the owning body-bottom floor', () => {
+  const target = { id: 'enemy', x: 150, y: 180, minY: 180, width: 104 };
+  const options = { width: 360, height: 300, size: 44, lockX: true,
+    obstacles: [{ left: 90, right: 210, top: 170, bottom: 280 }] };
+  const [unconstrained] = combatTargetAnchors({ ...options, targets: [{ ...target, minY: undefined }] });
+  assert.ok(unconstrained.y < target.minY, 'the unconstrained fallback uses the tempting slot over the actor');
+  const [placed] = combatTargetAnchors({ ...options, targets: [target] });
+  assert.equal(placed.y, target.minY, 'the constrained footer stays at or below the owning body');
+  assert.equal(placed.obstructed, true, 'impossible space is reported instead of hiding the collision over the actor');
+});

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allocateCombatBands, minimumHandHeight, packCombatRails } from '../src/ui/models/CombatLayout.js';
-import { handLayout } from '../src/ui/models/HandLayout.js';
+import { COMBAT_TOOLS_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-6;
@@ -11,7 +11,7 @@ const plan = (width, height, zoom = 1) =>
   allocateCombatBands({ width: width / zoom, height: height / zoom, zoom, rem: 16 / zoom });
 
 test('short landscape phones plan rails, supported', () => {
-  for (const [width, height, zoom] of [[844, 390, 0.62], [915, 412, 0.62], [740, 360, 0.62], [667, 375, 0.62], [844, 390, 1]]) {
+  for (const [width, height, zoom] of [[844, 390, 0.62], [915, 412, 0.62], [844, 390, 1]]) {
     const bands = plan(width, height, zoom);
     const at = `${width}x${height}@${zoom}`;
     assert.equal(bands.arrangement, 'rails', at);
@@ -20,7 +20,8 @@ test('short landscape phones plan rails, supported', () => {
     assert.ok(near(bands.hud + bands.battlefield + bands.hand, height / zoom), `${at}: bands fill the host`);
     assert.ok(bands.battlefield * zoom >= 92 + 3.5 * 16 - 1e-6, `${at}: one readable combatant`);
     assert.ok(bands.hand * zoom <= 208 + 1e-6, `${at}: hand never grows past its stacked minimum`);
-    assert.ok(bands.hand >= minimumHandHeight(16 / zoom) - 1e-6, `${at}: hand keeps a whole minimum card`);
+    assert.ok(bands.hand >= minimumHandHeight(16 / zoom) + COMBAT_TOOLS_HEIGHT_PX / zoom - 1e-6,
+      `${at}: hand keeps its toolbar plus one whole minimum card`);
     const rails = bands.rails;
     for (const size of [rails.diameter, rails.pileWidth, rails.pileHeight, rails.endWidth, rails.endHeight]) {
       assert.ok(size * zoom >= 44 - 1e-9, `${at}: every rail control is a 44 px target`);
@@ -28,6 +29,17 @@ test('short landscape phones plan rails, supported', () => {
     assert.ok(rails.pileWidth * zoom >= 64 - 1e-9, `${at}: piles keep the readable floor`);
     assert.ok(rails.height <= bands.hand + 1e-6, `${at}: rails fit the hand band`);
     assert.ok(near(rails.railWidth * 2 + rails.gap * 2 + rails.handWidth, width / zoom), `${at}: rails and hand fill the width`);
+  }
+});
+
+test('shorter landscape rails report unsupported instead of clipping the hand', () => {
+  for (const [width, height, zoom] of [[740, 360, 0.62], [667, 375, 0.62]]) {
+    const bands = plan(width, height, zoom);
+    const at = `${width}x${height}@${zoom}`;
+    assert.equal(bands.arrangement, 'rails', at);
+    assert.equal(bands.supported, false, at);
+    assert.ok(bands.hand >= minimumHandHeight(16 / zoom) + COMBAT_TOOLS_HEIGHT_PX / zoom - 1e-6,
+      `${at}: unsupported geometry retains the complete hand floor`);
   }
 });
 
@@ -44,7 +56,8 @@ test('the hand between the rails exposes five minimum cards at the touch target'
   for (const [width, height, zoom] of [[844, 390, 0.62], [740, 360, 0.62], [667, 375, 0.62]]) {
     const bands = plan(width, height, zoom);
     const rem = 16 / zoom;
-    const hand = handLayout({ width: bands.rails.handWidth, height: bands.hand, count: 5, rem, zoom });
+    const hand = handLayout({ width: bands.rails.handWidth,
+      height: bands.hand - COMBAT_TOOLS_HEIGHT_PX / zoom, count: 5, rem, zoom });
     assert.ok(hand.cardWidth >= wireframeUi.hand.minWidthRem * rem - 1e-6, 'card keeps its minimum width');
     assert.ok(hand.step * zoom >= 44 - 1e-6, 'each card exposes a touch target');
     assert.ok(hand.span <= bands.rails.handWidth + 1e-6, 'five cards fit without a scroller');
@@ -53,7 +66,7 @@ test('the hand between the rails exposes five minimum cards at the touch target'
   }
 });
 
-test('notch insets narrow the rails plan without breaking it', () => {
+test('notch insets narrow the rails plan without changing its support verdict', () => {
   // 47 physical px each side: an iPhone's landscape safe area. The adapter
   // passes the width left between the insets.
   for (const [width, height, zoom] of [[844, 390, 0.62], [915, 412, 0.62], [740, 360, 0.62], [667, 375, 0.62]]) {
@@ -62,12 +75,13 @@ test('notch insets narrow the rails plan without breaking it', () => {
     const bands = allocateCombatBands({ width: inner, height: height / zoom, zoom, rem: 16 / zoom });
     const open = plan(width, height, zoom);
     assert.equal(bands.arrangement, 'rails', at);
-    assert.equal(bands.supported, true, at);
+    assert.equal(bands.supported, open.supported, at);
     assert.ok(near(bands.rails.railWidth * 2 + bands.rails.gap * 2 + bands.rails.handWidth, inner), `${at}: rails and hand fill the safe width`);
     assert.ok(near(open.rails.handWidth - bands.rails.handWidth, 94 / zoom), `${at}: only the hand gives up the insets`);
     assert.deepEqual([bands.hud, bands.battlefield, bands.hand], [open.hud, open.battlefield, open.hand], `${at}: heights unchanged`);
     const rem = 16 / zoom;
-    const hand = handLayout({ width: bands.rails.handWidth, height: bands.hand, count: 5, rem, zoom });
+    const hand = handLayout({ width: bands.rails.handWidth,
+      height: bands.hand - COMBAT_TOOLS_HEIGHT_PX / zoom, count: 5, rem, zoom });
     assert.ok(hand.span <= bands.rails.handWidth + 1e-6 && hand.step * zoom >= 44 - 1e-6, `${at}: five cards still fit at the touch target`);
   }
 });

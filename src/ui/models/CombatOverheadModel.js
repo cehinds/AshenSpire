@@ -34,7 +34,7 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
       return xs.flatMap(x => ys.map(y => ({ ...start, x, y })))
         .filter(anchor => {
           const box = rect(anchor);
-          return box.left >= 0 && box.right <= width && box.top >= 0 && box.bottom <= height
+          return box.left >= 0 && box.right <= width && box.top >= 0 && box.bottom <= height && anchor.y >= (start.minY ?? 0)
             && obstacles.every(obstacle => clear(box, obstacle));
         })
         .sort((a, b) => (a.x - start.x) ** 2 + (a.y - start.y) ** 2
@@ -63,6 +63,11 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
     const shiftLimit = Math.min(size, Math.max(0, maxShiftX));
     const place = (source, x, blockers) => {
       const control = { ...source, x };
+      // A body-bottom floor is expressed in the same bounded stage space as
+      // the target center. A body below the stage retains the ordinary edge
+      // clamp, while an in-stage floor forbids the upward fallback from
+      // placing the visible footer back over its owner.
+      const floor = Math.min(height - half, Math.max(half, source.minY ?? half));
       let bottomExhausted = false;
       for (let pass=0;pass<=blockers.length;pass++) {
         const covered=blockers.filter(o => intersects(control,control.x,o));
@@ -79,7 +84,7 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
           const covered=blockers.filter(o => intersects(control,control.x,o));
           if (!covered.length) break;
           const nextY=Math.min(...covered.map(o => o.top-half-2));
-          if (nextY<half) break;
+          if (nextY<floor) break;
           control.y=nextY;
         }
       }
@@ -196,7 +201,7 @@ export function combatOverheadRibbonShift({ x, width, top, bottom, ribbon, clear
   return intersects ? Math.max(0, ribbon.bottom + clearance - top) : 0;
 }
 
-export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null }) {
+export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null, ribbonClearance = 14 }) {
   if (ribbon) {
     const adjusted = controls.map(control => ({ ...control, offsetY: 0 }));
     let anchors;
@@ -208,7 +213,7 @@ export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, rib
       let changed = false;
       for (const control of adjusted) {
         const x = anchors.find(anchor => anchor.id === control.id).x;
-        const shift = combatOverheadRibbonShift({ ...control, x, ribbon });
+        const shift = combatOverheadRibbonShift({ ...control, x, ribbon, clearance: ribbonClearance });
         if (!shift) continue;
         control.top += shift; control.bottom += shift; control.offsetY += shift;
         changed = true;
