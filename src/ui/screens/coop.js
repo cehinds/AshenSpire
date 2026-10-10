@@ -1,3 +1,4 @@
+import { enemyActionPose } from '../../model/enemyActionPose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
 import {mountCoopProgressionDoor,gateCoopProgressionControls} from '../components/coopProgressionDoor.js';
@@ -1878,8 +1879,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const definition = registries.enemies.get(enemyId)?.moves?.[mv.moveId];
           const plan = resolveActionAnimation({ actorId: enemyId, actionId: mv.moveId,
             tags: definition?.tags || [], intent: mv.kind, availablePoses: stage?.poses || [] });
-          const pose = mv.kind === 'attack' ? (['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack')
-            : mv.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+          const pose = enemyActionPose(mv.kind, plan);
           stage?.play(pose, 400);
           if (pose === 'attack') {
             const sprite = box.querySelector('.sprite');
@@ -2020,8 +2020,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             tags: definition?.tags || [], intent: moved.kind, availablePoses: stage?.poses || [] });
           sprite.dataset.actionFamily = plan.family;
           sprite.dataset.actionMotion = plan.motion;
-          pose = moved.kind === 'attack' ? ['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack'
-            : moved.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+          pose = enemyActionPose(moved.kind, plan);
         }
         const duration = stage?.actionTiming?.(pose, speed)?.totalMs || speed.lungeMs;
         stage?.play(pose, duration);

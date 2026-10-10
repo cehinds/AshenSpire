@@ -594,3 +594,14 @@ hashes. `tools/alternative-selected-stances-export.mjs` reproduces the browser
 Canvas normalization. Four embedded Sprite Workshop projects accompany the
 exports under `pose-studio/stances/selected-projects/`. No new third-party
 artwork or license is introduced by this integration.
+
+## Enemy expansion, 2026-10-09
+
+The 33 enemy pose sets under `assets/enemy-poses/expansion/` are first-party
+AI-generated artwork made with OpenAI image generation from the project's
+existing enemy references and the owner's supplied facing references. Source
+sheets, recorded prompts, corrections and embedded Sprite Workshop projects are
+maintained in [AshenSpire-art](https://github.com/cehinds/AshenSpire-art), under
+`art/enemy-expansion-2026-10-09/`. No third-party or Creative Commons licence is
+asserted for these generated paintings. Known visual and design deviations are
+recorded in `docs/ai/ENEMY-SPRITE-HANDOFF-2026-10-09.md`.

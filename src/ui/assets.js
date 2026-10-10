@@ -1,4 +1,5 @@
 import { alternativeSprite, alternativePlayerId } from './alternativeArt.js';
+import { enemyExpansionSprite } from './enemyExpansionStage.js';
 import { createAlternativeCardStage } from './alternativeCardStage.js';
 import { armamentIconAsset } from '../model/equipmentArt.js';
 import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
@@ -153,6 +154,8 @@ export function spriteMirror(artFaces, side = 'enemy') {
  * placeholder, so content can ship art-less.
  */
 export function enemySprite(enemyDef, entity = {}) {
+  const expanded = enemyExpansionSprite(enemyDef, entity);
+  if (expanded) return expanded;
   const alternative = alternativeSprite(enemyDef.id, 'enemy');
   if (alternative) return alternative;
   const unity = PAINTED_ENEMIES.includes(enemyDef.id);

@@ -842,5 +842,6 @@ document.addEventListener('wheel',event=>{
 document.addEventListener('keydown',event=>{if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();search.focus();}else if(event.key==='Escape'&&document.activeElement===search&&search.value){search.value='';render();}});
 window.addEventListener('resize',updateDensityUi); setView(catalogView); render();
 </script>
+<section id="enemy-expansion-stage"><h2>Enemy expansion stage</h2><p>Real enemySprite renderer review, 2026-10-09. Front three-quarter/screen-left. Stable floor across action frames; visual approval remains open.</p><img src="preview/enemy-expansion-2026-10-09/runtime-attack.png" alt="Soldier, hound and wisp displaying their new attack poses" style="max-width:100%"></section>
 </body>
 </html>
