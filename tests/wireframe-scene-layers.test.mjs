@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sceneLayers, sceneWindowLayers, battlefieldBackdropConfig } from '../src/ui/models/SceneLayerModel.js';
-import { illustratedBackgroundHtml, orderedSceneLayers } from '../src/ui/components/illustratedBackground.js';
+import { illustratedBackgroundHtml } from '../src/ui/components/illustratedBackground.js';
 import { targetLayer, targetOutline } from '../src/ui/models/TargetLayerModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
@@ -16,14 +16,13 @@ const fields = [[1440, 460], [1280, 424], [390, 450], [375, 336], [844, 148], [3
 // Where a crop draws atlas point (ax, ay) in battlefield px.
 const project = ([vx, vy, vw, vh], width, height, ax, ay) => [(ax - vx) * width / vw, (ay - vy) * height / vh];
 
-test('authored scene layers paint sky, structures, then floor without mutating their catalog', () => {
+test('alternative scene renderer preserves the authored layer order without mutating its catalog', () => {
   const layers = Object.freeze([{ id: 'floor' }, { id: 'structures' }, { id: 'skybox' }]);
-  assert.deepEqual(orderedSceneLayers(layers).map(layer => layer.id), ['skybox', 'structures', 'floor']);
   assert.deepEqual(layers.map(layer => layer.id), ['floor', 'structures', 'skybox']);
   const html = illustratedBackgroundHtml({ region: 'test', scene: 'test', viewBox: [0, 0, 100, 100],
     layers: layers.map(layer => ({ ...layer, href: 'test.webp', width: 100, height: 100 })) });
-  assert(html.indexOf('data-layer="skybox"') < html.indexOf('data-layer="structures"'));
-  assert(html.indexOf('data-layer="structures"') < html.indexOf('data-layer="floor"'));
+  assert(html.indexOf('data-layer="floor"') < html.indexOf('data-layer="structures"'));
+  assert(html.indexOf('data-layer="structures"') < html.indexOf('data-layer="skybox"'));
 });
 
 test('full-screen backdrop grounds the figures using the battlefield window', () => {

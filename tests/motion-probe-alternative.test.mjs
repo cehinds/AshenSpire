@@ -155,7 +155,7 @@ test('every same-door variant plant still changes the current real source', asyn
   const selftest = source.slice(source.indexOf("if (argv.includes('--selftest')) {"), source.indexOf('\nconst ROOT ='))
     .replace("await import('./doorplant.mjs')", 'await harness()');
   await runInNewContext(`(async () => { ${selftest} })()`, {
-    argv: ['--selftest'], ALTERNATIVE: true, CANVAS_IDLE: 'anchored',
+    argv: ['--selftest'], ALTERNATIVE: true, CANVAS_IDLE: /const CANVAS_IDLE = '([^']+)'/.exec(source)[1],
     process: { exit() {} }, console: { log() {}, error() {}, info() {} },
     harness: async () => ({ resolveShard: () => null, doorSelftest: async options => { corpus = options; return 0; } }),
   });

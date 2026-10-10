@@ -19,6 +19,7 @@ try {
     const snapshot = () => page.evaluate(() => {
       const root = document.querySelector('.combat-tools'), panel = document.querySelector('#combat-log');
       return { size: root.dataset.logSize, open: !panel.hidden, rect: panel.getBoundingClientRect().toJSON(),
+        footerTop: document.querySelector('.combat-action-row').getBoundingClientRect().top,
         tools: root.getBoundingClientRect().toJSON(), hand: document.querySelector('.hand').getBoundingClientRect().toJSON(),
         menuBottom: Math.max(...[...document.querySelectorAll('.topbar button')].map(node => node.getBoundingClientRect().bottom)) };
     });
@@ -53,8 +54,9 @@ try {
       assert.equal(await page.locator('#combat-log button[data-log-size]').count(), 0, 'no inner size buttons');
       await log.tap(); await page.waitForTimeout(250);
       const small = await snapshot(); assert(small.open && small.size === 'Small');
-      assert(Math.abs(small.hand.right - small.tools.right - 6) < 1, 'toolbar aligned to hand right');
-      assert(Math.abs(small.tools.top - small.hand.top - 30) < 1, 'toolbar lowered in card band');
+      assert(small.tools.left >= small.hand.right - 1, 'alternative toolbar uses the reserved side rail');
+      assert(Math.abs(small.footerTop - small.tools.bottom - 8) < 1, 'alternative toolbar clears its footer by8px');
+      assert(small.tools.left >= 0 && small.tools.right <= width, 'toolbar stays inside viewport');
       const maxDelta = small.tools.top - 6 - small.menuBottom - 8 - small.rect.height;
       dragScale = Math.max(1, maxDelta / Math.max(24, Math.min(120, height - small.tools.bottom - 8)));
       const large = await drag(maxDelta);
@@ -67,6 +69,10 @@ try {
       assert(small.rect.height < medium.rect.height && medium.rect.height < large.rect.height, 'three distinct visible heights');
       const cancelled = await drag(medium.rect.height - small.rect.height, true);
       assert(cancelled.open && cancelled.size === 'Medium', 'cancel restores prior size');
+      await log.tap(); await page.waitForTimeout(200);
+      assert(!(await snapshot()).open, 'fresh tap after cancellation is not suppressed');
+      await log.tap(); await page.waitForTimeout(200);
+      assert((await snapshot()).open, 'fresh tap reopens after cancellation');
       const smallAgain = await drag(small.rect.height - medium.rect.height);
       assert(smallAgain.open && smallAgain.size === 'Small', 'downward touch drag snaps Small');
       result.steps.push({ route: 'touch-snaps', small, medium, large, cancelled, smallAgain });
