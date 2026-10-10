@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1820",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Mobile reach check's intent-badge plant matches again",
+    "detail": "Development-process change only. The mobile reach self-test again recognises its own planted fault when a neighbouring fighter's intent badge, rather than its artwork, covers another fighter's intent.",
+    "build": "0.7.1.1267",
+    "pullRequest": 1820,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1820"
+  },
+  {
     "id": "pr-1819",
     "date": "2026-10-10",
     "group": "2026-10-10",
