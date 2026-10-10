@@ -156,6 +156,15 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
+        // An enemy's transparent tap core (::before, above neighbouring art)
+        // grown to ~160 px answers taps on the fighter in front of it. The
+        // enemy-art guard names the art and the frame that took it.
+        name: "one fighter's tap core grows over the fighter in front of it",
+        file: 'styles/combat-layers.css',
+        append: ":root .combat[data-layout='formation'] .combatant.enemy[data-eid='e3'].enemy-target-hitbox::before { width: 160px !important; height: 160px !important; }",
+        expectRed: /enemy art e\d+\s+<-\s+e\d+ frame\/tap plate/,
+      },
+      {
         name: 'a player loses its exposed artwork or frame-level tap area',
         file: 'styles/combat.css',
         append: '.player-target-hitbox::before, .player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite *, .combat[data-waist-overlap="true"] .player .combatant-mini-hud, .combat[data-waist-overlap="true"] .player .combatant-mini-hud * { pointer-events: none !important; }',
@@ -602,6 +611,31 @@ const PROBE = `(() => {
       && hit.tagName === 'IMG' && hit.complete && hit.naturalWidth > 0 && hit.naturalHeight > 0;
     covered.push(name(c) + '  <-  ' + name(hit)
       + (authoredNeighbour ? ' via .alternative-silhouette [authored-neighbour]' : ''));
+  }
+  // ENEMY ART ROUTING. A tap on a living enemy's visible art must select that
+  // enemy. Sample its sprite on the same 5x6 grid tools/routing-probe does and
+  // report the first point whose hit is ANOTHER enemy's frame or its ::before /
+  // ::after tap plates (elementFromPoint returns the originating element for a
+  // pseudo, so the hit IS the frame) outside that other enemy's sprite. Another
+  // enemy's overhead controls (intent button, HP bar) may win: they are
+  // controls, not art, and the brief allows them.
+  if (document.querySelector('.combat')) {
+    for (const frame of document.querySelectorAll('.combatant.enemy:not(.dead)')) {
+      const box = frame.querySelector('.combatant-card > .sprite')?.getBoundingClientRect();
+      if (!box || box.width <= 0) continue;
+      let leak = null;
+      for (let fx = 0.2; fx <= 0.8 && !leak; fx += 0.15) for (let fy = 0.15; fy <= 0.9 && !leak; fy += 0.15) {
+        const x = box.left + box.width * fx, y = box.top + box.height * fy;
+        if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+        const hit = document.elementFromPoint(x, y);
+        const owner = hit?.closest('.combatant.enemy');
+        if (!owner || owner === frame || hit !== owner) continue;
+        const ob = owner.querySelector('.combatant-card > .sprite')?.getBoundingClientRect();
+        if (ob && x >= ob.left && x <= ob.right && y >= ob.top && y <= ob.bottom) continue;
+        leak = owner;
+      }
+      if (leak) covered.push('enemy art ' + (frame.dataset.eid || 'enemy') + '  <-  ' + (leak.dataset.eid || 'enemy') + ' frame/tap plate (outside its art)');
+    }
   }
   const visual = [];
   // The shared class-pick narrow composition expects one cp-body text
