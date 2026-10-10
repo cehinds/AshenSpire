@@ -389,7 +389,7 @@ async function blockedIndexPass() {
     check(await poll(`${ready} && document.documentElement.dataset.builtInArt === 'failed'`, 20000) >= 0, `in-run Retry (${name}): the screen did not mount on a failed load`);
     const sel = JSON.stringify(artSel);
     const artState = `(() => { const sprites = [...document.querySelectorAll(${sel})];
-      return { n: sprites.length, placeholders: sprites.filter((e) => !e.querySelector('img') && e.hasAttribute('data-art-placeholder')).length,
+      return { n: sprites.length, placeholders: sprites.filter((e) => e.hasAttribute('data-art-placeholder') && ![...e.querySelectorAll('img')].some((i) => i.complete && i.naturalWidth > 0 && !i.hidden && getComputedStyle(i).visibility !== 'hidden')).length,
         drawn: sprites.filter((e) => [...e.querySelectorAll('img')].some((i) => i.complete && i.naturalWidth > 0 && (i.getAttribute('src') || '').includes('objects/'))).length,
         hand: document.querySelectorAll('.combat .hand .card').length }; })()`;
     await ev(`window.__retryRoot = document.querySelector(${JSON.stringify(rootSel)})`);
