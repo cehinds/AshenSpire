@@ -1,5 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+test('a foot-locked target never escapes a blocked floor by crossing its body', () => {
+  const [target] = combatTargetAnchors({ width: 288, height: 200, size: 28, lockX: true,
+    targets: [{ id: 'enemy', x: 170, y: 150, minY: 150, width: 88 }],
+    obstacles: [{ left: 100, right: 240, top: 152, bottom: 200 }] });
+  assert.ok(target.y >= 150);
+  assert.equal(target.obstructed, true);
+});
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { combatOverheadAnchorX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
 import { fitCombatSprites } from '../src/ui/models/CombatSpriteScaleModel.js';

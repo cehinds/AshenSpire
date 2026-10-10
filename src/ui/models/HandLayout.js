@@ -1,9 +1,9 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 
-// The combat hand reserves a 44px touch row plus four physical pixels of
+// The combat hand reserves a 30px compact row plus four physical pixels of
 // separation before card geometry begins. Keep the band allocator and the
 // renderer on the same physical floor.
-export const COMBAT_TOOLS_HEIGHT_PX = 48;
+export const COMBAT_TOOLS_HEIGHT_PX = 34;
 
 // Presentation order is local, keyed by instance, and never mutates a pile.
 export function reconcileHandOrder(previous, current) {

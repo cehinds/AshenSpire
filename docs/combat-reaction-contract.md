@@ -39,12 +39,15 @@ Owner request, 2026-10-08. This extends SPEC sections 4.8, 4.9 and 7.4. The cont
 - Tap Combat log to open or close it. Drag its button vertically to resize, snapping to **Small**, **Medium**, or **Large** on release; no size buttons appear inside the log. Arrow Up/Down and Home/End provide keyboard resizing. Small uses about half the card height, Medium half the viewport, and Large the space below the menu. On short screens, distribute three distinct stops within that available height. Resizing and cancellation preserve combat state and scrolling.
 - The compact Log/Reaction toolbar sits at the right of the card section, above the resting cards. Selected card inspection remains independently reachable.
 
-## Player mini HUD
+## Combatant selection HUD
 
-- Keep a compact health strip beside the player's artwork, clear of enemy bodies, their attached plates, and the hand toolbar. The strip is also the self-target for an armed self-cast card.
-- Selecting the player or its health strip reveals name, level, Poise, Ward, and contextual details in a compact dark background panel. Unselected details and the panel background remain hidden. Repack this panel around existing controls without changing sprite size or resting position.
-- Place the delayed Inspect button above the player's visible artwork, centered on the character. The Inspect button remains separate from the details panel.
-- Preserve sprite baseline, formation depth, resource order, status disclosure, and variant artwork. Missing/unloaded art uses safe box geometry until its actual bounds become available.
+- Idle enemies show only the projected intent symbol (plus `?` when unread), a slim HP strip above the body, and applicable status symbols. Selection reveals the existing intent text/amounts and the name/HP panel below the body. Unknown projections never invent an action or expose hidden amounts.
+- Sprite, intent, and health controls select the same owner; armed legal cards use those same targets. The player's HP strip also confirms self-cast cards. The small Information button remains above the player; on a selected combatant one tap opens its inspector.
+- Idle player HP sits below the artwork, raised only enough to clear the toolbar. Selecting the player reveals name, level, Poise, Ward and HP in a dark panel beside the lower body. Keep it clear of enemy sprites, controls and the hand toolbar.
+- Selected enemies have red silhouette and Information outlines; selected players use green. Selection temporarily raises only that sprite above other combatants and applies 105% scale around its ground anchor. Deselect restores its original layer and size. Card playback cannot accumulate scale or change the resting anchor; melee motion still returns home.
+- A selected card's authored maneuver supplies the player's overhead action icon. Do not infer action identity from card names.
+- Header HP occupies the available width before Armoury, leaving padding; fill is current/max. Existing utility icons, card rendering/fan and footer composition are preserved.
+- Labels fit their available width with padding. Compact and expanded controls are independently selectable, and reserved intent widths include their attached idle HP strips.
 
 ## Required verification
 

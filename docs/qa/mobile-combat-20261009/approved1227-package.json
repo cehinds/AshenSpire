@@ -1,0 +1,13 @@
+{
+  "build": "0.7.1.1227",
+  "digest": "73455e1bea",
+  "url": "http://localhost:8338/dist/AshenSpire.html?preview=rear-player&shot=combat",
+  "sha256": "dab06ee7240b76451c56ad53e651a6d22488d9696c89e601bfdc3ca49c5b3b3c",
+  "runtimeIntegrationCommit": "deb528bbbfe85577c1f02ea64bb0d63847216fb3",
+  "viewports": ["288x513", "320x568", "390x844"],
+  "result": "all native touch routes passed; zero page errors",
+  "stateInjection": false,
+  "environment": "local packaged HTML in headless Edge with browser-emulated touch",
+  "selectionResults": "approved1227-selection-results.json",
+  "logResults": "approved1227-log-results.json"
+}

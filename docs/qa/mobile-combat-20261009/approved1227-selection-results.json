@@ -1,0 +1,1196 @@
+[
+  {
+    "width": 390,
+    "height": 844,
+    "pass": true,
+    "baseline": [
+      {
+        "id": "player",
+        "selected": false,
+        "x": 6.8125,
+        "y": 532.921875,
+        "width": 169.671875,
+        "height": 180.015625,
+        "bottom": 712.9375,
+        "center": 91.6484375,
+        "depth": 301,
+        "scale": "none",
+        "fit": "0.9482011173184361",
+        "zoom": "1.05275",
+        "filter": "none",
+        "artworkEdges": []
+      },
+      {
+        "id": "e1",
+        "selected": false,
+        "x": 112.75,
+        "y": 395.828125,
+        "width": 105.984375,
+        "height": 70.390625,
+        "bottom": 466.21875,
+        "center": 165.7421875,
+        "depth": 201,
+        "scale": "none",
+        "fit": "0.3707688658265383",
+        "zoom": "0.411649",
+        "filter": "none",
+        "artworkEdges": [
+          "none"
+        ]
+      },
+      {
+        "id": "e2",
+        "selected": false,
+        "x": 217.359375,
+        "y": 405.296875,
+        "width": 91.765625,
+        "height": 60.9375,
+        "bottom": 466.234375,
+        "center": 263.2421875,
+        "depth": 200,
+        "scale": "none",
+        "fit": "0.32099747961452957",
+        "zoom": "0.35639",
+        "filter": "none",
+        "artworkEdges": [
+          "none"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "phase": "selected",
+        "id": "player",
+        "actors": [
+          {
+            "id": "player",
+            "selected": true,
+            "x": 2.570709228515625,
+            "y": 523.9210815429688,
+            "width": 178.15545654296875,
+            "height": 189.01641845703125,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "drop-shadow(rgb(101, 223, 104) 1px 0px 0px) drop-shadow(rgb(101, 223, 104) -1px 0px 0px) drop-shadow(rgb(101, 223, 104) 0px 1px 2px)",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 112.75,
+            "y": 395.828125,
+            "width": 105.984375,
+            "height": 70.390625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 217.359375,
+            "y": 405.296875,
+            "width": 91.765625,
+            "height": 60.9375,
+            "bottom": 466.234375,
+            "center": 263.2421875,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "rerendered",
+        "id": "player",
+        "actors": [
+          {
+            "id": "player",
+            "selected": true,
+            "x": 2.570709228515625,
+            "y": 523.9210815429688,
+            "width": 178.15545654296875,
+            "height": 189.01641845703125,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "drop-shadow(rgb(101, 223, 104) 1px 0px 0px) drop-shadow(rgb(101, 223, 104) -1px 0px 0px) drop-shadow(rgb(101, 223, 104) 0px 1px 2px)",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 112.75,
+            "y": 395.828125,
+            "width": 105.984375,
+            "height": 70.390625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 217.359375,
+            "y": 405.296875,
+            "width": 91.765625,
+            "height": 60.9375,
+            "bottom": 466.234375,
+            "center": 263.2421875,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "deselected",
+        "id": "player",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 6.8125,
+            "y": 532.921875,
+            "width": 169.671875,
+            "height": 180.015625,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 301,
+            "scale": "none",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 112.75,
+            "y": 395.828125,
+            "width": 105.984375,
+            "height": 70.390625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 217.359375,
+            "y": 405.296875,
+            "width": 91.765625,
+            "height": 60.9375,
+            "bottom": 466.234375,
+            "center": 263.2421875,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "selected",
+        "id": "e1",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 6.8125,
+            "y": 532.921875,
+            "width": 169.671875,
+            "height": 180.015625,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 301,
+            "scale": "none",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": true,
+            "x": 110.10038757324219,
+            "y": 392.30859375,
+            "width": 111.28359985351562,
+            "height": 73.91015625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 217.359375,
+            "y": 405.296875,
+            "width": 91.765625,
+            "height": 60.9375,
+            "bottom": 466.234375,
+            "center": 263.2421875,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "rerendered",
+        "id": "e1",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 6.8125,
+            "y": 532.921875,
+            "width": 169.671875,
+            "height": 180.015625,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 301,
+            "scale": "none",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": true,
+            "x": 110.10038757324219,
+            "y": 392.30859375,
+            "width": 111.28359985351562,
+            "height": 73.91015625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 217.359375,
+            "y": 405.296875,
+            "width": 91.765625,
+            "height": 60.9375,
+            "bottom": 466.234375,
+            "center": 263.2421875,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "deselected",
+        "id": "e1",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 6.8125,
+            "y": 532.921875,
+            "width": 169.671875,
+            "height": 180.015625,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 301,
+            "scale": "none",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 112.75,
+            "y": 395.828125,
+            "width": 105.984375,
+            "height": 70.390625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 217.359375,
+            "y": 405.296875,
+            "width": 91.765625,
+            "height": 60.9375,
+            "bottom": 466.234375,
+            "center": 263.2421875,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "selected",
+        "id": "e2",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 6.8125,
+            "y": 532.921875,
+            "width": 169.671875,
+            "height": 180.015625,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 301,
+            "scale": "none",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 112.75,
+            "y": 395.828125,
+            "width": 105.984375,
+            "height": 70.390625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": true,
+            "x": 215.0652313232422,
+            "y": 402.25,
+            "width": 96.35389709472656,
+            "height": 63.984375,
+            "bottom": 466.234375,
+            "center": 263.24217987060547,
+            "depth": 350,
+            "scale": "1.05",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "rerendered",
+        "id": "e2",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 6.8125,
+            "y": 532.921875,
+            "width": 169.671875,
+            "height": 180.015625,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 301,
+            "scale": "none",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 112.75,
+            "y": 395.828125,
+            "width": 105.984375,
+            "height": 70.390625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": true,
+            "x": 215.0652313232422,
+            "y": 402.25,
+            "width": 96.35389709472656,
+            "height": 63.984375,
+            "bottom": 466.234375,
+            "center": 263.24217987060547,
+            "depth": 350,
+            "scale": "1.05",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "deselected",
+        "id": "e2",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 6.8125,
+            "y": 532.921875,
+            "width": 169.671875,
+            "height": 180.015625,
+            "bottom": 712.9375,
+            "center": 91.6484375,
+            "depth": 301,
+            "scale": "none",
+            "fit": "0.9482011173184361",
+            "zoom": "1.05275",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 112.75,
+            "y": 395.828125,
+            "width": 105.984375,
+            "height": 70.390625,
+            "bottom": 466.21875,
+            "center": 165.7421875,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.3707688658265383",
+            "zoom": "0.411649",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 217.359375,
+            "y": 405.296875,
+            "width": 91.765625,
+            "height": 60.9375,
+            "bottom": 466.234375,
+            "center": 263.2421875,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.32099747961452957",
+            "zoom": "0.35639",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "armed-target-outline",
+        "targets": [
+          {
+            "relationship": "enemy",
+            "visible": true
+          },
+          {
+            "relationship": "enemy",
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "pass": true,
+    "baseline": [
+      {
+        "id": "player",
+        "selected": false,
+        "x": 283.84375,
+        "y": 488.734375,
+        "width": 195.515625,
+        "height": 207.4375,
+        "bottom": 696.171875,
+        "center": 381.6015625,
+        "depth": 301,
+        "scale": "none",
+        "fit": "1.0918336466165415",
+        "zoom": "0.909861",
+        "filter": "none",
+        "artworkEdges": []
+      },
+      {
+        "id": "e1",
+        "selected": false,
+        "x": 507.140625,
+        "y": 269.59375,
+        "width": 238.515625,
+        "height": 158.390625,
+        "bottom": 427.984375,
+        "center": 626.3984375,
+        "depth": 201,
+        "scale": "none",
+        "fit": "0.8336840131578948",
+        "zoom": "0.694737",
+        "filter": "none",
+        "artworkEdges": [
+          "none"
+        ]
+      },
+      {
+        "id": "e2",
+        "selected": false,
+        "x": 838.34375,
+        "y": 269.59375,
+        "width": 238.515625,
+        "height": 158.390625,
+        "bottom": 427.984375,
+        "center": 957.6015625,
+        "depth": 200,
+        "scale": "none",
+        "fit": "0.8336840131578948",
+        "zoom": "0.694737",
+        "filter": "none",
+        "artworkEdges": [
+          "none"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "phase": "selected",
+        "id": "player",
+        "actors": [
+          {
+            "id": "player",
+            "selected": true,
+            "x": 278.95587158203125,
+            "y": 478.36248779296875,
+            "width": 205.2913818359375,
+            "height": 217.80938720703125,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "drop-shadow(rgb(101, 223, 104) 1px 0px 0px) drop-shadow(rgb(101, 223, 104) -1px 0px 0px) drop-shadow(rgb(101, 223, 104) 0px 1px 2px)",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 507.140625,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 838.34375,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "rerendered",
+        "id": "player",
+        "actors": [
+          {
+            "id": "player",
+            "selected": true,
+            "x": 278.95587158203125,
+            "y": 478.36248779296875,
+            "width": 205.2913818359375,
+            "height": 217.80938720703125,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "drop-shadow(rgb(101, 223, 104) 1px 0px 0px) drop-shadow(rgb(101, 223, 104) -1px 0px 0px) drop-shadow(rgb(101, 223, 104) 0px 1px 2px)",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 507.140625,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 838.34375,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "deselected",
+        "id": "player",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 283.84375,
+            "y": 488.734375,
+            "width": 195.515625,
+            "height": 207.4375,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 301,
+            "scale": "none",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 507.140625,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 838.34375,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "selected",
+        "id": "e1",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 283.84375,
+            "y": 488.734375,
+            "width": 195.515625,
+            "height": 207.4375,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 301,
+            "scale": "none",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": true,
+            "x": 501.177734375,
+            "y": 261.6742248535156,
+            "width": 250.44140625,
+            "height": 166.31015014648438,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 838.34375,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "rerendered",
+        "id": "e1",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 283.84375,
+            "y": 488.734375,
+            "width": 195.515625,
+            "height": 207.4375,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 301,
+            "scale": "none",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": true,
+            "x": 501.177734375,
+            "y": 261.6742248535156,
+            "width": 250.44140625,
+            "height": 166.31015014648438,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 351,
+            "scale": "1.05",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 838.34375,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "deselected",
+        "id": "e1",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 283.84375,
+            "y": 488.734375,
+            "width": 195.515625,
+            "height": 207.4375,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 301,
+            "scale": "none",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 507.140625,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 838.34375,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "selected",
+        "id": "e2",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 283.84375,
+            "y": 488.734375,
+            "width": 195.515625,
+            "height": 207.4375,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 301,
+            "scale": "none",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 507.140625,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": true,
+            "x": 832.380859375,
+            "y": 261.6742248535156,
+            "width": 250.44140625,
+            "height": 166.31015014648438,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 350,
+            "scale": "1.05",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "rerendered",
+        "id": "e2",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 283.84375,
+            "y": 488.734375,
+            "width": 195.515625,
+            "height": 207.4375,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 301,
+            "scale": "none",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 507.140625,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": true,
+            "x": 832.380859375,
+            "y": 261.6742248535156,
+            "width": 250.44140625,
+            "height": 166.31015014648438,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 350,
+            "scale": "1.05",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "drop-shadow(rgb(239, 73, 73) 1px 0px 0px) drop-shadow(rgb(239, 73, 73) -1px 0px 0px) drop-shadow(rgb(239, 73, 73) 0px 1px 2px)",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "deselected",
+        "id": "e2",
+        "actors": [
+          {
+            "id": "player",
+            "selected": false,
+            "x": 283.84375,
+            "y": 488.734375,
+            "width": 195.515625,
+            "height": 207.4375,
+            "bottom": 696.171875,
+            "center": 381.6015625,
+            "depth": 301,
+            "scale": "none",
+            "fit": "1.0918336466165415",
+            "zoom": "0.909861",
+            "filter": "none",
+            "artworkEdges": []
+          },
+          {
+            "id": "e1",
+            "selected": false,
+            "x": 507.140625,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 626.3984375,
+            "depth": 201,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          },
+          {
+            "id": "e2",
+            "selected": false,
+            "x": 838.34375,
+            "y": 269.59375,
+            "width": 238.515625,
+            "height": 158.390625,
+            "bottom": 427.984375,
+            "center": 957.6015625,
+            "depth": 200,
+            "scale": "none",
+            "fit": "0.8336840131578948",
+            "zoom": "0.694737",
+            "filter": "none",
+            "artworkEdges": [
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "phase": "armed-target-outline",
+        "targets": [
+          {
+            "relationship": "enemy",
+            "visible": true
+          },
+          {
+            "relationship": "enemy",
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "errors": []
+  }
+]

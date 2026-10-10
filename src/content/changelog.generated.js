@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-09",
     "group": "2026-10-09",
     "summary": "Weapon attacks use four painted phases",
-    "detail": "Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded.",
+    "detail": "Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded. Smaller 256 px sprites and backgrounds reduce the standalone download while keeping the same on-screen placement.",
     "build": "0.7.1.1228",
     "pullRequest": 1789,
     "url": "https://github.com/cehinds/AshenSpire/pull/1789"
+  },
+  {
+    "id": "pr-1787",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Selected combatants come forward with a compact HUD",
+    "detail": "Keep the existing cards and footer while showing compact intent icons and HP strips. Selecting a sprite, intent or HP reveals that character's details, outlines enemies red and players green, and brings the sprite forward at 105% scale. Deselect restores its exact size and layer. Small Information controls stay above the sprite, self-cast cards work through player HP, selected cards show their action icon, and header HP fills proportionally toward Armoury. On narrow phones, compact selected details and the log toolbar stay clear of target controls and cards.",
+    "build": "0.7.1.1227",
+    "pullRequest": 1787,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1787"
   },
   {
     "id": "pr-1776",

@@ -47,3 +47,23 @@ test('a later co-op panel avoids the entire earlier reading and Info footprint',
   assert.ok(result.left+128+10<=occupied.left || result.left-44>=occupied.right+10
     || result.top+80+10<=occupied.top || result.top>=occupied.bottom+10);
 });
+
+test('288px two-row details retain the lower-right slot clear of enemies, Info and toolbar',()=>{
+  const obstacles=[
+    {left:66,top:65,right:222,bottom:83},
+    {left:56,top:128,right:144,bottom:154},
+    {left:150,top:131,right:238,bottom:157},
+    {left:56,top:157,right:144,bottom:176},
+    {left:150,top:160,right:238,bottom:179},
+    {left:88,top:180,right:157,bottom:226},
+    {left:162,top:183,right:227,bottom:226},
+    {left:58,top:232,right:80,bottom:254},
+    {left:62,top:259,right:282,bottom:289},
+  ];
+  const result=playerDetailsPlacement({art:{right:113,top:329},width:146,height:26,
+    viewport:{left:0,top:0,right:288,bottom:513},handTop:259,hudBottom:65,gap:3,obstacles});
+  assert.equal(result.left,116,'the panel remains beside the player');
+  assert.equal(result.top,230,'the panel uses the bottom slot above the toolbar');
+  assert.ok(obstacles.every(o=>result.left+146+3<=o.left || result.left>=o.right+3
+    || result.top+26+3<=o.top || result.top>=o.bottom+3));
+});
