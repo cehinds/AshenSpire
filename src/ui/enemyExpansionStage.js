@@ -30,6 +30,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
   root.append(bob);
   bob.append(image);
   const placeholder = document.createElement('span');
+  placeholder.className = 'enemy-expansion-placeholder';
   placeholder.textContent = definition.name || definition.id;
   placeholder.setAttribute('role', 'img');
   placeholder.setAttribute('aria-label', placeholder.textContent);
