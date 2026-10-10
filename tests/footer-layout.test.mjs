@@ -30,9 +30,15 @@ for (const width of [288, 320, 390]) {
   for (const zoom of [1, 1.5, 2]) {
     const compact = packCombatFooter({ width: width / zoom, height: 64 / zoom, zoom, rem: 24 });
     assert.ok(compact.supported && compact.groupWidth <= width / zoom);
-    assert.equal(compact.pileWidth * zoom, 44);
+    // Draw moved from the 44px target to a 50px tap (compactCombat.pileWidthPx) with
+    // a 28px icon and 13px count; Discard/Exhaust is wider for its two counts.
+    assert.equal(compact.pileWidth * zoom, 50);
+    assert.equal(compact.spentWidth * zoom, 64);
+    assert.equal(compact.pileHeight * zoom, 60);
     // The 64px cap (compactCombat.footerDiameterMaxPx) or the band height, whichever binds.
-    assert.ok(compact.diameter * zoom > 52 && compact.diameter * zoom <= 64 + 1e-9);
+    // At 288px the wider piles take the circles down to 51px so End Turn keeps its 56px
+    // floor (was > 52 with 44px piles); 320px and up keep the full circle.
+    assert.ok(compact.diameter * zoom > 50 && compact.diameter * zoom <= 64 + 1e-9);
     assert.ok(compact.endWidth * zoom >= 56, 'the primary action stays larger than either pile');
     assert.ok(compact.diameter > compact.pileWidth, 'resources and potions outrank piles');
   }

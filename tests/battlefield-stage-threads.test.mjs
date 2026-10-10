@@ -21,7 +21,7 @@ test('tracking pass reserves the same settled target cores as the main placement
   assert.match(stage, /const targetCores = boxes\.flatMap\(/);
   assert.match(stage, /targetCores,\n\s*\}\);/);
   assert.match(stage, /settledTargetCores = targetCores;/);
-  assert.match(stage, /function trackPlayerHud\(\) \{\n\s*\/\/[^\n]*\n\s*placePlayerHud\(false, settledTargetCores\);/);
+  assert.match(stage, /function trackPlayerHud\(\) \{\n\s*\/\/[^\n]*\n\s*placePlayerHud\(false, settledTargetCores, true\);/);
   assert.doesNotMatch(stage, /function trackPlayerHud\(\) \{\n\s*placePlayerHud\(\);/);
 });
 
@@ -33,4 +33,8 @@ test('combat-layer QA probe validates the sprite pseudo-element shadows, not the
 
 test('dead combat-ground-shadow rules are removed from combat-layers.css', () => {
   assert.doesNotMatch(css, /combat-ground-shadow/);
+});
+
+test('enemy Inspect expands to a complete 44px target while stopping at the intent', () => {
+  assert.match(css, /\.enemy \.combatant-leading > \.combatant-info::before\s*\{[\s\S]*?inset:\s*calc\(-18px \/ var\(--ui-zoom,1\)\) calc\(-11px \/ var\(--ui-zoom,1\)\) calc\(-4px \/ var\(--ui-zoom,1\)\);/);
 });

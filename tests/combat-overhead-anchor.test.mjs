@@ -62,6 +62,99 @@ test('short landscape overheads pack intersecting rows despite a wide stage', ()
   assert.deepEqual(combatOverheadAnchors({ width: 1440, controls }),
     combatOverheadAnchors({ width: 844, controls }), 'packing follows measured bands rather than a phone breakpoint');
 });
+
+const overlapsBox = (box, o) => box.left < o.right && box.right > o.left && box.top < o.bottom && box.bottom > o.top;
+const overheadBox = (control, anchor) => ({ left: anchor.x - control.width / 2, right: anchor.x + control.width / 2,
+  top: control.top + (anchor.offsetY ?? 0), bottom: control.bottom + (anchor.offsetY ?? 0) });
+
+test('a 320-wide enemy overhead moves off the player art and its controls it would cover', () => {
+  // Measured at 320x568 with three enemies: the left enemy's packed overhead sat
+  // over the player's red-cape art and "i" control.
+  const controls = [{ id: 'e1', side: 'enemy', x: 77, width: 70.4, top: 152.7, bottom: 200.7 }];
+  const obstacles = [
+    { ownerId: 'player', left: 33.5, right: 116.9, top: 185.3, bottom: 273.8 },
+    { ownerId: 'player', left: 65.2, right: 87.2, top: 159.6, bottom: 181.6 },
+    { ownerId: 'player', left: 20.2, right: 132.2, top: 276.1, bottom: 295.1 },
+  ];
+  const [anchor] = combatOverheadAnchors({ width: 320, controls, obstacles });
+  const box = overheadBox(controls[0], anchor);
+  for (const obstacle of obstacles) assert.equal(overlapsBox(box, obstacle), false,
+    'the overhead never covers the player art or controls');
+  assert.notEqual(anchor.obstructed, true, 'a clear slot exists above the player');
+  assert.ok(anchor.offsetY < 0, 'the overhead moves up before it moves sideways');
+  assert.ok(box.top >= 0, 'the moved overhead stays inside the field');
+});
+
+test('an overhead never blocks itself, and unobstructed anchors are unchanged', () => {
+  const controls = [{ id: 'e1', side: 'enemy', x: 77, width: 70.4, top: 152.7, bottom: 200.7 }];
+  assert.deepEqual(combatOverheadAnchors({ width: 320, controls,
+    obstacles: [{ ownerId: 'e1', left: 40, right: 110, top: 150, bottom: 205 }] }),
+  combatOverheadAnchors({ width: 320, controls }), 'an obstacle owned by the overhead is ignored');
+  const far = [{ ownerId: 'player', left: 0, right: 10, top: 0, bottom: 10 }];
+  assert.deepEqual(combatOverheadAnchors({ width: 320, controls, obstacles: far }),
+    combatOverheadAnchors({ width: 320, controls }), 'a distant obstacle leaves the packed anchor alone');
+});
+
+test('moving an overhead off the player keeps the turn ribbon clearance', () => {
+  // Review case: the upward move from the 320-wide player clash landed the
+  // intent at 105.6-153.6, under a ribbon spanning 90-130.
+  const controls = [{ id: 'e1', side: 'enemy', x: 77, width: 70.4, top: 152.7, bottom: 200.7 }];
+  const obstacles = [
+    { ownerId: 'player', left: 33.5, right: 116.9, top: 185.3, bottom: 273.8 },
+    { ownerId: 'player', left: 65.2, right: 87.2, top: 159.6, bottom: 181.6 },
+    { ownerId: 'player', left: 20.2, right: 132.2, top: 276.1, bottom: 295.1 },
+  ];
+  const ribbon = { left: 0, right: 320, top: 90, bottom: 130 }, ribbonClearance = 14;
+  const [anchor] = combatOverheadAnchors({ width: 320, controls, obstacles, ribbon, ribbonClearance, height: 400 });
+  const box = overheadBox(controls[0], anchor);
+  if (!anchor.obstructed) {
+    assert.equal(overlapsBox(box, { ...ribbon, bottom: ribbon.bottom + ribbonClearance }), false,
+      'a moved overhead never sits under the ribbon or inside its clearance');
+    for (const obstacle of obstacles) assert.equal(overlapsBox(box, obstacle), false);
+  }
+});
+
+test('an enemy overhead with no clear slot is reported obstructed rather than hidden', () => {
+  const controls = [{ id: 'e1', side: 'enemy', x: 77, width: 70.4, top: 152.7, bottom: 200.7 }];
+  const [anchor] = combatOverheadAnchors({ width: 320, controls, height: 400,
+    obstacles: [{ ownerId: 'player', left: 0, right: 320, top: 0, bottom: 400 }] });
+  assert.equal(anchor.obstructed, true);
+  assert.equal(anchor.x, 77, 'the reported anchor keeps its packed position');
+});
+
+test('a failed overhead fallback keeps its packed slot clear of earlier relocations', () => {
+  const controls = [
+    { id: 'mover', side: 'enemy', row: 0, x: 50, width: 40, top: 100, bottom: 140 },
+    { id: 'blocked', side: 'enemy', row: 0, x: 120, width: 40, top: 100, bottom: 140 },
+  ];
+  const anchors = combatOverheadAnchors({ width: 200, height: 200, inset: 0, gap: 0, controls,
+    obstacles: [
+      { ownerId: 'mover', left: 0, right: 200, top: 0, bottom: 200 },
+      { ownerId: 'blocked', left: 30, right: 62, top: 90, bottom: 150 },
+    ] });
+  const boxes = controls.map(control => overheadBox(control, anchors.find(anchor => anchor.id === control.id)));
+  assert.equal(anchors.find(anchor => anchor.id === 'blocked').obstructed, true);
+  assert.equal(anchors.find(anchor => anchor.id === 'blocked').x, 120, 'the failed control retains its packed origin');
+  assert.equal(overlapsBox(boxes[0], boxes[1]), false,
+    'an earlier relocation cannot consume a later failed fallback');
+});
+
+test('a successful relocation releases its reservation for a later control', () => {
+  const controls = [
+    { id: 'a', side: 'player', row: 0, x: 30, width: 60, top: 100, bottom: 140 },
+    { id: 'b', side: 'player', row: 0, x: 120, width: 40, top: 100, bottom: 140 },
+  ];
+  const anchors = combatOverheadAnchors({ width: 140, height: 150, inset: 0, gap: 6, controls,
+    obstacles: [
+      { ownerId: 'b', left: 0, right: 60, top: 90, bottom: 150 },
+      { ownerId: 'a', left: 100, right: 140, top: 0, bottom: 150 },
+    ] });
+  const moved = anchors.find(anchor => anchor.id === 'a');
+  const reused = anchors.find(anchor => anchor.id === 'b');
+  assert.notEqual(moved.offsetY ?? 0, 0, 'the first owner vacates its packed origin');
+  assert.equal(reused.obstructed, undefined, 'the later owner finds space after the reservation is released');
+  assert.equal(overlapsBox(overheadBox(controls[0], moved), overheadBox(controls[1], reused)), false);
+});
 import { presentationConfig } from '../src/model/advancedConfig.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../src/ui/fx.js';
 

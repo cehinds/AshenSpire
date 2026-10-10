@@ -9215,6 +9215,7 @@
           "target",
           "diameter",
           "pileWidth",
+          "spentWidth",
           "pileHeight",
           "endWidth",
           "endHeight",
@@ -9233,6 +9234,9 @@
             "__number": "157.44000000000003"
           },
           "pileWidth": {
+            "__number": "78.72000000000001"
+          },
+          "spentWidth": {
             "__number": "78.72000000000001"
           },
           "pileHeight": {
@@ -9258,6 +9262,7 @@
           "target",
           "diameter",
           "pileWidth",
+          "spentWidth",
           "pileHeight",
           "endWidth",
           "endHeight",
@@ -9279,6 +9284,9 @@
             "__number": "53.199999999999996"
           },
           "pileWidth": {
+            "__number": "64"
+          },
+          "spentWidth": {
             "__number": "64"
           },
           "pileHeight": {

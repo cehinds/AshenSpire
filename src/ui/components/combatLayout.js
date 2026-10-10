@@ -71,6 +71,7 @@ export function wireCombatLayout(combatEl) {
     row.style.setProperty('--footer-gap', footer.gap + 'px');
     row.style.setProperty('--footer-circle', footer.diameter + 'px');
     row.style.setProperty('--footer-pile-width', footer.pileWidth + 'px');
+    row.style.setProperty('--footer-spent-width', footer.spentWidth + 'px');
     row.style.setProperty('--footer-pile-height', footer.pileHeight + 'px');
     row.style.setProperty('--footer-end-width', footer.endWidth + 'px');
     row.dataset.footerGeometry = footer.supported ? 'supported' : 'unsupported';

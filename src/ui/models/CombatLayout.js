@@ -120,13 +120,21 @@ export function packCombatFooter({ width, height, zoom = 1, rem = 16 }, config =
     const target = config.minimumTargetPx / zoom;
     const gap = Math.min(config.gapRem * rem, compactConfig.footerGapMaxPx / zoom);
     const available = Math.max(0, width - gap * 4);
+    // Draw is a 48px tap with a 28px icon. Discard/Exhaust stacks two 13px
+    // counts beside its icon, so it is wider; both are as tall as the pile
+    // (icon plus two lines). Circles give up width only when End Turn would
+    // fall under its floor, and never below the touch target.
+    const pileWidth = Math.max(target, compactConfig.pileWidthPx / zoom);
+    const spentWidth = Math.max(pileWidth, compactConfig.spentWidthPx / zoom);
+    const pileHeight = Math.max(target, compactConfig.pileHeightPx / zoom);
+    const endFloor = compactConfig.endWidthMinPx / zoom;
     const diameter = Math.max(target,
-      Math.min(compactConfig.footerDiameterMaxPx / zoom, height * config.heightFraction));
-    const pileWidth = target;
+      Math.min(compactConfig.footerDiameterMaxPx / zoom, height * config.heightFraction,
+        (available - pileWidth - spentWidth - endFloor) / 2));
     const endWidth = Math.max(0,
-      Math.min(compactConfig.footerEndWidthMaxPx / zoom, available - diameter * 2 - pileWidth * 2));
-    return Object.freeze({ gap, target, diameter, pileWidth, pileHeight: target, endWidth, endHeight: diameter,
-      groupWidth: diameter * 2 + pileWidth * 2 + endWidth + gap * 4,
+      Math.min(compactConfig.footerEndWidthMaxPx / zoom, available - diameter * 2 - pileWidth - spentWidth));
+    return Object.freeze({ gap, target, diameter, pileWidth, spentWidth, pileHeight, endWidth, endHeight: diameter,
+      groupWidth: diameter * 2 + pileWidth + spentWidth + endWidth + gap * 4,
       supported: endWidth >= target && height >= target });
   }
   const gap = config.gapRem * rem;
@@ -137,7 +145,7 @@ export function packCombatFooter({ width, height, zoom = 1, rem = 16 }, config =
   const endRoom = available - diameter * 2 - pileWidth * 2;
   const endWidth = Math.max(0, Math.min(available * config.endMaxFraction, endRoom));
   return Object.freeze({
-    gap, target, diameter, pileWidth, pileHeight: target, endWidth, endHeight: diameter,
+    gap, target, diameter, pileWidth, spentWidth: pileWidth, pileHeight: target, endWidth, endHeight: diameter,
     groupWidth: diameter * 2 + pileWidth * 2 + endWidth + gap * 4,
     supported: endWidth >= target && height >= target,
   });
@@ -163,7 +171,7 @@ export function packCombatRails({ width, zoom = 1, rem = 16 }, config = wirefram
   const minimumHandWidth = hand.minWidthRem * rem + (hand.minCapacity - 1) * hand.exposedTargetPx / zoom
     + hand.verticalInsetRem * rem * 2;
   return Object.freeze({
-    gap, target, diameter, pileWidth, pileHeight: target, endWidth: railWidth, endHeight: diameter,
+    gap, target, diameter, pileWidth, spentWidth: pileWidth, pileHeight: target, endWidth: railWidth, endHeight: diameter,
     railWidth, height: diameter * 2 + gap, handWidth, minimumHandWidth,
     supported: handWidth >= minimumHandWidth,
   });
