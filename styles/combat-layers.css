@@ -76,11 +76,10 @@
 :root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)[data-core-obstructed='true']::before {
   pointer-events: none;
 }
-/* Waist-overlap players are selected through their exposed artwork. Their
-   foot is behind the cards, so no invisible selection patch belongs there. */
-:root .combat[data-layout='formation'][data-waist-overlap='true'] .combatant.player-target-hitbox::before,
-:root .combat[data-layout='formation'][data-waist-overlap='true'] .combatant.player-target-hitbox::after {
-  display: none;
+/* Once packing moves the core, the fitted square left at the old spot
+   (::after) would answer for this enemy over whatever now stands there. */
+:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)[data-core-obstructed]::after {
+  pointer-events: none;
 }
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) {
   z-index: calc(var(--combat-layer-selection) + 1) !important;
