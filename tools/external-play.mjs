@@ -75,6 +75,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { objectPath } from './asset-pack.mjs';
 import { SFX_RECIPES, SFX_MANIFEST } from '../src/content/sfx.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { retryArtStateExpression } from './external-play-art-state.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
@@ -387,11 +388,7 @@ async function blockedIndexPass() {
     await cdp.send('Emulation.setDeviceMetricsOverride', DESKTOP, S);
     await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
     check(await poll(`${ready} && document.documentElement.dataset.builtInArt === 'failed'`, 20000) >= 0, `in-run Retry (${name}): the screen did not mount on a failed load`);
-    const sel = JSON.stringify(artSel);
-    const artState = `(() => { const sprites = [...document.querySelectorAll(${sel})];
-      return { n: sprites.length, placeholders: sprites.filter((e) => !e.querySelector('img') && e.hasAttribute('data-art-placeholder')).length,
-        drawn: sprites.filter((e) => [...e.querySelectorAll('img')].some((i) => i.complete && i.naturalWidth > 0 && (i.getAttribute('src') || '').includes('objects/'))).length,
-        hand: document.querySelectorAll('.combat .hand .card').length }; })()`;
+    const artState = retryArtStateExpression(artSel);
     await ev(`window.__retryRoot = document.querySelector(${JSON.stringify(rootSel)})`);
     // The images' own error handlers swap the placeholders in as each request fails.
     await poll(`(${artState}).placeholders === (${artState}).n && (${artState}).n > 0`, 6000);

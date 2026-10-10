@@ -110,7 +110,16 @@ test('inspection and leading controls keep priority over the tap square', () => 
 });
 
 test('the player proxy paints nothing and shares the fitted center, height and transform', () => {
-  for (const property of ['left', 'top', 'height', 'transform']) assert.equal(proxy.declarations[property], plate.declarations[property]);
+  for (const property of ['height', 'transform']) assert.equal(proxy.declarations[property], plate.declarations[property]);
+  for (const zoom of [0.65, 0.738, 1, 1.5]) {
+    const vars = { '--enemy-hit-x': `${148 / zoom}px`, '--enemy-hit-y': `${122 / zoom}px` };
+    for (const property of ['left', 'top']) assert.equal(numeric(proxy.declarations[property], vars), numeric(plate.declarations[property], vars));
+    const shifted = { ...vars, '--enemy-core-x': `${194 / zoom}px`, '--enemy-core-y': `${168 / zoom}px` };
+    assert.ok(Math.abs(numeric(proxy.declarations.left, shifted) * zoom - 194) < 1e-9);
+    assert.ok(Math.abs(numeric(proxy.declarations.top, shifted) * zoom - 168) < 1e-9);
+    assert.ok(Math.abs(numeric(plate.declarations.left, shifted) * zoom - 148) < 1e-9, 'independent input movement cannot move the painted plate');
+    assert.ok(Math.abs(numeric(plate.declarations.top, shifted) * zoom - 122) < 1e-9);
+  }
   assert.equal(proxy.declarations.background, 'none');
   assert.equal(proxy.declarations.border, '0');
   assert.equal(proxy.declarations['box-shadow'], 'none');
@@ -121,4 +130,11 @@ test('the player proxy paints nothing and shares the fitted center, height and t
   assert.equal(visual.declarations.background, undefined, 'the existing visual plate is not repainted');
   assert.equal(reading.declarations.visibility, undefined, 'name/HP/status remain visible');
   assert.equal(reading.declarations['pointer-events'], undefined, 'reading controls keep their existing pointer semantics');
+});
+
+test('an impossible enemy core relinquishes input without disabling the sprite or reading controls', () => {
+  const blocked = pick(r => r.selector.includes("[data-core-obstructed='true']") && r.selector.endsWith('::before'));
+  assert.equal(blocked.declarations['pointer-events'], 'none');
+  assert.ok(blocked.selector.includes('.enemy-target-hitbox:not(.dead)'));
+  assert.deepEqual(Object.keys(blocked.declarations), ['pointer-events']);
 });

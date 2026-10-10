@@ -38,6 +38,8 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
 | `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
 | `tests.yml` → core suite | yes | yes (also on push to `dev`) |
+| `tests.yml` → discovered tests, four shards, without `SLOW_DISCOVERED` | yes | yes (also on push to `dev`) |
+| `tests.yml` → discovered tests (slow simulations: `SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`) | no | yes |
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
@@ -442,11 +444,16 @@ Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
 (skipping `node_modules`, `dist`, `build`, `scratch` and dot-directories other
 than `.github`) and hands them to one `node --test`. A new test file needs no
 registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
-map with the reason. `.github/workflows/tests.yml` runs the two halves as two
-Linux jobs, plus the bundler's parse-gate fixtures (`node tools/bundle.test.mjs`,
-several minutes) as a third; on a pull request into `dev` only the fast half
-(`core suite`) runs, and all three run on every push to `test` and `release`
-(see *Which checks gate a pull request* above).
+map with the reason. A file that spawns full simulation runs goes in
+`SLOW_DISCOVERED` (`tests/run-node-lanes.mjs`), also with its reason: the
+discovered shards on a pull request into `dev` pass `--no-slow`, and
+`tests.yml`'s `discovered-slow` job runs those files alone (`--slow-only`) on
+every push to `test` and `release`. `.github/workflows/tests.yml` runs the core
+suite, the four discovered shards, the slow files, the tools' self-tests and the
+bundler's parse-gate fixtures (`node tools/bundle.test.mjs`, several minutes) as
+separate Linux jobs; on a pull request into `dev` only the core suite and the
+discovered shards run, and all of them run on every push to `test` and
+`release` (see *Which checks gate a pull request* above).
 
 Every browser tool launches Chromium through `tools/browser.mjs` (`CHROME`
 picks the binary). The wait for Chrome's DevTools endpoint is never shorter
