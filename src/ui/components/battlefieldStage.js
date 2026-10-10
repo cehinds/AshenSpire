@@ -738,7 +738,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // where the hand consumes much of the viewport. Keep the same horizon.
     const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
-      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom, narrow });
+      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom, narrow, coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,

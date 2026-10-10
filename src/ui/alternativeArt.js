@@ -108,7 +108,7 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, narrow }) {
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, narrow, coverFloor = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
   if (!scene || width <= 0 || height <= 0) return;
@@ -116,9 +116,11 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
   const scale = Math.max(width / device.width, height / device.height);
-  // Follow the fitted enemies while keeping the floor canvas beneath the
-  // entire battlefield. Moving it farther up exposes its lower edge.
-  const cameraGround = Math.max(ground, height - (1 - device.groundAnchor) * device.height * scale);
+  // Combat follows the fitted enemies while keeping the floor canvas beneath
+  // the entire battlefield; moving it farther up exposes its lower edge.
+  // Other callers (dialogue) keep their own floor line.
+  const cameraGround = coverFloor
+    ? Math.max(ground, height - (1 - device.groundAnchor) * device.height * scale) : ground;
   const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
     : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
