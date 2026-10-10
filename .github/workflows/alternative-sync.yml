@@ -34,7 +34,9 @@ jobs:
 
   sync:
     needs: policy-tests
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    # The root alternative was consolidated into dev. Keep its historical
+    # branches frozen; preservation policy tests still run above.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

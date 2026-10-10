@@ -7,10 +7,40 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-09",
     "group": "2026-10-09",
     "summary": "Compact combat targeting and touch controls",
-    "detail": "Show compact intent icons and health strips until selecting a combatant reveals its details. Keep player details beside the lower body and the small Information button above the sprite. Selected characters rise in front at 105% scale and restore their original size and layer when deselected. Target through sprites, intent badges and health strips; self-cast through the player HUD. Fit header HP up to Armoury with padding and proportional fill. Preserve cards and footer. Keep Log and Reaction above the cards and drag the log between three bounded sizes without inner buttons.",
-    "build": "0.7.1.1205",
+    "detail": "Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.",
+    "build": "0.7.1.1207",
     "pullRequest": 1776,
     "url": "https://github.com/cehinds/AshenSpire/pull/1776"
+  },
+  {
+    "id": "pr-1783",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "The historical Alternative Test promotion is recorded",
+    "detail": "Restore the missing receipt for the reviewed alternative combat promotion without changing its original build identity or the surrounding history.",
+    "build": "0.7.1.1205",
+    "pullRequest": 1783,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1783"
+  },
+  {
+    "id": "pr-1781",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Alternative combat perspective becomes the default",
+    "detail": "Regular Dev/Test inherit the approved alternative battlefield, artwork and animations together with readable card effects, primary bottom-band actions, stance counters, persistent Ward, status stacks, Upcast, hidden intents, enemy knowledge and Ashen Blight. Compact hand, Info and fighter targets stay reachable. The former root alternative branches are frozen; future updates use regular Dev/Test.",
+    "build": "0.7.1.1203",
+    "pullRequest": 1781,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1781"
+  },
+  {
+    "id": "pr-1768",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Readable card effects and stable combat targets",
+    "detail": "Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.",
+    "build": "0.7.1.1198",
+    "pullRequest": 1768,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1768"
   },
   {
     "id": "pr-1778",
@@ -31,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1193",
     "pullRequest": 1766,
     "url": "https://github.com/cehinds/AshenSpire/pull/1766"
+  },
+  {
+    "id": "pr-1740",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Alternative combat keeps its art with the complete tactical rules",
+    "detail": "The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation follows the played card, paid rank and character, and phone cards and Upcast controls stay reachable. Thinner resource glows let the authored Counter motion finish without changing its pace. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.",
+    "build": "0.7.1.1191",
+    "pullRequest": 1740,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1740"
   },
   {
     "id": "pr-1775",
@@ -201,6 +241,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1142",
     "pullRequest": 1750,
     "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1744",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative combat sigils and checkpoints reached Test",
+    "detail": "The reviewed alternative combat card sigils, complete effects, checkpoints and reachable tutorial controls were promoted to Alternative Test with the existing battlefield artwork and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1744,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1744"
   },
   {
     "id": "pr-1737",

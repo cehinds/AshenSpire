@@ -1484,10 +1484,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {
       if (busy || !getEntity(combat, enemy.id)?.alive || selfArm) return false;
-      if (selected) playCard(selected, enemy.id);
-      else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-      else selectCombatant(enemy.id);
-      return true;
+      if (selected) { playCard(selected, enemy.id); return true; }
+      if (selectedFlask != null) { useFlask(selectedFlask, enemy.id); return true; }
+      selectCombatant(enemy.id);
+      // Unarmed taps still belong to the intent's selection-first tooltip.
+      return false;
     } });
   }
 

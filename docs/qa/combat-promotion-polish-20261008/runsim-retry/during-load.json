@@ -1,0 +1,27 @@
+{
+  "capturedAt": "2026-10-08T19:59:15.6477464-08:00",
+  "cpuPercent": 96,
+  "watchedProcesses": [
+    {
+      "pid": 27640,
+      "parentPid": 29160,
+      "createdAt": "2026-10-08T19:58:01.7466540-08:00",
+      "cpuSeconds": 70.078125,
+      "command": "\"C:\\Program Files\\nodejs\\node.exe\" tools/runsim.mjs 5"
+    },
+    {
+      "pid": 8020,
+      "parentPid": 12028,
+      "createdAt": "2026-10-08T19:58:09.6117340-08:00",
+      "cpuSeconds": 0.3125,
+      "command": "\"C:\\Program Files\\nodejs\\node.exe\" tools/launch.mjs --build-only"
+    },
+    {
+      "pid": 21068,
+      "parentPid": 8020,
+      "createdAt": "2026-10-08T19:59:00.1716180-08:00",
+      "cpuSeconds": 9.046875,
+      "command": "\"C:\\Program Files\\nodejs\\node.exe\" D:\\repos\\.codex\\worktrees\\card-solid-bb\\AshenSpire\\tools\\bundle.mjs --single-file"
+    }
+  ]
+}

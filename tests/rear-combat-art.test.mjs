@@ -65,9 +65,23 @@ test('all action and stance frames ship with verified hashes and a common foot a
 test('rear stages keep fixed frame geometry and held stances during automatic counter attacks', async () => {
   const dom = rewardDom();
   const create = dom.document.createElement.bind(dom.document);
+  const readbacks = [];
   dom.document.createElement = tag => {
     const node = create(tag);
-    if (tag === 'canvas') node.getContext = () => ({ clearRect() {}, save() {}, restore() {}, drawImage() {}, fillRect() {} });
+    if (tag === 'canvas') {
+      let painted = false;
+      const context = {
+        clearRect() { painted = false; }, save() {}, restore() {},
+        drawImage() { painted = true; }, fillRect() {},
+        getImageData(x, y, width, height) {
+          assert(painted, 'first-pixel materialization follows the visible draw');
+          assert.deepEqual([x, y, width, height], [0, 0, 1, 1]);
+          readbacks.push({ canvas: node, x, y, width, height });
+          return { width, height, data: new Uint8ClampedArray(width * height * 4) };
+        },
+      };
+      node.getContext = () => context;
+    }
     return node;
   };
   const globals = { ...dom,
@@ -84,7 +98,10 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
       assert.equal(await stage.ready, true);
       const dimensions = stage.el.style.cssText;
       stage.setStance('defensive');
+      const beforeReadbacks = readbacks.length;
       stage.play('attack', 260); // The reaction runtime uses this for an automatic Counter.
+      assert.equal(readbacks.length, beforeReadbacks + 1, 'action preparation materializes the first visible pixel');
+      assert.equal(readbacks.at(-1).canvas, stage.currentArt.canvas, 'readback belongs to the visible stage, not its aura work surface');
       assert.equal(stage.stance, 'defensive');
       stage.settle();
       assert.equal(stage.pose, 'stance-defensive');

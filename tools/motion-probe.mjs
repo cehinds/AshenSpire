@@ -15,7 +15,9 @@
 //   IDLE <who>    every combatant (players and enemies) draws at least one
 //                 visible (laid out with area, effective opacity above 0),
 //                 loaded figure image (an <img> with pixels, or the
-//                 Classic style's drawn <svg>), and every one is moved by an
+//                 Classic style's drawn <svg>). Default rear canvases keep a
+//                 painted, fixed anchor/scale/rest pose over twenty frames;
+//                 other figures are moved by an
 //                 idle animation: on the image or on the layer inside .sprite
 //                 that carries it (.facing, a painted .pose-layer; D42),
 //                 `getComputedStyle(el).animationName !== 'none'` AND a running,
@@ -28,10 +30,9 @@
 //                 IDLE-classic redraw the player in those sprite styles and
 //                 repeat it (the Glyph style is a sigil panel, not a figure,
 //                 and is not checked). No figure may be moved by two idle
-//                 carriers at once (it would bob twice as far). The alternative
-//                 build keeps its rear-view silhouette for all non-glyph styles;
-//                 its image silhouette or authored canvas stage must be the
-//                 sole moving, clocked carrier. Canvas art must contain pixels.
+//                 carriers at once (it would bob twice as far). The real Classic
+//                 display appearance exercises both Rendered and Classic styles,
+//                 while Default keeps its authored rear canvas and action playback.
 //   CONTROL       with motion on, the same sampler over the same turn sees a
 //                 finite CSS animation, a CSS transition and an Element.animate()
 //                 call over the limit, so a green REDUCED line is not a blind
@@ -99,11 +100,11 @@ const VIEWPORT = { width: 1440, height: 900 };
 // opt-in changes only boot readiness, never action deadlines or motion limits.
 const BOOT_TIMEOUT_MS = Math.max(20000, Math.min(120000, Number(process.env.MOTION_BOOT_TIMEOUT_MS) || 20000));
 const ALTERNATIVE = existsSync(new URL('../src/ui/alternativeArt.js', import.meta.url));
-// Primary rear fighters hold their root still; choreography moves pixels inside
-// the canvas. This is branch-owned policy: alternative branches retain `bob`
-// along with their authored CSS carriers during synchronization.
+// Compatibility policy for anchored-canvas probes. Production Default uses
+// the stronger fixedRest geometry/pixel gate; Classic retains its clocked bob.
 const CANVAS_IDLE = 'anchored';
 const argv = process.argv.slice(2);
+const CLASSIC = argv.includes('--classic'); // original idle-bob plants use the actual Classic appearance
 const SEED = argv.includes('--seed') ? argv[argv.indexOf('--seed') + 1] : 'MOTION1';
 const DUMP = argv.includes('--dump'); // print every animation and scripted change seen
 
@@ -138,19 +139,16 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
         replace: '.combatant .sprite > img { animation: sprite-idle',
-        expectRed: CANVAS_IDLE === 'anchored' ? /RED IDLE enemy#\d+ — .*no idle animation/ : /RED IDLE player#\d+ — .*no idle animation/,
+        expectRed: /RED IDLE player#\d+ — .*no idle animation/,
       },
       {
         // #1475 review: the carrier list before the Rendered style's still
         // painting was in it, so that figure never bobbed.
-        name: CANVAS_IDLE === 'anchored' ? 'the held rear canvas acquires an external bob' : 'the idle bob leaves out the Rendered style\'s painting',
+        name: 'the idle bob leaves out the Rendered style\'s painting',
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
-        replace: CANVAS_IDLE === 'anchored'
-          ? '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .alternative-card-stage) { animation: sprite-idle'
-          : '.combatant .sprite :is(.facing, .painted-stage > .pose-layer) { animation: sprite-idle',
-        expectRed: CANVAS_IDLE === 'anchored' ? /RED IDLE player#\d+ — .*anchored canvas has an external idle animation/
-          : ALTERNATIVE ? /RED IDLE-rendered player#\d+ — .*no idle animation/
+        replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer) { animation: sprite-idle',
+        expectRed: ALTERNATIVE ? /RED IDLE-rendered player#\d+ — .*no idle animation/
           : /RED IDLE-rendered player#\d+ — .*img\.painted-presentation: no idle animation/,
       },
       {
@@ -159,11 +157,8 @@ if (argv.includes('--selftest')) {
         name: 'the Rendered style bobs its painting and its nested stage separately',
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
-        replace: ALTERNATIVE
-          ? '.combatant .sprite :is(.alternative-silhouette, .alternative-crop, .alternative-card-stage, .alternative-card-stage canvas) { animation: sprite-idle'
-          : '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
-        expectRed: ALTERNATIVE ? /RED IDLE-rendered player#\d+ — .*bobbed twice/
-          : /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline/,
+        replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
+        expectRed: /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline/,
       },
       {
         // #1475 review: a named, running, infinite bob that never moves.
@@ -187,7 +182,7 @@ if (argv.includes('--selftest')) {
         name: 'the idle carriers are made transparent',
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite;',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { opacity: 0; animation: sprite-idle 3.1s ease-in-out infinite;',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { opacity: 0; animation: sprite-idle 3.1s ease-in-out infinite;',
         expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
       },
       {
@@ -228,7 +223,7 @@ if (argv.includes('--selftest')) {
         name: 'the idle carriers run another infinite animation, not the bob',
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite;',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: pulse-gold 3.1s ease-in-out infinite;',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: pulse-gold 3.1s ease-in-out infinite;',
         expectRed: /RED IDLE \w+#\d+ — .*no idle animation on it or its layers/,
       },
       {
@@ -245,15 +240,13 @@ if (argv.includes('--selftest')) {
         name: 'the idle bob sits on the figure images instead of their layer',
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle',
-        replace: ALTERNATIVE ? '.combatant .sprite :is(.alternative-figure img, .alternative-card-stage canvas) { animation: sprite-idle'
-          : '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
-        expectRed: ALTERNATIVE ? /RED IDLE player#\d+ — .*(idle animation runs outside the alternative silhouette carrier|anchored canvas has an external idle animation)/
-          : /RED IDLE-AFTER enemy#\d+ — .*img\.enemy-pose-state: no idle animation on it or its layers[\s\S]*RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame/,
+        replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
+        expectRed: /RED IDLE-AFTER enemy#\d+ — .*img\.enemy-pose-state: no idle animation on it or its layers[\s\S]*RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame/,
       },
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
         file: 'src/ui/alternativeCardStage.js',
-        find: '    ctx.drawImage(image,128+x,16,512,512);ctx.restore();',
+        find: '    auraRenderer.draw(ctx,image,filterFor(pose,playing?.action),128+x,16,512,512,{materialize});ctx.restore();',
         replace: '    ctx.restore();',
         expectRed: /RED IDLE player#\d+ — .*canvas has no painted pixels/,
       }, {
@@ -265,6 +258,18 @@ if (argv.includes('--selftest')) {
             replace: 'const reducedMotionRequested = () => false;' },
         ],
         expectRed: /RED REDUCED-SCRIPT setting\+os — .*canvas/,
+      }, {
+        name: 'the fixed rear stage gains an idle translation',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n.combatant .sprite > .alternative-card-stage { animation: sprite-idle 3.1s ease-in-out infinite; }',
+        expectRed: /RED IDLE player#\d+ — .*fixed rest/,
+      }, {
+        name: 'the fixed rear stage changes scale while resting',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n@keyframes broken-rear-scale { from { transform: scale(1); } to { transform: scale(1.1); } }\n.combatant .sprite > .alternative-card-stage { animation: broken-rear-scale 1s linear infinite alternate; }',
+        expectRed: /RED IDLE player#\d+ — .*fixed rest/,
       }] : []),
       {
         name: 'the Reduced motion setting stops shortening CSS animations',
@@ -318,7 +323,8 @@ if (argv.includes('--selftest')) {
         expectRed: ALTERNATIVE ? /RED REDUCED-SCRIPT setting\+os — .*painted-combat-effect/
           : /RED REDUCED-SCRIPT setting\+os — .*combatant-effect-layer/,
       },
-    ],
+    ].map(plant => /idle bob|idle keyframes|idle carriers|combatants are made transparent|Rendered style bobs/.test(plant.name)
+      ? { ...plant, args: [...(plant.args || []), '--classic'] } : plant),
   });
   // The one counted verdict line (tools/verdict.mjs reads it bare).
   console.info(`${passed} passed, ${failed} failed`);
@@ -494,15 +500,16 @@ async function until(evaluate, expression, what, ms = 20000, onWait = null) {
   throw new Error(`timed out after ${ms} ms waiting for ${what}; screen ${JSON.stringify(await evaluate(`({url:location.href,text:document.body.innerText.slice(0,1200),combat:!!window.__combat,sampler:!!window.__motionProbe})`))}`);
 }
 
-async function boot({ send, evaluate }, base, { setting, os }) {
+async function boot({ send, evaluate }, base, { setting, os, classic = CLASSIC }) {
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: os ? 'reduce' : 'no-preference' }] });
-  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true }));
+  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, classicAppearance: classic }));
   await send('Page.navigate', { url: `${base}?shot=combat&shotSeed=${encodeURIComponent(SEED)}&shotSettings=${settings}` });
   await wait(300);
   await until(evaluate, `!!(window.__combat && window.__motionProbe && document.querySelector('.combatant.enemy') && document.querySelector('.hand .card') && document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled)`, 'combat to mount', BOOT_TIMEOUT_MS);
   // The applied setting is the app's own, read back from the page.
-  const applied = await evaluate(`({ cls: document.body.classList.contains('reduced-motion'), os: matchMedia('(prefers-reduced-motion: reduce)').matches })`);
+  const applied = await evaluate(`({ cls: document.body.classList.contains('reduced-motion'), os: matchMedia('(prefers-reduced-motion: reduce)').matches, appearance: document.documentElement.dataset.displayAppearance })`);
   if (applied.cls !== setting || applied.os !== os) throw new Error(`reduced motion did not apply as asked: wanted setting=${setting} os=${os}, page has class=${applied.cls} media=${applied.os}`);
+  if (applied.appearance !== (classic ? 'classic' : 'alternative')) throw new Error('The requested display appearance did not apply');
   await wait(800);
 }
 
@@ -610,11 +617,77 @@ const dump = (mode, turn) => {
 const long = (log) => log.filter((a) => a.active === 'Infinity' || a.active > MAX_ACTIVE_MS);
 const show = (a) => `${a.kind} ${a.name} on ${a.target} (${a.active === 'Infinity' ? 'infinite' : `${Math.round(a.active)} ms`}, via ${a.via})`;
 
+// Rear canvases have an authored fixed resting body, not a CSS idle bob.
+// Sample the real stage AND canvas boxes/pose over twenty frames. A painted,
+// stationary wrapper cannot vouch for a blank or independently moving canvas.
+// Pixels are read at the first and last sample of each rest window only;
+// transient internal painting between those samples remains outside this gate.
+async function fixedRest({ evaluate }, label, baseline = []) {
+  const samples = await evaluate(`(async () => {
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const MOVE = ['translate','transform','scale','rotate','top','bottom','left','right','inset','marginTop','marginBottom','marginLeft','marginRight','offsetDistance'];
+    const measure = (pixels = false) => [...document.querySelectorAll('.combatant:not(.dead):not(.down)')].flatMap((frame,i) => {
+      const stage = frame.querySelector('.sprite .alternative-card-stage');
+      if (!stage) return [];
+      const canvas = stage.querySelector('canvas');
+      let alpha = 1, visible = !!canvas, displacing = false;
+      for (let el = canvas; el; el = el.parentElement) {
+        const style = getComputedStyle(el);
+        alpha *= Number(style.opacity);
+        if (style.display === 'none' || style.visibility !== 'visible') visible = false;
+        displacing ||= el.getAnimations().some(a => a.playState === 'running' && a.effect
+          && new Set(a.effect.getKeyframes().map(k => JSON.stringify(MOVE.map(p => k[p] ?? null)))).size > 1);
+      }
+      const s = stage.getBoundingClientRect(), c = canvas?.getBoundingClientRect();
+      visible &&= alpha > 0 && s.width > 0 && s.height > 0 && c?.width > 0 && c?.height > 0;
+      let painted = null, fingerprint = null;
+      if (pixels && canvas) {
+        try { const data = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+          painted = data.some((value,index) => index % 4 === 3 && value > 0);
+          fingerprint = 2166136261;
+          for (const value of data) fingerprint = Math.imul(fingerprint ^ value,16777619) >>> 0;
+        } catch { painted = false; }
+      }
+      return [{ id: frame.dataset.eid || 'actor-'+i,
+        who: (frame.classList.contains('player') ? 'player' : 'enemy')+'#'+i,
+        visible,painted,fingerprint,displacing,pose:stage.dataset.pose,rest:stage.dataset.rest,stance:stage.dataset.stance,
+        bounds:[s.left,s.top,s.width,s.height,c?.left,c?.top,c?.width,c?.height] }];
+    });
+    const out = [measure(true)];
+    for (let i=0;i<20;i++) { await new Promise(r => requestAnimationFrame(r)); out.push(measure(i===19)); }
+    return out;
+  })()`);
+  const first = samples[0];
+  check(first.length > 0, `${label}-FIXED-BOARD`, 'the Default appearance has an authored rear canvas');
+  for (const owner of first) {
+    const previous = baseline.find(value => value.id === owner.id);
+    const final = samples.at(-1).find(value => value.id === owner.id);
+    const geometry = (a,b) => a.bounds.every((value,index) => Number.isFinite(value)
+      && Number.isFinite(b.bounds[index]) && Math.abs(value-b.bounds[index]) <= .05);
+    const stable = samples.every(frame => {
+      const current = frame.find(value => value.id === owner.id);
+      return current && current.visible && !current.displacing && geometry(owner,current)
+        && current.pose === owner.pose && current.rest === owner.rest && current.stance === owner.stance;
+    });
+    const resting = owner.pose === 'ready' || owner.pose === 'guard-brace' || owner.pose?.startsWith('stance-');
+    const pixelsStable = final?.painted && final.fingerprint === owner.fingerprint;
+    const detail = !owner.painted || !final?.painted ? 'canvas has no painted pixels' : !owner.visible ? 'no visible figure image to animate'
+      : !resting || !stable || !pixelsStable || previous && !geometry(previous,owner) ? 'fixed rest anchor, scale, pose or painted pixels changed'
+        : 'painted canvas holds its fixed rest anchor, scale and pose across twenty frames';
+    check(owner.painted && owner.visible && pixelsStable && resting && stable && (!previous || geometry(previous,owner)),
+      `${label} ${owner.who}`, detail);
+  }
+  return first;
+}
+
 // Every living combatant's visible figure images, each with the element that
 // moves it: the image itself or a layer up to .sprite (D42 puts the bob on
 // .facing / .pose-layer). A carrier needs a computed animationName AND a
 // running infinite CSSAnimation of that name on that element.
-async function idle({ evaluate }, label, canvasIdle = 'bob') {
+async function idle({ evaluate }, label, policy = {}) {
+  // Preserve both the string canvas policy and the stronger Default gate's
+  // options API. Only fixedRest validates production Default rest geometry.
+  const { excludeCanvases = false, canvasIdle = 'bob' } = typeof policy === 'string' ? { canvasIdle: policy } : policy;
   // Two frames first: an animation the probe's own style reads create is
   // started, and its animationstart (which pins the bob's phase to the
   // clock) dispatched, only at a frame. A painted frame never shows it
@@ -624,7 +697,9 @@ async function idle({ evaluate }, label, canvasIdle = 'bob') {
     const who = (c.classList.contains('player') ? 'player' : c.classList.contains('enemy') ? 'enemy' : 'combatant') + '#' + i;
     const dead = c.classList.contains('dead') || c.classList.contains('down');
     const name = c.querySelector('.nm')?.textContent?.trim() || '';
+    const fixedCanvas = ${excludeCanvases} && !!c.querySelector('.sprite .alternative-card-stage canvas');
     const imgs = [...c.querySelectorAll('.sprite img, .sprite svg, .sprite .alternative-card-stage canvas')].filter((img) => {
+      if (${excludeCanvases} && img.closest('.alternative-card-stage')) return false;
       // An <svg> is a figure only when it is drawn art (the Classic style),
       // not a nested part of one or a decorative layer (the pose aura).
       if (img.tagName.toLowerCase() === 'svg' && (img.parentElement.closest('svg') || img.closest('[aria-hidden="true"]'))) return false;
@@ -649,7 +724,7 @@ async function idle({ evaluate }, label, canvasIdle = 'bob') {
       return false;
     };
     const tag = (el) => el.tagName.toLowerCase() + [...el.classList].slice(0, 2).map((k) => '.' + k).join('');
-    return { who, dead, name, imgs: imgs.map((img) => {
+    return { who, dead, name, fixedCanvas, imgs: imgs.map((img) => {
       const named = [];
       for (let el = img; el && el !== c; el = el.parentElement) {
         const anim = getComputedStyle(el).animationName;
@@ -693,6 +768,7 @@ async function idle({ evaluate }, label, canvasIdle = 'bob') {
   }); })()`);
   for (const f of figures) {
     if (label !== 'IDLE' && f.dead) continue;
+    if (f.fixedCanvas) continue; // fixedRest separately checks pixels and every stage/canvas bound
     const bare = f.imgs.filter((i) => !i.carrier || !i.carrier.expected || !i.loaded || i.twice || i.anchoredMotion);
     const why = (i) => !i.loaded ? (i.img === 'canvas' ? 'the canvas has no painted pixels' : `the image did not load, it draws nothing (src ${i.src || 'empty'})`)
       : i.twice ? `bobbed twice, by sprite-idle on ${i.twice.join(' and ')}`
@@ -716,9 +792,14 @@ let s;
 try {
   s = await session(browser);
 
-  // ---- §5: the idle animation plays on every combatant, motion on ----------
+  // ---- §5: Default rear rest and legacy idle animation, motion on ----------
   await boot(s, base, { setting: false, os: false });
-  const first = await idle(s, 'IDLE', CANVAS_IDLE);
+  const fixedDefault = ALTERNATIVE && !CLASSIC;
+  const resting = fixedDefault ? await fixedRest(s, 'IDLE') : [];
+  const first = await idle(s, 'IDLE', { excludeCanvases: fixedDefault, canvasIdle: fixedDefault ? CANVAS_IDLE : 'bob' });
+  const alternativeStageId = await s.evaluate(`document.querySelector('.combatant.player .sprite .alternative-card-stage')?.dataset.animationSet || null`);
+  const expectedStageId = await s.evaluate('"class-cards-" + window.__combatRunForShot.class');
+  if (fixedDefault) check(alternativeStageId === expectedStageId, 'IDLE-ALTERNATIVE-IDENTITY', 'the approved Default player art matches the current class');
   const players = first.filter((f) => f.who.startsWith('player')).length;
   const enemies = first.filter((f) => f.who.startsWith('enemy')).length;
   check(players >= 1 && enemies >= 1, 'IDLE-BOARD', `seed ${SEED}: ${players} player(s) and ${enemies} enemy(ies) on the board`);
@@ -733,27 +814,30 @@ try {
   const missing = Object.keys(kinds).filter((k) => !kinds[k]);
   check(missing.length === 0, 'CONTROL', `motion on: ${control.log.length} animation(s) seen, ${seen.length} over ${MAX_ACTIVE_MS} ms; `
     + (missing.length ? `never saw a ${missing.join(' or ')} over the limit — the sampler may be blind to it` : Object.entries(kinds).map(([k, a]) => `${k}: ${show(a)}`).join('; ')));
-  await idle(s, 'IDLE-AFTER', CANVAS_IDLE);
+  if (fixedDefault) await fixedRest(s, 'IDLE-AFTER', resting);
+  await idle(s, 'IDLE-AFTER', { excludeCanvases: fixedDefault, canvasIdle: fixedDefault ? CANVAS_IDLE : 'bob' });
+  // Idle-bob coverage uses the actual Classic appearance, not a sprite-style
+  // setting that Default deliberately ignores. All original CSS plants remain
+  // meaningful, including after-turn guard/state-image carrier changes.
+  if (fixedDefault) {
+    await boot(s, base, { setting: false, os: false, classic: true });
+    await idle(s, 'IDLE');
+    const classicTurn = await playTurn(s);
+    check(classicTurn.landed && classicTurn.turn >= 2, 'TURN classic-idle', `${classicTurn.attack} landed${passedNote(classicTurn)}, turn ${classicTurn.turn}`);
+    await idle(s, 'IDLE-AFTER');
+  }
   // The other figure styles a player can choose (customize.js SPRITE_STYLES):
   // the run's customization is part of the player frame's art key, so a
   // render after changing it draws the player afresh in that style.
-  // The alternative build deliberately retains its approved rear-view art
-  // for every non-glyph choice. Assert that identity, rather than requiring
-  // the primary build's markup or silently switching its geometry/artwork.
-  const alternativeStageId = await s.evaluate(`document.querySelector('.combatant.player .sprite .alternative-card-stage')?.dataset.animationSet || null`);
-  const alternativeId = await s.evaluate(`document.querySelector('.combatant.player .sprite .alternative-figure')?.dataset.alternativeSprite || null`);
-  const expectedStageId = await s.evaluate('"class-cards-" + window.__combatRunForShot.class');
-  if (ALTERNATIVE) check(alternativeStageId ? alternativeStageId === expectedStageId : !!alternativeId, 'IDLE-ALTERNATIVE-IDENTITY', 'the approved alternative player art matches the current class');
   for (const style of ['rendered', 'classic']) {
-    const mark = alternativeStageId ? `[data-animation-set="${alternativeStageId}"] canvas` : alternativeId ? `[data-alternative-sprite="${alternativeId}"] .alternative-silhouette`
-      : style === 'rendered' ? '.rendered-stage' : 'svg';
+    const mark = style === 'rendered' ? '.rendered-stage' : 'svg';
     await s.evaluate(`(() => { const run = window.__combatRunForShot;
       run.customization = { ...(run.customization || {}), spriteStyle: ${JSON.stringify(style)} };
       window.__renderCombatForShot(); })()`);
     await until(s.evaluate, `!!document.querySelector(${JSON.stringify(`.combatant.player .sprite ${mark}`)})
       && [...document.querySelectorAll('.combatant.player .sprite img')].every((i) => i.complete)`, `the player redrawn in the ${style} style`);
     await wait(300);
-    const drawn = await idle(s, `IDLE-${style}`, CANVAS_IDLE);
+    const drawn = await idle(s, `IDLE-${style}`);
     check(drawn.some((f) => f.who.startsWith('player')), `IDLE-${style}-BOARD`, `the player is on the board in the ${style} style`);
     if (style === 'rendered') {
       // The Rendered stage swaps its still painting for a nested painted
@@ -761,7 +845,7 @@ try {
       // rest pose. One timeline on the stage keeps the phase across that
       // swap; a second idle carrier inside it restarts at 0 when unhidden.
       // Computed style answers even for the hidden nested stage.
-      const carrier = alternativeStageId ? '.alternative-card-stage' : alternativeId ? '.alternative-silhouette' : '.rendered-stage';
+      const carrier = '.rendered-stage';
       const inner = await s.evaluate(`[...document.querySelectorAll(${JSON.stringify(`.combatant .sprite ${carrier} *`)})]
         .filter((el) => getComputedStyle(el).animationName.split(/,\\s*/).includes('sprite-idle'))
         .map((el) => el.tagName.toLowerCase() + '.' + [...el.classList].join('.'))`);

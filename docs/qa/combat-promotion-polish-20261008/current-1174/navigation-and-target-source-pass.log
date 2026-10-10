@@ -1,0 +1,471 @@
+TAP version 13
+# Subtest: the shipped hand behaviour shuffles ordinary cards and draws a fixed number
+ok 1 - the shipped hand behaviour shuffles ordinary cards and draws a fixed number
+  ---
+  duration_ms: 1.8466
+  ...
+# Subtest: the Draw row gives every class 4 cards a turn at creation
+ok 2 - the Draw row gives every class 4 cards a turn at creation
+  ---
+  duration_ms: 102.2229
+  ...
+# Subtest: a new solo fight keeps Retain cards, draws exactly the Draw stat more (clamped at capacity), and discards nothing
+ok 3 - a new solo fight keeps Retain cards, draws exactly the Draw stat more (clamped at capacity), and discards nothing
+  ---
+  duration_ms: 176.1445
+  ...
+# Subtest: the draw stops at the hand size when the retained hand is nearly full
+ok 4 - the draw stops at the hand size when the retained hand is nearly full
+  ---
+  duration_ms: 20.3497
+  ...
+# Subtest: retain-and-fill still works when selected
+ok 5 - retain-and-fill still works when selected
+  ---
+  duration_ms: 16.917
+  ...
+# Subtest: discard at end of turn still works when selected
+ok 6 - discard at end of turn still works when selected
+  ---
+  duration_ms: 13.4481
+  ...
+# Subtest: a run saved before D27 keeps its snapshotted Draw row while new fights use the current behaviour
+ok 7 - a run saved before D27 keeps its snapshotted Draw row while new fights use the current behaviour
+  ---
+  duration_ms: 36.205
+  ...
+# Subtest: the Draw row is data: overriding its base changes what a new character draws
+ok 8 - the Draw row is data: overriding its base changes what a new character draws
+  ---
+  duration_ms: 695.0693
+  ...
+# Subtest: complete native chooser measurement ignores fan transforms and is cached across selection
+ok 9 - complete native chooser measurement ignores fan transforms and is cached across selection
+  ---
+  duration_ms: 1.8643
+  ...
+# Subtest: a clipped, tools-reserved hand contains every selected face and its below-card row
+ok 10 - a clipped, tools-reserved hand contains every selected face and its below-card row
+  ---
+  duration_ms: 2.364
+  ...
+# Subtest: native child touch-target style changes invalidate a reserve even when parent typography is unchanged
+ok 11 - native child touch-target style changes invalidate a reserve even when parent typography is unchanged
+  ---
+  duration_ms: 0.5799
+  ...
+# Subtest: reserving controls is stable across hand size and absent controls preserve existing geometry
+ok 12 - reserving controls is stable across hand size and absent controls preserve existing geometry
+  ---
+  duration_ms: 1.8143
+  ...
+# Subtest: a full selected-card union clears both clipping edges with stable zoom-correct translation
+ok 13 - a full selected-card union clears both clipping edges with stable zoom-correct translation
+  ---
+  duration_ms: 1.5114
+  ...
+# Subtest: top clipping is corrected and a genuinely oversized union is never hidden by a false bottom-only fit
+ok 14 - top clipping is corrected and a genuinely oversized union is never hidden by a false bottom-only fit
+  ---
+  duration_ms: 0.4571
+  ...
+# Subtest: Information stays above its owner, within the reserved hand width, and clear of player HP
+ok 15 - Information stays above its owner, within the reserved hand width, and clear of player HP
+  ---
+  duration_ms: 0.4854
+  ...
+# Subtest: an Information door blocked across the whole row moves above the HUD instead of covering HP
+ok 16 - an Information door blocked across the whole row moves above the HUD instead of covering HP
+  ---
+  duration_ms: 0.2213
+  ...
+# PASS 15/15; the hand forwards its surface, availability and commands to the inspect door
+# Subtest: D:\\repos\\.codex\\worktrees\\combat-expansion-runtime\\AshenSpire\\tests\\hand-forwards-surface.test.mjs
+ok 3 - D:\\repos\\.codex\\worktrees\\combat-expansion-runtime\\AshenSpire\\tests\\hand-forwards-surface.test.mjs
+  ---
+  duration_ms: 88.9219
+  ...
+# Subtest: 0 retained + draw 4 draws 4 within the absolute cap
+ok 18 - 0 retained + draw 4 draws 4 within the absolute cap
+  ---
+  duration_ms: 21.6995
+  ...
+# Subtest: 2 retained + draw 4 draws 4 within the absolute cap
+ok 19 - 2 retained + draw 4 draws 4 within the absolute cap
+  ---
+  duration_ms: 3.3807
+  ...
+# Subtest: 6 retained + draw 4 draws 4 within the absolute cap
+ok 20 - 6 retained + draw 4 draws 4 within the absolute cap
+  ---
+  duration_ms: 2.6467
+  ...
+# Subtest: 12 retained + draw 4 draws 3 within the absolute cap
+ok 21 - 12 retained + draw 4 draws 3 within the absolute cap
+  ---
+  duration_ms: 3.5596
+  ...
+# Subtest: 8 retained + draw 6 draws 6 within the absolute cap
+ok 22 - 8 retained + draw 6 draws 6 within the absolute cap
+  ---
+  duration_ms: 2.1769
+  ...
+# Subtest: 15 retained + draw 6 draws 0 within the absolute cap
+ok 23 - 15 retained + draw 6 draws 0 within the absolute cap
+  ---
+  duration_ms: 1.4145
+  ...
+# Subtest: refresh shuffles ordinary unplayed cards, keeps Retain, exhausts Ethereal, and leaves played discards alone
+ok 24 - refresh shuffles ordinary unplayed cards, keeps Retain, exhausts Ethereal, and leaves played discards alone
+  ---
+  duration_ms: 2.2267
+  ...
+# Subtest: every added Retain keyword survives upgrades; playing a retained spell still leaves the hand
+ok 25 - every added Retain keyword survives upgrades; playing a retained spell still leaves the hand
+  ---
+  duration_ms: 15.2945
+  ...
+# Subtest: draw scaling is unchanged and the absolute capacity does not scale
+ok 26 - draw scaling is unchanged and the absolute capacity does not scale
+  ---
+  duration_ms: 3.6439
+  ...
+# Subtest: new shuffle mode round-trips with the run RNG; old snapshots keep discard behaviour
+ok 27 - new shuffle mode round-trips with the run RNG; old snapshots keep discard behaviour
+  ---
+  duration_ms: 20.14
+  ...
+# Subtest: Play in deck order returns ordinary cards without consuming shuffle RNG
+ok 28 - Play in deck order returns ordinary cards without consuming shuffle RNG
+  ---
+  duration_ms: 2.6422
+  ...
+# Subtest: forced overflow discards stay discarded during a shuffle refresh
+ok 29 - forced overflow discards stay discarded during a shuffle refresh
+  ---
+  duration_ms: 2.5817
+  ...
+# Subtest: an exhausted draw supply deals only available cards without duplicating Retain
+ok 30 - an exhausted draw supply deals only available cards without duplicating Retain
+  ---
+  duration_ms: 1.7913
+  ...
+# Subtest: each co-op seat refreshes its own cards and respects the 15-card cap
+ok 31 - each co-op seat refreshes its own cards and respects the 15-card cap
+  ---
+  duration_ms: 80.7915
+  ...
+# Subtest: the default opening follows the shipped starting rule; unplayed cards survive and fill mode fills capacity
+ok 32 - the default opening follows the shipped starting rule; unplayed cards survive and fill mode fills capacity
+  ---
+  duration_ms: 30.2724
+  ...
+# Subtest: attribute choice, whole-point flooring, bounds and scaling off
+ok 33 - attribute choice, whole-point flooring, bounds and scaling off
+  ---
+  duration_ms: 3.018
+  ...
+# Subtest: fixed draws are the shipped default, drawing the Draw row up to the hand size, and can be changed or scaled
+ok 34 - fixed draws are the shipped default, drawing the Draw row up to the hand size, and can be changed or scaled
+  ---
+  duration_ms: 7.6746
+  ...
+# Subtest: retention off discards ordinary cards; optional choice validates atomically
+ok 35 - retention off discards ordinary cards; optional choice validates atomically
+  ---
+  duration_ms: 14.3141
+  ...
+# Subtest: overflow requires the selected excess; full hands never churn the draw pile
+ok 36 - overflow requires the selected excess; full hands never churn the draw pile
+  ---
+  duration_ms: 2.4283
+  ...
+# Subtest: empty draw pile respects reshuffle toggle
+ok 37 - empty draw pile respects reshuffle toggle
+  ---
+  duration_ms: 1.4839
+  ...
+# Subtest: combat snapshot keeps rules and resumes deterministically
+ok 38 - combat snapshot keeps rules and resumes deterministically
+  ---
+  duration_ms: 6.5843
+  ...
+# Subtest: configuration export preserves stat and draw-mode choices
+ok 39 - configuration export preserves stat and draw-mode choices
+  ---
+  duration_ms: 1230.34
+  ...
+# Subtest: a configuration whose hand row has min above max is refused at import
+ok 40 - a configuration whose hand row has min above max is refused at import
+  ---
+  duration_ms: 692.5839
+  ...
+# Subtest: ethereal exhausts despite auto-retention and cannot be chosen to avoid it
+ok 41 - ethereal exhausts despite auto-retention and cannot be chosen to avoid it
+  ---
+  duration_ms: 2.4612
+  ...
+# Subtest: saved rules reject malformed formulas, and old snapshots retain legacy behavior
+ok 42 - saved rules reject malformed formulas, and old snapshots retain legacy behavior
+  ---
+  duration_ms: 3.4859
+  ...
+# Subtest: a fight saved with the retired hand groups still counts exactly
+ok 43 - a fight saved with the retired hand groups still counts exactly
+  ---
+  duration_ms: 3.1873
+  ...
+# Subtest: settings present each hand-rule subsection once, in the order a turn reads them
+ok 44 - settings present each hand-rule subsection once, in the order a turn reads them
+  ---
+  duration_ms: 0.1465
+  ...
+# Subtest: the hand receipt is the arithmetic scaledCards does
+ok 45 - the hand receipt is the arithmetic scaledCards does
+  ---
+  duration_ms: 0.2564
+  ...
+# Subtest: each class opens on four plus the usual Intelligence draw scaling
+ok 46 - each class opens on four plus the usual Intelligence draw scaling
+  ---
+  duration_ms: 1.6808
+  ...
+# Subtest: a run fight deals the class opening hand and snapshots it
+ok 47 - a run fight deals the class opening hand and snapshots it
+  ---
+  duration_ms: 81.7555
+  ...
+# Subtest: each class's opening hand is its own editor, in the row's own fields
+ok 48 - each class's opening hand is its own editor, in the row's own fields
+  ---
+  duration_ms: 399.2717
+  ...
+# Subtest: character creation's Hand chip is the opening hand combat deals, for every class under Standard presets
+ok 49 - character creation's Hand chip is the opening hand combat deals, for every class under Standard presets
+  ---
+  duration_ms: 84.9901
+  ...
+# Subtest: character creation's Draw chip is capped by the hand size when the turn draw exceeds it
+ok 50 - character creation's Draw chip is capped by the hand size when the turn draw exceeds it
+  ---
+  duration_ms: 312.0142
+  ...
+# Subtest: the hand receipt carries the terms the chips print
+ok 51 - the hand receipt carries the terms the chips print
+  ---
+  duration_ms: 0.1701
+  ...
+# Subtest: outside-card Upcast stays inside the 320px phone hand
+ok 52 - outside-card Upcast stays inside the 320px phone hand
+  ---
+  duration_ms: 5.9897
+  ...
+# Subtest: outside-card Upcast stays inside the 390px phone hand
+ok 53 - outside-card Upcast stays inside the 390px phone hand
+  ---
+  duration_ms: 0.3615
+  ...
+# Subtest: pager focus reveals an ordinary face before selection when hand scrolling clamps
+ok 54 - pager focus reveals an ordinary face before selection when hand scrolling clamps
+  ---
+  duration_ms: 1.9158
+  ...
+# Subtest: hand clipping and CSS zoom share one coordinate space
+ok 55 - hand clipping and CSS zoom share one coordinate space
+  ---
+  duration_ms: 0.4496
+  ...
+# Subtest: pager focus and pointer selection choose one reveal owner without scroll oscillation
+ok 56 - pager focus and pointer selection choose one reveal owner without scroll oscillation
+  ---
+  duration_ms: 1.3181
+  ...
+# Subtest: native pan preserves its viewport after a browser cancellation with an older pager cursor
+ok 57 - native pan preserves its viewport after a browser cancellation with an older pager cursor
+  ---
+  duration_ms: 1.1747
+  ...
+# Subtest: phone Upcast clears the footer at CSS zoom without accumulating lift
+ok 58 - phone Upcast clears the footer at CSS zoom without accumulating lift
+  ---
+  duration_ms: 0.689
+  ...
+# Subtest: visible, hidden and detached-size controls leave hand position untouched
+ok 59 - visible, hidden and detached-size controls leave hand position untouched
+  ---
+  duration_ms: 0.3269
+  ...
+# Subtest: overflow-visible fan keeps the owning card and chooser together at 320px
+ok 60 - overflow-visible fan keeps the owning card and chooser together at 320px
+  ---
+  duration_ms: 1.0794
+  ...
+# Subtest: overflow-visible fan keeps the owning card and chooser together at 390px
+ok 61 - overflow-visible fan keeps the owning card and chooser together at 390px
+  ---
+  duration_ms: 1.0123
+  ...
+# Subtest: shared hand selection and scrolling invoke reveal without opening or paying Upcast
+ok 62 - shared hand selection and scrolling invoke reveal without opening or paying Upcast
+  ---
+  duration_ms: 1.2065
+  ...
+# Subtest: the Hand chip follows a per-class Settings override the way the fight does
+ok 63 - the Hand chip follows a per-class Settings override the way the fight does
+  ---
+  duration_ms: 778.8497
+  ...
+# Subtest: in fill mode the Draw chip tops the hand up to capacity
+ok 64 - in fill mode the Draw chip tops the hand up to capacity
+  ---
+  duration_ms: 24.9038
+  ...
+# Subtest: the primary stat card states the opening-hand effect, and no other card does
+ok 65 - the primary stat card states the opening-hand effect, and no other card does
+  ---
+  duration_ms: 26.55
+  ...
+# Subtest: the Shrine level-up cards read the solo hand the next fight deals
+ok 66 - the Shrine level-up cards read the solo hand the next fight deals
+  ---
+  duration_ms: 395.0218
+  ...
+# Subtest: the in-combat Armoury cards read the running fight's own hand rules
+ok 67 - the in-combat Armoury cards read the running fight's own hand rules
+  ---
+  duration_ms: 300.0409
+  ...
+# Subtest: the class preview shows both the Hand and the Draw chip, and not Poise
+ok 68 - the class preview shows both the Hand and the Draw chip, and not Poise
+  ---
+  duration_ms: 23.5777
+  ...
+# Subtest: hand order survives draws and discards without mutating domain arrays
+ok 69 - hand order survives draws and discards without mutating domain arrays
+  ---
+  duration_ms: 2.4876
+  ...
+# Subtest: uniform card proportions, physical exposure, and selected body containment
+ok 70 - uniform card proportions, physical exposure, and selected body containment
+  ---
+  duration_ms: 1.7957
+  ...
+# Subtest: excess cards overflow horizontally with the same face size
+ok 71 - excess cards overflow horizontally with the same face size
+  ---
+  duration_ms: 0.2427
+  ...
+# Subtest: a roomy desktop hand uses the available height for larger readable cards
+ok 72 - a roomy desktop hand uses the available height for larger readable cards
+  ---
+  duration_ms: 0.2432
+  ...
+# Subtest: rotated fan corners clear the footer at phone and desktop scales
+ok 73 - rotated fan corners clear the footer at phone and desktop scales
+  ---
+  duration_ms: 0.5918
+  ...
+# Subtest: short-phone fitted feet keep separate full tap areas without changing the artwork
+ok 74 - short-phone fitted feet keep separate full tap areas without changing the artwork
+  ---
+  duration_ms: 5.0275
+  ...
+# Subtest: tap target packing preserves unconstrained feet and clamps only targets to stage edges
+ok 75 - tap target packing preserves unconstrained feet and clamps only targets to stage edges
+  ---
+  duration_ms: 1.0087
+  ...
+# Subtest: packed frame targets reserve their visible health footer as the owner cue
+ok 76 - packed frame targets reserve their visible health footer as the owner cue
+  ---
+  duration_ms: 0.601
+  ...
+# Subtest: short landscape overheads pack intersecting rows despite a wide stage
+ok 77 - short landscape overheads pack intersecting rows despite a wide stage
+  ---
+  duration_ms: 0.5652
+  ...
+# Subtest: half-field mobile figures keep distinct reachable intent anchors in the short portrait field
+ok 78 - half-field mobile figures keep distinct reachable intent anchors in the short portrait field
+  ---
+  duration_ms: 6.6626
+  ...
+# Subtest: measured Inspect expansion preserves slot order and full overhead clearance
+ok 79 - measured Inspect expansion preserves slot order and full overhead clearance
+  ---
+  duration_ms: 0.6134
+  ...
+# Subtest: overhead offsets convert screen pixels once and retain the measured control box at UI zoom
+ok 80 - overhead offsets convert screen pixels once and retain the measured control box at UI zoom
+  ---
+  duration_ms: 0.4559
+  ...
+# Subtest: full-height enemies from separate formation rows keep every intent reachable when their fitted bands coincide
+ok 81 - full-height enemies from separate formation rows keep every intent reachable when their fitted bands coincide
+  ---
+  duration_ms: 0.7903
+  ...
+# Subtest: an in-bounds reserved control anchor stays put independently of figure growth
+ok 82 - an in-bounds reserved control anchor stays put independently of figure growth
+  ---
+  duration_ms: 0.5747
+  ...
+# Subtest: ribbon clearance repacks the final physical bands without moving already clear controls
+ok 83 - ribbon clearance repacks the final physical bands without moving already clear controls
+  ---
+  duration_ms: 1.382
+  ...
+# Subtest: actual 844x390 XL foot targets and health footers clear final intent boxes inside the 139.86px stage
+ok 84 - actual 844x390 XL foot targets and health footers clear final intent boxes inside the 139.86px stage
+  ---
+  duration_ms: 1.2316
+  ...
+# Subtest: intent clearance repacks a newly joined footer band without shifting clear targets
+ok 85 - intent clearance repacks a newly joined footer band without shifting clear targets
+  ---
+  duration_ms: 0.402
+  ...
+# Subtest: insufficient stage room is reported rather than placing a target over another control or outside the stage
+ok 86 - insufficient stage room is reported rather than placing a target over another control or outside the stage
+  ---
+  duration_ms: 0.253
+  ...
+# Subtest: aligned target plates resolve crowded footers vertically
+ok 87 - aligned target plates resolve crowded footers vertically
+  ---
+  duration_ms: 0.6085
+  ...
+# Subtest: actual 1200x730 XL floor targets find upward room without detaching their columns
+ok 88 - actual 1200x730 XL floor targets find upward room without detaching their columns
+  ---
+  duration_ms: 23.2054
+  ...
+# Subtest: waist-overlap player foot below the field retains a clamped 44px target
+ok 89 - waist-overlap player foot below the field retains a clamped 44px target
+  ---
+  duration_ms: 0.2527
+  ...
+# Subtest: upward fallback still reports obstruction when an overhead occupies all available space
+ok 90 - upward fallback still reports obstruction when an overhead occupies all available space
+  ---
+  duration_ms: 0.3902
+  ...
+# Subtest: actual 390x650 XL aligned feet fit complete 44px targets below visible intents
+ok 91 - actual 390x650 XL aligned feet fit complete 44px targets below visible intents
+  ---
+  duration_ms: 1.0668
+  ...
+# Subtest: bounded floor retry does not trade an impossible stage for outside or overlapping targets
+ok 92 - bounded floor retry does not trade an impossible stage for outside or overlapping targets
+  ---
+  duration_ms: 0.3417
+  ...
+1..92
+# tests 92
+# suites 0
+# pass 92
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4839.6104

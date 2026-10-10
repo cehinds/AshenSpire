@@ -2,6 +2,8 @@
 
 Finish the remaining combat expansion delivery, correct all card formula displays and complete compiled-browser and dev/test validation in both editions.
 
+Read [the task-owned verified status](combat-mechanics-and-formulas-status.md) first. The earlier snapshot below is historical; the linked status supersedes it for source, build, validation and origin checkpoints.
+
 ## Session and branch
 
 - Chat ID: 01a117e5-7a97-7170-bed5-62561c5ee7b8
@@ -14,11 +16,11 @@ Finish the remaining combat expansion delivery, correct all card formula display
 
 - Keep physical/spell card families, damage tags, stances, counters, status effects and canonical mechanics consistent with SPEC and the combat expansion contracts.
 - Power plays once, exhausts and lasts for the combat; Skill is reusable utility/buff; Status enters the deck and is usually a debuff.
-- Action labels remain at the bottom for Attack, Smash, Counter, Sweep, Ranged, Spell, Power, Skill and Status. Keep damage wording readable and expose full tags through inspection.
+- Action labels remain at the bottom for Attack, Defend, Smash, Counter, Sweep, Ranged, Spell, Power, Skill and Status. Keep damage wording readable and expose full tags through inspection.
 - Fixed values show real numbers outside combat; state-dependent effects show an accurate explanation of their formula. Live combat preview values take precedence over static substitutions.
 - Reject overflowing constants and invalid symbolic entity references; do not guess current combat state or silently change effect arithmetic.
 
-## Current work and evidence
+## Earlier snapshot and evidence
 
 The latest local head observed was 2934beab9d2e517f9d9ff031299bc3cc9c40a62c on codex/combat-promotion-polish-20261008. The chat reports 35 focused checks and six static-formula regression tests passed, with independent formula review complete. The broader engine suite failed the full-run simulator time limit; that remains unresolved.
 The all-card scan had found 86 variants with unresolved formula placeholders outside combat. A prior review caught static values overriding live values and that precedence was corrected. A compiled prelude build is in progress. Earlier mechanics PRs have landed over multiple turns; do not reopen completed changes merely because they appear in the old context.
@@ -82,3 +84,7 @@ A new AI should be able to fetch origin, create a D: worktree for the recorded b
 
 Report separate checkboxes for source implementation, verified origin push, independent review, current-head validation, dev or alternative/dev merge, test and alternative promotion/CI, and owner/device acceptance where needed. Cite exact SHAs, PRs and workflows. If a merge is blocked, keep the work pushed and give the precise failing gate and next fix; do not mislabel that checkpoint as integrated delivery.
 
+
+## Task-owned live checkpoint
+
+Read [the verified task status](combat-mechanics-and-formulas-status.md) before acting; it supersedes the earlier snapshot for source, evidence, blockers and next actions.

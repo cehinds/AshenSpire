@@ -1,0 +1,476 @@
+{
+  "source": "be6326f7a5291d6fc3240d893effc95b82eb7d39",
+  "build": null,
+  "surface": "source",
+  "devices": [
+    {
+      "name": "desktop",
+      "refs": 2186,
+      "fullyReadable": 2186,
+      "expanded": 316,
+      "minFont": 12.2222,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 9.14583
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.45069
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.9828
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
+      "actions": [
+        "attack",
+        "defend",
+        "sweep",
+        "smash",
+        "counter",
+        "skill",
+        "power",
+        "spell",
+        "ranged",
+        "status"
+      ],
+      "schools": [
+        "force",
+        "alteration",
+        "illusion",
+        "frost",
+        "lightning",
+        "fire",
+        "divine",
+        "decay"
+      ],
+      "informationDoors": [
+        {
+          "school": "alteration",
+          "ref": {
+            "cardId": "blightedTransmute"
+          },
+          "action": "skill",
+          "schoolName": "Alteration",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "alteration",
+          "ref": {
+            "cardId": "blightedTransmute"
+          },
+          "action": "skill",
+          "schoolName": "Alteration",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "divine",
+          "ref": {
+            "cardId": "blightedSecondBloom"
+          },
+          "action": "skill",
+          "schoolName": "Divine",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "divine",
+          "ref": {
+            "cardId": "blightedSecondBloom"
+          },
+          "action": "skill",
+          "schoolName": "Divine",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "frost",
+          "ref": {
+            "cardId": "frostCounter"
+          },
+          "action": "counter",
+          "schoolName": "Frost",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "frost",
+          "ref": {
+            "cardId": "frostCounter"
+          },
+          "action": "counter",
+          "schoolName": "Frost",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "fire",
+          "ref": {
+            "cardId": "fireCounter"
+          },
+          "action": "counter",
+          "schoolName": "Fire",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "fire",
+          "ref": {
+            "cardId": "fireCounter"
+          },
+          "action": "counter",
+          "schoolName": "Fire",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "lightning",
+          "ref": {
+            "cardId": "lightningCounter"
+          },
+          "action": "counter",
+          "schoolName": "Lightning",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "lightning",
+          "ref": {
+            "cardId": "lightningCounter"
+          },
+          "action": "counter",
+          "schoolName": "Lightning",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "force",
+          "ref": {
+            "cardId": "forceCounter"
+          },
+          "action": "counter",
+          "schoolName": "Force",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "force",
+          "ref": {
+            "cardId": "forceCounter"
+          },
+          "action": "counter",
+          "schoolName": "Force",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "illusion",
+          "ref": {
+            "cardId": "illusionCounter"
+          },
+          "action": "counter",
+          "schoolName": "Illusion",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "illusion",
+          "ref": {
+            "cardId": "illusionCounter"
+          },
+          "action": "counter",
+          "schoolName": "Illusion",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "decay",
+          "ref": {
+            "cardId": "decayCounter"
+          },
+          "action": "counter",
+          "schoolName": "Decay",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "decay",
+          "ref": {
+            "cardId": "decayCounter"
+          },
+          "action": "counter",
+          "schoolName": "Decay",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        }
+      ],
+      "errors": [],
+      "failed": [
+        "404 http://localhost:60412/assets/sfx/holdTick.ogg"
+      ]
+    },
+    {
+      "name": "phone",
+      "refs": 2186,
+      "fullyReadable": 2186,
+      "expanded": 319,
+      "minFont": 11.1833,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 9.14583
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.45069
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.9656
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
+      "actions": [
+        "attack",
+        "defend",
+        "sweep",
+        "smash",
+        "counter",
+        "skill",
+        "power",
+        "spell",
+        "ranged",
+        "status"
+      ],
+      "schools": [
+        "force",
+        "alteration",
+        "illusion",
+        "frost",
+        "lightning",
+        "fire",
+        "divine",
+        "decay"
+      ],
+      "informationDoors": [
+        {
+          "school": "alteration",
+          "ref": {
+            "cardId": "blightedTransmute"
+          },
+          "action": "skill",
+          "schoolName": "Alteration",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "alteration",
+          "ref": {
+            "cardId": "blightedTransmute"
+          },
+          "action": "skill",
+          "schoolName": "Alteration",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "divine",
+          "ref": {
+            "cardId": "blightedSecondBloom"
+          },
+          "action": "skill",
+          "schoolName": "Divine",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "divine",
+          "ref": {
+            "cardId": "blightedSecondBloom"
+          },
+          "action": "skill",
+          "schoolName": "Divine",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "frost",
+          "ref": {
+            "cardId": "frostCounter"
+          },
+          "action": "counter",
+          "schoolName": "Frost",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "frost",
+          "ref": {
+            "cardId": "frostCounter"
+          },
+          "action": "counter",
+          "schoolName": "Frost",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "fire",
+          "ref": {
+            "cardId": "fireCounter"
+          },
+          "action": "counter",
+          "schoolName": "Fire",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "fire",
+          "ref": {
+            "cardId": "fireCounter"
+          },
+          "action": "counter",
+          "schoolName": "Fire",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "lightning",
+          "ref": {
+            "cardId": "lightningCounter"
+          },
+          "action": "counter",
+          "schoolName": "Lightning",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "lightning",
+          "ref": {
+            "cardId": "lightningCounter"
+          },
+          "action": "counter",
+          "schoolName": "Lightning",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "force",
+          "ref": {
+            "cardId": "forceCounter"
+          },
+          "action": "counter",
+          "schoolName": "Force",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "force",
+          "ref": {
+            "cardId": "forceCounter"
+          },
+          "action": "counter",
+          "schoolName": "Force",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "illusion",
+          "ref": {
+            "cardId": "illusionCounter"
+          },
+          "action": "counter",
+          "schoolName": "Illusion",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "illusion",
+          "ref": {
+            "cardId": "illusionCounter"
+          },
+          "action": "counter",
+          "schoolName": "Illusion",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "decay",
+          "ref": {
+            "cardId": "decayCounter"
+          },
+          "action": "counter",
+          "schoolName": "Decay",
+          "door": "Information",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        },
+        {
+          "school": "decay",
+          "ref": {
+            "cardId": "decayCounter"
+          },
+          "action": "counter",
+          "schoolName": "Decay",
+          "door": "Enter",
+          "focusRestored": true,
+          "resourcesUnchanged": true
+        }
+      ],
+      "errors": [],
+      "failed": [
+        "404 http://localhost:60412/assets/sfx/nodeTravel.ogg",
+        "404 http://localhost:60412/assets/sfx/cardDraw.ogg",
+        "404 http://localhost:60412/assets/sfx/turnStinger.ogg",
+        "404 http://localhost:60412/assets/sfx/holdTick.ogg"
+      ]
+    }
+  ]
+}

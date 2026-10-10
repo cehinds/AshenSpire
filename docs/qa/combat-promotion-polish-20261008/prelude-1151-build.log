@@ -1,0 +1,100 @@
+launch: compiling presentation config…
+config-build: wrote src/config/generated/ui.js from 48 source file(s)
+launch: compiling authored content…
+(node:15996) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+content-build: OK
+SFX_FAMILY_IDS [procBurst, beat, holdTick, holdCommit, rewardTake, hit] — sfx authority: 25 caller id(s), 31 recipe row(s), 0 defect(s)
+  armouryUi.json   → src/content/generated/armouryUi.js  (2 rows)
+  basicCardProfiles.csv → src/content/generated/basicCardProfiles.js  (17 rows)
+  cardEquipmentExceptions.csv → src/content/generated/cardEquipmentExceptions.js  (1 rows)
+  cardExposure.csv → src/content/generated/cardExposure.js  (128 rows)
+  characterCreation.json → src/content/generated/characterCreation.js  (7 rows)
+  classMastery.csv → src/content/generated/classMastery.js  (108 rows)
+  classTree.csv    → src/content/generated/classTree.js  (40 rows)
+  equipMods.csv    → src/content/generated/equipMods.js  (18 rows)
+  equipSlots.csv   → src/content/generated/equipSlots.js  (7 rows)
+  equipTargets.csv → src/content/generated/equipTargets.js  (6 rows)
+  equipmentGrants.csv → src/content/generated/equipmentGrants.js  (0 rows)
+  equipmentRequirements.csv → src/content/generated/equipmentRequirements.js  (8 rows)
+  familyNodes.csv  → src/content/generated/familyNodes.js  (130 rows)
+  itemUpgradeChanges.csv → src/content/generated/itemUpgradeChanges.js  (152 rows)
+  legacyDungeons.json → src/content/generated/legacyDungeons.js  (5 rows)
+  locationPresentation.json → src/content/generated/locationPresentation.js  (9 rows)
+  nodeEffects.json → src/content/generated/nodeEffects.js  (173 rows)
+  nodeRelations.csv → src/content/generated/nodeRelations.js  (27 rows)
+  nodeTerms.csv    → src/content/generated/nodeTerms.js  (168 rows)
+  nodeVariables.csv → src/content/generated/nodeVariables.js  (196 rows)
+  nodes.csv        → src/content/generated/nodes.js  (448 rows)
+  outfits.csv      → src/content/generated/outfits.js  (35 rows)
+  speakers.csv     → src/content/generated/speakers.js  (5 rows)
+  startingKits.csv → src/content/generated/startingKits.js  (8 rows)
+  tagFamilies.csv  → src/content/generated/tagFamilies.js  (21 rows)
+  tagging.csv      → src/content/generated/tagging.js  (3727 rows)
+  uiStrings.csv    → src/content/generated/uiStrings.js  (1276 rows)
+  unlocks.csv      → src/content/generated/unlocks.js  (18 rows)
+  variableBindings.csv → src/content/generated/variableBindings.js  (196 rows)
+  weaponCardPackages.json → src/content/generated/weaponCardPackages.js  (28 rows)
+  weapons.csv      → src/content/generated/weapons.js  (28 rows)
+  worldAtlas.json  → src/content/generated/worldAtlas.js  (35 rows)
+  (nodes.csv)      → src/content/generated/tagDomains.js  (28 rows)
+  (nodes.csv)      → src/content/generated/tags.js  (420 rows)
+  (familyNodes.csv) → src/content/generated/tagFamilyDomains.js  (130 rows)
+  (nodes.csv + nodeRelations.csv + nodeTerms.csv) → src/content/generated/propertyRules.js  (180 rows)
+  (nodeEffects.json + variableBindings.csv) → src/content/generated/propertyRuleEffects.js  (173 rows)
+  (nodes.csv + nodeTerms.csv) → src/content/generated/../../framework/data/properties.js  (2 rows)
+  (nodeRelations.csv) → src/content/generated/../../framework/data/relations.js  (2 rows)
+launch: building the game (pack shape, light art by default)…
+bundle: build ordinal → 1151 (the source moved; buildordinal.json rewritten)
+bundle.mjs: OK
+  entry            : src/main.js
+  build version    : 2236bdab43 (derived from this source; node tools/buildversion.mjs --which 2236bdab43)
+  modules bundled  : 673
+  stylesheets      : 16 (styles/base.css, styles/prologue.css, styles/ui.css, styles/combat.css, styles/combat-poses.css, styles/map.css, styles/legacy-dungeon.css, styles/kit.css, styles/responsive-type.css, styles/combat-test.css, styles/hud-visibility.css, styles/player-polish-icons.css, styles/player-polish.css, styles/illustrated-cards.css, styles/corrupted-cards.css, styles/combat-expansion.css)
+  authoring omitted: 0 KiB (equipment component experiments)
+  shape            : pack shape (packs/ and objects/ beside the HTML; served, or by double-click while the folder stays together; default tier light)
+  art swept        : 6215 files (59631 KiB) — carried as packs, not copied
+  pack common      : 146 ids, 146 objects, 32157308 bytes → packs/common-18cb7f56cba7.json (pinned 18cb7f56cba7)
+  pack light       : 6215 ids, 6165 objects, 60635904 bytes → packs/light-8a040b7bc979.json (pinned 8a040b7bc979)
+  font sidecar     : 15 faces → packs/fonts-c278c936e856.js
+  default tier     : light
+  css assets       : 44 url()s → 33 ASSET_CSS rules, filled from the index the loader uses; 93 SVG mask url()s inlined
+  map detail       : 116 tiles in the common pack
+  shipped score    : 14 files in the common pack (music/manifest.json and its tracks)
+  NOT CHECKED HERE : that the pinned packs and every object they list are beside the HTML — node tools/verify-external.mjs
+  literal refs     : all resolve
+  output           : build/AshenSpire.html
+  output size      : 14741261 bytes (14395.8 KiB)
+BOUNDARY: every module was COMPILED, never RUN. A file that parses and throws
+          on load builds clean here — that is node tests/run-node.mjs and the
+          browser. Strictness and the module signature are asserted through
+          node's parser and node's vm, so no browser has seen this bundle.
+          Only LITERAL asset paths were resolved; paths built at runtime
+          (`assets/x_${id}.webp`) are unchecked here — Vira audits those
+          against the CSVs. dist/ is not this tool's to check: that is
+          node tools/verify-shipped.mjs. Nothing above says the game plays.
+launch: building the light single file (download/)…
+bundle.mjs: OK
+  entry            : src/main.js
+  build version    : 2236bdab43 (derived from this source; node tools/buildversion.mjs --which 2236bdab43)
+  modules bundled  : 673
+  stylesheets      : 16 (styles/base.css, styles/prologue.css, styles/ui.css, styles/combat.css, styles/combat-poses.css, styles/map.css, styles/legacy-dungeon.css, styles/kit.css, styles/responsive-type.css, styles/combat-test.css, styles/hud-visibility.css, styles/player-polish-icons.css, styles/player-polish.css, styles/illustrated-cards.css, styles/corrupted-cards.css, styles/combat-expansion.css)
+  authoring omitted: 0 KiB (equipment component experiments)
+  shape            : the light single file (art from the fetched light pack, inline; runs from file://; no byte budget)
+  css assets inlined: 137 (1933 KiB raw)
+  art inlined      : 6215 files (59215 KiB raw)
+  literal refs     : all resolve
+  output           : build/download/AshenSpire.html
+  output size      : 98723033 bytes (96409.2 KiB)
+BOUNDARY: every module was COMPILED, never RUN. A file that parses and throws
+          on load builds clean here — that is node tests/run-node.mjs and the
+          browser. Strictness and the module signature are asserted through
+          node's parser and node's vm, so no browser has seen this bundle.
+          Only LITERAL asset paths were resolved; paths built at runtime
+          (`assets/x_${id}.webp`) are unchecked here — Vira audits those
+          against the CSVs. dist/ is not this tool's to check: that is
+          node tools/verify-shipped.mjs. Nothing above says the game plays.
+launch: removed 4 stale launcher output(s): dist/packs, dist/objects, dist/cards, dist/AshenSpire-0.7.1.1150.html
+launch: current build refreshed → dist/AshenSpire.html + dist/AshenSpire-0.7.1.1151.html (+ packs/, objects/) + dist/download/AshenSpire.html + AshenSpire.html (the light single file)
+launch: light art by default; the pack HTML, its dist/ copies and the light single file
+launch: OK — 4/4 current-build aliases refreshed.
