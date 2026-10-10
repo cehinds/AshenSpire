@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
-- **Pull requests into dev are checked in about five minutes** ([#1797](https://github.com/cehinds/AshenSpire/pull/1797), `0.7.1.1242`). The four full-simulation tests that held one shard at 8m19s now run on every push to `test` and `release` instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.
+- **Pull requests into dev are checked in about five minutes** ([#1797](https://github.com/cehinds/AshenSpire/pull/1797), `0.7.1.1244`). The four full-simulation tests that held one shard at 8m19s now run on every push to `test` and `release` instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.
 
 - **Enemy combat art gains painted action sets** ([#1795](https://github.com/cehinds/AshenSpire/pull/1795), `0.7.1.1236`). Integrate 33 enemy sets with melee, ranged, spell, guard and reaction frames through the shared art loader. Preserve existing action timing and reduced-motion behavior. The continuation handoff records remaining angle, clipping and halo review.
 
