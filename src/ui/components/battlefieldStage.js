@@ -631,8 +631,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
           footer.style.translate = `${offset.left}px ${offset.top}px`;
           footer.style.position = 'relative';
-          // A fallen footer no longer reserves space; keep it beneath living ones.
-          footer.style.zIndex = frame.classList.contains('dead') ? '' : 'var(--combat-layer-selection)';
+          footer.style.zIndex = 'var(--combat-layer-selection)';
+          // A fallen footer reserves no space, so a living one may pack onto
+          // its spot. Hide it rather than paint a faded plate over that fighter.
+          footer.style.visibility = frame.classList.contains('dead') ? 'hidden' : '';
         }
         if (frame.classList.contains('enemy') && !frame.classList.contains('context-selected')) {
           const meter = frame.querySelector('.combatant-card > .meters');
