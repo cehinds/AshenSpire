@@ -6,10 +6,21 @@ export function combatOverheadAnchorX({ width, x, controlWidth, inset = 6 }) {
   return Math.min(Math.max(x, inset + half), width - inset - half);
 }
 
+// SPEC §7: the physical height of an enemy/player tap area in screen px. Both
+// the packed spacing below and the painted `--enemy-hit-height` derive from
+// this one value, so two packed targets' hit areas can never overlap.
+export const COMBAT_TARGET_HIT_PX = 44;
+
+// Pack spacing for the context-selected footers: at least the real hit-area
+// height, even when the compact visual footer (#1787) is shorter.
+export function combatTargetPackSize(footerHeights = []) {
+  return Math.max(COMBAT_TARGET_HIT_PX, ...footerHeights.filter(Number.isFinite));
+}
+
 // Tap areas follow the measured feet until final sprite fitting brings two
 // formation rows together. Space only these targets, inside the stage, so a
 // neighbouring figure cannot take the owner's complete tap area.
-export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [], lockX = false,
+export function combatTargetAnchors({ width, height, targets, size = COMBAT_TARGET_HIT_PX, obstacles = [], lockX = false,
   maxShiftX = 0, packWithinBounds = false }) {
   const half = size / 2;
   const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
