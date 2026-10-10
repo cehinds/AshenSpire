@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {combatFrameTarget} from '../src/ui/components/battlefieldStage.js';
-import {combatTargetAnchors} from '../src/ui/models/CombatOverheadModel.js';
+import {COMBAT_TARGET_HIT_PX,combatTargetAnchors} from '../src/ui/models/CombatOverheadModel.js';
 
 const clear = (target, rect) => target.x + target.width / 2 + 2 <= rect.left
   || target.x - target.width / 2 >= rect.right + 2 || target.y + 22 + 2 <= rect.top || target.y - 22 >= rect.bottom + 2;
@@ -68,7 +68,7 @@ test('the actual stage pack and HUD retry use the same player proxy receipt and 
   const placed=boxes.map((_box,index)=>({frame:{dataset:{eid:index?'enemy':'player'},
     classList:{contains:role=>role===(index?'enemy':'player') || index > 0 && role === 'context-selected'}}}));
   let packInput,retryInput;
-  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,combatFrameTarget,ribbon:null,
+  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,ribbon:null,
     combat:{getBoundingClientRect:()=>({bottom:900})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packInput=input;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
@@ -89,7 +89,7 @@ test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
   const boxes=ids.map((_id,i)=>({hostRect:{left:100+i*150,width:100,bottom:300},footerWidth:104,frameRect:{},controls:[]}));
   const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')||(id==='alive'&&role==='context-selected')}}}));
   let packInput,retryInput;
-  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{getBoundingClientRect:()=>({bottom:400})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packInput=input;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
@@ -104,7 +104,7 @@ test('idle overhead HP and an artwork-owned player reserve no hidden footers',()
   const boxes=ids.map((_id,i)=>({hostRect:{left:30+i*90,width:80,bottom:225},footerWidth:88,frameRect:{},controls:[]}));
   const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='selected'||id==='player')&&role==='context-selected'}}}));
   let packed,reserved;
-  runInNewContext(source.slice(begin,end),{fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:513})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packed=input.targets;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{reserved=input.targetCores;return input.pack();}});

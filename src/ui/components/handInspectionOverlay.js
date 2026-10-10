@@ -24,14 +24,16 @@ export function revealHandUpcastControl(hand, control, viewportWidth = window.in
   if (right <= left) return;
   const scale = port.width / hand.clientWidth;
   const outside = bounds => bounds.left < left ? bounds.left - left : bounds.right > right ? bounds.right - right : 0;
+  // Measure from the authored position. An earlier correction must not hide an
+  // overflow or keep a card offset after a resize or rotation makes it fit.
+  card?.style?.setProperty?.('--hand-upcast-shift', '0px');
+  box = measure();
   const delta = outside(box);
   if (delta) hand.scrollLeft += delta / scale;
   box = measure();
   const remaining = outside(box);
-  if (remaining && card) {
-    const shift = parseFloat(card.style.getPropertyValue('--hand-upcast-shift')) || 0;
-    card.style.setProperty('--hand-upcast-shift', `${shift - remaining / scale}px`);
-  }
+  if (remaining && card) card.style.setProperty('--hand-upcast-shift', `${-remaining / scale}px`);
+  else card?.style?.removeProperty?.('--hand-upcast-shift');
   // Fit the complete selected face and its controls into the clipped port.
   // Capacity is reserved by HandLayout; translation only reconciles edges.
   if (control !== card && card && Number.isFinite(port.bottom)) {

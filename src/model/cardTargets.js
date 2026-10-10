@@ -27,6 +27,17 @@ export function assertCardTarget(plan, requestedId) {
   return requestedId;
 }
 
+// After the "ask to upcast after target" chooser returns a rank, decide the
+// next beat from the card's plan at that rank. A remembered legal destination
+// plays at once; a hostile card that strikes no single enemy (Contagion:
+// allEnemies/random) plays at once with no target; anything else
+// (a single-target card whose destination the rank changed) re-arms a picker.
+export function upcastNextStep(plan, needsSingleTarget, previousTarget) {
+  if (previousTarget != null && plan.legalIds.includes(previousTarget)) return 'play';
+  if (plan.mode === 'enemy' && !needsSingleTarget) return 'playUntargeted';
+  return 'retarget';
+}
+
 // Inert frames are skipped by browser hit testing. A fast flick must still
 // refuse a release over a visible combatant on the wrong side of this card.
 export function forbiddenCardDrop(plan, point, combatants = []) {
