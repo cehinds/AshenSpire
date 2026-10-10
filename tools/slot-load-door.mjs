@@ -216,10 +216,11 @@ try {
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text || 'evaluation failed');
     return result.result.value;
   };
-  const until = async (expression, waitingFor, timeout = 20000) => {
+  const until = async (expression, waitingFor, timeout = 20000, onWait = null) => {
     const started = Date.now();
     while (Date.now() - started < timeout) {
       if (await ev(expression).catch(() => false)) return true;
+      await onWait?.();
       await wait(70);
     }
     const pageState = await ev(`({ url: location.href, ready: document.readyState, combat: !!window.__combat, text: document.body?.innerText?.slice(0, 800) })`).catch((error) => ({ unavailable: error.message }));
@@ -274,7 +275,13 @@ try {
     await click('.end-turn');
     await wait(750);
     await confirmIfAsked();
-    await until(`window.__combat.turn > ${turn} && window.__combat.phase === 'player'`, 'the next player turn');
+    await until(`window.__combat.turn > ${turn} && window.__combat.phase === 'player'`, 'the next player turn', 20000, async () => {
+      // Knowledge-enabled fights offer defensive reactions during the enemy
+      // turn. Decline through the real Back control so this save/load probe
+      // advances normally without spending a reaction or bypassing its rules.
+      const decline = '.reaction-choice [data-control-role="exit"]';
+      if (await ev(`!!document.querySelector(${JSON.stringify(decline)})`)) await click(decline);
+    });
     await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'combat timeline settlement');
   };
 

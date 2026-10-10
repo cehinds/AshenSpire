@@ -1,0 +1,7 @@
+NAVIGATED
+INITIAL {"turn":1,"phase":"player","hp":63,"version":2,"knowledge":1}
+REACTION "DEFENSIVE REACTION\nRespond to the incoming action\n✕\n\nChoose a card to play before this action resolves. Back skips this reaction.\n\nDodge Roll · 1 SPShield Bash · 1 SPShield Bash · Upcast 1 · 2 SP · 1 MP\nBack\nPlay"
+REACTION "DEFENSIVE REACTION\nRespond to the incoming action\n✕\n\nChoose a card to play before this action resolves. Back skips this reaction.\n\nDodge Roll · 1 SPShield Bash · 1 SPShield Bash · Upcast 1 · 2 SP · 1 MP\nBack\nPlay"
+TURN {"before":{"turn":1,"phase":"player","hp":63,"version":2,"knowledge":1},"after":{"turn":2,"phase":"player","hp":53,"version":2,"knowledge":1},"reactions":2}
+TURN {"before":{"turn":2,"phase":"player","hp":53,"version":2,"knowledge":1},"after":{"turn":3,"phase":"player","hp":43,"version":2,"knowledge":1},"reactions":2}
+PASS {"reactions":2,"restored":{"turn":3,"phase":"player","hp":43,"version":2,"knowledge":1},"snapshotBytes":49117,"errors":[],"failed":[]}

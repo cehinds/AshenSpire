@@ -245,3 +245,49 @@ test('aligned target plates resolve crowded footers vertically', () => {
   assert(placed[1].y-placed[0].y>=56);
   assert(placed.every(p=>!p.obstructed));
 });
+
+test('bounded footer packing moves plates above the real hand while preserving clear anchors', () => {
+  const targets = [{ id: 'left', x: 300, y: 210, width: 104 },
+    { id: 'right', x: 470, y: 210, width: 104 }];
+  const before = structuredClone(targets);
+  const anchors = combatTargetAnchors({ width: 650, height: 320, targets, size: 44,
+    packWithinBounds: true, obstacles: [{ left: 0, right: 650, top: 195, bottom: 320 }] });
+  assert.deepEqual(targets, before, 'the actor anchors remain immutable');
+  for (const anchor of anchors) {
+    assert.equal(anchor.x, before.find(target => target.id === anchor.id).x);
+    assert.ok(anchor.y + 22 <= 193, 'the full footer clears the hand by two pixels');
+    assert.ok(!anchor.obstructed);
+  }
+  const clear = combatTargetAnchors({ width: 650, height: 320, targets, size: 44,
+    packWithinBounds: true });
+  assert.deepEqual(clear.map(({ id, x, y }) => ({ id, x, y })),
+    targets.map(({ id, x, y }) => ({ id, x, y })), 'ordinary attached plates keep their original positions');
+});
+
+test('bounded footers reserve a player details panel and a crowded hand together', () => {
+  const obstacles = [{ left: 10, right: 138, top: 100, bottom: 195 },
+    { left: 0, right: 360, top: 200, bottom: 500 }];
+  const anchors = combatTargetAnchors({ width: 360, height: 500, size: 44, packWithinBounds: true,
+    targets: [{ id: 'a', x: 108, y: 210, width: 104 }, { id: 'b', x: 250, y: 210, width: 104 },
+      { id: 'c', x: 300, y: 240, width: 104 }], obstacles });
+  const boxes = anchors.map(anchor => ({ left: anchor.x - 52, right: anchor.x + 52,
+    top: anchor.y - 22, bottom: anchor.y + 22 }));
+  const clear = (a, b) => a.right + 2 <= b.left || a.left >= b.right + 2
+    || a.bottom + 2 <= b.top || a.top >= b.bottom + 2;
+  assert.ok(anchors.every(anchor => !anchor.obstructed));
+  boxes.forEach((box, index) => {
+    assert.ok(obstacles.every(obstacle => clear(box, obstacle)));
+    assert.ok(boxes.slice(index + 1).every(other => clear(box, other)));
+  });
+});
+
+test('bounded footer packing reports an impossible panel without fabricating a clear slot', () => {
+  const anchors = combatTargetAnchors({ width: 120, height: 80, size: 44, packWithinBounds: true,
+    targets: [{ id: 'enemy', x: 60, y: 40, width: 104 }],
+    obstacles: [{ left: 0, right: 120, top: 0, bottom: 80 }] });
+  assert.equal(anchors.length, 1);
+  assert.equal(anchors[0].obstructed, true);
+  assert.ok(Number.isFinite(anchors[0].x) && Number.isFinite(anchors[0].y));
+  assert.ok(anchors[0].x >= 52 && anchors[0].x <= 68);
+  assert.ok(anchors[0].y >= 22 && anchors[0].y <= 58);
+});

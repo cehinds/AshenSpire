@@ -2,13 +2,11 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
+import { cardMarkupDom } from './helpers/card-markup-dom.mjs';
 
 // Exercise the real renderer with production registries. This records markup;
 // it does not claim to test browser geometry or accessibility trees.
-globalThis.document = { createElement: () => ({
-  dataset: {}, style: { setProperty() {} }, classList: { add() {} }, innerHTML: '',
-}) };
-globalThis.requestAnimationFrame = () => {};
+Object.assign(globalThis, cardMarkupDom());
 const registries = createRegistries(contentBundle);
 const ref = { cardId: contentBundle.cards[0].id };
 const render = (preview) => renderCard(registries, ref, { preview, tooltip: false, inspection: false }).innerHTML;

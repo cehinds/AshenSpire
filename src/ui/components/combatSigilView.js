@@ -5,14 +5,14 @@ export function sigilHtml(id, kind = 'action', { tooltip = true } = {}) {
   const catalog = kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS;
   const mark = Object.hasOwn(catalog, id) ? catalog[id] : null;
   if (!mark) return '';
-  return `<span class="combat-sigil combat-sigil-${kind}" role="img" aria-label="${esc(mark.label)}" aria-description="${esc(mark.help)}"${tooltip ? ` title="${esc(mark.label + ': ' + mark.help)}"` : ''} data-sigil="${esc(id)}"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${mark.shape}</svg></span>`;
+  return `<span class="combat-sigil combat-sigil-${kind}" role="img" aria-label="${esc(mark.label)}" aria-description="${esc(mark.help)}"${tooltip ? ` title="${esc(mark.label + ': ' + mark.help)}"` : ''} data-sigil="${esc(id)}"><svg viewBox="0 0 32 32" fill="${mark.solid ? 'currentColor' : 'none'}" fill-rule="evenodd" stroke="${mark.solid ? 'none' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${mark.shape}</svg></span>`;
 }
 
-export function cardSigilsHtml(identity, damageTypes = []) {
+export function cardSigilsHtml(identity) {
   if (!identity) return '';
-  // Card taps belong to selection; Information owns their explanations.
-  const label = ACTION_SIGILS[identity.action]?.label || '';
-  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}">${sigilHtml(identity.action, 'action', {tooltip:false})}<span class="card-type-name">${esc(label)}</span></div>`;
+  const mark = ACTION_SIGILS[identity.action];
+  // The existing bottom layer owns the footer. School and other tags use the rail.
+  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}"><span class="card-action-icon" data-card-layer="7">${sigilHtml(identity.action, 'action', {tooltip:false})}</span><span class="card-type-name" data-card-layer="8">${esc(mark.label)}</span></div>`;
 }
 
 export function sigilExplanationHtml(identity) {
@@ -31,6 +31,13 @@ export function compactCardRules(html) {
     .replace(/to the selected enemy/g, 'to target')
     .replace(/to every living enemy/g, 'to all enemies')
     .replace(/card\(s\)/g, 'cards')
+    .replace(/Draw ((?:<[^>]+>)*\d+(?:<\/[^>]+>)*) cards/g, 'Draw $1')
+    .replace(/If you have (?:starstoneCharge|Starstone Charge)/g, 'With Starstone')
+    .replace(/Apply (<span\b[^>]*>[^<]*<\/span>|\{starstoneCharge\}|\d+) starstoneCharge to yourself/g, 'Gain $1 Starstone')
+    .replace(/Starstone Charge/g, 'Starstone')
+    // Concealed's amount and duration stay on the face; inspection owns its
+    // shared definition, including the effects that reveal it.
+    .replace(/\. Concealment\. Sweep and Holy revelation clear it\./g, '.')
     .replace(/If you previously played at least (\d+) ([\w-]+) cards this turn/g, 'If $1+ $2 cards played this turn')
     .replace(/ and If /g, ' and ')
     .replace(/once per turn from this family/g, 'once per turn per family')

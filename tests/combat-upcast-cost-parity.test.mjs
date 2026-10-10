@@ -12,11 +12,10 @@ import { combatSnapshotCardCosts } from '../src/ui/models/CombatSnapshotCardCost
 import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { upcastChoicePlan } from '../src/ui/components/upcastChoice.js';
+import { cardMarkupDom } from './helpers/card-markup-dom.mjs';
 
 // Record the production renderer's resource markup, not browser geometry.
-globalThis.document = { createElement: () => ({ dataset: {}, style: { setProperty() {} },
-  classList: { add() {} }, appendChild() {}, innerHTML: '', insertAdjacentHTML(_where, value) { this.innerHTML += value; } }) };
-globalThis.requestAnimationFrame = () => {};
+Object.assign(globalThis, cardMarkupDom());
 const id = 'paid-tier-fixture';
 const ref = { instanceId: 'paid-tier-instance', cardId: id };
 const tiers = { baseTier: 2, unlockedTiers: [3, 5], maximumTier: 5, blockPerRank: 1 };

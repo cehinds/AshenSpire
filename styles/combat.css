@@ -1560,6 +1560,7 @@
 .intent-values { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: calc(5px / var(--ui-zoom, 1)); }
 .intent-value { display: inline-flex; align-items: center; gap: calc(4px / var(--ui-zoom, 1)); }
 .intent-icon { width: calc(21px / var(--ui-zoom, 1)); height: calc(21px / var(--ui-zoom, 1)); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.intent-icon[data-solid='true'] { fill: currentColor; fill-rule: evenodd; stroke: none; }
 .combatant-leading .intent[data-intent-visibility='partial'] { --intent-accent: #e7c65c; }
 .combatant-leading .intent[data-intent-visibility='unknown'] { --intent-accent: #c88aeb; color: var(--intent-accent); }
 .combatant-leading .intent[data-intent-visibility='unknown'] .intent-stance { font-size: calc(28px / var(--ui-zoom, 1)); }

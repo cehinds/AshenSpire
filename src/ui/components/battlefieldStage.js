@@ -335,29 +335,47 @@ export function wireBattlefieldStage(field, model) {
     // fight runs several refreshes before its first paint. What is written
     // below places only the absolutely positioned badge and the hit target's
     // ::after, never a box read here, so one layout serves every read.
-    const boxes = placed.map(({ frame, sprite }) => ({
+    placePlayerHud();
+    const boxes = placed.map(({ frame, sprite }) => {
+      const footers = [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')].map(footer => {
+        const rect = footer.getBoundingClientRect();
+        const [x = 0, y = 0] = footer.style.translate.split(' ').map(value => parseFloat(value) || 0);
+        return { left: rect.left - x * zoom, right: rect.right - x * zoom,
+          top: rect.top - y * zoom, bottom: rect.bottom - y * zoom, width: rect.width, height: rect.height };
+      }).filter(rect => rect.width > 0 && rect.height > 0);
+      const footerTop = Math.min(...footers.map(rect => rect.top));
+      const footerBottom = Math.max(...footers.map(rect => rect.bottom));
+      return {
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
       frameRect: frame.classList.contains('enemy-target-hitbox') || (frame.classList.contains('player-target-hitbox') && combat.dataset.waistOverlap !== 'true') ? frame.getBoundingClientRect() : null,
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
-      footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
-        .map(footer => footer.getBoundingClientRect().width)),
+      footerWidth: Math.max(0, ...footers.map(rect => rect.width)),
+      footerHeight: footers.length ? footerBottom - footerTop : 0,
+      footerCenterY: footers.length ? (footerTop + footerBottom) / 2 : null,
+      footerCenterX: footers.length ? (Math.min(...footers.map(rect => rect.left))
+        + Math.max(...footers.map(rect => rect.right))) / 2 : null,
       controls: [...frame.querySelectorAll('.combatant-leading button')]
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
-    }));
+      };
+    });
+    const compactFooters = narrow || window.innerHeight <= 480;
+    const footerObstacles = compactFooters ? [...combat.querySelectorAll('.hand, .hand .card, .player .combatant-mini-hud')]
+      .map(node => node.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0) : [];
     const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
-      lockX: true, size: Math.max(44, ...boxes.map(box => box.intentRect?.height || 0)),
-      obstacles: boxes.flatMap(box => box.controls.map(rect => ({
+      lockX: !compactFooters, packWithinBounds: compactFooters,
+      size: Math.max(44, ...boxes.map(box => Math.max(box.intentRect?.height || 0, box.footerHeight))),
+      obstacles: [...footerObstacles, ...boxes.flatMap(box => box.controls)].map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
-      }))),
+      })),
       targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
-        x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top + (box.intentRect ? box.intentRect.height / 2 : 0),
+        x: (box.footerCenterX ?? box.hostRect.left + box.hostRect.width / 2) - fieldRect.left,
+        y: (box.footerCenterY ?? box.hostRect.bottom + (box.intentRect ? box.intentRect.height / 2 : 0)) - fieldRect.top,
         width: Math.max(box.footerWidth, box.intentRect?.width || 0),
       })) });
     placed.forEach(({ frame, sprite, scale }, i) => {
@@ -375,8 +393,8 @@ export function wireBattlefieldStage(field, model) {
         frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
         frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
-          left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom - (intentRect ? intentRect.height / 2 - 5 : 0), width: 0, height: 0 }, { zoom });
+          left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
+          top: fieldRect.top + target.y - (boxes[i].footerCenterY ?? hostRect.bottom + (intentRect ? intentRect.height / 2 - 5 : 0)), width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {

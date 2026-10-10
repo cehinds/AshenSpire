@@ -1,14 +1,14 @@
 // Original monochrome marks. Identity comes from authored combat tags, never
 // a card name, damage element, class colour, or inferred effect.
-const mark = (label, shape, help) => Object.freeze({ label, shape, help });
+const mark = (label, shape, help, solid = false) => Object.freeze({ label, shape, help, solid });
 export const ACTION_SIGILS = Object.freeze({
-  attack: mark('Attack', '<path d="m6 3 17 20-3 3L3 6Zm20 0L9 23l3 3L29 6ZM5 20l7 7m8-7 7 7M3 29l5-5m16 0 5 5"/>', 'A direct attack.'),
-  defend: mark('Defend', '<path d="M16 4 26 8v9c0 6-10 11-10 11S6 23 6 17V8Z"/>', 'Guard or other defensive support.'),
-  counter: mark('Counter', '<path d="M16 3 28 7v10c0 7-12 13-12 13S4 24 4 17V7Z"/><path d="M21 13a6 6 0 1 0 1 7M21 8v5h-5"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.'),
+  attack: mark('Attack', '<path d="m3 2 7 3 15 18-3 3L6 10Zm26 0-7 3L7 23l3 3L26 10ZM3 22l7 7 2-2-7-7Zm19 5 2 2 7-7-2-2ZM2 29l2 2 4-4-2-2Zm22-2 4 4 2-2-4-4Z"/>', 'A direct attack.', true),
+  defend: mark('Defend', '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>', 'Guard or other defensive support.', true),
+  counter: mark('Counter', '<path d="M15 2 26 6v3L7 28c-3-3-4-6-4-11V7Zm11 14v2c0 6-11 12-11 12l-4-2ZM28 2l2 1-1 6L12 26l-3-3ZM6 21l7 7-2 2-7-7ZM2 29l2 2 4-4-2-2Z"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.', true),
   sweep: mark('Sweep', '<path d="M4 23q12-24 24 0M4 23h24M24 18l4 5-4 5"/>', 'An attack across several targets.'),
-  ranged: mark('Ranged', '<path d="M8 4q16 12 0 24M8 4v24M3 16h24m-6-5 6 5-6 5"/>', 'An attack made at range.'),
-  smash: mark('Smash', '<path d="m9 5 15 4-2 8-15-4ZM15 15l-4 13M23 22l4 5M5 20l-3 4"/>', 'A heavy, forceful attack.'),
-  spell: mark('Spell', '<path d="m6 29 15-19"/><circle cx="22" cy="8" r="6"/><path d="m22 3 1 4 4 1-4 1-1 4-1-4-4-1 4-1Z"/>', 'A spell. Information identifies its school.'),
+  ranged: mark('Ranged', '<path d="m30 2-5 14-4-5L10 22v6l-5 3v-6H0l4-6h6L20 9l-5-3Z"/>', 'An attack made at range.', true),
+  smash: mark('Smash', '<path d="M3 9q0-4 4-4h3q1-3 4-3h3q3 0 4 3h3q4 0 4 4v5l3 2v6l-7 6v4H10v-5l-7-7Zm6-1v8h2V8Zm7-3v11h2V5Zm7 3v8h2V8ZM8 19v3h11l6-5-2-2-5 4Z"/>', 'A heavy, forceful attack.', true),
+  spell: mark('Spell', '<path d="M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z"/>', 'A spell. Information identifies its school.', true),
   power: mark('Power', '<path d="M13 28V13H8L16 3l8 10h-5v15ZM4 16v6m-3-3h6m19 1v8m-4-4h8"/>', 'Cast once; its buff lasts for this combat. The paid card leaves play.'),
   skill: mark('Skill', '<path d="M5 17v-5l4-4 4 4v3l5-8 5 3-4 7h7v5l-9 6H9Z"/>', 'Reusable utility or a buff. Inspect for its effects.'),
   status: mark('Status', '<path d="m16 3 13 25H3ZM16 11v7m0 5h.01"/>', 'A status-effect card added to the deck, usually harmful.'),

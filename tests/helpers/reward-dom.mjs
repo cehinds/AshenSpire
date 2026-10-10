@@ -78,7 +78,7 @@ export function rewardDom() {
     stopPropagation() { this.propagationStopped = true; }
     stopImmediatePropagation() { this.immediatePropagationStopped = true; this.stopPropagation(); }
   }
-  const document = { createElement: tag => new Element(tag), createTextNode: text => { const el = new Element('text'); el.textContent = text; return el; } };
+  const document = { createElement: tag => new Element(tag), createElementNS: (namespace,tag) => { const el=new Element(tag);el.namespaceURI=namespace;return el; }, createTextNode: text => { const el = new Element('text'); el.textContent = text; return el; } };
   document.body = new Element('body');
   document.querySelectorAll = selector => document.body.querySelectorAll(selector);
   document.querySelector = selector => document.body.querySelector(selector);

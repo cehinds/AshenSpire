@@ -1,10 +1,11 @@
+import {cardSideTags, cardTagRailHtml} from '../src/ui/components/cardTagSymbols.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../src/content/combatSigils.js';
 import { compactCardRules, cardSigilsHtml, sigilExplanationHtml, sigilHtml } from '../src/ui/components/combatSigilView.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { playingCardModel, combatCardType } from '../src/model/playingCard.js';
+import { playingCardModel, combatCardType, staticCardTokens } from '../src/model/playingCard.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
@@ -42,7 +43,7 @@ test('marks preserve readable accessible names and inspection explanations', () 
   const html = cardSigilsHtml(identity);
   assert.match(html, /data-primary-sigil="spell"/);
   assert.match(html, /role="img" aria-label="Spell"/);
-  assert.match(html, /class="card-type-name">Spell<\/span>/);
+  assert.match(html, /class="card-type-name" data-card-layer="8">Spell<\/span>/);
   assert.doesNotMatch(html, /combat-sigil-school|card-damage-types/);
   assert.match(html, /focusable="false"/);
   assert.doesNotMatch(html, /tabindex=/);
@@ -57,7 +58,7 @@ test('card footer icons and corresponding intents use the same approved geometry
     assert.equal(INTENT_ICON_SHAPES[intent], ACTION_SIGILS[card].shape);
     const html=cardSigilsHtml({action:card});
     assert.ok(html.includes(ACTION_SIGILS[card].shape));
-    assert.ok(html.includes(`class="card-type-name">${ACTION_SIGILS[card].label}</span>`));
+    assert.ok(html.includes(`class="card-type-name" data-card-layer="8">${ACTION_SIGILS[card].label}</span>`));
   }
 });
 
@@ -84,4 +85,44 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
   assert.equal(actions.size, 10); assert.equal(schools.size, 8);
+});
+
+test('approved solid footer symbols stay distinct and have a visible action name', () => {
+  for(const id of ['smash','attack','counter','ranged','spell','defend']) {
+    assert.equal(ACTION_SIGILS[id].solid,true);
+    assert.match(sigilHtml(id),/fill="currentColor"/);
+    assert.match(cardSigilsHtml({action:id}),new RegExp('card-type-name" data-card-layer="8">'+ACTION_SIGILS[id].label));
+  }
+  assert.notEqual(ACTION_SIGILS.counter.shape,ACTION_SIGILS.defend.shape);
+});
+
+test('long rank effects keep their Starstone condition, values and draw limit', () => {
+  const reg=createRegistries(contentBundle),def=resolveCard(reg,{cardId:'radiantSpray',abilityRank:5});
+  assert.equal(staticCardTokens(def).starstoneCharge,1);
+  assert.deepEqual(staticCardTokens({effects:[{op:'damage',amount:{f:'add',args:[2,{f:'add',args:[3,4]}]}}]}),{damage:9});
+  assert.deepEqual(staticCardTokens({effects:[{op:'damage',amount:{f:'add',args:[2,{f:'stat',key:'strength'}]}}]}),{});
+  assert.equal(compactCardRules('Apply 1 vulnerable to every living enemy. Apply 1 starstoneCharge to yourself.'), 'Apply 1 vulnerable to all enemies. Gain 1 Starstone.');
+  assert.equal(compactCardRules('If you have starstoneCharge: Deal 4 damage to every living enemy. Apply <span class="val">1</span> starstoneCharge to yourself. Draw <span class="val">1</span> card(s), once per turn from this family.'), 'With Starstone: 4 damage to all enemies. Gain <span class="val">1</span> Starstone. Draw <span class="val">1</span>, once per turn per family.');
+});
+
+test('Ritual Ward keeps Defend below and Ritual, Spell, Divine on the right', () => {
+  const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
+  const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
+  assert.equal(model.sigils.action,'defend');
+  assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Ritual','Spell','Divine']);
+});
+
+test('three primary symbols prioritize element, status and main skill without mutating full tags', () => {
+  const reg=createRegistries(contentBundle),ref={cardId:'gorefireSlash'};
+  const model=playingCardModel(reg,ref),def=resolveCard(reg,ref),before=JSON.stringify(model.tags);
+  const chosen=cardSideTags(model,def,reg);
+  assert.ok(chosen.some(t=>t.id==='status:bleed'));
+  assert.ok(chosen.length<=3);
+  assert.ok(chosen.every(t=>t.label.toLowerCase()!==model.sigils.action));
+  assert.equal(JSON.stringify(model.tags),before);
+  const html=cardTagRailHtml(chosen);
+  assert.equal((html.match(/class="card-tag-symbol"/g)||[]).length,chosen.length);
+  assert.doesNotMatch(html,/tabindex=|title=/);
+  for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+'"'));
+  assert.equal(cardTagRailHtml([]),'');
 });

@@ -42,6 +42,7 @@ export function combatCardType(def) {
   if (['status', 'curse'].includes(def.type)) return 'Status';
   if (def.type === 'skill' && !p.maneuver) return 'Skill';
   if (p.maneuver === 'counter') return 'Counter';
+  if (p.maneuver === 'defend') return 'Defend';
   if (p.camp === 'spell') return 'Spell';
   return p.maneuver && p.maneuver !== 'casting' ? p.maneuver[0].toUpperCase() + p.maneuver.slice(1)
     : def.type[0].toUpperCase() + def.type.slice(1);
@@ -170,8 +171,16 @@ export function combatCardSummary(def, preview = null, registries = null) {
 export function staticCardTokens(def) {
   const tokens = {};
   const effects = cardTokenEffects(def);
+  // Rank composition wraps constant stacks in add formulas. Resolve only
+  // constant sums here; state-dependent values still belong to live preview.
+  const constant = value => {
+    if (typeof value === 'number') return value;
+    if (value?.f !== 'add' || !Array.isArray(value.args)) return undefined;
+    const args = value.args.map(constant);
+    return args.every(Number.isFinite) ? args.reduce((sum, item) => sum + item, 0) : undefined;
+  };
   for (const binding of computeTokenBindings(effects)) {
-    const value = (effects[binding.index] || {})[binding.field];
+    const value = constant((effects[binding.index] || {})[binding.field]);
     if (typeof value === 'number') tokens[binding.token] = value;
   }
   return tokens;
@@ -287,9 +296,10 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     ? abilityRank === 0 ? 'Cantrip' : 'Spell'
     : abilityRank === 0 ? 'Technique' : 'Combat Maneuver';
   const legacyRank = Number.isInteger(def.rank) && def.rank > 1 ? def.rank : 1;
-  const rankBadge = abilityRank !== null ? `R${abilityRank}` : legacyRank > 1 ? `R${legacyRank}` : null;
+  const visibleRank=abilityRank??(legacyRank>1||Number.isInteger(ref.rank)&&ref.rank>0?legacyRank:0);
+  const rankBadge = visibleRank > 0 ? `Rank ${visibleRank}` : null;
   const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
-    : legacyRank > 1 ? `Rank ${legacyRank}` : '';
+    : rankBadge || '';
 
   return freeze({
     id: def.id,
