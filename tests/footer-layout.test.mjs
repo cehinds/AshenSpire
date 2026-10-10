@@ -31,7 +31,8 @@ for (const width of [288, 320, 390]) {
     const compact = packCombatFooter({ width: width / zoom, height: 64 / zoom, zoom, rem: 24 });
     assert.ok(compact.supported && compact.groupWidth <= width / zoom);
     assert.equal(compact.pileWidth * zoom, 44);
-    assert.equal(compact.diameter * zoom, 52);
+    // The 64px cap (compactCombat.footerDiameterMaxPx) or the band height, whichever binds.
+    assert.ok(compact.diameter * zoom > 52 && compact.diameter * zoom <= 64 + 1e-9);
     assert.ok(compact.endWidth * zoom >= 56, 'the primary action stays larger than either pile');
     assert.ok(compact.diameter > compact.pileWidth, 'resources and potions outrank piles');
   }

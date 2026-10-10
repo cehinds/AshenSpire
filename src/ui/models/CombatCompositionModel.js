@@ -78,14 +78,16 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
       halfWidth: player ? undefined : halfWidth };
   });
-  return separateEnemies(fitted, width);
+  // A short landscape strip has no room above the row for spread overheads;
+  // its depth ranks keep their packed overhead lanes instead.
+  return width <= height * 2 ? separateEnemies(fitted, width) : fitted.map(({ halfWidth, ...fit }) => fit);
 }
 
 // Depth ranks share a formation column, so a phone can stack one enemy
-// wholly behind another. Sweep enemies apart in x order until at most a
-// quarter of their widths overlap (depth still reads), then shift the group
-// back inside the stage; enemies already apart never move.
-function separateEnemies(fits, width, overlap = .25) {
+// wholly behind another. Sweep enemies apart in x order until their art no
+// longer overlaps (their overhead intent and HP need the room), then shift
+// the group back inside the stage; enemies already apart never move.
+function separateEnemies(fits, width, overlap = 0) {
   const enemies = fits.filter(fit => Number.isFinite(fit.halfWidth)).sort((a, b) => a.x - b.x);
   for (let i = 1; i < enemies.length; i++) {
     const prev = enemies[i - 1], cur = enemies[i];
