@@ -25,6 +25,16 @@ function mounted(version, seed = 11) {
 const route = (definition, run, version) => resolveCombatAnimation(definition,
   equippedPieces(registries, run.loadout, run.class), { combatExpansionVersion: version, classId: run.class, appearance: 'classic' });
 
+test('triggered alternative counters use the selected return attack for every default class', () => {
+  const attack = { type: 'attack', kindIds: ['classification.attack'], cardTags: ['camp:physical', 'maneuver:attack'] };
+  for (const classId of ['reaver', 'starseer', 'herald', 'rogue']) {
+    const plan = resolveCombatAnimation(attack, [], { classId, appearance: 'alternative', combatExpansionVersion: 2, counterTriggered: true });
+    assert.equal(plan.technique, 'counter');
+    assert.equal(plan.rest, null, 'the reaction does not replace the last confirmed stance');
+    assert.equal(resolveCombatAnimation(attack, [], { classId, appearance: 'classic', counterTriggered: true }).technique, 'attack');
+  }
+});
+
 for (const version of [1, 2]) test(`actual mounted Shield Bash version ${version} uses the committed action and permanent instance`, () => {
   const { run, card } = mounted(version);
   const combat = createRunCombat({ registries, run, rng: createRng(11), enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });

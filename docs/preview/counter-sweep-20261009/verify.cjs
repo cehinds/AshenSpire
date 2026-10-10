@@ -33,8 +33,13 @@ const server=http.createServer((req,res)=>{
       assert(!stage.el.dataset.artError,actor+' asset load');
       assert(stage.el.dataset.effect===selections[actor].sequences[action].effects[1],actor+' contact effect');
       assert(stage.currentArt.image.src.includes('/contact.webp'),actor+' selected contact');
+      if(action==='sweep')assert(stage.currentArt.left>128,actor+' forward sweep motion');
       stage.seek(action,130,260);assert(stage.el.dataset.effect.endsWith('effect-2'),actor+' recovery');
       stage.seek(action,200,260);assert(stage.pose==='ready'&&!stage.el.dataset.effect,actor+' idle cleanup');
+      if(action==='counter'){
+        stage.seek('counterPrepare',130,260);
+        assert(stage.pose===actor+'.counter.stance'&&!stage.el.dataset.effect,actor+' preparation holds without a counterattack');
+      }
       stage.setStance(action);stage.settle();assert(stage.pose==='stance-'+action,actor+' held stance');
       stage.setRestPose('defeated');assert(stage.pose==='defeated'&&!stage.el.dataset.effect,actor+' defeat overrides stance');
       stage.setRestPose('idle');stage.setStance(null);
@@ -47,7 +52,7 @@ const server=http.createServer((req,res)=>{
     document.body.classList.remove('reduce-flashes');document.body.classList.add('reduced-motion');
     // The explicit settle path used by instant/reduced playback clears both layers.
     for(const {stage} of stages){stage.settle();assert(!stage.el.dataset.effect,'settle clears trails');}
-    return {clips:8,contactAndRecoveryEffects:true,originalIdle:true,heldStances:true,defeatPriority:true,reduceFlashes:true};
+    return {clips:8,contactAndRecoveryEffects:true,originalIdle:true,heldStances:true,counterPreparation:true,sweepTravel:true,defeatPriority:true,reduceFlashes:true};
   });
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.evaluate(()=>{for(const {action,stage} of stages){stage.play(action,260);if(stage.el.dataset.effect||stage.pose!=='ready')throw Error('reduced motion playback');}});

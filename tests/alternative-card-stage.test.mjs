@@ -57,6 +57,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
     stage.setStance(null);stage.setRestPose('counter');assert.equal(stage.pose,'reaver.counter.stance','counter uses the selected preparation');
     stage.setRestPose('idle');
+    stage.setRestPose('counter');stage.play('counterPrepare',260);step(100);
+    assert.equal(stage.pose,'reaver.counter.stance','preparation holds the selected stance without swinging');
+    assert.equal(stage.el.dataset.effect,'','preparation never emits the counter impact trail');
+    step(160);assert.equal(stage.pose,'reaver.counter.stance','confirmed preparation remains held after its beat');
+    stage.setRestPose('idle');
     stage.play('attack',260,['stamina']);step(115);
     assert.equal(stage.pose,'attack-contact');
     assert.ok(paints.some(p=>p.args[0]?.url?.includes('attack-contact')&&p.args[1]===208&&p.args[2]===16),'the source figure advances 80 pixels at the authored floor anchor');

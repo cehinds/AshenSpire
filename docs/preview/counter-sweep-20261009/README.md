@@ -6,6 +6,8 @@ Each action plays stance, contact, recovery and the existing ready frame in 55/6
 
 Confirmed counter and physical sweep cards select their new held player stance; the next turn resets that selection through the existing ledger. Defeat still takes priority. Enemy intent projection is unchanged. Solo, co-op and deck previews share the same stage and sequence data. The original idle, attack, defend and casting image files and catalogs remain unchanged.
 
+Playing a counter card holds its preparation frame without a swing or slash. The triggered counter reaction plays the selected return attack in both solo and co-op; card previews show that full clip.
+
 The art repository retains PNG sources, exact generation prompts, SVG effects, four portable Sprite Workshop projects, the selection JSON and the labeled Play/Pause/Step/Reset preview in `art/player-counter-sweep-2026-10-09/`. The asset release is pinned by `art-release.json`; `src/content/playerCounterSweepSprites.js` records the high-export hashes and shared 512px registration for 256px raster exports.
 
 ## Verification

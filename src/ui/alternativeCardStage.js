@@ -37,7 +37,13 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   const attacks = Object.entries(playerAttackSprites[classId] || {});
   const family = { ...base,
     frames: { ...base.frames, ...selected.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
-    sequences: { ...base.sequences, ...selected.sequences, ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
+    sequences: { ...base.sequences, ...selected.sequences,
+      // Preserve the original forward sweep while fitting its four painted phases.
+      sweep: { ...selected.sequences.sweep, travel: [0,
+        base.sequences.sweep.travel[base.sequences.sweep.impact],
+        base.sequences.sweep.travel[base.sequences.sweep.impact + 1], 0] },
+      counterPrepare: { poses: [selected.stances.counter], durations: [260], impact: 0, travel: [0], hold: true },
+      ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
       ['attack', 'spell', 'ranged', 'rangedMagic'].map(action => [`weapon:${action}:${name}`, { ...entry.sequence, action }]))) },
   };
   const heldFrames = { ...alternativeSelectedStances.classes[classId]?.frames,

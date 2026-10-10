@@ -11,9 +11,12 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, appearance = 'alternative', combatExpansionVersion } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, appearance = 'alternative', combatExpansionVersion, counterTriggered = false } = {}) {
   const classDefault = appearance === 'alternative' ? cardActionPlan(card, classId) : null;
-  if (classDefault) return playerAttackPlan(card, equipment, classId, classDefault);
+  if (classDefault) {
+    const plan = playerAttackPlan(card, equipment, classId, classDefault);
+    return counterTriggered ? { ...plan, technique: 'counter', rest: null } : plan;
+  }
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));

@@ -100,7 +100,7 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
       const dimensions = stage.el.style.cssText;
       stage.setStance('defensive');
       const beforeReadbacks = readbacks.length;
-      stage.play('attack', 260); // The reaction runtime uses this for an automatic Counter.
+      stage.play('counter', 260); // Automatic counters use their selected return attack.
       assert.equal(readbacks.length, beforeReadbacks + 1, 'action preparation materializes the first visible pixel');
       assert.equal(readbacks.at(-1).canvas, stage.currentArt.canvas, 'readback belongs to the visible stage, not its aura work surface');
       assert.equal(stage.stance, 'defensive');
@@ -119,9 +119,7 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
             assert(art.image.url.includes(`/player-counter-sweep/${classId}/${action}/`), 'selected body phases own the counter/sweep motion');
           }
         }
-        // Selected counter/sweep motion is painted inside the registered frame;
-        // only the original attack and smash sequences add canvas travel.
-        if (['attack', 'smash'].includes(action)) assert(positions.some(x => x > 128));
+        if (['attack', 'smash', 'sweep'].includes(action)) assert(positions.some(x => x > 128));
         else assert(positions.every(x => x === 128), `${action} must stay anchored`);
         stage.settle();
         assert.equal(stage.currentArt.left, 128);
