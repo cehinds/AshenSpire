@@ -159,7 +159,7 @@
   padding: 0; border: 0; background: none; box-shadow: none;
 }
 :root .combat[data-layout='formation'] .combat-tools > button {
-  min-height: calc(44px / var(--ui-zoom,1)); height: calc(44px / var(--ui-zoom,1));
+  min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
   font-size: calc(11px / var(--ui-zoom,1)); white-space: nowrap;
 }
@@ -281,6 +281,9 @@
   background: none; border: 0; padding: 0; margin: 0;
 }
 :root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > :is(.nm,.meters) { border-color: var(--combatant-highlight); }
+:root .combat[data-layout='formation'] .enemy:not(.context-selected)::after { display: none; }
+:root .combat[data-compact-combat='true'] .enemy.context-selected .combat-health-row { --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); }
+:root .combat[data-compact-combat='true'] .enemy.context-selected .combatant-card > .meters { padding: calc(2px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud {
   border-color: var(--combatant-highlight); padding: calc(4px / var(--ui-zoom,1));
 }
@@ -290,5 +293,27 @@
   width: calc(24px / var(--ui-zoom,1)); height: calc(24px / var(--ui-zoom,1));
   min-width: 0; min-height: 0; padding: 0; border: 0; background: none; box-shadow: none; color: var(--gold);
 }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); padding-bottom: calc(12px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); min-height: var(--health-row-h); padding-bottom: calc(12px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
+
+/* Compact details keep all three rows readable without a 44px empty HP slot. */
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(128px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { padding: 0; gap: 0; }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm { height: calc(13px / var(--ui-zoom,1)); min-height: 0; }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { gap: 0 calc(4px / var(--ui-zoom,1)); }
+:root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row {
+  --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h);
+  --combatant-value-text: calc(11px / var(--ui-zoom,1));
+  height: var(--health-row-h); min-height: var(--health-row-h);
+}
+@media (max-width: 320px) {
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(4px / var(--ui-zoom,1)); }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm {
+    grid-column: 1; grid-row: 1; height: calc(12px / var(--ui-zoom,1));
+    font-size: calc(9px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
+  }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { display: contents; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row { grid-column: 2; grid-row: 1; min-width: 0; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud [data-meter-row='resource'] { grid-row: 2; min-width: 0; }
+}

@@ -54,7 +54,7 @@ try {
       await log.tap(); await page.waitForTimeout(250);
       const small = await snapshot(); assert(small.open && small.size === 'Small');
       assert(Math.abs(small.hand.right - small.tools.right - 6) < 1, 'toolbar aligned to hand right');
-      assert(Math.abs(small.tools.top - small.hand.top - 30) < 1, 'toolbar lowered in card band');
+      assert(Math.abs(small.tools.top - small.hand.top) < 1, 'toolbar occupies the reserved top row of the card band');
       const maxDelta = small.tools.top - 6 - small.menuBottom - 8 - small.rect.height;
       dragScale = Math.max(1, maxDelta / Math.max(24, Math.min(120, height - small.tools.bottom - 8)));
       const large = await drag(maxDelta);

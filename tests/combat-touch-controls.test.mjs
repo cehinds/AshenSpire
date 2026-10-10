@@ -6,13 +6,16 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const css = read('../styles/combat-layers.css');
 const battlefield = read('../src/ui/components/battlefieldStage.js');
 const hand = read('../src/ui/components/hand.js');
+const tools = read('../src/ui/components/combatTools.js');
 const combat = read('../src/ui/screens/combat.js');
 const coop = read('../src/ui/screens/coop.js');
 
-test('formation controls retain 44px physical touch targets and active paging', () => {
-  assert.match(css, /\.combat-tools > button\s*\{[^}]*min-height:\s*calc\(44px \/ var\(--ui-zoom,1\)\);[^}]*height:\s*calc\(44px \/ var\(--ui-zoom,1\)\)/s);
-  assert.match(css, /--inspect-box:\s*calc\(44px \/ var\(--ui-zoom,1\)\)/);
-  assert.match(css, /\.combat-health-row\s*\{[^}]*min-height:\s*calc\(44px \/ var\(--ui-zoom,1\)\)/s);
+test('approved compact Inspect and HP shapes retain active paging', () => {
+  const inspectSizes = [...css.matchAll(/[^{}]*\.combatant-leading > \.combatant-info\s*\{([^}]*)\}/g)]
+    .flatMap(match => [...match[1].matchAll(/--inspect-box:\s*calc\((\d+)px \/ var\(--ui-zoom,\s*1\)\)/g)].map(size => Number(size[1])));
+  assert(inspectSizes.length > 0, 'the Inspect size contract must be present');
+  assert(inspectSizes.every(size => size === 22), 'player-specific overrides cannot enlarge the approved 22px Inspect control');
+  assert.match(css, /\.combatant:not\(\.context-selected\) \.combat-health-row\s*\{[^}]*--health-row-h:\s*calc\(7px \/ var\(--ui-zoom,1\)\)/s);
   assert.match(css, /\.hand-overlay > :is\(\.hand-prev,\.hand-next\)\s*\{\s*pointer-events:\s*auto;/);
 });
 
@@ -23,7 +26,13 @@ test('expanded combat panels and selected details stay in the correct layer', ()
 
 test('compact geometry reserves the measured controls and overhead gaps', () => {
   assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
-  assert.match(hand, /const toolsHeight = 34 \/ zoom;/);
+  const reserve = Number(hand.match(/const toolsHeight = (\d+) \/ zoom;/)?.[1]);
+  const dockOffset = Number(tools.match(/top: \(handBox\?\.top \|\| 0\) \+ (\d+)/)?.[1] ?? (tools.includes('top: handBox?.top || 0') ? 0 : NaN));
+  const toolHeight = Number(css.match(/\.combat-tools > button\s*\{[^}]*height:\s*calc\((\d+)px \/ var\(--ui-zoom,1\)\)/s)?.[1]);
+  assert([reserve, dockOffset, toolHeight].every(Number.isFinite), 'all toolbar dimensions must be accounted for');
+  assert.equal(toolHeight, 30, 'approved compact toolbar height');
+  assert.equal(reserve, 34, 'the compact fan reserves the toolbar and its clearance');
+  assert(reserve >= dockOffset + toolHeight + 4, 'card reservation must include toolbar offset, height and clearance');
 });
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {

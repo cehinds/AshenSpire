@@ -88,7 +88,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // hand width: doing that collapsed every card onto one slot on phones.
     combatEl.style.setProperty('--combat-tools-reserve', '0px');
     const localDock = anchorLocalBox(combatEl, { left: (handBox?.right || innerWidth) - width - 6,
-      top: (handBox?.top || 0) + 30, width: 0, height: 0 }, { zoom });
+      top: handBox?.top || 0, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
     root.style.left = `${localDock.left}px`;
     root.style.right = 'auto';

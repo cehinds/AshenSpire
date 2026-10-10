@@ -79,7 +79,7 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
           const covered=blockers.filter(o => intersects(control,control.x,o));
           if (!covered.length) break;
           const nextY=Math.min(...covered.map(o => o.top-half-2));
-          if (nextY<half) break;
+          if (nextY<Math.max(half, source.minY ?? half)) break;
           control.y=nextY;
         }
       }
