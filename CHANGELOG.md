@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
-- **Reserve combat HUD targets and keep self-cast proxies reachable** ([#1788](https://github.com/cehinds/AshenSpire/pull/1788), `0.7.1.1231`). The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.
+- **Reserve combat HUD targets and keep self-cast proxies reachable** ([#1792](https://github.com/cehinds/AshenSpire/pull/1792), `0.7.1.1232`). The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.
 
 ## 2026-10-09
 
