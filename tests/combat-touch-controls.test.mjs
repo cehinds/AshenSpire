@@ -6,6 +6,7 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const css = read('../styles/combat-layers.css');
 const battlefield = read('../src/ui/components/battlefieldStage.js');
 const hand = read('../src/ui/components/hand.js');
+const tools = read('../src/ui/components/combatTools.js');
 const combat = read('../src/ui/screens/combat.js');
 const coop = read('../src/ui/screens/coop.js');
 
@@ -23,7 +24,9 @@ test('expanded combat panels and selected details stay in the correct layer', ()
 
 test('compact geometry reserves the measured controls and overhead gaps', () => {
   assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
-  assert.match(hand, /const toolsHeight = 34 \/ zoom;/);
+  assert.match(hand, /const toolsHeight = 48 \/ zoom;/);
+  assert.match(tools, /top: handBox\?\.top \|\| 0/);
+  assert.doesNotMatch(tools, /top: \(handBox\?\.top \|\| 0\) \+ 30/);
 });
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {
