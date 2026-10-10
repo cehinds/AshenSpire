@@ -22,9 +22,11 @@ export function deckCardAnimationPlan(registries, run, ref) {
   const definition = resolveCard(registries, ref);
   const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
   const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
-  const plan = resolveCombatAnimation({ ...definition, cardTags: tags,
+  let plan = resolveCombatAnimation({ ...definition, cardTags: tags,
     animationTags: combatEffectTags(registries, definition), sourceArmamentId: ref.sourceArmamentId,
   }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance() });
+  // Preview the eventual return attack; live card play receives the held brace.
+  if (plan.technique === 'counterPrepare') plan = { ...plan, technique: 'counter' };
   const sequence = plan.alternative && (playerAttackSequence(run.class, plan.technique) || playerCounterSweepSprites[run.class]?.sequences[plan.technique] || alternativeCardAnimations.classes[run.class]?.sequences[plan.technique]);
   if (sequence) return { animation: null, plan, sequence, frames: sequence.poses, armourId: 'default',
     duration: durationFor(sequence, ANIM_SPEEDS[getAnimSpeed()]), frameMs: 260 / sequence.poses.length };

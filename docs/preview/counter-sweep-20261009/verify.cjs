@@ -16,6 +16,8 @@ const server=http.createServer((req,res)=>{
   await page.evaluate(async()=>{
     const {createAlternativeCardStage}=await import('/src/ui/alternativeCardStage.js');
     const {playerCounterSweepSprites}=await import('/src/content/playerCounterSweepSprites.js');
+    const {resolveCombatAnimation}=await import('/src/model/combatAnimation.js');
+    window.prepareCounter=classId=>resolveCombatAnimation({cardTags:['camp:physical','maneuver:counter']},[],{classId});
     window.stages=[];window.selections=playerCounterSweepSprites;
     for(const actor of ['reaver','starseer','herald','rogue'])for(const action of ['counter','sweep']){
       const panel=document.createElement('section');panel.style.cssText='padding:20px;background:#303943;color:#f4efe6;min-height:300px;overflow:visible';
@@ -37,7 +39,8 @@ const server=http.createServer((req,res)=>{
       stage.seek(action,130,260);assert(stage.el.dataset.effect.endsWith('effect-2'),actor+' recovery');
       stage.seek(action,200,260);assert(stage.pose==='ready'&&!stage.el.dataset.effect,actor+' idle cleanup');
       if(action==='counter'){
-        stage.seek('counterPrepare',130,260);
+        const plan=prepareCounter(actor);assert(plan.rest==='counter',actor+' preparation rest');
+        stage.seek(plan.technique,130,260);
         assert(stage.pose===actor+'.counter.stance'&&!stage.el.dataset.effect,actor+' preparation holds without a counterattack');
       }
       stage.setStance(action);stage.settle();assert(stage.pose==='stance-'+action,actor+' held stance');

@@ -15,7 +15,9 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation, c
   const classDefault = appearance === 'alternative' ? cardActionPlan(card, classId) : null;
   if (classDefault) {
     const plan = playerAttackPlan(card, equipment, classId, classDefault);
-    return counterTriggered ? { ...plan, technique: 'counter', rest: null } : plan;
+    if (counterTriggered) return { ...plan, technique: 'counter', rest: null };
+    // Both queued snapshots and paced beats receive preparation, never retaliation.
+    return plan.technique === 'counter' ? { ...plan, technique: 'counterPrepare' } : plan;
   }
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);

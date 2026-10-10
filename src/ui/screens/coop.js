@@ -2013,7 +2013,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
               appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion, counterTriggered: !!returned });
           sprite.dataset.actionFamily = plan.family;
           sprite.dataset.actionMotion = plan.motion;
-          pose = stage?.setRestPose ? (!returned && plan.technique === 'counter' ? 'counterPrepare' : plan.technique) : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
+          pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
         } else {
           const definition = registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
           const plan = resolveActionAnimation({ actorId: moved.enemyId, actionId: moved.moveId,

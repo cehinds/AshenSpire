@@ -4,6 +4,7 @@ import { rewardDom } from './helpers/reward-dom.mjs';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { setAnimSpeed } from '../src/ui/fx.js';
 import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
+import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
 
 test('Classic appearance leaves its upstream stage in charge without allocating an alternative canvas', () => {
   try {
@@ -57,7 +58,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
     stage.setStance(null);stage.setRestPose('counter');assert.equal(stage.pose,'reaver.counter.stance','counter uses the selected preparation');
     stage.setRestPose('idle');
-    stage.setRestPose('counter');stage.play('counterPrepare',260);step(100);
+    const preparation=resolveCombatAnimation({cardTags:['camp:physical','maneuver:counter']},[],{classId:'reaver'});
+    stage.setRestPose(preparation.rest);stage.play(preparation.technique,260);step(100);
     assert.equal(stage.pose,'reaver.counter.stance','preparation holds the selected stance without swinging');
     assert.equal(stage.el.dataset.effect,'','preparation never emits the counter impact trail');
     step(160);assert.equal(stage.pose,'reaver.counter.stance','confirmed preparation remains held after its beat');

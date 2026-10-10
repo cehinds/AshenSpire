@@ -18,7 +18,8 @@ test('rear class choreography follows resolved cards with stationary guard and r
     const card = { cardTags: ['maneuver:' + maneuver, 'camp:' + (magical ? 'spell' : 'physical')] };
     const plan = resolveCombatAnimation(card, [], { classId });
     assert.equal(plan.technique, action === 'spell' ? 'weapon:spell:energy-blade'
-      : action === 'rangedMagic' ? 'weapon:rangedMagic:staff-casting' : action);
+      : action === 'rangedMagic' ? 'weapon:rangedMagic:staff-casting'
+      : action === 'counter' ? 'counterPrepare' : action);
     assert.equal(plan.family, ['counter', 'defend'].includes(action) ? 'guard'
       : action.startsWith('ranged') ? 'projectile' : action === 'spell' ? 'spell' : 'strike');
     const sequence = actions.classes[classId].sequences[action];
