@@ -98,6 +98,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     root.dataset.logSize = state.size;
   }
   const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
+  function flushGeometry() {
+    if (frame) cancelAnimationFrame(frame);
+    measure();
+  }
   const observer = new ResizeObserver(schedule);
   observer.observe(combatEl);
   const footer = combatEl.querySelector('.combat-action-row'); if (footer) observer.observe(footer);
@@ -128,7 +132,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     }
     schedule();
   }
-  return { update,
+  return { update, flushGeometry,
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
     release() { released = true; observer.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };

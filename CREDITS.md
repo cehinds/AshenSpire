@@ -594,3 +594,13 @@ hashes. `tools/alternative-selected-stances-export.mjs` reproduces the browser
 Canvas normalization. Four embedded Sprite Workshop projects accompany the
 exports under `pose-studio/stances/selected-projects/`. No new third-party
 artwork or license is introduced by this integration.
+
+### Reviewed default-outfit player attacks (2026-10-09)
+
+Original OpenAI-generated paintings and reused first-party AshenSpire poses power
+32 four-phase attack sequences for Reaver, Starseer, Herald and Rogue.
+[Retained PNGs, prompts and review provenance](https://github.com/cehinds/AshenSpire-art/tree/main/art/player-attacks-2026-10-09)
+identify each source and reused pose. Runtime exports live under
+`assets/animations/player-attacks/`; light twins follow the art repository policy.
+The four provisional spear sequences are excluded. No third-party artwork was
+downloaded and no third-party license is claimed.

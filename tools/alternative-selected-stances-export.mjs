@@ -33,25 +33,29 @@ try{
  for(const e of exports){
   const actor=e.choice.actor,stance={attack:'offensive',defend:'defensive',casting:'casting'}[e.choice.stance];
   const dir='assets-display/alternative/stances/'+actor;mkdirSync(root+dir,{recursive:true});
-  const path=dir+'/'+stance+'.webp',lite=dir+'/'+stance+'-mobile.webp',full=Buffer.from(e.full,'base64'),small=Buffer.from(e.lite,'base64');
+  // Runtime rasters share the 256px export; choreography retains its 512px canvas.
+  const path=dir+'/'+stance+'.webp',lite=dir+'/'+stance+'-mobile.webp',full=Buffer.from(e.lite,'base64'),small=Buffer.from(e.lite,'base64');
   writeFileSync(root+path,full);writeFileSync(root+lite,small);
   catalog.hashes[path.replace('assets-display/alternative/','')]=sha(full);catalog.hashes[lite.replace('assets-display/alternative/','')]=sha(small);
   const item=catalog.classes[actor]??={frames:{}};
-  item.frames[stance]={path,lite,size:[512,512],bounds:e.bounds,anchor:[256,464],sha256:sha(full),liteSha256:sha(small),sourceOption:e.choice.sourceOption,source:e.choice.source,sourceBounds:e.sourceBounds,scale:e.scale};
+  item.frames[stance]={path,lite,size:[512,512],rasterSize:[256,256],bounds:e.bounds,anchor:[256,464],sha256:sha(full),liteSha256:sha(small),sourceOption:e.choice.sourceOption,source:e.choice.source,sourceBounds:e.sourceBounds,scale:e.scale};
  }
  catalog.filePaths=Object.fromEntries(Object.keys(catalog.hashes).map(file=>[file,'assets-display/alternative/'+file]));
  writeFileSync(root+'src/content/alternativeSelectedStances.js','// Owner-selected held poses, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n');
+ if (!process.argv.includes('--runtime-only')) {
  mkdirSync(root+'pose-studio/stances/selected-projects',{recursive:true});
  for(const [actor,{frames}]of Object.entries(catalog.classes)){
   const rig={schemaVersion:1,id:'alternative.selected-stances.'+actor,name:actor+' · selected stances',canvas:{width:512,height:512},assets:{},poses:{},animations:{},queues:{}};
   for(const [stance,f]of Object.entries(frames)){
-   rig.assets[stance]={id:stance,src:'data:image/webp;base64,'+readFileSync(root+f.path).toString('base64')};
+   const master=exports.find(e=>e.choice.actor===actor && {attack:'offensive',defend:'defensive',casting:'casting'}[e.choice.stance]===stance);
+   rig.assets[stance]={id:stance,src:'data:image/webp;base64,'+master.full};
    rig.poses[stance]={id:stance,name:stance,reviewed:true,notes:'Owner-selected pose. Flattened source artwork; floor registration only.',bones:[],layers:[{id:'figure',name:'Selected figure',role:'body',assetId:stance,x:0,y:0,rotation:0,scale:1,opacity:1,pivot:[256,464],visible:true,locked:false,anchors:[{id:'floor',kind:'joint',name:'Floor',x:256,y:464}]}]};
    rig.animations[stance]={id:stance,name:stance,frames:[{id:stance+'-held',poseId:stance,duration:260,event:'',overrides:{}}]};
   }
   rig.queues.review={id:'review',name:'Selected stances',items:Object.keys(frames).map(s=>({id:s,animationId:s,repeats:1,pause:600}))};
   writeFileSync(root+'pose-studio/stances/selected-projects/'+actor+'.rig.json',JSON.stringify(rig,null,2)+'\n');
  }
- console.log('Exported 12 approved stances, 24 Full/Lite assets and four Workshop projects.');
+ }
+ console.log('Exported 12 approved stances and 24 compact runtime assets.');
 }finally{await browser.close();}
 
