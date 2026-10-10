@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1795",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Enemy combat art gains painted action sets",
+    "detail": "Integrate 33 enemy sets with melee, ranged, spell, guard and reaction frames through the shared art loader. Preserve existing action timing and reduced-motion behavior. The continuation handoff records remaining angle, clipping and halo review.",
+    "build": "0.7.1.1231",
+    "pullRequest": 1795,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1795"
+  },
+  {
     "id": "pr-1789",
     "date": "2026-10-09",
     "group": "2026-10-09",
