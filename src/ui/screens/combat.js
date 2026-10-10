@@ -1465,7 +1465,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     if (!existing) box.addEventListener('click', event => {
       if (!selfArm || !event.target.closest('.combatant-mini-hud')) return;
-      event.preventDefault(); event.stopPropagation();
+      // The ordinary frame click handler is registered on this same element.
+      // Consuming a HUD click must stop that sibling listener too, otherwise a
+      // choice card such as Warrior's Vow can open its modal twice.
+      event.preventDefault(); event.stopImmediatePropagation();
       playCard(selfArm, null);
     }, true);
     if (!existing) zone.appendChild(box);

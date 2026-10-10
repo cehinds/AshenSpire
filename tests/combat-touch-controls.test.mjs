@@ -41,3 +41,8 @@ test('unarmed intent taps preserve the selection-first tooltip path', () => {
   assert.match(combat, /selectCombatant\(enemy\.id\);[\s\S]*?return false;/);
   assert.match(coop, /selectCombatant\(e\.id\);[\s\S]*?return false;/);
 });
+
+test('an armed self-target HUD click reaches only one frame listener', () => {
+  assert.match(combat,
+    /if \(!selfArm \|\| !event\.target\.closest\('\.combatant-mini-hud'\)\) return;[\s\S]*?event\.stopImmediatePropagation\(\);[\s\S]*?playCard\(selfArm, null\);/);
+});
