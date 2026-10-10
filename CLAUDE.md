@@ -33,8 +33,12 @@ CI builds and publishes it as a workflow artifact, and a pull request commits
 only `buildordinal.json` and the generated changelog module from its rebuild
 (DEVELOPER.md, *Run & test*).
 
-How AI work is routed between models, efforts, and subagents is in
-[docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
+**Main session orchestrates; Haiku subagents do the work** (owner, 2026-10-10).
+The main session (Opus 5.5) plans, briefs, verifies, reviews findings and lands
+PRs; scoped implementation, searches and test runs go to the `ashen-worker`
+agent (Haiku 5.5, `.claude/agents/`), risky diffs are reviewed by
+`ashen-reviewer` (Opus 5.5). The loop, brief template and escalation rules are
+in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).
 Both are advisory and never override SPEC.md, CONTRIBUTING.md, or DEVELOPER.md.

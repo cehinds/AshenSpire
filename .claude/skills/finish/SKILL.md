@@ -55,7 +55,10 @@ with the files it touches, and group tasks into **waves** whose file sets do
 not overlap.
 
 ## Phase 3 — Execute (Workflow, wave by wave)
-For each wave, run a pipeline with one agent per task, in parallel:
+For each wave, run a pipeline with one agent per task, in parallel. Task agents
+run on Haiku (`model: 'haiku'`) from an orchestrator brief, and risky diffs are
+reviewed on Opus (docs/ai/AI-ROUTING.md §5–§8). Receipts, merges and promotion
+stay with the orchestrator:
 a. Branch `feature/<topic>` from `dev`; the PR targets `dev`.
 b. Write a failing test or reproduction first, when one applies.
 c. Make the smallest change that fixes it; content goes in data, not code.

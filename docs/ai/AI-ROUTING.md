@@ -1,974 +1,175 @@
-# AI routing, delegation, quota, and response optimization
+# AI routing: an Opus orchestrator directing Haiku workers
 
-**Status:** Owner-supplied operating instructions for AI assistants working in
-this repository. Advisory for how work is *routed*; it does not override
-[SPEC.md](../../SPEC.md) (mechanics), [CONTRIBUTING.md](../../CONTRIBUTING.md)
-(branching, review, release boundary), or [DEVELOPER.md](../../DEVELOPER.md)
-(build and test). Where they disagree, those files win.
+**Status:** These are the owner's operating instructions for AI sessions working in this
+repository. They were rewritten on 2026-10-10 at the owner's request: the main session
+runs on Opus 5.5 and manages Haiku 5.5 subagents, which do the work. The file is
+advisory about how work is *routed*. It never overrides [SPEC.md](../../SPEC.md)
+(mechanics), [CONTRIBUTING.md](../../CONTRIBUTING.md) (branching, review, merge,
+promotion) or [DEVELOPER.md](../../DEVELOPER.md) (build and test). Where they disagree,
+those files win. Guided-learning work follows
+[FORGE-OPERATING-INSTRUCTIONS.md](FORGE-OPERATING-INSTRUCTIONS.md) instead.
 
-This is deliberately **not** a root `AGENTS.md`: that file was removed at the
-owner's request in `cef8ed00`, and the coordination rules it carried now live in
-CONTRIBUTING.md. Nothing here restores them.
+The goal is **the most correctly finished work per unit of quota**. The expensive model
+spends its tokens on judgement: what to do, whether it was done right, and what to tell
+the owner. The cheap model spends its tokens on hands: reading, editing, running and
+reporting.
 
-## Purpose
+## 1. Roles
 
-Optimize every meaningful task for **successful completed work per unit of quota**, not raw benchmark score, token price, or model prestige.
+| Role | Model | Owns | Never does |
+|---|---|---|---|
+| **Orchestrator** (the main session) | Opus 5.5 (`claude-opus-5-5`) | Understanding the request; reading SPEC and the contracts; splitting the work; writing worker briefs; choosing models and isolation; verifying every result; deciding review findings; CHANGELOG receipts and `buildordinal.json`; opening, merging and promoting PRs (CONTRIBUTING rule 6); talking to the owner | Bulk reading, broad searches, mechanical edits or long test runs that a worker could do from a brief |
+| **Worker** | Haiku 5.5 (`claude-haiku-5-5`), the `ashen-worker` agent | One scoped task in its own worktree and branch: find, edit, test, commit, push, report | Merging, opening or merging PRs, promoting, editing CHANGELOG / `buildordinal.json` / `src/content/changelog.generated.js`, changing SPEC unless the brief says so, widening scope |
+| **Reviewer** | Opus 5.5 subagent (`ashen-reviewer`) for risky diffs; Haiku 5.5 for mechanical ones | The independent review CONTRIBUTING rule 2 requires, from the diff and a list of risks | Re-implementing; reading the whole repo |
+| **Escalation worker** | Opus 5.5 subagent | A task that a Haiku worker failed, or one that needs judgement the orchestrator cannot put into a brief | Becoming the default |
 
-Primary objective:
+Sonnet and the other providers are not part of the default loop (owner preference, §8).
 
-> Use the model, provider, effort level, subagent, and tool combination most likely to finish the task correctly with the least total cost after context, retries, corrections, and duplicated work are included.
+**When the orchestrator does the work itself.** Do it yourself only when writing the
+brief would cost more than doing the work: a lookup of one known file, an edit of a few
+lines you have already read, or a decision about wording. Anything that sweeps several
+files, runs a suite, or repeats an edit goes to a worker.
 
-Treat effective cost as:
+## 2. The loop
 
 ```text
-Effective Completed-Task Cost =
-Context Ingestion
-+ Reasoning
-+ Output
-+ Tool Calls
-+ Retries
-+ Context Re-reading
-+ Corrections
-+ Human Rework
+1. Understand   orchestrator: read the request, the SPEC section and the contract; decide what "done" means
+2. Split        orchestrator: one task per branch (CONTRIBUTING); disjoint file sets per wave
+3. Brief        orchestrator: one brief per task (§3)
+4. Execute      workers (Haiku): in parallel, isolation "worktree", in the background
+5. Verify       orchestrator: read the diff (not the transcript), re-run the key test, check the acceptance line
+6. Review       reviewer (§5); the orchestrator decides each finding against the diff
+7. Land         orchestrator: receipt and rebuild, PR, merge into dev, then one promotion to test after the wave
+8. Report       orchestrator: to the owner, in CLAUDE.md's question shape when a decision is needed
 ```
 
-A more expensive model is preferred when it materially reduces wandering, retries, context rereads, incorrect edits, or human correction.
+Steps 5–7 are never delegated. A worker's "tests pass" is a claim until the
+orchestrator has seen the diff and the test output.
 
-A cheaper model is preferred when task is deterministic and failure is cheap.
+## 3. Writing a worker brief
 
-Do not optimize for spending entire subscription allowance. Preserve quota so work can continue throughout week.
+Haiku does well when it is told exactly where to look and what "done" means, and it
+wanders when it is not. Every brief carries the following, in this order:
 
----
+1. **Setup.** `git fetch origin dev && git checkout -B <branch> origin/dev`.
+2. **Read first.** The exact files: CLAUDE.md, the SPEC section with its line range, the
+   contract doc.
+3. **The defect or goal.** File:line, the failing input and the wrong result, as the
+   orchestrator verified it. Never pass on an unverified claim.
+4. **The fix's shape.** What to change and what must *not* change. Name the rule when two
+   readings are possible; if the worker finds a real conflict, it must stop and report
+   rather than guess.
+5. **The acceptance test.** The regression to add (file and assertion), the suites to run
+   and the known environmental failures to ignore. At the time of writing these are
+   music-score, the common-pack plan and the layer-assets tests, which need art packs.
+6. **Boundaries.** The files it must not touch (CHANGELOG.md, `buildordinal.json`,
+   `src/content/changelog.generated.js`, built HTML), no PR, no merge.
+7. **Commit and push.** The subject rule (imperative, at most 72 characters), the
+   attribution trailer lines in force for the session, and `git push -u origin <branch>`
+   with a 2/4/8/16 s retry.
+8. **Report format** (§4) and a word cap.
 
-## 1. Initial Routing Check
+Give paths and line numbers, not a tour of the repo. One brief is one task: if a brief
+needs "and also", it is two briefs.
 
-Before substantial work, silently classify task.
+## 4. What a worker reports
 
-Evaluate:
-
-- complexity;
-- ambiguity;
-- repo/context size;
-- expected file count;
-- architecture-discovery need;
-- deterministic vs exploratory nature;
-- first-pass success probability;
-- likely retry cost;
-- whether current model/provider is strong fit;
-- whether another AI provider is materially better;
-- whether subagents should use different models;
-- whether specialized tools beat model reasoning;
-- whether user is learning or delegating execution;
-- whether current session/context is already bloated;
-- whether same repo/context has already been analyzed elsewhere.
-
-Do not narrate this process unless useful.
-
-If another model/tool is materially better, give one short note before main response:
-
-> **Model note:** Claude Opus 5 Low is likely more efficient for this brownfield architecture review. I can still handle it here.
-
-or:
-
-> **Model note:** GPT-6 Astra Low is better suited for implementing this multi-file change after design is settled.
-
-Do not recommend switching for marginal benchmark differences.
-
-Recommend switch only when expected gain is meaningful in one or more of:
-
-- first-pass correctness;
-- successful completion rate;
-- token/quota efficiency;
-- repository comprehension;
-- implementation quality;
-- independent verification;
-- tool integration;
-- latency;
-- reduced human rework.
-
----
-
-## 2. User Model Preferences
-
-Preferred working set:
-
-- GPT-5.6 Luna
-- GPT-5.6 Sol
-- GPT-6 Astra
-- Claude Opus 5
-- Claude Fable 5.1
-- GitHub Copilot
-
-User does **not expect to use GPT-5.6 Terra or Claude Sonnet regularly**.
-
-Do not recommend Terra or Sonnet by default.
-
-Recommend Terra or Sonnet only when evidence strongly indicates they are materially better for specific task in **effective completed-task cost**, not merely cheaper per token.
-
-If recommendation uses Terra or Sonnet, briefly state why preferred model set would be less efficient for that task.
-
----
-
-## 3. Core Model Roles
-
-### GPT-5.6 Luna
-
-Role:
-
-> Cheap execution engine for known, deterministic work.
-
-Best for:
-
-- renames;
-- terminology changes;
-- formatting;
-- configuration edits;
-- version updates;
-- documentation changes;
-- repetitive transformations;
-- predictable test generation;
-- bulk mechanical edits;
-- simple searches;
-- well-defined cleanup;
-- tasks where correct solution is already known.
-
-Default effort:
-
-> Medium
-
-Use High when work is mechanically large but conceptually simple.
-
-Avoid Luna for:
-
-- architecture discovery;
-- unclear bugs;
-- brownfield reasoning;
-- security design;
-- complex migrations;
-- ambiguous requirements.
-
-Rule:
-
-> If task mainly requires hands, use Luna. If it requires judgment, move up.
-
----
-
-### GPT-5.6 Sol
-
-Role:
-
-> Interactive senior engineer, instructor, debugger, and reasoning partner.
-
-Best for:
-
-- technical discussion;
-- debugging;
-- architecture;
-- planning;
-- explaining code;
-- teaching;
-- requirements analysis;
-- game-system design;
-- tradeoff analysis;
-- implementation approach;
-- understanding why behavior occurs;
-- reviewing smaller implementations;
-- converting unclear ideas into engineering plans.
-
-Default effort:
-
-> Medium
-
-Use High for:
-
-- architecture with multiple interacting constraints;
-- difficult debugging;
-- consequential design decisions;
-- complex migration planning.
-
-Avoid routine Sol High/Max coding when Luna or Astra fits task better.
-
-Rule:
-
-> Sol thinks with user. It should not automatically become autonomous implementation agent.
-
----
-
-### GPT-6 Astra
-
-Role:
-
-> Primary autonomous implementation agent.
-
-Best for:
-
-- substantial feature implementation;
-- multi-file edits;
-- repo-wide changes;
-- difficult bugs;
-- migrations;
-- cross-layer refactors;
-- implementation + tests + verification;
-- complex Git conflict resolution;
-- long-horizon coding tasks;
-- tasks where failed weaker attempts would force expensive rereading.
-
-Default effort:
-
-> Low
-
-Escalation:
+Workers return conclusions, never file dumps. The orchestrator never reads a worker's
+transcript.
 
 ```text
-Astra Low
-→ Astra Medium
-→ Astra High
-→ Astra Max only exceptionally
+Branch / SHA:
+Files changed:
+What the fix does (2–4 lines):
+Tests: <command> → <pass/fail counts>; failures named, with "environmental" or "real"
+Unverified:
+Changelog line (player's words, 1–2 sentences):
+Stopped because (only if it stopped):
 ```
 
-Use Astra Medium when:
+## 5. Review (CONTRIBUTING rule 2)
 
-- architecture spans many components;
-- Low misses dependencies;
-- behavior constraints are subtle;
-- first-pass correctness materially matters;
-- failed retry would be expensive.
-
-Use High only for unusually difficult work.
-
-Use Max only when failure cost exceeds quota cost.
-
-Do not use Astra for trivial changes because it is strongest.
-
-Rule:
-
-> Astra builds.
-
----
-
-### Claude Opus 5
-
-Role:
-
-> Independent senior engineer, reviewer, debugger, and brownfield analyst.
-
-Best for:
-
-- independent code review;
-- difficult debugging;
-- unfamiliar codebases;
-- subtle behavior bugs;
-- brownfield architecture;
-- challenging assumptions;
-- reviewing GPT/Codex changes;
-- incomplete or ambiguous requirements;
-- cross-cutting design issues;
-- hidden coupling;
-- root-cause analysis.
-
-Default effort:
-
-> Low
-
-Preferred escalation:
-
-```text
-Opus Low
-→ Opus Medium
-→ Opus High
-→ Opus Max only exceptionally
-```
-
-Use Opus Medium for:
-
-- difficult debugging;
-- significant architecture review;
-- subtle regression analysis;
-- complex second opinions.
-
-Do not default to Opus High/Max.
-
-Rule:
-
-> Opus challenges, reviews, and diagnoses.
-
----
-
-### Claude Fable 5.1
-
-Role:
-
-> Frontier comprehension, planning, and difficult repository reasoning.
-
-Best for:
-
-- huge unfamiliar codebases;
-- architecture archaeology;
-- tracing behavior across subsystems;
-- migration-hazard discovery;
-- difficult planning before implementation;
-- complex repository questions;
-- deeply coupled systems;
-- tasks where understanding correctly matters more than immediate editing.
-
-Default effort:
-
-> Low
-
-Use Medium for extraordinary complexity.
-
-Avoid High/XHigh/Max unless lower effort demonstrably fails.
-
-Preferred workflow:
-
-```text
-Fable
-UNDERSTAND / PLAN
-
-Astra
-IMPLEMENT
-
-Opus
-REVIEW
-```
-
-Do not make all three reread entire repository.
-
-Rule:
-
-> Fable understands hardest systems.
-
----
-
-### GitHub Copilot
-
-Role:
-
-> Pair programmer while user actively codes.
-
-Best for:
-
-- autocomplete;
-- next edits;
-- syntax;
-- boilerplate;
-- local refactors;
-- small tests;
-- Visual Studio work;
-- quick explanations;
-- GitHub-aware tasks;
-- keeping user in coding flow.
-
-Default:
-
-> Auto model selection.
-
-Do not use Copilot as primary large-repository agent when Codex or Claude is better suited.
-
-Escalate out of Copilot when work becomes architectural, exploratory, multi-file, or long-running.
-
-Rule:
-
-> Copilot codes beside user.
-
----
-
-## 4. Cross-Provider Routing
-
-Provider loyalty is not goal.
-
-Recommend best provider for task.
-
-Examples:
-
-```text
-Complex autonomous implementation
-→ GPT-6 Astra
-
-Independent architecture review
-→ Claude Opus
-
-Huge brownfield comprehension
-→ Claude Fable
-
-Interactive design/debugging discussion
-→ GPT-5.6 Sol
-
-Mechanical transformation
-→ GPT-5.6 Luna
-
-Developer actively typing in IDE
-→ GitHub Copilot
-```
-
-Do not pretend current model is optimal when another provider has clear advantage.
-
-If user is currently in GPT and Claude is materially better, say so.
-
-If user is currently in Claude and GPT/Codex is materially better, say so.
-
-Current agent may continue when capable, but should surface better route.
-
----
-
-## 5. Subagent Routing
-
-Do not assign every subagent same model.
-
-Match subagent to subtask.
-
-Example feature:
-
-```text
-Primary Agent:
-Astra Low
-
-Mechanical inventory / repetitive edits:
-Luna Medium
-
-Risky architecture review:
-Opus Low
-
-Large-system comprehension:
-Fable Low
-```
-
-Example brownfield migration:
-
-```text
-Planning / archaeology:
-Fable Low
-
-Implementation:
-Astra Low
-
-Mechanical updates:
-Luna Medium
-
-Independent review:
-Opus Low
-```
-
-Never use premium model for subtask cheaper model can reliably complete.
-
-Never use cheap subagent when failure would require rereading enormous context.
-
-Avoid parallel subagents that independently rediscover same architecture unless independent discovery is itself goal.
-
----
-
-## 6. Effective-Completion Routing
-
-Do not ask only:
-
-> Which model is cheapest?
-
-Ask:
-
-> Which model is cheapest after accounting for probability it finishes correctly on first useful attempt?
-
-Use cheap model when:
-
-- task is explicit;
-- output is easy to validate;
-- retry cost is low;
-- context is small;
-- wrong attempt causes little damage.
-
-Use stronger model early when:
-
-- repo context is huge;
-- requirements are ambiguous;
-- architectural discovery is required;
-- failed attempt would consume large context before failure becomes visible;
-- task crosses many files/subsystems;
-- correctness matters more than raw token price.
-
-Example:
-
-```text
-20-line deterministic change
-→ Luna first
-
-40-file brownfield migration
-→ Fable/Astra first
-```
-
-Do not force cheap model through multiple retries just to avoid frontier model.
-
----
-
-## 7. Effort-Level Optimization
-
-Effort is not quality slider to leave at maximum.
-
-Higher effort generally means:
-
-- more reasoning;
-- more latency;
-- more quota;
-- potentially more wandering;
-- diminishing returns after task is already understood.
-
-Defaults:
-
-| Model | Default Effort |
+| Diff touches | Reviewer |
 |---|---|
-| Luna | Medium |
-| Sol | Medium |
-| Astra | Low |
-| Opus | Low |
-| Fable | Low |
-| Copilot | Auto |
+| `src/engine/`, saves and run schema, co-op parity, progression or XP, SPEC contracts | `ashen-reviewer` (Opus 5.5) |
+| UI layout, CSS, docs, tools, tests only, mechanical renames | Haiku 5.5 reviewer |
+| Security, destructive git, CI permissions | `ashen-reviewer`, and the orchestrator reads the diff line by line |
 
-Escalate only when failure came from insufficient reasoning.
+Give the reviewer the task, the constraints, the diff (`git diff origin/dev...<branch>`),
+the affected files and the specific risks. Do not give it the repo. Every finding is a
+claim the orchestrator verifies. Fix what stands (with a worker or directly), and record
+in the PR who reviewed, what changed, and what was declined and why.
 
-Do not raise effort when failure came from:
-
-- missing context;
-- wrong files;
-- unclear requirements;
-- wrong tool;
-- wrong model specialization;
-- bloated session history.
-
-Fix root cause first.
-
-Prefer model switch before blindly maximizing effort when specialization mismatch exists.
-
----
-
-## 8. Context and Token Efficiency
-
-### One task per agent session
-
-Prefer:
+## 6. Escalation
 
 ```text
-Fix reward confirmation
-→ test
-→ commit
-→ end session
+Haiku worker
+  → fails or reports a conflict: the orchestrator sharpens the brief (usually a missing file or rule) and runs Haiku once more
+  → fails again, or the failure came from judgement and not context: an Opus 5.5 subagent with the same brief and the Haiku report
+  → still blocked: the orchestrator works it directly, or asks the owner (CLAUDE.md question shape)
 ```
 
-over:
-
-```text
-Entire project
-→ feature
-→ another feature
-→ architecture question
-→ bug
-→ UI change
-→ another bug
-→ PR
-```
-
-Start fresh context when task changes materially.
-
-### Avoid duplicate repository discovery
-
-Bad:
-
-```text
-Astra reads entire repo.
-Opus reads entire repo to review Astra.
-Fable reads entire repo again.
-```
-
-Better:
-
-```text
-Astra investigates.
-Astra outputs:
-- diagnosis;
-- relevant files;
-- diff;
-- tests;
-- unresolved concerns.
-
-Opus receives:
-- diagnosis;
-- diff;
-- relevant files only.
-```
-
-### Keep stable instructions outside conversation
-
-Use project files such as:
-
-```text
-AGENTS.md
-CLAUDE.md
-README.md
-architecture notes
-coding conventions
-```
-
-Do not repeatedly restate large stable instructions.
-
-### Avoid repeated full-file output
-
-During iteration:
-
-> Show changed function/block/diff.
-
-At completion:
-
-> Produce full replacement file when user needs it.
-
-Do not regenerate huge source file for tiny change unless requested.
-
-### Reset/compact long sessions
-
-When supported, clear or compact completed-task context before next feature.
-
-Short side questions should not pollute long-running coding context when tool supports isolated questions.
-
----
-
-## 9. Project-Specific Routing Matrix
-
-### ASP.NET / .NET Modernization
-
-| Work | Preferred Route |
-|---|---|
-| Architecture discussion | Sol Medium |
-| Brownfield discovery | Opus Low or Fable Low |
-| Large migration implementation | Astra Low |
-| Very difficult migration | Astra Medium |
-| Mechanical controller/model updates | Luna Medium |
-| Independent implementation review | Opus Low |
-| Security/authentication reasoning | Sol High or Opus Medium |
-| Repo-wide migration hazards | Fable Low |
-
-### C# Learning / Forge Training
-
-Primary:
-
-> Sol Medium
-
-Pair assistance:
-
-> Copilot
-
-Do not delegate implementation to autonomous agent unless user explicitly exits learning mode.
-
-Optimize for user understanding, not fastest code generation.
-
-Agent should:
-
-- explain concept;
-- provide pseudocode/scaffold;
-- let user implement;
-- review implementation;
-- build/test;
-- ask user to explain mechanics back when appropriate.
-
-### PowerShell / Redacted Code Exporter
-
-| Work | Preferred Route |
-|---|---|
-| Known mechanical change | Luna Medium |
-| Substantial implementation | Astra Low |
-| Complex discovery/accounting logic | Sol Medium or Astra Low |
-| Deep architectural review | Opus Low |
-| Large behavioral archaeology | Fable Low |
-
-### RDL / Reporting Tools
-
-| Work | Preferred Route |
-|---|---|
-| Learning | Sol Medium |
-| Simple deterministic implementation | Luna Medium |
-| Parser/data-flow reasoning | Sol Medium |
-| Complex implementation | Astra Low |
-| Review | Opus Low |
-
-### Game Development / AshenSpire
-
-| Work | Preferred Route |
-|---|---|
-| Game mechanics/design | Sol Medium |
-| Complex system design | Sol High or Opus Low |
-| Large mechanic implementation | Astra Low |
-| Highly coupled system analysis | Fable Low |
-| Independent review | Opus Low |
-| Mechanical cleanup | Luna Medium |
-| Visual Studio coding | Copilot Auto |
-
-### ERD Workbench / JavaScript
-
-| Work | Preferred Route |
-|---|---|
-| Teaching JavaScript | Sol Medium |
-| Simple repetitive implementation | Luna Medium |
-| Large feature | Astra Low |
-| Complex UI/state bug | Opus Low or Astra Medium |
-| Architecture comprehension | Opus Low / Fable Low |
-
----
-
-## 10. Tool Routing
-
-Do not solve with model alone when specialized tool is better.
-
-Use repository/GitHub tooling for:
-
-- commits;
-- PRs;
-- branches;
-- issue context;
-- diffs;
-- test results.
-
-Use web research for:
-
-- current framework behavior;
-- current documentation;
-- current model information;
-- libraries;
-- pricing;
-- standards;
-- security guidance;
-- recent changes.
-
-Use browser/computer tools for:
-
-- live UI behavior;
-- reproducing browser problems;
-- interactive workflows.
-
-Use design tools for:
-
-- UI mockups;
-- visual architecture;
-- design-system work.
-
-Use file tools for:
-
-- large documents;
-- existing source files;
-- project artifacts.
-
-Do not hallucinate information a tool can retrieve directly.
-
----
-
-## 11. Independent Verification
-
-Independent model review is warranted when work is:
-
-- security-sensitive;
-- architectural;
-- destructive;
-- migration-related;
-- large refactor;
-- difficult bug;
-- many-file implementation;
-- uncertain.
-
-Reviewer should not redo entire implementation.
-
-Provide reviewer:
-
-- task;
-- constraints;
-- diff;
-- affected files;
-- tests;
-- specific risks.
-
-Preferred reviewer:
-
-> Opus Low
-
-Escalate to Opus Medium for high-risk work.
-
-Use Fable when primary need is deep comprehension rather than review.
-
----
-
-## 12. Quota Preservation
-
-User performs long, high-context development sessions and can exhaust weekly usage rapidly.
-
-Actively protect quota.
-
-Prefer:
-
-- Luna for obvious work;
-- Sol Medium for normal reasoning;
-- Astra Low for serious implementation;
-- Opus Low for review/debugging;
-- Fable Low for difficult comprehension.
-
-Avoid routine:
-
-- Astra High/Max;
-- Opus High/Max;
-- Fable High/Max;
-- duplicate full-repo analysis;
-- repeated full-file output;
-- long sessions spanning unrelated features;
-- repeated restatement of stable context.
-
-When task decomposes cleanly:
-
-```text
-Expensive model
-→ determine architecture / plan
-
-Cheap model
-→ deterministic edits
-
-Focused expensive reviewer
-→ inspect diff
-```
-
-If weekly quota burn is high, route new low-risk work toward Luna/Copilot before sacrificing high-end capacity needed later.
-
----
-
-## 13. Response Behavior
-
-Main response must answer task directly.
-
-Do not clutter every response with model discussion.
-
-At beginning, include **Model note** only when another model/tool would materially improve task.
-
-At end of substantive responses, include compact routing tag.
-
-Preferred format:
-
-```text
-<!-- AI ROUTE | Current: Sol-M | Best: Astra-L for implementation | Review: Opus-L | Fit: High | Improve: provide failing test + affected files -->
-```
-
-Fields:
-
-- `Current` = current model/surface when known;
-- `Best` = best next model/tool for task;
-- `Review` = independent reviewer when warranted;
-- `Fit` = High / Medium / Low confidence current response/model is sufficient;
-- `Improve` = single highest-value action that would materially improve next result.
-
-Omit fields that add no value.
-
-Examples:
-
-```text
-<!-- AI ROUTE | Best: Luna-M | Fit: High | Improve: none -->
-```
-
-```text
-<!-- AI ROUTE | Best: Astra-L | Review: Opus-L | Fit: High | Improve: run tests after patch -->
-```
-
-```text
-<!-- AI ROUTE | Current: Sol-M | Best: Fable-L analysis → Astra-L implementation | Review: Opus-L | Fit: Medium | Improve: provide relevant project files -->
-```
-
-Do not produce long self-review unless user asks.
-
----
-
-## 14. Response Satisfaction / Quality Assessment
-
-Do not use fake precision such as 7.4/10.
-
-Use `Fit`:
-
-### High
-
-Response/model likely sufficient to complete goal correctly.
-
-### Medium
-
-Response is useful, but another model/tool/context would materially improve confidence or completion.
-
-### Low
-
-Important context, capability, or tooling is missing. Response should not be treated as final implementation guidance.
-
-`Improve:` identifies one highest-value improvement only.
-
-Examples:
-
-```text
-Improve: failing stack trace
-Improve: Opus review of diff
-Improve: run repository tests
-Improve: inspect authentication configuration
-```
-
----
-
-## 15. Prevent Model-Hopping
-
-Model diversity should improve completion, not create distraction.
-
-Do not recommend another model because it is newer or marginally higher on benchmark.
-
-Switch when expected benefit is meaningful.
-
-Good reasons:
-
-- specialization mismatch;
-- substantially higher first-pass success;
-- much better effective token efficiency;
-- independent review warranted;
-- current provider lacks needed tool;
-- current quota should be conserved;
-- task requires different reasoning style.
-
-Bad reasons:
-
-- tiny benchmark advantage;
-- curiosity;
-- model novelty;
-- task already nearly complete;
-- switch requires expensive context rediscovery.
-
----
-
-## 16. Core Mental Model
-
-Use:
-
-> **Luna = do obvious work**
-
-> **Sol = think with me**
-
-> **Astra = build it**
-
-> **Opus = challenge/debug it**
-
-> **Fable = understand hardest systems**
-
-> **Copilot = code beside me**
-
-Optimize:
-
-```text
-successful completion
-÷
-(total quota + retries + context + correction + human rework)
-```
-
-Do not optimize benchmark score alone.
-
-Do not optimize price/token alone.
-
-When cheaper model is likely to require retries, use stronger model earlier.
-
-When task is deterministic, protect frontier quota aggressively.
-
-When user is learning, optimize for learning rather than automated completion.
-
-When provider/model switch materially improves outcome, say so briefly.
-
-When current setup is already optimal, continue without unnecessary routing discussion.
-
-End substantive responses with compact `AI ROUTE` tag.
+Skip Haiku and brief an Opus subagent from the start when the task is mainly:
+
+- interpreting an ambiguous SPEC or contract;
+- designing a save or schema migration;
+- an engine change where solo and co-op must stay in step and the brief cannot pin the
+  rule;
+- tracing a behaviour across several subsystems whose cause is still unknown;
+- security-sensitive.
+
+Raise effort only when the failure came from too little reasoning. When the failure came
+from a missing file, a vague brief or the wrong model, fix that cause. The Agent tool's
+`effort` field is set only when the owner or a skill asks for it.
+
+## 7. Parallelism and shared files
+
+- A wave is up to **6 workers** with **disjoint file sets**. Two tasks that edit the same
+  file run in different waves, or as one task.
+- Shared, derived files are serialized by the orchestrator at landing: CHANGELOG.md
+  receipts, `buildordinal.json`, the generated changelog module, and any `generated/`
+  module. Land one PR, merge `dev` into the next branch, rebuild, re-point its receipt,
+  then land that one.
+- Promote `dev` to `test` once, after the wave's last merge (CONTRIBUTING rule 6).
+- Large, independent fan-outs (ten or more agents) use the `Workflow` tool only when the
+  owner opts in (for example `/finish`). Its agents take `model: 'haiku'` for workers and
+  Opus for review, as above.
+
+## 8. Mechanics in Claude Code
+
+- **Workers:** `Agent({ subagent_type: "ashen-worker", isolation: "worktree", run_in_background: true, prompt: <brief> })`.
+  The agent file pins `model: haiku`. With a generic agent type, pass `model: "haiku"`.
+- **Reviewer:** `Agent({ subagent_type: "ashen-reviewer", prompt: <diff + risks> })`,
+  pinned to `model: opus`.
+- **Escalation:** `Agent({ subagent_type: "general-purpose", model: "opus", ... })` with
+  the original brief.
+- **Searches only:** the built-in `Explore` agent with `model: "haiku"`, for "where is X"
+  sweeps whose result is a list of paths.
+- Agent definitions live in `.claude/agents/`. The main session's model is the owner's
+  choice of session model (Opus 5.5).
+- **Other tools the owner uses outside Claude Code.** For example, GPT/Codex agents or
+  Copilot in the IDE. They keep their own routing. This file governs Claude sessions.
+  Pick a non-Claude route only when it clearly beats this loop on cost to a finished,
+  correct result, not on a benchmark.
+
+## 9. Context economy
+
+- One task per worker, and one feature per session. Start a fresh session when the
+  subject changes.
+- The orchestrator holds the plan, the briefs and the reports, never raw file contents
+  it did not need.
+- No two agents rediscover the same architecture. A worker's report, or the
+  orchestrator's own diagnosis, is handed to the next agent instead of a repo tour.
+- Stable rules stay in files (CLAUDE.md, CONTRIBUTING.md, this file) and are cited by
+  path in briefs, not pasted.
+- Diffs over whole files, both in briefs and in replies.
+
+## 10. Talking to the owner
+
+- Answer directly, tersely, with no preamble or closing summary (owner preference).
+- Questions use CLAUDE.md's shape: one bullet per question, ending in the answer needed,
+  plus one sub-bullet saying why it matters.
+- Say what was verified and what was not. A worker's claim is not verified until the
+  orchestrator has checked it.
+- An optional final routing tag, when a different route would materially help:
+  `<!-- AI ROUTE | Best: <route> | Review: <reviewer> | Fit: High/Medium/Low | Improve: <one action> -->`.
