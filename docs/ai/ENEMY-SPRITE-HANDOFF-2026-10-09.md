@@ -59,3 +59,9 @@ After integrating current dev/player attacks, 14 focused tests passed. Source co
 ### Transfer layout
 
 Runtime high/light frames, source sheets, overrides, references and the rebuild script are committed to the art repository. Generated PNG exports, contact sheets and embedded projects remain in the complete local package and are reproducible with `node build.cjs` plus Sharp. The full ready-to-open export snapshot is additionally preserved locally on art branch `codex/enemy-sprite-expansion` at `f1ecc42`; the lean merge branch is `codex/enemy-sprite-runtime-integration`. This avoids transferring duplicate embedded copies of every painted frame and does not change the runtime pack hashes.
+
+### Delivery checkpoints
+
+Art PR https://github.com/cehinds/AshenSpire-art/pull/20 merged at 0b0ca43e57c36b588998e0a4df35bf340eff0508. Pack CI and automatic publication succeeded. Release hd-assets-v18 published 2026-10-10T06:49:03Z; all high/light/common hashes match the locally verified candidates. Game integration PR: https://github.com/cehinds/AshenSpire/pull/1795. Verify its current merge/promotion status before continuing; do not infer merge from this checkpoint.
+
+Next art pass: rebuild/open the portable projects, inspect all contact sheets at game scale, repair marked cell-edge intersections and matte halos, correct Stitched Hound's side-on idle toward the approved front three-quarter screen-left angle, and obtain a decision on the Stitched King design. Keep committed-action timing and hidden-intent boundaries intact. Run actual combat after replacements and validate on a physical phone. Do not treat the generated approval count as owner acceptance.
