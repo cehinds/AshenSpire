@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1785",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Enemy names remain inspectable beside fighter targets",
+    "detail": "The full enemy name opens inspection beside an independent 44px fighter-selection core within the existing footer. Native input uses the actual side-core geometry while retaining keyboard inspection, conditional card/flask targeting, full obstacle footprints, artwork and hand positions.",
+    "build": "0.7.1.1209",
+    "pullRequest": 1785,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1785"
+  },
+  {
+    "id": "pr-1784",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Crowded combat targets keep a clear HUD slot",
+    "detail": "When the player panel blocks enemy footers on short phone screens, one bounded placement retry clears more targets while preserving full HUD and Info footprints, artwork, hand positions and honest obstruction reporting.",
+    "build": "0.7.1.1207",
+    "pullRequest": 1784,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1784"
+  },
+  {
+    "id": "pr-1783",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "The historical Alternative Test promotion is recorded",
+    "detail": "Restore the missing receipt for the reviewed alternative combat promotion without changing its original build identity or the surrounding history.",
+    "build": "0.7.1.1205",
+    "pullRequest": 1783,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1783"
+  },
+  {
     "id": "pr-1781",
     "date": "2026-10-09",
     "group": "2026-10-09",
@@ -221,6 +251,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1142",
     "pullRequest": 1750,
     "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1744",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative combat sigils and checkpoints reached Test",
+    "detail": "The reviewed alternative combat card sigils, complete effects, checkpoints and reachable tutorial controls were promoted to Alternative Test with the existing battlefield artwork and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1744,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1744"
   },
   {
     "id": "pr-1737",

@@ -2,7 +2,100 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handLayout, handGeometryKey, restingHandEnvelope } from '../src/ui/models/HandLayout.js';
 import { playerDetailsPlacement } from '../src/ui/models/PlayerDetailsPlacementModel.js';
-import { visibleCombatPanelRect, combatControlWidth } from '../src/ui/components/battlefieldStage.js';
+import { visibleCombatPanelRect, combatControlWidth, packCombatTargetsWithHud } from '../src/ui/components/battlefieldStage.js';
+import { combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
+
+test('actual 1203 phone XL blocked feet obtain a full clear footer pack after one HUD retry', () => {
+  // Passive packaged capture: field top74.734375, HUD128x79.9375, hidden
+  // physical44px Info door, full104px enemy footers and the resting hand.
+  const fieldTop = 74.734375, fieldHeight = 275.203125, handTop = 354.4850323884865;
+  const door = 43.98876382978723;
+  const targets = [
+    { id:'player', x:91.65625, y:477.3125-fieldTop+22, width:48 },
+    { id:'e1', x:165.7421875, y:303.15625-fieldTop+22, width:104 },
+    { id:'e2', x:263.2421875, y:303.15625-fieldTop+22, width:104 },
+    { id:'e3', x:165.734375, y:259.109375-fieldTop+22, width:104 },
+  ];
+  const intents = [
+    {left:113.25,right:209.25,top:195.453125,bottom:249.84375},
+    {left:215.25,right:311.25,top:195.453125,bottom:249.84375},
+    {left:117.75,right:213.75,top:129.953125,bottom:184.34375},
+  ];
+  const fixed = [
+    {left:0,right:390,top:0,bottom:fieldTop},
+    {left:92.8125,right:297.1875,top:fieldTop,bottom:97.078125},
+    {left:241.96875,right:378,top:458.09375,bottom:550.09375},
+    {left:78.625,right:142.640625,top:557.984375,bottom:650},
+    {left:145.828125,right:244.171875,top:566.265625,bottom:641.71875},
+    {left:247.359375,right:311.375,top:557.984375,bottom:650},
+    {left:314.5625,right:390.015625,top:566.265625,bottom:641.71875},
+    {left:0,right:241.953125,top:handTop,bottom:557.984375}, ...intents,
+  ];
+  const placement = {art:{right:153.359375,top:346.3804572610294},width:128,height:79.9375,
+    viewport:{left:0,top:0,right:390,bottom:650},handTop,hudBottom:fieldTop,leftOverhang:door};
+  const originalInputs = structuredClone({targets,fixed,placement});
+  let hud = {left:163.359375,top:264.5625}, packCount = 0, hudCount = 0;
+  const obstacles = () => [...fixed, {left:hud.left-door-8,right:hud.left+128+8,
+    top:hud.top-8,bottom:hud.top+79.9375+8}]
+    .map(r=>({...r,top:r.top-fieldTop,bottom:r.bottom-fieldTop}));
+  const pack = () => { packCount++;
+    return combatTargetAnchors({width:390,height:650-fieldTop-60,size:44,
+      lockX:true,maxShiftX:44,targets,obstacles:obstacles()}); };
+  const before = pack(); packCount = 0;
+  assert.deepEqual(before.filter(t=>t.obstructed).map(t=>t.id).sort(),['e1','e3'],
+    'the actual panel footprint reproduces the packaged native failure');
+  const targetCores = targets.map(t=>({id:t.id,left:t.x-22,right:t.x+22,
+    top:fieldTop+t.y-22,bottom:fieldTop+t.y+22}));
+  const fit = () => packCombatTargetsWithHud({pack,targetCores,placeHud:cores=>{
+    hudCount++;
+    assert.deepEqual(cores.map(c=>c.id).sort(),['e1','e3'],'only blocked original physical cores constrain the retry');
+    hud = playerDetailsPlacement({...placement,obstacles:[...intents,...cores]});
+  }});
+  const after = fit();
+  assert.equal(packCount,2,'one initial pack and one bounded retry');
+  assert.equal(hudCount,1);
+  assert.ok(hud.left>230,'the panel uses the clear right-side slot');
+  assert.ok(hud.left-door>=10&&hud.left+128<=380,'the complete Info/panel footprint remains visible');
+  assert.ok(hud.top+79.9375<=handTop-10,'the panel keeps the authored hand clearance');
+  const rect = t=>({left:t.x-t.width/2,right:t.x+t.width/2,top:t.y-22,bottom:t.y+22});
+  const clear = (a,b)=>a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom;
+  for(const target of after){
+    assert.equal(target.obstructed,false,target.id+' is fully clear');
+    const source=targets.find(t=>t.id===target.id), box=rect(target);
+    assert.ok(Math.abs(target.x-source.x)<=44,target.id+' stays within the existing horizontal limit');
+    assert.ok(box.left>=0&&box.right<=390&&box.top>=0&&box.bottom<=650-fieldTop-60);
+    assert.ok(obstacles().every(o=>clear(box,o)),target.id+' reserves its complete visible footer, HUD, hand and controls');
+    assert.ok(after.filter(t=>t.id!==target.id).every(t=>clear(box,rect(t))),target.id+' clears every other complete footer');
+    if(target.id!=='player')assert.ok(Math.abs(target.y-Math.min(source.y,fieldHeight-22))<=88,
+      target.id+' preserves the native owner-cue limit');
+  }
+  const settledHud=playerDetailsPlacement({...placement,obstacles:[...intents,
+    ...after.filter(t=>t.id!=='player').map(t=>{const box=rect(t);
+      return {...box,top:box.top+fieldTop,bottom:box.bottom+fieldTop};})]});
+  assert.deepEqual(settledHud,hud,'the subsequent HUD tracking pass keeps the same slot beside the complete settled footers');
+  assert.deepEqual({targets,fixed,placement},originalInputs,'artwork anchors, panel inputs and existing obstacles never mutate');
+  assert.deepEqual(fit(),after,'settled retry is idempotent');
+  assert.equal(hudCount,1,'an already-clear pack does not move the HUD again');
+});
+
+test('clear target layouts return their exact original anchors without a HUD retry', () => {
+  const original=combatTargetAnchors({width:390,height:300,size:44,lockX:true,maxShiftX:44,
+    targets:[{id:'player',x:80,y:140,width:48},{id:'enemy',x:290,y:220,width:104}]});
+  const result=packCombatTargetsWithHud({pack:()=>original,targetCores:[],
+    placeHud:()=>assert.fail('ordinary clear layouts must retain the exact first placement')});
+  assert.equal(result,original);
+});
+
+test('an infeasible target retry restores the HUD and preserves explicit obstruction', () => {
+  const pack=()=>combatTargetAnchors({width:120,height:60,size:44,lockX:true,maxShiftX:44,
+    targets:[{id:'enemy',x:60,y:30,width:104}],obstacles:[{left:0,right:120,top:0,bottom:60}]});
+  const reservations=[];
+  const result=packCombatTargetsWithHud({pack,placeHud:cores=>reservations.push(cores),
+    targetCores:[{id:'enemy',left:38,right:82,top:8,bottom:52}]});
+  assert.equal(result[0].obstructed,true,'no-room evidence remains explicit');
+  assert.equal(reservations.length,2,'one retry then restoration, never a refresh loop');
+  assert.deepEqual(reservations[1],[],'restore the original HUD reservation after no improvement');
+});
 
 test('the resting fan floor is the union of rotated authored corners at every text and phone scale', () => {
   for (const count of [0, 1, 5, 8, 15]) for (const zoom of [.67, .738, 1, 1.5]) {

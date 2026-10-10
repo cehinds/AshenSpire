@@ -1,0 +1,127 @@
+{
+  "baseline": "654c08a82f5b6b567f9cc28c11de1d0a6262fe54",
+  "branch": "codex/combat-name-inspection-reach-20261009",
+  "sourceAcceptance": "17 focused checks PASS,0 skips; independent merge_review source-only CLEAR/APPROVE",
+  "nativeAcceptance": "Composed source-only CSS fixture PASS,4 zooms; not actual packaged game acceptance",
+  "source": [
+    {
+      "path": "styles/combat-layers.css",
+      "sha256": "0954a972c8f34b1ea09dd038aba0344c25c99a8216ec64da50bec4f9d6bf44f6"
+    },
+    {
+      "path": "tools/pointer-target.mjs",
+      "sha256": "48932865d3a828706e177020e99a25db8ff50cba7bdbbf3dbb70a82a57f0c6c7"
+    },
+    {
+      "path": "src/ui/screens/combat.js",
+      "sha256": "970152e2d2d820837a6fbdc6191565b788ed18701753ab4f47dd390a0935e4f7"
+    },
+    {
+      "path": "tests/combat-target-layers.test.mjs",
+      "sha256": "f80bd52d1c629578a08b262c4c1bb738b7c9aa7c7fa71eceeea6e9e2739d35fa"
+    },
+    {
+      "path": "tests/pointer-target.test.mjs",
+      "sha256": "0df7ff1a46997006d776e02f10263eab034110a11768f82a542d36ef211f3003"
+    },
+    {
+      "path": "docs/combat-target-pointer-behavior.md",
+      "sha256": "80fabbdf436fbbd2a013539011baa1f1b4a87271d5948d112cfb7b7902b1bfab"
+    }
+  ],
+  "rawEvidence": [
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-0.65-previewport.png",
+      "bytes": 5386,
+      "sha256": "b88fcc8d87caa13bc7550d49e5130cf323e8ebcb9919ba8f24bc627910d33618"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-0.65.png",
+      "bytes": 8681,
+      "sha256": "cd0f5998bdfa15e7655a019407ed87c847e7c2b2a972b648c32237808aad7ffc"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-0.738-previewport.png",
+      "bytes": 5392,
+      "sha256": "25b0de815dbea2c65912fde5b0cad6fd1094cc41bc4b24e129b42e904488c809"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-0.738.png",
+      "bytes": 8773,
+      "sha256": "7e11a1aa5ac376428f201c574a26d31670957effedcd75f8cc7bc18ae7fd469b"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-1-previewport.png",
+      "bytes": 5273,
+      "sha256": "bcd40e3bdc59a85676ab858f6de78777f4d57d81820f3ca4f8475fec5b6f29b5"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-1.5-previewport.png",
+      "bytes": 5400,
+      "sha256": "326c35708069bc3c9ae1d4e05abc14603328ddb5671d2f3b3f4ddef1dd73f1d3"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-1.5.png",
+      "bytes": 9178,
+      "sha256": "ca235b129f7d089d3d394cddb69446d2c778398c9a17225a0e2b9aea3f3ceb38"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/fixture-1.png",
+      "bytes": 8537,
+      "sha256": "d0dd41f98a67c1afc2810ccffee7c1f23fbfb5bcc07755de6c9157abe7087bba"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/focused-final.log",
+      "bytes": 1770,
+      "sha256": "7b40af9a84710afbf0d9d0c20d91fba12ae92a7e95235e372b1951e6b513204b"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/focused-initial.log",
+      "bytes": 2665,
+      "sha256": "660f548efc600a5afe23ad27db0de24db744ed4eb93b829c24c5e7a36ad8e8f4"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/native-fixture-initial-incomplete-plate-report.json",
+      "bytes": 672,
+      "sha256": "428158ff73ea9abcd5d2b976e953219137b9ca242c8897f0a7b52e5635d641e2"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/native-fixture-initial-incomplete-plate.log",
+      "bytes": 628,
+      "sha256": "eb7494a4eacab3cf4a03b60bd835069a853bec8394554620506848944b110c01"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/native-fixture-previewport-report.json",
+      "bytes": 5039,
+      "sha256": "a9b53164b8a190f5069212577e91f04d4f05dfd06fb121f8f090de01e6e9fce1"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/native-fixture-previewport.log",
+      "bytes": 2960,
+      "sha256": "48f5b2ec96060c78db85dc14bea46846724d300ebd8b1166dd6d3b4fe4e7ba7f"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/native-fixture-report.json",
+      "bytes": 5331,
+      "sha256": "712f39607c318cedc7e14e20c80aa59ab122b24e9656c1d986f1811b5c850e59"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/native-fixture.log",
+      "bytes": 3667,
+      "sha256": "638f03dfe9abc2a20ae041dbf9fe8b7d0cdb53a0f2aac46209f822a48fe30930"
+    },
+    {
+      "path": "D:/repos/.codex/outputs/combat-card-stances/name-inspection-1203-fix-20261009/native-fixture.mjs",
+      "bytes": 9217,
+      "sha256": "3ac50f13a45967d07eeaac9d493e7192f4ad7c4d859cd01971f605f65f04a671"
+    }
+  ],
+  "retainedInitialResults": [
+    "focused-initial.log:16/17 PASS; one floating-point exact-edge equality failure corrected to arithmetic precision1e-9, no browser threshold change",
+    "native-fixture-initial-incomplete-plate-report.json:RED because fixture omitted production::after geometry rule; exact rule added",
+    "native-fixture-previewport-report.json:CSS ownership PASS; screenshot review found missing mobile viewport meta, corrected and rerun at actual390×650"
+  ],
+  "cleanup": "All three owned profiles gone, no shared-native lock and no nm1203 browser process after finalrun",
+  "compiledAcceptance": "NOT RUN; parent official build/native gates required after integration",
+  "independentReview": "Enemy core bounded inside96/104 footer, player unchanged, before-first helper fallback/ownership retained; no duplicate test/browser/build by reviewer"
+}

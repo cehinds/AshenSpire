@@ -32,7 +32,7 @@ test('pointer target refuses a wholly covered or offscreen control', () => {
   assert.throws(fixture(({target}) => target, {x:250,y:250,width:100,height:100}), /no unobstructed/);
 });
 
-function formationFixture(hitAt, { zoom = 1, originY = 10, localHeight = 400, targetStyle = {} } = {}) {
+function formationFixture(hitAt, { zoom = 1, originY = 10, localHeight = 400, targetStyle = {}, coreStyle = null } = {}) {
   const rect = { x: 20, y: originY, width: 100 * zoom, height: localHeight * zoom };
   const core = { x: 20 + parseFloat(targetStyle.left ?? '70') * zoom, y: originY + parseFloat(targetStyle.top ?? '333') * zoom };
   const samples = [];
@@ -43,12 +43,28 @@ function formationFixture(hitAt, { zoom = 1, originY = 10, localHeight = 400, ta
   const style = { left: '70px', top: '333px', width: `${104 / zoom}px`, height: `${44 / zoom}px`,
     content: '""', display: 'block', visibility: 'visible', pointerEvents: 'auto', ...targetStyle };
   const context = { innerWidth: 700, innerHeight: 900,
-    getComputedStyle: (_el, pseudo) => pseudo === '::after' ? style : { width: '100px' },
+    getComputedStyle: (_el, pseudo) => pseudo === '::after' ? style : pseudo === '::before' && coreStyle ? { ...style, ...coreStyle } : { width: '100px' },
     document: { querySelector: () => target, elementFromPoint: (x, y) => {
       samples.push({ x, y }); return hitAt({ target, art, nested, blocker, core, rect }, x, y);
     } } };
   return { core, rect, samples, run: () => JSON.parse(JSON.stringify(runInNewContext(pointerTargetExpression('.combatant.player.armed'), context))) };
 }
+
+test('formation input uses the shifted native core instead of the name-inspection plate center', () => {
+  for (const zoom of [.67, .738, 1, 1.5]) {
+    const coreX = 20 + 70 * zoom - 30, coreY = 10 + 333 * zoom;
+    const probe = formationFixture(({ target, nested, blocker }, x, y) => {
+      if (x === coreX && y === coreY) return target;
+      if (x === 20 + 70 * zoom) return nested;
+      return blocker;
+    }, { zoom, coreStyle: { left: `${70 - 30 / zoom}px`, width: `${44 / zoom}px` } });
+    assert.deepEqual(probe.run(), { x: coreX, y: coreY });
+    assert.deepEqual(probe.samples, [{ x: coreX, y: coreY }]);
+  }
+  const blocked = formationFixture(({ nested }) => nested, { coreStyle: { left: '40px', width: '44px' } });
+  assert.throws(blocked.run, /no unobstructed/);
+  assert.equal(blocked.samples.length, 30, 'covered core does not bypass nested controls or discard legacy grid');
+});
 
 test('formation sampling reaches its independently fitted 44px core before the old frame grid', () => {
   const probe = formationFixture(({ target, blocker, core }, x, y) =>
