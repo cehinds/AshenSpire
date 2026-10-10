@@ -116,13 +116,16 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
   const scale = Math.max(width / device.width, height / device.height);
+  // Follow the fitted enemies while keeping the floor canvas beneath the
+  // entire battlefield. Moving it farther up exposes its lower edge.
+  const cameraGround = Math.max(ground, height - (1 - device.groundAnchor) * device.height * scale);
   const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
-    : fieldTop + ground - device.groundAnchor * device.height * scale;
+    : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;
-  [...svg.children].forEach((group, index) => {
+  [...svg.querySelectorAll(':scope > .alternative-scene-layer')].forEach((group, index) => {
     const layer = combatSceneLayers(device)[index];
     const art = alternativeArtCatalog.sceneLayers[layer.id];
     const image = group.firstElementChild;

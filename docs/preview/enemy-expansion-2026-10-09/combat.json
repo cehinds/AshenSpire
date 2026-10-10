@@ -1,0 +1,70 @@
+{
+  "errors": [],
+  "httpErrors": [],
+  "optional": [
+    {
+      "url": "http://localhost:8812/assets/sfx/playerHurt.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://localhost:8812/assets/sfx/deckShuffle.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://localhost:8812/assets/sfx/cardDraw.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://localhost:8812/assets/sfx/turnStinger.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://localhost:8812/assets/sfx/playerHurt.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://localhost:8812/assets/sfx/deckShuffle.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://localhost:8812/assets/sfx/cardDraw.ogg",
+      "status": 404
+    },
+    {
+      "url": "http://localhost:8812/assets/sfx/turnStinger.ogg",
+      "status": 404
+    }
+  ],
+  "views": [
+    {
+      "name": "desktop",
+      "initial": {
+        "turn": 1,
+        "events": 12,
+        "enemies": [
+          "stitchedHound",
+          "stitchedHound"
+        ]
+      },
+      "final": {
+        "turn": 2,
+        "events": 45
+      }
+    },
+    {
+      "name": "phone-emulation",
+      "initial": {
+        "turn": 1,
+        "events": 12,
+        "enemies": [
+          "stitchedHound",
+          "stitchedHound"
+        ]
+      },
+      "final": {
+        "turn": 2,
+        "events": 45
+      }
+    }
+  ]
+}

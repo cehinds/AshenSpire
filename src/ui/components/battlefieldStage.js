@@ -14,7 +14,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
@@ -369,7 +369,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
     const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
     const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
-      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top + 22 : null,
+      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top : null,
     });
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
@@ -732,7 +732,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // where the hand consumes much of the viewport. Keep the same horizon.
     const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
-      fieldTop, ground: plan.ground / zoom, narrow });
+      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom, narrow });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
