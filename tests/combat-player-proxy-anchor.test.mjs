@@ -66,7 +66,7 @@ test('the actual stage pack and HUD retry use the same player proxy receipt and 
     {hostRect:{left:550,width:100,bottom:400},footerWidth:104,frameRect:{},controls:[]},
   ];
   const placed=boxes.map((_box,index)=>({frame:{dataset:{eid:index?'enemy':'player'},
-    classList:{contains:role=>role===(index?'enemy':'player')}}}));
+    classList:{contains:role=>role===(index?'enemy':'player') || index > 0 && role === 'context-selected'}}}));
   let packInput,retryInput;
   runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,combatFrameTarget,ribbon:null,
     combat:{getBoundingClientRect:()=>({bottom:900})},readFooterObstacles:()=>[],
@@ -87,7 +87,7 @@ test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
   const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargets = targets;',begin);
   const fieldRect={left:0,top:0,width:600,height:400},ids=['player','alive','dead'];
   const boxes=ids.map((_id,i)=>({hostRect:{left:100+i*150,width:100,bottom:300},footerWidth:104,frameRect:{},controls:[]}));
-  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')}}}));
+  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')||(id==='alive'&&role==='context-selected')}}}));
   let packInput,retryInput;
   runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,combatFrameTarget,
     combat:{getBoundingClientRect:()=>({bottom:400})},readFooterObstacles:()=>[],
@@ -95,4 +95,20 @@ test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
     packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
   assert.deepEqual(packInput.targets.map(target=>target.id),['player','alive']);
   assert.deepEqual(retryInput.targetCores.map(core=>core.id),['player','alive']);
+});
+
+test('idle overhead HP and an artwork-owned player reserve no hidden footers',()=>{
+  const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
+  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargets = targets;',begin);
+  const ids=['player','idle','selected'];
+  const boxes=ids.map((_id,i)=>({hostRect:{left:30+i*90,width:80,bottom:225},footerWidth:88,frameRect:{},controls:[]}));
+  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||id==='selected'&&role==='context-selected'}}}));
+  let packed,reserved;
+  runInNewContext(source.slice(begin,end),{fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,combatFrameTarget,
+    combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:513})},readFooterObstacles:()=>[],
+    combatTargetAnchors:input=>{packed=input.targets;return input.targets;},placePlayerHud:()=>{},
+    packCombatTargetsWithHud:input=>{reserved=input.targetCores;return input.pack();}});
+  assert.deepEqual(packed.map(target=>target.id),['selected']);
+  assert.deepEqual(reserved.map(target=>target.id),['selected']);
+  assert.equal(packed[0].minY,packed[0].y,'the visible enemy footer remains attached below its body');
 });

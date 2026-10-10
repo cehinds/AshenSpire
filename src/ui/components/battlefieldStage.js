@@ -128,7 +128,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const width = box.clientWidth - 8 / uiZoom();
       if (width <= 0) continue;
       const style = getComputedStyle(label);
-      const maximum = 11 / uiZoom();
+      const maximum = (label.closest('.player.context-selected') && window.innerWidth > 320 ? 12 : 11) / uiZoom();
       labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
       const measured = labelMeasure.measureText(label.textContent).width;
       label.style.fontSize = `${Math.max(8 / uiZoom(), maximum * Math.min(1, width / Math.max(1, measured)))}px`;
@@ -587,7 +587,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
       })),
-      targets: boxes.flatMap((box, i) => box.frameRect && !placed[i].frame.classList.contains('dead') ? [combatFrameTarget({
+      // Idle enemies read above their bodies. Reserve below-body footers only
+      // when they paint, so hidden plates cannot displace the player's HUD.
+      targets: boxes.flatMap((box, i) => box.frameRect && !placed[i].frame.classList.contains('dead')
+        && (placed[i].frame.classList.contains('context-selected')
+          || placed[i].frame.classList.contains('player') && combat.dataset?.waistOverlap !== 'true') ? [combatFrameTarget({
         ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
         player: placed[i].frame.classList.contains('player'),
       })] : []) });
@@ -596,7 +600,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // A fallen frame survives for its defeat pose but paints no target
       // proxy, so it neither competes for footer space nor blocks the HUD.
       targetCores: boxes.flatMap((box, i) => {
-        if (placed[i].frame.classList.contains('dead')) return [];
+        if (placed[i].frame.classList.contains('dead') || !placed[i].frame.classList.contains('context-selected')
+          && (!placed[i].frame.classList.contains('player') || combat.dataset?.waistOverlap === 'true')) return [];
         const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
           player: placed[i].frame.classList.contains('player') });
         return [{ id: target.id, left: fieldRect.left + target.x - 22, right: fieldRect.left + target.x + 22,
@@ -696,7 +701,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           ? { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 } : null;
       }).filter(Boolean);
     const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
-    if (idleCores.some((core, i) => stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
+    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
       || idleCores.slice(i + 1).some(other => near(core, other)))) {
       const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
         readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
