@@ -32,6 +32,7 @@ pull requests into `dev` opened ready for review, and only the owner merging to
 CI builds and publishes it as a workflow artifact, and a pull request commits
 only `buildordinal.json` and the generated changelog module from its rebuild
 (DEVELOPER.md, *Run & test*).
+
 Likewise never commit bulk QA evidence JSON (raw `results.json`, geometry dumps,
 browser-health logs); it goes to CI artifacts, and `tests/qa-evidence-size.test.mjs`
 fails a tracked evidence JSON over 256 KiB (CONTRIBUTING.md, *QA evidence goes
