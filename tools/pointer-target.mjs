@@ -11,20 +11,25 @@ function visiblePointerTarget(selector) {
   const b = el.getBoundingClientRect();
   const boxes = [];
   // A formation frame fills the field vertically, but its fitted foot target
-  // has an independent center. Sample the physical core of that actual ::after
+  // has an independent center. Sample the physical core of the actual ::before
+  // cap (which can sit beside the name), using the painted ::after geometry
+  // only when that cap is not rendered or its geometry is invalid,
   // before the legacy frame grid; every point still requires a real owned hit.
   if (el.matches?.('.combatant:is(.enemy-target-hitbox, .player-target-hitbox)')) {
-    const targetStyle = getComputedStyle(el, '::after');
     const localWidth = parseFloat(getComputedStyle(el).width) || el.offsetWidth;
     const scale = b.width / localWidth;
-    const left = parseFloat(targetStyle.left), top = parseFloat(targetStyle.top);
-    const width = parseFloat(targetStyle.width), height = parseFloat(targetStyle.height);
-    if (Number.isFinite(scale) && scale > 0 && [left, top, width, height].every(Number.isFinite)
-      && width > 0 && height > 0 && targetStyle.display !== 'none'
-      && !['hidden', 'collapse'].includes(targetStyle.visibility) && targetStyle.pointerEvents !== 'none'
-      && !['none', 'normal'].includes(targetStyle.content)) {
-      const size = Math.min(44, width * scale, height * scale);
-      boxes.push({ x: b.x + left * scale - size / 2, y: b.y + top * scale - size / 2, width: size, height: size });
+    for (const pseudo of ['::before', '::after']) {
+      const targetStyle = getComputedStyle(el, pseudo);
+      const left = parseFloat(targetStyle.left), top = parseFloat(targetStyle.top);
+      const width = parseFloat(targetStyle.width), height = parseFloat(targetStyle.height);
+      if (Number.isFinite(scale) && scale > 0 && [left, top, width, height].every(Number.isFinite)
+        && width > 0 && height > 0 && targetStyle.display !== 'none'
+        && !['hidden', 'collapse'].includes(targetStyle.visibility) && targetStyle.pointerEvents !== 'none'
+        && !['none', 'normal'].includes(targetStyle.content)) {
+        const size = Math.min(44, width * scale, height * scale);
+        boxes.push({ x: b.x + left * scale - size / 2, y: b.y + top * scale - size / 2, width: size, height: size });
+        break;
+      }
     }
   }
   boxes.push(b);
