@@ -1,4 +1,4 @@
-import { expandedProgression, queueClassMilestone } from './classMilestones.js';
+import { expandedProgression, queueClassMilestone, capRunClassGrants } from './classMilestones.js';
 import { activateAbilitySkill } from './abilitySkillActivation.js';
 // SPEC §13.4q. A scoped projection keeps authored content complete while live
 // reward/shop readers see the run owner's current unlocks. Definitions remain
@@ -25,6 +25,9 @@ export function openClassMasteryTrack(registries, run, classId) {
       if (!receipt) continue;
       for (const kind of ['cards','armory','relic']) if (receipt.grants[kind]) receipt.grants[kind].state = 'spent';
     }
+    // Re-equipping a class re-checks its feat/attribute grants against the
+    // run's shared budget (SPEC §13.4r), which another class may have used.
+    capRunClassGrants(registries, run, classId);
     const ability = registries.balance.progression.classSkills[classId]?.find(id => ['item:magic-focus','combatManeuvers'].includes(id));
     if (ability) activateAbilitySkill(run, ability);
   }

@@ -25,22 +25,31 @@ import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRng, seedToString } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { commitCombatSnapshot, restoreCombatSnapshot, serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 import { buildActMap, drawSeatOrder } from '../src/engine/actmap.js';
 import { rollEncounter } from '../src/engine/encounters.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
+import { openRunEnemyKnowledge } from '../src/model/enemyKnowledgeRun.js';
 
 const SEED = 0x2b0d;
-const registries = createRegistries(contentBundle);
+const baseRegistries = createRegistries(contentBundle);
+// Every helper reads this; one test swaps in a variant bundle and restores it.
+let registries = baseRegistries;
 
 // newRun → startClimb, minus the screens: the same fields main.js stamps, the
 // same stream order (seats, then map), and the same persist.
 function newSeededRun(saves) {
   saves.ensureProfile();
-  // This entry-restart mirror covers historical saves. Expanded combat's
-  // durable transaction hook and exact snapshots are tested separately.
-  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: saves.loadMeta(), combatExpansionVersion: 1, enemyKnowledgeVersion: null });
+  // A default new run: expanded combat, enemy knowledge and reaction rules on,
+  // exactly as main.js newRun creates it (SPEC §9: abandoning mid-combat
+  // restarts that combat in every run, not only historical ones).
+  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: saves.loadMeta() });
+  assert.equal(run.combatExpansionVersion, 2);
+  assert.equal(run.enemyKnowledgeRules?.version, 1);
+  assert.equal(run.reactionRulesVersion, 1);
+  openRunEnemyKnowledge(run, { receiptId: '60000000-0000-4000-8000-000000000001', bankable: true });
   run.seedString = seedToString(SEED);
   run.customization = { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -55,25 +64,39 @@ function newSeededRun(saves) {
   return { run, rng };
 }
 
-// main.js enterCombat, non-UI half. Returns the live combat.
+// main.js enterCombat, non-UI half, including the expanded-combat durable
+// transaction hook (opening checkpoint + beforeCombatCommit). Returns the live
+// combat.
 function enterCombat(saves, run, rng, nodeId, encounterId, { resuming = false } = {}) {
   const storedSnapshot = resuming ? run.combatEntered?.snapshot : null;
   const savedSnapshot = storedSnapshot && !storedSnapshot.result ? storedSnapshot : null;
   run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   if (!resuming) saves.saveRun(run, rng);
   const enc = registries.encounters.get(encounterId);
-  if (savedSnapshot) return restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackPoolDeck: isPoolDeckMode(run) });
+  const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
   const seat = seatAtTier(run.seatOrder, run.actNumber);
-  return createRunCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
-    rng,
+    rng: entryRng,
     run,
     settings: saves.loadMeta().settings || {},
+    enemyKnowledgeProfile: saves.loadMeta().enemyKnowledge,
     enemyIds: enc.enemies,
     hpMult: seatTierHpMult(registries, seat, run.actNumber),
     enemyStatuses: [],
     playerStatuses: [],
   });
+  if (combat.combatExpansionVersion === 2) {
+    const durable = candidate => commitExpansionCandidate({ run, candidate, nodeId, encounterId,
+      saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng) });
+    if (!savedSnapshot) {
+      durable(combat);
+      rng.restoreCounters(entryRng.getCounters());
+      combat.rng = rng;
+    }
+    combat.beforeCombatCommit = durable;
+  }
+  return combat;
 }
 
 // startFight('normal', nodeId) on the classic map: the roll and the
@@ -137,6 +160,8 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   const hpAtEntry = run.hp;
   const { nodeId, encounterId, combat } = startNormalFight(saves, run, rng);
   const opening = view(combat);
+  const entrySnapshot = saves.loadRun(registries).combatEntered.snapshot;
+  assert.equal(entrySnapshot?.turn, 1, 'expanded combat wrote its opening checkpoint at turn 1');
   assert.equal(opening.turn, 1, 'a fresh fight opens on turn 1');
   assert.equal(opening.playerHp, hpAtEntry, 'the fight opens at the run HP');
 
@@ -148,8 +173,10 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   // gone; only the slot survives. This is resumeRun's order.
   const reloaded = saves.loadRun(registries);
   assert.ok(reloaded, 'the slot written at combat entry loads');
-  assert.deepEqual(reloaded.combatEntered, { nodeId, encounterId },
-    'the slot holds the entry receipt only — no exact snapshot was ever committed');
+  assert.equal(reloaded.combatEntered.nodeId, nodeId);
+  assert.equal(reloaded.combatEntered.encounterId, encounterId);
+  assert.deepEqual(reloaded.combatEntered.snapshot, entrySnapshot,
+    'the slot still holds the opening checkpoint — no played card replaced it');
   assert.equal(reloaded.hp, hpAtEntry, 'player HP is the value at combat entry');
   assert.deepEqual(reloaded.deck, deckAtEntry, 'the deck is the deck at combat entry');
   const reloadRng = createRng(reloaded.seed, reloaded.streamCounters);
@@ -163,6 +190,144 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   assert.deepEqual(again.discard, [], 'nothing played before the abandon is in the discard pile');
   assert.equal(again.playerHp, hpAtEntry, 'player HP is restored to the entry value');
   assert.deepEqual(again.counters, opening.counters, 'the restart consumed exactly the draws the first entry did');
+});
+
+test('M2 regression: a card play in a default new run does not replace combatEntered.snapshot', () => {
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const { run, rng } = newSeededRun(saves);
+  const { combat } = startNormalFight(saves, run, rng);
+  const entry = saves.loadRun(registries);
+  assert.ok(entry.combatEntered.snapshot, 'the opening checkpoint exists');
+  assert.ok(combat.beforeCombatCommit, 'the durable transaction hook is installed, as in main.js');
+  playOneCard(combat);
+  const after = saves.loadRun(registries);
+  assert.deepEqual(after.combatEntered.snapshot, entry.combatEntered.snapshot,
+    'the played card did not overwrite the entry checkpoint');
+  assert.deepEqual(after.streamCounters, entry.streamCounters, 'nor did it move the saved RNG counters');
+  assert.equal(after.hp, entry.hp);
+});
+
+// main.js combat onSave / onQuit: Save Game and Save and Quit replace the
+// checkpoint with the exact committed state, then persist with the live rng.
+function explicitSave(saves, run, combat, nodeId, encounterId) {
+  commitCombatSnapshot({ run, combat, nodeId, encounterId });
+  saves.saveRun(run, combat.rng);
+}
+
+// Play a card, then end turns until an enemy action offers the player a
+// reaction (a default run has reaction prompts on). Returns the turn it paused.
+function reachReactionPause(combat) {
+  playOneCard(combat);
+  for (let turns = 0; turns < 8 && !combat.pendingReaction && !combat.result; turns++) {
+    dispatch(combat, { type: 'endTurn' });
+  }
+  assert.ok(combat.pendingReaction, 'an enemy turn offered the player a reaction');
+  assert.equal(combat.result, null, 'the fight is still live at the pause');
+}
+
+test('M2 regression: abandoning at a reaction pause restarts at turn 1 from the entry checkpoint and its RNG', () => {
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const { run, rng } = newSeededRun(saves);
+  const hpAtEntry = run.hp;
+  const { combat } = startNormalFight(saves, run, rng);
+  const opening = view(combat);
+  const entry = saves.loadRun(registries);
+  assert.equal(entry.combatEntered.snapshot?.turn, 1);
+  reachReactionPause(combat);
+
+  // Walk away at the pause: no Save Game. SPEC §3.12/§9 — nothing automatic
+  // replaces combatEntered.snapshot, so the slot still holds the entry.
+  const reloaded = saves.loadRun(registries);
+  assert.deepEqual(reloaded.combatEntered.snapshot, entry.combatEntered.snapshot,
+    'the reaction pause did not replace the entry checkpoint');
+  assert.equal(reloaded.combatEntered.snapshot.pendingReaction, undefined);
+  assert.deepEqual(reloaded.streamCounters, entry.streamCounters, 'nor did it stamp the live RNG counters');
+  assert.equal(reloaded.hp, hpAtEntry);
+  const reloadRng = createRng(reloaded.seed, reloaded.streamCounters);
+  const restarted = enterCombat(saves, reloaded, reloadRng, reloaded.combatEntered.nodeId, reloaded.combatEntered.encounterId, { resuming: true });
+  const again = view(restarted);
+  assert.equal(again.turn, 1, 'the restarted fight is on turn 1');
+  assert.equal(restarted.pendingReaction, undefined, 'no reaction is pending at the entry checkpoint');
+  assert.deepEqual(again.enemies, opening.enemies);
+  assert.deepEqual(again.hand, opening.hand);
+  assert.deepEqual(again.draw, opening.draw);
+  assert.equal(again.playerHp, hpAtEntry);
+  assert.deepEqual(again.counters, opening.counters, 'the restart resumes from the entry RNG counters');
+});
+
+// An ordinary (non-reaction) chosen-discard prompt is a pause too
+// (reactionPaused counts pendingAbilityDiscard). Every card here draws one and
+// then asks the player to choose a discard, so the first play opens it.
+const chosenDiscardRegistries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => ({
+  ...card, gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined,
+  effects: [{ op: 'draw', amount: 1 }, { op: 'discard', amount: 1, choose: true }], upgrade: {} })) });
+
+test('M2 regression: abandoning at an ordinary chosen-discard prompt restarts at turn 1 from the entry checkpoint', () => {
+  registries = chosenDiscardRegistries;
+  try {
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    const { run, rng } = newSeededRun(saves);
+    const hpAtEntry = run.hp;
+    const { combat } = startNormalFight(saves, run, rng);
+    const opening = view(combat);
+    const entry = saves.loadRun(registries);
+    assert.equal(entry.combatEntered.snapshot?.turn, 1);
+    // playOneCard measures a smaller hand; this card draws one, so play directly.
+    const target = combat.enemies.find((enemy) => enemy.alive !== false && enemy.hp > 0);
+    dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: target.instanceId });
+    assert.ok(combat.pendingAbilityDiscard, 'the played card opened its chosen-discard prompt');
+
+    const reloaded = saves.loadRun(registries);
+    assert.deepEqual(reloaded.combatEntered.snapshot, entry.combatEntered.snapshot,
+      'the discard prompt did not replace the entry checkpoint');
+    assert.equal(reloaded.combatEntered.snapshot.pendingAbilityDiscard, undefined);
+    assert.deepEqual(reloaded.streamCounters, entry.streamCounters, 'nor did it stamp the live RNG counters');
+    const reloadRng = createRng(reloaded.seed, reloaded.streamCounters);
+    const restarted = enterCombat(saves, reloaded, reloadRng, reloaded.combatEntered.nodeId, reloaded.combatEntered.encounterId, { resuming: true });
+    const again = view(restarted);
+    assert.equal(again.turn, 1);
+    assert.equal(restarted.pendingAbilityDiscard, undefined, 'the restart is before the card, not at its prompt');
+    assert.deepEqual(again.hand, opening.hand);
+    assert.deepEqual(again.draw, opening.draw);
+    assert.deepEqual(again.discard, []);
+    assert.equal(again.playerHp, hpAtEntry);
+    assert.deepEqual(again.counters, opening.counters);
+  } finally {
+    registries = baseRegistries;
+  }
+});
+
+test('M2: an explicit Save Game at a reaction pause restores that pending reaction exactly', () => {
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const { run, rng } = newSeededRun(saves);
+  const { nodeId, encounterId, combat } = startNormalFight(saves, run, rng);
+  reachReactionPause(combat);
+  const atPause = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const countersAtPause = combat.rng.getCounters();
+  explicitSave(saves, run, combat, nodeId, encounterId); // Save Game is accepted at a reaction pause
+
+  const reloaded = saves.loadRun(registries);
+  assert.deepEqual(JSON.parse(JSON.stringify(reloaded.combatEntered.snapshot)), atPause,
+    'the slot holds the exact pause state');
+  assert.deepEqual(reloaded.streamCounters, countersAtPause, 'and every RNG stream counter at the pause');
+  const reloadRng = createRng(reloaded.seed, reloaded.streamCounters);
+  const resumed = enterCombat(saves, reloaded, reloadRng, nodeId, encounterId, { resuming: true });
+  assert.ok(resumed.pendingReaction, 'the reaction is still pending after reload');
+  assert.deepEqual(resumed.pendingReaction, combat.pendingReaction, 'the same offer and options');
+  assert.deepEqual(JSON.parse(JSON.stringify(serializeCombatSnapshot(resumed))), atPause, 'the entire combat matches');
+  assert.deepEqual(resumed.rng.getCounters(), countersAtPause);
+
+  // Both continue identically from the restored pause (decline the offer).
+  for (const state of [combat, resumed]) {
+    dispatch(state, { type: 'chooseReaction', offerId: state.pendingReaction.id, optionId: null });
+  }
+  assert.deepEqual(JSON.parse(JSON.stringify(serializeCombatSnapshot(resumed))),
+    JSON.parse(JSON.stringify(serializeCombatSnapshot(combat))), 'the continuation is identical');
+  assert.deepEqual(resumed.rng.getCounters(), combat.rng.getCounters());
 });
 
 // The mirror above is only as good as its parity with main.js. These are the
