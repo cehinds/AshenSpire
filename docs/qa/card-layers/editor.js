@@ -1,7 +1,6 @@
 import {bounds,edges,nearest,moveSnapped,resizeBox,transformGroup} from './layout-math.js';
 import {fitIllustratedCards} from '/src/ui/components/illustratedCard.js';
 import {cardLayoutDocument,cardLayoutReferences} from '/src/ui/components/cardLayout.js';
-import {cardLayoutDocumentWithChanges} from '/src/model/cardLayoutDocument.js';
 import {applyCardAppearance} from '/src/ui/components/cardAppearance.js';
 import {validateCardAppearance} from '/src/model/cardAppearance.js';
 const WIDTH=360,HEIGHT=540,STORAGE='ashen-card-layer-editor-v1';
@@ -50,8 +49,8 @@ export class CardLayoutEditor{
   }
   editAppearance(){
     const status=this.appearance.querySelector('[data-visual-status]');
-    try{const value=JSON.parse(this.appearance.querySelector('[data-visual-json]').value),href=this.appearance.querySelector('[data-visual-href]').value.trim();value.href=href||null;validateCardAppearance({components:{draft:value}});
-      const {id,catalog,key}=this.appearanceTarget();this.checkpoint();this.data.components??=copy(defaults.components||{});this.data.symbols??=copy(defaults.symbols||{});if(id)this.data.components[id]=value;else this.data.symbols[catalog][key]=value;
+    try{const value=JSON.parse(this.appearance.querySelector('[data-visual-json]').value),href=this.appearance.querySelector('[data-visual-href]').value.trim();value.href=href||null;
+      const {id,catalog,key}=this.appearanceTarget();validateCardAppearance(id?{components:{[id]:value}}:{symbols:{[catalog]:{[key]:value}}});this.checkpoint();this.data.components??=copy(defaults.components||{});this.data.symbols??=copy(defaults.symbols||{});if(id)this.data.components[id]=value;else this.data.symbols[catalog][key]=value;
       this.save();this.mount(this.originalReference.cloneNode(true),this.parts,this.key,this.isVisible);this.onChange?.();status.textContent='Applied to draft. Save to game to update all cards.';
     }catch(error){status.textContent=error.message;}
   }
@@ -60,15 +59,17 @@ export class CardLayoutEditor{
     try{await this.ready;if(!this.revision)throw Error('Game save is unavailable. Run the local server with --editor-write.');
       const response=await fetch('/__editor/card-layout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision:this.revision,document:this.document()})}),result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
       this.revision=result.revision;this.gameDocument=result.document;
+      if(download)this.downloadDocument(result.document);
       this.status.textContent=download?'Saved to game JSON and exported. Reloading the game preview…':'Saved to game JSON. Reloading the renderer…';
       delete this.data.layouts[this.key];delete this.data.components;delete this.data.symbols;localStorage.setItem(STORAGE,JSON.stringify(this.data));setTimeout(()=>location.reload(),150);
     }catch(error){this.status.textContent='Not saved to game: '+error.message;}finally{this.saving=false;}
   }
   download(){
     if(!this.gameDocument||this.saving){this.status.textContent='Wait for the game connection before exporting.';return;}
-    // Start the download in the button's activation event, before the async save.
-    const data=cardLayoutDocumentWithChanges(this.gameDocument,this.document()),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'})),a=make('a');a.href=url;a.download='ashen-card-layout.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
     return this.saveGame(true);
+  }
+  downloadDocument(data){
+    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'})),a=make('a');a.href=url;a.download='ashen-card-layout.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
   }
   mount(reference,parts,key,isVisible){
     if(this.drag)this.cancel();

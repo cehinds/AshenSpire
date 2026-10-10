@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-09",
     "group": "2026-10-09",
     "summary": "Alternative cards keep their native battlefield presentation",
-    "detail": "Share the complete editable card design without repeating its master data, while preserving the alternative battlefield geometry, idle motion and correctly ordered scene layers. Card actions, ranks, symbols and effect text retain the promoted primary behavior.",
-    "build": "0.7.1.1198",
+    "detail": "Share the complete editable card design without repeating its master data, while preserving the alternative battlefield geometry, idle motion and correctly ordered scene layers. Card actions, ranks, symbols and effect text retain the promoted primary behavior. The editor protects card-supplied text and exports only accepted saves; compact combat packs name and health plates clear of the hand, cards and player details.",
+    "build": "0.7.1.1200",
     "pullRequest": 1780,
     "url": "https://github.com/cehinds/AshenSpire/pull/1780"
   },

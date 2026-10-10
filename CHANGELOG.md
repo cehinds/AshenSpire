@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
-- **Alternative cards keep their native battlefield presentation** ([#1780](https://github.com/cehinds/AshenSpire/pull/1780), `0.7.1.1198`). Share the complete editable card design without repeating its master data, while preserving the alternative battlefield geometry, idle motion and correctly ordered scene layers. Card actions, ranks, symbols and effect text retain the promoted primary behavior.
+- **Alternative cards keep their native battlefield presentation** ([#1780](https://github.com/cehinds/AshenSpire/pull/1780), `0.7.1.1200`). Share the complete editable card design without repeating its master data, while preserving the alternative battlefield geometry, idle motion and correctly ordered scene layers. Card actions, ranks, symbols and effect text retain the promoted primary behavior. The editor protects card-supplied text and exports only accepted saves; compact combat packs name and health plates clear of the hand, cards and player details.
 
 - **The shared card design loads without repeated master data** ([#1778](https://github.com/cehinds/AshenSpire/pull/1778), `0.7.1.1195`). Keep the complete editable card structure while storing its shared components once in the game bundle. Browser checks follow optional reaction choices, current fighter motion and the combat layer order.
 
