@@ -78,6 +78,16 @@ export function combatTargetHudFootprints(targets, fieldRect, size) {
   }));
 }
 
+export function combatFrameTarget({ id, hostRect, fieldRect, footerSize, footerWidth, player }) {
+  const foot = hostRect.bottom - fieldRect.top + footerSize / 2;
+  // Waist-overlap artwork extends into the hand. The player's independent
+  // proxy stays in the field and can pack above real hand/action obstacles;
+  // enemy name/HP footers retain their owning body's bottom floor.
+  return { id, x: hostRect.left + hostRect.width / 2 - fieldRect.left,
+    y: player ? Math.min(foot, fieldRect.height - footerSize / 2) : foot,
+    minY: player ? footerSize / 2 : foot, width: Math.max(48, footerWidth) };
+}
+
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
@@ -542,22 +552,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
       })),
-      targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
-        .filter(box => box.frameRect).map(box => ({
-        id: box.id,
-        x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top + footerSize / 2,
-        minY: box.hostRect.bottom - fieldRect.top + footerSize / 2,
-        width: Math.max(48, box.footerWidth),
-      })) });
+      targets: boxes.flatMap((box, i) => box.frameRect ? [combatFrameTarget({
+        ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
+        player: placed[i].frame.classList.contains('player'),
+      })] : []) });
     const targets = packCombatTargetsWithHud({ pack: packTargets,
       placeHud: cores => placePlayerHud(true, cores),
-      targetCores: boxes.map((box, i) => ({ id: placed[i].frame.dataset.eid,
-        left: box.hostRect.left + box.hostRect.width / 2 - 22,
-        right: box.hostRect.left + box.hostRect.width / 2 + 22,
-        top: box.hostRect.bottom + footerSize / 2 - 22,
-        bottom: box.hostRect.bottom + footerSize / 2 + 22,
-      })),
+      targetCores: boxes.map((box, i) => {
+        const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
+          player: placed[i].frame.classList.contains('player') });
+        return { id: target.id, left: fieldRect.left + target.x - 22, right: fieldRect.left + target.x + 22,
+          top: fieldRect.top + target.y - 22, bottom: fieldRect.top + target.y + 22 };
+      }),
     });
     settledTargets = targets;
     settledFooterSize = footerSize;
