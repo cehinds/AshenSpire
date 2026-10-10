@@ -8,10 +8,12 @@ import { stanceInventory } from '../tools/alternative-stances-inventory.mjs';
 import { validate } from '../src/model/presentationSequence.js';
 
 const card = (maneuver, camp='physical') => ({cardTags:[`camp:${camp}`,`maneuver:${maneuver}`]});
-test('Attack, Smash and Sweep share offensive; Defend uses defensive; Counter keeps its existing pose',()=>{
-  for(const maneuver of ['attack','smash','sweep','ranged'])assert.equal(stanceForCard(card(maneuver)),'offensive');
+test('Attack and Smash retain offensive; Counter and physical Sweep use their reviewed stances',()=>{
+  for(const maneuver of ['attack','smash','ranged'])assert.equal(stanceForCard(card(maneuver)),'offensive');
   assert.equal(stanceForCard(card('defend')),'defensive');
-  assert.equal(stanceForCard(card('counter')),null);
+  assert.equal(stanceForCard(card('counter')),'counter');
+  assert.equal(stanceForCard(card('sweep')),'sweep');
+  assert.equal(stanceForCard(card('sweep','spell')),'casting');
   assert.equal(stanceForCard(card('ranged','spell')),'casting');
   assert.equal(stanceForCard({cardTags:['camp:spell','school:fire']}),'casting');
 });
