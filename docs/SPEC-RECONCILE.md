@@ -395,6 +395,22 @@ chosen one, solo and co-op (`tests/warriors-vow.test.mjs`).
 **Counts, stage 4: §14 and §15 have 10 rows: 2 shipped (S14.1, #1343; S15.2, #1349) and 8 to-build; their spec steps landed (#1331, #1348).
 Stage 3's two to-build rows are unchanged.**
 
+### Stage 5 (2026-10-10): §14 re-checked against `dev`
+
+Stage 4's §14 verdicts above are kept as they were written. This note records the new
+verdicts, each checked by its falsifier on `dev` and by the test named:
+
+| Row | Stage 4 | Stage 5 | Evidence |
+|---|---|---|---|
+| S14.1b | to-build | **shipped** (#1372); the §2 browser move check stays open | `DeckEditorModel` in `src/`; `tests/deck-editor.test.mjs` |
+| S14.2 | to-build | **shipped** (#1371) | `guaranteedMinimum` in `src/`; `tests/shop-kinds.test.mjs` |
+| S14.3 | to-build | **shipped** (#1374, #1377) | `consumables` in `RUN_SHAPE`; `tests/market-additions.test.mjs`, `tests/market-additions-5b.test.mjs` |
+| S14.4 | to-build | **shipped** (#1390) | `smithingStonesRefined` in `src/`; `tests/blacksmith.test.mjs` |
+| S14.5 | to-build | **shipped** (#1438) | `respecRefundPct` in `src/`; `tests/master.test.mjs` |
+
+**Counts, stage 5: §14 has 6 rows, all shipped; the §2 "Three shop types" line in FINISH is `[~]`
+for the per-row chance test it does not yet have. §15 rows were not re-checked in this stage.**
+
 ## Boundary of stage 4
 
 Source and `contentBundle` reads on one Linux runner, in a checkout without `art/`. Nothing

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1816",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Project status docs match the build again",
+    "detail": "Development-process change only. FINISH.md and SPEC's scope table now record the Blacksmith, the three shops, Poise, class mastery and the per-run feat budget as built, and offline play as partly done.",
+    "build": "0.7.1.1263",
+    "pullRequest": 1816,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1816"
+  },
+  {
     "id": "pr-1811",
     "date": "2026-10-10",
     "group": "2026-10-10",
