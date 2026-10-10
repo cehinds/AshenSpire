@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
+- **Selected counters and sweeps carry their weapon effects** ([#1800](https://github.com/cehinds/AshenSpire/pull/1800), `0.7.1.1239`). Reaver, Starseer, Herald and Rogue use the eight selected stance-to-attack clips with steel slashes, staff trails, palm impacts and dagger effects. Four phases return to the original ready frame, and combat and card previews share the same timing. Confirmed counters and physical sweeps keep their chosen preparation stance between actions; original idle, attack, defend and casting artwork stays intact. Reduced motion and reduced flashes clear the separate effect layers.
+
 - **Enemy combat art gains painted action sets** ([#1795](https://github.com/cehinds/AshenSpire/pull/1795), `0.7.1.1236`). Integrate 33 enemy sets with melee, ranged, spell, guard and reaction frames through the shared art loader. Preserve existing action timing and reduced-motion behavior. The continuation handoff records remaining angle, clipping and halo review.
 
 - **Fallen enemies no longer crowd living targets** ([#1794](https://github.com/cehinds/AshenSpire/pull/1794), `0.7.1.1234`). A defeated enemy stays on the field for its defeat pose but no longer reserves an invisible tap target or shows its faded name and health plate, so living fighters' footers keep their places without a ghost plate over them and the HUD no longer shifts around it.

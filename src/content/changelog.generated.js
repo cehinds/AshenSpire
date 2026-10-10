@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1800",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Selected counters and sweeps carry their weapon effects",
+    "detail": "Reaver, Starseer, Herald and Rogue use the eight selected stance-to-attack clips with steel slashes, staff trails, palm impacts and dagger effects. Four phases return to the original ready frame, and combat and card previews share the same timing. Confirmed counters and physical sweeps keep their chosen preparation stance between actions; original idle, attack, defend and casting artwork stays intact. Reduced motion and reduced flashes clear the separate effect layers.",
+    "build": "0.7.1.1239",
+    "pullRequest": 1800,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1800"
+  },
+  {
     "id": "pr-1795",
     "date": "2026-10-10",
     "group": "2026-10-10",
