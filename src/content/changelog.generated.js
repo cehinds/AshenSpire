@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1823",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Discard and Draw counts fit again on mid-size and landscape phone footers",
+    "detail": "On 601–680px screens and short landscape layouts, the Draw and Discard piles once more use the smaller icon and counts that fit their size, instead of an oversized icon that pushed the counts out.",
+    "build": "0.7.1.1275",
+    "pullRequest": 1823,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1823"
+  },
+  {
     "id": "pr-1818",
     "date": "2026-10-10",
     "group": "2026-10-10",
