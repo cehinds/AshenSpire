@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1812",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Bulk QA evidence stays out of the repository",
+    "detail": "Development-process change only. Raw browser-run results, geometry dumps and health logs go to CI artifacts, about 39 MB of them leave the tree, and a test blocks any new evidence JSON over 256 KiB.",
+    "build": "0.7.1.1258",
+    "pullRequest": 1812,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1812"
+  },
+  {
     "id": "pr-1809",
     "date": "2026-10-10",
     "group": "2026-10-10",

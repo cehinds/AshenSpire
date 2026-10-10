@@ -11,3 +11,6 @@
 - Reaction PR #1767 is still separate pending integration. Its clipped horizontal hand requires revalidation of the entire selected card and the below-card controls; these 1172 results do not accept a future combined artifact.
 
 Files here retain the full driver results and representative actual captures. Raw health, remaining captures, logs, and independent review are preserved in the corresponding D: output directories and selectively copied alongside this record.
+
+
+**Raw files removed from the tree (2026-10-10, #1812).** `classic-native-results.json`, `default-native-results.json` were removed under the QA-evidence rule (CONTRIBUTING.md, *QA evidence goes to CI artifacts, not the tree*). Statements or manifests here that name them describe the original run; the bytes live in history: `git log --diff-filter=D -- <path>` finds the removing commit and `git show <commit>^:<path>` restores them.

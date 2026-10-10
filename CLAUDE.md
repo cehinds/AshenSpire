@@ -33,6 +33,11 @@ CI builds and publishes it as a workflow artifact, and a pull request commits
 only `buildordinal.json` and the generated changelog module from its rebuild
 (DEVELOPER.md, *Run & test*).
 
+Likewise never commit bulk QA evidence JSON (raw `results.json`, geometry dumps,
+browser-health logs); it goes to CI artifacts, and `tests/qa-evidence-size.test.mjs`
+fails a tracked evidence JSON over 256 KiB (CONTRIBUTING.md, *QA evidence goes
+to CI artifacts, not the tree*).
+
 **Main session manages; workers do the work** (owner, 2026-10-10).
 This is the standing policy for every session: the main session manages,
 coordinates and reviews; workers do the work. Scoped implementation, searches
