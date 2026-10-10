@@ -10,13 +10,13 @@
       "hudMinimumPx": 48,
       "hudHeightFraction": 0.09,
       "handMinimumPx": 176,
-      "handMaximumPx": 220,
-      "handHeightFraction": 0.28,
-      "footerPx": 78,
+      "handMaximumPx": 250,
+      "handHeightFraction": 0.31,
+      "footerPx": 92,
       "minimumBattlefieldPx": 130,
       "footerGapMaxPx": 4,
-      "footerDiameterMaxPx": 52,
-      "footerEndWidthMaxPx": 76
+      "footerDiameterMaxPx": 64,
+      "footerEndWidthMaxPx": 96
     },
     "hand": {
       "minimumHeightPx": 208,

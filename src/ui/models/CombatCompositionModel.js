@@ -57,7 +57,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
-  return sizes.map(size => {
+  const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
     const spacious = height > 300;
@@ -75,6 +75,29 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
       : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground)
         : spacious ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
           : (size.ground ?? actor.slot.ground) - height * .07);
-    return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio };
+    return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
+      halfWidth: player ? undefined : halfWidth };
   });
+  return separateEnemies(fitted, width);
+}
+
+// Depth ranks share a formation column, so a phone can stack one enemy
+// wholly behind another. Sweep enemies apart in x order until at most a
+// quarter of their widths overlap (depth still reads), then shift the group
+// back inside the stage; enemies already apart never move.
+function separateEnemies(fits, width, overlap = .25) {
+  const enemies = fits.filter(fit => Number.isFinite(fit.halfWidth)).sort((a, b) => a.x - b.x);
+  for (let i = 1; i < enemies.length; i++) {
+    const prev = enemies[i - 1], cur = enemies[i];
+    cur.x = Math.max(cur.x, prev.x + (prev.halfWidth + cur.halfWidth) * (1 - overlap));
+  }
+  const last = enemies.at(-1);
+  if (last && last.x + last.halfWidth + 6 > width) {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      const next = enemies[i + 1];
+      const limit = next ? next.x - (next.halfWidth + enemies[i].halfWidth) * (1 - overlap) : width - enemies[i].halfWidth - 6;
+      enemies[i].x = Math.max(enemies[i].halfWidth + 6, Math.min(enemies[i].x, limit));
+    }
+  }
+  return fits.map(({ halfWidth, ...fit }) => fit);
 }

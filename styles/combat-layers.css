@@ -10,8 +10,12 @@
   --combat-layer-selection: 500;
   --combat-layer-cards: 600;
   --combat-layer-hud: 700;
+  --combat-layer-banner: 900;
 }
 :root .combat[data-layout='formation'] > :is(.field,.hand-area) { z-index: auto; }
+/* The victory beat owns the whole screen while it plays: above fighters,
+   their selection controls, the cards and the HUD. */
+:root .combat[data-layout='formation'] > .victory-beat { z-index: var(--combat-layer-banner); }
 :root .combat[data-layout='formation'] > .backdrop { z-index: var(--combat-layer-scenery); }
 :root .combat[data-layout='formation'] .combatant .sprite {
   z-index: calc(var(--combat-layer-enemy) + var(--combat-depth, 0)) !important;
