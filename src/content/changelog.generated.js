@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Newly painted enemies fall back and come back cleanly",
     "detail": "When their art cannot load, the new enemies show their name in place of the picture, and Retry paints them again; taps on them always reach the enemy, never an inner layer.",
-    "build": "0.7.1.1247",
+    "build": "0.7.1.1250",
     "pullRequest": 1804,
     "url": "https://github.com/cehinds/AshenSpire/pull/1804"
+  },
+  {
+    "id": "pr-1799",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Art retry verification requires a visible fallback",
+    "detail": "The blocked-art browser check accepts a marked placeholder that retains its hidden failed image only when its fallback is visibly laid out, while still requiring visible art to return after Retry. Game behavior is unchanged.",
+    "build": "0.7.1.1248",
+    "pullRequest": 1799,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1799"
+  },
+  {
+    "id": "pr-1797",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Pull requests into dev are checked in about five minutes",
+    "detail": "The four full-simulation tests that held one shard at 8m19s now run on every push to test and release instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.",
+    "build": "0.7.1.1247",
+    "pullRequest": 1797,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1797"
   },
   {
     "id": "pr-1796",

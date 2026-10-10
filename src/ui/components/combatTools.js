@@ -81,7 +81,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
     const hand = combatEl.querySelector('.hand');
     const handBox = hand?.getBoundingClientRect();
-    const width = Math.min(220, (handBox?.width || innerWidth) - 12);
+    const width = Math.max(0, (handBox?.width || innerWidth) - 12);
     const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
     root.style.width = `${localWidth.width}px`;
     // A compact toolbar occupies the top of the card band. It never consumes

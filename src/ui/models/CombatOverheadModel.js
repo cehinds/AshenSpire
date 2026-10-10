@@ -14,7 +14,8 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
   const half = size / 2;
   const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
     y: Math.min(Math.max(target.y, half), Math.max(half, height - half)) }));
-  const intersects = (control, x, obstacle) => x - control.width / 2 < obstacle.right
+  const intersects = (control, x, obstacle) => (obstacle.ownerId == null || obstacle.ownerId !== control.id)
+    && x - control.width / 2 < obstacle.right
     && x + control.width / 2 > obstacle.left
     && control.y - half < obstacle.bottom && control.y + half > obstacle.top;
   if (packWithinBounds) {
@@ -35,7 +36,7 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
         .filter(anchor => {
           const box = rect(anchor);
           return box.left >= 0 && box.right <= width && box.top >= 0 && box.bottom <= height && anchor.y >= (start.minY ?? 0)
-            && obstacles.every(obstacle => clear(box, obstacle));
+            && obstacles.every(obstacle => obstacle.ownerId != null && obstacle.ownerId === anchor.id || clear(box, obstacle));
         })
         .sort((a, b) => (a.x - start.x) ** 2 + (a.y - start.y) ** 2
           - ((b.x - start.x) ** 2 + (b.y - start.y) ** 2));
@@ -99,7 +100,7 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
     const pack = (ordered, allowShift = false, seed = null) => {
       const placed = [];
       for (const source of ordered) {
-        const blockers = [...obstacles, ...placed.map(p => ({ left:p.x-p.width/2,
+        const blockers = [...obstacles.filter(obstacle => obstacle.ownerId == null || obstacle.ownerId !== source.id), ...placed.map(p => ({ left:p.x-p.width/2,
           right:p.x+p.width/2, top:p.y-half, bottom:p.y+half }))];
         const seeded = seed?.id===source.id;
         let control = place(source, seeded ? seed.x : source.x, blockers);
