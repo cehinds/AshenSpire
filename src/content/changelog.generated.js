@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1806",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Bigger cards and footer on phones; enemies no longer hide each other",
+    "detail": "Phone cards are about a fifth larger and the footer's action orb and End Turn button grow. In fights where two enemies share a formation column, a phone no longer draws one wholly behind the other; each stands under its own intent and health. The victory banner now plays above the fighters and the hand instead of behind the player.",
+    "build": "0.7.1.1253",
+    "pullRequest": 1806,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1806"
+  },
+  {
     "id": "pr-1804",
     "date": "2026-10-10",
     "group": "2026-10-10",
