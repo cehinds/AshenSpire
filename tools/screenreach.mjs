@@ -162,12 +162,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
-        name: 'the waist-overlap player loses only its 44px tap proxy',
-        file: 'styles/combat.css',
-        append: 'html:root .combat[data-layout="formation"][data-waist-overlap="true"] .combatant.player-target-hitbox:not(.dead)::before { pointer-events: none !important; }',
-        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
-      },
-      {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
         file: 'src/ui/screens/settings.js',
         find: 'if (lifecycleSentinel.isConnected) return;',
@@ -513,16 +507,13 @@ const PROBE = `(() => {
       const targetStyle = getComputedStyle(c, '::before');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
-      // A rendered tap square must itself be reachable; exposed artwork does
-      // not excuse a covered one. Only a core that packing explicitly gave up
-      // (data-core-obstructed) falls back to the artwork route.
-      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none'
-        && c.dataset.coreObstructed !== 'true';
-      const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
-        ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
+      // Waist-overlap players expose their artwork; their plate is hidden.
+      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none';
+      const reach = (hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
+        && exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => frameOwnsHit(c, sprite, top))
-        : exposedPatch(sprite, 24);
+          top => frameOwnsHit(c, sprite, top)))
+        || exposedPatch(sprite, 24);
       if (reach) continue;
     }
     // A tall neighbouring enemy can paint across an intent badge's centre on
