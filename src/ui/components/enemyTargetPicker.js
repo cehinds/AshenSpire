@@ -4,7 +4,7 @@ import { anchorLocalBox, uiZoom } from '../fx.js';
 import { enemyTargetGrid as classicEnemyTargetGrid } from '../models/EnemyTargetGridModel.js';
 import { alternativeEnemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
 import { classicAppearance } from '../displayAppearance.js';
-import { focusElement } from '../input.js';
+import { clearFocus, focusElement } from '../input.js';
 
 // Placement follows fitted figures without intercepting inspection controls.
 function watchTargetPlacement(host, picker) {
@@ -95,12 +95,21 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
       button.dataset.eid = target.id;
       button.dataset.focusable = '';
       button.innerHTML = '<span class="enemy-target-name"></span><span class="enemy-target-health"></span>';
+      // A pointer press after keyboard navigation changes input modes. Clear
+      // the unified cursor (wherever it sits, this target or another) before
+      // activation so its enemy key cannot be restored onto a combatant after
+      // the picker leaves the DOM. Keyboard Enter/Space never fires pointerdown.
+      button.addEventListener('pointerdown', () => clearFocus());
       button.addEventListener('click', event => {
         event.stopPropagation();
         if (!button.disabled) picker.activate?.(button.dataset.eid);
       });
       for (const event of ['pointerenter', 'focus']) button.addEventListener(event, () => picker.preview?.(button.dataset.eid));
-      button.addEventListener('focus', () => focusElement(button));
+      // Keyboard focus (Tab) brings the unified cursor along. A pointer press
+      // also focuses the button but must not move the cursor: after the play,
+      // cursor restore would select that enemy and refit the stage (a script
+      // reflow the reduced-motion probe sees), as combatant boxes already avoid.
+      button.addEventListener('focus', () => { if (button.matches(':focus-visible')) focusElement(button); });
       for (const event of ['pointerleave', 'blur']) button.addEventListener(event, () => picker.preview?.(null));
       picker.appendChild(button);
     }

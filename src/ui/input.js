@@ -478,6 +478,11 @@ export function focusElement(el) {
   return true;
 }
 
+/** Remove the unified cursor and its restore key without changing DOM focus. */
+export function clearFocus() {
+  setFocus(null);
+}
+
 function ensureFocus() {
   let el = current();
   if (el && visible(el)) return el;
