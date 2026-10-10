@@ -299,7 +299,10 @@ const INTENT_OVERLAP = `(async () => {
   const playerBefore = player?.getBoundingClientRect();
   if (!playerBefore || !Number.isFinite(playerBefore.width) || playerBefore.width <= 0)
     throw new Error('screenreach: small-player fixture is missing its sprite');
-  const playerPlate = getComputedStyle(player.closest('.combatant'), '::before').display !== 'none';
+  // Key on the layout state itself, not on whether a CSS rule hides the
+  // proxy: the waist-overlap player keeps its packed proxy and its size.
+  const playerPlate = player.closest('.combat')?.dataset.waistOverlap !== 'true'
+    && getComputedStyle(player.closest('.combatant'), '::before').display !== 'none';
   let playerAfter = playerBefore;
   if (playerPlate) {
     player.style.transformOrigin = 'center bottom';

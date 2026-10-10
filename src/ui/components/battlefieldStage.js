@@ -689,15 +689,27 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const stealsArtwork = core => actorArt.some(box => box.ownerId !== core.id
       && core.x + 22 > box.left && core.x - 22 < box.right
       && core.y + 22 > box.top && core.y - 22 < box.bottom);
-    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || idleCores.slice(i + 1)
-      .some(other => Math.abs(core.x-other.x) < 44 && Math.abs(core.y-other.y) < 44))) {
+    // A context-selected enemy keeps its fitted core. It is not repacked, but
+    // an idle core must still leave it room rather than snap back over it.
+    const fixedCores = placed.filter(({frame}) => frame.matches('.enemy.context-selected:not(.dead)'))
+      .map(({frame}) => {
+        const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
+        if (style.display === 'none' || style.pointerEvents === 'none') return null;
+        const x = box.left + parseFloat(style.left) * zoom - fieldRect.left;
+        const y = box.top + parseFloat(style.top) * zoom - fieldRect.top;
+        return Number.isFinite(x) && Number.isFinite(y)
+          ? { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 } : null;
+      }).filter(Boolean);
+    const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
+    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
+      || idleCores.slice(i + 1).some(other => near(core, other)))) {
       const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
         readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
       const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm')]
         .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
         .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
           top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
-      obstacles.push(...actorArt);
+      obstacles.push(...actorArt, ...fixedCores);
       const cores = combatTargetAnchors({ width:fieldRect.width, height:boundary-fieldRect.top,
         size:44, lockX:true, maxShiftX:44,
         targets:idleCores.map(core => ({ ...core, x:core.art.width >= 44

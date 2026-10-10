@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Pull requests into dev are checked in about five minutes",
     "detail": "The four full-simulation tests that held one shard at 8m19s now run on every push to test and release instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.",
-    "build": "0.7.1.1238",
+    "build": "0.7.1.1242",
     "pullRequest": 1797,
     "url": "https://github.com/cehinds/AshenSpire/pull/1797"
   },

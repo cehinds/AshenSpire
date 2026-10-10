@@ -41,17 +41,26 @@ test('own artwork permits the target while foreign artwork remains an obstacle i
   }
 });
 
+const stageSource=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
+const stageStart=stageSource.indexOf('    // Idle names do not reserve footer rows');
+const stageEnd=stageSource.indexOf('    const rect = combat.getBoundingClientRect();',stageStart);
+// The adapter asks for idle enemies and for context-selected ones; answer each.
+const actor=(id,art,x,y,idle)=>{
+  const properties={};
+  return {frame:{dataset:{eid:id},matches:selector=>selector.includes('.context-selected:') ? !idle : idle,
+    getBoundingClientRect:()=>({left:0,top:0}),
+    style:{removeProperty:key=>delete properties[key],setProperty:(key,value)=>{properties[key]=value;}},properties,x,y},
+    sprite:{art,getBoundingClientRect:()=>({...art,width:art.right-art.left,height:art.bottom-art.top})}};
+};
+const runStage=placed=>runInNewContext(stageSource.slice(stageStart,stageEnd),{placed,zoom:1,refresh:()=>{},
+  fieldRect:{left:0,top:0,width:844,height:190},
+  getComputedStyle:frame=>({left:String(frame.x),top:String(frame.y)}),
+  currentSpriteArtBounds:sprite=>sprite.art,
+  readRestingHand:()=>null,combat:{querySelector:()=>null,querySelectorAll:()=>[]},combatTargetAnchors});
+
 test('stage repairs one idle core over a selected neighbour even without a core/core collision', () => {
-  const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
-  const start=source.indexOf('    // Idle names do not reserve footer rows');
-  const end=source.indexOf('    const rect = combat.getBoundingClientRect();',start);
+  const source=stageSource, start=stageStart, end=stageEnd;
   assert.ok(start>=0&&end>start);
-  const actor=(id,art,x,y,idle)=>{
-    const properties={};
-    return {frame:{dataset:{eid:id},matches:()=>idle,getBoundingClientRect:()=>({left:0,top:0}),
-      style:{removeProperty:key=>delete properties[key],setProperty:(key,value)=>{properties[key]=value;}},properties,x,y},
-      sprite:{art,getBoundingClientRect:()=>({...art,width:art.right-art.left,height:art.bottom-art.top})}};
-  };
   const placed=[actor('e1',{left:342,right:392,top:138,bottom:164},367,176,false),
     actor('e3',{left:361,right:373,top:138,bottom:151},337,164,true)];
   const before=placed.map(actor=>structuredClone(actor.sprite.art));
@@ -66,4 +75,28 @@ test('stage repairs one idle core over a selected neighbour even without a core/
   assert.ok(Number.isFinite(core.x)&&Number.isFinite(core.y),'the lone stealing core is actually repacked');
   assert.equal(overlaps(core,placed[0].sprite.art),false,'selected neighbour keeps its own body click');
   assert.deepEqual(placed.map(actor=>actor.sprite.art),before,'actual stage adapter does not move or resize artwork');
+});
+
+test('an idle core never snaps back over a selected neighbour\'s fixed core', () => {
+  // Cores 30px apart, and neither core overlaps the other actor's artwork:
+  // only the selected enemy's own square stands in the way.
+  const placed=[actor('e1',{left:300,right:340,top:60,bottom:120},320,150,false),
+    actor('e3',{left:400,right:440,top:60,bottom:120},350,150,true)];
+  runStage(placed);
+  const e1=placed[0].frame, e3=placed[1].frame;
+  assert.equal(e1.properties['--enemy-core-x'],undefined,'the selected core is not repacked');
+  const core={x:parseFloat(e3.properties['--enemy-core-x']),y:parseFloat(e3.properties['--enemy-core-y']),width:44};
+  assert.ok(Number.isFinite(core.x),'the idle core is packed');
+  assert.equal(e3.dataset.coreObstructed,'false');
+  assert.equal(overlaps(core,{left:320-22,right:320+22,top:150-22,bottom:150+22}),false,
+    'the idle square leaves the selected enemy\'s square to it');
+});
+
+test('a packed core gives up the fitted ::after square it left behind', () => {
+  const layers=readFileSync(new URL('../styles/combat-layers.css',import.meta.url),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+  const rule=[...layers.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(([,selector])=>selector.includes('[data-core-obstructed]')
+    && selector.trim().endsWith('::after'));
+  assert.ok(rule,'packed cores disable their stale ::after square');
+  assert.ok(rule[1].includes('.enemy-target-hitbox:not(.dead)'));
+  assert.match(rule[2],/pointer-events:\s*none/);
 });
