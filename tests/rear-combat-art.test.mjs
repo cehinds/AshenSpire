@@ -115,8 +115,13 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
           assert.equal(stage.el.style.cssText, dimensions);
           assert.deepEqual([art.top, art.width, art.height], [16, 512, 512]);
           assert(!art.image.url.includes('-mobile.webp'), 'fixed foreground artwork uses the full source on phones');
+          if (['counter', 'sweep'].includes(action) && fraction < .69) {
+            assert(art.image.url.includes(`/player-counter-sweep/${classId}/${action}/`), 'selected body phases own the counter/sweep motion');
+          }
         }
-        if (['attack', 'smash', 'sweep'].includes(action)) assert(positions.some(x => x > 128));
+        // Selected counter/sweep motion is painted inside the registered frame;
+        // only the original attack and smash sequences add canvas travel.
+        if (['attack', 'smash'].includes(action)) assert(positions.some(x => x > 128));
         else assert(positions.every(x => x === 128), `${action} must stay anchored`);
         stage.settle();
         assert.equal(stage.currentArt.left, 128);
