@@ -18,6 +18,7 @@ import { alternativeCombatComposition, combatComposition as classicCombatComposi
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
+import { reducedMotionRequested } from '../motion.js';
 
 // Hidden panels can retain layout rectangles. Reserve controls that will paint
 // together at the layout boundary, including during its common screen fade.
@@ -313,6 +314,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   }
   let inspectTick = 0;
   function trackPlayerHud() {
+    // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
+    // into a script-driven animation by rewriting its settled coordinates.
+    if (reducedMotionRequested()) { trackingRequest = 0; return; }
     // Keep the settled target cores reserved, or the HUD can snap back over the player target.
     placePlayerHud(false, settledTargetCores, true);
     // A neighbour's intent that moves between refits re-picks the spot about
@@ -928,7 +932,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   window.addEventListener('resize', schedule);
   const poseObserver = new MutationObserver(() => {
-    if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
+    if (!reducedMotionRequested() && !trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
   });
   poseObserver.observe(field, { subtree: true, attributes: true,
     attributeFilter: ['src', 'data-pose', 'data-animating', 'class'] });

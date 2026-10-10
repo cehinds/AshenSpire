@@ -21,8 +21,13 @@ test('tracking pass reserves the same settled target cores as the main placement
   assert.match(stage, /const targetCores = boxes\.flatMap\(/);
   assert.match(stage, /targetCores,\n\s*\}\);/);
   assert.match(stage, /settledTargetCores = targetCores;/);
-  assert.match(stage, /function trackPlayerHud\(\) \{\n\s*\/\/[^\n]*\n\s*placePlayerHud\(false, settledTargetCores, true\);/);
+  assert.match(stage, /function trackPlayerHud\(\) \{[\s\S]*?placePlayerHud\(false, settledTargetCores, true\);/);
   assert.doesNotMatch(stage, /function trackPlayerHud\(\) \{\n\s*placePlayerHud\(\);/);
+});
+
+test('reduced motion never starts or continues the frame-by-frame HUD tracker', () => {
+  assert.match(stage, /function trackPlayerHud\(\) \{[\s\S]*?if \(reducedMotionRequested\(\)\) \{ trackingRequest = 0; return; \}/);
+  assert.match(stage, /const poseObserver = new MutationObserver\(\(\) => \{\n\s*if \(!reducedMotionRequested\(\) && !trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
 });
 
 test('combat-layer QA probe validates the sprite pseudo-element shadows, not the removed layer', () => {
