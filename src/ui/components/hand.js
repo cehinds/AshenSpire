@@ -1,4 +1,4 @@
-import { handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { COMBAT_TOOLS_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
@@ -129,7 +129,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
       // The compact toolbar occupies a 44px touch row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
-      const toolsHeight = 48 / zoom;
+      const toolsHeight = COMBAT_TOOLS_HEIGHT_PX / zoom;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
       // Hidden, inert clones reserve its space before a press selects a face;
