@@ -21,7 +21,8 @@ test('card identity preserves class actions while reviewed weapons specialize at
    for(const equipment of [[],[{id:'shortbow'}],[{id:'greatsword'}],[{id:'buckler',kind:'shield',geom:'round'}]]){
     const result=resolveCombatAnimation(card(maneuver),equipment,{classId});
     const specialized = maneuver === 'attack' && equipment[0]?.id === 'greatsword' ? 'weapon:attack:greatsword'
-      : maneuver === 'ranged' && equipment[0]?.id === 'shortbow' ? 'weapon:ranged:bow' : maneuver;
+      : maneuver === 'ranged' && equipment[0]?.id === 'shortbow' ? 'weapon:ranged:bow'
+      : maneuver === 'counter' ? 'counterPrepare' : maneuver;
     assert.equal(result.technique,specialized);
     assert.equal(result.alternative,true);
    }
