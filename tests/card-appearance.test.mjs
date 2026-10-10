@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {validateCardAppearance} from '../src/model/cardAppearance.js';
 import {cardLayoutDocumentWithChanges} from '../src/model/cardLayoutDocument.js';
+import {applyCardAppearance} from '../src/ui/components/cardAppearance.js';
+import {withKitDom} from './helpers/kit-dom.mjs';
 const master=JSON.parse(readFileSync(new URL('../src/content/card-layout.json',import.meta.url),'utf8'));
 test('master visual definitions validate and survive an editor layout save',()=>{
  assert.equal(validateCardAppearance(master),master);
@@ -14,3 +16,12 @@ test('visual data cannot inject executable markup or escape the asset directory'
  for(const body of ['<script>alert(1)</script>','<path onload="alert(1)" d="M0 0"/>','<foreignObject/>','<path fill="url(https://example.com)" d="M0 0"/>'])assert.throws(()=>validateCardAppearance({symbols:{actions:{smash:{svg:{viewBox:'0 0 32 32',body}}}}}));
  assert.throws(()=>validateCardAppearance({components:{title:{href:'assets/title.png'}}}),/supplied by the card/);
 });
+test('SVG-backed component images preserve contain, cover, and fill fitting',()=>withKitDom(({document})=>{
+ for(const [fit,aspect] of [['contain','xMidYMid meet'],['cover','xMidYMid slice'],['fill','none']]){
+  const face=document.createElement('article'),trim=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  trim.classList.add('card-base-action-frame');face.append(trim);
+  applyCardAppearance(face,{components:{'footer-trim':{href:'assets/card-components/trim.webp',fit}}});
+  assert.equal(trim.firstChild.tagName,'IMAGE');
+  assert.equal(trim.firstChild.getAttribute('preserveAspectRatio'),aspect);
+ }
+}));

@@ -7,7 +7,7 @@ function paint(node,visual){
   node.querySelectorAll(':scope > [data-card-decoration]').forEach(n=>n.remove());
   const isSvg=node.tagName.toLowerCase()==='svg';
   if(visual.href){
-    if(isSvg){const r=visual.imageRect||{x:0,y:0,w:360,h:540},img=document.createElementNS('http://www.w3.org/2000/svg','image');for(const [k,v] of Object.entries({href:assetUrl(visual.href),x:r.x,y:r.y,width:r.w,height:r.h,preserveAspectRatio:visual.fit==='fill'?'none':'xMidYMid meet'}))img.setAttribute(k,String(v));node.replaceChildren(img);}
+    if(isSvg){const r=visual.imageRect||{x:0,y:0,w:360,h:540},img=document.createElementNS('http://www.w3.org/2000/svg','image'),aspect=visual.fit==='fill'?'none':visual.fit==='cover'?'xMidYMid slice':'xMidYMid meet';for(const [k,v] of Object.entries({href:assetUrl(visual.href),x:r.x,y:r.y,width:r.w,height:r.h,preserveAspectRatio:aspect}))img.setAttribute(k,String(v));node.replaceChildren(img);}
     else{if(getComputedStyle(node).position==='static')node.style.position='relative';node.replaceChildren(imageNode(visual.href,visual.fit));node.style.background='none';node.style.clipPath='none';}
     node.dataset.customImage='true';
   }else if(visual.svg){
