@@ -110,7 +110,15 @@ test('inspection and leading controls keep priority over the tap square', () => 
 });
 
 test('the player proxy paints nothing and shares the fitted center, height and transform', () => {
-  for (const property of ['left', 'top', 'height', 'transform']) assert.equal(proxy.declarations[property], plate.declarations[property]);
+  // Packing may shift only the transparent core (--enemy-core-x/y); without
+  // that override the proxy resolves to exactly the plate's fitted center.
+  const unpacked = value => value?.replace(/^var\(--enemy-core-([xy]), (.*)\)$/, '$2');
+  for (const property of ['left', 'top']) {
+    assert.match(proxy.declarations[property], /^var\(--enemy-core-[xy], /, `${property} accepts only the core override`);
+    assert.equal(unpacked(proxy.declarations[property]), plate.declarations[property]);
+    assert.doesNotMatch(plate.declarations[property], /--enemy-core/, 'the visible plate never follows the packed core');
+  }
+  for (const property of ['height', 'transform']) assert.equal(proxy.declarations[property], plate.declarations[property]);
   assert.equal(proxy.declarations.background, 'none');
   assert.equal(proxy.declarations.border, '0');
   assert.equal(proxy.declarations['box-shadow'], 'none');
