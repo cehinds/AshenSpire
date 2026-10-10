@@ -15,7 +15,7 @@ import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.
 import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
-import { cardTargetPlan } from '../../model/cardTargets.js';
+import { cardTargetPlan, upcastNextStep } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { combatCardView } from '../models/CombatCardView.js';
@@ -92,6 +92,8 @@ import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
 import { resourceBars } from '../components/resbars.js';
+import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
+import { characterLevel } from '../../model/levelup.js';
 import { combatHealthRow } from '../components/combatHealth.js';
 import { blockPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -290,6 +292,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const upcastTiersByCard = new Map();
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  // Receipt renders replace the field DOM, but keep the encounter's fitted art.
+  // The stage invalidates this cache when viewport, formation or artwork changes.
+  let combatLayoutState = {};
   const combatRests = new Map();
   const heldStances = createStanceLedger();
   const readinessOrders = new Map();
@@ -417,7 +422,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             const chosen = cardDef(inst);
             const plan = cardTargetPlan(chosen, me, scene?.enemies, scene?.players);
             const previousTarget = obj.targetId ?? (plan.mode === 'friendly' ? me : null);
-            if (!plan.legalIds.includes(previousTarget)) {
+            // An area card (allEnemies) has no single destination: send it now.
+            const step = upcastNextStep(plan, cardNeedsEnemyTarget(chosen), previousTarget);
+            if (step === 'playUntargeted') { send({ ...obj, targetId: undefined, upcastTier: Number(ranks) }); return; }
+            if (step === 'retarget') {
               if (plan.mode === 'friendly') { armFriendlyTargeting(inst.instanceId); return; }
               armedFriendlyCard = null; render();
               const targetShell = openCardChoiceModal({ cardName: chosen.name,
@@ -802,6 +810,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // would sit over the reward or map and send a stale playCard on a pick
     // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
+      combatLayoutState = {};
       closeCardChoice();
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
@@ -859,7 +868,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wrap.className = 'meters';
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
-    const bars = resourceBars(plan, { surface: 'model' });
+    const bars = resourceBars(plan, { surface: 'model', showLabels: !isEnemy });
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
@@ -867,6 +876,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
+    // Each row names its kind, as the solo renderer does (combat.js meterBars).
+    for (const row of bars.children) {
+      const kind = row.dataset.meterRow === 'hp' || row.dataset.res === 'hp' ? 'hp' : row.classList.contains('procbar') ? 'buildup' : 'resource';
+      row.dataset.meterRow = kind;
+      if (meterRowSelectedOnly(kind)) row.dataset.selectedOnly = 'true';
+    }
     while (bars.firstChild) wrap.append(bars.firstChild);
     if (ent.combatExpansionVersion === 2) {
       const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
@@ -1112,7 +1127,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId) }));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId), view: 'combat' }));
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setStance?.(heldStances.get(p.id));
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
@@ -1129,8 +1144,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
-      name.className = 'nm'; name.textContent = m.name || p.id;
-      name.title = `${name.textContent}: ${seatState.label}, ${p.energy}/${p.energyMax} energy`;
+      // The nameplate reads name · Lv, as the solo nameplate does (combat.js).
+      // The snapshot's `level` is the seat's ledger row ({ level, xp, … } or null),
+      // which is exactly the run shape characterLevel reads from `run.level`.
+      name.className = 'nm'; name.textContent = `${m.name || p.id} · Lv ${characterLevel({ level: m.level })}`;
+      name.title = `${m.name || p.id}: ${seatState.label}, ${p.energy}/${p.energyMax} energy`;
       box.appendChild(name);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
@@ -1211,7 +1229,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       row.appendChild(box);
     }
 
-    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
     const area = app.querySelector('.hand-area');
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
@@ -1348,6 +1365,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         : null;
       if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
     }
+    // Fit only after the replacement hand/footer establish the final field size.
+    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
     for (const [ownerId, plan] of pendingAnimations) {
       const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
       const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);

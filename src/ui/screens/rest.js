@@ -607,8 +607,18 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     // Opening and selecting mutate presentation state only. Back and Escape
     // return to the Shrine; Confirm promotes one item and returns to the
     // picker while stones remain. Every completed upgrade is persisted.
+    // A one-choice Shrine (not multi-use) is spent by the first upgrade: Back
+    // after one or more upgrades ends the visit with their receipt, exactly as
+    // the final stone does, so the upgrade can never be paired with a Rest,
+    // Extract or Install at the same site (#1675 follow-up). Back with nothing
+    // upgraded still returns to the Shrine untouched.
     const smithOption = app.querySelector('#smith-opt');
-    const openSmith = () => {
+    const smithReceiptLine = (receipts) => {
+      const items = receipts.map((r) => `${esc(r.itemName || r.armamentName)} to tier ${r.afterLevel}`).join(', ');
+      const spent = receipts.reduce((sum, r) => sum + r.cost, 0);
+      return `Upgraded ${items}: spent ${spent} Stone${receipts.length > 1 && spent !== 1 ? 's' : ''}.`;
+    };
+    const openSmith = (receipts = []) => {
       let selectedItemRef = null;
       const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse, repeatUpgrades: true });
       const modal = mountSmithUpgradeModal(app, model(), {
@@ -619,18 +629,23 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           selectedItemRef = itemRef;
           modal.update(model());
         },
-        onBack: () => { remount(); app.querySelector('#smith-opt')?.focus({ preventScroll: true }); },
+        onBack: () => {
+          if (!multiUse && receipts.length) { onDone(smithReceiptLine(receipts)); return; }
+          remount();
+          app.querySelector('#smith-opt')?.focus({ preventScroll: true });
+        },
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
+          const done = [...receipts, receipt];
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          if (run.smithingStones > 0) { openSmith(); return; }
+          if (run.smithingStones > 0) { openSmith(done); return; }
           if (multiUse) { remount(); return; }
-          onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
+          onDone(smithReceiptLine(done));
         },
       });
     };
-    smithOption.addEventListener('click', openSmith);
+    smithOption.addEventListener('click', () => openSmith());
     if (openPanel === 'smith') openSmith();
     smithOption.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;

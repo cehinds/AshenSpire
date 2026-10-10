@@ -13,3 +13,6 @@ Standalone hand QA, trim, T14 motion, full compiled screenreach, negative plants
 The Default log retains its original EPERM profile cleanup message. A subsequent identity-filtered process/path check found no matching owned browser and no remaining profile path; no process termination or deletion was performed. Parent HTTP server 8823 was retained.
 
 Text is curated as UTF-8 without BOM with LF line endings; raw D: evidence remains unchanged. PNGs are copied byte for byte. manifest.json records both raw and curated SHA256 values, original paths, scope and cleanup facts. Full result JSON is retained without shortening the trace or state payloads.
+
+
+**Raw files removed from the tree (2026-10-10, #1812).** `default/browser-health.json`, `default/results.json` were removed under the QA-evidence rule (CONTRIBUTING.md, *QA evidence goes to CI artifacts, not the tree*). Statements or manifests here that name them describe the original run; the bytes live in history: `git log --diff-filter=D -- <path>` finds the removing commit and `git show <commit>^:<path>` restores them.

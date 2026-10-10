@@ -1,7 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
-import { combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors } from '../models/CombatOverheadModel.js';
+import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
@@ -14,7 +14,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
@@ -70,6 +70,8 @@ export function combatPlayerActionRect(node, infoRect, art, zoom, floor = Infini
 // A readable player panel can consume the only near-foot slot for another
 // actor. Retry its placement once with those actors' physical cores reserved;
 // retain the first layout unless the full footer pack actually improves.
+// `targetCores` is the caller's settled reservation: it is cleared in place when
+// the retry is refused, so the tracking pass never reapplies a rejected layout.
 export function packCombatTargetsWithHud({ pack, placeHud, targetCores }) {
   const original = pack();
   const blocked = targets => targets.filter(target => target.obstructed);
@@ -79,6 +81,7 @@ export function packCombatTargetsWithHud({ pack, placeHud, targetCores }) {
   const retry = pack();
   if (blocked(retry).length < ids.size) return retry;
   placeHud([]);
+  targetCores.length = 0;
   return original;
 }
 
@@ -120,7 +123,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let frameRequest = 0;
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
-  let settledTargets = [], settledFooterSize = 44;
+  let settledTargets = [], settledFooterSize = 44, settledTargetCores = [];
   let playerInfoRects = [];
   const labelMeasure = document.createElement('canvas').getContext('2d');
   function fitLabels() {
@@ -310,7 +313,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   }
   let inspectTick = 0;
   function trackPlayerHud() {
-    placePlayerHud(false, [], true);
+    // Keep the settled target cores reserved, or the HUD can snap back over the player target.
+    placePlayerHud(false, settledTargetCores, true);
     // A neighbour's intent that moves between refits re-picks the spot about
     // four times a second; the Inspect itself never follows the body's bob.
     if (++inspectTick % 15 === 0) placeEnemyInspect();
@@ -489,6 +493,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
     }
     const fitFormation = () => {
+      // Classic and alternative compositions differ; choose per fit, not at import.
+      const combatComposition = classicAppearance() ? classicCombatComposition : alternativeCombatComposition;
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
@@ -647,6 +653,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // must not split the independent frame plate's complete tap area.
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     settledTargets = [];
+    settledTargetCores = [];
     placePlayerHud();
     // Enemy overheads pack around the player's measured art and controls. An
     // obstacle never blocks its own owner, and the fitted artwork does not move.
@@ -713,7 +720,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       });
       return footerObstacles;
     };
-    const footerSize = Math.max(44, ...boxes.filter((box, index) => placed[index].frame.classList.contains('context-selected')).map(box=>box.footerHeight));
+    // Space packed targets by the real hit-area height, never the compact
+    // footer alone, so neighbouring tap areas cannot overlap.
+    const footerSize = combatTargetPackSize(boxes.filter((box, index) => placed[index].frame.classList.contains('context-selected')).map(box=>box.footerHeight));
     const packTargets = () => combatTargetAnchors({ width: fieldRect.width,
       height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
       // Crowded HUD/intent bands may leave no vertical slot. Only the plate
@@ -732,36 +741,39 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
         player: placed[i].frame.classList.contains('player'),
       })] : []) });
-    const targets = packCombatTargetsWithHud({ pack: packTargets,
-      placeHud: cores => placePlayerHud(true, cores),
-      // A fallen frame survives for its defeat pose but paints no target
-      // proxy, so it neither competes for footer space nor blocks the HUD.
-      targetCores: boxes.flatMap((box, i) => {
+    // A fallen frame survives for its defeat pose but paints no target
+    // proxy, so it neither competes for footer space nor blocks the HUD.
+    const targetCores = boxes.flatMap((box, i) => {
         if (placed[i].frame.classList.contains('dead') || (placed[i].frame.classList.contains('player')
           ? combat.dataset?.waistOverlap === 'true' : !placed[i].frame.classList.contains('context-selected'))) return [];
         const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
           player: placed[i].frame.classList.contains('player') });
-        return [{ id: target.id, left: fieldRect.left + target.x - 22, right: fieldRect.left + target.x + 22,
-          top: fieldRect.top + target.y - 22, bottom: fieldRect.top + target.y + 22 }];
-      }),
+        const half = COMBAT_TARGET_HIT_PX / 2;
+        return [{ id: target.id, left: fieldRect.left + target.x - half, right: fieldRect.left + target.x + half,
+          top: fieldRect.top + target.y - half, bottom: fieldRect.top + target.y + half }];
+    });
+    const targets = packCombatTargetsWithHud({ pack: packTargets,
+      placeHud: cores => placePlayerHud(true, cores),
+      targetCores,
     });
     settledTargets = targets;
+    settledTargetCores = targetCores;
     settledFooterSize = footerSize;
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
       if (intentRect) {
-        frame.style.setProperty('--enemy-hit-width', `${Math.max(44,boxes[i].footerWidth) / zoom}px`);
+        frame.style.setProperty('--enemy-hit-width', `${Math.max(COMBAT_TARGET_HIT_PX,boxes[i].footerWidth) / zoom}px`);
         // Intent cards can be taller; the independent foot target keeps its
         // physical 44px minimum so two aligned footer bands fit a short stage.
-        frame.style.setProperty('--enemy-hit-height', `${44 / zoom}px`);
+        frame.style.setProperty('--enemy-hit-height', `${COMBAT_TARGET_HIT_PX / zoom}px`);
       }
       if (frameRect) {
         const target = targets.find(target => target.id === frame.dataset.eid) || combatFrameTarget({
           ...boxes[i], id: frame.dataset.eid, fieldRect, footerSize, player: frame.classList.contains('player'),
         });
         const local = anchorLocalBox(frameRect, { left: fieldRect.left + target.x,
-          top: fieldRect.top + target.y, width: 44, height: 44 }, { zoom });
+          top: fieldRect.top + target.y, width: COMBAT_TARGET_HIT_PX, height: COMBAT_TARGET_HIT_PX }, { zoom });
         frame.style.setProperty('--enemy-hit-x', `${local.left}px`);
         frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
         frame.dataset.targetObstructed = String(!!target.obstructed);

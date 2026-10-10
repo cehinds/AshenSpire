@@ -11,7 +11,7 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
     const chosen = ordered.map(target => {
       available.sort((a,b) => distance(target,a)-distance(target,b));
       return available.shift();
-    }).sort((a,b) => a.left-b.left || a.top-b.top);
+    });
     return ordered.map((target,i) => ({id:target.id,...chosen[i]}));
   };
   const distance = (target,cell) => (cell.left+cell.width/2-target.x)**2+(cell.top+cell.height/2-target.y)**2;
@@ -45,16 +45,24 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
   }
   // If inspection controls occupy every safe cell, retain a separate square
   // for every foe instead of leaving unplaced controls at stale coordinates.
+  // Last resort: shrink toward the 44px floor, keeping only hard obstacles
+  // (player sprite, cards, tools, buttons) blocked. A foe with no slot even then
+  // is left unplaced; the picker hides its button and the sprite stays targetable.
   if (cells.length < targets.length) {
-    const edge = Math.min(48, width - 2 * inset, height - 2 * inset);
-    if (edge <= 0) return [];
-    cells = [];
-    for (let top = inset; top + edge <= height - inset; top += edge + gap) {
-      for (let left = inset; left + edge <= width - inset; left += edge + gap) {
-        const cell = { left, top, width: edge, height: edge };
-        if (!hardObstacles.some(rect => overlaps(cell, rect, gap))) cells.push(cell);
+    let fallback = [];
+    for (const edge of [...new Set([48, 44, Math.min(48, width - 2 * inset, height - 2 * inset)])]) {
+      if (edge <= 0 || edge > width - 2 * inset || edge > height - 2 * inset) continue;
+      const grid = [];
+      for (let top = inset; top + edge <= height - inset; top += edge + gap) {
+        for (let left = inset; left + edge <= width - inset; left += edge + gap) {
+          const cell = { left, top, width: edge, height: edge };
+          if (!hardObstacles.some(rect => overlaps(cell, rect, gap))) grid.push(cell);
+        }
       }
+      if (grid.length > fallback.length) fallback = grid;
+      if (grid.length >= targets.length) break;
     }
+    cells = fallback;
   }
   if (cells.length && cells[0].id !== undefined) return targets.map(t=>cells.find(c=>c.id===t.id));
   // Match closest pairs first so an already-centered foe keeps its own cell.

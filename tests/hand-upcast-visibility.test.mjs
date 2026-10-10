@@ -247,6 +247,27 @@ for (const viewport of [320, 390]) test(`overflow-visible fan keeps the owning c
   assert.ok(control.getBoundingClientRect().right <= viewport - 30, 'a newly narrower viewport admits the same owning card');
 });
 
+test('a stale upcast shift is removed once the chooser fits its natural place', () => {
+  const properties = new Map();
+  let natural = 295.266;
+  const hand = { clientWidth: 296 / .9, scrollTop: 17, getBoundingClientRect: () => ({ left: 12, right: 308, width: 296 }) };
+  Object.defineProperty(hand, 'scrollLeft', { get: () => 0, set() {} });
+  const card = { classList: { contains: name => name === 'card' },
+    style: { getPropertyValue: key => properties.get(key) ?? '', setProperty: (key, value) => properties.set(key, value),
+      removeProperty: key => properties.delete(key) } };
+  const control = { parentElement: card, getBoundingClientRect: () => {
+    const shift = (parseFloat(properties.get('--hand-upcast-shift')) || 0) * .9;
+    return { left: natural + shift, right: natural + 146.156 + shift, width: 146.156 };
+  } };
+  revealHandUpcastControl(hand, control, 320);
+  assert.ok(properties.get('--hand-upcast-shift'), 'an overflowing chooser is pulled inside the port');
+  assert.ok(Math.abs(control.getBoundingClientRect().right - 308) < .001);
+  natural = 100;
+  revealHandUpcastControl(hand, control, 320);
+  assert.equal(properties.get('--hand-upcast-shift'), undefined, 'a stale shift is removed once the card no longer overflows');
+  assert.equal(control.getBoundingClientRect().left, 100, 'the card returns to its authored position');
+});
+
 test('shared hand selection and scrolling invoke reveal without opening or paying Upcast', () => {
   const { hand, control } = scroller({ viewport: 390, controlLeft: 365.266 });
   let selected = false, mutation, disconnected = false;

@@ -258,6 +258,7 @@
 .enemy-target-health { font-size: .8em; color: #eee2cf; }
 .enemy-target-button:is(:hover, :focus-visible) { outline: 2px solid var(--gold); outline-offset: -3px; background: #493c29; }
 .enemy-target-button:disabled { opacity: .5; cursor: default; }
+.enemy-target-button[hidden] { display: none; }
 
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS

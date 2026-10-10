@@ -3,17 +3,20 @@ import { reconcileCombatKnowledge } from './enemyKnowledge.js';
 
 /** Irreversible changes are saved before adoption, animation or terminal presentation. */
 export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, saveCandidate }) {
-  // Legacy ordinary actions do not replace the entry/explicit Save Game checkpoint.
-  // Knowledge reads, predictions and learning always need their exact transaction.
-  // Blight receipts, choices and zero-delta converted payments are irreversible,
-  // so compare the complete state rather than just its meter value. The first
-  // opening checkpoint also saves the entry check and exact initial RNG state.
+  // SPEC §3.12/§9: nothing automatic replaces the entry/explicit Save Game
+  // checkpoint, in any run, so abandoning mid-combat restarts that combat
+  // (owner ruling 2026-10-10). That includes a reaction pause: its exact
+  // save/restore (combat-reaction-contract) is the player's explicit Save Game
+  // or Save and Quit at the pause, never an automatic write here. Exact writes
+  // remain only for Blight receipts, choices and zero-delta converted payments
+  // (irreversible, so compare the complete state rather than just its meter
+  // value) and terminal results. The first opening checkpoint also saves the
+  // entry check and exact initial RNG state.
   const checkpoint = run.combatEntered;
-  const savesKnowledge = run.enemyKnowledgeRules?.version === 1 || candidate.enemyKnowledge?.version === 1;
-  if (!savesKnowledge && candidate.reactionRulesVersion !== 1 && candidate.combatExpansionVersion === 2 && !candidate.result
+  if (candidate.combatExpansionVersion === 2 && !candidate.result
     && checkpoint?.nodeId === nodeId && checkpoint.encounterId === encounterId && checkpoint.snapshot
     && JSON.stringify(run.ashenBlight) === JSON.stringify(candidate.player.ashenBlight)) {
-    return { ok: true, durable: false };
+    return bankKnowledgeOnly({ run, candidate, saveCandidate });
   }
   const next = structuredClone(run);
   reconcileCombatKnowledge(next, candidate);
@@ -31,4 +34,23 @@ export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, 
   Object.assign(run, next);
   run.loadout = loadout;
   return { ok: true };
+}
+
+// Enemy-knowledge receipts reconcile to the run exactly once (enemy-knowledge
+// contract): Perception is paid by a per-encounter high-water mark and bestiary
+// receipts merge by receipt union, so banking them now and re-earning them in a
+// restarted fight never pays twice. Only the knowledge ledger moves: the
+// checkpoint snapshot and its saved RNG counters (no rng is passed) stay put.
+function bankKnowledgeOnly({ run, candidate, saveCandidate }) {
+  if (!run.enemyKnowledgeState || !candidate.enemyKnowledge) return { ok: true, durable: false };
+  const next = structuredClone(run);
+  reconcileCombatKnowledge(next, candidate);
+  if (JSON.stringify(next.enemyKnowledgeState) === JSON.stringify(run.enemyKnowledgeState)
+    && JSON.stringify(next.skills) === JSON.stringify(run.skills)) return { ok: true, durable: false };
+  const receipt = saveCandidate(next, null);
+  if (receipt?.ok === false) throw new Error(receipt.error || 'Enemy learning could not be saved');
+  run.enemyKnowledgeState = next.enemyKnowledgeState;
+  run.skills = next.skills;
+  if (next.savedAt !== undefined) run.savedAt = next.savedAt;
+  return { ok: true, durable: false, knowledge: true };
 }

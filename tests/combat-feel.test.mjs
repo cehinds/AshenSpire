@@ -108,9 +108,9 @@ function drive(t, fn) {
       animateActor: () => ({ impactMs: 100, totalMs: 800,
         hold: (ms) => holds.push(['actor', ms, Date.now()]), cancel() {} }),
       onFlush: () => flushes++, onBeatApplied() {} };
-    const events = (amounts) => [{ type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
+    const events = (amounts, opener) => [opener || { type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
       ...amounts.map((amount) => ({ type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount }))];
-    const start = (amounts) => playTimeline(events(amounts), ctx, () => completed++);
+    const start = (amounts, opener) => playTimeline(events(amounts, opener), ctx, () => completed++);
     const fire = (name) => { for (const cb of [...(listeners.get(name) || [])]) cb(); };
     try { fn({ dom, actor, target, combatEl, holds, reactions, buzzes, start, fire,
       tick: (ms) => t.mock.timers.tick(ms), stats: () => ({ flushes, completed, settled }) }); }
@@ -144,6 +144,22 @@ test('a click during hit-stop clears both held figures and flushes once without 
     assert.equal(stats().flushes, 1);
     assert.equal(stats().completed, 1);
     assert.equal(buzzes.length, 1);
+  });
+});
+
+test('a counter beat holds on an HP hit of 6 or more, like an attack beat (SPEC §7.4)', (t) => {
+  drive(t, ({ start, tick, holds }) => {
+    start([6], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' }); tick(100);
+    assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]], 'a counter hit of 6 HP holds both figures');
+    for (let i = 0; i < 100; i++) tick(20);
+  });
+});
+
+test('a counter beat does not hold on an HP hit under 6', (t) => {
+  drive(t, ({ start, tick, holds }) => {
+    start([5], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' }); tick(100);
+    assert.equal(holds.length, 0, 'a counter hit of 5 HP does not hold');
+    for (let i = 0; i < 100; i++) tick(20);
   });
 });
 

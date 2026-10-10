@@ -17,3 +17,6 @@ All eight representative images were visually reviewed before this gallery was c
 ![Native tier picker on a compact phone](phone-compact-native-tier-picker-open.png)
 
 ![Corrupted card inspection](phone-corrupted-inspection.png)
+
+
+**Raw files removed from the tree (2026-10-10, #1812).** `summary.json` was removed under the QA-evidence rule (CONTRIBUTING.md, *QA evidence goes to CI artifacts, not the tree*). Statements or manifests here that name it describe the original run; the bytes live in history: `git log --diff-filter=D -- <path>` finds the removing commit and `git show <commit>^:<path>` restores them.
