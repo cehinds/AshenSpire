@@ -11,7 +11,7 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
     const chosen = ordered.map(target => {
       available.sort((a,b) => distance(target,a)-distance(target,b));
       return available.shift();
-    }).sort((a,b) => a.left-b.left || a.top-b.top);
+    });
     return ordered.map((target,i) => ({id:target.id,...chosen[i]}));
   };
   const distance = (target,cell) => (cell.left+cell.width/2-target.x)**2+(cell.top+cell.height/2-target.y)**2;

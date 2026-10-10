@@ -23,6 +23,14 @@ for (const [width, height] of [[320, 250], [390, 420], [844, 150], [1440, 600]])
   });
 }
 
+test('Classic grid keeps vertical order of targets that share a column band', () => {
+  const [upper, lower] = enemyTargetGrid({ width: 400, height: 400, targets: [
+    { id: 'upper', x: 210, y: 100 }, { id: 'lower', x: 200, y: 250 }] });
+  assert.equal(upper.id, 'upper');
+  assert.equal(lower.id, 'lower');
+  assert.ok(upper.top < lower.top, `upper (${upper.top}) must sit above lower (${lower.top})`);
+});
+
 test('isolated enemy uses its nearest free grid center', () => {
   const target = { id: 'e1', x: 210, y: 210 };
   const [slot] = enemyTargetGrid({ width: 420, height: 420, targets: [target] });

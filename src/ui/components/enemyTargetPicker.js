@@ -1,7 +1,10 @@
 import { tFull } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
-import { alternativeEnemyTargetGrid as enemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
+import { enemyTargetGrid as classicEnemyTargetGrid } from '../models/EnemyTargetGridModel.js';
+import { alternativeEnemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
+import { classicAppearance } from '../displayAppearance.js';
+import { focusElement } from '../input.js';
 
 // Placement follows fitted figures without intercepting inspection controls.
 function watchTargetPlacement(host, picker) {
@@ -26,7 +29,12 @@ function watchTargetPlacement(host, picker) {
       ...host.querySelectorAll('.combatant-leading, .meters')]
       .filter(Boolean).map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height).map(localRect);
     const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
-    const hardObstacles = playerRect?.width && playerRect?.height ? [localRect(playerRect)] : [];
+    // Cards, combat tools and action buttons paint above the picker: never place a target under them.
+    const hardNodes = [playerRect, ...(combat?.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card') ?? [])];
+    const hardObstacles = hardNodes.filter(Boolean)
+      .map(node => (node.getBoundingClientRect ? node.getBoundingClientRect() : node))
+      .filter(rect => rect.width && rect.height).map(localRect);
+    const enemyTargetGrid = classicAppearance() ? classicEnemyTargetGrid : alternativeEnemyTargetGrid;
     const targets = [...picker.children].map(button => {
       const figure = [...host.querySelectorAll('.combatant.enemy')].find(node => node.dataset.eid === button.dataset.eid);
       const rect = (figure?.querySelector('.sprite') || figure)?.getBoundingClientRect();
@@ -86,10 +94,12 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
         if (!button.disabled) picker.activate?.(button.dataset.eid);
       });
       for (const event of ['pointerenter', 'focus']) button.addEventListener(event, () => picker.preview?.(button.dataset.eid));
+      button.addEventListener('focus', () => focusElement(button));
       for (const event of ['pointerleave', 'blur']) button.addEventListener(event, () => picker.preview?.(null));
       picker.appendChild(button);
     }
     button.disabled = disabled;
+    button.dataset.number = String(index + 1);
     button.querySelector('.enemy-target-name').textContent = `${index + 1}. ${target.name}`;
     button.querySelector('.enemy-target-health').textContent = tFull('combat.enemyTarget.health', { hp: target.hp, maxHp: target.maxHp });
     button.setAttribute('aria-label', tFull('combat.enemyTarget.label', { number: index + 1, name: target.name, hp: target.hp, maxHp: target.maxHp }));
