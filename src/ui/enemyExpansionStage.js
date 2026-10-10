@@ -3,7 +3,8 @@ import { assetUrl } from './assetmap.js';
 import { enemyPresentation, enemyAuraFilter } from './enemyStates.js';
 import { reducedMotionRequested } from './motion.js';
 import { registerStage } from './services/PoseAnimator.js';
-import { markArtPlaceholder } from './artFallback.js';
+import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
+import { builtInFor } from './highResArt.js';
 
 const aliases = { guard: 'block', guardHit: 'block', projectile: 'rangedWeaponAttack', ranged: 'rangedWeaponAttack', buff: 'magicAttack', casting: 'magicAttack', magic: 'magicAttack', hurt: 'hit', afflicted: 'wounded', counter: 'counterattack', prone: 'defeated', sleep: 'defeated' };
 
@@ -24,9 +25,10 @@ export function enemyExpansionSprite(definition, entity = {}) {
   image.style.cssText = `position:absolute;max-width:none;width:${512 * scale}px;height:${512 * scale}px;left:calc(50% - ${256 * scale}px);bottom:${-32 * scale}px`;
   // The root is the sprite's first child, which the hit recoil animates.
   // The idle bob lives on this inner layer so a recoil never resets its clock.
+  // Like the older pose stages, nothing inside takes a hit: taps land on the stage.
   const bob = document.createElement('div');
   bob.className = 'enemy-expansion-bob';
-  bob.style.cssText = 'position:absolute;inset:0';
+  bob.style.cssText = 'position:absolute;inset:0;pointer-events:none';
   root.append(bob);
   bob.append(image);
   const placeholder = document.createElement('span');
@@ -34,11 +36,22 @@ export function enemyExpansionSprite(definition, entity = {}) {
   placeholder.textContent = definition.name || definition.id;
   placeholder.setAttribute('role', 'img');
   placeholder.setAttribute('aria-label', placeholder.textContent);
-  placeholder.style.cssText = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center';
+  placeholder.style.cssText = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none';
   bob.append(placeholder);
-  image.addEventListener('load', () => { image.style.visibility = ''; placeholder.style.display = 'none'; });
+  // A failed frame leaves the stage like every other art fallback: the <img>
+  // is taken out and the marked stage shows its named placeholder, so a Retry
+  // (restoreArtPlaceholders) finds it and draws the art back in.
+  image.addEventListener('load', () => {
+    if (!image.parentNode) bob.append(image);
+    image.style.visibility = ''; placeholder.style.display = 'none';
+    root.removeAttribute(ART_PLACEHOLDER_ATTR); delete root.ashenRestoreArt;
+  });
   image.addEventListener('error', () => {
-    image.style.visibility = 'hidden'; placeholder.style.display = 'flex';
+    // A detached frame's errors never reach highResArt's document listener,
+    // so try its built-in fallback here before standing the name in.
+    const fallback = builtInFor(image.getAttribute('src'));
+    if (fallback) { image.src = fallback; return; }
+    image.remove(); placeholder.style.display = 'flex';
     markArtPlaceholder(root, () => draw(root.dataset.pose || 'idle'));
   });
   const path = pose => `assets/enemy-poses/expansion/${definition.id}/${pose}.webp`;

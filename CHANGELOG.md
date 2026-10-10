@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
+- **Newly painted enemies fall back and come back cleanly** ([#1804](https://github.com/cehinds/AshenSpire/pull/1804), `0.7.1.1251`). When their art cannot load, the new enemies show their name in place of the picture, and Retry paints them again; taps on them always reach the enemy, never an inner layer.
+
 - **Art retry verification requires a visible fallback** ([#1799](https://github.com/cehinds/AshenSpire/pull/1799), `0.7.1.1248`). The blocked-art browser check accepts a marked placeholder that retains its hidden failed image only when its fallback is visibly laid out, while still requiring visible art to return after Retry. Game behavior is unchanged.
 
 - **Pull requests into dev are checked in about five minutes** ([#1797](https://github.com/cehinds/AshenSpire/pull/1797), `0.7.1.1247`). The four full-simulation tests that held one shard at 8m19s now run on every push to `test` and `release` instead of on each pull request; no test was removed. Also, on short landscape phones, tapping an enemy's body no longer selects the enemy standing behind it: when two idle enemies' invisible tap squares would collide, only the squares move apart, while artwork and name plates stay put.
