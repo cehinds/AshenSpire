@@ -587,17 +587,20 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
       })),
-      targets: boxes.flatMap((box, i) => box.frameRect ? [combatFrameTarget({
+      targets: boxes.flatMap((box, i) => box.frameRect && !placed[i].frame.classList.contains('dead') ? [combatFrameTarget({
         ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
         player: placed[i].frame.classList.contains('player'),
       })] : []) });
     const targets = packCombatTargetsWithHud({ pack: packTargets,
       placeHud: cores => placePlayerHud(true, cores),
-      targetCores: boxes.map((box, i) => {
+      // A fallen frame survives for its defeat pose but paints no target
+      // proxy, so it neither competes for footer space nor blocks the HUD.
+      targetCores: boxes.flatMap((box, i) => {
+        if (placed[i].frame.classList.contains('dead')) return [];
         const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
           player: placed[i].frame.classList.contains('player') });
-        return { id: target.id, left: fieldRect.left + target.x - 22, right: fieldRect.left + target.x + 22,
-          top: fieldRect.top + target.y - 22, bottom: fieldRect.top + target.y + 22 };
+        return [{ id: target.id, left: fieldRect.left + target.x - 22, right: fieldRect.left + target.x + 22,
+          top: fieldRect.top + target.y - 22, bottom: fieldRect.top + target.y + 22 }];
       }),
     });
     settledTargets = targets;

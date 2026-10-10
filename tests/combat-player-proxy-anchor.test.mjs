@@ -81,3 +81,18 @@ test('the actual stage pack and HUD retry use the same player proxy receipt and 
     assert.equal(core.right-core.left,44);assert.equal(core.bottom-core.top,44);
   }
 });
+
+test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
+  const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
+  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargets = targets;',begin);
+  const fieldRect={left:0,top:0,width:600,height:400},ids=['player','alive','dead'];
+  const boxes=ids.map((_id,i)=>({hostRect:{left:100+i*150,width:100,bottom:300},footerWidth:104,frameRect:{},controls:[]}));
+  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')}}}));
+  let packInput,retryInput;
+  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,combatFrameTarget,
+    combat:{getBoundingClientRect:()=>({bottom:400})},readFooterObstacles:()=>[],
+    combatTargetAnchors:input=>{packInput=input;return input.targets;},placePlayerHud:()=>{},
+    packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
+  assert.deepEqual(packInput.targets.map(target=>target.id),['player','alive']);
+  assert.deepEqual(retryInput.targetCores.map(core=>core.id),['player','alive']);
+});
