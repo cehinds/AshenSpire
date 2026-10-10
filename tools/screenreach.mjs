@@ -613,7 +613,7 @@ const PROBE = `(() => {
       + (authoredNeighbour ? ' via .alternative-silhouette [authored-neighbour]' : ''));
   }
   // ENEMY ART ROUTING. A tap on a living enemy's visible art must select that
-  // enemy. Sample its sprite on the same 5x6 grid tools/routing-probe does and
+  // enemy. Sample its sprite on a 5x6 grid (20-80% across, 15-90% down) and
   // report the first point whose hit is ANOTHER enemy's frame or its ::before /
   // ::after tap plates (elementFromPoint returns the originating element for a
   // pseudo, so the hit IS the frame) outside that other enemy's sprite. Another
