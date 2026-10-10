@@ -104,6 +104,14 @@ export function combatFrameTarget({ id, hostRect, fieldRect, footerSize, footerW
     minY: player ? footerSize / 2 : foot, width: Math.max(48, footerWidth) };
 }
 
+// getBoundingClientRect and the placement obstacles are already in physical
+// screen pixels. Match the CSS pseudo-element's 44px target without applying
+// UI zoom a second time: 22px mark + 18px above + 4px below.
+export function combatInspectTapBox({ left, top, width, height = width }) {
+  return { left: left - 11, right: left + width + 11,
+    top: top - 18, bottom: top + height + 4 };
+}
+
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
@@ -249,7 +257,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Reads every box first, then writes only the sides that change, so a pass
   // costs one layout read and no forced re-layout between enemies.
   function placeEnemyInspect() {
-    const zoom = uiZoom();
     const combat = field.closest('.combat');
     const infos = [...field.querySelectorAll('.combatant.enemy:not(.dead) > .combatant-stack > .combatant-leading > .combatant-info')];
     if (!infos.length || !combat) return;
@@ -257,7 +264,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const hudBoxes = [...combat.ownerDocument.querySelectorAll('.topbar, .combat-hud, .turn-ribbon, .combat-tools')]
       .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
     const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-    const pad = 11 * zoom, gap = 4 * zoom;
+    const gap = 4;
     // Other combatants' controls, excluding Inspect marks: those are placed by
     // this pass and tracked from their planned boxes below.
     const controls = [...field.querySelectorAll('.combatant-leading > .intent, .combatant-leading > .player-action-intent, .combatant.player .combatant-leading > .combatant-info, .combatant-mini-hud, .combatant-card > .nm, .combatant-card > .meters')]
@@ -270,26 +277,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // Each spot with its 44 px tap box. A side spot never reaches into the intent.
       const centre = box.left + box.width / 2;
       const spots = [
-        ['', { left: centre - size / 2, top: box.top - gap - size },
-          { left: centre - size / 2 - pad, right: centre + size / 2 + pad, top: box.top - gap - size - pad, bottom: box.top }],
-        ['left', { left: box.left - gap - size, top: box.top },
-          { left: box.left - gap - size - pad, right: box.left - gap, top: box.top - pad, bottom: box.top + size + pad }],
-        ['right', { left: box.right + gap, top: box.top },
-          { left: box.right + gap, right: box.right + gap + size + pad, top: box.top - pad, bottom: box.top + size + pad }],
+        ['', { left: centre - size / 2, top: box.top - gap - size }],
+        ['left', { left: box.left - gap - size, top: box.top }],
+        ['right', { left: box.right + gap, top: box.top }],
         // Beside the intent's top corners, for a back-row figure wedged between
         // neighbouring intents, where the ribbon ends.
-        ['left-up', { left: box.left - gap - size, top: box.top - gap - size },
-          { left: box.left - gap - size - pad, right: box.left - gap, top: box.top - gap - size - pad, bottom: box.top - gap }],
-        ['right-up', { left: box.right + gap, top: box.top - gap - size },
-          { left: box.right + gap, right: box.right + gap + size + pad, top: box.top - gap - size - pad, bottom: box.top - gap }],
+        ['left-up', { left: box.left - gap - size, top: box.top - gap - size }],
+        ['right-up', { left: box.right + gap, top: box.top - gap - size }],
         // One mark further out, past a turn ribbon that ends beside the intent.
-        ['right-far-up', { left: box.right + gap + size, top: box.top - gap - size },
-          { left: box.right + gap + size - pad, right: box.right + gap + 2 * size + pad, top: box.top - gap - size - pad, bottom: box.top - gap }],
+        ['right-far-up', { left: box.right + gap + size, top: box.top - gap - size }],
         // Last resort, below the overhead on this enemy's own art: a tap that
         // misses the mark still selects this same enemy.
-        ['below', { left: centre - size / 2, top: box.bottom + gap },
-          { left: centre - size / 2 - pad, right: centre + size / 2 + pad, top: box.bottom + gap - pad, bottom: box.bottom + gap + size + pad }],
-      ];
+        ['below', { left: centre - size / 2, top: box.bottom + gap }],
+      ].map(([side, at]) => [side, at, combatInspectTapBox({ ...at, width: size })]);
       // Our own intent is the anchor; every tap pad must clear everything else,
       // including the Inspect marks already planned this pass.
       const others = [...controls.filter(({ node }) => !(node.matches('.intent') && node.parentElement === anchor)).map(({ rect }) => rect),
