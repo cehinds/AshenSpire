@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1796",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Steadier names under reduced motion and reachable Info on phones",
+    "detail": "With Reduced motion on, enemy names and health no longer twitch by fractions of a pixel as the board settles, and moving the pointer no longer drifts the backdrop. The player's Info and action buttons stay above the hand instead of slipping under it when the character stands low on narrow phones. Newly painted enemies bob while idle again, and a hit no longer knocks their bob out of step.",
+    "build": "0.7.1.1245",
+    "pullRequest": 1796,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1796"
+  },
+  {
     "id": "pr-1800",
     "date": "2026-10-10",
     "group": "2026-10-10",
