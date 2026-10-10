@@ -83,6 +83,7 @@ test('expanded enemy art retries through the verified pack without replacing its
   assert.equal(image.style.visibility,'hidden');
   assert.equal(figure.hasAttribute('data-art-placeholder'),true);
   assert.equal(figure.querySelector('span').getAttribute('role'),'img');
+  assert.equal(figure.querySelector('span').style.display,'flex','the failed frame exposes its rendered fallback');
   const url='objects/enemy-expansion-idle.webp';
   setBuiltInSource(new Map([[id,url]]));
   assert.equal(restoreArtPlaceholders(root),1);
