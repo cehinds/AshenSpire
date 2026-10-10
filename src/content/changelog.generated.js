@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1809",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "AI sessions: model names follow the newest release, and old worktrees are cleaned up",
+    "detail": "Development-process change only, nothing in the game changes. Sessions remove finished worktrees to save disk space.",
+    "build": "0.7.1.1257",
+    "pullRequest": 1809,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1809"
+  },
+  {
     "id": "pr-1808",
     "date": "2026-10-10",
     "group": "2026-10-10",
