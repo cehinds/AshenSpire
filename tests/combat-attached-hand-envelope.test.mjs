@@ -271,5 +271,8 @@ test('the independent art-centered Info footprint stays identical when hidden, v
       {...hidden,left:76,right:120,top:190,bottom:234});
     assert.equal(combatPlayerInfoRect(node,{...art,top:20},viewport,zoom).top,0,'keep incoming viewport-top clamp');
     assert.equal(combatPlayerInfoRect(null,art,viewport,zoom),null);
+    assert.deepEqual(combatPlayerInfoRect(node,art,viewport,zoom,400),hidden,'a door already above the hand keeps its place');
+    assert.equal(combatPlayerInfoRect(node,{...art,top:520},viewport,zoom,390).bottom,386,
+      'low waist-overlap art cannot carry the door under the resting hand');
   }finally{if(original===undefined)delete globalThis.getComputedStyle;else globalThis.getComputedStyle=original;}
 });

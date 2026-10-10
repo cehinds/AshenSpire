@@ -3,6 +3,7 @@ import { assetUrl } from './assetmap.js';
 import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
 import { classicAppearance } from './displayAppearance.js';
+import { reducedMotionRequested } from './motion.js';
 
 /* ALTERNATIVE_ART_START */
 const alternativeArtMap = {};
@@ -142,7 +143,8 @@ export function wireAlternativeBackdrop(combat) {
   if (!layers.length) return () => {};
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const move = event => {
-    const off = reduced.matches || document.documentElement.dataset.ambient === 'off' || event.pointerType === 'touch';
+    // The in-game Reduced motion setting counts as much as the OS preference.
+    const off = reducedMotionRequested() || document.documentElement.dataset.ambient === 'off' || event.pointerType === 'touch';
     const bounds = combat.getBoundingClientRect();
     const x = off ? 0 : (event.clientX - bounds.left) / bounds.width * 2 - 1;
     const y = off ? 0 : (event.clientY - bounds.top) / bounds.height * 2 - 1;
