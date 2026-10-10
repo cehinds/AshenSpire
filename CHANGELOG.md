@@ -34,11 +34,15 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
+- **Enemy combat art gains painted action sets** ([#1795](https://github.com/cehinds/AshenSpire/pull/1795), `0.7.1.1236`). Integrate 33 enemy sets with melee, ranged, spell, guard and reaction frames through the shared art loader. Preserve existing action timing and reduced-motion behavior. The continuation handoff records remaining angle, clipping and halo review.
+
 - **Fallen enemies no longer crowd living targets** ([#1794](https://github.com/cehinds/AshenSpire/pull/1794), `0.7.1.1234`). A defeated enemy stays on the field for its defeat pose but no longer reserves an invisible tap target or shows its faded name and health plate, so living fighters' footers keep their places without a ghost plate over them and the HUD no longer shifts around it.
 
 - **Reserve combat HUD targets and keep self-cast proxies reachable** ([#1792](https://github.com/cehinds/AshenSpire/pull/1792), `0.7.1.1232`). The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.
 
 ## 2026-10-09
+
+
 
 - **Weapon attacks use four painted phases** ([#1789](https://github.com/cehinds/AshenSpire/pull/1789), `0.7.1.1229`). Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded. Smaller 256 px sprites and backgrounds reduce the standalone download while keeping the same on-screen placement.
 

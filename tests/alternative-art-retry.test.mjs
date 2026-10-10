@@ -43,8 +43,8 @@ beforeEach(()=>{
 afterEach(()=>{delete globalThis.document;delete globalThis.Image;resetHighResArt();setBuiltInSource(null);});
 const objectFor=id=>{const hash=catalog.hashes[id.split('/').at(-1)];return `objects/${hash.slice(0,2)}/${hash}.webp`;};
 
-test('actual enemy and player figures become marked placeholders and Retry restores the same authored crop',()=>{
-  const figures=[enemySprite({id:'graveWisp'}),playerSprite({},'reaver','default')];
+test('legacy alternative and player figures become marked placeholders and Retry restores the same authored crop',()=>{
+  const figures=[alternativeSprite('graveWisp'),playerSprite({},'reaver','default')];
   root.append(...figures);
   const originals=figures.map(figure=>({figure,image:figure.querySelector('img'),picture:figure.querySelector('picture'),mobile:figure.querySelector('source'),crop:figure.querySelector('.alternative-crop'),stage:figure.querySelector('.painted-stage'),geometry:figure.style.cssText}));
   for(const row of originals){
@@ -74,6 +74,24 @@ test('actual enemy and player figures become marked placeholders and Retry resto
     assert.equal(row.figure.hasAttribute('data-art-placeholder'),false);
   }
   assert.equal(restoreArtPlaceholders(root),0,'each failed figure restores once');
+});
+
+test('expanded enemy art retries through the verified pack without replacing its stage',()=>{
+  const figure=enemySprite({id:'graveWisp'}); root.append(figure);
+  const image=figure.querySelector('img'), geometry=figure.style.cssText, id=image.src;
+  image.dispatch('error');
+  assert.equal(image.style.visibility,'hidden');
+  assert.equal(figure.hasAttribute('data-art-placeholder'),true);
+  assert.equal(figure.querySelector('span').getAttribute('role'),'img');
+  const url='objects/enemy-expansion-idle.webp';
+  setBuiltInSource(new Map([[id,url]]));
+  assert.equal(restoreArtPlaceholders(root),1);
+  assert.equal(image.src,url);
+  image.dispatch('load');
+  assert.equal(image.style.visibility,'');
+  assert.equal(figure.querySelector('span').style.display,'none');
+  assert.equal(figure.style.cssText,geometry);
+  assert.equal(figure.querySelector('img'),image);
 });
 
 test('a mounted bare variant URL moves to its verified common object after Retry, unknown URLs stay unchanged',()=>{
