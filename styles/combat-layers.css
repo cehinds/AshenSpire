@@ -55,9 +55,9 @@
   z-index: var(--combat-layer-selection) !important;
 }
 /* The painted plate stays below its readable name and HP. Its own children
-   must not split the physical tap area into strips: the transparent, centered
-   square belongs to the frame and uses the same fitted center/height. Keep it
-   narrower than a wide enemy plate so its outer name/HP remain inspectable.
+   must not split the physical tap area into strips: the transparent square
+   belongs to the frame and uses the fitted height. On enemies it occupies the
+   left side of the full footer, leaving the name's center for inspection.
    Explicit overhead reading controls retain priority above this square. */
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)::before {
   content: ''; display: block; position: absolute;
@@ -67,6 +67,9 @@
   transform: translate(-50%, -50%); pointer-events: auto;
   background: none; border: 0; box-shadow: none;
   z-index: calc(var(--combat-layer-selection) + 2) !important;
+}
+:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)::before {
+  left: calc(var(--enemy-hit-x) - (var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))) - min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))))) / 2);
 }
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) {
   z-index: calc(var(--combat-layer-selection) + 1) !important;
@@ -225,7 +228,7 @@
 
 :root .combat[data-layout='formation'] :is(.hand-overlay,.hand) { pointer-events: none !important; }
 :root .combat[data-layout='formation'] .hand :is(.card,.card-info-button) { pointer-events: auto; }
-:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next,.hand-info-portal) { pointer-events: auto; }
 
 :root .combat[data-layout="formation"] .hand[data-wireframe-hand="true"] .card > .card-info-button { pointer-events: auto; }
 

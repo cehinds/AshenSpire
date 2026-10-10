@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allocateCombatBands, minimumHandHeight, packCombatFooter } from '../src/ui/models/CombatLayout.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
-import { handLayout } from '../src/ui/models/HandLayout.js';
+import { COMBAT_TOOLS_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-6;
 
@@ -44,13 +44,24 @@ test('compact landscape is reported, not silently squeezed', () => {
 });
 
 test('compact landscape folds its footer into rails before reporting failure', () => {
-  const bands = allocateCombatBands({ width: 600, height: 360, compact: true });
+  const bands = allocateCombatBands({ width: 600, height: 390, compact: true });
   assert.equal(bands.arrangement, 'rails');
   assert.equal(bands.supported, true);
   assert.equal(bands.footer, 0);
   assert.ok(bands.battlefield >= 130, 'one compact combatant remains readable');
-  assert.ok(bands.hand >= minimumHandHeight(), 'the hand keeps one whole minimum card');
+  assert.ok(bands.hand >= minimumHandHeight() + COMBAT_TOOLS_HEIGHT_PX,
+    'the hand keeps its toolbar plus one whole minimum card');
   assert.ok(bands.rails.supported, 'the controls and five exposed cards fit beside the hand');
+});
+
+test('short rail hosts reserve the toolbar or report unsupported geometry', () => {
+  for (const [width, height, compact] of [[600, 360, true], [844, 340, false]]) {
+    const bands = allocateCombatBands({ width, height, compact });
+    assert.equal(bands.arrangement, 'rails');
+    assert.equal(bands.supported, false, `${width}x${height} cannot clip cards to claim support`);
+    assert.ok(bands.hand >= minimumHandHeight() + COMBAT_TOOLS_HEIGHT_PX,
+      `${width}x${height} keeps the toolbar outside the card floor`);
+  }
 });
 
 test('band shares must describe the whole host', () => {

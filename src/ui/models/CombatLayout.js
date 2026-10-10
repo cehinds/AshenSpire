@@ -1,5 +1,6 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { uiConfig } from '../../config/generated/ui.js';
+import { COMBAT_TOOLS_HEIGHT_PX } from './HandLayout.js';
 
 // The W4 bands, top to bottom.
 const SCENE_BANDS = Object.freeze(['hud', 'scene', 'context', 'footer']);
@@ -89,7 +90,7 @@ export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerA
   const rails = packCombatRails({ width, zoom, rem }, config);
   if (!rails.supported) return stacked;
   const preferred = Math.max(height * (handShare + footerShare), config.hand.minimumHeightPx / zoom);
-  const floor = Math.max(minimumHandHeight(rem, config), rails.height);
+  const floor = Math.max(minimumHandHeight(rem, config) + COMBAT_TOOLS_HEIGHT_PX / zoom, rails.height);
   const railHand = Math.max(floor, Math.min(preferred, height - stacked.hud - stacked.minimumBattlefield));
   const field = height - stacked.hud - railHand;
   return Object.freeze({
