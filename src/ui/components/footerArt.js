@@ -15,7 +15,9 @@ export function paintFooterOrb(orb, resource, urls) {
   return true;
 }
 function svg(nodes, b) {
-  return `<svg class="footer-art-face" viewBox="${b.x} ${b.y} ${b.w} ${b.h}" aria-hidden="true" focusable="false">${nodes.map(n => {
+  // Stretch to the control box, as the box's percentage sizing does; meet would
+  // letterbox the art inside a box that is itself stretched, so they drift apart.
+  return `<svg class="footer-art-face" viewBox="${b.x} ${b.y} ${b.w} ${b.h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${nodes.map(n => {
     if (n.asset !== 'text') return footerAssets[n.asset] ? `<image data-footer-asset="${esc(n.asset)}" href="${esc(assetUrl(footerAssets[n.asset]))}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="none"/>` : '';
     const align = n.textAlign || 'center', x = n.x + (align === 'right' ? n.w : align === 'center' ? n.w / 2 : 0);
     return `<text data-footer-text="${esc(n.id)}" data-footer-binding="${esc(n.binding || 'static')}" x="${x}" y="${n.y + n.h / 2}" text-anchor="${align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle'}" dominant-baseline="central" font-family="${esc(footerFonts[n.fontFamily] || footerFonts.serif)}" font-size="${n.fontSize}" font-weight="${n.fontWeight || 400}" font-style="${esc(n.fontStyle || 'normal')}" fill="${esc(n.color)}" opacity="${n.opacity}" lengthAdjust="spacingAndGlyphs"></text>`;
@@ -108,7 +110,8 @@ export function paintFooterArt(row, values = {}) {
   row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn);
   row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
-  for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
+  // The key sits on its own line under the words, as the full label's key does.
+  for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurnKey ? `${next.endTurn}\n${next.endTurnKey}` : next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
     const label = row.querySelector(`${selectors[role]} .footer-compact-label`);
     if (label && label.dataset.labelText !== text) {
       label.replaceChildren(...text.split('\n').map(value => {
