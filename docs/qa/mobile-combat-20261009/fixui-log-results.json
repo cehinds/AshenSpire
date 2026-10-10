@@ -1,0 +1,1186 @@
+[
+  {
+    "width": 288,
+    "height": 513,
+    "steps": [
+      {
+        "route": "touch-snaps",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 197.515625,
+            "width": 264,
+            "height": 55.484375,
+            "top": 197.515625,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 128.03125,
+            "width": 264,
+            "height": 124.96875,
+            "top": 128.03125,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 58.546875,
+            "width": 264,
+            "height": 194.453125,
+            "top": 58.546875,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "cancelled": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 128.03125,
+            "width": 264,
+            "height": 124.96875,
+            "top": 128.03125,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "smallAgain": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 197.515625,
+            "width": 264,
+            "height": 55.484375,
+            "top": 197.515625,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        }
+      },
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 197.515625,
+            "width": 264,
+            "height": 55.484375,
+            "top": 197.515625,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 128.03125,
+            "width": 264,
+            "height": 124.96875,
+            "top": 128.03125,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 17.921875,
+            "y": 58.546875,
+            "width": 264,
+            "height": 194.453125,
+            "top": 58.546875,
+            "right": 281.921875,
+            "bottom": 253,
+            "left": 17.921875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 259,
+            "width": 275.9375,
+            "height": 29.984375,
+            "top": 259,
+            "right": 281.921875,
+            "bottom": 288.984375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 259.046875,
+            "width": 288,
+            "height": 175.96875,
+            "top": 259.046875,
+            "right": 288,
+            "bottom": 435.015625,
+            "left": 0
+          },
+          "menuBottom": 50.5
+        }
+      }
+    ],
+    "errors": [],
+    "url": "http://localhost:8349/?shot=combat",
+    "title": "Ashen Spire",
+    "pass": true
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "steps": [
+      {
+        "route": "touch-snaps",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 252.53125,
+            "width": 296,
+            "height": 55.40625,
+            "top": 252.53125,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 155.984375,
+            "width": 296,
+            "height": 151.953125,
+            "top": 155.984375,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 59.4375,
+            "width": 296,
+            "height": 248.5,
+            "top": 59.4375,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "cancelled": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 155.984375,
+            "width": 296,
+            "height": 151.953125,
+            "top": 155.984375,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "smallAgain": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 252.53125,
+            "width": 296,
+            "height": 55.40625,
+            "top": 252.53125,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        }
+      },
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 252.53125,
+            "width": 296,
+            "height": 55.40625,
+            "top": 252.53125,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 155.984375,
+            "width": 296,
+            "height": 151.953125,
+            "top": 155.984375,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 17.671875,
+            "y": 59.4375,
+            "width": 296,
+            "height": 248.5,
+            "top": 59.4375,
+            "right": 313.671875,
+            "bottom": 307.9375,
+            "left": 17.671875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 313.9375,
+            "width": 307.6875,
+            "height": 30,
+            "top": 313.9375,
+            "right": 313.671875,
+            "bottom": 343.9375,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 314.265625,
+            "width": 320,
+            "height": 175.8125,
+            "top": 314.265625,
+            "right": 320,
+            "bottom": 490.078125,
+            "left": 0
+          },
+          "menuBottom": 51.1875
+        }
+      }
+    ],
+    "errors": [],
+    "url": "http://localhost:8349/?shot=combat",
+    "title": "Ashen Spire",
+    "pass": true
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "steps": [
+      {
+        "route": "touch-snaps",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 479.859375,
+            "width": 300,
+            "height": 59.953125,
+            "top": 479.859375,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 118.140625,
+            "width": 300,
+            "height": 421.671875,
+            "top": 118.140625,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 61.375,
+            "width": 300,
+            "height": 478.4375,
+            "top": 61.375,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "cancelled": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 118.140625,
+            "width": 300,
+            "height": 421.671875,
+            "top": 118.140625,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "smallAgain": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 479.859375,
+            "width": 300,
+            "height": 59.953125,
+            "top": 479.859375,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        }
+      },
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 479.859375,
+            "width": 300,
+            "height": 59.953125,
+            "top": 479.859375,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 118.140625,
+            "width": 300,
+            "height": 421.671875,
+            "top": 118.140625,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 83.6875,
+            "y": 61.375,
+            "width": 300,
+            "height": 478.4375,
+            "top": 61.375,
+            "right": 383.6875,
+            "bottom": 539.8125,
+            "left": 83.6875
+          },
+          "tools": {
+            "x": 5.984375,
+            "y": 545.8125,
+            "width": 377.703125,
+            "height": 30,
+            "top": 545.8125,
+            "right": 383.6875,
+            "bottom": 575.8125,
+            "left": 5.984375
+          },
+          "hand": {
+            "x": 0,
+            "y": 546.234375,
+            "width": 390,
+            "height": 219.828125,
+            "top": 546.234375,
+            "right": 390,
+            "bottom": 766.0625,
+            "left": 0
+          },
+          "menuBottom": 53
+        }
+      }
+    ],
+    "errors": [],
+    "url": "http://localhost:8349/?shot=combat",
+    "title": "Ashen Spire",
+    "pass": true
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "steps": [
+      {
+        "route": "touch-snaps",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 136.35379028320312,
+            "width": 300,
+            "height": 46.96875,
+            "top": 136.35379028320312,
+            "right": 714.296875,
+            "bottom": 183.32254028320312,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 87.015625,
+            "width": 300,
+            "height": 93.9375,
+            "top": 87.015625,
+            "right": 714.296875,
+            "bottom": 180.953125,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 40.03125,
+            "width": 300,
+            "height": 140.921875,
+            "top": 40.03125,
+            "right": 714.296875,
+            "bottom": 180.953125,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "cancelled": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 87.015625,
+            "width": 300,
+            "height": 93.9375,
+            "top": 87.015625,
+            "right": 714.296875,
+            "bottom": 180.953125,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "smallAgain": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 133.984375,
+            "width": 300,
+            "height": 46.96875,
+            "top": 133.984375,
+            "right": 714.296875,
+            "bottom": 180.953125,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        }
+      },
+      {
+        "route": "tap-touch-drag-cancel-keyboard",
+        "small": {
+          "size": "Small",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 136.35379028320312,
+            "width": 300,
+            "height": 46.96875,
+            "top": 136.35379028320312,
+            "right": 714.296875,
+            "bottom": 183.32254028320312,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "medium": {
+          "size": "Medium",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 87.015625,
+            "width": 300,
+            "height": 93.9375,
+            "top": 87.015625,
+            "right": 714.296875,
+            "bottom": 180.953125,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        },
+        "large": {
+          "size": "Large",
+          "open": true,
+          "rect": {
+            "x": 414.296875,
+            "y": 40.03125,
+            "width": 300,
+            "height": 140.921875,
+            "top": 40.03125,
+            "right": 714.296875,
+            "bottom": 180.953125,
+            "left": 414.296875
+          },
+          "tools": {
+            "x": 129.515625,
+            "y": 186.953125,
+            "width": 584.78125,
+            "height": 30,
+            "top": 186.953125,
+            "right": 714.296875,
+            "bottom": 216.953125,
+            "left": 129.515625
+          },
+          "hand": {
+            "x": 123.546875,
+            "y": 187,
+            "width": 596.90625,
+            "height": 203,
+            "top": 187,
+            "right": 720.453125,
+            "bottom": 390,
+            "left": 123.546875
+          },
+          "menuBottom": 32
+        }
+      }
+    ],
+    "errors": [],
+    "url": "http://localhost:8349/?shot=combat",
+    "title": "Ashen Spire",
+    "pass": true
+  }
+]
