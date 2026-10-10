@@ -80,7 +80,10 @@ test('footer tracks respect envelopes, touch targets, and never exceed the host'
     assert.ok(plan.pileWidth * zoom >= 44 - 1e-9 && plan.pileHeight * zoom >= 44 - 1e-9);
     if (width > 600) assert.ok(plan.pileWidth >= config.pileMinimumRem * rem - 1e-9, 'wide pile keeps its authored readable floor');
     else {
-      assert.ok(near(plan.pileWidth, plan.target), 'compact pile keeps its full touch target with fitted labels');
+      // Draw is a 50px tap (compactCombat.pileWidthPx, was the 44px target) so its
+      // 28px icon and 13px count fit; Discard/Exhaust is 64px for its two counts.
+      assert.ok(near(plan.pileWidth * zoom, 50), 'compact pile keeps a 50px tap with fitted labels');
+      assert.ok(near(plan.spentWidth * zoom, 64), 'compact Discard/Exhaust keeps room for two 13px counts');
       assert.ok(plan.diameter > plan.pileWidth && plan.endWidth > plan.pileWidth, 'primary controls receive the larger compact tracks');
     }
     assert.ok(plan.diameter <= Math.max(plan.target, height * config.heightFraction) + 1e-9);

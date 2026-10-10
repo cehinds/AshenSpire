@@ -104,6 +104,14 @@ export function combatFrameTarget({ id, hostRect, fieldRect, footerSize, footerW
     minY: player ? footerSize / 2 : foot, width: Math.max(48, footerWidth) };
 }
 
+// getBoundingClientRect and the placement obstacles are already in physical
+// screen pixels. Match the CSS pseudo-element's 44px target without applying
+// UI zoom a second time: 22px mark + 18px above + 4px below.
+export function combatInspectTapBox({ left, top, width, height = width }) {
+  return { left: left - 11, right: left + width + 11,
+    top: top - 18, bottom: top + height + 4 };
+}
+
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
@@ -150,7 +158,31 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (envelope?.validated) layoutState.restHandAnchor = envelope;
     return envelope;
   }
-  function placePlayerHud(reserveFirst = false, targetCores = []) {
+  function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
+    // A player's Inspect over the head must not hide an enemy's intent or
+    // Inspect. It takes the head's left, the field's left edge, or the head's
+    // right before accepting an overlap. Declared here so the placement source
+    // stays one self-contained unit.
+    const clearOfEnemyControls = (rect, art, viewport, zoom) => {
+      if (!rect) return rect;
+      const controls = [...field.querySelectorAll('.enemy .combatant-leading > .intent, .enemy .combatant-leading > .combatant-info')]
+        .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+      // The 44 px tap pad counts: a neighbour's control must not sit under it.
+      const pad = 11 * zoom;
+      const hits = box => controls.some(c => box.left - pad < c.right && box.right + pad > c.left
+        && box.top - pad < c.bottom && box.bottom + pad > c.top);
+      if (!hits(rect)) return rect;
+      const gap = 4 * zoom;
+      // Head's left, the field's left edge, then the head's right; each on the
+      // head's row first, then one and two rows higher.
+      const lefts = [art.left - gap - rect.width, viewport.left + gap, art.right + gap];
+      const tops = [rect.top, rect.top - rect.height - gap, rect.top - 2 * (rect.height + gap)];
+      for (const top of tops) for (const left of lefts) {
+        const moved = { ...rect, left, right: left + rect.width, top, bottom: top + rect.height };
+        if (left >= viewport.left && moved.right <= viewport.right && top >= viewport.top && !hits(moved)) return moved;
+      }
+      return rect;
+    };
     const zoom = uiZoom();
     const combat = field.closest('.combat');
     const panels = [...field.querySelectorAll(reserveFirst === true
@@ -175,7 +207,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const inspect = leading.querySelector('.combatant-info');
       const action = leading.querySelector('.player-action-intent');
       const doorFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
-      const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor);
+      // The Info door keeps its offset from the figure's stack, which only a
+      // layout refit moves. Idle bob and pose motion read the live artwork, so
+      // they never move the door; the frame tick (tick = true) follows the stack.
+      const offset = tick ? player.inspectOffset : null;
+      const infoRect = offset && inspect ? { left: stack.left + offset.x, top: stack.top + offset.y, width: offset.width,
+        height: offset.height, right: stack.left + offset.x + offset.width, bottom: stack.top + offset.y + offset.height }
+        : clearOfEnemyControls(combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor), art, viewport, zoom);
+      if (!tick) player.inspectOffset = infoRect ? { x: infoRect.left - stack.left, y: infoRect.top - stack.top,
+        width: infoRect.width, height: infoRect.height } : null;
       const actionRect = combatPlayerActionRect(action, infoRect, art, zoom, doorFloor);
       return [{ player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect }];
     });
@@ -210,9 +250,74 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
     }
   }
+  // Every living enemy's Inspect hangs above its intent. The default spot is
+  // read after the refit; it moves to the intent's left or right only when the
+  // 44 px tap area above would sit under the HUD, the turn ribbon, or another
+  // combatant's control. Nothing here reserves room in the fitted envelope.
+  // Reads every box first, then writes only the sides that change, so a pass
+  // costs one layout read and no forced re-layout between enemies.
+  function placeEnemyInspect() {
+    const combat = field.closest('.combat');
+    const infos = [...field.querySelectorAll('.combatant.enemy:not(.dead) > .combatant-stack > .combatant-leading > .combatant-info')];
+    if (!infos.length || !combat) return;
+    const viewport = combat.getBoundingClientRect();
+    const hudBoxes = [...combat.ownerDocument.querySelectorAll('.topbar, .combat-hud, .turn-ribbon, .combat-tools')]
+      .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
+    const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const gap = 4;
+    // Other combatants' controls, excluding Inspect marks: those are placed by
+    // this pass and tracked from their planned boxes below.
+    const controls = [...field.querySelectorAll('.combatant-leading > .intent, .combatant-leading > .player-action-intent, .combatant.player .combatant-leading > .combatant-info, .combatant-mini-hud, .combatant-card > .nm, .combatant-card > .meters')]
+      .map(node => ({ node, rect: visibleCombatPanelRect(node, combat) })).filter(entry => entry.rect);
+    const measured = infos.map(info => ({ info, size: info.getBoundingClientRect().width,
+      anchor: info.parentElement, box: info.parentElement.getBoundingClientRect() }));
+    const planned = [], sides = [];
+    for (const { info, size, anchor, box } of measured) {
+      if (!(size > 0) || !(box.width > 0)) { sides.push(null); continue; }
+      // Each spot with its 44 px tap box. A side spot never reaches into the intent.
+      const centre = box.left + box.width / 2;
+      const spots = [
+        ['', { left: centre - size / 2, top: box.top - gap - size }],
+        ['left', { left: box.left - gap - size, top: box.top }],
+        ['right', { left: box.right + gap, top: box.top }],
+        // Beside the intent's top corners, for a back-row figure wedged between
+        // neighbouring intents, where the ribbon ends.
+        ['left-up', { left: box.left - gap - size, top: box.top - gap - size }],
+        ['right-up', { left: box.right + gap, top: box.top - gap - size }],
+        // One mark further out, past a turn ribbon that ends beside the intent.
+        ['right-far-up', { left: box.right + gap + size, top: box.top - gap - size }],
+        // Last resort, below the overhead on this enemy's own art: a tap that
+        // misses the mark still selects this same enemy.
+        ['below', { left: centre - size / 2, top: box.bottom + gap }],
+      ].map(([side, at]) => [side, at, combatInspectTapBox({ ...at, width: size })]);
+      // Our own intent is the anchor; every tap pad must clear everything else,
+      // including the Inspect marks already planned this pass.
+      const others = [...controls.filter(({ node }) => !(node.matches('.intent') && node.parentElement === anchor)).map(({ rect }) => rect),
+        ...planned];
+      const mark = at => ({ left: at.left, top: at.top, right: at.left + size, bottom: at.top + size });
+      // The painted 22 px mark must clear the HUD; its tap pad must clear the
+      // other combatants' controls.
+      const pick = spots.find(([, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
+        && !hudBoxes.some(hud => overlaps(mark(at), hud)) && !others.some(rect => overlaps(tap, rect)));
+      // With every spot taken (a back-row figure wedged under the ribbon),
+      // keep the mark reachable on the figure's own art rather than hidden.
+      const chosen = pick || (hudBoxes.some(hud => overlaps(mark(spots[0][1]), hud)) ? spots.at(-1) : spots[0]);
+      planned.push(chosen[2]);
+      sides.push(chosen[0]);
+    }
+    measured.forEach(({ info }, i) => {
+      if (sides[i] == null) return;
+      if (sides[i]) { if (info.dataset.inspectSide !== sides[i]) info.dataset.inspectSide = sides[i]; }
+      else if (info.hasAttribute('data-inspect-side')) info.removeAttribute('data-inspect-side');
+    });
+  }
+  let inspectTick = 0;
   function trackPlayerHud() {
     // Keep the settled target cores reserved, or the HUD can snap back over the player target.
-    placePlayerHud(false, settledTargetCores);
+    placePlayerHud(false, settledTargetCores, true);
+    // A neighbour's intent that moves between refits re-picks the spot about
+    // four times a second; the Inspect itself never follows the body's bob.
+    if (++inspectTick % 15 === 0) placeEnemyInspect();
     // Idle breathing also moves the painted body. Keep the physical gap during
     // those CSS transforms as well as explicit attack and movement poses.
     trackingRequest = field.isConnected && field.querySelector('.combatant.player')
@@ -337,7 +442,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
-      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control, :scope > .combatant-mini-hud')]
+      // An enemy's Inspect sits above its intent outside the fitted envelope
+      // (placeEnemyInspect), so it never widens or heightens the stack.
+      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control:not(.combatant-info), :scope > .combatant-mini-hud')]
         .map(control => visibleCombatPanelRect(control, field)).filter(Boolean) : [];
       const leadingWidth = leadingRects.length && !frame.classList.contains('player') ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
@@ -443,14 +550,35 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     sizes = artworkFit.sizes;
     // Intent/Inspect controls still respond to their current text and selection,
     // but their changing headroom cannot resize or move the settled artwork.
-    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap,
-      controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
-        const fitted = sizes.find(size => size.id === actor.slot.id);
-        const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - overheadGap;
-        return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
-          width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
-      }) });
+    const overheadControls = actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
+      const fitted = sizes.find(size => size.id === actor.slot.id);
+      const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - overheadGap;
+      return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
+        width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
+    });
+    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap, controls: overheadControls });
     const placed = [];
+    const leadingWrites = [];
+    // Writes one readable overhead at its anchor. Called again once the
+    // player's settled art and controls are measured (see below).
+    const placeLeading = ({ actor, frame, leadingHost, id, x, ground, visibleHeight }, anchors) => {
+      const anchor = anchors.find(overhead => overhead.id === id);
+      const overheadX = anchor?.x ?? x;
+      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+        { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
+      leadingHost.style.left = `${overheadLocal.left}px`;
+      // Full-height artwork may reach its final ground before the fitter
+      // can reserve more ribbon headroom. Move only the readable controls,
+      // including a packed cross-row control, clear of the ribbon.
+      const overheadTop = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
+      const overheadShift = anchor?.offsetY
+        ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
+          top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
+      leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
+      // An overhead with no clear slot stays at its anchor, reported, not hidden.
+      if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
+      else delete frame.dataset.overheadObstructed;
+    };
     const depthOrder = [...new Set(plan.slots.map(slot => slot.layer))].sort((a, b) => a - b);
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
@@ -494,20 +622,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // centre. Their intent/Inspect controls retain their distinct reserved
       // slots instead of following that inward art clamp. Measured collisions
       // also occur on short landscape screens; clear anchors stay unchanged.
-      const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
-      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
-        { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
-      if (leadingHost) {
-        leadingHost.style.left = `${overheadLocal.left}px`;
-        // Full-height artwork may reach its final ground before the fitter
-        // can reserve more ribbon headroom. Move only the readable controls,
-        // including a packed cross-row control, clear of the ribbon.
-        const overheadTop = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
-        const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
-          ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
-            top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
-        leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
-      }
+      if (leadingHost) leadingWrites.push({ actor, frame, leadingHost, id: slot.id, x, ground, visibleHeight });
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
       frame.style.setProperty('--overhead-top', `${-overheadGap / zoom}px`);
@@ -521,6 +636,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       frame.classList.toggle('player-target-hitbox', frame.classList.contains('player'));
       placed.push({ frame, sprite, scale });
     }
+    for (const entry of leadingWrites) placeLeading(entry, overheads);
     // WCO2: the guard badge lives inside this zoomed host. Publish the zoom
     // and the visible artwork's box (local px, relative to the host) so the
     // badge can counter-zoom and anchor to the art rather than inheriting
@@ -539,6 +655,24 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     settledTargets = [];
     settledTargetCores = [];
     placePlayerHud();
+    // Enemy overheads pack around the player's measured art and controls. An
+    // obstacle never blocks its own owner, and the fitted artwork does not move.
+    const playerObstacles = placed.filter(({ frame }) => frame.classList.contains('player')).flatMap(({ frame, sprite }) => {
+      const art = currentSpriteArtBounds(sprite, refresh);
+      const controls = [...frame.querySelectorAll('.combatant-leading, .combatant-info, .player-action-intent, .combatant-mini-hud')]
+        .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+      return [art, ...controls].map(rect => ({ ownerId: frame.dataset.eid, left: rect.left - fieldRect.left,
+        right: rect.right - fieldRect.left, top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top }));
+    });
+    // Only a clash re-packs: a layout where no overhead reaches the player keeps
+    // the anchors above, so it is written exactly as before.
+    const repacked = combatOverheadAnchors({ width: fieldRect.width, height: fieldRect.height, ribbon,
+      ribbonClearance: overheadGap, controls: overheadControls, obstacles: playerObstacles });
+    if (repacked.some(anchor => { const before = overheads.find(overhead => overhead.id === anchor.id);
+      return anchor.x !== before?.x || (anchor.offsetY ?? 0) !== (before?.offsetY ?? 0) || !!anchor.obstructed !== !!before?.obstructed; })) {
+      overheads = repacked;
+      for (const entry of leadingWrites) placeLeading(entry, overheads);
+    }
     const boxes = placed.map(({ frame, sprite }) => ({
       intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
@@ -743,6 +877,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       }
     }
     const rect = combat.getBoundingClientRect();
+    // Last layout write of the refit: the HUD, ribbon and intents are settled.
+    // The combat box above is unchanged by the Inspect marks.
+    placeEnemyInspect();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
     // painting. Continuing behind cards must not move the ground line.
