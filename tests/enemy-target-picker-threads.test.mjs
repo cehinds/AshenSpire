@@ -7,8 +7,19 @@ import { readFileSync } from 'node:fs';
 
 const picker = readFileSync(new URL('../src/ui/components/enemyTargetPicker.js', import.meta.url), 'utf8');
 
-test('target button focus syncs the unified focus cursor', () => {
-  assert.match(picker, /addEventListener\('focus', \(\) => focusElement\(button\)\)/);
+test('keyboard target button focus syncs the unified focus cursor', () => {
+  assert.match(picker, /addEventListener\('focus', \(\) => \{ if \(button\.matches\(':focus-visible'\)\) focusElement\(button\); \}\)/);
+});
+
+test('a pointer press on a target button does not move the unified cursor', () => {
+  // Unguarded, the press moved the cursor onto the button; restore after the
+  // play then selected the enemy and refit the stage under reduced motion.
+  assert.doesNotMatch(picker, /addEventListener\('focus', \(\) => focusElement\(button\)\)/);
+  // Any pointer press on a target clears the cursor, not only one on the
+  // focused target: a cursor left on target A must not be restored onto A's
+  // combatant after a click on target B.
+  assert.match(picker, /addEventListener\('pointerdown', \(\) => clearFocus\(\)\);/);
+  assert.doesNotMatch(picker, /if \(button\.classList\.contains\('gp-focus'\)\) clearFocus\(\)/);
 });
 
 test('target buttons carry data-number for the formation ::before label', () => {

@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
+- **Clicking a target no longer shuffles enemy labels** ([#1825](https://github.com/cehinds/AshenSpire/pull/1825), `0.7.1.1280`). Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Clicking any target after keyboard navigation clears the old cursor first, while keyboard focus still moves the cursor to the target.
+
 - **Reduced motion keeps combat controls still** ([#1824](https://github.com/cehinds/AshenSpire/pull/1824), `0.7.1.1279`). When reduced motion is enabled in the game or operating system, the battlefield no longer rewrites the settled Inspect and fighter-detail positions every frame. Changing that preference during a fight settles the controls once or resumes normal tracking. Normal motion still tracks moving artwork, while reduced motion keeps the controls fixed.
 
 - **Discard and Draw counts fit again on mid-size and landscape phone footers** ([#1823](https://github.com/cehinds/AshenSpire/pull/1823), `0.7.1.1275`). On 601–680px screens and short landscape layouts, the Draw and Discard piles once more use the smaller icon and counts that fit their size, instead of an oversized icon that pushed the counts out.
