@@ -27,7 +27,7 @@ test('spell and ranged identities keep their effects while selecting reviewed pa
   assert.equal(plan(card('casting', 'spell')).technique, 'weapon:spell:staff-casting');
   assert.equal(plan(card('ranged'), gear('shortbow')).technique, 'weapon:ranged:bow');
   assert.equal(plan(card('ranged'), gear('dagger')).technique, 'ranged');
-  for (const action of ['smash', 'sweep', 'counter', 'defend']) assert.equal(plan(card(action), gear('greatsword')).technique, action);
+  for (const action of ['smash', 'sweep', 'counter', 'defend']) assert.equal(plan(card(action), gear('greatsword')).technique, action === 'counter' ? 'counterPrepare' : action);
   assert.equal(plan(card('attack', 'spell')).family, 'spell');
 });
 
