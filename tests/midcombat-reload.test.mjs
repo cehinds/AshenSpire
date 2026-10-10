@@ -30,6 +30,8 @@ import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 import { buildActMap, drawSeatOrder } from '../src/engine/actmap.js';
 import { rollEncounter } from '../src/engine/encounters.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
+import { openRunEnemyKnowledge } from '../src/model/enemyKnowledgeRun.js';
 
 const SEED = 0x2b0d;
 const registries = createRegistries(contentBundle);
@@ -38,9 +40,14 @@ const registries = createRegistries(contentBundle);
 // same stream order (seats, then map), and the same persist.
 function newSeededRun(saves) {
   saves.ensureProfile();
-  // This entry-restart mirror covers historical saves. Expanded combat's
-  // durable transaction hook and exact snapshots are tested separately.
-  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: saves.loadMeta(), combatExpansionVersion: 1, enemyKnowledgeVersion: null });
+  // A default new run: expanded combat, enemy knowledge and reaction rules on,
+  // exactly as main.js newRun creates it (SPEC §9: abandoning mid-combat
+  // restarts that combat in every run, not only historical ones).
+  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: saves.loadMeta() });
+  assert.equal(run.combatExpansionVersion, 2);
+  assert.equal(run.enemyKnowledgeRules?.version, 1);
+  assert.equal(run.reactionRulesVersion, 1);
+  openRunEnemyKnowledge(run, { receiptId: '60000000-0000-4000-8000-000000000001', bankable: true });
   run.seedString = seedToString(SEED);
   run.customization = { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -55,25 +62,39 @@ function newSeededRun(saves) {
   return { run, rng };
 }
 
-// main.js enterCombat, non-UI half. Returns the live combat.
+// main.js enterCombat, non-UI half, including the expanded-combat durable
+// transaction hook (opening checkpoint + beforeCombatCommit). Returns the live
+// combat.
 function enterCombat(saves, run, rng, nodeId, encounterId, { resuming = false } = {}) {
   const storedSnapshot = resuming ? run.combatEntered?.snapshot : null;
   const savedSnapshot = storedSnapshot && !storedSnapshot.result ? storedSnapshot : null;
   run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   if (!resuming) saves.saveRun(run, rng);
   const enc = registries.encounters.get(encounterId);
-  if (savedSnapshot) return restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackPoolDeck: isPoolDeckMode(run) });
+  const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
   const seat = seatAtTier(run.seatOrder, run.actNumber);
-  return createRunCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
-    rng,
+    rng: entryRng,
     run,
     settings: saves.loadMeta().settings || {},
+    enemyKnowledgeProfile: saves.loadMeta().enemyKnowledge,
     enemyIds: enc.enemies,
     hpMult: seatTierHpMult(registries, seat, run.actNumber),
     enemyStatuses: [],
     playerStatuses: [],
   });
+  if (combat.combatExpansionVersion === 2) {
+    const durable = candidate => commitExpansionCandidate({ run, candidate, nodeId, encounterId,
+      saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng) });
+    if (!savedSnapshot) {
+      durable(combat);
+      rng.restoreCounters(entryRng.getCounters());
+      combat.rng = rng;
+    }
+    combat.beforeCombatCommit = durable;
+  }
+  return combat;
 }
 
 // startFight('normal', nodeId) on the classic map: the roll and the
@@ -137,6 +158,8 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   const hpAtEntry = run.hp;
   const { nodeId, encounterId, combat } = startNormalFight(saves, run, rng);
   const opening = view(combat);
+  const entrySnapshot = saves.loadRun(registries).combatEntered.snapshot;
+  assert.equal(entrySnapshot?.turn, 1, 'expanded combat wrote its opening checkpoint at turn 1');
   assert.equal(opening.turn, 1, 'a fresh fight opens on turn 1');
   assert.equal(opening.playerHp, hpAtEntry, 'the fight opens at the run HP');
 
@@ -148,8 +171,10 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   // gone; only the slot survives. This is resumeRun's order.
   const reloaded = saves.loadRun(registries);
   assert.ok(reloaded, 'the slot written at combat entry loads');
-  assert.deepEqual(reloaded.combatEntered, { nodeId, encounterId },
-    'the slot holds the entry receipt only — no exact snapshot was ever committed');
+  assert.equal(reloaded.combatEntered.nodeId, nodeId);
+  assert.equal(reloaded.combatEntered.encounterId, encounterId);
+  assert.deepEqual(reloaded.combatEntered.snapshot, entrySnapshot,
+    'the slot still holds the opening checkpoint — no played card replaced it');
   assert.equal(reloaded.hp, hpAtEntry, 'player HP is the value at combat entry');
   assert.deepEqual(reloaded.deck, deckAtEntry, 'the deck is the deck at combat entry');
   const reloadRng = createRng(reloaded.seed, reloaded.streamCounters);
@@ -163,6 +188,22 @@ test('M2: abandoning mid-combat without saving restarts that combat at turn 1 fr
   assert.deepEqual(again.discard, [], 'nothing played before the abandon is in the discard pile');
   assert.equal(again.playerHp, hpAtEntry, 'player HP is restored to the entry value');
   assert.deepEqual(again.counters, opening.counters, 'the restart consumed exactly the draws the first entry did');
+});
+
+test('M2 regression: a card play in a default new run does not replace combatEntered.snapshot', () => {
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const { run, rng } = newSeededRun(saves);
+  const { combat } = startNormalFight(saves, run, rng);
+  const entry = saves.loadRun(registries);
+  assert.ok(entry.combatEntered.snapshot, 'the opening checkpoint exists');
+  assert.ok(combat.beforeCombatCommit, 'the durable transaction hook is installed, as in main.js');
+  playOneCard(combat);
+  const after = saves.loadRun(registries);
+  assert.deepEqual(after.combatEntered.snapshot, entry.combatEntered.snapshot,
+    'the played card did not overwrite the entry checkpoint');
+  assert.deepEqual(after.streamCounters, entry.streamCounters, 'nor did it move the saved RNG counters');
+  assert.equal(after.hp, entry.hp);
 });
 
 // The mirror above is only as good as its parity with main.js. These are the

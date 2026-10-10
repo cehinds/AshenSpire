@@ -58,10 +58,11 @@ test('production browser wrapper preserves historical expanded checkpoint and RN
   assert.deepEqual(f.notices, []);
 });
 
-test('production browser wrapper banks opted-in learning and preserves its latest accepted checkpoint', async () => {
+test('production browser wrapper banks opted-in learning without moving the entry checkpoint or its RNG', async () => {
   const f = fixture(true);
   await settle();
   assert.equal(f.banks(), 1);
+  const entry = f.saves.loadRun(f.registries);
   dispatch(f.combat, { type: 'endTurn' });
   let choices = 0;
   while (f.combat.pendingReaction) {
@@ -70,9 +71,15 @@ test('production browser wrapper banks opted-in learning and preserves its lates
   }
   await settle();
   const loaded = f.saves.loadRun(f.registries);
-  assert.equal(f.banks(), 2 + choices, 'each accepted reaction command banks its own checkpoint');
-  assert.equal(loaded.combatEntered.snapshot.turn, 2);
-  assert.deepEqual(loaded.streamCounters, f.rng.getCounters());
+  assert.equal(f.combat.turn, 2);
+  // SPEC §3.12/§9: the ordinary turn change never replaces the checkpoint, and
+  // the asynchronous profile bank re-saves without stamping live RNG counters.
+  assert.equal(loaded.combatEntered.snapshot.turn, 1);
+  assert.ok(f.banks() >= 1 + choices, 'each exact reaction pause banks its own checkpoint');
+  if (!choices) {
+    assert.deepEqual(loaded.combatEntered.snapshot, entry.combatEntered.snapshot);
+    assert.deepEqual(loaded.streamCounters, entry.streamCounters);
+  }
   assert.deepEqual(loaded.skills.perception, f.run.skills.perception);
   assert.deepEqual(f.notices, []);
 });
