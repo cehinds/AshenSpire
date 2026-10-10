@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
+- **Reserve combat HUD and targets before their first paint** ([#1788](https://github.com/cehinds/AshenSpire/pull/1788), `0.7.1.1227`). The full combat render authors the hand, measures the incoming zero-width-reserve top-band toolbar, then fits the stage once. Shared screen fading retains HUD obstacles, and later tracking reserves complete settled footers and all independently art-centered player Info footprints, including selectable hidden doors. Incoming compact geometry, independent 44px selection, name inspection, clocks and input rules are retained.
+
 - **Compact combat targeting and touch controls** ([#1776](https://github.com/cehinds/AshenSpire/pull/1776), `0.7.1.1225`). Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.
 
 - **Enemy names remain inspectable beside fighter targets** ([#1785](https://github.com/cehinds/AshenSpire/pull/1785), `0.7.1.1209`). The full enemy name opens inspection beside an independent 44px fighter-selection core within the existing footer. Native input uses the actual side-core geometry while retaining keyboard inspection, conditional card/flask targeting, full obstacle footprints, artwork and hand positions.

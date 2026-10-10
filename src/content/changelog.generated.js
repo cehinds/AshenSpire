@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1788",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Reserve combat HUD and targets before their first paint",
+    "detail": "The full combat render authors the hand, measures the incoming zero-width-reserve top-band toolbar, then fits the stage once. Shared screen fading retains HUD obstacles, and later tracking reserves complete settled footers and all independently art-centered player Info footprints, including selectable hidden doors. Incoming compact geometry, independent 44px selection, name inspection, clocks and input rules are retained.",
+    "build": "0.7.1.1227",
+    "pullRequest": 1788,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1788"
+  },
+  {
     "id": "pr-1776",
     "date": "2026-10-09",
     "group": "2026-10-09",
