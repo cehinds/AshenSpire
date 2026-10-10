@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1788",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Reserve combat HUD targets and keep self-cast proxies reachable",
+    "detail": "The full render authors the hand, measures the zero-width-reserve toolbar, then fits once; shared fading and later HUD tracking retain full footer and independent Info reservations. The waist-overlap player's independent 44px proxy packs inside the visible field above hand/action obstacles while enemy footers retain their body-bottom floors. The component contract checker now requires this actual deferred lifecycle, with negative regressions for missing or duplicated fits.",
+    "build": "0.7.1.1231",
+    "pullRequest": 1788,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1788"
+  },
+  {
     "id": "pr-1789",
     "date": "2026-10-09",
     "group": "2026-10-09",
