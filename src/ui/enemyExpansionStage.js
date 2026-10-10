@@ -3,7 +3,8 @@ import { assetUrl } from './assetmap.js';
 import { enemyPresentation, enemyAuraFilter } from './enemyStates.js';
 import { reducedMotionRequested } from './motion.js';
 import { registerStage } from './services/PoseAnimator.js';
-import { markArtPlaceholder } from './artFallback.js';
+import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
+import { builtInFor } from './highResArt.js';
 
 const aliases = { guard: 'block', guardHit: 'block', projectile: 'rangedWeaponAttack', ranged: 'rangedWeaponAttack', buff: 'magicAttack', casting: 'magicAttack', magic: 'magicAttack', hurt: 'hit', afflicted: 'wounded', counter: 'counterattack', prone: 'defeated', sleep: 'defeated' };
 
@@ -42,8 +43,13 @@ export function enemyExpansionSprite(definition, entity = {}) {
   image.addEventListener('load', () => {
     if (!image.parentNode) bob.append(image);
     image.style.visibility = ''; placeholder.style.display = 'none';
+    root.removeAttribute(ART_PLACEHOLDER_ATTR); delete root.ashenRestoreArt;
   });
   image.addEventListener('error', () => {
+    // A detached frame's errors never reach highResArt's document listener,
+    // so try its built-in fallback here before standing the name in.
+    const fallback = builtInFor(image.getAttribute('src'));
+    if (fallback) { image.src = fallback; return; }
     image.remove(); placeholder.style.display = 'flex';
     markArtPlaceholder(root, () => draw(root.dataset.pose || 'idle'));
   });
