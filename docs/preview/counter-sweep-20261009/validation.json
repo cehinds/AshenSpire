@@ -1,0 +1,13 @@
+{
+  "clips": 8,
+  "contactAndRecoveryEffects": true,
+  "originalIdle": true,
+  "heldStances": true,
+  "counterPreparation": true,
+  "sweepTravel": true,
+  "defeatPriority": true,
+  "reduceFlashes": true,
+  "reducedMotion": true,
+  "assetTier": "hd",
+  "errors": []
+}

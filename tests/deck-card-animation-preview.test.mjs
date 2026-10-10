@@ -5,6 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { alternativeCardAnimations } from '../src/content/alternativeCardAnimations.js';
 import { playerAttackSequence } from '../src/model/playerAttackSprites.js';
+import { playerCounterSweepSprites } from '../src/content/playerCounterSweepSprites.js';
 import { durationFor } from '../src/model/alternativeCardAnimation.js';
 import { ANIM_SPEEDS } from '../src/ui/animationPace.js';
 import { deckCardAnimationPlan, deckCardAnimationPreview } from '../src/ui/components/deckCardAnimationPreview.js';
@@ -18,6 +19,22 @@ const equip = (run, right, left) => {
     run.loadout.sets[slot][0] = id;
   }
 };
+
+test('all four classes preview the selected counter and sweep clips used by combat', () => {
+  for (const classId of ['reaver', 'starseer', 'herald', 'rogue']) {
+    const run = createRunState({ seed: 21, classId, registries });
+    const before = structuredClone(run);
+    for (const [cardId, action] of [['guardCounter', 'counter'], ['crimsonCleave', 'sweep']]) {
+      const playback = deckCardAnimationPlan(registries, run, { cardId });
+      const selected = playerCounterSweepSprites[classId].sequences[action];
+      assert.equal(playback.sequence, selected);
+      assert.equal(playback.frames.length, 4);
+      assert.equal(playback.frames.at(-1), 'ready');
+      assert.equal(playback.duration, durationFor(selected, ANIM_SPEEDS.normal));
+    }
+    assert.deepEqual(run, before);
+  }
+});
 
 test('preview routes card types through the same class defaults as combat without mutating the run', () => {
   const run = freshRun();

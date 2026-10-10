@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Steadier names under reduced motion and reachable Info on phones",
     "detail": "With Reduced motion on, enemy names and health no longer twitch by fractions of a pixel as the board settles, and moving the pointer no longer drifts the backdrop. The player's Info and action buttons stay above the hand instead of slipping under it when the character stands low on narrow phones. Newly painted enemies bob while idle again, and a hit no longer knocks their bob out of step.",
-    "build": "0.7.1.1239",
+    "build": "0.7.1.1245",
     "pullRequest": 1796,
     "url": "https://github.com/cehinds/AshenSpire/pull/1796"
+  },
+  {
+    "id": "pr-1800",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Selected counters and sweeps carry their weapon effects",
+    "detail": "Reaver, Starseer, Herald and Rogue use the eight selected stance-to-attack clips with steel slashes, staff trails, palm impacts and dagger effects. Four phases return to the original ready frame, and combat and card previews share the same timing. Confirmed counters and physical sweeps keep their chosen preparation stance between actions; original idle, attack, defend and casting artwork stays intact. Reduced motion and reduced flashes clear the separate effect layers.",
+    "build": "0.7.1.1244",
+    "pullRequest": 1800,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1800"
   },
   {
     "id": "pr-1795",

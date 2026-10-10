@@ -18,7 +18,8 @@ test('rear class choreography follows resolved cards with stationary guard and r
     const card = { cardTags: ['maneuver:' + maneuver, 'camp:' + (magical ? 'spell' : 'physical')] };
     const plan = resolveCombatAnimation(card, [], { classId });
     assert.equal(plan.technique, action === 'spell' ? 'weapon:spell:energy-blade'
-      : action === 'rangedMagic' ? 'weapon:rangedMagic:staff-casting' : action);
+      : action === 'rangedMagic' ? 'weapon:rangedMagic:staff-casting'
+      : action === 'counter' ? 'counterPrepare' : action);
     assert.equal(plan.family, ['counter', 'defend'].includes(action) ? 'guard'
       : action.startsWith('ranged') ? 'projectile' : action === 'spell' ? 'spell' : 'strike');
     const sequence = actions.classes[classId].sequences[action];
@@ -100,7 +101,7 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
       const dimensions = stage.el.style.cssText;
       stage.setStance('defensive');
       const beforeReadbacks = readbacks.length;
-      stage.play('attack', 260); // The reaction runtime uses this for an automatic Counter.
+      stage.play('counter', 260); // Automatic counters use their selected return attack.
       assert.equal(readbacks.length, beforeReadbacks + 1, 'action preparation materializes the first visible pixel');
       assert.equal(readbacks.at(-1).canvas, stage.currentArt.canvas, 'readback belongs to the visible stage, not its aura work surface');
       assert.equal(stage.stance, 'defensive');
@@ -115,6 +116,9 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
           assert.equal(stage.el.style.cssText, dimensions);
           assert.deepEqual([art.top, art.width, art.height], [16, 512, 512]);
           assert(!art.image.url.includes('-mobile.webp'), 'fixed foreground artwork uses the full source on phones');
+          if (['counter', 'sweep'].includes(action) && fraction < .69) {
+            assert(art.image.url.includes(`/player-counter-sweep/${classId}/${action}/`), 'selected body phases own the counter/sweep motion');
+          }
         }
         if (['attack', 'smash', 'sweep'].includes(action)) assert(positions.some(x => x > 128));
         else assert(positions.every(x => x === 128), `${action} must stay anchored`);
