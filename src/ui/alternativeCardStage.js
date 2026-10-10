@@ -1,4 +1,5 @@
 import { alternativeCardAnimations } from '../content/alternativeCardAnimations.js';
+import { playerAttackSprites } from '../content/playerAttackSprites.js';
 import { alternativeSelectedStances } from '../content/alternativeSelectedStances.js';
 import { durationFor, sampleSequence, hitFlashOpacity } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
@@ -26,11 +27,17 @@ function load(url) {
   return cached.get(url);
 }
 
-/** Branch-owned base armour animation. Equipment never changes its choreography. */
+/** Base armour actions with explicitly selected reviewed weapon attacks. */
 export function createAlternativeCardStage(classId, { still = false } = {}) {
   if (classicAppearance()) return null;
-  const family = alternativeCardAnimations.classes[classId];
-  if (!family) return null;
+  const base = alternativeCardAnimations.classes[classId];
+  if (!base) return null;
+  const attacks = Object.entries(playerAttackSprites[classId] || {});
+  const family = { ...base,
+    frames: { ...base.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
+    sequences: { ...base.sequences, ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
+      ['attack', 'spell', 'ranged', 'rangedMagic'].map(action => [`weapon:${action}:${name}`, { ...entry.sequence, action }]))) },
+  };
   const heldFrames = alternativeSelectedStances.classes[classId]?.frames || {};
   const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
   const el = document.createElement('div');
@@ -95,7 +102,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     if (!image) return;
     currentArt={canvas,image,left:128+x,top:16,width:512,height:512};
     ctx.save();
-    auraRenderer.draw(ctx,image,filterFor(pose,playing?.action),128+x,16,512,512,{materialize});ctx.restore();
+    auraRenderer.draw(ctx,image,filterFor(pose,playing?.sequence.action || playing?.action),128+x,16,512,512,{materialize});ctx.restore();
     const flash=hitFlashOpacity('hurt',flashAt===null?1:(now-flashAt)/260,{reduced:reducedMotionRequested()});
     if (flash) {
       maskCtx.clearRect(0,0,512,512);maskCtx.globalCompositeOperation='source-over';
@@ -160,7 +167,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     actionTiming(action,speed=ANIM_SPEEDS.normal){
       const sequence=family.sequences[aliases[action]||action];if(!sequence)return null;
       const totalMs=durationFor(sequence,speed);
-      return {totalMs,impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)/260*totalMs};
+      return {totalMs,impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)/sequence.durations.reduce((a,b)=>a+b,0)*totalMs};
     },
     play(action,ms=260,aura=[]){
       if(disposed || (rest==='defeated'&&action!=='defeated'))return false;
