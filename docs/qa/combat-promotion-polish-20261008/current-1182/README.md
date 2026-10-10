@@ -10,3 +10,6 @@ This is the frozen pre-inheritance candidate1182 / d21efc30bd at source checkpoi
 The upstream1772 inheritance and the narrowly reviewed exact-message classification require fresh artifact/native proof. Historical raw RED receipts remain RED.
 
 The curated gates.json uses LF line endings for Git storage; its JSON values are unchanged. provenance.json records both the original D: receipt SHA256 and the curated SHA256. The raw original remains byte-identical.
+
+
+**Raw files removed from the tree (2026-10-10, #1812).** `browser-health.json`, `default-results.json` were removed under the QA-evidence rule (CONTRIBUTING.md, *QA evidence goes to CI artifacts, not the tree*). Statements or manifests here that name them describe the original run; the bytes live in history: `git log --diff-filter=D -- <path>` finds the removing commit and `git show <commit>^:<path>` restores them.
