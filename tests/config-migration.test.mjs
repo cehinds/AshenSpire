@@ -73,6 +73,10 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 //     cardClasses.armamentItem (read-only disclosure, inline comparison).
 //     These are the approved new contract, not migration drift. Only those
 //     subtrees/key-order entries were added; all prior probe values remain pinned.
+//   · Compact combat footer (FixUI, 2026-10-10): packCombatFooter and
+//     packCombatRails add spentWidth (the Discard/Exhaust column) for the larger
+//     phone piles. Only CombatLayout.js's entry is refreshed; every prior probe
+//     value is unchanged apart from the key order the new field shifts.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {
