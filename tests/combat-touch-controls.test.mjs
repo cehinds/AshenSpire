@@ -29,6 +29,8 @@ test('compact geometry reserves the measured controls and overhead gaps', () => 
   assert.match(hand, /setProperty\('--hand-clearance-top', \(toolsHeight \+ plan\.clearanceTop\) \+ 'px'\)/);
   assert.match(tools, /top: handBox\?\.top \|\| 0/);
   assert.doesNotMatch(tools, /top: \(handBox\?\.top \|\| 0\) \+ 30/);
+  assert.match(battlefield, /\.player \.combatant-leading, \.player \.combatant-info/);
+  assert.match(battlefield, /playerControl = node\.matches\('\.player \.combatant-leading, \.player \.combatant-info'\)/);
 });
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {

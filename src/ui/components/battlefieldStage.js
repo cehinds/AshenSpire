@@ -478,13 +478,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // final HUD pass can then keep this slot without competing with a footer.
     placePlayerHud(true);
     const readFooterObstacles = () => {
-      const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading')]
+      const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading, .player .combatant-info')]
         .map(node => {
           const rect = visibleCombatPanelRect(node, combat);
           if (!rect) return null;
           // Footer packing supplies two pixels; reserve eight more around the
-          // panel to match the final player HUD pass's ten-pixel clearance.
-          const padding = node.matches('.player .combatant-leading') ? 8 : 0;
+          // panel and its independently positioned Inspect control to match
+          // the final player HUD pass's ten-pixel clearance.
+          const playerControl = node.matches('.player .combatant-leading, .player .combatant-info');
+          const padding = playerControl ? 8 : 0;
           const door = node.matches('.player .combatant-leading') ? combatControlWidth(node.querySelector(':scope > .combatant-info'), pageZoom) : 0;
           return { left: rect.left - padding - door, right: rect.right + padding,
             top: rect.top - padding, bottom: rect.bottom + padding, width: rect.width, height: rect.height };
