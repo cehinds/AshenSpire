@@ -241,7 +241,9 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
         replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
-        expectRed: /RED IDLE-AFTER enemy#\d+ — .*img\.enemy-pose-state: no idle animation on it or its layers[\s\S]*RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame/,
+        // #1795's painted enemies use img.pose-frame, so this plant now bobs
+        // them on the image; the defect still shows on the player's layers.
+        expectRed: /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame[\s\S]*RED IDLE-classic player#\d+ — .*svg: no idle animation on it or its layers/,
       },
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
