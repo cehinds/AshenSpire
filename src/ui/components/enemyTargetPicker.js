@@ -96,11 +96,10 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
       button.dataset.focusable = '';
       button.innerHTML = '<span class="enemy-target-name"></span><span class="enemy-target-health"></span>';
       // A pointer press after keyboard navigation changes input modes. Clear
-      // the old unified cursor before activation so its enemy key cannot be
-      // restored onto the combatant after this button leaves the DOM.
-      button.addEventListener('pointerdown', () => {
-        if (button.classList.contains('gp-focus')) clearFocus();
-      });
+      // the unified cursor (wherever it sits, this target or another) before
+      // activation so its enemy key cannot be restored onto a combatant after
+      // the picker leaves the DOM. Keyboard Enter/Space never fires pointerdown.
+      button.addEventListener('pointerdown', () => clearFocus());
       button.addEventListener('click', event => {
         event.stopPropagation();
         if (!button.disabled) picker.activate?.(button.dataset.eid);
