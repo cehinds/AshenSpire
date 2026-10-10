@@ -20,6 +20,20 @@ check(() => assert.doesNotMatch(combat, /function combatantInspectControl/));
 check(() => assert.match(combat, /combatantInfo\(combatantSubject\('player', p\)\.name, opener => openCombatantDoor\(combatantSubject\('player', p\), opener\)\)/));
 check(() => assert.match(combat, /if \(enemy\.alive\) leading\.push\(combatantInfo\(def\.name, opener => openCombatantDoor\(combatantSubject\('enemy', enemy\), opener\)\)/));
 
+// Enemy name (#1785, regressed by #1787): with nothing armed, a centre tap or
+// Enter/Space on the name opens the full read; the frame's left core selects.
+// docs/combat-target-pointer-behavior.md; the aria-label promises the read.
+const nameAt = combat.indexOf("const openThisRead = (event) => {");
+check(() => assert.ok(nameAt >= 0, 'the enemy-name handler exists'));
+const nameHandler = combat.slice(nameAt, combat.indexOf('};', nameAt));
+check(() => assert.match(nameHandler, /if \(selected\) playCard\(selected, enemy\.id\);\s*else if \(selectedFlask != null\) useFlask\(selectedFlask, enemy\.id\);\s*else openCombatantDoor\(combatantSubject\('enemy', enemy\), nm\);/));
+check(() => assert.doesNotMatch(nameHandler, /selectCombatant/, 'the name must not merely select (core does that)'));
+check(() => assert.match(combat, /nm\.setAttribute\('aria-label', `\$\{def\.name\} — the full read`\)/));
+check(() => assert.match(combat, /nm\.addEventListener\('click', openThisRead\);/));
+check(() => assert.match(combat, /nm\.addEventListener\('keydown', \(event\) => \{\s*if \(event\.key !== 'Enter' && event\.key !== ' '\) return;\s*event\.preventDefault\(\);\s*openThisRead\(event\);/));
+// The frame (left core) click still selects when unarmed.
+check(() => assert.match(combat, /else if \(selectedFlask != null\) useFlask\(selectedFlask, enemy\.id\);\s*else if \(!selfArm\) \{\s*selectCombatant\(enemy\.id\);/));
+
 // Behaviour of the control itself.
 const dom = rewardDom();
 const extra = { MutationObserver: class { observe() {} disconnect() {} } };
@@ -53,4 +67,4 @@ try {
   }
 }
 
-console.log(`PASS ${checks}/${checks}; combat inspection opens from the overhead Information control, one tap on desktop, select-then-open on touch`);
+console.log(`PASS ${checks}/${checks}; combat inspection opens from the overhead Information control, one tap on desktop, select-then-open on touch; enemy name opens the full read, core selects`);
