@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1784",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Crowded combat targets keep a clear HUD slot",
+    "detail": "When the player panel blocks enemy footers on short phone screens, one bounded placement retry clears more targets while preserving full HUD and Info footprints, artwork, hand positions and honest obstruction reporting.",
+    "build": "0.7.1.1207",
+    "pullRequest": 1784,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1784"
+  },
+  {
     "id": "pr-1783",
     "date": "2026-10-09",
     "group": "2026-10-09",
