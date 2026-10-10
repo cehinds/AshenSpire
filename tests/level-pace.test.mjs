@@ -17,7 +17,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { validateContent } from '../src/model/validate.js';
-import { awardLevelXp, combatLevelXp, emptyLevel, levelPace, xpToNext } from '../src/model/levelup.js';
+import { awardLevelXp, bankLevelXp, combatLevelXp, emptyLevel, levelPace, pendingLevelCount, xpToNext } from '../src/model/levelup.js';
 import { levelPacePreview } from '../src/ui/models/LevelPacePreviewModel.js';
 
 const XP_MULT = 'gameConfig.progression.xpMultiplier';
@@ -134,6 +134,31 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   const bank = { level: emptyLevel() };
   assert.equal(awardLevelXp(early, bank, 345).discarded, 0);
   assert.equal(bank.level.xp, 65);
+});
+
+test('§15.2: with cap 1, a fight counts only its own levels, not XP banked by earlier fights', () => {
+  const reg = withCap(1);
+  const run = { level: emptyLevel() };
+  // Fight A pays 150: one level's XP (100) is banked, the level is not claimed.
+  assert.equal(bankLevelXp(reg, run, 150).discarded, 0);
+  // Fight B pays 200. Alone it raises one level; with A's banked XP the ledger
+  // holds two levels (100 + 175 ≤ 350). Fight B's own allowance is one of them,
+  // so nothing is discarded and both levels stay banked.
+  const b = bankLevelXp(reg, run, 200);
+  assert.equal(b.discarded, 0, 'no XP banked by an earlier fight is discarded');
+  assert.equal(b.pendingLevelUps, 2, 'both levels are banked');
+  assert.equal(run.level.level, 1, 'banking does not move the displayed level');
+  assert.equal(run.level.xp, 350, 'the whole 350 XP is on the ledger');
+  assert.equal(pendingLevelCount(reg, run), 2);
+  // Fight B alone, on a fresh ledger, raises exactly one level.
+  const alone = { level: emptyLevel() };
+  assert.equal(bankLevelXp(reg, alone, 200).pendingLevelUps, 1);
+  // A third fight is still capped at one level of its own: the XP past it is discarded.
+  const c = bankLevelXp(reg, run, 900);
+  assert.ok(c.discarded > 0, 'the cap still discards the XP past this fight\'s one level');
+  assert.equal(pendingLevelCount(reg, run), 3);
+  // The ledger keeps the three levels' XP plus one short of the fourth step: the discard is exactly the excess.
+  assert.equal(run.level.xp, xpToNext(reg, 1) + xpToNext(reg, 2) + xpToNext(reg, 3) + xpToNext(reg, 4) - 1);
 });
 
 test('§15.2: the preview lists the XP to reach each of levels 2–20, from the live curve', () => {
