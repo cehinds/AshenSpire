@@ -45,6 +45,8 @@ test('enemy stage settles reactions, extends holds, and keeps defeat terminal', 
   assert.equal(el.dataset.pose, 'attack-02');
   t.mock.timers.tick(100);
   assert.equal(el.dataset.pose, 'idle');
+  stage.setState({ hp: 10, maxHp: 10, block: 4 });
+  assert.equal(el.dataset.pose, 'block-01', 'resting guard uses a painted frame, not a sequence asset name');
   stage.setState({ hp: 2, maxHp: 10 });
   stage.play('hit', 220);
   t.mock.timers.tick(220);

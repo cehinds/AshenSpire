@@ -40,8 +40,9 @@ export function enemyExpansionSprite(definition, entity = {}) {
   const resolve = pose => aliases[pose] || pose;
   function draw(pose) {
     if (disposed) return;
-    root.dataset.pose = pose;
-    image.src = assetUrl(path(pose));
+    const frame = art.actions[pose]?.[0]?.pose || pose;
+    root.dataset.pose = frame;
+    image.src = assetUrl(path(frame));
   }
   function stop() { clearTimeout(timer); timer = null; generation++; }
   function settle() { stop(); draw(resolve(presentation.rest)); }
