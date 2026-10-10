@@ -21,8 +21,7 @@ test('tracking pass reserves the same settled target cores as the main placement
   assert.match(stage, /const targetCores = boxes\.flatMap\(/);
   assert.match(stage, /targetCores,\n\s*\}\);/);
   assert.match(stage, /settledTargetCores = targetCores;/);
-  // The optional third argument only marks the per-frame tick (Inspect re-pick throttle).
-  assert.match(stage, /function trackPlayerHud\(\) \{\n\s*\/\/[^\n]*\n\s*placePlayerHud\(false, settledTargetCores(?:, true)?\);/);
+  assert.match(stage, /function trackPlayerHud\(\) \{\n\s*\/\/[^\n]*\n\s*placePlayerHud\(false, settledTargetCores\);/);
   assert.doesNotMatch(stage, /function trackPlayerHud\(\) \{\n\s*placePlayerHud\(\);/);
 });
 

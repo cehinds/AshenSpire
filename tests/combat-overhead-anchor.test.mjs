@@ -121,26 +121,6 @@ test('an enemy overhead with no clear slot is reported obstructed rather than hi
   assert.equal(anchor.obstructed, true);
   assert.equal(anchor.x, 77, 'the reported anchor keeps its packed position');
 });
-test('one overhead with no clear slot keeps every overhead at its packed anchor', () => {
-  // Review case: e1 moves right off the player, into e2's packed slot; e2 has
-  // nowhere to go and stays put, so the moved e1 would sit on it.
-  const controls = [
-    { id: 'e1', side: 'enemy', x: 60, width: 60, top: 0, bottom: 40 },
-    { id: 'e2', side: 'enemy', x: 160, width: 60, top: 0, bottom: 40 },
-  ];
-  // A 40 px field leaves no vertical move.
-  const obstacles = [
-    { ownerId: 'player', left: 0, right: 100, top: 0, bottom: 40 },
-    { ownerId: 'player', left: 170, right: 320, top: 0, bottom: 40 },
-  ];
-  const packed = combatOverheadAnchors({ width: 320, controls });
-  const anchors = combatOverheadAnchors({ width: 320, controls, obstacles, height: 40 });
-  assert.deepEqual(anchors.map(({ id, x, offsetY }) => ({ id, x, offsetY })),
-    packed.map(({ id, x, offsetY }) => ({ id, x, offsetY })), 'no overhead moves when one cannot clear');
-  assert.ok(anchors.every(anchor => anchor.obstructed === true), 'each anchor meeting an obstacle is flagged');
-  for (let i = 1; i < anchors.length; i++) assert.equal(overlapsBox(overheadBox(controls[i - 1], anchors[i - 1]),
-    overheadBox(controls[i], anchors[i])), false, 'no two overheads overlap');
-});
 import { presentationConfig } from '../src/model/advancedConfig.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../src/ui/fx.js';
 

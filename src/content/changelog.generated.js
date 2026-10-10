@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Every fighter's Inspect button is always shown and holds still; bigger footer piles on phones",
     "detail": "Every enemy and the player now show an Inspect \"i\" at all times, and it no longer bobs with the idle animation; when space is tight it moves beside the enemy's intent or onto the enemy's own art instead of hiding under the top bar. On phones the Draw, Discard and Potions controls are larger with bigger icons and counts, and an enemy's intent and health no longer sit over the player's head.",
-    "build": "0.7.1.1271",
+    "build": "0.7.1.1269",
     "pullRequest": 1818,
     "url": "https://github.com/cehinds/AshenSpire/pull/1818"
   },
