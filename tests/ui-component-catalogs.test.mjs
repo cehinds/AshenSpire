@@ -95,6 +95,49 @@ test('alternative formation still requires the named bounded fitter and its mode
   }
 });
 
+const renderingReceipt = receipt();
+const combatC8 = combat => findings({ ...renderingReceipt, combat }).filter(line => line.startsWith('C8 combat composition'));
+function changeRenderBody(name, mutate) {
+  const source = renderingReceipt.combat;
+  const begin = source.indexOf(`  function ${name}(`);
+  const end = source.indexOf('\n  }', begin) + '\n  }'.length;
+  assert.ok(begin >= 0 && end > begin);
+  const body = source.slice(begin, end), changed = mutate(body);
+  assert.notEqual(changed, body, 'the negative must change the actual authored function');
+  return source.slice(0, begin) + changed + source.slice(end);
+}
+
+test('C8 accepts the actual deferred full fit and synchronous action-only frame fit', () => {
+  assert.deepEqual(combatC8(renderingReceipt.combat), []);
+});
+
+for (const [label, name, mutate] of [
+  ['missing player frames', 'renderCombatantStage', body => body.replace('renderPlayer();', '')],
+  ['missing enemy frames', 'renderCombatantStage', body => body.replace('renderEnemies();', '')],
+  ['disabled action-only default fit', 'renderCombatantStage', body => body.replace('fit = true', 'fit = false')],
+  ['missing action-only stage refresh', 'renderCombatantStage', body => body.replace('battlefieldStage.refresh();', '')],
+  ['missing action-only formation refresh', 'renderCombatantStage', body => body.replace('formationMovement?.refresh();', '')],
+  ['duplicate action-only fit', 'renderCombatantStage', body => body.replace('battlefieldStage.refresh();', 'battlefieldStage.refresh(); battlefieldStage.refresh();')],
+  ['unguarded action-only fit', 'renderCombatantStage', body => body.replace('if (fit)', 'if (true)')],
+  ['eager full-render frame fit', 'render', body => body.replace('renderCombatantStage({ fit: false });', 'renderCombatantStage();')],
+  ['missing full-render frame creation', 'render', body => body.replace('renderCombatantStage({ fit: false });', '')],
+  ['missing final full fit', 'render', body => body.replace('battlefieldStage.refresh();', '')],
+  ['duplicate final full fit', 'render', body => body.replace('battlefieldStage.refresh();', 'battlefieldStage.refresh(); battlefieldStage.refresh();')],
+  ['missing final formation fit', 'render', body => body.replace('formationMovement?.refresh();', '')],
+  ['tools measured before the hand', 'render', body => body.replace('    renderHand();', '').replace('    combatTools.flushGeometry();', '    combatTools.flushGeometry();\n    renderHand();')],
+  ['missing tools measurement', 'render', body => body.replace('combatTools.flushGeometry();', '')],
+  ['comment-only player frames', 'renderCombatantStage', body => body.replace('renderPlayer();', '/* renderPlayer(); */')],
+  ['string-only final fit', 'render', body => body.replace('battlefieldStage.refresh();', '"battlefieldStage.refresh();";')],
+]) test(`C8 rejects ${label} in the actual render source`, () => {
+  assert.equal(combatC8(changeRenderBody(name, mutate)).length, 1);
+});
+
+test('C8 still requires real action-only callers outside the two render declarations', () => {
+  const source = renderingReceipt.combat.replace(/renderCombatantStage\(\);/g, '/* renderCombatantStage(); */');
+  assert.notEqual(source, renderingReceipt.combat);
+  assert.equal(combatC8(source).length, 1);
+});
+
 // An empty family names itself: with the Markdown Rendered-family table gone,
 // the message says that catalog listed no Armoury ids, not only that every
 // Armoury id is one-sided.
