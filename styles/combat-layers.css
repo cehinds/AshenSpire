@@ -218,7 +218,7 @@
 
 :root .combat[data-layout='formation'] :is(.hand-overlay,.hand) { pointer-events: none !important; }
 :root .combat[data-layout='formation'] .hand :is(.card,.card-info-button) { pointer-events: auto; }
-:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next,.hand-info-portal) { pointer-events: auto; }
 
 :root .combat[data-layout="formation"] .hand[data-wireframe-hand="true"] .card > .card-info-button { pointer-events: auto; }
 

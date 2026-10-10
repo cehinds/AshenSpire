@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-09",
     "summary": "Compact combat targeting and touch controls",
     "detail": "Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.",
-    "build": "0.7.1.1207",
+    "build": "0.7.1.1209",
     "pullRequest": 1776,
     "url": "https://github.com/cehinds/AshenSpire/pull/1776"
   },

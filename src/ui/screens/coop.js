@@ -1184,7 +1184,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: e.id });
           return true;
         }
-        selectCombatant(e.id); render();
+        selectCombatant(e.id);
         // Leave unarmed taps to the intent's selection-first tooltip.
         return false;
       }));
