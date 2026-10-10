@@ -92,6 +92,8 @@ import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
 import { resourceBars } from '../components/resbars.js';
+import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
+import { characterLevel } from '../../model/levelup.js';
 import { combatHealthRow } from '../components/combatHealth.js';
 import { blockPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -866,7 +868,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wrap.className = 'meters';
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
-    const bars = resourceBars(plan, { surface: 'model' });
+    const bars = resourceBars(plan, { surface: 'model', showLabels: !isEnemy });
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
@@ -874,6 +876,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
+    // Each row names its kind, as the solo renderer does (combat.js meterBars).
+    for (const row of bars.children) {
+      const kind = row.dataset.meterRow === 'hp' || row.dataset.res === 'hp' ? 'hp' : row.classList.contains('procbar') ? 'buildup' : 'resource';
+      row.dataset.meterRow = kind;
+      if (meterRowSelectedOnly(kind)) row.dataset.selectedOnly = 'true';
+    }
     while (bars.firstChild) wrap.append(bars.firstChild);
     if (ent.combatExpansionVersion === 2) {
       const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
@@ -1119,7 +1127,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId) }));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId), view: 'combat' }));
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setStance?.(heldStances.get(p.id));
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
@@ -1136,8 +1144,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
-      name.className = 'nm'; name.textContent = m.name || p.id;
-      name.title = `${name.textContent}: ${seatState.label}, ${p.energy}/${p.energyMax} energy`;
+      // The nameplate reads name · Lv, as the solo nameplate does (combat.js).
+      name.className = 'nm'; name.textContent = `${m.name || p.id} · Lv ${characterLevel({ level: m.level })}`;
+      name.title = `${m.name || p.id}: ${seatState.label}, ${p.energy}/${p.energyMax} energy`;
       box.appendChild(name);
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
