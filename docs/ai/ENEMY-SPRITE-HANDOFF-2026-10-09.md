@@ -25,7 +25,7 @@ Counterattack, sweep and preparing frames exist in the package. Their use depend
 3. Inspect Glass Regent and Valkyrie Shade for gray/cyan matte halos; inspect winged silhouettes and long spears for edge intersections.
 4. Stitched King uses a fully clothed patchwork-armored variant. Its body design differs from the original exposed stitched figure and needs an explicit art decision before calling it canonical/approved.
 5. Eclipse Cantor ranged-02 was replaced with a full-body physical-throw pose after the source cell contained only a projectile.
-6. Validate combat framing on desktop and a physical phone. Authoring-preview screenshots are not game acceptance or physical-device evidence.
+6. Continue angle-fidelity review: Stitched Hound idle remains more side-on than the supplied soldier reference. The target is front three-quarter/screen-left; generation is not owner acceptance. Validate on a physical phone.
 7. The portable project schema passed validation. The earlier workshop browser screenshot remained at “Loading workshop”; do not treat it as a successful editor import. Serve `.mjs` with JavaScript MIME and verify actual project loading.
 
 ## Continue safely
@@ -51,3 +51,7 @@ Follow the art repository's normal PR/automatic pack publication, then pin the r
 - The large local full-suite run was stopped during discovered tests to reduce
   disk contention. Its completion is not claimed. Required PR/promotion CI still
   has to establish the final merged result.
+
+### Actual combat smoke check
+
+After integrating current dev/player attacks, 14 focused tests passed. Source combat ran at 1440×1000 and 390×844 in Edge. The test confirmed End Turn, declined reaction offers, and advanced turn 1 → 2 (event log 12 → 45) in both viewports. Enemy art requests and page execution had no errors. Four optional audio probes returned 404; those IDs are absent from the pinned manifest and retain existing procedural fallbacks. Screenshots and the machine-readable receipt are under `docs/preview/enemy-expansion-2026-10-09/`. This supersedes the earlier renderer-only coverage statement; phone emulation is still not a physical-phone test.
