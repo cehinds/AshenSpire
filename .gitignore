@@ -584,3 +584,14 @@ build/windows-installer/
 
 # Regenerable alternative combat art download.
 /docs/design/combat-depth-2026-10-05/ashenspire-combat-art.zip
+
+# Bulk QA evidence (owner, 2026-10-10): raw browser-run output — full results,
+# per-viewport geometry dumps and browser-health logs — is uploaded as a CI
+# workflow artifact, never committed. Commit the README, screenshots and a small
+# curated summary instead; tests/qa-evidence-size.test.mjs fails a tracked
+# evidence JSON over 256 KiB (CONTRIBUTING.md, "QA evidence goes to CI
+# artifacts"). Already-tracked files are unaffected; `git add -f` a small one.
+/docs/qa/**/results.json
+/docs/qa/**/*-results.json
+/docs/qa/**/*-geometry.json
+/docs/qa/**/browser-health.json
