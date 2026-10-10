@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
+- **Weapon attacks use four painted phases** ([#1789](https://github.com/cehinds/AshenSpire/pull/1789), `0.7.1.1228`). Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded.
+
 - **Compact combat targeting and touch controls** ([#1776](https://github.com/cehinds/AshenSpire/pull/1776), `0.7.1.1225`). Keep enemy labels below their sprites and player details beside the character, with a background only when selected and Inspect above the player. Make intent badges and the player health strip usable card targets. Fit smaller idle cards and compact footer controls on narrow phones. Place Log and Reaction at the right above the cards; tap the log to toggle or drag it to snap between three sizes without inner buttons. Keep card Inspect inside the selected face, clear of the toolbar.
 
 - **Enemy names remain inspectable beside fighter targets** ([#1785](https://github.com/cehinds/AshenSpire/pull/1785), `0.7.1.1209`). The full enemy name opens inspection beside an independent 44px fighter-selection core within the existing footer. Native input uses the actual side-core geometry while retaining keyboard inspection, conditional card/flask targeting, full obstacle footprints, artwork and hand positions.

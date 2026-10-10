@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1789",
+    "date": "2026-10-09",
+    "group": "2026-10-09",
+    "summary": "Weapon attacks use four painted phases",
+    "detail": "Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded.",
+    "build": "0.7.1.1228",
+    "pullRequest": 1789,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1789"
+  },
+  {
     "id": "pr-1776",
     "date": "2026-10-09",
     "group": "2026-10-09",
