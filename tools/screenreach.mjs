@@ -152,13 +152,13 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'a silhouette loses its frame-level tap area',
         file: 'styles/combat.css',
-        append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
+        append: '.enemy-target-hitbox::before, .enemy-target-hitbox::after { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
         name: 'a player loses its exposed artwork or frame-level tap area',
         file: 'styles/combat.css',
-        append: '.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
+        append: '.player-target-hitbox::before, .player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -481,7 +481,13 @@ const PROBE = `(() => {
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
-      const targetStyle = getComputedStyle(c, '::after');
+      // The transparent ::before proxy is the actual tap surface; the painted
+      // ::after plate is hidden on unselected enemies. Whenever the proxy is
+      // drawn it is measured, so a proxy that stops taking hits is a failure,
+      // never a quiet fallback to the artwork.
+      const proxyStyle = getComputedStyle(c, '::before');
+      const targetStyle = proxyStyle.display !== 'none' && proxyStyle.content !== 'none'
+        ? proxyStyle : getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
       // Waist-overlap players expose their artwork; their plate is hidden.
