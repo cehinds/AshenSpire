@@ -29,15 +29,22 @@ Validation on 2026-10-09:
   selection and target-button input played anticipation, strike, follow-through,
   recovery and returned to the offensive stance at 1440x1000 and 390x844.
   No character placeholders or missing sprite requests occurred.
-- Browser requests exposed missing SFX files (`cardPlay`, `block`, `relic`,
-  `holdTick`). The current layout substantially occludes the player behind the
-  hand. The captures demonstrate playback, not full visual or phone-device
-  acceptance. Those issues are not fixed by this sprite change.
-- Refreshed complete inline candidate: 116,028,404 bytes. The new light sprites
-  contribute 1,378,368 base64 bytes. Art allocation is 83,000,000 bytes; measured
-  art including fonts is 82,809,576 bytes. The complete download exceeds the
-  newer 100 MB owner target. Older build tooling treats that target as
-  informational; passing its checks does not establish size compliance.
+- The compact v17 packaged candidate repeated the real-input playback check at
+  both viewports with all four phases, stance recovery and zero placeholders.
+  Captures below are from the compact candidate before its receipt-only rebuild.
+  Desktop placement is visible; the phone hand still overlaps part of the actor.
+  Browser requests exposed existing missing SFX files (`cardPlay`, `block`,
+  `relic`, `holdTick`). These captures do not establish physical-phone acceptance.
+- The owner requested 256px or 128px sprite/background exports. The 256px light
+  pack and runtime display exports reduce the complete inline candidate from
+  116,028,404 to 65,383,178 bytes (43.65% smaller), below the 100,000,000-byte
+  maximum and 80,000,000-byte preference. Inline light art including fonts is
+  48,078,820 bytes; the art allocation is restored to 81,500,000 bytes.
+  Source masters and card portraits retain their separate resolution rules.
+  Backgrounds are visibly softer at this reduced raster resolution.
+- Published asset pin: `hd-assets-v17`, from AshenSpire-art PR #19. All three
+  published pack hashes match the locally reproduced packs. The regenerated
+  game manifest verifies the compact light twins, including all 128 new frames.
 
 Independent Codex review identified co-op's midpoint impact assumption and loss
 of casting aura identity; both were corrected before final review.
