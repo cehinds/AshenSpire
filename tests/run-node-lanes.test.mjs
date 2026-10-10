@@ -194,7 +194,19 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     const discovery = job(workflow, discovered);
     assert.match(discovery, /timeout-minutes: 20/);
     assert.match(discovery, /fail-fast: false/);
-    assert.match(discovery, /--discovered-only --shard \$\{\{ matrix\.shard \}\}/);
+    // ci.yml runs every discovered file; tests.yml's shards leave the slow
+    // ones to its discovered-slow job, gated off pull requests like selftests.
+    if (file === 'ci.yml') assert.match(discovery, /--discovered-only --shard \$\{\{ matrix\.shard \}\}/);
+    else {
+      assert.match(discovery, /--discovered-only --no-slow --shard \$\{\{ matrix\.shard \}\}/);
+      const slow = job(workflow, 'discovered-slow');
+      assert.match(slow, /timeout-minutes: 20/);
+      assert.match(slow, /--discovered-only --slow-only\n/);
+      assert.match(slow, /fetch-art/);
+      const gate = /\n {4}if: (.*)\n/.exec(slow)?.[1];
+      assert.ok(gate, 'discovered-slow has no job-level if:');
+      assert.equal(gate, /\n {4}if: (.*)\n/.exec(job(workflow, selftests))?.[1], 'discovered-slow runs exactly where selftests run');
+    }
     const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
     assert.deepEqual(shards, ['0/4', '1/4', '2/4', '3/4']);
     assert.match(discovery, /fetch-art/);
