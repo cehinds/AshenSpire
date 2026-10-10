@@ -4986,6 +4986,10 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile {
   height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1))); min-height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1)));
 }
+/* Every compact-label row (601-680px hosts and short-host rails such as
+   844x390 included) keeps 44px piles: a 42% icon over 11px counts fits them. */
+.combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: 42%; flex: 0 1 42%; }
+.combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(11px / var(--ui-zoom, 1)); }
 /* Piles on a compact host (<= 600px, packCombatFooter's compact branch): a 28px
    icon over 13px counts, the minimum legible size on a phone. Discard/Exhaust's
    two lines are the tallest content, and the pile height (pileHeightPx) is sized
