@@ -21,6 +21,12 @@ export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
 }
 
+export function combatSceneryGround(sizes, actors, fallback) {
+  const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
+  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.ground)).map(size => size.ground);
+  return grounds.length ? Math.min(...grounds) : fallback;
+}
+
 export function combatComposition({ sizes, actors, width, height, handTop, solo = true }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
