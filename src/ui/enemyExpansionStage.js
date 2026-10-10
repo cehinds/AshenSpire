@@ -22,13 +22,19 @@ export function enemyExpansionSprite(definition, entity = {}) {
   image.alt = definition.name || definition.id;
   image.draggable = false;
   image.style.cssText = `position:absolute;max-width:none;width:${512 * scale}px;height:${512 * scale}px;left:calc(50% - ${256 * scale}px);bottom:${-32 * scale}px`;
-  root.append(image);
+  // The root is the sprite's first child, which the hit recoil animates.
+  // The idle bob lives on this inner layer so a recoil never resets its clock.
+  const bob = document.createElement('div');
+  bob.className = 'enemy-expansion-bob';
+  bob.style.cssText = 'position:absolute;inset:0';
+  root.append(bob);
+  bob.append(image);
   const placeholder = document.createElement('span');
   placeholder.textContent = definition.name || definition.id;
   placeholder.setAttribute('role', 'img');
   placeholder.setAttribute('aria-label', placeholder.textContent);
   placeholder.style.cssText = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center';
-  root.append(placeholder);
+  bob.append(placeholder);
   image.addEventListener('load', () => { image.style.visibility = ''; placeholder.style.display = 'none'; });
   image.addEventListener('error', () => {
     image.style.visibility = 'hidden'; placeholder.style.display = 'flex';

@@ -44,24 +44,26 @@ export function combatControlWidth(node, zoom) {
   return Math.max(0, parseFloat(style.width) || 0, parseFloat(style.minWidth) || 0) * zoom;
 }
 
-export function combatPlayerInfoRect(node, art, viewport, zoom) {
+export function combatPlayerInfoRect(node, art, viewport, zoom, floor = Infinity) {
   if (!node) return null;
   const width = combatControlWidth(node, zoom);
   const height = node.getBoundingClientRect().height || width;
   if (!(width > 0 && height > 0)) return null;
   const left = (art.left + art.right) / 2 - width / 2;
-  const top = Math.max(viewport.top, art.top - height - 4);
+  // Art whose top sits low (a waist-overlap player) must not carry the door
+  // down under the resting hand or tools, which would take every tap on it.
+  const top = Math.max(viewport.top, Math.min(art.top - height - 4, floor - height - 4));
   return { left, top, right: left + width, bottom: top + height, width, height };
 }
 
 // The selected-card action is independent of the reading panel, like Info.
-export function combatPlayerActionRect(node, infoRect, art, zoom) {
+export function combatPlayerActionRect(node, infoRect, art, zoom, floor = Infinity) {
   if (!node) return null;
   const width = combatControlWidth(node, zoom);
   const height = node.getBoundingClientRect().height || width;
   if (!(width > 0 && height > 0)) return null;
   const left = (art.left + art.right) / 2 - (infoRect?.width || 22) / 2 - 28;
-  const top = art.top - 28;
+  const top = Math.min(art.top - 28, floor - height - 4);
   return { left, top, right: left + width, bottom: top + height, width, height };
 }
 
@@ -169,8 +171,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const panel = leading.getBoundingClientRect();
       const inspect = leading.querySelector('.combatant-info');
       const action = leading.querySelector('.player-action-intent');
-      const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom);
-      const actionRect = combatPlayerActionRect(action, infoRect, art, zoom);
+      const doorFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
+      const infoRect = combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor);
+      const actionRect = combatPlayerActionRect(action, infoRect, art, zoom, doorFloor);
       return [{ player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect }];
     });
     // Reserve every seat's intended Info/action doors before placing any panel,
@@ -628,13 +631,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.style.setProperty('--enemy-hit-x', `${local.left}px`);
         frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
         frame.dataset.targetObstructed = String(!!target.obstructed);
+        // Each refresh reads the footer back through its own translate, so
+        // float error re-wrote it a few thousandths of a pixel apart on every
+        // settle. Round to a hundredth: a still footer then writes the same
+        // value, and reduced motion sees no script-driven drift.
+        const settledPx = value => Math.round(value * 100) / 100 || 0;
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
           top: fieldRect.top + target.y - footerSize / 2 - (Number.isFinite(boxes[i].footerTop) ? boxes[i].footerTop : hostRect.bottom), width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
-          footer.style.translate = `${offset.left}px ${offset.top}px`;
+          footer.style.translate = `${settledPx(offset.left)}px ${settledPx(offset.top)}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = 'var(--combat-layer-selection)';
           // A fallen footer reserves no space, so a living one may pack onto
@@ -650,7 +658,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
               left: leading.left + (leading.width - rect.width) / 2 - rect.left,
               top: leading.bottom - rect.height - rect.top, width: 0, height: 0,
             }, { zoom });
-            meter.style.translate = `${offset.left + idleOffset.left}px ${offset.top + idleOffset.top}px`;
+            meter.style.translate = `${settledPx(offset.left + idleOffset.left)}px ${settledPx(offset.top + idleOffset.top)}px`;
           }
         }
       }

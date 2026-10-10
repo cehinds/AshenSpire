@@ -152,13 +152,13 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'a silhouette loses its frame-level tap area',
         file: 'styles/combat.css',
-        append: 'html:root .combat[data-layout="formation"] .combatant.enemy-target-hitbox:not(.dead)::before, html:root .combat[data-layout="formation"] .combatant.enemy-target-hitbox::after { pointer-events: none !important; }',
+        append: '.enemy-target-hitbox::before, .enemy-target-hitbox::after { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
         name: 'a player loses its exposed artwork or frame-level tap area',
         file: 'styles/combat.css',
-        append: 'html:root .combat[data-layout="formation"] .combatant.player-target-hitbox:not(.dead)::before, html:root .combat[data-layout="formation"] .combatant.player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
+        append: '.player-target-hitbox::before, .player-target-hitbox::after, .combat[data-waist-overlap="true"] .player .sprite, .combat[data-waist-overlap="true"] .player .sprite * { pointer-events: none !important; }',
         expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -504,16 +504,25 @@ const PROBE = `(() => {
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
-      const targetStyle = getComputedStyle(c, '::before');
+      // The transparent ::before proxy is the actual tap surface; the painted
+      // ::after plate is hidden on unselected enemies. Whenever the proxy is
+      // drawn it is measured, so a proxy that stops taking hits is a failure,
+      // never a quiet fallback to the artwork.
+      const proxyStyle = getComputedStyle(c, '::before');
+      const targetStyle = proxyStyle.display !== 'none' && proxyStyle.content !== 'none'
+        ? proxyStyle : getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
       // Waist-overlap players expose their artwork; their plate is hidden.
-      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none';
-      const reach = (hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
-        && exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
+      // A core that packing explicitly gave up (data-core-obstructed) takes no
+      // input by design; that enemy is reached through its artwork.
+      const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none'
+        && c.dataset.coreObstructed !== 'true';
+      const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
+        ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
             top: ty - halfHeight, bottom: ty + halfHeight },
-          top => frameOwnsHit(c, sprite, top)))
-        || exposedPatch(sprite, 24);
+          top => frameOwnsHit(c, sprite, top))
+        : exposedPatch(sprite, 24);
       if (reach) continue;
     }
     // A tall neighbouring enemy can paint across an intent badge's centre on
