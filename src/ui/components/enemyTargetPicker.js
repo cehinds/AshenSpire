@@ -42,6 +42,12 @@ function watchTargetPlacement(host, picker) {
         y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2 };
     });
     const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles });
+    const placed = new Set(placements.map(placement => placement.id));
+    // A foe the grid could not place keeps no stale coordinates: its button is
+    // hidden (not focusable) and the enemy stays targetable through its sprite.
+    for (const button of picker.children) {
+      button.hidden = !placed.has(button.dataset.eid);
+    }
     for (const placement of placements) {
       const button = [...picker.children].find(node => node.dataset.eid === placement.id);
       const local = anchorLocalBox(host, { left: box.left + placement.left, top: box.top + placement.top,

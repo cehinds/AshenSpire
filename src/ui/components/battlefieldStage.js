@@ -70,6 +70,8 @@ export function combatPlayerActionRect(node, infoRect, art, zoom, floor = Infini
 // A readable player panel can consume the only near-foot slot for another
 // actor. Retry its placement once with those actors' physical cores reserved;
 // retain the first layout unless the full footer pack actually improves.
+// `targetCores` is the caller's settled reservation: it is cleared in place when
+// the retry is refused, so the tracking pass never reapplies a rejected layout.
 export function packCombatTargetsWithHud({ pack, placeHud, targetCores }) {
   const original = pack();
   const blocked = targets => targets.filter(target => target.obstructed);
@@ -79,6 +81,7 @@ export function packCombatTargetsWithHud({ pack, placeHud, targetCores }) {
   const retry = pack();
   if (blocked(retry).length < ids.size) return retry;
   placeHud([]);
+  targetCores.length = 0;
   return original;
 }
 

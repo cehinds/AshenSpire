@@ -111,7 +111,7 @@ export function paintFooterArt(row, values = {}) {
   row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
   // The key sits on its own line under the words, as the full label's key does.
-  for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurnKey ? `${next.endTurn}\n${next.endTurnKey}` : next.endTurn,discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
+  for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurnKey ? `${next.endTurn}\n${next.endTurnKey}` : next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
     const label = row.querySelector(`${selectors[role]} .footer-compact-label`);
     if (label && label.dataset.labelText !== text) {
       label.replaceChildren(...text.split('\n').map(value => {

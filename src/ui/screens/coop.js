@@ -1145,6 +1145,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
       // The nameplate reads name · Lv, as the solo nameplate does (combat.js).
+      // The snapshot's `level` is the seat's ledger row ({ level, xp, … } or null),
+      // which is exactly the run shape characterLevel reads from `run.level`.
       name.className = 'nm'; name.textContent = `${m.name || p.id} · Lv ${characterLevel({ level: m.level })}`;
       name.title = `${m.name || p.id}: ${seatState.label}, ${p.energy}/${p.energyMax} energy`;
       box.appendChild(name);
