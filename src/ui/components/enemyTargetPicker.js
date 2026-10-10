@@ -100,7 +100,11 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
         if (!button.disabled) picker.activate?.(button.dataset.eid);
       });
       for (const event of ['pointerenter', 'focus']) button.addEventListener(event, () => picker.preview?.(button.dataset.eid));
-      button.addEventListener('focus', () => focusElement(button));
+      // Keyboard focus (Tab) brings the unified cursor along. A pointer press
+      // also focuses the button but must not move the cursor: after the play,
+      // cursor restore would select that enemy and refit the stage (a script
+      // reflow the reduced-motion probe sees), as combatant boxes already avoid.
+      button.addEventListener('focus', () => { if (button.matches(':focus-visible')) focusElement(button); });
       for (const event of ['pointerleave', 'blur']) button.addEventListener(event, () => picker.preview?.(null));
       picker.appendChild(button);
     }
