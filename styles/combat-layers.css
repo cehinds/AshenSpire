@@ -286,9 +286,20 @@
   translate: -50% 0; margin: 0;
 }
 :root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info::before {
-  /* 44 px tap area around the 22 px mark; it stops at the intent's top edge. */
+  /* 44 px tap area around the 22 px mark: 18 px away from the intent, 4 px
+     (the gap) toward it, so it stops at the intent's edge. battlefieldStage's
+     placeEnemyInspect plans the same boxes. */
   content: ''; position: absolute;
-  inset: calc(-11px / var(--ui-zoom,1)) calc(-11px / var(--ui-zoom,1)) calc(-4px / var(--ui-zoom,1));
+  inset: calc(-18px / var(--ui-zoom,1)) calc(-11px / var(--ui-zoom,1)) calc(-4px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='left']::before {
+  inset: calc(-11px / var(--ui-zoom,1)) calc(-4px / var(--ui-zoom,1)) calc(-11px / var(--ui-zoom,1)) calc(-18px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='right']::before {
+  inset: calc(-11px / var(--ui-zoom,1)) calc(-18px / var(--ui-zoom,1)) calc(-11px / var(--ui-zoom,1)) calc(-4px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='below']::before {
+  inset: calc(-4px / var(--ui-zoom,1)) calc(-11px / var(--ui-zoom,1)) calc(-18px / var(--ui-zoom,1));
 }
 :root .combat[data-layout='formation'] .enemy .combatant-leading > .combatant-info[data-inspect-side='left'] {
   left: auto; right: calc(100% + 4px / var(--ui-zoom,1)); top: 0; bottom: auto; translate: none;

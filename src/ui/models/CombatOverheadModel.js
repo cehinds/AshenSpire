@@ -216,8 +216,9 @@ export function combatOverheadRibbonShift({ x, width, top, bottom, ribbon, clear
 // Enemy overheads pack among themselves first. Obstacles (the player's art and
 // its controls) are then cleared per overhead: it keeps its packed anchor when
 // clear, otherwise moves up or sideways to the cheapest clear slot. An obstacle
-// never blocks its own owner. No clear slot is reported, not hidden: the anchor
-// stays put with `obstructed: true`.
+// never blocks its own owner. No clear slot is reported, not hidden: if any
+// overhead has none, every overhead keeps its packed anchor and each one that
+// meets an obstacle carries `obstructed: true`.
 export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null, ribbonClearance = 14,
   obstacles = [], height = Infinity }) {
   const anchors = packCombatOverheadAnchors({ width, controls, inset, gap, ribbon, ribbonClearance });
@@ -231,7 +232,7 @@ export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, rib
 
 function clearCombatOverheads({ width, height, controls, anchors, inset, gap, obstacles }) {
   const placed = [];
-  return anchors.map(anchor => {
+  const cleared = anchors.map(anchor => {
     const control = controls.find(source => source.id === anchor.id);
     if (!control || !Number.isFinite(control.top) || !Number.isFinite(control.bottom)) return anchor;
     const baseY = anchor.offsetY ?? 0;
@@ -261,6 +262,19 @@ function clearCombatOverheads({ width, height, controls, anchors, inset, gap, ob
       top: top + best.dy, bottom: bottom + best.dy });
     if (best.x === anchor.x && best.dy === 0) return anchor;
     return { ...anchor, x: best.x, offsetY: baseY + best.dy };
+  });
+  if (!cleared.some(anchor => anchor.obstructed)) return cleared;
+  // One overhead with no clear slot stays at its packed anchor, which the
+  // moves before it never avoided. Keep the whole pack instead, so no moved
+  // overhead lands on it, and flag every packed anchor that meets an obstacle.
+  return anchors.map(anchor => {
+    const control = controls.find(source => source.id === anchor.id);
+    if (!control || !Number.isFinite(control.top) || !Number.isFinite(control.bottom)) return anchor;
+    const baseY = anchor.offsetY ?? 0, half = control.width / 2;
+    const box = { left: anchor.x - half, right: anchor.x + half, top: control.top + baseY, bottom: control.bottom + baseY };
+    const hit = obstacles.some(wall => !(wall.ownerId != null && wall.ownerId === control.id)
+      && box.left < wall.right && box.right > wall.left && box.top < wall.bottom && box.bottom > wall.top);
+    return hit ? { ...anchor, obstructed: true } : anchor;
   });
 }
 
