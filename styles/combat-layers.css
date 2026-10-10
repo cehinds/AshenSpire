@@ -169,9 +169,11 @@
 
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
-  display: grid; grid-template-columns: 1fr 1.25fr; gap: calc(8px / var(--ui-zoom,1));
+  display: grid; grid-template-columns: 1fr 1fr; gap: calc(8px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
 }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
