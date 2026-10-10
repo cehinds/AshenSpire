@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-10
 
+- **AI sessions: model names follow the newest release, and old worktrees are cleaned up** ([#1809](https://github.com/cehinds/AshenSpire/pull/1809), `0.7.1.1257`). Development-process change only, nothing in the game changes. Sessions remove finished worktrees to save disk space.
 - **AI sessions: an Opus orchestrator directs Haiku workers** ([#1808](https://github.com/cehinds/AshenSpire/pull/1808), `0.7.1.1256`). Development-process change only, nothing in the game changes. The main session plans, verifies, reviews and lands work, and scoped implementation runs on Haiku worker agents.
 - **Bigger cards and footer on phones; enemies no longer hide each other** ([#1806](https://github.com/cehinds/AshenSpire/pull/1806), `0.7.1.1255`). Phone cards are about a fifth larger and the footer's action orb and End Turn button grow. In fights where two enemies share a formation column, a phone no longer draws one wholly behind the other; each stands under its own intent and health. The victory banner now plays above the fighters and the hand instead of behind the player.
 
