@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Every fighter's Inspect button is always shown and holds still; bigger footer piles on phones",
     "detail": "Every enemy and the player now show an Inspect \"i\" at all times, and it no longer bobs with the idle animation; when space is tight it moves beside the enemy's intent or onto the enemy's own art instead of hiding under the top bar. On phones the Draw, Discard and Potions controls are larger with bigger icons and counts, and an enemy's intent and health no longer sit over the player's head.",
-    "build": "0.7.1.1267",
+    "build": "0.7.1.1269",
     "pullRequest": 1818,
     "url": "https://github.com/cehinds/AshenSpire/pull/1818"
+  },
+  {
+    "id": "pr-1820",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Mobile reach check's intent-badge plant matches again",
+    "detail": "Development-process change only. The mobile reach self-test again recognises its own planted fault when a neighbouring fighter's intent badge, rather than its artwork, covers another fighter's intent.",
+    "build": "0.7.1.1267",
+    "pullRequest": 1820,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1820"
+  },
+  {
+    "id": "pr-1819",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Save-and-load browser check follows the restart rule",
+    "detail": "Development-process change only. The browser check for loading a save now expects an unsaved fight to restart from its first turn, matching how the game has behaved since #1811.",
+    "build": "0.7.1.1266",
+    "pullRequest": 1819,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1819"
   },
   {
     "id": "pr-1815",

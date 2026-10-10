@@ -128,9 +128,18 @@ if (process.argv.includes('--selftest')) {
         replace: '  rng = createRng(run.seed ^ 1, run.streamCounters); // slot-load-door selftest plant',
         expectRed: /RED SLOT-LOAD-MIDCOMBAT-RESTART/,
       },
+      {
+        // The #1734/#1767 regression #1811 fixed: every ordinary action
+        // replaced the entry checkpoint, so an unsaved fight resumed mid-turn.
+        name: 'ordinary actions replace the entry checkpoint again',
+        file: 'src/engine/combatExpansionSave.js',
+        find: '  if (candidate.combatExpansionVersion === 2 && !candidate.result',
+        replace: '  if (false && candidate.combatExpansionVersion === 2 && !candidate.result // slot-load-door selftest plant',
+        expectRed: /RED SLOT-LOAD-KNOWLEDGE-SNAPSHOT/,
+      },
     ],
   });
-  if (code === 0) console.log('slot-load-door --selftest: OK — 7/7 known-bads observed red');
+  if (code === 0) console.log('slot-load-door --selftest: OK — 8/8 known-bads observed red');
   process.exit(code);
 }
 
@@ -556,28 +565,31 @@ try {
   } catch (error) {
     check(false, 'SLOT-LOAD-EXPANDED-SNAPSHOT', error.message);
   }
-  // Default knowledge-enabled combat durably commits each accepted action,
-  // including its reads and RNG. Load must restore the latest accepted turn.
+  // Default knowledge-enabled combat banks what it learns but, like every
+  // fight, never lets an ordinary action replace the entry checkpoint (SPEC
+  // §3.12/§9, #1811). Loading an unsaved fight restores its opening turn,
+  // seed and counters exactly.
   try {
     await ev('window.__staleDoc = 1');
     await cdp.send('Page.navigate', { url: `${sourceUrl}?shot=combat` }, sessionId);
     await until(`!window.__staleDoc && !location.search.includes('shotKnowledgeVersion') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'fresh default knowledge-enabled combat', bootTimeout);
     if (!(await ev('window.__combat.combatExpansionVersion === 2 && window.__combat.enemyKnowledge?.version === 1'))) throw new Error('the default fixture lacks independent knowledge rules');
-    await advanceTurn();
-    await advanceTurn();
     const snapshotWithRng = () => ev(`(async () => {
       const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
       return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: { seed: window.__combat.rng.seed, counters: window.__combat.rng.getCounters() } });
     })()`);
-    const committed = await snapshotWithRng();
-    const committedPose = await pose();
+    const entry = await snapshotWithRng();
+    if ((await pose()).turn !== 1) throw new Error('the knowledge fixture did not open on turn 1');
+    await advanceTurn();
+    await advanceTurn();
+    const unsavedPose = await pose();
     await ev('window.__combat.__slotLoadProbe = true');
     await openLoadSlot(1);
     await confirmIfAsked();
     await until(`!!window.__combat && !window.__combat.__slotLoadProbe && window.__combat.phase === 'player'`, 'the restored knowledge-enabled snapshot');
     const restored = await snapshotWithRng();
-    check(committedPose.turn > 1 && restored === committed, 'SLOT-LOAD-KNOWLEDGE-SNAPSHOT',
-      restored === committed ? `knowledge combat restores exact accepted turn ${committedPose.turn}, reads, learning, resources, piles, enemies and RNG` : 'knowledge combat differs from its latest accepted snapshot');
+    check(unsavedPose.turn > 1 && restored === entry, 'SLOT-LOAD-KNOWLEDGE-SNAPSHOT',
+      restored === entry ? `unsaved knowledge combat at turn ${unsavedPose.turn} restarts at its exact opening turn, piles, enemies and RNG` : 'unsaved knowledge combat did not restart at its entry checkpoint');
   } catch (error) {
     check(false, 'SLOT-LOAD-KNOWLEDGE-SNAPSHOT', error.message);
   }
