@@ -14,12 +14,14 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const json=path=>JSON.parse(readFileSync(resolve(root,path)));
 const card=(maneuver,camp='physical')=>({id:'test',cardTags:['camp:'+camp,'maneuver:'+maneuver]});
 
-test('card identity selects class-default motions independently of equipped weapons',()=>{
+test('card identity preserves class actions while reviewed weapons specialize attacks',()=>{
  for(const classId of CARD_ACTION_CLASSES){
   for(const maneuver of ['attack','smash','sweep','counter','defend','ranged']){
    for(const equipment of [[],[{id:'shortbow'}],[{id:'greatsword'}],[{id:'buckler',kind:'shield',geom:'round'}]]){
     const result=resolveCombatAnimation(card(maneuver),equipment,{classId});
-    assert.equal(result.technique,maneuver);
+    const specialized = maneuver === 'attack' && equipment[0]?.id === 'greatsword' ? 'weapon:attack:greatsword'
+      : maneuver === 'ranged' && equipment[0]?.id === 'shortbow' ? 'weapon:ranged:bow' : maneuver;
+    assert.equal(result.technique,specialized);
     assert.equal(result.alternative,true);
    }
   }
