@@ -80,7 +80,7 @@ test('expanded enemy art retries through the verified pack without replacing its
   const figure=enemySprite({id:'graveWisp'}); root.append(figure);
   const image=figure.querySelector('img'), geometry=figure.style.cssText, id=image.src;
   image.dispatch('error');
-  assert.equal(image.style.visibility,'hidden');
+  assert.equal(figure.querySelector('img'),null,'the failed frame leaves the stage, like every art fallback');
   assert.equal(figure.hasAttribute('data-art-placeholder'),true);
   assert.equal(figure.querySelector('span').getAttribute('role'),'img');
   assert.equal(figure.querySelector('span').style.display,'flex','the failed frame exposes its rendered fallback');
