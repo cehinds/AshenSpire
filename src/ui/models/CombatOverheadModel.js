@@ -14,7 +14,8 @@ export function combatTargetAnchors({ width, height, targets, size = 44, obstacl
   const half = size / 2;
   const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
     y: Math.min(Math.max(target.y, half), Math.max(half, height - half)) }));
-  const intersects = (control, x, obstacle) => x - control.width / 2 < obstacle.right
+  const intersects = (control, x, obstacle) => (obstacle.ownerId == null || obstacle.ownerId !== control.id)
+    && x - control.width / 2 < obstacle.right
     && x + control.width / 2 > obstacle.left
     && control.y - half < obstacle.bottom && control.y + half > obstacle.top;
   if (packWithinBounds) {

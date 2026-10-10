@@ -634,7 +634,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           x: box.left + parseFloat(style.left) * zoom - fieldRect.left,
           y: box.top + parseFloat(style.top) * zoom - fieldRect.top, width: 44 };
       });
-    if (idleCores.some((core, i) => idleCores.slice(i + 1)
+    const actorArt = placed.map(({frame, sprite}) => {
+      const box = currentSpriteArtBounds(sprite, refresh);
+      return { ownerId:frame.dataset.eid, left:box.left-fieldRect.left,
+        right:box.right-fieldRect.left, top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top };
+    });
+    const stealsArtwork = core => actorArt.some(box => box.ownerId !== core.id
+      && core.x + 22 > box.left && core.x - 22 < box.right
+      && core.y + 22 > box.top && core.y - 22 < box.bottom);
+    if (idleCores.some((core, i) => stealsArtwork(core) || idleCores.slice(i + 1)
       .some(other => Math.abs(core.x-other.x) < 44 && Math.abs(core.y-other.y) < 44))) {
       const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
         readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
@@ -642,11 +650,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
         .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
           top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
-      for (const {frame, sprite} of placed) {
-        const box = currentSpriteArtBounds(sprite, refresh);
-        obstacles.push({ ownerId:frame.dataset.eid, left:box.left-fieldRect.left,
-          right:box.right-fieldRect.left, top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top });
-      }
+      obstacles.push(...actorArt);
       const cores = combatTargetAnchors({ width:fieldRect.width, height:boundary-fieldRect.top,
         size:44, lockX:true, maxShiftX:44,
         targets:idleCores.map(core => ({ ...core, x:core.art.width >= 44

@@ -71,6 +71,11 @@
 :root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)::before {
   left: var(--enemy-core-x, calc(var(--enemy-hit-x) - (var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))) - min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))))) / 2));
 }
+/* An impossible auxiliary square must not steal another actor's artwork.
+   The actor's own sprite and explicit reading controls keep their routes. */
+:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)[data-core-obstructed='true']::before {
+  pointer-events: none;
+}
 /* Waist-overlap players are selected through their exposed artwork. Their
    foot is behind the cards, so no invisible selection patch belongs there. */
 :root .combat[data-layout='formation'][data-waist-overlap='true'] .combatant.player-target-hitbox::before,
