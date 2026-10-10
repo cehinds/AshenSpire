@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Steadier names under reduced motion and reachable Info on phones",
     "detail": "With Reduced motion on, enemy names and health no longer twitch by fractions of a pixel as the board settles, and moving the pointer no longer drifts the backdrop. The player's Info and action buttons stay above the hand instead of slipping under it when the character stands low on narrow phones.",
-    "build": "0.7.1.1235",
+    "build": "0.7.1.1237",
     "pullRequest": 1796,
     "url": "https://github.com/cehinds/AshenSpire/pull/1796"
+  },
+  {
+    "id": "pr-1795",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Enemy combat art gains painted action sets",
+    "detail": "Integrate 33 enemy sets with melee, ranged, spell, guard and reaction frames through the shared art loader. Preserve existing action timing and reduced-motion behavior. The continuation handoff records remaining angle, clipping and halo review.",
+    "build": "0.7.1.1236",
+    "pullRequest": 1795,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1795"
   },
   {
     "id": "pr-1794",
