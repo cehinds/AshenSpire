@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1819",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Save-and-load browser check follows the restart rule",
+    "detail": "Development-process change only. The browser check for loading a save now expects an unsaved fight to restart from its first turn, matching how the game has behaved since #1811.",
+    "build": "0.7.1.1266",
+    "pullRequest": 1819,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1819"
+  },
+  {
     "id": "pr-1815",
     "date": "2026-10-10",
     "group": "2026-10-10",
