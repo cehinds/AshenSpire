@@ -49,3 +49,15 @@ test('compact End Turn label shows the bound key under its words, as the full la
     assert.equal(row.querySelector('.end-turn').getAttribute('aria-label'), 'End Turn (E)');
   });
 });
+
+// Review finding on #1818: the phone-only (<= 600px) 28px/13px pile rules
+// replaced the unscoped fallback, so 601-680px hosts and short-host rails
+// (844x390) fell back to the generic 58% icon and 12px label inside a 44px pile.
+test('every compact-label pile keeps the 42% / 11px fallback; phones override it', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  assert.match(css, /^\.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-art-face \{ height: 42%; flex: 0 1 42%; \}$/m);
+  assert.match(css, /^\.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-compact-label \{ font-size: calc\(11px \/ var\(--ui-zoom, 1\)\); \}$/m);
+  assert.match(css, /^\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-art-face \{ height: calc\(28px/m);
+  assert.match(css, /^\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-compact-label \{ font-size: calc\(13px/m);
+});

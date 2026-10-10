@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-10",
     "summary": "Clicking a target no longer shuffles enemy labels",
     "detail": "Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Keyboard focus still moves the cursor to the target.",
-    "build": "0.7.1.1274",
+    "build": "0.7.1.1276",
     "pullRequest": 1825,
     "url": "https://github.com/cehinds/AshenSpire/pull/1825"
+  },
+  {
+    "id": "pr-1823",
+    "date": "2026-10-10",
+    "group": "2026-10-10",
+    "summary": "Discard and Draw counts fit again on mid-size and landscape phone footers",
+    "detail": "On 601–680px screens and short landscape layouts, the Draw and Discard piles once more use the smaller icon and counts that fit their size, instead of an oversized icon that pushed the counts out.",
+    "build": "0.7.1.1275",
+    "pullRequest": 1823,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1823"
   },
   {
     "id": "pr-1818",
