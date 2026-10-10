@@ -689,9 +689,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const stealsArtwork = core => actorArt.some(box => box.ownerId !== core.id
       && core.x + 22 > box.left && core.x - 22 < box.right
       && core.y + 22 > box.top && core.y - 22 < box.bottom);
-    // A context-selected enemy keeps its fitted core. It is not repacked, but
-    // an idle core must still leave it room rather than snap back over it.
-    const fixedCores = placed.filter(({frame}) => frame.matches('.enemy.context-selected:not(.dead)'))
+    // A context-selected enemy and the player keep their fitted cores. They are
+    // not repacked, but an idle core must leave them room rather than sit over
+    // them (the player's square takes self-cast cards).
+    const fixedCores = placed.filter(({frame}) => frame.matches('.enemy.context-selected:not(.dead), .player:not(.dead)'))
       .map(({frame}) => {
         const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
         if (style.display === 'none' || style.pointerEvents === 'none') return null;

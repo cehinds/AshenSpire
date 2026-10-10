@@ -76,11 +76,6 @@
 :root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)[data-core-obstructed='true']::before {
   pointer-events: none;
 }
-/* Once packing moves the core, the fitted square left at the old spot
-   (::after) would answer for this enemy over whatever now stands there. */
-:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox:not(.dead)[data-core-obstructed]::after {
-  pointer-events: none;
-}
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) {
   z-index: calc(var(--combat-layer-selection) + 1) !important;
 }

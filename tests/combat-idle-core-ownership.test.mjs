@@ -92,11 +92,10 @@ test('an idle core never snaps back over a selected neighbour\'s fixed core', ()
     'the idle square leaves the selected enemy\'s square to it');
 });
 
-test('a packed core gives up the fitted ::after square it left behind', () => {
-  const layers=readFileSync(new URL('../styles/combat-layers.css',import.meta.url),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
-  const rule=[...layers.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(([,selector])=>selector.includes('[data-core-obstructed]')
-    && selector.trim().endsWith('::after'));
-  assert.ok(rule,'packed cores disable their stale ::after square');
-  assert.ok(rule[1].includes('.enemy-target-hitbox:not(.dead)'));
-  assert.match(rule[2],/pointer-events:\s*none/);
+test('the player\'s self-cast square is a fixed obstacle for idle-core packing', () => {
+  const fixed = stageSource.match(/const fixedCores = placed\.filter\(\(\{frame\}\) => frame\.matches\('([^']+)'\)\)/);
+  assert.ok(fixed, 'fixed-core selection is present');
+  const selectors = fixed[1].split(',').map(part => part.trim());
+  assert.ok(selectors.includes('.player:not(.dead)'), 'the living player square is never covered by a packed enemy core');
+  assert.ok(selectors.includes('.enemy.context-selected:not(.dead)'));
 });
