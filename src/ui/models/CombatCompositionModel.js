@@ -76,30 +76,38 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
         : spacious ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
           : (size.ground ?? actor.slot.ground) - height * .07);
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
-      halfWidth: player ? undefined : halfWidth };
+      separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };
   });
   // A short landscape strip has no room above the row for spread overheads;
   // its depth ranks keep their packed overhead lanes instead.
-  return width <= height * 2 ? separateEnemies(fitted, width) : fitted.map(({ halfWidth, ...fit }) => fit);
+  return width <= height * 2 ? separateEnemies(fitted, width) : fitted.map(({ separationHalf, separationSide, ...fit }) => fit);
 }
 
 // Depth ranks share a formation column, so a phone can stack one enemy
 // wholly behind another. Sweep enemies apart in x order until their art no
-// longer overlaps (their overhead intent and HP need the room), then shift
-// the group back inside the stage; enemies already apart never move.
-function separateEnemies(fits, width, overlap = 0) {
-  const enemies = fits.filter(fit => Number.isFinite(fit.halfWidth)).sort((a, b) => a.x - b.x);
-  for (let i = 1; i < enemies.length; i++) {
-    const prev = enemies[i - 1], cur = enemies[i];
-    cur.x = Math.max(cur.x, prev.x + (prev.halfWidth + cur.halfWidth) * (1 - overlap));
-  }
-  const last = enemies.at(-1);
-  if (last && last.x + last.halfWidth + 6 > width) {
+// longer overlaps (their overhead intent and HP need the room); enemies
+// already apart never move. The row stays between the player's centre line
+// and the stage edge; when it cannot fit there, the enemies share the
+// overlap evenly rather than crowding onto the player.
+function separateEnemies(fits, width) {
+  const enemies = fits.filter(fit => fit.separationSide === 'enemy').sort((a, b) => a.x - b.x);
+  const players = fits.filter(fit => fit.separationSide === 'player');
+  const left = Math.max(6, ...players.map(fit => fit.x));
+  const right = width - 6;
+  if (enemies.length) {
+    const pairs = enemies.slice(1).reduce((sum, cur, i) => sum + enemies[i].separationHalf + cur.separationHalf, 0);
+    const room = right - left - enemies[0].separationHalf - enemies.at(-1).separationHalf;
+    const spacing = pairs > 0 && room < pairs ? Math.max(.4, room / pairs) : 1;
+    enemies[0].x = Math.max(enemies[0].x, left + enemies[0].separationHalf);
+    for (let i = 1; i < enemies.length; i++) {
+      const prev = enemies[i - 1], cur = enemies[i];
+      cur.x = Math.max(cur.x, prev.x + (prev.separationHalf + cur.separationHalf) * spacing);
+    }
     for (let i = enemies.length - 1; i >= 0; i--) {
       const next = enemies[i + 1];
-      const limit = next ? next.x - (next.halfWidth + enemies[i].halfWidth) * (1 - overlap) : width - enemies[i].halfWidth - 6;
-      enemies[i].x = Math.max(enemies[i].halfWidth + 6, Math.min(enemies[i].x, limit));
+      const limit = next ? next.x - (next.separationHalf + enemies[i].separationHalf) * spacing : right - enemies[i].separationHalf;
+      enemies[i].x = Math.min(enemies[i].x, limit);
     }
   }
-  return fits.map(({ halfWidth, ...fit }) => fit);
+  return fits.map(({ separationHalf, separationSide, ...fit }) => fit);
 }

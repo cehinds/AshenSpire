@@ -58,3 +58,17 @@ test('a short landscape stage keeps depth ranks stacked for their overhead lanes
   const fit = alternativeCombatComposition({ actors, sizes, width: 844, height: 140, handTop: 200 });
   assert.equal(fit[1].x, fit[2].x);
 });
+
+test('a crowded narrow row shares overlap among enemies instead of crossing the player', () => {
+  // Review scenario: 320x568 phone, three wide enemies, player at the left.
+  const actors = ['p', 'a', 'b', 'c'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 120, leading: 40, slot: { id, ground: 230 } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [60, 200, 260, 200][i], visibleHeight: 120, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width: 320, height: 248, handTop: 400 });
+  const player = fit[0];
+  for (const enemy of fit.slice(1)) {
+    const half = 120 * enemy.scale / 2;
+    assert(enemy.x - half >= player.x - 1e-9, `${enemy.id} stays right of the player's centre line`);
+    assert(enemy.x + half <= 320 - 6 + 1e-9, `${enemy.id} stays on stage`);
+  }
+});
