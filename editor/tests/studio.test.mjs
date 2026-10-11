@@ -236,3 +236,16 @@ test('a Content Editor save of a build input takes the lock when it is free and 
   assert.match(await fs.readFile(file, 'utf8'), /Bronze sword/);
   await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'released after the save');
 });
+
+test('a Content Editor save outside the build inputs does not wait for the build lock', async t => {
+  const { root } = await fixture(t);
+  const app = await createStudio({ root, port: 0, stateDir: path.join(root, 'state'), lockWaitMs: 60000 }); t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' }); t.after(() => other.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: other.pid, holder: 'Workbench config build', startedAt: Date.now(), token: 'theirs' }));
+  const started = Date.now();
+  const saved = await fetch(`${app.url}/api/save`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ path: 'editor/workspace/test.json', hash: null, text: '[]\n' }] }) });
+  assert.equal(saved.status, 200);
+  assert.ok(Date.now() - started < 5000, 'no wait for the lock');
+  assert.equal(await fs.readFile(path.join(root, 'editor/workspace/test.json'), 'utf8'), '[]\n');
+});
