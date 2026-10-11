@@ -373,6 +373,8 @@ document.addEventListener('keydown',e => {
   if (e.key.toLowerCase() === 's') { e.preventDefault(); reviewChanges(); }
   if (e.key.toLowerCase() === 'z' && !['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)) { e.preventDefault(); applyUndo(e.shiftKey); }
 });
+// Framed by the Workbench, Ctrl+K and Ctrl+\ are its palette and preview toggle (workbench/app.mjs, onFrameMessage).
+if (window.parent !== window) document.addEventListener('keydown',e => { const k = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey ? (e.key.toLowerCase() === 'k' ? 'k' : e.key === '\\' ? '\\' : '') : ''; if (k) { e.preventDefault(); window.parent.postMessage({ type:'ashenspire-workbench-key', key:k },'*'); } });
 on('#review','click',reviewChanges); on('#preview-game','click',() => { previewPath = 'index.html'; location.hash = 'previews'; if (route === 'previews') render(); });
 on('#import-files','change',async e => { await importSprites(e.target.files); e.target.value = ''; });
 try {

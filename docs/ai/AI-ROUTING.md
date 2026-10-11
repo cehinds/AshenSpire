@@ -207,6 +207,11 @@ Raise effort only when the failure came from too little reasoning. When the fail
 from a missing file, a vague brief or the wrong model, fix that cause. The Agent tool's
 `effort` field is set only when the owner or a skill asks for it.
 
+**Owner's effort settings (2026-10-11):** the main session runs at **high** effort;
+`ashen-reviewer` (Opus 5.5) at **medium** (pinned in its agent file); workers on Haiku 5.5
+(`ashen-worker`). An agent that is not `ashen-worker` and does implementation work is
+started with `model: haiku` unless it is an escalation (above).
+
 ## 7. Parallelism and shared files
 
 - A wave is up to **6 workers** with **disjoint file sets**. Two tasks that edit the same

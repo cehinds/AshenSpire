@@ -10,6 +10,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { holdForCli } from './lib/build-lock.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const srcDir = resolve(root, 'content/framework');
@@ -41,6 +42,8 @@ function generate(name, data) {
 
 const sources = readdirSync(srcDir).filter((f) => f.endsWith('.json')).sort();
 if (sources.length === 0) throw new Error(`framework data: no sources in ${srcDir}`);
+// Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
+if (!check) await holdForCli(root, 'framework-data-build');
 if (!check) mkdirSync(outDir, { recursive: true });
 
 let stale = 0;

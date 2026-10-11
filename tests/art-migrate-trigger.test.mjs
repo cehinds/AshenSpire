@@ -130,3 +130,21 @@ test('removal is requested only once the art PR exists', () => {
 test('pages: the newest run for the head SHA must itself be the success', () => {
   assert.ok(pages.includes(`[.workflow_runs[] | select(.head_sha == $sha)][0] | select(.conclusion == "success")`));
 });
+
+test('pages: branch previews match feature, fix and chore prefixes in any case (Chore/X too)', () => {
+  const wf = readFileSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url), 'utf8');
+  const filters = wf.match(/test\("\^\(feature\|fix\|chore\)\/"[^)]*\)/g) || [];
+  assert.ok(filters.length >= 3, `expected the three PR-branch filters, found ${filters.length}`);
+  for (const f of filters) assert.match(f, /; "i"\)$/, `case-sensitive branch filter: ${f}`);
+});
+
+test('pages: the dev-preview workflow_run trigger admits feature/, fix/, chore/ branches in any case (branch filters are case-sensitive)', () => {
+  const wf = readFileSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url), 'utf8');
+  const line = wf.match(/workflow_run:[\s\S]*?branches: \[(.*)\]\s*$/m)?.[1] ?? '';
+  const globs = [...line.matchAll(/'([^']+)'/g)].map(m => m[1]).filter(g => !g.startsWith('alternative/'));
+  // GitHub filter globs: [..] is a one-character class, ** matches the rest.
+  const re = g => new RegExp('^' + g.replace(/\*\*/g, '\u0000').replace(/\*/g, '[^/]*').replace(/\u0000/g, '.*') + '$');
+  for (const branch of ['feature/a', 'Feature/a', 'FEATURE/a', 'fEature/a', 'fix/a', 'FIX/a', 'chore/a', 'Chore/FixCombatUi2', 'CHORE/a'])
+    assert.ok(globs.some(g => re(g).test(branch)), `trigger would skip ${branch}`);
+  assert.ok(!globs.some(g => re(g).test('dev')), 'dev must not match a preview prefix');
+});
