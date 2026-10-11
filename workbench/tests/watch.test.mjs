@@ -143,17 +143,38 @@ async function waitFor(ok, ms = 3000) {
   for (let i = 0; i < ms / 20 && !ok(); i++) await sleep(20);
 }
 
-test('on macOS a folder event names the files under it when it changed after the watch began; the self-named event names nothing', () => {
+test('on macOS a new folder names the files under it; a folder already there, and the watched folder\'s self-named event, name nothing', () => {
   const abs = path.join('/p', 'content');
   const config = path.join(abs, 'config');
   const tokens = path.join(config, 'ui/tokens.json');
-  // dirs maps a folder to its change time; files lists plain files.
-  const fake = (dirs, files = [], under = {}) => ({ since: 1000, folderChanged: (p) => (p in dirs ? dirs[p] : null), exists: (p) => p in dirs || files.includes(p), filesUnder: (p) => under[p] || [] });
-  assert.deepEqual(recursiveEventPaths(abs, 'content', 'darwin', fake({})), [], 'the watched folder itself (content/content)');
-  assert.deepEqual(recursiveEventPaths(abs, 'config', 'darwin', fake({ [config]: 2000 }, [], { [config]: [tokens] })), [tokens], 'a folder moved in is reported only as the folder: its files are noted');
-  assert.deepEqual(recursiveEventPaths(abs, 'config', 'darwin', fake({ [config]: 500 }, [], { [config]: [tokens] })), [], 'a replayed event for a folder older than the watch names nothing');
-  assert.deepEqual(recursiveEventPaths(abs, 'config/a.json', 'darwin', fake({})), [path.join(abs, 'config/a.json')], 'a file event, even for a file now gone');
-  assert.deepEqual(recursiveEventPaths(abs, 'content', 'darwin', fake({}, [path.join(abs, 'content')])), [path.join(abs, 'content')], 'a real file named like its folder is kept');
-  assert.deepEqual(recursiveEventPaths(abs, 'config', 'win32', fake({ [config]: 2000 })), [config], 'Windows keeps the folder event as it is');
-  assert.deepEqual(recursiveEventPaths(abs, null, 'darwin', fake({})), []);
+  const fake = ({ dirs = [], files = [], known = [], under = {} } = {}) => ({
+    isDir: (p) => dirs.includes(p), exists: (p) => dirs.includes(p) || files.includes(p),
+    isNewFolder: (p) => !known.includes(p), filesUnder: (p) => under[p] || [],
+  });
+  assert.deepEqual(recursiveEventPaths(abs, 'content', 'darwin', fake()), [], 'the watched folder itself (content/content)');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'darwin', fake({ dirs: [config], under: { [config]: [tokens] } })), [tokens], 'a folder moved in is reported only as the folder: its files are noted');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'darwin', fake({ dirs: [config], known: [config], under: { [config]: [tokens] } })), [],
+    'a folder already watched names nothing: a save inside it must not reload its siblings, and replayed events must not either');
+  assert.deepEqual(recursiveEventPaths(abs, 'config/a.json', 'darwin', fake()), [path.join(abs, 'config/a.json')], 'a file event, even for a file now gone');
+  assert.deepEqual(recursiveEventPaths(abs, 'content', 'darwin', fake({ files: [path.join(abs, 'content')] })), [path.join(abs, 'content')], 'a real file named like its folder is kept');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'win32', fake({ dirs: [config] })), [config], 'Windows keeps the folder event as it is');
+  assert.deepEqual(recursiveEventPaths(abs, null, 'darwin', fake()), []);
+});
+
+test('on macOS a folder moved into the watched tree after the watch began batches its files', async (t) => {
+  if (process.platform !== 'darwin') return t.skip('needs FSEvents (macOS)');
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-out-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content'), { recursive: true });
+  await fs.mkdir(path.join(outside, 'ui'), { recursive: true });
+  await fs.writeFile(path.join(outside, 'ui/tokens.json'), '{}');
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'darwin', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  await sleep(500);
+  await fs.rename(path.join(outside, 'ui'), path.join(root, 'content/ui'));
+  await waitFor(() => batches.flat().includes('content/ui/tokens.json'));
+  assert.ok(batches.flat().includes('content/ui/tokens.json'), `the moved-in folder's file is batched: ${batches.flat()}`);
 });

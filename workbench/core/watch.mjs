@@ -73,22 +73,30 @@ export function createOwnWrites() {
 /**
  * The paths a recursive watch event names. macOS (FSEvents) also reports folders,
  * and reports an event on the watched folder itself under that folder's own name
- * (content/content). On darwin the self-named event names nothing, and a folder
- * event names the files under it when the folder changed after the watch began
- * (`since`): a folder moved in is reported only as the folder, and its rename gives it
- * a new change time. FSEvents also replays events from just before the watch began;
- * an older folder names nothing, as its files are reported one by one. Files reported
- * twice are counted once (the batch is a Set). Elsewhere the event's path is kept.
+ * (content/content). On darwin the self-named event names nothing. A folder that
+ * was already there (`isNewFolder` false) names nothing either: its files are
+ * reported one by one, and a save inside it also reports the folder. A folder new
+ * since the watch began names the files under it, since a folder moved in is
+ * reported only as the folder (the batch is a Set, so a file reported twice counts
+ * once). Elsewhere the event's path is kept as it is.
  */
-export function recursiveEventPaths(abs, name, platform = process.platform, { since = 0, exists = fs.existsSync, folderChanged = (p) => { try { const st = fs.statSync(p); return st.isDirectory() ? st.ctimeMs : null; } catch { return null; } }, filesUnder = (p) => [...walk(p).keys()] } = {}) {
+export function recursiveEventPaths(abs, name, platform = process.platform, { exists = fs.existsSync, isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } }, isNewFolder = () => true, filesUnder = (p) => [...walk(p).keys()] } = {}) {
   if (!name) return [];
   const base = String(name);
   const target = path.join(abs, base);
   if (platform !== 'darwin') return [target];
   if (base === path.basename(abs) && !exists(target)) return []; // the watched folder itself
-  const changed = folderChanged(target);
-  if (changed === null) return [target];
-  return changed >= since ? filesUnder(target) : [];
+  if (!isDir(target)) return [target];
+  return isNewFolder(target) ? filesUnder(target) : [];
+}
+
+/** Every folder under abs (abs included), skipping hidden ones and node_modules. */
+function foldersUnder(abs, out = new Set()) {
+  out.add(abs);
+  let entries = [];
+  try { entries = fs.readdirSync(abs, { withFileTypes: true }); } catch { return out; }
+  for (const e of entries) if (e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules') foldersUnder(path.join(abs, e.name), out);
+  return out;
 }
 
 /**
@@ -99,7 +107,6 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   const pending = new Set();
   const watchers = []; const polls = [];
   let timer = null; let mutedUntil = 0; let muted = false; let closed = false;
-  const startedAt = Date.now(); // folders changed before this are replays (see recursiveEventPaths)
   const rel = (abs) => path.relative(root, abs).split(path.sep).join('/');
 
   function note(abs) {
@@ -213,11 +220,20 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   }
 
   // One { recursive: true } watch per source folder where the platform has one.
+  // The folders there when the watch began, and those seen since: on macOS only a
+  // folder not among them is walked for its files (see recursiveEventPaths).
+  const knownFolders = new Set();
+  const isNewFolder = (p) => {
+    if (knownFolders.has(p)) return false;
+    foldersUnder(p, knownFolders);
+    return true;
+  };
   function watchRecursive(abs, d) {
+    if (platform === 'darwin') foldersUnder(abs, knownFolders);
     let w;
     try {
       w = fs.watch(abs, { recursive: true }, (_event, name) => {
-        for (const target of recursiveEventPaths(abs, name, platform, { since: startedAt })) note(target);
+        for (const target of recursiveEventPaths(abs, name, platform, { isNewFolder })) note(target);
       });
     } catch { return false; /* recursive watch unsupported here: poll below */ }
     w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });
