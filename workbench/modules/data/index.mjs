@@ -8,8 +8,9 @@
 import { createGrid, createCheckPanel } from '../../ui/kit/grid.mjs';
 import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
+import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor, rebaseChanges } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -43,6 +44,7 @@ export default {
     const fileIn = $('.ds-file-in');
 
     const state = { tables: [], parsed: new Map(), drafts: new Map(), selected: null, grid: null, activeRow: null, tab: 'row', filter: '' };
+    let saving = false;
 
     // ---------- loading ----------
     async function parsedOf(path) {
@@ -152,38 +154,55 @@ export default {
       const body = d.hunks.map((h) => `<div class="ds-hunk">@@ -${h.oldStart},${h.oldLines} +${h.newStart},${h.newLines} @@</div>${h.lines.map((l) => `<div class="ds-line ds-${l.op === '+' ? 'add' : l.op === '-' ? 'del' : 'ctx'}">${esc(l.op)}${esc(l.text)}</div>`).join('')}`).join('');
       return `<section class="ds-diff"><h3>${esc(d.path)} <span class="ds-count">+${d.added} −${d.removed}</span></h3><pre class="ds-lines">${body || '<span class="ds-muted">No line changes.</span>'}</pre></section>`;
     }
+    /**
+     * Save every changed table. The Save button is disabled while the request is
+     * in flight. A 409 (ctx.api's err.body.conflicts) offers Reload or Overwrite
+     * per the disk hashes it carries; a 422 lists the rows the compiler refused.
+     */
     async function save(changes) {
+      if (saving) return;
       const status = dlg.querySelector('.ds-review-status');
+      const button = dlg.querySelector('[data-save]');
+      const label = button ? button.textContent : 'Save';
+      saving = true;
+      if (button) { button.disabled = true; button.textContent = 'Saving…'; }
+      let res;
       try {
-        const res = await ctx.api('files/save', { changes });
-        close();
-        for (const f of res.files) { state.parsed.delete(f.path); state.drafts.delete(f.path); }
-        if (state.selected && res.files.some((f) => f.path === state.selected)) await select(state.selected);
-        refresh();
-        ctx.toast({ kind: 'success', title: `Saved ${res.files.length} file${res.files.length === 1 ? '' : 's'}` });
-        ctx.preview.reload();
+        res = await ctx.api('files/save', { changes });
       } catch (e) {
-        if (/changed/i.test(e.message)) return conflicts(changes, status);
-        if (/do not validate/i.test(e.message)) status.innerHTML = `<p class="ds-bad">Nothing saved. ${esc(e.message)}. Fix the rows the Check panel names, then save again.</p>`;
-        else status.innerHTML = `<p class="ds-bad">Not saved: ${esc(e.message)}</p>`;
+        saving = false;
+        if (button) { button.disabled = false; button.textContent = label; }
+        const failure = saveFailure(e);
+        if (failure.kind === 'conflicts') return conflicts(changes, status, failure.conflicts);
+        if (failure.kind === 'problems') {
+          const list = failure.problems.map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
+          status.innerHTML = `<p class="ds-bad">Nothing saved. Fix the rows the Check panel names, then save again.</p><ul class="ds-problems">${list}</ul>`;
+        } else status.innerHTML = `<p class="ds-bad">Not saved: ${esc(failure.message)}. Your edits are still here; try again.</p>`;
+        return;
       }
+      saving = false;
+      close();
+      for (const f of res.files) { state.parsed.delete(f.path); state.drafts.delete(f.path); }
+      if (state.selected && res.files.some((f) => f.path === state.selected)) await select(state.selected);
+      refresh();
+      ctx.toast({ kind: 'success', title: `Saved ${res.files.length} file${res.files.length === 1 ? '' : 's'}` });
+      ctx.preview.reload();
     }
     /** Files that changed on disk since they were read: Reload takes the disk copy; Overwrite keeps the drafts. */
-    async function conflicts(changes, status) {
-      const now = await Promise.all(changes.map((c) => ctx.api(`files/read?path=${encodeURIComponent(c.path)}`).then((f) => ({ c, hash: f.hash }), () => ({ c, hash: null }))));
-      const moved = now.filter(({ c, hash }) => hash !== c.baseHash);
-      const names = moved.map(({ c }) => esc(c.path)).join(', ') || 'a file';
+    async function conflicts(changes, status, found) {
+      const diskHash = new Map(found.map((c) => [c.path, c.hash ?? null]));
+      const moved = changes.filter((c) => diskHash.has(c.path));
+      const names = moved.map((c) => esc(c.path)).join(', ') || 'a file';
       status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" data-reload>Reload from disk</button><button type="button" data-overwrite class="primary">Overwrite with my changes</button></div>`;
       status.querySelector('[data-reload]').onclick = async () => {
-        for (const { c } of moved) { state.parsed.delete(c.path); state.drafts.delete(c.path); }
+        for (const c of moved) { state.parsed.delete(c.path); state.drafts.delete(c.path); }
+        // The disk copies replace the drafts: the steps that hold the drafts must go, or undo writes them back.
+        ctx.history.clear();
         close();
-        if (state.selected && moved.some(({ c }) => c.path === state.selected)) await select(state.selected);
+        if (state.selected && moved.some((c) => c.path === state.selected)) await select(state.selected);
         refresh();
       };
-      status.querySelector('[data-overwrite]').onclick = () => save(changes.map((c) => {
-        const found = now.find((n) => n.c.path === c.path);
-        return found && found.hash ? { ...c, baseHash: found.hash } : c;
-      }));
+      status.querySelector('[data-overwrite]').onclick = () => save(rebaseChanges(changes, found));
     }
 
     function showFile() {

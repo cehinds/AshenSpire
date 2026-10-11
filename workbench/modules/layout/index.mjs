@@ -5,6 +5,7 @@
 // disabled until their work lands. Rules and the mapping from a canvas edit to
 // config values are in config-model.mjs; this file is the view and the gestures.
 import { icon } from '../../ui/icons.mjs';
+import { saveFailure } from '../../ui/logic.mjs';
 import { createCanvas, createLayersPanel, createInspector } from '../../ui/kit/canvas.mjs';
 import * as C from './config-model.mjs';
 import * as M from './studio-model.mjs';
@@ -48,7 +49,7 @@ const SHELL = `<div class="lay">
     <label class="lay-check"><input type="checkbox" data-act="snap"> Snap</label>
     <label class="lay-check"><input type="checkbox" data-act="grid"> Grid</label>
     <span class="lay-sep"></span>
-    <span class="lay-align">${ALIGN.map(([edge, label]) => `<button type="button" class="btn btn-sm btn-ghost" data-align="${edge}" title="${label}" disabled>${esc(label.replace('Align ', ''))}</button>`).join('')}
+    <span class="lay-align" title="Off in UI config: the layout places regions, so align and distribute would not save">${ALIGN.map(([edge, label]) => `<button type="button" class="btn btn-sm btn-ghost" data-align="${edge}" title="${label}" disabled>${esc(label.replace('Align ', ''))}</button>`).join('')}
       <button type="button" class="btn btn-sm btn-ghost" data-distribute="horizontal" title="Distribute horizontally" disabled>Dist H</button>
       <button type="button" class="btn btn-sm btn-ghost" data-distribute="vertical" title="Distribute vertically" disabled>Dist V</button></span>
     <span class="spacer"></span>
@@ -127,9 +128,8 @@ export default {
       const review = $('[data-act="review"]');
       review.disabled = n === 0;
       review.textContent = `Review changes (${n})`;
-      const hasSel = st.canvas ? st.canvas.getSelection().length : 0;
-      for (const b of el.querySelectorAll('[data-align]')) b.disabled = hasSel < 1;
-      for (const b of el.querySelectorAll('[data-distribute]')) b.disabled = hasSel < 3;
+      // UI config: the layout places regions, so align and distribute are off (they would move regions).
+      for (const b of el.querySelectorAll('[data-align], [data-distribute]')) b.disabled = true;
     }
 
     /** The config values the selected region owns, each editable in place; a $name shows its value as a chip. */
@@ -170,7 +170,7 @@ export default {
       const f = activeFile();
       if (!path || !f || !f.data) return;
       if (input.value === '') { paintFields(); return; }
-      const value = input.type === 'number' ? Number(input.value) : input.value;
+      const value = input.type === 'number' ? Number(input.value) : C.fieldValue(input.value, M.getPath(f.data, path));
       if (typeof value === 'number' && !Number.isFinite(value)) { paintFields(); return; }
       setFileData(f.rel, C.setConfigValue(f.data, path, value), `Set ${path}`);
     }
@@ -206,9 +206,15 @@ export default {
       const f = activeFile();
       const v = st.view;
       if (!f || !f.data || !v) { rebuild(); return; }
-      const next = C.applyCanvasEdits({ data: f.data, regions: v.regions, items: doc.items, viewport: v.vp, grid: st.settings.grid });
-      setFileData(f.rel, next, change.label);
+      const report = C.canvasEditReport({ data: f.data, regions: v.regions, items: doc.items, viewport: v.vp, grid: st.settings.grid });
+      setFileData(f.rel, report.data, change.label);
       rebuild();
+      if (report.notes.length) placedByLayout(report.notes);
+    }
+
+    /** A gesture that maps to no config change: the region snaps back (rebuild) and the user is told why. */
+    function placedByLayout(notes) {
+      ctx.toast({ kind: 'warn', title: 'Regions in UI config are positioned by the layout; drag an edge to resize', detail: notes.map((n) => n.label).join(', ') });
     }
 
     function ensureCanvas() {
@@ -277,16 +283,9 @@ export default {
     }
 
     // ---- review and save -------------------------------------------------
-    // ctx.api throws only the message, so a 422's problems and a 409's
-    // conflicts would be lost. The module reads the session token that the
-    // host's own /api/session answers, and posts to the file API itself.
-    let token = null;
-    async function fileCall(path, body) {
-      if (!token) token = (await (await fetch('/api/session')).json()).token;
-      const res = await fetch(`/api/${path}`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, status: res.status, data };
-    }
+    // ctx.api throws an Error with err.status and err.body, so a 422's
+    // problems and a 409's conflicts reach the dialog.
+    let saving = false;
 
     let dlg = null;
     function ensureDialog() {
@@ -321,39 +320,54 @@ export default {
       }
       const files = diffs.map((d) => `<section class="lay-file"><h3>${esc(d.path)} <span class="lay-stat">+${d.added} −${d.removed}</span></h3>${hunksHtml(d)}</section>`).join('');
       body().innerHTML = `${notice}<p class="lay-note">${changes.length} file(s) under content/config. Saved through the same validation as the other studios: the content compiler checks the whole tree first.</p>${files}`
-        + `<div class="lay-dlg-actions"><button type="button" class="btn btn-sm btn-ghost" data-dlg="close">Cancel</button><button type="button" class="btn btn-sm btn-primary" data-dlg="save">Save ${changes.length} file(s)</button></div>`;
-      body().dataset.count = String(changes.length);
+        + `<div class="lay-dlg-actions"><button type="button" class="btn btn-sm btn-ghost" data-dlg="close">Cancel</button><button type="button" class="btn btn-sm btn-primary" data-dlg="save" data-label="Save ${changes.length} file(s)"${saving ? ' disabled' : ''}>${saving ? 'Saving…' : `Save ${changes.length} file(s)`}</button></div>`;
     }
 
-    /** Save the dirty files; a 422 lists the compiler's problems, a 409 offers a choice per file. */
+    /**
+     * Save the dirty files. The Save button is disabled while the request is in
+     * flight. A 422 lists the compiler's problems, a 409 offers a choice per file,
+     * and any other failure (a network error included) is shown in the dialog.
+     */
     async function save() {
       const changes = C.changesFor(st.files);
-      if (!changes.length) return;
+      if (!changes.length || saving) return;
       const sent = new Map(changes.map((c) => [c.path, c]));
-      const res = await fileCall('files/save', { changes });
-      if (res.ok) {
-        for (const saved of res.data.files) {
-          const f = [...st.files.values()].find((x) => x.path === saved.path);
-          const c = sent.get(saved.path);
-          if (f && c) { f.original = c.text; f.hash = saved.hash; }
+      saving = true;
+      setSaveBusy(true);
+      let data;
+      try {
+        data = await ctx.api('files/save', { changes });
+      } catch (err) {
+        saving = false;
+        setSaveBusy(false);
+        const failure = saveFailure(err);
+        if (failure.kind === 'problems') {
+          const list = failure.problems.map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
+          await openReview(`<div class="lay-problems"><p><strong>Nothing saved.</strong> The compiler found problems:</p><ul>${list}</ul></div>`);
+        } else if (failure.kind === 'conflicts') {
+          const rows = failure.conflicts.map((c) => `<li><code>${esc(c.path)}</code> <button type="button" class="btn btn-sm" data-dlg="reload" data-path="${esc(c.path)}">Reload from disk</button> <button type="button" class="btn btn-sm" data-dlg="keep" data-path="${esc(c.path)}" data-hash="${esc(c.hash || '')}">Keep my version</button></li>`).join('');
+          await openReview(`<div class="lay-problems is-conflict"><p><strong>Changed on disk since it was opened.</strong> Choose per file:</p><ul>${rows}</ul><p class="lay-note">Reload drops your edits to that file. Keep my version overwrites the change made on disk.</p></div>`);
+        } else {
+          await openReview(`<div class="lay-problems"><p><strong>Not saved:</strong> ${esc(failure.message)}. Your edits are still here; try again.</p></div>`);
         }
-        dlg.close();
-        rebuild();
-        ctx.toast({ kind: 'success', title: `Saved ${res.data.files.length} file(s)`, detail: `Backup ${res.data.backup}`, record: false });
-        ctx.preview.reload();
         return;
       }
-      if (res.status === 422) {
-        const list = (res.data.problems || []).map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
-        await openReview(`<div class="lay-problems"><p><strong>Nothing saved.</strong> The compiler found problems:</p><ul>${list}</ul></div>`);
-        return;
+      saving = false;
+      for (const saved of data.files) {
+        const f = [...st.files.values()].find((x) => x.path === saved.path);
+        const c = sent.get(saved.path);
+        if (f && c) { f.original = c.text; f.hash = saved.hash; }
       }
-      if (res.status === 409) {
-        const rows = (res.data.conflicts || []).map((c) => `<li><code>${esc(c.path)}</code> <button type="button" class="btn btn-sm" data-dlg="reload" data-path="${esc(c.path)}">Reload from disk</button> <button type="button" class="btn btn-sm" data-dlg="keep" data-path="${esc(c.path)}" data-hash="${esc(c.hash || '')}">Keep my version</button></li>`).join('');
-        await openReview(`<div class="lay-problems is-conflict"><p><strong>Changed on disk since it was opened.</strong> Choose per file:</p><ul>${rows}</ul><p class="lay-note">Reload drops your edits to that file. Keep my version overwrites the change made on disk.</p></div>`);
-        return;
-      }
-      await openReview(`<div class="lay-problems"><p><strong>Not saved:</strong> ${esc(res.data.error || `HTTP ${res.status}`)}</p></div>`);
+      dlg.close();
+      rebuild();
+      ctx.toast({ kind: 'success', title: `Saved ${data.files.length} file(s)`, detail: `Backup ${data.backup}`, record: false });
+      ctx.preview.reload();
+    }
+
+    /** Disable the dialog's Save button while a save is in flight (openReview redraws it enabled). */
+    function setSaveBusy(busy) {
+      const btn = dlg && dlg.querySelector('[data-dlg="save"]');
+      if (btn) { btn.disabled = busy; btn.textContent = busy ? 'Saving…' : btn.dataset.label; }
     }
 
     async function onDialogClick(e) {
@@ -368,6 +382,8 @@ export default {
       if (act === 'reload') {
         const r = await ctx.api(`files/read?path=${encodeURIComponent(f.path)}`);
         Object.assign(f, C.fileState(f.rel, r.text, r.hash));
+        // The disk copy replaces the edits, so the steps that hold them must go: undo would write them back.
+        ctx.history.clear();
         rebuild();
         await openReview();
       }
@@ -377,6 +393,15 @@ export default {
 
     el.querySelector('.lay-bar').addEventListener('change', onBarChange);
     el.querySelector('.lay-bar').addEventListener('click', onBarClick);
+    // UI config: arrow keys would nudge a region, which the layout places. The capture listener
+    // stops them before the canvas kit sees them, and says why when something is selected.
+    const ARROW_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
+    el.addEventListener('keydown', (e) => {
+      if (!ARROW_KEYS.has(e.key) || !e.target.closest?.('.lay-canvas')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (st.canvas && st.canvas.getSelection().length) placedByLayout([{ label: 'the selected region', outcome: 'move' }]);
+    }, true);
 
     // ---- load ------------------------------------------------------------
 

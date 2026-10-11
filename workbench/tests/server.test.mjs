@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createWorkbench, listPreviews, projectStateDir } from '../server.mjs';
+import { createWorkbench, listPreviews, projectStateDir, migrateLegacyState } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS, JobRunner, GENERATED, killTree } from '../core/jobs.mjs';
 import { Settings } from '../core/settings.mjs';
@@ -701,4 +701,29 @@ test('two projects that share a state dir keep separate backups and job history'
   assert.equal((await get(appA, '/api/jobs')).runs.length, 1);
   assert.equal((await get(appB, '/api/jobs')).runs.length, 0, 'B does not list A\'s job history');
   assert.equal(await fs.readFile(path.join(rootB, 'styles/main.css'), 'utf8'), 'body{}\n', 'B\'s project is untouched');
+});
+
+test('legacy jobs.json and backups/ move into the project state dir once, and only when it is new', async () => {
+  const base = await fs.mkdtemp(path.join(os.tmpdir(), 'wb-legacy-'));
+  const root = path.join(base, 'project');
+  const stateDir = path.join(base, 'state');
+  await fs.mkdir(root, { recursive: true });
+  await fs.mkdir(path.join(stateDir, 'backups', 'set-1'), { recursive: true });
+  await fs.writeFile(path.join(stateDir, 'jobs.json'), '{"runs":[]}\n');
+  await fs.writeFile(path.join(stateDir, 'backups', 'set-1', 'a.json'), '{}\n');
+  await fs.writeFile(path.join(stateDir, 'settings.json'), '{}\n');
+  const realRoot = await fs.realpath(root);
+  const target = projectStateDir(realRoot, stateDir);
+
+  assert.deepEqual(await migrateLegacyState(stateDir, target), ['jobs.json', 'backups']);
+  assert.equal(await fs.readFile(path.join(target, 'jobs.json'), 'utf8'), '{"runs":[]}\n');
+  assert.equal(await fs.readFile(path.join(target, 'backups', 'set-1', 'a.json'), 'utf8'), '{}\n');
+  assert.equal(await fs.readFile(path.join(stateDir, 'settings.json'), 'utf8'), '{}\n', 'settings.json stays in stateDir');
+  await assert.rejects(fs.stat(path.join(stateDir, 'jobs.json')), 'the legacy file moved, not copied');
+
+  // Once the project has its own dir, a legacy file left behind is not moved in.
+  await fs.writeFile(path.join(stateDir, 'jobs.json'), '{"runs":["other"]}\n');
+  assert.deepEqual(await migrateLegacyState(stateDir, target), []);
+  assert.equal(await fs.readFile(path.join(target, 'jobs.json'), 'utf8'), '{"runs":[]}\n', 'the project keeps its own history');
+  await fs.rm(base, { recursive: true, force: true });
 });

@@ -108,3 +108,27 @@ export function manifestSummary(manifest) {
     art: Array.isArray(manifest.art) ? manifest.art.length : 0,
   };
 }
+
+/**
+ * The error `api()` throws for a non-OK response. `status` is the HTTP status;
+ * `body` is the parsed JSON body, or null when the reply had none. The message
+ * is the body's `error`, or `HTTP <status>` when there is none.
+ */
+export function apiError(status, body) {
+  const err = new Error((body && body.error) || `HTTP ${status}`);
+  err.status = status;
+  err.body = body ?? null;
+  return err;
+}
+
+/**
+ * What a failed files/save means for a dialog, from the error ctx.api threw:
+ *   problems: 422, the compiler's { path, message } list;
+ *   conflicts: 409, the files changed on disk ({ path, hash });
+ *   error: anything else, a network error included, with its message.
+ */
+export function saveFailure(err) {
+  if (err && err.status === 422) return { kind: 'problems', problems: Array.isArray(err.body?.problems) ? err.body.problems : [] };
+  if (err && err.status === 409) return { kind: 'conflicts', conflicts: Array.isArray(err.body?.conflicts) ? err.body.conflicts : [] };
+  return { kind: 'error', message: (err && err.message) || 'network error' };
+}

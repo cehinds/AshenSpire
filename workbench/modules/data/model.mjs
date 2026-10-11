@@ -217,3 +217,13 @@ export function isDirty(table, doc) {
 export function changeFor(table, doc) {
   return { path: table.path, text: serializeTable(table, doc), baseHash: table.baseHash };
 }
+
+/**
+ * The changes rebased on the disk hashes a 409 reported. A file deleted on
+ * disk reports hash null, and Overwrite then saves with baseHash null, which
+ * creates it; a file that changed keeps its new hash.
+ */
+export function rebaseChanges(changes, conflicts) {
+  const disk = new Map(conflicts.map((c) => [c.path, c.hash ?? null]));
+  return changes.map((c) => (disk.has(c.path) ? { ...c, baseHash: disk.get(c.path) } : c));
+}
