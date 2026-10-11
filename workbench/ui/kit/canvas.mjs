@@ -25,6 +25,8 @@
 //   values and leaves mixed ones blank.
 import * as M from './canvas-model.mjs';
 
+export { createLayersPanel, createInspector } from './canvas-panels.mjs';
+
 const PAD = 24;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 4;
