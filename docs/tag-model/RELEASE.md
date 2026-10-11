@@ -56,10 +56,11 @@ input bytes give the same output bytes, with no timestamps or paths in it.
   An unresolved key, a key that names both a value and a formula, a tag key
   with no preview value, a formula cycle or an unknown function fails the build.
 - **Dropped columns.** The game never reads these at runtime, so the compiler
-  leaves them out: `description`, `note`, `notes`, `liveRef`, `source`, `file`,
-  `usedBy`, `usedFor`, `usedWhen`, `context`, `readBy`, `storage`,
-  `currentSymbol`, `currentAssetRef`, and the formula `expr` text (replaced by
-  its RPN). A dropped column is not in the output, so it is not round-tripped.
+  leaves them out: prose such as `description`, `note`, `notes`, `effect` (tags),
+  `usedFor`, `usedWhen`, `context` and `storage`; provenance such as `liveRef`,
+  `source`, `file`, `usedBy`, `readBy`, `currentSymbol` and `currentAssetRef`;
+  and the formula `expr` text (replaced by its RPN). The list is `DROP` in
+  `tools/release.mjs`. A dropped column is not in the output, so it is not round-tripped.
   Its `[key]` references are still validated, so a bad reference fails the
   build even in a dropped column. Presentation `tag` columns are kept, because
   `breakpoints.tag` holds the band.
@@ -134,5 +135,24 @@ touch the engine.
 
 ## Size and commit decision
 
-See the step 4 section below, which records the measured sizes and whether the
-generated module is committed.
+Measured on the 20 inputs at this commit's tables (`tools/release.mjs` stats;
+gzip at level 9):
+
+| | Bytes | Gzip |
+|---|---|---|
+| CSV, all 20 inputs | 11,733,776 | 888,565 |
+| Module `tag-constants.js` | 4,923,991 | 668,113 |
+
+The module is 2,744,985 bytes of string table and 2,169,047 bytes of tables.
+The largest table is `presentation.styles` (783,376 bytes). Most of the string
+table is asset paths and animation frame lists, which the game does read.
+
+**Decision: not committed.** The module is over the 1 MB limit. Its path,
+`docs/tag-model/release/`, is already ignored by `.gitignore` line 23
+(`[Rr]elease/`), so no `.gitignore` change is needed; `git status` never shows
+it. Build it locally with `node docs/tag-model/tools/release.mjs`.
+
+**Guard.** There is no committed file to compare, so `tools/check.mjs` compiles
+the release build in memory and fails on any problem it reports. If a module
+is ever committed, the guard should also compare it with a fresh compile, using
+`node docs/tag-model/tools/release.mjs --check`.

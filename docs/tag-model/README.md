@@ -356,3 +356,13 @@ line is stale.
   `nodes.csv` is the one vocabulary. Before any code reads these tables, a
   SPEC pull request has to adopt the model (or the parts of it that survive
   review).
+
+## Release constants
+
+`tools/release.mjs` compiles every table into one data-only module,
+`release/tag-constants.js` (not committed; it is over 1 MB). Strings are
+interned, tag references are numeric ids, and formulas are RPN with resolved
+references. Run `node docs/tag-model/tools/release.mjs` to build it, and
+`node --test docs/tag-model/tools/release.test.mjs` to check that it decodes
+back to the tables and matches the workbench engine. Design and encoding are in
+[RELEASE.md](RELEASE.md). Nothing in the game reads it yet.
