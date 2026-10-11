@@ -567,7 +567,8 @@ then the round-end settle runs (see Momentum).
 
 Each defensive card has base values (PLACEHOLDER, `DEFENSE_BASE`): guard block 6,
 evade 20 percentage points, counter damage 2. The owner may give a card its own
-value.
+value. A card's `block`, `evadePct` and `counterDamage`, when present, must be finite
+numbers of 0 or more; otherwise the timeline throws a TypeError naming the field.
 
 - Preemptive (queued). The card resolves in its place in the queue, and it becomes
   active for its owner until it is used up or the round ends. It gets the buff

@@ -1058,3 +1058,43 @@ test('an un-attacked WIS enemy draws no rng, so it cannot shift another enemy\'s
   assert.deepEqual(goblinFirst.queues.goblin, alone.queues.goblin);
   assert.deepEqual(wolfFirst.queues.wolf, fourCards());
 });
+
+// Defence numbers (Codex review on PR #1838): block, evadePct and counterDamage must be finite
+// numbers of 0 or more. A bad value throws a TypeError naming the field, whether the card is
+// queued or offered as a reaction.
+const BAD_DEFENCE_VALUES = [-1, NaN, '6'];
+const DEFENCE_CASES = [
+  { field: 'block', kind: 'guard', target: 'self' },
+  { field: 'evadePct', kind: 'evade', target: 'self' },
+  { field: 'counterDamage', kind: 'counter', target: 'goblin' },
+];
+
+test('a queued guard, evade or counter with a bad block, evadePct or counterDamage throws TypeError', () => {
+  for (const { field, kind, target } of DEFENCE_CASES) {
+    for (const bad of BAD_DEFENCE_VALUES) {
+      const queued = card('bad', kind, target, 5, { [field]: bad });
+      assert.throws(
+        () => createRound(duo({}, { hp: 20 }), { queues: { player: [queued] }, rng: HIT_RNG }).resolveAll(),
+        { name: 'TypeError', message: new RegExp(field) },
+        `queued ${field} = ${String(bad)}`,
+      );
+    }
+  }
+});
+
+test('a reaction card with a bad block, evadePct or counterDamage throws TypeError when offered', () => {
+  for (const { field, kind, target } of DEFENCE_CASES) {
+    for (const bad of BAD_DEFENCE_VALUES) {
+      const held = card('bad', kind, target, 5, { [field]: bad });
+      assert.throws(
+        () => createRound(duo({}, { hand: [held] }), {
+          queues: { goblin: [stab(1, 4)] },
+          rng: HIT_RNG,
+          onReaction: () => ({ id: 'bad' }),
+        }).resolveAll(),
+        { name: 'TypeError', message: new RegExp(field) },
+        `reaction ${field} = ${String(bad)}`,
+      );
+    }
+  }
+});

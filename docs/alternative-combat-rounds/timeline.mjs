@@ -56,6 +56,19 @@ const cardSp = (card) => {
   return Number(c);
 };
 
+// Defence numbers on a card (Codex review on PR #1838). A field that is absent (undefined or
+// null) uses its DEFENSE_BASE default, so this returns undefined. A present value must be a
+// finite number of 0 or more, else TypeError naming the field.
+const DEFENCE_FIELDS = Object.freeze(['block', 'evadePct', 'counterDamage']);
+function defenceNumber(card, field) {
+  const v = card?.[field];
+  if (v === undefined || v === null) return undefined;
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {
+    throw new TypeError(`card "${card.id}" ${field} must be a finite number of 0 or more`);
+  }
+  return v;
+}
+
 // Initiative base (owner, 2026-10-11, placeholder): floor(DEX / 2).
 function initiativeBase(c) {
   const dex = Number(c.attrs?.DEX ?? 0);
@@ -133,6 +146,7 @@ function validateQueues(queues, combatants) {
       if (typeof card.id !== 'string' || card.id === '') throw new TypeError(`a card in "${id}" needs an id`);
       if (!CARD_KINDS.includes(card.kind)) throw new TypeError(`card "${card.id}" kind must be one of ${CARD_KINDS.join(', ')}`);
       if (!Number.isFinite(Number(card.speed ?? 0))) throw new TypeError(`card "${card.id}" speed must be a finite number`);
+      for (const field of DEFENCE_FIELDS) defenceNumber(card, field);
       const foes = foesOf(combatants, id);
       const t = card.target;
       const ok = card.kind === 'attack' ? foes.includes(t)
@@ -498,7 +512,7 @@ function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, spe
   const buff = (key) => (preemptive ? REACTION_BUFF[key] : 0);
   const act = cur.active[owner];
   if (card.kind === 'guard') {
-    const block = (card.block ?? DEFENSE_BASE.block) + buff('block');
+    const block = (defenceNumber(card, 'block') ?? DEFENSE_BASE.block) + buff('block');
     const record = { cardId: card.id, momentumGain: card.momentumGain, stance: card.stance ?? null, left: block };
     events.push({ type: 'guardUp', by: owner, cardId: card.id, block, buffed: preemptive });
     // A reaction guard belongs to one attack: it is returned, not added to the round's pool.
@@ -506,13 +520,13 @@ function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, spe
     act.guard += block;
     act.guardCards.push(record);
   } else if (card.kind === 'evade') {
-    const pct = (card.evadePct ?? DEFENSE_BASE.evadePct) + buff('evadePct');
+    const pct = (defenceNumber(card, 'evadePct') ?? DEFENSE_BASE.evadePct) + buff('evadePct');
     const record = { cardId: card.id, pct, gain: card.momentumGain, stance: card.stance ?? null };
     events.push({ type: 'evadeUp', by: owner, cardId: card.id, pct, buffed: preemptive });
     if (reaction) return record;
     act.evade.push(record);
   } else if (card.kind === 'counter') {
-    const damage = (card.counterDamage ?? DEFENSE_BASE.counterDamage) + buff('counterDamage');
+    const damage = (defenceNumber(card, 'counterDamage') ?? DEFENSE_BASE.counterDamage) + buff('counterDamage');
     const target = card.target === 'self' ? null : (foe ?? card.target);
     const record = {
       cardId: card.id,
