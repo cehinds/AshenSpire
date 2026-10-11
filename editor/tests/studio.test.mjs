@@ -102,3 +102,16 @@ test('with only the light pack fetched, the library lists and the preview serves
   const served = await fetch(redirect.headers.get('location'));
   assert.equal(served.status,200); assert.equal(await served.text(),'RIFF');
 });
+test('framing is refused by default and allowed only for a named loopback ancestor (the Workbench)', async t => {
+  const { root } = await fixture(t);
+  await fs.writeFile(path.join(root, 'sample.html'), '<!doctype html><title>x</title>');
+  await assert.rejects(createStudio({root,port:0,stateDir:path.join(root,'state'),frameAncestors:['https://evil.example']}), /Refused frame ancestor/);
+  await assert.rejects(createStudio({root,port:0,stateDir:path.join(root,'state'),frameAncestors:["http://127.0.0.1:4300 'unsafe-inline'"]}), /Refused frame ancestor/);
+  const plain = await createStudio({root,port:0,stateDir:path.join(root,'state')}); t.after(() => plain.close());
+  assert.match((await fetch(`${plain.url}/`)).headers.get('content-security-policy'), /frame-ancestors 'none'$/);
+  const framed = await createStudio({root,port:0,stateDir:path.join(root,'state'),frameAncestors:['http://127.0.0.1:4300']}); t.after(() => framed.close());
+  assert.match((await fetch(`${framed.url}/`)).headers.get('content-security-policy'), /frame-ancestors http:\/\/127\.0\.0\.1:4300$/);
+  const game = await fetch(`${framed.url.replace('127.0.0.1','localhost')}/game/sample.html`);
+  assert.equal(game.status,200);
+  assert.match(game.headers.get('content-security-policy'), /frame-ancestors 'self' http:\/\/127\.0\.0\.1:\d+ http:\/\/127\.0\.0\.1:4300$/);
+});

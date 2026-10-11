@@ -15,7 +15,12 @@ const commands = {
   build: [['tools/launch.mjs', '--build-only']],
   validate: [['tests/run-node.mjs'], ['tools/buildversion.mjs', '--check'], ['tools/verify-shipped.mjs']],
 };
-export async function createStudio({ root = path.resolve(HERE, '..'), port = 4317, stateDir, codexExecutable } = {}) {
+// A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
+// Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
+export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
+export async function createStudio({ root = path.resolve(HERE, '..'), port = 4317, stateDir, codexExecutable, frameAncestors = [] } = {}) {
+  for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
+  const ancestors = frameAncestors.join(' ');
   root = await fs.realpath(root);
   stateDir ||= path.join(HERE, '.studio', hash(root).slice(0, 16));
   const workspace = new Workspace(root, stateDir);
@@ -163,7 +168,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         file = path.join(HERE, name);
       }
       const bytes = await fs.readFile(file);
-      res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', ...(url.pathname.startsWith('/game/') ? { 'Content-Security-Policy': `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads; frame-ancestors 'self' http://${address}` } : { 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http://${previewAddress} data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'` }) });
+      res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', ...(url.pathname.startsWith('/game/') ? { 'Content-Security-Policy': `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads; frame-ancestors 'self' http://${address}${ancestors ? ` ${ancestors}` : ''}` } : { 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http://${previewAddress} data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors ${ancestors || "'none'"}` }) });
       res.end(bytes);
     } catch (error) { send(res, error.code === 'ENOENT' ? 404 : 400, { error: error.message }); }
   });
@@ -173,7 +178,8 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const index = process.argv.indexOf('--project');
   const portIndex = process.argv.indexOf('--port');
-  const app = await createStudio({ ...(index < 0 ? {} : { root: path.resolve(process.argv[index + 1]) }), port: portIndex < 0 ? 4317 : Number(process.argv[portIndex + 1]) });
+  const ancestorIndex = process.argv.indexOf('--frame-ancestor');
+  const app = await createStudio({ ...(index < 0 ? {} : { root: path.resolve(process.argv[index + 1]) }), port: portIndex < 0 ? 4317 : Number(process.argv[portIndex + 1]), frameAncestors: ancestorIndex < 0 ? [] : [process.argv[ancestorIndex + 1]] });
   console.log(`AshenSpire Studio: ${app.url}`);
   const close = async () => { await app.close(); process.exit(0); };
   process.on('SIGINT', close); process.on('SIGTERM', close);
