@@ -151,6 +151,12 @@ export function attackTagsFor(action, effect, registries) {
   return Array.isArray(effect.tags) ? effect.tags : [];
 }
 
+// Co-op seats for a crit receipt, so a client can place its callout over a
+// player target (whose entity id is the shared 'player'). Solo adds nothing.
+function critSeats(ctx, source, target) {
+  return ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};
+}
+
 /**
  * critChance(rules, attributes, tags) → { chance, multiplier } for an attack of
  * these tags (SPEC §13.4o): every matching rule adds base + Σ weight ×
@@ -182,12 +188,6 @@ export function rollCrit(ctx, source, tags) {
  * §4.2 math, block absorption first, then HP. Emits damageDealt (+ hpLost if
  * HP was touched), handles deaths and phase checks. Returns final damage.
  */
-// Co-op seats for a crit receipt, so a client can place its callout over a
-// player target (whose entity id is the shared 'player'). Solo adds nothing.
-function critSeats(ctx, source, target) {
-  return ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};
-}
-
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
   if (ctx.combatExpansionVersion === 2) return applyExpandedDamage(ctx, source, target, base, attackTags, carrier);
