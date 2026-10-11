@@ -169,7 +169,8 @@ export class Tool {
     this.set('starting', 'Starting…');
     let child;
     try {
-      child = spawn(process.execPath, def.command(this.port), { cwd: this.root, env: { ...process.env, ...(def.env ? def.env(this.port) : {}), FORCE_COLOR: '0' }, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+      // POSIX: a process-group leader, so a stop reaches the tool's own builders too (tools/lib/process-tree.mjs).
+      child = spawn(process.execPath, def.command(this.port), { cwd: this.root, env: { ...process.env, ...(def.env ? def.env(this.port) : {}), FORCE_COLOR: '0' }, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, detached: process.platform !== 'win32' });
     } catch (e) { this.set('down', `Could not start: ${e.message}`); return; }
     this.child = child;
     child.stdout.on('data', (d) => this.addLog(d));
