@@ -410,6 +410,8 @@ export async function buildExport({ only = null } = {}) {
     tables: tables.sort((a, b) => (a.id < b.id ? -1 : 1)),
     config: configs.sort((a, b) => (a.id < b.id ? -1 : 1)),
     art,
+    // A --only export lists some tables: importers must not prune the rest as stale.
+    ...(only ? { partial: true } : {}),
   };
   files.set('manifest.json', stableStringify(manifest));
   const rows = tables.reduce((n, t) => n + t.rows, 0);

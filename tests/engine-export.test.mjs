@@ -133,6 +133,8 @@ test('--only limits the export and the tool refuses to clear a foreign folder', 
   const r = run('--only', 'content.cards', '--out', out);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(readJson(out, 'manifest.json').tables.map((t) => t.id), ['content.cards']);
+  assert.equal(readJson(out, 'manifest.json').partial, true, 'an --only manifest is marked partial');
+  assert.equal('partial' in manifest, false, 'a full export is not marked partial');
 
   const foreign = join(scratch, 'foreign');
   mkdirSync(foreign, { recursive: true });
@@ -288,5 +290,16 @@ test('the Unity importer prunes only the paths its import record lists', () => {
   assert.doesNotMatch(body, /Directory\.GetFiles\(/, 'pruning must not scan the folders');
   assert.match(body, /ReadRecord\(\)/, 'pruning reads the previous import record');
   assert.match(body, /AssetDatabase\.DeleteAsset\(stale\)/, 'only recorded stale paths are deleted');
+  assert.match(body, /if \(manifest\.partial\)/, 'a partial (--only) manifest prunes nothing');
+  assert.match(source, /public bool partial;/, 'the manifest carries the partial marker');
+  // A recorded path is deleted only inside the import's three folders, as a file.
+  const guard = source.slice(source.indexOf('private static readonly string[] PrunableRoots'), source.indexOf('private static void WriteRecord('));
+  assert.match(guard, /Root \+ "\/Tables\/", Root \+ "\/Config\/", Root \+ "\/Art\/"/, 'the allowed roots are Tables, Config and Art');
+  assert.match(guard, /IndexOf\('\\\\'\) >= 0/, 'a backslash is refused');
+  assert.match(guard, /segment == "\.\."/, 'a ".." segment is refused');
+  assert.match(guard, /Path\.HasExtension\(path\)/, 'only a file path (with an extension) is deleted');
+  assert.match(guard, /path\.Length > root\.Length/, 'a root folder itself is never a prune target');
+  assert.match(source, /IsPrunable\(stale\)[\s\S]*?LogWarning\(/, 'a refused path is reported with a warning, not deleted');
+  assert.match(body, /if \(!IsPrunable\(stale\)\)|IsPrunable\(stale\)/, 'the delete loop checks the guard');
   assert.match(source, /ashenspire-import\.json/, 'the record file is named in the importer');
 });
