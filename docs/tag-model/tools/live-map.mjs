@@ -462,6 +462,11 @@ export const LIVE = {
   'grantSource.armor': 'from:armor',
   'grantSource.weapon': 'from:weapon',
   'grantSource.class': 'from:class',
+  // proposed live mapping (domain pass)
+  'meta.combat.damage.arcane': 'damage.arcane',
+  'meta.combat.damage.blade': 'damage.blade',
+  'meta.combat.damage.blunt': 'damage.blunt',
+  'meta.combat.damage.piercing': 'damage.piercing',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

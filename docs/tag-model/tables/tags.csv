@@ -445,7 +445,7 @@ presentationRoot.shield,presentationRoot.shield,shield,presentationRoot,TagNode,
 presentationRoot.barrier,presentationRoot.barrier,barrier,presentationRoot,TagNode,,barrier visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:barrier
 presentationRoot.ward,presentationRoot.ward,ward,presentationRoot,TagNode,,ward visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ward
 presentationRoot.magic,presentationRoot.magic,magic,presentationRoot,TagNode,,magic visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:magic
-presentationRoot.arcane,arcane,arcane,presentationRoot,TagNode,,arcane visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:arcane
+presentationRoot.arcane,presentationRoot.arcane,arcane,presentationRoot,TagNode,,arcane visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:arcane
 presentationRoot.dodge,presentationRoot.dodge,dodge,presentationRoot,TagNode,,dodge visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:dodge
 presentationRoot.riposte,riposte,riposte,presentationRoot,TagNode,,riposte visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:riposte
 presentationRoot.heal,presentationRoot.heal,heal,presentationRoot,TagNode,,heal visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heal
@@ -743,6 +743,10 @@ grantSource.relic,grantSource.relic,Relic,grantSource,TagNode,,Carried in by the
 grantSource.armor,grantSource.armor,Armor,grantSource,TagNode,,Bound to the outfit the run begins wearing.,,,,,,live-tag,▣,7FA8C9,from:armor
 grantSource.weapon,grantSource.weapon,Weapon,grantSource,TagNode,,Bound to an armament in hand at creation.,,,,,,live-tag,⚔,C9502E,from:weapon
 grantSource.class,grantSource.class,Class,grantSource,TagNode,,The class signature card.,,,,,,live-tag,✦,9FC3E8,from:class
+meta.combat.damage.arcane,damage.arcane,arcane,meta.combat.damage,DamageType,,Arcane damage. Builds Arcane Exposure on enemies that track it.,,,,,,live-tag,,,damage.arcane
+meta.combat.damage.blade,damage.blade,blade,meta.combat.damage,DamageType,,Damage dealt with an edge.,,,,,,live-tag,,,damage.blade
+meta.combat.damage.blunt,damage.blunt,blunt,meta.combat.damage,DamageType,,Damage dealt with mass and impact.,,,,,,live-tag,,,damage.blunt
+meta.combat.damage.piercing,piercing,piercing,meta.combat.damage,DamageType,,Damage dealt with a point.,,,,,,live-tag,,,damage.piercing
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,
