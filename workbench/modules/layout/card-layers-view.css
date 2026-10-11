@@ -1,0 +1,31 @@
+/* Layout Studio · Card layers. The game draws the card in a frame; the layer boxes sit over it. */
+.cl-body { min-height: 0; }
+.cl-file { font: 12px/1.3 ui-monospace, monospace; color: var(--muted, #6b7280); }
+.cl-wrap {
+  position: relative; height: 100%; min-height: 360px;
+  display: flex; align-items: center; justify-content: center; overflow: auto;
+  background: var(--canvas-bg, #14161b); border-radius: 6px;
+}
+.cl-stage { position: relative; flex: none; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); }
+.cl-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; background: transparent; }
+.cl-boxes { position: absolute; inset: 0; touch-action: none; }
+.cl-box {
+  position: absolute; box-sizing: border-box; cursor: move;
+  border: 1px dashed rgba(90, 170, 255, 0.75); background: rgba(90, 170, 255, 0.06);
+}
+.cl-box.is-selected { border: 2px solid #4ab0ff; background: rgba(90, 170, 255, 0.14); }
+.cl-box.is-locked { cursor: default; border-style: dotted; border-color: rgba(255, 255, 255, 0.35); background: transparent; }
+.cl-handle {
+  position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px;
+  background: #4ab0ff; border: 1px solid #0c0d10; cursor: nwse-resize;
+}
+.cl-layers { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cl-row { display: grid; gap: 4px; padding: 6px; border-radius: 6px; border: 1px solid transparent; }
+.cl-row.is-selected { border-color: #4ab0ff; }
+.cl-row.is-hidden .cl-pick { opacity: 0.55; }
+.cl-pick { text-align: left; background: none; border: 0; padding: 2px 0; color: inherit; cursor: pointer; font: inherit; }
+.cl-pick[aria-pressed="true"] code { font-weight: 700; }
+.cl-row .lay-check { display: inline-flex; gap: 4px; margin-right: 8px; }
+.cl-order { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+.cl-insp .lay-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+.cl-insp .lay-row input[type="number"] { width: 7em; }

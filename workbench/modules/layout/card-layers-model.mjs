@@ -88,6 +88,19 @@ export function changesFor({ original, data, path = LAYOUT_FILE }) {
   return text === original ? [] : [{ path, text }];
 }
 
+/**
+ * The render page's address on the game server. ?po= is the Workbench origin the page may talk to;
+ * ?r= changes on a reload, so the same page is navigated to again.
+ */
+export function renderUrl(gameBase, { parentOrigin = '', nonce = 0 } = {}) {
+  const base = String(gameBase || '').replace(/\/?$/, '/');
+  const q = new URLSearchParams();
+  if (parentOrigin) q.set('po', parentOrigin);
+  if (nonce) q.set('r', String(nonce));
+  const query = q.toString();
+  return `${base}workbench/modules/layout/card-layers-render.html${query ? `?${query}` : ''}`;
+}
+
 // ---- edits: each returns a new document; the one it was given is never mutated ----
 
 const round = (v) => Math.round(v * 1000) / 1000;
