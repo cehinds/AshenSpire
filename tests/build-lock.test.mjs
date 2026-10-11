@@ -347,6 +347,9 @@ test('the workbench workflow runs this suite and triggers on the lock and its te
   const yml = fs.readFileSync(new URL('../.github/workflows/workbench.yml', import.meta.url), 'utf8');
   const run = yml.split('\n').find((l) => /run: node --test workbench\/tests/.test(l)) || '';
   assert.match(run, /tests\/build-lock\.test\.mjs/, 'the test step runs tests/build-lock.test.mjs');
+  for (const suite of ['tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs']) {
+    assert.match(run, new RegExp(suite.replace(/[./]/g, (c) => `\\${c}`)), `the test step runs ${suite}`);
+  }
   const shared = ['tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs', 'tools/lib/process-tree.mjs', 'tools/lib/build-steps.mjs', 'tools/lib/write-atomic.mjs', 'tools/lib/shot-match.mjs', 'tools/launch.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs'];
   for (const file of shared) {
     assert.equal(yml.split(`- '${file}'`).length - 1, 2, `${file} is in both the push and pull_request paths filters`);
