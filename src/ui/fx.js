@@ -622,7 +622,12 @@ export function animateEvents(events, ctx, done) {
   let cued = 0;
   const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events); };
   pending = events.filter((e) => visualFor(e) !== null);
-  const skip = () => {
+  const skip = (event) => {
+    // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
+    if (event?.target?.closest?.('[data-combat-read-only]')) {
+      addEventListener('pointerdown', skip, { once: true, capture: true });
+      return;
+    }
     flushRequested = true;
     clearCallouts(ctx.layer);
   };
