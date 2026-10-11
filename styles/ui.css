@@ -1667,9 +1667,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-main[aria-pressed="true"] {
   transform: translateY(-2px); box-shadow: 0 5px 10px #0008, inset 0 0 0 1px #806020; background: #2c2315;
 }
-@media (min-width: 1001px) {
-  .deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) .deck-editor-row-rules { padding-right: var(--deck-inline-inspect); }
-}
+.deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) .deck-editor-row-rules { padding-right: var(--deck-inline-inspect); }
 .deck-editor .deck-editor-inline-inspect {
   position: absolute; z-index: 2; right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .6rem);
   bottom: .6rem; min-width: var(--deck-inline-inspect); min-height: var(--deck-editor-target); padding: .2rem .35rem;
@@ -1728,17 +1726,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor .deck-editor-inline-inspect { right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .35rem); padding-inline: .1rem; }
   .deck-editor-animation { display: none; }
 }
-/* Phones: a library row's card face takes the full row. The stepper sits inside
-   the card's own footprint at the bottom right, so the rules text wraps before
-   it; the inline Inspect link sits bottom left and the card keeps room for it. */
+/* Phones: a library row's card face takes the full row, the stepper sits on its
+   own line beneath it, and the name keeps line 1 (type and stance may wrap). */
 @media (max-width: 1000px) {
-  .deck-editor .deck-editor-tile.deck-editor-item { position: relative; flex-wrap: wrap; }
-  .deck-editor-tile > .deck-editor-main { flex: 1 1 100%; min-width: 0; min-height: calc(max(3rem, var(--deck-editor-target)) + 2.4rem); }
-  .deck-editor .deck-editor-tile > .deck-editor-actions { position: absolute; right: .5rem; bottom: .5rem; z-index: 2; flex: none; align-items: center; }
+  .deck-editor-tile.deck-editor-item { flex-wrap: wrap; }
+  .deck-editor-tile > .deck-editor-main { flex: 1 1 100%; min-width: 0; }
+  .deck-editor-tile > .deck-editor-actions { flex: 1 1 100%; justify-content: flex-end; align-self: auto; }
   .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { height: max(3rem, var(--deck-editor-target)); min-width: max(3rem, var(--deck-editor-target)); }
-  .deck-editor .deck-editor-tile .deck-editor-stepper-count { min-width: 4.2rem; }
-  .deck-editor .deck-editor-tile .deck-editor-row-rules { padding-right: 0; margin-right: calc(2 * max(3rem, var(--deck-editor-target)) + 4.2rem + .6rem); }
-  .deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) .deck-editor-main { padding-bottom: calc(max(48px, var(--deck-editor-target)) + .6rem); }
   .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 3; grid-row: 1; flex-wrap: wrap; max-height: none; overflow: visible; row-gap: .1rem; }
   .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-name { flex: 1 1 100%; }
   /* Inspect sits at the left end of the stepper row, away from the right-aligned － count ＋. */
