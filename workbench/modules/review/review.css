@@ -1,0 +1,27 @@
+/* workbench/modules/review/review.css — Visual Review layout. The module is a size
+   container, so its breakpoints follow the module's own width, as Entity Browser's do.
+   It uses the Workbench tokens (--as-*) like the other native modules. */
+.rv { container: rv / inline-size; display: flex; flex-direction: column; height: 100%; min-height: 0; color: inherit; font-size: var(--as-text-md, 13px); }
+.rv [hidden] { display: none !important; }
+.rv button { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--as-line, #3a2f20); background: transparent; color: inherit; }
+.rv button:disabled { opacity: 0.45; cursor: not-allowed; }
+.rv button.primary { border-color: var(--as-accent, #e0a64a); background: var(--as-accent-soft, rgba(224, 166, 74, 0.14)); }
+.rv button:focus-visible, .rv summary:focus-visible { outline: 2px solid var(--as-accent-strong, #f0b95c); outline-offset: 2px; }
+
+.rv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--as-line, #3a2f20); }
+.rv-pick { position: relative; }
+.rv-pick summary { list-style: none; cursor: pointer; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--as-line, #3a2f20); }
+.rv-pick summary::-webkit-details-marker { display: none; }
+.rv-pick-n { opacity: 0.7; font-variant-numeric: tabular-nums; }
+.rv-pick[open] summary { border-color: var(--as-accent, #e0a64a); }
+.rv-pick-panel { position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; width: 240px; padding: 8px; border-radius: 8px; border: 1px solid var(--as-line-strong, #453e35); background: var(--as-bg-panel, #1a1815); display: grid; gap: 8px; }
+.rv-pick-list { display: grid; gap: 4px; max-height: 50vh; overflow: auto; }
+.rv-pick-list label { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.rv-pick-acts { display: flex; gap: 6px; }
+.rv-seg { display: inline-flex; border: 1px solid var(--as-line, #3a2f20); border-radius: 6px; overflow: hidden; }
+.rv-seg button { border: 0; border-radius: 0; }
+.rv-seg button[aria-pressed="true"] { background: var(--as-accent-soft, rgba(224, 166, 74, 0.14)); }
+.rv-job { font-size: 13px; opacity: 0.85; }
+
+.rv-main { flex: 1; min-height: 0; overflow: auto; padding: 10px; }
+.rv-empty { margin: 16px; opacity: 0.75; }
