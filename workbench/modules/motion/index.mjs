@@ -14,7 +14,7 @@ import {
   LIBRARY_KINDS, SPEEDS, FACINGS, SIZES, BACKGROUNDS, REF,
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty,
-  setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile,
+  setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -340,6 +340,8 @@ export default {
         ${problems.length ? `<div class="mo-problems"><p>This file does not match the game format:</p><ul>${problems.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
         ${clip ? clipInspector(clip) : ''}
         ${p ? anchorInspector(p) : ''}
+        ${p ? effectsInspector() : ''}
+        ${p ? bindingsInspector(p) : ''}
         <h3>Links</h3>
         <div class="mo-links">
           ${cls ? `<button type="button" class="btn btn-sm mo-x-entities" data-class="${esc(cls)}">Open in Entity Browser</button>` : ''}
@@ -364,8 +366,43 @@ export default {
           <label class="mo-field">Layer<select data-clip-field="layer">${['front', 'behind', 'aura'].map((l) => `<option value="${l}"${l === c.layer ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
           <label class="mo-check"><input type="checkbox" data-clip-field="travel"${c.travel ? ' checked' : ''}> Travels to target</label>
           <label class="mo-check"><input type="checkbox" data-clip-field="muted"${c.muted ? ' checked' : ''}> Muted</label>
+          <p><button type="button" class="btn btn-sm" data-remove-clip="${esc(c.id)}">Remove effect</button></p>
         </div>`;
     }
+    function effectsInspector() {
+      const effects = st.index.effects || [];
+      return `<h3>Add effect</h3><div class="mo-add">
+        <label class="mo-field">Effect<select class="mo-effect-pick">${effects.map((e) => `<option value="${esc(e)}">${esc(st.index.labels[e] || e)}</option>`).join('')}</select></label>
+        <button type="button" class="btn btn-sm" data-add-effect${effects.length ? '' : ' disabled'}>Add on the contact cue</button>
+      </div>`;
+    }
+    function bindingsInspector(p) {
+      const rows = bindingRows(p);
+      return `<h3>Bindings</h3>${rows.length ? `<ul class="mo-bindings">${rows.map((b) => `<li><strong>${esc(b.name)}</strong> <span class="mo-note">${esc(b.provider)} · ${esc(b.kind)}${b.objectId ? ` ${esc(b.objectId)}` : ''} · ${esc(b.event)} · priority ${b.priority}${b.enabled ? '' : ' · disabled'}</span>${b.tags.length ? `<div class="mo-chips">${b.tags.map((t) => `<span class="mo-chip">${esc(t)}</span>`).join(' ')}</div>` : ''}</li>`).join('')}</ul>` : '<p class="mo-note">No bindings. Binding a card or object to this animation is set in the Connect tab of the game build, not here yet.</p>'}`;
+    }
+    function onInspClick(e) {
+      const p = st.file?.project;
+      if (!p) return;
+      const add = e.target.closest('[data-add-effect]');
+      if (add) {
+        const effect = insp.querySelector('.mo-effect-pick')?.value;
+        if (!effect) return;
+        const made = addClip(p, effect);
+        commitProject(made.project, `Add ${effect}`);
+        st.selected = { kind: 'clip', id: made.id };
+        renderTimeline();
+        renderInspector();
+        return;
+      }
+      const rm = e.target.closest('[data-remove-clip]');
+      if (rm) {
+        commitProject(removeClip(p, rm.dataset.removeClip), 'Remove effect');
+        st.selected = null;
+        renderTimeline();
+        renderInspector();
+      }
+    }
+    insp.addEventListener('click', onInspClick);
     function anchorInspector(p) {
       return `<h3>Anchors</h3><div class="mo-fields">${Object.entries(p.anchors).map(([k, v]) => `<fieldset class="mo-anchor" data-anchor="${esc(k)}"><legend>${esc(k)}</legend>
         <label class="mo-field">X<input type="number" step="0.001" min="0" max="1" data-axis="0" value="${num(v[0])}"></label>

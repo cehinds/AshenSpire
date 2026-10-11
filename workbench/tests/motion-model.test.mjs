@@ -8,7 +8,7 @@ import {
   FRAME_MS, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks,
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
-  canvasDocOf, applyCanvasDoc, snap,
+  canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -179,6 +179,33 @@ test('the canvas kit view maps anchors and clip offsets to items, and back witho
   assert.equal(same.clips[0].x, project.clips[0].x);
   const moved = applyCanvasDoc(project, { ...doc, items: doc.items.map((i) => (i.id === 'anchor:weapon' ? { ...i, x: i.x + 20 } : i)) });
   assert.ok(Math.abs(moved.anchors.weapon[0] - (project.anchors.weapon[0] + 0.02)) < 1e-9);
+});
+
+test('adding and removing effects keeps IDs unique and refuses unknown or unsafe input', () => {
+  const { project } = parsePoseFile(readFixture('pose-studio/renewal/attack.pose.json'));
+  const a = addClip(project, 'slash');
+  assert.equal(a.project.clips.length, project.clips.length + 1);
+  const added = a.project.clips.at(-1);
+  assert.equal(added.id, a.id);
+  assert.equal(added.cue, 'contact');
+  assert.equal(checkProject(a.project).length, 0);
+  const b = addClip(a.project, 'slash');
+  assert.notEqual(b.id, a.id, 'a second slash gets its own ID');
+  assert.throws(() => addClip(project, '../evil'), /letters/);
+  assert.throws(() => addClip(project, 'slash', { cue: 'later' }), /Unknown cue/);
+  assert.throws(() => addClip(project, 'slash', { anchor: 'nope' }), /No anchor/);
+  const removed = removeClip(a.project, added.id);
+  assert.equal(removed.clips.length, project.clips.length);
+  assert.throws(() => removeClip(removed, 'missing'), /No effect/);
+});
+
+test('bindings read as rows with their tags, enabled state and priority', () => {
+  const { project } = parsePoseFile(readFixture('pose-studio/renewal/attack.pose.json'));
+  assert.deepEqual(bindingRows(project), [], 'the attack set has no bindings');
+  const rows = bindingRows({ bindings: [{ id: 'b1', name: 'Card hit', provider: 'ashenspire', kind: 'card', objectId: 'strike', event: 'actionResolved', all: ['fx:fire'], any: ['weapon'], none: ['blocked'], enabled: false, priority: 5 }] });
+  assert.deepEqual(rows[0].tags, ['fx:fire', 'any weapon', 'not blocked']);
+  assert.equal(rows[0].enabled, false);
+  assert.equal(rows[0].priority, 5);
 });
 
 test('snap rounds to the grid step and leaves the value alone without one', () => {

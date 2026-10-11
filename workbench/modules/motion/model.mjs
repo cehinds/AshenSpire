@@ -251,6 +251,43 @@ export function moveClip(project, id, x, y) {
   return setClipFields(project, id, { x, y });
 }
 
+const CUE_NAMES = ['anticipation', 'release', 'contact', 'recovery'];
+const ANCHOR_FOR_NEW = 'torso';
+
+/**
+ * Adds an effect clip at the playhead's cue, on the torso anchor, with the game's default
+ * timing (a 200 ms burst at the contact cue). Returns { project, id }.
+ */
+export function addClip(project, effect, { cue = 'contact', anchor = ANCHOR_FOR_NEW } = {}) {
+  if (typeof effect !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/.test(effect)) throw new Error('Effect IDs are letters, digits and . _ : -');
+  if (!CUE_NAMES.includes(cue)) throw new Error(`Unknown cue ${cue}`);
+  if (!isObj(project.anchors) || !Array.isArray(project.anchors[anchor])) throw new Error(`No anchor ${anchor}`);
+  if (project.clips.length >= LIMITS.clips) throw new Error(`A project holds at most ${LIMITS.clips} effects`);
+  const next = copy(project);
+  const taken = new Set(next.clips.map((c) => c.id));
+  let n = next.clips.length + 1, id = `effect-${effect}-${n}`;
+  while (taken.has(id)) { n += 1; id = `effect-${effect}-${n}`; }
+  next.clips.push({ id, effect, cue, offset: 0, duration: 200, anchor, x: 0, y: 0, size: 160, opacity: 1, rotation: 0, layer: 'front', travel: false, muted: false });
+  return { project: next, id };
+}
+
+/** Removes an effect clip. Unknown IDs throw, so a stale selection cannot silently do nothing. */
+export function removeClip(project, id) {
+  if (!project.clips.some((c) => c.id === id)) throw new Error(`No effect ${id}`);
+  const next = copy(project);
+  next.clips = next.clips.filter((c) => c.id !== id);
+  return next;
+}
+
+/** The bindings as read-only rows: which card or object triggers which effects. */
+export function bindingRows(project) {
+  return (project.bindings || []).map((b) => ({
+    id: b.id, name: b.name || b.id, provider: b.provider, kind: b.kind, objectId: b.objectId || '', event: b.event,
+    tags: [...(b.all || []).map((t) => t), ...(b.any || []).map((t) => `any ${t}`), ...(b.none || []).map((t) => `not ${t}`)],
+    enabled: b.enabled !== false, priority: b.priority ?? 0,
+  }));
+}
+
 /** Changes the pose names' frame count is not supported (the poses are the animation's keys); this only renames a pose frame. */
 export function renamePose(project, index, name) {
   const next = copy(project);
