@@ -35,7 +35,7 @@ meta.character.offensive-stats.crit-damage,crit-damage,Crit damage,meta.characte
 meta.character.offensive-stats.accuracy,offensive-stats.accuracy,Accuracy,meta.character.offensive-stats,Character,,,,,,,,new,,,
 meta.character.defensive-stats,defensive-stats,Defensive stats,meta.character,Character,,,,,,,,game-concept,,,
 meta.character.defensive-stats.dr,dr,DR,meta.character.defensive-stats,Character,,defense rating,Scales physical Block,,,,,game-concept,,,
-meta.character.defensive-stats.evasion,evasion,Evasion,meta.character.defensive-stats,Character,,dodge chance,,,,,,game-concept,,,
+meta.character.defensive-stats.evasion,defensive-stats.evasion,Evasion,meta.character.defensive-stats,Character,,dodge chance,,,,,,game-concept,,,
 meta.character.defensive-stats.accuracy,defensive-stats.accuracy,Accuracy,meta.character.defensive-stats,Character,,"Defense-side Accuracy (owner decision 11, 2026-10-11). The offensive Accuracy tag under offensive-stats is unchanged",,,,,,new,,,
 meta.character.defensive-stats.block,defensive-stats.block,Block,meta.character.defensive-stats,Character,,stops physical,,,,,,game-concept,,,
 meta.character.defensive-stats.barrier,defensive-stats.barrier,Barrier,meta.character.defensive-stats,Character,,stops magic,,,,,,game-concept,,,
@@ -538,7 +538,7 @@ property.attunedMind,attunedMind,Attuned Mind,property,TagNode,,Mana found is a 
 property.starlitFocus,starlitFocus,Starlit Focus,property,TagNode,,The charge is there before the first cast. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,✦,9FC3E8,starlitFocus
 property.lodestarCap,lodestarCap,Lodestar Cap,property,TagNode,,The shard opens the fight wider. Effects in nodeEffects.json: triggers on combatStart; ops restoreMana.,,,,,,live-tag,🌟,9FC3E8,lodestarCap
 property.arcaneDraw,arcaneDraw,Arcane Draw,property,TagNode,,The first break each combat is a hand. Effects in nodeEffects.json: triggers on arcaneBreak; ops draw.,,,,,,live-tag,🌀,9FC3E8,arcaneDraw
-property.conduit,conduit,Conduit,property,TagNode,,"The subclass whose casts cost breath, not blood. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.",,,,,,live-tag,⚡,9FC3E8,conduit
+property.conduit,property.conduit,Conduit,property,TagNode,,"The subclass whose casts cost breath, not blood. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.",,,,,,live-tag,⚡,9FC3E8,conduit
 property.reservoir,reservoir,Reservoir,property,TagNode,,The subclass that never runs dry. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreMana.,,,,,,live-tag,🫙,9FC3E8,reservoir
 property.warmth,warmth,Warmth,property,TagNode,,Every heal braces you. Effects in nodeEffects.json: triggers on healed; ops block.,,,,,,live-tag,☀,9FC3E8,warmth
 property.vigil,vigil,Vigil,property,TagNode,,The litany never quite stops. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.,,,,,,live-tag,🕯,9FC3E8,vigil
@@ -715,6 +715,10 @@ scaling.wisdom,scaling.wisdom,wisdom,scaling,TagNode,,This card scales with Wisd
 costRoot,costRoot,cost,,TagNode,,How a card is paid for. Grouping node for the cost vocabulary.,,,,,,live-tag,,,cost
 costRoot.action,costRoot.action,action,costRoot,TagNode,,Costs Stamina to play.,,,,,,live-tag,,,cost.action
 costRoot.alternative,alternative,alternative,costRoot,TagNode,,May be paid with a complete alternative option instead of its listed cost.,,,,,,live-tag,,,cost.alternative
+utilityRoot,utilityRoot,utility,,TagNode,,"Action roles a card or flask can take outside its damage: evasion, conduit and mana charge. Grouping node for the utility vocabulary.",,,,,,live-tag,,,utility
+utilityRoot.evasion,utilityRoot.evasion,evasion,utilityRoot,TagNode,,Contributes to Dodge Rolls and avoiding damage.,,,,,,live-tag,,,utility.evasion
+utilityRoot.conduit,utilityRoot.conduit,conduit,utilityRoot,TagNode,,Channels magic through an equipped armament.,,,,,,live-tag,,,utility.conduit
+utilityRoot.manaCharge,manaCharge,manaCharge,utilityRoot,TagNode,,Recovers the stated amount of Mana.,,,,,,live-tag,,,utility.manaCharge
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

@@ -714,5 +714,9 @@
  "scaling.wisdom": "new",
  "costRoot": "new",
  "costRoot.action": "new",
- "costRoot.alternative": "new"
+ "costRoot.alternative": "new",
+ "utilityRoot": "new",
+ "utilityRoot.evasion": "new",
+ "utilityRoot.conduit": "new",
+ "utilityRoot.manaCharge": "new"
 }

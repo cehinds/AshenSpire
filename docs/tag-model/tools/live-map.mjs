@@ -427,6 +427,11 @@ export const LIVE = {
   'costRoot': 'cost',
   'costRoot.action': 'cost.action',
   'costRoot.alternative': 'cost.alternative',
+  // proposed live mapping (domain pass)
+  'utilityRoot': 'utility',
+  'utilityRoot.evasion': 'utility.evasion',
+  'utilityRoot.conduit': 'utility.conduit',
+  'utilityRoot.manaCharge': 'utility.manaCharge',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

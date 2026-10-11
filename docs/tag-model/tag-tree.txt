@@ -840,3 +840,7 @@ scaling {Which attribute a card's effect scales with. Grouping node for the scal
 cost {How a card is paid for. Grouping node for the cost vocabulary.}
   action {Costs Stamina to play.}
   alternative {May be paid with a complete alternative option instead of its listed cost.}
+utility {Action roles a card or flask can take outside its damage: evasion, conduit and mana charge. Grouping node for the utility vocabulary.}
+  evasion {Contributes to Dodge Rolls and avoiding damage.}
+  conduit {Channels magic through an equipped armament.}
+  manaCharge {Recovers the stated amount of Mana.}
