@@ -28,7 +28,8 @@ test('a watcher on a recursive platform watches the whole tree with one watch', 
   assert.equal(w.modes.content, 'watch');
   await new Promise((r) => setTimeout(r, 200));
   await fs.writeFile(path.join(root, 'content/deep/a.json'), '1');
-  await waitFor(() => batches.length > 0);
+  // Wait for the file itself: an earlier batch may hold only the folder event macOS can report.
+  await waitFor(() => batches.flat().includes('content/deep/a.json'));
   // macOS FSEvents may also report the content/deep folder made just before the watch began.
   const seen = batches.flat();
   assert.ok(seen.includes('content/deep/a.json'), `the write is batched: ${seen}`);
