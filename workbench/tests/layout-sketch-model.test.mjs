@@ -99,6 +99,16 @@ test('the notes are the sketch\'s own, and the export is the file\'s text', () =
   assert.equal(JSON.parse(S.exportJson(notes, realText)).notes, 'Try the hand at 40%');
 });
 
+test('a sketch deleted on disk leaves the list, and no sketch stays open', () => {
+  const gone = S.deletedSketch(['alpha', 'beta'], 'alpha');
+  assert.deepEqual(gone.names, ['beta']);
+  assert.equal(gone.name, null);
+  assert.equal(gone.sketch, null);
+  assert.equal(gone.original, null);
+  assert.equal(gone.hash, null);
+  assert.equal(gone.error, null);
+});
+
 test('a hidden box stays in the canvas document as hidden, so Layers still lists it', () => {
   const { data } = S.parseSketch(realText);
   const hidden = S.updateBox(data, 'hand', { hidden: true });

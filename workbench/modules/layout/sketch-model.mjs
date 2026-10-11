@@ -77,6 +77,12 @@ export function removeBoxes(sketch, ids, { force = false } = {}) {
 
 export const setNotes = (sketch, notes) => ({ ...M.clone(sketch), notes: String(notes ?? '') });
 
+/**
+ * The view's state once the open sketch is gone from disk: it leaves the list and
+ * no sketch stays open, so there is no draft to save.
+ */
+export const deletedSketch = (names, name) => ({ names: names.filter((n) => n !== name), name: null, sketch: null, original: null, hash: null, error: null, problems: [] });
+
 /** The breakpoint a viewport falls in, for the sketch's own breakpoints. */
 export const breakpointOf = (sketch, viewport) => M.breakpointFor(sketch.breakpoints || [], viewport);
 

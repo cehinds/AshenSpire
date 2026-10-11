@@ -387,11 +387,25 @@ export function createSketchView(root, host) {
       await listNames();
       paintAll();
     },
-    /** Reload the open sketch from disk after a conflict: the draft and its history go. */
+    /**
+     * Reload the open sketch from disk after a conflict: the draft and its history go. A
+     * sketch deleted on disk (a 404) leaves the list and the canvas clears; it reports missing.
+     */
     async reload(path) {
-      if (path !== pathOf(st.name)) return;
-      await open(st.name);
+      if (path !== pathOf(st.name)) return undefined;
+      try {
+        await open(st.name);
+      } catch (err) {
+        if (err.status !== 404) throw err;
+        Object.assign(st, S.deletedSketch(st.names, st.name));
+        host.history.clear();
+        st.canvas?.setDoc({ width: 800, height: 600, items: [] });
+        st.canvas?.select([]);
+        paintAll();
+        return { missing: true };
+      }
       rebuild();
+      return undefined;
     },
     hashOf(path) { return path === pathOf(st.name) ? st.hash : undefined; },
     /** "Keep my version" in the conflict dialog: the draft is saved over the disk copy, so it takes the disk hash. */
