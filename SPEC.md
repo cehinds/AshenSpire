@@ -1884,8 +1884,7 @@ together.
 ## 8. Testing
 
 **Two runners, one suite:** `tests/index.html` in a browser, `node tests/run-node.mjs`
-headless — both load `engine.test.js`. All assertions are against model + engine with **no UI
-imports**, so nothing in this file has seen a screen; the suite says so in its own boundary
+headless — both load `engine.test.js`. All assertions are against model + engine and no test needs a DOM, so nothing in this file has seen a screen; the suite says so in its own boundary
 block when it finishes.
 
 **The required-coverage list that used to live here is gone, and deliberately.** It named 17
@@ -1903,15 +1902,14 @@ grep -n "test('" tests/engine.test.js         # the index, derived
 
 **What this section states instead is the contract a test must meet, which cannot rot:**
 
-1. **Headless and UI-free.** A test that needs a DOM belongs in `tools/`, not here.
+1. **Headless, no DOM.** A test that needs a DOM belongs in `tools/`, not here.
 2. **Both edges** — the empty/zero case and the cap/overflow case (Charter quality gate).
 3. **Content-driven mechanics are asserted through their data**, never against a number
    hard-coded in the test: a status test drives `content/statuses.js` rows, so retuning a knob
    moves the test with it instead of breaking it.
 4. **A check is trusted only after it has been watched to fail.** The observed-red idiom is
    `--selftest` (a known-bad corpus, every case must fail for its named reason) and `--mutate`
-   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments and
-   wired in `.github/workflows/ci.yml`.
+   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments. CI runs `--selftest` for `tools/verify-shipped.mjs` and `tools/fullscreen-control.mjs` (`.github/workflows/ci.yml`); `tools/content-build.mjs` is not wired into CI.
 5. **Every release-gating instrument prints what it did NOT check, in its run output — not
    only in its header.** *(House law, adopted 2026-08-07 out of the instrument audit. It was
    triggered by three greens that lied in one week: a screenshot harness blind to five
@@ -1929,11 +1927,7 @@ spec rather than in tribal memory:
 | `tools/screenshot.mjs` | the **source tree** over a local server | the `?shot=` states that existed when it was written — **structurally blind** to any surface without one |
 | `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | **two denominators, both printed.** (1) **Top-level states**, derived from `main.js`'s `?shot=` states, so a new state cannot be silently missed; five co-op states **excluded by name**. (2) **Navigable sub-surfaces** — the tabs and panels reachable *inside* a state — derived from the three homes that define them (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`), one generated shot per member, each carrying an **assertion** that the surface both selected and painted. Surfaces with no `?shot=` are reached by real clicks and seeded storage; an unaccounted state, a **home that derives zero members**, or a sub-surface shot with no assertion all **fail before the browser starts** |
 
-**There is no single home that defines the tabbed surfaces**, only three homes each defining
-its own members — so denominator 2 enumerates the three sets the harness was told about, and
-prints the sets it knows exist and does not enumerate (co-op's per-player seat tabs). Closing
-that hole is a change to the tree, not to the harness: one declarative surface table, in the
-content layer beside `MENU_TABS`, naming every navigable set and its members.
+**The tabbed surfaces are listed in one table, `src/ui/surfaces.js`, which holds no members.** Each row points at the home that defines its set (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`) and asks it at call time. Denominator 2 enumerates the three sets the harness was told about, and prints the sets it knows exist and does not enumerate (co-op's per-player seat tabs). A fifth set that no row names is still invisible to the table, and a source tree cannot show it.
 
 The artifact is **never modified** to reach a state — crisis states are produced by writing
 storage from outside and reloading, because a shot of a patched bundle is a shot of something
