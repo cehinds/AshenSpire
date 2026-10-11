@@ -189,3 +189,13 @@ test('a symlinked pack folder is refused: nothing is listed or served from it', 
   assert.equal(await resolveArt(root, 'assets/sprites/linked.webp'), null, 'a linked cache folder serves nothing');
   assert.ok(!(await listArt(root)).files.some((f) => f.path.includes('linked')), 'nor lists anything');
 });
+
+test('a pin tag of . or .. is rejected, so the pack folder cannot leave the cache', async (t) => {
+  const root = await project(t, { pin: false });
+  for (const tag of ['..', '.', '../x']) {
+    await fs.writeFile(path.join(root, 'art-release.json'), JSON.stringify({ schema: 2, tag, packs: {} }));
+    assert.equal(await pinOf(root), null, `tag ${JSON.stringify(tag)} is refused`);
+  }
+  await fs.writeFile(path.join(root, 'art-release.json'), JSON.stringify({ schema: 2, tag: 'hd-assets-v19..x', packs: {} }));
+  assert.equal((await pinOf(root)).tag, 'hd-assets-v19..x', 'a tag that merely contains dots is fine');
+});

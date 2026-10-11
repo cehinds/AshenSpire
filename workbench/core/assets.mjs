@@ -46,7 +46,7 @@ export async function mapLimit(items, limit, fn) {
 export async function pinOf(root) {
   try {
     const pin = JSON.parse(await fs.readFile(path.join(root, 'art-release.json'), 'utf8'));
-    return typeof pin.tag === 'string' && /^[\w.-]+$/.test(pin.tag) ? { tag: pin.tag, zips: Object.fromEntries(PACKS.map((p) => [p, pin.packs?.[p]?.zip || null])) } : null;
+    return typeof pin.tag === 'string' && /^(?!\.{1,2}$)[\w.-]+$/.test(pin.tag) ? { tag: pin.tag, zips: Object.fromEntries(PACKS.map((p) => [p, pin.packs?.[p]?.zip || null])) } : null;
   } catch { return null; }
 }
 
