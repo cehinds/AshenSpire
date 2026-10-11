@@ -1154,8 +1154,9 @@ no rule.
 
 ### 5.1 Classes, creation presets, and levels
 
-**New default creation mode.** Add a new stable mode id, `tuned`, and make it the default for
-new runs. Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
+**New creation mode.** Add a new stable mode id, `tuned`. It is not offered at creation and
+is not the default: new runs default to `lean`, labelled Standard (`src/content/attributes.js:190`;
+`content/source/characterCreation.json:3`). Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
 owns its total and allocation bounds. This is a new mode, not a mutation or rename of
 `standard` or `pointbuy`, because saved runs persist the mode id and both older modes must
 continue to validate exactly as authored.
@@ -1240,34 +1241,36 @@ resource vocabularies. A new opcode/predicate is allowed only when the approved 
 cannot be expressed by those primitives, and then it is a separately specified closed-set
 extension with validation and engine tests—not imperative per-card code.
 
-### 5.2 Vagabond card pool — M1 set (24 cards + upgrades)
+### 5.2 Reaver card pool — M1 set (24 cards + upgrades)
 
-Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in energy. `+` column = upgrade delta.
+The reward pool is 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); this table is the M1 set.
+
+Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine id `energy` is an alias). `+` column = upgrade delta.
 
 | Card | R | Cost | Type | Text | Upgrade |
 |---|---|---|---|---|---|
 | Strike | S | 1 | Attack | Deal 6. | Deal 9 |
 | Defend | S | 1 | Skill | Gain 5 Block. | Gain 8 |
-| Bloodflame Slash | S | 1 | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
+| Gorefire Slash | S | 1 + 1 Mana | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
 | Crimson Cleave | C | 2 | Attack | Deal 8 to ALL enemies. Apply 2 Bleed to ALL. | 11 dmg |
 | Shield Bash | C | 1 | Attack | Deal 5. 4 Poise damage. | 8 dmg, 5 Poise |
 | Quickstep | C | 1 | Skill | Gain 6 Block. Draw 1. | 8 Block |
 | Guard Counter | C | 1 | Attack | Deal 4. If you have Block: deal 10 instead. | 6 / 14 |
 | Iron Resolve | C | 1 | Skill | Gain 5 Block. If in Bulwark Stance: gain 9 instead. | 7 / 12 |
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
-| Enter: Bloodflame | C | 1 | Skill | Enter Bloodflame Stance. Draw 1. | cost 0 |
+| Enter: Gorefire | C | 1 | Skill | Enter Gorefire Stance. Draw 1. | cost 0 |
 | Enter: Bulwark | C | 1 | Skill | Enter Bulwark Stance. Gain 3 Block. | +6 Block total |
 | Stomp | U | 2 | Attack | Deal 12. 8 Poise damage. | 16 dmg, 10 Poise |
 | Rallying Standard | U | 1 | Power | At the start of your turn, gain 1 Strength. Take 1 damage. | no self-damage |
 | War Surgeon | U | 1 | Skill | Exhaust. Heal 2 HP for every 4 Bleed on all enemies. | every 3 |
 | Hemorrhage | U | 1 | Skill | Double the target's Bleed. Exhaust. | don't Exhaust |
-| Twinblade Flurry | U | 1 | Attack | Deal 3×3. Bloodflame applies per hit. | 4×3 |
-| Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: Retain 4 of it next turn. | 16 Block |
+| Twinblade Flurry | U | 1 | Attack | Deal 3×3. Gorefire applies per hit. | 4×3 |
+| Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: gain 4 Block next turn. | 16 Block |
 | Kick Off | U | 0 | Attack | Deal 4. 3 Poise damage. Exhaust. | 7 dmg, don't Exhaust |
 | Executioner | R | 2 | Attack | Deal 10. If target is Staggered: deal 25 instead. | 14 / 32 |
 | Goreblood | R | 3 | Power | Poise thresholds no longer increase after filling. | cost 2 |
 | Unbreakable | R | 2 | Power | Block no longer expires at the start of your turn. (Cap 30.) | cap 40 |
-| Grafted Arms | R | 1 | Attack | X-cost: Deal 6 per energy spent, split randomly among enemies as 6-damage hits. | 8 per |
+| Stitched Arms | R | X | Attack | X-cost: Deal 6 per Stamina spent, split randomly among enemies as 6-damage hits. | 8 per |
 | Last Stand | R | 1 | Skill | Ethereal. Gain Block equal to missing HP (max 20). | max 30 |
 | Warrior's Vow | R | 0 | Skill | Innate. Enter a Stance of your choice. Exhaust. | draw 1 |
 
@@ -1275,43 +1278,43 @@ Colorless/curse/status M1 minimum: **Wound** (status, unplayable), **Dazed** (st
 
 ### 5.3 Enemy roster — Act 1 (M1)
 
-Basics (encounters roll from the weighted table in `content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
+Basics (encounters roll from the weighted table in `src/content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
 | Wandering Soldier | 22–26 | 10 | Slash 7 (45), Guard 6 Block (30), Warcry +2 Str (25, max1) | bread & butter |
-| Rot Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
-| Demi-Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail (25), Brace 8 Block (25) | tanky |
+| Blight Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
+| Husk Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail and add 1 Slimed (25), Brace 8 Block (25) | tanky |
 | Grave Wisp | 10–12 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 4 + heals self 4 (50) | kill first |
-| Pack encounter | — | — | 2× Rot Hound + 1 Grave Wisp | teaches targeting |
+| Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-Elite — **Crucible Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+Elite — **Wyrm Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
 
-Boss — **The Watchful Omen** (Margit-inspired, HP 140, Poise 30):
-- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 16 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 16 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 9 (repeatable ×2), Hammer Toss 6×2.
-- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 4×4*.
+Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
+- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
+- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 3×4*.
 - Staggering him cancels a Held Blade in progress (satisfying counterplay).
-- Reward: 75–90 runes, rare relic choice, card reward with rare upgrade odds boosted.
+- Reward: 225–270 cinders, rare relic choice, card reward with rare upgrade odds boosted.
 
 (Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
 
-### 5.4 Relics (M2 set, 16)
+### 5.4 Relics (M2 set of 16; 63 ship in all)
 
 | Relic | Rarity | Effect |
 |---|---|---|
-| Tarnished Medallion | starter | (class starter, see §5.1) |
-| Golden Seed | common | At combat start, heal 3 HP. |
+| Forsaken Medallion | starter | (class starter, see §5.1) |
+| Golden Sprout | common | At the start of each combat, heal 3 HP and grow the Crimson charge pool by 1. |
 | Whetstone Fragment | common | Your first attack each combat deals +4. |
 | Kindling Charm | common | At the start of each combat, draw 1 extra card. |
-| Rune Pouch | common | Gain 25% more runes from combats. |
-| Beast Eye | common | Elites drop an extra card reward. |
+| Cinder Pouch | common | Gain 25% more Cinders from combats. |
+| Feral Eye | common | Elites offer an extra card reward choice. |
 | Cracked Tear | uncommon | Flasks are 50% stronger (rounded up). |
-| Stonesword Key | uncommon | Unknown (?) nodes are revealed on the map. |
-| Fell Omen Brand | uncommon | Whenever an enemy Staggers, draw 2. |
-| Bloodied Talisman | uncommon | Bleed bursts deal +25%. |
+| Sealstone Key | uncommon | Unknown (?) nodes are revealed on the map. |
+| Fell Warden Brand | uncommon | Whenever an enemy Staggers, draw 2. |
+| Bloodied Talisman | uncommon | Bleed bursts make the victim lose 5 extra HP. |
 | Grace Fragment | uncommon | Resting heals +15% more (shipped as Ember Fragment, §13.4j). |
 | Twinned Armor | uncommon | Every 10th card you play each combat: gain 6 Block. |
-| Erdtree Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
+| Goldbough Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
 | Dragon Heart | rare | +1 energy each turn. Shrines and chapels no longer offer Rest (shipped as Wyrm Heart, `restDenied: ['restHpPartial']`, §13.4j). |
 | Ancestral Horn | rare | Powers cost 1 less. |
 | Ash of Remembrance | boss | **+1 energy each turn; at combat start, gain 1 Madness.** |
@@ -1382,21 +1385,21 @@ It remains history, not a second implementable mode.
 | Flask | Effect |
 |---|---|
 | Crimson Flask | Heal 25% max HP. |
-| Azure Flask | Restore 20 Mana. |
+| Azure Flask | Restore 1 Mana. |
 | Flask of Ferocity | Gain 2 Strength this combat. |
 | Flask of Stone | Gain 15 Block. |
-| Rot Coating | Apply 4 Scarlet Rot to target. |
-| Blood Grease | Your attacks apply +2 Bleed this turn. |
-| Wondrous Physick (rare) | Two random flask effects at once. |
+| Blight Coating | Apply 4 Crimson Blight to target. |
+| Blood Unction | Your attacks apply 2 extra Bleed per hit this turn. |
+| Wondrous Draught (rare) | Two random flask effects at once. |
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
-Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `balance.js`). Every event is a real trade-off, StS-style. M2 launch set:
+Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `content/mapconfig.js` as `mapConfigs[act].unknownWeights`). Every event is a real trade-off, StS-style. M2 launch set:
 
-1. **Erdtree Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
-2. **Abandoned Merchant Cart** — *Loot* (gain 60–90 runes, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
-3. **Weeping Peninsula Pilgrim** — *Give 50 runes* (gain a random uncommon relic) / *Refuse* (nothing).
-4. **Ancient Rune Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 runes) / *Leave*.
+1. **Goldbough Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
+2. **Abandoned Merchant Cart** — *Loot* (gain 75 cinders, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
+3. **Wayward Pilgrim** — *Give 50 cinders* (gain a random relic) / *Refuse* (nothing).
+4. **Ancient Cinder Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 cinders) / *Leave*.
 
 Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
 
@@ -1405,7 +1408,7 @@ Event definition = data object: `{ id, name, art, text, choices: [{ label, requi
 - **Choice-level** — `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs; `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest. Leave stays requirement-free so a branch can never trap.
 - **Event-level (quest steps)** — `eventHistoryRequirements[eventId]`, the same grammar; `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback. `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves exactly as before.
 
-The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Nameless at Rest** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
+The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Second Cairn** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
 
 **Quest completion and dialogue (plan phase 10a, proposal §7.5).** A committed choice goes through one door, `engine/quests.js commitEventChoice`: the run effects, then the history row, then the completion check. A chain is a third sidecar, `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`; Grave of the Nameless ships as `nameless`, completed by any answer at the second cairn but Leave. Completion is `completeQuest`: it appends `{ kind: 'questCompleted', questId, source }` to the existing `run.history` at most once per quest per run (no `RUN_SHAPE` change) and emits the `questCompleted` event, which nothing else emits. An atlas quest's claimed reward completes through the same door with `source: 'atlas'`. Every chain step opens in the dialogue screen (W4c, WGQ0–WGQ8): the event text divides into beats on blank lines, the speaker named in `eventSpeakers` (a `content/source/speakers.csv` row: `id,name,portraitKey`; a missing portrait shows the name plate) stands right and the player left, and the event's choices are the responses on the last beat. Back, Continue, Skip speech and speech ending move only the beat; only a response commits, and binding responses keep the hold. Validation refuses by name a chain step or completion ref that does not resolve, a chain step without a speaker, an unknown speaker, and a Leave that completes a quest. One-off events keep the Event screen.
 
@@ -1416,7 +1419,7 @@ The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The
 Faithful to StS's published algorithm, simplified where invisible to the player. Algorithm lives in `engine/mapgen.js`; every constant below comes from `content/mapconfig.js`:
 
 - Per act: **`floors` × `columns`** grid (shipped: 12 × 7). The **top floor is always a single Shrine** row and the Boss sits above it — typed by the generator before any rule runs, so the floors a rule can reach are **1..`floors`-1**. That band is called the **rollable band** and it is the denominator for every fraction below.
-- Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (first 2 paths must start at distinct columns); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
+- Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (shipped `entries: 1` puts every path in one entrance column; the first 2 paths start at distinct columns only when `entries` is unset); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
 - **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` (the single gate these two replaced) gated **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
 
   | anchor | resolves to |
@@ -1432,11 +1435,11 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 - **`minElites` counts nodes in the graph; it is not a reachability promise.** It was called `minReachableElites` and never measured reachability — a measurable fraction of starts can reach no Elite at the shipped shape, and the fraction **grows as the act shortens**. The numbers are deliberately not restated here: a sample restated in prose drifts (three homes carried three different samples within a day of each other). **`node tools/mapplan.mjs` measures and prints them on every run**; nothing gates on them, and making the generator honour it is an open design call.
 - **What a `?` node resolves to is `mapConfigs[act].unknownWeights`** — beside the geometry it describes, per act. It was `balance.unknownNode`, a flat global that could not vary per act while the map it belongs to does.
 - **Any claim about generated maps is a distribution, never a seed.** Node count's mean and range are **deliberately not restated here** — the previous edition of this sentence carried 59.2 over 50–69, which the 12-floor act made false the moment it landed, which is this rule proving itself two bullets after it was written. `tools/mapplan.mjs` prints them at the current shape on every run. Stops per run is exactly **`floors` + 1** at every shape measured — that one is a formula, not a sample, and a formula does not drift. A tool that generates one map and reports a number has said nothing — the same green a tool gives when it checked nothing. `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
-- Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Stonesword Key** relic, `?` nodes render their resolved type.
+- Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Sealstone Key** relic, `?` nodes render their resolved type.
 - **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 
-Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase). All numbers: `balance.js`.
+Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
 
 ---
 
