@@ -282,7 +282,7 @@ export default {
       const was = state.selected;
       const next = withoutTable(state, path);
       state.parsed = next.parsed; state.drafts = next.drafts; state.selected = next.selected;
-      ctx.history.clear();
+      ctx.history.scoped(path).clear();
       if (was === path) {
         state.activeRow = null;
         if (state.grid) { state.grid.setRules([]); state.grid.setData({ columns: [], rows: [] }); }
