@@ -289,8 +289,13 @@ the action's `armor` and `card`, which are speed-table ids (`actionSpeed`).
   like an unknown armor. Names are case-sensitive.
 - `evasionFor({evasionArmor, dex, shield, evasionCard, evasion}, tables)` in `resolver.mjs`.
   `evasion` is any extra flat bonus, and a plain numeric evasion still works.
-- The DEX term is never below 0. A missing armor counts as Cloth. A missing `dex`
-  takes `attrs.DEX`, and a missing DEX adds 0. These two rules are placeholders the owner has not confirmed.
+- The armor formula runs only when a side gives at least one of `evasionArmor`,
+  `dex`, `shield` or `evasionCard`. A side with none of them (even one with
+  `attrs`) uses its plain `evasion` number, so `attrs` given for Accuracy never
+  adds evasion by surprise.
+- When the formula runs: the DEX term is never below 0, a missing armor counts
+  as Cloth, and a missing `dex` takes `attrs.DEX` (a missing DEX adds 0). These
+  rules are placeholders the owner has not confirmed.
 - Examples: Cloth at DEX 1 is 0. Leather at DEX 3 is 0 + 2 = 2, and with a buckler
   it is 3 (the rogue check: enemy accuracy 5 misses 25% of faces). Plated at DEX 5
   is 1 (cap 0). A buckler adds 1, and Backstep adds 5.
