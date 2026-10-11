@@ -29,6 +29,17 @@ test('the game server is resolved through connectPlan, which keeps the frame unl
   assert.match(body[0], /if \(run !== gameRuns \|\| !mounted\) return;/, 'a late answer never overrides a newer connect');
 });
 
+test('the module re-resolves the game on show and on reload, and unsubscribes in unmount', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /const offReload = ctx\.onReload\(\(ev\) => connectGame\(\{ force: ev\?\.kind === 'reload' \}\)\);/, 'content rebuilds force a reload; game events are planned');
+  const show = src.match(/onShow\(\) \{[\s\S]*?const p = ctx\.params;/);
+  assert.ok(show, 'onShow exists');
+  assert.match(show[0], /connectGame\(\);/, 'a show re-resolves the game server');
+  const unmount = src.match(/unmount\(\) \{[\s\S]*?cancelAnimationFrame\(rafId\);/);
+  assert.ok(unmount, 'unmount exists');
+  assert.match(unmount[0], /offReload\(\);/, 'the reload subscription is removed on unmount');
+});
+
 test('the render page obeys only its parent, at the origin given by ?po=', () => {
   const render = read('workbench/modules/motion/render.mjs');
   assert.match(render, /ev\.origin !== parentOrigin \|\| ev\.source !== window\.parent/);

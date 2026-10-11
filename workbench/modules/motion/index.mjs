@@ -773,6 +773,8 @@ export default {
 
     // ---------- start ----------
     connectGame();
+    // The content was rebuilt (a forced reload), or the game server came up or restarted (the plan decides).
+    const offReload = ctx.onReload((ev) => connectGame({ force: ev?.kind === 'reload' }));
     listSets();
     renderAll();
     renderLibrary();
@@ -794,6 +796,8 @@ export default {
 
     return {
       onShow() {
+        // The game may have stopped, restarted or moved while the module was away: resolve it again.
+        connectGame();
         // A fresh params object is a new visit: its link applies once, a plain return keeps the state.
         const p = ctx.params;
         if (p && Object.keys(p).length && p !== st.seenParams) {
@@ -807,6 +811,7 @@ export default {
       },
       unmount() {
         mounted = false;
+        offReload();
         window.removeEventListener('message', onMessage);
         resizer?.disconnect();
         cancelAnimationFrame(rafId);
