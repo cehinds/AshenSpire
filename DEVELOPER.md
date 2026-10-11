@@ -50,7 +50,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
-| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | yes | only when release differs from test |
+| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
