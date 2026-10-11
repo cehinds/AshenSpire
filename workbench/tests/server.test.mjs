@@ -434,6 +434,28 @@ test('the game server is reused only when it names this project as its root', as
   assert.match(unknown.conflict, /does not say which checkout/);
 });
 
+test('the Content Editor and Pose Studio are reused only when they name this project', async (t) => {
+  const root = await project(t);
+  const other = await project(t);
+  const defs = toolDefs({ repo: path.resolve(HERE, '../..'), root, origin: 'http://127.0.0.1:1' });
+  const { createServer } = await import('node:http');
+  const stub = async (handler) => { const s = createServer(handler); await new Promise((r) => s.listen(0, '127.0.0.1', r)); t.after(() => s.close()); return s.address().port; };
+  const probeOn = async (id, port) => { const tool = new Tool({ ...defs.find((d) => d.id === id), port }, { root, origin: 'http://127.0.0.1:1' }); return { ok: await tool.probe(), conflict: tool.conflict }; };
+  const editorFor = (r) => stub((req, res) => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(r === undefined ? { token: 't' } : { token: 't', root: r })); });
+  assert.equal((await probeOn('editor', await editorFor(root))).ok, true);
+  assert.match((await probeOn('editor', await editorFor(other))).conflict, /serving another checkout/);
+  assert.match((await probeOn('editor', await editorFor(undefined))).conflict, /does not say which checkout/);
+  const poseFor = (r) => stub((req, res) => { if (req.url === '/__serve/info') { if (r === undefined) { res.writeHead(404); return res.end(); } res.writeHead(200); return res.end(JSON.stringify({ root: r })); } res.writeHead(200); res.end('ok'); });
+  assert.equal((await probeOn('pose', await poseFor(root))).ok, true);
+  assert.match((await probeOn('pose', await poseFor(other))).conflict, /serving another checkout/);
+  assert.match((await probeOn('pose', await poseFor(undefined))).conflict, /does not say which checkout/);
+  // The real Pose Studio server says which checkout it serves, to loopback clients only.
+  const { handler } = await import('../../pose-studio/server.mjs');
+  const port = await stub(handler);
+  const info = await (await fetch(`http://127.0.0.1:${port}/__serve/info`)).json();
+  assert.equal(typeof info.root, 'string');
+});
+
 test('external entries resolve under a checkout given with a trailing separator', async (t) => {
   const art = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-art-')));
   t.after(() => fs.rm(art, { recursive: true, force: true }));

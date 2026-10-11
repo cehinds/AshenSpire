@@ -25,7 +25,7 @@ export function toolDefs({ repo, root, origin, ports = {} }) {
       id: 'editor', name: 'Content Editor', port: p.editor, host: '127.0.0.1', path: '/', health: '/api/session',
       blurb: 'Tables, sprites, relations, scripts and previews for content/source and content/framework.',
       command: (port) => [path.join(repo, 'editor/server.mjs'), '--project', root, '--port', String(port), '--frame-ancestor', origin],
-      framing: true,
+      framing: true, sessionRoot: true,
     },
     {
       id: 'ui-studio', name: 'UI Studio', port: p['ui-studio'], host: '127.0.0.1', path: '/', health: '/api/session',
@@ -37,6 +37,7 @@ export function toolDefs({ repo, root, origin, ports = {} }) {
       id: 'pose', name: 'Pose & FX', port: p.pose, host: '127.0.0.1', path: '/pose-studio/index.html', health: '/pose-studio/index.html',
       blurb: 'Poses, stances and effect timing on the live combat figures.',
       command: () => [path.join(repo, 'pose-studio/server.mjs'), '--project', root], env: (port) => ({ POSE_STUDIO_PORT: String(port) }),
+      serveRoot: '/__serve/info',
     },
     {
       id: 'game', name: 'Game server', port: p.game, host: 'localhost', path: '/', health: '/index.html',
@@ -82,7 +83,11 @@ export class Tool {
       if (res.status !== 200) return false;
       if (this.def.sessionRoot) {
         const session = await res.json().catch(() => ({}));
-        if (session.root && fs.realpathSync(session.root) !== this.root) { this.conflict = `Port ${this.port} is serving another checkout (${session.root})`; return false; }
+        // Reused only when it names this project; an older build that does not say is not reused.
+        if (typeof session.root !== 'string') { this.conflict = `Port ${this.port} is answered by a ${this.def.name} that does not say which checkout it serves. Stop it, then press Restart.`; return false; }
+        let served = session.root;
+        try { served = fs.realpathSync(session.root); } catch { /* not on this disk: compared as given */ }
+        if (served !== this.root) { this.conflict = `Port ${this.port} is serving another checkout (${session.root})`; return false; }
       } else await res.arrayBuffer().catch(() => {});
       if (this.def.serveRoot) {
         // A server answering on the port is reused only when it names this project as its root.

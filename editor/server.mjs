@@ -87,7 +87,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         if (req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: 'Cross-site request refused' });
         if (url.pathname !== '/api/session' && req.headers['x-studio-token'] !== token) return send(res, 403, { error: 'Reopen the editor to connect' });
         if (req.method === 'GET') {
-          if (url.pathname === '/api/session') return send(res, 200, { token });
+          if (url.pathname === '/api/session') return send(res, 200, { token, root });
           if (url.pathname === '/api/inventory') return send(res, 200, await inventory());
           if (url.pathname === '/api/file') return send(res, 200, await workspace.read(url.searchParams.get('path')));
           if (url.pathname === '/api/job') { const { child, ...publicJob } = job || {}; return send(res, 200, publicJob); }
