@@ -10,7 +10,7 @@
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
   facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
-  RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan,
+  RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan, drawerOpenFor,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -265,7 +265,7 @@ export default {
     }
     function select(id) {
       st.id = id || null;
-      setDrawer(Boolean(st.id)); // a selection slides the drawer in (an overlay below 1100px)
+      setDrawer(drawerOpenFor(st)); // a selection slides the drawer in (an overlay below 1100px)
       renderTitle(); sendDrawer(); renderTry(); writeHash();
     }
     function setTab(tab) {
@@ -280,6 +280,8 @@ export default {
       setKind(next.kind, { keepFilters: true });
       Object.assign(st, { q: next.q, sort: next.sort, class: next.class, type: next.type, tag: next.tag, rarity: next.rarity, id: next.id, tab: next.tab });
       // The facets settle the filters first, so the grid is sent the values the column shows.
+      // A link that names an entity opens its drawer too, as a click does (an overlay below 1100px).
+      setDrawer(drawerOpenFor(st));
       renderFacets(); sendCenter(); sendDrawer(); renderChips(); renderTabs(); renderCount(); renderTitle(); writeHash();
     }
 

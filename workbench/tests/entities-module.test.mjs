@@ -8,7 +8,7 @@ import { armamentIconAsset } from '../../src/model/equipmentArt.js';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
-  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan,
+  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan, drawerOpenFor,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -179,6 +179,13 @@ test('on show the module keeps a working game and reloads when the origin change
   assert.equal(connectPlan({ base: up, currentOrigin: null, ready: false }), 'load', 'the first connect loads');
   assert.equal(connectPlan({ base: up, currentOrigin: 'http://localhost:4320', ready: false }), 'load', 'frames that never answered are loaded again');
   assert.equal(connectPlan({ base: up, currentOrigin: 'http://localhost:4320', ready: true, force: true }), 'load', 'a forced reload loads anyway');
+});
+
+test('a deep link that selects an entity opens the detail drawer, and one without an id does not', () => {
+  const linked = parseDeepLink(new URLSearchParams('kind=relics&id=medallion&tab=data'));
+  assert.equal(drawerOpenFor(linked), true, 'an id in the link opens the drawer (an overlay below 1100px)');
+  assert.equal(drawerOpenFor(parseDeepLink(new URLSearchParams('kind=relics'))), false, 'no id: no drawer');
+  assert.equal(drawerOpenFor({ id: null }), false);
 });
 
 test('the render page URL carries the parent origin and only set parameters', () => {

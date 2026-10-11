@@ -261,6 +261,11 @@ export function tryFightUrl(gameBase, { classId = 'reaver', mainHand = '', offHa
   return `${base}index.html?${q}`;
 }
 
+/** The detail drawer is open exactly while an entity is selected, whether by a click or a deep link. */
+export function drawerOpenFor({ id = null } = {}) {
+  return Boolean(id);
+}
+
 /**
  * What the module does after it resolves the game server: 'setup' (the server is down, show the setup
  * message), 'keep' (the same origin is already answering, leave the frames) or 'load' (point the frames
