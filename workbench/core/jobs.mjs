@@ -8,6 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { tryAcquire as tryFileLock, acquire as waitFileLock, busyMessage } from '../../tools/lib/build-lock.mjs';
 
 export const HISTORY = 30;
 const LOG_CAP = 400 * 1024;
@@ -18,7 +19,9 @@ const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests
 });
 
 /** Jobs in one lock group write the same generated trees (src/content/generated,
- *  src/framework/data, src/config/generated), so only one of them runs at a time. */
+ *  src/framework/data, src/config/generated), so only one of them runs at a time.
+ *  The group is also held across processes through <root>/.build-lock
+ *  (tools/lib/build-lock.mjs), which the editor and UI Studio take too. */
 export const GENERATED = 'generated-sources';
 
 /** id → { label, description, lock?, steps(root) → [{ args, optional?, missing? }] } */
@@ -53,6 +56,7 @@ export class JobRunner {
     this.runs = []; this.active = new Map(); // id → run
     this.locks = new Map(); // lock group → label of whoever holds it (a job or a live-reload build)
     this.lockWaiters = [];
+    this.fileLocks = new Map(); // lock group → release() of the cross-process lock
     try { this.runs = JSON.parse(fs.readFileSync(stateFile, 'utf8')).slice(0, HISTORY).map((r) => (r.status === 'running' ? { ...r, status: 'cancelled', message: 'The Workbench stopped while this ran' } : r)); } catch { /* no history yet */ }
   }
 
@@ -81,7 +85,11 @@ export class JobRunner {
     if (!job) throw Object.assign(Error(`Unknown job: ${String(id).slice(0, 60)}`), { status: 400 });
     if (this.active.has(id)) throw Object.assign(Error(`${job.label} is already running`), { status: 409 });
     if (job.lock && this.locks.has(job.lock)) throw Object.assign(Error(`${this.locks.get(job.lock)} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
-    if (job.lock) this.locks.set(job.lock, job.label);
+    if (job.lock) {
+      const got = tryFileLock(this.root, `${job.label} (Workbench)`);
+      if (typeof got !== 'function') throw Object.assign(Error(`${busyMessage(got.heldBy)} (it writes the same generated files as ${job.label})`), { status: 409, heldBy: got.heldBy });
+      this.locks.set(job.lock, job.label); this.fileLocks.set(job.lock, got);
+    }
     const run = { runId: `${Date.now().toString(36)}-${randomBytes(3).toString('hex')}`, id, label: job.label, status: 'running', startedAt: Date.now(), endedAt: null, durationMs: null, exitCode: null, message: '', log: '' };
     this.runs.unshift(run); this.runs.length = Math.min(this.runs.length, HISTORY);
     this.active.set(id, run);
@@ -135,13 +143,19 @@ export class JobRunner {
     this.onEvent('job', this.summary(run));
   }
 
-  /** Wait for a lock group to be free, then hold it as `label`; pair with release(). */
-  async acquire(lock, label) {
+  /** Wait for a lock group to be free here and in other processes, then hold
+   *  it as `label`; pair with release(). Rejects if another process keeps the
+   *  cross-process lock past `timeoutMs`. */
+  async acquire(lock, label, { timeoutMs, pollMs } = {}) {
     while (this.locks.has(lock)) await new Promise((resolve) => this.lockWaiters.push(resolve));
     this.locks.set(lock, label);
+    try { this.fileLocks.set(lock, await waitFileLock(this.root, `${label} (Workbench)`, { timeoutMs, pollMs })); } catch (e) { this.release(lock); throw e; }
   }
 
   release(lock) {
+    const releaseFile = this.fileLocks.get(lock);
+    this.fileLocks.delete(lock);
+    if (releaseFile) releaseFile();
     this.locks.delete(lock);
     const waiters = this.lockWaiters.splice(0);
     for (const wake of waiters) wake();

@@ -533,3 +533,35 @@ test('on Windows a cancel kills the whole process tree with taskkill /T', () => 
   killTree(child, { platform: 'win32', run: () => ({ status: 128 }) });
   assert.equal(killed, true, 'falls back to killing the step itself');
 });
+
+test('a generated-files lock held by another process (the editor, UI Studio) refuses generated jobs with 409 naming it', async (t) => {
+  const root = await project(t);
+  const { app, call } = await boot(t, root);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), '\n');
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(root, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'x' }));
+  for (const id of ['content-build', 'config-build', 'build-only', 'engine-export']) {
+    const blocked = await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id }) });
+    assert.equal(blocked.status, 409, id);
+    assert.match((await blocked.json()).error, /^UI Studio config compile is running; try again when it finishes/, id);
+  }
+  assert.equal(app.jobs.locks.size, 0, 'a refused start holds nothing');
+  // A live-reload build waits for it, then holds the file lock itself.
+  let acquired = false;
+  const waiting = app.jobs.acquire(GENERATED, 'A live-reload build', { pollMs: 20 }).then(() => { acquired = true; });
+  await new Promise((r) => setTimeout(r, 120));
+  assert.equal(acquired, false, 'waits while the other process holds it');
+  await fs.rm(lock);
+  await waiting;
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).holder, 'A live-reload build (Workbench)');
+  app.jobs.release(GENERATED);
+  await assert.rejects(fs.stat(lock), /ENOENT/);
+  // A Workbench job holds the file lock while it runs and frees it after.
+  assert.equal((await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'config-build' }) })).status, 200);
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).holder, 'Config build (Workbench)');
+  for (let i = 0; i < 100 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 30));
+  await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
+});

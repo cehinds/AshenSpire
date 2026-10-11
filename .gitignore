@@ -602,3 +602,7 @@ build/windows-installer/
 
 # AshenSpire Workbench: per-machine job history and settings
 workbench/.state/
+
+# Cross-process lock on the generated trees (tools/lib/build-lock.mjs)
+/.build-lock
+/.build-lock.stale-*

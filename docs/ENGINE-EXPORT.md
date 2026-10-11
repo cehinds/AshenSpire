@@ -163,7 +163,12 @@ Use one of these to import:
 - **Batch**: [`import_ashenspire.py`](engine-export/unreal/import_ashenspire.py)
   reads the manifest and a struct map (table id to struct path; see
   [`struct_map.example.json`](engine-export/unreal/struct_map.example.json)).
-  It then creates or refills one DataTable per mapped table.
+  It then creates or refills one DataTable per mapped table. The destination
+  folder mirrors the manifest: after an import that ran to the end, was not
+  cancelled and had no failed table, it deletes the `DT_*` DataTables it owns
+  in `--dest` (not subfolders) whose table is no longer in the manifest. Other
+  assets there are left alone. Pass `--no-prune` when importing an export made
+  with `--only`, whose manifest lists only some tables.
 
 Config files and art manifests are plain JSON. Load them with the `Json`
 module or import them as you need.

@@ -117,7 +117,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       if (steps.length) {
         hub.send('building', { files, steps });
         // Live-reload builds share the jobs' lock: never two writers of the generated trees.
-        await jobs.acquire(GENERATED, 'A live-reload build');
+        // It also waits for the editor or UI Studio when one of them is building (tools/lib/build-lock.mjs).
+        try { await jobs.acquire(GENERATED, 'A live-reload build'); } catch (e) { hub.send('reload-failed', { files, step: steps[0], output: e.message }); return; }
         watcher.mute();
         try {
           for (const step of steps) {
