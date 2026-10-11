@@ -69,3 +69,11 @@ Enable **Snap** to align movement to an 8 px grid, canvas edges/centres, and vis
 **Export JSON** embeds project raster assets in the downloaded file, keeping labels, transforms, groups and every page editable when the file is imported at another studio address. Original files stay untouched. Reference images are review aids and are excluded from the portable export. **Export PNG → Selected component** exports transparent individual layers or groups; **Full view PNG** exports the current page.
 
 Additional checks: `node --test qa/project.test.mjs` and `node qa/project-smoke.mjs` against the running studio. The latter uses routed test scenes and exercises real mouse snapping, bypass, rotation, page text editing, persistence isolation, file roundtrip and PNG export. Set `HUD_STUDIO_EXECUTABLE=/path/to/chromium` to use an installed browser for either interaction suite.
+
+## Single-file handoff
+
+Build with `node tools/hud-component-studio/bundle-project.mjs --scene projects/character-creation/scene.json --out /path/to/Character-Creation-Studio.html`. Double-click the output HTML to use this same editor without a server, installation or network. It embeds the scene, PNG assets, scripts, styles and any local CSS font dependencies. Reference overlays are omitted. Export JSON remains the durable editable backup; bundled drafts save only scene changes and reuse the embedded source images to stay within browser storage limits. `--id <name>` sets the stable autosave identity when distributing renamed copies of one project.
+
+Run `node tools/hud-component-studio/qa/bundle-smoke.mjs` to check direct `file://` opening, safe embedded text, mouse editing, persistence, PNG and portable JSON exports with no external requests. Use `HUD_STUDIO_EXECUTABLE` when needed to select a browser that supports local files.
+
+If the test machine blocks local-file browsing, set `HUD_STUDIO_BUNDLE_URL=http://127.0.0.1:8361/standalone.html` to test the same generated HTML through one intercepted HTTP response; the test blocks every external asset/script request.
