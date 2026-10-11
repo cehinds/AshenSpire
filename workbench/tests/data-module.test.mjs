@@ -368,3 +368,18 @@ test('inserted rows sit where they are placed and carry no comments of their own
   doc.rows = [{ id: 'n0', name: 0 }, table.rows[0], { id: 'n1', name: 5 }, table.rows[1], table.rows[2], { id: 'n2', name: 7 }];
   assert.equal(D.serializeTable(table, doc), 'id,name\nn0,0\n# ca\na,1\nn1,5\n# cb\nb,2\n# cc\nc,3\nn2,7\n');
 });
+
+test('CRLF line endings survive a reorder', () => {
+  const text = 'id,name\r\n# ca\r\na,1\r\n# cb\r\nb,2\r\n';
+  assert.equal(reordered(text, [1, 0]), 'id,name\r\n# cb\r\nb,2\r\n# ca\r\na,1\r\n');
+});
+
+test('quoted cells with commas and quotes survive a reorder byte for byte', () => {
+  const text = 'id,name\n# ca\na,"x, y"\n# cb\nb,"p""q"\n';
+  assert.equal(reordered(text, [1, 0]), 'id,name\n# cb\nb,"p""q"\n# ca\na,"x, y"\n');
+});
+
+test('a file with no final newline keeps none after a reorder', () => {
+  const text = 'id,name\n# ca\na,1\n# cb\nb,2';
+  assert.equal(reordered(text, [1, 0]), 'id,name\n# cb\nb,2\n# ca\na,1');
+});
