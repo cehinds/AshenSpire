@@ -97,8 +97,11 @@ export function recursiveEventPaths(abs, name, platform = process.platform, { ex
     // path when the watch began (same inode) and is untouched since (both its modification and
     // its change time older) is a replay. A file moved in keeps its old times but was not there,
     // so it is kept; so is a gone file.
+    // HFS+ keeps file times to the whole second: a whole-second time is compared with the
+    // second the watch began, so an edit in that same second is not read as older.
     const at = platform === 'darwin' && presentAtStart(target) ? changedAt(target) : null;
-    return at !== null && at < since ? [] : [target];
+    const start = at !== null && at % 1000 === 0 ? Math.floor(since / 1000) * 1000 : since;
+    return at !== null && at < start ? [] : [target];
   }
   return isNewFolder(target) ? filesUnder(target) : [];
 }
@@ -242,9 +245,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   // The folders there when the watch began, and those seen since, with their inodes:
   // on macOS only a folder not among them is walked for its files (see recursiveEventPaths).
   const knownFolders = new Map(); // folder -> inode
-  // On macOS, a file not changed since then is a replayed event. Whole seconds: HFS+ keeps
-  // file times to the second, so an edit in the watch's first second must not read as older.
-  const startedAt = Math.floor(Date.now() / 1000) * 1000;
+  const startedAt = Date.now(); // on macOS, a file not changed since then is a replayed event
   const startFiles = new Map(); // macOS: file -> inode when the watch began (see presentAtStart)
   const presentAtStart = (p) => { try { return startFiles.get(p) === fs.statSync(p).ino; } catch { return false; } };
   const isNewFolder = (p) => {

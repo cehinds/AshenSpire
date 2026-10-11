@@ -182,6 +182,10 @@ test('on macOS a file event for a file untouched since the watch began is a repl
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(500)), [], 'written before the watch: a replayed event');
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(1500)), [css], 'written after the watch began');
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(500, () => false)), [css], 'moved in after the watch began: old times, but not there at the start');
+  const hfs = (t) => ({ ...at(t), since: 5700 });
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', hfs(5000)), [css], 'HFS+ whole-second time in the second the watch began: kept');
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', hfs(4000)), [], 'HFS+ whole-second time before that second: a replay');
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', hfs(5300)), [], 'a fine-grained time before the start: a replay');
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', { since: 1000, isDir: () => false, exists: () => false, changedAt: () => null }), [css], 'a deleted file is always kept');
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'win32', at(500)), [css], 'only macOS replays events');
 });
