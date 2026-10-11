@@ -1,7 +1,10 @@
 // workbench/core/watch.mjs — notice source edits and batch them.
 //
-// fs.watch with { recursive: true } where the platform has it (Windows, macOS,
-// Linux on Node 20+); a 1 s mtime poll where it throws. Changes are collected
+// On Linux, one non-recursive fs.watch per folder, so a rename-into-place does not
+// silence later edits; folders that appear get watches, and folders that are removed
+// or renamed away have theirs closed. On Windows and macOS, one fs.watch with
+// { recursive: true } (a per-folder handle on Windows would block renaming the parent).
+// A 1 s mtime poll where a watch throws. Changes are collected
 // into one batch per quiet period (`debounceMs`) and handed to `onBatch` as
 // project-relative paths. `mute()` drops events under the builds' generated
 // output (BUILD_OUTPUTS) while a build runs and for a short grace after, so a
