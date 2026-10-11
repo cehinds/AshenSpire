@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../ui/kit/grid-model.mjs';
-import { pasteSummary } from '../ui/kit/grid.mjs';
+import { pasteSummary, pasteNotice } from '../ui/kit/grid.mjs';
 
 const cols = [
   { key: 'id', type: 'string' },
@@ -288,6 +288,7 @@ test('pasteVisible: a hidden active row refuses the paste with a reason instead 
   assert.deepEqual(out.rows.map(r => r.a), [1, 2, 4], 'a is unchanged');
   assert.equal(out.reason, 'The active cell is hidden by the filter; select a visible cell and paste again.');
   assert.equal(out.reason, M.HIDDEN_ANCHOR_REASON);
+  assert.deepEqual(pasteNotice(out), { title: 'Paste not applied', lines: [M.HIDDEN_ANCHOR_REASON], more: 0 }, 'the banner shows the reason');
   const multi = M.pasteVisible(d.rows, d.columns, [1, 2], { r: 0, c: 0 }, '9\n8');
   assert.equal(multi.change, null, 'a multi-line paste is refused the same way');
   assert.equal(multi.reason, M.HIDDEN_ANCHOR_REASON);

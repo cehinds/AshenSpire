@@ -34,6 +34,12 @@ export function pasteSummary(errors = [], overflow = { rows: 0, cols: 0 }, limit
   return lines.length ? { title: 'Paste partly applied', lines, more: 0 } : null;
 }
 
+/** The banner for a paste that did not apply cleanly without errors: its refusal reason, else the overflow notes. */
+export function pasteNotice(res) {
+  if (res.reason) return { title: 'Paste not applied', lines: [res.reason], more: 0 };
+  return pasteSummary([], res.overflow);
+}
+
 export function createGrid(el, options = {}) {
   let rules = options.rules ?? [], refs = options.refs ?? {};
   const readOnly = !!options.readOnly, onChange = options.onChange ?? null;
@@ -249,7 +255,7 @@ export function createGrid(el, options = {}) {
     }
     hideBanner();
     if (res.change) commit(res);
-    const note = pasteSummary([], res.overflow);
+    const note = pasteNotice(res);
     if (note) showBanner(note);
   }
   // Inline banner above the grid. Dismissible; a new paste replaces it.
