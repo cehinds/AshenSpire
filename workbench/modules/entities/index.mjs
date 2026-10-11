@@ -10,7 +10,7 @@
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
   facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
-  RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan, drawerOpenFor,
+  RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan, drawerOpenFor, gameStartOf,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -76,7 +76,7 @@ export default {
     const prefs = { density: ctx.settings.get('density', 'comfortable'), layout: ctx.settings.get('layout', 'grid') };
     // mainHand and offHand start null (not chosen yet); '' is a chosen empty hand.
     const st = { ...parseDeepLink({}), density: prefs.density, layout: prefs.layout, pose: 'idle', tab: 'card', classId: 'reaver', mainHand: null, offHand: null };
-    const game = { base: null, origin: null, ready: false };
+    const game = { base: null, origin: null, ready: false, serverId: null };
     let seenParams = null;
     let counts = {}, index = [], indexKind = null, classes = [], armaments = [], files = null;
     let tryFor = undefined; // the entity the Try in fight hands were last set for
@@ -114,9 +114,10 @@ export default {
     let runs = 0;
     async function connect({ force = false } = {}) {
       const run = ++runs;
-      let base = null, failure = null;
+      let base = null, failure = null, tools = [];
       try {
-        base = gameBaseOf(await ctx.api('tools'));
+        tools = await ctx.api('tools');
+        base = gameBaseOf(tools);
         if (!base) throw new Error('The game server is not running.');
       } catch (err) { failure = err; }
       if (run !== runs) return; // a later connect has taken over
@@ -127,8 +128,9 @@ export default {
         return;
       }
       setup.hidden = true;
-      if (connectPlan({ base, currentOrigin: game.origin, ready: game.ready, force }) === 'keep') return;
-      game.base = base; game.origin = new URL(base).origin; game.ready = false;
+      const serverId = gameStartOf(tools);
+      if (connectPlan({ base, currentOrigin: game.origin, ready: game.ready, force, serverId, currentServerId: game.serverId }) === 'keep') return;
+      game.base = base; game.origin = new URL(base).origin; game.ready = false; game.serverId = serverId;
       center.src = renderUrl(base, { parentOrigin: location.origin });
       drawer.src = renderUrl(base, { parentOrigin: location.origin, kind: st.kind, view: 'detail' });
       awaitReady();
@@ -325,7 +327,10 @@ export default {
     }).catch(() => { files = null; });
     renderChips(); renderTabs(); renderTitle(); renderFacets(); renderCount();
     connect();
+    // The content was rebuilt, or the game server came up again (a restart may keep its port): draw the new one.
+    const offReload = ctx.onReload((ev) => connect({ force: true }));
     return {
+      unmount() { offReload(); clearTimeout(readyTimer); clearTimeout(answerTimer); },
       // The host calls onShow after mount, and again each time the module is opened. It keeps a
       // fresh params object per open, so a link or command applies once and a plain return keeps the state.
       onShow() {
