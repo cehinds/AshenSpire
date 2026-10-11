@@ -151,6 +151,43 @@ test('a fresh lock that takes the slot after the stale one is judged is not remo
   assert.equal(fs.readFileSync(lockPath(root), 'utf8'), fresh, 'the fresh lock is left in place');
 });
 
+test('a stale lock is broken and acquired, leaving no break mutex behind', (t) => {
+  const root = tmpRoot(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: deadPid(), holder: 'Crashed build', startedAt: Date.now(), token: 'x' }));
+  const release = tryAcquire(root, 'me');
+  assert.equal(typeof release, 'function', 'the stale lock is broken and taken');
+  assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'me');
+  release();
+  assert.deepEqual(fs.readdirSync(root), [], 'no lock and no .break left behind');
+});
+
+test('a fresh break mutex blocks breaking: the stale lock stays until the break is over', (t) => {
+  const root = tmpRoot(t);
+  const stale = JSON.stringify({ pid: deadPid(), holder: 'Crashed build', startedAt: Date.now(), token: 'x' });
+  fs.writeFileSync(lockPath(root), stale);
+  fs.writeFileSync(`${lockPath(root)}.break`, 'other-breaker');
+  const got = tryAcquire(root, 'me');
+  assert.equal(typeof got, 'object', 'a break in progress is not taken over');
+  assert.equal(fs.readFileSync(lockPath(root), 'utf8'), stale, 'the stale lock is not removed by this run');
+  assert.equal(fs.readFileSync(`${lockPath(root)}.break`, 'utf8'), 'other-breaker', 'the other breaker\'s mutex is left alone');
+  fs.rmSync(`${lockPath(root)}.break`);
+  const release = tryAcquire(root, 'me');
+  assert.equal(typeof release, 'function', 'once the break is over, the stale lock is broken');
+  release();
+});
+
+test('a leftover break mutex older than 30 s is cleared, and the stale lock is broken', (t) => {
+  const root = tmpRoot(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: deadPid(), holder: 'Crashed build', startedAt: Date.now(), token: 'x' }));
+  fs.writeFileSync(`${lockPath(root)}.break`, 'crashed-breaker');
+  const old = new Date(Date.now() - 60 * 1000);
+  fs.utimesSync(`${lockPath(root)}.break`, old, old);
+  const release = tryAcquire(root, 'me');
+  assert.equal(typeof release, 'function', 'a crashed breaker does not block forever');
+  release();
+  assert.deepEqual(fs.readdirSync(root), [], 'the leftover mutex is cleared');
+});
+
 test('acquire waits for the holder, and gives up naming it after the timeout', async (t) => {
   const root = tmpRoot(t);
   const first = tryAcquire(root, 'Engine export (Workbench)');
