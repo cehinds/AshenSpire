@@ -25,6 +25,7 @@ import { serve } from './serve.mjs';
 // here since the launcher was written. A second implementation of a rule is a
 // second chance to disagree with it, and this one disagreed silently.
 import { buildVersion } from './buildversion.mjs';
+import { holdForCli } from './lib/build-lock.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -90,6 +91,9 @@ const TIER = FULL_ART ? 'high' : 'light';
 // 0a. Compile presentation config (content/config/**.json → src/config/generated/ui.js).
 // Runs before the content build, whose stray-source sweep refuses a config file
 // the generated module was not compiled from.
+// The builds below write the generated trees: hold the shared lock until the
+// build is done (the builders run under it; tools/lib/build-lock.mjs).
+const releaseBuildLock = await holdForCli(ROOT, 'launch');
 console.log('launch: compiling presentation config…');
 const uiConfig = spawnSync(process.execPath, [resolve(ROOT, 'tools/config-build.mjs')], { stdio: 'inherit' });
 if (uiConfig.status !== 0) {
@@ -192,6 +196,8 @@ if (args.includes('--build-only')) {
   console.log(`launch: OK — ${landed}/${aliases.length} current-build aliases refreshed.`);
   process.exit(0);
 }
+
+releaseBuildLock();
 
 // 3. Serve the live app and open the browser.
 const pi = args.indexOf('--port');

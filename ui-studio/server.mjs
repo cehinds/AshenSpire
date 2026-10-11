@@ -20,7 +20,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { compileEntries, readConfigTree, CONFIG_DIR } from '../tools/config-build.mjs';
-import { tryAcquire, acquire, busyMessage } from '../tools/lib/build-lock.mjs';
+import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
 import { artPath, packTreeOf } from '../tools/art-source.mjs';
 import { DEFAULT_SETTINGS, mergeSettings, settingsProblems, sketchProblems } from './model.mjs';
 
@@ -266,7 +266,8 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
       }
       try {
         await new Promise((resolve) => {
-          const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true });
+          // config-build runs under this compile's hold on the lock (tools/lib/build-lock.mjs).
+          const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) } });
           current.child = child;
           const append = (d) => { current.output = (current.output + d).slice(-60000); };
           child.stdout.on('data', append); child.stderr.on('data', append);

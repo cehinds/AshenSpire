@@ -8,7 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { tryAcquire as tryFileLock, acquire as waitFileLock, busyMessage } from '../../tools/lib/build-lock.mjs';
+import { tryAcquire as tryFileLock, acquire as waitFileLock, busyMessage, lockEnv } from '../../tools/lib/build-lock.mjs';
 
 export const HISTORY = 30;
 const LOG_CAP = 400 * 1024;
@@ -115,7 +115,9 @@ export class JobRunner {
       this.append(run, `> ${commandLine(step)}\n`);
       const code = await new Promise((resolve) => {
         // Its own process group on POSIX, so a cancel also stops what the step started.
-        const child = spawn(process.execPath, step.args, { cwd: this.root, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' }, windowsHide: true, detached: process.platform !== 'win32' });
+        // The step's builders run under this job's hold on the cross-process lock.
+        const held = JOBS[run.id]?.lock ? lockEnv(this.fileLocks.get(JOBS[run.id].lock)) : {};
+        const child = spawn(process.execPath, step.args, { cwd: this.root, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1', ...held }, windowsHide: true, detached: process.platform !== 'win32' });
         run.child = child;
         child.stdout.on('data', (d) => this.append(run, d.toString()));
         child.stderr.on('data', (d) => this.append(run, d.toString()));
@@ -142,6 +144,9 @@ export class JobRunner {
     this.persist();
     this.onEvent('job', this.summary(run));
   }
+
+  /** The env that lets a builder run under the cross-process lock this runner holds for `lock`. */
+  lockEnv(lock) { return lockEnv(this.fileLocks.get(lock)); }
 
   /** Wait for a lock group to be free here and in other processes, then hold
    *  it as `label`; pair with release(). Rejects if another process keeps the

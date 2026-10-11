@@ -19,7 +19,7 @@ import { spawn, execFile } from 'node:child_process';
 import { safePath, createGate, newToken, createSseHub, readJson, sendJson, MIME } from './lib/index.mjs';
 import { ToolSupervisor } from './core/tools.mjs';
 import { JobRunner, GENERATED } from './core/jobs.mjs';
-import { createWatcher, buildsFor } from './core/watch.mjs';
+import { createWatcher, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -88,7 +88,7 @@ export async function library(root, { settings = {}, extBase = '' } = {}) {
   return { areas: registry.areas, entries };
 }
 
-export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, children = true, stateDir = path.join(HERE, '.state'), debounceMs = 300, ports, forcePoll = false, env = process.env } = {}) {
+export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, children = true, stateDir = path.join(HERE, '.state'), debounceMs = 300, ports, forcePoll = false, env = process.env, lockWaitMs = 10 * 60 * 1000 } = {}) {
   root = await fs.realpath(root);
   const token = newToken();
   const hub = createSseHub();
@@ -104,21 +104,37 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   let watcher = null; let chain = Promise.resolve();
   const runBuild = (script) => new Promise((resolve) => {
     let out = '';
-    const child = spawn(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0' }, windowsHide: true });
+    const child = spawn(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0', ...jobs.lockEnv(GENERATED) }, windowsHide: true });
     child.stdout.on('data', (d) => { out = (out + d).slice(-20000); });
     child.stderr.on('data', (d) => { out = (out + d).slice(-20000); });
     child.on('error', (e) => resolve({ code: -1, out: e.message }));
     child.on('close', (code) => resolve({ code, out }));
   });
-  function onBatch(files) {
+  // Batches not yet taken by the chain; one arriving meanwhile joins them, so a
+  // writer's files that land while the reload waits for it reload once.
+  let queued = null;
+  const stepsFor = (files) => buildsFor(files, root).filter((s) => existsSync(path.join(root, s)));
+  function onBatch(batch) {
+    if (queued) { for (const f of batch) queued.add(f); return; }
+    const mine = queued = new Set(batch);
+    const take = () => { if (queued === mine) queued = null; return [...mine].sort(); };
     chain = chain.then(async () => {
-      const steps = buildsFor(files, root).filter((s) => existsSync(path.join(root, s)));
+      // Generated output written by another writer (a Workbench job, the editor,
+      // UI Studio, a terminal build) reloads only once that writer is done: wait
+      // for the shared lock to be free, then reload once.
+      if ([...mine].some(isBuildOutput) && !stepsFor([...mine]).length) {
+        try { await jobs.acquire(GENERATED, 'A live-reload', { timeoutMs: lockWaitMs }); jobs.release(GENERATED); } catch (e) {
+          hub.send('reload-failed', { files: take(), step: null, output: e.message }); return;
+        }
+      }
+      const files = take();
+      const steps = stepsFor(files);
       const built = [];
       if (steps.length) {
         hub.send('building', { files, steps });
         // Live-reload builds share the jobs' lock: never two writers of the generated trees.
         // It also waits for the editor or UI Studio when one of them is building (tools/lib/build-lock.mjs).
-        try { await jobs.acquire(GENERATED, 'A live-reload build'); } catch (e) { hub.send('reload-failed', { files, step: steps[0], output: e.message }); return; }
+        try { await jobs.acquire(GENERATED, 'A live-reload build', { timeoutMs: lockWaitMs }); } catch (e) { hub.send('reload-failed', { files, step: steps[0], output: e.message }); return; }
         watcher.mute();
         try {
           for (const step of steps) {
@@ -130,7 +146,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       }
       reloads += 1;
       hub.send('reload', { files, count: files.length, built, at: Date.now() });
-    }).catch(() => {});
+    }).catch(() => { take(); });
   }
 
   const server = http.createServer(async (req, res) => {

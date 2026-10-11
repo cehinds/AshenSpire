@@ -7,6 +7,13 @@
 // created exclusively ('wx') holding { pid, holder, startedAt, token }. A lock
 // whose pid is gone, or that is older than STALE_MS, is broken and taken over.
 // Release removes the file only while it still holds our pid and token.
+//
+// THE WRITER CLIs TAKE IT THEMSELVES (holdForCli). Each builder run directly
+// waits for the lock, so two terminals, or a terminal and a studio, never write
+// the trees at once. Nesting does not deadlock: a holder passes its lock's
+// token to the builders it spawns in ASHEN_BUILD_LOCK_TOKEN (lockEnv), and a
+// builder whose token matches the live lock file runs under its parent's hold.
+// --check modes only read, and take no lock.
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -71,13 +78,13 @@ export function tryAcquire(root, holder) {
     }
     try { fs.writeSync(fd, JSON.stringify(info)); } finally { fs.closeSync(fd); }
     let released = false;
-    return function release() {
+    return Object.assign(function release() {
       if (released) return; released = true;
       const lock = readLock(file);
       if (lock?.info && lock.info.pid === info.pid && lock.info.token === token) {
         try { fs.unlinkSync(file); } catch { /* already gone */ }
       }
-    };
+    }, { token });
   }
   const lock = readLock(file);
   return { heldBy: { pid: lock?.info?.pid ?? null, holder: lock?.info?.holder || 'Another build', startedAt: lock?.info?.startedAt ?? null } };
@@ -96,3 +103,46 @@ export async function acquire(root, holder, { timeoutMs = 10 * 60 * 1000, pollMs
 
 /** The 409 message for a refused start. */
 export const busyMessage = (heldBy) => `${heldBy.holder} is running; try again when it finishes`;
+
+/** The variable a holder passes its lock token to its children in. */
+export const TOKEN_ENV = 'ASHEN_BUILD_LOCK_TOKEN';
+
+/** The env entries a holder gives the builders it spawns, so they run under its hold. */
+export const lockEnv = (release) => (release && release.token ? { [TOKEN_ENV]: release.token } : {});
+
+/** True when `env` carries the token of the lock now held at `root` by a live process: a parent holds it for us. */
+export function heldByParent(root, env = process.env) {
+  const token = env[TOKEN_ENV];
+  if (!token) return false;
+  const lock = readLock(lockPath(root));
+  return Boolean(lock?.info && lock.info.token === token && pidAlive(lock.info.pid));
+}
+
+export const CLI_WAIT_MS = 5 * 60 * 1000;
+
+/**
+ * The lock for a writer CLI run directly (content-build, config-build,
+ * framework-data-build, engine-export, launch). Runs under a parent's hold when
+ * the env token matches; otherwise waits for the lock (saying who holds it),
+ * holds it until the process exits, and puts its token in `env` so the builders
+ * it spawns run under it. On timeout it exits 1 naming the holder.
+ * @returns {Function} release (a no-op under a parent's hold).
+ */
+export async function holdForCli(root, holder, { env = process.env, timeoutMs = Number(env.ASHEN_BUILD_LOCK_WAIT_MS) || CLI_WAIT_MS, pollMs = 250, log = (line) => console.error(line), exit = (code) => process.exit(code) } = {}) {
+  if (heldByParent(root, env)) return () => {};
+  let release = tryAcquire(root, holder);
+  if (typeof release !== 'function') {
+    const { heldBy } = release;
+    log(`${holder}: waiting for ${heldBy.holder}${heldBy.pid ? ` (pid ${heldBy.pid})` : ''} to finish writing the generated files…`);
+    try { release = await acquire(root, holder, { timeoutMs, pollMs }); } catch (e) {
+      log(`${holder}: gave up after ${Math.round(timeoutMs / 1000)} s — ${e.message}. If no build is running, delete ${lockPath(root)}.`);
+      exit(1);
+      throw e;
+    }
+  }
+  const token = release.token;
+  env[TOKEN_ENV] = token;
+  const done = () => { release(); if (env[TOKEN_ENV] === token) delete env[TOKEN_ENV]; process.removeListener('exit', done); };
+  process.on('exit', done);
+  return done;
+}

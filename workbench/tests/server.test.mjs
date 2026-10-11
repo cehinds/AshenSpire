@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS, JobRunner, GENERATED, killTree } from '../core/jobs.mjs';
@@ -294,6 +294,51 @@ test('an edit made while a build runs is kept for the next reload; only the buil
   for (const r of reloads) assert.ok(!r.files.some(isBuildOutput), `no batch carries the build's own output: ${r.files}`);
 });
 
+test('generated output written by another process reloads once that process frees the build lock, not before', async (t) => {
+  const root = await project(t);
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(root, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Editor content build', startedAt: Date.now(), token: 'x' }));
+  const gen = path.join(root, 'src/content/generated');
+  await fs.mkdir(gen, { recursive: true });
+  const { app } = await boot(t, root);
+  let freedAt = 0;
+  const reloads = await collectEvents(app, 'reload', (evs) => evs.length >= 1, {
+    onOpen: async () => {
+      await new Promise((r) => setTimeout(r, 300));
+      await fs.writeFile(path.join(gen, 'cards.js'), 'export const cards = [];\n');
+      await new Promise((r) => setTimeout(r, 800));
+      await fs.writeFile(path.join(gen, 'enemies.js'), 'export const enemies = [];\n'); // the writer is still going
+      await new Promise((r) => setTimeout(r, 800));
+      assert.equal(app.reloads, 0, 'no reload while the writer holds the lock');
+      freedAt = Date.now();
+      await fs.rm(lock);
+    },
+  });
+  assert.ok(freedAt > 0 && reloads[0].at >= freedAt, 'reloaded after the lock was freed');
+  assert.deepEqual(reloads[0].files, ['src/content/generated/cards.js', 'src/content/generated/enemies.js'], 'one reload for the whole write');
+  await new Promise((r) => setTimeout(r, 500));
+  assert.equal(app.reloads, 1);
+});
+
+test('a reload waiting on a build lock that is never freed reports reload-failed', async (t) => {
+  const root = await project(t);
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: other.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'x' }));
+  await fs.mkdir(path.join(root, 'src/config/generated'), { recursive: true });
+  const { app } = await boot(t, root, { lockWaitMs: 600 });
+  nextEvent.onOpen = async () => {
+    await new Promise((r) => setTimeout(r, 300));
+    await fs.writeFile(path.join(root, 'src/config/generated/ui.js'), 'export default 1;\n');
+  };
+  const failed = await nextEvent(app, 'reload-failed');
+  assert.deepEqual(failed.files, ['src/config/generated/ui.js']);
+  assert.match(failed.output, /UI Studio config compile is running/);
+  assert.equal(app.reloads, 0);
+});
+
 test('settings: checkouts are validated; the art checkout is served read-only on the preview origin only', async (t) => {
   const root = await project(t);
   const art = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-art-')));
@@ -441,6 +486,33 @@ test('the game server is reused only when it names this project as its root', as
   assert.match(unknown.conflict, /does not say which checkout/);
 });
 
+test('the game server the Workbench starts listens on loopback only, never on the LAN', async (t) => {
+  const root = await project(t);
+  await fs.writeFile(path.join(root, 'index.html'), '<!doctype html><title>game</title>');
+  const game = toolDefs({ repo: path.resolve(HERE, '../..'), root, origin: 'http://127.0.0.1:1' }).find((d) => d.id === 'game');
+  const args = game.command(0);
+  const at = args.indexOf('--host');
+  assert.ok(at > 0, 'the command line passes --host');
+  assert.equal(args[at + 1], 'localhost');
+  // Run the Workbench's own command line and read the port from its log, as the supervisor does.
+  const child = spawn(process.execPath, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  t.after(() => child.kill());
+  const port = await new Promise((resolve, reject) => {
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; const m = out.match(game.portFrom); if (m) resolve(Number(m[1])); });
+    child.on('exit', (code) => reject(Error(`serve exited ${code}: ${out}`)));
+  });
+  for (const host of ['127.0.0.1', 'localhost']) assert.equal((await fetch(`http://${host}:${port}/index.html`)).status, 200, host);
+  const lan = Object.values(os.networkInterfaces()).flat().find((a) => a && !a.internal && a.family === 'IPv4');
+  if (!lan) { t.diagnostic('no non-loopback IPv4 interface: LAN reachability not checked'); return; }
+  const reached = await fetch(`http://${lan.address}:${port}/index.html`, { signal: AbortSignal.timeout(2000) }).then(() => true, () => false);
+  assert.equal(reached, false, `not reachable on ${lan.address}`);
+  // Without --host serve.mjs still listens everywhere (LAN play and existing callers rely on it).
+  const open = await serve({ root, port: 0, open: false, quiet: true });
+  t.after(() => open.server.close());
+  assert.equal((await fetch(`http://${lan.address}:${open.port}/index.html`)).status, 200, 'the default bind is unchanged');
+});
+
 test('the Content Editor and Pose Studio are reused only when they name this project', async (t) => {
   const root = await project(t);
   const other = await project(t);
@@ -512,6 +584,20 @@ test('a live-reload build waits for a job holding the generated-files lock, and 
   runner.release(GENERATED);
   await fs.writeFile(path.join(root, 'tools/content-build.mjs'), '\n');
   assert.equal(runner.start('content-build').status, 'running');
+});
+
+test('a job\'s builder that takes the lock itself runs under the job\'s hold, not into a deadlock', async (t) => {
+  const root = await project(t);
+  const runner = new JobRunner({ root, stateFile: path.join(root, '.wb-state/jobs.json') });
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  const lib = pathToFileURL(path.resolve(HERE, '../../tools/lib/build-lock.mjs')).href;
+  // A writer CLI as the real ones are: it holds the lock while it writes, waiting at most 1 s.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `import { holdForCli } from ${JSON.stringify(lib)};\nprocess.env.ASHEN_BUILD_LOCK_WAIT_MS = '1000';\nawait holdForCli(process.cwd(), 'config-build');\nconsole.log('built');\n`);
+  const run = runner.start('config-build');
+  for (let i = 0; i < 200 && runner.active.size; i++) await new Promise((r) => setTimeout(r, 20));
+  const done = runner.get(run.runId);
+  assert.equal(done.status, 'passed', done.log);
+  assert.doesNotMatch(done.log, /waiting for/);
 });
 
 test('a setting saved empty stays empty instead of falling back to its default', async (t) => {
