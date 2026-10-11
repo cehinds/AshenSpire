@@ -451,6 +451,10 @@ export const LIVE = {
   // proposed live mapping (domain pass)
   'item': 'item',
   'item.bound': 'bound',
+  // proposed live mapping (domain pass)
+  'itemType': 'itemType',
+  'itemType.blade': 'item:blade',
+  'itemType.magic-focus': 'item:magic-focus',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

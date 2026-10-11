@@ -733,5 +733,8 @@
  "counterMode.melee": "new",
  "counterMode.spell": "new",
  "item": "new",
- "item.bound": "new"
+ "item.bound": "new",
+ "itemType": "new",
+ "itemType.blade": "new",
+ "itemType.magic-focus": "new"
 }

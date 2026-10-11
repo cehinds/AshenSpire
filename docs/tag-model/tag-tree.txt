@@ -859,3 +859,6 @@ Counter reach {Counter reach: which kind of incoming attack a counter can answer
   Spell counter {Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.}
 Item {What a piece of gear DOES beyond its numbers, and what a run pickup is.}
   Bound {Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.}
+Item type {What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.}
+  Blade {What this piece IS: the Armoury and the smith name it Blade.}
+  Magic Focus {What this piece IS: the Armoury and the smith name it Magic Focus.}
