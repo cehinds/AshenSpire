@@ -242,7 +242,9 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   // The folders there when the watch began, and those seen since, with their inodes:
   // on macOS only a folder not among them is walked for its files (see recursiveEventPaths).
   const knownFolders = new Map(); // folder -> inode
-  const startedAt = Date.now(); // on macOS, a file not changed since then is a replayed event
+  // On macOS, a file not changed since then is a replayed event. Whole seconds: HFS+ keeps
+  // file times to the second, so an edit in the watch's first second must not read as older.
+  const startedAt = Math.floor(Date.now() / 1000) * 1000;
   const startFiles = new Map(); // macOS: file -> inode when the watch began (see presentAtStart)
   const presentAtStart = (p) => { try { return startFiles.get(p) === fs.statSync(p).ino; } catch { return false; } };
   const isNewFolder = (p) => {
