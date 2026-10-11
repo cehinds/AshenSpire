@@ -161,6 +161,16 @@ test('staleGenerated runs the builders (or their --check) and names the stale on
   assert.equal(r.status, 0, `the checkout's generated modules are current:\n${r.stdout}${r.stderr}`);
 });
 
+test('--no-build holds the generated tree before checking or importing it', () => {
+  const source = readFileSync(tool, 'utf8');
+  const main = source.slice(source.indexOf('async function main()'));
+  const lock = main.indexOf("await holdForCli(ROOT, 'engine-export')");
+  const staleCheck = main.indexOf('staleGenerated({ build: opts.build })');
+  assert.ok(lock >= 0, 'engine-export does not take the shared lock');
+  assert.ok(lock < staleCheck, 'the lock must cover stale checks and generated-module imports');
+  assert.doesNotMatch(main.slice(0, staleCheck), /if\s*\(opts\.build\)[^\n]*holdForCli/, '--no-build must not skip the lock');
+});
+
 // The Unreal importer runs against a stub `unreal` module (no editor here):
 // after a complete import it deletes only the DT_* DataTables it tagged as its own that the
 // manifest no longer lists; a cancelled or failed import, or --no-prune, keeps them.
