@@ -152,21 +152,22 @@ export function parseEvasionCards(text) {
 // + card bonus + `evasion` (any extra flat bonus). `tables` is { armor, cards }
 // from parseEvasionArmor and parseEvasionCards. The inputs are evasionArmor,
 // dex, shield and evasionCard. They are not the action's `armor` and `card`,
-// which are speed-table ids. A missing evasionArmor counts as Cloth, and a
-// missing DEX adds nothing. The DEX term is never negative. A buckler adds
+// which are speed-table ids. A missing evasionArmor counts as Cloth. A missing
+// dex takes attrs.DEX, and a missing DEX adds nothing. The DEX term is never negative. A buckler adds
 // 1 and any other shield adds 0. A card not in the table adds 0.
 // With none of evasionArmor, dex, shield or evasionCard given, the result is the
 // plain `evasion` number, so existing callers are unchanged.
 export const SHIELD_EVASION = Object.freeze({ buckler: 1 });
 
-export function evasionFor({ evasionArmor, dex, shield, evasionCard, evasion = 0 } = {}, tables = {}) {
+export function evasionFor({ evasionArmor, dex, shield, evasionCard, attrs, evasion = 0 } = {}, tables = {}) {
   const flat = Number(evasion ?? 0);
   const extra = Number.isFinite(flat) ? flat : 0;
   if (evasionArmor == null && dex == null && shield == null && evasionCard == null) return extra;
   const armorName = evasionArmor ?? 'Cloth';
   const row = tables?.armor?.get(armorName);
   if (!row) throw new RangeError(`unknown armor "${armorName}"`);
-  const dexNum = Number(dex ?? 1);
+  // A missing dex takes attrs.DEX, and a missing attrs.DEX counts as 1 (adds 0).
+  const dexNum = Number(dex ?? attrs?.DEX ?? 1);
   const dexTerm = Math.max(0, Math.min(dexNum - 1, row.dexCap)) || 0;
   const shieldBonus = shield != null && Object.hasOwn(SHIELD_EVASION, shield) ? SHIELD_EVASION[shield] : 0;
   const cardBonus = evasionCard == null ? 0 : (tables?.cards?.get(evasionCard) ?? 0);
@@ -251,7 +252,7 @@ function normalizeSide(name, s, tables) {
     tags: Array.isArray(s.tags) ? [...s.tags] : [],
     accuracy: accuracyFor({ attrs: s.attrs, level: s.level, tags: s.tags, accuracy: s.accuracy }),
     attrs: s.attrs ?? {},
-    evasion: evasionFor({ evasionArmor: s.evasionArmor, dex: s.dex, shield: s.shield, evasionCard: s.evasionCard, evasion: s.evasion }, tables),
+    evasion: evasionFor({ evasionArmor: s.evasionArmor, dex: s.dex, shield: s.shield, evasionCard: s.evasionCard, attrs: s.attrs, evasion: s.evasion }, tables),
     stance: s.stance ?? null,
     damage: Number(s.damage ?? 0),
     block: Number(s.block ?? 0),

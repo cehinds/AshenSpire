@@ -346,6 +346,19 @@ test('speed ids: a card or armor on an action is not an evasion input (no throw,
   }
 });
 
+test('evasionFor: a missing dex takes attrs.DEX, an explicit dex wins, and attrs alone add nothing', () => {
+  assert.equal(evasionFor({ evasionArmor: 'Leather', attrs: { DEX: 4 } }, evasionTables()), 4, '1 + min(3, 6)');
+  assert.equal(evasionFor({ evasionArmor: 'Leather', dex: 2, attrs: { DEX: 4 } }, evasionTables()), 2, 'explicit dex 2: 1 + min(1, 6)');
+  assert.equal(evasionFor({ attrs: { DEX: 4 } }), 0, 'no evasion input: the plain evasion, 0');
+});
+
+test('evasion from attrs.DEX reaches the hit roll: Leather with DEX 4 is evasion 4, needs 12', () => {
+  const foe = { id: 'foe', speed: 1, kind: 'attack' };
+  const target = { ...PLAIN_TARGET, evasionArmor: 'Leather', attrs: { DEX: 4 } };
+  assert.equal(find(resolvePair(target, foe, d20Face(11), { evasionTables: evasionTables() }), 'hit').hit, false);
+  assert.equal(find(resolvePair(target, foe, d20Face(12), { evasionTables: evasionTables() }), 'hit').hit, true);
+});
+
 test('evasionArmor, evasionCard and shield are the evasion inputs', () => {
   const foe = { id: 'foe', speed: 1, kind: 'attack' };
   const target = { ...PLAIN_TARGET, card: 'strike', evasionArmor: 'Leather', dex: 3 };
