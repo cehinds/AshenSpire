@@ -246,6 +246,22 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
     ['Guard broken! (+3 Poise pressure)']);
 });
 
+test('v1: a Smash with a zero break bonus still reports the Guard break, with no Poise claim', () => {
+  const registries = createRegistries(contentBundle);
+  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
+      energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
+  const enemy = c.enemies[0];
+  enemy.hp = enemy.maxHp = 200; enemy.block = 3;
+  const poiseBefore = enemy.poiseMeter?.value;
+  applyAttackDamage(c, c.player, enemy, 5, [], { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'slashing', breakPoiseBonus: 0 },
+    attack: { source: 'weapon', damageType: 'slashing' }, combatRiderTargets: [] });
+  assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, poise }) => ({ targetId, poise })), [{ targetId: 'e1', poise: 0 }]);
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
+    ['Guard broken!']);
+  assert.equal(enemy.poiseMeter?.value, poiseBefore, 'no bonus Poise was applied');
+});
+
 test('v1: a Smash into an armed Counter breaks Guard through the synchronous door once', () => {
   const profile = { camp: 'physical', maneuver: 'smash', damageType: 'slashing' };
   const registries = createRegistries({ ...legacyContentBundle,

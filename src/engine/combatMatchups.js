@@ -155,7 +155,8 @@ export function completeMatchupHit(ctx, source, target, carrier, receipt, { bloc
     // The same hit's Guard-break consequence precedes its retaliation. Resolve
     // through the ordinary Poise implementation so a real stagger can clear
     // Counter before either its queued damage or synchronous Ward reply starts.
-    if (amount) ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: amount });
+    // The break is reported even with no bonus: Guard broke all the same.
+    ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: amount });
     if (amount && receipt.counterEligible && typeof applySmashBreakPoise === 'function') applySmashBreakPoise(amount);
     else if (amount) ctx.enqueue({ effect: { op: 'poiseDamage', amount }, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
   }
@@ -453,8 +454,9 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   };
   if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0 && target?.alive) {
     const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
+    // The break is reported even with no bonus: Guard broke all the same.
+    ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: Math.max(0, number(amount)) });
     if (amount > 0) {
-      ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: amount });
       ctx.enqueue?.({ effect: { op: 'poiseDamage', amount }, source, owner: source, target,
         card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
     }
