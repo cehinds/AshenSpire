@@ -185,6 +185,19 @@ export function parsePoseFile(text) {
   return { project, original: text, problems: checkProject(project) };
 }
 
+/**
+ * Orders file selections. begin() starts one and returns its generation; current(g) is true only
+ * for the newest one, so a read that finishes after a newer pick is dropped instead of installed.
+ */
+export function selectionGate() {
+  let latest = 0;
+  return {
+    begin() { latest += 1; return latest; },
+    current(generation) { return generation === latest; },
+    latest() { return latest; },
+  };
+}
+
 /** The problems that would stop the game reading a project (a subset of the game's validate()). */
 export function checkProject(p) {
   const problems = [];

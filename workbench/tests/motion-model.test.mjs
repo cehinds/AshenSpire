@@ -9,7 +9,7 @@ import {
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
   canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
-  rebaseOnConflicts, viewOf,
+  rebaseOnConflicts, viewOf, selectionGate,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -362,4 +362,14 @@ test('viewOf leaves a well-formed project as it is and fills missing poses and a
   assert.deepEqual(bare.anchors, {});
   assert.deepEqual(bare.clips, []);
   assert.equal(viewOf(null), null);
+});
+
+test('a selection gate drops a file read that a newer selection has overtaken', () => {
+  const gate = selectionGate();
+  const first = gate.begin();
+  const second = gate.begin();
+  assert.equal(gate.current(first), false, 'the first pick is stale once the second begins');
+  assert.equal(gate.current(second), true);
+  assert.equal(gate.latest(), second, 'reading the latest does not start a new selection');
+  assert.equal(gate.current(second), true);
 });
