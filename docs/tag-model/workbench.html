@@ -342,11 +342,12 @@ async function flush(t){
   if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),500); return; }
   if(!dirty.has(t)) return;
   dirty.delete(t); saving.add(t); setStatus();
-  const parts=chunk(state.data[t].rows);
+  const cols=state.data[t].columns;
+  const parts=chunk(state.data[t].rows.map(r=>cols.map(c=>r[c]??'')));
   try{
     const prev=saved[t]||{parts:[],head:''};
     for(let i=0;i<parts.length;i++){ const js=JSON.stringify(parts[i]); if(prev.parts[i]!==js){ await db.doc('tables/'+t+'/parts/p'+i).set({index:i,rows:parts[i]}); } }
-    const head={columns:state.data[t].columns, parts:parts.length};
+    const head={columns:cols, parts:parts.length, format:'arrays'};
     const hj=JSON.stringify(head); if(prev.head!==hj) await db.doc('tables/'+t).set(head);
     for(let i=parts.length;i<prev.parts.length;i++) await db.doc('tables/'+t+'/parts/p'+i).delete();
     saved[t]={parts:parts.map(x=>JSON.stringify(x)), head:hj};
@@ -592,11 +593,11 @@ rebuild(); setStatus(); render();
       const h=live[t].head; if(!h) return;
       let rows;
       if(Array.isArray(h.rows)) rows=h.rows;
-      else { rows=[]; for(let i=0;i<(h.parts||0);i++){ const p=live[t].parts.get(i); if(!p) return; rows.push(...p); } }
+      else { rows=[]; const hc=h.columns||[]; for(let i=0;i<(h.parts||0);i++){ const p=live[t].parts.get(i); if(!p) return; for(const r of p) rows.push(Array.isArray(r)? Object.fromEntries(hc.map((c,j)=>[c,r[j]??''])) : r); } }
       const cols=Array.isArray(h.columns)&&h.columns.length? [...h.columns] : [...TABLES[t].columns];
       for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
       loaded.add(t); pending.delete(t);
-      saved[t]= Array.isArray(h.rows)? {parts:[],head:''} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts})};
+      saved[t]= Array.isArray(h.rows)? {parts:[],head:''} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts,format:h.format})};
       if(JSON.stringify(rows)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
       state.data[t]={columns:cols, rows:JSON.parse(JSON.stringify(rows))};
       loaded.add(t); pending.delete(t);
