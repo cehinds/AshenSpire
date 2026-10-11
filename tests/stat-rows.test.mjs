@@ -92,8 +92,9 @@ test('hand scaling remains preserved while ratings use their single primary bonu
     const draw = Math.min(10, 4 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5));
     assert.equal(statRowCount(resolvedRuleRow(table, 'draw'), attrs), draw);
     assert.equal(statRowCount(resolvedRuleRow(table, 'openingHand'), attrs), draw);
-    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), 15);
+    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), Math.min(20, 7 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5)));
   }
+  assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), at(14)), 9, 'hand size 7 + 2 at INT 14');
   for (const id of ['ar', 'dr', 'pr', 'ward']) {
     for (const attrs of [at(3), at(5), at(8), at(12)]) {
       assert.equal(statRowCount(resolvedRuleRow(table, id), attrs), attrs.strength + (id === 'ward' ? 1 : 0), `${id}`);
