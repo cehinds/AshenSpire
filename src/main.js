@@ -1741,10 +1741,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       const empty = slots.find((s) => !s.summary);
       startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
     },
-    // A delete returns to the door it came from, with the slot now empty.
+    // The Title updates in place from the returned list (no remount). The
+    // snapshot below is this showTitle's own `slots`, which onQuickStart and
+    // onCustom read, so it is refreshed too.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);
-      showTitle({ reopen: from });
+      const fresh = saveSlotRecords();
+      slots.splice(0, slots.length, ...fresh);
+      return fresh;
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
