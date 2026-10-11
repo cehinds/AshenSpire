@@ -47,7 +47,7 @@ scale.resist.hybrid,TBD,TBD,armor,"Resistance of scale to hybrid damage (TBD pla
 dodgeBlock.mod,1,×,dodgeRoll,"Modifier on Dodge Block; relics and stances change this (owner decision 9)"
 cloth.evasionBase,0,rating,armor,"Evasion base of cloth armour (evasion table, decision 11)"
 cloth.dexCap,4,points,armor,"DEX cap of cloth armour for the evasion DEX term (decision 11)"
-leather.evasionBase,1,rating,armor,"Evasion base of leather armour (decision 11)"
+leather.evasionBase,0,rating,armor,"Evasion base of leather armour (decision 11)"
 leather.dexCap,6,points,armor,"DEX cap of leather armour (decision 11)"
 studded.evasionBase,1,rating,armor,"Evasion base of studded armour (decision 11)"
 studded.dexCap,3,points,armor,"DEX cap of studded armour (decision 11)"
