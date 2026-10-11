@@ -22,7 +22,7 @@ on:
 # cancelled (cancel-in-progress: false); the rebase-and-retry push loop below
 # handles the race with architecture-sync.yml.
 concurrency:
-  group: readme-sync-dev
+  group: readme-sync-${{ github.ref_name }}
   cancel-in-progress: false
 
 # The routine commits only README.md.

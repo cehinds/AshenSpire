@@ -5,11 +5,11 @@ on:
     branches: [dev, alternative/dev, 'alternative/**/dev']
   workflow_dispatch:
 
-# Own group, per workflow. A shared group would let one pending run replace the
+# Own group, per workflow and target ref. A shared group would let one pending run replace the
 # other (GitHub keeps one pending run per group). The rebase-and-retry push loop
 # in each workflow handles the race with readme-sync.yml instead.
 concurrency:
-  group: architecture-sync-dev
+  group: architecture-sync-${{ github.ref_name }}
   cancel-in-progress: false
 
 # The routine commits only the generated current-dev inventory. The core
