@@ -226,7 +226,9 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
   red on one foe and green on two others.
 - Speed totals match the pairing in `resolveRound`: a `speed` field is used
   (the player adds momentum, the enemy subtracts it), and the component total
-  is the fallback when there is no `speed` field.
+  is the fallback when there is no `speed` field. The M_e given to cardHint must be
+  the decayed M_e for the round (`decayMomentum(stored)`), the same start that
+  resolveRound pairs with. With the stored value, the totals can disagree.
 - Callers pass the decayed (current-round) M_e to cardHint, not the stored one:
   `decayMomentum(stored M_e)`. resolveRound pairs with that decayed start (Timing),
   so a hint given the stored value can disagree with the pairing.

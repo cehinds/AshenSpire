@@ -1544,13 +1544,31 @@ test('cardHint speedDelta sign matches who acts first in resolvePair and resolve
     const expected = first === null ? 0 : who[first];
     assert.equal(sign(hint.speedDelta), expected, `player ${p} vs enemy ${e}`);
   }
-  // Momentum: M_e = 2 gives the player +1 and the enemy -1, so the foe at 2 is beaten.
+  // Momentum with the default decay (no decay: 0 pin). The stored M_e of 2 decays to 1
+  // before pairing, so the player gets trunc(1 / 2) = 0 and the foe at 2 is faster.
+  // The hint must be given the decayed M_e, as DESIGN.md (Card hints) says.
   const card = { id: 'c', speed: 1, kind: 'other' };
   const foe = { id: 'x', speed: 2, kind: 'other', stance: 'attack' };
-  const hint = cardHint(card, foe, hintCtx({ momentum: 2 }));
-  const { events } = resolveRound([{ ...card, slot: 0, kind: 'other' }], [foe], 1, rng, { momentum: { x: 2 }, decay: 0 });
-  assert.equal(sign(hint.speedDelta), 1);
-  assert.equal(find(events, 'order').first, 'player');
+  const { events } = resolveRound([{ ...card, slot: 0 }], [foe], 1, rng, { momentum: { x: 2 } });
+  const hint = cardHint(card, foe, hintCtx({ momentum: decayMomentum(2) }));
+  assert.equal(sign(hint.speedDelta), -1);
+  assert.equal(find(events, 'order').first, 'enemy');
+  // Passing the stored M_e instead gives +1 (the player faster), which disagrees with the pairing.
+  assert.equal(sign(cardHint(card, foe, hintCtx({ momentum: 2 })).speedDelta), 1);
+});
+
+test('cardHint sign matches resolveRound when M_e is passed decayed, for a range of stored values', () => {
+  const rng = () => 0.99;
+  const sign = (n) => Math.sign(n);
+  for (const stored of [-3, -2, -1, 0, 1, 2, 3]) {
+    const card = { id: 'c', speed: 2, kind: 'other' };
+    const foe = { id: 'x', speed: 2, kind: 'other', stance: 'attack' };
+    const { events } = resolveRound([{ ...card, slot: 0 }], [foe], 1, rng, { momentum: { x: stored } });
+    const hint = cardHint(card, foe, hintCtx({ momentum: decayMomentum(stored) }));
+    const first = find(events, 'order').first;
+    const expected = first === null ? 0 : { player: 1, enemy: -1 }[first];
+    assert.equal(sign(hint.speedDelta), expected, `stored M_e ${stored}`);
+  }
 });
 
 test('cardHint at perception stage 3: the full action gives speed, the arrow and green', () => {
