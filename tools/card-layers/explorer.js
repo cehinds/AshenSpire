@@ -1,7 +1,7 @@
-import {contentBundle} from '/src/content/index.js';
-import {createRegistries} from '/src/model/registries.js';
-import {renderCard} from '/src/ui/components/card.js';
-import {fitIllustratedCards} from '/src/ui/components/illustratedCard.js';
+import {contentBundle} from '../../src/content/index.js';
+import {createRegistries} from '../../src/model/registries.js';
+import {renderCard} from '../../src/ui/components/card.js';
+import {fitIllustratedCards} from '../../src/ui/components/illustratedCard.js';
 import {CardLayoutEditor} from './editor.js';
 
 const registry=createRegistries(contentBundle);

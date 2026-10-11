@@ -1,9 +1,9 @@
 import {bounds,edges,nearest,moveSnapped,resizeBox,transformGroup} from './layout-math.js';
-import {fitIllustratedCards} from '/src/ui/components/illustratedCard.js';
-import {cardLayoutDocument,cardLayoutReferences} from '/src/ui/components/cardLayout.js';
-import {cardLayoutDocumentWithChanges} from '/src/model/cardLayoutDocument.js';
-import {applyCardAppearance} from '/src/ui/components/cardAppearance.js';
-import {validateCardAppearance} from '/src/model/cardAppearance.js';
+import {fitIllustratedCards} from '../../src/ui/components/illustratedCard.js';
+import {cardLayoutDocument,cardLayoutReferences} from '../../src/ui/components/cardLayout.js';
+import {cardLayoutDocumentWithChanges} from '../../src/model/cardLayoutDocument.js';
+import {applyCardAppearance} from '../../src/ui/components/cardAppearance.js';
+import {validateCardAppearance} from '../../src/model/cardAppearance.js';
 const WIDTH=360,HEIGHT=540,STORAGE='ashen-card-layer-editor-v1';
 const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
 const copy=x=>JSON.parse(JSON.stringify(x));
