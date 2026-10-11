@@ -1278,23 +1278,23 @@ Colorless/curse/status M1 minimum: **Wound** (status, unplayable), **Dazed** (st
 
 ### 5.3 Enemy roster — Act 1 (M1)
 
-Basics (encounters roll from the weighted table in `content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
+Basics (encounters roll from the weighted table in `src/content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
 | Wandering Soldier | 22–26 | 10 | Slash 7 (45), Guard 6 Block (30), Warcry +2 Str (25, max1) | bread & butter |
-| Rot Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
-| Demi-Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail (25), Brace 8 Block (25) | tanky |
+| Blight Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
+| Husk Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail and add 1 Slimed (25), Brace 8 Block (25) | tanky |
 | Grave Wisp | 10–12 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 4 + heals self 4 (50) | kill first |
-| Pack encounter | — | — | 2× Rot Hound + 1 Grave Wisp | teaches targeting |
+| Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-Elite — **Crucible Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+Elite — **Wyrm Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
 
-Boss — **The Watchful Omen** (Margit-inspired, HP 140, Poise 30):
-- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 16 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 16 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 9 (repeatable ×2), Hammer Toss 6×2.
-- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 4×4*.
+Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
+- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
+- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 3×4*.
 - Staggering him cancels a Held Blade in progress (satisfying counterplay).
-- Reward: 75–90 runes, rare relic choice, card reward with rare upgrade odds boosted.
+- Reward: 225–270 cinders, rare relic choice, card reward with rare upgrade odds boosted.
 
 (Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
 
