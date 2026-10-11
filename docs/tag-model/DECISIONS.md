@@ -23,14 +23,16 @@ Formula, relation and value keys follow the README conventions.
   groups, the presentation tuning rows (`gameConfig.presentation.*`), and listed
   keys for layout, UI scale, reduced motion, touch, haptics, performance or
   quality and other display rows. Everything else is global, including all
-  tuning rows. Result: 110 device, 4,358 global. `tools/check.mjs` fails a row
+  tuning rows. Result: 107 device, 4,361 global. `tools/check.mjs` fails a row
   that is neither.
 - **Couldn't place:** these rows are global, because the owner's rule does not
   settle them: `animSpeed` (Combat pacing), `holdConfirm` (hold-to-confirm
   timing), `tileActivation` and `moveActivation` (how tiles and moves are
   activated), `resetAllSettings` (resets both kinds), and the formation movement
   rules (`movementEnabled`, `movementNeedsSelection`, `movementCostsAction`). The
-  owner can move any of them to device.
+  owner can move any of them to device. Set global on review: `mapMode` (fog or
+  path reveal is gameplay knowledge) and `sote_lan_tint` and `sote_lan_style`
+  (the co-op identity should not split per device, like `sote_lan_name`).
 
 ## 2. Device bands gain `wide`
 

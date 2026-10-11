@@ -128,7 +128,7 @@ before the split is used.
 UI scale, reduced motion, touch, haptics, performance or quality, and the other
 display-related rows. `global` is everything else, including every tuning row.
 The rule is in `deviceScopeOf` in `tools/build.mjs`. `scope` is unchanged. Today
-110 rows are `device` and 4,358 are `global`. `tools/check.mjs` fails a row that
+107 rows are `device` and 4,361 are `global`. `tools/check.mjs` fails a row that
 is neither.
 
 **Icons.** `combat-symbols.csv` has one `status` per concept. `assignedAssetRef`

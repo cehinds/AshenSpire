@@ -190,12 +190,14 @@ const DEVICE_KEYS = new Set([
   'armamentsPhonePlacement', 'showPlayedCard', 'manaRing', 'walkedFade', 'cardMotif',
   'cardMotifStrength', 'ambient', 'controlHints', 'mapFreePan', 'mapHeaderDensity',
   'mapHeaderRelics', 'mapHeaderSeed', 'uprightGate', 'classicAppearance',
-  'sote_lan_tint', 'sote_lan_style',
 ]);
 // Global even though their group is a device group: resetAllSettings resets both
-// kinds. Presentation rows that govern input or movement rules are global.
+// kinds, mapMode is gameplay knowledge (fog or path reveal), and the co-op
+// identity (sote_lan_tint, sote_lan_style) must not split per device. Presentation
+// rows that govern input or movement rules are global.
 const GLOBAL_KEYS = new Set([
-  'resetAllSettings', 'movementEnabled', 'movementNeedsSelection', 'movementCostsAction',
+  'resetAllSettings', 'mapMode', 'sote_lan_tint', 'sote_lan_style',
+  'movementEnabled', 'movementNeedsSelection', 'movementCostsAction',
   'tileActivation', 'moveActivation',
 ]);
 function deviceScopeOf(r) {
