@@ -216,6 +216,27 @@ for (const mode of ['watch', 'poll']) {
   });
 }
 
+test('a file renamed into place keeps reloading on later in-place edits (watch)', async (t) => {
+  // Regression: a recursive fs.watch went silent for a file once a rename had written it.
+  const root = await project(t);
+  const { app } = await boot(t, root);
+  let edited = false;
+  const reloads = await collectEvents(app, 'reload', (evs) => evs.length >= 2, {
+    onOpen: async () => {
+      await new Promise((r) => setTimeout(r, 300));
+      await fs.writeFile(path.join(root, 'styles/tmp-source.css'), 'a{}\n');
+      await fs.rename(path.join(root, 'styles/tmp-source.css'), path.join(root, 'styles/main.css'));
+    },
+    onEvent: async (name) => {
+      if (name !== 'reload' || edited) return;
+      edited = true;
+      await new Promise((r) => setTimeout(r, 400));
+      await fs.writeFile(path.join(root, 'styles/main.css'), 'body{color:green}\n');
+    },
+  });
+  assert.deepEqual(reloads.at(-1).files, ['styles/main.css'], 'the in-place edit after the rename is its own batch');
+});
+
 test('a content/config change runs the config compiler before the reload; a failing build reports instead', async (t) => {
   const root = await project(t);
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });
