@@ -431,6 +431,23 @@ test('a peer head that did not start from our save shows the conflict banner, an
   assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(mine));
 });
 
+test('Load theirs adopts the server table even when the head has not moved since we loaded it', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  const R = sample(6, 'r');
+  await putBlobTable(db, api, 't', R);
+  api.subscribeTable('t');
+  await waitFor(() => page.loaded.has('t'));
+  editTable(page, sample(4, 'mine'));
+  db.failSet = (p) => (p === 'tables/t' ? { code: 'invalid_argument' } : null);
+  await api.flush('t');
+  assert.equal(api.tstate.t.pinned, true);
+  db.failSet = null;
+  await api.loadTheirs('t');
+  assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(R), 'the head we already had is adopted again');
+  assert.equal(page.dirty.has('t'), false);
+});
+
 test('the pinned state shows its own banner whose buttons export and load theirs', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);
