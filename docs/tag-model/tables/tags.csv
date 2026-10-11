@@ -59,12 +59,12 @@ meta.character.weapon.two-handed.twinblade,twinblade,Twinblade,meta.character.we
 meta.character.weapon.two-handed.staff,two-handed.staff,Staff,meta.character.weapon.two-handed,Weapon,,,,,,,,game-concept,,,
 meta.character.weapon.two-handed.bow,two-handed.bow,Bow,meta.character.weapon.two-handed,Weapon,,,,,,,,game-concept,,,
 meta.character.weapon.off-hand,off-hand,Off-hand,meta.character.weapon,Weapon,,,,,,,,game-concept,,,
-meta.character.weapon.off-hand.shield,off-hand.shield,Shield,meta.character.weapon.off-hand,Weapon,,,,,,,,live-tag,🛡,,item:shield
+meta.character.weapon.off-hand.shield,off-hand.shield,Shield,meta.character.weapon.off-hand,Weapon,,,,,,,,live-tag,🛡,7FA8C9,item:shield
 meta.character.weapon.off-hand.parrying-dagger,parrying-dagger,Parrying dagger,meta.character.weapon.off-hand,Weapon,,,,,,,,new,,,
 meta.character.weapon.off-hand.light-source,light-source,Light source,meta.character.weapon.off-hand,Weapon,,"lantern, torch",,,,,,new,,,
 meta.character.weapon.off-hand.catalyst,catalyst,Catalyst,meta.character.weapon.off-hand,Weapon,,"chime, branch, rod",,,,,,new,,,
 meta.character.weapon.unarmed,weapon.unarmed,Unarmed,meta.character.weapon,Weapon,,,,,,,,game-concept,,,
-meta.character.armor,character.armor,Armor,meta.character,Armor,,,,,,,,live-tag,▣,,item:armor
+meta.character.armor,character.armor,Armor,meta.character,Armor,,,,,,,,live-tag,▣,B8B0A0,item:armor
 meta.character.armor.weight,weight,Weight,meta.character.armor,Armor,,,,,,,,game-concept,,,
 meta.character.armor.weight.clothing,clothing,Clothing,meta.character.armor.weight,Armor,,,,,,,,game-concept,,,
 meta.character.armor.weight.light,weight.light,Light,meta.character.armor.weight,Armor,,,,,,,,game-concept,,,
@@ -79,12 +79,12 @@ meta.character.armor.material.scale,scale,Scale,meta.character.armor.material,Ar
 meta.character.armor.material.plated,plated,Plated,meta.character.armor.material,Armor,,"heavy, high DR, resists blunt less",,,,,,game-concept,,,
 meta.character.armor.defensive-property,defensive-property,Defensive property,meta.character.armor,Armor,,,,,,,,new,,,
 meta.character.armor.defensive-property.absorption,absorption,Absorption,meta.character.armor.defensive-property,Armor,,converts part of damage taken to Block or Ward,,,,,,new,,,
-meta.character.armor.defensive-property.siphon,siphon,Siphon,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). drains HP or MP when hit or when breaking,,,,,,live-tag,◈,,siphon
+meta.character.armor.defensive-property.siphon,siphon,Siphon,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). drains HP or MP when hit or when breaking,,,,,,live-tag,◈,7FA8C9,siphon
 meta.character.armor.defensive-property.thorns,thorns,Thorns,meta.character.armor.defensive-property,Armor,,returns damage to melee attackers,,,,,,game-concept,,,
 meta.character.armor.defensive-property.padded,padded,Padded,meta.character.armor.defensive-property,Armor,,"+ Poise, resists Stagger",,,,,,new,,,
 meta.character.armor.defensive-property.warded,warded,Warded,meta.character.armor.defensive-property,Armor,,"+ Ward, resists magic impact",,,,,,game-concept,,,
-meta.character.armor.defensive-property.insulated,insulated,Insulated,meta.character.armor.defensive-property,Armor,,"Moved: re-homed in the proposal (tag-tree.txt [m]). resists lightning, no conduction",,,,,,live-tag,◇,,trait:insulated
-meta.character.armor.defensive-property.grounded,defensive-property.grounded,Grounded,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). clears Paralysis pressure,,,,,,live-tag,◇,,trait:grounded
+meta.character.armor.defensive-property.insulated,insulated,Insulated,meta.character.armor.defensive-property,Armor,,"Moved: re-homed in the proposal (tag-tree.txt [m]). resists lightning, no conduction",,,,,,live-tag,◇,9FC3E8,trait:insulated
+meta.character.armor.defensive-property.grounded,defensive-property.grounded,Grounded,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). clears Paralysis pressure,,,,,,live-tag,◇,9FC3E8,trait:grounded
 meta.character.armor.defensive-property.fireproof,fireproof,Fireproof,meta.character.armor.defensive-property,Armor,,resists Burn,,,,,,new,,,
 meta.character.armor.defensive-property.frostlined,frostlined,Frostlined,meta.character.armor.defensive-property,Armor,,resists Frost build-up,,,,,,new,,,
 meta.character.armor.defensive-property.sanctified,sanctified,Sanctified,meta.character.armor.defensive-property,Armor,,resists necrotic and Blight,,,,,,new,,,
@@ -124,11 +124,11 @@ meta.character.consumable.buff-item,buff-item,Buff item,meta.character.consumabl
 meta.character.consumable.key-item,key-item,Key item,meta.character.consumable,Consumable,,,,,,,,new,,,
 meta.character.creature,creature,Creature,meta.character,Creature,,,,,,,,live-tag,,,creature
 meta.character.creature.type,creature.type,Type,meta.character.creature,Creature,,,,,,,,game-concept,,,
-meta.character.creature.type.beast,beast,Beast,meta.character.creature.type,Creature,,,,,,,,live-tag,🐾,,beast
-meta.character.creature.type.humanoid,humanoid,Humanoid,meta.character.creature.type,Creature,,,,,,,,live-tag,👤,,humanoid
-meta.character.creature.type.undead,undead,Undead,meta.character.creature.type,Creature,,,,,,,,live-tag,💀,,undead
-meta.character.creature.type.construct,construct,Construct,meta.character.creature.type,Creature,,,,,,,,live-tag,⚙,,construct
-meta.character.creature.type.spirit,spirit,Spirit,meta.character.creature.type,Creature,,,,,,,,live-tag,👻,,spirit
+meta.character.creature.type.beast,beast,Beast,meta.character.creature.type,Creature,,,,,,,,live-tag,🐾,7A6F5A,beast
+meta.character.creature.type.humanoid,humanoid,Humanoid,meta.character.creature.type,Creature,,,,,,,,live-tag,👤,B8B0A0,humanoid
+meta.character.creature.type.undead,undead,Undead,meta.character.creature.type,Creature,,,,,,,,live-tag,💀,647B73,undead
+meta.character.creature.type.construct,construct,Construct,meta.character.creature.type,Creature,,,,,,,,live-tag,⚙,9FC3E8,construct
+meta.character.creature.type.spirit,spirit,Spirit,meta.character.creature.type,Creature,,,,,,,,live-tag,👻,7FA8C9,spirit
 meta.character.creature.type.dragon,dragon,Dragon,meta.character.creature.type,Creature,,,,,,,,game-concept,,,
 meta.character.creature.type.demon,demon,Demon,meta.character.creature.type,Creature,,,,,,,,new,,,
 meta.character.creature.type.elemental,elemental,Elemental,meta.character.creature.type,Creature,,,,,,,,game-concept,,,
@@ -151,13 +151,13 @@ meta.combat.skill.weapon-skill,weapon-skill,Weapon skill,meta.combat.skill,Skill
 meta.combat.skill.weapon-skill.sword,weapon-skill.sword,Sword,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill.dagger,weapon-skill.dagger,Dagger,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill.twinblades,twinblades,Twinblades,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
-meta.combat.skill.weapon-skill.blade,weapon-skill.blade,Blade,meta.combat.skill.weapon-skill,Skill,,,,,,,,live-tag,⚔,,blade
+meta.combat.skill.weapon-skill.blade,weapon-skill.blade,Blade,meta.combat.skill.weapon-skill,Skill,,,,,,,,live-tag,⚔,C9502E,blade
 meta.combat.skill.weapon-skill.blunt,weapon-skill.blunt,Blunt,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill.axe,weapon-skill.axe,Axe,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill.polearm,polearm,Polearm,meta.combat.skill.weapon-skill,Skill,,,,,,,,new,,,
 meta.combat.skill.weapon-skill.staff,weapon-skill.staff,Staff,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill.marksman,marksman,Marksman,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
-meta.combat.skill.weapon-skill.bow,weapon-skill.bow,Bow,meta.combat.skill.weapon-skill,Skill,,,,,,,,live-tag,➶,,bow
+meta.combat.skill.weapon-skill.bow,weapon-skill.bow,Bow,meta.combat.skill.weapon-skill,Skill,,,,,,,,live-tag,➶,7FA8C9,bow
 meta.combat.skill.weapon-skill.shield,weapon-skill.shield,Shield,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill.unarmed,weapon-skill.unarmed,Unarmed,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill.two-handed,weapon-skill.two-handed,Two-handed,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
@@ -167,70 +167,70 @@ meta.combat.skill.armor-skill.light,armor-skill.light,Light,meta.combat.skill.ar
 meta.combat.skill.armor-skill.medium,armor-skill.medium,Medium,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.armor-skill.heavy,armor-skill.heavy,Heavy,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.technique,technique,Technique,meta.combat.skill,Skill,,,,,,,,live-tag,,,technique
-meta.combat.skill.technique.heavy,technique.heavy,Heavy,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,,technique:heavy
-meta.combat.skill.technique.precision,technique.precision,Precision,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,,technique:precision
-meta.combat.skill.technique.pierce,technique.pierce,Pierce,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,†,,pierce
-meta.combat.skill.technique.cleave,technique.cleave,Cleave,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,,technique:cleave
-meta.combat.skill.technique.flourish,technique.flourish,Flourish,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,,technique:flourish
-meta.combat.skill.technique.guile,technique.guile,Guile,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,◇,,guile
-meta.combat.skill.technique.blood,technique.blood,Blood,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). pay HP for power,,,,,,live-tag,🩸,,blood
-meta.combat.skill.technique.venom,technique.venom,Venom,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). poison craft,,,,,,live-tag,☠,,venom
-meta.combat.skill.class-stance,class-stance,Class stance,meta.combat.skill,ClassStance,,Moved: re-homed in the proposal (tag-tree.txt [m]). card skill; holds a stance until changed,,,,,,live-tag,◇,,theme:stance
+meta.combat.skill.technique.heavy,technique.heavy,Heavy,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:heavy
+meta.combat.skill.technique.precision,technique.precision,Precision,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:precision
+meta.combat.skill.technique.pierce,technique.pierce,Pierce,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,†,9FC3E8,pierce
+meta.combat.skill.technique.cleave,technique.cleave,Cleave,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:cleave
+meta.combat.skill.technique.flourish,technique.flourish,Flourish,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:flourish
+meta.combat.skill.technique.guile,technique.guile,Guile,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,◇,647B73,guile
+meta.combat.skill.technique.blood,technique.blood,Blood,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). pay HP for power,,,,,,live-tag,🩸,8A1A1A,blood
+meta.combat.skill.technique.venom,technique.venom,Venom,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). poison craft,,,,,,live-tag,☠,7FAF63,venom
+meta.combat.skill.class-stance,class-stance,Class stance,meta.combat.skill,ClassStance,,Moved: re-homed in the proposal (tag-tree.txt [m]). card skill; holds a stance until changed,,,,,,live-tag,◇,9FC3E8,theme:stance
 meta.combat.skill.class-stance.gorefire-stance,gorefire-stance,Gorefire Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.class-stance.bulwark-stance,bulwark-stance,Bulwark Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.class-stance.brace,brace,Brace,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.prepare,prepare,Prepare,meta.combat.skill,Skill,,"Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared",,,,,,new,,,
 meta.combat.skill.spellcraft,spellcraft,Spellcraft,meta.combat.skill,Skill,,each school deals its damage type,,,,,,live-tag,,,school
-meta.combat.skill.spellcraft.fire,spellcraft.fire,Fire,meta.combat.skill.spellcraft,Skill,spellcraft.fire,,,,,,,live-tag,🔥,,school:fire
-meta.combat.skill.spellcraft.fire.gorefire,fire.gorefire,Gorefire,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]). fire fed by blood,,,,,,live-tag,🔥,,gorefire
-meta.combat.skill.spellcraft.fire.ash,fire.ash,Ash,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,•,,ash
-meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,❄,,school:frost
-meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,ϟ,,school:lightning
+meta.combat.skill.spellcraft.fire,spellcraft.fire,Fire,meta.combat.skill.spellcraft,Skill,spellcraft.fire,,,,,,,live-tag,🔥,E47C43,school:fire
+meta.combat.skill.spellcraft.fire.gorefire,fire.gorefire,Gorefire,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]). fire fed by blood,,,,,,live-tag,🔥,C9502E,gorefire
+meta.combat.skill.spellcraft.fire.ash,fire.ash,Ash,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,•,7A6F5A,ash
+meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,❄,A6D8EF,school:frost
+meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,ϟ,E8D46A,school:lightning
 meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,game-concept,,,
-meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,,school:force
-meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,,live-tag,✦,,starstone
-meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,✚,,school:divine
-meta.combat.skill.spellcraft.divine.oath,divine.oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,,live-tag,✚,,oath
-meta.combat.skill.spellcraft.necrotic,spellcraft.necrotic,Necrotic,meta.combat.skill.spellcraft,Skill,spellcraft.necrotic,,,,,,,live-tag,☣,,school:decay
-meta.combat.skill.spellcraft.necrotic.blight,necrotic.blight,Blight,meta.combat.skill.spellcraft.necrotic,Skill,spellcraft.necrotic,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,☣,,blight
+meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,B99DEC,school:force
+meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,,live-tag,✦,7FA8C9,starstone
+meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,✚,F0D99A,school:divine
+meta.combat.skill.spellcraft.divine.oath,divine.oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,,live-tag,✚,C9A227,oath
+meta.combat.skill.spellcraft.necrotic,spellcraft.necrotic,Necrotic,meta.combat.skill.spellcraft,Skill,spellcraft.necrotic,,,,,,,live-tag,☣,A4BD72,school:decay
+meta.combat.skill.spellcraft.necrotic.blight,necrotic.blight,Blight,meta.combat.skill.spellcraft.necrotic,Skill,spellcraft.necrotic,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,☣,B5541C,blight
 meta.combat.skill.spellcraft.psychic,spellcraft.psychic,Psychic,meta.combat.skill.spellcraft,Skill,spellcraft.psychic,,,,,,,new,,,
-meta.combat.skill.spellcraft.psychic.illusion,illusion,Illusion,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). existing school,,,,,,live-tag,◎,,school:illusion
-meta.combat.skill.spellcraft.psychic.ritual,psychic.ritual,Ritual,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). madness,,,,,,live-tag,◈,,ritual
-meta.combat.skill.spellcraft.alteration,alteration,Alteration,meta.combat.skill.spellcraft,Skill,alteration,"Moved: re-homed in the proposal (tag-tree.txt [m]). existing school, non-elemental",,,,,,live-tag,◇,,school:alteration
+meta.combat.skill.spellcraft.psychic.illusion,illusion,Illusion,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). existing school,,,,,,live-tag,◎,C59BD7,school:illusion
+meta.combat.skill.spellcraft.psychic.ritual,psychic.ritual,Ritual,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). madness,,,,,,live-tag,◈,C9A227,ritual
+meta.combat.skill.spellcraft.alteration,alteration,Alteration,meta.combat.skill.spellcraft,Skill,alteration,"Moved: re-homed in the proposal (tag-tree.txt [m]). existing school, non-elemental",,,,,,live-tag,◇,9BC8BE,school:alteration
 meta.combat.damage,damage,Damage,meta.combat,DamageType,,,,,,,,live-tag,,,damage
 meta.combat.damage.physical,damage.physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
-meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,,live-tag,◇,,damage:slashing
-meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,,live-tag,◇,,damage:blunt
-meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,,live-tag,◇,,damage:piercing
+meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,,live-tag,◇,9FC3E8,damage:slashing
+meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,,live-tag,◇,9FC3E8,damage:blunt
+meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:piercing
 meta.combat.damage.magic,damage.magic,Magic,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.magic
-meta.combat.damage.magic.fire,magic.fire,Fire,meta.combat.damage.magic,DamageType,spellcraft.fire,→ Burned,On hit: apply [burned],burned,,,,live-tag,◇,,damage:fire
-meta.combat.damage.magic.frost,magic.frost,Frost,meta.combat.damage.magic,DamageType,spellcraft.frost,→ Frostbitten,On hit: apply [build-up.frost],,,,,live-tag,◇,,damage:frost
-meta.combat.damage.magic.lightning,magic.lightning,Lightning,meta.combat.damage.magic,DamageType,spellcraft.lightning,→ Paralyzed,On hit: apply [paralyzed]; breaks an ungrounded Counter,,,,,live-tag,◇,,damage:lightning
+meta.combat.damage.magic.fire,magic.fire,Fire,meta.combat.damage.magic,DamageType,spellcraft.fire,→ Burned,On hit: apply [burned],burned,,,,live-tag,◇,9FC3E8,damage:fire
+meta.combat.damage.magic.frost,magic.frost,Frost,meta.combat.damage.magic,DamageType,spellcraft.frost,→ Frostbitten,On hit: apply [build-up.frost],,,,,live-tag,◇,9FC3E8,damage:frost
+meta.combat.damage.magic.lightning,magic.lightning,Lightning,meta.combat.damage.magic,DamageType,spellcraft.lightning,→ Paralyzed,On hit: apply [paralyzed]; breaks an ungrounded Counter,,,,,live-tag,◇,9FC3E8,damage:lightning
 meta.combat.damage.magic.earth,magic.earth,Earth,meta.combat.damage.magic,DamageType,spellcraft.earth,,,,,,,game-concept,,,
-meta.combat.damage.magic.divine,magic.divine,Divine,meta.combat.damage.magic,DamageType,spellcraft.divine,cleanses,On hit: cleanse one debuff from the attacker,,,,,live-tag,◇,,damage:sacred
-meta.combat.damage.magic.necrotic,magic.necrotic,Necrotic,meta.combat.damage.magic,DamageType,spellcraft.necrotic,→ Blighted,On hit: apply [blighted],,,,,live-tag,◇,,damage:decay
+meta.combat.damage.magic.divine,magic.divine,Divine,meta.combat.damage.magic,DamageType,spellcraft.divine,cleanses,On hit: cleanse one debuff from the attacker,,,,,live-tag,◇,9FC3E8,damage:sacred
+meta.combat.damage.magic.necrotic,magic.necrotic,Necrotic,meta.combat.damage.magic,DamageType,spellcraft.necrotic,→ Blighted,On hit: apply [blighted],,,,,live-tag,◇,9FC3E8,damage:decay
 meta.combat.damage.magic.psychic,magic.psychic,Psychic,meta.combat.damage.magic,DamageType,spellcraft.psychic,→ Confused,On hit: apply [confused],,,,,new,,,
 meta.combat.damage.hybrid,hybrid,Hybrid,meta.combat.damage,DamageType,,,,,,,,game-concept,,,
-meta.combat.damage.hybrid.force,hybrid.force,Force,meta.combat.damage.hybrid,DamageType,spellcraft.force,Block or Barrier stops it,Drains 2 [defensive-stats.ward]; slips past melee Counter,,,,,live-tag,◇,,damage:arcane
+meta.combat.damage.hybrid.force,hybrid.force,Force,meta.combat.damage.hybrid,DamageType,spellcraft.force,Block or Barrier stops it,Drains 2 [defensive-stats.ward]; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:arcane
 meta.combat.stance,combat.stance,Stance,meta.combat,Stance,,,,,,,,live-tag,,,maneuver
 meta.combat.stance.offensive,offensive,Offensive,meta.combat.stance,Stance,,,,,,,,game-concept,,,
-meta.combat.stance.offensive.attack,offensive.attack,Attack,meta.combat.stance.offensive,Stance,,44 cards,×1.25 vs [smash] stance,,,,,live-tag,⚔,,maneuver:attack
+meta.combat.stance.offensive.attack,offensive.attack,Attack,meta.combat.stance.offensive,Stance,,44 cards,×1.25 vs [smash] stance,,,,,live-tag,⚔,D7B36B,maneuver:attack
 meta.combat.stance.offensive.attack.strike,attack.strike,Strike,meta.combat.stance.offensive.attack,Stance,,"Strike, Quick Cut, Katana Draw Cut, weapon attacks",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.flurry,flurry,Flurry,meta.combat.stance.offensive.attack,Stance,,"Blade Dance, Thousand Cuts, Twin Fang, Twinblade Flurry",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.bleed-strike,bleed-strike,Bleed strike,meta.combat.stance.offensive.attack,Stance,,"Rend, Serrated Blade, Bloodhunter's Strike, Goreslash",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.finisher,finisher,Finisher,meta.combat.stance.offensive.attack,Stance,,"Executioner, Deathblow, Coup de Grace, Assassinate",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.dirty-trick,dirty-trick,Dirty trick,meta.combat.stance.offensive.attack,Stance,,"Cheap Shot, Low Blow, Sap, Garrote, Hamstring, Ambush",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.elemental-strike,elemental-strike,Elemental strike,meta.combat.stance.offensive.attack,Stance,,"Flame to Blade, Gorefire Slash, Rime Thrust",,,,,,game-concept,,,
-meta.combat.stance.offensive.smash,smash,Smash,meta.combat.stance.offensive,Stance,,13 cards,×1.5 vs [defensive.block] stance; +3 Poise on guard break,,,,,live-tag,⚒,,maneuver:smash
+meta.combat.stance.offensive.smash,smash,Smash,meta.combat.stance.offensive,Stance,,13 cards,×1.5 vs [defensive.block] stance; +3 Poise on guard break,,,,,live-tag,⚒,DB9871,maneuver:smash
 meta.combat.stance.offensive.smash.bash,bash,Bash,meta.combat.stance.offensive.smash,Stance,,"Bashing Blow, Shield Bash, Shield Crash, Stomp, Kick Off",,,,,,game-concept,,,
 meta.combat.stance.offensive.smash.sunder,sunder,Sunder,meta.combat.stance.offensive.smash,Stance,,"Sundering Chop, Sunderplate, Ruinous Blow, Colossus Smash",,,,,,game-concept,,,
 meta.combat.stance.offensive.smash.poise-break,poise-break,Poise break,meta.combat.stance.offensive.smash,Stance,,"Poise Breaker, Breaker's Toll, Kiln Cleave",,,,,,game-concept,,,
-meta.combat.stance.offensive.sweep,sweep,Sweep,meta.combat.stance.offensive,Stance,,6 cards,Hits all; slips past melee Counter; ×0.75 vs [defensive.block],,,,,live-tag,🌀,,maneuver:sweep
+meta.combat.stance.offensive.sweep,sweep,Sweep,meta.combat.stance.offensive,Stance,,6 cards,Hits all; slips past melee Counter; ×0.75 vs [defensive.block],,,,,live-tag,🌀,93C9BC,maneuver:sweep
 meta.combat.stance.offensive.sweep.cleave,sweep.cleave,Cleave,meta.combat.stance.offensive.sweep,Stance,,"Cleaving Blow, Crimson Cleave, Hewing Arc, Sweeping Blow",,,,,,game-concept,,,
 meta.combat.stance.offensive.sweep.whirl,whirl,Whirl,meta.combat.stance.offensive.sweep,Stance,,Whirling Guard,,,,,,game-concept,,,
-meta.combat.stance.defensive,defensive,Defensive,meta.combat.stance,Stance,,,,,,,,live-tag,🛡,,maneuver:defend
+meta.combat.stance.defensive,defensive,Defensive,meta.combat.stance,Stance,,,,,,,,live-tag,🛡,9FC3E8,maneuver:defend
 meta.combat.stance.defensive.block,defensive.block,Block,meta.combat.stance.defensive,Stance,,"about 45 cards, tagged Defend today",Gain Block or Barrier at turn start,,,,,game-concept,,,
-meta.combat.stance.defensive.block.guard,block.guard,Guard,meta.combat.stance.defensive.block,Stance,,"Defend, Quick Guard, weapon/staff/sceptre Guard, Iron Skin, Brace",,,,,,live-tag,🛡,,guard
+meta.combat.stance.defensive.block.guard,block.guard,Guard,meta.combat.stance.defensive.block,Stance,,"Defend, Quick Guard, weapon/staff/sceptre Guard, Iron Skin, Brace",,,,,,live-tag,🛡,7FA8C9,guard
 meta.combat.stance.defensive.block.shield,block.shield,Shield,meta.combat.stance.defensive.block,Stance,,"Shieldwall, Shield Guard, Shield Bastion, Set the Shield",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.ward,block.ward,Ward,meta.combat.stance.defensive.block,Stance,,"Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.endure,endure,Endure,meta.combat.stance.defensive.block,Stance,,"Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance",,,,,,game-concept,,,
@@ -238,21 +238,21 @@ meta.combat.stance.defensive.evade,evade,Evade,meta.combat.stance.defensive,Stan
 meta.combat.stance.defensive.evade.dodge,evade.dodge,Dodge,meta.combat.stance.defensive.evade,Stance,,"Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.vanish,vanish,Vanish,meta.combat.stance.defensive.evade,Stance,,"Shadowstep, Vanish, Nightstep, Misdirect",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.obscure,obscure,Obscure,meta.combat.stance.defensive.evade,Stance,,"Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand",,,,,,game-concept,,,
-meta.combat.stance.counter,stance.counter,Counter,meta.combat.stance,Stance,,"20 cards, its own stance",Incoming ×0.5; returns damage,,,,,live-tag,↩,,maneuver:counter
+meta.combat.stance.counter,stance.counter,Counter,meta.combat.stance,Stance,,"20 cards, its own stance",Incoming ×0.5; returns damage,,,,,live-tag,↩,C8A3D8,maneuver:counter
 meta.combat.stance.counter.parry,parry,Parry,meta.combat.stance.counter,Stance,,"Riposte, Rondel Parry, Binding Parry, Low Guard Riposte, Spiked Reprisal",,,,,,game-concept,,,
 meta.combat.stance.counter.school-counter,school-counter,School counter,meta.combat.stance.counter,Stance,,"one per spell school: Fire, Frost, Lightning, Force...",,,,,,game-concept,,,
-meta.combat.stance.counter.ranged-counter,ranged-counter,Ranged counter,meta.combat.stance.counter,Stance,,"Nock and Wait, Barrage Counter",,,,,,live-tag,◇,,counter:ranged
+meta.combat.stance.counter.ranged-counter,ranged-counter,Ranged counter,meta.combat.stance.counter,Stance,,"Nock and Wait, Barrage Counter",,,,,,live-tag,◇,D7B36B,counter:ranged
 meta.combat.stance.counter.ward-counter,ward-counter,Ward counter,meta.combat.stance.counter,Stance,,"Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal",,,,,,game-concept,,,
 meta.combat.delivery,delivery,Delivery,meta.combat,TagNode,,,,,,,,live-tag,,,delivery
 meta.combat.delivery.melee,delivery.melee,Melee,meta.combat.delivery,TagNode,,"Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)",,,,,,live-tag,◇,9FC3E8,delivery:melee
-meta.combat.delivery.ranged,delivery.ranged,Ranged,meta.combat.delivery,TagNode,,"9 cards, was a stance",,,,,,live-tag,➶,,maneuver:ranged
+meta.combat.delivery.ranged,delivery.ranged,Ranged,meta.combat.delivery,TagNode,,"9 cards, was a stance",,,,,,live-tag,➶,AAC88A,maneuver:ranged
 meta.combat.delivery.ranged.shot,shot,Shot,meta.combat.delivery.ranged,TagNode,,"Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot",,,,,,game-concept,,,
 meta.combat.delivery.ranged.volley,volley,Volley,meta.combat.delivery.ranged,TagNode,,"Arrow Volley, Toxic Volley, Fan of Knives, Ricochet",,,,,,game-concept,,,
-meta.combat.delivery.casting,casting,Casting,meta.combat.delivery,TagNode,,"7 cards, was a stance",,,,,,live-tag,◇,,maneuver:casting
+meta.combat.delivery.casting,casting,Casting,meta.combat.delivery,TagNode,,"7 cards, was a stance",,,,,,live-tag,◇,9FC3E8,maneuver:casting
 meta.combat.delivery.casting.bolt,bolt,Bolt,meta.combat.delivery.casting,TagNode,,"Ember Dart, Rime Needle, Static Needle, Holy Spark, Force Nudge",,,,,,game-concept,,,
 meta.combat.delivery.casting.mote,mote,Mote,meta.combat.delivery.casting,TagNode,,"Drowsing Mote, Rot Mote",,,,,,game-concept,,,
 meta.combat.delivery.multi-hit,multi-hit,Multi-hit,meta.combat.delivery,TagNode,,,,,,,,new,,,
-meta.combat.delivery.area,delivery.area,Area,meta.combat.delivery,TagNode,,,,,,,,live-tag,◇,,delivery:area
+meta.combat.delivery.area,delivery.area,Area,meta.combat.delivery,TagNode,,,,,,,,live-tag,◇,9FC3E8,delivery:area
 meta.combat.magic,combat.magic,Magic,meta.combat,TagNode,,,,,,,,game-concept,,,
 meta.combat.magic.offensive-magic,offensive-magic,Offensive magic,meta.combat.magic,TagNode,,,,,,,,game-concept,,,
 meta.combat.magic.defensive-magic,defensive-magic,Defensive magic,meta.combat.magic,TagNode,,,,,,,,game-concept,,,
