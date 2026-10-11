@@ -239,20 +239,27 @@ async function applyHead(t,h){
   if(!h){ stopParts(t); ts.base=''; ts.blobs=new Map(); ts.legacy=null; ts.incomplete=null; adoptRows(t, TABLES[t].columns, []); return; }
   if(h.format==='blobs'){
     stopParts(t); ts.legacy=null;
+    if(!Array.isArray(h.blobs)){ blockTable(t,UNKNOWN_FORMAT); return; }
     if(loaded.has(t)&&!ts.incomplete&&revOf(h)===ts.base) return;
     const r=await assembleBlobs(t,h);
     if(seq!==ts.seq||dirty.has(t)||saving.has(t)) return;
-    if(r.missing){ ts.incomplete={rev:revOf(h), hash:r.missing}; loaded.delete(t); setStatus('bad','This table is incomplete on the server (missing part '+r.missing+'). Reload later.'); render(); return; }
+    if(r.missing){ blockTable(t,'This table is incomplete on the server (missing part '+r.missing+'). Reload later.'); return; }
     const arrs=[]; for(const x of h.blobs||[]) arrs.push(...r.got.get(x));
     ts.incomplete=null; ts.base=revOf(h); ts.blobs=r.got; ts.legacyDocs=[];
     adoptRows(t, headCols(h,t), objectRows(headCols(h,t), arrs));
     return;
   }
+  if(Array.isArray(h.rows)){ /* oldest inline format: the rows are in the head itself */
+    stopParts(t); ts.legacy=null; ts.base=''; ts.blobs=new Map(); ts.incomplete=null; ts.legacyDocs=[];
+    const hc=headCols(h,t); adoptRows(t, hc, h.rows.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r)); return;
+  }
+  if(!Number.isInteger(h.parts)||h.parts<1){ blockTable(t,UNKNOWN_FORMAT); return; } /* never adopt an empty table from an unknown head */
   /* legacy head: read only, its parts are assembled when all are present */
   ts.legacy=h; ts.base=''; ts.blobs=new Map(); ts.incomplete=null;
-  if(!(Number(h.parts)>0)){ stopParts(t); ts.legacyDocs=[]; adoptRows(t, headCols(h,t), []); return; }
   ensureParts(t); legacyAssemble(t);
 }
+const UNKNOWN_FORMAT='This table is stored in a format this page does not recognise, so it is blocked and cannot be saved over. Reload later.';
+function blockTable(t,message){ const ts=TS(t); stopParts(t); ts.legacy=null; ts.incomplete={message}; loaded.delete(t); setStatus('bad',message); render(); }
 function onHead(t,h){
   const ts=TS(t); ts.latest=h;
   if(dirty.has(t)||saving.has(t)){ ts.seq++; return; } /* keep local edits; the save step's get() detects a newer head */
@@ -524,7 +531,7 @@ function renderTable(p,t){
     b.append(btn('Load theirs (discard mine)',()=>loadTheirs(t)), btn('Keep mine (overwrite)',()=>keepMine(t)));
     p.appendChild(b); }
   if(ts.incomplete){ const b=document.createElement('div'); b.className='banner bad'; b.setAttribute('role','alert');
-    b.textContent='This table is incomplete on the server (missing part '+ts.incomplete.hash+'). Reload later.'; p.appendChild(b); }
+    b.textContent=ts.incomplete.message; p.appendChild(b); }
   const tools=document.createElement('div'); tools.className='toolbar';
   tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
   const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');

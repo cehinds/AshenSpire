@@ -241,6 +241,25 @@ test('a newer head never replaces unsaved local edits', async () => {
   assert.ok(api.tstate.t.latest && api.tstate.t.latest.blobs.length >= 1, 'newer head recorded');
 });
 
+test('oldest inline-rows head loads its rows instead of an empty table', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { columns: COLS, rows: [{ id: 'i1', name: 'n', qty: 5 }] });
+  api.subscribeTable('t');
+  await waitFor(() => page.loaded.has('t'));
+  assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify([{ id: 'i1', name: 'n', qty: 5 }]));
+});
+
+test('a head with no recognised format blocks the table; it never loads as empty', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { columns: COLS, parts: 0 });
+  api.subscribeTable('t');
+  await waitFor(() => page.statuses.some((s) => /does not recognise/.test(s.msg)));
+  assert.equal(page.loaded.has('t'), false);
+  assert.equal(page.state.data.t.rows.length, 0);
+});
+
 // Writer helper: a tab holding `objs` as its unsaved table.
 function editTable(page, objs) {
   page.state.data.t.rows = objs;
