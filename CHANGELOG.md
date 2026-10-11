@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-11
 
+- **Preview builds for every open branch now publish** ([#1851](https://github.com/cehinds/AshenSpire/pull/1851), `0.7.1.1298`). Development-process change only, nothing in the game changes. A branch whose name starts with a capital letter, such as `Chore/…`, now gets its playable preview page like any other open branch, instead of a broken link.
 - **Game rules updated for clearer combat feedback** ([#1848](https://github.com/cehinds/AshenSpire/pull/1848), `0.7.1.1297`). Rules document change only, nothing in the game changes yet. The rules now say an attack plays the swing and the return to stance before the target reacts, and before numbers and health bars update. They also say the game will report why a reaction wasn't offered and when a Smash breaks Guard.
 - **A test now passes on Windows too** ([#1846](https://github.com/cehinds/AshenSpire/pull/1846), `0.7.1.1296`). Development-process change only, nothing in the game changes. One source check compared file paths with forward slashes and failed on the Windows test runners at Test; it now reads paths the same way on every system.
 

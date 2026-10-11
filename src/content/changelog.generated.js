@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1851",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Preview builds for every open branch now publish",
+    "detail": "Development-process change only, nothing in the game changes. A branch whose name starts with a capital letter, such as Chore/…, now gets its playable preview page like any other open branch, instead of a broken link.",
+    "build": "0.7.1.1298",
+    "pullRequest": 1851,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1851"
+  },
+  {
     "id": "pr-1848",
     "date": "2026-10-11",
     "group": "2026-10-11",
