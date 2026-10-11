@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   SCREENS, DEVICES, screenById, deviceById, captureFile, rowsFor,
   diffPixels, diffImage, judge, percentLabel, DEFAULT_TOLERANCE,
-  filterRows, summarizeRows, parseDeepLink, deepLinkOf,
+  filterRows, summarizeRows, parseDeepLink, deepLinkOf, acceptPlan,
 } from '../modules/review/model.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -122,6 +122,25 @@ test('the deep link reads screen and device, drops unknown values, and round-tri
   assert.deepEqual(deepLinkOf({ screen: 'map', device: null }), { screen: 'map' });
   assert.deepEqual(deepLinkOf({ screen: 'bogus', device: 'tablet' }), { device: 'tablet' });
   assert.deepEqual(deepLinkOf(parseDeepLink({ screen: 'shop', device: 'desk' })), { screen: 'shop', device: 'desk' });
+});
+
+test('accept plan: one screen takes every device with a capture; all takes changed and unbaselined rows only', () => {
+  const rows = [
+    row('title', 'desk', { changed: true }),
+    row('title', 'tablet', { changed: false }),
+    row('title', 'phone', { changed: null, hasCapture: false, hasBaseline: false }),
+    row('map', 'desk', { changed: null, hasBaseline: false }),
+    row('map', 'tablet', { changed: false }),
+    row('map', 'phone', { changed: true }),
+  ];
+  const one = acceptPlan(rows, { screen: 'title' });
+  assert.deepEqual(one.items.map((i) => i.file), ['desk-title.png', 'tablet-title.png']);
+  assert.equal(one.skipped, 1);
+  const all = acceptPlan(rows, { all: true });
+  assert.deepEqual(all.items.map((i) => i.file), ['desk-title.png', 'desk-map.png', 'phone-map.png']);
+  assert.equal(all.skipped, 1);
+  assert.deepEqual(acceptPlan(rows), { items: [], skipped: 0 });
+  assert.deepEqual(acceptPlan(rows, { screen: 'nope' }), { items: [], skipped: 0 });
 });
 
 test('percentLabel shows 0%, <0.01% for a trace, and two places otherwise', () => {

@@ -146,6 +146,24 @@ export function deepLinkOf({ screen = null, device = null } = {}) {
   return out;
 }
 
+/**
+ * What "Accept as baseline" will copy. `all` takes every row whose capture is
+ * changed or has no baseline yet; `screen` takes every device's capture of one
+ * screen. A row with no capture is never accepted (it is counted in `skipped`).
+ * Returns { items: [{ device, screen, file }], skipped }.
+ */
+export function acceptPlan(rows, { screen = '', all = false } = {}) {
+  const scoped = all ? rows : screen ? rows.filter((r) => r.screen === screen) : [];
+  const items = [];
+  let skipped = 0;
+  for (const r of scoped) {
+    if (!r.hasCapture) { skipped++; continue; }
+    if (all && r.changed !== true && r.hasBaseline) continue;
+    items.push({ device: r.device, screen: r.screen, file: captureFile(r.device, r.screen) });
+  }
+  return { items, skipped };
+}
+
 /** 0 reads as 0%, a tiny but non-zero share as <0.01%, and anything else to two places. */
 export function percentLabel(p) {
   if (!(p > 0)) return '0%';
