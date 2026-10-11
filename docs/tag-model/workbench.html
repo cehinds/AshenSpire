@@ -199,7 +199,7 @@ function chunkRows(rows){
 const BLOB_RETRY_MS=[250,500];
 const tstate={};
 const sleepMs=ms=>new Promise(r=>setTimeout(r,ms));
-function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map()}); }
+function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, lastSaveAt:0, conflict:null, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map()}); }
 function headPath(t){ return 'tables/'+t; }
 function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
 /* a blob head's rev; legacy heads have none, so their base is '' */
@@ -261,6 +261,8 @@ async function applyHead(t,h){
     const r=await assembleBlobs(t,h);
     if(seq!==ts.seq||dirty.has(t)||saving.has(t)) return;
     if(r.missing){ blockTable(t,'This table is incomplete on the server (missing part '+r.missing+'). Reload later.'); return; }
+    /* backstop: a head not written on top of our last save, arriving soon after it, means a peer raced us: show the conflict */
+    if(ts.lastSaveAt&&Date.now()-ts.lastSaveAt<10000&&revOf(h)!==ts.base&&(h.base||'')!==ts.base){ ts.conflict={theirRev:revOf(h)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); return; }
     const arrs=[]; for(const x of h.blobs||[]) arrs.push(...r.got.get(x));
     ts.incomplete=null; ts.base=revOf(h); ts.blobs=r.got; ts.legacyDocs=[];
     adoptRows(t, headCols(h,t), objectRows(headCols(h,t), arrs));
@@ -334,7 +336,7 @@ async function flush(t, opts){
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
     const base=opts.overwrite? curRev : ts.base;
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
-    ts.base=rev; ts.conflict=null; ts.incomplete=null; ts.legacy=null;
+    ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null;
     ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
     /* a head a peer wrote after ours, seen while we were saving, was not applied: apply it now */
     if(ts.latest&&(ts.latest.savedAt||0)>now&&revOf(ts.latest)!==rev) newer=ts.latest;

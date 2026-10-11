@@ -197,7 +197,7 @@ const COLS = ['id', 'name', 'qty'];
 const sample = (n, tag = 'a') => Array.from({ length: n }, (_, i) => ({ id: tag + i, name: 'name ' + i, qty: i }));
 
 // Writes a blob-format table through the db (what a writer leaves behind).
-async function putBlobTable(db, api, t, objs, cols = COLS, savedAt = 1) {
+async function putBlobTable(db, api, t, objs, cols = COLS, savedAt = 1, base = '') {
   const rows = objs.map((o) => cols.map((c) => o[c] ?? ''));
   const blobs = [];
   for (const rs of api.chunkRows(rows)) {
@@ -205,7 +205,7 @@ async function putBlobTable(db, api, t, objs, cols = COLS, savedAt = 1) {
     await db.doc(api.blobPath(t, h)).set({ rows: rs, createdAt: 1 });
     blobs.push(h);
   }
-  const head = { format: 'blobs', columns: cols, blobs, rev: 'r' + blobs.join('').slice(0, 12) + savedAt, base: '', savedAt };
+  const head = { format: 'blobs', columns: cols, blobs, rev: 'r' + blobs.join('').slice(0, 12) + savedAt, base, savedAt };
   await db.doc(api.headPath(t)).set(head);
   return head;
 }
@@ -268,6 +268,21 @@ test('a head with an unknown format is blocked even when it has integer parts', 
   await waitFor(() => page.statuses.some((s) => /does not recognise/.test(s.msg)));
   assert.equal(page.loaded.has('t'), false);
   assert.equal(page.state.data.t.rows.length, 0);
+});
+
+test('backstop: a head not written on top of our recent save shows a conflict instead of replacing our rows', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  const xs = sample(20, 'x');
+  editTable(A.page, xs);
+  await A.api.flush('t'); // our save is recent
+  A.api.subscribeTable('t');
+  await waitFor(() => A.page.loaded.has('t'));
+  // a peer writes a head that did not start from our save
+  await putBlobTable(db, B.api, 't', sample(9, 'peer'), COLS, Date.now() + 1000, 'not-our-rev');
+  await waitFor(() => A.api.tstate.t.conflict);
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(xs), 'our rows are kept');
+  assert.equal(A.page.dirty.has('t'), true);
 });
 
 test('a legacy write by an old tab after our load counts as a conflict', async () => {
@@ -345,7 +360,8 @@ test('a newer head that arrives while we save is applied once the save ends', as
   db.afterSet = async (p) => {
     if (p !== 'tables/t' || injected) return;
     injected = true;
-    await putBlobTable(db, B.api, 't', ys, COLS, Date.now() + 60000); // a peer's head lands after ours
+    const ours = db.read(p); // a peer that saw our save writes on top of it
+    await putBlobTable(db, B.api, 't', ys, COLS, Date.now() + 60000, ours.rev); // a peer's head lands after ours
     await settle(20); // its snapshot arrives while our save is still in progress
   };
   await A.api.flush('t');
