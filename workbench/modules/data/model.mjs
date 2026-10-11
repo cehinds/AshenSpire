@@ -44,6 +44,28 @@ export function keyColumnOf(columns) {
 }
 
 /**
+ * The scope column that makes the key unique, or null. It looks only when the key column repeats in `rows`
+ * (as read from disk): then the first other column named *Id (e.g. classId) whose (scope, key) pairs are
+ * unique across all rows is the scope. A scope must itself repeat, so a per-row id cannot hide a duplicate.
+ * No repeated key, or no such column, gives null: the key stays unique on its own.
+ */
+export function keyScopeOf(columns, rows = [], keyName = keyColumnOf(columns)?.key) {
+  const key = columns.find((c) => c.key === keyName);
+  if (!key) return null;
+  const textOf = (row, c) => cellText(row[c.key], c.type).trim();
+  const keyed = rows.filter((r) => textOf(r, key) !== '');
+  const repeats = (cells) => new Set(cells).size !== cells.length;
+  if (!repeats(keyed.map((r) => textOf(r, key)))) return null;
+  for (const scope of columns) {
+    if (scope.key === key.key || !/Id$/.test(scope.key)) continue;
+    const scopes = keyed.map((r) => textOf(r, scope));
+    const pairs = keyed.map((r) => JSON.stringify([textOf(r, scope), textOf(r, key)]));
+    if (repeats(scopes) && !repeats(pairs)) return scope.key;
+  }
+  return null;
+}
+
+/**
  * The deep link's `match` param: `col:value` pairs separated by commas, e.g. `classId:reaver`.
  * Returns [{ col, value }]; a blank or malformed piece is dropped. Empty input gives [].
  */
@@ -69,10 +91,18 @@ export function findRow(rows, keyCol, row, match = '') {
     && wanted.every((m) => String(r[m.col] ?? '') === m.value));
 }
 
-/** Validation rules for the grid: the key is required and unique; every value fits its column type. */
-export function tableRules(columns) {
+/**
+ * Validation rules for the grid: the key is required and unique; every value fits its column type.
+ * `rows` are the table as read from disk; they decide the key's scope (see keyScopeOf).
+ */
+export function tableRules(columns, rows = []) {
   const key = keyColumnOf(columns);
-  const rules = key ? [{ kind: 'required', key: key.key }, { kind: 'unique', key: key.key }] : [];
+  const rules = [];
+  if (key) {
+    const scope = keyScopeOf(columns, rows);
+    rules.push({ kind: 'required', key: key.key });
+    rules.push(scope ? { kind: 'unique', keys: [scope, key.key] } : { kind: 'unique', key: key.key });
+  }
   for (const c of columns) rules.push({ kind: 'type', key: c.key });
   return rules;
 }
