@@ -432,6 +432,13 @@ export const LIVE = {
   'utilityRoot.evasion': 'utility.evasion',
   'utilityRoot.conduit': 'utility.conduit',
   'utilityRoot.manaCharge': 'utility.manaCharge',
+  // proposed live mapping (domain pass)
+  'lifecycle': 'lifecycle',
+  'lifecycle.recall': 'lifecycle.recall',
+  'lifecycle.recall.afterUse': 'lifecycle.recall.afterUse',
+  'lifecycle.recall.afterTurnDraw': 'lifecycle.recall.afterTurnDraw',
+  'lifecycle.recall.afterCardPlay': 'lifecycle.recall.afterCardPlay',
+  'lifecycle.seal': 'lifecycle.seal',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

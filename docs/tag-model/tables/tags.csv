@@ -719,6 +719,12 @@ utilityRoot,utilityRoot,utility,,TagNode,,"Action roles a card or flask can take
 utilityRoot.evasion,utilityRoot.evasion,evasion,utilityRoot,TagNode,,Contributes to Dodge Rolls and avoiding damage.,,,,,,live-tag,,,utility.evasion
 utilityRoot.conduit,utilityRoot.conduit,conduit,utilityRoot,TagNode,,Channels magic through an equipped armament.,,,,,,live-tag,,,utility.conduit
 utilityRoot.manaCharge,manaCharge,manaCharge,utilityRoot,TagNode,,Recovers the stated amount of Mana.,,,,,,live-tag,,,utility.manaCharge
+lifecycle,lifecycle,lifecycle,,TagNode,,"Where a card goes after it is played or resolved: recalled to hand, sealed away, or exhausted. Grouping node for the lifecycle vocabulary.",,,,,,live-tag,,,lifecycle
+lifecycle.recall,recall,recall,lifecycle,TagNode,,Returns to your hand after the named moment instead of being discarded.,,,,,,live-tag,,,lifecycle.recall
+lifecycle.recall.afterUse,afterUse,afterUse,lifecycle.recall,TagNode,,Returns to your hand after being played. A forced discard is not a use.,,,,,,live-tag,,,lifecycle.recall.afterUse
+lifecycle.recall.afterTurnDraw,afterTurnDraw,afterTurnDraw,lifecycle.recall,TagNode,,Returns to your hand after your turn's draw.,,,,,,live-tag,,,lifecycle.recall.afterTurnDraw
+lifecycle.recall.afterCardPlay,afterCardPlay,afterCardPlay,lifecycle.recall,TagNode,,Returns to your hand after you play another card.,,,,,,live-tag,,,lifecycle.recall.afterCardPlay
+lifecycle.seal,seal,seal,lifecycle,TagNode,,Set aside in the Sealed zone when its seal condition is met.,,,,,,live-tag,,,lifecycle.seal
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

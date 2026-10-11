@@ -718,5 +718,11 @@
  "utilityRoot": "new",
  "utilityRoot.evasion": "new",
  "utilityRoot.conduit": "new",
- "utilityRoot.manaCharge": "new"
+ "utilityRoot.manaCharge": "new",
+ "lifecycle": "new",
+ "lifecycle.recall": "new",
+ "lifecycle.recall.afterUse": "new",
+ "lifecycle.recall.afterTurnDraw": "new",
+ "lifecycle.recall.afterCardPlay": "new",
+ "lifecycle.seal": "new"
 }

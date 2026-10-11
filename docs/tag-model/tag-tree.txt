@@ -844,3 +844,9 @@ utility {Action roles a card or flask can take outside its damage: evasion, cond
   evasion {Contributes to Dodge Rolls and avoiding damage.}
   conduit {Channels magic through an equipped armament.}
   manaCharge {Recovers the stated amount of Mana.}
+lifecycle {Where a card goes after it is played or resolved: recalled to hand, sealed away, or exhausted. Grouping node for the lifecycle vocabulary.}
+  recall {Returns to your hand after the named moment instead of being discarded.}
+    afterUse {Returns to your hand after being played. A forced discard is not a use.}
+    afterTurnDraw {Returns to your hand after your turn's draw.}
+    afterCardPlay {Returns to your hand after you play another card.}
+  seal {Set aside in the Sealed zone when its seal condition is met.}
