@@ -1747,6 +1747,52 @@ row.
 
 The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, Battlefield, Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab. A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
 
+What the tabs hold, by area:
+
+- **Progression:** starting level; experience gain multiplier; the XP curve
+  (`balance.level.xp`); optional maximum level; attribute points granted per level; and points
+  required for each derived-stat tier. The level-pace preview (§15.2) shows the configured
+  curve before a run starts. Class defaults sit under this tab.
+- **Class defaults:** each registered class exposes its starting STR, DEX, CON, WIS and INT,
+  starting resource/flask allocation, and other schema-valid starting values. Class controls are
+  registry-derived, so adding a class cannot create an invisible default. Per-class values must
+  still satisfy the selected creation mode's bounds and total-allocation rules; invalid
+  combinations are explained and cannot be applied silently.
+- **Combat and actors:** up to six rows and three columns per side,
+  with front/back meaning identified per side; formation spacing, player and
+  enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
+  data-owned combat presentation values that do not alter asset identity.
+  Default spawns start on the lowest row in the outermost column of each team,
+  placing player and enemy starts farthest apart. Fill each row from outside toward
+  the centre, then move upward. For two columns and three rows, player rows read
+  `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
+  The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
+  Measurements remain responsive percentages; reference anchors at 1641×526 are checked
+  against the exports. Explicit saved group edits take precedence.
+  Formation settings offer group controls for the entire
+  battlefield, either team, individual columns, and named custom sets of positions. Dragging or
+  nudging translates every anchor in the group together. Offsets are stored as percentages of
+  battlefield width/height. Grid snapping defaults on with a 50 CSS px adjustable step; the group's
+  first anchor snaps to an intersection while all member spacing remains fixed. Snapping can be disabled.
+  Edge distances and nudge steps use CSS pixels. Characters and tiles
+  share the transformed anchors, and group translations stop at the battlefield edges. Custom
+  members retain their side, row and local column when the roster changes. Settings edits
+  require Apply layout. These are presentation edits, not tactical
+  movement, and do not spend actions or change combat range rules.
+  Groups may also target a row or one position and apply character size multipliers with feet
+  fixed to their anchors. Combat has no in-battle positioning control.
+- **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
+  tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
+  geometry. Dependent constraints are enforced together (for example, resting < selected <
+  reading) and the editor identifies the value preventing an invalid change.
+- **World, economy and rewards:** encounter/reward odds, currency and experience multipliers,
+  merchant and service pricing, map-generation tuning, and other global balance values whose
+  schema permits a runtime override.
+- **Rules and accessibility:** eligible boolean flags and closed-set modes used by gameplay or
+  presentation. Existing ordinary Display, Audio and Accessibility controls remain in their
+  approachable homes and appear in Advanced only when needed as part of the complete searchable
+  inventory; both surfaces resolve through one descriptor and one persisted value.
+
 Search and section navigation remain available at every supported viewport and text size. Each
 row shows the shipped default, the currently resolved value, whether it affects the current run
 or only a new run, and a Reset action. A section can reset all its values after confirmation;
@@ -2021,7 +2067,7 @@ New maps support multiple terminal boss destinations within an act, with distinc
 
 Every offered path must reach a valid destination without unintended dead ends, unreachable rewards, or repeatable completion rewards. Preserve an accessible pre-boss rest on every terminal route. Persist generated topology, destination identity, and encounter selection. Legacy saves keep their existing topology and chosen boss behavior: an unentered legacy boss node without a stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw during loading or migration. Loading must not regenerate a map, move the player, consume new RNG draws, or reinterpret an in-progress encounter; existing combat snapshots remain unchanged. Validate connectivity, pre-boss rest access, and deterministic reloads over a seed corpus and play through distinct terminal routes.
 
-The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
+The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. The 1.0 target for elites is **one to five per seat, averaging three (±0.5)** (owner ruling D4, 2026-09-24; revised 2026-09-26), counted separately from the other two totals; it is still open (`docs/FINISH.md`). Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
 
 Enemy card movesets are a limited presentation and authoring extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits, and delayed-action state. Issues #239/#241 describe related proposed action planning and persistence work, not an already shipped plan cursor. A later switch to ordered plans requires its own verified mechanics change. Do not introduce a separate parallel move picker or reroll an intent when rendering a card or loading a save.
 
@@ -2203,7 +2249,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 ### 13.4i The character level is earned: XP, the point ledger, the level's own term (plan phase 6)
 
-- **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10; a save at ≤ 9 arrives at the level its cinder purchases reached — `1 + levelUps` — with no XP toward the next and nothing waiting; `validateRunShape` refuses a malformed ledger by name), written only by `model/levelup.js`. `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`); XP is banked by `bankLevelXp` (`src/model/levelup.js:156`), and a level is claimed only by `claimBankedLevel` (`src/model/levelup.js:170`) on the Level up press (§13.4o), which grants the dial's points to `unspentPoints` (`balance.levelUp.maxLevels` caps the claims, XP past it stays); `awardLevelXp` (`src/model/levelup.js:304`) climbs as many steps as the XP buys at once, and only a QA fixture calls it (`src/main.js:4137`); `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point — the attribute moves, `levelUps`/`levelPoints` record the assignment for the load door's allocation check exactly as before, the pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest). `levelUpPlan` offers the waiting points and nothing else (`blockedBy`: `points` | `cap` | null); the shrine's Level-up card assigns them (`rest.js`), the town's level-up service once phase 7 places it. Cinders buy no level: no code path spends `run.cinders` on one.
+- **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10; a save at ≤ 9 arrives at the level its cinder purchases reached — `1 + levelUps` — with no XP toward the next and nothing waiting; `validateRunShape` refuses a malformed ledger by name), written only by `model/levelup.js`. `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`); XP is banked by `bankLevelXp` (`src/model/levelup.js:156`), and a level is claimed only by `claimBankedLevel` (`src/model/levelup.js:170`) on the Level up press (§13.4o), which grants the dial's points to `unspentPoints` (`balance.levelUp.maxLevels` caps the claims, XP past it stays); `awardLevelXp` (`src/model/levelup.js:304`) climbs as many steps as the XP buys at once, and the solo game no longer calls it except in a QA fixture (`src/main.js:4137`); co-op members on the older progression rules (`tools/session.mjs`) and the simulator (`tools/simrun.mjs`) still award through it; `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point — the attribute moves, `levelUps`/`levelPoints` record the assignment for the load door's allocation check exactly as before, the pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest). `levelUpPlan` offers the waiting points and nothing else (`blockedBy`: `points` | `cap` | null); the shrine's Level-up card assigns them (`rest.js`), the town's level-up service once phase 7 places it. Cinders buy no level: no code path spends `run.cinders` on one.
 
 - **Guided level rewards (owner, 2026-10-03; superseded IN PART by §13.4o, 2026-10-04 — the auto-claim and pausing go, every level now waits for the player's Level up press; the deferral and persistence rules below stand):** Accessibility → Pause XP for level-up rewards (`guidedLevelUp`, default on) banks earned character and skill XP, pauses at each level, opens its reward chooser with Back, and resumes surplus XP after that choice. Back stops automatic prompting for the current reward screen; Continue can leave without advancing levels or selecting progression rewards. Unclaimed progression offers retain their originally rolled choices and absolute `requiredLevel` in optional `run.deferredProgression` (`levelCards`, `levelChoices`, `skillDrafts`, `classDrafts`); they return at later victories and through Character → Level up & rewards outside combat. Existing saves may omit the field. Class-specific offers wait for their original class to be equipped; switching classes cannot discard them or place a mismatched class draft into an active reward checkpoint. Deferring cannot grant, reroll, duplicate or auto-collect a progression reward. Turning the guide off follows the existing manual-level preference. Reduced motion skips the fill animation without changing the sequence or persistence.
 - **The awards are the run's owner's** (`main.js onCombatEnd`, `tools/session.mjs` per seat — the seat's ledger rides its member view, and assigning the points in co-op waits with the co-op class draft (§13.4g): the session pays, the co-op shrine does not yet offer — and `tools/runsim.mjs`): `combatLevelXp(registries, { victory, pool, kills })` — `xp.combatWin` for a won fight and `xp.kill.<pool>` per enemy felled (a kill is a kill, won or lost; an unknown pool pays the normal rate); `questLevelXp` names `xp.quest`; nothing calls it yet (character XP for quests is post-1.0). His level-value dial (`levelUpValue`) is read where the level is reached, so the points a level grants are decided then and wait for the shrine.
