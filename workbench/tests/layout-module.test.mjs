@@ -25,6 +25,12 @@ const settings = C.defaultSettings();
 const wireframe = C.wireframeById(settings, 'w4a');
 const device = settings.devices.find((d) => d.id === 'desk-1280');
 
+test('the vendored studio model is byte-identical to ui-studio/model.mjs', () => {
+  const mine = readFileSync(join(ROOT, 'workbench/modules/layout/studio-model.mjs'), 'utf8');
+  const theirs = readFileSync(join(ROOT, 'ui-studio/model.mjs'), 'utf8');
+  assert.equal(mine, theirs, 'copy studio-model.mjs from ui-studio/model.mjs again');
+});
+
 test('regions for w4a at desk 1280 match UI Studio\'s regionsFor, field for field', () => {
   const files = loadedFiles(W4A_FILES);
   const vp = C.viewportOf(device);
