@@ -36,6 +36,26 @@ export const BUILD_OUTPUTS = {
 };
 export const isBuildOutput = (rel) => Object.values(BUILD_OUTPUTS).some((dirs) => dirs.some((d) => rel.startsWith(d) || `${rel}/` === d));
 
+/**
+ * The files the Workbench itself has just written, each with the size and mtime
+ * it left them with. isOwn(abs) is true while the file still matches that stat,
+ * so the watcher can drop the echo of a save. An edit made after the save has a
+ * newer mtime (or a new size), so it is still a change and reloads.
+ */
+export function createOwnWrites() {
+  const written = new Map();
+  return {
+    record(abs, stat) { written.set(path.resolve(abs), { size: stat.size, mtimeMs: stat.mtimeMs }); },
+    isOwn(abs) {
+      const w = written.get(path.resolve(abs));
+      if (!w) return false;
+      let now;
+      try { now = fs.statSync(abs); } catch { return false; }
+      return now.size === w.size && now.mtimeMs <= w.mtimeMs;
+    },
+  };
+}
+
 export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, isOutput = isBuildOutput }) {
   const pending = new Set();
   const watchers = []; const polls = [];
