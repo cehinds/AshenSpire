@@ -83,13 +83,18 @@ const FOLDER_EVENTS = new Set(['darwin', 'win32']);
  * reported only as the folder (the batch is a Set, so a file reported twice counts
  * once). Elsewhere the event's path is kept as it is.
  */
-export function recursiveEventPaths(abs, name, platform = process.platform, { exists = fs.existsSync, isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } }, isNewFolder = () => true, filesUnder = (p) => [...walk(p).keys()] } = {}) {
+export function recursiveEventPaths(abs, name, platform = process.platform, { exists = fs.existsSync, isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } }, isNewFolder = () => true, filesUnder = (p) => [...walk(p).keys()], since = 0, changedAt = (p) => { try { const st = fs.statSync(p); return Math.max(st.mtimeMs, st.ctimeMs); } catch { return null; } } } = {}) {
   if (!name) return [];
   const base = String(name);
   const target = path.join(abs, base);
   if (!FOLDER_EVENTS.has(platform)) return [target];
   if (platform === 'darwin' && base === path.basename(abs) && !exists(target)) return []; // the watched folder itself
-  if (!isDir(target)) return [target];
+  if (!isDir(target)) {
+    // FSEvents also replays events from just before the watch began: a file untouched since then
+    // (both its modification and its change time older) is a replay. A gone file is always kept.
+    const at = platform === 'darwin' ? changedAt(target) : null;
+    return at !== null && at < since ? [] : [target];
+  }
   return isNewFolder(target) ? filesUnder(target) : [];
 }
 
@@ -232,6 +237,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   // The folders there when the watch began, and those seen since, with their inodes:
   // on macOS only a folder not among them is walked for its files (see recursiveEventPaths).
   const knownFolders = new Map(); // folder -> inode
+  const startedAt = Date.now(); // on macOS, a file not changed since then is a replayed event
   const isNewFolder = (p) => {
     let ino;
     try { ino = fs.statSync(p).ino; } catch { return false; }
@@ -255,7 +261,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     try {
       w = fs.watch(abs, { recursive: true }, (_event, name) => {
         if (FOLDER_EVENTS.has(platform) && name) forgetGone(abs, path.join(abs, String(name)));
-        for (const target of recursiveEventPaths(abs, name, platform, { isNewFolder })) note(target);
+        for (const target of recursiveEventPaths(abs, name, platform, { isNewFolder, since: startedAt })) note(target);
       });
     } catch { return false; /* recursive watch unsupported here: poll below */ }
     w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });

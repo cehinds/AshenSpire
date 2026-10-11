@@ -164,6 +164,16 @@ test('on macOS a new folder names the files under it; a folder already there, an
   assert.deepEqual(recursiveEventPaths(abs, null, 'darwin', fake()), []);
 });
 
+test('on macOS a file event for a file untouched since the watch began is a replay and names nothing', () => {
+  const abs = path.join('/p', 'styles');
+  const css = path.join(abs, 'main.css');
+  const at = (t) => ({ since: 1000, isDir: () => false, exists: () => true, changedAt: () => t });
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(500)), [], 'written before the watch: a replayed event');
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(1500)), [css], 'written after the watch began');
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', { since: 1000, isDir: () => false, exists: () => false, changedAt: () => null }), [css], 'a deleted file is always kept');
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'win32', at(500)), [css], 'only macOS replays events');
+});
+
 test('on macOS a folder moved into the watched tree after the watch began batches its files', async (t) => {
   if (process.platform !== 'darwin') return t.skip('needs FSEvents (macOS)');
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
