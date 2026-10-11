@@ -311,3 +311,29 @@ test('src/engine/combatRounds stays headless: no window, document, storage, time
     for (const word of banned) assert.equal(text.includes(word), false, `${f} contains "${word}"`);
   }
 });
+
+test('every export line in the combat rounds modules is a form tools/bundle.mjs accepts', () => {
+  // tools/bundle.mjs transforms exports line by line: `export { a, b };` (no `from`),
+  // `export function|class NAME`, or `export const|let|var NAME`. Anything else fails the build.
+  const files = ['src/engine/combatRounds/resolver.js', 'src/engine/combatRounds/timeline.js',
+    'src/engine/combatRounds/round.js', 'src/content/combatRounds.js'];
+  const ok = [
+    /^[ \t]*export\s*\{[^}]*\}\s*;?[ \t]*$/,
+    /^[ \t]*export\s+(async\s+)?(function\*?|class)\s+[A-Za-z_$]/,
+    /^[ \t]*export\s+(const|let|var)\s+[A-Za-z_$]/,
+  ];
+  for (const f of files) {
+    const lines = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8').split(/\r?\n/);
+    lines.forEach((line, i) => {
+      if (!/^[ \t]*export\b/.test(line)) return;
+      assert.ok(ok.some((re) => re.test(line)), `${f}:${i + 1} uses an export form the bundler rejects: ${line}`);
+    });
+  }
+});
+
+test('a non-finite combatant level counts as 0, the same before and after a JSON round-trip', async () => {
+  const { makeCombatant } = await import('../src/engine/combatRounds/timeline.js');
+  const c = makeCombatant({ id: 'player', side: 'player', level: 'x', hp: 10 });
+  assert.equal(c.level, 0);
+  assert.equal(JSON.parse(JSON.stringify(c)).level, 0);
+});

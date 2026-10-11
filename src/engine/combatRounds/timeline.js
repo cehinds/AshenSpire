@@ -37,15 +37,8 @@ export const CARD_KINDS = Object.freeze(['attack', 'guard', 'evade', 'counter', 
 export const DEFENSIVE_KINDS = Object.freeze(['guard', 'evade', 'counter']);
 
 // The placeholder numbers (SP, buffs, defence bases, adaptation) are data in src/content/combatRounds.js.
-export {
-  ADAPT_COUNTER_DAMAGE,
-  ADAPT_INDEX,
-  ADAPT_PERCENT_MAX,
-  ADAPT_PERCENT_PER_WIS,
-  DEFAULT_SP,
-  DEFENSE_BASE,
-  REACTION_BUFF,
-} from '../../content/combatRounds.js';
+// One-line local re-export: tools/bundle.mjs accepts `export { a, b };` without `from` only.
+export { ADAPT_COUNTER_DAMAGE, ADAPT_INDEX, ADAPT_PERCENT_MAX, ADAPT_PERCENT_PER_WIS, DEFAULT_SP, DEFENSE_BASE, REACTION_BUFF };
 
 const SIDES = Object.freeze(['player', 'enemy']);
 
@@ -119,7 +112,8 @@ export function makeCombatant(spec = {}, tables = {}) {
     side,
     name: spec.name ?? id,
     attrs,
-    level: Number(spec.level ?? 0),
+    // A non-finite level counts as 0, so a saved round (JSON turns NaN into null) reads it the same.
+    level: Number.isFinite(Number(spec.level ?? 0)) ? Number(spec.level ?? 0) : 0,
     hp,
     maxHp: hp,
     sp,
