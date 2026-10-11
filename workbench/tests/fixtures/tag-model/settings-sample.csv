@@ -1,0 +1,4 @@
+key,label,group,type,default,options,min,max,step,storage,readBy,file,scope,deviceScope,tag,liveRef
+gameConfig.prologue.scenes.warmth.text,Dialogue,Opening,textarea,"Three hearths once kept the roads warm.
+We lived beyond their walls.",,,,,profile settings (localStorage sote_meta_v1 .settings),src/ui/screens/settings.js (screen row),src/ui/screens/settings.js + src/model/advancedConfig.js,tuning,global,opening,src/ui/screens/settings.js + src/model/advancedConfig.js
+gameConfig.prologue.scenes.warmth.seconds,Scene duration (seconds),Opening,number,5,,1,180,0.1,profile settings (localStorage sote_meta_v1 .settings),src/ui/screens/settings.js (screen row),src/ui/screens/settings.js + src/model/advancedConfig.js,tuning,global,opening,src/ui/screens/settings.js + src/model/advancedConfig.js
