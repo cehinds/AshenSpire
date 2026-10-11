@@ -74,3 +74,13 @@
 .mo.is-narrow.lib-open .mo-lib, .mo.is-narrow.insp-open .mo-insp { display: block; }
 .mo.is-narrow .mo-scrim { z-index: 9; }
 .mo.is-narrow .mo-body { position: relative; }
+
+/* Position editor: the canvas kit over the figure. */
+.mo-edit { width: 100%; height: min(60vh, 560px); min-height: 320px; position: relative; border: 1px solid var(--as-border, #cfd6cc); border-radius: 8px; overflow: hidden; background: #15211e; }
+.mo-edit .ck-host { height: 100%; }
+.mo-fields { display: grid; gap: 6px; }
+.mo-fields .mo-field { margin: 0; }
+.mo-fields .mo-check { margin: 2px 0; }
+.mo-anchor { border: 1px solid var(--as-border, #d6dcd3); border-radius: 6px; padding: 6px 8px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mo-anchor legend { font-size: 12px; padding: 0 4px; }
+.mo-fields input[type="number"], .mo-fields select { width: 100%; box-sizing: border-box; }

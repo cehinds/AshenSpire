@@ -8,11 +8,18 @@
 // Narrow (the module under 1100px): the library and inspector are overlays.
 // Save goes through the shared file service (/api/files) with a line diff to review.
 
+import { createCanvas } from '../../ui/kit/canvas.mjs';
 import {
-  LIBRARY_KINDS, SPEEDS, FACINGS, SIZES, BACKGROUNDS,
+  LIBRARY_KINDS, SPEEDS, FACINGS, SIZES, BACKGROUNDS, REF,
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty,
+  setClipFields, setAnchor, canvasDocOf, applyCanvasDoc,
 } from './model.mjs';
+
+// The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
+const FRAME_FLOOR = 600 / 640;
+const FIGURE_SCALE = 0.9;
+const clone = (v) => JSON.parse(JSON.stringify(v));
 
 const MODULE_SOURCE = 'ashen-motion-module';
 const RENDER_SOURCE = 'ashen-motion';
@@ -43,8 +50,6 @@ export default {
         <div class="mo-title"><h2 class="mo-name">Motion Studio</h2><span class="mo-file"></span><span class="mo-dirty" hidden>Unsaved</span></div>
         <div class="mo-head-actions">
           <button type="button" class="btn btn-sm mo-toggle" data-overlay="lib" aria-expanded="false">Library</button>
-          <button type="button" class="btn btn-sm mo-undo" disabled>Undo</button>
-          <button type="button" class="btn btn-sm mo-redo" disabled>Redo</button>
           <button type="button" class="btn btn-sm mo-toggle" data-overlay="insp" aria-expanded="false">Inspector</button>
         </div>
       </header>
@@ -63,9 +68,13 @@ export default {
             <label class="mo-field mo-inline">Background<select class="mo-bg">${BACKGROUNDS.map((b) => `<option value="${b}">${b[0].toUpperCase() + b.slice(1)}</option>`).join('')}</select></label>
             <label class="mo-check"><input type="checkbox" class="mo-onion-prev"> Onion: previous</label>
             <label class="mo-check"><input type="checkbox" class="mo-onion-next"> Onion: next</label>
+            <div class="mo-seg" role="group" aria-label="Mode"><button type="button" class="btn btn-sm" data-mode="stage" aria-pressed="true">Stage</button><button type="button" class="btn btn-sm" data-mode="edit" aria-pressed="false">Edit positions</button></div>
+            <label class="mo-check mo-edit-only" hidden><input type="checkbox" class="mo-snap" checked> Snap</label>
+            <label class="mo-check mo-edit-only" hidden><input type="checkbox" class="mo-grid"> Grid</label>
           </div>
           <div class="mo-stagewrap">
             <div class="mo-frame-box"><iframe class="mo-frame" title="Figure rendered by the game"></iframe><p class="mo-setup" hidden></p></div>
+            <div class="mo-edit" hidden aria-label="Position editor. Drag anchors and effects; arrow keys nudge."></div>
           </div>
           <div class="mo-transport">
             <button type="button" class="btn btn-sm mo-play">Play</button>
@@ -92,7 +101,8 @@ export default {
     const scrub = $('.mo-scrub'), timeEl = $('.mo-time'), playBtn = $('.mo-play'), loopEl = $('.mo-loop');
     const speedEl = $('.mo-speed'), bgEl = $('.mo-bg'), prevEl = $('.mo-onion-prev'), nextEl = $('.mo-onion-next');
     const classEl = $('.mo-class'), qEl = $('.mo-q'), countEl = $('.mo-count'), fileEl = $('.mo-file'), dirtyEl = $('.mo-dirty');
-    const undoBtn = $('.mo-undo'), redoBtn = $('.mo-redo'), scrim = $('.mo-scrim');
+    const scrim = $('.mo-scrim'), editEl = $('.mo-edit'), snapEl = $('.mo-snap'), gridEl = $('.mo-grid');
+    let canvas = null;
 
     // ---------- state ----------
     const st = {
@@ -106,7 +116,7 @@ export default {
       time: 0, playing: false, speed: 1, loop: true, facing: 'right', size: 'medium', background: 'checker',
       onion: { prev: false, next: false },
       selected: null, // { kind: 'clip', id } | { kind: 'anchor', name }
-      narrow: false, overlay: null,
+      narrow: false, overlay: null, mode: 'stage',
     };
     let rafId = 0, lastTick = 0, pendingLink = null, mounted = true;
 
@@ -288,6 +298,10 @@ export default {
       el.querySelectorAll('[data-size]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.size === st.size)));
       frame.parentElement.style.setProperty('--mo-scale', String(SIZES[st.size]));
       root.classList.toggle('is-empty', !p);
+      el.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === st.mode)));
+      el.querySelectorAll('.mo-edit-only').forEach((x) => { x.hidden = st.mode !== 'edit'; });
+      el.querySelector('.mo-frame-box').hidden = st.mode === 'edit';
+      editEl.hidden = st.mode !== 'edit';
     }
     function renderTimeline() {
       const p = st.file?.project;
@@ -322,7 +336,7 @@ export default {
         </dl>` : '<p class="mo-note">Choose an animation set, stance or outfit in the library. Stances and sets open here; an outfit alone shows its painted frames.</p>'}
         ${problems.length ? `<div class="mo-problems"><p>This file does not match the game format:</p><ul>${problems.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
         ${clip ? clipInspector(clip) : ''}
-        ${p ? `<h3>Anchors</h3><ul class="mo-anchors">${Object.entries(p.anchors).map(([k, v]) => `<li><span>${esc(k)}</span> ${v[0].toFixed(3)}, ${v[1].toFixed(3)}</li>`).join('')}</ul>` : ''}
+        ${p ? anchorInspector(p) : ''}
         <h3>Links</h3>
         <div class="mo-links">
           ${cls ? `<button type="button" class="btn btn-sm mo-x-entities" data-class="${esc(cls)}">Open in Entity Browser</button>` : ''}
@@ -331,22 +345,128 @@ export default {
       insp.querySelector('.mo-x-entities')?.addEventListener('click', (e) => ctx.openModule('entities', { kind: 'classes', id: e.currentTarget.dataset.class }));
       insp.querySelector('.mo-x-assets')?.addEventListener('click', (e) => ctx.openModule('assets', { path: e.currentTarget.dataset.path }));
     }
+    const num = (v) => (Number.isFinite(v) ? v : 0);
+    const field = (label, key, value, attrs = '') => `<label class="mo-field">${esc(label)}<input type="number" step="1" data-clip-field="${key}" value="${num(value)}" ${attrs}></label>`;
     function clipInspector(c) {
       return `<h3>Effect · ${esc(c.effect)}</h3>
-        <dl class="mo-meta">
-          <dt>Cue</dt><dd>${esc(c.cue)}${c.offset >= 0 ? ' +' : ' '}${c.offset} ms</dd>
-          <dt>Anchor</dt><dd>${esc(c.anchor)}</dd>
-          <dt>Position</dt><dd>${c.x}, ${c.y} px</dd>
-          <dt>Size</dt><dd>${c.size}</dd>
-          <dt>Opacity</dt><dd>${c.opacity}</dd>
-          <dt>Layer</dt><dd>${esc(c.layer)}${c.travel ? ' · travels to target' : ''}${c.muted ? ' · muted' : ''}</dd>
-        </dl>`;
+        <div class="mo-fields" data-clip="${esc(c.id)}">
+          <p class="mo-note">Cue ${esc(c.cue)}, ${c.offset >= 0 ? '+' : ''}${c.offset} ms, anchor ${esc(c.anchor)}.</p>
+          ${field('Offset (ms)', 'offset', c.offset)}
+          ${field('Duration (ms)', 'duration', c.duration, 'min="60" max="30000"')}
+          ${field('X (px)', 'x', c.x)}
+          ${field('Y (px)', 'y', c.y)}
+          ${field('Size', 'size', c.size, 'min="20" max="800"')}
+          ${field('Rotation (deg)', 'rotation', c.rotation)}
+          <label class="mo-field">Opacity<input type="number" step="0.05" min="0" max="1" data-clip-field="opacity" value="${num(c.opacity)}"></label>
+          <label class="mo-field">Layer<select data-clip-field="layer">${['front', 'behind', 'aura'].map((l) => `<option value="${l}"${l === c.layer ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label class="mo-check"><input type="checkbox" data-clip-field="travel"${c.travel ? ' checked' : ''}> Travels to target</label>
+          <label class="mo-check"><input type="checkbox" data-clip-field="muted"${c.muted ? ' checked' : ''}> Muted</label>
+        </div>`;
     }
+    function anchorInspector(p) {
+      return `<h3>Anchors</h3><div class="mo-fields">${Object.entries(p.anchors).map(([k, v]) => `<fieldset class="mo-anchor" data-anchor="${esc(k)}"><legend>${esc(k)}</legend>
+        <label class="mo-field">X<input type="number" step="0.001" min="0" max="1" data-axis="0" value="${num(v[0])}"></label>
+        <label class="mo-field">Y<input type="number" step="0.001" min="0" max="1" data-axis="1" value="${num(v[1])}"></label></fieldset>`).join('')}</div>`;
+    }
+
+    // ---------- edits: one History step per change, through the host's undo ----------
+    /** Sets the open file's draft, redraws the stage and inspector. */
+    function setProject(next) { st.file.project = next; sendLoad(); renderAll(); }
+    function commitProject(next, label) {
+      const before = st.file?.project;
+      if (!before || JSON.stringify(before) === JSON.stringify(next)) return;
+      const undo = clone(before), redo = clone(next);
+      ctx.history.pushChange({ label, undo, redo }, (snap) => { if (st.file) setProject(clone(snap)); });
+      setProject(redo);
+    }
+    function onInspChange(e) {
+      const p = st.file?.project;
+      if (!p) return;
+      const anchor = e.target.closest('.mo-anchor');
+      if (anchor) {
+        const name = anchor.dataset.anchor;
+        const xy = [...p.anchors[name]];
+        const axis = Number(e.target.dataset.axis);
+        xy[axis] = Number(e.target.value);
+        if (!Number.isFinite(xy[axis])) return;
+        commitProject(setAnchor(p, name, xy), `Move ${name} anchor`);
+        return;
+      }
+      const key = e.target.dataset.clipField;
+      const fields = e.target.closest('.mo-fields[data-clip]');
+      if (!key || !fields) return;
+      const id = fields.dataset.clip;
+      const raw = e.target.type === 'checkbox' ? e.target.checked : e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+      if (typeof raw === 'number' && !Number.isFinite(raw)) return;
+      commitProject(setClipFields(p, id, { [key]: raw }), `Set ${key}`);
+    }
+    insp.addEventListener('change', onInspChange);
+
+    // ---------- the position editor (canvas kit) ----------
+    /** The figure as the stage draws it, so the handles sit over it. Locked: it is the reference, not an edit. */
+    function editDoc() {
+      const p = st.file.project;
+      const doc = canvasDocOf(p);
+      const pose = p.poses[poseIndexAt(p.poses.length, p.duration, st.time)];
+      const side = Math.round(REF.height * FIGURE_SCALE);
+      const feet = (p.anchors.feet?.[1] ?? 0.85) * REF.height;
+      const torso = (p.anchors.torso?.[0] ?? 0.3) * REF.width;
+      const src = p.assets?.[`pose:${pose}`] || frameUrl(pose);
+      doc.items.unshift({ id: 'figure', x: torso - side / 2, y: feet - side * FRAME_FLOOR, w: side, h: side, z: 0, locked: true, label: pose, data: { kind: 'figure', src } });
+      return doc;
+    }
+    function frameUrl(pose) {
+      const cls = st.filter.classId || st.file?.project?.actor || '';
+      const file = (st.index.frames[st.outfit || cls] || st.index.frames[cls] || {})[pose];
+      return file ? `/asset-file/${file}` : null;
+    }
+    function ensureCanvas() {
+      if (canvas) return canvas;
+      canvas = createCanvas(editEl, {
+        doc: { width: REF.width, height: REF.height, items: [] },
+        snap: snapEl.checked,
+        grid: { size: 10, show: gridEl.checked },
+        rulers: true,
+        onChange: (doc, change) => { if (st.file) commitProject(applyCanvasDoc(st.file.project, doc), change?.label || 'Move'); },
+        onSelect: (ids) => {
+          const id = ids[0] || '';
+          st.selected = id.startsWith('anchor:') ? { kind: 'anchor', name: id.slice(7) } : id.startsWith('clip:') ? { kind: 'clip', id: id.slice(5) } : null;
+          renderTimeline();
+          renderInspector();
+        },
+        renderItem: (node, item) => {
+          if (item.data?.kind !== 'figure') return;
+          node.replaceChildren();
+          if (!item.data.src) return;
+          const img = document.createElement('img');
+          img.alt = '';
+          img.src = item.data.src;
+          img.draggable = false;
+          img.style.cssText = 'width:100%;height:100%;display:block;pointer-events:none;opacity:0.9';
+          node.append(img);
+        },
+      });
+      return canvas;
+    }
+    function syncCanvas() {
+      if (st.mode !== 'edit' || !st.file) return;
+      ensureCanvas().setDoc(editDoc());
+    }
+    function setMode(mode) {
+      st.mode = mode;
+      if (mode === 'edit') { setPlaying(false); syncCanvas(); }
+      renderTransport();
+    }
+    el.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    snapEl.addEventListener('change', () => canvas?.setSnap(snapEl.checked));
+    gridEl.addEventListener('change', () => canvas?.setGrid(gridEl.checked));
+
     function renderAll() {
       renderLibrary();
       renderTransport();
       renderTimeline();
       renderInspector();
+      if (st.mode === 'edit') syncCanvas();
       sendView();
       el.querySelector('.mo-review')?.toggleAttribute('disabled', !st.file || !isDirty(st.file.original, st.file.project));
     }

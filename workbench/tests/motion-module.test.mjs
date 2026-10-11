@@ -33,3 +33,12 @@ test('the render page draws with the game model and the painted art, not a copy'
     assert.ok(fs.existsSync(path.join(ROOT, rel)), `${rel} exists`);
   }
 });
+
+test('edits go through the canvas kit and one history step per change, and save nothing until reviewed', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /import \{ createCanvas \} from '\.\.\/\.\.\/ui\/kit\/canvas\.mjs'/);
+  assert.match(src, /ctx\.history\.pushChange\(\{ label, undo, redo \}/);
+  assert.match(src, /canvas = createCanvas\(editEl/);
+  assert.doesNotMatch(src, /files\/save/, 'no save happens until the review dialog');
+  assert.match(src, /locked: true, label: pose, data: \{ kind: 'figure', src \}/, 'the figure is a locked reference item');
+});
