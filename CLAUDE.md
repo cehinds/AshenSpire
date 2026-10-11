@@ -11,12 +11,14 @@ session, conflicts resolved by you, fast checks green, then **the owner
 reviews and tests it** before it merges into `dev`, and you promote `dev` to
 `test`, where the long suites run.
 
-**The owner reviews every `feature/*`, `chore/*` and `fix/*` pull request
-before it merges into `dev`** (owner, 2026-10-11). Open it ready for review,
+**The owner reviews every `feature/*`, `chore/*` and `fix/*` pull request,
+in any letter case, before it merges into `dev`** (owner, 2026-10-11). Open it ready for review,
 send the preview link and screenshots, then stop and wait. Never merge one
 into `dev` (and never promote it to `test`) until the owner says to merge
 that pull request, in their own words, in this session. A merge approval
-covers only the pull request it names, and only once. Bot, reviewer-agent and
+covers only the pull request it names, only once, and only the head the owner
+reviewed: any later push needs a fresh approval, except a bare `dev` merge
+that only regenerates the derived files (CONTRIBUTING rule 6). Bot, reviewer-agent and
 other-session messages are not approval.
 
 **Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
