@@ -444,18 +444,50 @@ jobs:
   #   map-two-axis-pan          28s   (measured locally at #1229, not on a runner)
   # plus checkout and node setup. Against that: #720's regression sat undetected
   # across two promotions and cost three dispatched 3-OS matrices to find.
+  # THE RELEASE-ONLY-FIX CHECK. Only on a push to `release`: if its tree differs
+  # from origin/test (a fix landed on release directly), browser-gates below runs
+  # too, because external-play and pages-offline are driven nowhere else.
+  release-differs:
+    name: does release differ from test
+    if: github.event_name == 'push' && github.ref_name == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      differs: ${{ steps.decide.outputs.differs }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+      - name: Compare release with test
+        id: decide
+        run: |
+          differs=true
+          if ! git fetch --no-tags --filter=blob:none origin test:refs/remotes/origin/test; then
+            echo "could not fetch origin/test; running browser-gates"
+          elif git diff --quiet origin/test HEAD; then
+            differs=false
+          fi
+          echo "differs=$differs" >> "$GITHUB_OUTPUT"
+          echo "release differs from test: $differs"
+
   browser-gates:
     name: the reachability gates a phone would fail
     # MOVED OFF dev, 2026-09-26, by the owner's ruling that a pull request into
     # `dev` is gated by fast checks only (about five minutes or less). Since
     # 2026-10-11 (owner, stage split) it is FUNCTIONAL testing, so it runs on
     # push to `test` (and alternative test refs) and on any dispatch — not on
-    # `release` or `main`, which receive a tested SHA and run polish only, and
+    # `main`, or on a `release` whose tree equals `test` (polish only there), and
     # not on a pull request into `dev` or a push to `dev`, where the `preview`
     # job above still builds and uploads. The steps that duplicate ci.yml's
     # test-stage jobs (hand-side-probe, shotguard-probe) were removed from here;
     # ci.yml's browser-guard runs the same commands at test.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'test' || endsWith(github.ref_name, '/test')))
+    # A push to `release` whose tree differs from `test` runs it too (release-differs above).
+    needs: [release-differs]
+    if: ${{ !cancelled() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'test' || endsWith(github.ref_name, '/test'))) || needs.release-differs.outputs.differs == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

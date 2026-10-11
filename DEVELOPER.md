@@ -61,7 +61,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → every flask menu, and the flask-menu known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → about-changelog known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → startup gate known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
-| `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | — |
+| `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | only when release differs from test |
 | `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | only when release differs from test |
 | `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | only when release differs from test |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | only when release differs from test |
