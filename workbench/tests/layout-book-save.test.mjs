@@ -11,6 +11,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { createFileService } from '../core/files.mjs';
 import * as K from '../modules/layout/book-model.mjs';
+import { consumables } from '../../src/content/consumables.js';
+import { BOOK_COVERS, BOOK_SYMBOLS, BOOK_TREATMENTS, BOOK_TRIMS, BOOK_PALETTE } from '../../src/content/bookArt.js';
+
+const CATALOG = K.catalogOf({ books: consumables.filter((r) => r.kind === 'skillBook'), cover: BOOK_COVERS, symbol: BOOK_SYMBOLS, treatment: BOOK_TREATMENTS, trim: BOOK_TRIMS, palette: BOOK_PALETTE });
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const sha = (text) => createHash('sha256').update(text).digest('hex');
@@ -29,7 +33,7 @@ test('a recipe edit saved through the file service changes only its value on dis
   const service = createFileService({ root, stateDir: path.join(root, '.wb-state') });
   const real = await fs.readFile(path.join(root, K.RECIPES_FILE), 'utf8');
   const { hash } = await service.read(K.RECIPES_FILE);
-  const next = K.setRecipeField(real, 'focusTreatise', 'ink', '#ffffff');
+  const next = K.setRecipeField(real, 'focusTreatise', 'ink', '#ffffff', CATALOG);
   const saved = await service.save([{ path: K.RECIPES_FILE, text: next, baseHash: hash }]);
   assert.equal(saved.files[0].path, K.RECIPES_FILE);
   assert.equal(await fs.readFile(path.join(root, K.RECIPES_FILE), 'utf8'), next);
@@ -55,7 +59,7 @@ test('a save against a stale hash is a conflict, and the file is left as it was'
   const root = await project(t);
   const service = createFileService({ root, stateDir: path.join(root, '.wb-state') });
   const real = await fs.readFile(path.join(root, K.RECIPES_FILE), 'utf8');
-  const next = K.setRecipeField(real, 'focusTreatise', 'trim', 'frame');
+  const next = K.setRecipeField(real, 'focusTreatise', 'trim', 'frame', CATALOG);
   await assert.rejects(
     service.save([{ path: K.RECIPES_FILE, text: next, baseHash: 'stale' }]),
     (err) => err.status === 409,
