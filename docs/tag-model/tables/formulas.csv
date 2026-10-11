@@ -1,9 +1,10 @@
-key,expr,scope,description
-strike.damage,[strike.baseDamage] + floor([ar] * [strike.arScale]) + [sword.arBonus],strike,Damage of one Strike
-strike.critDamage,floor([strike.damage] * [crit.mult]),strike,Damage on a crit
-strike.vsVulnerable,floor([strike.damage] * [vulnerable.mult]),strike,Damage into a Vulnerable target
-dodgeRoll.block,[dodgeRoll.base] + ([rank] - 1) + [dr],dodgeRoll,Block gained; rank adds 1 per rank (algorithm progression)
-dodgeRoll.poise,[dodgeRoll.block],dodgeRoll,Poise guard gained
-dodgeRoll.ward,[dodgeRoll.block],dodgeRoll,Ward guard gained
-burned.tick,[burned] * [burned.tickPerStack],burned,HP lost at turn start
-dodgeRoll.dodgeBlock,([dodgeRoll.base] + [dodgeBlock.drBonus]) * [dodgeBlock.mod],dodgeRoll,"Dodge Block: 3 + DR bonuses, scaled by modifiers (owner decision 9). Relics and stances change dodgeBlock.mod"
+key,expr,scope,description,status
+strike.damage,[strike.baseDamage] + floor([ar] * [strike.arScale]) + [sword.arBonus],strike,Damage of one Strike,
+strike.critDamage,floor([strike.damage] * [crit.mult]),strike,Damage on a crit,
+strike.vsVulnerable,floor([strike.damage] * [vulnerable.mult]),strike,Damage into a Vulnerable target,
+dodgeRoll.block,[dodgeRoll.base] + ([rank] - 1) + [dr],dodgeRoll,Block gained; rank adds 1 per rank (algorithm progression),
+dodgeRoll.poise,[dodgeRoll.block],dodgeRoll,Poise guard gained,
+dodgeRoll.ward,[dodgeRoll.block],dodgeRoll,Ward guard gained,
+burned.tick,[burned] * [burned.tickPerStack],burned,HP lost at turn start,
+dodgeRoll.dodgeBlock,([dodgeRoll.base] + [dodgeBlock.drBonus]) * [dodgeBlock.mod],dodgeRoll,"Dodge Block: 3 + DR bonuses, scaled by modifiers (owner decision 9). Relics and stances change dodgeBlock.mod",
+evasion.rating,TBD,character,Evasion formula: placeholder pending a proposal (owner decision 11),proposed

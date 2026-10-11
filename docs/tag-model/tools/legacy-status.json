@@ -392,5 +392,6 @@
  "card.upgrade.upgraded": "existing",
  "card.character-card": "existing",
  "meta.combat.delivery.melee": "new",
- "meta.combat.skill.prepare": "new"
+ "meta.combat.skill.prepare": "new",
+ "meta.character.defensive-stats.accuracy": "new"
 }

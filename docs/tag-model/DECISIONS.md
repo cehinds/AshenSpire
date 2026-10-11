@@ -205,3 +205,27 @@ Formula, relation and value keys follow the README conventions.
 - **Couldn't place:** the rule that stops a pool from feeding another is not
   written in the tables. `SEPARATE_POOL` records the constraint. The
   mechanics belong to SPEC once the owner adopts them.
+
+## 11. Defenses are AR, DR, PR, Poise, Ward, Evasion and Accuracy
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** The defenses are AR, DR, PR, Poise, Ward, Evasion and Accuracy.
+  Evasion and Accuracy are the new defense stats. Evasion's formula is pending
+  a proposal.
+- **Tables changed:**
+  - `tables/tags.csv`: `meta.character.defensive-stats.accuracy` (status
+    `new`), beside the existing `evasion`. The offensive `accuracy` tag is
+    unchanged. Its key is now `offensive-stats.accuracy`, because the build
+    qualifies both keys to tell them apart.
+  - `tools/legacy-status.json`: `defensive-stats.accuracy` added as `new`.
+  - `tables/formulas.csv`: a `status` column is added. Blank means defined.
+    New row `evasion.rating`, expr `TBD`, scope `character`, status `proposed`.
+    The expression has no `[key]` references, so the check passes it as a
+    placeholder.
+- **Couldn't place:**
+  - **Accuracy exists twice.** The offensive tag was already in the tables. The
+    owner's "add Accuracy as a tag" was read as a second, defense-side tag.
+    Owner to say whether there should be one tag or two.
+  - **AR and PR placement.** The owner lists AR, DR and PR as defenses. In the
+    tables, AR and PR are under `offensive-stats`, and DR is under
+    `defensive-stats`. Nothing was moved. Owner to say if AR and PR should move.
