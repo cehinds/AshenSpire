@@ -23,10 +23,20 @@ function reactionUnavailableText(event, { registries, source, owner }) {
   }
 }
 
-export function combatLogEntries(events, { registries, players = [], enemies = [] } = {}) {
+function nameLookup({ registries, players = [], enemies = [] }) {
   const names = new Map(players.map(player => [player.id, player.name || 'Forsaken']));
   for (const enemy of enemies) names.set(enemy.id, registries?.enemies.get(enemy.enemyId)?.name || 'Enemy');
-  const name = id => names.get(id) || (id === 'player' ? 'Forsaken' : 'Enemy');
+  return id => names.get(id) || (id === 'player' ? 'Forsaken' : 'Enemy');
+}
+
+/** The log's own words for one combatReactionUnavailable, without the co-op seat prefix. */
+export function reactionUnavailableNote(event, { registries, players = [], enemies = [] } = {}) {
+  const name = nameLookup({ registries, players, enemies });
+  return reactionUnavailableText(event, { registries, source: name(event.sourceId), owner: name(event.ownerId) });
+}
+
+export function combatLogEntries(events, { registries, players = [], enemies = [] } = {}) {
+  const name = nameLookup({ registries, players, enemies });
   const rows = [];
   let round = 1;
   events.forEach((event, id) => {
