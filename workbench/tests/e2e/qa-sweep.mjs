@@ -319,6 +319,43 @@ async function dataStudio() {
 async function layoutStudio() {
   await goModule('Layout Studio');
   await waitVisible('.view.active .ck-item');
+  const V = '.view.active ';
+  // Eight pointer moves from (x, y) by (dx, dy): a drag the canvas reads as a gesture.
+  const dragBy = async (x, y, dx, dy) => {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(x + (dx * i) / 8, y + (dy * i) / 8);
+    await page.mouse.up();
+    await sleep(300);
+  };
+  const centreOf = async (sel) => {
+    const box = await page.locator(sel).first().boundingBox();
+    if (!box) throw Error(`no box for ${sel}`);
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+  // Region 2 is the scene band. Its lower edge (scene / hand) is the edge the config owns, so its bottom handle resizes it.
+  const BAND = `${V}.ck-item >> nth=1`;
+  const bandGeom = () => page.locator(BAND).evaluate((n) => `${n.style.top} ${n.style.height}`);
+  const undoOn = () => page.isEnabled(VUNDO);
+  const reviewOn = () => page.isEnabled(`${V}[data-review]`);
+  const DLG = 'dialog.lay-dlg[open]';
+  // Opens Review changes, checks it shows a diff, then Cancel closes it without saving.
+  const reviewAndCancel = async () => {
+    expect(await reviewOn(), 'Review changes is disabled while a change is pending');
+    await page.click(`${V}[data-review]`);
+    await page.locator(`${DLG} .lay-hunk`).first().waitFor({ state: 'visible', timeout: 8000 });
+    const changed = await page.locator(`${DLG} .lay-ln.is-add, ${DLG} .lay-ln.is-del`).count();
+    expect(changed > 0, 'the review opened without a diff');
+    await page.click(`${DLG} button[data-dlg="close"]:text-is("Cancel")`);
+    await sleep(300);
+    expect(await page.evaluate(() => document.querySelector('dialog')?.open !== true), 'dialog still open after Cancel');
+    return changed;
+  };
+  let bandStart = null;
+  let slotStart = null;
+  const SLOT = `${V}.ck-item[data-id^="slot:"] >> nth=0`;
+  const slotGeom = () => page.locator(SLOT).evaluate((n) => `${n.style.left} ${n.style.top}`);
+
   await check('Layout: Fit the wireframe', async () => {
     await page.click('.view.active button[data-act="fit"]');
     await sleep(300);
@@ -329,28 +366,43 @@ async function layoutStudio() {
     await sleep(300);
     expect(await page.locator('.view.active .lay-insp input[data-key]').count() > 0, 'inspector has no fields after selecting a region');
   });
-  await check('Layout: drag a region and see it move', async () => {
-    const box = await page.locator('.view.active .ck-item >> nth=1').boundingBox();
-    const x0 = box.x + box.width / 2, y0 = box.y + box.height / 2;
-    // Region 2 is a full-width band: it moves on the vertical axis only, so the drag runs down.
-    const pos = () => page.locator('.view.active .ck-item >> nth=1').evaluate((n) => `${n.style.left} ${n.style.top}`);
-    const before = await pos();
-    await page.mouse.move(x0, y0); await page.mouse.down();
-    for (let i = 1; i <= 8; i++) await page.mouse.move(x0, y0 + i * 6);
-    await page.mouse.up();
-    await sleep(300);
-    const after = await pos();
-    expect(before !== after, `region did not move (${before} -> ${after})`);
-    return `${before} -> ${after}`;
+  await check('Layout: a centre drag of a band snaps back and the toast says the layout places it', async () => {
+    const geom = await bandGeom();
+    const undo = await undoOn();
+    const c = await centreOf(BAND);
+    await dragBy(c.x, c.y, 0, 48);
+    const after = await bandGeom();
+    expect(after === geom, `a pure move changed the band (${geom} -> ${after})`);
+    expect((await undoOn()) === undo, 'a pure move changed the Undo history');
+    await page.getByText('positioned by the layout').first().waitFor({ state: 'visible', timeout: 3000 });
+    return 'snapped back; toast shown';
   });
-  await check('Layout: undo reverts the drag', async () => {
-    const pos = () => page.locator('.view.active .ck-item >> nth=1').evaluate((n) => `${n.style.left} ${n.style.top}`);
-    const before = await pos();
-    expect(await page.isEnabled(VUNDO), 'Undo is disabled after the drag');
+  await check('Layout: drag the band\'s bottom handle to resize it', async () => {
+    const c = await centreOf(BAND);
+    await page.mouse.click(c.x, c.y);
+    await sleep(200);
+    const handle = `${V}.ck-handle[data-handle="s"]`;
+    await page.locator(handle).waitFor({ state: 'visible', timeout: 3000 });
+    bandStart = await bandGeom();
+    const h = await centreOf(handle);
+    await dragBy(h.x, h.y, 0, 48);
+    const after = await bandGeom();
+    expect(after !== bandStart, `the bottom handle did not resize the band (${bandStart} -> ${after})`);
+    expect(await undoOn(), 'Undo is disabled after the resize');
+    await shot(`layout-${sizeName}`);
+    return `${bandStart} -> ${after}`;
+  });
+  await check('Layout: Review changes shows the diff, and Cancel closes it', async () => {
+    const changed = await reviewAndCancel();
+    expect((await bandGeom()) !== bandStart, 'Cancel reverted the resize');
+    return `${changed} changed lines`;
+  });
+  await check('Layout: undo restores the band height', async () => {
     await page.click(VUNDO);
     await sleep(300);
-    const after = await pos();
-    expect(before !== after, `undo did not change the region position (${before})`);
+    const now = await bandGeom();
+    expect(now === bandStart, `undo did not restore the band (${now}, was ${bandStart})`);
+    return `restored to ${bandStart}`;
   });
   await check('Layout: More menu opens and lists the coming modes', async () => {
     await page.click('.view.active .lay-more > summary');
@@ -358,23 +410,37 @@ async function layoutStudio() {
     expect(await page.locator('.view.active .lay-more[open] .lay-more-list').count() === 1, 'More menu did not open');
     await page.click('.view.active .lay-more > summary');
   });
-  await check('Layout: Review changes opens and Close cancels', async () => {
-    await page.click('.view.active .ck-item >> nth=1', { force: true });
-    await page.mouse.move(0, 0);
-    const box = await page.locator('.view.active .ck-item >> nth=1').boundingBox();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
-    for (let i = 1; i <= 4; i++) await page.mouse.move(box.x + box.width / 2 + i * 8, box.y + box.height / 2);
-    await page.mouse.up();
-    await sleep(300);
-    await page.click('.view.active button[data-act="review"]:not([disabled])');
-    await sleep(400);
-    expect(await page.evaluate(() => document.querySelector('dialog')?.open === true), 'review dialog did not open');
-    await page.click('dialog [data-dlg="close"]');
-    await sleep(200);
-    expect(await page.evaluate(() => document.querySelector('dialog')?.open !== true), 'dialog still open');
-    await page.click(VUNDO);
+  await check('Layout: Battlefield mode draws the formation slots', async () => {
+    await page.click(`${V}.lay-modes [data-mode="battlefield"]`);
+    await sleep(800);
+    await page.locator(SLOT).waitFor({ state: 'visible', timeout: 8000 });
+    return `${await page.locator(`${V}.ck-item[data-id^="slot:"]`).count()} slots`;
   });
-  await shot(`layout-${sizeName}`);
+  await check('Layout: Battlefield: drag a slot and see it move', async () => {
+    slotStart = await slotGeom();
+    const c = await centreOf(SLOT);
+    await dragBy(c.x, c.y, 48, 0);
+    const after = await slotGeom();
+    expect(after !== slotStart, `slot did not move (${slotStart} -> ${after})`);
+    expect(await undoOn(), 'Undo is disabled after the slot move');
+    return `${slotStart} -> ${after}`;
+  });
+  await check('Layout: Battlefield: undo restores the slot', async () => {
+    await page.click(VUNDO);
+    await sleep(300);
+    const now = await slotGeom();
+    expect(now === slotStart, `undo did not restore the slot (${now}, was ${slotStart})`);
+  });
+  await check('Layout: Battlefield: Review changes shows the diff, and Cancel closes it', async () => {
+    const c = await centreOf(SLOT);
+    await dragBy(c.x, c.y, 48, 0);
+    const changed = await reviewAndCancel();
+    await page.click(VUNDO);
+    await sleep(300);
+    expect((await slotGeom()) === slotStart, 'undo did not restore the slot after the review');
+    return `${changed} changed lines`;
+  });
+  try { await page.click(`${V}.lay-modes [data-mode="config"]`); await sleep(400); } catch { /* the mode tab is always drawn */ }
 }
 
 async function entityBrowser() {
@@ -650,7 +716,8 @@ async function visualReview() {
     return await textOf('.rv-job');
   });
   await check('Review: detail view modes all render', async () => {
-    await page.locator('.view.active button:has-text("View")').first().click();
+    // Open the row this path captured (desk/title): the first "View" in the list is a screen with no capture to accept.
+    await page.locator('.view.active button[data-open="desk/title"]').first().click();
     await sleep(600);
     // Only the detail's own view modes: the module's other tabs also carry data-mode.
     const detailModes = '.view.active .rv-detail [data-mode]';
@@ -744,32 +811,54 @@ async function motionStudio() {
     expect(speed === '0.5' && onion, `speed ${speed}, onion ${onion}`);
     return `${playing} → ${paused} · ${time} · speed ${speed} · onion on`;
   });
-  await check('Motion: edit positions, drag a handle, inspector changes, undo', async () => {
+  await check('Motion: drag an anchor that is topmost at its centre; inspector follows, undo restores, library shows Unsaved', async () => {
     await page.click(`${V}button[data-mode="edit"]`);
     await sleep(600);
-    const item = page.locator(`${V}.mo-edit .ck-item:not(.locked)`).first();
-    await item.waitFor({ state: 'visible', timeout: 8000 });
-    // Select the item first, so the Inspector shows its fields (an anchor's X, or an effect's X).
-    const firstNum = () => page.locator(`${V}.mo-insp input[type="number"]`).first().inputValue().catch(() => null);
-    const box0 = await item.boundingBox();
-    await page.mouse.click(box0.x + box0.width / 2, box0.y + box0.height / 2);
-    await sleep(400);
-    const v0 = await firstNum();
-    expect(v0 !== null, 'no inspector number field after selecting an item');
-    const box = await item.boundingBox();
-    const x0 = box.x + box.width / 2, y0 = box.y + box.height / 2;
-    await page.mouse.move(x0, y0); await page.mouse.down();
-    for (let i = 1; i <= 6; i++) await page.mouse.move(x0 + i * 5, y0 + i * 2);
+    // Anchors are drawn above the effects. Pick one whose centre is not covered by another item.
+    // The canvas draws items in z-order, so the topmost item under a point is the last .ck-item (in DOM order) whose box holds it.
+    // (.ck-item has pointer-events: none: the kit resolves the hit in its model, so elementFromPoint cannot see an item.)
+    const pick = await page.evaluate(() => {
+      const items = [...document.querySelectorAll('.view.active .mo-edit .ck-item')];
+      const nodes = items.filter((n) => n.dataset.id?.startsWith('anchor:'));
+      const seen = [];
+      for (const n of nodes) {
+        n.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const r = n.getBoundingClientRect();
+        const x = r.x + r.width / 2, y = r.y + r.height / 2;
+        const covering = items.filter((o) => { const q = o.getBoundingClientRect(); return x >= q.left && x <= q.right && y >= q.top && y <= q.bottom; });
+        const top = covering[covering.length - 1];
+        if (top === n) return { id: n.dataset.id, x, y };
+        seen.push(`${n.dataset.id} covered by ${top?.dataset.id ?? 'nothing'}`);
+      }
+      return { none: seen.slice(0, 4).join(' | ') || `${nodes.length} anchors drawn` };
+    });
+    expect(pick && !pick.none, `no anchor is topmost at its centre: ${pick?.none ?? 'no anchors drawn'}`);
+    const name = pick.id.slice('anchor:'.length);
+    // The anchor's inspector fieldset holds its X and Y (0..1), the values the drag changes.
+    const read = () => page.evaluate((n) => {
+      const f = document.querySelector(`.view.active .mo-anchor[data-anchor="${n}"]`);
+      return f ? [...f.querySelectorAll('input')].map((i) => i.value).join(',') : null;
+    }, name);
+    const v0 = await read();
+    expect(v0 !== null, `no Inspector fields for anchor ${name}`);
+    await page.mouse.move(pick.x, pick.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(pick.x + i * 4, pick.y + i * 3);
     await page.mouse.up();
     await sleep(400);
-    const v1 = await firstNum();
-    expect(v1 !== v0, `the Inspector did not follow the drag (${v0} -> ${v1})`);
+    const v1 = await read();
+    expect(v1 !== v0, `the Inspector did not follow the drag of ${name} (${v0} -> ${v1})`);
+    await overlay('lib', true);
+    const unsaved = await page.locator(`${V}.mo-item[aria-current="true"] .mo-item-dirty`).count();
+    await overlay('lib', false);
+    expect(unsaved > 0, 'the library shows no Unsaved badge for the edited file');
+    await shot(`motion-${sizeName}`);
     await page.click(`${V}[data-mod-undo]`);
     await sleep(400);
-    const v2 = await firstNum();
-    expect(v2 === v0, `undo did not restore the position (${v1} -> ${v2}, was ${v0})`);
+    const v2 = await read();
+    expect(v2 === v0, `undo did not restore ${name} (${v1} -> ${v2}, was ${v0})`);
     await page.click(`${V}button[data-mode="stage"]`);
-    return `inspector ${v0} -> ${v1} -> undo ${v2}`;
+    return `anchor ${name} X,Y ${v0} -> ${v1} -> undo ${v2}`;
   });
   await check('Motion: stance file is read-only with the generated note', async () => {
     await overlay('lib', true);
@@ -790,36 +879,31 @@ async function motionStudio() {
     expect(enabledInputs === 0, `${enabledInputs} of ${totalInputs} Inspector fields are editable on a generated stance file`);
     return `generated note shown; ${totalInputs} Inspector fields, all read-only`;
   });
-  await check('Motion: Open in Asset Gallery from the library', async () => {
-    // The link appears in the Inspector for a file with source frames: pick an animation that has them.
-    // Walk outfit, animation and stance entries until a selected file shows the link (an outfit shows its painted frames).
-    // An enabled link only: a disabled one carries its reason in its title (no source frame for that pose).
-    const LINK = `${V}.mo-x-assets:not([disabled])`;
-    let btn = page.locator(LINK).first();
+  await check('Motion: Open in Asset Gallery control is present, disabled, and gives a reason', async () => {
+    // The control shows in the Inspector for a selected file. Walk outfit, animation and stance entries until one shows it.
+    const LINK = `${V}.mo-x-assets`;
+    let found = page.locator(LINK).first();
     for (const kind of ['outfit', 'animation', 'stance']) {
       const items = page.locator(`${V}.mo-item[data-kind="${kind}"]`);
       const n = Math.min(await items.count(), 8);
-      for (let i = 0; i < n && await btn.count() === 0; i++) {
+      for (let i = 0; i < n && await found.count() === 0; i++) {
         await overlay('lib', true);
         await items.nth(i).click();
         await sleep(700);
         await overlay('lib', false);
         await overlay('insp', true);
-        btn = page.locator(LINK).first();
-        if (await btn.count() === 0) await overlay('insp', false);
+        found = page.locator(LINK).first();
+        if (await found.count() === 0) await overlay('insp', false);
       }
     }
-    if (await btn.count() === 0) {
-      const why = await page.locator(`${V}.mo-x-assets[disabled]`).first().getAttribute('title').catch(() => null);
-      throw Error(`no selected animation or stance has an enabled "Open source frames in Asset Gallery"${why ? ` (last reason: ${why})` : ''}`);
-    }
-    await btn.click();
-    await sleep(1200);
-    expect(await activeView() === 'view-mod-assets' || (await hashNow()).includes('mod=assets'), 'did not open Asset Gallery');
-    return await hashNow();
+    expect(await found.count() > 0, 'no selected file shows the "Open source frames in Asset Gallery" control');
+    expect(await found.isDisabled(), 'the control is enabled; every pose has embedded art, so it should be disabled with a reason');
+    const reason = (await found.getAttribute('title')) || '';
+    expect(reason.trim().length > 0, 'the disabled control has no reason in its title');
+    return `disabled: ${reason.slice(0, 120)}`;
   });
-  await shot(`motion-${sizeName}`);
 }
+
 
 async function globalPaths() {
   await check('Global: Ctrl+K finds each module', async () => {
