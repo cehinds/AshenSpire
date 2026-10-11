@@ -798,7 +798,8 @@ go red is `unknown`, not green.
 ## 4. Combat rules (Slay-the-Spire-faithful)
 
 **Reward-card cost tuning (2026-09-19).** Resource costs remain explicit card
-data, paid together with Actions; rarity does not roll a cost at play time.
+data, paid from the one Stamina pool (Actions is how the HUD shows it; `energy`
+is a retired alias of `stamina`); rarity does not roll a cost at play time.
 Across the union of class reward pools, Common/Uncommon/Rare cards target
 30/50/70 percent with a Stamina cost, including 15/30/50 percent with both
 Stamina and Mana, rounded to whole cards. Starter and equipment-only cards
@@ -825,9 +826,9 @@ Stamina/Mana spent or no HP lost, the enemies' turn included; 0 = every turn)
 and **only every N rounds**; **after a won fight** (percent of the maximum,
 applied after the fight's pools are written back); and **at every Rest**
 (percent of the maximum on top of the place's own tags, §13.4j, included in the
-Rest preview). The defaults are the rules above — Stamina recovers
-`mechanics.stamina.idleRecoveryPerTurn` after an idle turn, nothing else
-recovers — and a fight built at the defaults carries no recovery state, so its
+Rest preview). The defaults are the rules above — Stamina gets no idle recovery (the turn-start
+refill in §4.1 already restores it, so `mechanics.stamina.idleRecoveryPerTurn` is
+not applied), and nothing else recovers — and a fight built at the defaults carries no recovery state, so its
 behaviour and its save are unchanged. A fight built under changed rules
 snapshots them with the idle streaks (`combat.recovery`); a restored fight keeps
 them. Co-op seats and the foundation ruleset keep their own recovery rules.
@@ -886,9 +887,9 @@ their snapshotted rules. The numbered legacy sequence below is an illustrative
 baseline; saved stat rows and hand options override its draw and cleanup defaults.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
-2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
-3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5; the retired fallback of 5 in a pre-ruleset-7 co-op seat) — excess drawn cards go to discard with a "hand full" toast (StS behavior).
-4. **Player turn end:** `playerTurnEnd` triggers; discard hand except `Retain` cards; `Ethereal` cards in hand exhaust instead. Unspent energy is lost.
+2. **Player turn start:** lose all block (unless modified), set Stamina to its maximum (Stamina row, less any Stagger loss), draw the Draw / turn row (the Opening hand row on turn 1), `playerTurnStart` triggers.
+3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5; the retired fallback of 5 in a pre-ruleset-7 co-op seat) — with the default hand rules a draw stops at that size without consuming the draw pile; only a fight without hand rules sends excess drawn cards to discard with a "hand full" toast (StS behavior).
+4. **Player turn end:** `playerTurnEnd` triggers; return unplayed cards except `Retain` cards (by default they shuffle into the draw pile, `shuffleHand: true`; the legacy baseline discards them); `Ethereal` cards in hand exhaust instead. Unspent Stamina is lost.
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
 7. **End:** all enemies dead → victory (rewards); player HP ≤ 0 → death screen.
@@ -899,14 +900,23 @@ For an attack dealing `base` damage:
 
 ```
 dmg = base
+dmg = dmg + card rating bonus                    // ratings (§13.4l) run first
+dmg = dmg + school damage add                    // player cards with a damage school
 dmg = dmg + attacker.Strength                    // may go below base
 dmg = dmg * (attacker has Weak      ? 0.75 : 1)
 dmg = dmg * (defender has Vulnerable? 1.5  : 1)
-dmg = dmg * (defender is Staggered  ? 1.5  : 1)
+dmg = dmg * (defender is Staggered  ? 1.5  : 1)  // legacy ratings only (see below)
+dmg = dmg * defender's Poise or Ward resistance  // ratings on; Ward for magical hits
+dmg = dmg * (tag-scoped vulnerability, §3.7)
+dmg = dmg * (school resistance, then school vulnerability)
 dmg = floor(dmg); if dmg < 0 → 0
 ```
 
-(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
+The tactical matchup multipliers (§4.7) run after the floor. Staggered's ×1.5 is
+the `staggered` status's `damageTakenMult`, and it applies only under legacy
+ratings; with ratings on (the default), a break applies no status (see §4.4).
+
+(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses. The order is `computeAttackDamage` in `src/engine/actions.js`.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
 
 The combat health row shows ordinary Block as a blue shield beside HP. While
 that shield is positive, HP is blue; breaking it restores the normal red (or
@@ -923,12 +933,12 @@ snapshots carry the provenance with their damage and guard receipts.
 Narrow health lanes display current HP alone to prevent number collisions;
 the complete current/maximum value remains in the accessible label and tooltip.
 
-**Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
+**Card preview numbers in the UI are computed by the same engine function** (`previewCard(combat, cardInstanceId, targetId)`, which calls `computeAttackDamage`); no duplicated math in the UI (§3.13).
 
 ### 4.3 Card rules
 
 - Types: **Attack, Skill, Power, Curse, Status**. Powers are removed from play when played (not exhausted — they don't hit the exhaust pile). Curses/Statuses are unplayable unless stated.
-- Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all energy; effect scales via `{f:'energySpent'}`).
+- Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all Stamina; effect scales via `{f:'energySpent'}`).
 - Upgrades: every non-curse card has exactly one authored upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Ordinary cards retain a permanent per-copy run upgrade. Equipment-sourced basic cards instead resolve that authored upgrade from their source armament's run-owned Smithing tier, so every current and future copy from the same armament changes together.
 - Smithing: a run owns `smithingStones`, an `armamentLevels` map, and idempotent reward claims. The shipped tier cap is 1 and promoting an armament to tier 1 costs 1 Smithing Stone. Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the corresponding source armament tier without granting Stones.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
@@ -979,17 +989,18 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 | **Crimson Blight** *(`crimsonBlight`; "Scarlet Rot" pre-scrub)* | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead it has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
 | **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
 | ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
-| **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
-| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak) and opens the next turn one action short. |
+| **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 Stamina per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
+| **Poise / Stagger** | Every enemy has `poiseMax` (4–36 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered") and `poiseMax` ×1.25 (rounded up); the meter keeps any overflow. Only under legacy ratings, Staggered also takes +50% attack damage until the end of the *player's* next turn. Poise meter does not decay. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill opens the next turn one Stamina short. Only under legacy ratings does a fill also apply `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak). |
 
 All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
-### 4.5 Stances (Vagabond mechanic)
+### 4.5 Stances (Reaver mechanic)
 
 At most one stance active. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Stances are combat-scoped.
 
-- **Bloodflame Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
+- **Gorefire Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
 - **Bulwark Stance:** whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.
+- **Brace:** damage taken ×0.75. On entering: gain 4 Block. Leaving it for another stance gives 1 Strength.
 
 Some cards read "If in [stance]: bonus" (predicate `inStance`). Stance icon shows beside the player's status row.
 
@@ -1021,7 +1032,7 @@ Enemy definition shape (content file):
 
 **Future expansion proposal:** [Combat expansion notes](docs/combat-cards-expansion-proposal.md) describe later candidate rules for persistent stances, Evade, Counter coverage, Ward/Poise resistance, recovery cards, Sleep/Prone, tag interactions, upcasting, and three Ashen Blight feat stages. This documentation reference does not change the existing §4.7 rules below; each runtime revision requires a separate accepted contract and implementation.
 
-**Contract status: planned.** This section must land in its own specification PR before the implementation PR. It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
+**Contract status: implemented** (version-1 table; §4.8 carries version 2). It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
 
 **Identity and authoring**
 
@@ -1067,13 +1078,14 @@ Riders resolve once per committed root action (player card or enemy move) and ta
 | Force | Strip up to 2 Ward; bypass melee Counter. Ward drain never spills into HP or ordinary Guard |
 | Holy | After HP loss, cleanse one stack from the attacker's first eligible hostile status in configured priority order |
 | Necrotic | Apply 1 Crimson Blight after HP loss. This is combat status buildup, not persistent run corruption |
+| Poison | Apply 1 Venom after HP loss |
 
 All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
 
 **Intent visibility and persistence**
 
 - Design assumption resolving the incomplete user sentence “base 70% chance to be”: **70% chance to conceal the exact selected action**, not 70% hit chance. Attacks retain existing accuracy/evade rules. For profiled moves, `hiddenChance = clamp(0.70 − Wisdom × 0.02 − Intelligence × 0.01, 0, 0.95)`. Reductions are percentage points. Configuration may override coefficients; Wisdom 10/Intelligence 5 gives 45% hidden.
-- Always show a stance: Attacking, Defending, Countering, Sweeping, Ranged, Smashing, Casting, Preparing or Staggered. Physical support actions use Preparing where no actual attack/defense maneuver exists. Hidden previews expose camp/maneuver and stance only; selected move ID, exact damage/hits, Block, delay payload and school/type details are omitted through an allowlist.
+- Always show a stance: Attack, Defend, Counter, Sweep, Ranged, Smash, Casting, Spell, Preparing or Staggered. Physical support actions use Preparing where no actual attack/defense maneuver exists. Hidden previews expose camp/maneuver and stance only; selected move ID, exact damage/hits, Block, delay payload and school/type details are omitted through an allowlist.
 - Visibility rolls once per newly selected intent on independent deterministic stream `enemyIntentVisibility`; inspecting or previewing never rerolls. Co-op records one read per living observer. Existing delayed intent retains its committed read until a new selection occurs.
 - Persist the committed Counter charge/carrier/lifetime and enemy visibility/read state with combat entities, plus the random-stream counters. Reload restores decisions; it does not grant another reaction or reveal roll.
 - The enemy move catalog may list its authored move set and base values even when the current selection is hidden, but it must not highlight which catalog entry is selected or show its live preview. A catalog is reference information, not a back door into concealed intent.
@@ -1140,15 +1152,6 @@ refresh at player-turn start. The player mini HUD sits above visible artwork
 with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
 This specification precedes the runtime implementation and does not claim that
 the new reaction system has shipped.
-
-When a seat holds a Counter or defensive Sweep but no reaction is offered for
-an incoming root, the engine emits `combatReactionUnavailable` once per root and
-seat, naming the first failing check (`switchOff`, `attackerStaggered`,
-`attackerControlled`, `notCovered`, `cost`, `controlled`, `unplayable`,
-`alreadyAnswered` or `other`); a seat with no such card, a dead seat and a
-disconnected seat get none. A Smash that breaks physical Guard emits
-`combatGuardBroken` once per break. Both are informational receipts and change
-no rule.
 
 ## 5. Content specification
 
