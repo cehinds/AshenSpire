@@ -71,20 +71,24 @@ export function createOwnWrites() {
 }
 
 /**
- * The path a recursive watch event names, or null when it names no source file.
- * macOS (FSEvents) also reports folders, and reports an event on the watched folder
- * itself under that folder's own name (content/content); its files are reported
- * one by one, so on darwin a folder event is dropped. Elsewhere a folder event is
- * kept: on Windows a folder renamed into place is reported only as the folder.
+ * The paths a recursive watch event names. macOS (FSEvents) also reports folders,
+ * and reports an event on the watched folder itself under that folder's own name
+ * (content/content). On darwin the self-named event names nothing, and a folder
+ * event names the files under it when the folder changed after the watch began
+ * (`since`): a folder moved in is reported only as the folder, and its rename gives it
+ * a new change time. FSEvents also replays events from just before the watch began;
+ * an older folder names nothing, as its files are reported one by one. Files reported
+ * twice are counted once (the batch is a Set). Elsewhere the event's path is kept.
  */
-export function recursiveEventPath(abs, name, platform = process.platform, { exists = fs.existsSync, isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } } } = {}) {
-  if (!name) return null;
+export function recursiveEventPaths(abs, name, platform = process.platform, { since = 0, exists = fs.existsSync, folderChanged = (p) => { try { const st = fs.statSync(p); return st.isDirectory() ? st.ctimeMs : null; } catch { return null; } }, filesUnder = (p) => [...walk(p).keys()] } = {}) {
+  if (!name) return [];
   const base = String(name);
   const target = path.join(abs, base);
-  if (platform !== 'darwin') return target;
-  if (base === path.basename(abs) && !exists(target)) return null; // the watched folder itself
-  if (isDir(target)) return null;
-  return target;
+  if (platform !== 'darwin') return [target];
+  if (base === path.basename(abs) && !exists(target)) return []; // the watched folder itself
+  const changed = folderChanged(target);
+  if (changed === null) return [target];
+  return changed >= since ? filesUnder(target) : [];
 }
 
 /**
@@ -95,6 +99,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   const pending = new Set();
   const watchers = []; const polls = [];
   let timer = null; let mutedUntil = 0; let muted = false; let closed = false;
+  const startedAt = Date.now(); // folders changed before this are replays (see recursiveEventPaths)
   const rel = (abs) => path.relative(root, abs).split(path.sep).join('/');
 
   function note(abs) {
@@ -212,8 +217,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     let w;
     try {
       w = fs.watch(abs, { recursive: true }, (_event, name) => {
-        const target = recursiveEventPath(abs, name, platform);
-        if (target) note(target);
+        for (const target of recursiveEventPaths(abs, name, platform, { since: startedAt })) note(target);
       });
     } catch { return false; /* recursive watch unsupported here: poll below */ }
     w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });

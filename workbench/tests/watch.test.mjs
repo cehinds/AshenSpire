@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { createWatcher, watchModeFor, recursiveEventPath } from '../core/watch.mjs';
+import { createWatcher, watchModeFor, recursiveEventPaths } from '../core/watch.mjs';
 
 // The per-folder mode is what Linux runs. Elsewhere a watched subfolder holds a handle that
 // blocks renaming or removing its parent (Windows: EPERM), so those tests run on Linux only.
@@ -143,13 +143,17 @@ async function waitFor(ok, ms = 3000) {
   for (let i = 0; i < ms / 20 && !ok(); i++) await sleep(20);
 }
 
-test('on macOS a recursive event for a folder, or for the watched folder under its own name, names no file', () => {
+test('on macOS a folder event names the files under it when it changed after the watch began; the self-named event names nothing', () => {
   const abs = path.join('/p', 'content');
-  const fsFake = (dirs, files = []) => ({ isDir: (p) => dirs.includes(p), exists: (p) => dirs.includes(p) || files.includes(p) });
-  assert.equal(recursiveEventPath(abs, 'content', 'darwin', fsFake([])), null, 'the watched folder itself (content/content)');
-  assert.equal(recursiveEventPath(abs, 'config', 'darwin', fsFake([path.join(abs, 'config')])), null, 'a folder event');
-  assert.equal(recursiveEventPath(abs, 'config/a.json', 'darwin', fsFake([])), path.join(abs, 'config/a.json'), 'a file event, even for a file now gone');
-  assert.equal(recursiveEventPath(abs, 'content', 'darwin', fsFake([], [path.join(abs, 'content')])), path.join(abs, 'content'), 'a real file named like its folder is kept');
-  assert.equal(recursiveEventPath(abs, 'config', 'win32', fsFake([path.join(abs, 'config')])), path.join(abs, 'config'), 'Windows keeps a folder event: a folder renamed into place is reported only as the folder');
-  assert.equal(recursiveEventPath(abs, null, 'darwin', fsFake([])), null);
+  const config = path.join(abs, 'config');
+  const tokens = path.join(config, 'ui/tokens.json');
+  // dirs maps a folder to its change time; files lists plain files.
+  const fake = (dirs, files = [], under = {}) => ({ since: 1000, folderChanged: (p) => (p in dirs ? dirs[p] : null), exists: (p) => p in dirs || files.includes(p), filesUnder: (p) => under[p] || [] });
+  assert.deepEqual(recursiveEventPaths(abs, 'content', 'darwin', fake({})), [], 'the watched folder itself (content/content)');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'darwin', fake({ [config]: 2000 }, [], { [config]: [tokens] })), [tokens], 'a folder moved in is reported only as the folder: its files are noted');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'darwin', fake({ [config]: 500 }, [], { [config]: [tokens] })), [], 'a replayed event for a folder older than the watch names nothing');
+  assert.deepEqual(recursiveEventPaths(abs, 'config/a.json', 'darwin', fake({})), [path.join(abs, 'config/a.json')], 'a file event, even for a file now gone');
+  assert.deepEqual(recursiveEventPaths(abs, 'content', 'darwin', fake({}, [path.join(abs, 'content')])), [path.join(abs, 'content')], 'a real file named like its folder is kept');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'win32', fake({ [config]: 2000 })), [config], 'Windows keeps the folder event as it is');
+  assert.deepEqual(recursiveEventPaths(abs, null, 'darwin', fake({})), []);
 });
