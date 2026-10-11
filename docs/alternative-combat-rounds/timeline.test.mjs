@@ -641,6 +641,33 @@ test('a reaction evade answers the attack it was played against; a queued evade 
   assert.equal(out.state.combatants.player.hp, 19);
 });
 
+test('a queued counter of a defeated player does not fire, cancel, or credit momentum', () => {
+  // d4: player 4, goblin 2. Counter total 0 + 1 + 4 = 5, stab total 3 + 2 = 5: a tie, so
+  // the counter goes first and does not cancel. The stab (10) defeats the player (hp 3).
+  const out = createRound(duo({}, { hp: 3 }), {
+    queues: { player: [card('counter', 'counter', 'goblin', 0)], goblin: [stab(3, 10)] },
+    rng: rngThen([0.75, 0.3], 0.45),
+  }).resolveAll();
+  assert.ok(out.events.some((e) => e.type === 'defeated' && e.id === 'player'));
+  assert.equal(out.state.combatants.player.hp, 0);
+  assert.equal(out.state.combatants.goblin.hp, 10);
+  assert.equal(out.events.some((e) => e.type === 'counterFired' || e.type === 'countered'), false);
+  assert.equal(out.events.some((e) => e.type === 'momentum' && e.by === 'player'), false);
+});
+
+test('a reaction counter of a player defeated by the attack does not fire', () => {
+  const out = createRound(duo({}, { hp: 3, hand: [card('rc', 'counter', 'self', 0)] }), {
+    queues: { goblin: [stab(3, 10)] },
+    rng: rngThen([0.75, 0.3], 0.45),
+    onReaction: () => ({ id: 'rc' }),
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'reaction').cardId, 'rc');
+  assert.equal(out.state.combatants.player.hp, 0);
+  assert.equal(out.state.combatants.goblin.hp, 10);
+  assert.equal(out.events.some((e) => e.type === 'counterFired' || e.type === 'countered'), false);
+  assert.equal(out.events.some((e) => e.type === 'momentum' && e.by === 'player'), false);
+});
+
 // ---- Momentum: per enemy, summed per exchange, settled once at round end ----
 
 const momentumOf = (out, id) => out.state.momentum[id];

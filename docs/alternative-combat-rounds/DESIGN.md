@@ -548,7 +548,9 @@ returns `{ events, state, timeline }`. The round ends after its last entry, and
 then the round-end settle runs (see Momentum).
 
 - A defeated combatant (hp 0) skips its remaining actions (`skipped`,
-  `reason: 'defeated'`). An attack on a defeated target is skipped
+  `reason: 'defeated'`).
+  A defeated combatant's counters (queued or reaction) do not fire or cancel: the
+  counter's owner must have hp above 0 when it would act. An attack on a defeated target is skipped
   (`reason: 'targetDefeated'`).
 - An attack rolls its hit with `hitRoll` (Accuracy from `accuracyFor`, evasion from
   `evasionFor`). A miss ends the attack.

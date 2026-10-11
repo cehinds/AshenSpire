@@ -525,13 +525,15 @@ function applyEntry(cur, entry, events, options, run) {
     const reacted = offerReaction(cur, entry, events, options, run);
     // A reaction counter answers this attack; otherwise the first queued counter that fires.
     const counter = reacted.counter ?? takeCounter(cur, entry.target, entry.actor);
+    // A counter fires or cancels only while its owner is alive (owner, 2026-10-11).
+    const ownerAlive = () => Boolean(counter) && cur.combatants[counter.owner].hp > 0;
     // The enemy in this exchange: the attacker, or the defender when the player attacks.
     const key = entry.side === 'enemy' ? entry.actor : entry.target;
     const attackCard = { momentumGain: entry.card.momentumGain, stance: entry.card.stance ?? null };
     const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
     const credited = new Set();
     const sideOf = (id) => cur.combatants[id].side;
-    if (counter && !counter.reaction && counter.speed > entry.speed.total) {
+    if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.total) {
       // A faster counter cancels the attack. A tie or a slower counter does not.
       events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
       applyDamage(cur, entry.actor, counter.damage, events);
@@ -545,7 +547,7 @@ function applyEntry(cur, entry, events, options, run) {
     } else {
       credit(cur, run, { key, winner: sideOf(entry.target), winCard: out.defenseCard ?? {}, foeCard: attackCard, events, seq: entry.seq, credited });
     }
-    if (counter) {
+    if (ownerAlive()) {
       events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
       applyDamage(cur, entry.actor, counter.damage, events);
       credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
