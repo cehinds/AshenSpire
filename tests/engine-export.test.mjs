@@ -160,3 +160,80 @@ test('staleGenerated runs the builders (or their --check) and names the stale on
   const r = run('--no-build', '--only', 'content.cards', '--out', join(scratch, 'no-build'));
   assert.equal(r.status, 0, `the checkout's generated modules are current:\n${r.stdout}${r.stderr}`);
 });
+
+// The Unreal importer runs against a stub `unreal` module (no editor here):
+// after a complete import it deletes only its own DT_* DataTables that the
+// manifest no longer lists; a cancelled or failed import, or --no-prune, keeps them.
+const STUB_UNREAL = String.raw`
+import sys, types, json
+state = json.loads(sys.argv[1])
+assets = {a["path"]: a for a in state["assets"]}
+deleted, saved = [], []
+class DataTable: pass
+class Other: pass
+def obj(a): return DataTable() if a["cls"] == "DataTable" else Other()
+class EditorAssetLibrary:
+    @staticmethod
+    def list_assets(dest, recursive=True, include_folder=False):
+        return [p + "." + p.rsplit("/", 1)[-1] for p, a in assets.items() if (p.rsplit("/", 1)[0] == dest.rstrip("/")) or (recursive and p.startswith(dest))]
+    @staticmethod
+    def does_asset_exist(path): return path.split(".")[0] in assets
+    @staticmethod
+    def load_asset(path): return obj(assets[path.split(".")[0]])
+    @staticmethod
+    def delete_asset(path): deleted.append(path.split(".")[0]); return True
+    @staticmethod
+    def save_loaded_asset(t): saved.append(t); return True
+class ScopedSlowTask:
+    def __init__(self, n, label): self.n = 0
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+    def make_dialog(self, b): pass
+    def should_cancel(self):
+        self.n += 1
+        return state.get("cancelAt") == self.n
+    def enter_progress_frame(self, n, label): pass
+class DataTableFunctionLibrary:
+    @staticmethod
+    def fill_data_table_from_json_file(t, f, s): return not state.get("fail")
+m = types.ModuleType("unreal")
+m.DataTable = DataTable
+m.EditorAssetLibrary = EditorAssetLibrary
+m.ScopedSlowTask = ScopedSlowTask
+m.DataTableFunctionLibrary = DataTableFunctionLibrary
+m.load_object = lambda outer, p: object()
+m.log = m.log_warning = m.log_error = lambda msg: None
+sys.modules["unreal"] = m
+sys.path.insert(0, state["dir"])
+import import_ashenspire as imp
+imp.import_export(state["export"], state["structs"], "/Game/A", prune=state.get("prune", True))
+print(json.dumps(sorted(deleted)))
+`;
+
+test('the Unreal importer mirrors the manifest: it prunes only its own stale DT_* tables after a complete import', (t) => {
+  const python = ['python3', 'python'].find((p) => spawnSync(p, ['--version']).status === 0);
+  if (!python) return t.skip('no python on PATH');
+  const exp = join(scratch, 'unreal-prune');
+  mkdirSync(join(exp, 'tables'), { recursive: true });
+  writeFileSync(join(exp, 'tables/content.cards.json'), '[]');
+  writeFileSync(join(exp, 'manifest.json'), JSON.stringify({ format: 'ashenspire.engine-export/1', tables: [
+    { id: 'content.cards', file: 'tables/content.cards.json' }, { id: 'content.unmapped', file: 'tables/x.json' },
+  ] }));
+  const assets = [
+    { path: '/Game/A/DT_content_cards', cls: 'DataTable' },
+    { path: '/Game/A/DT_content_unmapped', cls: 'DataTable' }, // in the manifest, not mapped: kept
+    { path: '/Game/A/DT_content_removed', cls: 'DataTable' }, // gone from the manifest: pruned
+    { path: '/Game/A/DT_Mine', cls: 'Other' }, // matches the name, not a DataTable: kept
+    { path: '/Game/A/MyTable', cls: 'DataTable' }, // not the importer's naming: kept
+    { path: '/Game/A/Sub/DT_content_old', cls: 'DataTable' }, // a subfolder: kept
+  ];
+  const go = (extra) => {
+    const r = spawnSync(python, ['-I', '-B', '-c', STUB_UNREAL, JSON.stringify({ dir: join(root, 'docs/engine-export/unreal'), export: exp, structs: { 'content.cards': '/Script/X.Row' }, assets, ...extra })], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return JSON.parse(r.stdout.trim().split('\n').pop());
+  };
+  assert.deepEqual(go({}), ['/Game/A/DT_content_removed']);
+  assert.deepEqual(go({ cancelAt: 2 }), [], 'a cancelled import prunes nothing');
+  assert.deepEqual(go({ fail: true }), [], 'a failed table prunes nothing');
+  assert.deepEqual(go({ prune: false }), [], '--no-prune keeps everything');
+});
