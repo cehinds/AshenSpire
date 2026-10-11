@@ -8,6 +8,8 @@ import {
   buildTimeline,
   createRound,
   makeFight,
+  adaptEnemyQueues,
+  adaptChance,
   MERGE_MODES,
 } from './timeline.mjs';
 import { parseStanceAdvantage } from './resolver.mjs';
@@ -659,4 +661,85 @@ test('momentum is kept per enemy: a hit on the goblin leaves the wolf alone', ()
   }).resolveAll();
   assert.equal(momentumOf(out, 'goblin'), 1);
   assert.equal(momentumOf(out, 'wolf'), 0);
+});
+
+// ---- Enemy adaptation (WIS): may change the third queued action ----
+
+const fourCards = () => [
+  atk('c0', 'player', 1), atk('c1', 'player', 2), atk('c2', 'player', 3), atk('c3', 'player', 4),
+];
+const playerHitsGoblin = [atk('jab', 'goblin', 5)];
+
+test('adaptChance is wis * 15%, clamped to 0..60%, and 0 for wis 0 or less', () => {
+  assert.equal(adaptChance(0), 0);
+  assert.equal(adaptChance(-2), 0);
+  assert.ok(Math.abs(adaptChance(2) - 0.3) < 1e-9);
+  assert.ok(Math.abs(adaptChance(3) - 0.45) < 1e-9);
+  assert.equal(adaptChance(10), 0.6);
+});
+
+test('a wis 0 enemy never changes, and draws no rng', () => {
+  const { rng, box } = countingRng(0);
+  const queues = { goblin: fourCards() };
+  const out = adaptEnemyQueues(queues, playerHitsGoblin, rng, { wis: { goblin: 0 } });
+  assert.deepEqual(out.changed, []);
+  assert.deepEqual(out.queues.goblin, fourCards());
+  assert.equal(box.calls, 0);
+});
+
+test('a wis 2 enemy changes only its third action, to a counter, when the player attacks it', () => {
+  // wis 2: chance 0.3. A draw of 0.1 is below it.
+  const queues = { goblin: fourCards() };
+  const out = adaptEnemyQueues(queues, playerHitsGoblin, constRng(0.1), { wis: { goblin: 2 } });
+  assert.deepEqual(out.changed, ['goblin']);
+  const q = out.queues.goblin;
+  assert.deepEqual([q[0], q[1], q[3]], [fourCards()[0], fourCards()[1], fourCards()[3]]);
+  assert.equal(q[2].kind, 'counter');
+  assert.equal(q[2].target, 'player');
+  assert.equal(q[2].replaces, 'c2');
+  // The input queue is not changed.
+  assert.deepEqual(queues.goblin, fourCards());
+});
+
+test('an enemy keeps its third action when the player does not attack it', () => {
+  const out = adaptEnemyQueues(
+    { goblin: fourCards() },
+    [atk('jab', 'wolf', 5)],
+    constRng(0.1),
+    { wis: { goblin: 2 } },
+  );
+  assert.deepEqual(out.changed, []);
+  assert.deepEqual(out.queues.goblin, fourCards());
+});
+
+test('the chance is a strict threshold: a draw equal to it does not change', () => {
+  const at = adaptEnemyQueues({ goblin: fourCards() }, playerHitsGoblin, constRng(0.3), { wis: { goblin: 2 } });
+  assert.deepEqual(at.changed, []);
+  // wis 10 clamps to 60%: a draw of 0.59 changes, 0.6 does not.
+  const below = adaptEnemyQueues({ goblin: fourCards() }, playerHitsGoblin, constRng(0.59), { wis: { goblin: 10 } });
+  assert.deepEqual(below.changed, ['goblin']);
+  const at60 = adaptEnemyQueues({ goblin: fourCards() }, playerHitsGoblin, constRng(0.6), { wis: { goblin: 10 } });
+  assert.deepEqual(at60.changed, []);
+});
+
+test('a queue shorter than three actions is never changed', () => {
+  const out = adaptEnemyQueues(
+    { goblin: [atk('c0', 'player', 1), atk('c1', 'player', 2)] },
+    playerHitsGoblin,
+    constRng(0),
+    { wis: { goblin: 9 } },
+  );
+  assert.deepEqual(out.changed, []);
+});
+
+test('only the enemies that changed are listed, and the player queue is never adapted', () => {
+  const queues = {
+    player: [atk('jab', 'goblin', 5)],
+    goblin: fourCards(),
+    wolf: fourCards(),
+  };
+  const out = adaptEnemyQueues(queues, [atk('jab', 'goblin', 5)], constRng(0.1), { wis: { goblin: 2, wolf: 0 } });
+  assert.deepEqual(out.changed, ['goblin']);
+  assert.deepEqual(out.queues.player, queues.player);
+  assert.deepEqual(out.queues.wolf, fourCards());
 });

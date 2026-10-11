@@ -669,3 +669,56 @@ export function createRound(state, options = {}) {
     },
   };
 }
+
+// Enemy adaptation (owner, 2026-10-11; DESIGN.md, Timeline model). PLACEHOLDERS.
+// Chance per WIS point is 15%, clamped to 0..60%. Only the third queued action
+// (index 2) can change. A change swaps it for a counter at the player, and only when
+// the player's queue attacks that enemy. Otherwise the action is kept.
+export const ADAPT_PERCENT_PER_WIS = 15;
+export const ADAPT_PERCENT_MAX = 60;
+export const ADAPT_INDEX = 2;
+export const ADAPT_COUNTER_DAMAGE = 2;
+
+// Chance (0..1) that an enemy with `wis` changes its third action. A wis of 0 or less never changes.
+export function adaptChance(wis) {
+  const w = Number(wis);
+  if (!Number.isFinite(w) || w <= 0) return 0;
+  return Math.min(ADAPT_PERCENT_MAX, w * ADAPT_PERCENT_PER_WIS) / 100;
+}
+
+// Lets each enemy maybe change its third queued action, after the player has committed
+// (owner, 2026-10-11). `queues` is the round's queues, `playerQueue` the player's cards,
+// `rng` the injected rng, and options.wis is { [enemyId]: wis } (default 0 each).
+// Returns { queues, changed }: new queues (the input is not changed) and the ids of
+// the enemies whose action changed, for a UI to reveal.
+export function adaptEnemyQueues(queues, playerQueue, rng, options = {}) {
+  if (!queues || typeof queues !== 'object' || Array.isArray(queues)) throw new TypeError('queues must be an object');
+  if (playerQueue !== undefined && !Array.isArray(playerQueue)) throw new TypeError('playerQueue must be an array');
+  const wis = options.wis ?? {};
+  const out = {};
+  const changed = [];
+  for (const id of Object.keys(queues)) {
+    const q = Array.isArray(queues[id]) ? queues[id].map((c) => ({ ...c })) : [];
+    out[id] = q;
+    if (id === 'player') continue;
+    const chance = adaptChance(wis[id] ?? 0);
+    if (chance <= 0 || q.length <= ADAPT_INDEX) continue;
+    const roll = rollUnit(rng);
+    if (!(roll < chance)) continue;
+    const attacked = (playerQueue ?? []).some((c) => c && c.kind === 'attack' && c.target === id);
+    if (!attacked) continue;
+    const old = q[ADAPT_INDEX];
+    q[ADAPT_INDEX] = {
+      id: `${old.id}:counter`,
+      kind: 'counter',
+      target: 'player',
+      speed: Number(old.speed ?? 0),
+      cost: cardCost(old),
+      counterDamage: ADAPT_COUNTER_DAMAGE,
+      tags: [],
+      replaces: old.id,
+    };
+    changed.push(id);
+  }
+  return { queues: out, changed };
+}
