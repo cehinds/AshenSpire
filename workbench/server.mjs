@@ -18,8 +18,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { safePath, createGate, newToken, createSseHub, readJson, sendJson, MIME } from './lib/index.mjs';
-import { ToolSupervisor } from './core/tools.mjs';
-import { JobRunner, GENERATED, STOP_GRACE_MS } from './core/jobs.mjs';
+import { ToolSupervisor, TOOL_STOP_MS } from './core/tools.mjs';
+import { JobRunner, GENERATED } from './core/jobs.mjs';
 import { createWatcher, createOwnWrites, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 import { createFileService } from './core/files.mjs';
@@ -420,7 +420,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   console.log(`AshenSpire Workbench: ${app.url}`);
   if (!args.includes('--no-open')) openWindow(app.url);
   process.on('exit', () => app.killChildrenSync());
-  // Allow the job's grace period (STOP_GRACE_MS) to end before the process exits anyway.
-  const close = async () => { const t = setTimeout(() => process.exit(0), STOP_GRACE_MS + 2000); await app.close().catch(() => {}); clearTimeout(t); process.exit(0); };
+  // Allow the tools' stop deadline (TOOL_STOP_MS) to end before the process exits anyway.
+  const close = async () => { const t = setTimeout(() => process.exit(0), TOOL_STOP_MS + 2000); await app.close().catch(() => {}); clearTimeout(t); process.exit(0); };
   process.on('SIGINT', close); process.on('SIGTERM', close); process.on('SIGHUP', close);
 }

@@ -11,8 +11,16 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
+import { STOP_GRACE_MS, KILL_WAIT_MS, stopGroup } from '../../tools/lib/process-tree.mjs';
+import { killTree } from './jobs.mjs';
 
 const LOG_LINES = 60;
+
+/**
+ * How long a stopping tool gets before the Workbench SIGKILLs its whole tree: the tool's own
+ * shutdown (the Editor's group stop: STOP_GRACE_MS, then KILL_WAIT_MS) plus a margin.
+ */
+export const TOOL_STOP_MS = STOP_GRACE_MS + KILL_WAIT_MS + 3000;
 
 /**
  * The tool table. `repo` is the checkout holding the tool code, `root` the
@@ -192,15 +200,26 @@ export class Tool {
     setTimeout(poll, 150).unref?.();
   }
 
-  async stop() {
+  /** SIGTERM the tool's group, then wait up to deadlineMs for it to exit on its own. Past the
+   *  deadline the whole tree is SIGKILLed and the group stop is awaited (bounded). */
+  async stop({ deadlineMs = TOOL_STOP_MS } = {}) {
     const child = this.child;
     if (!child) return;
     this.stopping = true;
-    await new Promise((resolve) => {
-      const timer = setTimeout(() => { try { child.kill('SIGKILL'); } catch { /* gone */ } resolve(); }, 3000);
-      child.once('exit', () => { clearTimeout(timer); resolve(); });
-      try { child.kill(); } catch { clearTimeout(timer); resolve(); }
+    const exited = () => child.exitCode !== null || child.signalCode !== null;
+    // Windows has no process groups: killTree there is taskkill /T /F, so keep the plain signal.
+    const signalTree = (signal) => (process.platform === 'win32' ? (() => { try { child.kill(signal); } catch { /* gone */ } })() : killTree(child, { signal }));
+    const exitedSoon = new Promise((resolve) => {
+      if (exited()) return resolve(true);
+      const timer = setTimeout(() => resolve(false), deadlineMs);
+      child.once('exit', () => { clearTimeout(timer); resolve(true); });
     });
+    signalTree('SIGTERM');
+    if (!(await exitedSoon)) {
+      signalTree('SIGKILL');
+      if (!exited()) await new Promise((resolve) => child.once('exit', resolve));
+      if (process.platform !== 'win32') await stopGroup(child.pid, { graceMs: 0 });
+    }
     this.child = null;
     this.set('down', 'Stopped');
   }
