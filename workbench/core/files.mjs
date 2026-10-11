@@ -177,9 +177,11 @@ async function checkJs(rel, text) {
  * createFileService({ root, stateDir, keepBackups, onSaved, lockWaitMs, fileFault })
  * root must be a realpath. stateDir receives backups/. onSaved(paths) runs after
  * a successful save or restore (the server sends the live-reload batch).
+ * onWritten(abs, stat) runs after each file is renamed into place (saves and rollbacks),
+ * with the stat the file was left with: the server uses it to drop the watcher's echo.
  * fileFault(rel) is a test seam: it may throw before a file is renamed into place.
  */
-export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null }) {
+export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null }) {
   let tail = Promise.resolve();
   const serialize = (task) => { const run = tail.then(task, task); tail = run.catch(() => {}); return run; };
   const backupsDir = path.join(stateDir, 'backups');
@@ -276,7 +278,10 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     try {
       await fs.writeFile(temp, bytes, { flag: 'wx' });
       if (fileFault) fileFault(rel);
+      // The temp file is the same inode after the rename, so its stat is abs's stat.
+      const stat = await fs.stat(temp);
       await fs.rename(temp, abs);
+      onWritten(abs, stat);
     } finally { await fs.rm(temp, { force: true }); }
   }
 
