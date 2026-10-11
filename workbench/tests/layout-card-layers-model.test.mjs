@@ -78,3 +78,48 @@ test('layoutProblems lists what the game compiler would refuse', () => {
   const missing = base(); delete missing.layers[0].rotation;
   assert.match(CL.layoutProblems(missing).join('\n'), /rotation must be a number/);
 });
+
+test('a field edit changes only that field, keeps key order, and refuses a bad value', () => {
+  const { data } = CL.parseLayout(real);
+  const id = data.layers[1].id;
+  const next = CL.setLayerField(data, id, 'x', 12.3456);
+  assert.equal(next.layers[1].x, 12.346, 'rounded to three places');
+  assert.deepEqual(Object.keys(next.layers[1]), Object.keys(data.layers[1]));
+  assert.equal(data.layers[1].x, 9.999999999999977, 'the input document is not mutated');
+  assert.deepEqual(CL.changedLayers(data, next), [id]);
+  assert.equal(CL.setLayerField(next, id, 'x', 12.346), next, 'the same value is the same document');
+  assert.throws(() => CL.setLayerField(data, id, 'w', 0), /at least 1/);
+  assert.throws(() => CL.setLayerField(data, id, 'opacity', 1.5), /from 0 to 1/);
+  assert.throws(() => CL.setLayerField(data, id, 'x', NaN), /must be a number/);
+  assert.throws(() => CL.setLayerField(data, id, 'visible', 'yes'), /true or false/);
+  assert.throws(() => CL.setLayerField(data, id, 'href', 'x.png'), /not a layer field/);
+});
+
+test('move, resize and reorder keep the other layers and the file valid', () => {
+  const { data } = CL.parseLayout(real);
+  const [a, b] = [data.layers[0].id, data.layers[1].id];
+  const moved = CL.moveLayer(data, b, 5, -2);
+  assert.equal(moved.layers[1].x, Math.round((data.layers[1].x + 5) * 1000) / 1000);
+  assert.equal(CL.moveLayer(data, b, 0, 0), data);
+  const boxed = CL.resizeLayer(data, b, { x: 1, y: 2, w: 30, h: 40 });
+  assert.deepEqual([boxed.layers[1].x, boxed.layers[1].y, boxed.layers[1].w, boxed.layers[1].h], [1, 2, 30, 40]);
+  assert.throws(() => CL.resizeLayer(data, b, { x: 1, y: 2, w: 0, h: 40 }), /at least 1/);
+  const reordered = CL.reorderLayer(data, a, data.layers.length - 1);
+  assert.equal(reordered.layers.at(-1).id, a);
+  assert.deepEqual(reordered.layers.slice(0, -1).map((l) => l.id), data.layers.slice(1).map((l) => l.id));
+  assert.equal(CL.reorderLayer(data, a, 0), data, 'already at the back: the same document');
+  assert.throws(() => CL.reorderLayer(data, a, 99), /cannot move there/);
+  assert.throws(() => CL.moveLayer(data, 'nope', 1, 1), /No layer nope/);
+  for (const next of [moved, boxed, reordered]) assert.deepEqual(CL.layoutProblems(next), []);
+});
+
+test('the layer list is front first, with visibility and lock state', () => {
+  const doc = { schemaVersion: 1, width: 10, height: 10, layers: [
+    { id: 'back', type: 'image', x: 0, y: 0, w: 1, h: 1, rotation: 0, opacity: 1 },
+    { id: 'front', type: 'text', x: 0, y: 0, w: 1, h: 1, rotation: 0, opacity: 1, visible: false, locked: true },
+  ] };
+  assert.deepEqual(CL.layerRows(doc), [
+    { id: 'front', type: 'text', index: 1, visible: false, locked: true },
+    { id: 'back', type: 'image', index: 0, visible: true, locked: false },
+  ]);
+});

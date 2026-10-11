@@ -87,3 +87,91 @@ export function changesFor({ original, data, path = LAYOUT_FILE }) {
   const text = serialize(data, formatOf(original));
   return text === original ? [] : [{ path, text }];
 }
+
+// ---- edits: each returns a new document; the one it was given is never mutated ----
+
+const round = (v) => Math.round(v * 1000) / 1000;
+const MIN_SIZE = 1;
+
+/** The index of a layer by id, or -1. */
+export function indexOfLayer(data, id) {
+  return Array.isArray(data?.layers) ? data.layers.findIndex((l) => l && l.id === id) : -1;
+}
+
+/** The layer list as the inspector shows it: front (top of the paint order) first. */
+export function layerRows(data) {
+  const layers = Array.isArray(data?.layers) ? data.layers : [];
+  return layers.map((layer, index) => ({
+    id: layer.id,
+    type: layer.type,
+    index,
+    visible: layer.visible !== false,
+    locked: layer.locked === true,
+  })).reverse();
+}
+
+function withLayer(data, id, edit) {
+  const i = indexOfLayer(data, id);
+  if (i < 0) throw Error(`No layer ${id}`);
+  const layers = data.layers.slice();
+  layers[i] = edit(data.layers[i]);
+  return { ...data, layers };
+}
+
+/**
+ * One field of a layer. Geometry must be a number, w and h stay at least MIN_SIZE, opacity stays
+ * from 0 to 1, and the flags are true or false. A refused value throws and the document is kept.
+ */
+export function setLayerField(data, id, field, value) {
+  let next = value;
+  if (field === 'visible' || field === 'locked') {
+    if (typeof value !== 'boolean') throw Error(`${field} must be true or false`);
+  } else if (!GEOMETRY.includes(field)) {
+    throw Error(`${field} is not a layer field the Workbench edits`);
+  } else {
+    if (!Number.isFinite(value)) throw Error(`${field} must be a number`);
+    if ((field === 'w' || field === 'h') && value < MIN_SIZE) throw Error(`${field} must be at least ${MIN_SIZE}`);
+    if (field === 'opacity' && (value < 0 || value > 1)) throw Error('opacity must be from 0 to 1');
+    next = round(value);
+  }
+  const i = indexOfLayer(data, id);
+  if (i >= 0 && data.layers[i][field] === next) return data;
+  return withLayer(data, id, (layer) => ({ ...layer, [field]: next }));
+}
+
+/** Move a layer by a design-unit offset. A zero move returns the same document. */
+export function moveLayer(data, id, dx, dy) {
+  if (!Number.isFinite(dx) || !Number.isFinite(dy)) throw Error('The move must be a number');
+  if (!dx && !dy) return data;
+  return withLayer(data, id, (layer) => ({ ...layer, x: round(layer.x + dx), y: round(layer.y + dy) }));
+}
+
+/** Set a layer's box (x, y, w, h). Width and height stay at least MIN_SIZE. */
+export function resizeLayer(data, id, box) {
+  for (const key of ['x', 'y', 'w', 'h']) if (!Number.isFinite(box?.[key])) throw Error(`${key} must be a number`);
+  if (box.w < MIN_SIZE || box.h < MIN_SIZE) throw Error(`w and h must be at least ${MIN_SIZE}`);
+  return withLayer(data, id, (layer) => ({ ...layer, x: round(box.x), y: round(box.y), w: round(box.w), h: round(box.h) }));
+}
+
+/**
+ * Move a layer to a new place in the paint order. `to` is the index in the file's list (0 is the
+ * back, drawn first). The other layers keep their order.
+ */
+export function reorderLayer(data, id, to) {
+  const from = indexOfLayer(data, id);
+  if (from < 0) throw Error(`No layer ${id}`);
+  if (!Number.isInteger(to) || to < 0 || to >= data.layers.length) throw Error('The layer cannot move there');
+  if (to === from) return data;
+  const layers = data.layers.slice();
+  const [moving] = layers.splice(from, 1);
+  layers.splice(to, 0, moving);
+  return { ...data, layers };
+}
+
+/** The ids of the layers whose content differs between two documents. */
+export function changedLayers(before, after) {
+  const a = new Map((before?.layers || []).map((l) => [l.id, JSON.stringify(l)]));
+  const b = new Map((after?.layers || []).map((l) => [l.id, JSON.stringify(l)]));
+  const ids = new Set([...a.keys(), ...b.keys()]);
+  return [...ids].filter((id) => a.get(id) !== b.get(id));
+}
