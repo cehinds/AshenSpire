@@ -3,9 +3,11 @@
 //   node docs/tag-model/tools/build.mjs --inv <dir-with-inventory-csvs>
 //   node docs/tag-model/tools/build.mjs            (re-run from tables/presentation/)
 //
-// --inv copies the raw inventory CSVs into tables/presentation/ first. Without
-// it the script reads the copies there and strips the derived columns, so the
-// run is repeatable: a second run over its own output is byte-identical. It then:
+// --inv copies the raw inventory CSVs into tables/presentation/ first. Columns
+// listed in AUTHORED (combat-symbols artBrief and priority) are not in the raw
+// files, so the copy keeps their values from the existing CSV, matched by key.
+// Without --inv the script reads the copies there and strips the derived columns,
+// so the run is repeatable: a second run over its own output is byte-identical. It then:
 //   0. cleans the inventory: id/name columns that repeat get a -2, -3 suffix
 //      (effects.id, breakpoints.name); exact duplicate rows are dropped
 //      (layouts, styles); components.assetRefs keeps only tokens that resolve
@@ -64,12 +66,37 @@ const MOVED_NOTE = 'Moved: re-homed in the proposal (tag-tree.txt [m]).';
 const MOVED_PREFIX = /^(Moved: re-homed in the proposal \(tag-tree\.txt \[m\]\)\.\s*)+/;
 
 // ---------------------------------------------------------------- inventory
+// Authored columns: values typed into tables/presentation/<name>.csv that the raw
+// inventory does not carry. A re-extraction (--inv) keeps them, matched by the
+// raw file's first column (the row's key).
+const AUTHORED = { 'combat-symbols': ['artBrief', 'priority'] };
+function extractInventory(name, src) {
+  const dst = join(PRES, name + '.csv');
+  const raw = readTable(src);
+  const keep = (AUTHORED[name] || []).filter(c => !raw.header.includes(c));
+  if (!keep.length) { copyFileSync(src, dst); return; }
+  const prev = existsSync(dst) ? readTable(dst) : null;
+  const authored = new Map();
+  if (prev) {
+    const kc = prev.header.indexOf(raw.header[0]);
+    for (const c of keep) {
+      const ci = prev.header.indexOf(c);
+      if (ci < 0) continue;
+      prev.rows.forEach(r => {
+        if (!authored.has(r[kc])) authored.set(r[kc], {});
+        authored.get(r[kc])[c] = r[ci];
+      });
+    }
+  }
+  const rows = raw.rows.map(r => [...r, ...keep.map(c => (authored.get(r[0]) || {})[c] ?? '')]);
+  writeFileSync(dst, toCsv([...raw.header, ...keep], rows));
+}
 function readInventory(name) {
   if (INV) {
     const src = join(INV, name + '.csv');
     if (!existsSync(src)) throw new Error('missing inventory file ' + src);
     mkdirSync(PRES, { recursive: true });
-    copyFileSync(src, join(PRES, name + '.csv'));
+    extractInventory(name, src);
   }
   const t = readTable(join(PRES, name + '.csv'));
   // styles: an earlier run re-pointed componentId to a catalog component and kept
