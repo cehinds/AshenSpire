@@ -1,0 +1,567 @@
+<title>Ashen Spire Tag Workbench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: header + status line, tab bar (six tables + Sheet + Check), then the active panel: a toolbar over an editable grid, or the object sheet. */
+:root{
+  --bg:#f3f1ee; --panel:#fbfaf8; --sunk:#ebe7e2; --fg:#24201d; --muted:#6c645d; --line:#d3cbc3;
+  --ember:#b4471f; --teal:#2f6f6a; --ok:#2f7a45; --warn:#9a6a00; --bad:#b3261e;
+  --display:"Marcellus","Cormorant Garamond",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#171412; --panel:#201b18; --sunk:#2a2420; --fg:#ece6df; --muted:#a39a91; --line:#3f3731;
+  --ember:#e2774c; --teal:#5fb3aa; --ok:#6cc48a; --warn:#e0b04a; --bad:#f08a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171412; --panel:#201b18; --sunk:#2a2420; --fg:#ece6df; --muted:#a39a91; --line:#3f3731;
+  --ember:#e2774c; --teal:#5fb3aa; --ok:#6cc48a; --warn:#e0b04a; --bad:#f08a80; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);margin:0;padding-inline:16px;padding-block:18px 40px;font-size:14px}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:1.65rem;margin:0;letter-spacing:.02em}
+.sub{color:var(--muted);margin:3px 0 0;font-size:.88rem;max-width:80ch;line-height:1.45}
+.status{font:.78rem var(--mono);color:var(--muted)}
+.status b{font-weight:500}
+.status .ok{color:var(--ok)} .status .warn{color:var(--warn)} .status .bad{color:var(--bad)}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line)}
+.tab{font:500 .85rem var(--body);background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--ember)}
+.tab .n{font:.72rem var(--mono);color:var(--muted);margin-left:4px}
+button,select,input,textarea{font:inherit;color:var(--fg)}
+button{font-weight:500;font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--ember);border-color:var(--ember);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--ember);outline-offset:1px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .grow{flex:1}
+input[type=search],select{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px}
+input[type=search]{min-width:0;width:260px;max-width:100%}
+.help{font-size:.82rem;color:var(--muted);line-height:1.5;max-width:110ch;margin:0}
+.help code,.mono{font-family:var(--mono);font-size:.78rem}
+.grid{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:68vh}
+table{border-collapse:collapse;font-size:.8rem}
+th{position:sticky;top:0;z-index:1;background:var(--sunk);text-align:left;font-weight:600;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{border-bottom:1px solid var(--line);padding:0;vertical-align:top}
+td.act{padding:3px 4px;white-space:nowrap}
+td input{width:100%;border:0;background:transparent;padding:6px 6px;font:inherit;font-size:.8rem;min-width:70px;box-sizing:border-box}
+td input:focus{background:var(--sunk);outline:none;box-shadow:inset 0 0 0 1.5px var(--ember)}
+td.c-description input,td.c-effect input,td.c-expr input,td.c-tags input{min-width:260px}
+td.c-id input{min-width:230px;font-family:var(--mono);font-size:.74rem}
+td.c-key input,td.c-parent input,td.c-source input,td.c-target input,td.c-object input{font-family:var(--mono);font-size:.74rem;min-width:150px}
+td.c-expr input{font-family:var(--mono);font-size:.76rem}
+td.bad input{box-shadow:inset 0 -2px 0 var(--bad)}
+td.warn input{box-shadow:inset 0 -2px 0 var(--warn)}
+td.out{padding:6px 8px;font:.76rem var(--mono);white-space:nowrap;color:var(--teal)}
+td.out.bad{color:var(--bad)} td.out.warn{color:var(--warn)}
+.x{border:0;background:none;color:var(--muted);padding:2px 6px;font-size:.9rem}
+.x:hover{color:var(--bad)}
+.more{padding:10px;text-align:center}
+.pill{display:inline-block;font:500 .7rem var(--body);padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.new{color:var(--ember);border-color:var(--ember)} .pill.moved{color:var(--teal);border-color:var(--teal)}
+.sheet{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.sheet{grid-template-columns:1fr}}
+.cardart{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.cardart .img{aspect-ratio:2/3;max-width:100%;border-radius:8px;background:var(--sunk);display:grid;place-items:center;overflow:hidden}
+.cardart img{width:100%;height:100%;object-fit:cover}
+.cardart h2{font-family:var(--display);font-weight:400;font-size:1.35rem;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:.8rem}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--mono);font-size:.76rem;overflow-wrap:anywhere}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box h3{font:600 .9rem var(--body);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.76rem;border:1px solid var(--line);border-radius:6px;padding:3px 7px;background:var(--sunk)}
+.chip small{display:block;font:.68rem var(--mono);color:var(--muted)}
+.chip.bad{border-color:var(--bad);color:var(--bad)}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.tbl{overflow-x:auto}
+.tbl table{width:100%}
+.tbl td,.tbl th{padding:5px 8px;font-size:.78rem}
+.tbl td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.issues li{margin:3px 0;font-size:.82rem}
+.issues code{font-family:var(--mono);font-size:.76rem}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg);max-width:min(760px,92vw);width:100%;padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{width:100%;min-height:260px;box-sizing:border-box;font:.76rem var(--mono);background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:8px}
+dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:10px}
+.empty{padding:28px;text-align:center;color:var(--muted);line-height:1.6}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.76rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Ashen Spire Tag Workbench</h1>
+    <p class="sub">Every tag, object, value and formula in one editable set of tables. Formulas reference anything by key in square brackets, for example <code class="mono">[strike.baseDamage] + floor([ar] * 0.25)</code>. Import and export each table as CSV.</p>
+    <div class="status" id="status">Connecting…</div>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <section id="panel"></section>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dlg-title" style="margin:0 0 8px;font:600 1rem var(--body)"></h3>
+  <p id="dlg-help" class="help" style="margin-bottom:8px"></p>
+  <textarea id="dlg-text" spellcheck="false"></textarea>
+  <div class="row" id="dlg-actions"></div>
+</dialog>
+<input type="file" id="file" accept=".csv,text/csv" hidden>
+
+<script>
+"use strict";
+const TABLES = {
+  tags:{label:'Tags', key:'id', help:'One row per tag. <b>id</b> is the full path, <b>key</b> the short unique name formulas use. <b>erd</b> names the model it belongs to, <b>school</b> its magic class, <b>related</b> other tag keys (space separated). Text in <b>effect</b> can cite <code>[key]</code>; <b>variables</b> lists the value keys the tag reads, so its numbers live in Values, never in the tag.',
+    columns:['id','key','label','parent','erd','school','description','effect','variables','duration','stacking','related','status','glyph','color'],
+    refs:{parent:'tag', school:'tag', related:'tags', variables:'values'}},
+  objects:{label:'Objects', key:'id', help:'Cards, weapons, armor and anything else that carries tags. <b>tags</b>, <b>exp</b> are tag keys; <b>grants</b> are object ids; <b>art</b> and <b>artDefault</b> are game asset ids from the Assets table; <b>cost</b> and <b>description</b> can cite <code>[key]</code>. <b>rankMode</b> is <code>list</code> (use the Ranks table) or <code>formula</code> (formulas read <code>[rank]</code>).',
+    columns:['id','kind','name','erd','cardType','stance','rarity','costResource','cost','tags','skill','exp','grants','art','artDefault','placement','rankMode','maxRank','description'],
+    refs:{cardType:'tag', stance:'tag', rarity:'tag', costResource:'tag', skill:'tag', tags:'tags', exp:'tags', grants:'objects', art:'asset', artDefault:'asset'}},
+  values:{label:'Values', key:'key', help:'Plain numbers. A value whose key matches a tag key is that tag\'s preview number (for example <code>ar</code> = 24), used when formulas are previewed. <b>scope</b> is the object or area it belongs to.',
+    columns:['key','value','unit','scope','description'], refs:{}},
+  formulas:{label:'Formulas', key:'key', help:'Expressions over <code>[key]</code> references to values, other formulas, tags with a preview value, and <code>[rank]</code>. Operators <code>+ - * / % ^</code>, comparisons, and <code>min max floor ceil round abs clamp(x,lo,hi) if(cond,a,b)</code>. The result column previews at rank 1.',
+    columns:['key','expr','scope','description'], refs:{}},
+  ranks:{label:'Ranks', key:null, help:'Rank progression as a list. Each row changes a value key from that rank on: <code>+1</code>, <code>-0.5</code>, <code>=8</code> or <code>×1.25</code> (also <code>*1.25</code>). Changes add up rank by rank.',
+    columns:['object','rank','key','change','note'], refs:{object:'object', key:'value'}},
+  assets:{label:'Assets', key:'id', help:'Game art ids, exactly as the game names them (<code>assets/cards/extended/card-strike-512.webp</code>). The game resolves them through <code>assetUrl()</code>. This page cannot load the game\'s art, so <b>preview</b> holds an image you upload here to see it on the Object sheet.',
+    columns:['id','kind','width','height','preview','note'], refs:{}},
+  relations:{label:'Relations', key:null, help:'Typed links between tags: STRONG_VS, WEAK_VS, BYPASSES, APPLIES, CLEARS, REQUIRES, CONFLICTS_WITH, REFERENCES. <b>value</b> is the multiplier or amount when there is one.',
+    columns:['source','relation','target','value','note'], refs:{source:'tag', target:'tag'}},
+};
+const ORDER = ['tags','objects','values','formulas','ranks','relations','assets'];
+const PAGE = 150;
+
+const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
+for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
+let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
+const dirty=new Set(), saving=new Set(), timers={}, saved={}, live={};
+const PART_BYTES=180000;
+function chunk(rows){ const out=[]; let cur=[], size=2; for(const r of rows){ const n=JSON.stringify(r).length+1; if(cur.length&&size+n>PART_BYTES){ out.push(cur); cur=[]; size=2; } cur.push(r); size+=n; } out.push(cur); return out; }
+
+/* ---------- indexes ---------- */
+let IX={};
+function rebuild(){
+  const tagByKey=new Map(), tagById=new Map(), val=new Map(), frm=new Map(), obj=new Map(), ast=new Map();
+  for (const r of state.data.assets.rows) if(r.id) ast.set(String(r.id),r);
+  for (const r of state.data.tags.rows){ if(r.key) tagByKey.set(String(r.key),r); if(r.id) tagById.set(String(r.id),r); }
+  for (const r of state.data.values.rows) if(r.key) val.set(String(r.key),r);
+  for (const r of state.data.formulas.rows) if(r.key) frm.set(String(r.key),r);
+  for (const r of state.data.objects.rows) if(r.id) obj.set(String(r.id),r);
+  IX={tagByKey,tagById,val,frm,obj,ast};
+}
+function findTag(k){ k=String(k||'').trim(); return IX.tagByKey.get(k)||IX.tagById.get(k)||null; }
+function refKind(k){
+  if(k==='rank') return 'rank';
+  if(IX.frm.has(k)) return 'formula';
+  if(IX.val.has(k)) return 'value';
+  if(findTag(k)) return 'tag';
+  if(IX.obj.has(k)) return 'object';
+  return null;
+}
+
+/* ---------- formula engine ---------- */
+function tokenize(s){
+  const out=[]; let i=0;
+  while(i<s.length){
+    const c=s[i];
+    if(/\s/.test(c)){i++;continue;}
+    if(c==='['){const j=s.indexOf(']',i); if(j<0) throw new Error('missing ]'); out.push({t:'ref',v:s.slice(i+1,j).trim()}); i=j+1; continue;}
+    if(/[0-9.]/.test(c)){let j=i; while(j<s.length&&/[0-9.]/.test(s[j]))j++; out.push({t:'num',v:parseFloat(s.slice(i,j))}); i=j; continue;}
+    if(/[a-zA-Z_]/.test(c)){let j=i; while(j<s.length&&/[a-zA-Z_0-9]/.test(s[j]))j++; out.push({t:'id',v:s.slice(i,j)}); i=j; continue;}
+    const two=s.slice(i,i+2);
+    if(['<=','>=','==','!=','&&','||'].includes(two)){out.push({t:'op',v:two});i+=2;continue;}
+    if('+-*/%^()<>,!×'.includes(c)){out.push({t:'op',v:c==='×'?'*':c});i++;continue;}
+    throw new Error('unexpected "'+c+'"');
+  }
+  return out;
+}
+function parse(s){
+  const tk=tokenize(s); let p=0;
+  const peek=()=>tk[p], eat=v=>{ if(tk[p]&&tk[p].v===v){p++;return true;} return false; };
+  const need=v=>{ if(!eat(v)) throw new Error('expected '+v); };
+  const bin=(next,ops)=>()=>{ let l=next(); for(;;){ const o=peek(); if(o&&o.t==='op'&&ops.includes(o.v)){p++; l={op:o.v,l,r:next()};} else return l; } };
+  function unary(){ if(eat('-')) return {op:'neg',a:unary()}; if(eat('!')) return {op:'not',a:unary()}; return pow(); }
+  function pow(){ const b=prim(); if(eat('^')) return {op:'^',l:b,r:unary()}; return b; }
+  function prim(){
+    const t=tk[p++]; if(!t) throw new Error('unexpected end');
+    if(t.t==='num') return {num:t.v};
+    if(t.t==='ref') return {ref:t.v};
+    if(t.t==='id'){ need('('); const args=[]; if(!eat(')')){ do{args.push(or());}while(eat(',')); need(')'); } return {fn:t.v.toLowerCase(),args}; }
+    if(t.v==='('){ const e=or(); need(')'); return e; }
+    throw new Error('unexpected "'+t.v+'"');
+  }
+  const mul=bin(unary,['*','/','%']), add=bin(mul,['+','-']), cmp=bin(add,['<','>','<=','>=','==','!=']), and=bin(cmp,['&&']), or=bin(and,['||']);
+  const e=or(); if(p<tk.length) throw new Error('unexpected "'+tk[p].v+'"'); return e;
+}
+const FN={min:Math.min,max:Math.max,floor:Math.floor,ceil:Math.ceil,round:Math.round,abs:Math.abs,
+  clamp:(x,a,b)=>Math.min(Math.max(x,a),b), if:(c,a,b)=>c?a:b};
+function refsIn(s){ const r=[]; String(s||'').replace(/\[([^\]]+)\]/g,(m,k)=>{r.push(k.trim());return m;}); return r; }
+
+function makeEnv(rank, objectId){
+  const overrides=rankedValues(objectId, rank);
+  const memo=new Map(), stack=new Set();
+  function get(k){
+    if(k==='rank') return rank;
+    if(overrides.has(k)) return overrides.get(k);
+    if(IX.frm.has(k)){
+      if(memo.has(k)) return memo.get(k);
+      if(stack.has(k)) throw new Error('loop through '+k);
+      stack.add(k); try{ const v=evalNode(parse(String(IX.frm.get(k).expr||'')),get); memo.set(k,v); return v; } finally{ stack.delete(k); }
+    }
+    if(IX.val.has(k)){ const v=Number(IX.val.get(k).value); if(Number.isNaN(v)) throw new Error(k+' is not a number'); return v; }
+    if(findTag(k)) { const e=new Error('['+k+'] has no preview value'); e.soft=true; throw e; }
+    throw new Error('unknown ['+k+']');
+  }
+  return get;
+}
+function evalNode(n,get){
+  if('num' in n) return n.num;
+  if('ref' in n) return get(n.ref);
+  if(n.fn){ const f=FN[n.fn]; if(!f) throw new Error('unknown function '+n.fn); return f(...n.args.map(a=>evalNode(a,get))); }
+  if(n.op==='neg') return -evalNode(n.a,get);
+  if(n.op==='not') return evalNode(n.a,get)?0:1;
+  const l=evalNode(n.l,get), r=evalNode(n.r,get);
+  switch(n.op){case'+':return l+r;case'-':return l-r;case'*':return l*r;case'/':return r===0?NaN:l/r;case'%':return l%r;case'^':return Math.pow(l,r);
+    case'<':return +(l<r);case'>':return +(l>r);case'<=':return +(l<=r);case'>=':return +(l>=r);case'==':return +(l===r);case'!=':return +(l!==r);case'&&':return +(l&&r);case'||':return +(l||r);}
+  throw new Error('bad operator');
+}
+function rankedValues(objectId, rank){
+  const m=new Map(); if(!objectId) return m;
+  const rows=state.data.ranks.rows.filter(r=>String(r.object)===objectId && Number(r.rank)<=rank && Number(r.rank)>=2).sort((a,b)=>Number(a.rank)-Number(b.rank));
+  for(const r of rows){
+    const k=String(r.key||''); const base=m.has(k)?m.get(k):Number(IX.val.get(k)?.value);
+    const ch=String(r.change||'').trim(); const n=parseFloat(ch.replace(/^[+=×*x]/,''));
+    if(Number.isNaN(n)||Number.isNaN(base)) continue;
+    let v=base; if(/^=/.test(ch)) v=n; else if(/^[×*x]/.test(ch)) v=base*n; else v=base+parseFloat(ch);
+    m.set(k,Math.round(v*1000)/1000);
+  }
+  return m;
+}
+function evalExpr(expr, rank=1, objectId=null){
+  try{ const v=evalNode(parse(String(expr||'')), makeEnv(rank,objectId)); return {v}; }
+  catch(e){ return {err:e.message, soft:!!e.soft}; }
+}
+function fmt(v){ if(typeof v!=='number'||!isFinite(v)) return String(v); return Math.round(v*100)/100+''; }
+function fillText(text, rank, objectId){
+  return String(text||'').replace(/\[([^\]]+)\]/g,(m,k)=>{ const r=evalExpr('['+k+']',rank,objectId); if('v' in r) return fmt(r.v); const t=findTag(k.trim()); return t? t.label : m; });
+}
+
+/* ---------- validation ---------- */
+function cellIssue(table, col, raw){
+  const v=String(raw??'').trim(); if(!v) return null;
+  const kind=TABLES[table].refs[col];
+  const missing=[];
+  if(kind==='tag'){ if(!findTag(v)) missing.push(v); }
+  else if(kind==='tags'){ for(const k of v.split(/\s+/)) if(!findTag(k)) missing.push(k); }
+  else if(kind==='objects'){ for(const k of v.split(/\s+/)) if(!IX.obj.has(k)) missing.push(k); }
+  else if(kind==='object'){ if(!IX.obj.has(v)) missing.push(v); }
+  else if(kind==='value'){ if(!IX.val.has(v)) missing.push(v); }
+  else if(kind==='values'){ for(const k of v.split(/\s+/)) if(!IX.val.has(k)&&!IX.frm.has(k)) missing.push(k); }
+  else if(kind==='asset'){ if(!IX.ast.has(v)) missing.push(v); }
+  for(const k of refsIn(v)) if(!refKind(k)) missing.push('['+k+']');
+  return missing.length? 'Unknown: '+missing.join(', ') : null;
+}
+function allIssues(){
+  const out=[];
+  for(const t of ORDER){
+    const keyCol=TABLES[t].key, seen=new Map();
+    state.data[t].rows.forEach((r,i)=>{
+      for(const c of state.data[t].columns){ const m=cellIssue(t,c,r[c]); if(m) out.push({t,i,c,msg:m,row:r}); }
+      if(keyCol){ const k=String(r[keyCol]??'').trim(); if(!k) out.push({t,i,c:keyCol,msg:'Empty '+keyCol,row:r}); else if(seen.has(k)) out.push({t,i,c:keyCol,msg:'Duplicate '+keyCol+' "'+k+'"',row:r}); else seen.set(k,1); }
+    });
+  }
+  const tk=new Map(); state.data.tags.rows.forEach((r,i)=>{ const k=String(r.key||''); if(k){ if(tk.has(k)) out.push({t:'tags',i,c:'key',msg:'Duplicate key "'+k+'"',row:r}); tk.set(k,1);} });
+  for(const r of state.data.formulas.rows){ const e=evalExpr(r.expr); if(e.err && !e.soft) out.push({t:'formulas',i:state.data.formulas.rows.indexOf(r),c:'expr',msg:e.err,row:r}); }
+  return out;
+}
+
+/* ---------- CSV ---------- */
+function toCSV(cols, rows){
+  const esc=v=>{ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  return [cols.map(esc).join(','), ...rows.map(r=>cols.map(c=>esc(r[c])).join(','))].join('\r\n');
+}
+function parseCSV(text){
+  const rows=[]; let row=[], f='', q=false, i=0; text=String(text).replace(/^﻿/,'');
+  while(i<text.length){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i+=2;continue;} q=false; i++; continue;} f+=c; i++; continue; }
+    if(c==='"'){q=true;i++;continue;}
+    if(c===','){row.push(f);f='';i++;continue;}
+    if(c==='\r'){i++;continue;}
+    if(c==='\n'){row.push(f);rows.push(row);row=[];f='';i++;continue;}
+    f+=c;i++;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row);}
+  const nonEmpty=rows.filter(r=>r.some(x=>x!==''));
+  if(!nonEmpty.length) return {columns:[],rows:[]};
+  const cols=nonEmpty[0].map(s=>s.trim());
+  return {columns:cols, rows:nonEmpty.slice(1).map(r=>{ const o={}; cols.forEach((c,j)=>{ o[c]=coerce(r[j]??''); }); return o; })};
+}
+function coerce(s){ const t=String(s); return /^-?\d+(\.\d+)?$/.test(t.trim())? Number(t) : t; }
+
+/* ---------- persistence ---------- */
+const LS='ashen-tag-workbench-v1';
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){} }
+function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)) state.data[t]=d[t]; } }catch(e){} }
+function markDirty(t){
+  dirty.add(t); rebuild(); setStatus();
+  if(localMode||!db||!canWrite){ saveLocal(); return; }
+  clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
+}
+async function flush(t){
+  if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),500); return; }
+  if(!dirty.has(t)) return;
+  dirty.delete(t); saving.add(t); setStatus();
+  const parts=chunk(state.data[t].rows);
+  try{
+    const prev=saved[t]||{parts:[],head:''};
+    for(let i=0;i<parts.length;i++){ const js=JSON.stringify(parts[i]); if(prev.parts[i]!==js){ await db.doc('tables/'+t+'/parts/p'+i).set({index:i,rows:parts[i]}); } }
+    const head={columns:state.data[t].columns, parts:parts.length};
+    const hj=JSON.stringify(head); if(prev.head!==hj) await db.doc('tables/'+t).set(head);
+    for(let i=parts.length;i<prev.parts.length;i++) await db.doc('tables/'+t+'/parts/p'+i).delete();
+    saved[t]={parts:parts.map(x=>JSON.stringify(x)), head:hj};
+  }
+  catch(e){
+    dirty.add(t);
+    if(e&&e.code==='invalid_argument'){ canWrite=false; setStatus('warn','This view can read but not save. Edits stay in this browser; export them as CSV.'); saveLocal(); }
+    else setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'), timers[t]=setTimeout(()=>flush(t),3000);
+  }
+  finally{ saving.delete(t); setStatus(); }
+}
+function setStatus(level,msg){
+  const el=document.getElementById('status');
+  const pend=dirty.size+saving.size;
+  const where=localMode?'<b class="warn">Local only</b>: saved in this browser; export CSV to keep it':(canWrite?'<b class="ok">Shared</b>: edits save to this page\'s table store':'<b class="warn">Read only</b>');
+  el.innerHTML=where+' · '+(pend?'<b>Saving…</b>':'All changes saved')+(msg?' · <span class="'+(level||'')+'">'+escapeHtml(msg)+'</span>':'');
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- rendering ---------- */
+function renderTabs(){
+  const el=document.getElementById('tabs'); el.textContent='';
+  const views=[...ORDER,'sheet','check'];
+  for(const v of views){
+    const b=document.createElement('button'); b.className='tab'; b.type='button'; b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', String(state.view===v));
+    b.textContent= TABLES[v]? TABLES[v].label : (v==='sheet'?'Object sheet':'Check');
+    if(TABLES[v]){ const n=document.createElement('span'); n.className='n'; n.textContent=state.data[v].rows.length; b.appendChild(n); }
+    if(v==='check'){ const n=document.createElement('span'); n.className='n'; n.textContent=allIssues().length; b.appendChild(n); }
+    b.onclick=()=>{ state.view=v; render(); };
+    el.appendChild(b);
+  }
+}
+function render(){ renderTabs(); const p=document.getElementById('panel'); p.textContent='';
+  if(TABLES[state.view]) renderTable(p,state.view); else if(state.view==='sheet') renderSheet(p); else renderCheck(p); }
+
+function renderTable(p,t){
+  const def=TABLES[t], tbl=state.data[t];
+  const tools=document.createElement('div'); tools.className='toolbar';
+  tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
+  const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');
+  const col=btn('Add column',()=>openText('Add a column to '+def.label,'Type the new column name.','',[['Add',v=>{ v=v.trim(); if(v&&!tbl.columns.includes(v)){ tbl.columns.push(v); markDirty(t); render(); } }]],true));
+  const exp=btn('Export CSV',()=>exportCSV(t));
+  const imp=btn('Import CSV',()=>importDialog(t));
+  tools.append(add,col,imp,exp); if(!canWrite && !localMode){ add.disabled=col.disabled=imp.disabled=true; }
+  p.appendChild(tools);
+  const help=document.createElement('p'); help.className='help'; help.style.margin='8px 0'; help.innerHTML=def.help; p.appendChild(help);
+  if(t==='formulas'||t==='objects'||t==='tags'){ const lg=document.createElement('div'); lg.className='legend'; lg.innerHTML='<span><i style="background:var(--bad)"></i>unknown reference</span><span><i style="background:var(--warn)"></i>tag has no preview value</span>'; p.appendChild(lg); }
+  const q=p.querySelector('input[type=search]'); q.value=state.filter[t]||'';
+  const grid=document.createElement('div'); grid.className='grid'; p.appendChild(grid);
+  const draw=()=>{
+    grid.textContent='';
+    const f=(state.filter[t]||'').toLowerCase();
+    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r])=>!f||tbl.columns.some(c=>String(r[c]??'').toLowerCase().includes(f)));
+    if(!tbl.rows.length){ grid.innerHTML='<div class="empty">No rows yet. Add a row, or import a CSV whose first line names the columns:<br><code class="mono">'+escapeHtml(tbl.columns.join(','))+'</code></div>'; return; }
+    const table=document.createElement('table');
+    const head=document.createElement('tr'); head.appendChild(document.createElement('th'));
+    for(const c of tbl.columns){ const th=document.createElement('th'); th.textContent=c; head.appendChild(th); }
+    if(t==='formulas'){ const th=document.createElement('th'); th.textContent='result (rank 1)'; head.appendChild(th); }
+    const thead=document.createElement('thead'); thead.appendChild(head); table.appendChild(thead);
+    const body=document.createElement('tbody');
+    for(const [r,i] of rows.slice(0,state.shown[t])){
+      const tr=document.createElement('tr');
+      const act=document.createElement('td'); act.className='act';
+      const del=document.createElement('button'); del.className='x'; del.type='button'; del.title='Delete row'; del.setAttribute('aria-label','Delete row'); del.textContent='×';
+      del.onclick=()=>{ tbl.rows.splice(i,1); markDirty(t); render(); }; if(!canWrite&&!localMode) del.disabled=true;
+      if(t==='assets'&&assetsCap&&canWrite){ const up=document.createElement('button'); up.className='x'; up.type='button'; up.title='Upload preview image'; up.textContent='⤒'; up.onclick=()=>uploadPreview(r); act.appendChild(up); }
+      if(t==='objects'){ const go=document.createElement('button'); go.className='x'; go.type='button'; go.title='Open sheet'; go.textContent='↗'; go.onclick=()=>{ state.sheet=String(r.id); state.view='sheet'; render(); }; act.appendChild(go); }
+      act.appendChild(del); tr.appendChild(act);
+      for(const c of tbl.columns){
+        const td=document.createElement('td'); td.className='c-'+c;
+        const inp=document.createElement('input'); inp.value=r[c]??''; inp.setAttribute('aria-label',c); inp.readOnly=!canWrite&&!localMode;
+        const issue=cellIssue(t,c,r[c]); if(issue){ td.classList.add('bad'); inp.title=issue; } else if(r[c]!=null&&String(r[c]).length>30) inp.title=String(r[c]);
+        inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; if(t==='formulas') draw(); renderTabs(); });
+        td.appendChild(inp); tr.appendChild(td);
+      }
+      if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(e.soft?'warn':'bad'); } tr.appendChild(td); }
+      body.appendChild(tr);
+    }
+    table.appendChild(body); grid.appendChild(table);
+    if(rows.length>state.shown[t]){ const m=document.createElement('div'); m.className='more'; m.appendChild(btn(`Show ${Math.min(PAGE,rows.length-state.shown[t])} more of ${rows.length-state.shown[t]}`,()=>{ state.shown[t]+=PAGE; draw(); })); grid.appendChild(m); }
+  };
+  let tmr; q.addEventListener('input',()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.filter[t]=q.value; state.shown[t]=PAGE; draw(); },150); });
+  draw();
+}
+function uploadPreview(row){
+  const f=document.getElementById('file'); f.accept='image/*'; f.value='';
+  f.onchange=async()=>{ const file=f.files[0]; f.accept='.csv,text/csv'; if(!file) return;
+    try{ setStatus('','Uploading '+file.name+'…'); const res=await assetsCap.upload(file); row.preview=res.url; markDirty('assets'); setStatus('ok','Preview uploaded for '+row.id); render(); }
+    catch(e){ setStatus('bad','Upload failed ('+(e&&e.code||'error')+').'); } };
+  f.click();
+}
+function btn(label,fn,cls){ const b=document.createElement('button'); b.type='button'; b.textContent=label; if(cls) b.className=cls; b.onclick=fn; return b; }
+
+function renderSheet(p){
+  const objs=state.data.objects.rows;
+  if(!objs.length){ p.innerHTML='<div class="empty">No objects yet. Add a card, weapon or armor row on the Objects tab.</div>'; return; }
+  if(!state.sheet||!IX.obj.has(state.sheet)) state.sheet=String(objs[0].id);
+  const o=IX.obj.get(state.sheet), id=String(o.id), maxRank=Math.max(1,Number(o.maxRank)||1);
+  if(state.sheetRank>maxRank) state.sheetRank=1;
+  const tools=document.createElement('div'); tools.className='toolbar';
+  const sel=document.createElement('select'); sel.setAttribute('aria-label','Object');
+  for(const r of objs){ const op=document.createElement('option'); op.value=r.id; op.textContent=(r.name||r.id)+' · '+(r.kind||''); if(String(r.id)===id) op.selected=true; sel.appendChild(op); }
+  sel.onchange=()=>{ state.sheet=sel.value; state.sheetRank=1; render(); };
+  const rk=document.createElement('select'); rk.setAttribute('aria-label','Rank');
+  for(let i=1;i<=maxRank;i++){ const op=document.createElement('option'); op.value=i; op.textContent='Rank '+i; if(i===state.sheetRank) op.selected=true; rk.appendChild(op); }
+  rk.onchange=()=>{ state.sheetRank=Number(rk.value); render(); };
+  tools.append(sel,rk); p.appendChild(tools);
+  const rank=state.sheetRank;
+  const wrap=document.createElement('div'); wrap.className='sheet'; wrap.style.marginTop='12px'; p.appendChild(wrap);
+
+  const card=document.createElement('div'); card.className='cardart';
+  const img=document.createElement('div'); img.className='img';
+  const href=String(o.art||'').trim();
+  const pv=String(IX.ast.get(href)?.preview||IX.ast.get(String(o.artDefault||''))?.preview||'');
+  const src=/^(data:image|\/_blob\/|https?:)/.test(pv)? pv : (/^(data:image|\/_blob\/)/.test(href)? href : '');
+  if(src){ const im=document.createElement('img'); im.alt=o.name||id; im.src=src; im.onerror=()=>{ im.replaceWith(placeholder(o)); }; img.appendChild(im); }
+  else img.appendChild(placeholder(o));
+  const h=document.createElement('h2'); h.textContent=o.name||id;
+  const desc=document.createElement('p'); desc.className='help'; desc.style.color='var(--fg)'; desc.textContent=fillText(o.description,rank,id);
+  const cost=String(o.cost||'').trim()? fillText(o.cost,rank,id)+' '+(findTag(o.costResource)?.label||o.costResource||'') : '—';
+  const kv=document.createElement('dl'); kv.className='kv';
+  const add=(k,v)=>{ const dt=document.createElement('dt'); dt.textContent=k; const dd=document.createElement('dd'); dd.textContent=v||'—'; kv.append(dt,dd); };
+  add('kind',o.kind); add('type',findTag(o.cardType)?.label||o.cardType); add('stance',findTag(o.stance)?.label||o.stance); add('rarity',findTag(o.rarity)?.label||o.rarity);
+  add('cost',cost); add('skill',findTag(o.skill)?.label||o.skill); add('placement',o.placement); add('art',href||('default: '+(o.artDefault||'none'))); add('model',o.erd); add('ranks',(o.rankMode||'list')+' · max '+maxRank);
+  card.append(img,h,desc,kv); wrap.appendChild(card);
+
+  const right=document.createElement('div'); right.className='stack'; wrap.appendChild(right);
+  // tags
+  const tb=document.createElement('div'); tb.className='box'; tb.innerHTML='<h3>Tags</h3>';
+  const chips=document.createElement('div'); chips.className='chips';
+  const groups=[['tags','tag'],['exp','EXP'],['skill','skill'],['stance','stance'],['cardType','type'],['costResource','cost resource']];
+  for(const [col,lab] of groups){ for(const k of String(o[col]||'').split(/\s+/).filter(Boolean)){ const t=findTag(k); const c=document.createElement('span'); c.className='chip'+(t?'':' bad');
+    c.textContent=t? t.label : k; const s=document.createElement('small'); s.textContent=lab+' · '+(t? (t.erd||'')+(t.school?' · '+t.school:'') : 'unknown'); c.appendChild(s); c.title=t? t.id : 'No tag with this key'; chips.appendChild(c); } }
+  for(const g of String(o.grants||'').split(/\s+/).filter(Boolean)){ const c=document.createElement('span'); c.className='chip'+(IX.obj.has(g)?'':' bad'); c.textContent=IX.obj.get(g)?.name||g; const s=document.createElement('small'); s.textContent='grants'; c.appendChild(s); chips.appendChild(c); }
+  tb.appendChild(chips); right.appendChild(tb);
+  // values & formulas
+  const own=k=>k===id||k.startsWith(id+'.')||IX.val.get(k)?.scope===id||IX.frm.get(k)?.scope===id;
+  const vrows=state.data.values.rows.filter(r=>own(String(r.key)));
+  const frows=state.data.formulas.rows.filter(r=>own(String(r.key)));
+  const used=new Set(); frows.forEach(f=>refsIn(f.expr).forEach(k=>used.add(k))); refsIn(o.description).forEach(k=>used.add(k)); refsIn(o.cost).forEach(k=>used.add(k));
+  const outside=[...used].filter(k=>!own(k)&&k!=='rank');
+  const vb=document.createElement('div'); vb.className='box'; vb.innerHTML='<h3>Values and formulas at rank '+rank+'</h3>';
+  const vt=document.createElement('div'); vt.className='tbl';
+  const rowsHtml=[];
+  const env=makeEnv(rank,id);
+  for(const r of vrows){ let v; try{ v=fmt(env(String(r.key))); }catch(e){ v=e.message; } rowsHtml.push(['value',r.key,v,r.unit,r.description]); }
+  for(const r of frows){ const e=evalExpr(r.expr,rank,id); rowsHtml.push(['formula',r.key,'v' in e?fmt(e.v):e.err,'',r.expr]); }
+  for(const k of outside){ const kind=refKind(k)||'unknown'; let v='—'; try{ v=fmt(env(k)); }catch(e){ v=e.soft?'runtime':e.message; } rowsHtml.push(['uses '+kind,k,v,'',(IX.val.get(k)||IX.frm.get(k))?.description||findTag(k)?.label||'']); }
+  vt.innerHTML='<table><thead><tr><th>kind</th><th>key</th><th>value</th><th>unit</th><th>detail</th></tr></thead><tbody>'+rowsHtml.map(r=>'<tr><td>'+escapeHtml(r[0])+'</td><td class="mono">'+escapeHtml(r[1])+'</td><td class="num">'+escapeHtml(r[2])+'</td><td>'+escapeHtml(r[3]||'')+'</td><td class="mono">'+escapeHtml(r[4]||'')+'</td></tr>').join('')+'</tbody></table>';
+  vb.appendChild(vt); right.appendChild(vb);
+  // progression
+  const pb=document.createElement('div'); pb.className='box'; pb.innerHTML='<h3>Rank progression</h3>';
+  const keys=[...vrows.map(r=>String(r.key)),...frows.map(r=>String(r.key))];
+  if(keys.length){
+    let html='<table><thead><tr><th>key</th>'; for(let i=1;i<=maxRank;i++) html+='<th style="text-align:right">R'+i+'</th>'; html+='</tr></thead><tbody>';
+    for(const k of keys){ html+='<tr><td class="mono">'+escapeHtml(k)+'</td>'; for(let i=1;i<=maxRank;i++){ let v; try{ v=fmt(makeEnv(i,id)(k)); }catch(e){ v='—'; } html+='<td class="num">'+escapeHtml(v)+'</td>'; } html+='</tr>'; }
+    html+='</tbody></table>'; const d=document.createElement('div'); d.className='tbl'; d.innerHTML=html; pb.appendChild(d);
+  }
+  const rl=state.data.ranks.rows.filter(r=>String(r.object)===id);
+  const note=document.createElement('p'); note.className='help';
+  note.textContent= (o.rankMode==='formula'? 'Algorithm: formulas read [rank]. ' : '') + (rl.length? rl.map(r=>'R'+r.rank+': '+r.key+' '+r.change).join(' · ') : 'No rank rows for this object.');
+  pb.appendChild(note); right.appendChild(pb);
+  // relations
+  const tagKeys=new Set(String(o.tags||'').split(/\s+/).concat([o.stance,o.skill]).filter(Boolean));
+  const rel=state.data.relations.rows.filter(r=>tagKeys.has(String(r.source))||tagKeys.has(String(r.target)));
+  if(rel.length){ const rb=document.createElement('div'); rb.className='box'; rb.innerHTML='<h3>Relations through its tags</h3>';
+    const ul=document.createElement('ul'); ul.className='issues'; for(const r of rel){ const li=document.createElement('li'); li.textContent=(findTag(r.source)?.label||r.source)+' '+String(r.relation).toLowerCase().replace(/_/g,' ')+' '+(findTag(r.target)?.label||r.target)+(r.value!==''&&r.value!=null?' ('+r.value+')':'')+(r.note?' · '+r.note:''); ul.appendChild(li); }
+    rb.appendChild(ul); right.appendChild(rb); }
+}
+function placeholder(o){
+  const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.setAttribute('viewBox','0 0 200 300'); s.setAttribute('width','100%'); s.setAttribute('height','100%'); s.setAttribute('role','img'); s.setAttribute('aria-label','Default art for '+(o.name||o.id));
+  const kind=String(o.kind||'');
+  const glyph={card:'M100 70 L130 150 L100 230 L70 150 Z',weapon:'M96 40 h8 v160 h18 v10 h-18 v40 h-8 v-40 h-18 v-10 h18 Z',armor:'M60 80 h80 l-10 120 l-30 30 l-30 -30 Z'}[kind]||'M100 90 a60 60 0 1 0 0.1 0 Z';
+  s.innerHTML='<rect width="200" height="300" fill="var(--sunk)"/><rect x="10" y="10" width="180" height="280" rx="10" fill="none" stroke="var(--line)" stroke-width="2"/><path d="'+glyph+'" fill="none" stroke="var(--ember)" stroke-width="3"/><text x="100" y="275" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono, monospace" font-size="11">'+escapeHtml(o.artDefault||'default art')+'</text>';
+  return s;
+}
+function renderCheck(p){
+  const iss=allIssues();
+  const h=document.createElement('p'); h.className='help'; h.textContent= iss.length? iss.length+' problems across all tables. Click one to jump to its table.' : 'No problems: every reference resolves and every formula computes.';
+  p.appendChild(h);
+  const ul=document.createElement('ul'); ul.className='issues';
+  for(const it of iss.slice(0,400)){ const li=document.createElement('li'); const b=document.createElement('button'); b.className='x'; b.style.color='var(--fg)'; b.type='button';
+    const kc=TABLES[it.t].key; b.textContent=TABLES[it.t].label+' › '+(kc? it.row[kc] : 'row '+(it.i+1))+' › '+it.c+': '+it.msg;
+    b.onclick=()=>{ state.view=it.t; state.filter[it.t]=String(kc? it.row[kc] : it.row[it.c]||''); render(); }; li.appendChild(b); ul.appendChild(li); }
+  p.appendChild(ul);
+  const ex=document.createElement('div'); ex.className='toolbar'; ex.style.marginTop='12px';
+  ex.append(btn('Export every table as one JSON file',()=>{ const all={}; for(const t of ORDER) all[t]=state.data[t]; offer('ashen-tag-workbench.json', JSON.stringify(all,null,1)); }));
+  p.appendChild(ex);
+}
+
+/* ---------- import / export ---------- */
+async function offer(filename, text){
+  if(downloads){ try{ await downloads.save({filename, data:text}); setStatus('ok','Saved '+filename); return; } catch(e){ if(e&&e.code==='declined') return; } }
+  openText(filename,'Copy this text and save it as '+filename+'.',text,[['Copy',v=>{ try{ navigator.clipboard.writeText(v).then(()=>setStatus('ok','Copied'),()=>{}); }catch(e){} }]],false);
+}
+function exportCSV(t){ offer('ashen-'+t+'.csv', toCSV(state.data[t].columns, state.data[t].rows)); }
+function importDialog(t){
+  const def=TABLES[t];
+  openText('Import CSV into '+def.label,'Paste CSV below, or choose a file. The first line must name the columns. Merge updates rows with the same '+(def.key||'content')+' and adds new ones; Replace swaps the whole table.','',[
+    ['Choose file…',()=>{ const f=document.getElementById('file'); f.accept='.csv,text/csv'; f.value=''; f.onchange=async()=>{ const file=f.files[0]; if(!file) return; document.getElementById('dlg-text').value=await file.text(); document.getElementById('dlg').showModal(); }; f.click(); }, true],
+    ['Merge',v=>applyImport(t,v,'merge')],['Replace',v=>applyImport(t,v,'replace')]],false);
+}
+function applyImport(t,text,mode){
+  const parsed=parseCSV(text); if(!parsed.columns.length){ setStatus('bad','That CSV has no header row.'); return; }
+  const tbl=state.data[t], key=TABLES[t].key;
+  for(const c of parsed.columns) if(!tbl.columns.includes(c)) tbl.columns.push(c);
+  if(mode==='replace'||!key){ if(mode==='replace') tbl.rows=parsed.rows; else tbl.rows.push(...parsed.rows); }
+  else { const at=new Map(tbl.rows.map((r,i)=>[String(r[key]),i])); for(const r of parsed.rows){ const k=String(r[key]??''); if(k&&at.has(k)) Object.assign(tbl.rows[at.get(k)],r); else tbl.rows.push(r); } }
+  markDirty(t); setStatus('ok','Imported '+parsed.rows.length+' rows into '+TABLES[t].label+' ('+mode+')'); render();
+}
+function openText(title,help,text,actions,keepOpen){
+  const d=document.getElementById('dlg'); document.getElementById('dlg-title').textContent=title; document.getElementById('dlg-help').textContent=help;
+  const ta=document.getElementById('dlg-text'); ta.value=text; ta.style.minHeight= text||actions.length>2?'260px':'60px';
+  const row=document.getElementById('dlg-actions'); row.textContent='';
+  for(const [label,fn,stay] of actions){ row.appendChild(btn(label,()=>{ const v=ta.value; if(!stay) d.close(); fn(v); }, label==='Merge'||label==='Add'?'primary':'')); }
+  row.appendChild(btn('Close',()=>d.close())); d.showModal(); ta.focus();
+}
+
+/* ---------- boot ---------- */
+rebuild(); setStatus(); render();
+(async()=>{
+  const cl=window.claude;
+  const [d,u,dl,as]=await Promise.all([cl?.use?.('db')??null, cl?.use?.('user')??null, cl?.use?.('downloads')??null, cl?.use?.('assets')??null]).catch(()=>[null,null,null,null]);
+  db=d; downloads=dl; assetsCap=as; render();
+  if(!db){ localMode=true; loadLocal(); rebuild(); setStatus('warn','The shared table store is not available here.'); render(); return; }
+  if(u){ try{ const w=await u.can('data.write'); if(w===false) canWrite=false; }catch(e){} }
+  const unsub={};
+  const onErr=t=>e=>setStatus('bad','Lost the live connection to "'+t+'" ('+e.code+'). Reload to reconnect.');
+  for(const t of ORDER){
+    live[t]={head:null, parts:new Map()};
+    const apply=()=>{
+      if(dirty.has(t)||saving.has(t)) return;
+      const h=live[t].head; if(!h) return;
+      let rows;
+      if(Array.isArray(h.rows)) rows=h.rows;
+      else { rows=[]; for(let i=0;i<(h.parts||0);i++){ const p=live[t].parts.get(i); if(!p) return; rows.push(...p); } }
+      const cols=Array.isArray(h.columns)&&h.columns.length? [...h.columns] : [...TABLES[t].columns];
+      for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
+      saved[t]= Array.isArray(h.rows)? {parts:[],head:''} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts})};
+      if(JSON.stringify(rows)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)) return;
+      state.data[t]={columns:cols, rows:JSON.parse(JSON.stringify(rows))};
+      rebuild(); setStatus(); render();
+    };
+    unsub[t]=[db.doc('tables/'+t).onSnapshot(s=>{ live[t].head=s.exists? s.data() : null; apply(); }, onErr(t)),
+      db.collection('tables/'+t+'/parts').onSnapshot(q=>{ live[t].parts=new Map(q.docs.map(d=>{ const b=d.data(); return [Number(b.index), b.rows||[]]; })); apply(); }, onErr(t))];
+  }
+})();
+</script>

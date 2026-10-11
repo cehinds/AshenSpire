@@ -1,0 +1,17 @@
+source,relation,target,value,note
+smash,STRONG_VS,defensive.block,1.5,
+attack,STRONG_VS,smash,1.25,
+sweep,WEAK_VS,defensive.block,0.75,
+physical.pierce,BYPASSES,counter,,melee only
+hybrid.force,BYPASSES,counter,,melee only
+sweep,BYPASSES,counter,,melee only
+magic.fire,APPLIES,burned,1,
+slashing,APPLIES,bleeding,1,
+magic.frost,APPLIES,build-up.frost,1,
+magic.lightning,APPLIES,paralyzed,1,
+magic.necrotic,APPLIES,blighted,1,
+magic.psychic,APPLIES,confused,1,
+magic.fire,CLEARS,frozen,,thaws
+physical.blunt,CLEARS,frozen,,shatters
+type.stance,REFERENCES,combat.stance,,
+gorefire,REQUIRES,blood,,

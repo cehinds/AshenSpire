@@ -1,0 +1,400 @@
+Meta
+  Character
+    Class
+      Warrior {Reaver}
+      Scoundrel {Rogue}
+      Monk {Herald}
+      Mage {Starseer}
+    Attribute
+      Strength
+      Dexterity
+      Constitution
+      Intelligence
+      Wisdom
+    Resource
+      HP
+      SP {Stamina}
+      MP {Mana}
+      Level
+        Character level
+        Class level
+        Skill level
+      EXP
+        Character EXP
+        Class EXP
+        Skill EXP
+      Currency
+        Cinders
+        Gold [n] {later}
+    Offensive stats [n]
+      AR [n] {attack rating, scales physical}
+      PR {potency rating, scales magic}
+      Crit chance
+      Crit damage [n]
+      Accuracy [n]
+    Defensive stats
+      DR {defense rating}
+      Evasion [n] {dodge chance}
+      Block {stops physical}
+      Barrier [n] {stops magic}
+      Poise {physical impact → Staggered}
+      Ward {magic impact → Disrupted}
+    Perception {intent reveal}
+    Weapon
+      One-handed
+        Sword
+        Katana [n]
+        Dagger
+        Axe [n]
+        Hammer [n]
+        Spear
+        Scepter
+        Tome
+      Two-handed
+        Great sword
+        Halberd
+        Twinblade [n]
+        Staff
+        Bow
+      Off-hand
+        Shield
+        Parrying dagger [n]
+        Light source [n] {lantern, torch}
+        Catalyst [n] {chime, branch, rod}
+      Unarmed
+    Armor
+      Weight
+        Clothing
+        Light
+        Medium
+        Heavy
+      Material [n]
+        Cloth [n] {light, no resistances}
+        Leather [n] {light, + evasion}
+        Studded [n] {leather + physical Block}
+        Chain [n] {medium, resists slashing}
+        Scale [n] {medium, resists piercing}
+        Plated [n] {heavy, high DR, resists blunt less}
+      Defensive property [n]
+        Absorption [n] {converts part of damage taken to Block or Ward}
+        Siphon [m] {drains HP or MP when hit or when breaking}
+        Thorns [n] {returns damage to melee attackers}
+        Padded [n] {+ Poise, resists Stagger}
+        Warded [n] {+ Ward, resists magic impact}
+        Insulated [m] {resists lightning, no conduction}
+        Grounded [m] {clears Paralysis pressure}
+        Fireproof [n] {resists Burn}
+        Frostlined [n] {resists Frost build-up}
+        Sanctified [n] {resists necrotic and Blight}
+        Mindguard [n] {resists Insanity and Confused}
+        Lightweight [n] {−SP cost, + Evade}
+        Reinforced [n] {Block not lost on Stagger}
+      Slot [n]
+        Head [n]
+        Body [n]
+        Hands [n]
+        Feet [n]
+        Talisman [n]
+    Relic
+      Rarity [n]
+        Starter [n]
+        Common [n]
+        Uncommon [n]
+        Rare [n]
+        Boss [n]
+        Event [n]
+      Trigger [n]
+        Combat start [n]
+        Turn start [n]
+        On play [n]
+        On hit [n]
+        On kill [n]
+        Passive [n]
+    Feat
+      Class feat [n]
+      Skill feat [n]
+      Ability [n]
+    Consumable
+      Flask [n] {HP, MP}
+      Potion [n]
+      Throwable [n]
+      Buff item [n]
+      Key item [n]
+    Creature
+      Type
+        Beast
+        Humanoid
+        Undead
+        Construct
+        Spirit
+        Dragon [n]
+        Demon [n]
+        Elemental [n]
+        Plant [n]
+      Rank [n]
+        Minion [n]
+        Elite [n]
+        Boss [n]
+    Other
+      Location [n]
+        Shrine [n]
+        Camp [n]
+        Inn [n]
+        Chapel [n]
+        Event [n]
+        Encounter [n]
+  Combat
+    Skill
+      Weapon skill {deals physical damage}
+        Sword
+        Dagger
+        Twinblades
+        Blade
+        Blunt
+        Axe [n]
+        Polearm [n]
+        Staff
+        Marksman
+        Bow
+        Shield
+        Unarmed [n]
+        Two-handed
+        Dual-wield [n]
+      Armor skill
+        Light
+        Medium
+        Heavy
+      Technique
+        Heavy [m]
+        Precision [m]
+        Pierce [m]
+        Cleave [m]
+        Flourish [m]
+        Guile [m] {rogue trickery}
+        Blood [m] {pay HP for power}
+        Venom [m] {poison craft}
+      Class stance [m] {card skill; holds a stance until changed}
+        Gorefire Stance
+        Bulwark Stance
+        Brace
+      Spellcraft {each school deals its damage type}
+        Fire
+          Gorefire [m] {fire fed by blood}
+          Ash [m]
+        Frost
+        Lightning
+        Earth [n]
+        Force
+          Starstone [m] {astral force}
+        Divine
+          Oath [m] {vows, holy martial}
+        Necrotic
+          Blight [m]
+        Psychic [n]
+          Illusion [m] {existing school}
+          Ritual [m] {madness}
+        Alteration [m] {existing school, non-elemental}
+    Damage
+      Physical
+        Slashing {→ Bleeding}
+        Blunt {→ Poise damage}
+        Pierce {ignores Guard}
+      Magic
+        Fire {→ Burned}
+        Frost {→ Frostbitten}
+        Lightning {→ Paralyzed}
+        Earth [n]
+        Divine {cleanses}
+        Necrotic {→ Blighted}
+        Psychic [n] {→ Confused}
+      Hybrid [n]
+        Force {Block or Barrier stops it}
+    Stance
+      Offensive
+        Attack {44 cards}
+          Strike {Strike, Quick Cut, Katana Draw Cut, weapon attacks}
+          Flurry {Blade Dance, Thousand Cuts, Twin Fang, Twinblade Flurry}
+          Bleed strike {Rend, Serrated Blade, Bloodhunter's Strike, Goreslash}
+          Finisher {Executioner, Deathblow, Coup de Grace, Assassinate}
+          Dirty trick {Cheap Shot, Low Blow, Sap, Garrote, Hamstring, Ambush}
+          Elemental strike {Flame to Blade, Gorefire Slash, Rime Thrust}
+        Smash {13 cards}
+          Bash {Bashing Blow, Shield Bash, Shield Crash, Stomp, Kick Off}
+          Sunder {Sundering Chop, Sunderplate, Ruinous Blow, Colossus Smash}
+          Poise break {Poise Breaker, Breaker's Toll, Kiln Cleave}
+        Sweep {6 cards}
+          Cleave {Cleaving Blow, Crimson Cleave, Hewing Arc, Sweeping Blow}
+          Whirl {Whirling Guard}
+      Defensive
+        Block {about 45 cards, tagged Defend today}
+          Guard {Defend, Quick Guard, weapon/staff/sceptre Guard, Iron Skin, Brace}
+          Shield {Shieldwall, Shield Guard, Shield Bastion, Set the Shield}
+          Ward {Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier}
+          Endure {Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance}
+        Evade [n] {about 15 cards, tagged Defend today}
+          Dodge {Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics}
+          Vanish {Shadowstep, Vanish, Nightstep, Misdirect}
+          Obscure {Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand}
+      Counter {20 cards, its own stance}
+        Parry {Riposte, Rondel Parry, Binding Parry, Low Guard Riposte, Spiked Reprisal}
+        School counter {one per spell school: Fire, Frost, Lightning, Force...}
+        Ranged counter {Nock and Wait, Barrage Counter}
+        Ward counter {Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal}
+    Delivery
+      Ranged {9 cards, was a stance}
+        Shot {Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot}
+        Volley {Arrow Volley, Toxic Volley, Fan of Knives, Ricochet}
+      Casting {7 cards, was a stance}
+        Bolt {Ember Dart, Rime Needle, Static Needle, Holy Spark, Force Nudge}
+        Mote {Drowsing Mote, Rot Mote}
+      Multi-hit [n]
+      Area [n]
+    Magic
+      Offensive magic
+      Defensive magic
+    Recovery [n]
+      Heal [n]
+      Cleanse [n]
+      Restore SP [n]
+      Restore MP [n]
+    Status effect
+      Debuff
+        Damage over time
+          Bleeding {lose HP each turn}
+          Burned {Burn}
+          Poisoned {Venom}
+          Blighted {Crimson Blight, never ticks down}
+        Build-up {meter bursts for % max HP}
+          Bleed
+          Frost
+          Insanity
+        Weakened
+          Weak {−25% attack damage}
+          Vulnerable {+50% attack damage taken}
+          Frail {−25% Block}
+          Magic Vulnerable
+          Frost-Exposed {+ vs Starstone}
+          Unraveled {+ vs Ritual, Blight}
+          Chilled {next Blunt hit +25%}
+          Aged [n]
+          Slowed [n]
+          Silenced [n]
+          Disarmed [n]
+        Immobile {lose actions}
+          Staggered {skip turn, +50% damage taken}
+          Frozen
+          Sleep
+          Paralyzed {Paralysis}
+          Dazed
+          Entombed [n]
+        Off-footing
+          Prone
+          Off Balance
+        Mind
+          Maddened {Madness: lose HP, gain Energy}
+          Confused [n]
+          Fixated [n]
+      Buff
+        Stat
+          Strengthened {Strength}
+          Dexterity
+          Accelerated [n]
+          Enlightened [n]
+          Hearty [n]
+        Protection
+          Unbreakable {Block kept, +version}
+          Invulnerability {avoid next hit}
+          Decoy {avoid next single hit}
+          Concealed
+          Grounded {no lightning backlash}
+          Shielded [n]
+        Recovery
+          Regenerating {Regen}
+          Communion
+          Life Tithe
+          Stigmata
+          Harbinger of Blight
+        Setup
+          Prepared {next payoff empowered}
+          Starstone Charge
+      Power {lasting effect from a Power card}
+        Offense
+          Rallying Standard {+version}
+          Glass Cannon
+          Blood Unction
+          Envenom
+          Sanguine Pact
+          Zealotry
+          Constellation
+          Waxing Moon
+          Thorn Halo
+          Ember Tide
+        Defense
+          Astral Armor
+          Shieldwall Echo
+          Iron Vow
+          Azure Coil
+          Moonlit Shield
+          Afterimage
+          Goreblood
+        Tempo
+          Deadly Tempo
+          Opportunist
+          Stargazer
+          Astromancer
+      Resistance {after a build-up burst}
+        Clotted {vs Bleed}
+        Weathered {vs Frost}
+        Resolute {vs Insanity}
+    Deck manipulation
+      Draw [n]
+      Discard [n]
+      Create [n]
+      Upgrade [n]
+      Cost change [n]
+    Rule manipulation
+      Extra action [n]
+      Turn skip [n]
+      Stance change [n]
+      Intent reveal / conceal [n]
+Card
+  Type
+    Stance {matches Combat › Stance}
+      Offensive
+        Attack
+        Smash
+        Sweep
+      Defensive
+        Block
+        Evade
+      Counter
+    Skill
+    Power
+    Curse
+    Status
+    Consumable [n]
+  Rarity
+    Starter
+    Common
+    Uncommon
+    Rare
+  Keyword
+    Exhaust
+    Retain
+    Innate
+    Ethereal
+    Unplayable
+  Cost
+    Stamina {physical cards}
+    Mana {spells}
+    Free [n]
+  Source
+    Class
+    Weapon
+    Armor
+    Relic
+    Global
+  Upgrade
+    Base
+    Upgraded
+  Character card {class-bound}

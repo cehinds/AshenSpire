@@ -1,0 +1,22 @@
+key,value,unit,scope,description
+ar,24,rating,character,Preview value for the AR tag
+pr,10,rating,character,Preview value for the PR tag
+dr,18,rating,character,Preview value for the DR tag
+strength,14,points,character,Preview value
+dexterity,10,points,character,Preview value
+burned,3,stacks,status,Preview stacks of Burned
+crit.mult,1.5,×,global,Crit damage multiplier
+weak.mult,0.75,×,status,Damage dealt while Weak
+vulnerable.mult,1.5,×,status,Damage taken while Vulnerable
+burned.tickPerStack,1,HP,status,HP lost per Burned stack at turn start
+strike.baseDamage,6,damage,strike,Base damage at rank 1
+strike.arScale,0.25,×AR,strike,Share of AR added to damage
+strike.cost,1,SP,strike,Stamina cost
+strike.expSkill,4,EXP,strike,Blade skill EXP per play
+strike.expClass,2,EXP,strike,Class EXP per play
+sword.arBonus,3,damage,straightSword,Flat damage a sword adds to sword attacks
+straightSword.ar,12,rating,straightSword,Weapon AR
+dodgeRoll.base,3,points,dodgeRoll,"Base Block, Poise and Ward"
+dodgeRoll.cost,1,SP,dodgeRoll,Stamina cost (Light/Medium); Heavy pays 2
+wayfarerPlate.dr,6,rating,wayfarerPlate,Armor DR
+wayfarerPlate.poise,8,points,wayfarerPlate,Poise threshold
