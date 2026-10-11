@@ -1156,7 +1156,11 @@ function newRun(config) {
     prepare: () => saves.ensureProfile(),
     isCurrent: () => app.firstElementChild === surface && run === previousRun,
     adopt: () => beginPreparedRun({ ...config, seedString: asked }),
-    onFailure: error => showSettingsNotice(`Profile could not be saved: ${error.message}`, 'profile'),
+    onFailure: error => {
+      const message = `Profile could not be saved: ${error.message}`;
+      console.error('[run] start refused:', error);
+      if (!showSettingsNotice(message, 'profile')) failureBanner('run:start', 'THIS RUN COULD NOT START', ` · ${message}`);
+    },
   });
 }
 
