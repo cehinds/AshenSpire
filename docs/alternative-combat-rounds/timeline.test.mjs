@@ -1328,6 +1328,20 @@ test('a queued evade card in evasion-cards.csv adds its Evasion to the hit roll,
   assert.equal(hit.need, 10);
   assert.equal(hit.hit, false);
   assert.equal(out.events.some((e) => e.type === 'evadeRoll'), false);
+  // The table card has no percent of its own: 0, and the preemptive buff does not apply to 0.
+  assert.equal(out.events.find((e) => e.type === 'evadeUp').pct, 0);
+});
+
+test('a table evade card Evasion ends with the attack it is spent on', () => {
+  // Two stabs, one queued Dodge: the first need is 10 (7 + 3), the second is back to 7.
+  const out = createRound(evadeFight(), {
+    queues: {
+      player: [card('Dodge', 'evade', 'self', 6)],
+      goblin: [atk('s1', 'player', 1, { damage: 4 }), atk('s2', 'player', 0, { damage: 4 })],
+    },
+    rng: rngThen([0, 0.75, 0.37, 0.37], 0.99),
+  }).resolveAll();
+  assert.deepEqual(out.events.filter((e) => e.type === 'hit').map((e) => e.need), [10, 7]);
 });
 
 test('an explicit evadePct on a table evade card still rolls, with the preemptive buff', () => {

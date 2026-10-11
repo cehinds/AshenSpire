@@ -586,7 +586,9 @@ numbers of 0 or more; otherwise the timeline throws a TypeError naming the field
     default. Its percent is only its own `evadePct` (plus the preemptive buff), and 0
     when it has none, so no percent roll happens. The table comes in through the
     `tables` option of `makeCombatant`/`makeFight` (`parseEvasionCards`). A card not in
-    the table keeps the 20% default. The `evadeUp` event carries `evasion`.
+    the table keeps the 20% default. The `evadeUp` event carries `evasion`. A combatant's
+    standing `evasionCard` (the slot-model input) is a separate, permanent bonus and stacks
+    with a played evade card's one-attack bonus.
   - Counter: fires on the next attack from its chosen foe, or from any foe when
     its target is `self`. A counter faster than the attack (strictly higher effective
     speed, the capped speed the merge uses, not the raw total) cancels it (`countered`), and deals its damage to the attacker. Otherwise
