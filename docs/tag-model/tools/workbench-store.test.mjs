@@ -203,13 +203,13 @@ export function makeFakeDb() {
   return fake;
 }
 
-const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tableBanners, runBanner, renderBanners, tstate, chunkRows, hashText, headPath, blobPath })';
+const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, markDirty, loadTheirs, keepMine, tableBanners, runBanner, renderBanners, tstate, chunkRows, hashText, headPath, blobPath })';
 
 // One browser tab: its own state, sharing only the fake db with other tabs.
 export function makePage(db, tables, edit) {
   const page = {
     db, canWrite: true, localMode: false,
-    state: { data: {} }, dirty: new Set(), saving: new Set(), timers: {},
+    state: { data: {} }, dirty: new Set(), saving: new Set(), timers: {}, timerKind: {},
     loaded: new Set(), pending: new Set(), TABLES: tables,
     renders: 0, statuses: [],
     setTimeout, clearTimeout, setImmediate,
@@ -585,6 +585,21 @@ test('the re-check writes back only blobs this save built, never a stale hash ca
   await W.api.flush('t', { written: new Set(['stalehash']) });
   assert.equal(db.has(W.api.blobPath('t', 'stalehash')), false, 'no blob is written for a hash this save did not build');
   assert.equal(await storedRows(db), JSON.stringify(sample(3, 's')));
+});
+
+test('a stale retry does not clear a pending edit timer: the edit saves with fresh rows, a fresh deadline and no stale state', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  W.page.saving.add('t'); // a save is in flight
+  const rows = sample(3, 'n');
+  W.page.loaded.add('t');
+  W.page.state.data.t.rows = rows;
+  W.api.markDirty('t'); // the real edit path: arms the edit's own timer
+  await W.api.flush('t', { deadline: Date.now() - 1 }); // a retry whose budget has already expired
+  W.page.saving.delete('t');
+  await waitFor(() => db.has('tables/t'), 4000);
+  assert.equal(await storedRows(db), JSON.stringify(rows));
+  assert.equal(W.api.tstate.t.conflict, null, 'the expired retry did not turn the edit into a conflict');
 });
 
 test('a second banner that appears while another is up is announced as an alert', async () => {

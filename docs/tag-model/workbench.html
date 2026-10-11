@@ -159,7 +159,7 @@ const PAGE = 150;
 const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
-const dirty=new Set(), saving=new Set(), timers={};
+const dirty=new Set(), saving=new Set(), timers={}, timerKind={}; /* timerKind: 'edit' or 'retry' for the pending timer of a table */
 /* storage:begin */
 /* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
 const BLOB_MAX=170000, BLOB_ROW_MAX=250000, BLOB_CUT=64, BLOB_FALLBACK=8, GC_AGE_MS=120000;
@@ -327,12 +327,25 @@ async function acquireHead(t){
   }
 }
 /* a conflict keeps local edits dirty and waits for the user; opts.overwrite writes the head on top of their rev */
+/* an edit marks its table dirty and arms a save 900 ms later; a save already waiting is not replaced by a retry (see retryFlush) */
+function markDirty(t){
+  if(!localMode && !loaded.has(t)){ setStatus('warn','Still loading '+t+'; that edit was not saved.'); return; }
+  dirty.add(t); rebuild(); setStatus();
+  if(localMode||!db||!canWrite){ saveLocal(); return; }
+  clearTimeout(timers[t]); timerKind[t]='edit'; timers[t]=setTimeout(()=>{ timerKind[t]=null; flush(t); },900);
+}
+/* arms a retry of a save. A pending timer armed by an edit is left alone: that edit's save runs with fresh rows,
+   a fresh deadline and no blob state carried over from the failed attempt, so the retry would only replace it with stale state */
+function retryFlush(t,opts,ms){
+  if(timers[t]&&timerKind[t]==='edit') return;
+  clearTimeout(timers[t]); timerKind[t]='retry'; timers[t]=setTimeout(()=>{ timerKind[t]=null; flush(t,opts); },ms);
+}
 /* the set of blob hashes a head names (empty for a missing head or another format) */
 function headBlobs(h){ return new Set(h&&h.format==='blobs'&&Array.isArray(h.blobs)? h.blobs : []); }
 async function flush(t, opts){
   opts=opts||{};
   const ts=TS(t);
-  if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),500); return; }
+  if(saving.has(t)){ retryFlush(t,opts,500); return; }
   if(!dirty.has(t)) return;
   if(ts.pinned) return; /* a rejected table is never saved again from this view, Keep mine included */
   if(ts.conflict&&!opts.overwrite) return;
@@ -375,7 +388,7 @@ async function flush(t, opts){
     /* the leased head must need no blob we have neither written nor seen: if a peer changed it under us, retry the save.
        Fencing: if the get took most of the lease, another tab may hold it by now, so do not write under it. Both retry. */
     const verified=new Set([...written, ...headBlobs(curHead)]);
-    if(hashes.some(h=>!verified.has(h)) || Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),50); return; }
+    if(hashes.some(h=>!verified.has(h)) || Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); retryFlush(t,opts,50); return; }
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
     const base=opts.overwrite? curRev : ts.base, prevBase=ts.base;
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
@@ -401,7 +414,7 @@ async function flush(t, opts){
   catch(e){
     /* rejected: the edits stay on screen, pinned and unsaved; no peer head replaces them until the user chooses */
     if(e&&e.code==='invalid_argument'){ dirty.add(t); ts.pinned=true; ts.conflict=null; canWrite=false; setStatus('warn','This view can read but not save. Your edits are shown here, not saved; export them as CSV.'); saveLocal(); render(); }
-    else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
+    else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); retryFlush(t,opts,3000); }
   }
   finally{ saving.delete(t); setStatus(); }
   if(newer==='conflict'){ ts.conflict={theirRev:revOf(ts.latest)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); }
@@ -604,12 +617,6 @@ const LS='ashen-tag-workbench-v1';
 function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
 function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)) state.data[t]=d[t]; } }catch(e){} }
 function editable(t){ return localMode || (!!db && canWrite && loaded.has(t)); }
-function markDirty(t){
-  if(!localMode && !loaded.has(t)){ setStatus('warn','Still loading '+t+'; that edit was not saved.'); return; }
-  dirty.add(t); rebuild(); setStatus();
-  if(localMode||!db||!canWrite){ saveLocal(); return; }
-  clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
-}
 function setStatus(level,msg){
   const el=document.getElementById('status');
   const pend=dirty.size+saving.size;
