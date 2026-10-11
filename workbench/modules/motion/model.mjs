@@ -441,6 +441,23 @@ export function applyCanvasDoc(project, doc) {
   return next;
 }
 
+/** True when a files/read failure says the file is not on disk (a pose file deleted on disk). */
+export function isMissingOnDisk(error) {
+  return error?.status === 404;
+}
+
+/**
+ * A pose file deleted on disk: its draft goes and it leaves the library list. When it was the
+ * open file, nothing stays open and the selection clears (`closed` says so). New Maps are
+ * returned; the ones given are not changed.
+ */
+export function forgetDeletedFile({ file, drafts, sets, selected }, path) {
+  const closed = file?.path === path;
+  const nextDrafts = new Map(drafts); nextDrafts.delete(path);
+  const nextSets = new Map(sets); nextSets.delete(path);
+  return { file: closed ? null : file, drafts: nextDrafts, sets: nextSets, selected: closed ? null : selected, closed };
+}
+
 /** A library-free summary of what a save would change: the changed top-level fields. */
 export function changedFields(before, after) {
   const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
