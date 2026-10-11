@@ -14,14 +14,14 @@ magic.psychic,APPLIES,confused,1,
 magic.fire,CLEARS,frozen,,thaws
 physical.blunt,CLEARS,frozen,,shatters
 type.stance,REFERENCES,combat.stance,,
-gorefire,REQUIRES,blood,,
+fire.gorefire,REQUIRES,technique.blood,,
 offensive.attack,DEFAULT_DELIVERY,melee,,Default delivery of the Attack stance (owner decision 3)
 smash,DEFAULT_DELIVERY,melee,,Default delivery of the Smash stance
 sweep,DEFAULT_DELIVERY,melee,,Default delivery of the Sweep stance
 parry,DEFAULT_DELIVERY,melee,,Parry counter is a melee delivery
 school-counter,DEFAULT_DELIVERY,casting,,One per spell school; cast delivery (to confirm)
 ward-counter,DEFAULT_DELIVERY,casting,,Ward counter cast delivery (to confirm)
-ranged-counter,DEFAULT_DELIVERY,ranged,,Ranged counter is a ranged delivery
+ranged-counter,DEFAULT_DELIVERY,delivery.ranged,,Ranged counter is a ranged delivery
 prepare,APPLIES,prepared,,Prepare sets Prepared (available to players and enemies)
 character.consumable,CREATES_CARD,type.consumable,,Using a consumable item can create a one-shot card; the item is also a Consumable card (owner decision 7)
 defensive-stats.block,SEPARATE_POOL,poise,,Block and Poise are separate pools (owner decision 10)
