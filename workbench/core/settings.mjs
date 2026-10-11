@@ -7,11 +7,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export const EDITOR_URL_DEFAULT = 'http://127.0.0.1:5173';
+// How many save backup sets workbench/.state/backups keeps (files.mjs prunes the rest).
+export const KEEP_BACKUPS_DEFAULT = 50;
 // The Workbench page may frame loopback origins only (its CSP frame-src).
 const LOOPBACK_URL = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}(\/[\w\-./?=&%#]*)?$/;
 
 export function defaults(env = process.env) {
-  return { artCheckout: env.ASHEN_ART_CHECKOUT || '', editorCheckout: env.ASHEN_EDITOR_CHECKOUT || '', editorUrl: EDITOR_URL_DEFAULT };
+  return { artCheckout: env.ASHEN_ART_CHECKOUT || '', editorCheckout: env.ASHEN_EDITOR_CHECKOUT || '', editorUrl: EDITOR_URL_DEFAULT, keepBackups: KEEP_BACKUPS_DEFAULT };
 }
 
 /** Problems with a proposed settings object; [] when it may be saved. */
@@ -24,6 +26,7 @@ export function settingsProblems(s) {
     if (typeof v !== 'string' || !path.isAbsolute(v)) { problems.push(`${key}: use an absolute folder path`); continue; }
     try { if (!fs.statSync(v).isDirectory()) problems.push(`${key}: not a folder`); } catch { problems.push(`${key}: folder not found (${v})`); }
   }
+  if (s.keepBackups !== undefined && !(Number.isInteger(s.keepBackups) && s.keepBackups >= 1 && s.keepBackups <= 500)) problems.push('keepBackups: use a whole number from 1 to 500');
   if (s.editorUrl !== undefined && s.editorUrl !== '' && !(typeof s.editorUrl === 'string' && LOOPBACK_URL.test(s.editorUrl))) problems.push('editorUrl: use a local address such as http://127.0.0.1:5173');
   return problems;
 }
@@ -36,7 +39,9 @@ export class Settings {
     const base = defaults(this.env);
     const out = { ...base };
     // A saved empty string is an explicit "none": it overrides the default or the environment.
-    for (const k of Object.keys(base)) if (typeof saved[k] === 'string') out[k] = saved[k];
+    for (const k of Object.keys(base)) {
+      if (typeof base[k] === 'number' ? Number.isInteger(saved[k]) : typeof saved[k] === 'string') out[k] = saved[k];
+    }
     return out;
   }
   save(next) {
