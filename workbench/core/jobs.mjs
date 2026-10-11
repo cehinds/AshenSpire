@@ -28,12 +28,20 @@ const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests
  *  (tools/lib/build-lock.mjs), which the editor and UI Studio take too. */
 export const GENERATED = 'generated-sources';
 
+/** A job's params: absent or null means the defaults ({}); any other non-object is a 400. */
+export function jobParams(params) {
+  if (params === undefined || params === null) return {};
+  if (typeof params !== 'object' || Array.isArray(params)) throw Object.assign(Error('Job params must be an object'), { status: 400 });
+  return params;
+}
+
 /**
  * The screens and device a Visual capture run takes, checked against the
  * allowlist (workbench/modules/review/model.mjs). Anything else is a 400, so a
  * request names a screen id, never a path or a flag.
  */
-export function reviewCaptureParams(params = {}) {
+export function reviewCaptureParams(input) {
+  const params = jobParams(input);
   const device = params.device ?? 'desk';
   if (!deviceById(device)) throw Object.assign(Error(`Unknown device: ${String(device).slice(0, 40)}`), { status: 400 });
   const asked = params.screens ?? SCREENS.map((s) => s.id);
@@ -72,7 +80,7 @@ export const JOBS = {
     steps: (root, { params = {}, stateDir = path.join(root, 'workbench', '.state') } = {}) => {
       const { device, screens } = reviewCaptureParams(params);
       const { width, height } = deviceById(device);
-      return [{ args: ['tools/screenshot.mjs', '--out', path.join(stateDir, 'review', 'captures'), '--viewport', `${width}x${height}`, '--prefix', `${device}-`, '--only', screens.join(',')] }];
+      return [{ args: ['tools/screenshot.mjs', '--out', path.join(stateDir, 'review', 'captures'), '--viewport', `${width}x${height}`, '--prefix', `${device}-`, '--only', screens.join(','), '--exact'] }];
     },
   },
 };
@@ -116,7 +124,7 @@ export class JobRunner {
     const job = Object.hasOwn(JOBS, id) ? JOBS[id] : null;
     if (!job) throw Object.assign(Error(`Unknown job: ${String(id).slice(0, 60)}`), { status: 400 });
     if (this.active.has(id)) throw Object.assign(Error(`${job.label} is already running`), { status: 409 });
-    const steps = job.steps(this.root, { params, stateDir: path.dirname(this.stateFile) });
+    const steps = job.steps(this.root, { params: jobParams(params), stateDir: path.dirname(this.stateFile) });
     if (job.lock && this.locks.has(job.lock)) throw Object.assign(Error(`${this.locks.get(job.lock)} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
     if (job.lock) {
       const got = tryFileLock(this.root, `${job.label} (Workbench)`);

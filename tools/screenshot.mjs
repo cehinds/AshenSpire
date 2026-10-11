@@ -6,14 +6,18 @@
 //
 //   node tools/screenshot.mjs            → docs/preview/{startup,title,map,combat,...}.png
 //   node tools/screenshot.mjs --out DIR  → capture into DIR instead
+//   node tools/screenshot.mjs --only a,b → only shots whose name starts with a or b
+//   node tools/screenshot.mjs --only a,b --exact → only shots named exactly a or b
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+import { keepShot } from './lib/shot-match.mjs';
+import { tempBeside, writeFileAtomic } from './lib/write-atomic.mjs';
 import { devtoolsClient, readyExpression, settledFrame } from './shotReady.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -131,12 +135,15 @@ const pi = args.indexOf('--prefix');
 const PREFIX = pi >= 0 && args[pi + 1] && !args[pi + 1].startsWith('--') ? args[pi + 1] : '';
 
 // --only a,b — keep the shots whose name starts with one of these.
+// --exact — with --only, keep only the shots whose whole name is one of these
+// (so `class-rogue` does not also take `class-rogue-ember`).
 // Lets a run write exactly one evidence set rather than every screen the tool
 // knows, so the documented command's output IS the committed folder.
 const yi = args.indexOf('--only');
 const ONLY = yi >= 0 && args[yi + 1] && !args[yi + 1].startsWith('--')
   ? args[yi + 1].split(',').map((s) => s.trim()).filter(Boolean)
   : null;
+const EXACT = args.includes('--exact');
 
 // --class-matrix — one capture per SHIPPED class sprite, read from the sprite
 // manifest rather than listed here.
@@ -232,6 +239,8 @@ function shotPath(name) {
 
 async function capture(shot) {
   const out = shotPath(shot.name);
+  // Chrome writes a temp file beside the PNG; it is renamed over `out` only once Chrome reports it written.
+  const tmp = tempBeside(out);
   const { child, close: dropBrowser } = await launchBrowser({
     prefix: 'shot-', browser, headless: '--headless=new', awaitEndpoint: false,
     // 8000 was not enough and failed at random: successive runs caught a
@@ -239,7 +248,7 @@ async function capture(shot) {
     // brightness 24, then class-starseer at 21, against 39.6 for a settled
     // frame). A capture that is sometimes a half-faded frame is not evidence,
     // and the flake is invisible unless you measure the brightness.
-    args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=20000', `--screenshot=${out}`],
+    args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=20000', `--screenshot=${tmp}`],
     urlArg: `http://localhost:${port}/${shot.query}`,
   });
   return new Promise((done) => {
@@ -251,7 +260,9 @@ async function capture(shot) {
       clearTimeout(killer);
       dropBrowser();
       // Chrome can exit 0 even when the write fails — trust its own report.
-      const ok = /bytes written to file/.test(output) && existsSync(out);
+      let ok = /bytes written to file/.test(output) && existsSync(tmp);
+      if (ok) { try { renameSync(tmp, out); } catch { ok = false; } }
+      rmSync(tmp, { force: true });
       console.log(`  ${ok ? '✓' : '✗'} ${shot.name} → ${out}`);
       if (!ok) console.error(`    ${output.trim().split('\n').slice(-2).join(' | ')}`);
       done(ok);
@@ -259,6 +270,7 @@ async function capture(shot) {
     child.on('error', (e) => {
       clearTimeout(killer);
       dropBrowser();
+      rmSync(tmp, { force: true });
       console.error(`  ✗ ${shot.name}: ${e.message}`);
       done(false);
     });
@@ -279,7 +291,6 @@ async function capture(shot) {
 // written — a combat frame missing a figure is not evidence.
 async function captureReady(shot) {
   const out = shotPath(shot.name);
-  rmSync(out, { force: true });
   const [width, height] = VIEWPORT.split(',').map(Number);
   let session;
   try {
@@ -342,7 +353,7 @@ async function captureReady(shot) {
         console.error(`  ✗ ${shot.name}: no settled frame in ${MAX_TRIES} retakes; NOT captured.`);
         return false;
       }
-      writeFileSync(out, frame);
+      writeFileAtomic(out, frame);
       const figures = state.combatants.map((c) => `${c.eid} ${c.drawn}/${c.shown}`).join(', ');
       console.log(`  ✓ ${shot.name} → ${out} (art ready: ${figures})`);
       return true;
@@ -424,7 +435,7 @@ const SAMPLE_CLASS_SHOTS = new Set([
 const ALL = CLASS_MATRIX
   ? [...SHOTS.filter((s) => !SAMPLE_CLASS_SHOTS.has(s.name)), ...classMatrixShots()]
   : SHOTS;
-const RUN = ONLY ? ALL.filter((s) => ONLY.some((p) => s.name.startsWith(p))) : ALL;
+const RUN = ONLY ? ALL.filter((s) => keepShot(s.name, ONLY, { exact: EXACT })) : ALL;
 if (ONLY && !RUN.length) {
   console.error(`screenshot: --only ${ONLY.join(',')} matched no shots.`);
   process.exit(1);

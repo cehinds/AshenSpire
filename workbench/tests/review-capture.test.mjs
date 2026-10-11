@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { JOBS, JobRunner, reviewCaptureParams } from '../core/jobs.mjs';
@@ -31,7 +32,7 @@ test('the capture job runs tools/screenshot.mjs at the device size, into the pro
   const [step] = JOBS['review-capture'].steps('/repo', { params: { screens: ['title', 'map'], device: 'phone' }, stateDir: '/state/p1' });
   assert.deepEqual(step.args, [
     'tools/screenshot.mjs', '--out', path.join('/state/p1', 'review', 'captures'),
-    '--viewport', '390x844', '--prefix', 'phone-', '--only', 'title,map',
+    '--viewport', '390x844', '--prefix', 'phone-', '--only', 'title,map', '--exact',
   ]);
 });
 
@@ -57,4 +58,30 @@ test('the job list still describes the capture job with its default command', ()
   const def = runner.defs().find((d) => d.id === 'review-capture');
   assert.equal(def.label, 'Visual capture');
   assert.match(def.commands[0], /^node tools\/screenshot\.mjs --out \/state\/p1\/review\/captures --viewport 1280x800 --prefix desk- --only /);
+});
+
+test('null params mean the defaults, and a non-object params value is a 400 with a clear message', () => {
+  const stateDir = '/state/p1';
+  const defaults = JOBS['review-capture'].steps('/repo', { params: {}, stateDir });
+  assert.deepEqual(JOBS['review-capture'].steps('/repo', { params: null, stateDir }), defaults);
+  assert.throws(() => JOBS['review-capture'].steps('/repo', { params: 'desk', stateDir }), (e) => e.status === 400 && /must be an object/.test(e.message));
+  assert.throws(() => reviewCaptureParams(['title']), (e) => e.status === 400);
+});
+
+test('the runner refuses a non-object params before a run starts, and accepts null as defaults', async (t) => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'review-capture-null-'));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const runner = new JobRunner({ root: dir, stateFile: path.join(dir, 'state', 'jobs.json') });
+  assert.doesNotThrow(() => JOBS['review-capture'].steps(dir, { params: null, stateDir: dir }));
+  assert.throws(() => runner.start('review-capture', 'desk'), (e) => e.status === 400);
+  assert.equal(runner.runs.length, 0);
+});
+
+test('every Accept control is disabled while a capture runs, and accepting is refused then (the page half of the 409)', () => {
+  const src = readFileSync(new URL('../modules/review/index.mjs', import.meta.url), 'utf8');
+  assert.match(src, /allBtn\.disabled = [^;]*st\.runId/, 'Accept all changed');
+  assert.match(src, /screenBtn\.disabled = [^;]*st\.runId/, 'Accept this screen');
+  assert.match(src, /querySelector\('\.rv-accept'\)\.disabled = [^;]*st\.runId/, 'Accept as baseline in the detail');
+  assert.match(src, /async function acceptItems\(items, what\) \{\n\s*if \(st\.runId\)/, 'acceptItems refuses during a run');
+  assert.match(src, /function paintPick\(\) \{[\s\S]*?paintCaptureLock\(\)/, 'a run starting or ending repaints the Accept controls');
 });
