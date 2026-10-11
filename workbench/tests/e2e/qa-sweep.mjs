@@ -716,7 +716,8 @@ async function visualReview() {
     return await textOf('.rv-job');
   });
   await check('Review: detail view modes all render', async () => {
-    await page.locator('.view.active button:has-text("View")').first().click();
+    // Open the row this path captured (desk/title): the first "View" in the list is a screen with no capture to accept.
+    await page.locator('.view.active button[data-open="desk/title"]').first().click();
     await sleep(600);
     // Only the detail's own view modes: the module's other tabs also carry data-mode.
     const detailModes = '.view.active .rv-detail [data-mode]';
