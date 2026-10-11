@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
-import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity, hitRecoilX } from '../src/model/alternativeCardAnimation.js';
+import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity, hitRecoilX, hurtClipFrame } from '../src/model/alternativeCardAnimation.js';
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
 import { validate } from '../pose-studio/model.mjs';
@@ -104,6 +104,18 @@ test('hits flash red for the whole reaction and suppress flashing for reduced mo
  assert.ok(hitFlashOpacity('hurt',0,{duration:380})>.7);
  assert.ok(hitFlashOpacity('hurt',133,{duration:380})>.7,'held through 40% of 380 ms');
  assert.equal(hitFlashOpacity('hurt',380,{duration:380}),0);
+});
+
+test('the hurt clip strobes seven equal frames with red on frames 2, 4 and 6',()=>{
+ assert.deepEqual(hurtClipFrame(0),{index:0,red:false});
+ assert.deepEqual(hurtClipFrame(1.5/7),{index:1,red:true});
+ assert.deepEqual(hurtClipFrame(2.5/7),{index:2,red:false});
+ assert.deepEqual(hurtClipFrame(3.5/7),{index:3,red:true});
+ assert.deepEqual(hurtClipFrame(5.5/7),{index:5,red:true});
+ assert.deepEqual(hurtClipFrame(6.5/7),{index:6,red:false});
+ assert.deepEqual(hurtClipFrame(1),{index:6,red:false},'the last frame is clamped');
+ assert.deepEqual(hurtClipFrame(-1),{index:0,red:false});
+ assert.deepEqual(hurtClipFrame(NaN),{index:0,red:false});
 });
 
 test('the knock-back eases left to -14px at 30% and back to rest',()=>{

@@ -64,6 +64,19 @@ export function hitFlashOpacity(action, progress, { reduced = false, duration } 
   return t < .4 ? .75 : .75 * (1 - (t - .4) / .6);
 }
 
+/** The hurt clip is seven equal frames; frames 2, 4 and 6 (indices 1, 3, 5) are red. */
+export const HURT_CLIP_FRAMES = 7;
+
+/**
+ * Which hurt-clip frame a 0..1 reaction progress falls in. Pure: the stage
+ * draws the hurt pose and, on `red` frames only, the red mask over it.
+ */
+export function hurtClipFrame(progress) {
+  const p = progress > 0 ? Math.min(1, progress) : 0;
+  const index = Math.min(HURT_CLIP_FRAMES - 1, Math.floor(HURT_CLIP_FRAMES * p));
+  return { index, red: index % 2 === 1 };
+}
+
 export const HIT_RECOIL_PX = -14;
 export const HIT_RECOIL_PEAK = .3;
 
