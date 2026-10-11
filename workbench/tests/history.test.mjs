@@ -83,6 +83,27 @@ test('a throwing group still closes and keeps the pushes it made', () => {
   assert.equal(h.list().length, 2, 'later pushes are top-level again');
 });
 
+test('a callback that pushes during undo or redo cannot corrupt the stacks', () => {
+  const h = new History();
+  let pushed = null;
+  h.push({ label: 'a', undo() {}, redo() {} });
+  h.push({ label: 'b', undo() { pushed = h.push({ label: 'nested', undo() {}, redo() {} }); }, redo() { pushed = h.push({ label: 'nested2', undo() {}, redo() {} }); } });
+  assert.equal(h.undo().label, 'b');
+  assert.equal(pushed, false, 'push is ignored while undo runs');
+  assert.deepEqual(h.list(), [{ label: 'a', done: true }, { label: 'b', done: false }]);
+  h.redo();
+  assert.equal(pushed, false, 'push is ignored while redo runs');
+  assert.deepEqual(h.list(), [{ label: 'a', done: true }, { label: 'b', done: true }]);
+});
+
+test('a throwing undo keeps the entry where it was', () => {
+  const h = new History();
+  h.push({ label: 'bad', undo() { throw Error('nope'); }, redo() {} });
+  assert.throws(() => h.undo(), /nope/);
+  assert.deepEqual(h.list(), [{ label: 'bad', done: true }]);
+  assert.equal(h.canRedo, false);
+});
+
 test('the history is limited to 200 steps by default and drops the oldest', () => {
   const h = new History();
   for (let i = 0; i < 205; i += 1) h.push({ label: `s${i}`, undo() {}, redo() {} });

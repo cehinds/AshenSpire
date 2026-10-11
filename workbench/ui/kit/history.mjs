@@ -10,6 +10,7 @@ export class History {
   #past = [];
   #future = [];
   #groups = [];
+  #busy = false;
   #listeners = new Set();
   #limit;
 
@@ -24,6 +25,7 @@ export class History {
    * and equal (a no-op drag leaves no step).
    */
   push({ label = 'Change', undo, redo, before, after } = {}) {
+    if (this.#busy) return false;
     if (typeof undo !== 'function' || typeof redo !== 'function') return false;
     if (before !== undefined && after !== undefined && same(before, after)) return false;
     const entry = { label: String(label), undo, redo };
@@ -52,21 +54,28 @@ export class History {
   }
 
   undo() {
-    const entry = this.#past[this.#past.length - 1];
+    const entry = this.#past.pop();
     if (!entry) return null;
-    entry.undo();
-    this.#past.pop(); this.#future.push(entry);
+    this.#run(() => entry.undo(), () => this.#past.push(entry));
+    this.#future.push(entry);
     this.#notify();
     return entry;
   }
 
   redo() {
-    const entry = this.#future[this.#future.length - 1];
+    const entry = this.#future.pop();
     if (!entry) return null;
-    entry.redo();
-    this.#future.pop(); this.#past.push(entry);
+    this.#run(() => entry.redo(), () => this.#future.push(entry));
+    this.#past.push(entry);
     this.#notify();
     return entry;
+  }
+
+  // The stacks are moved before the callback runs, and push() is ignored while
+  // it runs, so a callback that records a change cannot corrupt them.
+  #run(fn, restore) {
+    this.#busy = true;
+    try { fn(); } catch (err) { restore(); throw err; } finally { this.#busy = false; }
   }
 
   /** Timeline, oldest first: applied steps (done true), then undone steps in redo order (done false). */
