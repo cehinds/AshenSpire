@@ -128,6 +128,28 @@ test('whenNoOverlay waits for a registered modal even when the DOM shows nothing
   assert.equal(ran, 1, 'and only once');
 });
 
+test('the shared shell restores focus and removes its veil before closed waiters redraw', async () => {
+  const { openModal } = await import('../src/ui/components/modalShell.js');
+  resetModalState();
+  withModalDom((dom) => {
+    const opener = dom.document.createElement('button');
+    dom.document.body.appendChild(opener);
+    opener.focus();
+    const shell = openModal({ name: 'settings', title: 'Settings', opener });
+    let atRedraw = null;
+    onModalsClosed(() => {
+      atRedraw = { active: dom.document.activeElement, veilConnected: shell.veil.isConnected };
+      dom.document.body.replaceChildren();
+    });
+
+    shell.close();
+
+    assert.equal(atRedraw?.active, opener, 'focus returned before the redraw replaced its opener');
+    assert.equal(atRedraw?.veilConnected, false, 'the veil was removed before closed waiters ran');
+    assert.equal(modalOpen(), false);
+  });
+});
+
 test('the four shared shells register with the modal state and release it', () => {
   const shells = [
     ['src/ui/components/modalShell.js', /registerModal\(\s*name \|\| title \|\| 'modal'/],

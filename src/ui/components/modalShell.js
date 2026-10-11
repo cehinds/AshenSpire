@@ -525,15 +525,23 @@ export function openModal({
   let release = null;
   let unregisterModal = null;
   const close = () => {
-    // Every close path comes through here, so the registry entry goes with the
-    // veil. Idempotent: a second close finds nothing left to release.
-    unregisterModal?.();
-    unregisterModal = null;
-    if (!veil.isConnected) return;
-    release?.();
+    // Every close path comes through here. Keep the registry entry until focus
+    // has returned and the veil is gone: releasing the last modal synchronously
+    // runs whenNoOverlay() waiters, and one of those may replace the opener.
+    // Capture and clear first so an onClose callback cannot run cleanup twice.
+    if (!veil.isConnected) {
+      unregisterModal?.();
+      unregisterModal = null;
+      return;
+    }
+    const releaseDismiss = release;
+    const unregister = unregisterModal;
     release = null;
+    unregisterModal = null;
+    releaseDismiss?.();
     veil.remove();
     onClose?.();
+    unregister?.();
   };
 
   const head = modalHead({
