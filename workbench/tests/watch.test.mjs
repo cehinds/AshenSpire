@@ -28,6 +28,24 @@ test('a watcher on a recursive platform watches the whole tree with one watch', 
   assert.deepEqual(batches.flat(), ['content/deep/a.json']);
 });
 
+test('a folder that appears while watching (Linux) batches the files written into it', async (t) => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content'), { recursive: true });
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'linux', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  assert.equal(w.modes.content, 'watch');
+  await fs.mkdir(path.join(root, 'content/newdir'));
+  await sleep(300);
+  await fs.writeFile(path.join(root, 'content/newdir/a.json'), '1');
+  await sleep(300);
+  await fs.writeFile(path.join(root, 'content/newdir/a.json'), '22');
+  await waitFor(() => batches.flat().includes('content/newdir/a.json'));
+  assert.ok(batches.flat().includes('content/newdir/a.json'), `a write in the new folder reaches a batch: ${JSON.stringify(batches)}`);
+});
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(ok, ms = 3000) {
-  for (let i = 0; i < ms / 20 && !ok(); i++) await new Promise((r) => setTimeout(r, 20));
+  for (let i = 0; i < ms / 20 && !ok(); i++) await sleep(20);
 }
