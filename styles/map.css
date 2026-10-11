@@ -259,6 +259,11 @@
    `g.` is load-bearing: kit.css's `.tooltip-selected:not(.overhead-control)`
    is (0,2,0) and loads after this file, so an equal selector loses. */
 g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
+/* A tap no longer runs the tooltip's tap-to-select on map nodes (#1830), so
+   the class above is never set and the browser's own ring showed on the
+   tapped node instead. A pointer or touch focus draws none; keyboard focus
+   (:focus-visible) and the pad cursor (.gp-focus) keep theirs. */
+g.map-node:focus:not(:focus-visible) { outline: none; }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;

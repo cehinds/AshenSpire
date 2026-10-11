@@ -49,6 +49,12 @@ files, runs a suite, or repeats an edit goes to a worker.
 Steps 5–7 are never delegated. A worker's "tests pass" is a claim until the
 orchestrator has seen the diff and the test output.
 
+**Small commits, reviewed as they land** (owner, 2026-10-11). The orchestrator briefs
+each worker with a numbered step list, one commit per step, and the worker pushes each
+commit as soon as it is made. As commits land, the orchestrator starts reviewers on the
+pushed SHAs while the worker continues, so steps 4–6 overlap instead of waiting for
+the whole task.
+
 ## 3. Writing a worker brief
 
 Haiku does well when it is told exactly where to look and what "done" means, and it
@@ -136,7 +142,8 @@ Workers return conclusions, never file dumps. The orchestrator never reads a wor
 transcript.
 
 ```text
-Branch / SHA:
+Branch:
+Commits: every SHA in order, oldest first, each with its subject
 Files changed:
 What the fix does (2–4 lines):
 Tests: <command> → <pass/fail counts>; failures named, with "environmental" or "real"
@@ -157,6 +164,11 @@ Give the reviewer the PR number (CONTRIBUTING requires it), the task, the constr
 the affected files and the specific risks. Do not give it the repo. Every finding is a
 claim the orchestrator verifies. Fix what stands (with a worker or directly), and record
 in the PR who reviewed, what changed, and what was declined and why.
+
+A per-commit review that starts before any PR exists names the branch and the pushed
+SHAs instead of a PR number. It does not replace the PR-level review above: once the PR
+is opened, that review is still required, and the per-commit findings and fixes are
+recorded in the PR with it.
 
 ## 6. Escalation
 
