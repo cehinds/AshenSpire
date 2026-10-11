@@ -262,6 +262,27 @@ test('pasteVisible: a blank copied cell pastes as a clear, so copy-then-paste ro
   assertRoundTrip(target, out);
 });
 
+test('pasteVisible: spaces pasted into a text column are kept; number, boolean and json clear on whitespace', () => {
+  const columns = [
+    { key: 'text', type: 'string', label: 'text' },
+    { key: 'ref', type: 'ref', label: 'ref' },
+    { key: 'num', type: 'number', label: 'num' },
+    { key: 'flag', type: 'boolean', label: 'flag' },
+    { key: 'data', type: 'json', label: 'data' },
+  ];
+  const rows = [{ text: 'a', ref: 'b', num: 4, flag: true, data: { x: 1 } }];
+  const out = M.pasteVisible(rows, columns, [0], { r: 0, c: 0 }, [['   ', '   ', '   ', '   ', '   ']]);
+  assert.deepEqual(out.errors, []);
+  assert.equal(out.rows[0].text, '   ', 'spaces in a string column are kept');
+  assert.equal(out.rows[0].ref, '   ', 'spaces in a ref column are kept');
+  assert.equal(out.rows[0].num, null, 'whitespace clears a number column');
+  assert.equal(out.rows[0].flag, null, 'whitespace clears a boolean column');
+  assert.equal(out.rows[0].data, null, 'whitespace clears a json column');
+  const cleared = M.pasteVisible(rows, columns, [0], { r: 0, c: 0 }, [['', '', '', '', '']]);
+  assert.equal(cleared.rows[0].text, '', 'an exactly empty value clears a string column');
+  assert.equal(cleared.rows[0].ref, '', 'an exactly empty value clears a ref column');
+});
+
 test('pasteAccepted: text proceeds; empty text proceeds only over a selection; read-only takes nothing', () => {
   const sel = selOf(range(0, 1, 1, 1));
   assert.equal(pasteAccepted('x', null), true, 'non-empty text pastes at the anchor as before');

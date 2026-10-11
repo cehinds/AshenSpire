@@ -395,8 +395,11 @@ export function pasteVisible(rows, columns, order, anchor, matrixOrText, selecti
   const parsed = [];
   for (const { r, c, raw } of writes) {
     const col = columns[c];
-    // A blank value (empty after trimming) clears the cell instead of failing the column's parse.
-    const isBlank = typeof raw === 'string' && !raw.trim();
+    // A blank value clears the cell instead of failing the column's parse. For number, boolean and json a
+    // whitespace-only value is blank. Text-like columns (string, ref, formula) keep what was pasted, so only
+    // an exactly empty value clears them: spaces pasted into a text column are kept.
+    const textColumn = col.type === 'string' || col.type === 'ref' || col.type === 'formula';
+    const isBlank = typeof raw === 'string' && (textColumn ? raw === '' : !raw.trim());
     try { parsed.push({ r, key: col.key, value: isBlank ? emptyValue(col.type) : parseValue(raw, col.type) }); }
     catch (e) { errors.push({ row: r, key: col.key, value: raw, message: e.message }); }
   }
