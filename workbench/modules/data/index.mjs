@@ -155,7 +155,7 @@ export default {
       const changes = paths.map((p) => changeFor(state.parsed.get(p), state.drafts.get(p)));
       const diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })
         .catch((e) => ({ path: c.path, error: e.message, hunks: [], added: 0, removed: 0 }))));
-      dlg.innerHTML = `<div class="ds-review-body"><h2>Review changes (${changes.length})</h2>${diffs.map(diffHtml).join('')}<div class="ds-review-status" role="status"></div><div class="ds-review-actions"><button type="button" data-cancel>Cancel</button><button type="button" class="primary" data-save>Save ${changes.length} file${changes.length === 1 ? '' : 's'}</button></div></div>`;
+      dlg.innerHTML = `<div class="ds-review-body"><h2>Review changes (${changes.length})</h2>${diffs.map(diffHtml).join('')}<div class="ds-review-status" role="status"></div><div class="ds-review-actions"><button type="button" class="btn btn-sm" data-cancel>Cancel</button><button type="button" class="btn btn-sm btn-primary" data-save>Save ${changes.length} file${changes.length === 1 ? '' : 's'}</button></div></div>`;
       dlg.querySelector('[data-cancel]').onclick = close;
       dlg.querySelector('[data-save]').onclick = () => save(changes);
       if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
@@ -204,7 +204,7 @@ export default {
       const diskHash = new Map(found.map((c) => [c.path, c.hash ?? null]));
       const moved = changes.filter((c) => diskHash.has(c.path));
       const names = moved.map((c) => esc(c.path)).join(', ') || 'a file';
-      status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" data-reload>Reload from disk</button><button type="button" data-overwrite class="primary">Overwrite with my changes</button></div>`;
+      status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" class="btn btn-sm" data-reload>Reload from disk</button><button type="button" class="btn btn-sm btn-primary" data-overwrite>Overwrite with my changes</button></div>`;
       status.querySelector('[data-reload]').onclick = async () => {
         for (const c of moved) { state.parsed.delete(c.path); state.drafts.delete(c.path); }
         // The disk copies replace the drafts: the steps that hold the drafts must go, or undo writes them back.
