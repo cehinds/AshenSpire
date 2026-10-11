@@ -133,7 +133,7 @@ export function makeFakeDb() {
   return fake;
 }
 
-const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, tstate, chunkRows, hashText, headPath, blobPath })';
+const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tstate, chunkRows, hashText, headPath, blobPath })';
 
 // One browser tab: its own state, sharing only the fake db with other tabs.
 export function makePage(db, tables) {
@@ -266,6 +266,31 @@ test('(a) sequential writers: the second one gets a conflict and the store keeps
   assert.ok(B.page.dirty.has('t'), 'local edits kept');
   assert.equal(B.api.tstate.t.conflict.theirRev, A.api.tstate.t.base);
   assert.equal(JSON.stringify(B.page.state.data.t.rows), JSON.stringify(ys));
+});
+
+test('(a) conflict choices: Load theirs drops local edits; Keep mine overwrites on their rev', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  const xs = sample(60, 'x'), ys = sample(60, 'y');
+  editTable(A.page, xs);
+  await A.api.flush('t');
+  editTable(B.page, ys);
+  await B.api.flush('t');
+  await B.api.loadTheirs('t');
+  assert.equal(JSON.stringify(B.page.state.data.t.rows), JSON.stringify(xs));
+  assert.equal(B.page.dirty.has('t'), false);
+  assert.equal(B.api.tstate.t.conflict, null);
+
+  const zs = sample(60, 'z');
+  editTable(A.page, zs);
+  await A.api.flush('t'); // A moves the head on
+  editTable(B.page, ys);
+  await B.api.flush('t');
+  assert.ok(B.api.tstate.t.conflict, 'conflict while mine is pending');
+  await B.api.keepMine('t');
+  assert.equal(await storedRows(db), JSON.stringify(ys));
+  assert.equal(B.api.tstate.t.conflict, null);
+  assert.equal(B.page.dirty.has('t'), false);
 });
 
 test('(a) interleaved writers: the stored table is exactly one writer\'s full table', async () => {

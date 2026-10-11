@@ -40,6 +40,8 @@ button.primary{background:var(--ember);border-color:var(--ember);color:#fff}
 button:disabled{opacity:.5;cursor:default}
 :focus-visible{outline:2px solid var(--ember);outline-offset:1px}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.banner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:1px solid var(--warn);border-radius:8px;padding:8px 10px;background:var(--panel)}
+.banner.bad{border-color:var(--bad)}
 .toolbar .grow{flex:1}
 input[type=search],select{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px}
 input[type=search]{min-width:0;width:260px;max-width:100%}
@@ -299,6 +301,15 @@ async function flush(t, opts){
   }
   finally{ saving.delete(t); setStatus(); }
 }
+/* conflict choices: drop local edits and show theirs, or write ours on top of their rev */
+async function loadTheirs(t){
+  const ts=TS(t);
+  const s=await db.doc(headPath(t)).get();
+  ts.conflict=null; dirty.delete(t);
+  await applyHead(t, s.exists? s.data() : null);
+  render();
+}
+function keepMine(t){ return flush(t,{overwrite:true}); }
 /* storage:end */
 
 /* ---------- indexes ---------- */
@@ -507,6 +518,13 @@ function render(){ renderTabs(); const p=document.getElementById('panel'); p.tex
 
 function renderTable(p,t){
   const def=TABLES[t], tbl=state.data[t];
+  const ts=TS(t);
+  if(ts.conflict){ const b=document.createElement('div'); b.className='banner warn'; b.setAttribute('role','alert');
+    const msg=document.createElement('span'); msg.textContent='Someone else saved this table while you were editing. '; b.appendChild(msg);
+    b.append(btn('Load theirs (discard mine)',()=>loadTheirs(t)), btn('Keep mine (overwrite)',()=>keepMine(t)));
+    p.appendChild(b); }
+  if(ts.incomplete){ const b=document.createElement('div'); b.className='banner bad'; b.setAttribute('role','alert');
+    b.textContent='This table is incomplete on the server (missing part '+ts.incomplete.hash+'). Reload later.'; p.appendChild(b); }
   const tools=document.createElement('div'); tools.className='toolbar';
   tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
   const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');
