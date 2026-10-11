@@ -1,0 +1,62 @@
+// A co-op seat's own card attack plays in the solo order (SPEC §7.4,
+// beatOrder 'sequential'): coop.js routes the snapshot that carries it through
+// the paced timeline instead of a plain render (coopTimelineRoute).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { initialClassTreeChoices } from '../src/model/classTree.js';
+import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
+import { createSession } from '../tools/session.mjs';
+import { coopTimelineRoute } from '../src/ui/screens/coop.js';
+
+const registries = createRegistries(contentBundle);
+
+test('a player attack routes through the player timeline', () => {
+  assert.equal(coopTimelineRoute([{ type: 'cardPlayed', playerId: 'p1', cardType: 'attack' },
+    { type: 'damageDealt', sourceId: 'player', sourcePlayerId: 'p1', targetId: 'e1', amount: 6, isAttack: true }], ['p1']), 'player');
+  assert.equal(coopTimelineRoute([{ type: 'impactDealt', sourceId: 'p2', targetId: 'e1', amount: 2 }], ['p1', 'p2']), 'player');
+});
+
+test('enemy beats keep the enemy timeline, also when a player attack rides along', () => {
+  assert.equal(coopTimelineRoute([{ type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' }]), 'enemy');
+  assert.equal(coopTimelineRoute([
+    { type: 'damageDealt', sourcePlayerId: 'p1', sourceId: 'player', targetId: 'e1', amount: 4, isAttack: true },
+    { type: 'combatCounterTriggered', sourceKind: 'enemy', sourceId: 'e1' },
+  ], ['p1']), 'enemy');
+});
+
+test('non-attack and enemy-sourced receipts render plainly', () => {
+  assert.equal(coopTimelineRoute([]), null);
+  assert.equal(coopTimelineRoute(null), null);
+  assert.equal(coopTimelineRoute([{ type: 'cardPlayed', playerId: 'p1', cardType: 'skill' },
+    { type: 'blockGained', targetId: 'player', playerId: 'p1', amount: 5 }], ['p1']), null);
+  // Damage that is not an attack (a status tick) and an enemy's hit do not route.
+  assert.equal(coopTimelineRoute([{ type: 'damageDealt', sourcePlayerId: 'p1', targetId: 'e1', amount: 3 }], ['p1']), null);
+  assert.equal(coopTimelineRoute([{ type: 'damageDealt', sourceId: 'e1', sourcePlayerId: null, targetId: 'player', amount: 3, isAttack: true }], ['p1']), null);
+});
+
+test('a real session attack snapshot routes to the player timeline', () => {
+  const host = createSession({ registries, seedString: 'ATTACKORDER' });
+  host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
+  host.addMember({ id: 'p2', name: 'Two', classId: 'rogue' });
+  host.start();
+  for (const member of host.session.members.values()) {
+    while (member.run.classMasteryState?.initialTreeTiers.length) {
+      const choices = initialClassTreeChoices(registriesForClassMastery(registries, member.run), member.run);
+      assert.equal(host.chooseMasteryNode(member.id, choices[0]).ok, true);
+    }
+  }
+  for (const id of ['p1', 'p2']) assert.equal(host.chooseNode(id, host.session.mapGraph.startIds[0]).ok, true);
+  const scene = host.snapshot().scene;
+  assert.equal(scene.kind, 'combat');
+  const seat = scene.players.find(player => player.id === 'p1');
+  const target = scene.enemies.find(enemy => enemy.alive !== false && enemy.hp > 0);
+  const attack = seat.hand.find(card => registries.cards.get(card.cardId)?.type === 'attack');
+  assert.ok(attack, 'the opening hand holds an attack');
+  const played = host.combatPlay('p1', attack.instanceId, target.id);
+  assert.equal(played.ok, true, JSON.stringify(played));
+  const after = host.snapshot().scene;
+  assert.equal(after.kind, 'combat');
+  assert.equal(coopTimelineRoute(after.events, ['p1', 'p2']), 'player', JSON.stringify(after.events.map(event => event.type)));
+});

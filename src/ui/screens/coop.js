@@ -209,6 +209,23 @@ export function coopCallouts(events = []) {
   return out;
 }
 
+/**
+ * Which paced timeline a combat snapshot's receipts play through, or null for
+ * a plain render. 'enemy': an enemy acts or a counter fires (the Enemy Turn
+ * ribbon shows). 'player': a seat's own attack lands (damageDealt with isAttack,
+ * or impactDealt, from a player source), so it plays stance → swing → reaction →
+ * numbers → bars, as solo does (SPEC §7.4, beatOrder 'sequential'). A snapshot
+ * with both goes through the enemy timeline once.
+ */
+const ENEMY_TIMELINE_EVENTS = ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'];
+export function coopTimelineRoute(events = [], seatIds = []) {
+  const list = (events || []).filter(Boolean);
+  if (list.some(event => ENEMY_TIMELINE_EVENTS.includes(event.type))) return 'enemy';
+  const fromPlayer = event => !!event.sourcePlayerId || event.sourceId === 'player' || seatIds.includes(event.sourceId);
+  const attack = event => (event.type === 'damageDealt' && event.isAttack) || event.type === 'impactDealt';
+  return list.some(event => attack(event) && fromPlayer(event)) ? 'player' : null;
+}
+
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
