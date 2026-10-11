@@ -49,7 +49,8 @@ coordinates and reviews; workers do the work. Scoped implementation, searches
 and test runs go to the `ashen-worker` agent (`.claude/agents/`); risky diffs
 go to `ashen-reviewer`. Models track the newest release of each tier: workers
 run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
-on the newest Opus (Opus 5.5 today). Agent files pin the tier aliases
+on the newest Opus (Opus 5.5 today); the main session at high effort, `ashen-reviewer`
+at medium (owner, 2026-10-11). Agent files pin the tier aliases
 (`model: haiku` / `model: opus`), which resolve to the newest model. When a new
 model ships, update the "today" names here and in docs/ai/AI-ROUTING.md, nothing
 else. Remove old local worktrees to save disk space: at session start and end,

@@ -2,6 +2,7 @@
 name: ashen-reviewer
 description: Opus reviewer for risky AshenSpire diffs (engine, saves, co-op parity, progression, SPEC contracts, security). Read-only; reports findings with a concrete failure path. Satisfies CONTRIBUTING's review requirement (A pull request is not done…, item 2).
 model: opus
+effort: medium
 tools: Read, Grep, Glob, Bash
 ---
 
