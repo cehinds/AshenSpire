@@ -36,8 +36,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'opening New Game rebuilds the whole Title instead of the modal layer',
         file: 'src/ui/screens/title.js',
-        find: '    selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;\n    renderModal();',
-        replace: '    selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;\n    render(); // modal-no-reset selftest plant',
+        find: '    selectedSlot = saveSlotSelectionModel(currentSlots, { kind }).properties.selectedSlot;\n    renderModal();',
+        replace: '    selectedSlot = saveSlotSelectionModel(currentSlots, { kind }).properties.selectedSlot;\n    render(); // modal-no-reset selftest plant',
         expectRed: /RED TITLE-NEW-NO-RESET/,
       },
     ],
@@ -198,7 +198,10 @@ try {
     const host = document.querySelector('[aria-modal="true"] [data-settings-host]');
     if (!host) return { found: false };
     const modal = host.closest('[aria-modal="true"]');
-    const candidates = [];
+    // The panel that scrolls usually sits INSIDE the host (.set-panel), so the
+    // host's descendants are tried first, then the host and its ancestors.
+    const candidates = [...host.querySelectorAll('*')].filter((el) => el.scrollHeight > el.clientHeight + 4
+      && /(auto|scroll)/.test(getComputedStyle(el).overflowY));
     for (let el = host; el; el = el.parentElement) {
       if (el.scrollHeight > el.clientHeight) candidates.push(el);
       if (el === modal) break;
@@ -217,29 +220,35 @@ try {
     return { found: false, candidates: candidates.length, host: sizes(host), modal: sizes(modal) };
   })()`);
 
+  // A setting changed WITHIN the open topic: the first checkbox or switch now in
+  // view inside the scrolled panel. (A General topic select is not used: it
+  // shows another topic, where starting at the top is the intent.)
   const select = await ev(`(() => {
-    const sel = document.querySelector('select[data-general-select], select[data-general-topic]');
-    if (!sel || sel.options.length < 2) return null;
-    const before = sel.value;
-    sel.selectedIndex = sel.selectedIndex === 0 ? 1 : 0;
-    sel.dispatchEvent(new Event('change', { bubbles: true }));
-    return { kind: sel.hasAttribute('data-general-select') ? 'general-select' : 'general-topic', before, after: sel.value };
+    const panel = window.__settingsScroller;
+    if (!panel) return null;
+    const box = panel.getBoundingClientRect();
+    // A setting's own control: a choice button that is not the current one, a
+    // switch that is not an action, or a dropdown with another option.
+    const control = [...panel.querySelectorAll('button.choice[data-key]:not(.on):not([disabled]), [role="switch"][data-key]:not([data-action]):not([disabled]), select.set-choice-select[data-key]')]
+      .find((el) => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= box.top && r.bottom <= box.bottom
+        && (el.tagName !== 'SELECT' || el.options.length > 1); });
+    if (!control) return null;
+    const label = control.getAttribute('data-key') || control.getAttribute('aria-label') || control.tagName;
+    const before = control.tagName === 'SELECT' ? control.value : (control.getAttribute('aria-pressed') ?? control.getAttribute('aria-checked'));
+    if (control.tagName === 'SELECT') {
+      control.selectedIndex = control.selectedIndex === 0 ? 1 : 0;
+      control.dispatchEvent(new Event('change', { bubbles: true }));
+    } else control.click();
+    return { kind: 'setting ' + label, before: String(before), after: 'toggled', panelClass: String(panel.className) };
   })()`);
   await wait(300);
 
-  // After the change the scroller may have been rebuilt; re-find it by the same
-  // rule and read where it is now.
+  // After the change the panel may have been rebuilt; re-find it by its class
+  // and read where it is now.
   const settingsAfter = await ev(`(() => {
-    const host = document.querySelector('[aria-modal="true"] [data-settings-host]');
     const live = window.__settingsScroller && window.__settingsScroller.isConnected ? window.__settingsScroller : null;
-    let el = live;
-    if (!el && host) {
-      const modal = host.closest('[aria-modal="true"]');
-      for (let node = host; node; node = node.parentElement) {
-        if (node.scrollHeight > node.clientHeight) { el = node; break; }
-        if (node === modal) break;
-      }
-    }
+    const cls = window.__settingsScroller ? String(window.__settingsScroller.className).split(/\\s+/).filter(Boolean).map((c) => '.' + c).join('') : '';
+    const el = live || (cls ? document.querySelector('[aria-modal="true"] ' + cls) : null);
     return { connected: !!live, top: el ? el.scrollTop : null, modalOpen: !!document.querySelector('[aria-modal="true"] [data-settings-host]') };
   })()`);
   const settingsEnd = await snap();
@@ -256,7 +265,7 @@ try {
       + `(candidates=${scroll.candidates ?? 0}, host scroll/client=${scroll.host}, modal=${scroll.modal}); `
       + `scroll position not measured; ${select ? `${select.kind} ${select.before}->${select.after}, Title node kept` : 'no General select'}`);
   } else if (!select) {
-    unknown('SETTINGS-NO-RESET', `scrolled ${scroll.moved}px, but no General select with two options rendered at 390x844; change not exercised`);
+    unknown('SETTINGS-NO-RESET', `scrolled ${scroll.moved}px, but no setting control was in view inside the panel; change not exercised`);
   } else {
     const drift = settingsAfter.top == null ? Infinity : Math.abs(settingsAfter.top - scroll.at);
     check(drift <= 40, 'SETTINGS-NO-RESET',
