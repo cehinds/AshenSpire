@@ -191,7 +191,7 @@ export function evasionFor({ evasionArmor, dex, shield, evasionCard, attrs, evas
   return row.base + dexTerm + shieldBonus + cardBonus + extra;
 }
 
-function rollUnit(rng) {
+export function rollUnit(rng) {
   if (typeof rng !== 'function') throw new TypeError('rng must be a function returning [0, 1)');
   const x = rng();
   if (!(x >= 0 && x < 1)) throw new RangeError(`rng must return a value in [0, 1), got ${x}`);
