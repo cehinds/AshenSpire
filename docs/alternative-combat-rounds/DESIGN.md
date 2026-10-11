@@ -80,7 +80,7 @@ Flagged: at stage 1 and 2 the card hint cannot show a speed advantage.
 - Actions and Stamina are one resource, SP. SP and MP are stat-driven, with
   base values of 3 (SP) and 1 (MP). (Owner, 2026-10-11.)
 - For testing, SP is fixed at 3 for the player and for each enemy.
-- Every card has an SP cost, and may also have an MP cost.
+- Every card has its own SP cost, `sp` (default 1), and may also have an MP cost.
 - The player plays as many cards as SP affords. The same rule applies to each
   enemy, with that enemy's own SP pool and hidden deck. Each card it plays is
   one intent slot (see Round flow and perception).
@@ -495,9 +495,12 @@ Placeholder numbers are marked PLACEHOLDER in the code and below.
 
 - Every combatant (the player and each enemy) builds a queue of cards each round.
   The number of cards varies.
-- Each card costs SP. Every card costs 3 SP for testing (PLACEHOLDER,
-  `CARD_SP_COST`), unless a card gives its own `cost`. A combatant's SP budget is
-  `sp` (PLACEHOLDER default 6). A queue that costs more than `sp` is rejected.
+- Each card has its own SP cost, `sp` (Strike 1, Smash 2). A card with no `sp`
+  costs 1 (PLACEHOLDER, `DEFAULT_CARD_SP`). A combatant's SP budget is `sp` per
+  round, 3 for testing (PLACEHOLDER, `DEFAULT_SP`), and it refills each round.
+  A queue is valid when the sum of its cards' SP costs is at most `sp`. A queue
+  that costs more is rejected. Example: three 1-SP cards fit in 3 SP; a 2-SP card
+  and another 2-SP card do not.
 - MP is separate and is not modelled here (open, see below).
 - Each card has a target. The player targets a foe id (an enemy) or `self`. An
   enemy targets `player` or `self`. Attacks must target a foe. Guard and Evade
@@ -577,10 +580,11 @@ value.
     the attack resolves, and the counter fires after it (`counterFired`), dealing
     its damage. A tie does not cancel.
 - Reaction (in hand). A player may play an unplayed defensive card from `hand` as a
-  reaction, when an attack targets that player, if SP is left for the card. The
-  player's `onReaction(attack, eligibleCards)` callback returns a card, or null.
-  The card must be eligible. A reaction uses base values, no buff, and spends the
-  cost. Its effect applies to that attack. A reaction counter fires after that
+  reaction, when an attack targets that player, if SP is left for the card: the
+  card's `sp` must be at most the SP left after the queue. With 0 SP left, no
+  reaction is offered. The player's `onReaction(attack, eligibleCards)` callback
+  returns a card, or null. The card must be eligible. A reaction uses base values,
+  no buff, and spends the card's `sp` from what is left. Its effect applies to that attack. A reaction counter fires after that
   attack and never cancels it (PLACEHOLDER: a choice, not owner-approved). Enemies
   never react.
 - Eligible cards are defensive cards in hand that are not queued this round and not
