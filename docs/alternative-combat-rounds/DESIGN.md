@@ -229,9 +229,6 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
   is the fallback when there is no `speed` field. The M_e given to cardHint must be
   the decayed M_e for the round (`decayMomentum(stored)`), the same start that
   resolveRound pairs with. With the stored value, the totals can disagree.
-- Callers pass the decayed (current-round) M_e to cardHint, not the stored one:
-  `decayMomentum(stored M_e)`. resolveRound pairs with that decayed start (Timing),
-  so a hint given the stored value can disagree with the pairing.
 - The breakdown always sums to the player total: with a `speed` field it is
   the speed term plus the momentum term, otherwise the component terms.
 - Left-edge arrow, from the speed difference (player minus enemy):
@@ -353,7 +350,7 @@ silent. They are placeholders for testing the shape, not decisions.
 - An enemy slot with no player card is unpaired ('unpaired' event). Its
   events carry `unpaired: true`. An unpaired enemy attack rolls its hit against
   the player's defence (`options.playerDefense`: `evasion`, `evadePct`, `tags`,
-  zero defaults). A landed hit wins the slot for that enemy (momentum -1 for the
+  zero defaults). A landed hit wins the slot for that enemy (moves momentum by the enemy action's gain, default 1, against the
   player, once per pairing). A miss or an avoid (intangible, evadePct) wins the
   slot for the player, as for any defender. Non-attack unpaired actions (block,
   evade, other) do nothing (owner, 2026-10-11).
@@ -370,7 +367,7 @@ b. Resolved (2026-10-11). Momentum is applied per slot, with a round-end
 c. Resolved (2026-10-11): one player card per enemy action. A second card is
    rejected.
 d. Resolved (owner, 2026-10-11): an unpaired enemy attack rolls its hit against
-   the player's defence. A landed hit wins the slot for that enemy (momentum -1 for
+   the player's defence. A landed hit wins the slot for that enemy (by the enemy action's gain, default 1, against
    the player). Non-attack unpaired actions do nothing. See "Resolver placeholder
    rules" and item 1.
 e. Resolved (2026-10-11): four perception stages, as in "Perception stages".
