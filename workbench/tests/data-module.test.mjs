@@ -169,3 +169,18 @@ test('a row added to a JSON table is saved as the array with the new row last', 
   assert.equal(saved.entities.at(-1).id, 'framework.newEntity');
   assert.equal(saved.comment, table.meta.document.comment);
 });
+
+test('Overwrite after a 409 rebases on the disk hash, and a file deleted on disk is recreated with baseHash null', () => {
+  const changes = [
+    { path: 'content/source/cards.csv', text: 'id\n1\n', baseHash: 'old-a' },
+    { path: 'content/source/gone.csv', text: 'id\n2\n', baseHash: 'old-b' },
+    { path: 'content/source/other.csv', text: 'id\n3\n', baseHash: 'old-c' },
+  ];
+  const conflicts = [{ path: 'content/source/cards.csv', hash: 'disk-a' }, { path: 'content/source/gone.csv', hash: null }];
+  const rebased = D.rebaseChanges(changes, conflicts);
+  assert.equal(rebased[0].baseHash, 'disk-a');
+  assert.equal(rebased[1].baseHash, null, 'deleted on disk: the stale hash is not kept');
+  assert.equal(rebased[2].baseHash, 'old-c', 'a file that did not conflict keeps its base');
+  assert.equal(rebased[1].text, 'id\n2\n', 'the drafts are kept');
+  assert.equal(changes[1].baseHash, 'old-b', 'the input is not mutated');
+});

@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor, rebaseChanges } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -202,7 +202,7 @@ export default {
         if (state.selected && moved.some((c) => c.path === state.selected)) await select(state.selected);
         refresh();
       };
-      status.querySelector('[data-overwrite]').onclick = () => save(changes.map((c) => (diskHash.get(c.path) ? { ...c, baseHash: diskHash.get(c.path) } : c)));
+      status.querySelector('[data-overwrite]').onclick = () => save(rebaseChanges(changes, found));
     }
 
     function showFile() {
