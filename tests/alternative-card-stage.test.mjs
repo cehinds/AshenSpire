@@ -118,6 +118,16 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.ok(paints.at(-1).alpha>.7,'the red tint shows while hit-stop holds');
     step(50);step(100);assert.ok(paints.at(-1).args[1]<128,'the knock-back resumes once the hold ends');
     step(280);assert.equal(raf.size,0,'the held reaction ends after its own 380 ms of motion');
+    // Reduce flashes drops the red tint but keeps the knock-back (SPEC §7.4).
+    document.body.classList.add('reduce-flashes');paints.length=0;
+    stage.play('hit',220);step(66);
+    assert.ok(!paints.some(p=>p.fill==='#ff2424'),'reduce-flashes paints no red mask');
+    assert.ok(stage.currentArt.left<128-10,'reduce-flashes keeps the knock-back');
+    document.body.classList.remove('reduce-flashes');
+    // A click-skip settles the reaction and its hold at once.
+    stage.play('hit',380);stage.hold(100);stage.settle();
+    assert.equal(stage.currentArt.left,128,'settle ends the knock-back');
+    step(16);assert.equal(raf.size,0,'settle ends the hit reaction');
     stage.seek('sweep',70);assert.equal(stage.pose,'reaver.sweep.contact');assert.equal(raf.size,0);
     assert.equal(stage.el.dataset.effect,'reaver.sweep.effect-1');
     assert.ok(paints.at(-1).args[0].url.endsWith('/effect-1.webp'));

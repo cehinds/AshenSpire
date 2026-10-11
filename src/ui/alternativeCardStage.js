@@ -126,7 +126,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       const overlay=images.get(effect);
       if(overlay){ctx.drawImage(overlay,128+x,16,512,512);el.dataset.effect=effect;}
     }
-    const flash=flashAt===null?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
+    // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
+    const flash=flashAt===null||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
     if (flash) {
       maskCtx.clearRect(0,0,512,512);maskCtx.globalCompositeOperation='source-over';
       maskCtx.drawImage(image,0,0,512,512);maskCtx.globalCompositeOperation='source-in';
@@ -152,7 +153,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     if (playing || flashAt!==null) request=requestAnimationFrame(tick);
   }
   const wake=()=>{ if (request===null && !disposed) {last=performance.now();request=requestAnimationFrame(tick);} };
-  function settle() { playing=null;resources=[];elapsed=0;pose=restPose();paint(); }
+  // A click-skip settles to end-state: any hit reaction and its hold end too.
+  function settle() { playing=null;resources=[];elapsed=0;flashAt=null;flashElapsed=0;holdUntil=0;pose=restPose();paint(); }
   function hit(ms=220) { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();flashMs=ms>0?ms:220;flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
