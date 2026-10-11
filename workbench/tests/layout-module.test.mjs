@@ -219,6 +219,25 @@ test('the viewport of a rotated device swaps its sides', () => {
   assert.equal(C.viewportOf(free, { freeSize: { width: 500, height: 300 } }).width, 500);
 });
 
+test('a save sets the base to the text that was sent, so edits made while it ran stay dirty', () => {
+  const rel = 'ui/scenes/w4a-combat.json';
+  const f = C.fileState(rel, readRel(rel), 'hash-before');
+  const scene = M.getPath(f.data, 'sizing.bands.scene');
+  f.data = M.setPath(f.data, 'sizing.bands.scene', scene + 1);
+  const sentText = C.proposedText(f);
+  // The save is in flight; the user edits the same file again before the server answers.
+  f.data = M.setPath(f.data, 'sizing.bands.scene', scene + 2);
+  Object.assign(f, C.savedBase([{ path: f.path, hash: 'hash-after' }], new Map([[f.path, sentText]]), f.path));
+  assert.equal(f.hash, 'hash-after');
+  assert.equal(f.original, sentText, 'the base is the submitted text, not the live draft');
+  assert.equal(C.isDirty(f), true, 'the edit made after submitting is still unsaved');
+  const later = C.proposedText(f).split('\n');
+  const sent = sentText.split('\n');
+  assert.equal(later.length, sent.length);
+  assert.equal(later.filter((line, i) => line !== sent[i]).length, 1, 'the diff is the one later edit');
+  assert.equal(C.savedBase([{ path: f.path, hash: 'x' }], new Map(), f.path), null, 'a file not in the save keeps its base');
+});
+
 test('a plain number typed into a $ref field is saved as a number; a $name or text stays text', () => {
   assert.equal(C.fieldValue('42', '$gap'), 42);
   assert.equal(C.fieldValue(' 3.5 ', '$gap'), 3.5);
