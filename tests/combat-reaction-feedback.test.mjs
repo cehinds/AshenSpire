@@ -15,14 +15,21 @@ import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 const SLASH = { intent: 'attack', damage: 1, hits: 2, weight: 1 };
 const SWEEP = ['camp:physical', 'maneuver:sweep', 'reach:contact', 'targeting:single'];
 
-function registriesWith(move = {}) {
-  return createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
+// An HP offering on the Counter: `offer` is the nonlethal HP payment it asks for.
+const withOffering = (card, amount) => {
+  const payment = { op: 'loseHp', target: 'self', amount, nonlethal: true, offering: true };
+  return { ...card, effects: [payment, ...card.effects], gradeProfiles: card.gradeProfiles?.map(profile => ({ ...profile, effects: [payment, ...profile.effects] })) };
+};
+
+function registriesWith(move = {}, offer = null) {
+  const cards = offer === null ? contentBundle.cards : contentBundle.cards.map(card => card.id === 'guardCounter' ? withOffering(card, offer) : card);
+  return createRegistries({ ...contentBundle, cards, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
     ? { ...enemy, firstMove: 'slash', moves: { slash: { ...SLASH, ...move } } } : enemy) });
 }
 const seatStats = { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20 };
 
-function solo({ cardIds = ['guardCounter'], move } = {}) {
-  const registries = registriesWith(move);
+function solo({ cardIds = ['guardCounter'], move, offer = null } = {}) {
+  const registries = registriesWith(move, offer);
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: 1,
     enemyIds: ['wanderingSoldier'], player: { ...seatStats, drawPerTurn: cardIds.length,
       deck: cardIds.map((cardId, index) => ({ cardId, instanceId: `r${index}`, upgraded: false })) } });
@@ -57,6 +64,13 @@ test('a Counter the seat cannot pay for reports cost with need and have', () => 
   combat.player.energy = 0;
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
     cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+});
+
+test('a Counter whose HP offering would leave the seat dead reports cost with resource hp', () => {
+  const combat = solo({ offer: seatStats.hp });
+  assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
+    cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: seatStats.hp, have: seatStats.hp }]);
+  assert.equal(combat.pendingReaction, undefined);
 });
 
 test('the Reaction switch off reports switchOff only to a seat holding a candidate', () => {
