@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
+  escHtml, handChoices,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -135,4 +136,19 @@ test('the game base comes from the running game tool only', () => {
   assert.equal(gameBaseOf([{ id: 'game', status: 'down', url: 'http://localhost:4320' }]), null);
   assert.equal(gameBaseOf([{ id: 'editor', status: 'up', url: 'http://localhost:4317' }]), null);
   assert.equal(gameBaseOf(null), null);
+});
+
+test('escHtml escapes markup and quotes, so an id cannot break out of an attribute', () => {
+  assert.equal(escHtml(`"><img src=x onerror=1>&'`), '&quot;&gt;&lt;img src=x onerror=1&gt;&amp;&#39;');
+  assert.equal(escHtml(null), '');
+  assert.equal(escHtml(12), '12');
+});
+
+test('the Try in fight hand choices start with the empty hand and keep ids as given', () => {
+  assert.deepEqual(handChoices([{ id: 'straightSword', name: 'Straight Sword' }, { id: 'a"b', name: 'Odd' }]), [
+    ['', 'Empty hand'], ['straightSword', 'Straight Sword'], ['a"b', 'Odd'],
+  ]);
+  assert.deepEqual(handChoices(), [['', 'Empty hand']]);
+  const opts = handChoices([{ id: 'a"b', name: 'Odd' }]).map(([v, t]) => `<option value="${escHtml(v)}">${escHtml(t)}</option>`).join('');
+  assert.equal(opts, '<option value="">Empty hand</option><option value="a&quot;b">Odd</option>');
 });

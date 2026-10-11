@@ -9,7 +9,7 @@
 
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
-  facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
+  facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -19,7 +19,7 @@ const TABS = [['card', 'Card', 'detail'], ['inventory', 'Inventory', 'inventory'
 const FILTERS = ['class', 'type', 'tag', 'rarity'];
 const LABELS = { class: 'All classes', type: 'All types', tag: 'All tags', rarity: 'All rarities' };
 
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = escHtml;
 
 export default {
   mount(el, ctx) {
@@ -172,8 +172,8 @@ export default {
       const cls = tryForm.elements.class, main = tryForm.elements.mainHand, off = tryForm.elements.offHand;
       if (!classes.length) return;
       if (!cls.options.length) cls.innerHTML = classes.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
-      const hands = [['', 'Empty hand'], ...armaments.map((a) => [a.id, a.name])];
-      if (!main.options.length) { main.innerHTML = hands.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join(''); off.innerHTML = main.innerHTML; }
+      const hands = handChoices(armaments);
+      if (!main.options.length) { main.innerHTML = hands.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(''); off.innerHTML = main.innerHTML; }
       const pick = (v, fallback) => (v !== null && hands.some(([id]) => id === v) ? v : fallback);
       st.classId = cls.value || st.classId;
       if (st.kind === 'armaments' && st.id) st.mainHand = st.id;

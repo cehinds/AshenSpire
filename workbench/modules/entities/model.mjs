@@ -52,6 +52,16 @@ export function sourceTableFor(kind, files = null) {
   return files.includes(path) ? path : null;
 }
 
+/** Escapes text for HTML element content and quoted attribute values. */
+export function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/** The hand choices for the Try in fight form: the empty hand, then each armament as [id, name]. */
+export function handChoices(armaments = []) {
+  return [['', 'Empty hand'], ...armaments.map((a) => [String(a.id), String(a.name ?? a.id)])];
+}
+
 export function kindOf(id) {
   return KINDS.find((k) => k.id === id) || null;
 }
