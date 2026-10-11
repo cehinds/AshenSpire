@@ -27,10 +27,25 @@ name: art-migrate
 # Nothing here merges anything. The art pull request is the owner's to review
 # and merge; the release it triggers is the art repository's own workflow.
 #
+# TRUST BOUNDARY (intake). A pull request's head is untrusted: it can carry any
+# change to any file, this workflow included. So the intake job never checks
+# out or runs the pull request's code:
+#   - the checkout is the BASE commit (the event's base.sha, the protected dev
+#     tip), and every `node` run is tools/art-intake.mjs from that tree;
+#   - the head is only fetched as git objects; the tool reads its files as
+#     blobs (`git cat-file`), which runs no filter, textconv or hook;
+#   - the art repository token is in the environment of the push and gh steps
+#     only, never of a step that runs node, and the art checkout keeps no
+#     credentials on disk (persist-credentials: false); git gets the token per
+#     command through GIT_CONFIG_* in the step's env;
+#   - pull request values (numbers, shas, paths, titles) reach a shell only
+#     through env:, never through ${{ }} inside run:.
+#
 # SECRETS. ART_REPO_WRITE_TOKEN (owner adds it): contents and pull-requests
-# write on cehinds/AshenSpire-art. It is read only by the intake job, and only
-# for a pull request from this repository. The pin bump reads the public art
-# repository with GITHUB_TOKEN and opens its pull request with GITHUB_TOKEN.
+# write on cehinds/AshenSpire-art. It is read only by the push and gh steps of
+# the intake job, and only for a pull request from this repository. The pin
+# bump reads the public art repository with GITHUB_TOKEN and opens its pull
+# request with GITHUB_TOKEN.
 
 on:
   pull_request:
@@ -63,17 +78,22 @@ jobs:
       PR: ${{ github.event.pull_request.number }}
       BASE: ${{ github.event.pull_request.base.sha }}
       HEAD: ${{ github.event.pull_request.head.sha }}
+      REPO: ${{ github.repository }}
       FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      # A shallow checkout, then the two commits' history without blobs: the
-      # diff needs trees only, and --stage reads the few art blobs on demand.
+      # The BASE commit, never the pull request's merge commit: the tool that
+      # runs below is this tree's copy, and a pull request cannot change it.
       - uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Fetch the pull request's history (no blobs)
+      # The two commits' history without blobs: the diff needs trees only, and
+      # the stage step reads the few art blobs on demand. Objects only; the
+      # head is never checked out.
+      - name: Fetch the pull request's history (no blobs, no checkout)
         run: git fetch --no-tags --filter=blob:none --unshallow origin "$BASE" "$HEAD" || git fetch --no-tags --filter=blob:none origin "$BASE" "$HEAD"
 
       - name: List the art files this pull request adds or modifies
@@ -89,12 +109,12 @@ jobs:
         id: gate
         env:
           COUNT: ${{ steps.list.outputs.count }}
-          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
         run: |
           set -euo pipefail
           if [ "$COUNT" = 0 ]; then state=none
           elif [ "$FORK" = true ]; then state=blocked-fork
-          elif [ -z "$ART_REPO_WRITE_TOKEN" ]; then state=blocked-token
+          elif [ "$HAS_ART_TOKEN" != true ]; then state=blocked-token
           else state=migrate; fi
           echo "state=$state" >> "$GITHUB_OUTPUT"
           echo "state: $state ($COUNT art file(s))"
@@ -108,12 +128,12 @@ jobs:
           path: art-repo
           ref: main
           fetch-depth: 1
+          persist-credentials: false
 
-      - name: Stage the files in the art repository and push the intake branch
+      # No token in this step: it runs the base tool and local git only.
+      - name: Stage the files and commit them in the art repository (no token)
         id: stage
         if: steps.gate.outputs.state == 'migrate'
-        env:
-          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
         run: |
           set -euo pipefail
           branch="intake/ashenspire-pr-$PR"
@@ -126,12 +146,28 @@ jobs:
           if git diff --cached --quiet; then
             echo "The art repository already holds these files on $branch."
           else
-            git commit -q -m "Intake art from AshenSpire#$PR" -m "Staged by .github/workflows/art-migrate.yml from https://github.com/${{ github.repository }}/pull/$PR."
+            git commit -q -m "Intake art from AshenSpire#$PR" -m "Staged by .github/workflows/art-migrate.yml from https://github.com/$REPO/pull/$PR."
           fi
-          # The bot's own branch: each run rebuilds it from main and replaces it.
-          git fetch -q origin "+refs/heads/$branch:refs/remotes/origin/$branch" 2>/dev/null || true
-          git push --force-with-lease origin "HEAD:refs/heads/$branch"
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+      # The only step with the token in its environment that touches the network
+      # for git. It runs no file from any tree: only git, with the token given
+      # per command (no credential is written to art-repo/.git/config).
+      - name: Push the intake branch to the art repository
+        if: steps.gate.outputs.state == 'migrate'
+        env:
+          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          BRANCH: ${{ steps.stage.outputs.branch }}
+        run: |
+          set -euo pipefail
+          auth="$(printf 'x-access-token:%s' "$ART_REPO_WRITE_TOKEN" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+          cd art-repo
+          # The bot's own branch: each run rebuilds it from main and replaces it.
+          git fetch -q origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null || true
+          git push --force-with-lease origin "HEAD:refs/heads/$BRANCH"
 
       - name: Open or update the pull request in the art repository
         id: artpr
@@ -142,7 +178,7 @@ jobs:
         run: |
           set -euo pipefail
           {
-            echo "Art files from [${{ github.repository }}#$PR](https://github.com/${{ github.repository }}/pull/$PR), at the paths the art repository keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`)."
+            echo "Art files from [$REPO#$PR](https://github.com/$REPO/pull/$PR), at the paths the art repository keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`)."
             echo
             echo "Merge this, and the release workflow publishes the next \`hd-assets-v<N>\`. The AshenSpire pin-bump job (every 6 hours) then opens the \`art-release.json\` bump."
             echo

@@ -17,6 +17,14 @@
 //
 // Exit codes: 0 ok; 1 a selftest case failed; 2 usage, a bad ref, or a git error.
 //
+// TRUST BOUNDARY. This file is read and run from the BASE commit only, by
+// .github/workflows/art-migrate.yml. A pull request's head is data here: its
+// tree is never checked out or executed, and its files are read as git blobs
+// (`git cat-file blob <head>:<path>`), which runs no filter or textconv. The
+// workflow runs this tool with no art-repository token in its environment; the
+// token is used only by the git push and gh steps that follow.
+//
+
 // WHICH FILES (owner, 2026-10-11). The art repository holds what
 // art-manifest.json's own roots name (tools/art-manifest.mjs, commonSources
 // and the high tier): the high tier under assets/ (fonts and sound effects
@@ -125,10 +133,26 @@ function parseArgs(argv) {
   return a;
 }
 
-/** Writes the bytes of `dest`'s file (read at head) under the art checkout `dir`. */
+/**
+ * A destination inside the art checkout: relative, with no empty, '.', '..'
+ * or '.git' segment, so a staged file can never climb out of the checkout or
+ * land in a git directory (its config and hooks).
+ */
+export function checkDest(dest) {
+  const segs = String(dest).split('/');
+  if (segs.some((seg) => seg === '' || seg === '.' || seg === '..' || seg === '.git')) {
+    throw Object.assign(new Error(`refusing destination ${JSON.stringify(dest)}`), { exit: 2 });
+  }
+  return dest;
+}
+
+/**
+ * Writes the bytes of `path` at `head` (a blob, read raw: no textconv, no
+ * filters) to `dest`, under the art checkout `dir`.
+ */
 export function stageFile(dir, path, dest, head) {
-  if (dest.split('/').some((seg) => seg === '..' || seg === '')) throw Object.assign(new Error(`refusing destination ${dest}`), { exit: 2 });
-  const bytes = git(['show', `${checkRef(head)}:${path}`], { maxBuffer: 1 << 30 });
+  checkDest(dest);
+  const bytes = git(['cat-file', 'blob', `${checkRef(head)}:${path}`], { maxBuffer: 1 << 30 });
   const target = resolve(dir, ...dest.split('/'));
   if (!target.startsWith(resolve(dir) + sep)) throw Object.assign(new Error(`${dest} escapes ${dir}`), { exit: 2 });
   mkdirSync(dirname(target), { recursive: true });
@@ -163,6 +187,10 @@ export function selftest() {
     { status: 'A', path: 'music/town.mp3' }, { status: 'M', path: 'assets-mobile/a.webp' }, { status: 'A', path: 'assets/a.webp' },
   ]), { migrate: [{ path: 'assets/a.webp', dest: 'hd/assets/a.webp' }, { path: 'music/town.mp3', dest: 'common/music/town.mp3' }], stays: ['assets-mobile/a.webp'] });
   check('a ref starting with a dash is refused', (() => { try { checkRef('--output=/tmp/x'); return 'accepted'; } catch (e) { return e.exit; } })(), 2);
+  for (const bad of ['hd/../x', 'art/.git/config', 'common//x', 'art/./x']) {
+    check(`a destination ${bad} is refused`, (() => { try { checkDest(bad); return 'accepted'; } catch (e) { return e.exit; } })(), 2);
+  }
+  check('an ordinary destination is accepted', checkDest('hd/assets/bg/town.webp'), 'hd/assets/bg/town.webp');
   if (failures.length) {
     for (const f of failures) console.error(`art-intake selftest FAIL: ${f}`);
     return 1;

@@ -2,7 +2,7 @@
 // Pure functions only (no git, no network): fast enough for every PR into dev.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classify, destinationFor, intake, parseNameStatus, selftest } from '../tools/art-intake.mjs';
+import { checkDest, classify, destinationFor, intake, parseNameStatus, selftest } from '../tools/art-intake.mjs';
 
 test('a high-tier file migrates to the art repository hd/ tree', () => {
   assert.deepEqual(classify('assets/bg/town.webp'), { verdict: 'migrate', dest: 'hd/assets/bg/town.webp' });
@@ -56,6 +56,13 @@ test('intake sorts migrations by path and names the light files it keeps', () =>
     { path: 'music/town.mp3', dest: 'common/music/town.mp3' },
   ]);
   assert.deepEqual(r.stays, ['assets-mobile/a.webp']);
+});
+
+test('a staged destination cannot climb out of the checkout or land in a git directory', () => {
+  for (const bad of ['hd/../x', '../x', 'art/.git/config', 'common//x', 'art/./x']) {
+    assert.throws(() => checkDest(bad), (e) => e.exit === 2, bad);
+  }
+  assert.equal(checkDest('hd/assets/bg/town.webp'), 'hd/assets/bg/town.webp');
 });
 
 test('the tool selftest passes', () => {
