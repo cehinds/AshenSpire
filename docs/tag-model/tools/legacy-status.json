@@ -736,5 +736,11 @@
  "item.bound": "new",
  "itemType": "new",
  "itemType.blade": "new",
- "itemType.magic-focus": "new"
+ "itemType.magic-focus": "new",
+ "grantSource": "new",
+ "grantSource.global": "new",
+ "grantSource.relic": "new",
+ "grantSource.armor": "new",
+ "grantSource.weapon": "new",
+ "grantSource.class": "new"
 }

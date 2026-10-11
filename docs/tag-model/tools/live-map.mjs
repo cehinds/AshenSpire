@@ -455,6 +455,13 @@ export const LIVE = {
   'itemType': 'itemType',
   'itemType.blade': 'item:blade',
   'itemType.magic-focus': 'item:magic-focus',
+  // proposed live mapping (domain pass)
+  'grantSource': 'grantSource',
+  'grantSource.global': 'from:global',
+  'grantSource.relic': 'from:relic',
+  'grantSource.armor': 'from:armor',
+  'grantSource.weapon': 'from:weapon',
+  'grantSource.class': 'from:class',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

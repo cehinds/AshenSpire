@@ -389,7 +389,7 @@ card.source.class,source.class,Class,card.source,Card,,,,,,,,game-concept,,,
 card.source.weapon,source.weapon,Weapon,card.source,Card,,,,,,,,game-concept,,,
 card.source.armor,source.armor,Armor,card.source,Card,,,,,,,,game-concept,,,
 card.source.relic,source.relic,Relic,card.source,Card,,,,,,,,game-concept,,,
-card.source.global,global,Global,card.source,Card,,,,,,,,game-concept,,,
+card.source.global,source.global,Global,card.source,Card,,,,,,,,game-concept,,,
 card.upgrade,card.upgrade,Upgrade,card,Card,,,,,,,,game-concept,,,
 card.upgrade.base,base,Base,card.upgrade,Card,,,,,,,,game-concept,,,
 card.upgrade.upgraded,upgraded,Upgraded,card.upgrade,Card,,,,,,,,live-tag,,,internal.upgraded
@@ -737,6 +737,12 @@ item.bound,item.bound,Bound,item,TagNode,,Carries its own cards — they arrive 
 itemType,itemType,Item type,,TagNode,,"What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.",,,,,,live-tag,,,itemType
 itemType.blade,itemType.blade,Blade,itemType,TagNode,,What this piece IS: the Armoury and the smith name it Blade.,,,,,,live-tag,⚔,C9502E,item:blade
 itemType.magic-focus,magic-focus,Magic Focus,itemType,TagNode,,What this piece IS: the Armoury and the smith name it Magic Focus.,,,,,,live-tag,✦,9FC3E8,item:magic-focus
+grantSource,grantSource,Grant source,,TagNode,,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry.",,,,,,live-tag,,,grantSource
+grantSource.global,grantSource.global,Global,grantSource,TagNode,,Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.,,,,,,live-tag,🌐,B8B0A0,from:global
+grantSource.relic,grantSource.relic,Relic,grantSource,TagNode,,Carried in by the starting relic.,,,,,,live-tag,◈,C9A227,from:relic
+grantSource.armor,grantSource.armor,Armor,grantSource,TagNode,,Bound to the outfit the run begins wearing.,,,,,,live-tag,▣,7FA8C9,from:armor
+grantSource.weapon,grantSource.weapon,Weapon,grantSource,TagNode,,Bound to an armament in hand at creation.,,,,,,live-tag,⚔,C9502E,from:weapon
+grantSource.class,grantSource.class,Class,grantSource,TagNode,,The class signature card.,,,,,,live-tag,✦,9FC3E8,from:class
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,
