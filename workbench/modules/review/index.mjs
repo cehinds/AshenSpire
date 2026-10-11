@@ -71,6 +71,13 @@ export default {
       el.querySelectorAll('.rv-pick-list input').forEach((box) => { box.checked = st.screens.has(box.value); });
       el.querySelectorAll('[data-device]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.device === st.device)));
       runBtn.disabled = !st.screens.size || Boolean(st.runId);
+      paintCaptureLock();
+    }
+
+    /** The Accept controls follow the capture: none is offered while a run is writing the captures. */
+    function paintCaptureLock() {
+      paintSummary();
+      if (dstate.row) paintDetailHead();
     }
     el.querySelector('.rv-pick-list').addEventListener('change', (ev) => {
       const box = ev.target;
@@ -343,14 +350,18 @@ export default {
       if (line) line.textContent = parts.join(' · ');
       const all = acceptPlan(st.rows, { all: true }).items.length;
       const allBtn = main().querySelector('.rv-acc-all');
-      if (allBtn) { allBtn.textContent = `Accept all changed (${all})`; allBtn.disabled = all === 0; }
+      if (allBtn) { allBtn.textContent = `Accept all changed (${all})`; allBtn.disabled = all === 0 || Boolean(st.runId); }
       const screenBtn = main().querySelector('.rv-acc-screen');
-      if (screenBtn) screenBtn.disabled = !st.filter.screen || acceptPlan(st.rows, { screen: st.filter.screen }).items.length === 0;
+      if (screenBtn) screenBtn.disabled = Boolean(st.runId) || !st.filter.screen ||acceptPlan(st.rows, { screen: st.filter.screen }).items.length === 0;
     }
 
     // ---------- accept as baseline ----------
     /** Copies the chosen captures over their baselines on the server, then reloads the rows (and the open detail). */
     async function acceptItems(items, what) {
+      if (st.runId) {
+        ctx.toast({ kind: 'warn', title: 'A capture is running', detail: 'Accept the baselines when it finishes.', record: false });
+        return;
+      }
       if (!items.length) {
         ctx.toast({ kind: 'warn', title: 'Nothing to accept', detail: 'Only a capture that exists can become a baseline.', record: false });
         return;
@@ -562,7 +573,7 @@ export default {
       badge.className = `rv-badge rv-b-${b.cls}`;
       badge.textContent = b.label;
       detail.querySelector('.rv-dpx').textContent = pixelsOf(r);
-      detail.querySelector('.rv-accept').disabled = !r.hasCapture;
+      detail.querySelector('.rv-accept').disabled = !r.hasCapture || Boolean(st.runId);
       const layout = detail.querySelector('.rv-layout');
       layout.hidden = !s.layout;
       const list = visible();

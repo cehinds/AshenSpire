@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { JOBS, JobRunner, reviewCaptureParams } from '../core/jobs.mjs';
@@ -74,4 +75,13 @@ test('the runner refuses a non-object params before a run starts, and accepts nu
   assert.doesNotThrow(() => JOBS['review-capture'].steps(dir, { params: null, stateDir: dir }));
   assert.throws(() => runner.start('review-capture', 'desk'), (e) => e.status === 400);
   assert.equal(runner.runs.length, 0);
+});
+
+test('every Accept control is disabled while a capture runs, and accepting is refused then (the page half of the 409)', () => {
+  const src = readFileSync(new URL('../modules/review/index.mjs', import.meta.url), 'utf8');
+  assert.match(src, /allBtn\.disabled = [^;]*st\.runId/, 'Accept all changed');
+  assert.match(src, /screenBtn\.disabled = [^;]*st\.runId/, 'Accept this screen');
+  assert.match(src, /querySelector\('\.rv-accept'\)\.disabled = [^;]*st\.runId/, 'Accept as baseline in the detail');
+  assert.match(src, /async function acceptItems\(items, what\) \{\n\s*if \(st\.runId\)/, 'acceptItems refuses during a run');
+  assert.match(src, /function paintPick\(\) \{[\s\S]*?paintCaptureLock\(\)/, 'a run starting or ending repaints the Accept controls');
 });
