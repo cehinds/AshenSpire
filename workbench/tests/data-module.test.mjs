@@ -122,6 +122,22 @@ test('an edited CSV row keeps the comment and blank lines above it', () => {
 });
 
 
+test('a deleted CSV row keeps its leading comment, moved to the next surviving row', () => {
+  const text = 'id,name\n# note for a\na,1\n# note for b\nb,2\n';
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = doc.rows.filter((r) => r.id !== 'a');
+  assert.equal(D.serializeTable(table, doc), 'id,name\n# note for a\n# note for b\nb,2\n');
+});
+
+test('a deleted last CSV row keeps its leading comment at the end of the file', () => {
+  const text = 'id,name\na,1\n# note for b\nb,2\n';
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = doc.rows.filter((r) => r.id !== 'b');
+  assert.equal(D.serializeTable(table, doc), 'id,name\na,1\n# note for b\n');
+});
+
 test('a CSV number column accepts integers and ordinary decimals only', () => {
   const kind = (v) => D.parseTable('content/source/x.csv', `v\n${v}\n`).columns[0].type;
   assert.equal(kind('-0.5'), 'number');
