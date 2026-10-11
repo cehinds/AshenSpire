@@ -260,6 +260,19 @@ test('v2: an enemy Smash that breaks a defending seat\'s Guard emits combatGuard
   }
 });
 
+test('v2: a lethal Smash still reports Guard broken without applying break Poise to the dead seat', () => {
+  const combat = solo({ cardIds: ['defend'], move: { damage: 20, hits: 1,
+    cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] } });
+  combat.player.block = 0;
+  combat.player.hp = 1;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });
+  const poiseBefore = combat.player.poiseMeter?.value;
+  const rows = guardBroken(soloEnd(combat));
+  assert.equal(combat.player.alive, false);
+  assert.deepEqual(rows.map(({ targetId, sourceId }) => ({ targetId, sourceId })), [{ targetId: 'player', sourceId: 'e1' }]);
+  assert.equal(combat.player.poiseMeter?.value, poiseBefore, 'a dead seat receives no break Poise');
+});
+
 test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or synchronous', () => {
   const registries = createRegistries(contentBundle);
   const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
@@ -275,6 +288,23 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
   // The bonus is nominal (Poise Guard may absorb it), so the log claims pressure, not damage taken.
   assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
     ['Guard broken! (+3 Poise pressure)']);
+});
+
+test('v1: a lethal Smash still reports Guard broken without applying break Poise to the dead target', () => {
+  const registries = createRegistries(contentBundle);
+  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
+      energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
+  const enemy = c.enemies[0];
+  enemy.hp = 1;
+  enemy.block = 3;
+  const poiseBefore = enemy.poiseMeter?.value;
+  applyAttackDamage(c, c.player, enemy, 5, [], { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'slashing' },
+    attack: { source: 'weapon', damageType: 'slashing' }, combatRiderTargets: [] });
+  assert.equal(enemy.alive, false);
+  assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId }) => ({ targetId, sourceId })),
+    [{ targetId: 'e1', sourceId: 'player' }]);
+  assert.equal(enemy.poiseMeter?.value, poiseBefore, 'a dead enemy receives no break Poise');
 });
 
 test('v1: a Smash with a zero break bonus still reports the Guard break, with no Poise claim', () => {

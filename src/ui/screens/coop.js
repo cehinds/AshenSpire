@@ -1904,9 +1904,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return;
     }
     const sc = s.scene;
-    if (sc?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
-      && shouldPaceCoopReceipts(sc.events)) {
-      paceReactionReceipts(s);
+    const receiptScene = sc?.kind === 'combat' ? sc : sc?.combatReceipts;
+    if (receiptScene?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
+      && shouldPaceCoopReceipts(receiptScene.events)) {
+      paceReactionReceipts(s, receiptScene);
       return;
     }
     const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
@@ -1985,12 +1986,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   }
 
-  function paceReactionReceipts(next) {
+  function paceReactionReceipts(next, receiptScene = next.scene) {
     pacing = true;
     enemyPacing = false;
     const working = structuredClone(snap);
     working.scene.events = [];
-    const events = (next.scene.events || []).map(event => ({ ...event,
+    const events = (receiptScene.events || []).map(event => ({ ...event,
       sourceId: event.sourceId === 'player' ? event.sourcePlayerId || event.playerId : event.sourceId,
       targetId: event.targetId === 'player' ? event.targetPlayerId || event.playerId : event.targetId }));
     const anchorFor = id => app.querySelector(`[data-seat="${CSS.escape(String(id))}"] .sprite`)
@@ -1999,7 +2000,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const apply = beat => {
       for (const event of beat.events) {
         if (Number.isSafeInteger(event.eventIndex) && event.eventIndex >= 0)
-          working.scene.combatLog = (next.scene.combatLog || []).filter(entry => entry.id <= event.eventIndex);
+          working.scene.combatLog = (receiptScene.combatLog || []).filter(entry => entry.id <= event.eventIndex);
         const target = entityFor(event.targetId);
         if (event.type === 'hpLost' && target) target.hp = Math.max(0, target.hp - event.amount);
         if (event.type === 'healed' && target) target.hp = Math.min(target.maxHp, target.hp + event.amount);
@@ -2016,7 +2017,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (['cardDrawn', 'cardDiscarded', 'cardExhausted'].includes(event.type)) {
           const owner = entityFor(event.playerId || event.sourcePlayerId);
           if (owner && event.type !== 'cardDrawn') owner.hand = owner.hand.filter(card => card.instanceId !== event.cardInstanceId);
-          const drawn = next.scene.players.find(player => player.id === owner?.id)?.hand.find(card => card.instanceId === event.cardInstanceId);
+          const drawn = receiptScene.players.find(player => player.id === owner?.id)?.hand.find(card => card.instanceId === event.cardInstanceId);
           if (owner && drawn && !owner.hand.some(card => card.instanceId === drawn.instanceId)) owner.hand.push(drawn);
         }
         if (event.type === 'enemyDied' && target) { target.hp = 0; target.alive = false; }
@@ -2039,7 +2040,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       snap = working; render();
     };
     snap = working; render();
-    prepareCombatAnimations(next.scene, next);
+    prepareCombatAnimations(receiptScene, next);
     const timelineAnimations = new Map(pendingAnimations);
     pendingAnimations.clear();
     playTimeline(events, {
@@ -2065,8 +2066,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const instance = played.cardInstance || working.scene.players.find(player => player.id === ownerId)?.hand.find(card => card.instanceId === played.cardInstanceId)
             || { cardId: played.cardId };
           let def = combatCardView({ registries: registriesForClassMastery(registries, { ...member, class: member?.classId }),
-            player: working.scene.players.find(player => player.id === ownerId), combatExpansionVersion: next.scene.combatExpansionVersion,
-            breakMeterVersion: next.scene.breakMeterVersion }, instance, played.upcastTier);
+            player: working.scene.players.find(player => player.id === ownerId), combatExpansionVersion: receiptScene.combatExpansionVersion,
+            breakMeterVersion: receiptScene.breakMeterVersion }, instance, played.upcastTier);
           if (returned) {
             const tags = (def.cardTags || def.tags || []).filter(tag => !tag.startsWith('kind:') && !tag.startsWith('maneuver:'));
             def = { ...def, type: 'attack', kindIds: ['classification.attack'], cardTags: [...tags, 'maneuver:attack'] };
@@ -2074,7 +2075,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const plan = !returned && timelineAnimations.get(ownerId) || resolveCombatAnimation(def,
             equippedPieces(registries, member?.loadout, member?.classId),
             { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId), classId: member?.classId,
-              appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion, counterTriggered: !!returned });
+              appearance: displayAppearance(), combatExpansionVersion: receiptScene.combatExpansionVersion, counterTriggered: !!returned });
           actorAura = plan.aura || null;
           timelineAnimations.delete(ownerId);
           sprite.dataset.actionFamily = plan.family;
@@ -2109,16 +2110,16 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       },
       onBeatApplied: apply,
       onFlush() {
-        animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
-        lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
-        lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
+        animationReceiptSeq = Math.max(animationReceiptSeq, receiptScene.receiptSeq || 0);
+        lastSoundSeq = Math.max(lastSoundSeq, receiptScene.receiptSeq || 0);
+        lastReceiptSeq = Math.max(lastReceiptSeq, receiptScene.receiptSeq || 0);
         snap = next; render();
       },
     }, () => {
-      animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
-      lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
-      lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
-      prevCombat = next.scene;
+      animationReceiptSeq = Math.max(animationReceiptSeq, receiptScene.receiptSeq || 0);
+      lastSoundSeq = Math.max(lastSoundSeq, receiptScene.receiptSeq || 0);
+      lastReceiptSeq = Math.max(lastReceiptSeq, receiptScene.receiptSeq || 0);
+      prevCombat = receiptScene;
       snap = next;
       pacing = false;
       enemyPacing = false;

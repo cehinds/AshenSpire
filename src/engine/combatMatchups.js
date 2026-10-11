@@ -150,15 +150,15 @@ export function completeMatchupHit(ctx, source, target, carrier, receipt, { bloc
   if (combatExpansionEnabled(ctx)) return;
   if (!receipt.profile || carrier?.combatReaction) return;
   const cfg = matchupRules(ctx);
-  if (receipt.smash && receipt.guardBefore > 0 && (target.block || 0) - (target.wardBlock || 0) <= 0 && target.alive) {
+  if (receipt.smash && receipt.guardBefore > 0 && (target.block || 0) - (target.wardBlock || 0) <= 0) {
     const amount = Math.max(0, receipt.profile.breakPoiseBonus ?? cfg.smash.guardBreakPoiseBonus);
     // The same hit's Guard-break consequence precedes its retaliation. Resolve
     // through the ordinary Poise implementation so a real stagger can clear
     // Counter before either its queued damage or synchronous Ward reply starts.
     // The break is reported even with no bonus: Guard broke all the same.
     ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: amount });
-    if (amount && receipt.counterEligible && typeof applySmashBreakPoise === 'function') applySmashBreakPoise(amount);
-    else if (amount) ctx.enqueue({ effect: { op: 'poiseDamage', amount }, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
+    if (target.alive && amount && receipt.counterEligible && typeof applySmashBreakPoise === 'function') applySmashBreakPoise(amount);
+    else if (target.alive && amount) ctx.enqueue({ effect: { op: 'poiseDamage', amount }, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
   }
   if (receipt.counterEligible && target?.combatCounter?.charges > 0) {
     const counter = receipt.counter;
@@ -452,11 +452,11 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     queue.push(action);
     if (ctx.reactionRulesVersion !== 1) ctx.enqueue?.(action);
   };
-  if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0 && target?.alive) {
+  if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0) {
     const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
     // The break is reported even with no bonus: Guard broke all the same.
     ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: Math.max(0, number(amount)) });
-    if (amount > 0) {
+    if (target?.alive && amount > 0) {
       ctx.enqueue?.({ effect: { op: 'poiseDamage', amount }, source, owner: source, target,
         card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
     }

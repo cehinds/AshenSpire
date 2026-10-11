@@ -143,7 +143,11 @@ export function completeExpandedAction(ctx, action) {
   beginExpandedAction(ctx, group, action.source);
   for (const row of Object.values(group.targets)) {
     const target = expansionEntity(ctx, row), receipt = row.receipt;
-    if (!expansionTargetPresent(ctx, target) || !receipt) continue;
+    // A target can die during this action after its receipt has begun. Finish
+    // that receipt so consequences of the lethal contact (such as Guard
+    // breaking) are still reported. A disconnected co-op body remains frozen.
+    const playerId = ctx.playerIdForEntity?.(target);
+    if (!target || !receipt || (ctx.players && playerId && ctx.players.get(playerId)?.connected !== true)) continue;
     Matchups.completeTacticalAction(ctx, action.source, target, group.carrier, receipt,
       { restrictions: Control.controlRestrictions(ctx, target) });
     Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
