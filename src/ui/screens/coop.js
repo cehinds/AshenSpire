@@ -76,6 +76,7 @@ import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combat
 import { resolveCoopPlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { combatToolsModel } from '../models/CombatToolsModel.js';
 import { mountCombatTools } from '../components/combatTools.js';
+import { createReactionNote, latestReactionNote } from '../components/reactionNote.js';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
 import { tagService } from '../../model/tagService.js';
@@ -349,6 +350,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let combatLayout = null; // the layout adapter (components/combatLayout.js) for the mounted board
   let combatTools = null;
+  // "No reaction: why" for this screen's own seats, once per receipt.
+  const reactionNote = createReactionNote();
+  let reactionNoteSeq = 0;
   const combatToolsState = { open: false, size: 'Small', followLatest: true };
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
   // The beat is the same on pointer, keyboard and pad since S7 went wide
@@ -739,6 +743,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (handStrip) { handStrip.teardown(); handStrip = null; }
     if (combatLayout) { combatLayout.release(); combatLayout = null; }
     if (combatTools) { combatTools.release(); combatTools = null; }
+    reactionNote.clear();
     if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
@@ -1241,6 +1246,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       onViewChange: updateTools, onToggle: enabled => send({ t: 'setReactions', enabled }) });
     updateTools();
     combatTools.restoreFocus(focusedTool);
+    reactionNote.attach(app.querySelector('.combat'));
+    if ((Number(sc.receiptSeq) || 0) > reactionNoteSeq && (sc.events || []).length) {
+      reactionNoteSeq = Number(sc.receiptSeq) || 0;
+      const note = latestReactionNote(sc.events, { isLocal: id => seats.includes(id), registries,
+        players: (snap.party || []).map(member => ({ id: member.id, name: member.name })), enemies: sc.enemies });
+      if (note) reactionNote.show(note.text);
+    }
     wireCoopActionRow(meP);
     const hand = area.querySelector('.hand');
     hand.inert = pacing || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;

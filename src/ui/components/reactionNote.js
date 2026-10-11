@@ -56,7 +56,9 @@ export function createReactionNote({ now = () => Date.now() } = {}) {
       node.style.animationDelay = `-${Math.max(0, REACTION_NOTE_MS - (until - now()))}ms`;
       host.append(node);
     }
+    // The tools row may still move this frame (its geometry flush); place again after it.
     place();
+    globalThis.requestAnimationFrame?.(place);
   };
   const show = (text) => {
     if (!text) return;
