@@ -351,3 +351,13 @@ export function visibleItems({ count = 0, metrics, scrollTop = 0, viewport = 0, 
   const last = Math.min(rows - 1, Math.floor((Math.max(0, scrollTop) + Math.max(0, viewport)) / rowHeight) + overscan);
   return { from: Math.min(count, first * cols), to: Math.min(count, (last + 1) * cols) };
 }
+
+// Runs `fn` at most once at a time: a call made while a run is in flight gets that run's promise, so two
+// callers (the mount and the first show) make one request. A call after the run settles starts a new one.
+export function singleFlight(fn) {
+  let inflight = null;
+  return () => {
+    if (!inflight) inflight = new Promise((resolve) => resolve(fn())).finally(() => { inflight = null; });
+    return inflight;
+  };
+}

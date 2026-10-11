@@ -262,3 +262,26 @@ test('the Asset Gallery is a real module, not the placeholder, and its module lo
   const mod = await MODULES.find((m) => m.id === 'assets').load();
   assert.equal(typeof mod.default.mount, 'function');
 });
+
+test('singleFlight: a call during a running load reuses its promise, and a later call starts a new run', async () => {
+  const { singleFlight } = await import('../modules/assets/model.mjs');
+  let runs = 0, finish;
+  const load = singleFlight(() => { runs++; return new Promise((resolve) => { finish = resolve; }); });
+  const first = load();
+  const second = load();
+  assert.equal(runs, 1, 'mount then the first onShow make one request');
+  assert.equal(first, second, 'the in-flight promise is reused');
+  finish('done');
+  assert.equal(await first, 'done');
+  load();
+  assert.equal(runs, 2, 'after the load settles, the next onShow refreshes');
+});
+
+test('singleFlight: a synchronous throw rejects the run and frees the slot for the next call', async () => {
+  const { singleFlight } = await import('../modules/assets/model.mjs');
+  let runs = 0;
+  const load = singleFlight(() => { runs++; if (runs === 1) throw new Error('boom'); return Promise.resolve('ok'); });
+  await assert.rejects(load(), /boom/);
+  assert.equal(await load(), 'ok');
+  assert.equal(runs, 2);
+});
