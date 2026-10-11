@@ -7,7 +7,7 @@ export const MODES = Object.freeze([
   { id: 'battlefield', label: 'Battlefield', built: true },
   { id: 'deck-row', label: 'Deck row', built: false },
   { id: 'sp-orb', label: 'SP orb', built: false },
-  { id: 'book-recipes', label: 'Book recipes', built: false },
+  { id: 'book-recipes', label: 'Book recipes', built: true },
   { id: 'card-layers', label: 'Card layers', built: false },
 ]);
 
