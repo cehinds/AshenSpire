@@ -4,10 +4,6 @@
 // The rest of the footer is drawn as locked context. index.mjs mounts this view into its own
 // root and supplies the host (the API, history, preview, toast and the canvas settings).
 import { createCanvas, createLayersPanel } from '../../ui/kit/canvas.mjs';
-import { footerBounds } from '../../../src/ui/models/FooterLayoutModel.js';
-import { footerFonts } from '../../../src/content/footerLayout.js';
-import { staminaOrb } from '../../../src/content/staminaOrb.js';
-import { assetUrl } from '../../../src/ui/assetmap.js';
 import * as O from './orb-model.mjs';
 import * as C from './config-model.mjs';
 
@@ -193,17 +189,20 @@ export function createOrbView(root, host) {
     const sp = spSet();
     const items = layout.items.filter((n) => sp.has(n.id) && n.visible !== false);
     if (!items.length) { host.toast({ kind: 'warn', title: 'No SP item is visible', record: false }); return; }
-    const b = footerBounds(items), scale = 2;
+    let base = null;
+    try { base = gameBaseOf(await host.api('tools')); } catch { base = null; }
+    if (!base) { host.toast({ kind: 'warn', title: 'The game server is not up', detail: 'The PNG draws the game\'s art, served by the game server.', record: false }); return; }
+    const b = O.footerBounds(items), scale = 2;
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil(b.w * scale); canvas.height = Math.ceil(b.h * scale);
     const g = canvas.getContext('2d');
     g.scale(scale, scale);
-    const images = await loadImages(items.filter((n) => n.asset !== 'text').map((n) => n.asset));
+    const images = await loadImages(base, items.filter((n) => n.asset !== 'text').map((n) => n.asset));
     for (const n of items) {
       g.save();
       g.globalAlpha = n.opacity ?? 1;
       if (n.asset === 'text') {
-        g.font = `${n.fontWeight || 400} ${n.fontStyle && n.fontStyle !== 'normal' ? `${n.fontStyle} ` : ''}${n.fontSize}px ${footerFonts[n.fontFamily] || footerFonts.serif}`;
+        g.font = `${n.fontWeight || 400} ${n.fontStyle && n.fontStyle !== 'normal' ? `${n.fontStyle} ` : ''}${n.fontSize}px ${O.FOOTER_FONTS[n.fontFamily] || O.FOOTER_FONTS.serif}`;
         g.fillStyle = n.color || '#e7dcc0';
         g.textAlign = n.textAlign === 'left' ? 'left' : n.textAlign === 'right' ? 'right' : 'center';
         g.textBaseline = 'middle';
@@ -225,13 +224,14 @@ export function createOrbView(root, host) {
     }, 'image/png');
   }
 
-  async function loadImages(assets) {
+  /** The SP art, from the game server at its own repo path (the SP Atelier's convention). */
+  async function loadImages(base, assets) {
     const out = {};
     await Promise.all([...new Set(assets)].map(async (asset) => {
-      const path = staminaOrb.assets[asset];
+      const path = O.ORB_ASSETS[asset];
       if (!path) return;
       const img = new Image();
-      img.src = assetUrl(path);
+      img.src = `${base}${path}`;
       try { await img.decode(); out[asset] = img; } catch { /* a missing art is drawn as nothing */ }
     }));
     return out;

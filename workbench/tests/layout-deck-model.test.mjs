@@ -97,3 +97,21 @@ test('edited files pass the repo\'s config compiler with the rest of the real co
   assert.deepEqual(compileEntries(with_(D.serializeDeck(D.reorderGroup(data, 0, 1)))).errors, []);
   assert.deepEqual(compileEntries(with_(D.serializeDeck(D.moveResource(data, 'stamina', 0)))).errors, []);
 });
+
+test('the browser copy of the badge rule gives the game\'s own badges for every profile and grouping', () => {
+  const groups = data.components.resourceGroups;
+  const separate = groups;
+  const legacy = [groups[0], { ...groups[1], resources: ['action', 'stamina'] }];
+  const combined = [{ id: 'all', label: 'Cost', resources: ['mana', 'stamina', 'action'] }];
+  const profiles = [
+    { action: 2, mana: 3, stamina: 2, variable: false },
+    { action: 0, mana: 0, stamina: 0, variable: true },
+    { action: 0, mana: 2, stamina: 0, variable: true },
+    { action: 1, mana: 0, stamina: 4, variable: false },
+  ];
+  for (const profile of profiles) {
+    for (const list of [separate, legacy, combined, [...separate].reverse()]) {
+      assert.deepEqual(D.badgesFor(profile, list), deckEditorCosts(profile, list), JSON.stringify({ profile, list }));
+    }
+  }
+});

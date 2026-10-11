@@ -10,7 +10,6 @@
 // index.mjs mounts this view into its own root and supplies the host (the API, history, preview,
 // toast and the canvas settings).
 import { createCanvas, createLayersPanel } from '../../ui/kit/canvas.mjs';
-import { deckEditorCosts } from '../../../src/ui/models/deckEditorCosts.js';
 import * as D from './deck-model.mjs';
 import * as R from './deck-row-model.mjs';
 import * as C from './config-model.mjs';
@@ -18,7 +17,7 @@ import * as C from './config-model.mjs';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ZOOM_STEP = 1.25;
 const ALIGN = [['left', 'Align left'], ['center', 'Align centre'], ['right', 'Align right'], ['top', 'Align top'], ['middle', 'Align middle'], ['bottom', 'Align bottom']];
-/** The sample the badges are previewed with: the game's own function draws them, this only names the numbers. */
+/** The sample the badges are previewed with (the game's own badge rules, D.badgesFor, do the sums). */
 const SAMPLE = Object.freeze({ action: 2, mana: 3, stamina: 2, variable: false });
 const RESOURCE_NAME = Object.freeze({ mana: 'MP', stamina: 'SP', action: 'Action (legacy alias of SP)' });
 
@@ -98,7 +97,7 @@ export function createDeckView(root, host) {
   function paintInspector() {
     const box = $('.dk-insp');
     const groups = st.groups || [];
-    const preview = groups.length ? deckEditorCosts(SAMPLE, groups).map((b) => `${esc(b.label)} ${esc(b.value)}`).join(' · ') : '';
+    const preview = groups.length ? D.badgesFor(SAMPLE, groups).map((b) => `${esc(b.label)} ${esc(b.value)}`).join(' · ') : '';
     const groupRows = groups.map((g, i) => {
       const others = groups.map((o, j) => (j === i ? '' : `<option value="${j}">${esc(o.label)}</option>`)).join('');
       const resources = g.resources.map((r) => `<div class="lay-row"><code title="${esc(r)}">${esc(RESOURCE_NAME[r] || r)}</code><span class="dk-actions">

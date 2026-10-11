@@ -6,6 +6,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { compileEntries, readConfigTree } from '../../tools/config-build.mjs';
+import { footerLayout, footerFonts } from '../../src/content/footerLayout.js';
+import { staminaOrb } from '../../src/content/staminaOrb.js';
+import { footerLayoutModel, footerStaminaLayers, footerBounds } from '../../src/ui/models/FooterLayoutModel.js';
 import * as O from '../modules/layout/orb-model.mjs';
 
 const real = (rel) => readFileSync(new URL(`../../content/config/ui/${rel}`, import.meta.url), 'utf8');
@@ -103,4 +106,50 @@ test('the edited footer passes the repo\'s config compiler with the rest of the 
   assert.deepEqual(compileEntries(with_(TEXT)).errors, []);
   const moved = O.changedText(TEXT, O.setItemField(data, 'sp-orb', 'x', 60));
   assert.deepEqual(compileEntries(with_(moved)).errors, []);
+});
+
+// The browser copy of the game's rules (orb-model.mjs) against the game's own functions.
+const shownAll = (d) => ({ ...layoutOf(d), items: layoutOf(d).items.map((n) => ({ ...n, visible: true })) });
+function layoutOf(d) { return d.components.layout; }
+const mutants = (d) => {
+  const L = layoutOf(d);
+  const edit = (f) => ({ ...d, components: { ...d.components, layout: { ...L, items: L.items.map(f) } } });
+  return [
+    d,
+    edit((n) => (n.id === 'sp-number' ? { ...n, group: 'draw' } : n)),
+    edit((n) => (n.id === 'sp-sigil' ? { ...n, asset: 'plate' } : n)),
+    edit((n) => (n.id === 'draw-art' ? { ...n, group: 'sp' } : n)),
+    edit((n) => (n.id === 'end-plate' ? { ...n, asset: 'diamond', x: 100, y: 180 } : n)),
+    edit((n) => (n.id === 'rail-a' ? { ...n, group: 'potions' } : n)),
+    edit((n) => (n.asset === 'orb' ? { ...n, binding: 'discard' } : n)),
+  ];
+};
+
+test('the SP group is the game\'s own classification, on the real file and on edited variants', () => {
+  for (const d of mutants(data)) {
+    const game = footerLayoutModel(shownAll(d)).groups.sp.items.map((n) => n.id);
+    assert.deepEqual(O.spIds(d), game);
+  }
+});
+
+test('the mana ring matches the game\'s resampling at every capacity and when a socket moves', () => {
+  const pick = (g) => g.map(({ id, asset, x, y, w, h }) => ({ id, asset, x, y, w, h }));
+  const sockets = [data, O.setItemField(data, 'mana-0', 'x', 300), O.setItemField(data, 'mana-7', 'w', 40)];
+  for (const d of sockets) {
+    for (const [capacity, available] of [[0, 0], [3, 2], [6, 6], [12, 5], [18, 9], [24, 1]]) {
+      const game = footerStaminaLayers(d.components.layout, { gems: Array.from({ length: capacity }, (_, i) => ({ id: i < available ? 'diamond' : 'spent' })) })
+        .filter((n) => n.asset === 'diamond' || n.asset === 'spent');
+      assert.deepEqual(pick(O.ringAt(d, capacity, available)), pick(game), `capacity ${capacity}`);
+    }
+  }
+  const hidden = O.setItemField(data, 'mana-3', 'visible', false);
+  assert.deepEqual(pick(O.ringAt(hidden, 12, 3)), pick(footerStaminaLayers(hidden.components.layout, { gems: Array.from({ length: 12 }, (_, i) => ({ id: i < 3 ? 'diamond' : 'spent' })) }).filter((n) => n.asset === 'diamond' || n.asset === 'spent')));
+});
+
+test('the bounds and the art paths and fonts are the game\'s', () => {
+  const sp = O.spIds(data).map((id) => data.components.layout.items.find((n) => n.id === id));
+  assert.deepEqual(O.footerBounds(sp), footerBounds(sp));
+  assert.deepEqual(O.footerBounds([]), footerBounds([]));
+  assert.deepEqual(O.ORB_ASSETS, staminaOrb.assets);
+  assert.deepEqual(O.FOOTER_FONTS, footerFonts);
 });

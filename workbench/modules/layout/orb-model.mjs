@@ -14,9 +14,14 @@
 // canvas; the rest of the footer is carried through untouched. Values the game does
 // not read (the canvas's stacking order and lock state) are never written.
 
-import { footerLayoutModel, footerStaminaLayers } from '../../../src/ui/models/FooterLayoutModel.js';
+// The browser cannot import the game's source (the Workbench serves its own modules), so the
+// game's pure rules are restated here, each next to its name in src/. tests/ and
+// workbench/tests/layout-orb-model.test.mjs import the originals and compare every answer.
 
 export const FOOTER_FILE = 'content/config/ui/presentation/footerLayout.json';
+/** src/content/footerLayout.js footerFonts, and src/content/staminaOrb.js assets (the SP art). */
+export const FOOTER_FONTS = Object.freeze({ serif: 'Georgia, serif', sans: 'Arial, sans-serif', mono: 'monospace' });
+export const ORB_ASSETS = Object.freeze(Object.fromEntries(['frame', 'orb', 'sigil', 'diamond', 'spent'].map((id) => [id, `assets/ui/stamina-orb/${id}.webp`])));
 
 /** The fields of a footer item this mode edits; text items also carry fontSize. */
 export const FIELDS = Object.freeze(['x', 'y', 'w', 'h', 'opacity', 'visible']);
@@ -42,15 +47,31 @@ export function parseFooter(text) {
 /** The file text for a footer object. An unedited parse gives the original text. */
 export const serializeFooter = (data) => JSON.stringify(data, null, 2) + '\n';
 
-/**
- * The SP group, by the game's own classifier. Hidden items are classified as if
- * shown, so the hidden sigil stays in the group (footerLayoutModel drops hidden
- * items, which would hide them from the editor as well).
- */
+// src/ui/models/FooterLayoutModel.js: an art's asset, or a text's binding, names its group.
+const ASSET_ROLE = { frame: 'sp', orb: 'sp', sigil: 'sp', diamond: 'sp', spent: 'sp', draw: 'draw', plate: 'end', 'spent-cards': 'discard', potions: 'potions' };
+const BINDING_ROLE = { sp: 'sp', spLabel: 'sp', draw: 'draw', drawLabel: 'draw', endTurn: 'end', endTurnKey: 'end', discard: 'discard', exhaust: 'discard', potions: 'potions' };
+const FOOTER_ROLES = ['sp', 'draw', 'end', 'discard', 'potions'];
+
+/** The SP group's item ids, classified as the game classifies them (footerLayoutModel with every item shown). */
 export function spIds(data) {
-  const layout = layoutOf(data);
-  const shown = { ...layout, items: layout.items.map((n) => ({ ...n, visible: true })) };
-  return footerLayoutModel(shown).groups.sp.items.map((n) => n.id);
+  const items = layoutOf(data).items;
+  const anchors = items.filter((n) => ASSET_ROLE[n.asset]);
+  const role = (n) => {
+    if (ASSET_ROLE[n.asset]) return ASSET_ROLE[n.asset];
+    if (BINDING_ROLE[n.binding]) return BINDING_ROLE[n.binding];
+    if (n.asset === 'connector') return 'rail';
+    if (FOOTER_ROLES.includes(n.group)) return n.group;
+    const nearest = anchors.slice().sort((a, b) => Math.hypot(n.x - a.x, n.y - a.y) - Math.hypot(n.x - b.x, n.y - b.y))[0];
+    return ASSET_ROLE[nearest?.asset] || 'end';
+  };
+  return items.filter((n) => role(n) === 'sp').map((n) => n.id);
+}
+
+/** src/ui/models/FooterLayoutModel.js footerBounds: the box around some items. */
+export function footerBounds(items) {
+  if (!items.length) return { x: 0, y: 0, w: 1, h: 1 };
+  const x = Math.min(...items.map((n) => n.x)), y = Math.min(...items.map((n) => n.y));
+  return { x, y, w: Math.max(1, ...items.map((n) => n.x + n.w - x)), h: Math.max(1, ...items.map((n) => n.y + n.h - y)) };
 }
 
 /** The mana sockets in their numeric order (mana-0 … mana-11), which the game resamples. */
@@ -164,11 +185,26 @@ export function fromCanvasDoc(data, doc) {
   return { ...data, components: { ...data.components, layout: { ...layout, items } } };
 }
 
-/** The sockets' geometry the game draws at a capacity, from its own resampling (footerStaminaLayers). */
+/**
+ * The mana ring the game draws at a capacity, from its resampling of the sockets
+ * (src/ui/models/FooterLayoutModel.js footerStaminaLayers): gems only, in socket order.
+ */
 export function ringAt(data, capacity, available = 0) {
+  const sockets = layoutOf(data).items.filter((n) => ['diamond', 'spent'].includes(n.asset))
+    .sort((a, b) => socketRank(a) - socketRank(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const gems = Array.from({ length: capacity }, (_, i) => ({ id: i < available ? 'diamond' : 'spent' }));
-  return footerStaminaLayers(layoutOf(data), { gems }).filter((n) => n.asset === 'diamond' || n.asset === 'spent');
+  return gems.flatMap((gem, i) => {
+    if (!sockets.length) return [];
+    const at = i * sockets.length / gems.length;
+    const a = sockets[Math.floor(at)], b = sockets[(Math.floor(at) + 1) % sockets.length], blend = at % 1;
+    if (a.visible === false) return [];
+    const lerp = (key) => a[key] + (b[key] - a[key]) * blend;
+    const scale = Math.min(1, sockets.length / gems.length) * (gem.id === 'spent' ? 0.6 : 1);
+    const w = lerp('w') * scale, h = lerp('h') * scale;
+    return [{ id: a.id, asset: gem.id, x: lerp('x') + (lerp('w') - w) / 2, y: lerp('y') + (lerp('h') - h) / 2, w, h }];
+  });
 }
+const socketRank = (n) => (/^mana-\d+$/.test(n.id) ? Number(n.id.slice(5)) : Infinity);
 
 /** The file text a save would write for this object, or null when it matches the original text. */
 export function changedText(original, data) {

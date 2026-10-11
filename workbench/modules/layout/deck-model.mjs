@@ -12,7 +12,8 @@
 // any other shape is refused rather than rewritten.
 //
 // Every edit below returns a new object and refuses (throws) a result the compiler would refuse.
-// The badges themselves are the game's own (src/ui/models/deckEditorCosts.js); the model does not restate them.
+// The browser cannot import the game's source, so badgesFor restates src/ui/models/deckEditorCosts.js;
+// workbench/tests/layout-deck-model.test.mjs compares the two on every case it checks.
 
 export const DECK_FILE = 'content/config/ui/presentation/deckEditorCosts.json';
 export const RESOURCES = Object.freeze(['mana', 'stamina', 'action']);
@@ -137,6 +138,22 @@ export function splitResource(data, resource) {
   const alone = { id, label: DEFAULT_LABEL[resource], resources: [resource] };
   const next = groups.map((g, i) => (i === from ? { ...g, resources: g.resources.filter((r) => r !== resource) } : g));
   return accept(data, [...next, alone]);
+}
+
+/**
+ * The badges the game shows for a cost profile (src/ui/models/deckEditorCosts.js deckEditorCosts,
+ * restated): one per group, with the pools it shows summed, and X when a variable cost has no fixed part.
+ */
+export function badgesFor(profile, groups) {
+  return groups.map(({ id, label, resources, art }) => {
+    const canonical = [...new Set(resources.map((resource) => (resource === 'action' ? 'stamina' : resource)))];
+    const variable = profile.variable && canonical.includes('stamina');
+    const fixed = canonical.reduce((total, resource) => {
+      const value = resource === 'stamina' ? profile.stamina ?? profile.action : profile[resource];
+      return total + (variable && resource === 'stamina' ? 0 : Number(value || 0));
+    }, 0);
+    return { id, label, resources: canonical, ...(art ? { art } : {}), value: variable ? `X${fixed ? `+${fixed}` : ''}` : fixed };
+  });
 }
 
 /** The file text a save would write for these groups, or null when it matches the original. */
