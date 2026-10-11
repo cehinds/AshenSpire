@@ -1916,8 +1916,12 @@ const quickMenuControls = {
   },
 };
 
+// The Settings door showSettings opened, so an import (which replaces the profile
+// under it) can close it. Its toggles read the stale DOM otherwise.
+let settingsDoor = null;
+
 function showSettings() {
-  openSettings({
+  settingsDoor = openSettings({
     meta: activeMeta,
     previewAttributes: run?.attributes,
     previewLevel: run ? characterLevelOf(run) : null,
@@ -1941,6 +1945,8 @@ function refreshAfterImport() {
   applyRestoredSettings(settings);
   rebuildRegistries(activeSettings);
   settingsChoiceChecked = false;
+  // The Settings door (opened from the title's Download & saves path) still shows the old profile.
+  settingsDoor?.close?.(); settingsDoor = null;
   showTitle({ skipStartup: true });
 }
 

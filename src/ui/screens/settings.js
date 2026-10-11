@@ -4193,4 +4193,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
   });
   // The selected tab on a rail; the [Section ▾] selector on a compact host.
   (rendered?.nav?.start() || door.veil.querySelector('#set-close'))?.focus({ preventScroll: true });
+  // The shell's handle ({ close, ... }) so a caller that opened Settings can close it
+  // when an import replaces the profile under it (main.js refreshAfterImport).
+  return door;
 }

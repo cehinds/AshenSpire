@@ -74,3 +74,19 @@ test('an import refresh restores the profile the way the Profile door does', () 
   assert.ok(body.indexOf('bringStoredProfileForward(') < body.indexOf('applyRestoredSettings('), 'migrate before applying');
   assert.ok(!/activeSettings\s*=/.test(body), 'activeSettings is filled in place, never replaced');
 });
+
+test('the import copy promises no reload the page no longer does', () => {
+  const offline = read('src/ui/components/offlinePlay.js');
+  assert.ok(!offline.includes('reloads after import'), 'the confirmation does not promise a reload');
+  assert.ok(!offline.includes('Reload the game to use them'), 'the success status does not ask for a reload');
+});
+
+test('an import refresh closes the Settings door before the title redraws', () => {
+  const main = read('src/main.js');
+  const refresh = bodyOf(main, 'function refreshAfterImport() {');
+  assert.match(main, /let settingsDoor = null;/);
+  const close = refresh.indexOf('settingsDoor?.close?.()');
+  assert.notEqual(close, -1, 'refreshAfterImport closes settingsDoor');
+  assert.ok(close < refresh.indexOf('showTitle('), 'settingsDoor closes before showTitle');
+  assert.match(bodyOf(main, 'function showSettings() {'), /settingsDoor = openSettings\(/);
+});
