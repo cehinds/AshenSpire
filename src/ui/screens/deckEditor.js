@@ -840,7 +840,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const row = focusedRow();
       if (row) { remove(row); return true; }
       const node = focused();
-      const onTile = /^tile(-remove)?:/.test(node?.dataset.focusKey || '');
+      // The tile's main, its ＋ and its － are one control group: － on any of
+      // them removes one copy, so the keyboard gets the same answer everywhere in the row.
+      const onTile = /^tile(-add|-remove)?:/.test(node?.dataset.focusKey || '');
       const tile = onTile ? model.collection.find(candidate => candidate.key === node.dataset.key) : null;
       if (tile?.removable) { focusKey = node.dataset.focusKey; remove(tile.removeInstanceId); return true; }
       return false;

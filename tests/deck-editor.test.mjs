@@ -592,8 +592,9 @@ test('Reading Desk: pane switching and redraw skip rows inside collapsed deck gr
     assert.equal(document.activeElement.dataset.focusKey, 'tile-add:basic:attack', 'the pressed ＋ keeps focus');
     assert.notEqual(document.activeElement.tagName, 'INPUT', 'never the search box');
     assert.equal(run.deck.length, before.deck.length + 1);
-    assert.equal(editor.dispatch({ family: 'keyboard', key: '-' }), false);
-    assert.equal(run.deck.length, before.deck.length + 1);
+    // The ＋ and － of one tile are one control group: － on the focused ＋ takes back the copy ＋ added.
+    assert.equal(editor.dispatch({ family: 'keyboard', key: '-' }), true);
+    assert.equal(run.deck.length, before.deck.length, 'the copy ＋ added is taken back');
     editor.close();
   });
 });
@@ -996,6 +997,53 @@ test('DOM: － on a focused collection tile removes one copy from the keyboard',
     assert.equal(run.deck.length, n - 1, 'one copy out');
     editor.close();
   });
+});
+
+test('a plain run: the mint tile removes plain copies only; a set-aside copy in the deck belongs to its kept tile', () => {
+  const run = {
+    class: 'reaver', editMintCounter: 0,
+    deck: [
+      { instanceId: 'p1', cardId: 'strike', upgraded: false },
+      { instanceId: 'u1', cardId: 'strike', upgraded: true },
+      { instanceId: 'p2', cardId: 'strike', upgraded: false },
+    ],
+    sideboard: [],
+  };
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  const kept = `kept:${deckVariantKey(run.deck[1])}`;
+  const mint = model.collection.find((tile) => tile.key === 'basic:strike');
+  assert.equal(mint.inDeck, 2, 'the mint counts plain copies only');
+  assert.equal(mint.removeInstanceId, 'p2', 'the mint removes the last PLAIN copy');
+  const keptTile = model.collection.find((tile) => tile.key === kept);
+  assert.ok(keptTile, 'the deck-held set-aside copy has a kept tile');
+  assert.equal(keptTile.inDeck, 1);
+  assert.equal(keptTile.removeInstanceId, 'u1');
+  assert.equal(keptTile.removable, true);
+  assert.equal(keptTile.addable, false, 'nothing to restore with no sideboard copy');
+  const row = model.deck.find((r) => r.instanceId === 'u1' || r.groupKey === 'u1');
+  assert.ok(row, 'the upgraded copy is its own deck row');
+  assert.equal(row.tileKey, kept, 'an inspected set-aside deck row resolves to the kept tile');
+  const plainRow = model.deck.find((r) => r.tileKey === 'basic:strike');
+  assert.ok(plainRow, 'a plain deck row resolves to the mint tile');
+  // Removing through the kept tile takes the upgraded copy, not a plain one.
+  const edit = openDeckEdit(REG, run, {});
+  assert.equal(edit.remove(keptTile.removeInstanceId).ok, true);
+  assert.equal(run.deck.some((c) => c.instanceId === 'u1'), false);
+  assert.equal(run.deck.filter((c) => !c.upgraded).length, 2, 'both plain copies stay');
+  edit.cancel();
+});
+
+test('a set-aside variant in the deck with no sideboard copy: add is refused cleanly, not thrown', () => {
+  const run = {
+    class: 'reaver', editMintCounter: 0,
+    deck: [{ instanceId: 'u1', cardId: 'strike', upgraded: true }],
+    sideboard: [],
+  };
+  const key = `kept:${deckVariantKey(run.deck[0])}`;
+  const edit = openDeckEdit(REG, run, {});
+  assert.doesNotThrow(() => edit.add(key));
+  assert.equal(edit.add(key).ok, false);
+  edit.cancel();
 });
 
 test('DOM: the inspector offers Add and Remove side by side, each enabled only when it would act', async () => {
