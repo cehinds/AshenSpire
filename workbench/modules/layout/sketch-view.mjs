@@ -399,11 +399,11 @@ export function createSketchView(root, host) {
       return [{ path: pathOf(st.name), text: S.serializeSketch(st.sketch, st.original), baseHash: st.hash }];
     },
     /** A save went through: the sketch is now that file, and its list gains the name. */
-    async saved(files) {
-      const f = files.find((x) => x.path === pathOf(st.name));
-      if (!f) return;
-      st.original = S.serializeSketch(st.sketch, st.original);
-      st.hash = f.hash;
+    async saved(files, sent) {
+      const base = C.savedBase(files, sent, pathOf(st.name));
+      if (!base) return;
+      st.original = base.original;
+      st.hash = base.hash;
       await listNames();
       paintAll();
     },

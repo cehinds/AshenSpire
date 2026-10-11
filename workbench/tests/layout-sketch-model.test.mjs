@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as S from '../modules/layout/sketch-model.mjs';
+import * as C from '../modules/layout/config-model.mjs';
 import * as M from '../modules/layout/studio-model.mjs';
 import { SKETCH_SCHEMA } from '../modules/layout/studio-model.mjs';
 import { createDocument } from '../ui/kit/canvas-model.mjs';
@@ -138,4 +139,17 @@ test('showing a hidden box from Layers writes its hidden flag back, and hiding o
   const again = S.applyCanvasItems(data, S.canvasItems(data, phone).map((it) => (it.id === 'hud' ? { ...it, hidden: true } : it)), phone);
   assert.equal(again.boxes.find((b) => b.id === 'hud').hidden, true, 'the box is hidden in the file');
   assert.equal(S.drawingFor(again, phone).rects.length, 3);
+});
+
+test('a sketch save sets the base to the sent text, so an edit made while it ran stays dirty', () => {
+  const { data } = S.parseSketch(realText);
+  const setHud = (d, hidden) => S.applyCanvasItems(d, S.canvasItems(d, phone).map((it) => (it.id === 'hud' ? { ...it, hidden } : it)), phone);
+  const sentText = S.serializeSketch(setHud(data, true), realText);
+  // The save is in flight; the user shows the HUD again before the server answers.
+  const live = setHud(setHud(data, true), false);
+  const base = C.savedBase([{ path: EXAMPLE, hash: 'hash-after' }], new Map([[EXAMPLE, sentText]]), EXAMPLE);
+  assert.equal(base.original, sentText, 'the base is the submitted text');
+  assert.equal(base.hash, 'hash-after');
+  assert.notEqual(S.serializeSketch(live, base.original), base.original, 'the later edit is still unsaved');
+  assert.equal(S.serializeSketch(setHud(data, true), base.original), base.original, 'nothing else differs from the submit');
 });

@@ -393,7 +393,7 @@ export default {
         if (base) Object.assign(f, base);
       }
       if (views.battlefield) views.battlefield.saved(data.files, sent);
-      if (views.sketch) await views.sketch.saved(data.files);
+      if (views.sketch) await views.sketch.saved(data.files, sent);
       dlg.close();
       rebuild();
       ctx.toast({ kind: 'success', title: `Saved ${data.files.length} file(s)`, detail: `Backup ${data.backup}`, record: false });
