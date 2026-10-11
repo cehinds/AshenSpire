@@ -5295,6 +5295,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.stance.neutral",
+    "extends": "",
+    "short": "Neutral",
+    "full": "Neutral stance card.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.up",
     "extends": "",
     "short": "▲",

@@ -338,7 +338,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // The card's stance type (SPEC §14.1): offensive, defensive, casting, counter
   // or sweep. A card with none shows no label.
   const stanceNode = (row) => {
-    const stance = stanceForCard(resolveCard(registries, row.ref));
+    // A card no stance classifies (a Prepare, a Power) is Neutral, not unlabelled.
+    const stance = stanceForCard(resolveCard(registries, row.ref)) ?? 'neutral';
     return stance ? el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) }) : null;
   };
   const cardFace = (row, extra, grouped = false, illustrated = !grouped) => [

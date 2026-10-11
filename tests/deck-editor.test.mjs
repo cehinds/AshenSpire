@@ -1209,6 +1209,21 @@ test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles 
   });
 });
 
+test('DOM: a card no stance classifies shows a Neutral stance, not none (a Rogue Prepare)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = createRunState({ seed: 0x5eed, classId: 'rogue', registries: REG, combatExpansionVersion: 1 });
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const prepare = deckEditorModel({ registries: REG, run, settings: {} }).deck.find(row => row.cardId === 'prepare');
+    assert.ok(prepare, 'the Rogue starts with a Prepare');
+    const row = editor.root.querySelector(`.deck-editor-row[data-instance-id="${prepare.instanceId}"]`)
+      || [...editor.root.querySelectorAll('.deck-editor-row')].find(node => node.querySelector('.deck-editor-name')?.textContent === prepare.name);
+    assert.equal(row.querySelector('.deck-editor-stance').textContent, 'Neutral');
+    assert.equal(row.querySelector('.deck-editor-stance').dataset.stance, 'neutral');
+    editor.close();
+  });
+});
+
 test('DOM: every collection tile displays its current deck count beneath resource costs', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
