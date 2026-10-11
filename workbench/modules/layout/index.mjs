@@ -108,6 +108,8 @@ export default {
       settings: st.settings,
       devices: () => st.settings.devices,
       viewportOf: (device, orientation, freeSize) => C.viewportOf(device, { orientation, freeSize }),
+      /** Resolves once the UI config files are loaded (or failed to load). */
+      ready: () => configLoaded,
       /** The battlefield is the combat wireframe's scene band at the device; without the config it is a fallback. */
       sceneSize(vp) {
         if (st.files) {
@@ -528,7 +530,7 @@ export default {
       }
     }
 
-    load();
+    const configLoaded = load();
 
     return {
       onShow() {

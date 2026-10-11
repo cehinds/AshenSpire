@@ -9,6 +9,8 @@ import * as C from './config-model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ZOOM_STEP = 1.25;
+/** The device UI config opens on, so the two modes start at the same size. */
+const DEFAULT_DEVICE = 'desk-1280';
 /** The slot marker on the canvas, in battlefield px. */
 export const SLOT_PX = 26;
 const ALIGN = [['left', 'Align left'], ['center', 'Align centre'], ['right', 'Align right'], ['top', 'Align top'], ['middle', 'Align middle'], ['bottom', 'Align bottom']];
@@ -269,13 +271,15 @@ export function createBattlefieldView(root, host) {
 
   async function load() {
     try {
+      // The scene size comes from the UI config files, so the first drawing waits for them.
+      if (host.ready) await host.ready();
       const r = await host.api(`files/read?path=${encodeURIComponent(B.PRESETS_FILE)}`);
       const parts = B.parsePresets(r.text);
       // Saving writes the presets back in this form; a file in another form would show a diff that no edit made.
       if (B.serializePresets(parts, parts.data) !== r.text) throw Error(`${B.PRESETS_FILE} is not in the form Layout Studio saves; edit it in the file`);
       st.parts = parts; st.data = parts.data; st.original = r.text; st.hash = r.hash;
       st.layoutKey = B.layoutKeys(st.data)[0];
-      st.deviceId = host.devices()[0]?.id ?? null;
+      st.deviceId = host.devices().some((d) => d.id === DEFAULT_DEVICE) ? DEFAULT_DEVICE : host.devices()[0]?.id ?? null;
       ensureCanvas();
       rebuild({ fit: true });
     } catch (err) {

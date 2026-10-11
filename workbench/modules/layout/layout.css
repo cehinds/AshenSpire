@@ -58,7 +58,7 @@
    They slide with a transform, so the canvas never reflows under them. */
 .lay .lay-toggle, .lay .lay-panel-head { display: none; }
 @container lay (max-width: 1100px) {
-  .lay-body { grid-template-columns: minmax(0, 1fr); }
+  .lay-body, .mode-body { grid-template-columns: minmax(0, 1fr); }
   .lay .lay-toggle { display: inline-flex; }
   .lay .lay-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid var(--as-line); font-size: var(--as-text-sm); font-weight: 600; }
   .lay-left, .lay-right { position: absolute; top: 0; bottom: 0; z-index: 6; width: min(300px, 88%); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); transition: transform 180ms ease; }

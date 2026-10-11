@@ -358,7 +358,7 @@ export function createSketchView(root, host) {
       ensureCanvas();
       const first = st.names[0];
       if (first) await open(first); else startNew('wireframe-1');
-      st.deviceId = host.devices()[0]?.id ?? null;
+      st.deviceId = host.devices().some((d) => d.id === 'desk-1280') ? 'desk-1280' : host.devices()[0]?.id ?? null;
       rebuild({ fit: true });
     } catch (err) {
       st.error = `Could not load the sketches: ${err.message}`;
