@@ -15,6 +15,12 @@ visible (UI, tools, the Workbench, art, layout), finish the report with fresh
 screenshots of the changed screens and a preview the owner can open (a
 published page or the CI artifact link), without being asked.
 
+**Nothing lives only on one machine** (owner, 2026-10-11): the owner switches
+computers and models mid-task, so every commit reaches origin as soon as it exists.
+Workers' branches are pushed to their own `origin/<branch>` as they commit (the
+main session pushes them when a worker cannot), task status lives in the PR body
+or a committed file, and previews are published links, not local servers.
+
 **When you need the owner to decide or do something**, ask in this shape, and
 nothing longer (owner's rule, 2026-09-26):
 
