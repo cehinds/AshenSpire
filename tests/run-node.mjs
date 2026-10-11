@@ -1341,4 +1341,8 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
-process.exit(failed + zoomExtra > 0 ? 1 : 0);
+// On macOS stdout to a pipe is asynchronous, and an immediate process.exit cut the
+// report off mid-stream (the failing test's name never reached the CI log). Exit
+// once the last write has been flushed; writes on one stream complete in order.
+process.exitCode = failed + zoomExtra > 0 ? 1 : 0;
+process.stdout.write('', () => process.exit(process.exitCode));
