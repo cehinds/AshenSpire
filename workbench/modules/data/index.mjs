@@ -326,11 +326,26 @@ export default {
     });
 
     ctx.shortcuts.register('Mod+S', 'Review & save', () => { openReview(); }, { inInput: true });
-    // Deep link: #mod=data&table=<path> selects that table; otherwise the first table opens.
+    // Deep link: #mod=data&table=<path>[&row=<key>] selects that table; otherwise the first table opens.
+    // A row is the one whose key-column value equals it; it is selected and scrolled into view.
+    const rowAt = (key) => {
+      const data = state.grid?.getData();
+      const keyCol = data && keyColumnOf(data.columns);
+      if (!keyCol || key == null) return;
+      const r = data.rows.findIndex((row) => String(row[keyCol.key] ?? '') === String(key));
+      if (r < 0) return;
+      state.activeRow = r;
+      state.grid.focusCell(r, Math.max(0, data.columns.indexOf(keyCol)));
+      renderRow();
+    };
+    const openAt = async (path, row) => {
+      await select(path);
+      if (row != null && state.selected === path) rowAt(row);
+    };
     const pick = () => {
       const want = ctx.params?.table;
       const hit = state.tables.find((t) => t.path === want);
-      if (hit) return select(hit.path);
+      if (hit) return openAt(hit.path, ctx.params?.row);
       const first = state.tables[0];
       if (first) return select(first.path);
       return null;
@@ -338,10 +353,15 @@ export default {
     loadList().then(() => {
       if (pick() === null) gridEl.innerHTML = '<div class="ds-note">No tables found.</div>';
     }).catch((e) => { gridEl.innerHTML = `<div class="ds-note">${esc(e.message)}</div>`; });
+    let seenRow = null;
     return {
       onShow() {
-        const want = ctx.params?.table;
-        if (want && want !== state.selected && state.tables.some((t) => t.path === want)) select(want);
+        const p = ctx.params;
+        const want = p?.table;
+        if (!want || !state.tables.some((t) => t.path === want)) return;
+        if (want !== state.selected) { openAt(want, p.row); return; }
+        // The same table again: a new link's row is selected; a plain return keeps the reader's row.
+        if (p.row != null && p !== seenRow) { seenRow = p; rowAt(p.row); }
       },
       commands: () => [
         ...state.tables.map((t) => ({ title: `Open table… ${t.name}`, sub: t.group, run: () => select(t.path) })),
