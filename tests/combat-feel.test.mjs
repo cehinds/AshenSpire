@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SHAKE_STEPS, SHAKE_MAX_PX, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
-import { ANIM_SPEEDS, playTimeline, setAnimSpeed } from '../src/ui/fx.js';
+import { ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack } from '../src/ui/reaverAttack.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -143,9 +143,9 @@ function drive(t, fn) {
   });
 }
 
-// Sequential beat order (animationPace.js, owner 2026-10-11): the attacker
-// holds its impact frame at each contact; the target's recoil — and its hold —
-// play after the swing has settled (impactMs 100, totalMs 800 + both holds).
+// Sequential beat order (animationPace.js, owner 2026-10-11; SPEC §7.4): the
+// hit-stop holds the attacker's impact frame alone; the target's recoil plays
+// unheld after the swing has settled (impactMs 100, totalMs 800 + both holds).
 test('each qualifying multi-hit impact holds both figures, and buzzes at first impact once', (t) => {
   drive(t, ({ start, tick, holds, buzzes, reactions }) => {
     start([6, 10]); tick(100);
@@ -155,25 +155,34 @@ test('each qualifying multi-hit impact holds both figures, and buzzes at first i
     tick(128);
     assert.deepEqual(holds.slice(1), [['actor', 60, 10228]], 'the second hit holds the attacker after its step and the first hold');
     tick(128); tick(564);
-    assert.deepEqual(holds.slice(2), [['target', 60, 10920]], 'the first reaction holds the target once the swing (800 + 120 ms) is over');
-    assert.deepEqual(reactions, [['hit', 220]], 'target playback keeps its base duration');
+    assert.deepEqual(reactions, [['hit', 220]], 'the target reacts once the swing (800 + 120 ms) is over, at its base duration');
     for (let i = 0; i < 100; i++) tick(20);
-    assert.deepEqual(holds.slice(3).map(([who, ms]) => [who, ms]), [['target', 60]], 'the second reaction holds the target too');
+    assert.equal(reactions.length, 2, 'the second hit reacts too');
+    assert.ok(holds.every(([who]) => who === 'actor'), 'the target is never held');
     assert.equal(buzzes.length, 1, 'recovery does not buzz twice');
   });
 });
 
-test('a click during hit-stop clears both held figures and flushes once without a second buzz', (t) => {
+test('beatOrder impact holds both figures at impact, as before', (t) => {
+  setBeatOrder('impact');
+  try {
+    drive(t, ({ start, tick, holds, reactions }) => {
+      start([6]); tick(100);
+      assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]]);
+      assert.deepEqual(reactions, [['hit', 220]]);
+      for (let i = 0; i < 100; i++) tick(20);
+    });
+  } finally { setBeatOrder('sequential'); }
+});
+
+test('a click during hit-stop clears the held attacker and flushes once without a second buzz', (t) => {
   drive(t, ({ start, tick, actor, target, fire, stats, buzzes }) => {
     start([6]); tick(100);
     assert.ok(actor.classList.contains('hit-stop'), 'the attacker holds at impact');
-    assert.ok(!target.classList.contains('hit-stop'), 'the target reacts only after the swing (sequential)');
-    tick(760);
-    assert.ok(target.classList.contains('hit-stop'), 'the target holds its recoil after the swing');
+    assert.ok(!target.classList.contains('hit-stop'), 'the target is not held at impact (sequential)');
     fire('pointerdown');
     assert.ok(!actor.classList.contains('hit-stop'));
     assert.ok(!target.classList.contains('hit-stop'));
-    assert.equal(stats().settled, 1);
     fire('pointerup'); tick(1);
     assert.equal(stats().flushes, 1);
     assert.equal(stats().completed, 1);

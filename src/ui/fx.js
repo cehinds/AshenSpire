@@ -975,10 +975,9 @@ export function playTimeline(events, ctx, done) {
               numbers();
               return;
             }
-            // The target's recoil holds as long as the attacker held its impact frame.
-            hitStop = holdFor(event);
+            // The hit-stop held the attacker's impact frame alone; the target's
+            // reaction plays unheld (SPEC §7.4, sequential).
             safe(() => parts.reaction(ctx));
-            hitStop = 0;
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
               else schedule(stepR, speed.reactionMs);
