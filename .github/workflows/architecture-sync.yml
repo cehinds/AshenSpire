@@ -5,10 +5,11 @@ on:
     branches: [dev, alternative/dev, 'alternative/**/dev']
   workflow_dispatch:
 
-# Shared with readme-sync.yml: the two bot pushes to a development branch queue
-# behind each other and are never cancelled mid-push (see that workflow).
+# Own group, per workflow. A shared group would let one pending run replace the
+# other (GitHub keeps one pending run per group). The rebase-and-retry push loop
+# in each workflow handles the race with readme-sync.yml instead.
 concurrency:
-  group: dev-bot-push
+  group: architecture-sync-dev
   cancel-in-progress: false
 
 # The routine commits only the generated current-dev inventory. The core
