@@ -52,3 +52,9 @@ test('the end plate keeps its stretch: only piles and potions are contain-fit', 
     assert.equal(end.getAttribute('style'), null);
   });
 });
+
+test('compact contain faces size by height, so their width follows the art aspect', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  assert.match(css, /^\.combat-action-row\[data-footer-compact='true'\] \.footer-art-face\[data-art-fit='contain'\] \{ width: auto; \}$/m);
+});

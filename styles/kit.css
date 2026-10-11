@@ -4995,6 +4995,10 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    844x390 included) keeps 44px piles: a 42% icon over 11px counts fits them. */
 .combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: 42%; flex: 0 1 42%; }
 .combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(11px / var(--ui-zoom, 1)); }
+/* A compact face is sized by height; its width follows the art's own aspect (the
+   aspect-ratio footerArt.js writes) so the contained art is not stretched into a
+   pile's full width. */
+.combat-action-row[data-footer-compact='true'] .footer-art-face[data-art-fit='contain'] { width: auto; }
 /* Piles on a compact host (<= 600px, packCombatFooter's compact branch): a 28px
    icon over 13px counts, the minimum legible size on a phone. Discard/Exhaust's
    two lines are the tallest content, and the pile height (pileHeightPx) is sized
