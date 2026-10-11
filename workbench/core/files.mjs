@@ -240,6 +240,15 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     return { path: rel, exists: buf !== null, ...result };
   }
 
+  /** Runs tools/card-components.mjs on a layout, against this project's root. Throws the compiler's message. */
+  async function compileLayout(layout) {
+    const [{ compileCardComponents }, { contentBundle }] = await Promise.all([
+      import('../../tools/card-components.mjs'),
+      import('../../src/content/index.js'),
+    ]);
+    compileCardComponents(layout, contentBundle.cards, root);
+  }
+
   /** Problems with a change set: [{ path, message }]. Config files compile as one tree, as UI Studio does. */
   async function validate(changes) {
     const problems = [];
@@ -250,7 +259,14 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
           try { parsed = JSON.parse(c.text); } catch (e) { throw Error(`Invalid JSON: ${e.message}`); }
           validateText(c.path, c.text);
           // The card layout is a schema the game compiler reads: each problem is listed on its own.
-          if (c.path === LAYOUT_FILE) for (const message of layoutProblems(parsed)) problems.push({ path: c.path, message });
+          if (c.path === LAYOUT_FILE) {
+            const found = layoutProblems(parsed);
+            for (const message of found) problems.push({ path: c.path, message });
+            // The game's own compiler has the last word: a layout it refuses is never written.
+            if (!found.length) {
+              try { await compileLayout(parsed); } catch (e) { problems.push({ path: c.path, message: e.message }); }
+            }
+          }
         } else if (c.kind === 'csv') {
           tableData(c.path, c.text);
           validateText(c.path, c.text);

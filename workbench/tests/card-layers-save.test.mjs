@@ -17,6 +17,8 @@ async function project(t) {
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'src/content'), { recursive: true });
   await fs.copyFile(path.join(ROOT, LAYOUT_FILE), path.join(root, LAYOUT_FILE));
+  // The compiler checks every layer image against the art manifest, as the game build does.
+  await fs.copyFile(path.join(ROOT, 'art-manifest.json'), path.join(root, 'art-manifest.json'));
   return root;
 }
 
@@ -71,4 +73,21 @@ test('a save of the card layout runs the card components build before the reload
   assert.deepEqual(buildsFor([LAYOUT_FILE], root), ['tools/card-components.mjs']);
   assert.deepEqual(buildsFor(['content/config/ui/tokens.json', LAYOUT_FILE], root), ['tools/config-build.mjs', 'tools/card-components.mjs'], 'config first, then the card components');
   assert.deepEqual(buildsFor(['styles/main.css'], root), []);
+});
+
+test('a layout the game compiler refuses is a 422 with its message, and nothing is written', async (t) => {
+  const root = await project(t);
+  const service = createFileService({ root, stateDir: path.join(root, '.wb-state') });
+  const before = await service.read(LAYOUT_FILE);
+  // Top-level width 400 against coordinateSpace.width 360: the schema check passes, the compiler refuses.
+  const broken = JSON.parse(before.text);
+  broken.width = 400;
+  const text = JSON.stringify(broken, null, 2) + '\n';
+  const problems = await service.validate([{ path: LAYOUT_FILE, kind: 'json', text }]);
+  assert.deepEqual(problems, [{ path: LAYOUT_FILE, message: 'Invalid card preview coordinate space' }]);
+  await assert.rejects(
+    service.save([{ path: LAYOUT_FILE, text, baseHash: before.hash }]),
+    (err) => err.status === 422 && err.problems[0].message === 'Invalid card preview coordinate space',
+  );
+  assert.equal(await fs.readFile(path.join(root, LAYOUT_FILE), 'utf8'), before.text);
 });
