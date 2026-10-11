@@ -180,8 +180,9 @@ async function checkJs(rel, text) {
  * onWritten(abs, stat) runs after each file is renamed into place (saves and rollbacks),
  * with the stat the file was left with: the server uses it to drop the watcher's echo.
  * fileFault(rel) is a test seam: it may throw before a file is renamed into place.
+ * pruneFault() is a test seam: it may throw where old backup sets are pruned.
  */
-export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null }) {
+export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null }) {
   let tail = Promise.resolve();
   const serialize = (task) => { const run = tail.then(task, task); tail = run.catch(() => {}); return run; };
   const backupsDir = path.join(stateDir, 'backups');
@@ -298,6 +299,7 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
   }
 
   async function prune(keep) {
+    if (pruneFault) pruneFault();
     const ids = (await fs.readdir(backupsDir).catch(() => [])).filter((id) => SET_ID.test(id)).sort();
     for (const id of ids.slice(0, Math.max(0, ids.length - keep))) await fs.rm(path.join(backupsDir, id), { recursive: true, force: true });
   }
@@ -364,7 +366,8 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
         throw error;
       }
       const keep = Number.isInteger(keepBackups()) && keepBackups() >= 1 ? keepBackups() : 50;
-      await prune(keep);
+      // The save has landed: pruning old backup sets is housekeeping, so a failure there is logged, not reported as a failed save.
+      try { await prune(keep); } catch (error) { console.warn(`Workbench: could not prune old backups: ${error.message}`); }
       return { backup: id, files: prepared.map((f) => ({ path: f.path, hash: hash(f.bytes) })) };
     } finally { if (release) release(); }
   }
