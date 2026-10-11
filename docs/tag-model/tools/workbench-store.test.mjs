@@ -2,7 +2,7 @@
 // docs/tag-model/workbench.html into a node vm context with a fake db.
 //
 //   node --test docs/tag-model/tools/workbench-store.test.mjs
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1228,7 +1228,7 @@ test('(c) inserting one row at the top rewrites at most two blobs', async () => 
 const CSV_DIR = path.join(HERE, '..', 'tables');
 const CSV_FOR = {
   tags: 'tags.csv', objects: 'objects.csv', values: 'values.csv', formulas: 'formulas.csv',
-  ranks: 'ranks.csv', relations: 'relations.csv',
+  ranks: 'ranks.csv', relations: 'relations.csv', artSizes: 'assets.csv',
   assets: 'presentation/assets.csv', components: 'presentation/components.csv', layouts: 'presentation/layouts.csv',
   styles: 'presentation/styles.csv', tokens: 'presentation/tokens.csv', breakpoints: 'presentation/breakpoints.csv',
   animations: 'presentation/animations.csv', effects: 'presentation/effects.csv', resolutions: 'presentation/resolutions.csv',
@@ -1315,4 +1315,21 @@ test('a columnless head whose rows are objects still loads with the defaults', a
   api.subscribeTable('t');
   await waitFor(() => page.loaded.has('t'));
   assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify([{ id: 'o1', name: 'n', qty: 2 }]));
+});
+
+// CSVs under tables/ and tables/presentation/ that no workbench table edits. Empty on purpose:
+// a new CSV must get a workbench table, or be added here with the reason in a comment.
+const EXCLUDED_CSV = new Set([]);
+
+test('every CSV under tables/ and tables/presentation/ is edited by a workbench table or excluded', () => {
+  const mapped = new Set(Object.values(CSV_FOR));
+  const found = [];
+  for (const dir of ['', 'presentation']) {
+    for (const f of readdirSync(path.join(CSV_DIR, dir))) {
+      if (f.endsWith('.csv')) found.push(path.posix.join(dir, f));
+    }
+  }
+  const unmapped = found.filter((f) => !mapped.has(f) && !EXCLUDED_CSV.has(f));
+  assert.deepEqual(unmapped, [], 'CSV with no workbench table and not excluded');
+  for (const f of EXCLUDED_CSV) assert.ok(found.includes(f) && !mapped.has(f), 'stale exclusion: ' + f);
 });

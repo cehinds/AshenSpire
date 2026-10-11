@@ -151,11 +151,13 @@ const TABLES = {
   combatSymbols:{label:'Combat symbols', key:'tagKey', group:'presentation', help:'One icon per combat concept. <b>placeholder</b> rows borrow the closest existing icon until art is made.', columns:['tagKey','label','currentSymbol','currentAssetRef','suggestedAssetRef','status','assignedAssetRef','tag','liveRef','artBrief','priority'], refs:{tag:'tag'}},
   settings:{label:'Settings', key:'key', group:'presentation', help:'Player settings and game tuning values, with defaults, ranges and where they are read. <b>scope</b> is player or tuning; <b>deviceScope</b> is device (per device: layout, text size, display) or global.', columns:['key','label','group','type','default','options','min','max','step','storage','readBy','file','scope','deviceScope','tag','liveRef'], refs:{tag:'tag'}},
   strings:{label:'Strings', key:'key', group:'presentation', help:'Every label and tooltip. <b>context</b> hardcoded marks text written directly in UI code instead of the shared strings file.', columns:['key','text','tooltip','context','file','tag','liveRef','proposedKey','migrateTo'], refs:{tag:'tag'}},
+  artSizes:{label:'Art sizes', key:'id', help:'Pixel size of each game asset id the tables point at, with its <b>kind</b> (card art, card icon and so on). Sizes come from the game\'s art files. <b>preview</b> names a preview image, if there is one; <b>note</b> says anything unusual about the file.',
+    columns:['id','kind','width','height','preview','note'], refs:{}},
   relations:{label:'Relations', key:null, help:'Typed links between tags: STRONG_VS, WEAK_VS, BYPASSES, APPLIES, CLEARS, REQUIRES, CONFLICTS_WITH, REFERENCES. <b>value</b> is the multiplier or amount when there is one.',
     columns:['source','relation','target','value','note'], refs:{source:'tag', target:'tag'}},
 };
-const ORDER = ['tags','objects','values','formulas','ranks','relations','components','layouts','styles','tokens','breakpoints','assets','animations','effects','resolutions','symbols','combatSymbols','settings','strings'];
-const CORE = new Set(['tags','objects','values','formulas','ranks','relations']);
+const ORDER = ['tags','objects','values','formulas','ranks','relations','artSizes','components','layouts','styles','tokens','breakpoints','assets','animations','effects','resolutions','symbols','combatSymbols','settings','strings'];
+const CORE = new Set(['tags','objects','values','formulas','ranks','relations','artSizes']);
 const loaded = new Set(); const pending = new Set();
 const PAGE = 150;
 
