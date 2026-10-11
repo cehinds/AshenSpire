@@ -5,13 +5,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { allowedKind, createFileService } from '../core/files.mjs';
 import { buildsFor } from '../core/watch.mjs';
 import { hash } from '../../editor/core.mjs';
+import { parseTagCSV, writeTagCSV } from '../lib/tag-model-csv.mjs';
 
 const T = 'docs/tag-model/tables';
+const SETTINGS = `${T}/presentation/settings.csv`;
+// Three real lines of presentation/settings.csv: its header and a row whose default cell is multiline.
+const SETTINGS_TEXT = readFileSync(new URL('./fixtures/tag-model/settings-sample.csv', import.meta.url), 'utf8');
+// The settings text with one cell changed, written back in the file's own shape.
+const settingsWith = (edit) => {
+  const table = parseTagCSV(SETTINGS_TEXT);
+  const shape = { eol: table.eol, trailingNewline: table.trailingNewline, bom: table.bom };
+  return writeTagCSV({ columns: table.columns, rows: table.rows.map((row, i) => (i === 0 ? { ...row, ...edit } : row)) }, shape);
+};
 const LAYOUTS = `${T}/presentation/layouts.csv`;
 const LAYOUTS_TEXT = 'id,tag,band,width\nl1,desk,desktop,100\nl2,phone,mobile,50\n';
 
@@ -111,4 +122,53 @@ test('a read of a tag-model table says its tier, whether it is savable, and its 
   assert.equal(layouts.tagModel.job, 'tag-model');
   assert.match(layouts.tagModel.banner, /A re-extraction \(build\.mjs --inv\) overwrites these columns/);
   assert.equal((await f.files.read('content/source/items.csv')).tagModel, undefined);
+});
+
+test('a multiline table saves: a base edit to a multiline row is accepted and the file keeps its multiline cell', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  const change = await f.change(SETTINGS, settingsWith({ label: 'Narration' }));
+  await f.files.save([change]);
+  const disk = await fs.readFile(path.join(f.root, SETTINGS), 'utf8');
+  assert.match(disk, /^gameConfig\.prologue\.scenes\.warmth\.text,Narration,/m);
+  assert.equal(parseTagCSV(disk).rows[0].default, 'Three hearths once kept the roads warm.\nWe lived beyond their walls.');
+});
+
+test('a single-line save over a multiline disk file still runs the rules: a changed derived cell is refused', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  // The page sends the row's default as one line (no line break), and changes its tag (a read-only column).
+  const change = await f.change(SETTINGS, settingsWith({ default: 'Short line', tag: 'player.changed' }));
+  const err = await refused(f.files.save([change]), 422);
+  assert.deepEqual(err.problems.map((p) => p.message), ['row 1, tag: read-only column']);
+  assert.equal(await fs.readFile(path.join(f.root, SETTINGS), 'utf8'), SETTINGS_TEXT, 'nothing is written');
+});
+
+test('a single-line save of a base cell over a multiline disk file is accepted', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  await f.files.save([await f.change(SETTINGS, settingsWith({ default: 'Short line' }))]);
+  assert.equal(parseTagCSV(await fs.readFile(path.join(f.root, SETTINGS), 'utf8')).rows[0].default, 'Short line');
+});
+
+test('an unparseable disk file refuses the save with the parse message, and writes nothing', async (t) => {
+  const f = await fixture(t);
+  const broken = 'key,label\nbroken,"never closed\n';
+  await fs.writeFile(path.join(f.root, SETTINGS), broken);
+  const change = await f.change(SETTINGS, SETTINGS_TEXT);
+  const err = await refused(f.files.save([change]), 422);
+  assert.equal(err.problems.length, 1);
+  assert.equal(err.problems[0].path, SETTINGS);
+  assert.match(err.problems[0].message, /^The file on disk does not parse: Unclosed CSV quote/);
+  assert.equal(await fs.readFile(path.join(f.root, SETTINGS), 'utf8'), broken);
+  assert.deepEqual(f.saved, []);
+});
+
+test('an unparseable new text is refused with 422 and its parse message, listed once', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  const change = await f.change(SETTINGS, 'key,label\nbroken,"never closed\n');
+  const err = await refused(f.files.save([change]), 422);
+  assert.deepEqual(err.problems, [{ path: SETTINGS, message: 'Unclosed CSV quote at line 2.' }]);
+  assert.equal(await fs.readFile(path.join(f.root, SETTINGS), 'utf8'), SETTINGS_TEXT);
 });

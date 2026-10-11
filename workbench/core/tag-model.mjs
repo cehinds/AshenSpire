@@ -5,7 +5,7 @@
 // Three tiers. A table the map does not name is read-only (its banner says it is
 // generated). The tables are re-extracted by docs/tag-model/tools/build.mjs, so a
 // save runs the job that keeps them consistent after it.
-import { parseCSV } from '../../editor/tables.mjs';
+import { parseTagCSV } from '../lib/tag-model-csv.mjs';
 
 export const TAG_MODEL_DIR = 'docs/tag-model/tables';
 export const TAG_MODEL_JOBS = { check: 'tag-model-check', full: 'tag-model' };
@@ -71,14 +71,30 @@ export function tagModelJobFor(paths = [], map = TAG_MODEL_EDITABLE) {
   return null;
 }
 
+/** Throws when a tag-model table's text does not parse (RFC 4180, workbench/lib/tag-model-csv.mjs) or repeats an id. */
+export function checkTagModelText(text) {
+  const table = parseTagCSV(text);
+  if (!table.columns.includes('id')) return;
+  const seen = new Set();
+  for (const row of table.rows) {
+    if (!String(row.id ?? '').trim() || seen.has(row.id)) throw Error(`Missing or duplicate id: ${row.id}`);
+    seen.add(row.id);
+  }
+}
+
 /** Problems with a save of one tag-model table: [{ path, message }], one per cell or row the save may not change.
  *  savedText is the text the page sends; diskText is the file on disk ('' when it is new). Rows are matched by `id`,
  *  or by position when the table has no id column. Only the derived columns and the read-only rows are checked. */
 export function checkTagModelSave(rule, savedText, diskText = '', path = `${TAG_MODEL_DIR}/${rule.table}`) {
-  const saved = parseCSV(savedText);
-  const disk = diskText && diskText.trim() ? parseCSV(diskText) : { columns: saved.columns, rows: [] };
   const problems = [];
   const at = (message) => problems.push({ path, message });
+  // Fail closed: a text that does not parse is refused with its parse message, and the rule check does not run on it.
+  let saved;
+  try { saved = parseTagCSV(savedText); } catch (e) { at(e.message); return problems; }
+  let disk = { columns: saved.columns, rows: [] };
+  if (diskText && diskText.trim()) {
+    try { disk = parseTagCSV(diskText); } catch (e) { at(`The file on disk does not parse: ${e.message}`); return problems; }
+  }
   if (disk.columns.join('\u0001') !== saved.columns.join('\u0001')) {
     at('The header row and its column order cannot change. Keep the columns as they are.');
     return problems;
