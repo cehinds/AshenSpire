@@ -571,30 +571,53 @@ test('the bonus goes to the winning stance only', () => {
   assert.equal(momentum.foe, -3);
 });
 
-// Owner example: if a counter staggers the attacker, the counter-user gains
-// full momentum, which sets M_e to +-3 in their favour (round end).
-test('counter stagger: a counter that staggers the attacker sets M_e to +3 for the player', () => {
+// Counter stagger (owner, 2026-10-11): a counter that fires and staggers adds
+// +-3 to its side's summed round delta, on top of the normal slot win. The
+// round-end clamp applies once, to the sum.
+test('counter stagger: from M_e -2, the player counter adds 3 on top of the slot win (clamp of -2 + 1 + 1 + 3)', () => {
   const { events, momentum } = resolveRound(
-    [{ id: 'counter', slot: 0, speed: 5, kind: 'counter', stance: 'counter', tags: ['stagger'] }],
-    [{ id: 'foe', speed: 4, kind: 'attack', stance: 'attack' }],
+    [{ id: 'counter', slot: 0, speed: 6, kind: 'counter', stance: 'counter', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 3, kind: 'attack', stance: 'attack' }],
     1,
     d20Face(20),
-    { stanceAdvantage: stanceTable() },
+    { stanceAdvantage: stanceTable(), momentum: { foe: -2 } },
   );
-  assert.deepEqual(find(events, 'status'), { type: 'status', status: 'stagger', target: 'enemy', slot: 0, visible: true, momentum: 0 });
+  assert.equal(find(events, 'countered').by, 'player');
+  assert.equal(find(events, 'status').target, 'enemy');
+  assert.equal(find(events, 'status').status, 'stagger');
+  const stagger = events.find((e) => e.reason === 'counterStagger');
+  assert.equal(stagger.delta, 3);
+  assert.equal(stagger.set, undefined, 'the stagger carries a delta, not a set');
+  assert.equal(momentum.foe, clampMomentum(-2 + 1 + 1 + 3));
   assert.equal(momentum.foe, 3);
-  assert.deepEqual(find(events, 'momentum').reason, 'success');
-  assert.equal(events.find((e) => e.reason === 'counterStagger').set, 3);
 });
 
-test('counter stagger: when the enemy counter staggers the player, M_e is set to -3', () => {
+test('counter stagger adds to M_e rather than setting it: from -3 the player counter ends at 1, not 3', () => {
+  // Speeds at M -3: player 6-1 = 5, enemy 3+1 = 4, so the counter fires first.
+  // No stance table, so the slot win is the base gain 1. Total: -3 + 1 + 3 = 1.
   const { momentum } = resolveRound(
-    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack', stance: 'attack' }],
-    [{ id: 'foe', speed: 5, kind: 'counter', stance: 'counter', tags: ['stagger'] }],
+    [{ id: 'counter', slot: 0, speed: 6, kind: 'counter', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 3, kind: 'attack' }],
     1,
     d20Face(20),
+    { momentum: { foe: -3 } },
   );
-  assert.equal(momentum.foe, -3);
+  assert.equal(momentum.foe, 1);
+});
+
+test('counter stagger: when the enemy counter staggers the player, it adds -3 on top of the slot win (from M_e 2)', () => {
+  // Speeds at M 2: player 3+1 = 4, enemy 6-1 = 5, so the enemy counter fires first.
+  // Total: 2 - 1 (slot win) - 3 (stagger) = -2.
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 3, kind: 'attack', stance: 'attack' }],
+    [{ id: 'foe', speed: 6, kind: 'counter', stance: 'counter', tags: ['stagger'] }],
+    1,
+    d20Face(20),
+    { momentum: { foe: 2 } },
+  );
+  assert.equal(find(events, 'countered').by, 'enemy');
+  assert.equal(events.find((e) => e.reason === 'counterStagger').delta, -3);
+  assert.equal(momentum.foe, -2);
 });
 
 test('counter stagger: hyper armor resists the stagger, so no full momentum', () => {
@@ -622,7 +645,7 @@ test('counter stagger: a counter that only stuns sets no full momentum, so the n
 });
 
 // Two slots for the same enemy, each a counter that staggers the other side.
-// Opposing full sets cancel (placeholder rule, flagged for the owner), so the
+// Opposing staggers net to their normal deltas (owner, 2026-10-11), so the
 // result must not depend on the order of playerCards.
 const opposingStaggerQueue = () => [
   { id: 'foeA', enemyId: 'foe', speed: 4, kind: 'attack', stance: 'attack' },
@@ -637,8 +660,9 @@ test('counter stagger: opposing staggers for one enemy give the same momentum in
   assert.equal(forward.momentum.foe, reversed.momentum.foe);
 });
 
-test('counter stagger: opposing staggers cancel, so M_e is start plus the summed normal deltas', () => {
-  // Player counter: momentumGain 2 plus stance bonus 1 = +3. Enemy counter: gain 1 plus bonus 1 = -2.
+test('counter stagger: opposing staggers net to their normal deltas, with no cancel event', () => {
+  // Player counter: gain 2 + stance bonus 1 = +3, plus stagger +3 = +6.
+  // Enemy counter: gain 1 + stance bonus 1 = -2, plus stagger -3 = -5. Net +1.
   const counter = { ...playerCounter, momentumGain: 2 };
   const { events, momentum } = resolveRound(
     [counter, playerStrike],
@@ -647,10 +671,10 @@ test('counter stagger: opposing staggers cancel, so M_e is start plus the summed
     d20Face(20),
     { stanceAdvantage: stanceTable(), momentum: { foe: 0 } },
   );
-  assert.equal(momentum.foe, clampMomentum(0 + 3 + -2));
+  assert.equal(momentum.foe, clampMomentum(0 + 6 + -5));
   assert.equal(momentum.foe, 1);
-  assert.deepEqual(events.find((e) => e.reason === 'counterStaggerCancelled'), { type: 'momentum', reason: 'counterStaggerCancelled', enemyId: 'foe' });
-  assert.equal(events.some((e) => e.type === 'momentumApplied' && Math.abs(e.to) === 3), false);
+  assert.deepEqual(events.filter((e) => e.reason === 'counterStagger').map((e) => e.delta), [3, -3]);
+  assert.equal(events.some((e) => e.reason === 'counterStaggerCancelled'), false);
 });
 
 // Momentum adds half its value to speed, truncated toward zero (owner, 2026-10-11).

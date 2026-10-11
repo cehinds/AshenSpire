@@ -533,12 +533,13 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // round. Momentum updates at round end (DESIGN.md, Momentum):
 // - Every pairing in the round uses the round's starting M_e.
 // - Each slot win moves M_e toward the winner by the card's momentumGain
-//   (default 1). A side wins a slot at most once per pairing. The deltas are
-//   summed per enemy, then clamped once to -3..3.
-// - A counter stagger sets M_e to +-3. If one enemy gets opposing staggers in
-//   the same round, they cancel: no set applies, and the summed deltas settle it.
+//   (default 1), plus the stance bonus. A side wins a slot at most once per
+//   pairing. A counter that staggers adds +-3 on top of its slot win. The
+//   deltas are summed per enemy, then clamped once to -3..3. Opposing staggers
+//   net naturally (owner, 2026-10-11).
 // - Pair events carry `momentum`: that enemy's starting M_e. A 'momentum'
-//   event marks each slot win. 'momentumApplied' marks each round-end change.
+//   event marks each slot win and each counter stagger (`delta`).
+//   'momentumApplied' marks each round-end change.
 // - A second player card on an already paired slot is rejected ('rejected').
 // - An enemy slot with no player card is 'unpaired' and has no effect.
 export function resolveRound(playerCards, enemyQueue, perception, rng, options = {}) {
@@ -608,7 +609,6 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   }
 
   const pending = Object.create(null); // summed raw deltas per enemy, applied at round end
-  const staggerSigns = new Map(); // enemy -> Set of +1/-1, one per counter that staggers (round end)
   const events = [];
   const paired = new Set();
   const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
@@ -654,13 +654,14 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
         push({ type: 'momentum', enemyId: k, by: winner, gain, bonus, delta, reason: 'success', slot }, k);
       }
     }
-    // A counter that staggers its target gives its side full momentum (set to +-3).
+    // A counter that staggers its target adds +-3 to its side's summed delta, on
+    // top of the slot win above (owner, 2026-10-11). Clamped once at round end.
     const counterWin = pairEvents.find((e) => e.type === 'countered');
     if (counterWin && pairEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(counterWin.by))) {
       const sign = counterWin.by === 'player' ? 1 : -1;
-      if (!staggerSigns.has(k)) staggerSigns.set(k, new Set());
-      staggerSigns.get(k).add(sign);
-      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', set: sign * MOMENTUM_MAX, slot }, k);
+      const delta = sign * MOMENTUM_MAX;
+      pending[k] = (pending[k] ?? 0) + delta;
+      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', delta, slot }, k);
     }
   });
 
@@ -670,23 +671,12 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     }
   });
 
-  // Round end: counter staggers for one enemy. Opposing signs cancel (placeholder
-  // rule, flagged in DESIGN.md), so that enemy settles from its summed deltas.
-  // A single sign sets M_e to +-3. Order of playerCards does not matter.
-  const fullSet = Object.create(null); // enemy -> +-3, from a single-sign stagger
-  for (const [k, signs] of staggerSigns) {
-    if (signs.has(1) && signs.has(-1)) {
-      events.push({ type: 'momentum', reason: 'counterStaggerCancelled', enemyId: k });
-    } else {
-      fullSet[k] = [...signs][0] * MOMENTUM_MAX;
-    }
-  }
-
-  // Round end: sum each enemy's deltas, then clamp once.
+  // Round end: sum each enemy's deltas (slot wins and counter staggers alike),
+  // then clamp once. Opposing staggers net naturally. Order of playerCards does not matter.
   const momentum = {};
   for (const k of Object.keys(start)) {
     const from = start[k];
-    const to = Object.hasOwn(fullSet, k) ? clampMomentum(fullSet[k]) : clampMomentum(from + (pending[k] ?? 0));
+    const to = clampMomentum(from + (pending[k] ?? 0));
     setOwn(momentum, k, to);
     if (to !== from) {
       events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to, momentum: to });

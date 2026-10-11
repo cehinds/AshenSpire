@@ -130,13 +130,17 @@ at M_e = 0.
   - smash beats block and breaks it for +2. A smash win over block is worth
     1 + 2 = 3.
   - counter beats attack for +1. A counter win over attack is worth 1 + 1 = 2.
-- Counter stagger: if a counter that fires staggers the attacker, the
-  counter-user gains full momentum. M_e is set to +3 (player counter) or -3
-  (enemy counter), in their favour.
-- Opposing counter staggers cancel (owner, 2026-10-11). If one enemy gets
-  opposing counter staggers in the same round (+3 and -3), they cancel. No full
-  set applies, and that enemy settles from its summed normal deltas. A single sign sets M_e as above. The
-  resolver emits `{type: 'momentum', reason: 'counterStaggerCancelled', enemyId}`.
+- Counter stagger (owner, 2026-10-11): if a counter that fires staggers the
+  attacker, the counter-user's side adds 3 to its summed round delta, in their
+  favour: +3 (player counter) or -3 (enemy counter). It is in addition to the
+  normal slot win (gain plus stance bonus, once per side per pairing).
+  - Example: from M_e -2, a player counter with gain 1 and a counter-beats-attack
+    bonus of 1 gives clamp(-2 + 1 + 1 + 3) = +3.
+  - The resolver emits `{type: 'momentum', reason: 'counterStagger', by, delta, enemyId}`,
+    with `delta` = +3 or -3.
+- Opposing counter staggers net (owner, 2026-10-11). If one enemy gets a +3 and
+  a -3 in the same round, they add to the summed deltas like any other. There
+  is no cancel rule and no set. Order of playerCards does not matter.
 - The rest of the table is filled in with bonus 1 where the advantage looks
   obvious. Every such row is marked TBD.
 
@@ -359,6 +363,7 @@ o. Does a miss from the evasion stat alone count as a dodge? Current reading:
 p. Resolved (2026-10-11): truncation toward zero.
 q. Stance bonus: is it added to the base gain (current reading) or does it
    replace it? Smash over block would be 3 or 2. Flagged.
-r. Counter stagger: does it set M_e to +-3 (current reading) or add to it?
-   Flagged.
+r. Resolved (owner, 2026-10-11). Counter stagger adds +-3 to the counter-user's
+   side of the summed round delta. It is in addition to the normal slot win.
+   Opposing staggers net naturally (+3 and -3), with no cancel rule.
 s. Card hint speed tiers: thresholds (placeholder >=2 strong, >=1 slight)?
