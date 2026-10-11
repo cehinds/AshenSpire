@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1831",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "AI sessions: work lands in small commits, reviewed as they land",
+    "detail": "Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.",
+    "build": "0.7.1.1281",
+    "pullRequest": 1831,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1831"
+  },
+  {
     "id": "pr-1825",
     "date": "2026-10-10",
     "group": "2026-10-10",
