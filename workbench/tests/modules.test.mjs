@@ -20,9 +20,9 @@ test('every module id loads and default-exports a mount()', async () => {
 });
 
 test('a placeholder module shows the coming-in-this-branch empty state and lists what it replaces', async () => {
-  const layout = (await MODULES[1].load()).default;
+  const motion = (await MODULES.find((m) => m.id === 'motion').load()).default;
   const el = { innerHTML: '' };
-  const instance = layout.mount(el, {});
+  const instance = motion.mount(el, {});
   assert.match(el.innerHTML, /Coming in this branch: /);
   assert.equal(typeof instance, 'object');
 });
