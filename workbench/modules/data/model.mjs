@@ -313,6 +313,15 @@ export function isDirty(table, doc) {
 }
 
 /**
+ * Whether a mousedown on an element with this tag name should move focus back
+ * to the grid. A text field or select in the grid's toolbar (the search box)
+ * keeps the focus the user put there; every other target hands it back.
+ */
+export function refocusesGrid(tagName) {
+  return !['INPUT', 'SELECT', 'TEXTAREA'].includes(String(tagName ?? '').toUpperCase());
+}
+
+/**
  * Latest-wins gate for table loads. begin() numbers a load; current(n) is true
  * only for the newest one. A load that finishes after a later click checks
  * current() before it installs its table, so the last click wins.
