@@ -908,7 +908,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // on a phone an unordered deck has no deck pane to stand in.
   const phoneQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 1000px)') : null;
   const onPhoneChange = (ev) => {
-    if (!ev?.matches || model.ordered || pane !== 'deck') return;
+    if (!ev?.matches || model.ordered) return;
+    // An open inspection stays open; its Back goes to the library list.
+    if (mobileView === 'inspect') { pane = 'collection'; inspectOrigin = 'collection'; draw(); return; }
+    if (pane !== 'deck') return;
     pane = 'collection';
     mobileView = 'collection';
     focusKey = null;
