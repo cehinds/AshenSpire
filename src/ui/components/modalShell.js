@@ -37,6 +37,7 @@ import { esc } from './tooltip.js';
 import { planButtonGroup } from '../models/ButtonSizeModel.js';
 import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
 import { activeWireframeChoice } from '../wireframeChoices.js';
+import { registerModal } from '../modalState.js';
 
 /** The one glyph. U+2715; the save-slot modal used U+00D7 and now does not. */
 export const MODAL_CLOSE_GLYPH = '✕';
@@ -481,6 +482,7 @@ export function restampModalWireframes(doc = typeof document === 'undefined' ? n
 }
 
 export function openModal({
+  name = '',
   size = 'md',
   className = '',
   eyebrow = '',
@@ -521,7 +523,12 @@ export function openModal({
   panel.tabIndex = -1;
 
   let release = null;
+  let unregisterModal = null;
   const close = () => {
+    // Every close path comes through here, so the registry entry goes with the
+    // veil. Idempotent: a second close finds nothing left to release.
+    unregisterModal?.();
+    unregisterModal = null;
     if (!veil.isConnected) return;
     release?.();
     release = null;
@@ -564,6 +571,7 @@ export function openModal({
 
   veil.appendChild(panel);
   host.appendChild(veil);
+  unregisterModal = registerModal(name || title || 'modal', panel);
   release = bindModalDismiss({ veil, panel, close, opener });
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
