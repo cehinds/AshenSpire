@@ -131,6 +131,13 @@ test('a save sets the base to the submitted text, so an edit made while it ran s
   assert.equal(after.filter((l, i) => l !== before[i]).length, 1, 'the diff is only the later edit');
 });
 
+test('Data Studio keeps each saved table\'s draft and bases it on the submitted text', () => {
+  const src = read('workbench/modules/data/index.mjs');
+  const save = src.slice(src.indexOf('    async function save(changes) {'), src.indexOf('    /** Files that changed on disk'));
+  assert.match(save, /savedTable\(f\.path, sent\.get\(f\.path\), f\.hash\)/, 'the base is the submitted text');
+  assert.doesNotMatch(save, /state\.drafts\.delete/, 'a draft with edits made after submitting is kept');
+});
+
 // Leading comments and blank lines belong to the row they sit above, so an
 // edit or a delete never drops them (Data Studio save path).
 test('an edited CSV row keeps the comment and blank lines above it', () => {

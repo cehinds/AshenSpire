@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -198,7 +198,9 @@ export default {
       }
       saving = false;
       close();
-      for (const f of res.files) { state.parsed.delete(f.path); state.drafts.delete(f.path); }
+      // The submitted text is each saved table's base. The drafts stay, so an edit made while the save ran stays unsaved.
+      const sent = new Map(changes.map((c) => [c.path, c.text]));
+      for (const f of res.files) if (sent.has(f.path)) state.parsed.set(f.path, savedTable(f.path, sent.get(f.path), f.hash));
       if (state.selected && res.files.some((f) => f.path === state.selected)) await select(state.selected);
       refresh();
       ctx.toast({ kind: 'success', title: `Saved ${res.files.length} file${res.files.length === 1 ? '' : 's'}` });
