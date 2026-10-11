@@ -52,6 +52,7 @@ test('synthetic collision: two tags map the same live id', () => {
   const res = analyze({ tags, nodes, tagging: [] });
   assert.deepEqual(res.collisions, [{ liveId: 'x', tagIds: ['a', 'b'] }]);
   assert.equal(res.verdict.lossless, false);
+  assert.equal(res.verdict.text, 'Verdict: NOT lossless (0 used live ids unmapped, 1 collisions)');
   assert.match(render(res), /\| x \| a, b \|/);
 });
 
@@ -74,6 +75,19 @@ test('synthetic unmapped: a live id with carriers and no tag is listed first', (
     { id: 'y', usage: 1 },
   ]);
   assert.equal(res.verdict.lossless, false);
+  assert.equal(res.verdict.text, 'Verdict: NOT lossless (2 used live ids unmapped, 0 collisions)');
+});
+
+test('synthetic unused unmapped: an unmapped id with no carriers still verdicts lossless', () => {
+  const tags = [{ id: 'a', parent: '', label: 'A', glyph: '', color: '', status: 'live-tag', liveId: 'x' }];
+  const nodes = [
+    { id: 'x', parentId: '', label: 'A', glyph: '', color: '' },
+    { id: 'y', parentId: '', label: 'Y', glyph: '', color: '' },
+  ];
+  const res = analyze({ tags, nodes, tagging: [] });
+  assert.deepEqual(res.unmapped, [{ id: 'y', usage: 0 }]);
+  assert.equal(res.verdict.lossless, true);
+  assert.equal(res.verdict.text, 'Verdict: lossless');
 });
 
 test('synthetic reverse-missing: a live-tag whose liveId is not a live node', () => {
