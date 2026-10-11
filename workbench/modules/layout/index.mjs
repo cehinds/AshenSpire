@@ -49,7 +49,7 @@ const SHELL = `<div class="lay">
     <label class="lay-check"><input type="checkbox" data-act="snap"> Snap</label>
     <label class="lay-check"><input type="checkbox" data-act="grid"> Grid</label>
     <span class="lay-sep"></span>
-    <span class="lay-align">${ALIGN.map(([edge, label]) => `<button type="button" class="btn btn-sm btn-ghost" data-align="${edge}" title="${label}" disabled>${esc(label.replace('Align ', ''))}</button>`).join('')}
+    <span class="lay-align" title="Off in UI config: the layout places regions, so align and distribute would not save">${ALIGN.map(([edge, label]) => `<button type="button" class="btn btn-sm btn-ghost" data-align="${edge}" title="${label}" disabled>${esc(label.replace('Align ', ''))}</button>`).join('')}
       <button type="button" class="btn btn-sm btn-ghost" data-distribute="horizontal" title="Distribute horizontally" disabled>Dist H</button>
       <button type="button" class="btn btn-sm btn-ghost" data-distribute="vertical" title="Distribute vertically" disabled>Dist V</button></span>
     <span class="spacer"></span>
@@ -128,9 +128,8 @@ export default {
       const review = $('[data-act="review"]');
       review.disabled = n === 0;
       review.textContent = `Review changes (${n})`;
-      const hasSel = st.canvas ? st.canvas.getSelection().length : 0;
-      for (const b of el.querySelectorAll('[data-align]')) b.disabled = hasSel < 1;
-      for (const b of el.querySelectorAll('[data-distribute]')) b.disabled = hasSel < 3;
+      // UI config: the layout places regions, so align and distribute are off (they would move regions).
+      for (const b of el.querySelectorAll('[data-align], [data-distribute]')) b.disabled = true;
     }
 
     /** The config values the selected region owns, each editable in place; a $name shows its value as a chip. */
@@ -207,9 +206,15 @@ export default {
       const f = activeFile();
       const v = st.view;
       if (!f || !f.data || !v) { rebuild(); return; }
-      const next = C.applyCanvasEdits({ data: f.data, regions: v.regions, items: doc.items, viewport: v.vp, grid: st.settings.grid });
-      setFileData(f.rel, next, change.label);
+      const report = C.canvasEditReport({ data: f.data, regions: v.regions, items: doc.items, viewport: v.vp, grid: st.settings.grid });
+      setFileData(f.rel, report.data, change.label);
       rebuild();
+      if (report.notes.length) placedByLayout(report.notes);
+    }
+
+    /** A gesture that maps to no config change: the region snaps back (rebuild) and the user is told why. */
+    function placedByLayout(notes) {
+      ctx.toast({ kind: 'warn', title: 'Regions in UI config are positioned by the layout; drag an edge to resize', detail: notes.map((n) => n.label).join(', ') });
     }
 
     function ensureCanvas() {
@@ -386,6 +391,15 @@ export default {
 
     el.querySelector('.lay-bar').addEventListener('change', onBarChange);
     el.querySelector('.lay-bar').addEventListener('click', onBarClick);
+    // UI config: arrow keys would nudge a region, which the layout places. The capture listener
+    // stops them before the canvas kit sees them, and says why when something is selected.
+    const ARROW_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
+    el.addEventListener('keydown', (e) => {
+      if (!ARROW_KEYS.has(e.key) || !e.target.closest?.('.lay-canvas')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (st.canvas && st.canvas.getSelection().length) placedByLayout([{ label: 'the selected region', outcome: 'move' }]);
+    }, true);
 
     // ---- load ------------------------------------------------------------
 
