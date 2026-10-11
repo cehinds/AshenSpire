@@ -546,13 +546,18 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
 
   // Intangible charge pools for the round (DESIGN.md, Evasion): one for the
   // player, one per enemy. Each starts from options.charges, else from the
-  // first card or first queued action of that side, and is spent in place.
+  // largest intangibleCharges of that side's cards (or of that enemy's queued
+  // actions), and is spent in place.
+  const largestCharges = (entries) => Math.max(0, ...entries.map((e) => chargeCount(e.intangibleCharges)));
   const charges = { player: 0 };
-  charges.player = chargeCount(chargeIn.player ?? playerCards[0]?.intangibleCharges);
+  charges.player = chargeCount(chargeIn.player ?? largestCharges(playerCards));
   for (const enemy of enemyQueue) {
     const k = enemyKey(enemy);
     if (k === 'player') throw new TypeError('an enemy id cannot be "player"');
-    if (!(k in charges)) charges[k] = chargeCount(chargeIn[k] ?? enemy.intangibleCharges);
+    if (!(k in charges)) {
+      const own = enemyQueue.filter((e) => enemyKey(e) === k);
+      charges[k] = chargeCount(chargeIn[k] ?? largestCharges(own));
+    }
   }
 
   const pending = {}; // summed raw deltas per enemy, applied at round end

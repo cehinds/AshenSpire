@@ -214,8 +214,9 @@ successes for momentum (see Momentum).
   for the player and one for each enemy (keyed by enemy id). Every queued
   action of an enemy draws on that enemy's pool, so one charge is spent at
   most once per round. The pool starts from `options.charges`, else from the
-  side's `intangibleCharges` (the first card or first queued action of that
-  side). It is spent in place across the round's pairings, and the remaining
+  side's pool: the largest `intangibleCharges` of that side's cards (player),
+  or of that enemy's queued actions (an enemy id). A card or action with no
+  `intangibleCharges` counts as 0. It is spent in place across the round's pairings, and the remaining
   counts are returned as `charges: { player, [enemyId]: n }`. At 0 charges
   the tag does nothing. Emits `evaded` with `reason: 'intangible'` and the
   pool left in `charges`.

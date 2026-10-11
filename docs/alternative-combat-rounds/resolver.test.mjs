@@ -872,6 +872,37 @@ test('intangible: the player pool is shared across pairings, and each enemy has 
   assert.equal(charges.H, 3);
 });
 
+test('intangible pool: a side with no charges option takes the largest intangibleCharges of its cards', () => {
+  // The first player card has no charges. The shield, second, has 1. The pool is 1, so the shield avoids one hit.
+  const cards = [
+    { id: 'plain', slot: 0, speed: 1, kind: 'other' },
+    { id: 'shield', slot: 1, speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 1 },
+  ];
+  const enemies = [
+    { id: 'e0', speed: 4, kind: 'attack' },
+    { id: 'e1', speed: 4, kind: 'attack' },
+  ];
+  const { events, charges } = resolveRound(cards, enemies, 2, () => 0.99);
+  const evaded = events.filter((e) => e.type === 'evaded');
+  assert.equal(evaded.length, 1, 'the shield avoids one hit');
+  assert.equal(evaded[0].slot, 1);
+  assert.equal(charges.player, 0, 'the pool is spent to 0');
+});
+
+test('intangible pool: an enemy takes the largest intangibleCharges of its queued actions', () => {
+  // G's first action has no charges. The second has 2, so the pool is 2 and one charge is spent here, leaving 1.
+  const cards = [{ id: 'a', slot: 1, speed: 4, kind: 'attack' }];
+  const queue = [
+    { id: 'g0', enemyId: 'G', speed: 1, kind: 'other' },
+    { id: 'g1', enemyId: 'G', speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 2 },
+  ];
+  const { events, charges } = resolveRound(cards, queue, 2, () => 0.99);
+  const evaded = events.find((e) => e.type === 'evaded');
+  assert.equal(evaded.reason, 'intangible');
+  assert.equal(evaded.charges, 1, 'the pool started at 2');
+  assert.equal(charges.G, 1);
+});
+
 // Evasion, part 2a: evade bonus scopes (owner addendum, 2026-10-11). A bonus is
 // { source, pct, scope, condition? }. Only bonuses whose scope is live, and
 // whose condition passes, count.
