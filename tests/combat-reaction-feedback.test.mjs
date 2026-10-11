@@ -71,11 +71,20 @@ test('a Counter whose HP offering would leave the seat dead reports cost with re
   const combat = solo({ offer: seatStats.hp });
   const events = soloEnd(combat);
   assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
-    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: seatStats.hp, have: seatStats.hp }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: seatStats.hp + 1, have: seatStats.hp }]);
   assert.equal(combat.pendingReaction, undefined);
   const registries = createRegistries(contentBundle);
   assert.deepEqual(combatLogEntries(events, { registries }).map(row => row.text).filter(text => text.startsWith('Not enough')),
-    [`Not enough HP to Guard Counter (need ${seatStats.hp}, have ${seatStats.hp}).`]);
+    [`Not enough HP to Guard Counter (need ${seatStats.hp + 1}, have ${seatStats.hp}).`]);
+});
+
+test('an HP offering reports need as the offering plus one, and have as current HP', () => {
+  for (const hp of [5, 3]) {
+    const combat = solo({ offer: 5 });
+    combat.player.hp = hp;
+    assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
+      cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: 6, have: hp }]);
+  }
 });
 
 test('the reported refusal names the card it came from, not the first candidate', () => {
