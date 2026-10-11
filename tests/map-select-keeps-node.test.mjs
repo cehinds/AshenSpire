@@ -42,11 +42,21 @@ test('openTray calls centerOnNode only when the node is not comfortably visible'
 
 test('nodeComfortablyVisible checks all four sides against the margin', () => {
   const body = fnBody('nodeComfortablyVisible');
+  assert.match(body, /lastPickPointerType !== 'touch'/, 'visibility follows the pointer that activated the node');
+  assert.doesNotMatch(body, /pointer: coarse/, 'hybrid devices do not use the primary-pointer media query');
   assert.match(body, /nodeBox\.left >= portBox\.left \+ margin/);
   assert.match(body, /nodeBox\.right <= portBox\.right - margin/);
   assert.match(body, /nodeBox\.top >= portBox\.top \+ margin/);
   assert.match(body, /nodeBox\.bottom <= visibleBottom - margin/);
   assert.match(body, /Math\.min\(portBox\.bottom, coveredTop\)/, 'the visible bottom is clipped to the tray');
+});
+
+test('the board passes the activating pointer type into map selection', () => {
+  const board = readFileSync(resolve(root, 'src/ui/components/mapboard.js'), 'utf8');
+  assert.match(board, /addEventListener\('pointerdown',[\s\S]*pickPointerType = ev\.pointerType \|\| 'mouse'/);
+  assert.match(board, /viewer\.onPick\(n\.id, \{ shownType, revealed \}, \{ pointerType \}\)/);
+  assert.match(src, /onPick: \(id, reading, \{ pointerType \} = \{\}\) => selectNode\(id, reading, pointerType\)/);
+  assert.match(src, /lastPickPointerType = pointerType;/);
 });
 
 test('closeTray resets the framing only when the tray moved the camera', () => {

@@ -127,12 +127,12 @@ export function releaseMapScreen() {
   liveMapViewportRelease = null;
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, selectedId = null }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, selectedId = null, selectedPointerType = 'mouse' }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   releaseMapScreen();
   // A redraw keeps the destination the player selected (#1474 review).
-  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, selectedId: selection.selectedId });
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, selectedId: selection.selectedId, selectedPointerType: lastPickPointerType });
   const map = mapAdapter?.graph || run.mapGraph;
   const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
@@ -220,6 +220,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // map frame as separate, unboxed controls and therefore add no footer height.
   const screen = app.querySelector('.mapscreen');
   let selection = { selectedId: null };
+  let lastPickPointerType = selectedPointerType;
   const readings = new Map();
   const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
   const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back', attrs: { 'data-back': '' } });
@@ -249,7 +250,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         if (commit && onSave) scheduleSave(onSave, app);
       },
       // W4b: a pick selects; Enter, or picking the selected node again, travels.
-      onPick: (id, reading) => selectNode(id, reading),
+      onPick: (id, reading, { pointerType } = {}) => selectNode(id, reading, pointerType),
       tooltip: (n, { shownType, revealed }) => mapAdapter ? `<div class="tt-title">${esc(n.name)}</div>${esc(n.lore)}` : nodeTooltip(shownType, n, revealed),
     },
   });
@@ -288,8 +289,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   let trayCentred = false;
   function nodeComfortablyVisible(revealHeight) {
     // Touch only: a finger that just tapped the node is about to tap it again.
-    // A mouse pick keeps the centred look (tools/map-two-axis-pan.mjs, desktop).
-    if (!matchMedia('(pointer: coarse)').matches) return false;
+    // Use that activation's pointer, not the device's primary-pointer media
+    // query: hybrids can be touched while their primary pointer is a mouse,
+    // and tablets can be clicked with a connected mouse.
+    if (lastPickPointerType !== 'touch') return false;
     const nodeEl = app.querySelector(`.map-node[data-node="${selection.selectedId}"]`);
     if (!nodeEl) return false;
     const nodeBox = nodeEl.getBoundingClientRect();
@@ -358,7 +361,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (moved > 6 || ev.target.closest('.map-node.reachable')) return;
     clearSelection();
   });
-  function selectNode(id, reading) {
+  function selectNode(id, reading, pointerType = 'mouse') {
+    lastPickPointerType = pointerType;
     if (reading) readings.set(id, reading);
     const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
     if (next.enter) { leaving(onPick)(id); return; }

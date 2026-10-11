@@ -488,7 +488,19 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: px(n), y: py(n), r }) : '';
     el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: px(n), y: py(n), radius: r, reachable: isReachable })}${mark || ''}`);
-    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
+    if (isReachable && viewer.onPick) {
+      // `(pointer: coarse)` describes only the primary device and is wrong on
+      // hybrids. Keep the pointer that made this activation beside the node;
+      // PointerEvent-backed clicks carry it themselves, while pointerdown is
+      // the fallback for browsers that still deliver a plain click event.
+      let pickPointerType = 'mouse';
+      el.addEventListener('pointerdown', (ev) => { pickPointerType = ev.pointerType || 'mouse'; });
+      el.addEventListener('click', (ev) => {
+        const pointerType = ev.pointerType || pickPointerType;
+        pickPointerType = 'mouse';
+        viewer.onPick(n.id, { shownType, revealed }, { pointerType });
+      });
+    }
     // A reachable node's tap is a SELECTION (the tray answers it), not an
     // explanation. Unreachable nodes have no selection handler, so keep their
     // second-tap explanation available to touch users without hover or focus.
