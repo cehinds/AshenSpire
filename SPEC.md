@@ -185,7 +185,7 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `src/net/` | LAN co-op client (§11). Absent behind the launcher → the feature hides itself. |
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
-| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only; no test needs a DOM. |
+| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). The core suite (`engine.test.js`) asserts against model + engine and needs no DOM; other `*.test.mjs` files may mount screens on a stub DOM (for example `card-rank.test.mjs`). |
 | `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
@@ -1302,7 +1302,7 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 
 (Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
 
-### 5.4 Relics (M2 set of 16; 63 ship in all)
+### 5.4 Relics (M2 set of 16; 73 ship in all: 63 in `src/content/relics.js` plus 10 class-mastery relics in `src/content/progression/relics.js`)
 
 | Relic | Rarity | Effect |
 |---|---|---|
