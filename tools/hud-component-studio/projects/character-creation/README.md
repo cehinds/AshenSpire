@@ -11,3 +11,5 @@ Generated page illustrations are visual targets in `assets/reference-*.png`. The
 Run `node tools/hud-component-studio/projects/character-creation/render.mjs` to regenerate all seven artwork exports and seven wireframes. Requires Playwright and Chromium; `CHROMIUM_PATH` overrides `/usr/bin/chromium`. The JSON scene is the canonical editable source. The extraction script records isolated atlas crop operations; do not rerun it over an edited scene.
 
 See `docs/design/character-creation/README.md` and `current-ui-audit.md` for observations and design scope. This pass includes desktop concepts; phone evidence is from the current UI audit.
+
+The repeatable renderer produces the default concept layout and honors group/node rotation and scale. Its text wrapping and visual effects are a lightweight approximation. Use the Studio PNG export for exact rendering of edited scenes, including clipping, text effects and editor typography. On Windows, set `CHROMIUM_PATH` to a Chromium-based browser executable or install the Playwright browser; file paths containing spaces are supported.
