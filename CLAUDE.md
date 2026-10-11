@@ -15,6 +15,12 @@ visible (UI, tools, the Workbench, art, layout), finish the report with fresh
 screenshots of the changed screens and a preview the owner can open (a
 published page or the CI artifact link), without being asked.
 
+**Nothing lives only on one machine** (owner, 2026-10-11): the owner switches
+computers and models mid-task, so every commit reaches origin as soon as it exists.
+Workers' branches are pushed to their own `origin/<branch>` as they commit (the
+main session pushes them when a worker cannot), task status lives in the PR body
+or a committed file, and previews are published links, not local servers.
+
 **When you need the owner to decide or do something**, ask in this shape, and
 nothing longer (owner's rule, 2026-09-26):
 
@@ -47,7 +53,10 @@ to CI artifacts, not the tree*).
 This is the standing policy for every session: the main session manages,
 coordinates and reviews; workers do the work. Scoped implementation, searches
 and test runs go to the `ashen-worker` agent (`.claude/agents/`); risky diffs
-go to `ashen-reviewer`. Models track the newest release of each tier: workers
+go to `ashen-reviewer`. Agents that write code (workers and implementing agents)
+work in very small steps, one self-contained commit per step, pushed as soon as it
+is made so reviewers review each commit as it lands (owner, 2026-10-11). Review
+agents stay read-only and review each pushed commit as it lands. Models track the newest release of each tier: workers
 run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
 on the newest Opus (Opus 5.5 today); the main session at high effort, `ashen-reviewer`
 at medium (owner, 2026-10-11). Agent files pin the tier aliases

@@ -1,0 +1,46 @@
+/* workbench/ui/kit/grid.css — styles for grid.mjs. Colors come from the
+   Workbench tokens when present; the fallbacks keep the grid readable alone. */
+.gk-root { --gk-bg: var(--panel, #fff); --gk-line: var(--line, #d7dce2); --gk-ink: var(--ink, #1d2430);
+  --gk-muted: var(--muted, #6b7280); --gk-sel: rgba(47, 111, 237, .14); --gk-active: #2f6fed;
+  --gk-bad: #c2410c; --gk-warn: #a16207; font: 13px/1.3 system-ui, sans-serif; color: var(--gk-ink);
+  display: flex; flex-direction: column; min-height: 0; background: var(--gk-bg); }
+.gk-bar { display: flex; align-items: center; gap: 8px; padding: 6px 0; flex-wrap: wrap; }
+.gk-bar .gk-spacer { flex: 1; }
+.gk-count { color: var(--gk-muted); font-variant-numeric: tabular-nums; }
+.gk-search { min-width: 220px; padding: 4px 8px; border: 1px solid var(--gk-line); border-radius: 6px; }
+.gk-bar button, .gk-menu button { padding: 4px 10px; border: 1px solid var(--gk-line); border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
+.gk-bar button:disabled { opacity: .45; cursor: default; }
+.gk-scroll { position: relative; flex: 1; min-height: 240px; overflow: auto; border: 1px solid var(--gk-line); border-radius: 8px; outline: none; }
+.gk-scroll:focus-visible { box-shadow: 0 0 0 2px var(--gk-active); }
+.gk-head { position: sticky; top: 0; z-index: 4; height: 32px; background: var(--gk-bg); border-bottom: 1px solid var(--gk-line); }
+.gk-hrow { position: relative; height: 32px; }
+.gk-hcell { position: absolute; top: 0; height: 32px; display: flex; align-items: center; gap: 4px; padding: 0 8px; box-sizing: border-box; font-weight: 600; white-space: nowrap; overflow: hidden; background: var(--gk-bg); cursor: pointer; user-select: none; }
+.gk-hcell .gk-label { overflow: hidden; text-overflow: ellipsis; }
+.gk-sort { color: var(--gk-muted); font-size: 11px; }
+.gk-rz { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; }
+.gk-body { position: relative; }
+.gk-rows { position: absolute; inset: 0; }
+.gk-row { position: absolute; left: 0; }
+.gk-cell { position: absolute; top: 0; height: 100%; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; border-bottom: 1px solid var(--gk-line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--gk-bg); cursor: cell; }
+.gk-cell.gk-num, .gk-hcell.gk-gutter { justify-content: flex-end; color: var(--gk-muted); font-variant-numeric: tabular-nums; cursor: pointer; }
+.gk-frozen { z-index: 2; }
+.gk-hcell.gk-frozen { z-index: 5; }
+.gk-t-number, .gk-t-boolean { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.gk-t-json, .gk-t-formula { font-family: ui-monospace, monospace; font-size: 12px; }
+.gk-sel { background: var(--gk-sel) !important; }
+.gk-active { outline: 2px solid var(--gk-active); outline-offset: -2px; z-index: 3; }
+.gk-bad { box-shadow: inset 3px 0 0 var(--gk-bad); color: var(--gk-bad); }
+.gk-warn { box-shadow: inset 3px 0 0 var(--gk-warn); }
+.gk-row-bad .gk-num { color: var(--gk-bad); font-weight: 600; }
+.gk-editor { position: absolute; z-index: 6; box-sizing: border-box; padding: 0 8px; border: 2px solid var(--gk-active); font: inherit; background: var(--gk-bg); color: inherit; outline: none; }
+.gk-editor.gk-invalid { border-color: var(--gk-bad); }
+.gk-root[data-density="comfortable"] .gk-cell { font-size: 14px; }
+.gk-menu { position: absolute; z-index: 20; display: flex; flex-direction: column; min-width: 180px; padding: 4px; background: var(--gk-bg); border: 1px solid var(--gk-line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+.gk-menu button { border: 0; text-align: left; border-radius: 4px; }
+.gk-menu button:hover, .gk-menu button:focus-visible { background: var(--gk-sel); }
+.gk-check ul { list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow: auto; }
+.gk-check li button { width: 100%; text-align: left; padding: 6px 8px; border: 0; border-bottom: 1px solid var(--gk-line); background: transparent; color: inherit; cursor: pointer; }
+.gk-check li.gk-error .gk-where { color: var(--gk-bad); font-weight: 600; }
+.gk-check li.gk-warning .gk-where { color: var(--gk-warn); font-weight: 600; }
+.gk-check .gk-ok { color: var(--gk-muted); }
+@media (max-width: 640px) { .gk-search { min-width: 0; flex: 1; } }

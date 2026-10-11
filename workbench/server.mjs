@@ -21,6 +21,7 @@ import { ToolSupervisor } from './core/tools.mjs';
 import { JobRunner, GENERATED } from './core/jobs.mjs';
 import { createWatcher, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
+import { createFileService } from './core/files.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..');
@@ -29,6 +30,8 @@ const STATIC = /^(index\.html|app\.mjs|workbench\.css|shared\/[\w-]+\.css|ui\/(k
 const PREVIEW_FILE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
 const WATCH_DIRS = ['content', 'src', 'styles'];
 const EXPORT_DIR = 'build/engine-export';
+// A save carries up to 100 files of up to 4 MB each, as JSON.
+const FILES_BODY_LIMIT = 32 * 1024 * 1024;
 
 const git = (root, args) => new Promise((resolve) => {
   execFile('git', args, { cwd: root, windowsHide: true, maxBuffer: 8 << 20 }, (error, stdout) => resolve(error ? null : stdout));
@@ -88,7 +91,7 @@ export async function library(root, { settings = {}, extBase = '' } = {}) {
   return { areas: registry.areas, entries };
 }
 
-export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, children = true, stateDir = path.join(HERE, '.state'), debounceMs = 300, ports, forcePoll = false, env = process.env, lockWaitMs = 10 * 60 * 1000 } = {}) {
+export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, children = true, stateDir = path.join(HERE, '.state'), debounceMs = 300, ports, forcePoll = false, env = process.env, lockWaitMs = 10 * 60 * 1000, fileFault = null } = {}) {
   root = await fs.realpath(root);
   const token = newToken();
   const hub = createSseHub();
@@ -96,6 +99,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   const gate = createGate({ token, hosts: () => [address], origins: () => [`http://${address}`], open: ['/api/session'], queryTokenPaths: ['/api/events'] });
   const jobs = new JobRunner({ root, stateFile: path.join(stateDir, 'jobs.json'), onEvent: (e, d) => hub.send(e, d) });
   const settings = new Settings(path.join(stateDir, 'settings.json'), env);
+  // The one save path for repo files (core/files.mjs). A save reloads the preview through onBatch.
+  const files = createFileService({ root, stateDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), lockWaitMs, fileFault });
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';
@@ -203,8 +208,31 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     res.end(await fs.readFile(file));
   }
 
+  // /api/files/*: the shared file service. Its save bodies can be large, so it reads its own body limit.
+  async function filesRoute(req, res, url) {
+    const p = url.pathname;
+    try {
+      if (req.method === 'GET') {
+        if (p === '/api/files/read') return sendJson(res, 200, await files.read(url.searchParams.get('path') || ''));
+        if (p === '/api/files/list') return sendJson(res, 200, await files.list(url.searchParams.get('dir') || '', url.searchParams.get('ext') || ''));
+        if (p === '/api/files/backups') return sendJson(res, 200, await files.backups());
+      } else if (req.method === 'POST') {
+        const data = await readJson(req, { limit: FILES_BODY_LIMIT });
+        if (p === '/api/files/save') return sendJson(res, 200, await files.save(data.changes));
+        if (p === '/api/files/diff') return sendJson(res, 200, await files.diff(data.path, data.text));
+        if (p === '/api/files/restore') return sendJson(res, 200, await files.restore(data.set, data.paths));
+      }
+      return sendJson(res, 404, { error: 'Unknown Workbench action' });
+    } catch (error) {
+      const status = error.status || (error.code === 'ENOENT' ? 404 : error.code === 'EREFUSED' ? 403 : 400);
+      const extra = Object.fromEntries(['problems', 'conflicts', 'heldBy'].filter((k) => error[k] !== undefined).map((k) => [k, error[k]]));
+      return sendJson(res, status, { error: error.message, ...extra });
+    }
+  }
+
   async function api(req, res, url) {
     const p = url.pathname;
+    if (p.startsWith('/api/files/')) return filesRoute(req, res, url);
     if (req.method === 'GET') {
       if (p === '/api/session') return sendJson(res, 200, { token, root, repo: REPO, port: server.address().port, children: Boolean(supervisor?.enabled), watching: watcher ? watcher.modes : {} });
       if (p === '/api/events') { hub.attach(req, res); return; }

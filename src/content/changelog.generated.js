@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "One Workbench for every authoring tool",
     "detail": "For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.",
-    "build": "0.7.1.1281",
+    "build": "0.7.1.1282",
     "pullRequest": 1829,
     "url": "https://github.com/cehinds/AshenSpire/pull/1829"
+  },
+  {
+    "id": "pr-1831",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "AI sessions: work lands in small commits, reviewed as they land",
+    "detail": "Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.",
+    "build": "0.7.1.1281",
+    "pullRequest": 1831,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1831"
   },
   {
     "id": "pr-1825",
