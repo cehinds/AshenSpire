@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1849",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Attacks play in order, Inspect buttons only on the selected fighter, and the game says why a reaction wasn't offered",
+    "detail": "STAGGERED, COUNTERED, EVADED, CRITICAL and GUARD BREAK now rise over the fighter they happen to, and a short note above the Reaction switch says why a Counter or Sweep wasn't offered. The combat log now opens at its middle size, and its Full log button shows every entry of the fight on one full-screen page. An attack now plays the swing and the return to stance first, then the target's reaction, then the damage number, and only then does the health bar change. A fighter's Inspect \"i\" now shows only while that fighter is selected, and it appears already in its place instead of jumping there; a card's Inspect appears once, above the card. Your stance and status icons stay visible when your hero isn't selected. When an enemy attacks and you hold a Counter or Sweep the game can't offer, the combat log says why (for example, a Counter can't answer a Sweep, or you're short on SP), and a Smash that breaks Guard is logged. In co-op, the same callouts and the \"no reaction\" note now show too. On a phone the note sits above your HP bar instead of covering it, and Full log is a small gold text link in the log's header. In co-op your own attacks now play in that same order too, and floating numbers no longer vanish when the board redraws. On phones the hand cards are bigger and sit right under the Combat log / Reaction row while staying readable, enemies stand further back on short screens, your stance shows above your hero while it isn't selected, and co-op's Ward/Barrier readout is a small label shown only on the selected hero.",
+    "build": "0.7.1.1317",
+    "pullRequest": 1849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1849"
+  },
+  {
     "id": "pr-1861",
     "date": "2026-10-11",
     "group": "2026-10-11",
