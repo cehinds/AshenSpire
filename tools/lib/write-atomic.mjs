@@ -6,9 +6,13 @@
 import { renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-/** The temp name for `file`: a dot-file beside it, unique to this process and moment. */
+/**
+ * The temp name for `file`: a dot-file beside it, unique to this process and moment. It keeps the
+ * extension, because Chrome's --screenshot refuses any path that does not end in .png.
+ */
 export function tempBeside(file) {
-  return path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.${Date.now().toString(36)}.tmp`);
+  const { base, ext, dir } = path.parse(file);
+  return path.join(dir, `.${base}.${process.pid}.${Date.now().toString(36)}.tmp${ext}`);
 }
 
 /** Writes `bytes` to `file` through a temp file beside it, then renames it over `file`. */

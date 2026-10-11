@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { writeFileAtomic } from '../tools/lib/write-atomic.mjs';
+import { tempBeside, writeFileAtomic } from '../tools/lib/write-atomic.mjs';
 
 const folder = () => mkdtempSync(path.join(tmpdir(), 'write-atomic-'));
 
@@ -39,10 +39,24 @@ test('a new file is created when none was there', (t) => {
   assert.equal(readFileSync(out, 'utf8'), 'PNG');
 });
 
+test('the temp file keeps the target extension, because Chrome refuses a --screenshot path that is not .png', () => {
+  const temp = tempBeside(path.join('/shots', 'desk-map.png'));
+  assert.equal(path.dirname(temp), '/shots');
+  assert.equal(path.extname(temp), '.png');
+  assert.notEqual(temp, path.join('/shots', 'desk-map.png'));
+});
+
 test('screenshot.mjs writes each combat frame through writeFileAtomic and no longer deletes the old frame up front', () => {
   const src = readFileSync(new URL('../tools/screenshot.mjs', import.meta.url), 'utf8');
-  assert.match(src, /import \{ writeFileAtomic \} from '\.\/lib\/write-atomic\.mjs'/);
+  assert.match(src, /import \{[^}]*writeFileAtomic[^}]*\} from '\.\/lib\/write-atomic\.mjs'/);
   assert.match(src, /writeFileAtomic\(out, frame\)/);
   assert.doesNotMatch(src, /writeFileSync\(out, frame\)/);
   assert.doesNotMatch(src, /rmSync\(out, \{ force: true \}\);\n\s*const \[width, height\]/, 'captureReady no longer removes the old PNG before the new one is ready');
+});
+
+test('a one-shot capture has Chrome write a temp file beside the PNG, renamed over it only when Chrome reports it written', () => {
+  const src = readFileSync(new URL('../tools/screenshot.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /--screenshot=\$\{out\}/, 'Chrome no longer writes the target directly');
+  assert.match(src, /--screenshot=\$\{tmp\}/);
+  assert.match(src, /renameSync\(tmp, out\)/);
 });

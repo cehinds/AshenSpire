@@ -12,12 +12,12 @@
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { keepShot } from './lib/shot-match.mjs';
-import { writeFileAtomic } from './lib/write-atomic.mjs';
+import { tempBeside, writeFileAtomic } from './lib/write-atomic.mjs';
 import { devtoolsClient, readyExpression, settledFrame } from './shotReady.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -239,6 +239,8 @@ function shotPath(name) {
 
 async function capture(shot) {
   const out = shotPath(shot.name);
+  // Chrome writes a temp file beside the PNG; it is renamed over `out` only once Chrome reports it written.
+  const tmp = tempBeside(out);
   const { child, close: dropBrowser } = await launchBrowser({
     prefix: 'shot-', browser, headless: '--headless=new', awaitEndpoint: false,
     // 8000 was not enough and failed at random: successive runs caught a
@@ -246,7 +248,7 @@ async function capture(shot) {
     // brightness 24, then class-starseer at 21, against 39.6 for a settled
     // frame). A capture that is sometimes a half-faded frame is not evidence,
     // and the flake is invisible unless you measure the brightness.
-    args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=20000', `--screenshot=${out}`],
+    args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=20000', `--screenshot=${tmp}`],
     urlArg: `http://localhost:${port}/${shot.query}`,
   });
   return new Promise((done) => {
@@ -258,7 +260,9 @@ async function capture(shot) {
       clearTimeout(killer);
       dropBrowser();
       // Chrome can exit 0 even when the write fails — trust its own report.
-      const ok = /bytes written to file/.test(output) && existsSync(out);
+      let ok = /bytes written to file/.test(output) && existsSync(tmp);
+      if (ok) { try { renameSync(tmp, out); } catch { ok = false; } }
+      rmSync(tmp, { force: true });
       console.log(`  ${ok ? '✓' : '✗'} ${shot.name} → ${out}`);
       if (!ok) console.error(`    ${output.trim().split('\n').slice(-2).join(' | ')}`);
       done(ok);
@@ -266,6 +270,7 @@ async function capture(shot) {
     child.on('error', (e) => {
       clearTimeout(killer);
       dropBrowser();
+      rmSync(tmp, { force: true });
       console.error(`  ✗ ${shot.name}: ${e.message}`);
       done(false);
     });
