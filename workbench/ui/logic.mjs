@@ -132,3 +132,13 @@ export function saveFailure(err) {
   if (err && err.status === 409) return { kind: 'conflicts', conflicts: Array.isArray(err.body?.conflicts) ? err.body.conflicts : [] };
   return { kind: 'error', message: (err && err.message) || 'network error' };
 }
+
+/**
+ * True when a tool in the tools listing has just come up: it was seen before and is up now, and
+ * either it was not up before or it is a new start (a restart on the same port). Other changes are not.
+ */
+export function toolCameUp(before = [], after = [], id) {
+  const was = before.find((t) => t && t.id === id), now = after.find((t) => t && t.id === id);
+  if (!was || !now || now.status !== 'up') return false;
+  return was.status !== 'up' || was.startedAt !== now.startedAt;
+}
