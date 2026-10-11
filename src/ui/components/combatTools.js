@@ -7,7 +7,7 @@ import { t } from '../strings.js';
 import { trackGesture } from '../gesture.js';
 import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
 import { visibleCombatPanelRect } from './battlefieldStage.js';
-import { renderCombatLogEntries } from './combatLogModal.js';
+import { renderCombatLogEntries, openCombatLogModal } from './combatLogModal.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -51,7 +51,7 @@ function cardBand(hand) {
   return right > left ? { left, right } : null;
 }
 
-export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onFullLog = null }) {
+export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
   logButton.style.touchAction = 'none';
@@ -124,7 +124,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onFu
       : COMBAT_LOG_SIZES[Math.max(0, Math.min(2, index + (event.key === 'ArrowUp' ? 1 : -1)))];
     state.open = true; onViewChange();
   });
-  fullLog.addEventListener('click', () => onFullLog?.(fullLog));
+  // The full log is a door of its own. It reads the same entries as the drawer
+  // and changes neither the drawer's open state nor its size.
+  let fullLogModal = null, latestEntries = [];
+  fullLog.addEventListener('click', () => {
+    if (fullLogModal) return;
+    fullLogModal = openCombatLogModal({ entries: latestEntries, opener: fullLog, onClose: () => { fullLogModal = null; } });
+  });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   let frame = 0, entryKey = '';
   function measure() {
@@ -200,9 +206,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onFu
     value.textContent = stateLabel;
     panel.hidden = !log.open; logButton.setAttribute('aria-expanded', String(log.open));
     logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
+    latestEntries = log.entries;
     const key = JSON.stringify(log.entries);
     if (key !== entryKey) {
-      entryKey = key; renderCombatLogEntries(list, log.entries);
+      entryKey = key; renderCombatLogEntries(list, log.entries); fullLogModal?.setEntries(log.entries);
       list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
     }
     schedule();
@@ -210,5 +217,5 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onFu
   return { update, flushGeometry,
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
-    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+    release() { released = true; fullLogModal?.close(); observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }
