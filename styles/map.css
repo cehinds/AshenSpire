@@ -324,6 +324,18 @@ g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
   animation: none;
   filter: drop-shadow(0 0 5px var(--gold));
 }
+
+/* Lite performance mode stops the map's endless animations, the same way
+   Reduced motion does above (combat.css carries the lite rules for combat).
+   Only the motion goes; the reachable, current and shrine cues stay on screen. */
+:root[data-performance='lite'] .mapscreen .map-node.current circle { animation: none; }
+:root[data-performance='lite'] .mapscreen .map-node.reachable > circle:not(.node-halo) { animation: none; stroke-opacity: 1; }
+:root[data-performance='lite'] .mapscreen .map-node .node-halo { animation: none; stroke-opacity: 0.5; }
+:root[data-performance='lite'] .mapscreen .map-edge.shrine-lane,
+:root[data-performance='lite'] .mapscreen .map-node.shrine-lane > circle:not(.node-halo) {
+  animation: none;
+  filter: none;
+}
 /* A selected shrine-lane node shows the selection glow and stops pulsing,
    like any other selected node; the shrine rules above would otherwise win. */
 .map-node.selected.shrine-lane > circle:not(.node-halo),

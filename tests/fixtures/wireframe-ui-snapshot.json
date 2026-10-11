@@ -18,7 +18,7 @@
     "gapPx": 10
   },
   "map": {
-    "repeatPickDelayMs": 400,
+    "repeatPickDelayMs": 150,
     "tray": {
       "openDelayMs": 150,
       "slideMs": 240,
