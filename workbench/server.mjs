@@ -20,7 +20,7 @@ import { spawn, execFile } from 'node:child_process';
 import { safePath, createGate, newToken, createSseHub, readJson, sendJson, MIME } from './lib/index.mjs';
 import { ToolSupervisor } from './core/tools.mjs';
 import { JobRunner, GENERATED } from './core/jobs.mjs';
-import { createWatcher, buildsFor, isBuildOutput } from './core/watch.mjs';
+import { createWatcher, createOwnWrites, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 import { createFileService } from './core/files.mjs';
 
@@ -131,7 +131,10 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   const jobs =new JobRunner({ root, stateFile: path.join(projectDir, 'jobs.json'), onEvent: (e, d) => hub.send(e, d) });
   const settings = new Settings(path.join(stateDir, 'settings.json'), env);
   // The one save path for repo files (core/files.mjs). A save reloads the preview through onBatch.
-  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), lockWaitMs, fileFault });
+  // What the file service wrote, so the watcher drops the echo of a save. onSaved still sends the batch itself:
+  // with forcePoll or a disabled watcher nothing else would.
+  const ownWrites = createOwnWrites();
+  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault });
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';
@@ -314,7 +317,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   previewAddress = `localhost:${server.address().port}`;
   const origin = `http://${address}`;
   supervisor = new ToolSupervisor({ repo: REPO, root, origin, ports, enabled: children, onChange: () => hub.send('tools', supervisor.list()) });
-  watcher = createWatcher({ root, dirs: WATCH_DIRS, debounceMs, onBatch, forcePoll });
+  watcher = createWatcher({ root, dirs: WATCH_DIRS, debounceMs, onBatch, forcePoll, isOwnWrite: ownWrites.isOwn });
   const started = supervisor.startAll();
 
   let closing = null;

@@ -56,7 +56,11 @@ export function createOwnWrites() {
   };
 }
 
-export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, isOutput = isBuildOutput }) {
+/**
+ * isOwnWrite(abs) says a file's events are the echo of a save the Workbench made
+ * (see createOwnWrites); those events are dropped when the batch is flushed.
+ */
+export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, isOutput = isBuildOutput, isOwnWrite = () => false }) {
   const pending = new Set();
   const watchers = []; const polls = [];
   let timer = null; let mutedUntil = 0; let muted = false; let closed = false;
@@ -74,7 +78,9 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   function flush() {
     if (!pending.size || closed) return;
     const files = [...pending].sort(); pending.clear();
-    onBatch(files);
+    // A file the Workbench just wrote is already in the batch its save sent: drop its echo here.
+    const external = files.filter((r) => !isOwnWrite(path.join(root, r)));
+    if (external.length) onBatch(external);
   }
 
   // One interval scans every polled folder in the same tick, so files written
