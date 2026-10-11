@@ -61,3 +61,14 @@ test('invalid JSON is refused before any schema check', async (t) => {
   assert.equal(problems.length, 1);
   assert.match(problems[0].message, /^Invalid JSON/);
 });
+
+test('a save of the card layout runs the card components build before the reload', async (t) => {
+  const root = await project(t);
+  const { buildsFor } = await import('../core/watch.mjs');
+  assert.deepEqual(buildsFor([LAYOUT_FILE], root), [], 'no tools/card-components.mjs in this checkout: no step');
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/card-components.mjs'), '\n');
+  assert.deepEqual(buildsFor([LAYOUT_FILE], root), ['tools/card-components.mjs']);
+  assert.deepEqual(buildsFor(['content/config/ui/tokens.json', LAYOUT_FILE], root), ['tools/config-build.mjs', 'tools/card-components.mjs'], 'config first, then the card components');
+  assert.deepEqual(buildsFor(['styles/main.css'], root), []);
+});
