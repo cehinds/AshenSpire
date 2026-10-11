@@ -8,7 +8,7 @@
 
 import {
   KINDS, SORTS, DEFAULT_SORT, rowsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
-  assetUrl, missingPacks, gridMetrics, visibleItems, sizeLabel, dimsLabel, clampZoom, frameSetOf, groupUsage,
+  assetUrl, missingPacks, gridMetrics, visibleItems, sizeLabel, dimsLabel, clampZoom, clampOpacity, frameSetOf, groupUsage,
 } from './model.mjs';
 
 const TILE_MIN = 64;
@@ -31,8 +31,23 @@ export default {
           <label class="ast-field ast-search"><span class="ast-sr">Search</span><input type="search" class="ast-q" placeholder="Search path or name" autocomplete="off"></label>
           <label class="ast-field ast-size-field">Size<input type="range" class="ast-size" min="${TILE_MIN}" max="${TILE_MAX}" step="8"></label>
           <p class="ast-count" role="status"></p>
+          <button type="button" class="ast-compare-btn" disabled>Compare</button>
         </div>
       </header>
+      <section class="ast-compare" aria-label="Compare two assets" hidden>
+        <div class="ast-cmp-bar">
+          <div class="ast-seg" role="group" aria-label="Compare mode">
+            <button type="button" data-mode="side" aria-pressed="true">Side by side</button>
+            <button type="button" data-mode="onion" aria-pressed="false">Onion skin</button>
+          </div>
+          <label class="ast-field ast-onion-field" hidden>Opacity<input type="range" class="ast-onion-op" min="0" max="1" step="0.05" value="0.5"></label>
+          <button type="button" class="ast-cmp-close">Close</button>
+        </div>
+        <div class="ast-cmp-stage" data-mode="side">
+          <figure class="ast-cmp-a"><img alt="" draggable="false"><figcaption></figcaption></figure>
+          <figure class="ast-cmp-b"><img alt="" draggable="false"><figcaption></figcaption></figure>
+        </div>
+      </section>
       <div class="ast-packs" hidden></div>
       <div class="ast-body">
         <aside class="ast-filters" aria-label="Filters">
@@ -89,6 +104,9 @@ export default {
     const viewport = $('.ast-viewport'), img = $('.ast-img'), audio = $('.ast-audio'), zlabel = $('.ast-zlabel');
 
     const st = { kind: '', q: '', folder: '', format: '', sort: DEFAULT_SORT, path: '', size: clampTile(ctx.settings.get('size', TILE_DEFAULT)) };
+    // The files picked for comparison, in the order they were picked (exactly two compare).
+    const picks = [];
+    const compareBtn = $('.ast-compare-btn'), compareBox = $('.ast-compare');
     let all = [], byPath = new Map(), view = [], packs = [], missing = null, loadError = '', imageMisses = 0, metrics = null, raf = 0, seenParams = null;
     // `userZoomed` is false while the picture is fitted to the viewport, so a resize refits it; a zoom or pan keeps its place.
     let zoom = { scale: 1, x: 0, y: 0 }, drag = null, userZoomed = false;
@@ -107,7 +125,7 @@ export default {
         all = []; byPath = new Map(); packs = []; missing = null;
         loadError = err.message || 'The art listing failed.';
       }
-      renderKinds(); renderFacets(); renderBanner(); refresh(); renderDrawer();
+      renderKinds(); renderFacets(); renderBanner(); renderPicks(); refresh(); renderDrawer();
     }
 
     // ---------- chips, facets, banner ----------
@@ -167,9 +185,11 @@ export default {
         ? `<img src="${assetUrl(row.path)}" alt="" loading="lazy" decoding="async">`
         : `<span class="ast-noimg">${esc((row.audio ? 'audio' : row.format || 'file').toUpperCase())}</span>`;
       const active = row.path === st.path;
-      return `<div class="ast-tile${active ? ' is-active' : ''}" data-i="${i}" role="button" tabindex="-1" aria-label="${esc(row.name)}" title="${esc(row.path)}" style="${at}">
+      const picked = picks.includes(row.path);
+      return `<div class="ast-tile${active ? ' is-active' : ''}${picked ? ' is-picked' : ''}" data-i="${i}" role="button" tabindex="-1" aria-label="${esc(row.name)}" title="${esc(row.path)}" style="${at}">
         <span class="ast-thumb">${media}</span>
         <span class="ast-cap">${esc(row.name)}</span>
+        <label class="ast-pick" title="Pick to compare"><input type="checkbox" data-pick="${esc(row.path)}"${picked ? ' checked' : ''}><span class="ast-sr">Pick ${esc(row.name)} to compare</span></label>
       </div>`;
     }
 
@@ -359,9 +379,54 @@ export default {
       raf = requestAnimationFrame(renderGrid);
     });
     grid.addEventListener('click', (ev) => {
+      const box = ev.target.closest('input[data-pick]');
+      if (box) { togglePick(box.dataset.pick, box.checked); return; }
+      if (ev.target.closest('.ast-pick')) return;
       const t = ev.target.closest('.ast-tile');
       if (t) select(view[Number(t.dataset.i)]?.path || '');
     });
+
+    // ---------- compare: two picked images, side by side or one over the other ----------
+    function togglePick(p, on) {
+      const at = picks.indexOf(p);
+      if (on && at < 0) picks.push(p);
+      if (!on && at >= 0) picks.splice(at, 1);
+      renderPicks();
+      renderGrid();
+    }
+    function renderPicks() {
+      const ok = picks.length === 2 && picks.every((p) => byPath.get(p) && !byPath.get(p).audio);
+      compareBtn.disabled = !ok;
+      compareBtn.textContent = picks.length ? `Compare (${picks.length})` : 'Compare';
+      compareBtn.title = ok ? 'Compare the two picked images' : 'Pick two images (tick their boxes) to compare';
+    }
+    function openCompare() {
+      if (picks.length !== 2) return;
+      const [a, b] = picks.map((p) => byPath.get(p));
+      const figs = compareBox.querySelectorAll('figure');
+      figs[0].querySelector('img').src = assetUrl(a.path);
+      figs[1].querySelector('img').src = assetUrl(b.path);
+      figs[0].querySelector('figcaption').textContent = `${a.name} · ${a.w && a.h ? `${a.w}×${a.h}` : 'size unknown'}`;
+      figs[1].querySelector('figcaption').textContent = `${b.name} · ${b.w && b.h ? `${b.w}×${b.h}` : 'size unknown'}`;
+      compareBox.hidden = false;
+      compareBox.querySelector('.ast-cmp-close').focus();
+    }
+    function closeCompare() { compareBox.hidden = true; }
+    compareBtn.addEventListener('click', openCompare);
+    compareBox.querySelector('.ast-cmp-close').addEventListener('click', closeCompare);
+    compareBox.querySelector('.ast-seg').addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-mode]');
+      if (!b) return;
+      const mode = b.dataset.mode;
+      compareBox.querySelector('.ast-cmp-stage').dataset.mode = mode;
+      compareBox.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.mode === mode)));
+      compareBox.querySelector('.ast-onion-field').hidden = mode !== 'onion';
+    });
+    const onionOp = compareBox.querySelector('.ast-onion-op');
+    const setOnion = () => { compareBox.querySelector('.ast-cmp-b img').style.opacity = String(clampOpacity(onionOp.value)); };
+    onionOp.addEventListener('input', setOnion);
+    setOnion();
+    compareBox.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeCompare(); });
     // An image that fails to load is counted once (the banner says what to fetch); the tile keeps its place.
     tiles.addEventListener('error', (ev) => {
       if (ev.target.tagName !== 'IMG') return;
