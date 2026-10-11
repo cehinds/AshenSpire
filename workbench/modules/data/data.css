@@ -1,11 +1,18 @@
 /* workbench/modules/data/data.css — Data Studio layout. The grid kit styles come from ui/kit/grid.css. */
-.ds { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; height: 100%; min-height: 0; }
+/* The host is the size container: below 1100px the table list and the Row/Check panel become overlay drawers. */
+.ds-host { height: 100%; min-height: 0; container: ds / inline-size; }
+.ds { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; height: 100%; min-height: 0; position: relative; }
+.ds-tables-toggle, .ds-list-close, .ds-drawer-close { display: none; }
 .ds-list, .ds-side { min-height: 0; overflow: auto; border-right: 1px solid var(--as-line); padding: 10px; }
+/* The find box fills the list column; its default width overflowed the 220px column. */
+.ds-find { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+.ds-list-head { display: flex; gap: 6px; align-items: center; }
+.ds-list-head .ds-find { flex: 1; }
 .ds-side { border-right: 0; border-left: 1px solid var(--as-line); }
 .ds-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
 .ds-toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--as-line); }
 .ds-grid { min-height: 0; min-width: 0; overflow: hidden; }
-.ds-group { margin: 12px 0 4px; font-size: var(--as-text-xs); color: var(--as-text-faint); text-transform: uppercase; letter-spacing: .06em; }
+.ds-group { margin: 12px 0 4px; font-size: var(--as-text-xs); color: var(--as-text-dim); text-transform: uppercase; letter-spacing: .06em; }
 .ds-table { display: flex; width: 100%; align-items: center; gap: 6px; border: 0; background: transparent; color: inherit; text-align: left; padding: 5px 6px; border-radius: 6px; cursor: pointer; font: inherit; }
 .ds-table[aria-current="true"] { background: var(--as-bg-raised); }
 .ds-table .ds-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -18,10 +25,22 @@
 .ds-form label { display: grid; gap: 3px; margin-bottom: 10px; font-size: var(--as-text-sm); }
 .ds-form em { font-style: normal; color: var(--as-text-faint); font-size: var(--as-text-xs); }
 .ds-form input { width: 100%; box-sizing: border-box; }
-.ds-muted { color: var(--as-text-faint); }
+.ds-muted { color: var(--as-text-dim); }
 .ds-note { padding: 24px; color: var(--as-text-dim); }
-.ds-file { color: var(--as-text-faint); font-size: var(--as-text-xs); margin-left: auto; }
-@media (max-width: 900px) { .ds { grid-template-columns: 1fr; } .ds-list, .ds-side { border: 0; max-height: 30vh; } }
+.ds-file { color: var(--as-text-dim); font-size: var(--as-text-xs); margin-left: auto; }
+/* Below 1100px the grid has the width: the table list and the Row/Check panel slide in as overlays from the
+   sides (.list-open, .row-open), each with a Close button. Nothing reflows under the grid. */
+@container ds (max-width: 1100px) {
+  .ds { grid-template-columns: minmax(0, 1fr); }
+  .ds-tables-toggle, .ds-list-close { display: inline-flex; }
+  .ds-list, .ds-side { position: absolute; top: 0; bottom: 0; z-index: 6; width: min(300px, 88%); background: var(--as-bg-panel); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); transition: transform 180ms ease; }
+  .ds-list { left: 0; border-right: 1px solid var(--as-line); transform: translateX(-100%); }
+  .ds-side { right: 0; border-left: 1px solid var(--as-line); border-right: 0; transform: translateX(100%); }
+  .ds.list-open .ds-list, .ds.row-open .ds-side { transform: none; }
+  .ds-drawer-close { display: inline-flex; }
+  .ds-tabs .ds-drawer-close { flex: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ds-list, .ds-side { transition: none; } }
 .ds-review { width: min(860px, 94vw); max-height: 86vh; padding: 0; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius-lg); background: var(--as-bg-panel); color: var(--as-text); box-shadow: var(--as-shadow-lg); }
 .ds-review::backdrop { background: var(--as-overlay); }
 .ds-review-body { padding: 18px 20px; overflow: auto; max-height: 86vh; }

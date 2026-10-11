@@ -108,6 +108,9 @@
 /* A small region shows its label on hover or selection only. */
 .ck-item.tiny .ck-label { display: none; }
 .ck-item.tiny.hover .ck-label, .ck-item.tiny.selected .ck-label { display: block; }
+/* A label that would collide with another (labelsToHide) shows on hover or selection only. */
+.ck-item.label-hide .ck-label { display: none; }
+.ck-item.label-hide.hover .ck-label, .ck-item.label-hide.selected .ck-label { display: block; }
 
 .ck-handle {
   position: absolute;

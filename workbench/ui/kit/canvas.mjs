@@ -31,8 +31,6 @@ const PAD = 24;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 4;
 const TOP_KEYS = ['x', 'y', 'w', 'h', 'rot', 'label', 'locked', 'hidden', 'z'];
-// A region on screen narrower than SMALL_W or shorter than SMALL_H (px) is "small": its label shows on hover or selection.
-const SMALL_W = 120, SMALL_H = 30;
 const RULER_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -122,13 +120,15 @@ export function createCanvas(el, opts = {}) {
     page.style.setProperty('--ck-minor-px', `${r3((g.size / Math.max(1, g.subdivisions)) * zoom)}px`);
     page.textContent = '';
     const sel = new Set(selection);
+    // Labels that would collide with a more important one are hidden; a hovered or selected label always shows (CSS).
+    const hideLabel = M.labelsToHide(doc, zoom, { selection });
     for (const it of M.sortedByZ(doc)) {
       if (it.hidden) continue;
       const n = doc0.createElement('div');
       const dim = scope !== null && it.group !== scope;
       // A small region cannot hold its label: the label then shows on hover or selection only (CSS).
-      const small = it.w * zoom < SMALL_W || it.h * zoom < SMALL_H;
-      n.className = `ck-item${sel.has(it.id) ? ' selected' : ''}${it.locked ? ' locked' : ''}${it.group ? ' in-group' : ''}${dim ? ' dim' : ''}${small ? ' tiny' : ''}`;
+      const small = M.isSmallRegion(it, zoom);
+      n.className = `ck-item${sel.has(it.id) ? ' selected' : ''}${it.locked ? ' locked' : ''}${it.group ? ' in-group' : ''}${dim ? ' dim' : ''}${small ? ' tiny' : ''}${hideLabel.has(it.id) ? ' label-hide' : ''}`;
       n.dataset.id = it.id;
       n.style.left = `${r3(it.x * zoom)}px`;
       n.style.top = `${r3(it.y * zoom)}px`;
@@ -343,9 +343,7 @@ export function createCanvas(el, opts = {}) {
   }
 
   function fit() {
-    const vw = view.clientWidth - 2 * PAD, vh = view.clientHeight - 2 * PAD;
-    const z = Math.min(vw / state.doc.width, vh / state.doc.height);
-    setZoom(Math.floor(clamp(z, MIN_ZOOM, MAX_ZOOM) * 1000) / 1000);
+    setZoom(M.fitZoom({ viewW: view.clientWidth, viewH: view.clientHeight, docW: state.doc.width, docH: state.doc.height, pad: PAD, minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM }));
     view.scrollLeft = 0;
     view.scrollTop = 0;
   }

@@ -19,32 +19,38 @@ const basename = (p) => p.split('/').pop();
 
 export default {
   mount(el, ctx) {
-    el.innerHTML = `<link rel="stylesheet" href="/modules/data/data.css"><div class="ds">
-      <aside class="ds-list" aria-label="Tables"><input type="search" class="ds-find" placeholder="Find a table…" aria-label="Find a table"><div class="ds-groups"></div></aside>
+    el.innerHTML = `<link rel="stylesheet" href="/modules/data/data.css"><div class="ds-host"><div class="ds">
+      <aside class="ds-list" id="ds-list" aria-label="Tables"><div class="ds-list-head"><input type="search" class="ds-find" placeholder="Find a table…" aria-label="Find a table"><button type="button" class="btn btn-sm ds-list-close">Close</button></div><div class="ds-groups"></div></aside>
       <section class="ds-main">
         <div class="ds-toolbar">
-          <button type="button" data-act="add">Add row</button>
-          <button type="button" data-act="dup">Duplicate</button>
-          <button type="button" data-act="del">Delete</button>
-          <button type="button" data-act="import">Import CSV/JSON</button>
-          <button type="button" data-act="export">Export</button>
-          <button type="button" data-act="review" class="primary">Review &amp; save (0)</button>
+          <button type="button" class="btn btn-sm ds-tables-toggle" aria-controls="ds-list" aria-expanded="false">Tables</button>
+          <button type="button" class="btn btn-sm" data-act="add">Add row</button>
+          <button type="button" class="btn btn-sm" data-act="dup">Duplicate</button>
+          <button type="button" class="btn btn-sm" data-act="del">Delete</button>
+          <button type="button" class="btn btn-sm" data-act="import">Import CSV/JSON</button>
+          <button type="button" class="btn btn-sm" data-act="export">Export</button>
+          <button type="button" class="btn btn-sm btn-primary" data-act="review">Review &amp; save (0)</button>
           <input type="file" class="ds-file-in" accept=".csv,.json,.tsv,.txt" hidden>
           <span class="ds-file"></span>
         </div>
         <div class="ds-grid"><div class="ds-note">Loading tables…</div></div>
       </section>
       <aside class="ds-side">
-        <div class="ds-tabs" role="tablist"><button type="button" role="tab" data-tab="row" aria-selected="true">Row</button><button type="button" role="tab" data-tab="check" aria-selected="false">Check</button></div>
+        <div class="ds-tabs" role="tablist"><button type="button" class="btn btn-sm" role="tab" data-tab="row" aria-selected="true">Row</button><button type="button" class="btn btn-sm" role="tab" data-tab="check" aria-selected="false">Check</button><button type="button" class="btn btn-sm ds-drawer-close">Close</button></div>
         <div class="ds-panel-row"></div>
         <div class="ds-panel-check ds-hidden"></div>
-      </aside></div>`;
+      </aside></div></div>`;
     const $ = (s) => el.querySelector(s);
     const groupsEl = $('.ds-groups'), gridEl = $('.ds-grid'), fileEl = $('.ds-file'), rowPanel = $('.ds-panel-row'), checkPanel = $('.ds-panel-check');
     const fileIn = $('.ds-file-in');
+    // Below 1100px the Row/Check panel is an overlay (.row-open) that opens on a row pick or a tab click.
+    const root = $('.ds');
+    const setDrawer = (open) => root.classList.toggle('row-open', open);
 
     const state = { tables: [], parsed: new Map(), drafts: new Map(), selected: null, grid: null, activeRow: null, tab: 'row', filter: '' };
     let saving = false;
+    // Only a pointer pick opens the Row panel; arrow keys move the grid's row without covering it.
+    let pointerPick = false;
 
     // ---------- loading ----------
     async function parsedOf(path) {
@@ -102,7 +108,12 @@ export default {
     }
     function syncActiveRow() {
       const active = gridEl.querySelector('.gk-active');
-      if (active && active.dataset.r !== undefined) { state.activeRow = Number(active.dataset.r); renderRow(); }
+      if (active && active.dataset.r !== undefined) {
+        const r = Number(active.dataset.r), picked = r !== state.activeRow;
+        state.activeRow = r; renderRow();
+        // A new row pick opens the Row panel; later grid events on the same row leave it as the reader closed it.
+        if (picked && pointerPick) { setDrawer(true); root.classList.remove('list-open'); }
+      }
     }
     // Every edit the grid commits is one History step; undo and redo put the snapshot back for its own table.
     function onGridChange(ev) {
@@ -144,7 +155,7 @@ export default {
       const changes = paths.map((p) => changeFor(state.parsed.get(p), state.drafts.get(p)));
       const diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })
         .catch((e) => ({ path: c.path, error: e.message, hunks: [], added: 0, removed: 0 }))));
-      dlg.innerHTML = `<div class="ds-review-body"><h2>Review changes (${changes.length})</h2>${diffs.map(diffHtml).join('')}<div class="ds-review-status" role="status"></div><div class="ds-review-actions"><button type="button" data-cancel>Cancel</button><button type="button" class="primary" data-save>Save ${changes.length} file${changes.length === 1 ? '' : 's'}</button></div></div>`;
+      dlg.innerHTML = `<div class="ds-review-body"><h2>Review changes (${changes.length})</h2>${diffs.map(diffHtml).join('')}<div class="ds-review-status" role="status"></div><div class="ds-review-actions"><button type="button" class="btn btn-sm" data-cancel>Cancel</button><button type="button" class="btn btn-sm btn-primary" data-save>Save ${changes.length} file${changes.length === 1 ? '' : 's'}</button></div></div>`;
       dlg.querySelector('[data-cancel]').onclick = close;
       dlg.querySelector('[data-save]').onclick = () => save(changes);
       if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
@@ -193,7 +204,7 @@ export default {
       const diskHash = new Map(found.map((c) => [c.path, c.hash ?? null]));
       const moved = changes.filter((c) => diskHash.has(c.path));
       const names = moved.map((c) => esc(c.path)).join(', ') || 'a file';
-      status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" data-reload>Reload from disk</button><button type="button" data-overwrite class="primary">Overwrite with my changes</button></div>`;
+      status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" class="btn btn-sm" data-reload>Reload from disk</button><button type="button" class="btn btn-sm btn-primary" data-overwrite>Overwrite with my changes</button></div>`;
       status.querySelector('[data-reload]').onclick = async () => {
         for (const c of moved) { state.parsed.delete(c.path); state.drafts.delete(c.path); }
         // The disk copies replace the drafts: the steps that hold the drafts must go, or undo writes them back.
@@ -212,6 +223,7 @@ export default {
     }
     // The grid redraws its rows on mousedown, which takes focus off the clicked cell; focus the grid again so its keys work.
     gridEl.addEventListener('mousedown', () => setTimeout(() => gridEl.querySelector('.gk-scroll')?.focus({ preventScroll: true }), 0));
+    gridEl.addEventListener('mousedown', () => { pointerPick = true; setTimeout(() => { pointerPick = false; }, 0); }, true);
     // The grid's own Undo, Redo and keys go through the module's History instead, so one stack covers every table.
     gridEl.addEventListener('keydown', (ev) => {
       if (ev.target.tagName === 'INPUT') return;
@@ -314,12 +326,25 @@ export default {
 
     // ---------- lists and tabs ----------
     el.querySelector('.ds-find').addEventListener('input', (ev) => { state.filter = ev.target.value; renderList(); });
+    // Below 1100px the table list is an overlay behind the Tables toggle; picking a table closes it.
+    const setList = (open) => {
+      root.classList.toggle('list-open', open);
+      $('.ds-tables-toggle').setAttribute('aria-expanded', String(open));
+    };
+    $('.ds-tables-toggle').addEventListener('click', () => setList(!root.classList.contains('list-open')));
+    $('.ds-list-close').addEventListener('click', () => setList(false));
+    $('.ds-drawer-close').addEventListener('click', () => setDrawer(false));
     groupsEl.addEventListener('click', (ev) => {
-      const b = ev.target.closest('[data-path]'); if (b) select(b.dataset.path);
+      const b = ev.target.closest('[data-path]'); if (b) { setList(false); select(b.dataset.path); }
+    });
+    el.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Escape') return;
+      setList(false); setDrawer(false);
     });
     el.querySelector('.ds-tabs').addEventListener('click', (ev) => {
       const tab = ev.target.closest('[data-tab]')?.dataset.tab; if (!tab) return;
       state.tab = tab;
+      setDrawer(true);
       el.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
       rowPanel.classList.toggle('ds-hidden', tab !== 'row');
       checkPanel.classList.toggle('ds-hidden', tab !== 'check');
