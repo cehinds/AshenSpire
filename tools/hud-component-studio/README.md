@@ -57,3 +57,25 @@ The studio writes the HUD's tunable look as the CSS custom properties in [docs/h
 `node qa/verify.mjs` checks the scene graph, every copied asset checksum, the CSS bindings against the contract (each token bound once, with matching types and existing nodes), the seed export for each form factor, and a synthetic desktop move. For the interaction suite, make Playwright available to Node (for example through `NODE_PATH`) and run `node qa/smoke.mjs` while the preview is running. Set `HUD_STUDIO_URL` for another port and `HUD_STUDIO_BROWSER=msedge` to use installed Edge instead of Playwright Chromium. Set `HUD_STUDIO_ARTIFACTS` to save screenshots and exports outside the checkout, and `HUD_STUDIO_SHOTS` to choose a separate folder for the screenshots. The default QA output under `qa/artifacts/` is ignored.
 
 The scene uses 224 nodes, 38 packaged assets, and three selection views. Source-art differences and substitutions are recorded in `scene-notes.md`; checksums and source repositories/releases are recorded in `assets.manifest.json`. See `qa/verification.md` for the publication check results.
+
+## Multi-page design projects
+
+Open `index.html?project=projects/character-creation/scene.json` from this same studio server. Project paths must remain under `projects/<name>/`; asset files are resolved relative to the selected JSON file, so `assets/frame.png` means `projects/<name>/assets/frame.png`. Each project has its own browser autosave. A missing or rejected project displays an error and never opens the HUD draft instead.
+
+The data contract remains scene `version: 1`: `title`, `canvas`, `defaultState`, `states: [{id, name}]`, `assets`, and `nodes`. States are named design pages, not gameplay navigation. Shared nodes appear on every page; page groups can set base `visible: false` with `states[pageId].visible: true`. Keep labels as independent `type: "text"` nodes so they remain editable. An optional `metadata.references` object maps page IDs to `assets/` image paths; it enables the Reference overlay. HUD CSS token export and device overrides are hidden for design projects.
+
+Enable **Snap** to align movement to an 8 px grid, canvas edges/centres, and visible component edges/centres. Pink guides show the chosen alignment. Hold **Ctrl/Command** while dragging to bypass snapping. The round grip above a selection rotates it; hold **Shift** for 15° increments. Resize handles scale groups and their children. **Outlines** helps inspect the component geometry.
+
+**Export JSON** embeds project raster assets in the downloaded file, keeping labels, transforms, groups and every page editable when the file is imported at another studio address. Original files stay untouched. Reference images are review aids and are excluded from the portable export. **Export PNG → Selected component** exports transparent individual layers or groups; **Full view PNG** exports the current page.
+
+Additional checks: `node --test qa/project.test.mjs` and `node qa/project-smoke.mjs` against the running studio. The latter uses routed test scenes and exercises real mouse snapping, bypass, rotation, page text editing, persistence isolation, file roundtrip and PNG export. Set `HUD_STUDIO_EXECUTABLE=/path/to/chromium` to use an installed browser for either interaction suite.
+
+## Single-file handoff
+
+Build with `node tools/hud-component-studio/bundle-project.mjs --scene projects/character-creation/scene.json --out /path/to/Character-Creation-Studio.html`. Double-click the output HTML to use this same editor without a server, installation or network. It embeds the scene, PNG assets, scripts, styles and any local CSS font dependencies. Reference overlays are omitted. Export JSON remains the durable editable backup; bundled drafts save only scene changes and reuse the embedded source images to stay within browser storage limits. The default autosave identity includes a hash of the full project path and scene filename, so caster/noncaster scenes and nested projects remain separate. `--id <name>` sets an explicit stable autosave identity when distributing renamed copies of one project.
+
+Run `node tools/hud-component-studio/qa/bundle-smoke.mjs` to check direct `file://` opening, safe embedded text, mouse editing, persistence, PNG and portable JSON exports with no external requests. Use `HUD_STUDIO_EXECUTABLE` when needed to select a browser that supports local files.
+
+If the test machine blocks local-file browsing, set `HUD_STUDIO_BUNDLE_URL=http://127.0.0.1:8361/standalone.html` to test the same generated HTML through one intercepted HTTP response; the test blocks every external asset/script request.
+
+`node --test tools/hud-component-studio/qa/bundle.test.mjs` checks bundle identity separation and explicit identity stability.
