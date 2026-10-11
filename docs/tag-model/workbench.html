@@ -382,6 +382,7 @@ async function flush(t, opts){
     /* GC may have deleted a blob this save wrote, between its write and the head landing: re-check each one and write any that are gone */
     const rowsOf=new Map(built.map(b=>[b.hash,b.rows]));
     for(const h of written){
+      if(!rowsOf.has(h)) continue; /* a hash from an earlier attempt's rows: this build has no rows for it, so there is nothing to write */
       const g=await db.doc(blobPath(t,h)).get();
       if(!g.exists) await db.doc(blobPath(t,h)).set({rows:rowsOf.get(h), createdAt:Date.now()});
     }

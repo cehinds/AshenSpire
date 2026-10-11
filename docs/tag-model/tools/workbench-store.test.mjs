@@ -578,6 +578,15 @@ test('a blob GC deletes after this save wrote it, before the head lands, is writ
   assert.equal(await storedRows(db), JSON.stringify(rows));
 });
 
+test('the re-check writes back only blobs this save built, never a stale hash carried in from an earlier attempt', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  editTable(W.page, sample(3, 's'));
+  await W.api.flush('t', { written: new Set(['stalehash']) });
+  assert.equal(db.has(W.api.blobPath('t', 'stalehash')), false, 'no blob is written for a hash this save did not build');
+  assert.equal(await storedRows(db), JSON.stringify(sample(3, 's')));
+});
+
 test('a second banner that appears while another is up is announced as an alert', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);
