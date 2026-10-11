@@ -1,12 +1,12 @@
 // workbench/modules/layout/modes.mjs — Layout Studio's modes and the deep link
-// that opens one: #mod=layout&mode=battlefield|sketch&…. Pure; index.mjs draws them.
+// that opens one: #mod=layout&mode=battlefield|sketch|deck|orb&…. Pure; index.mjs draws them.
 
 export const MODES = Object.freeze([
   { id: 'config', label: 'UI config', built: true },
   { id: 'sketch', label: 'Sketch', built: true },
   { id: 'battlefield', label: 'Battlefield', built: true },
-  { id: 'deck-row', label: 'Deck row', built: false },
-  { id: 'sp-orb', label: 'SP orb', built: false },
+  { id: 'deck', label: 'Deck row', built: false },
+  { id: 'orb', label: 'SP orb', built: false },
   { id: 'book-recipes', label: 'Book recipes', built: false },
   { id: 'card-layers', label: 'Card layers', built: false },
 ]);

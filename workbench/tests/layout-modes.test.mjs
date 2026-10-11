@@ -16,8 +16,8 @@ test('the deep link opens battlefield and sketch, and unknown modes open UI conf
 });
 
 test('a mode not built yet opens UI config rather than an empty page', () => {
-  assert.equal(L.modeFor('deck-row'), 'config');
-  assert.deepEqual(L.comingNext().map((m) => m.id), ['deck-row', 'sp-orb', 'book-recipes', 'card-layers']);
+  assert.equal(L.modeFor('deck'), 'config');
+  assert.deepEqual(L.comingNext().map((m) => m.id), ['deck', 'orb', 'book-recipes', 'card-layers']);
 });
 
 test('the link for a mode round-trips through the host\'s hash helpers', () => {
