@@ -1,5 +1,16 @@
 # Publication verification
 
+## October 11, 2026: form factors, shadows and CSS token export (Chromium, Linux)
+
+Environment: Linux, Node 22.22.0, Playwright Chromium (headless, `HUD_STUDIO_BROWSER` unset), studio served with `python3 -m http.server 8360 --bind 127.0.0.1`.
+
+- `node qa/verify.mjs`: 4 PASS lines. The graph, asset checksums and reference checksum still pass. `css-bindings.json` binds all 22 contract tokens exactly once, with types that match the contract table and existing node IDs. Each form factor's seed export is exactly the 14 explicitly set seed tokens, valid per contract type. A synthetic +40 design px Desktop move of player details exports `--hud-player-details-dx: "30px"` only in `desktop.json`, and it imports back.
+- `NODE_PATH=/opt/node-tools/node_modules HUD_STUDIO_URL=http://localhost:8360/ HUD_STUDIO_ARTIFACTS=<scratch>/studio-qa node qa/smoke.mjs`: 70 PASS checks, 0 page errors, 0 failed requests. The interaction suite is unchanged, plus form-factor checks: toggles are exclusive and named in the Inspector scope label. Mobile stays at the seed placement after a Tablet move. Export CSS JSON starts one download for this form factor and four for All four, each with the contract format. Import CSS JSON, undo/redo of drags and imports, and JSON export/import all carry `formFactors`. Inspector text shadow and widget shadow write SVG filters, and Clear turns them off. Export PNG still works. Reset form factor clears only that form factor. At 390 × 844 all toolbar controls, including the form-factor toggle and CSS export buttons, stay on screen.
+- Screenshots (1440 × 1000, Player selected, saved under the scratch `studio-after/` folder): Mobile, Tablet, Desktop and Widescreen views, plus the Inspector widget-shadow controls and the 390 × 844 narrow layout. Tablet shows the moved details panel. Mobile keeps the seed placement.
+- Known limitation: at 390 px the three-column workspace keeps its existing minimum width, so the page scrolls horizontally and the Inspector is clipped. This is unchanged from the previous studio layout and is not part of this change.
+
+## Earlier publication check
+
 Verified October 10, 2026 from the packaged repository copy on Windows, with Edge via Playwright. The Browser plugin was unavailable; the existing Playwright interaction suite was used.
 
 - The portable launcher served the copied package at `http://localhost:8362/`. The document title and URL identified HUD Component Studio, and the complete scene rendered at 1440 × 1000.

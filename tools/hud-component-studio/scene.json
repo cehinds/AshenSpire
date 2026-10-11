@@ -572,7 +572,13 @@
       "fontFamily": "Georgia",
       "fontSize": 24,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "header-hp-rim",
@@ -838,7 +844,14 @@
       "rotation": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "clip": false
+      "clip": false,
+      "shadow": {
+        "x": 0,
+        "y": 3,
+        "blur": 6,
+        "spread": 0,
+        "color": "rgba(0,0,0,0.55)"
+      }
     },
     {
       "id": "header-armoury-inset",
@@ -927,7 +940,14 @@
       "rotation": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "clip": false
+      "clip": false,
+      "shadow": {
+        "x": 0,
+        "y": 3,
+        "blur": 6,
+        "spread": 0,
+        "color": "rgba(0,0,0,0.55)"
+      }
     },
     {
       "id": "header-menu-inset",
@@ -1044,7 +1064,13 @@
       "fontFamily": "Georgia",
       "fontSize": 20,
       "fontWeight": "bold",
-      "textAlign": "center"
+      "textAlign": "center",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "enemies",
@@ -1234,7 +1260,13 @@
       "fontFamily": "Georgia",
       "fontSize": 27,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "enemy-1-hp-rim",
@@ -1349,7 +1381,19 @@
       "fontFamily": "Georgia",
       "fontSize": 15,
       "fontWeight": "normal",
-      "textAlign": "center"
+      "textAlign": "center",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      },
+      "textBacking": {
+        "color": "rgba(8,9,7,0.55)",
+        "padX": 4,
+        "padY": 1,
+        "radius": 4
+      }
     },
     {
       "id": "enemy-2",
@@ -1529,7 +1573,13 @@
       "fontFamily": "Georgia",
       "fontSize": 27,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "enemy-2-hp-rim",
@@ -1644,7 +1694,19 @@
       "fontFamily": "Georgia",
       "fontSize": 15,
       "fontWeight": "normal",
-      "textAlign": "center"
+      "textAlign": "center",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      },
+      "textBacking": {
+        "color": "rgba(8,9,7,0.55)",
+        "padX": 4,
+        "padY": 1,
+        "radius": 4
+      }
     },
     {
       "id": "enemy-selected-intent",
@@ -1693,7 +1755,14 @@
       "rotation": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "clip": false
+      "clip": false,
+      "shadow": {
+        "x": 0,
+        "y": 3,
+        "blur": 6,
+        "spread": 0,
+        "color": "rgba(0,0,0,0.55)"
+      }
     },
     {
       "id": "selected-intent-label",
@@ -1912,7 +1981,14 @@
       "rotation": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "clip": false
+      "clip": false,
+      "shadow": {
+        "x": 0,
+        "y": 3,
+        "blur": 6,
+        "spread": 0,
+        "color": "rgba(0,0,0,0.55)"
+      }
     },
     {
       "id": "enemy-name",
@@ -2425,7 +2501,19 @@
       "fontFamily": "Georgia",
       "fontSize": 14,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      },
+      "textBacking": {
+        "color": "rgba(8,9,7,0.55)",
+        "padX": 4,
+        "padY": 1,
+        "radius": 4
+      }
     },
     {
       "id": "player-feet-hp-rim",
@@ -2584,7 +2672,14 @@
       "rotation": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "clip": false
+      "clip": false,
+      "shadow": {
+        "x": 0,
+        "y": 3,
+        "blur": 6,
+        "spread": 0,
+        "color": "rgba(0,0,0,0.55)"
+      }
     },
     {
       "id": "player-details-inset",
@@ -2633,7 +2728,13 @@
       "fontFamily": "Georgia",
       "fontSize": 23,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "player-details-separator",
@@ -2660,7 +2761,13 @@
       "fontFamily": "Georgia",
       "fontSize": 21,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "player-details-level",
@@ -2687,7 +2794,13 @@
       "fontFamily": "Georgia",
       "fontSize": 21,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "player-details-hp-rim",
@@ -2802,7 +2915,13 @@
       "fontFamily": "Georgia",
       "fontSize": 18,
       "fontWeight": "normal",
-      "textAlign": "center"
+      "textAlign": "center",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "player-details-poise-label",
@@ -2829,7 +2948,13 @@
       "fontFamily": "Georgia",
       "fontSize": 16,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "player-details-poise-value",
@@ -2856,7 +2981,13 @@
       "fontFamily": "Georgia",
       "fontSize": 18,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "player-details-ward-label",
@@ -2883,7 +3014,13 @@
       "fontFamily": "Georgia",
       "fontSize": 16,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "player-details-ward-value",
@@ -2910,7 +3047,13 @@
       "fontFamily": "Georgia",
       "fontSize": 18,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "hand",
@@ -3072,7 +3215,13 @@
       "fontFamily": "Georgia",
       "fontSize": 16,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "reaction-label",
@@ -3099,7 +3248,13 @@
       "fontFamily": "Georgia",
       "fontSize": 15,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "reaction-track",
@@ -5213,7 +5368,13 @@
       "fontFamily": "Georgia",
       "fontSize": 13,
       "fontWeight": "bold",
-      "textAlign": "center"
+      "textAlign": "center",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "draw-pile",
@@ -5312,7 +5473,13 @@
       "fontFamily": "Georgia",
       "fontSize": 17,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "end-turn",
@@ -5384,7 +5551,13 @@
       "fontFamily": "Georgia",
       "fontSize": 27,
       "fontWeight": "normal",
-      "textAlign": "center"
+      "textAlign": "center",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "spent-piles",
@@ -5456,7 +5629,13 @@
       "fontFamily": "Georgia",
       "fontSize": 14,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "discard-count",
@@ -5510,7 +5689,13 @@
       "fontFamily": "Georgia",
       "fontSize": 14,
       "fontWeight": "normal",
-      "textAlign": "left"
+      "textAlign": "left",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "exhaust-count",
@@ -5609,7 +5794,13 @@
       "fontFamily": "Georgia",
       "fontSize": 18,
       "fontWeight": "normal",
-      "textAlign": "center"
+      "textAlign": "center",
+      "textShadow": {
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "color": "#000000"
+      }
     },
     {
       "id": "potion-crimson",
