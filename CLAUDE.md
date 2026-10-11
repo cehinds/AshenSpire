@@ -42,7 +42,10 @@ to CI artifacts, not the tree*).
 This is the standing policy for every session: the main session manages,
 coordinates and reviews; workers do the work. Scoped implementation, searches
 and test runs go to the `ashen-worker` agent (`.claude/agents/`); risky diffs
-go to `ashen-reviewer`. Models track the newest release of each tier: workers
+go to `ashen-reviewer`. Agents that write code (workers and implementing agents)
+work in very small steps, one self-contained commit per step, pushed as soon as it
+is made so reviewers review each commit as it lands (owner, 2026-10-11). Review
+agents stay read-only and review each pushed commit as it lands. Models track the newest release of each tier: workers
 run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
 on the newest Opus (Opus 5.5 today). Agent files pin the tier aliases
 (`model: haiku` / `model: opus`), which resolve to the newest model. When a new
@@ -52,7 +55,15 @@ run `git fetch --prune origin` and `git worktree prune`, then `git worktree
 remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that
 is clean (`git status --porcelain` empty) and whose branch is merged into
 `origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep any
-other worktree; ask the owner before discarding unmerged work. The loop, brief
+other worktree; ask the owner before discarding unmerged work. Worker branches
+are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/branch-cleanup`
+for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
+the parent branch merges into `dev`; origin worker branches are deleted by
+`worker-branch-cleanup.yml` after `dev` is promoted to `test`. Before handing
+work to Haiku, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
+the key lines yourself, measure before tuning, one owner per file per wave,
+numbered steps with the design already decided, named traps, an acceptance
+Haiku can run, and orchestrator QA of every diff in a real browser. The loop, brief
 template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).

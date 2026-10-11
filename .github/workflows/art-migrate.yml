@@ -1,0 +1,520 @@
+name: art-migrate
+
+# THE ART PIPELINE, AUTOMATED (owner, 2026-10-11). Art does not enter `dev`
+# through this repository any more: it enters through cehinds/AshenSpire-art
+# and its release, then a pin here (CONTRIBUTING.md, ground rule 2). This
+# workflow moves the two hand-offs that a person used to make.
+#
+#   1. INTAKE (pull_request_target into dev). A pull request that adds or modifies an
+#      art file (tools/art-intake.mjs: the high tier assets/, the fonts, the
+#      score renders, map-detail/, art/; NOT assets-mobile/, the light tier,
+#      which stays tracked here) is moved: its art files are staged in a branch
+#      `intake/ashenspire-pr-<N>` of cehinds/AshenSpire-art, and a pull request
+#      "Intake art from AshenSpire#<N>" is opened or updated there. A sticky
+#      comment on this pull request links it. THIS JOB THEN FAILS on purpose:
+#      the art must leave this pull request, so it never lands on dev.
+#      A fork pull request, or a repository without ART_REPO_WRITE_TOKEN, gets
+#      the same failure with the manual path written out (ground rule 2).
+#      When a later push of the pull request carries no art any more, the
+#      intake pull request left by an earlier push is closed, and its branch
+#      deleted. When the pull request is closed without merging, the same
+#      cleanup runs in the close-intake job. Neither runs any head code.
+#
+#   2. PIN BUMP (schedule every 6 h, workflow_dispatch, repository_dispatch
+#      `art-release`). When the art repository's newest hd-assets-v<N> release
+#      is newer than art-release.json, this job writes the new pin (tag, zip
+#      and each pack's sha256, from the release's own .sha256 files), runs
+#      `node tools/art-manifest.mjs --write`, and opens a pull request into dev
+#      from branch `bot/art-pin-<tag>`. It is a no-op when the pin is current or
+#      a pull request for that tag already exists.
+#
+# Nothing here merges anything. The art pull request is the owner's to review
+# and merge; the release it triggers is the art repository's own workflow.
+#
+# TRUST BOUNDARY (intake). The intake runs on `pull_request_target`, never on
+# `pull_request`, and that choice is the security boundary. GitHub loads the
+# workflow definition of a pull_request_target run from the BASE branch, so a
+# pull request cannot edit this file to run its own copy with
+# ART_REPO_WRITE_TOKEN in scope. Under `pull_request` the definition is the
+# head's, and a same-repository pull request could rewrite a step to print the
+# token. GitHub's guidance on pull_request_target (docs.github.com, "Events that
+# trigger workflows", pull_request_target) warns that such a run must not check
+# out or execute untrusted head code, so the intake job never does. A pull
+# request's head is untrusted: it can carry any change to any file. So the
+# intake job never checks out or runs the pull request's code:
+#   - the checkout is the BASE commit (the event's base.sha, the protected dev
+#     tip), and every `node` run is tools/art-intake.mjs from that tree;
+#   - the head is only fetched as git objects; the tool reads its files as
+#     blobs (`git cat-file`), which runs no filter, textconv or hook;
+#   - the art repository token is in the environment of the push and gh steps
+#     only, never of a step that runs node, and the art checkout keeps no
+#     credentials on disk (persist-credentials: false); git gets the token per
+#     command through GIT_CONFIG_* in the step's env;
+#   - pull request values (numbers, shas, paths, titles) reach a shell only
+#     through env:, never through ${{ }} inside run:;
+#   - the token is reachable only for a same-repository pull request: every
+#     step that names the secret is gated on a head in this repository (or on
+#     the migrate state, which requires one). A fork's run gets the manual-path
+#     failure and no secret in any step's environment.
+#
+# SECRETS. ART_REPO_WRITE_TOKEN (owner adds it): contents and pull-requests
+# write on cehinds/AshenSpire-art, and (owner, 2026-10-11) contents and
+# pull-requests write on this repository too. In the intake job it is read only
+# by the push and gh steps, and only for a pull request from this repository.
+# pull_request_target runs a fork's pull request with the base's secrets in
+# scope, so that gate is what keeps the token from a fork.
+# In the pin-bump job it is read only by the push and the gh pr create step: the
+# bot branch is pushed and its pull request opened with that token, so the pull
+# request into dev triggers CI (a GITHUB_TOKEN push or pull request does not). If
+# the secret is empty the job falls back to GITHUB_TOKEN and says so with a
+# warning; that pull request then gets no CI run. The pin-bump job reads the
+# public art repository with GITHUB_TOKEN and checks out dev's own tree only.
+
+on:
+  pull_request_target:
+    branches: [dev]
+    types: [opened, synchronize, reopened, closed]
+  schedule:
+    - cron: '37 */6 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [art-release]
+
+permissions:
+  contents: read
+
+env:
+  ART_REPO: cehinds/AshenSpire-art
+
+jobs:
+  intake:
+    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    # Never cancelled mid-run: a run cancelled after it pushed the intake branch but
+    # before it opened the art pull request would leave an unlinked branch, and the
+    # next run (art removed, state none) does no art-repository work. Runs queue.
+    concurrency:
+      group: art-intake-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      BASE: ${{ github.event.pull_request.base.sha }}
+      HEAD: ${{ github.event.pull_request.head.sha }}
+      REPO: ${{ github.repository }}
+      FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      # The BASE commit, never the pull request's merge commit: the tool that
+      # runs below is this tree's copy, and a pull request cannot change it.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          # GITHUB_TOKEN (contents: read) stays configured so the head-object
+          # fetch below works on a private repository; no head code ever runs.
+
+      # The two commits' history without blobs: the diff needs trees only, and
+      # the stage step reads the few art blobs on demand. Objects only; the
+      # head is never checked out.
+      - name: Fetch the pull request's history (no blobs, no checkout)
+        run: git fetch --no-tags --filter=blob:none --unshallow origin "$BASE" "$HEAD" || git fetch --no-tags --filter=blob:none origin "$BASE" "$HEAD"
+
+      - name: List the art files this pull request adds or modifies
+        id: list
+        run: |
+          set -euo pipefail
+          : > art-files.txt
+          # BOOTSTRAP. The tool is read from the BASE checkout. A base that predates
+          # tools/art-intake.mjs (this workflow's own first pull request) has no
+          # copy, and the head's copy must never run in its place: the intake is
+          # skipped, named in the step summary, and the job succeeds.
+          if [ ! -f tools/art-intake.mjs ]; then
+            echo "bootstrap=true" >> "$GITHUB_OUTPUT"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Art intake: skipped (bootstrap)"
+              echo
+              echo "The base commit \`$BASE\` has no \`tools/art-intake.mjs\`, so the intake cannot run from it. The head's copy is not run in its place. This check passes without moving art; once this change is on \`dev\`, the intake applies to later pull requests."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "art intake skipped: the base has no tools/art-intake.mjs"
+            exit 0
+          fi
+          node tools/art-intake.mjs --list --base "$BASE" --head "$HEAD" > art-files.txt
+          n="$(wc -l < art-files.txt | tr -d ' ')"
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          if [ "$n" = 0 ]; then echo "No art files in this pull request: nothing to migrate."; else cat art-files.txt; fi
+
+      - name: Decide whether to migrate, or say why not
+        id: gate
+        env:
+          COUNT: ${{ steps.list.outputs.count }}
+          BOOTSTRAP: ${{ steps.list.outputs.bootstrap }}
+          # A fork's run names no secret at all: the value is false for it.
+          HAS_ART_TOKEN: ${{ github.event.pull_request.head.repo.full_name == github.repository && secrets.ART_REPO_WRITE_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          if [ "$BOOTSTRAP" = true ]; then state=skip
+          elif [ "$COUNT" = 0 ]; then state=none
+          elif [ "$FORK" = true ]; then state=blocked-fork
+          elif [ "$HAS_ART_TOKEN" != true ]; then state=blocked-token
+          else state=migrate; fi
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "state: $state ($COUNT art file(s))"
+
+      - name: Check out the art repository
+        if: steps.gate.outputs.state == 'migrate'
+        uses: actions/checkout@v5
+        with:
+          repository: cehinds/AshenSpire-art
+          token: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          path: art-repo
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      # The token is given per command and never stored (no credential in art-repo/.git/config).
+      # This step only fetches the intake branch's ref, so the stage step can build on it.
+      - name: Fetch the existing intake branch from the art repository, if any
+        id: fetch-intake
+        if: steps.gate.outputs.state == 'migrate'
+        env:
+          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          BRANCH: intake/ashenspire-pr-${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          auth="$(printf 'x-access-token:%s' "$ART_REPO_WRITE_TOKEN" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+          cd art-repo
+          # ls-remote exits 2 when the branch is absent; any other failure stops the job.
+          if git ls-remote --exit-code --heads origin "refs/heads/$BRANCH" >/dev/null 2>&1; then
+            git fetch -q origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+            echo "An earlier run staged $BRANCH: this run builds on it."
+          else
+            status=$?
+            if [ "$status" -ne 2 ]; then echo "::error title=Art repository unreachable::could not list $BRANCH in the art repository"; exit 1; fi
+            echo "No intake branch $BRANCH yet: this run starts from main."
+          fi
+
+      # No token in this step: it runs the base tool and local git only.
+      - name: Stage the files and commit them in the art repository (no token)
+        id: stage
+        if: steps.gate.outputs.state == 'migrate'
+        run: |
+          set -euo pipefail
+          branch="intake/ashenspire-pr-$PR"
+          cd art-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Build on the intake branch when an earlier run staged it (the fetch step
+          # before this one put it at refs/remotes/origin/$branch), so files staged
+          # earlier and since removed from this pull request stay on it. Only a branch
+          # that does not exist yet starts from main.
+          if git rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null; then
+            git checkout -B "$branch" "origin/$branch"
+          else
+            git checkout -B "$branch"
+          fi
+          cd "$GITHUB_WORKSPACE"
+          node tools/art-intake.mjs --stage art-repo --base "$BASE" --head "$HEAD"
+          cd art-repo
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The art repository already holds these files on $branch."
+          else
+            git commit -q -m "Intake art from AshenSpire#$PR" -m "Staged by .github/workflows/art-migrate.yml from https://github.com/$REPO/pull/$PR."
+          fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+      # The only step with the token in its environment that touches the network
+      # for git. It runs no file from any tree: only git, with the token given
+      # per command (no credential is written to art-repo/.git/config).
+      - name: Push the intake branch to the art repository
+        if: steps.gate.outputs.state == 'migrate'
+        env:
+          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          BRANCH: ${{ steps.stage.outputs.branch }}
+        run: |
+          set -euo pipefail
+          auth="$(printf 'x-access-token:%s' "$ART_REPO_WRITE_TOKEN" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+          cd art-repo
+          # A plain push: the intake branch only moves forward. If someone else moved it
+          # since this run fetched it, the push is refused and nothing is overwritten.
+          if ! git push origin "HEAD:refs/heads/$BRANCH"; then
+            echo "::error title=Intake branch moved::$BRANCH in the art repository changed after this run read it, so the push was refused. Nothing was overwritten. Re-run this check to stage again on the new tip."
+            exit 1
+          fi
+
+      - name: Open or update the pull request in the art repository
+        id: artpr
+        if: steps.gate.outputs.state == 'migrate'
+        env:
+          GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          BRANCH: ${{ steps.stage.outputs.branch }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Art files from [$REPO#$PR](https://github.com/$REPO/pull/$PR), at the paths the art repository keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`)."
+            echo
+            echo "Merge this, and the release workflow publishes the next \`hd-assets-v<N>\`. The AshenSpire pin-bump job (every 6 hours) then opens the \`art-release.json\` bump."
+            echo
+            echo "Files:"
+            # Everything the intake branch carries against the art repository's main,
+            # including files staged by earlier runs and since removed from the source.
+            # To a file first, then one sed that prints the first 200: no early-closing
+            # pipe, so a long list cannot SIGPIPE the step under pipefail.
+            git -C "$GITHUB_WORKSPACE/art-repo" diff --name-only origin/main HEAD > "$RUNNER_TEMP/intake-files.txt"
+            sed -n '1,200{s/^/- `/; s/$/`/; p}' "$RUNNER_TEMP/intake-files.txt"
+          } > art-pr-body.md
+          existing="$(gh pr list --repo "$ART_REPO" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --repo "$ART_REPO" --body-file art-pr-body.md >/dev/null
+            url="$(gh pr view "$existing" --repo "$ART_REPO" --json url --jq .url)"
+          else
+            url="$(gh pr create --repo "$ART_REPO" --base main --head "$BRANCH" --title "Intake art from AshenSpire#$PR" --body-file art-pr-body.md)"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Art pull request: $url"
+
+      # NO CLOSE ON state=none. Removing the art from this pull request is the
+      # step the sticky comment asks for once the intake pull request exists, so
+      # `none` is the expected next state and the intake must stay open to be
+      # merged. An intake is closed only when this pull request closes unmerged
+      # (the close-intake job below).
+
+      - name: Sticky comment on this pull request
+        if: always() && steps.gate.outputs.state != ''
+        continue-on-error: true
+        env:
+          STATE: ${{ steps.gate.outputs.state }}
+          ART_PR_URL: ${{ steps.artpr.outputs.url }}
+        run: |
+          set -euo pipefail
+          marker='<!-- art-intake -->'
+          {
+            echo "$marker"
+            case "$STATE" in
+              skip)
+                echo "### Art in this pull request: intake skipped (bootstrap)"
+                echo
+                echo "The base commit has no art intake tool yet, so nothing was checked or moved. The check passes." ;;
+              none)
+                echo "### Art in this pull request: resolved"
+                echo
+                echo "No art files are in this pull request any more. If an intake pull request was opened in [$ART_REPO](https://github.com/$ART_REPO) (branch \`intake/ashenspire-pr-$PR\`), it stays open: merging it is what brings the art into the art repository." ;;
+              migrate)
+                echo "### Art in this pull request: moved to the art repository"
+                echo
+                echo "This pull request adds art files, which live in [$ART_REPO](https://github.com/$ART_REPO) (CONTRIBUTING.md, ground rule 2)."
+                echo
+                if [ -n "$ART_PR_URL" ]; then
+                  echo "They have been staged in $ART_PR_URL."
+                  echo
+                  echo "Next: 1. remove these files from this pull request (they stay tracked in the art repository). 2. Once the art pull request merges, its release publishes, and the pin-bump job opens the \`art-release.json\` bump."
+                else
+                  # No art PR URL: do NOT ask for removal, or the next run (state none)
+                  # would pass with the art on an orphan branch and no review.
+                  echo "**The art pull request could not be opened** (see the log of this job). Keep the files in this pull request and re-run this check; it opens or updates the art pull request on the branch it already pushed."
+                fi ;;
+              blocked-fork)
+                echo "### Art in this pull request: manual path"
+                echo
+                echo "This pull request comes from a fork, so this workflow cannot push to [$ART_REPO](https://github.com/$ART_REPO). Remove the art files from this pull request, and open a pull request in $ART_REPO that carries them at the paths it keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`). Then the release and the pin bump follow as above." ;;
+              blocked-token)
+                echo "### Art in this pull request: manual path"
+                echo
+                echo "The repository secret ART_REPO_WRITE_TOKEN is not set, so this workflow cannot open the art pull request. Remove the art files from this pull request, and open a pull request in [$ART_REPO](https://github.com/$ART_REPO) that carries them at the paths it keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`). The owner can add the secret to enable this automatically." ;;
+            esac
+          } > comment.md
+          if [ "$STATE" != none ] && [ "$STATE" != skip ]; then
+            { echo; echo "Files:"; sed -n '1,200{s/^/- `/; s/$/`/; p}' "$GITHUB_WORKSPACE/art-files.txt"; } >> comment.md
+          fi
+          id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | sed -n '1p')"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@comment.md >/dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@comment.md >/dev/null
+          fi
+
+      - name: Fail while the art is still in this pull request
+        if: steps.gate.outputs.state != 'none' && steps.gate.outputs.state != 'skip'
+        env:
+          STATE: ${{ steps.gate.outputs.state }}
+          ART_PR_URL: ${{ steps.artpr.outputs.url }}
+        run: |
+          case "$STATE" in
+            migrate)
+              if [ -n "$ART_PR_URL" ]; then
+                echo "::error title=Art files in this pull request::They belong in $ART_REPO and were staged in $ART_PR_URL. Remove them from this pull request; this check stays red until they are gone (so they never land on dev)."
+              else
+                echo "::error title=Art pull request not opened::The art was pushed to $ART_REPO but its pull request could not be opened. Keep the files here and re-run this check."
+              fi ;;
+            blocked-fork) echo "::error title=Art files from a fork::This pull request comes from a fork, so the art cannot be moved automatically. Remove the art files and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
+            blocked-token) echo "::error title=ART_REPO_WRITE_TOKEN is not set::The art cannot be moved automatically. Remove the art files from this pull request and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
+          esac
+          exit 1
+
+  close-intake:
+    # The source pull request was closed without merging: its intake pull request
+    # (if an earlier push staged one) is closed and its branch deleted. A merged
+    # pull request is left alone. Base code only, and no checkout. pull_request_target
+    # for the same reason as intake (see the trust boundary above).
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && !github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    concurrency:
+      group: art-intake-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
+      GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+      REASON: "Closing: source PR was closed without merging, so its art is not migrated from this intake branch."
+    steps:
+      - name: Close the intake pull request in the art repository
+        run: |
+          set -euo pipefail
+          if [ "$HAS_ART_TOKEN" != true ]; then
+            echo "ART_REPO_WRITE_TOKEN is not set: no intake pull request to close."
+            exit 0
+          fi
+          branch="intake/ashenspire-pr-$PR"
+          num="$(gh pr list --repo "$ART_REPO" --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$num" ]; then
+            echo "No open intake pull request on $branch: nothing to close."
+            exit 0
+          fi
+          gh pr close "$num" --repo "$ART_REPO" --comment "$REASON" --delete-branch
+          echo "Closed $ART_REPO#$num and deleted $branch."
+
+  pin-bump:
+    # Positive list: pull_request_target is not a schedule, so it must not reach here.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: art-pin-bump
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      # dev's own tree only (never a ref from an event payload). No credential is
+      # left on disk: the push step passes its token per command.
+      - uses: actions/checkout@v5
+        with:
+          ref: dev
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-node
+
+      - name: Compare the newest art release with the pin
+        id: check
+        run: |
+          set -euo pipefail
+          newest="$(gh release list --repo "$ART_REPO" --limit 100 --json tagName --jq '.[].tagName' \
+            | { grep -E '^hd-assets-v[0-9]+$' || true; } | sed 's/^hd-assets-v//' | sort -n | tail -1)"
+          pinned="$(node -p "require('./art-release.json').tag.replace(/^hd-assets-v/, '')")"
+          echo "pinned: v$pinned; newest art release: v${newest:-none}"
+          if [ -z "$newest" ] || [ "$newest" -le "$pinned" ]; then echo "tag=" >> "$GITHUB_OUTPUT"; echo "The pin is current."; exit 0; fi
+          tag="hd-assets-v$newest"
+          if [ -n "$(gh pr list --repo "$GITHUB_REPOSITORY" --head "bot/art-pin-$tag" --state all --json number --jq '.[0].number // empty')" ]; then
+            echo "tag=" >> "$GITHUB_OUTPUT"; echo "A pull request for $tag already exists."; exit 0
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Write the new pin from the release's own hashes
+        if: steps.check.outputs.tag != ''
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p pins
+          gh release download "$TAG" --repo "$ART_REPO" --pattern '*.sha256' --dir pins
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const tag = process.env.TAG;
+          const n = tag.replace(/^hd-assets-v/, '');
+          const files = { high: `hd-assets-v${n}.zip.sha256`, light: `light-assets-v${n}.zip.sha256`, common: `common-assets-v${n}.zip.sha256` };
+          const sums = {};
+          for (const [pack, sumFile] of Object.entries(files)) {
+            const sha = readFileSync(`pins/${sumFile}`, 'utf8').trim().split(/\s+/)[0];
+            if (!/^[0-9a-f]{64}$/.test(sha)) throw new Error(`${tag}: ${sumFile} is not a sha256`);
+            sums[pack] = { zip: sumFile.replace(/\.sha256$/, ''), sha256: sha };
+          }
+          const pin = {
+            schema: 2,
+            repo: process.env.ART_REPO,
+            tag,
+            zip: sums.high.zip,
+            sha256: sums.high.sha256,
+            packs: { high: sums.high, light: sums.light, common: sums.common },
+          };
+          writeFileSync('art-release.json', `${JSON.stringify(pin, null, 2)}\n`);
+          console.log(`art-release.json: ${tag}`);
+          NODE
+
+      - name: Regenerate the manifest from the pinned release
+        if: steps.check.outputs.tag != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node tools/art-manifest.mjs --write
+          node tools/art-manifest.mjs --check
+
+      # The push and the pull request use ART_REPO_WRITE_TOKEN, so the pull request
+      # into dev triggers CI. Without the secret, GITHUB_TOKEN does the job and the
+      # pull request gets no CI run; the warning says so. The token is passed in
+      # env only and never interpolated into run:.
+      - name: Commit, push, and open the pin pull request
+        if: steps.check.outputs.tag != ''
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+          BOT_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          FALLBACK_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          branch="bot/art-pin-$TAG"
+          if [ -n "$BOT_TOKEN" ]; then
+            tok="$BOT_TOKEN"
+          else
+            echo "::warning title=ART_REPO_WRITE_TOKEN is not set::The pin pull request is opened with GITHUB_TOKEN, which does not trigger CI on it. Add the secret to get CI on pin pull requests."
+            tok="$FALLBACK_TOKEN"
+          fi
+          # One-off credential for this step's git and gh only; none is written to disk.
+          export GH_TOKEN="$tok"
+          auth="$(printf 'x-access-token:%s' "$tok" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add art-release.json art-manifest.json
+          git commit -q -m "Pin art release $TAG" -m "Written by .github/workflows/art-migrate.yml from the release's own .sha256 files; art-manifest.json regenerated with node tools/art-manifest.mjs --write."
+          # A branch left by a partial run (pushed, no pull request opened) is this job's own
+          # stale work. The push replaces it under a lease on the sha seen now: a remote
+          # branch that moved since is refused, and an absent branch leases against empty.
+          remote_sha="$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')"
+          git push -u --force-with-lease="refs/heads/$branch:$remote_sha" origin "$branch"
+          printf '%s\n' "Bumps the art pin to [$TAG](https://github.com/$ART_REPO/releases/tag/$TAG): art-release.json, and art-manifest.json regenerated from the pinned release." "" "Opened by the art-migrate pin-bump job." > pin-body.md
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file pin-body.md >/dev/null
+            echo "updated the open pin pull request #$existing"
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base dev --head "$branch" --title "Pin art release $TAG" --body-file pin-body.md
+          fi

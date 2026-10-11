@@ -11,15 +11,19 @@
 # viewport watch back to `centerOnCurrent()` and that test stays green while
 # `--check` goes red. Nothing called `--check`, so the guard ran nowhere.
 #
-# WHERE IT RUNS, by the owner's ruling of 2026-09-26 (DEVELOPER.md, *Which
-# checks gate a pull request*): a pull request into `dev` is gated by fast
-# checks only, about five minutes or less.
-#   pull_request into dev / push to dev — `--check` only: the one re-fit case,
-#                              about ten seconds of browser time.
-#   push to test / release, workflow_dispatch — also the full persistence drive
-#                              (nine judged cases through the real Map ->
+# WHERE IT RUNS (owner, 2026-10-11, the stage rules): a pull request into `dev`
+# and a push to `dev` run only the base smoke, about five minutes or less, and
+# this file is not part of it. It runs on a push to `test` (and
+# `alternative/**/test`) and on workflow_dispatch, where the higher-level
+# testing lives:
+#   push to test, workflow_dispatch — the re-fit case (`--check`, about ten
+#                              seconds of browser time) and the full persistence
+#                              drive (nine judged cases through the real Map ->
 #                              Armaments -> Map remount, character creation and
 #                              Save & Quit), about a minute more.
+# On a push to `release` it runs only when that tree differs from origin/test (the
+# `stage` job decides); otherwise the test stage already ran this check on the same
+# code before it was promoted.
 #
 # A JOB OF ITS OWN, not a step in tests.yml's core suite: `core` is a no-browser
 # lane, and this needs Chrome. It serves the SOURCE tree (no --entry), so it
@@ -30,15 +34,13 @@
 name: map camera
 
 on:
-  pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev']
   push:
-    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
+    branches: [test, release, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
-  group: map-camera-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: map-camera-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -57,10 +59,53 @@ env:
   ART_PACKS: all
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # THE STAGE DECISION. The job below runs unless this is a push to `release`
+  # whose tree equals origin/test: a release that carries only the SHA the test
+  # stage already ran is not run again. A fix that landed on release directly
+  # differs from test and runs. A failed fetch or diff counts as a difference.
+  # Pure git, no tool runs here. The same decision as ci.yml's `stage` job.
+  # ---------------------------------------------------------------------------
+  stage:
+    name: stage decision
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      # Trees only: a sparse checkout of .github and blobless history, so the
+      # 2 GB art tree is never fetched for a comparison of tree ids.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+
+      - name: Decide whether this workflow runs
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          run=1
+          if [ "$EVENT_NAME" = "push" ] && [ "$REF_NAME" = "release" ]; then
+            if ! git fetch --no-tags --filter=blob:none origin test:refs/remotes/origin/test; then
+              echo "could not fetch origin/test; running"
+            elif git diff --quiet origin/test HEAD; then
+              run=0
+            fi
+          fi
+          echo "run=$([ "$run" = 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "stage decision: run=$run (event=$EVENT_NAME ref=$REF_NAME)"
+
   refit:
     name: map camera re-fit (real browser)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: stage
+    if: needs.stage.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v5
         with:
@@ -77,6 +122,6 @@ jobs:
       - name: A settled map camera re-fits to its scrollport and keeps the tray's node (#1142, #1314)
         run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --check --no-screenshots
 
-      - name: The full map-camera persistence drive (push to test/release, or dispatch)
+      - name: The full map-camera persistence drive (push to test, or dispatch)
         if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
         run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --no-screenshots

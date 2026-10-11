@@ -3,6 +3,76 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1834",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Faster checks on every change; release builds the Windows installer",
+    "detail": "Development-process change only, nothing in the game changes. Pull requests now run a quick smoke check of about five minutes, the full test suites run when a build is promoted to Test, and Release runs the final polish checks and builds the Windows installer, whose download now follows the Release channel. Each open feature branch gets its own playable build, the README refreshes itself, and new high-resolution art moves to the art repository automatically.",
+    "build": "0.7.1.1293",
+    "pullRequest": 1834,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1834"
+  },
+  {
+    "id": "pr-1841",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Old QA screenshots cleared out of the project",
+    "detail": "Development housekeeping only, nothing in the game changes. About 237 MB of dated QA screenshots and run reports leave the repository; new QA runs go to CI artifacts, and the card layer editor and card preview pages the QA tools use now live under tools/.",
+    "build": "0.7.1.1292",
+    "pullRequest": 1841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1841"
+  },
+  {
+    "id": "pr-1835",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fights move faster at every pace",
+    "detail": "The pause between actions and the wait after the last hit are about 40% shorter, and a turn banner now clears before the next action starts, and the stagger between hits, attack lunges and impacts are up to 25% shorter, so Normal fights no longer drag. Normal is the new baseline; Slow and Fast scale from it, and Instant is unchanged. Hit timing stays readable: the wind-up and impact frames never lose more than a quarter of their time.",
+    "build": "0.7.1.1291",
+    "pullRequest": 1835,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1835"
+  },
+  {
+    "id": "pr-1830",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Menus and pop-ups no longer reset the screen, and map taps answer faster on phones",
+    "detail": "Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, pressing a selected node again travels to it, and selecting a node takes about half as long.",
+    "build": "0.7.1.1289",
+    "pullRequest": 1830,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1830"
+  },
+  {
+    "id": "pr-1833",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fighters visibly flinch when hit",
+    "detail": "When your hero takes damage they now play a short seven-frame hurt pose, flashing red on frames 2, 4 and 6 while they are knocked back a step. This replaces the brief rainbow flicker. Enemies recoil further and their red flash starts at the moment of impact. With Reduce flashes on, the hurt pose plays without the red.",
+    "build": "0.7.1.1287",
+    "pullRequest": 1833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1833"
+  },
+  {
+    "id": "pr-1832",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Worker branch rules documented; feature-branch playable builds announced",
+    "detail": "Development-process change only, nothing in the game changes. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. The README names where each open feature, fix or chore branch's playable build will live; publishing those builds is still pending, so the link does not work yet.",
+    "build": "0.7.1.1283",
+    "pullRequest": 1832,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1832"
+  },
+  {
+    "id": "pr-1831",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "AI sessions: work lands in small commits, reviewed as they land",
+    "detail": "Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.",
+    "build": "0.7.1.1281",
+    "pullRequest": 1831,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1831"
+  },
+  {
     "id": "pr-1825",
     "date": "2026-10-10",
     "group": "2026-10-10",

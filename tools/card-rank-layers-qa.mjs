@@ -5,7 +5,7 @@ import {mkdirSync} from 'node:fs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 import {launchBrowser} from './browser.mjs';
 import {serve} from './serve.mjs';
-const output=resolve(process.env.RANK_QA_OUT || 'docs/qa/card-rank-layers');
+const output=resolve(process.env.RANK_QA_OUT || 'scratch/qa/card-rank-layers');
 mkdirSync(output,{recursive:true});
 const server=await serve({root:process.cwd(),port:0,open:false});
 const base='http://localhost:'+server.server.address().port;
@@ -13,7 +13,7 @@ const launched=await launchBrowser({prefix:'rank-preview-',browser:process.env.C
 const browser=await chromium.connectOverCDP(launched.wsUrl);
 try{
  const page=await browser.newPage({viewport:{width:1180,height:1100}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'/docs/qa/card-rank-layers/preview.html',{waitUntil:'networkidle',timeout:120000});
+ await page.goto(base+'/tools/card-rank-layers/preview.html',{waitUntil:'networkidle',timeout:120000});
  await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(i=>i.decode()));});
  for(const width of [1180,390]){
   await page.setViewportSize({width,height:1100});await page.evaluate(async()=>{const {scheduleCardFits}=await import('/src/ui/components/card.js');scheduleCardFits(document.querySelectorAll('.card'));await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});

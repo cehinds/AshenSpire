@@ -595,3 +595,7 @@ build/windows-installer/
 /docs/qa/**/*-results.json
 /docs/qa/**/*-geometry.json
 /docs/qa/**/browser-health.json
+
+# docs/qa is not kept in the tree (owner decision, 2026-10-11): QA evidence goes
+# to CI artifacts, and the local QA tools write to scratch/qa/.
+/docs/qa/
