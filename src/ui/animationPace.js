@@ -17,6 +17,12 @@ export const COMBAT_TIMING = Object.freeze({
   fightEndDelayMs: 210,    // pause between the last hit and the spoils screen
 });
 
+// The wait a timeline holds after a turn-banner beat. The banner's own display
+// time is set from this same value (ui/fx.js), so it is gone when the next beat starts.
+export function turnBannerHoldMs(speed) {
+  return Math.max(COMBAT_TIMING.turnBannerFloorMs, speed.beatMs);
+}
+
 let animSpeed = 'normal';
 export function setAnimSpeed(v) {
   animSpeed = ANIM_SPEEDS[v] === undefined ? 'normal' : v;

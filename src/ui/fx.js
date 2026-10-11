@@ -27,7 +27,7 @@ import { reducedMotionRequested } from './motion.js';
 // (model/equipmentAnimation.js animationTiming), so the hit, its number and its
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
-import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed } from './animationPace.js';
+import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed };
 
 let pending = [];
@@ -414,13 +414,16 @@ function spawnFx(layer, anchor, cls, ms, text) {
   setTimeout(() => el.remove(), ms);
 }
 
-function banner(layer, text, cls = '') {
+// lifeMs, when given, is how long the banner shows and fades (the turn banner
+// passes its pace's hold, so it is gone before the next beat starts).
+function banner(layer, text, cls = '', lifeMs = null) {
   if (!layer) return;
   const el = document.createElement('div');
   el.className = `fx-banner ${cls}`;
   el.textContent = text;
+  if (lifeMs > 0) el.style.setProperty('--fx-banner-ms', `${lifeMs}ms`);
   layer.appendChild(el);
-  setTimeout(() => el.remove(), 320);
+  setTimeout(() => el.remove(), lifeMs > 0 ? lifeMs : 320);
 }
 
 // Hit-stop (SPEC §7.4). `hitStop` is set by playTimeline only while the hit
@@ -764,9 +767,10 @@ export function playTimeline(events, ctx, done) {
     if (beat.banner) {
       cueBeat(beatIndex);
       safe(() => playBeatCues(beat.events));
-      safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
+      const hold = turnBannerHoldMs(speed);
+      safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn', hold); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-      schedule(nextBeat, Math.max(COMBAT_TIMING.turnBannerFloorMs, speed.beatMs));
+      schedule(nextBeat, hold);
       return;
     }
 
