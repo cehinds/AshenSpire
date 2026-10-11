@@ -868,13 +868,15 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       }
     }
     // A counter that staggers its target adds +-3 to its side's summed delta, on
-    // top of the slot win above (owner, 2026-10-11). Clamped once at round end.
-    const counterWin = slotEvents.find((e) => e.type === 'countered');
-    if (counterWin && slotEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(counterWin.by))) {
-      const sign = counterWin.by === 'player' ? 1 : -1;
-      const delta = sign * MOMENTUM_MAX;
+    // top of the slot win above (owner, 2026-10-11). A counter that cancels the
+    // attack (countered) and a counter that ties it both count. Clamped once at round end.
+    for (const side of SIDES) {
+      const card = side === 'player' ? (pc ?? {}) : enemy;
+      if (card.kind !== 'counter') continue;
+      if (!slotEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(side))) continue;
+      const delta = (side === 'player' ? 1 : -1) * MOMENTUM_MAX;
       pending[k] = (pending[k] ?? 0) + delta;
-      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', delta, slot, ...extra }, k);
+      push({ type: 'momentum', enemyId: k, by: side, reason: 'counterStagger', delta, slot, ...extra }, k);
     }
   };
 

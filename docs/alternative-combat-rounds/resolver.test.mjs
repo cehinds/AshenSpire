@@ -917,6 +917,78 @@ test('counter stagger: a counter that only stuns sets no full momentum, so the n
   assert.equal(momentum.foe, 1);
 });
 
+// A counter that ties the attack and staggers it counts too (DESIGN.md, Counter
+// stagger). A tie gives no 'countered' event, only the stagger status.
+test('counter stagger: a player counter that ties an attack and staggers it adds +3', () => {
+  // Enemy attack hits at speed 3 (tie): -1 slot win. Counter stagger +3. From M 0: 2.
+  const { events, momentum } = resolveRound(
+    [{ id: 'counter', slot: 0, speed: 3, kind: 'counter', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 3, kind: 'attack' }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(events.some((e) => e.type === 'countered'), false, 'a tie is not a cancel');
+  assert.deepEqual(find(events, 'status'), { type: 'status', status: 'stagger', target: 'enemy', slot: 0, visible: true, momentum: 0 });
+  const stagger = events.find((e) => e.reason === 'counterStagger');
+  assert.equal(stagger.by, 'player');
+  assert.equal(stagger.delta, 3);
+  assert.equal(stagger.enemyId, 'foe');
+  assert.equal(momentum.foe, clampMomentum(0 - 1 + 3));
+  assert.equal(momentum.foe, 2);
+});
+
+test('counter stagger: an enemy counter that ties a player attack and staggers it adds -3', () => {
+  // Player attack hits at speed 3 (tie): +1 slot win. Enemy counter stagger -3. From M 0: -2.
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 3, kind: 'attack' }],
+    [{ id: 'foe', speed: 3, kind: 'counter', tags: ['stagger'] }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(events.some((e) => e.type === 'countered'), false, 'a tie is not a cancel');
+  const stagger = events.find((e) => e.reason === 'counterStagger');
+  assert.equal(stagger.by, 'enemy');
+  assert.equal(stagger.delta, -3);
+  assert.equal(momentum.foe, clampMomentum(0 + 1 - 3));
+  assert.equal(momentum.foe, -2);
+});
+
+test('counter stagger: a tied attack with a stagger tag does not get the +-3', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 3, kind: 'attack', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 3, kind: 'attack' }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(find(events, 'status').status, 'stagger');
+  assert.equal(events.some((e) => e.reason === 'counterStagger'), false);
+  assert.equal(events.some((e) => e.type === 'momentum' && Math.abs(e.delta) === 3), false);
+});
+
+test('counter stagger: a tied counter that meets hyper armor is resisted, so no +-3', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'counter', slot: 0, speed: 3, kind: 'counter', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 3, kind: 'attack', tags: ['hyperArmor'] }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(find(events, 'resisted').status, 'stagger');
+  assert.equal(events.some((e) => e.reason === 'counterStagger'), false);
+  assert.equal(momentum.foe, -1, 'only the enemy hit slot win is left');
+});
+
+test('counter stagger: two tied counters that both stagger each get their +-3, and net to 0', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'counter', slot: 0, speed: 3, kind: 'counter', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 3, kind: 'counter', tags: ['stagger'] }],
+    1,
+    d20Face(20),
+  );
+  const deltas = events.filter((e) => e.reason === 'counterStagger').map((e) => e.delta).sort((a, b) => a - b);
+  assert.deepEqual(deltas, [-3, 3]);
+  assert.equal(momentum.foe, 0);
+});
+
 // Two slots for the same enemy, each a counter that staggers the other side.
 // Opposing staggers net to their normal deltas (owner, 2026-10-11), so the
 // result must not depend on the order of playerCards.
