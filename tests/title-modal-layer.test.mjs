@@ -72,6 +72,10 @@ test('a delete from the Title redraws in place through deleteSlot, not showTitle
   assert.match(SOURCE, /onConfirm: \(\) => deleteSlot\(slot, 'new'\)/);
   assert.match(SOURCE, /onDelete: \(slot\) => deleteSlot\(slot, 'load'\)/);
   assert.match(SOURCE, /if \(!Array\.isArray\(fresh\)\) return;\n\s*currentSlots = fresh;/);
+  const body = arrowBody('deleteSlot');
+  assert.match(body, /renderMenu\(\);/, 'the Continue/save preview is refreshed');
+  assert.match(body, /renderModal\(\);/, 'the open New Game door is refreshed');
+  assert.doesNotMatch(body, /\brender\(\);/, 'deleting a slot does not replace the title root');
 });
 
 test('the intro scene replays automatically only on the first render of a mount', () => {

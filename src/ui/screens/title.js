@@ -254,6 +254,42 @@ export function mountTitle(app, {
     focusTitleDefault(app, { showCursor: false });
   };
 
+  const wireTitleActions = (scope) => {
+    scope.querySelectorAll('[data-title-action]').forEach((button) => {
+      if (button.closest('[data-title-modal-layer]')) return; // wired by renderModal()
+      button.addEventListener('click', () => {
+        const action = button.dataset.titleAction;
+        if (action === 'continue') onContinue(occupied()[0].slot);
+        else if (action === 'quick-start') onQuickStart?.();
+        else if (action === 'load') openLoadSelector(button);
+        else if (action === 'new') openModal(action);
+        else if (action === 'collection' && onCompendium) onCompendium();
+        else if (action === 'bestiary') onBestiary?.();
+        else if (action === 'history') onHistory?.();
+        else if (action === 'profile') onProfile?.();
+        else if (action === 'custom') onCustom?.();
+        else if (action === 'lan') onLan?.();
+        else if (action === 'settings') onSettings();
+        else if (action === 'offline') onOffline?.();
+        else if (action === 'quit' && onQuit) onQuit();
+      });
+    });
+  };
+
+  // A slot deletion changes only the Continue/save preview in the menu. Swap
+  // that fragment and leave the title root, artwork, embers, quick settings and
+  // their animation state intact.
+  function renderMenu() {
+    const current = app.querySelector('.as-titlemenu');
+    if (!current) return;
+    const holder = document.createElement('div');
+    holder.innerHTML = menuHtml();
+    const next = holder.firstElementChild;
+    if (!next) return;
+    current.replaceWith(next);
+    wireTitleActions(next);
+  }
+
   const activateSlot = (slot) => {
     // Two taps: the first highlights, the second on the highlighted slot opens
     // its decision door (Start / Overwrite). Continue opens it as well.
@@ -266,9 +302,8 @@ export function mountTitle(app, {
   };
 
   // A delete updates the Title in place: the host returns the fresh slot list,
-  // the mount keeps it, and render() redraws the same mount (no showTitle, so no
-  // intro replay and no startup checks). The New door stays open; the load
-  // selector is reopened over the redrawn Title.
+  // the mount keeps it, and only the affected menu and modal fragments redraw.
+  // The New door stays open; the load selector is reopened with fresh rows.
   const deleteSlot = (slot, from) => {
     const fresh = onDelete(slot, from);
     if (!Array.isArray(fresh)) return;
@@ -276,7 +311,8 @@ export function mountTitle(app, {
     const stillThere = (value) => value != null && currentSlots.some((record) => record.slot === value);
     if (!stillThere(activatedSlot)) activatedSlot = null;
     if (modal && !stillThere(selectedSlot)) selectedSlot = saveSlotSelectionModel(currentSlots, { kind: modal }).properties.selectedSlot;
-    render();
+    renderMenu();
+    renderModal();
     if (modal) focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
     if (from === 'load') openLoadSelector(app.querySelector('[data-title-action="load"]'));
   };
@@ -388,25 +424,7 @@ export function mountTitle(app, {
         }
       }
     });
-    root.querySelectorAll('[data-title-action]').forEach((button) => {
-      if (button.closest('[data-title-modal-layer]')) return; // wired by renderModal()
-      button.addEventListener('click', () => {
-        const action = button.dataset.titleAction;
-        if (action === 'continue') onContinue(occupied()[0].slot);
-        else if (action === 'quick-start') onQuickStart?.();
-        else if (action === 'load') openLoadSelector(button);
-        else if (action === 'new') openModal(action);
-        else if (action === 'collection' && onCompendium) onCompendium();
-        else if (action === 'bestiary') onBestiary?.();
-        else if (action === 'history') onHistory?.();
-        else if (action === 'profile') onProfile?.();
-        else if (action === 'custom') onCustom?.();
-        else if (action === 'lan') onLan?.();
-        else if (action === 'settings') onSettings();
-        else if (action === 'offline') onOffline?.();
-        else if (action === 'quit' && onQuit) onQuit();
-      });
-    });
+    wireTitleActions(root);
     renderModal();
     artNotice?.(root);
   }
