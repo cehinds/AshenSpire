@@ -8,8 +8,9 @@
 //   * the previous bytes go to workbench/.state/backups/<set>/ first, then each
 //     file is written atomically (tmp + rename); any failure rolls every file
 //     of the set back;
-//   * a save that touches content/ holds the cross-process build lock
-//     (tools/lib/build-lock.mjs), so no build reads a half-written tree.
+//   * a save that touches content/, src/ or styles/ holds the cross-process build
+//     lock (tools/lib/build-lock.mjs) from validation through the last rename, so
+//     no build reads a half-written or unvalidated tree.
 // Restore is a save of the backed-up bytes through the same path.
 //
 // The allowlist and the editable/duplicate-id rules are reused from the Content
@@ -37,6 +38,8 @@ const SET_ID = /^\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9]{6}$/;
 const JSON_TREE = /^(?:content\/config|pose-studio\/renewal|docs\/design)\/(?:[\w.-]+\/)*[\w.-]+\.json$/;
 const TEXT_TREE = /^(?:pose-studio\/stances|workbench\/workspace|ui-studio\/workspace)\/(?:[\w.-]+\/)*[\w.-]+$/;
 const TEXT_EXT = /\.(json|csv|js|mjs|css|html|md|txt|svg)$/i;
+// The trees a build reads: a save under any of them holds the build lock.
+const BUILD_INPUT = /^(?:content|src|styles)\//;
 
 const fail = (status, message, extra = {}) => Object.assign(Error(message), { status, ...extra });
 
@@ -308,11 +311,12 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
       if (!resolveBase && c.baseHash !== null && typeof c.baseHash !== 'string') throw fail(400, `${c.path}: baseHash is required (the hash the page read, or null for a new file)`);
       changes.push({ path: c.path, kind, text: c.text, baseHash: c.baseHash });
     }
-    const problems = await validate(changes);
-    if (problems.length) throw fail(422, 'Nothing saved: some files do not validate', { problems });
-
-    const release = changes.some((c) => c.path.startsWith('content/')) ? await acquire(root, 'Workbench file save', { timeoutMs: lockWaitMs }) : null;
+    // A change under a build's input tree holds the build lock, and validation (which reads the
+    // config tree) runs under it, so no build reads the tree while it is being checked or written.
+    const release = changes.some((c) => BUILD_INPUT.test(c.path)) ? await acquire(root, 'Workbench file save', { timeoutMs: lockWaitMs }) : null;
     try {
+      const problems = await validate(changes);
+      if (problems.length) throw fail(422, 'Nothing saved: some files do not validate', { problems });
       const prepared = [];
       const conflicts = [];
       for (const c of changes) {
