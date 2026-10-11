@@ -116,6 +116,8 @@ export function parity(tags, nodes) {
       else if (!isAncestorOrSelf(livePt.id, t) || livePt.id === t.id) {
         pair('parent', t.parent, `${n.parentId} (mapped to ${livePt.id})`);
       }
+    } else if (t.parent) {
+      pair('parent', t.parent, '(live root)');
     }
   }
   return diffs;

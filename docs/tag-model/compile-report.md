@@ -429,7 +429,7 @@ None: every live id is mapped by at most one tag.
 
 ## 3. Field parity
 
-195 differences.
+197 differences.
 
 | Model tag | Live id | Field | Model | Live |
 |---|---|---|---|---|
@@ -541,6 +541,7 @@ None: every live id is mapped by at most one tag.
 | meta.combat.skill.spellcraft.alteration | school:alteration | color | (empty) | 9BC8BE |
 | meta.combat.skill.spellcraft.alteration | school:alteration | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
 | meta.combat.damage | damage | label | Damage | damage |
+| meta.combat.damage | damage | parent | meta.combat | (live root) |
 | meta.combat.damage.physical | damage.physical | label | Physical | physical |
 | meta.combat.damage.physical.slashing | damage:slashing | glyph | (empty) | ◇ |
 | meta.combat.damage.physical.slashing | damage:slashing | color | (empty) | 9FC3E8 |
@@ -595,6 +596,7 @@ None: every live id is mapped by at most one tag.
 | meta.combat.stance.counter.ranged-counter | counter:ranged | glyph | (empty) | ◇ |
 | meta.combat.stance.counter.ranged-counter | counter:ranged | color | (empty) | D7B36B |
 | meta.combat.stance.counter.ranged-counter | counter:ranged | parent | meta.combat.stance.counter | counterMode (live parent unmapped) |
+| meta.combat.delivery | delivery | parent | meta.combat | (live root) |
 | meta.combat.delivery.ranged | maneuver:ranged | glyph | (empty) | ➶ |
 | meta.combat.delivery.ranged | maneuver:ranged | color | (empty) | AAC88A |
 | meta.combat.delivery.ranged | maneuver:ranged | parent | meta.combat.delivery | maneuver (live parent unmapped) |
