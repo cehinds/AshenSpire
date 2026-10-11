@@ -1345,7 +1345,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-veil { --deck-editor-target: max(calc(var(--tap-target, 44px) / var(--ui-zoom, 1)), calc(48px / var(--ui-zoom, 1))); }
 }
 .deck-editor {
-  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 0.8rem;
+  /* A column, not a row grid: the head, the optional toolbar and the modal head
+     come and go, and the panes always take the height left between them and the
+     footer (a fixed row template put the footer in a 0px row when the toolbar
+     was absent). */
+  display: flex; flex-direction: column; gap: 0.8rem;
   width: min(100%, 120rem); height: 100%; box-sizing: border-box; padding: 1rem;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
   font-size: var(--deck-editor-text); overflow: hidden;
@@ -1436,6 +1440,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-pane-bar > .deck-editor-tools[open] { display: contents; }
 .deck-editor-pane-bar .deck-editor-tools[open] > .deck-editor-chips { flex: 0 0 100%; flex-wrap: wrap; overflow: visible; }
 .deck-editor-chip { border-radius: .5rem; }
+.deck-editor > .deck-editor-panes { flex: 1 1 0; min-height: 0; }
+.deck-editor > :not(.deck-editor-panes) { flex: none; }
 .deck-editor-panes { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.15fr) minmax(0, .85fr); gap: 2.2rem; grid-template-rows: minmax(0, 1fr); }
 .deck-editor-pane { background: transparent; border: 0; border-radius: 0; }
 .deck-editor-search { flex: none; box-sizing: border-box; width: 100%; min-height: var(--deck-editor-target); background: #12100d; border: 1px solid var(--line-soft); border-radius: .6rem; color: var(--parchment); font: inherit; padding: .7rem 1rem; margin-bottom: 1.2rem; }
