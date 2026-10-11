@@ -10,6 +10,11 @@ the owner's standing rule for every session: reviewed by another agent or
 session, conflicts resolved by you, fast checks green, then you merge it into
 `dev` yourself and promote `dev` to `test`, where the long suites run.
 
+**Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
+visible (UI, tools, the Workbench, art, layout), finish the report with fresh
+screenshots of the changed screens and a preview the owner can open (a
+published page or the CI artifact link), without being asked.
+
 **When you need the owner to decide or do something**, ask in this shape, and
 nothing longer (owner's rule, 2026-09-26):
 
