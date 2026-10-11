@@ -2640,7 +2640,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 - **Header.** It shows the live counter "N / min–max", which turns red and shows the refusal sentence when out of bounds. Beside it is a compact cost-curve histogram.
 - **Filters and sort.** Filter chips cover type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded. Sort chips cover cost, name, type and source.
 - **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries explicit Add to deck and Remove from deck actions; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
-- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes. A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
+- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes (on a phone, only between the list and Draw order). A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
 - **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
 
 *Falsify:*

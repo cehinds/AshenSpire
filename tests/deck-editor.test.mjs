@@ -925,6 +925,79 @@ test('DOM: a pressed － keeps focus; when its copy runs out, focus moves to the
   });
 });
 
+test('DOM: on a phone an unordered deck gives LB and RB no pane to reach; an ordered deck still switches', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');
+  const previous = globalThis.matchMedia;
+  globalThis.matchMedia = (query) => ({ matches: query === '(max-width: 1000px)' });
+  try {
+    withDom(() => {
+      const unordered = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
+      assert.equal(unordered.dispatch({ family: 'controller', button: 5 }), false, 'RB does not switch on a phone');
+      assert.equal(unordered.root.querySelector('.deck-editor-panes').dataset.active, 'collection', 'the deck pane stays hidden');
+      assert.equal(unordered.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
+      unordered.close();
+      const ordered = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: { playInDeckOrder: true } });
+      assert.equal(ordered.dispatch({ family: 'controller', button: 5 }), true, 'RB switches an ordered deck');
+      assert.equal(ordered.root.querySelector('.deck-editor').dataset.mobileView, 'deck');
+      ordered.close();
+    });
+  } finally {
+    if (had) globalThis.matchMedia = previous; else delete globalThis.matchMedia;
+  }
+});
+
+test('DOM: a disabled inspector ＋ hands focus to its － partner in the same inspector', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const variant = deckVariantKey(run.deck.find(c => c.cardId === 'gorefireSlash'));
+    // Exactly one library copy: adding it leaves the tile with nothing to add.
+    run.sideboard = [...run.sideboard.filter(c => deckVariantKey(c) !== variant),
+      { ...structuredClone(run.deck.find(c => deckVariantKey(c) === variant)), instanceId: 'loose-gorefire' }];
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-main`).click();
+    editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-inline-inspect`).click();
+    const add = editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]');
+    add.focus();
+    add.click();
+    assert.equal(run.deck.filter(c => deckVariantKey(c) === variant).length, 2);
+    assert.equal(document.activeElement.dataset.focusKey, 'selected-remove', 'focus moves to Remove, not a chip');
+    editor.close();
+  });
+});
+
+test('DOM: a basic deck row inspects with an enabled Add that adds a copy of its basic', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const n = run.deck.length;
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const strike = deckEditorModel({ registries: REG, run, settings: {} }).deck.find(row => row.tileKey === 'basic:attack');
+    assert.ok(strike, 'a basic deck row names its own basic tile');
+    editor.root.querySelector(`[data-focus-key="row:${strike.groupKey}"]`).click();
+    editor.root.querySelector(`[data-focus-key="inspect:deck:${strike.groupKey}"]`).click();
+    const add = editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]');
+    assert.equal(add.disabled === true || add.hasAttribute('disabled'), false, 'Add is on for a basic');
+    add.click();
+    assert.equal(run.deck.length, n + 1, 'Add minted a copy of the basic');
+    editor.close();
+  });
+});
+
+test('DOM: － on a focused collection tile removes one copy from the keyboard', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const n = run.deck.length;
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-main').focus();
+    assert.equal(editor.dispatch({ family: 'keyboard', key: '-' }), true);
+    assert.equal(run.deck.length, n - 1, 'one copy out');
+    editor.close();
+  });
+});
+
 test('DOM: the inspector offers Add and Remove side by side, each enabled only when it would act', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {

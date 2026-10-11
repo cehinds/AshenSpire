@@ -251,7 +251,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // variant. Remove takes one copy: the tile's last deck copy, or this row.
     const deckCard = source === 'deck' ? run.deck.find(card => card.instanceId === row.instanceId) : null;
     const addTile = source === 'collection' ? row
-      : (deckCard ? model.collection.find(tile => tile.key === `card:${deckVariantKey(deckCard)}`) : null) || null;
+      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey) : null) || null;
     const addOn = !!addTile?.addable;
     const removeOn = !!row.removable;
     const removeId = source === 'collection' ? row.removeInstanceId : row.instanceId;
@@ -683,7 +683,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const isDisabled = (node) => !!node && (node.disabled === true || node.hasAttribute?.('disabled') === true);
   function siblingOf(key) {
     const other = key?.startsWith('tile-remove:') ? `tile-add:${key.slice('tile-remove:'.length)}`
-      : key?.startsWith('tile-add:') ? `tile-remove:${key.slice('tile-add:'.length)}` : null;
+      : key?.startsWith('tile-add:') ? `tile-remove:${key.slice('tile-add:'.length)}`
+        : key === 'selected-add' ? 'selected-remove' : key === 'selected-remove' ? 'selected-add' : null;
     return other ? panel.querySelector(`[data-focus-key="${cssEscape(other)}"]`) : null;
   }
 
@@ -756,7 +757,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return false;
   }
 
+  // On a phone the deck pane is hidden unless the deck is ordered (the Draw
+  // order chip is then the only way to it), so pane switching does nothing
+  // there for an unordered deck.
   function switchPane(step) {
+    if (!model.ordered && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) return false;
     const at = DECK_PANES.indexOf(pane);
     pane = DECK_PANES[(at + step + DECK_PANES.length) % DECK_PANES.length];
     mobileView = pane;
@@ -765,6 +770,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       || paneFocusable(pane);
     focusKey = first ? first.dataset.focusKey : null;
     draw();
+    return true;
   }
 
   function cycleFilters() {
@@ -810,8 +816,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         case PAD.b: doCancel(); return true;
         case PAD.x: { const row = focusedRow(); if (row && model.ordered) togglePick(row); return !!row; }
         case PAD.y: cycleFilters(); return true;
-        case PAD.lb: switchPane(-1); return true;
-        case PAD.rb: switchPane(1); return true;
+        case PAD.lb: return switchPane(-1);
+        case PAD.rb: return switchPane(1);
         case PAD.start: doDone(); return true;
         default: return false;
       }
@@ -833,9 +839,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (key === '-' || key === '_' || key === 'Delete' || key === 'Backspace') {
       const row = focusedRow();
       if (row) { remove(row); return true; }
-      const stepper = focused();
-      const tile = stepper?.dataset.focusKey?.startsWith('tile-remove:') ? model.collection.find(candidate => candidate.key === stepper.dataset.key) : null;
-      if (tile?.removable) { focusKey = stepper.dataset.focusKey; remove(tile.removeInstanceId); return true; }
+      const node = focused();
+      const onTile = /^tile(-remove)?:/.test(node?.dataset.focusKey || '');
+      const tile = onTile ? model.collection.find(candidate => candidate.key === node.dataset.key) : null;
+      if (tile?.removable) { focusKey = node.dataset.focusKey; remove(tile.removeInstanceId); return true; }
       return false;
     }
     if (key === 'Enter' || key === ' ') {

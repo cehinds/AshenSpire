@@ -176,7 +176,7 @@ function basicTiles(registries, run) {
  *     done: { disabled, refusal },
  *     curve: [{ bucket, count, share }],
  *     ordered,                        // playInDeckOrder: rows keep run.deck order
- *     deck: [{ instanceId, name, cost, type, source, upgraded, locked, lockText, removable, canUp, canDown }],
+ *     deck: [{ instanceId, tileKey, name, cost, type, source, upgraded, locked, lockText, removable, canUp, canDown }],
  *     collection: [{ key, name, cost, type, source, unlimited, owned, inDeck, countText, addable, refusal,
  *                    removeInstanceId, removable }],   // removeInstanceId: the last deck copy this tile's − takes
  *     filters: { type: [{ id, label, on }], cost: [...], source: [...], upgraded: { label, on } },
@@ -202,11 +202,16 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     .filter((bucket) => bucket !== 'X' || tally.X > 0)
     .map((bucket) => Object.freeze({ bucket, count: tally[bucket], share: tally[bucket] / peak }));
 
+  // The collection tile a deck card counts toward: the basic whose `belongs`
+  // test counts it (the same test as that basic's inDeck), else its variant tile.
+  const basicMints = basicTiles(registries, run).filter((basic) => basic.mint);
+  const tileKeyFor = (card) => basicMints.find((basic) => basic.belongs(card))?.key || `card:${deckVariantKey(card)}`;
   let deckRows = described.map(({ card, row }, index) => {
     const locked = false;
     return {
       ...row,
       instanceId: card.instanceId,
+      tileKey: tileKeyFor(card),
       index,
       locked,
       lockText: '',
