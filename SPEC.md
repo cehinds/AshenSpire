@@ -1298,23 +1298,23 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 
 (Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
 
-### 5.4 Relics (M2 set, 16)
+### 5.4 Relics (M2 set of 16; 63 ship in all)
 
 | Relic | Rarity | Effect |
 |---|---|---|
-| Tarnished Medallion | starter | (class starter, see §5.1) |
-| Golden Seed | common | At combat start, heal 3 HP. |
+| Forsaken Medallion | starter | (class starter, see §5.1) |
+| Golden Sprout | common | At the start of each combat, heal 3 HP and grow the Crimson charge pool by 1. |
 | Whetstone Fragment | common | Your first attack each combat deals +4. |
 | Kindling Charm | common | At the start of each combat, draw 1 extra card. |
-| Rune Pouch | common | Gain 25% more runes from combats. |
-| Beast Eye | common | Elites drop an extra card reward. |
+| Cinder Pouch | common | Gain 25% more Cinders from combats. |
+| Feral Eye | common | Elites offer an extra card reward choice. |
 | Cracked Tear | uncommon | Flasks are 50% stronger (rounded up). |
-| Stonesword Key | uncommon | Unknown (?) nodes are revealed on the map. |
-| Fell Omen Brand | uncommon | Whenever an enemy Staggers, draw 2. |
-| Bloodied Talisman | uncommon | Bleed bursts deal +25%. |
+| Sealstone Key | uncommon | Unknown (?) nodes are revealed on the map. |
+| Fell Warden Brand | uncommon | Whenever an enemy Staggers, draw 2. |
+| Bloodied Talisman | uncommon | Bleed bursts make the victim lose 5 extra HP. |
 | Grace Fragment | uncommon | Resting heals +15% more (shipped as Ember Fragment, §13.4j). |
 | Twinned Armor | uncommon | Every 10th card you play each combat: gain 6 Block. |
-| Erdtree Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
+| Goldbough Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
 | Dragon Heart | rare | +1 energy each turn. Shrines and chapels no longer offer Rest (shipped as Wyrm Heart, `restDenied: ['restHpPartial']`, §13.4j). |
 | Ancestral Horn | rare | Powers cost 1 less. |
 | Ash of Remembrance | boss | **+1 energy each turn; at combat start, gain 1 Madness.** |
