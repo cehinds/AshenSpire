@@ -242,21 +242,82 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 - Tapping a speed value shows the breakdown: base, weapon, armor, range, attack
   type, skill, initiative, and momentum (trunc(M_e / 2)).
 
-## Hit roll
+## Hit roll (owner-approved model, 2026-10-11)
 
 Hit when:
 
-    d20 + accuracy + floor(1·STR + 1·DEX + 0.5·WIS + 0.5·INT) >= 8 + evasion
+    d20 + Accuracy >= 8 + Evasion
 
-Equivalently, the required die is need = clamp(8 + evasion − bonus, 2, 16),
-where bonus is accuracy plus the attribute term, and the hit is d20 >= need.
-The clamp caps the chance to be missed at 75% (a hit is at least 25%).
+The required die is need = clamp(8 + Evasion − Accuracy, 2, 16), and the hit
+is d20 >= need. Code: `hitRoll()` in `resolver.mjs`, with `HIT_NEED_MIN` 2 and
+`HIT_NEED_MAX` 16. The clamp is the 75% cap: the chance to be missed is at most
+75%, so a hit is at least 25%.
 
-- Natural 1 always misses. Natural 20 always hits, whatever the totals.
-- Boundary: accuracy 0 and evasion 20 needs 16 (the clamp), not 28.
-- AC is 8 at evasion +0.
-- Example: Reaver with STR 3, DEX 1, WIS 1, INT 1 has floor(5) = 5, so with
-  accuracy 0 and evasion 0 it needs 3 or more on the d20.
+- Natural 1 always misses (need is at least 2). Natural 20 always hits (need is at most 16).
+- The 75% cap, boundary: Accuracy 0 against Evasion 20 needs 16, not 28.
+- Target 8 at Evasion 0 (AC base 8).
+
+### Accuracy and evasion values
+
+Accuracy = floor(STR + DEX + ½·WIS + ½·INT) + floor(level / 5) + attack tag.
+
+- Attack tag: `quick` +1, `telegraphed` −2, any other tag 0. Read from the attack's tags.
+- `accuracyFor({attrs, level, tags, accuracy})` in `resolver.mjs`. `accuracy` is any
+  extra flat bonus, and a plain numeric accuracy still works.
+- Example: level 1 Reaver with STR 3, DEX 1, WIS 1, INT 1 has accuracy 5. At
+  level 5 it has 6. A quick attack adds 1 (6 at level 1). A telegraphed one
+  takes 2 (3 at level 1).
+
+Evasion = armor base + min(DEX − 1, armor DEX cap) + shield + card bonus.
+
+- Armor table, `evasion-armor.csv` (armor, base, DEX cap):
+
+  | Armor   | Base | DEX cap |
+  |---------|------|---------|
+  | Cloth   | 0    | 4       |
+  | Leather | 1    | 6       |
+  | Studded | 1    | 3       |
+  | Chain   | 1    | 2       |
+  | Scale   | 1    | 1       |
+  | Plated  | 1    | 0       |
+
+- Shield: buckler +1. Any other shield 0.
+- Card bonus table, `evasion-cards.csv` (card, bonus): Backstep 5, Shadowstep 4,
+  Quickstep 3, Acrobatics 3, Dodge 3, Evasive Guard 2. A card not in the table adds 0.
+- `evasionFor({armor, dex, shield, card, evasion}, tables)` in `resolver.mjs`.
+  `evasion` is any extra flat bonus, and a plain numeric evasion still works.
+- The DEX term is never below 0. A missing armor counts as Cloth, and a missing
+  DEX adds 0. These two rules are placeholders the owner has not confirmed.
+- Examples: Cloth at DEX 1 is 0. Leather at DEX 3 (rogue-like) is 1 + 2 = 3.
+  Plated at DEX 5 is 1 (cap 0). A buckler adds 1, and Backstep adds 5.
+
+The tables match the tag tables on feature/TagRefactor (owner, 2026-10-11).
+
+### Expected results: enemy Accuracy 5
+
+The miss chance is (2 + Evasion) / 20 for Evasion 0 to 13. Above that the cap holds it at 75%.
+
+| Evasion | need | P(missed) |
+|---------|------|-----------|
+| 0       | 3    | 10%       |
+| 1       | 4    | 15%       |
+| 3       | 6    | 25%       |
+| 8       | 11   | 50%       |
+
+Tests compute these exhaustively over d20 faces 1..20 (`resolver.test.mjs`).
+
+### Enemy examples
+
+Enemy evasion from the owner's examples, with the miss chance against an
+Accuracy 5 attacker. Each enemy's armor and card parts are not given, so these
+are the totals only.
+
+| Enemy           | Evasion | need | P(missed) |
+|-----------------|---------|------|-----------|
+| Husk Brute      | 0       | 3    | 10%       |
+| Wandering Soldier | 1     | 4    | 15%       |
+| Fell Warden     | 2       | 5    | 20%       |
+| Blight Hound    | 3       | 6    | 25%       |
 
 ### Evasion
 
