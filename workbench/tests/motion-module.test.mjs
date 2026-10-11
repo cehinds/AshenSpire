@@ -45,3 +45,10 @@ test('edits go through the canvas kit and one history step per change, and save 
   assert.match(src, /saveFailure\(err\)/, 'problems and conflicts go through the shared failure reader');
   assert.match(src, /locked: true, label: pose, data: \{ kind: 'figure', src \}/, 'the figure is a locked reference item');
 });
+
+test('the module gates every edit and every save on isGenerated, so build-written stance files stay read-only', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /isGenerated,/, 'the module imports the generated-file rule from the model');
+  assert.match(src, /function commitProject\(next, label\) \{[\s\S]*?isGenerated\(st\.file\.path\)[\s\S]*?return;/, 'commitProject refuses a generated file');
+  assert.match(src, /function dirtyChanges\(\) \{[\s\S]*?isGenerated\(f\.path\)[\s\S]*?return \[\];/, 'no change reaches the save call for a generated file');
+});

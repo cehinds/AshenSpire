@@ -13,7 +13,7 @@ import { saveFailure } from '../../ui/logic.mjs';
 import {
   LIBRARY_KINDS, SPEEDS, FACINGS, SIZES, BACKGROUNDS, REF,
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
-  parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty,
+  parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
 } from './model.mjs';
 
@@ -414,7 +414,7 @@ export default {
     function setProject(next) { st.file.project = next; sendLoad(); renderAll(); }
     function commitProject(next, label) {
       const before = st.file?.project;
-      if (!before || JSON.stringify(before) === JSON.stringify(next)) return;
+      if (!before || isGenerated(st.file.path) || JSON.stringify(before) === JSON.stringify(next)) return;
       const undo = clone(before), redo = clone(next);
       ctx.history.pushChange({ label, undo, redo }, (snap) => { if (st.file) setProject(clone(snap)); });
       setProject(redo);
@@ -528,7 +528,7 @@ export default {
     /** The open file's change, if its project differs from the bytes read: the same text a save would write. */
     function dirtyChanges() {
       const f = st.file;
-      if (!f || !isDirty(f.original, f.project)) return [];
+      if (!f || isGenerated(f.path) || !isDirty(f.original, f.project)) return [];
       return [{ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }];
     }
     function renderDirty() {
