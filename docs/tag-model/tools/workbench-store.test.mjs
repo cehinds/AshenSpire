@@ -513,6 +513,23 @@ test('(a) sequential writers: the second one gets a conflict and the store keeps
   assert.equal(JSON.stringify(B.page.state.data.t.rows), JSON.stringify(ys));
 });
 
+test('Load theirs waits for an in-flight save, then adopts theirs', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  editTable(A.page, sample(3, 'x'));
+  await A.api.flush('t');
+  editTable(B.page, sample(3, 'y'));
+  await B.api.flush('t'); // B is now in conflict
+  const theirs = JSON.stringify(sample(3, 'x'));
+  B.page.saving.add('t'); // a save of B's is in flight
+  const done = B.api.loadTheirs('t');
+  await settle(60);
+  assert.equal(JSON.stringify(B.page.state.data.t.rows), JSON.stringify(sample(3, 'y')), 'waits while the save runs');
+  B.page.saving.delete('t');
+  await done;
+  assert.equal(JSON.stringify(B.page.state.data.t.rows), theirs);
+});
+
 test('a conflict re-renders the panel, and Keep mine re-renders after it saves on their rev', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T), B = makePage(db, T);
