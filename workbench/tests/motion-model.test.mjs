@@ -223,6 +223,32 @@ test('generated files are the stance projects the build writes; renewal and othe
   assert.equal(isGenerated(undefined), false);
 });
 
+test('an edited indented pose file keeps its indent, its trailing newline, and changes only the edited line', () => {
+  const real = readFixture('pose-studio/stances/projects/herald-default/casting.pose.json');
+  const { project: base } = parsePoseFile(real);
+  const compact = JSON.stringify(base);
+  // The shipped files escape non-ASCII as \uXXXX, so the synthetic variants do too.
+  const ascii = (s) => s.replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  const variants = [
+    ['two spaces', real],
+    ['four spaces', ascii(JSON.stringify(base, null, 4)) + '\n'],
+    ['a tab', ascii(JSON.stringify(base, null, '\t')) + '\n'],
+  ];
+  for (const [label, text] of variants) {
+    const { project } = parsePoseFile(text);
+    const hand = project.anchors.hand;
+    const edited = setAnchor(project, 'hand', [hand[0] === 0.5 ? 0.25 : 0.5, hand[1]]);
+    const out = serializePoseFile(edited, text);
+    const before = text.split('\n');
+    const after = out.split('\n');
+    assert.equal(after.length, before.length, `${label}: same line count`);
+    assert.equal(after.filter((line, i) => line !== before[i]).length, 1, `${label}: one line differs`);
+    assert.deepEqual(JSON.parse(out), edited, `${label}: parses back to the edit`);
+    assert.equal(out.endsWith('\n'), text.endsWith('\n'), `${label}: trailing newline kept`);
+  }
+  assert.notEqual(compact, real, 'the fixture is indented, not compact');
+});
+
 test('a pose file layout is its indent (none, two spaces, four spaces or a tab) and its trailing whitespace', () => {
   const { project } = parsePoseFile(readFixture('pose-studio/renewal/attack.pose.json'));
   assert.deepEqual(layoutOf(JSON.stringify(project)), { indent: '', tail: '' });

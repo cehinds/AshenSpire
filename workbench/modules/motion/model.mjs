@@ -217,16 +217,16 @@ export function layoutOf(text) {
 
 /**
  * The file text for a project. Unchanged projects return the original bytes exactly. A changed
- * project is written as JSON with non-ASCII escaped as \uXXXX (the style of the shipped pose files),
- * keeping the original's trailing whitespace.
+ * project is written as JSON in the original's indent (compact when it had none), with non-ASCII
+ * escaped as \uXXXX (the style of the shipped pose files), keeping the original's trailing whitespace.
  */
 export function serializePoseFile(project, original) {
   if (typeof original === 'string' && original.length) {
     const parsed = JSON.parse(original);
     if (JSON.stringify(parsed) === JSON.stringify(project)) return original;
   }
-  const body = JSON.stringify(project).replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
-  const tail = typeof original === 'string' ? original.slice(original.trimEnd().length) : '';
+  const { indent, tail } = layoutOf(original);
+  const body = JSON.stringify(project, null, indent || undefined).replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
   return body + tail;
 }
 
