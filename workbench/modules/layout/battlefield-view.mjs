@@ -239,11 +239,16 @@ export function createBattlefieldView(root, host) {
     rebuild({ fit: true });
   }
 
-  /** The game's combat preview: the combat fixture in the dock. The dock's size is the user's to set. */
-  function previewHere() {
-    host.preview.setOverride('shot', 'combat');
-    host.preview.reload();
-    host.toast({ kind: 'info', title: 'Previewing the combat battlefield', detail: 'Fixture combat. The preview uses the saved and compiled presets; set the dock to the device size to compare.', record: false });
+  /**
+   * The game's combat fixture in the dock (?shot=combat on the game server; the game
+   * reads its own query, not the Workbench's wb.* overrides). The dock's size is the user's to set.
+   */
+  async function previewHere() {
+    let base = null;
+    try { base = gameBaseOf(await host.api('tools')); } catch { base = null; }
+    if (!base) { host.toast({ kind: 'warn', title: 'The game server is not up', detail: 'Start the Workbench server; the preview needs the game.', record: false }); return; }
+    host.preview.showUrl(`${base}index.html?shot=combat`);
+    host.toast({ kind: 'info', title: 'Previewing the combat battlefield', detail: 'The combat fixture, with the saved presets. Set the dock to the device size to compare; Back returns to the game.', record: false });
   }
 
   function ensureCanvas() {
@@ -332,6 +337,12 @@ export function createBattlefieldView(root, host) {
       { title: 'Battlefield: align selected slots left', sub: 'Layout Studio', run: () => st.canvas?.align('left') },
     ],
   };
+}
+
+/** The game server's base URL from the Workbench's tools list, or null when it is not up. */
+function gameBaseOf(tools = []) {
+  const game = (Array.isArray(tools) ? tools : []).find((t) => t && t.id === 'game');
+  return game && game.status === 'up' && game.url ? String(game.url).replace(/\/?$/, '/') : null;
 }
 
 const round1 = (v) => Math.round(v * 10) / 10;
