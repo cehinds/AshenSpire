@@ -16,6 +16,14 @@
 //   node tools/engine-export.mjs --only content.cards,framework
 //                                                      only these tables (an id, or a
 //                                                      prefix ending at a dot boundary)
+//   node tools/engine-export.mjs --no-build            do not run the builders first;
+//                                                      fail if their output is stale
+//
+// The export reads the generated modules (src/content/generated, src/framework/
+// data, src/config/generated) next to the authored files they are compiled
+// from. So that it never mixes the two at different edits, it first runs the
+// builders that own those modules (each rewrites only what changed); with
+// --no-build it runs their --check instead and stops when one is stale.
 //
 // The output is deterministic: no timestamps, keys sorted, arrays in authored
 // order, 2-space indent, trailing newline. Two runs at one commit are
@@ -25,7 +33,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync
 import { join, dirname, relative, sep, resolve, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 
 export const FORMAT = 'ashenspire.engine-export/1';
@@ -219,6 +227,28 @@ function walkJson(dir) {
     else if (entry.name.endsWith('.json')) out.push(full);
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Generated modules: current before they are read.
+// ---------------------------------------------------------------------------
+
+/** The builders whose output collect() imports. content-build last: it refuses a framework or config JSON whose generated mirror is not current yet. */
+export const BUILDERS = ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs'];
+
+/**
+ * Run each builder under `root` (write mode, or `--check` when `build` is
+ * false). Returns the ones that failed — when checking, the ones whose
+ * generated output is stale — with their output; an empty list means current.
+ */
+export function staleGenerated({ root = ROOT, build = true, builders = BUILDERS } = {}) {
+  const failed = [];
+  for (const script of builders) {
+    if (!existsSync(join(root, script))) continue;
+    const r = spawnSync(process.execPath, [join(root, script), ...(build ? [] : ['--check'])], { cwd: root, encoding: 'utf8', env: { ...process.env, FORCE_COLOR: '0' } });
+    if (r.status !== 0) failed.push({ script, status: r.status, output: `${r.stdout || ''}${r.stderr || ''}${r.error ? r.error.message : ''}`.trim() });
+  }
+  return failed;
 }
 
 async function collect() {
@@ -428,11 +458,12 @@ export function compareDirs(expectedDir, actualDir) {
 }
 
 function parseArgs(argv) {
-  const opts = { out: join(ROOT, 'build', 'engine-export'), check: false, only: null };
+  const opts = { out: join(ROOT, 'build', 'engine-export'), check: false, only: null, build: true };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--out') opts.out = resolve(argv[++i] ?? '');
     else if (a === '--check') opts.check = true;
+    else if (a === '--no-build') opts.build = false;
     else if (a === '--only') opts.only = String(argv[++i] ?? '').split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--help' || a === '-h') { opts.help = true; } else throw new Error(`unknown argument '${a}'`);
   }
@@ -449,10 +480,19 @@ async function main() {
     process.exit(2);
   }
   if (opts.help) {
-    console.log('usage: node tools/engine-export.mjs [--out <dir>] [--check] [--only <table,...>]');
+    console.log('usage: node tools/engine-export.mjs [--out <dir>] [--check] [--only <table,...>] [--no-build]');
     return;
   }
   const started = Date.now();
+  const failed = staleGenerated({ build: opts.build });
+  if (failed.length) {
+    const names = failed.map((f) => f.script).join(', ');
+    console.error(opts.build
+      ? `engine-export: FAIL — ${names} failed, so the generated modules may not match the authored files; fix it and run again`
+      : `engine-export: FAIL — generated modules are stale; run ${failed.map((f) => `node ${f.script}`).join(' && ')} (or drop --no-build)`);
+    for (const f of failed) console.error(`  ${f.script}:\n    ${f.output.split('\n').slice(-8).join('\n    ')}`);
+    process.exit(1);
+  }
   const { files, summary } = await buildExport({ only: opts.only });
   if (opts.only && summary.tables + summary.config + summary.art === 0) {
     console.error(`engine-export: --only ${opts.only.join(',')} matched nothing`);

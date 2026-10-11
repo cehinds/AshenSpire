@@ -3,8 +3,10 @@
 // fs.watch with { recursive: true } where the platform has it (Windows, macOS,
 // Linux on Node 20+); a 1 s mtime poll where it throws. Changes are collected
 // into one batch per quiet period (`debounceMs`) and handed to `onBatch` as
-// project-relative paths. `mute()` drops events while a build writes its
-// generated output, so a rebuild never triggers itself.
+// project-relative paths. `mute()` drops events under the builds' generated
+// output (BUILD_OUTPUTS) while a build runs and for a short grace after, so a
+// rebuild never triggers itself; any other edit made meanwhile is kept and
+// lands in the next batch.
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -22,16 +24,29 @@ function walk(dir, out = new Map()) {
   return out;
 }
 
-export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false }) {
+/**
+ * What each build step in buildsFor() writes (content-build's OUT and its
+ * framework views, framework-data-build's outDir, config-build's GENERATED).
+ * Only these paths are ignored while a build runs.
+ */
+export const BUILD_OUTPUTS = {
+  'tools/content-build.mjs': ['src/content/generated/', 'src/framework/data/'],
+  'tools/framework-data-build.mjs': ['src/framework/data/'],
+  'tools/config-build.mjs': ['src/config/generated/'],
+};
+export const isBuildOutput = (rel) => Object.values(BUILD_OUTPUTS).some((dirs) => dirs.some((d) => rel.startsWith(d) || `${rel}/` === d));
+
+export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, isOutput = isBuildOutput }) {
   const pending = new Set();
   const watchers = []; const polls = [];
   let timer = null; let mutedUntil = 0; let muted = false; let closed = false;
   const rel = (abs) => path.relative(root, abs).split(path.sep).join('/');
 
   function note(abs) {
-    if (closed || muted || Date.now() < mutedUntil) return;
+    if (closed) return;
     const r = rel(abs);
     if (!r || r.startsWith('..') || IGNORED(r)) return;
+    if ((muted || Date.now() < mutedUntil) && isOutput(r)) return;
     pending.add(r);
     clearTimeout(timer);
     timer = setTimeout(flush, debounceMs);
@@ -77,7 +92,8 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
 
   return {
     modes,
-    mute() { muted = true; clearTimeout(timer); pending.clear(); },
+    /** While a build runs: its generated output is ignored; other edits still batch (onBatch queues them after the build). */
+    mute() { muted = true; },
     /** Resume after `graceMs`: late events from the build's own writes still land in the muted window. */
     unmute(graceMs = 600) { muted = false; mutedUntil = Date.now() + graceMs; },
     close() { closed = true; clearTimeout(timer); for (const w of watchers) w.close(); for (const t of polls) clearInterval(t); },

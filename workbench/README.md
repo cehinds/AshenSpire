@@ -18,13 +18,15 @@ it. Local only (127.0.0.1), no npm dependencies, no build step. Node 22+.
 - **Any terminal:** `node workbench/server.mjs [--port 4300] [--no-open] [--project DIR] [--no-children]`
 
 The Workbench starts its tools as child servers and stops them when it exits
-(Ctrl+C). A tool already answering on its port is reused, and never killed.
+(Ctrl+C). A tool already answering on its port is reused, and never killed — the UI
+Studio and game server only when they serve this project (`/api/session`,
+`/__serve/info`); otherwise the tool shows as down and says why.
 
 | Tool | Port | Started as |
 |---|---|---|
 | Workbench | 4300 | `node workbench/server.mjs` |
 | Content Editor | 4317 | `node editor/server.mjs --project <root> --port 4317 --frame-ancestor <workbench>` |
-| Pose & FX | 4318 | `POSE_STUDIO_PORT=4318 node pose-studio/server.mjs` |
+| Pose & FX | 4318 | `POSE_STUDIO_PORT=4318 node pose-studio/server.mjs --project <root>` |
 | UI Studio | 4319 | `node ui-studio/server.mjs --project <root> --port 4319 --frame-ancestor <workbench>` |
 | Game server | 4320 | `node tools/serve.mjs --port 4320 --no-open --no-lan --root <root>` |
 
@@ -52,7 +54,8 @@ then explain how to start each tool.
   `tools/content-build.mjs` and `tools/framework-data-build.mjs` first; under
   `content/config`, `tools/config-build.mjs`. Then the preview reloads and a
   toast says *Game reloaded (3 files)*. A failed build does not reload; its
-  output is in the error toast. Generated output never triggers a second reload.
+  output is in the error toast. Generated output never triggers a second reload;
+  an edit made while a build runs is kept and reloads right after it.
 - **Library** — every page in `workbench/tools.json`, grouped by area, with
   kind filters, search, an **Outputs** badge (what the page produces: JSON
   download, PNG …), live thumbnails that load as you scroll, and *Open* (in the

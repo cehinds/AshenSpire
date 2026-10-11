@@ -142,3 +142,21 @@ test('--only limits the export and the tool refuses to clear a foreign folder', 
   assert.match(refused.stderr, /refusing to clear it/);
   assert.equal(readFileSync(join(foreign, 'keep.txt'), 'utf8'), 'mine');
 });
+
+test('staleGenerated runs the builders (or their --check) and names the stale ones; --no-build passes when current', async () => {
+  const { staleGenerated, BUILDERS } = await import('../tools/engine-export.mjs');
+  assert.deepEqual(BUILDERS, ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs']);
+  const fixture = join(scratch, 'stale-fixture');
+  mkdirSync(join(fixture, 'tools'), { recursive: true });
+  // current.mjs is always current; stale.mjs fails its --check but builds fine.
+  writeFileSync(join(fixture, 'tools', 'current.mjs'), "process.exit(0);\n");
+  writeFileSync(join(fixture, 'tools', 'stale.mjs'), "if (process.argv.includes('--check')) { console.error('STALE: out of date'); process.exit(1); }\n");
+  const builders = ['tools/current.mjs', 'tools/stale.mjs', 'tools/absent.mjs'];
+  const checked = staleGenerated({ root: fixture, build: false, builders });
+  assert.deepEqual(checked.map((f) => f.script), ['tools/stale.mjs']);
+  assert.match(checked[0].output, /STALE: out of date/);
+  assert.deepEqual(staleGenerated({ root: fixture, build: true, builders }), [], 'build mode does not pass --check');
+
+  const r = run('--no-build', '--only', 'content.cards', '--out', join(scratch, 'no-build'));
+  assert.equal(r.status, 0, `the checkout's generated modules are current:\n${r.stdout}${r.stderr}`);
+});

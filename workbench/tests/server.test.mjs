@@ -5,13 +5,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS } from '../core/jobs.mjs';
-import { Tool } from '../core/tools.mjs';
-import { buildsFor } from '../core/watch.mjs';
+import { Tool, toolDefs } from '../core/tools.mjs';
+import { buildsFor, isBuildOutput } from '../core/watch.mjs';
+import { resolveExternal } from '../core/settings.mjs';
+import { serve } from '../../tools/serve.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -228,6 +230,63 @@ test('a content/config change runs the config compiler before the reload; a fail
   assert.match(failed.output, /bad config/);
 });
 
+/** Every `name` event until `done(events)` is true; `onEvent(name, data)` sees each event of any name as it arrives. */
+async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 8000 } = {}) {
+  const res = await fetch(`${app.url}/api/events?token=${app.token}`);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const deadline = Date.now() + timeoutMs;
+  const events = []; let buffer = ''; let pending = null; let opened = false;
+  try {
+    while (Date.now() < deadline) {
+      pending ||= reader.read();
+      const result = await Promise.race([pending, new Promise((r) => setTimeout(() => r(null), 100))]);
+      if (result) pending = null;
+      if (result && result.done) break;
+      if (result && result.value) buffer += decoder.decode(result.value, { stream: true });
+      const frames = buffer.split('\n\n'); buffer = frames.pop();
+      for (const frame of frames) {
+        const ev = frame.match(/^event: (.+)$/m); const data = frame.match(/^data: (.+)$/m);
+        if (!ev || !data) continue;
+        const parsed = JSON.parse(data[1]);
+        if (onEvent) await onEvent(ev[1], parsed);
+        if (ev[1] === name) { events.push(parsed); if (done(events)) return events; }
+      }
+      if (!opened && onOpen) { opened = true; await onOpen(); }
+    }
+    throw Error(`${name} events so far: ${JSON.stringify(events)}`);
+  } finally { reader.cancel().catch(() => {}); }
+}
+
+test('an edit made while a build runs is kept for the next reload; only the build output is ignored', async (t) => {
+  assert.equal(isBuildOutput('src/config/generated/ui.js'), true);
+  assert.equal(isBuildOutput('src/content/generated/cards.js'), true);
+  assert.equal(isBuildOutput('src/framework/data/properties.js'), true);
+  assert.equal(isBuildOutput('src/config/generated'), true);
+  assert.equal(isBuildOutput('src/game.js'), false);
+  assert.equal(isBuildOutput('content/config/ui/tokens.json'), false);
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // A slow config build: the second edit lands while it is still running.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; await new Promise((r) => setTimeout(r, 1200)); fs.mkdirSync('src/config/generated', { recursive: true }); fs.writeFileSync('src/config/generated/ui.js', 'export default ' + Date.now() + ';\\n');\n");
+  const { app } = await boot(t, root);
+  let edited = false;
+  const reloads = await collectEvents(app, 'reload', (evs) => evs.some((e) => e.files.includes('styles/second.css')), {
+    onOpen: async () => { await new Promise((r) => setTimeout(r, 300)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n'); },
+    onEvent: async (name) => {
+      if (name !== 'building' || edited) return;
+      edited = true;
+      await new Promise((r) => setTimeout(r, 300));
+      await fs.writeFile(path.join(root, 'styles/second.css'), 'p{}\n');
+    },
+  });
+  assert.equal(edited, true);
+  assert.deepEqual(reloads[0].files, ['content/config/ui/tokens.json']);
+  assert.deepEqual(reloads[0].built, ['tools/config-build.mjs']);
+  assert.ok(reloads.at(-1).files.includes('styles/second.css'), 'the edit made during the build reloads');
+  for (const r of reloads) assert.ok(!r.files.some(isBuildOutput), `no batch carries the build's own output: ${r.files}`);
+});
+
 test('settings: checkouts are validated; the art checkout is served read-only on the preview origin only', async (t) => {
   const root = await project(t);
   const art = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-art-')));
@@ -302,4 +361,86 @@ test('two Restart presses at once spawn one child, not an orphaned second', asyn
   tool.spawn = () => { spawned++; tool.child = { kill() {}, once() {} }; };
   await Promise.all([tool.restart(), tool.restart(), tool.start()]);
   assert.equal(spawned, 1);
+});
+
+test('Pose & FX is started on the Workbench project, and serves that project', async (t) => {
+  const root = await project(t);
+  const pose = toolDefs({ repo: path.resolve(HERE, '../..'), root, origin: 'http://127.0.0.1:1' }).find((d) => d.id === 'pose');
+  const args = pose.command(4318);
+  assert.equal(args[0], path.resolve(HERE, '../../pose-studio/server.mjs'));
+  assert.deepEqual(args.slice(1), ['--project', root]);
+  assert.deepEqual(pose.env(4318), { POSE_STUDIO_PORT: '4318' });
+  await fs.mkdir(path.join(root, 'pose-studio'), { recursive: true });
+  await fs.writeFile(path.join(root, 'pose-studio/index.html'), '<!doctype html><title>project copy</title>');
+  const child = spawn(process.execPath, [...args], { env: { ...process.env, ...pose.env(0) }, stdio: ['ignore', 'pipe', 'pipe'] });
+  t.after(() => child.kill('SIGKILL'));
+  const url = await new Promise((resolve, reject) => {
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; const m = out.match(/ready: (http:\/\/127\.0\.0\.1:\d+\/pose-studio\/index\.html)/); if (m) resolve(m[1]); });
+    child.on('exit', (c) => reject(Error(`exited ${c}`)));
+  });
+  assert.match(await (await fetch(url)).text(), /project copy/);
+});
+
+test('start.sh reuses a running Workbench only for the same project', { skip: process.platform === 'win32' || spawnSync('curl', ['--version']).status !== 0 }, async (t) => {
+  const root = await project(t);
+  const other = await project(t);
+  const { app } = await boot(t, root);
+  const port = String(new URL(app.url).port);
+  const start = (...args) => new Promise((resolve) => {
+    const child = spawn('sh', [path.join(HERE, '../start.sh'), '--port', port, '--no-open', ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; }); child.stderr.on('data', (d) => { out += d; });
+    child.on('exit', (code) => resolve({ code, out }));
+  });
+  const same = await start('--project', root);
+  assert.equal(same.code, 0, same.out);
+  assert.match(same.out, /already running/);
+  const mismatch = await start('--project', other);
+  assert.equal(mismatch.code, 1, mismatch.out);
+  assert.match(mismatch.out, /another project/);
+  assert.ok(mismatch.out.includes(root), 'names the project it is serving');
+});
+
+test('the game server is reused only when it names this project as its root', async (t) => {
+  const root = await project(t);
+  const other = await project(t);
+  await fs.writeFile(path.join(root, 'index.html'), '<!doctype html><title>game</title>');
+  await fs.writeFile(path.join(other, 'index.html'), '<!doctype html><title>other game</title>');
+  const game = toolDefs({ repo: path.resolve(HERE, '../..'), root, origin: 'http://127.0.0.1:1' }).find((d) => d.id === 'game');
+  const probeOn = async (port) => {
+    const tool = new Tool({ ...game, port }, { root, origin: 'http://127.0.0.1:1' });
+    return { ok: await tool.probe(), conflict: tool.conflict };
+  };
+  // tools/serve.mjs says which folder it serves, to loopback clients only.
+  const mine = await serve({ root, port: 0, open: false, quiet: true });
+  const theirs = await serve({ root: other, port: 0, open: false, quiet: true });
+  t.after(() => { mine.server.close(); theirs.server.close(); });
+  assert.deepEqual(await (await fetch(`http://127.0.0.1:${mine.port}/__serve/info`)).json(), { root });
+  const { createServer, get: httpGet } = await import('node:http');
+  const foreignHost = await new Promise((resolve, reject) => httpGet({ host: '127.0.0.1', port: mine.port, path: '/__serve/info', headers: { host: 'evil.example' } }, (r) => { r.resume(); resolve(r.statusCode); }).on('error', reject));
+  assert.equal(foreignHost, 403, 'a rebinding host name is refused');
+  assert.deepEqual(await probeOn(mine.port), { ok: true, conflict: null });
+  const mismatch = await probeOn(theirs.port);
+  assert.equal(mismatch.ok, false);
+  assert.match(mismatch.conflict, /serving another checkout/);
+  assert.ok(mismatch.conflict.includes(other));
+  // A server that answers /index.html but does not identify itself is not reused either.
+  const anon = createServer((req, res) => { res.writeHead(req.url === '/index.html' ? 200 : 404); res.end('ok'); });
+  await new Promise((r) => anon.listen(0, '127.0.0.1', r));
+  t.after(() => anon.close());
+  const unknown = await probeOn(anon.address().port);
+  assert.equal(unknown.ok, false);
+  assert.match(unknown.conflict, /does not say which checkout/);
+});
+
+test('external entries resolve under a checkout given with a trailing separator', async (t) => {
+  const art = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-art-')));
+  t.after(() => fs.rm(art, { recursive: true, force: true }));
+  await fs.mkdir(path.join(art, 'enemy-poses'), { recursive: true });
+  await fs.writeFile(path.join(art, 'enemy-poses/index.html'), '<!doctype html>');
+  const entry = { path: 'art/enemy-poses/index.html', pathPrefixOptional: 'art/' };
+  assert.equal(resolveExternal(entry, art), 'enemy-poses/index.html');
+  assert.equal(resolveExternal(entry, `${art}${path.sep}`), 'enemy-poses/index.html');
+  assert.equal(resolveExternal({ path: '../outside.html' }, `${art}${path.sep}`), null);
 });

@@ -14,7 +14,13 @@ node tools/engine-export.mjs                      # write build/engine-export/
 node tools/engine-export.mjs --out <dir>          # write somewhere else
 node tools/engine-export.mjs --check              # exit 1 if <out> differs from a fresh export
 node tools/engine-export.mjs --only content.cards,framework
+node tools/engine-export.mjs --no-build           # skip the builders; exit 1 if their output is stale
 ```
+
+- Every run first runs `tools/framework-data-build.mjs`, `tools/config-build.mjs`
+  and `tools/content-build.mjs` (each rewrites only what changed), so the
+  generated modules it reads always match the authored files it reads.
+  `--no-build` runs their `--check` instead and stops when one is stale.
 
 - `--only` takes table ids or prefixes that end at a dot (`content` selects
   every `content.*` table; `art` selects the art manifests).
