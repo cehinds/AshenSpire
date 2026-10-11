@@ -284,3 +284,23 @@ test('combos count only played cards: a rejected card cannot start a combo', () 
   assert.deepEqual(find(events, 'rejected'), { type: 'rejected', reason: 'slot taken', slot: 0, cardId: 'shieldBash' });
   assert.equal(momentumDelta, 0, 'strike follows only a rejected card, so no combo');
 });
+
+// Every source_type in speed-mods.csv must name a component that actionSpeed()
+// reads. The list mirrors COMPONENTS in resolver.mjs.
+const SPEED_COMPONENTS = ['card', 'weapon', 'armor', 'range', 'attackType', 'skill', 'initiative'];
+
+test('speed-mods.csv: every source_type maps to an actionSpeed component', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { fileURLToPath } = await import('node:url');
+  const path = fileURLToPath(new URL('./speed-mods.csv', import.meta.url));
+  const rows = readFileSync(path, 'utf8').trim().split('\n');
+  const header = rows.shift().split(',');
+  assert.deepEqual(header.slice(0, 4), ['source_type', 'source', 'mod', 'status']);
+
+  const bad = [];
+  for (const line of rows) {
+    const sourceType = line.split(',')[0];
+    if (!SPEED_COMPONENTS.includes(sourceType)) bad.push(`${sourceType} (${line.split(',')[1]})`);
+  }
+  assert.deepEqual(bad, [], 'source_type values with no matching component');
+});

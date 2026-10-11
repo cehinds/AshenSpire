@@ -10,16 +10,16 @@ weapon,dagger,+2,owner,
 weapon,straightSword,,TBD,placeholder; id from content/source/weapons.csv
 weapon,greatsword,,TBD,placeholder; id from content/source/weapons.csv
 weapon,shortbow,,TBD,placeholder; brief said bow; no bow id in weapons.csv; real id is shortbow (bowPierceAttack profile)
-shield,roundShield,,TBD,placeholder; id from content/source/weapons.csv
-shield,buckler,,TBD,placeholder; id from content/source/weapons.csv
-staff,ashStaff,,TBD,placeholder; id from content/source/weapons.csv
-staff,boneSceptre,,TBD,placeholder; id from content/source/weapons.csv
+weapon,roundShield,,TBD,placeholder; id from content/source/weapons.csv
+weapon,buckler,,TBD,placeholder; id from content/source/weapons.csv
+weapon,ashStaff,,TBD,placeholder; id from content/source/weapons.csv
+weapon,boneSceptre,,TBD,placeholder; id from content/source/weapons.csv
 range,contact,,TBD,placeholder
 range,near,,TBD,placeholder
 range,far,,TBD,placeholder
-attack_type,quick,,TBD,placeholder
-attack_type,heavy,,TBD,placeholder
-attack_type,telegraphed,,TBD,placeholder
+attackType,quick,,TBD,placeholder
+attackType,heavy,,TBD,placeholder
+attackType,telegraphed,,TBD,placeholder
 skill,rank,,TBD,placeholder; skill rank mod not specified
 initiative,initiative,,TBD,placeholder; initiative mod not specified
 card,strike,1,owner,base action speed (owner)
