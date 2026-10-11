@@ -95,6 +95,31 @@ test('CSV column types are inferred from the cells', () => {
   assert.equal(t.rows[2].count, null);
 });
 
+test('CSV cells the content compiler keeps as strings (1e3, 1.) stay strings and round-trip unchanged', () => {
+  const text = 'id,code,ratio\nalpha,1e3,-0.5\nbeta,2e4,.5\ngamma,1.,12\n';
+  const t = D.parseTable('content/source/x.csv', text);
+  assert.deepEqual(t.columns.map((c) => [c.key, c.type]), [['id', 'string'], ['code', 'string'], ['ratio', 'number']]);
+  assert.equal(t.rows[0].code, '1e3');
+  assert.equal(t.rows[1].code, '2e4');
+  assert.equal(t.rows[2].code, '1.');
+  assert.deepEqual(t.rows.map((r) => r.ratio), [-0.5, 0.5, 12]);
+  // Edit another cell in the 1e3 row; the 1e3 cell must stay byte-for-byte.
+  const doc = docOf(t);
+  doc.rows[0] = { ...doc.rows[0], id: 'alphaEdited' };
+  const out = D.serializeTable(t, doc);
+  assert.equal(out, 'id,code,ratio\nalphaEdited,1e3,-0.5\nbeta,2e4,.5\ngamma,1.,12\n');
+});
+
+test('a CSV number column accepts integers and ordinary decimals only', () => {
+  const kind = (v) => D.parseTable('content/source/x.csv', `v\n${v}\n`).columns[0].type;
+  assert.equal(kind('-0.5'), 'number');
+  assert.equal(kind('.5'), 'number');
+  assert.equal(kind('12'), 'number');
+  assert.equal(kind('-7'), 'number');
+  assert.equal(kind('1e3'), 'string');
+  assert.equal(kind('1.'), 'string');
+});
+
 test('JSON columns infer number, boolean, string, or json for mixed and nested values', () => {
   const t = D.parseTable('content/framework/x.json', JSON.stringify([
     { id: 'a', n: 1, b: true, s: 'x', mixed: 1, nested: { k: 1 } },
