@@ -259,6 +259,17 @@ export function tryFightUrl(gameBase, { classId = 'reaver', mainHand = '', offHa
   return `${base}index.html?${q}`;
 }
 
+/**
+ * What the module does after it resolves the game server: 'setup' (the server is down, show the setup
+ * message), 'keep' (the same origin is already answering, leave the frames) or 'load' (point the frames
+ * at the game, because the origin changed, the frames never answered, or a reload was forced).
+ */
+export function connectPlan({ base = null, currentOrigin = null, ready = false, force = false } = {}) {
+  if (!base) return 'setup';
+  const origin = new URL(base).origin;
+  return !force && ready && origin === currentOrigin ? 'keep' : 'load';
+}
+
 /** The Workbench's `tools` listing → the game server's base URL, or null when it is down. */
 export function gameBaseOf(tools = []) {
   const game = list(tools).find((t) => t && t.id === 'game');

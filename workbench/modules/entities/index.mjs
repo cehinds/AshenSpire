@@ -10,7 +10,7 @@
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
   facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
-  RENDER_PROTOCOL, settleFilters, tableRowOf,
+  RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -77,11 +77,17 @@ export default {
     const CHECKOUT_MESSAGE = "This project's checkout has no Entity Browser render page, or an older one. Update that checkout to this branch.";
     const SERVER_HINT = 'The entities are drawn by the game server, so start it from the Library or Home, then';
     const READY_WAIT_MS = 15000;
-    let readyTimer = 0;
+    const ANSWER_WAIT_MS = 10000;
+    let readyTimer = 0, answerTimer = 0;
     function showSetup(message, detail = '') {
       setup.hidden = false;
       setup.innerHTML = `<p>${esc(message)}${detail ? ` ${esc(detail)}` : ''} <button type="button" class="ent-retry">Try again</button></p>`;
-      setup.querySelector('.ent-retry').onclick = connect;
+      setup.querySelector('.ent-retry').onclick = () => connect();
+    }
+    // A grid that was sent but never reported its state back means the page has stopped answering.
+    function expectAnswer() {
+      clearTimeout(answerTimer);
+      answerTimer = setTimeout(() => { if (game.ready) connect({ force: true }); }, ANSWER_WAIT_MS);
     }
     // A render page that never says ready is either missing from this checkout or the server has stopped.
     function awaitReady() {
@@ -95,20 +101,29 @@ export default {
         else showSetup('The game server stopped answering.', SERVER_HINT);
       }, READY_WAIT_MS);
     }
-    async function connect() {
-      setup.hidden = true;
-      game.ready = false;
+    // Resolves the game server the same way at mount, on show and on Try again. The frames load again
+    // unless the same origin is already answering; `force` reloads them anyway.
+    let runs = 0;
+    async function connect({ force = false } = {}) {
+      const run = ++runs;
+      let base = null, failure = null;
       try {
-        const base = gameBaseOf(await ctx.api('tools'));
+        base = gameBaseOf(await ctx.api('tools'));
         if (!base) throw new Error('The game server is not running.');
-        game.base = base;
-        game.origin = new URL(base).origin;
-        center.src = renderUrl(base, { parentOrigin: location.origin });
-        drawer.src = renderUrl(base, { parentOrigin: location.origin, kind: st.kind, view: 'detail' });
-        awaitReady();
-      } catch (err) {
-        showSetup(err.message, SERVER_HINT);
+      } catch (err) { failure = err; }
+      if (run !== runs) return; // a later connect has taken over
+      if (failure) {
+        clearTimeout(readyTimer); clearTimeout(answerTimer);
+        game.origin = null; game.ready = false;
+        showSetup(failure.message, SERVER_HINT);
+        return;
       }
+      setup.hidden = true;
+      if (connectPlan({ base, currentOrigin: game.origin, ready: game.ready, force }) === 'keep') return;
+      game.base = base; game.origin = new URL(base).origin; game.ready = false;
+      center.src = renderUrl(base, { parentOrigin: location.origin });
+      drawer.src = renderUrl(base, { parentOrigin: location.origin, kind: st.kind, view: 'detail' });
+      awaitReady();
     }
 
     // ---------- messages ----------
@@ -116,6 +131,7 @@ export default {
     const viewOf = (tab) => TABS.find(([id]) => id === tab)?.[2] || 'detail';
     function sendCenter() {
       post(center, { type: 'set', params: { kind: st.kind, view: 'grid', q: st.q, sort: st.sort, class: st.class, type: st.type, tag: st.tag, rarity: st.rarity, density: st.density, layout: st.layout } });
+      expectAnswer();
     }
     function sendDrawer() {
       if (st.tab === 'try') return;
@@ -139,6 +155,9 @@ export default {
           if (!fromCenter) break;
           counts = d.counts || {}; classes = d.classes || []; armaments = d.armaments || [];
           renderChips(); renderTry();
+          break;
+        case 'shown':
+          if (fromCenter) clearTimeout(answerTimer);
           break;
         case 'index':
           if (fromCenter && d.kind === st.kind) {
@@ -296,6 +315,8 @@ export default {
       // The host calls onShow after mount, and again each time the module is opened. It keeps a
       // fresh params object per open, so a link or command applies once and a plain return keeps the state.
       onShow() {
+        // The game may have restarted or moved port while the module was away: resolve it again.
+        connect();
         const p = ctx.params;
         if (!p || p === seenParams) return;
         seenParams = p;
