@@ -237,7 +237,8 @@ test('a file renamed into place keeps reloading on later in-place edits (watch)'
       await fs.writeFile(path.join(root, 'styles/main.css'), 'body{color:green}\n');
     },
   });
-  assert.deepEqual(reloads.at(-1).files, ['styles/main.css'], 'the in-place edit after the rename is its own batch');
+  // macOS may deliver the renamed-away name late, into the next batch; it is no longer on disk.
+  assert.deepEqual(reloads.at(-1).files.filter((f) => f !== 'styles/tmp-source.css'), ['styles/main.css'], 'the in-place edit after the rename is its own batch');
 });
 
 test('a content/config change runs the config compiler before the reload; a failing build reports instead', async (t) => {
@@ -810,6 +811,8 @@ test('closing the Workbench stops a live-reload build it started, so the build w
   // The build announces itself, then would write its output a while later.
   await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; fs.writeFileSync('started.txt', '1'); await new Promise((r) => setTimeout(r, 800)); fs.writeFileSync('src/config/late.js', 'export default 1;\\n');\n");
   const { app } = await boot(t, root);
+  // macOS (FSEvents) starts delivering a moment after a watch is created: a write made at once can go unseen.
+  await new Promise((r) => setTimeout(r, 500));
   await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n');
   const exists = (rel) => fs.stat(path.join(root, rel)).then(() => true, () => false);
   for (let i = 0; i < 200 && !(await exists('started.txt')); i++) await new Promise((r) => setTimeout(r, 20));
@@ -826,6 +829,8 @@ test('close() stops a live-reload build whose grandchild ignores SIGTERM: it is 
   const grandchild = "process.on('SIGTERM', () => {}); require('node:fs').writeFileSync('grandchild.pid', String(process.pid)); setTimeout(() => require('node:fs').writeFileSync('late.txt', 'late'), 700); setInterval(() => {}, 1000);";
   await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `import { spawn } from 'node:child_process';\nspawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'ignore' });\nsetInterval(() => {}, 1000);\n`);
   const { app } = await boot(t, root);
+  // macOS (FSEvents) starts delivering a moment after a watch is created: a write made at once can go unseen.
+  await new Promise((r) => setTimeout(r, 500));
   await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n');
   const exists = (rel) => fs.stat(path.join(root, rel)).then(() => true, () => false);
   for (let i = 0; i < 200 && !(await exists('grandchild.pid')); i++) await new Promise((r) => setTimeout(r, 20));

@@ -71,6 +71,23 @@ export function createOwnWrites() {
 }
 
 /**
+ * The path a recursive watch event names, or null when it names no source file.
+ * macOS (FSEvents) also reports folders, and reports an event on the watched folder
+ * itself under that folder's own name (content/content); its files are reported
+ * one by one, so on darwin a folder event is dropped. Elsewhere a folder event is
+ * kept: on Windows a folder renamed into place is reported only as the folder.
+ */
+export function recursiveEventPath(abs, name, platform = process.platform, { exists = fs.existsSync, isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } } } = {}) {
+  if (!name) return null;
+  const base = String(name);
+  const target = path.join(abs, base);
+  if (platform !== 'darwin') return target;
+  if (base === path.basename(abs) && !exists(target)) return null; // the watched folder itself
+  if (isDir(target)) return null;
+  return target;
+}
+
+/**
  * isOwnWrite(abs) says a file's events are the echo of a save the Workbench made
  * (see createOwnWrites); those events are dropped when the batch is flushed.
  */
@@ -194,7 +211,10 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   function watchRecursive(abs, d) {
     let w;
     try {
-      w = fs.watch(abs, { recursive: true }, (_event, name) => { if (name) note(path.join(abs, String(name))); });
+      w = fs.watch(abs, { recursive: true }, (_event, name) => {
+        const target = recursiveEventPath(abs, name, platform);
+        if (target) note(target);
+      });
     } catch { return false; /* recursive watch unsupported here: poll below */ }
     w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });
     watchers.push(w);
