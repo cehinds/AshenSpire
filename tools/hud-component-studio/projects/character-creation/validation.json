@@ -1,28 +1,28 @@
 {
   "scene.json": {
-    "nodeCount": 794,
-    "assetCount": 36,
+    "nodeCount": 773,
+    "assetCount": 39,
     "states": [
-      "spells",
+      "class",
+      "attributes",
       "keepsake",
       "equipment",
       "feats",
-      "review",
-      "class",
-      "attributes"
+      "spells",
+      "review"
     ],
     "result": "pass"
   },
   "scene-noncaster.json": {
-    "nodeCount": 651,
-    "assetCount": 36,
+    "nodeCount": 638,
+    "assetCount": 42,
     "states": [
+      "class",
+      "attributes",
       "keepsake",
       "equipment",
       "feats",
-      "review",
-      "class",
-      "attributes"
+      "review"
     ],
     "result": "pass"
   },
@@ -32,7 +32,10 @@
     "result": "pass"
   },
   "visualInspection": [
-    "Feats artwork and exploded independent layers inspected",
-    "Spells existing illustrations / separate rank badge / cost / labels inspected"
+    "Final Attributes: name/Standard tabs/no assignment controls",
+    "Final Equipment: canonical item sprites/relic label/no martial tile",
+    "Final Spells: 1 of 2 selected / disabled continuation",
+    "Final Review: compact identity + Journey/Seed/Destination",
+    "Reusable trim rerasterized at3\u00d7"
   ]
 }

@@ -9,7 +9,7 @@
     {
       "asset": "panel-frame.png",
       "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/panel-frame.svg",
-      "operation": "SVG rasterization; no text added"
+      "operation": "SVG rasterization at 3\u00d7 resolution; transparent trim separate from background/text"
     },
     {
       "asset": "panel-selected.png",
@@ -34,7 +34,7 @@
     {
       "asset": "divider-ornate.png",
       "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/divider-ornate.svg",
-      "operation": "SVG rasterization; no text added"
+      "operation": "SVG rasterization at 3\u00d7 resolution; transparent trim separate from background/text"
     },
     {
       "asset": "selection-tick.png",
@@ -289,6 +289,36 @@
       "asset": "whetstone.png",
       "source": "assets-mobile/relics/travelersWhetstone.webp",
       "operation": "Existing independent illustration converted to PNG; no baked labels"
+    },
+    {
+      "asset": "ash-staff.png",
+      "source": "assets-mobile/equipment/weapon_ashStaff.webp",
+      "operation": "Existing canonical item art, PNG conversion; no relabelled substitute"
+    },
+    {
+      "asset": "starstone-shard.png",
+      "source": "assets-mobile/relics/starstoneShard.webp",
+      "operation": "Existing canonical item art, PNG conversion; no relabelled substitute"
+    },
+    {
+      "asset": "nightweave.png",
+      "source": "assets-mobile/equipment/icon_nightweave.webp",
+      "operation": "Existing canonical item art, PNG conversion; no relabelled substitute"
+    },
+    {
+      "asset": "gutter-leathers.png",
+      "source": "assets-mobile/equipment/icon_gutterLeathers.webp",
+      "operation": "Existing canonical Reaver item art converted to PNG"
+    },
+    {
+      "asset": "straight-sword.png",
+      "source": "assets-mobile/equipment/weapon_straightSword.webp",
+      "operation": "Existing canonical Reaver item art converted to PNG"
+    },
+    {
+      "asset": "forsaken-medallion.png",
+      "source": "assets-mobile/relics/forsakenMedallion.webp",
+      "operation": "Existing canonical Reaver item art converted to PNG"
     }
   ],
   "references": [
