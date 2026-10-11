@@ -1180,21 +1180,21 @@ When the Combat Rounds Preview is on, see §4.11.
 
 **Perception**
 
-- The player sees the first 1 + Perception actions of the round's order, where Perception is the §4.9 stat. Other actions are not shown.
+- The player reads the first 1 + Perception actions of the round's order, where Perception is the §4.9 stat. Actions beyond that count are placed on the initiative track as `?` at their place in the order (owner, 2026-10-11).
 - A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
-- A `?` action is not placed on the initiative track. A stage 3 action is placed.
+- A stage 0 (`?`) action within the read count is not placed on the initiative track. A stage 3 action is placed.
 
 **Co-op and LAN**
 
 - Each seat keeps its own queue, momentum and perception reads. Each living observer records its own read (§4.9).
 - A LAN peer receives a concealed action only as the projection that §4.7 and §4.9 allow. The host never sends a concealed action's full queue entry.
 
-**Open (owner decision needed)**
+**Resolved (owner, 2026-10-11)**
 
-- How live Actions (energy) price a queued card. DESIGN.md merges Actions and Stamina into SP; the live rules (§4.1, §13.4) keep them apart.
-- Whether an enemy action beyond the visible count is placed on the initiative track.
-- Whether the Counter grant and expiry timing of §4.7 maps onto queue position.
-- Co-op momentum: one per seat against each enemy (as written above), or one per enemy shared by the party.
+- A queued card pays only its Stamina cost as SP (and Mana as MP). A live Actions cost is not paid in the preview.
+- Enemy actions beyond the read count are placed on the initiative track as `?` (see Perception).
+- A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
+- In co-op, momentum is per seat: each seat has its own −3..+3 against each enemy.
 
 ## 5. Content specification
 

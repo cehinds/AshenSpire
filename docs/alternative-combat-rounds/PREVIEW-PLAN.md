@@ -25,8 +25,13 @@ An opt-in setting that runs real fights on the alternative combat rounds
 - Perception: visible enemy actions = 1 + the player's perception level; each is
   shown at stage 3 when today's intent read is exact, `?` when hidden (reuses the
   §4.9 knowledge rolls).
-- Initiative track: only `?` (stage 0) actions are left out of the order; stage 1
-  and up are placed.
+- Initiative track: stage 0 (`?`) actions within the read count are left out of
+  the order; stage 1 and up are placed; actions beyond the read count are placed as
+  `?`.
+- A queued card pays only its Stamina cost as SP (Mana as MP); live Actions costs
+  are not paid in the preview.
+- A queued Counter answers only the next attack from its target, then is spent.
+- Co-op momentum is per seat, against each enemy.
 
 ## Architecture
 
