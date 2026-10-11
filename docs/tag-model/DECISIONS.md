@@ -134,3 +134,19 @@ Formula, relation and value keys follow the README conventions.
     rule is a check change, so it is not made here.
   - The Curse tag's key is `curse`, not `type.curse`, unlike the other card
     types. This is harmless, and it is left as it is.
+
+## 7. Consumables are both items and cards
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Consumables are inventory items, and using one can create a
+  one-shot card.
+- **Tables changed:**
+  - `tables/relations.csv`: `character.consumable CREATES_CARD type.consumable`.
+    The source is the consumable item tree (`meta.character.consumable`, with
+    Flask, Potion, Throwable, Buff item and Key item). The target is the
+    Consumable card type (`meta.card.type.consumable`, key `type.consumable`).
+- **Couldn't place:**
+  - The one-shot card has no tag or object. Its identity, cost and effect are
+    not in the decision, so the relation points at the Consumable card type.
+  - Whether all five consumable item kinds create a card, or only some. The
+    relation covers the whole group. Owner to narrow it if needed.

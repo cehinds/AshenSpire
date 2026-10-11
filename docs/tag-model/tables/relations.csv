@@ -23,3 +23,4 @@ school-counter,DEFAULT_DELIVERY,casting,,One per spell school; cast delivery (to
 ward-counter,DEFAULT_DELIVERY,casting,,Ward counter cast delivery (to confirm)
 ranged-counter,DEFAULT_DELIVERY,ranged,,Ranged counter is a ranged delivery
 prepare,APPLIES,prepared,,Prepare sets Prepared (available to players and enemies)
+character.consumable,CREATES_CARD,type.consumable,,Using a consumable item can create a one-shot card; the item is also a Consumable card (owner decision 7)
