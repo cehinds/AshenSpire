@@ -20,7 +20,9 @@
       "endWidthMinPx": 56,
       "pileWidthPx": 50,
       "spentWidthPx": 64,
-      "pileHeightPx": 60
+      "pileHeightPx": 60,
+      "cardMinWidthPx": 72,
+      "cardMaxWidthPx": 120
     },
     "hand": {
       "minimumHeightPx": 208,

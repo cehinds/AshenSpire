@@ -1,9 +1,11 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { uiConfig } from '../../config/generated/ui.js';
 
 // The combat hand reserves a 30px compact row plus four physical pixels of
 // separation before card geometry begins. Keep the band allocator and the
 // renderer on the same physical floor.
 export const COMBAT_TOOLS_HEIGHT_PX = 34;
+const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
 // Presentation order is local, keyed by instance, and never mutates a pile.
 export function reconcileHandOrder(previous, current) {
@@ -35,7 +37,9 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const arc = config.arcRem * rem;
   const available = Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
   const cardWidth = compact
-    ? Math.max(72 / zoom, Math.min(100 / zoom, available * wireframeUi.card.ratio))
+    // Phone cards fill the band between a readable floor and a cap, both in
+    // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
+    ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, available * wireframeUi.card.ratio))
     : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);

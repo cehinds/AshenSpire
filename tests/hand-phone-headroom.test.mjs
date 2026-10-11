@@ -41,3 +41,13 @@ test('a full phone hand still fits 360px with a finger-sized lane per card', () 
   assert.ok((plan.start + plan.span) <= input.width + 1e-9, 'the fan ends inside the hand');
   assert.ok(plan.top + plan.cardHeight + plan.controlsReserve <= input.height + 1e-9);
 });
+
+test('a tall phone fills its band past the old 100px card cap, up to the authored cap', async () => {
+  const { uiConfig } = await import('../src/config/generated/ui.js');
+  const { cardMaxWidthPx } = uiConfig.scenes.w4a.sizing.compactCombat;
+  // 390x844 at zoom .9: a 250px hand band.
+  const { tools, ...input } = phone({ zoom: .9, clientHeight: 250 / .9, controlsHeight: 57 });
+  const plan = handLayout({ ...input, headroom: tools });
+  assert.ok(plan.cardWidth * input.zoom > 100, `card ${plan.cardWidth * input.zoom}px`);
+  assert.ok(plan.cardWidth * input.zoom <= cardMaxWidthPx + 1e-9);
+});
