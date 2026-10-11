@@ -248,3 +248,13 @@ test('a faster attack that misses does not interrupt the slower action', () => {
   assert.equal(hitsOf(events).find((e) => e.by === 'player').hit, false);
   assert.equal(hitsOf(events).some((e) => e.by === 'enemy'), true, 'enemy action still resolves');
 });
+
+test('owner example: strike at +4 against an enemy counter at +3 is not countered', () => {
+  const strike = { kind: 'attack', speed: 4, id: 'strike' };
+  const counter = { kind: 'counter', speed: 3, id: 'counter' };
+  const events = resolvePair(strike, counter, d20Face(20));
+
+  assert.equal(find(events, 'order').first, 'player');
+  assert.equal(find(events, 'countered'), undefined, 'a slower counter cannot cancel a faster strike');
+  assert.equal(hitsOf(events).find((e) => e.by === 'player').hit, true, 'player hit is present');
+});
