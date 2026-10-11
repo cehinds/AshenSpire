@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 import {
   makeCombatant,
   buildTimeline,
+  createRound,
+  makeFight,
   MERGE_MODES,
 } from './timeline.mjs';
 
@@ -219,4 +221,135 @@ test('buildTimeline rejects a target that is not a foe of the actor', () => {
     () => buildTimeline({}, { combatants: { player, goblin, wolf }, rng: constRng(0), merge: 'nope' }),
     RangeError,
   );
+});
+
+// ---- Round resolution (step API, hit roll, block, evade, intangible, hp) ----
+
+// Constant u = 0.45: d4 2, d20 10 (hits need 7 at DEX 1), evade roll 45.
+const HIT_RNG = constRng(0.45);
+const fightOf = (specs) => makeFight(specs);
+const duo = (goblinExtra = {}, playerExtra = {}) => fightOf([
+  { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 6, ...playerExtra },
+  { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 6, ...goblinExtra },
+]);
+
+test('makeFight builds combatants keyed by id, with empty momentum and charges', () => {
+  const st = duo();
+  assert.deepEqual(Object.keys(st.combatants), ['player', 'goblin']);
+  assert.deepEqual(st.momentum, {});
+  assert.equal(st.combatants.goblin.hp, 10);
+});
+
+test('a landed attack reduces the target hp by its damage', () => {
+  const round = createRound(duo(), {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 5 })] },
+    rng: HIT_RNG,
+  });
+  const out = round.resolveAll();
+  const hit = out.events.find((e) => e.type === 'hit');
+  assert.deepEqual([hit.by, hit.target, hit.d20, hit.hit], ['player', 'goblin', 10, true]);
+  const dmg = out.events.find((e) => e.type === 'damage');
+  assert.deepEqual([dmg.target, dmg.amount, dmg.hp], ['goblin', 5, 5]);
+  assert.equal(out.state.combatants.goblin.hp, 5);
+});
+
+test('a miss leaves hp unchanged (natural 1 always misses)', () => {
+  const round = createRound(duo(), {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 5 })] },
+    rng: constRng(0),
+  });
+  const out = round.resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'hit').hit, false);
+  assert.equal(out.events.some((e) => e.type === 'damage'), false);
+  assert.equal(out.state.combatants.goblin.hp, 10);
+});
+
+test('next() resolves one action and returns the state after it', () => {
+  const round = createRound(duo(), {
+    queues: {
+      player: [atk('jab', 'goblin', 6, { damage: 5 })],
+      goblin: [atk('stab', 'player', 2, { damage: 3 })],
+    },
+    rng: HIT_RNG,
+  });
+  const first = round.next();
+  assert.equal(first.entry.cardId, 'jab');
+  assert.equal(first.done, false);
+  assert.equal(first.state.combatants.goblin.hp, 5);
+  assert.equal(first.state.combatants.player.hp, 20);
+  const second = round.next();
+  assert.equal(second.entry.cardId, 'stab');
+  assert.equal(second.state.combatants.player.hp, 17);
+  const end = round.next();
+  assert.equal(end.done, true);
+  assert.equal(end.entry, null);
+  // resolveAll on a finished round adds no events.
+  assert.deepEqual(round.resolveAll().events, []);
+});
+
+test('a state snapshot is a copy, not a live view of the round', () => {
+  const round = createRound(duo(), {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 5 })] },
+    rng: HIT_RNG,
+  });
+  const r = round.next();
+  r.state.combatants.goblin.hp = 999;
+  assert.equal(round.state.combatants.goblin.hp, 5);
+});
+
+test('a defeated combatant skips its remaining actions; a dead target is skipped too', () => {
+  const round = createRound(
+    duo({ hp: 3 }),
+    {
+      queues: {
+        player: [atk('jab', 'goblin', 6, { damage: 5 }), atk('jab2', 'goblin', 1, { damage: 1 })],
+        goblin: [atk('stab', 'player', 0, { damage: 3 })],
+      },
+      rng: HIT_RNG,
+    },
+  );
+  const out = round.resolveAll();
+  // Order: jab (total 8), jab2 (total 3), stab (total 2).
+  assert.deepEqual(out.timeline.entries.map((e) => e.cardId), ['jab', 'jab2', 'stab']);
+  assert.ok(out.events.some((e) => e.type === 'defeated' && e.id === 'goblin'));
+  assert.deepEqual(
+    out.events.filter((e) => e.type === 'skipped').map((e) => [e.cardId, e.reason]),
+    [['jab2', 'targetDefeated'], ['stab', 'defeated']],
+  );
+  assert.equal(out.state.combatants.goblin.hp, 0);
+  assert.equal(out.state.combatants.player.hp, 20);
+});
+
+test('an intangible charge avoids a hit that would land, and is spent', () => {
+  const st = duo({ tags: ['intangible'], intangibleCharges: 1 });
+  const out = createRound(st, {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 5 })] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  const ev = out.events.find((e) => e.type === 'evaded');
+  assert.deepEqual([ev.reason, ev.charges], ['intangible', 0]);
+  assert.equal(out.state.combatants.goblin.hp, 10);
+  assert.equal(out.state.charges.goblin, 0);
+});
+
+test('a base evadePct roll below the percent avoids the hit', () => {
+  // Roll is floor(0.45 * 100) = 45. 45 < 50, so the attack is evaded.
+  const out = createRound(duo({ evadeBasePct: 50 }), {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 5 })] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  const roll = out.events.find((e) => e.type === 'evadeRoll');
+  assert.deepEqual([roll.evadePct, roll.roll, roll.success], [50, 45, true]);
+  assert.equal(out.events.find((e) => e.type === 'evaded').reason, 'evasion');
+  assert.equal(out.state.combatants.goblin.hp, 10);
+});
+
+test('an evadePct roll at or above the percent lets the hit land', () => {
+  // Roll 45 is not below 40, so the hit lands.
+  const out = createRound(duo({ evadeBasePct: 40 }), {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 5 })] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'evadeRoll').success, false);
+  assert.equal(out.state.combatants.goblin.hp, 5);
 });

@@ -7,8 +7,14 @@
 // function returning a float in [0, 1). Design: DESIGN.md, "Timeline model".
 
 import {
+  accuracyFor,
+  clampMomentum,
+  decayMomentum,
+  evadePctFor,
   evasionFor,
+  hitRoll,
   momentumSpeed,
+  rollD20,
   rollUnit,
 } from './resolver.mjs';
 
@@ -276,4 +282,213 @@ export function buildTimeline(queues, ctx = {}) {
   }
 
   return { merge, initiative, entries };
+}
+
+// A fight state: { combatants, momentum, poiseDouble, charges }. `specs` is a list of
+// makeCombatant() specs. Momentum starts at 0 for each enemy. Charges start at each
+// combatant's intangibleCharges.
+export function makeFight(specs, tables = {}) {
+  if (!Array.isArray(specs)) throw new TypeError('specs must be an array of combatant specs');
+  const combatants = {};
+  for (const spec of specs) {
+    const c = makeCombatant(spec, tables);
+    if (Object.hasOwn(combatants, c.id)) throw new TypeError(`duplicate combatant "${c.id}"`);
+    combatants[c.id] = c;
+  }
+  if (!Object.hasOwn(combatants, 'player')) throw new TypeError('a fight needs a "player" combatant');
+  const charges = {};
+  for (const c of Object.values(combatants)) charges[c.id] = c.intangibleCharges;
+  return { combatants, momentum: {}, poiseDouble: {}, charges };
+}
+
+// Damage through the target's active block (owner, 2026-10-11): the block absorbs
+// up to its amount, the rest reduces hp. A block is spent as it absorbs.
+// Emits one 'damage' event. Reaching 0 hp emits 'defeated' once.
+function applyDamage(cur, targetId, raw, events) {
+  const t = cur.combatants[targetId];
+  const pool = cur.active[targetId].guard;
+  const absorbed = Math.min(pool, raw);
+  const amount = raw - absorbed;
+  cur.active[targetId].guard = pool - absorbed;
+  const wasAlive = t.hp > 0;
+  t.hp = Math.max(0, t.hp - amount);
+  events.push({ type: 'damage', target: targetId, amount, absorbed, hp: t.hp });
+  if (wasAlive && t.hp === 0) events.push({ type: 'defeated', id: targetId });
+}
+
+// One attack (owner, 2026-10-11): hit roll, then full block, then intangible or the
+// evadePct roll, then damage. Returns nothing; pushes events and updates cur.
+function resolveAttack(cur, entry, events, rng, options) {
+  const attacker = cur.combatants[entry.actor];
+  const target = cur.combatants[entry.target];
+  const card = entry.card;
+  const dmg = Math.max(0, Number(card.damage ?? 0) || 0);
+  const d20 = rollD20(rng);
+  const accuracy = accuracyFor({ attrs: attacker.attrs, level: attacker.level, tags: card.tags, accuracy: card.accuracy })
+    + attacker.accuracyExtra;
+  const { hit, need } = hitRoll({ accuracy, evasion: target.evasion }, d20);
+
+  // A full block: the block covers the whole hit (block >= damage, damage > 0).
+  const blocked = hit && dmg > 0 && cur.active[target.id].guard >= dmg;
+
+  // Avoid (owner, 2026-10-11): an intangible charge avoids a hit outright and is spent
+  // only then. Otherwise the target rolls its evadePct. Only a hit that would land is rolled.
+  let avoid = null;
+  if (hit && !blocked) {
+    if (target.tags.includes('intangible') && cur.charges[target.id] > 0) {
+      avoid = 'intangible';
+      cur.charges[target.id] -= 1;
+    } else {
+      const stancePct = target.stance && options.evadeTable ? (options.evadeTable.get(target.stance) ?? 0) : 0;
+      const evadePct = evadePctFor({
+        evadeBasePct: target.evadeBasePct,
+        evadeBonuses: stancePct ? [{ source: `stance:${target.stance}`, pct: stancePct, scope: 'exchange' }] : [],
+      }, { inExchange: true });
+      if (evadePct > 0) {
+        const roll = Math.floor(rollUnit(rng) * 100);
+        const success = roll < evadePct;
+        events.push({ type: 'evadeRoll', by: target.id, target: attacker.id, evadePct, roll, success });
+        if (success) avoid = 'evasion';
+      }
+    }
+  }
+
+  const landed = hit && !blocked && avoid === null;
+  const armed = landed && cur.poiseDouble[attacker.id] === true;
+  events.push({
+    type: 'hit',
+    by: attacker.id,
+    target: target.id,
+    d20,
+    hit,
+    need,
+    blocked,
+    avoided: avoid !== null,
+    ...(armed ? { poiseMultiplier: 2 } : {}),
+  });
+  if (armed) cur.poiseDouble[attacker.id] = false;
+
+  if (blocked) {
+    events.push({ type: 'absorbed', by: target.id, target: attacker.id, amount: dmg });
+    applyDamage(cur, target.id, dmg, events);
+  } else if (avoid === 'intangible') {
+    events.push({ type: 'evaded', by: target.id, target: attacker.id, reason: 'intangible', charges: cur.charges[target.id] });
+  } else if (avoid === 'evasion') {
+    events.push({ type: 'evaded', by: target.id, target: attacker.id, reason: 'evasion' });
+  } else if (landed) {
+    applyDamage(cur, target.id, dmg, events);
+  }
+}
+
+// Resolves one timeline entry into `events`, updating `cur` in place.
+function applyEntry(cur, entry, events, options) {
+  const actor = cur.combatants[entry.actor];
+  const base = { seq: entry.seq, actor: entry.actor, cardId: entry.cardId };
+  if (actor.hp <= 0) {
+    events.push({ type: 'skipped', reason: 'defeated', ...base });
+    return;
+  }
+  if (entry.target !== 'self' && cur.combatants[entry.target].hp <= 0) {
+    events.push({ type: 'skipped', reason: 'targetDefeated', ...base, target: entry.target });
+    return;
+  }
+  events.push({ type: 'action', ...base, kind: entry.card.kind, target: entry.target, speed: entry.speed.total });
+  if (entry.card.kind === 'attack') resolveAttack(cur, entry, events, options.rng, options);
+}
+
+// Enemy momentum decay at round start (owner, 2026-10-11): each enemy's M moves
+// toward 0 by `step`. Returns the decayed M and the 'decay' events.
+function decayAll(cur, combatants, step, events) {
+  for (const id of Object.keys(combatants)) {
+    if (combatants[id].side !== 'enemy') continue;
+    const from = clampMomentum(cur.momentum[id] ?? 0);
+    const to = decayMomentum(from, step);
+    if (to !== from) events.push({ type: 'momentum', reason: 'decay', enemyId: id, from, to, delta: to - from, by: null });
+    cur.momentum[id] = to;
+  }
+}
+
+// Starts one round and returns a step-able resolver (owner, 2026-10-11).
+//
+// state:   from makeFight(); not changed. The round works on a copy.
+// options: { queues, rng, merge?, decay? (default 1), evadeTable? }
+//          queues: { [combatantId]: [card] } (see buildTimeline).
+// Returns { timeline, next(), resolveAll(), state }:
+//   next()        resolves the next timeline entry: { entry, events, state, done }.
+//                 `state` is a copy of the state after that action. `done` is true
+//                 once the last entry has resolved (the round then ends).
+//   resolveAll()  calls next() to the end: { events, state, timeline }.
+//   state         a copy of the state now.
+// Round start: enemy momentum decays (decay events come with the first next()).
+export function createRound(state, options = {}) {
+  if (!state || typeof state !== 'object' || !state.combatants) throw new TypeError('state must come from makeFight()');
+  const cur = structuredClone(state);
+  cur.momentum = { ...(cur.momentum ?? {}) };
+  cur.poiseDouble = { ...(cur.poiseDouble ?? {}) };
+  cur.charges = { ...(cur.charges ?? {}) };
+  // Round-scoped effects (block, evade, counters) start empty each round.
+  cur.active = {};
+  for (const c of Object.values(cur.combatants)) {
+    if (!Object.hasOwn(cur.charges, c.id)) cur.charges[c.id] = c.intangibleCharges;
+    cur.active[c.id] = { guard: 0, evade: [], counters: [] };
+  }
+  const startEvents = [];
+  const step = options.decay === undefined ? 1 : Number(options.decay);
+  if (!Number.isFinite(step) || step < 0) throw new TypeError('options.decay must be a finite number of 0 or more');
+  decayAll(cur, cur.combatants, step, startEvents);
+
+  const timeline = buildTimeline(options.queues ?? {}, {
+    combatants: cur.combatants,
+    momentum: cur.momentum,
+    rng: options.rng,
+    merge: options.merge ?? 'speed',
+  });
+  const spent = {};
+  for (const id of Object.keys(cur.combatants)) spent[id] = 0;
+  for (const e of timeline.entries) spent[e.actor] += e.card.cost;
+  cur.spLeft = {};
+  for (const id of Object.keys(cur.combatants)) cur.spLeft[id] = cur.combatants[id].sp - spent[id];
+
+  let idx = 0;
+  let settled = false;
+  let pending = startEvents;
+  const entries = timeline.entries;
+  const snapshot = () => structuredClone(cur);
+
+  const settle = (events) => {
+    settled = true;
+    events.push({ type: 'roundEnd' });
+    for (const id of Object.keys(cur.active)) cur.active[id] = { guard: 0, evade: [], counters: [] };
+  };
+
+  const next = () => {
+    const events = pending;
+    pending = [];
+    if (settled) return { entry: null, events, state: snapshot(), done: true };
+    let entry = null;
+    if (idx < entries.length) {
+      entry = entries[idx];
+      idx += 1;
+      applyEntry(cur, entry, events, options);
+    }
+    if (idx >= entries.length) settle(events);
+    return { entry: entry ? structuredClone(entry) : null, events, state: snapshot(), done: settled };
+  };
+
+  return {
+    timeline,
+    next,
+    resolveAll() {
+      const events = [];
+      let r;
+      do {
+        r = next();
+        events.push(...r.events);
+      } while (!r.done);
+      return { events, state: r.state, timeline };
+    },
+    get state() {
+      return snapshot();
+    },
+  };
 }
