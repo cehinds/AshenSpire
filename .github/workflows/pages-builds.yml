@@ -387,25 +387,15 @@ jobs:
           rm -rf "$out"; mkdir -p "$out"; : > "$entries"
           prs=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
             | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo) | select(.head.ref | test("^(feature|fix|chore)/")) | [.number, .head.ref, .head.sha] | @tsv')
-          # SANITISING IS NOT INJECTIVE: feature/a+b and feature/a-b both become
-          # feature/a-b, so they would download into one folder. Find every such
-          # collision BEFORE any download; both branches of a collision are withheld.
-          declare -A first_ref=() first_pr=() collided=()
+          # THE BRANCH NAME IS THE SITE PATH, unchanged. A name that cannot be one is
+          # refused by the same check the generator runs (--branch-dir), named with its
+          # PR, and skipped before any download. Nothing is sanitised, so nothing collides.
           while IFS=$'\t' read -r pr ref sha; do
             [ -n "$pr" ] || continue
-            s=$(printf '%s' "$ref" | sed 's#[^A-Za-z0-9._/-]#-#g')
-            if [ -z "${first_ref[$s]:-}" ]; then
-              first_ref[$s]=$ref; first_pr[$s]=$pr
-            elif [ "${first_ref[$s]}" != "$ref" ]; then
-              collided[$s]=1
-              echo "::warning title=Branch path collision::PR #${first_pr[$s]} (${first_ref[$s]}) and PR #$pr ($ref) both sanitise to \`$s\`; neither is published."
+            if ! safe=$(node tools/pages-site.mjs --branch-dir "$ref"); then
+              echo "::warning title=Branch not published::PR #$pr ($ref) is skipped: its branch name cannot be a site path (A-Z a-z 0-9 . _ / - only; no empty, \".\" or \"..\" segment)."
+              continue
             fi
-          done <<< "$prs"
-          while IFS=$'\t' read -r pr ref sha; do
-            [ -n "$pr" ] || continue
-            # The same sanitising as tools/pages-site.mjs safeBranchDir, which re-checks it.
-            safe=$(printf '%s' "$ref" | sed 's#[^A-Za-z0-9._/-]#-#g')
-            if [ -n "${collided[$safe]:-}" ]; then continue; fi
             run=$(gh api -X GET "repos/$REPO/actions/workflows/dev-preview.yml/runs" -f event=pull_request -f branch="$ref" -f per_page=30 \
               | jq -r --arg sha "$sha" '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")][0].id // empty')
             if [ -z "$run" ]; then
@@ -639,13 +629,19 @@ jobs:
 
   # THE STICKY "PLAYABLE BUILD" COMMENT. Its own job, so the Pages deploy job keeps
   # its environment and permissions exactly as they were: pull-requests: write is
-  # granted here alone, and only after the deploy has succeeded. It runs for every PR
-  # whose build is in the site from this run (assemble's comment_targets), so a
-  # coalesced run that published several previews comments on each of them.
+  # granted here alone, and only after the deploy has succeeded. It runs whenever
+  # assemble ran and the deploy succeeded, even when no preview was published this
+  # run, because a PR whose current preview was withdrawn still has a comment that
+  # now points at a removed path. For each PR:
+  #   - published this run (assemble's comment_targets) → upsert the link comment;
+  #   - open, same-repo feature/fix/chore into dev, NOT published, with a sticky
+  #     comment already → edit that comment to say the preview is withdrawn;
+  #   - not published and no sticky comment → nothing. A withdrawn note is never a
+  #     new comment.
   # One comment per PR, found by its marker and updated in place on every push.
   comment:
     needs: [assemble, deploy]
-    if: needs.deploy.result == 'success' && needs.assemble.outputs.comment_targets != '[]' && needs.assemble.outputs.comment_targets != ''
+    if: needs.assemble.result == 'success' && needs.deploy.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -674,13 +670,38 @@ jobs:
               echo "posted the playable-build comment on PR #$pr"
             fi
           }
+          # A PR whose preview is withdrawn (not published this run) keeps its sticky
+          # comment, which would point at a removed path. That comment is edited to say
+          # so. Only an existing comment is edited: no comment is created to say it.
+          withdraw() {
+            local pr="$1" id body
+            body=$(printf '%s\n' '<!-- ashen-playable-build -->' "Preview withdrawn: the current commit's build did not succeed; it returns when a build passes.")
+            id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
+              --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->")) | .id' | sed -n '1p') || return 1
+            if [ -z "$id" ]; then return 0; fi
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
+            echo "marked the playable-build comment on PR #$pr as withdrawn"
+          }
           failed=0
-          rows=$(printf '%s' "$TARGETS" | jq -r '.[] | [(.pr | tostring), .dir] | @tsv') || { echo "::error::could not read the comment targets"; exit 1; }
+          declare -A published=()
+          rows=$(printf '%s' "${TARGETS:-[]}" | jq -r '.[] | [(.pr | tostring), .dir] | @tsv') || { echo "::error::could not read the comment targets"; exit 1; }
           while IFS=$'\t' read -r pr dir; do
             [ -n "$pr" ] || continue
+            published[$pr]=1
             if ! upsert "$pr" "$dir"; then
               echo "::error title=Playable-build comment failed::PR #$pr"
               failed=1
             fi
           done <<< "$rows"
+          open=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
+            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/")) | .number') \
+            || { echo "::error::could not list the open pull requests into dev"; exit 1; }
+          while read -r pr; do
+            [ -n "$pr" ] || continue
+            [ -n "${published[$pr]:-}" ] && continue
+            if ! withdraw "$pr"; then
+              echo "::error title=Withdrawn-preview comment failed::PR #$pr"
+              failed=1
+            fi
+          done <<< "$open"
           exit "$failed"

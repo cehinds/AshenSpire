@@ -31,6 +31,7 @@
 //   node tools/pages-site.mjs --out _site [--keep 12] [--branches dev,test,release,main] [--remote origin]
 //                             [--branch-previews <dir>]   open-PR feature branch builds (branches/<branch>/latest/)
 //                             [--main-build <dir>] [--build-missing <workdir>]
+//   node tools/pages-site.mjs --branch-dir <name>  exit 0 and print the name if it can be a site path
 //   node tools/pages-site.mjs --check _site        re-verify an assembled site against git
 //   node tools/pages-site.mjs --selftest           generate into a temp dir with --keep 1 and verify
 //
@@ -776,45 +777,33 @@ function titleOf(file) {
 // previews.json; this file validates them, publishes them and lists them. The
 // site is rebuilt from scratch every run, so a build whose PR has merged or closed
 // is simply not written, and it leaves the site on the next publication.
+// THE BRANCH NAME IS THE SITE PATH. No sanitising: a name that is not a path as it
+// stands is refused, so two branches can never share a folder and no name is
+// rewritten into another. (The shell and this file used to sanitise differently
+// for non-BMP characters, so such a branch never got a preview.) The workflow runs
+// `node tools/pages-site.mjs --branch-dir <name>`, which calls this same check.
+export const BRANCH_NAME_PATTERN = /^[A-Za-z0-9._/-]+$/;
 export function safeBranchDir(branch) {
-  const dir = String(branch).replace(/[^A-Za-z0-9._/-]/g, '-');
-  if (!dir || dir.startsWith('/') || dir.endsWith('/') || dir.split('/').some((seg) => seg === '' || seg === '.' || seg === '..')) {
-    throw new Error(`branch "${branch}" has no safe site path`);
+  const name = String(branch);
+  if (!BRANCH_NAME_PATTERN.test(name) || name.split('/').some((seg) => seg === '' || seg === '.' || seg === '..')) {
+    throw new Error(`branch "${branch}" cannot be published: its name may use only A-Z a-z 0-9 . _ / - and has no empty, "." or ".." segment`);
   }
-  return dir;
+  return name;
 }
 
 // Reads <dir>/previews.json. Each entry names its branch, the folder the workflow
-// put that branch's build in (which must be safeBranchDir of the branch), the PR
-// number and the head commit. An entry that cannot be served is skipped and named.
+// put that branch's build in (which must be the branch's own name, its site path),
+// the PR number and the head commit. An entry that cannot be served is skipped,
+// named with its PR, and a warning is logged.
 export function readBranchPreviews(dir, skipped = []) {
   const file = join(dir, 'previews.json');
   if (!existsSync(file)) return [];
   const list = JSON.parse(readFileSync(file, 'utf8')).previews;
   if (!Array.isArray(list)) throw new Error(`${file}: no previews array`);
-  // SANITISING IS NOT INJECTIVE: feature/a+b and feature/a-b both become
-  // feature/a-b, and would share one folder and one site path. Such a path is
-  // served for neither branch; each is named, with its PR, and a warning is logged.
-  const branchesAt = new Map();
-  for (const entry of list) {
-    let path;
-    try { path = safeBranchDir(entry.branch); } catch { continue; }
-    if (!branchesAt.has(path)) branchesAt.set(path, []);
-    branchesAt.get(path).push(entry);
-  }
-  const collided = new Set();
-  for (const [path, group] of branchesAt) {
-    if (new Set(group.map((e) => e.branch)).size < 2) continue;
-    collided.add(path);
-    const who = group.map((e) => `PR #${e.pr} (${e.branch})`).join(' and ');
-    console.warn(`WARNING: branch paths collide at "${path}": ${who}. Neither is published.`);
-    for (const e of group) skipped.push({ branch: e.branch, reason: `its site path "${path}" is shared with another branch (${who}); neither is published` });
-  }
   const out = [];
   for (const entry of list) {
     try {
       const path = safeBranchDir(entry.branch);
-      if (collided.has(path)) continue;
       if (entry.dir !== path) throw new Error(`folder "${entry.dir}" is not the branch's site path "${path}"`);
       const from = join(dir, path);
       const htmls = existsSync(from) ? readdirSync(from).filter((f) => f.endsWith('.html')) : [];
@@ -824,6 +813,7 @@ export function readBranchPreviews(dir, skipped = []) {
       out.push({ branch: entry.branch, path, pr: Number(entry.pr) || 0, sha, file: htmls[0], from: join(from, htmls[0]) });
     } catch (error) {
       skipped.push({ branch: entry.branch, reason: error.message });
+      console.warn(`WARNING: PR #${entry.pr} (${entry.branch}) is not published: ${error.message}`);
     }
   }
   const paths = out.map((p) => p.path);
@@ -1775,7 +1765,17 @@ function boundary() {
   console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) try {
+// `--branch-dir <name>`: the workflow's one check of a branch name. It prints the
+// name on stdout when it can be a site path, and exits 1 with the reason otherwise.
+// It prints nothing else, so the workflow can capture stdout as the path.
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href && has('--branch-dir')) {
+  try {
+    process.stdout.write(`${safeBranchDir(flag('--branch-dir', ''))}\n`);
+  } catch (error) {
+    console.error(`pages-site --branch-dir: ${error.message}`);
+    process.exitCode = 1;
+  }
+} else if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) try {
   if (has('--selftest')) {
     // THE FIXTURE RUNS FIRST AND ITS ANSWER IS NOT THE GENERATOR'S. Everything
     // below reads the manifest discovery wrote, so it can only ever check the
