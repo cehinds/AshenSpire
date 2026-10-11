@@ -562,6 +562,28 @@ test('the pinned banner through its rendered buttons: Export, then Load theirs; 
   assert.equal(after.children.length, 0);
 });
 
+test('a second banner that appears while another is up is announced as an alert', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T);
+  A.api.subscribeTable('t');
+  await settle(10);
+  editTable(A.page, sample(5, 'x'));
+  db.failSet = (p) => (p === 'tables/t' ? { code: 'invalid_argument' } : null);
+  await A.api.flush('t'); // the pinned banner is up
+  const doc = A.page.document;
+  const first = doc.createElement('div');
+  A.api.renderBanners(first, 't');
+  assert.equal(first.children[0].getAttribute('role'), 'alert', 'the pinned banner is announced');
+  A.api.tstate.t.incomplete = { message: 'Another banner appears.' };
+  const second = doc.createElement('div');
+  A.api.renderBanners(second, 't');
+  const pinnedBox = second.children[0];
+  const newBox = second.children.find((c) => c.children[0].textContent.startsWith('Another banner appears.'));
+  assert.ok(newBox, 'the new banner is drawn');
+  assert.equal(newBox.getAttribute('role'), 'alert', 'the new banner is announced');
+  assert.equal(pinnedBox.getAttribute('role'), 'group', 'the pinned banner is not announced again');
+});
+
 test('invalid_argument on save pins the rejected edits: a peer head never replaces them until Load theirs', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);
