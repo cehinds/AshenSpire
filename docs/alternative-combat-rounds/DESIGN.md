@@ -43,6 +43,24 @@ The table of values lives in `speed-mods.csv`. The total is computed by
   queued actions (one of the visible ones, or any, see Open questions).
 - Each pairing is resolved on its own, in the order described below.
 
+### Perception stages
+
+Each visible enemy action is revealed in up to four stages. `revealAction()`
+in `resolver.mjs` returns only the fields visible at a stage. The stage is
+clamped to 0..3.
+
+- Stage 0: a "?". The player knows only that an action exists.
+- Stage 1: the stance group (for example offense, defense or evade). The
+  groups are in `STANCE_GROUPS`, and every group name is TBD.
+- Stage 2: the stance and the damage.
+- Stage 3: everything, including speed and tags.
+
+Flagged: at stage 1 and 2 the card hint cannot show a speed advantage.
+- The border uses stance only from stage 2, because the exact stance is not
+  known at stage 1.
+- The left-edge arrow needs the enemy's total speed, so it appears only at
+  stage 3.
+
 ## Pairing and resolution order
 
 - Within a pairing, the higher total speed acts first.
@@ -215,7 +233,8 @@ b. Resolved (2026-10-11). Momentum is applied per slot, with a round-end
    total per enemy. Decay is open (k).
 c. One player card per enemy slot, or several?
 d. What happens to an unpaired enemy action?
-e. What do perception thresholds reveal?
+e. Resolved (2026-10-11): four perception stages, as in "Perception stages".
+   The card hint consequence is flagged there.
 f. Does this replace the current Evade charges?
 g. Resolved (2026-10-11). Success is a landed hit, a counter that fires, a
    full block (Block >= damage and damage > 0), or a dodge (a miss against an evade action).
