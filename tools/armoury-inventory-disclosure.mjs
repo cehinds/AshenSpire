@@ -185,52 +185,54 @@ async function main() {
     await evaluate(`(() => {
       document.querySelector('[data-slot-position="rightHand:0"] .armament-replace')?.click();
     })()`);
-    await until("!!document.querySelector('.armoury-inventory .ep-list .disc-face')", 'filtered Inventory item cards');
+    await until("!!document.querySelector('.armoury-inventory .ep-list .equip-picker-row')", 'filtered Inventory item rows');
     const collapsedCards = await evaluate(`(() => ({
-      faces: document.querySelectorAll('.armoury-inventory .ep-list .disc-face').length,
+      faces: document.querySelectorAll('.armoury-inventory .ep-list .equip-picker-row').length,
       outsideActions: document.querySelectorAll('.armoury-inventory .ep-list > [data-act], .armoury-inventory .ep-list > .disc-faces > [data-act]').length,
-      visibleActions: [...document.querySelectorAll('.armoury-inventory .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length,
+      openDetails: document.querySelectorAll('.armoury-inventory .ep-list .equip-picker-detail').length,
+      visibleActions: [...document.querySelectorAll('.armoury-inventory .ep-list .equip-picker-detail [data-act]')].filter((element) => element.offsetParent !== null).length,
       inventoryPresent: !!document.querySelector('.armoury-inventory'),
       filteredFor: document.querySelector('.armoury-inventory .ep-list')?.dataset.filteredFor || null,
-      sharedFaces: document.querySelectorAll('.armoury-inventory .inventory-face').length,
+      discFacesInPicker: document.querySelectorAll('.armoury-inventory .equip-picker .disc-face').length,
       legacyFaces: document.querySelectorAll('.armoury-inventory .equip-chip.as-face').length,
     }))()`);
-    check(collapsedCards.faces > 0, `selected hand draws folded item cards (${collapsedCards.faces})`);
+    check(collapsedCards.faces > 0, `selected hand lists its compatible Inventory rows in the equip picker table (${collapsedCards.faces})`);
     check(collapsedCards.inventoryPresent && collapsedCards.filteredFor === 'rightHand:0',
       `Inventory remains available and filters for the selected socket (${collapsedCards.filteredFor || 'none'})`);
-    check(collapsedCards.sharedFaces === collapsedCards.faces && collapsedCards.legacyFaces === 0,
-      `slot selection reuses the Inventory card face (${collapsedCards.sharedFaces}/${collapsedCards.faces}, legacy ${collapsedCards.legacyFaces})`);
-    check(collapsedCards.outsideActions === 0 && collapsedCards.visibleActions === 0,
-      `collapsed item cards expose no action controls (outside ${collapsedCards.outsideActions}, visible ${collapsedCards.visibleActions})`);
+    check(collapsedCards.discFacesInPicker === 0 && collapsedCards.legacyFaces === 0,
+      `slot selection renders the picker table, not disclosure faces (disc ${collapsedCards.discFacesInPicker}, legacy ${collapsedCards.legacyFaces})`);
+    check(collapsedCards.outsideActions === 0 && collapsedCards.openDetails === 0 && collapsedCards.visibleActions === 0,
+      `uninspected picker rows open no detail and expose no detail action (outside ${collapsedCards.outsideActions}, details ${collapsedCards.openDetails}, visible ${collapsedCards.visibleActions})`);
 
     const expandedCard = await evaluate(`(() => {
-      const face = document.querySelector('.armoury-inventory .ep-list .disc-face');
+      const face = document.querySelector('.armoury-inventory .ep-list .equip-picker-row .equip-picker-inspect');
       const rect = face.getBoundingClientRect();
       const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
         bubbles: true, cancelable: true, pointerId: 317, pointerType: 'mouse', button: 0, detail: 1,
         clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
       }));
       event('pointerdown'); event('pointerup'); event('click', MouseEvent);
-      const visible = [...document.querySelectorAll('.armoury-inventory .ep-list [data-act]')].filter((element) => element.offsetParent !== null);
+      const visible = [...document.querySelectorAll('.armoury-inventory .ep-list .equip-picker-detail [data-act]')].filter((element) => element.offsetParent !== null);
+      // The click re-renders the table, so read the toggle state from the live row.
       return {
-        open: face.getAttribute('aria-expanded'),
+        open: document.querySelector('.armoury-inventory .ep-list .equip-picker-row.is-open .equip-picker-inspect')?.getAttribute('aria-expanded') || '',
         actions: visible.length,
-        actionInsideReveal: visible.length === 1 && !!visible[0].closest('.disc-reveal'),
-        instruction: document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')?.getAttribute('aria-label') || '',
-        focusable: document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')?.dataset.focusable || '',
-        role: document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')?.getAttribute('role') || '',
+        actionInsideReveal: visible.length === 1 && !!visible[0].closest('.equip-picker-detail'),
+        instruction: document.querySelector('.armoury-inventory .equip-picker-detail .inventory-detail')?.getAttribute('aria-label') || '',
+        focusable: document.querySelector('.armoury-inventory .equip-picker-detail .inventory-detail')?.dataset.focusable || '',
+        role: document.querySelector('.armoury-inventory .equip-picker-detail .inventory-detail')?.getAttribute('role') || '',
       };
     })()`);
     check(expandedCard.open === 'true' && expandedCard.actions === 1 && expandedCard.actionInsideReveal,
-      `expanded item card reveals exactly one in-card action (${expandedCard.actions})`);
+      `inspected picker row reveals exactly one detail action (${expandedCard.actions})`);
     check(/comparison shown in this card/i.test(expandedCard.instruction)
       && !/press and hold|activate this card/i.test(expandedCard.instruction),
     `the armament describes its inline comparison without advertising a whole-card action (${JSON.stringify(expandedCard.instruction)})`);
     check(expandedCard.role !== 'button' && expandedCard.focusable !== 'true',
       'read-only armament detail does not masquerade as a whole-card action');
     const readOnlyHold = await evaluate(`(async () => {
-      const source = document.querySelector('.armoury-inventory .inventory-detail:not([hidden])');
-      const reveal = source?.closest('.disc-reveal');
+      const source = document.querySelector('.armoury-inventory .equip-picker-detail .inventory-detail');
+      const reveal = source?.closest('.equip-picker-detail');
       const rect = source?.getBoundingClientRect();
       if (!source || !rect) return null;
       const before = document.querySelector('.armoury').textContent;
@@ -245,9 +247,9 @@ async function main() {
       const action = source.querySelector('button[data-act]');
       return {
         unchanged: document.querySelector('.armoury').textContent === before,
-        sameReveal: source.isConnected && !reveal.hidden,
+        sameReveal: source.isConnected && !!reveal && !reveal.hidden,
         holdMs: source.dataset.holdMs || '',
-        holdProgress: Number(reveal.dataset.holdProgress || 0),
+        holdProgress: Number(reveal?.dataset.holdProgress || 0),
         actionTag: action?.tagName || '',
         actionButtons: source.querySelectorAll('button[data-act]').length,
         focusableAction: !!action && action.tabIndex >= 0,
@@ -260,7 +262,7 @@ async function main() {
       'one explicit keyboard-focusable button owns the equipment action');
     check(readOnlyHold?.comparisonVisible,
       'comparison remains visible inline after holding and releasing the detail');
-    await evaluate(`document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')
+    await evaluate(`document.querySelector('.armoury-inventory .equip-picker-detail .inventory-detail')
       ?.dispatchEvent(new PointerEvent('pointerenter'))`);
     await wait(650);
     const comparisonTip = await evaluate(`(() => {
@@ -272,19 +274,19 @@ async function main() {
     check(!comparisonTip.visible,
       'hover does not reveal the equipment comparison tooltip');
     const actionReach = await evaluate(`(() => {
-      const action = document.querySelector('.armoury-inventory .ep-list [data-act]');
+      const action = document.querySelector('.armoury-inventory .ep-list .equip-picker-detail [data-act]');
       action?.scrollIntoView({ block: 'center' });
       const rect = action?.getBoundingClientRect();
       return {
-        insideReveal: !!action?.closest('.disc-reveal'),
+        insideReveal: !!action?.closest('.equip-picker-detail'),
         inViewport: !!rect && rect.top >= 0 && rect.bottom <= innerHeight,
       };
     })()`);
     check(actionReach.insideReveal && actionReach.inViewport,
-      'the expanded card action can be scrolled into the viewport without leaving its reveal');
+      'the inspected row action can be scrolled into the viewport without leaving its detail row');
     await screenshot('desktop-card-expanded');
     const afterRefold = await evaluate(`(() => {
-      const face = document.querySelector('.armoury-inventory .ep-list .disc-face');
+      const face = document.querySelector('.armoury-inventory .ep-list .equip-picker-row.is-open .equip-picker-inspect');
       if (face) {
         const rect = face.getBoundingClientRect();
         const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
@@ -293,9 +295,9 @@ async function main() {
         }));
         event('pointerdown'); event('pointerup'); event('click', MouseEvent);
       }
-      return [...document.querySelectorAll('.armoury-inventory .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length;
+      return [...document.querySelectorAll('.armoury-inventory .ep-list .equip-picker-detail [data-act]')].filter((element) => element.offsetParent !== null).length;
     })()`);
-    check(afterRefold === 0, 'refolding the item hides its action again');
+    check(afterRefold === 0, 'closing the inspected row hides its detail action again');
 
     // Separate Equipment and Inventory pages have no cross-page drop target.
     // The Replace -> Inventory -> explicit item action path is exercised below, including
@@ -378,7 +380,7 @@ async function main() {
     if (!SHIPPED) await until("!!document.querySelector('.armoury')", 'full-Inventory Armoury fixture');
     if (!SHIPPED) await evaluate(`(() => {
       document.querySelector('[data-slot-position="rightHand:0"] .armament-replace')?.click();
-      const face = document.querySelector('.ep-list [data-face="armament:straightSword"]');
+      const face = document.querySelector('.ep-list .equip-picker-row[data-item-id="straightSword"] .equip-picker-inspect');
       if (face) {
         const rect = face.getBoundingClientRect();
         const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
@@ -389,7 +391,7 @@ async function main() {
       }
     })()`);
     const holdOffComparison = SHIPPED ? null : await evaluate(`(async () => {
-      const source = document.querySelector('.ep-list .disc-reveal:not([hidden]) .inventory-detail:not([hidden])');
+      const source = document.querySelector('.ep-list .equip-picker-detail .inventory-detail');
       const action = source?.querySelector('button[data-act]');
       const rect = source?.getBoundingClientRect();
       if (!source || !rect) return null;
@@ -421,7 +423,7 @@ async function main() {
     const refusal = SHIPPED ? null : await evaluate(`(() => {
       const fixture = window.__pr315Fixture;
       const before = JSON.stringify(fixture.run.loadout);
-      const action = document.querySelector('.ep-list .inventory-detail:not([hidden]) [data-act=unequip]');
+      const action = document.querySelector('.ep-list .equip-picker-detail .inventory-detail [data-act=unequip]');
       const commitsBefore = fixture.commits;
       action?.click();
       return {
@@ -498,20 +500,21 @@ async function main() {
       await new Promise((done) => setTimeout(done, 0));
       const positionAction = document.querySelector('[data-slot-position="rightHand:0"] .armament-replace');
       positionAction?.click();
-      // The detail tree also renders item ids; click the disclosure owner itself.
-      const daggerFace = document.querySelector('.ep-list [data-face="armament:dagger"]');
+      // Rows carry the item id; click the row's own Inspect toggle.
+      const daggerFace = document.querySelector('.ep-list .equip-picker-row[data-item-id="dagger"] .equip-picker-inspect');
       daggerFace?.click();
       await new Promise((done) => setTimeout(done, 0));
-      const action = document.querySelector('.ep-list .disc-reveal:not([hidden]) .inventory-detail:not([hidden]) button[data-act]');
+      const action = document.querySelector('.ep-list .equip-picker-detail .inventory-detail button[data-act]');
       const actionLabel = action?.textContent?.trim() || '';
       const readOnlySelection = JSON.stringify(combat.loadout) === before;
+      const itemIds = [...document.querySelectorAll('.ep-list .equip-picker-row')].map((row) => row.dataset.itemId);
       action?.click();
       return {
         foundFace: !!daggerFace,
         foundAction: !!action && !action.disabled,
         refusal: action?.dataset.refusal || '',
         foundPositionAction: !!positionAction,
-        itemIds: [...document.querySelectorAll('.ep-list [data-item-id]')].map((face) => face.dataset.itemId),
+        itemIds,
         actionLabel,
         readOnlySelection,
         changed: JSON.stringify(combat.loadout) !== before,
