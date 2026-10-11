@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import path from 'node:path';
 import os from 'node:os';
 import { createWorkbench, projectStateDir } from '../server.mjs';
@@ -45,6 +46,16 @@ test('the review API refuses a call with no token, a cross-origin call, and a na
   assert.equal((await call('/api/review/image?set=baselines&file=desk-title.png')).status, 404);
   assert.equal((await call('/api/review/accept', { method: 'POST', body: JSON.stringify({ items: [{ device: 'desk', screen: '../x' }] }) })).status, 400);
   assert.equal((await fetch(`${app.url}/api/review/accept`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"items":[]}' })).status, 403);
+});
+
+test('the review API answers only the local Workbench host, not a rebinding name, even with the token', async (t) => {
+  const { app } = await boot(t);
+  const status = await new Promise((resolve, reject) => {
+    const req = http.request({ host: '127.0.0.1', port: app.server.address().port, path: '/api/review/state', headers: { host: 'evil.example', 'x-studio-token': app.token } }, (res) => { res.resume(); resolve(res.statusCode); });
+    req.on('error', reject);
+    req.end();
+  });
+  assert.equal(status, 403);
 });
 
 test('accept copies the chosen captures to baselines and reports the ones with no capture', async (t) => {
