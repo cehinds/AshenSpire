@@ -887,9 +887,9 @@ their snapshotted rules. The numbered legacy sequence below is an illustrative
 baseline; saved stat rows and hand options override its draw and cleanup defaults.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
-2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
-3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5; the retired fallback of 5 in a pre-ruleset-7 co-op seat) — excess drawn cards go to discard with a "hand full" toast (StS behavior).
-4. **Player turn end:** `playerTurnEnd` triggers; discard hand except `Retain` cards; `Ethereal` cards in hand exhaust instead. Unspent energy is lost.
+2. **Player turn start:** lose all block (unless modified), set Stamina to its maximum (Stamina row, less any Stagger loss), draw the Draw / turn row (the Opening hand row on turn 1), `playerTurnStart` triggers.
+3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5; the retired fallback of 5 in a pre-ruleset-7 co-op seat) — with the default hand rules a draw stops at that size without consuming the draw pile; only a fight without hand rules sends excess drawn cards to discard with a "hand full" toast (StS behavior).
+4. **Player turn end:** `playerTurnEnd` triggers; return unplayed cards except `Retain` cards (by default they shuffle into the draw pile, `shuffleHand: true`; the legacy baseline discards them); `Ethereal` cards in hand exhaust instead. Unspent Stamina is lost.
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
 7. **End:** all enemies dead → victory (rewards); player HP ≤ 0 → death screen.
