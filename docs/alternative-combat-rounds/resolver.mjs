@@ -848,23 +848,33 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   // uses the defaults (gain 1, no stance). `extra` marks unpaired slots.
   const settleSlot = (slotEvents, { pc, enemy, k, slot, visible, extra }) => {
     const credited = new Set();
-    for (const e of slotEvents) {
-      push({ ...e, slot, visible, ...extra }, k);
-      const winner = successSide(e);
+    // A side wins a slot at most once per pairing, however many of its successes it makes.
+    const credit = (winner) => {
       // Owner, 2026-10-11: on an unpaired slot the player gets no credit, whether the
       // enemy's attack misses or is avoided. Only the enemy's landed hit moves momentum.
-      if (pc === null && winner === 'player') continue;
-      // A side wins a slot at most once per pairing, however many of its successes it makes.
-      if (winner && !credited.has(winner)) {
-        credited.add(winner);
-        const card = winner === 'player' ? (pc ?? {}) : enemy;
-        const foe = winner === 'player' ? enemy : (pc ?? {});
-        const gain = gainOf(card);
-        // Stance advantage adds to the success (owner's rule: "adds bonus momentum").
-        const bonus = stanceBonus(stanceTable, card.stance, foe.stance);
-        const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
-        pending[k] = (pending[k] ?? 0) + delta;
-        push({ type: 'momentum', enemyId: k, by: winner, gain, bonus, delta, reason: 'success', slot, ...extra }, k);
+      if (pc === null && winner === 'player') return;
+      if (!winner || credited.has(winner)) return;
+      credited.add(winner);
+      const card = winner === 'player' ? (pc ?? {}) : enemy;
+      const foe = winner === 'player' ? enemy : (pc ?? {});
+      const gain = gainOf(card);
+      // Stance advantage adds to the success (owner's rule: "adds bonus momentum").
+      const bonus = stanceBonus(stanceTable, card.stance, foe.stance);
+      const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
+      pending[k] = (pending[k] ?? 0) + delta;
+      push({ type: 'momentum', enemyId: k, by: winner, gain, bonus, delta, reason: 'success', slot, ...extra }, k);
+    };
+    for (const e of slotEvents) {
+      push({ ...e, slot, visible, ...extra }, k);
+      credit(successSide(e));
+    }
+    // A tie gives a counter no 'countered' event, so it would win nothing from the
+    // events above. A counter that ties does not cancel the attack, and still wins
+    // its slot as in the timeline model (DESIGN.md, Counter stagger). Once per side.
+    if (slotEvents.some((e) => e.type === 'order' && e.simultaneous)) {
+      for (const side of SIDES) {
+        const card = side === 'player' ? (pc ?? {}) : enemy;
+        if (card.kind === 'counter') credit(side);
       }
     }
     // A counter that staggers its target adds +-3 to its side's summed delta, on

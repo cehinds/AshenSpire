@@ -176,7 +176,7 @@ at M_e = 0.
   attacker, the counter-user's side adds 3 to its summed round delta, in their
   favour: +3 (player counter) or -3 (enemy counter). It is in addition to the
   normal slot win (gain plus stance bonus, once per side per pairing).
-  A counter that ties the attack and staggers it counts too (as in the timeline model).
+  A counter that ties the attack counts as a slot win for its side (gain plus stance) and, if it staggers, adds the ±3 too (as in the timeline model).
   - Example: from M_e -2, a player counter with gain 1 and a counter-beats-attack
     bonus of 1 gives clamp(-2 + 1 + 1 + 3) = +3.
   - The resolver emits `{type: 'momentum', reason: 'counterStagger', by, delta, enemyId}`,
