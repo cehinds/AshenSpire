@@ -131,6 +131,10 @@ at M_e = 0.
 - Counter stagger: if a counter that fires staggers the attacker, the
   counter-user gains full momentum. M_e is set to +3 (player counter) or -3
   (enemy counter), in their favour.
+- Flagged: owner to confirm. If one enemy gets opposing counter staggers in the
+  same round (+3 and -3), they cancel. No full set applies, and that enemy
+  settles from its summed normal deltas. A single sign sets M_e as above. The
+  resolver emits `{type: 'momentum', reason: 'counterStaggerCancelled', enemyId}`.
 - The rest of the table is filled in with bonus 1 where the advantage looks
   obvious. Every such row is marked TBD.
 

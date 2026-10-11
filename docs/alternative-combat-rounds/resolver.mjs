@@ -535,6 +535,8 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // - Each slot win moves M_e toward the winner by the card's momentumGain
 //   (default 1). A side wins a slot at most once per pairing. The deltas are
 //   summed per enemy, then clamped once to -3..3.
+// - A counter stagger sets M_e to +-3. If one enemy gets opposing staggers in
+//   the same round, they cancel: no set applies, and the summed deltas settle it.
 // - Pair events carry `momentum`: that enemy's starting M_e. A 'momentum'
 //   event marks each slot win. 'momentumApplied' marks each round-end change.
 // - A second player card on an already paired slot is rejected ('rejected').
@@ -606,7 +608,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   }
 
   const pending = Object.create(null); // summed raw deltas per enemy, applied at round end
-  const fullSet = Object.create(null); // enemy -> +-3, set by a counter that staggers (round end)
+  const staggerSigns = new Map(); // enemy -> Set of +1/-1, one per counter that staggers (round end)
   const events = [];
   const paired = new Set();
   const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
@@ -656,8 +658,9 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     const counterWin = pairEvents.find((e) => e.type === 'countered');
     if (counterWin && pairEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(counterWin.by))) {
       const sign = counterWin.by === 'player' ? 1 : -1;
-      fullSet[k] = sign * MOMENTUM_MAX;
-      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', set: fullSet[k], slot }, k);
+      if (!staggerSigns.has(k)) staggerSigns.set(k, new Set());
+      staggerSigns.get(k).add(sign);
+      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', set: sign * MOMENTUM_MAX, slot }, k);
     }
   });
 
@@ -666,6 +669,18 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       push({ type: 'unpaired', slot, enemyId: enemyKey(enemy), visible: slot < visibleCount }, enemyKey(enemy));
     }
   });
+
+  // Round end: counter staggers for one enemy. Opposing signs cancel (placeholder
+  // rule, flagged in DESIGN.md), so that enemy settles from its summed deltas.
+  // A single sign sets M_e to +-3. Order of playerCards does not matter.
+  const fullSet = Object.create(null); // enemy -> +-3, from a single-sign stagger
+  for (const [k, signs] of staggerSigns) {
+    if (signs.has(1) && signs.has(-1)) {
+      events.push({ type: 'momentum', reason: 'counterStaggerCancelled', enemyId: k });
+    } else {
+      fullSet[k] = [...signs][0] * MOMENTUM_MAX;
+    }
+  }
 
   // Round end: sum each enemy's deltas, then clamp once.
   const momentum = {};

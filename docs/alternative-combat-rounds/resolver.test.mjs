@@ -621,6 +621,38 @@ test('counter stagger: a counter that only stuns sets no full momentum, so the n
   assert.equal(momentum.foe, 1);
 });
 
+// Two slots for the same enemy, each a counter that staggers the other side.
+// Opposing full sets cancel (placeholder rule, flagged for the owner), so the
+// result must not depend on the order of playerCards.
+const opposingStaggerQueue = () => [
+  { id: 'foeA', enemyId: 'foe', speed: 4, kind: 'attack', stance: 'attack' },
+  { id: 'foeCounter', enemyId: 'foe', speed: 5, kind: 'counter', stance: 'counter', tags: ['stagger'] },
+];
+const playerCounter = { id: 'counter', slot: 0, speed: 5, kind: 'counter', stance: 'counter', tags: ['stagger'] };
+const playerStrike = { id: 'strike', slot: 1, speed: 4, kind: 'attack', stance: 'attack' };
+
+test('counter stagger: opposing staggers for one enemy give the same momentum in either playerCards order', () => {
+  const forward = resolveRound([playerCounter, playerStrike], opposingStaggerQueue(), 2, d20Face(20), { stanceAdvantage: stanceTable() });
+  const reversed = resolveRound([playerStrike, playerCounter], opposingStaggerQueue(), 2, d20Face(20), { stanceAdvantage: stanceTable() });
+  assert.equal(forward.momentum.foe, reversed.momentum.foe);
+});
+
+test('counter stagger: opposing staggers cancel, so M_e is start plus the summed normal deltas', () => {
+  // Player counter: momentumGain 2 plus stance bonus 1 = +3. Enemy counter: gain 1 plus bonus 1 = -2.
+  const counter = { ...playerCounter, momentumGain: 2 };
+  const { events, momentum } = resolveRound(
+    [counter, playerStrike],
+    opposingStaggerQueue(),
+    2,
+    d20Face(20),
+    { stanceAdvantage: stanceTable(), momentum: { foe: 0 } },
+  );
+  assert.equal(momentum.foe, clampMomentum(0 + 3 + -2));
+  assert.equal(momentum.foe, 1);
+  assert.deepEqual(events.find((e) => e.reason === 'counterStaggerCancelled'), { type: 'momentum', reason: 'counterStaggerCancelled', enemyId: 'foe' });
+  assert.equal(events.some((e) => e.type === 'momentumApplied' && Math.abs(e.to) === 3), false);
+});
+
 // Momentum adds half its value to speed, truncated toward zero (owner, 2026-10-11).
 // +-1 gives 0, +-2 gives +-1, +-3 gives +-1. (Flagged: "rounded down" read as truncation.)
 test('momentum adds half its value to speed, truncated toward zero', () => {
