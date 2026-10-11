@@ -432,9 +432,9 @@ Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, 
 
 | Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
 |---|---|---|
-| Act map | StS path-walk + typing constraints (§6), `mapgen.js` + `floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
-| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/actN.js`: pools, weights, elite/boss lists |
-| Rewards | rarity rolls + pity/decay counters, `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
+| Act map | StS path-walk + typing constraints (§6), `src/engine/mapgen.js` + `src/model/floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
+| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/<seat>.js` (marches, reach, weald): pools, weights, elite/boss lists |
+| Rewards | rarity odds in `model/rewardOdds.js`; flask decay in `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
 Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
@@ -447,7 +447,7 @@ Two closed vocabularies, both in `balance.equipment`, both derived rather than a
 |---|---|---|
 | what does a mid-fight equipment action cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Both prepared-set swaps and item replace/move/unequip actions use this price. `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. |
 | may carried equipment change during combat | `allowChangesInCombat` | When true, the player-turn Armoury may replace, move, or unequip carried gear through the `changeEquipment` combat intent. The engine applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, and persists the same loadout object. False closes both UI and mutation paths. |
-| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — profile-wide (`both`, the shipped default) vs this-run-only (`perRun`). |
+| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — the shipped default is `perRun` (this run only); any other value is profile-wide, and `unlocked` is also read (`model/loadout.js:820-821`). |
 
 **A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
 column would compel an author to restate what the tags already imply (Law 0 clause 1). The two
@@ -476,8 +476,8 @@ nowhere else**. The order is fixed:
 
 If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
 with only its equipment cards. That is a **balance question for whoever authors the gear**,
-not a validation failure — `validateEquipment` says so as a warning, naming the class and
-the loadout, and refuses nothing.
+not a validation failure — `startingDeckWarnings()` reports it as a warning, naming the class and
+the loadout, and refuses nothing. `validateEquipment` returns problems only and does not show that warning.
 
 **After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
 smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
@@ -581,8 +581,8 @@ fail-closed rather than normalized or replaced with Unarmed.
 #### Complete armament kits
 
 Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`:
-`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, implements,
-and staves each lend one Strike, one Guard, and one signature Armament Art while
+`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, and staves (sceptres
+are staves) each lend one Strike, one Guard, and one signature Armament Art while
 equipped. Armour, talismans, and consumables do not acquire this kit.
 
 These three item-owned cards are guaranteed before the starting filler budget
@@ -605,7 +605,8 @@ author the same card; optional non-kit arts retain the existing shared-art rule.
 Reconciliation preserves cards already in discard or exhaust. Unequipping
 removes item-owned contributions and re-equipping restores their stable IDs.
 
-New armed starting decks omit the redundant global technique grant. Fully
+New armed starting decks omit the redundant global technique grant
+(proved in `tests/framework.test.mjs`). Fully
 unarmed Strike/Guard/technique behavior remains unchanged.
 
 **Everyone has the Dodge Roll** (owner's rule, 2026-09-24, widening the
@@ -624,12 +625,12 @@ and show the exact contributed cards, including counts.
 
 Shield signature identities are Shield Bash (Round Shield), Riposte (Buckler),
 Guardian (Kite Shield), Bastion (Tower Shield), and Spiked Reprisal (Spiked Shield).
-Guardian costs 1 Energy, grants 5 Block, adds a temporary 1-Energy Enter: Bulwark
+Guardian costs 1 Stamina, grants 5 Block, adds a temporary 1-Stamina Enter: Bulwark
 skill to the hand, and Exhausts. The generated skill also Exhausts, is usable by
 every class, and enters the existing Bulwark stance. A full hand sends it to
 discard. It never enters the permanent run deck and disappears after combat.
-Bastion costs 1 Energy, grants 12 Block, applies 1 Weak to self, and Exhausts.
-Spiked Reprisal costs 1 Energy, grants 4 Block, deals 4 damage, and applies 2
+Bastion costs 1 Stamina, grants 12 Block, applies 1 Weak to self, and Exhausts.
+Spiked Reprisal costs 1 Stamina, grants 4 Block, deals 4 damage, and applies 2
 Bleed. Existing card effects supply the other authored armament Arts.
 
 ### 3.9 Action queue
@@ -640,7 +641,7 @@ Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Tri
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). The core events are (not exhaustive; `EVENTS` is):
+Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. The core events are (not exhaustive; `EVENTS` is):
 
 ```
 combatStart, combatEnd(victory)
@@ -650,27 +651,25 @@ damageDealt(source,target,amount,blocked,isAttack)
 blockGained, hpLost, healed
 statusApplied, statusExpired, meterFilled, stanceEntered, stanceExited
 enemySpawned, enemyDied, enemyStaggered
-energyGained, energySpent
+energyGained, energySpent   // legacy names: `energy` is the retired alias of Stamina, the one cost pool
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
 combatReactionOffered, combatReactionChosen
-combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind) †
-combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?) †
 ```
 
 ### 3.11 Seeded RNG
 
 - `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
 - **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
-  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` is drawn exactly once, at run creation, for the seat order (§13); it exists so that order can be seeded without moving a single draw on any other stream.
+  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats`, `rewardRolls`, `shopOffers`, `sigils`, `enemyIntentVisibility`, `combatAvoidance`, `statusRecovery`, `statusPressure`, `ashenBlight`, `enemyIntentClue` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` gets one shuffle call at run creation, for the seat order (§13), which makes n−1 counter steps on that stream; it exists so that order can be seeded without moving a single draw on any other stream.
 - Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
 ### 3.12 Save format, and the durable profile
 
 **Two schemas, one home each — this is the contract, and the values are not restated here.**
 `RUN_SCHEMA_VERSION` lives in `src/model/state.js`; `META_SCHEMA_VERSION` lives in
-`src/engine/save.js`. Neither number appears anywhere else, and a second copy of either is a
-defect.
+`src/engine/save.js`. Neither number is restated as a current value anywhere else, and a second copy of
+either is a defect; the dated bumps below are history.
 
 **The run.** Key `sote_run_v1`, **three slots, one run each** (`SLOTS`, `save.js`). The
 persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`, with
@@ -684,8 +683,9 @@ id only (§3.3).
   **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
   `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
   piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. A live action queue
-  or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
+  record restores it without replaying combat start, draws, or enemy rolls. A live event buffer, or an
+  action queue that no pending reaction or ability discard holds, is not a committed
+  boundary and refuses the save. Older `combatEntered`
   records without a snapshot remain compatible and restart the encounter deterministically.
 - An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
@@ -748,7 +748,7 @@ five durability properties (#66/#67), each of which is a claim a command can fal
    filename. While in that state the profile is **quarantined**: the next ordinary settings
    write cannot overwrite the original bytes, which are the evidence of every other failure.
 5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `replacePrimaryWith()` are reachable by the player from **Profile on the title screen**
+   `restoreProfile(id)` are reachable by the player from **Profile on the title screen**
    (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
    primary — which archives the outgoing one and clears the quarantine. An archive nothing can
    open is a promise, not a feature.
@@ -759,11 +759,11 @@ notices (`drawerNotices()`) are how the screen reports what it had to do to itse
 
 ### 3.13 Card text templating
 
-Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."` Tokens bind to opcode values by op/status name (disambiguated by index when repeated: `{damage.2}`). The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2) — so a Strike in hand shows 9 when you have +3 Strength and shows it struck through to 6 when Weak. A validation rule (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
+Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."` Tokens bind to opcode values by op/status name (disambiguated by occurrence ordinal: the first is bare, the second is `{damage.2}`). The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2) — so a Strike in hand shows 9 when you have +3 Strength and shows it struck through to 6 when Weak. A validation rule (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
 
 ### 3.14 Content validation
 
-`model/validate.js` runs at boot in dev mode and from the test page. It checks, across ALL registries:
+`model/validate.js` runs at every boot (`src/main.js:182`) and from the test page. It checks, across ALL registries:
 
 1. Every content object conforms to its schema (fields, types, enums).
 2. Every id cross-reference resolves (cards in pools/decks, statuses in effects, encounters on maps, moves in `unlockMoves`, …).
@@ -776,9 +776,8 @@ Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Blee
    **naming the entry**, per Law 1 clause 5.
 7. Property rules (§3.3 PropertyRule): every `property` tag has exactly one rule; a rule's tag is
    a property tag; `requires`/`excludes` name property tags; `requires` has no cycle; a sidecar
-   `{ "balance": "path" }` names a real balance number; and `property` is paired with, or
-   written on, carrier families only — a card-family pairing or tagging row fails with
-   *cards never carry properties*. Each refusal names its row (`tests/engine.test.js` test 80).
+   `{ "balance": "path" }` names a real balance number; and any family may carry a
+   `property` tag. Each refusal names its row (`tests/engine.test.js` test 80).
 
 **Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
 failures *downstream of itself*, so the standing check is over observable outcome, in the
