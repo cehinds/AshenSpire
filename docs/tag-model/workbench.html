@@ -159,7 +159,7 @@ const PAGE = 150;
 const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
-const dirty=new Set(), saving=new Set(), timers={}, timerKind={}; /* timerKind: 'edit' or 'retry' for the pending timer of a table */
+const dirty=new Set(), saving=new Set(), timers={}, editGen={}; /* editGen[t] counts the edits to table t; a save remembers the count it started with */
 /* storage:begin */
 /* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
 const BLOB_MAX=170000, BLOB_ROW_MAX=250000, BLOB_CUT=64, BLOB_FALLBACK=8, GC_AGE_MS=120000;
@@ -329,21 +329,25 @@ async function acquireHead(t){
 /* a conflict keeps local edits dirty and waits for the user; opts.overwrite writes the head on top of their rev */
 /* an edit marks its table dirty and arms a save 900 ms later; a save already waiting is not replaced by a retry (see retryFlush) */
 function markDirty(t){
+  editGen[t]=(editGen[t]||0)+1; /* every edit bumps the generation, so a save that began earlier knows its rows are stale */
   if(!localMode && !loaded.has(t)){ setStatus('warn','Still loading '+t+'; that edit was not saved.'); return; }
   dirty.add(t); rebuild(); setStatus();
   if(localMode||!db||!canWrite){ saveLocal(); return; }
-  clearTimeout(timers[t]); timerKind[t]='edit'; timers[t]=setTimeout(()=>{ timerKind[t]=null; flush(t); },900);
+  clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
 }
-/* arms a retry of a save. A pending timer armed by an edit is left alone: that edit's save runs with fresh rows,
-   a fresh deadline and no blob state carried over from the failed attempt, so the retry would only replace it with stale state */
+/* arms a retry of a save. If an edit happened since this save began, the retry starts fresh (new deadline, nothing written yet)
+   but keeps the save's write intent, so a Keep mine stays a Keep mine. Otherwise the retry keeps the save's own budget. */
 function retryFlush(t,opts,ms){
-  if(timers[t]&&timerKind[t]==='edit') return;
-  clearTimeout(timers[t]); timerKind[t]='retry'; timers[t]=setTimeout(()=>{ timerKind[t]=null; flush(t,opts); },ms);
+  clearTimeout(timers[t]);
+  const stale=opts.gen!==(editGen[t]||0);
+  const next=stale? {overwrite:opts.overwrite} : opts;
+  timers[t]=setTimeout(()=>flush(t,next),ms);
 }
 /* the set of blob hashes a head names (empty for a missing head or another format) */
 function headBlobs(h){ return new Set(h&&h.format==='blobs'&&Array.isArray(h.blobs)? h.blobs : []); }
 async function flush(t, opts){
   opts=opts||{};
+  if(opts.gen===undefined) opts.gen=editGen[t]||0; /* the edit generation this save started with */
   const ts=TS(t);
   if(saving.has(t)){ retryFlush(t,opts,500); return; }
   if(!dirty.has(t)) return;

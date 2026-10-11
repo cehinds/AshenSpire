@@ -209,7 +209,7 @@ const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, markDirty, loadThei
 export function makePage(db, tables, edit) {
   const page = {
     db, canWrite: true, localMode: false,
-    state: { data: {} }, dirty: new Set(), saving: new Set(), timers: {}, timerKind: {},
+    state: { data: {} }, dirty: new Set(), saving: new Set(), timers: {}, editGen: {},
     loaded: new Set(), pending: new Set(), TABLES: tables,
     renders: 0, statuses: [],
     setTimeout, clearTimeout, setImmediate,
@@ -587,19 +587,56 @@ test('the re-check writes back only blobs this save built, never a stale hash ca
   assert.equal(await storedRows(db), JSON.stringify(sample(3, 's')));
 });
 
-test('a stale retry does not clear a pending edit timer: the edit saves with fresh rows, a fresh deadline and no stale state', async () => {
+// The first head get after a lease is granted takes 1.3 s, once: that lease is past its fence, so the save retries.
+function slowGetAfterLease(db) {
+  let justAcquired = false, slowed = false;
+  db.delay = async (op, p) => {
+    if (op === 'acquire') justAcquired = true;
+    if (op === 'get' && p === 'tables/t' && justAcquired) {
+      justAcquired = false;
+      if (!slowed) { slowed = true; await settle(1300); }
+    }
+  };
+}
+
+test('an edit that lands while a save is in flight: the save retries with the edit rows and a fresh budget', async () => {
   const db = makeFakeDb();
   const W = makePage(db, T);
-  W.page.saving.add('t'); // a save is in flight
-  const rows = sample(3, 'n');
   W.page.loaded.add('t');
-  W.page.state.data.t.rows = rows;
-  W.api.markDirty('t'); // the real edit path: arms the edit's own timer
-  await W.api.flush('t', { deadline: Date.now() - 1 }); // a retry whose budget has already expired
-  W.page.saving.delete('t');
-  await waitFor(() => db.has('tables/t'), 4000);
-  assert.equal(await storedRows(db), JSON.stringify(rows));
-  assert.equal(W.api.tstate.t.conflict, null, 'the expired retry did not turn the edit into a conflict');
+  W.page.dirty.add('t');
+  W.page.state.data.t.rows = sample(3, 'a');
+  slowGetAfterLease(db);
+  const S1 =W.api.flush('t', { deadline: Date.now() + 1000 }); // a save with a 1 s budget, slow at its lease get
+  await settle(300);
+  const rows2 = sample(3, 'b');
+  W.page.state.data.t.rows = rows2;
+  W.api.markDirty('t'); // an edit lands while S1 is in flight; its own timer fires during S1
+  await S1;
+  await settle(2500);
+  assert.equal(await storedRows(db), JSON.stringify(rows2));
+  assert.equal(W.api.tstate.t.conflict, null, 'no false "could not save in time"');
+});
+
+test('a Keep mine retried after an edit still overwrites: the retry keeps its write intent', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  B.page.loaded.add('t'); // B has the table loaded, so its edits arm the save timer
+  editTable(A.page, sample(3, 'a'));
+  await A.api.flush('t');
+  editTable(B.page, sample(3, 'y'));
+  await B.api.flush('t'); // B is in conflict with A's head
+  assert.ok(B.api.tstate.t.conflict);
+  await settle(1600); // the conflict save's lease lapses (1.5 s), so the Keep mine acquires at once
+  slowGetAfterLease(db);
+  const K =B.api.keepMine('t'); // an overwrite, slow at its lease get, so it retries
+  await settle(500);
+  const rows2 = sample(3, 'z');
+  B.page.state.data.t.rows = rows2;
+  B.api.markDirty('t'); // an edit lands while the overwrite is in flight; its timer is still pending when the retry fires
+  await K;
+  await settle(2500);
+  assert.equal(await storedRows(db), JSON.stringify(rows2));
+  assert.equal(B.api.tstate.t.conflict, null);
 });
 
 test('a second banner that appears while another is up is announced as an alert', async () => {
