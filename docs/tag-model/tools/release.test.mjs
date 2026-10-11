@@ -319,17 +319,37 @@ test('formulas give the workbench result at rank 1 and rank 3, for every object 
   t.diagnostic(`${kept.length} formulas, ${comparisons} comparisons against the workbench`);
 });
 
-test('the proposed placeholder is left out, with a note, as the workbench treats it', async () => {
-  const formulaCsv = csvOf(INPUTS.find(i => i.path === 'formulas.csv').text);
-  const excluded = formulaCsv.rows.filter(r => isExcludedFormula(r, formulaCsv.header));
-  assert.ok(excluded.length >= 1, 'the real tables carry a proposed placeholder');
-  const wb = workbenchTables(INPUTS);
-  const evalExpr = workbenchEngine(wb);
-  for (const r of excluded) {
-    const theirs = evalExpr(r[formulaCsv.header.indexOf('expr')], 1, null, r[formulaCsv.header.indexOf('status')]);
-    assert.equal(theirs.note, true, `workbench marks ${r[0]} as a note`);
-    assert.ok(COMPILED.notes.some(n => n.includes(`"${r[0]}"`)), `compile note names ${r[0]}`);
-  }
+// A minimal in-memory set of tables: the compiler needs tags, values, objects,
+// formulas and ranks, and nothing else. The placeholder tests use it so they do
+// not depend on the real tables, which change as formulas are authored.
+const PLACEHOLDER = 'placeholder.x';
+function placeholderFixture({ withUser }) {
+  const formulas = [
+    'key,expr,scope,description,status',
+    `${PLACEHOLDER},,scope,TBD,proposed`,
+    'scale.two,[ar] * 2,scope,,',
+    ...(withUser ? [`uses.placeholder,[${PLACEHOLDER}] * 2,scope,,`] : []),
+  ];
+  return [
+    { path: 'tags.csv', text: 'id,key\nmeta,meta\n' },
+    { path: 'values.csv', text: 'key,value\nar,24\n' },
+    { path: 'objects.csv', text: 'id,kind,name\n' },
+    { path: 'ranks.csv', text: 'object,rank,key,change\n' },
+    { path: 'formulas.csv', text: formulas.join('\n') + '\n' },
+  ];
+}
+
+test('a proposed formula with no expression is left out, with a note, as the workbench treats it', () => {
+  const inputs = placeholderFixture({ withUser: false });
+  const r = compileInputs(inputs);
+  assert.deepEqual(r.notes, [`excluded formulas.csv "${PLACEHOLDER}": status=proposed with no expression`]);
+  assert.equal(r.stats.formulas, 1, 'only the complete formula is kept');
+  const formulaCsv = csvOf(inputs.find(i => i.path === 'formulas.csv').text);
+  const excluded = formulaCsv.rows.filter(row => isExcludedFormula(row, formulaCsv.header));
+  assert.equal(excluded.length, 1);
+  const evalExpr = workbenchEngine(workbenchTables(inputs));
+  const theirs = evalExpr(excluded[0][formulaCsv.header.indexOf('expr')], 1, null, excluded[0][formulaCsv.header.indexOf('status')]);
+  assert.equal(theirs.note, true, 'workbench marks the placeholder as a note');
 });
 
 test('the output is byte-identical across two compiles and two CLI runs', () => {
@@ -389,8 +409,8 @@ test('an unresolved [key] fails the build and names it', () => {
 });
 
 test('a reference to the excluded placeholder fails the build', () => {
-  const inputs = mutate('formulas.csv', appendRow('x.uses,[evasion.rating] * 2,x,,'));
-  assert.throws(() => compileInputs(inputs), /proposed formula with no expression/);
+  const inputs = placeholderFixture({ withUser: true });
+  assert.throws(() => compileInputs(inputs), new RegExp(`\\[${PLACEHOLDER.replace('.', '\\.')}\\] is a proposed formula with no expression`));
 });
 
 test('a formula loop fails the build', () => {
