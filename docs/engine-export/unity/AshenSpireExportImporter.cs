@@ -14,6 +14,13 @@
 // count, its schema JSON and its hash. Config files are copied as .json
 // TextAssets under Assets/AshenSpire/Config/, and the art manifests under
 // Assets/AshenSpire/Art/. Only UnityEngine and UnityEditor are used.
+//
+// Pruning is by ownership, like the Unreal importer. After each successful
+// import the importer writes Assets/AshenSpire/.ashenspire-import.json, listing
+// the assets it created or updated. The next import deletes only the listed
+// assets that the new manifest no longer has. Assets you made by hand in those
+// folders are never listed, so they are kept. With no record (a first import,
+// or an upgrade from an importer that wrote none) nothing is pruned.
 // Reading rows at runtime: AshenSpireTable.ParseRows<T>().
 
 #if UNITY_EDITOR
@@ -59,10 +66,20 @@ namespace AshenSpire.EngineExport
         public ManifestFile[] art;
     }
 
+    // Written after every successful import: the asset paths that import created
+    // or updated. The next import prunes only the paths listed here.
+    [Serializable]
+    internal class ImportRecord
+    {
+        public string[] paths;
+    }
+
     public static class AshenSpireExportImporter
     {
         public const string Format = "ashenspire.engine-export/1";
         private const string Root = "Assets/AshenSpire";
+        // A dot-prefixed name is hidden from Unity's asset database, so the record is not an asset.
+        private const string RecordPath = Root + "/.ashenspire-import.json";
 
         [MenuItem("AshenSpire/Import Export Folder…")]
         public static void ImportFromMenu()
@@ -125,23 +142,47 @@ namespace AshenSpire.EngineExport
                 // Config objects and art manifests stay JSON: copied as TextAssets.
                 imported.UnionWith(CopyAll(folder, manifest.config, Root + "/Config", false));
                 imported.UnionWith(CopyAll(folder, manifest.art, Root + "/Art", true));
-                // The imported folders mirror this manifest: anything an earlier
-                // export left behind (a removed or renamed table) is deleted.
-                foreach (var sub in new[] { "/Tables", "/Config", "/Art" })
-                    foreach (var file in Directory.GetFiles(Root + sub, "*", SearchOption.AllDirectories))
-                    {
-                        var rel = file.Replace('\\', '/');
-                        if (rel.EndsWith(".meta") || imported.Contains(rel)) continue;
-                        AssetDatabase.DeleteAsset(rel);
-                    }
+                // Prune only what an earlier import recorded and this manifest no
+                // longer lists (a removed or renamed table). Files the user made in
+                // these folders are not in the record, so they are never deleted.
+                // No record (first run, or an upgrade from an older importer) prunes nothing.
+                var previous = ReadRecord();
+                if (previous != null)
+                    foreach (var stale in previous)
+                        if (stale.StartsWith(Root + "/") && !imported.Contains(stale))
+                            AssetDatabase.DeleteAsset(stale);
             }
             finally
             {
                 AssetDatabase.StopAssetEditing();
             }
+            WriteRecord(imported);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return tables.Length;
+        }
+
+        // Returns the paths the previous import recorded, or null when there is no readable record.
+        private static HashSet<string> ReadRecord()
+        {
+            if (!File.Exists(RecordPath)) return null;
+            try
+            {
+                var record = JsonUtility.FromJson<ImportRecord>(File.ReadAllText(RecordPath));
+                return record == null || record.paths == null ? null : new HashSet<string>(record.paths);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+
+        private static void WriteRecord(HashSet<string> imported)
+        {
+            var paths = new List<string>(imported);
+            paths.Sort(StringComparer.Ordinal);
+            var record = new ImportRecord { paths = paths.ToArray() };
+            File.WriteAllText(RecordPath, JsonUtility.ToJson(record, true));
         }
 
         private static HashSet<string> CopyAll(string folder, ManifestFile[] files, string target, bool keepTree)

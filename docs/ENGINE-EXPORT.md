@@ -124,9 +124,11 @@ into an `Editor/` folder. Then run **AshenSpire → Import Export Folder…** an
 pick the export folder. The importer creates one `AshenSpireTable` asset per
 table under `Assets/AshenSpire/Tables/`. Each asset holds the raw rows, the
 schema, the row count and the hash. It also copies the config and art
-manifests. The imported folders mirror the manifest: a table, config or art
-file that an earlier import created but this manifest no longer lists is
-deleted, so import a full export (not an `--only` one) into a project. `table.ParseRows<MyRow>()` turns the rows into a typed array through
+manifests. Each import writes `Assets/AshenSpire/.ashenspire-import.json`, a record of
+the assets it created or updated. The next import deletes only the recorded
+tables, config or art files that this manifest no longer lists, so import a
+full export (not an `--only` one) into a project. Files you made by hand in
+those folders are kept, and with no record nothing is deleted. `table.ParseRows<MyRow>()` turns the rows into a typed array through
 `JsonUtility`. `MyRow` is a `[Serializable]` class with public fields named
 like the columns.
 

@@ -216,6 +216,27 @@ for (const mode of ['watch', 'poll']) {
   });
 }
 
+test('a file renamed into place keeps reloading on later in-place edits (watch)', async (t) => {
+  // Regression: a recursive fs.watch went silent for a file once a rename had written it.
+  const root = await project(t);
+  const { app } = await boot(t, root);
+  let edited = false;
+  const reloads = await collectEvents(app, 'reload', (evs) => evs.length >= 2, {
+    onOpen: async () => {
+      await new Promise((r) => setTimeout(r, 300));
+      await fs.writeFile(path.join(root, 'styles/tmp-source.css'), 'a{}\n');
+      await fs.rename(path.join(root, 'styles/tmp-source.css'), path.join(root, 'styles/main.css'));
+    },
+    onEvent: async (name) => {
+      if (name !== 'reload' || edited) return;
+      edited = true;
+      await new Promise((r) => setTimeout(r, 400));
+      await fs.writeFile(path.join(root, 'styles/main.css'), 'body{color:green}\n');
+    },
+  });
+  assert.deepEqual(reloads.at(-1).files, ['styles/main.css'], 'the in-place edit after the rename is its own batch');
+});
+
 test('a content/config change runs the config compiler before the reload; a failing build reports instead', async (t) => {
   const root = await project(t);
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });
@@ -727,3 +748,42 @@ test('legacy jobs.json and backups/ move into the project state dir once, and on
   assert.equal(await fs.readFile(path.join(target, 'jobs.json'), 'utf8'), '{"runs":[]}\n', 'the project keeps its own history');
   await fs.rm(base, { recursive: true, force: true });
 });
+
+/** Saves styles/main.css through the file service, as the page does. */
+async function saveStyles(call, text) {
+  const read = await (await call('/api/files/read?path=styles%2Fmain.css')).json();
+  const res = await call('/api/files/save', { method: 'POST', body: JSON.stringify({ changes: [{ path: 'styles/main.css', text, baseHash: read.hash }] }) });
+  assert.equal(res.status, 200, await res.clone().text());
+}
+
+for (const mode of ['watch', 'poll']) {
+  test(`one save makes one reload batch, not two: the watcher drops the save's own events (${mode})`, async (t) => {
+    const root = await project(t);
+    const { app, call } = await boot(t, root, { forcePoll: mode === 'poll' });
+    const seen = [];
+    await collectEvents(app, 'never', () => false, {
+      timeoutMs: 1500,
+      onEvent: (name, data) => { if (name === 'reload') seen.push(data); },
+      onOpen: () => saveStyles(call, 'body{color:blue}\n'),
+    }).catch(() => {});
+    assert.equal(seen.length, 1, `reload batches after one save: ${JSON.stringify(seen)}`);
+    assert.deepEqual(seen[0].files, ['styles/main.css']);
+  });
+
+  test(`an external edit after a save still reloads (${mode})`, async (t) => {
+    const root = await project(t);
+    const { app, call } = await boot(t, root, { forcePoll: mode === 'poll' });
+    let edited = false;
+    const reloads = await collectEvents(app, 'reload', (evs) => evs.length >= 2, {
+      onOpen: () => saveStyles(call, 'body{color:blue}\n'),
+      onEvent: async (name) => {
+        if (name !== 'reload' || edited) return;
+        edited = true;
+        await new Promise((r) => setTimeout(r, 400));
+        await fs.writeFile(path.join(root, 'styles/main.css'), 'body{color:green}\n');
+      },
+    });
+    assert.deepEqual(reloads[0].files, ['styles/main.css']);
+    assert.deepEqual(reloads[1].files, ['styles/main.css'], 'the later external edit is its own batch');
+  });
+}

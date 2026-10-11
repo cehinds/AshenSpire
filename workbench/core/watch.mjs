@@ -36,7 +36,31 @@ export const BUILD_OUTPUTS = {
 };
 export const isBuildOutput = (rel) => Object.values(BUILD_OUTPUTS).some((dirs) => dirs.some((d) => rel.startsWith(d) || `${rel}/` === d));
 
-export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, isOutput = isBuildOutput }) {
+/**
+ * The files the Workbench itself has just written, each with the size and mtime
+ * it left them with. isOwn(abs) is true while the file still matches that stat,
+ * so the watcher can drop the echo of a save. An edit made after the save has a
+ * newer mtime (or a new size), so it is still a change and reloads.
+ */
+export function createOwnWrites() {
+  const written = new Map();
+  return {
+    record(abs, stat) { written.set(path.resolve(abs), { size: stat.size, mtimeMs: stat.mtimeMs }); },
+    isOwn(abs) {
+      const w = written.get(path.resolve(abs));
+      if (!w) return false;
+      let now;
+      try { now = fs.statSync(abs); } catch { return false; }
+      return now.size === w.size && now.mtimeMs <= w.mtimeMs;
+    },
+  };
+}
+
+/**
+ * isOwnWrite(abs) says a file's events are the echo of a save the Workbench made
+ * (see createOwnWrites); those events are dropped when the batch is flushed.
+ */
+export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, isOutput = isBuildOutput, isOwnWrite = () => false }) {
   const pending = new Set();
   const watchers = []; const polls = [];
   let timer = null; let mutedUntil = 0; let muted = false; let closed = false;
@@ -54,7 +78,9 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   function flush() {
     if (!pending.size || closed) return;
     const files = [...pending].sort(); pending.clear();
-    onBatch(files);
+    // A file the Workbench just wrote is already in the batch its save sent: drop its echo here.
+    const external = files.filter((r) => !isOwnWrite(path.join(root, r)));
+    if (external.length) onBatch(external);
   }
 
   // One interval scans every polled folder in the same tick, so files written
@@ -75,18 +101,47 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     polls.push(t);
   }
 
+  // One non-recursive fs.watch per folder, not one recursive watch: on Linux a
+  // recursive watch goes silent for a file once a write has renamed it into place,
+  // and every Workbench save is such a write, so a later edit would never reload.
+  const watchedDirs = new Set();
+  const isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } };
+  function watchFolder(abs) {
+    if (watchedDirs.has(abs)) return true;
+    let w;
+    try {
+      w = fs.watch(abs, (_event, name) => {
+        if (!name) return;
+        const base = String(name);
+        const child = path.join(abs, base);
+        if (!isDir(child)) { note(child); return; }
+        // A folder that appeared while watching: its files are new, and it gets watches of its own.
+        if (base.startsWith('.') || base === 'node_modules') return;
+        for (const f of walk(child).keys()) note(f);
+        watchSubfolders(child);
+      });
+    } catch { return false; }
+    watchedDirs.add(abs);
+    watchers.push(w);
+    w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); });
+    return true;
+  }
+  function watchSubfolders(abs) {
+    let entries = [];
+    try { entries = fs.readdirSync(abs, { withFileTypes: true }); } catch { return; /* removed while walking */ }
+    for (const e of entries.filter((x) => x.isDirectory())) {
+      if (e.name.startsWith('.') || e.name === 'node_modules') continue;
+      const sub = path.join(abs, e.name);
+      if (!watchFolder(sub)) poll(sub);
+      else watchSubfolders(sub);
+    }
+  }
+
   const modes = {};
   for (const d of dirs) {
     const abs = path.join(root, d);
     if (!fs.existsSync(abs)) continue;
-    if (!forcePoll) {
-      try {
-        const w = fs.watch(abs, { recursive: true }, (_event, name) => { if (name) note(path.join(abs, String(name))); });
-        w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });
-        watchers.push(w); modes[d] = 'watch';
-        continue;
-      } catch { /* recursive watch unsupported here: poll below */ }
-    }
+    if (!forcePoll && watchFolder(abs)) { watchSubfolders(abs); modes[d] = 'watch'; continue; }
     poll(abs); modes[d] = 'poll';
   }
 

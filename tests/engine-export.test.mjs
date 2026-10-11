@@ -279,3 +279,14 @@ test('the Unreal importer mirrors the manifest: it prunes only its own stale DT_
   assert.deepEqual(go({ fail: true }), [], 'a failed table prunes nothing');
   assert.deepEqual(go({ prune: false }), [], '--no-prune keeps everything');
 });
+
+// The Unity importer (C#, not compiled here) prunes by ownership: only paths its
+// record lists, never a folder scan that would delete hand-made assets.
+test('the Unity importer prunes only the paths its import record lists', () => {
+  const source = readFileSync(join(root, 'docs', 'engine-export', 'unity', 'AshenSpireExportImporter.cs'), 'utf8');
+  const body = source.slice(source.indexOf('public static int Import('), source.indexOf('private static HashSet<string> CopyAll('));
+  assert.doesNotMatch(body, /Directory\.GetFiles\(/, 'pruning must not scan the folders');
+  assert.match(body, /ReadRecord\(\)/, 'pruning reads the previous import record');
+  assert.match(body, /AssetDatabase\.DeleteAsset\(stale\)/, 'only recorded stale paths are deleted');
+  assert.match(source, /ashenspire-import\.json/, 'the record file is named in the importer');
+});

@@ -9,7 +9,7 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createWorkbench, projectStateDir } from '../server.mjs';
-import { allowedKind, lineDiff } from '../core/files.mjs';
+import { allowedKind, lineDiff, createFileService } from '../core/files.mjs';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
 
@@ -55,6 +55,19 @@ test('allowlist: editable sources only; traversal, generated files, .git and oth
   assert.equal(allowedKind('content/config/ui/tokens.json'), 'json');
   assert.equal(allowedKind('styles/main.css'), 'css');
   assert.equal(allowedKind('src/engine/rules.js'), 'js');
+});
+
+test('the file service reports each file it writes, with the stat the file was left with', async (t) => {
+  const root = await project(t);
+  const written = [];
+  const files = createFileService({ root, stateDir: path.join(root, '.wb-state'), onWritten: (abs, st) => written.push({ abs, size: st.size, mtimeMs: st.mtimeMs }) });
+  const text = 'a{color:red}\n';
+  await files.save([{ path: 'styles/main.css', text, baseHash: sha('body{}\n') }]);
+  const abs = path.join(root, 'styles/main.css');
+  assert.equal(written.length, 1, 'one write for one file');
+  assert.equal(written[0].abs, abs);
+  assert.equal(written[0].size, Buffer.byteLength(text));
+  assert.equal(written[0].mtimeMs, (await fs.stat(abs)).mtimeMs, 'the reported mtime is the file\'s mtime after the rename');
 });
 
 test('read returns text, hash and kind; list returns only allowlisted files', async (t) => {
