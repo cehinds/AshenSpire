@@ -201,10 +201,19 @@ export class JobRunner {
   /** Wait for a lock group to be free here and in other processes, then hold
    *  it as `label`; pair with release(). Rejects if another process keeps the
    *  cross-process lock past `timeoutMs`. */
-  async acquire(lock, label, { timeoutMs, pollMs } = {}) {
-    while (this.locks.has(lock)) await new Promise((resolve) => this.lockWaiters.push(resolve));
+  async acquire(lock, label, { timeoutMs, pollMs, signal } = {}) {
+    // An aborted signal ends either wait at once, and the lock is then never taken.
+    for (;;) {
+      if (signal?.aborted) throw signal.reason instanceof Error ? signal.reason : new Error('Aborted');
+      if (!this.locks.has(lock)) break;
+      await new Promise((resolve) => {
+        const wake = () => { signal?.removeEventListener('abort', wake); resolve(); };
+        this.lockWaiters.push(wake);
+        signal?.addEventListener('abort', wake, { once: true });
+      });
+    }
     this.locks.set(lock, label);
-    try { this.fileLocks.set(lock, await waitFileLock(this.root, `${label} (Workbench)`, { timeoutMs, pollMs })); } catch (e) { this.release(lock); throw e; }
+    try { this.fileLocks.set(lock, await waitFileLock(this.root, `${label} (Workbench)`, { timeoutMs, pollMs, signal })); } catch (e) { this.release(lock); throw e; }
   }
 
   release(lock) {

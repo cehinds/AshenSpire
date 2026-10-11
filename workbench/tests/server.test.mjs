@@ -683,6 +683,28 @@ test('a generated-files lock held by another process (the editor, UI Studio) ref
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
 });
 
+test('JobRunner.acquire with an aborted signal ends an in-process or a cross-process wait at once, taking nothing', async (t) => {
+  const root = await project(t);
+  const runner = new JobRunner({ root, stateFile: path.join(root, '.wb-state/jobs.json') });
+  await runner.acquire(GENERATED, 'A job');
+  const ctl = new AbortController();
+  const waiting = runner.acquire(GENERATED, 'A live-reload build', { timeoutMs: 60 * 1000, signal: ctl.signal });
+  setTimeout(() => ctl.abort(new Error('The Workbench is closing')), 50);
+  await assert.rejects(waiting, /The Workbench is closing/);
+  assert.equal(runner.locks.get(GENERATED), 'A job', 'the in-process hold is still the job\'s');
+  runner.release(GENERATED);
+  // Free in this process, held by a foreign process: the file-lock wait ends the same way and leaves no lock of ours.
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: other.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const ctl2 = new AbortController();
+  const waiting2 = runner.acquire(GENERATED, 'A live-reload build', { timeoutMs: 60 * 1000, pollMs: 5000, signal: ctl2.signal });
+  setTimeout(() => ctl2.abort(new Error('The Workbench is closing')), 50);
+  await assert.rejects(waiting2, /The Workbench is closing/);
+  assert.equal(runner.locks.has(GENERATED), false, 'nothing held here');
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, '.build-lock'), 'utf8')).token, 'theirs', 'their lock stands');
+});
+
 test('close() ends a save waiting for a foreign build lock at once: 503, nothing written, no lock of ours', async (t) => {
   const root = await project(t);
   const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
