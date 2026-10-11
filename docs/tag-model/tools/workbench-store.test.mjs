@@ -29,10 +29,10 @@ export function loadStorage(ctx, expose) {
   return vm.runInContext(storageSource() + '\n;(' + expose + ')', context);
 }
 
-test('storage block loads and chunk keeps every row in order', () => {
-  const { chunk } = loadStorage({}, '({ chunk })');
+test('storage block loads and chunkRows keeps every row in order', () => {
+  const { chunkRows } = loadStorage({}, '({ chunkRows })');
   const rows = Array.from({ length: 500 }, (_, i) => [i, 'row ' + i + ' ' + 'x'.repeat(1000)]);
-  const parts = chunk(rows);
+  const parts = chunkRows(rows);
   assert.ok(parts.length >= 2);
   // vm arrays come from another realm, so compare JSON text, not prototypes.
   assert.equal(JSON.stringify(parts.flat()), JSON.stringify(rows));
@@ -133,7 +133,7 @@ export function makeFakeDb() {
   return fake;
 }
 
-const EXPOSE = '({ subscribeTable, applyHead, onHead, tstate, chunkRows, hashText, headPath, blobPath })';
+const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, tstate, chunkRows, hashText, headPath, blobPath })';
 
 // One browser tab: its own state, sharing only the fake db with other tabs.
 export function makePage(db, tables) {
@@ -239,4 +239,78 @@ test('a newer head never replaces unsaved local edits', async () => {
   await settle(30);
   assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(mine));
   assert.ok(api.tstate.t.latest && api.tstate.t.latest.blobs.length >= 1, 'newer head recorded');
+});
+
+// Writer helper: a tab holding `objs` as its unsaved table.
+function editTable(page, objs) {
+  page.state.data.t.rows = objs;
+  page.dirty.add('t');
+}
+// Assembles the stored table as a fresh reader sees it.
+async function storedRows(db) {
+  const reader = makePage(db, T);
+  reader.api.subscribeTable('t');
+  await waitFor(() => reader.page.loaded.has('t'));
+  return JSON.stringify(reader.page.state.data.t.rows);
+}
+
+test('(a) sequential writers: the second one gets a conflict and the store keeps the first table', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  const xs = sample(60, 'x'), ys = sample(60, 'y');
+  editTable(A.page, xs);
+  await A.api.flush('t');
+  editTable(B.page, ys);
+  await B.api.flush('t');
+  assert.equal(await storedRows(db), JSON.stringify(xs));
+  assert.ok(B.page.dirty.has('t'), 'local edits kept');
+  assert.equal(B.api.tstate.t.conflict.theirRev, A.api.tstate.t.base);
+  assert.equal(JSON.stringify(B.page.state.data.t.rows), JSON.stringify(ys));
+});
+
+test('(a) interleaved writers: the stored table is exactly one writer\'s full table', async () => {
+  const db = makeFakeDb();
+  db.delay = async (op) => { if (op === 'set') await new Promise((r) => setTimeout(r, 15)); };
+  const A = makePage(db, T), B = makePage(db, T);
+  const xs = sample(200, 'x'), ys = sample(200, 'y');
+  editTable(A.page, xs);
+  editTable(B.page, ys);
+  await Promise.all([A.api.flush('t'), B.api.flush('t')]);
+  await settle(50);
+  const stored = await storedRows(db);
+  assert.ok(stored === JSON.stringify(xs) || stored === JSON.stringify(ys), 'mixed table stored');
+});
+
+test('(b) a reader during a slow save never assembles a mix of old and new rows', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T), R = makePage(db, T);
+  const v1 = sample(300, 'v'), v2 = sample(300, 'w');
+  editTable(W.page, v1);
+  await W.api.flush('t');
+  R.api.subscribeTable('t');
+  await waitFor(() => R.page.loaded.has('t'));
+  const seen = [];
+  R.page.render = () => seen.push(JSON.stringify(R.page.state.data.t.rows));
+  db.delay = async (op, p) => { if (op === 'set' && p.includes('/blobs/')) await new Promise((r) => setTimeout(r, 25)); };
+  editTable(W.page, v2);
+  await W.api.flush('t');
+  await settle(60);
+  const ok = [JSON.stringify(v1), JSON.stringify(v2)];
+  assert.ok(seen.length > 0);
+  for (const s of seen) assert.ok(ok.includes(s), 'reader showed a mixed table');
+  assert.equal(seen[seen.length - 1], ok[1]);
+});
+
+test('(c) inserting one row at the top rewrites at most two blobs', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  const objs = sample(3000, 'r');
+  editTable(W.page, objs);
+  await W.api.flush('t');
+  const mark = db.log.sets.length;
+  editTable(W.page, [{ id: 'top', name: 'new', qty: 0 }, ...objs]);
+  await W.api.flush('t');
+  const blobWrites = db.log.sets.slice(mark).filter((p) => p.includes('/blobs/'));
+  assert.ok(blobWrites.length <= 2, 'blob writes: ' + blobWrites.length);
+  assert.equal(await storedRows(db), JSON.stringify([{ id: 'top', name: 'new', qty: 0 }, ...objs]));
 });

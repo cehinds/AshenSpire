@@ -157,11 +157,8 @@ const PAGE = 150;
 const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
-const dirty=new Set(), saving=new Set(), timers={}, saved={};
+const dirty=new Set(), saving=new Set(), timers={};
 /* storage:begin */
-const PART_BYTES=180000;
-const HOLDER='tab-'+Math.random().toString(36).slice(2,10);
-function chunk(rows){ const out=[]; let cur=[], size=2; for(const r of rows){ const n=JSON.stringify(r).length+1; if(cur.length&&size+n>PART_BYTES){ out.push(cur); cur=[]; size=2; } cur.push(r); size+=n; } out.push(cur); return out; }
 /* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
 const BLOB_MAX=170000, BLOB_MIN_ROWS=20, BLOB_CUT=64, GC_AGE_MS=120000;
 function hash32(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return h>>>0; }
@@ -262,6 +259,45 @@ function onHead(t,h){
 function subscribeTable(t){
   const ts=TS(t); if(ts.unsub.length) return;
   ts.unsub.push(db.doc(headPath(t)).onSnapshot(s=>onHead(t, s.exists? s.data() : null), e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.')));
+}
+/* ---------- writer: blobs first, then one head write guarded by the rev this view loaded ---------- */
+/* a conflict keeps local edits dirty and waits for the user; opts.overwrite writes the head on top of their rev */
+async function flush(t, opts){
+  opts=opts||{};
+  const ts=TS(t);
+  if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),500); return; }
+  if(!dirty.has(t)) return;
+  if(ts.conflict&&!opts.overwrite) return;
+  dirty.delete(t); saving.add(t); setStatus();
+  const cols=[...state.data[t].columns];
+  const now=Date.now();
+  const built=chunkRows(state.data[t].rows.map(r=>cols.map(c=>r[c]??''))).map(rows=>({hash:hashText(JSON.stringify({rows})), rows}));
+  const hashes=built.map(b=>b.hash), written=new Set();
+  try{
+    for(const b of built){
+      if(ts.blobs.has(b.hash)||written.has(b.hash)) continue;   /* blobs are immutable: a known hash is never rewritten */
+      await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:now});
+      written.add(b.hash);
+    }
+    const s=await db.doc(headPath(t)).get();
+    const curHead=s.exists? s.data() : null, curRev=revOf(curHead);
+    if(!opts.overwrite && curRev!==ts.base){
+      ts.conflict={theirRev:curRev}; dirty.add(t);
+      setStatus('warn','Someone else saved this table while you were editing.');
+      return;
+    }
+    const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    const base=opts.overwrite? curRev : ts.base;
+    await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
+    ts.base=rev; ts.conflict=null; ts.incomplete=null; ts.legacy=null;
+    ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
+  }
+  catch(e){
+    dirty.add(t);
+    if(e&&e.code==='invalid_argument'){ canWrite=false; setStatus('warn','This view can read but not save. Edits stay in this browser; export them as CSV.'); saveLocal(); }
+    else { setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
+  }
+  finally{ saving.delete(t); setStatus(); }
 }
 /* storage:end */
 
@@ -442,32 +478,6 @@ function markDirty(t){
   dirty.add(t); rebuild(); setStatus();
   if(localMode||!db||!canWrite){ saveLocal(); return; }
   clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
-}
-async function flush(t){
-  if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),500); return; }
-  if(!dirty.has(t)) return;
-  dirty.delete(t); saving.add(t); setStatus();
-  const cols=state.data[t].columns;
-  const parts=chunk(state.data[t].rows.map(r=>cols.map(c=>r[c]??'')));
-  let lease=null;
-  try{
-    lease=await db.doc('tables/'+t).acquire({holder:HOLDER, ttlMs:20000}).catch(()=>null);
-    if(lease && !lease.acquired){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),1500); setStatus('','Another editor is saving '+TABLES[t].label+'; retrying.'); return; }
-    const prev=saved[t]||{parts:[],head:'',revs:[]};
-    const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-    const revs=[];
-    for(let i=0;i<parts.length;i++){ const js=JSON.stringify(parts[i]); if(prev.parts[i]!==js||!prev.revs[i]){ await db.doc('tables/'+t+'/parts/p'+i).set({index:i,rev,rows:parts[i]}); revs.push(rev); } else revs.push(prev.revs[i]); }
-    const head={columns:cols, parts:parts.length, format:'arrays', revs};
-    const hj=JSON.stringify(head); if(prev.head!==hj) await db.doc('tables/'+t).set(head);
-    for(let i=parts.length;i<prev.parts.length;i++) await db.doc('tables/'+t+'/parts/p'+i).delete();
-    saved[t]={parts:parts.map(x=>JSON.stringify(x)), head:hj, revs};
-  }
-  catch(e){
-    dirty.add(t);
-    if(e&&e.code==='invalid_argument'){ canWrite=false; setStatus('warn','This view can read but not save. Edits stay in this browser; export them as CSV.'); saveLocal(); }
-    else setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'), timers[t]=setTimeout(()=>flush(t),3000);
-  }
-  finally{ saving.delete(t); setStatus(); }
 }
 function setStatus(level,msg){
   const el=document.getElementById('status');
