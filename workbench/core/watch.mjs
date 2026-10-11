@@ -70,7 +70,7 @@ export function createOwnWrites() {
  * isOwnWrite(abs) says a file's events are the echo of a save the Workbench made
  * (see createOwnWrites); those events are dropped when the batch is flushed.
  */
-export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, isOutput = isBuildOutput, isOwnWrite = () => false }) {
+export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll = false, platform = process.platform, isOutput = isBuildOutput, isOwnWrite = () => false }) {
   const pending = new Set();
   const watchers = []; const polls = [];
   let timer = null; let mutedUntil = 0; let muted = false; let closed = false;
@@ -128,12 +128,18 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
         // A folder that appeared while watching: its files are new, and it gets watches of its own.
         if (base.startsWith('.') || base === 'node_modules') return;
         for (const f of walk(child).keys()) note(f);
-        watchSubfolders(child);
+        if (!watchTree(child)) poll(child);
       });
     } catch { return false; }
     watchedDirs.add(abs);
     watchers.push(w);
     w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); });
+    return true;
+  }
+  // A folder and, below it, every folder: each gets its own watch, or a poll where a watch throws.
+  function watchTree(abs) {
+    if (!watchFolder(abs)) return false;
+    watchSubfolders(abs);
     return true;
   }
   function watchSubfolders(abs) {
@@ -142,17 +148,29 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     for (const e of entries.filter((x) => x.isDirectory())) {
       if (e.name.startsWith('.') || e.name === 'node_modules') continue;
       const sub = path.join(abs, e.name);
-      if (!watchFolder(sub)) poll(sub);
-      else watchSubfolders(sub);
+      if (!watchTree(sub)) poll(sub);
     }
   }
 
+  // One { recursive: true } watch per source folder where the platform has one.
+  function watchRecursive(abs, d) {
+    let w;
+    try {
+      w = fs.watch(abs, { recursive: true }, (_event, name) => { if (name) note(path.join(abs, String(name))); });
+    } catch { return false; /* recursive watch unsupported here: poll below */ }
+    w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });
+    watchers.push(w);
+    return true;
+  }
+
   const modes = {};
+  const mode = watchModeFor(platform);
   for (const d of dirs) {
     const abs = path.join(root, d);
     if (!fs.existsSync(abs)) continue;
-    if (!forcePoll && watchFolder(abs)) { watchSubfolders(abs); modes[d] = 'watch'; continue; }
-    poll(abs); modes[d] = 'poll';
+    const watched = !forcePoll && (mode === 'recursive' ? watchRecursive(abs, d) : watchTree(abs));
+    if (watched) modes[d] = 'watch';
+    else { poll(abs); modes[d] = 'poll'; }
   }
 
   return {
