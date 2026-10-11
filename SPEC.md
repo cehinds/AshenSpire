@@ -68,7 +68,7 @@ on the prototype gate; both remain the contract for the work after 1.0, unchange
 
 | | |
 |---|---|
-| Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
+| Title | **Ashen Spire** (`AshenSpire` — the bundle name; page title `index.html:8`; title screen `src/ui/screens/title.js`) |
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
 | Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
