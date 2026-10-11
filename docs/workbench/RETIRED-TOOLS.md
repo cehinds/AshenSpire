@@ -12,7 +12,7 @@ Source of truth: `workbench/tools.json` (`moved`). The tests in
 `workbench/tests/retired.test.mjs` check every link with `parseHash` and that
 each moved page carries its notice.
 
-Counts: **6 fully replaced**, **24 partly replaced** (30 registry entries).
+Counts: **6 fully replaced**, **25 partly replaced** (31 registry entries).
 
 ## Mapping
 
@@ -28,6 +28,7 @@ old page.
 | Item card review | `item-cards-preview.html` | Entity Browser | `#mod=entities&kind=armor&view=worn` | full | none |
 | Held stances | `pose-studio/stances/index.html` | Motion Studio | `#mod=motion` | full | none |
 | Stance options (2026-10-08) | `pose-studio/stances/options-20261008/index.html` | Asset Gallery | `#mod=assets` | full | none |
+| Card layer explorer | `docs/qa/card-layers/index.html` | Layout Studio, Card layers | `#mod=layout&mode=card-layers` | partial | Layout groups (text box, trim, rank as one), per-card overrides and cost layouts, snap, grid and multi-select, drag-to-reorder grips and Export JSON download, card samples other than the one shown |
 | Layered Battlefield Editor (legacy) | `docs/design/combat-depth-2026-10-05/editor/editor-legacy.html` | Layout Studio, Battlefield | `#mod=layout&mode=battlefield` | partial | group and ungroup, lock, marquee selection |
 | Combat Studio | `docs/design/combat-depth-2026-10-05/editor/battlefield-wireframe-editor.html` | Layout Studio, Battlefield | `#mod=layout&mode=battlefield` | partial | parallax and effect preview |
 | Armament combat kits | `armament-kits-preview.html` | Entity Browser | `#mod=entities&kind=armaments` | partial | loadout compare |
@@ -60,7 +61,6 @@ old page.
 | Deck row layout editor | `docs/design/deck-row-editor/index.html` | Layout Studio, Deck row | Mode not built (`workbench/modules/layout/modes.mjs`) |
 | SP Atelier | `docs/design/sp-orb-editor/index.html` | Layout Studio, SP orb | Mode not built |
 | Book Atelier | `docs/preview/book-library/layers/atelier.html` | Layout Studio, Book recipes | Mode not built |
-| Card layer explorer | `docs/qa/card-layers/index.html` | Layout Studio, Card layers | Mode not built |
 | Pose Studio Sequence (prologue studio) | `art/prologue-2026-09-19/index.html` (art checkout) | Motion Studio, Sequence | Not built; art repo |
 | Scenes & Fixtures (world atlas, reading desk, equipment selection, tooltip scenes, live QA fixtures, tray gallery, wireframe gallery) | see `workbench/tools.json` | none | Stays as it is, by plan (CONSOLIDATION §G) |
 | Combat art in game (`docs/design/combat-depth-2026-10-05/game-preview.html`) | — | none | A game-preview page, not a gallery |
