@@ -1,0 +1,423 @@
+<title>AshenSpire Workbench Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; each module = header, wireframe of the planned screen, strip of today's tools, checklist. */
+:root{
+  --bg:#f3f1ee; --surface:#ffffff; --ink:#1f2328; --muted:#5d6670; --line:#d9d5cf;
+  --ember:#b4582a; --ember-soft:#f6e3d8; --ok:#2f7d4f; --warn:#9a6a00;
+  --wf-chrome:#e4e0da; --wf-panel:#f7f5f2; --wf-canvas:#ffffff; --wf-stroke:#8b8580; --wf-text:#4a4f55; --wf-accent:#b4582a; --wf-guide:#d4398f;
+  --display:"Spectral",Georgia,serif; --body:"Atkinson Hyperlegible",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16191d; --surface:#1e2227; --ink:#e7e3dd; --muted:#9aa3ad; --line:#323840;
+  --ember:#e08452; --ember-soft:#3a271d; --ok:#6cc08f; --warn:#e0b44f;
+  --wf-chrome:#2a2f36; --wf-panel:#22272d; --wf-canvas:#1a1d22; --wf-stroke:#5d6670; --wf-text:#b9c0c8; --wf-accent:#e08452; --wf-guide:#ff6fb8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16191d; --surface:#1e2227; --ink:#e7e3dd; --muted:#9aa3ad; --line:#323840;
+  --ember:#e08452; --ember-soft:#3a271d; --ok:#6cc08f; --warn:#e0b44f;
+  --wf-chrome:#2a2f36; --wf-panel:#22272d; --wf-canvas:#1a1d22; --wf-stroke:#5d6670; --wf-text:#b9c0c8; --wf-accent:#e08452; --wf-guide:#ff6fb8; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+header.top{padding-block:40px 24px;border-bottom:1px solid var(--line);display:grid;gap:12px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.15}
+h2{font-size:clamp(22px,3vw,28px)}
+h3{font-size:17px;font-family:var(--body);font-weight:700}
+.lede{color:var(--muted);max-width:68ch;margin:0}
+.meta{font:13px var(--mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 16px}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;padding-block:20px}
+nav.toc a{font:13px var(--mono);color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--surface)}
+nav.toc a:hover,nav.toc a:focus-visible{border-color:var(--ember);outline:none}
+section.mod{padding-block:40px;border-bottom:1px solid var(--line);display:grid;gap:20px}
+.modhead{display:grid;gap:6px}
+.eyebrow{font:12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ember)}
+.base{color:var(--muted);margin:0;max-width:72ch}
+.pill{display:inline-block;font:12px var(--mono);padding:2px 10px;border-radius:999px;background:var(--ember-soft);color:var(--ember);margin-left:8px;vertical-align:middle}
+.pill.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+figure{margin:0}
+.wf{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto}
+.wf svg{display:block;width:100%;min-width:560px;height:auto}
+.wf figcaption,.shot figcaption{font:12px var(--mono);color:var(--muted);margin-top:8px}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.shot{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}
+.shot img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top left;border-radius:4px;background:var(--wf-panel)}
+.shot .miss{display:grid;place-items:center;aspect-ratio:16/10;border-radius:4px;background:var(--wf-panel);color:var(--muted);font:12px var(--mono);text-align:center;padding:8px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.cols>div{min-width:0}
+ul.check{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px}
+ul.check li{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:start}
+ul.check input{margin-top:4px;accent-color:var(--ember);width:16px;height:16px}
+ul.check label{cursor:pointer}
+ul.check ul{grid-column:2;list-style:disc;margin:4px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+.src{font:12px var(--mono);color:var(--muted)}
+.retire{font-size:14px;color:var(--muted)}
+.retire b{color:var(--ink)}
+.progress{font:13px var(--mono);color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;max-width:320px}
+.bar i{display:block;height:100%;background:var(--ember);width:0}
+.phase{display:grid;gap:10px}
+.phase table{border-collapse:collapse;width:100%;font-size:14px}
+.phase th,.phase td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.phase th{font:12px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tablewrap{overflow-x:auto}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* wireframe primitives */
+.c-chrome{fill:var(--wf-chrome);stroke:var(--wf-stroke);stroke-width:.25}
+.c-panel{fill:var(--wf-panel);stroke:var(--wf-stroke);stroke-width:.25}
+.c-canvas{fill:var(--wf-canvas);stroke:var(--wf-stroke);stroke-width:.25}
+.c-accent{fill:var(--wf-accent);stroke:none}
+.c-ghost{fill:none;stroke:var(--wf-stroke);stroke-width:.25;stroke-dasharray:1 .8}
+.c-box{fill:color-mix(in srgb,var(--wf-accent) 14%,transparent);stroke:var(--wf-accent);stroke-width:.3}
+.c-guide{stroke:var(--wf-guide);stroke-width:.25;stroke-dasharray:1 .6;fill:none}
+.t{fill:var(--wf-text);font:2.1px var(--mono)}
+.t.s{font-size:1.7px}
+.t.on{fill:#fff}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Chore/ImproveTooling · tooling consolidation</div>
+  <h1>AshenSpire Workbench Plan</h1>
+  <p class="lede">About fifty tools in the repo, in the art repo and from past sessions merge into one desktop Workbench with eight modules. For each module: a wireframe of the planned screen, screenshots of the tools it replaces, and a checklist. Where two tools do the same job, the easier one to use is kept and the other's unique features are added to it.</p>
+  <div class="meta"><span>Updated 2026-10-11</span><span>Branch Chore/ImproveTooling</span><span>Source: docs/workbench/CONSOLIDATION.md</span></div>
+  <div class="progress"><span id="prog">0 of 0 items checked</span><div class="bar"><i id="progbar"></i></div></div>
+</header>
+<nav class="toc" aria-label="Modules">
+  <a href="#shell">Workbench shell</a><a href="#layout">A · Layout Studio</a><a href="#data">B · Data Studio</a><a href="#motion">C · Motion Studio</a><a href="#entity">D · Entity Browser</a><a href="#gallery">E · Asset Gallery</a><a href="#review">F · Visual Review</a><a href="#scenes">G · Scenes &amp; Fixtures</a><a href="#build">H · Build &amp; Export</a><a href="#platform">Shared platform</a><a href="#phases">Phases</a>
+</nav>
+
+<!-- SHELL -->
+<section class="mod" id="shell">
+  <div class="modhead"><div class="eyebrow">Phase 0 · in progress</div><h2>Workbench shell <span class="pill">building</span></h2>
+  <p class="base">One window that opens every tool, with the game running beside it. Saving anything reloads the game.</p></div>
+  <figure class="wf"><svg data-wf="shell" viewBox="0 0 160 90" role="img" aria-label="Wireframe of the Workbench shell"></svg><figcaption>Planned: left rail, header, module area, docked live game.</figcaption></figure>
+  <div class="cols">
+   <div><h3>What it does</h3><ul class="check">
+    <li><input type="checkbox" id="s1"><label for="s1">One launcher starts the three studios and a game server, then opens one window</label></li>
+    <li><input type="checkbox" id="s2"><label for="s2">Left rail switches modules and keeps each one's state</label><ul><li>Status dot per tool, Restart when a tool is down</li></ul></li>
+    <li><input type="checkbox" id="s3"><label for="s3">Live game docked on the right</label><ul><li>Drag to resize; Desktop, Tablet and Phone sizes</li><li>Auto-reload on save; recompiles content first when data changed</li><li>Pop out to its own window, collapse with Ctrl+\</li></ul></li>
+    <li><input type="checkbox" id="s4"><label for="s4">Ctrl+K searches tools, jobs, previews and actions; ? lists shortcuts</label></li>
+    <li><input type="checkbox" id="s5"><label for="s5">Toasts stack; errors stay until dismissed; notification history</label></li>
+    <li><input type="checkbox" id="s6"><label for="s6">Header shows branch, uncommitted changes and last build result</label></li>
+    <li><input type="checkbox" id="s7"><label for="s7">Library lists every tool, including the art repo and the two external editors</label><ul><li>A test fails if a new tool page is added but not listed</li></ul></li>
+   </ul></div>
+   <div><h3>Replaces</h3><p class="retire"><b>Three launchers and three ports</b> (Content Editor 4317, Pose Studio 4318, UI Studio 4319), and the editor's preview hub. Every root <code>*-preview.html</code> page and docs tool is opened from the Library.</p></div>
+  </div>
+</section>
+
+<!-- A -->
+<section class="mod" id="layout">
+  <div class="modhead"><div class="eyebrow">Group A · Phase 3</div><h2>Layout Studio</h2>
+  <p class="base">Built on <b>UI Studio</b> (4/5): edge-aware snapping, undo, align, device presets, compare, and the only layout tool that saves to the repo.</p></div>
+  <figure class="wf"><svg data-wf="layout" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Layout Studio"></svg><figcaption>Planned: mode tabs, layers, canvas with snap guides, inspector, live game.</figcaption></figure>
+  <div class="shots" data-shots="A-ui-studio|UI Studio (base);A-combat-studio|Combat Studio;A-legacy-editor|Legacy battlefield editor;A-deck-row|Deck row editor;A-sp-atelier|SP Atelier;A-book-atelier|Book Atelier"></div>
+  <div class="cols">
+   <div><h3>Modes (one per tool absorbed)</h3><ul class="check">
+    <li><input type="checkbox" id="a1"><label for="a1">UI config and Sketch</label><ul><li>From UI Studio, unchanged</li></ul></li>
+    <li><input type="checkbox" id="a2"><label for="a2">Battlefield</label><ul><li>From Combat Studio; reads the old legacy format and upgrades it</li></ul></li>
+    <li><input type="checkbox" id="a3"><label for="a3">Deck row</label><ul><li>From the deck-row editor, with its tested import check</li></ul></li>
+    <li><input type="checkbox" id="a4"><label for="a4">SP orb</label><ul><li>From SP Atelier; keeps PNG export</li></ul></li>
+    <li><input type="checkbox" id="a5"><label for="a5">Book recipes (form view)</label><ul><li>From Book Atelier; writes <code>bookArtPresets.js</code> straight to the repo instead of two downloads</li></ul></li>
+    <li><input type="checkbox" id="a6"><label for="a6">Card layers</label><ul><li>From the card-layers explorer (5/5)</li></ul></li>
+   </ul></div>
+   <div><h3>Features merged in</h3><ul class="check">
+    <li><input type="checkbox" id="a7"><label for="a7">Distribute, group/ungroup, lock, box-select</label><ul><li>Only the legacy editor had these</li></ul></li>
+    <li><input type="checkbox" id="a8"><label for="a8">Space-drag pan, Ctrl+wheel zoom, ? help</label><ul><li>From the legacy editor</li></ul></li>
+    <li><input type="checkbox" id="a9"><label for="a9">Layers panel with drag reorder, right-click menu, drill into a fighter's parts</label><ul><li>From Combat Studio</li></ul></li>
+    <li><input type="checkbox" id="a10"><label for="a10">Parallax and effect preview</label><ul><li>From Combat Studio</li></ul></li>
+    <li><input type="checkbox" id="a11"><label for="a11">Every mode gets undo, zoom, shortcuts and save-to-repo</label><ul><li>Deck row, SP Atelier and Book Atelier had no undo</li></ul></li>
+   </ul></div>
+  </div>
+</section>
+
+<!-- B -->
+<section class="mod" id="data">
+  <div class="modhead"><div class="eyebrow">Group B · Phase 4</div><h2>Data Studio</h2>
+  <p class="base">Built on the <b>Content Editor's</b> safe saving (conflict check, backups, review before save, undo), with the <b>Tag Workbench's</b> grid and checks on top.</p></div>
+  <figure class="wf"><svg data-wf="data" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Data Studio"></svg><figcaption>Planned: table list, grid with frozen key column, Check panel, object sheet.</figcaption></figure>
+  <div class="shots" data-shots="B-content-editor|Content Editor (base);B-tag-workbench|Tag Workbench (TagRefactor branch)"></div>
+  <div class="cols">
+   <div><h3>Kept and merged</h3><ul class="check">
+    <li><input type="checkbox" id="b1"><label for="b1">Safe save: conflict check, backups, review, undo</label><ul><li>Content Editor; the review becomes a line-level diff</li></ul></li>
+    <li><input type="checkbox" id="b2"><label for="b2">Grid toolbar: add column, add/delete row, paging</label><ul><li>Tag Workbench</li></ul></li>
+    <li><input type="checkbox" id="b3"><label for="b3">Per-cell reference checks and a Check tab that jumps to each problem</label><ul><li>Tag Workbench</li></ul></li>
+    <li><input type="checkbox" id="b4"><label for="b4">Formula column with live results</label><ul><li>Tag Workbench expression language</li></ul></li>
+    <li><input type="checkbox" id="b5"><label for="b5">Object sheet with rank progression</label><ul><li>Tag Workbench</li></ul></li>
+    <li><input type="checkbox" id="b6"><label for="b6">Drag-and-drop relation builder</label><ul><li>Content Editor</li></ul></li>
+    <li><input type="checkbox" id="b7"><label for="b7">Database-style checks and CSV / JSON / SQLite import and export</label><ul><li>world-atlas-data tool, run by the server</li></ul></li>
+   </ul></div>
+   <div><h3>New</h3><ul class="check">
+    <li><input type="checkbox" id="b8"><label for="b8">Sort, density and shareable view links</label><ul><li>Borrowed from the component catalog</li></ul></li>
+    <li><input type="checkbox" id="b9"><label for="b9">Multi-select, paste a range, bulk edit</label></li>
+    <li><input type="checkbox" id="b10"><label for="b10">Fast grid for large tables, frozen key column</label></li>
+    <li><input type="checkbox" id="b11"><label for="b11">“Show in game” and “Open in Entity Browser” from any row</label></li>
+   </ul></div>
+  </div>
+</section>
+
+<!-- C -->
+<section class="mod" id="motion">
+  <div class="modhead"><div class="eyebrow">Group C · Phase 5</div><h2>Motion Studio</h2>
+  <p class="base">Built on <b>Pose Studio</b> (4/5): timeline, stage zoom, undo and card binding rules.</p></div>
+  <figure class="wf"><svg data-wf="motion" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Motion Studio"></svg><figcaption>Planned: effect library, stage with onion skin, inspector, multi-track timeline.</figcaption></figure>
+  <div class="shots" data-shots="C-pose-studio|Pose Studio (base);C-renewal|Card-action preview;C-stances|Held stances"></div>
+  <div class="cols">
+   <div><h3>Modes</h3><ul class="check">
+    <li><input type="checkbox" id="c1"><label for="c1">Animate and Bindings</label><ul><li>Pose Studio, unchanged</li></ul></li>
+    <li><input type="checkbox" id="c2"><label for="c2">Preview (card actions by class)</label><ul><li>From the card-action preview page</li></ul></li>
+    <li><input type="checkbox" id="c3"><label for="c3">Stances</label><ul><li>From the held-stances page</li></ul></li>
+    <li><input type="checkbox" id="c4"><label for="c4">Sequence (opening scenes)</label><ul><li>Prologue studio, loaded from your art repo copy; keeps its validated import</li></ul></li>
+   </ul></div>
+   <div><h3>New</h3><ul class="check">
+    <li><input type="checkbox" id="c5"><label for="c5">Save to the repo, not download-only</label></li>
+    <li><input type="checkbox" id="c6"><label for="c6">Onion skin and keyframes per frame</label></li>
+    <li><input type="checkbox" id="c7"><label for="c7">Step one frame at a time</label><ul><li>From the painted-combat gallery</li></ul></li>
+    <li><input type="checkbox" id="c8"><label for="c8">Play all scenes on one timeline</label><ul><li>Feature bar set by AshenedSpire-Editor</li></ul></li>
+    <li><input type="checkbox" id="c9"><label for="c9">Undo in Sequence mode</label></li>
+   </ul></div>
+  </div>
+</section>
+
+<!-- D -->
+<section class="mod" id="entity">
+  <div class="modhead"><div class="eyebrow">Group D · Phase 2</div><h2>Entity Browser</h2>
+  <p class="base">Every armament, armor, potion, relic, card, status, stance, keyword, enemy and class, drawn with the real game renderer. Built on the <b>component catalog's</b> browsing (4/5).</p></div>
+  <figure class="wf"><svg data-wf="entity" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Entity Browser"></svg><figcaption>Planned: category chips, filters, card grid, detail drawer with tabs.</figcaption></figure>
+  <div class="shots" data-shots="D-component-catalog|Component catalog (base);D-weapon-cards|Weapon cards;D-items|Painted Armory;D-item-cards|Item cards;D-armament-kits|Armament kits;D-tooltip-review|Tooltip review"></div>
+  <div class="cols">
+   <div><h3>Kept and merged</h3><ul class="check">
+    <li><input type="checkbox" id="d1"><label for="d1">Search, 5 sort orders, density, grid/list, shareable view</label><ul><li>Component catalog</li></ul></li>
+    <li><input type="checkbox" id="d2"><label for="d2">Search across names, tags and item types</label><ul><li>Weapon cards</li></ul></li>
+    <li><input type="checkbox" id="d3"><label for="d3">Sticky detail card</label><ul><li>Painted Armory</li></ul></li>
+    <li><input type="checkbox" id="d4"><label for="d4">“Worn by class” view with pose picker</label><ul><li>Item cards</li></ul></li>
+    <li><input type="checkbox" id="d5"><label for="d5">Compare loadouts and “Try in fight”</label><ul><li>Armament kits</li></ul></li>
+    <li><input type="checkbox" id="d6"><label for="d6">Tooltip view and hover-timing lab</label><ul><li>Tooltip review</li></ul></li>
+   </ul></div>
+   <div><h3>New</h3><ul class="check">
+    <li><input type="checkbox" id="d7"><label for="d7">One browser for all 10 kinds of game object</label></li>
+    <li><input type="checkbox" id="d8"><label for="d8">Detail tabs: Card, Inventory, Worn, Tooltip, Data, Try in fight</label></li>
+    <li><input type="checkbox" id="d9"><label for="d9">Edit opens the row in Data Studio</label></li>
+   </ul></div>
+  </div>
+</section>
+
+<!-- E -->
+<section class="mod" id="gallery">
+  <div class="modhead"><div class="eyebrow">Group E · Phase 2</div><h2>Asset Gallery</h2>
+  <p class="base">One gallery fed by the art manifests. The 13 one-off review pages become saved views of it.</p></div>
+  <figure class="wf"><svg data-wf="gallery" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Asset Gallery"></svg><figcaption>Planned: facets, saved views, grid, backdrop switch, frame player.</figcaption></figure>
+  <div class="shots" data-shots="E-combat-depth|Combat depth catalog;E-class-armor-rear|Class armor rear views;E-player-components|Player components;E-player-polish|Player polish boards"></div>
+  <div class="cols">
+   <div><h3>Features merged in</h3><ul class="check">
+    <li><input type="checkbox" id="e1"><label for="e1">Grid with search, facets and detail view</label><ul><li>Combat depth catalog</li></ul></li>
+    <li><input type="checkbox" id="e2"><label for="e2">Lightbox with arrow keys</label><ul><li>Player polish</li></ul></li>
+    <li><input type="checkbox" id="e3"><label for="e3">Light / checker / dark background to check transparency</label><ul><li>Class armor rear views</li></ul></li>
+    <li><input type="checkbox" id="e4"><label for="e4">Frame player with step and speed</label><ul><li>Painted combat (art repo)</li></ul></li>
+    <li><input type="checkbox" id="e5"><label for="e5">Layered scene with device and depth switches</label><ul><li>Combat depth continuation</li></ul></li>
+    <li><input type="checkbox" id="e6"><label for="e6">Pick favourites and copy the list</label><ul><li>Stance options board</li></ul></li>
+    <li><input type="checkbox" id="e7"><label for="e7">Tag → effect sprite rules view</label><ul><li>Live from Pose Studio bindings, not a snapshot</li></ul></li>
+   </ul></div>
+   <div><h3>Replaces</h3><p class="retire">low-poly-fighters, board-fidelity, class-armor-rear, player-polish, player-polish asset kit, player-components, three combat-depth pages, stance options, and from the art repo: sprite catalog, tag mappings, webp pack desk, painted combat.</p></div>
+  </div>
+</section>
+
+<!-- F -->
+<section class="mod" id="review">
+  <div class="modhead"><div class="eyebrow">Group F · Phase 2</div><h2>Visual Review</h2>
+  <p class="base">One viewer for every screenshot set. Capture tools write a <code>review.json</code> list; the viewer reads it.</p></div>
+  <figure class="wf"><svg data-wf="review" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Visual Review"></svg><figcaption>Planned: review list, device and state chips, slider compare, approve or reject.</figcaption></figure>
+  <div class="shots" data-shots="F-responsive-type|Responsive type (best side-by-side);F-combat-formation|Combat formation;F-hud-comparison|HUD comparison (best state switch)"></div>
+  <div class="cols">
+   <div><h3>Features</h3><ul class="check">
+    <li><input type="checkbox" id="f1"><label for="f1">Side-by-side, slider and onion compare</label><ul><li>Side-by-side from responsive-type; slider and onion are new</li></ul></li>
+    <li><input type="checkbox" id="f2"><label for="f2">State switch that changes both sides</label><ul><li>HUD comparison</li></ul></li>
+    <li><input type="checkbox" id="f3"><label for="f3">Device and state filter chips, lightbox</label></li>
+    <li><input type="checkbox" id="f4"><label for="f4">Approve or reject each image; export verdicts</label><ul><li>Replaces the removed review approval hub</li></ul></li>
+    <li><input type="checkbox" id="f5"><label for="f5">Build, commit and art release shown on every set</label><ul><li>World atlas page's notes</li></ul></li>
+   </ul></div>
+   <div><h3>Replaces</h3><p class="retire">8 hand-made pages: responsive-type, combat-formation, combat-ground, hud-followup, concise-card-tooltips, starting-equipment, world-atlas screenshots, HUD comparison.</p></div>
+  </div>
+</section>
+
+<!-- G -->
+<section class="mod" id="scenes">
+  <div class="modhead"><div class="eyebrow">Group G · Phase 2</div><h2>Scenes &amp; Fixtures</h2>
+  <p class="base">Whole live game screens, opened from the Library at any device size. These stay as they are.</p></div>
+  <figure class="wf"><svg data-wf="scenes" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Scenes and Fixtures"></svg><figcaption>Planned: grouped scene list, device frame, notes and links.</figcaption></figure>
+  <div class="shots" data-shots="G-world-atlas|World atlas;G-deck-desk|Deck reading desk;G-card-layers|Card layers explorer"></div>
+  <ul class="check">
+   <li><input type="checkbox" id="g1"><label for="g1">World atlas, deck reading desk, equipment selection, tooltip scenes</label></li>
+   <li><input type="checkbox" id="g2"><label for="g2">Live QA pages: card layers, rank layers, class mastery, intent hit, starter card art, book library, merchant</label></li>
+   <li><input type="checkbox" id="g3"><label for="g3">In-game prologue editor and card-size settings</label></li>
+   <li><input type="checkbox" id="g4"><label for="g4">Tray gallery and wireframe gallery</label></li>
+  </ul>
+</section>
+
+<!-- H -->
+<section class="mod" id="build">
+  <div class="modhead"><div class="eyebrow">Group H · Phase 0</div><h2>Build &amp; Export <span class="pill ok">export done</span></h2>
+  <p class="base">Run jobs with live logs and history. Engine export writes 152 tables and 16,779 rows as JSON for Unity and Unreal.</p></div>
+  <figure class="wf"><svg data-wf="build" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Build and Export"></svg><figcaption>Planned: job list, live log, export tables.</figcaption></figure>
+  <ul class="check">
+   <li><input type="checkbox" id="h1" checked><label for="h1">Engine JSON export with schemas, manifest and --check</label><ul><li>Unity and Unreal import scripts included; not yet run inside either engine</li></ul></li>
+   <li><input type="checkbox" id="h2"><label for="h2">Jobs: compile content, compile UI config, build game, export, tool tests</label></li>
+   <li><input type="checkbox" id="h3"><label for="h3">Exporter scripts become jobs</label><ul><li>Extended card art, book art, selected stances, card art contact sheets</li><li>Codex gallery and package builders: asset kit, player components, board fidelity, class armor, combat depth</li></ul></li>
+   <li><input type="checkbox" id="h4"><label for="h4">CI runs tool tests, export and Workbench screenshots on every push</label></li>
+  </ul>
+</section>
+
+<!-- PLATFORM -->
+<section class="mod" id="platform">
+  <div class="modhead"><div class="eyebrow">Phase 1</div><h2>Shared platform and customization</h2>
+  <p class="base">Built once, used by every module, so the same action works the same way everywhere.</p></div>
+  <figure class="wf"><svg data-wf="settings" viewBox="0 0 160 90" role="img" aria-label="Wireframe of Settings"></svg><figcaption>Planned: Settings with sections and a shortcut editor.</figcaption></figure>
+  <div class="cols">
+   <div><h3>Shared parts</h3><ul class="check">
+    <li><input type="checkbox" id="p1"><label for="p1">One save path: conflict check, backups, line diff, validation</label></li>
+    <li><input type="checkbox" id="p2"><label for="p2">One undo system with a history panel</label></li>
+    <li><input type="checkbox" id="p3"><label for="p3">One canvas kit: snap, guides, align, distribute, group, zoom, pan, rulers</label></li>
+    <li><input type="checkbox" id="p4"><label for="p4">Game preview can show unsaved drafts</label></li>
+    <li><input type="checkbox" id="p5"><label for="p5">“Edit” and “Show in game” links between modules</label></li>
+   </ul></div>
+   <div><h3>Customization (Settings)</h3><ul class="check">
+    <li><input type="checkbox" id="p6"><label for="p6">Theme accent, light or dark, density, font size</label></li>
+    <li><input type="checkbox" id="p7"><label for="p7">Panel layout and saved workspaces</label></li>
+    <li><input type="checkbox" id="p8"><label for="p8">Remap any shortcut</label></li>
+    <li><input type="checkbox" id="p9"><label for="p9">Default device, snap distance, grid size</label></li>
+    <li><input type="checkbox" id="p10"><label for="p10">Autosave interval, how many backups to keep</label></li>
+    <li><input type="checkbox" id="p11"><label for="p11">Export and import all settings as JSON</label></li>
+   </ul></div>
+  </div>
+</section>
+
+<section class="mod phase" id="phases">
+  <h2>Phases</h2>
+  <div class="tablewrap"><table>
+   <thead><tr><th>Phase</th><th>Delivers</th><th>Retires</th></tr></thead>
+   <tbody>
+    <tr><td>0</td><td>Workbench shell, Library, live reload, Ctrl+K, build jobs, engine export, CI screenshots</td><td>—</td></tr>
+    <tr><td>1</td><td>Shared platform and Settings</td><td>Copied server code in the editors</td></tr>
+    <tr><td>2</td><td>Entity Browser, Asset Gallery, Visual Review, Scenes &amp; Fixtures</td><td>5 entity pages, 13 galleries, 8 screenshot pages</td></tr>
+    <tr><td>3</td><td>Layout Studio, all modes</td><td>Combat Studio, legacy editor, deck row, SP Atelier, Book Atelier</td></tr>
+    <tr><td>4</td><td>Data Studio</td><td>Content Editor tables, Tag Workbench, world-atlas tool UI</td></tr>
+    <tr><td>5</td><td>Motion Studio</td><td>Card-action preview, held stances, prologue studio</td></tr>
+    <tr><td>6</td><td>Old addresses redirect into the Workbench; docs and screenshots</td><td>Old pages</td></tr>
+   </tbody>
+  </table></div>
+  <p class="retire">Every old tool stays reachable until its replacement has every feature listed above.</p>
+</section>
+</div>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, text) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (text) n.textContent = text; return n; };
+  // r(x,y,w,h,cls,label,labelCls)
+  const R = (x,y,w,h,c='c-panel',l='',lc='') => ({x,y,w,h,c,l,lc});
+  const L = (x1,y1,x2,y2) => ({line:[x1,y1,x2,y2]});
+  const shell = (title, active) => [
+    R(0,0,160,90,'c-canvas'),
+    R(0,0,160,6,'c-chrome','AshenSpire Workbench   ·   Chore/ImproveTooling   ·   3 changed   ·   build ✓   ·   Ctrl+K'),
+    R(0,6,9,84,'c-chrome'),
+    ...['Home','Layout','Data','Motion','Entity','Assets','Review','Scenes','Build'].map((n,i)=>R(1,8+i*8,7,6,i===active?'c-accent':'c-panel',n.slice(0,5),i===active?'on s':'s')),
+    R(126,6,34,84,'c-panel'),
+    R(127,7,32,5,'c-chrome','Desktop | Tablet | Phone  ⟳','s'),
+    R(129,14,28,50,'c-canvas','live game'),
+    R(127,66,32,5,'c-chrome','Auto-reload ●  ↗ pop out','s'),
+    R(127,73,32,15,'c-ghost','reloaded · 3 files','s'),
+  ];
+  const W = {
+    shell: [...shell('Home',0),
+      R(11,8,113,6,'c-ghost','Home — tools, recent jobs, quick actions'),
+      ...[0,1,2].flatMap(c=>[0,1].map(r=>R(11+c*38,16+r*24,36,22,'c-panel',['Layout Studio','Data Studio','Motion Studio','Entity Browser','Asset Gallery','Visual Review'][r*3+c]))),
+      R(11,66,74,22,'c-panel','Recent jobs: content-build ✓ 4s · engine-export ✓ 0.7s · tool-tests ✗'),
+      R(87,66,37,22,'c-panel','Quick: Build · Export · Tests'),
+    ],
+    layout: [...shell('Layout',1),
+      R(11,8,113,5,'c-chrome','UI config | Sketch | Battlefield | Deck row | SP orb | Book | Card layers','s'),
+      R(11,14,113,5,'c-chrome','V B H  ·  align ⫷⫸  distribute  ·  group  ·  snap ●  grid ●  ·  − 100% +  ·  Desktop ▾ ⟲','s'),
+      R(11,20,22,68,'c-panel','Layers','s'), ...[0,1,2,3,4].map(i=>R(12,24+i*5,20,4,i===1?'c-box':'c-ghost',['Backdrop','Hero','Enemy','Hand','HUD'][i],'s')),
+      R(34,20,66,68,'c-canvas'), R(40,30,22,26,'c-box','Hero'), R(70,26,24,30,'c-box','Enemy'), R(38,62,58,18,'c-box','Hand'),
+      L(62,20,62,88), L(34,56,100,56),
+      R(101,20,23,68,'c-panel','Inspector','s'), ...['x 120  y 64','w 320  h 410','layer 2','Phone override','Lock ☐'].map((t,i)=>R(102,25+i*6,21,5,'c-ghost',t,'s')),
+    ],
+    data: [...shell('Data',2),
+      R(11,8,113,5,'c-chrome','Search ⌕  ·  filter  ·  sort  ·  bulk edit  ·  import ▾  export ▾  ·  Review & save (3)','s'),
+      R(11,14,20,74,'c-panel','Tables','s'), ...['weapons','tags','nodes','relations','worldAtlas','classTree'].map((t,i)=>R(12,18+i*5,18,4,i===1?'c-box':'c-ghost',t,'s')),
+      R(32,14,66,52,'c-canvas'), R(32,14,12,52,'c-chrome'), ...[0,1,2,3,4,5,6,7].map(i=>R(32,14+i*6.5,66,6.5,'c-ghost', i===0?'Name        kind     rank   formula        value':`tag_${i}      status   ${i}      =base*rank     ${i*3}`,'s')),
+      R(32,67,66,21,'c-panel','Check — 2 problems: unknown asset in row 4 · duplicate key row 7','s'),
+      R(99,14,25,74,'c-panel','Object sheet','s'), R(100,19,23,14,'c-ghost','art'), ...['tags: Bleed, Heavy','rank 1→5 table','relations (3)'].map((t,i)=>R(100,35+i*6,23,5,'c-ghost',t,'s')),
+    ],
+    motion: [...shell('Motion',3),
+      R(11,8,113,5,'c-chrome','Animate | Bindings | Sequence | Stances | Preview','s'),
+      R(11,14,22,46,'c-panel','Effects ⌕','s'), ...[0,1,2,3,4,5].map(i=>R(12+(i%2)*10.5,19+Math.floor(i/2)*11,9.5,10,'c-ghost','fx','s')),
+      R(34,14,66,46,'c-canvas'), R(52,20,18,34,'c-ghost','onion'), R(56,19,18,34,'c-box','pose 3'),
+      R(101,14,23,46,'c-panel','Inspector','s'), ...['rotate 12°','opacity 90%','frame 3 / 6','keyframe ◆'].map((t,i)=>R(102,19+i*6,21,5,'c-ghost',t,'s')),
+      R(11,61,113,27,'c-panel','▶ ⏸ ⏭  0.25× 1×  loop  ·  timeline','s'),
+      ...[0,1,2].map(i=>R(12,67+i*6,111,5,'c-ghost',['Pose','Effect','Sound'][i],'s')),
+      R(30,67,26,5,'c-box'), R(58,67,30,5,'c-box'), R(40,73,40,5,'c-box'), L(64,63,64,88),
+    ],
+    entity: [...shell('Entity',4),
+      R(11,8,113,5,'c-chrome','Armaments | Armor | Potions | Relics | Cards | Statuses | Stances | Keywords | Enemies | Classes','s'),
+      R(11,14,20,74,'c-panel','Filters','s'), ...['⌕ search','class ▾','type ▾','tag ▾','sort ▾','density ▭▭'].map((t,i)=>R(12,18+i*6,18,5,'c-ghost',t,'s')),
+      ...[0,1,2,3,4,5,6,7].map(i=>R(33+(i%4)*15,15+Math.floor(i/4)*26,13,24,i===2?'c-box':'c-canvas','card','s')),
+      R(33,68,58,20,'c-ghost','grid / list'),
+      R(93,14,31,74,'c-panel','Detail','s'), R(94,19,29,5,'c-chrome','Card|Inv|Worn|Tip|Data|Fight','s'), R(98,26,21,32,'c-canvas','real renderer'), R(94,61,29,6,'c-accent','Edit in Data Studio','on s'), R(94,69,29,6,'c-chrome','Try in fight ▶','s'),
+    ],
+    gallery: [...shell('Assets',5),
+      R(11,8,113,5,'c-chrome','Saved views ▾  ·  ⌕  ·  backdrop: light | checker | dark  ·  size ━●━','s'),
+      R(11,14,20,74,'c-panel','Facets','s'), ...['class','family','tier','source','status'].map((t,i)=>R(12,18+i*6,18,5,'c-ghost',t,'s')),
+      ...Array.from({length:15},(_,i)=>R(33+(i%5)*18,15+Math.floor(i/5)*18,16,16,i===6?'c-box':'c-canvas','','')),
+      R(33,70,91,18,'c-panel','Frame player: ◀ ▮ ▶  step  speed 1×  ·  ☆ pick  ·  copy list','s'),
+    ],
+    review: [...shell('Review',6),
+      R(11,8,113,5,'c-chrome','Desktop  Tablet  Phone   ·   Player turn  Enemy turn   ·   side-by-side | slider | onion','s'),
+      R(11,14,22,74,'c-panel','Review sets','s'), ...['combat-formation','responsive-type','hud-comparison','world-atlas'].map((t,i)=>R(12,18+i*6,20,5,i===0?'c-box':'c-ghost',t,'s')),
+      R(34,14,90,60,'c-canvas'), R(34,14,45,60,'c-ghost','before'), R(79,14,45,60,'c-ghost','after'), R(78,14,2,60,'c-accent'),
+      R(34,75,90,13,'c-panel','✓ Approve   ✗ Reject   ·   build 1280 · commit 21078bb · art v19   ·   export verdicts','s'),
+    ],
+    scenes: [...shell('Scenes',7),
+      R(11,8,30,80,'c-panel','Scenes ⌕','s'), ...['World atlas','Deck reading desk','Equipment selection','Tooltip scenes','Card layers','Merchant','Prologue editor'].map((t,i)=>R(12,13+i*6,28,5,i===0?'c-box':'c-ghost',t,'s')),
+      R(42,8,60,5,'c-chrome','Desktop | Tablet | Phone  ·  seed 42  ·  ↗ new window','s'),
+      R(48,15,48,60,'c-canvas','live scene'),
+      R(103,8,21,80,'c-panel','Notes & links','s'),
+    ],
+    build: [...shell('Build',8),
+      R(11,8,30,80,'c-panel','Jobs','s'), ...['content-build ✓','config-build ✓','build game …','engine export ✓','tool tests ✗','card art export'].map((t,i)=>R(12,13+i*6,28,5,i===2?'c-box':'c-ghost',t,'s')),
+      R(42,8,50,80,'c-canvas','live log'), ...[0,1,2,3,4,5].map(i=>R(43,14+i*4,48,3,'c-ghost','> step '+(i+1),'s')),
+      R(93,8,31,80,'c-panel','Export: 152 tables','s'), ...['weapons 214','tags 1180','nodes 640','classes 4'].map((t,i)=>R(94,14+i*6,29,5,'c-ghost',t,'s')),
+    ],
+    settings: [...shell('Settings',-1),
+      R(11,8,28,80,'c-panel','Settings','s'), ...['Appearance','Layout','Shortcuts','Canvas','Saving','Preview','Import / export'].map((t,i)=>R(12,13+i*6,26,5,i===2?'c-box':'c-ghost',t,'s')),
+      R(40,8,84,6,'c-chrome','Shortcuts  ·  ⌕ find action  ·  Reset to defaults','s'),
+      ...['Command palette        Ctrl+K','Save                       Ctrl+S','Undo / Redo               Ctrl+Z / Ctrl+Shift+Z','Toggle preview            Ctrl+\\','Zoom to fit                 0','Pan                          Space+drag'].map((t,i)=>R(40,16+i*7,84,6,i===3?'c-box':'c-ghost',t,'s')),
+    ],
+  };
+  for (const svg of document.querySelectorAll('svg[data-wf]')) {
+    for (const s of W[svg.dataset.wf] || []) {
+      if (s.line) { const [x1,y1,x2,y2]=s.line; svg.append(el('line',{x1,y1,x2,y2,class:'c-guide'})); continue; }
+      svg.append(el('rect',{x:s.x,y:s.y,width:s.w,height:s.h,rx:.6,class:s.c}));
+      if (s.l) svg.append(el('text',{x:s.x+1,y:s.y+(s.h<6?s.h/2+.7:2.8),class:'t '+(s.lc||'')}, s.l));
+    }
+  }
+  for (const box of document.querySelectorAll('[data-shots]')) {
+    for (const pair of box.dataset.shots.split(';')) {
+      const [file,label] = pair.split('|');
+      const fig = document.createElement('figure'); fig.className='shot';
+      const img = new Image(); img.loading='lazy'; img.alt='Screenshot of '+label; img.src='shots/'+file+'.jpg';
+      img.onerror = () => { const m=document.createElement('div'); m.className='miss'; m.textContent='No capture yet: '+label; img.replaceWith(m); };
+      const cap = document.createElement('figcaption'); cap.textContent = label;
+      fig.append(img, cap); box.append(fig);
+    }
+  }
+  const boxes=[...document.querySelectorAll('ul.check input')];
+  const key='wb-plan-checks';
+  let saved={}; try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
+  for(const b of boxes){ if(b.id in saved) b.checked=saved[b.id]; }
+  const upd=()=>{const n=boxes.filter(b=>b.checked).length;document.getElementById('prog').textContent=`${n} of ${boxes.length} items checked`;document.getElementById('progbar').style.width=(100*n/boxes.length)+'%'};
+  for(const b of boxes) b.addEventListener('change',()=>{saved[b.id]=b.checked;try{localStorage.setItem(key,JSON.stringify(saved))}catch{};upd()});
+  upd();
+})();
+</script>

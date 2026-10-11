@@ -459,6 +459,10 @@ artifacts/combat-foundations/
 # and nothing reads it from version control.
 build/components/
 
+# tools/engine-export.mjs — the engine-ready JSON export (docs/ENGINE-EXPORT.md).
+# Derived from the content tree on every run; ~11MB with the art manifests.
+build/engine-export/
+
 # build/web/ — the de-inlined build's home until docs/EXTERNAL-ASSETS-PLAN.md
 # step 8e made the pack shape build/ itself (tools/launch.mjs now removes a
 # left-over build/web/). Still ignored, so an older checkout's copy never shows.
@@ -595,6 +599,13 @@ build/windows-installer/
 /docs/qa/**/*-results.json
 /docs/qa/**/*-geometry.json
 /docs/qa/**/browser-health.json
+
+# AshenSpire Workbench: per-machine job history and settings
+workbench/.state/
+
+# Cross-process lock on the generated trees (tools/lib/build-lock.mjs)
+/.build-lock
+/.build-lock.stale-*
 
 # docs/qa is not kept in the tree (owner decision, 2026-10-11): QA evidence goes
 # to CI artifacts, and the local QA tools write to scratch/qa/.

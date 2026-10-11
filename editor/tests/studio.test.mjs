@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { Workspace, safePath, parseCSV, stringifyCSV, hash, editable } from '../core.mjs';
+import { spawn } from 'node:child_process';
+import { Workspace, safePath, parseCSV, stringifyCSV, hash, editable, validateText } from '../core.mjs';
 import { createStudio } from '../server.mjs';
+import { processAlive } from '../../tools/lib/process-tree.mjs';
 
 async function fixture(t) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'ashenspire-studio-'));
@@ -45,6 +47,42 @@ test('batch preflight prevents partial saves when another file conflicts', async
   await assert.rejects(workspace.save([{ ...file, text:file.text.replace('Steel','Iron') }, { path:'editor/workspace/new.json',hash:'stale',text:'[]' }]), /changed on disk/);
   assert.equal((await workspace.read(file.path)).text, file.text);
 });
+test('save validation accepts the real outfits.csv (id repeats across classes) and refuses a true duplicate', async () => {
+  const outfits = await fs.readFile(new URL('../../content/source/outfits.csv', import.meta.url), 'utf8');
+  assert.doesNotThrow(() => validateText('content/source/outfits.csv', outfits));
+  const firstReaver = outfits.split('\n').find((line) => line.startsWith('default,reaver,'));
+  assert.throws(() => validateText('content/source/outfits.csv', `${outfits}${firstReaver}\n`), /duplicate id: default/);
+  // A table with no scope column keeps the single key rule.
+  assert.throws(() => validateText('content/source/x.csv', 'id,name\nx,A\nx,B\n'), /duplicate id: x/);
+});
+
+test('save validation rejects a repeated id under another *Id column unless the table lists it in KEY_SCOPES', async () => {
+  const read = rel => fs.readFile(new URL(`../../${rel}`, import.meta.url), 'utf8');
+  // Append a copy of the table's first data row with one *Id value changed: the id repeats, the scope differs.
+  const withDuplicate = (text, field, value) => {
+    const lines = text.split('\n');
+    const headerAt = lines.findIndex(l => l.trim() && !l.startsWith('#'));
+    const names = lines[headerAt].split(',');
+    const row = lines.slice(headerAt + 1).find(l => l.trim() && !l.startsWith('#')).split(',');
+    row[names.indexOf(field)] = value;
+    return `${text.replace(/\n*$/, '\n')}${row.join(',')}\n`;
+  };
+  const cases = [
+    ['content/source/startingKits.csv', 'classId', 'starseer'],
+    ['content/source/nodes.csv', 'parentId', 'root'],
+    ['content/source/basicCardProfiles.csv', 'baseCardId', 'otherBase'],
+  ];
+  for (const [rel, field, value] of cases) {
+    const text = await read(rel);
+    assert.doesNotThrow(() => validateText(rel, text), rel);
+    assert.throws(() => validateText(rel, withDuplicate(text, field, value)), /duplicate id/, rel);
+  }
+  // The one listed table, outfits.csv, accepts that repeat as its scope.
+  const outfits = await read('content/source/outfits.csv');
+  const firstLine = outfits.split('\n').find(l => l.startsWith('default,reaver,'));
+  assert.doesNotThrow(() => validateText('content/source/outfits.csv', `${outfits}${firstLine.replace('default,reaver,', 'default,zzzUnlisted,')}\n`));
+});
+
 test('duplicate ids and concurrent stale saves are rejected', async t => {
   const { workspace } = await fixture(t); const file = await workspace.read('content/source/items.csv');
   await assert.rejects(workspace.save([{...file,text:'id,name\nx,A\nx,B\n'}]), /duplicate/);
@@ -101,4 +139,115 @@ test('with only the light pack fetched, the library lists and the preview serves
   const redirect = await fetch(`${app.url}/game/assets/bg/a.webp`,{redirect:'manual'});
   const served = await fetch(redirect.headers.get('location'));
   assert.equal(served.status,200); assert.equal(await served.text(),'RIFF');
+});
+test('framing is refused by default and allowed only for a named loopback ancestor (the Workbench)', async t => {
+  const { root } = await fixture(t);
+  await fs.writeFile(path.join(root, 'sample.html'), '<!doctype html><title>x</title>');
+  await assert.rejects(createStudio({root,port:0,stateDir:path.join(root,'state'),frameAncestors:['https://evil.example']}), /Refused frame ancestor/);
+  await assert.rejects(createStudio({root,port:0,stateDir:path.join(root,'state'),frameAncestors:["http://127.0.0.1:4300 'unsafe-inline'"]}), /Refused frame ancestor/);
+  const plain = await createStudio({root,port:0,stateDir:path.join(root,'state')}); t.after(() => plain.close());
+  assert.match((await fetch(`${plain.url}/`)).headers.get('content-security-policy'), /frame-ancestors 'none'$/);
+  const framed = await createStudio({root,port:0,stateDir:path.join(root,'state'),frameAncestors:['http://127.0.0.1:4300']}); t.after(() => framed.close());
+  assert.match((await fetch(`${framed.url}/`)).headers.get('content-security-policy'), /frame-ancestors http:\/\/127\.0\.0\.1:4300$/);
+  const game = await fetch(`${framed.url.replace('127.0.0.1','localhost')}/game/sample.html`);
+  assert.equal(game.status,200);
+  assert.match(game.headers.get('content-security-policy'), /frame-ancestors 'self' http:\/\/127\.0\.0\.1:\d+ http:\/\/127\.0\.0\.1:4300$/);
+});
+test('builds that write the generated trees share the cross-process lock: 409 naming the holder; validate is not blocked', async t => {
+  const { root } = await fixture(t);
+  await fs.mkdir(path.join(root,'tools'),{recursive:true});
+  await fs.writeFile(path.join(root,'tools/content-build.mjs'),'console.log("built");\n');
+  await fs.writeFile(path.join(root,'tools/framework-data-build.mjs'),'\n');
+  const app = await createStudio({root,port:0,stateDir:path.join(root,'state')}); t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const call = body => fetch(`${app.url}/api/job`, body ? {method:'POST',headers:{'x-studio-token':token,'Content-Type':'application/json'},body:JSON.stringify(body)} : {headers:{'x-studio-token':token}});
+  const settle = async () => { let job; for (let i = 0; i < 200; i++) { job = await (await call()).json(); if (job.status !== 'running') break; await new Promise(r => setTimeout(r, 30)); } return job; };
+  const other = spawn(process.execPath, ['-e','setTimeout(() => {}, 60000)'], {stdio:'ignore'}); t.after(() => other.kill());
+  const lock = path.join(await fs.realpath(root), '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({pid:other.pid,holder:'Config build (Workbench)',startedAt:Date.now(),token:'x'}));
+  for (const name of ['content','build']) {
+    const refused = await call({name});
+    assert.equal(refused.status,409,name);
+    assert.equal((await refused.json()).error,'Config build (Workbench) is running; try again when it finishes');
+  }
+  assert.equal((await call({name:'validate'})).status,200,'validate only reads the generated trees');
+  await settle();
+  await fs.rm(lock);
+  assert.equal((await call({name:'content'})).status,200);
+  const done = await settle();
+  assert.equal(done.status,'passed'); assert.match(done.output,/built/);
+  await assert.rejects(fs.stat(lock), /ENOENT/, 'released after the build');
+});
+
+test('closing the Editor stops a build and every process it started before releasing the lock', async t => {
+  if (process.platform === 'win32') return t.skip('POSIX process-group coverage; Windows uses taskkill /T');
+  const { root } = await fixture(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/launch.mjs'), `
+    import fs from 'node:fs';
+    import { spawn } from 'node:child_process';
+    const nested = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
+    fs.writeFileSync('build-tree.json', JSON.stringify({ parent: process.pid, nested: nested.pid }));
+    setInterval(() => {}, 1000);
+  `);
+  const app = await createStudio({ root, port: 0, stateDir: path.join(root, 'state') });
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const started = await fetch(`${app.url}/api/job`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'build' }) });
+  assert.equal(started.status, 200);
+  let pids;
+  for (let i = 0; i < 200 && !pids; i++) {
+    try { pids = JSON.parse(await fs.readFile(path.join(root, 'build-tree.json'), 'utf8')); } catch { await new Promise((resolve) => setTimeout(resolve, 20)); }
+  }
+  assert.ok(pids?.parent && pids?.nested, 'the build tree started');
+  await app.close();
+
+  // A zombie the container's PID 1 has not reaped yet counts as stopped, as it does in the shutdown code.
+  const alive = (pid) => processAlive(pid);
+  for (let i = 0; i < 100 && (alive(pids.parent) || alive(pids.nested)); i++) await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(alive(pids.parent), false, 'the direct build child exited');
+  assert.equal(alive(pids.nested), false, 'the nested builder exited');
+  await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'the lock was released after the process tree exited');
+});
+
+test('a Content Editor save of a build input waits for the shared build lock, then fails 409 and writes nothing', async t => {
+  const { root } = await fixture(t);
+  const app = await createStudio({ root, port: 0, stateDir: path.join(root, 'state'), lockWaitMs: 300 }); t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' }); t.after(() => other.kill());
+  const lock = path.join(await fs.realpath(root), '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Workbench config build', startedAt: Date.now(), token: 'theirs' }));
+  const file = path.join(root, 'content/source/items.csv');
+  const before = await fs.readFile(file, 'utf8');
+  const started = Date.now();
+  const refused = await fetch(`${app.url}/api/save`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ path: 'content/source/items.csv', hash: hash(before), text: before.replace('Steel', 'Bronze') }] }) });
+  assert.equal(refused.status, 409);
+  assert.match((await refused.json()).error, /Workbench config build is running/);
+  assert.ok(Date.now() - started >= 250, 'the save waited for the lock before it failed');
+  assert.equal(await fs.readFile(file, 'utf8'), before, 'nothing was written');
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'theirs', 'their lock stands');
+});
+
+test('a Content Editor save of a build input takes the lock when it is free and releases it afterwards', async t => {
+  const { root } = await fixture(t);
+  const app = await createStudio({ root, port: 0, stateDir: path.join(root, 'state') }); t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const file = path.join(root, 'content/source/items.csv');
+  const before = await fs.readFile(file, 'utf8');
+  const saved = await fetch(`${app.url}/api/save`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ path: 'content/source/items.csv', hash: hash(before), text: before.replace('Steel', 'Bronze') }] }) });
+  assert.equal(saved.status, 200);
+  assert.match(await fs.readFile(file, 'utf8'), /Bronze sword/);
+  await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'released after the save');
+});
+
+test('a Content Editor save outside the build inputs does not wait for the build lock', async t => {
+  const { root } = await fixture(t);
+  const app = await createStudio({ root, port: 0, stateDir: path.join(root, 'state'), lockWaitMs: 60000 }); t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' }); t.after(() => other.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: other.pid, holder: 'Workbench config build', startedAt: Date.now(), token: 'theirs' }));
+  const started = Date.now();
+  const saved = await fetch(`${app.url}/api/save`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ path: 'editor/workspace/test.json', hash: null, text: '[]\n' }] }) });
+  assert.equal(saved.status, 200);
+  assert.ok(Date.now() - started < 5000, 'no wait for the lock');
+  assert.equal(await fs.readFile(path.join(root, 'editor/workspace/test.json'), 'utf8'), '[]\n');
 });

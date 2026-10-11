@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createUiStudio, Workspace, safePath, hash } from '../server.mjs';
 import { SKETCH_SCHEMA } from '../model.mjs';
@@ -156,6 +157,21 @@ test('HTTP: token, origin and host checks; the preview origin cannot reach the A
   assert.equal((await fetch(`${app.url}/api/config`, { method: 'DELETE', headers: { 'x-studio-token': token } })).status, 404);
 });
 
+test('framing is refused by default and allowed only for a named loopback ancestor (the Workbench)', async (t) => {
+  const { root, stateDir } = await fixture(t);
+  await assert.rejects(createUiStudio({ root, port: 0, stateDir, frameAncestors: ['https://evil.example'] }), /Refused frame ancestor/);
+  await assert.rejects(createUiStudio({ root, port: 0, stateDir, frameAncestors: ["http://127.0.0.1:4300 'unsafe-inline'"] }), /Refused frame ancestor/);
+  const plain = await createUiStudio({ root, port: 0, stateDir });
+  t.after(() => plain.close());
+  assert.match((await fetch(`${plain.url}/`)).headers.get('content-security-policy'), /frame-ancestors 'none'$/);
+  const framed = await createUiStudio({ root, port: 0, stateDir, frameAncestors: ['http://127.0.0.1:4300'] });
+  t.after(() => framed.close());
+  assert.match((await fetch(`${framed.url}/`)).headers.get('content-security-policy'), /frame-ancestors http:\/\/127\.0\.0\.1:4300$/);
+  const game = await fetch(`${framed.url.replace('127.0.0.1', 'localhost')}/game/content/config/ui/tokens.json`);
+  assert.equal(game.status, 200);
+  assert.match(game.headers.get('content-security-policy'), /frame-ancestors 'self' http:\/\/127\.0\.0\.1:\d+ http:\/\/127\.0\.0\.1:4300$/);
+});
+
 test('two saves of disjoint files validate in turn: the second sees the first on disk', async (t) => {
   const { root, workspace } = await fixture(t);
   const [w4a, tokens] = await workspace.config();
@@ -173,4 +189,130 @@ test('two saves of disjoint files validate in turn: the second sees the first on
   const onDisk = await fs.readFile(path.join(root, 'content/config', w4a.rel), 'utf8');
   assert.equal(onDisk, w4aWithoutRef, 'the first write stands and the tree still compiles');
   assert.deepEqual((await workspace.validate([])).errors, []);
+});
+
+test('compile shares the generated-files lock: Compile now gets 409 naming the holder; a compile after save waits, then reports', async (t) => {
+  const { root, stateDir } = await fixture(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), 'console.log("compiled");\n');
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 300 });
+  t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const call = (body) => fetch(`${app.url}/api/compile`, body ? { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { headers: { 'x-studio-token': token } });
+  const settle = async () => { let job; for (let i = 0; i < 100; i++) { job = await (await call()).json(); if (!['running', 'waiting'].includes(job.status)) break; await new Promise((r) => setTimeout(r, 30)); } return job; };
+  // Another process (a Workbench job) holds the lock.
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(await fs.realpath(root), '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Content build (Workbench)', startedAt: Date.now(), token: 'x' }));
+  const refused = await call({});
+  assert.equal(refused.status, 409);
+  assert.equal((await refused.json()).error, 'Content build (Workbench) is running; try again when it finishes');
+  const waiting = await call({ wait: true });
+  assert.equal(waiting.status, 200);
+  assert.equal((await waiting.json()).status, 'waiting');
+  const gaveUp = await settle();
+  assert.equal(gaveUp.status, 'failed');
+  assert.match(gaveUp.output, /Content build \(Workbench\) is running; try again when it finishes\. The save stands/);
+  // It waits for the holder and then compiles.
+  assert.equal((await call({ wait: true })).status, 200);
+  await new Promise((r) => setTimeout(r, 60));
+  await fs.rm(lock);
+  const done = await settle();
+  assert.equal(done.status, 'passed');
+  assert.match(done.output, /compiled/);
+  await assert.rejects(fs.stat(lock), /ENOENT/, 'released after the compile');
+  assert.equal((await call({})).status, 200, 'Compile now runs when the lock is free');
+  assert.equal((await settle()).status, 'passed');
+});
+
+test('close() stops a running compile, its process tree, and releases the build lock before it resolves', { skip: process.platform === 'win32' }, async (t) => {
+  const { root, stateDir } = await fixture(t);
+  const real = await fs.realpath(root);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // A slow compiler that records its pid and never finishes on its own.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; fs.writeFileSync('compiler.pid', String(process.pid)); setInterval(() => {}, 1000);\n");
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 2000 });
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const started = await fetch(`${app.url}/api/compile`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(started.status, 200);
+  const pidFile = path.join(root, 'compiler.pid');
+  for (let i = 0; i < 100; i++) { try { await fs.access(pidFile); break; } catch { await new Promise((r) => setTimeout(r, 30)); } }
+  const pid = Number(await fs.readFile(pidFile, 'utf8'));
+  assert.ok(pid > 0, 'the compiler is running');
+  assert.doesNotThrow(() => process.kill(pid, 0), 'alive before close');
+  const lockText = await fs.readFile(path.join(real, '.build-lock'), 'utf8');
+  assert.equal(JSON.parse(lockText).holder, 'UI Studio config compile', 'the compile holds the lock');
+  await app.close();
+  assert.throws(() => process.kill(pid, 0), /ESRCH/, 'the compiler is gone once close() resolves');
+  await assert.rejects(fs.stat(path.join(real, '.build-lock')), /ENOENT/, 'the build lock is released once close() resolves');
+});
+
+test('close() does not return while a compile grandchild that ignores SIGTERM is alive; nothing is written after it', { skip: process.platform === 'win32' }, async (t) => {
+  const { root, stateDir } = await fixture(t);
+  const real = await fs.realpath(root);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // The compiler exits on SIGTERM, but the grandchild it started ignores SIGTERM and writes late.txt 700 ms in.
+  const grandchild = "process.on('SIGTERM', () => {}); require('node:fs').writeFileSync('grandchild.pid', String(process.pid)); setTimeout(() => require('node:fs').writeFileSync('late.txt', 'late'), 700); setInterval(() => {}, 1000);";
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `import { spawn } from 'node:child_process';\nspawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'ignore' });\nsetInterval(() => {}, 1000);\n`);
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 2000, stopGraceMs: 300 });
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const started = await fetch(`${app.url}/api/compile`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(started.status, 200);
+  const pidFile = path.join(root, 'grandchild.pid');
+  for (let i = 0; i < 100; i++) { try { await fs.access(pidFile); break; } catch { await new Promise((r) => setTimeout(r, 30)); } }
+  const pid = Number(await fs.readFile(pidFile, 'utf8'));
+  assert.ok(pid > 0, 'the grandchild is running');
+  await app.close();
+  // Dead, or an unreaped zombie that can no longer run or write.
+  const state = await fs.readFile(`/proc/${pid}/stat`, 'utf8').then((s) => (/\) Z /.test(s) ? 'zombie' : 'running'), () => 'gone');
+  assert.notEqual(state, 'running', 'the grandchild is dead once close() resolves');
+  await new Promise((r) => setTimeout(r, 1200));
+  await assert.rejects(fs.stat(path.join(real, 'late.txt')), /ENOENT/, 'nothing was written after close() resolved');
+  await assert.rejects(fs.stat(path.join(real, '.build-lock')), /ENOENT/, 'the build lock is released once close() resolves');
+});
+
+test('save holds the lock it is given, and releases it on success and on refusal', async (t) => {
+  const { root, workspace } = await fixture(t);
+  const [w4a] = await workspace.config();
+  const edited = W4A.replace('"hud": 10, "scene": 55', '"hud": 12, "scene": 53');
+  const file = path.join(root, 'content/config', w4a.rel);
+  // A lock that refuses: nothing is written.
+  await assert.rejects(workspace.save([{ rel: w4a.rel, text: edited, hash: w4a.hash }], { lock: async () => { throw Object.assign(Error('Busy holder is running'), { status: 409 }); } }), /Busy holder/);
+  assert.equal(await fs.readFile(file, 'utf8'), W4A, 'a refused lock writes nothing');
+  // A taken lock is released after a successful save, and after a refused one.
+  let released = 0;
+  const lock = async () => () => { released += 1; };
+  await workspace.save([{ rel: w4a.rel, text: edited, hash: w4a.hash }], { lock });
+  assert.equal(released, 1, 'released after a successful save');
+  await assert.rejects(workspace.save([{ rel: w4a.rel, text: edited, hash: 'stale' }], { lock }), /changed on disk/);
+  assert.equal(released, 2, 'released after a refused save too');
+  assert.equal(await fs.readFile(file, 'utf8'), edited);
+});
+
+test('save over HTTP holds the build lock: a foreign holder gets 409 naming it and the file is unchanged', async (t) => {
+  const { root, stateDir } = await fixture(t);
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 300 });
+  t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const real = await fs.realpath(root);
+  const [w4a] = await app.workspace.config();
+  const file = path.join(real, 'content/config', w4a.rel);
+  const edited = W4A.replace('"hud": 10, "scene": 55', '"hud": 12, "scene": 53');
+  const save = () => fetch(`${app.url}/api/save`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ rel: w4a.rel, text: edited, hash: w4a.hash }] }) });
+  // Another process (a Workbench build) holds the lock.
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(real, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Content build (Workbench)', startedAt: Date.now(), token: 'x' }));
+  const refused = await save();
+  assert.equal(refused.status, 409);
+  assert.equal((await refused.json()).error, 'Content build (Workbench) is running; try again when it finishes');
+  assert.equal(await fs.readFile(file, 'utf8'), W4A, 'a save refused by the lock writes nothing');
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'x', 'the other holder keeps its lock');
+  // Once the holder is gone the same save lands and the lock is released.
+  await fs.rm(lock);
+  assert.equal((await save()).status, 200);
+  assert.equal(await fs.readFile(file, 'utf8'), edited);
+  await assert.rejects(fs.stat(lock), /ENOENT/, 'the save released the lock');
 });

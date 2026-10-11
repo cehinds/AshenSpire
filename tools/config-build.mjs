@@ -32,6 +32,7 @@
 // are findable from either end.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { holdForCli } from './lib/build-lock.mjs';
 import { resolve, dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -402,6 +403,8 @@ export function configSourceErrors(contentRoot) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
+  // Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
+  if (!check) await holdForCli(ROOT, 'config-build');
   const entries = readConfigTree(resolve(ROOT, 'content'));
   if (!entries.length) {
     console.error(`config-build: no JSON under ${CONFIG_DIR}/`);

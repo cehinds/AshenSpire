@@ -1,0 +1,75 @@
+/* workbench/shared/tokens.css — design tokens for AshenSpire's desktop tools.
+   Variables only (no element selectors), namespaced --as-*, so any tool can
+   link it before its own stylesheet without changing how it looks until it
+   chooses to read a token. Dark, warm, one accent (ember amber). */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces, darkest to lightest */
+  --as-bg-sunken: #0d0c0a;
+  --as-bg: #131210;
+  --as-bg-panel: #1a1815;
+  --as-bg-raised: #23201c;
+  --as-bg-hover: #2c2823;
+  --as-bg-active: #36302a;
+  --as-overlay: rgba(6, 5, 4, 0.62);
+
+  /* Lines */
+  --as-line: #2e2a25;
+  --as-line-strong: #453e35;
+
+  /* Text */
+  --as-text: #ece5d8;
+  --as-text-dim: #b0a593;
+  --as-text-faint: #7a705f;
+
+  /* The one accent, and ink to sit on it */
+  --as-accent: #e0a64a;
+  --as-accent-strong: #f0b95c;
+  --as-accent-soft: rgba(224, 166, 74, 0.14);
+  --as-accent-ink: #1b1306;
+
+  /* Status */
+  --as-good: #74c27a;
+  --as-warn: #e3b341;
+  --as-bad: #e0645c;
+  --as-info: #6fa8dc;
+  --as-idle: #6d665c;
+
+  /* Type */
+  --as-font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  --as-font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  --as-mono: ui-monospace, "Cascadia Code", "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  --as-text-xs: 11px;
+  --as-text-sm: 12px;
+  --as-text-md: 13px;
+  --as-text-lg: 15px;
+  --as-text-xl: 19px;
+  --as-text-2xl: 24px;
+  --as-leading: 1.45;
+
+  /* Space (4 px grid) */
+  --as-space-1: 4px;
+  --as-space-2: 8px;
+  --as-space-3: 12px;
+  --as-space-4: 16px;
+  --as-space-5: 20px;
+  --as-space-6: 24px;
+  --as-space-8: 32px;
+
+  /* Shape and depth */
+  --as-radius-sm: 4px;
+  --as-radius: 6px;
+  --as-radius-lg: 10px;
+  --as-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+  --as-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+  /* Focus */
+  --as-focus: 0 0 0 2px var(--as-bg), 0 0 0 4px var(--as-accent);
+  --as-focus-ring: 2px solid var(--as-accent);
+
+  /* Motion */
+  --as-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --as-fast: 120ms;
+  --as-slow: 220ms;
+}

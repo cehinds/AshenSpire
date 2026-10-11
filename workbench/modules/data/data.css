@@ -1,0 +1,70 @@
+/* workbench/modules/data/data.css — Data Studio layout. The grid kit styles come from ui/kit/grid.css. */
+/* The host is the size container: below 1100px the table list and the Row/Check panel become overlay drawers. */
+.ds-host { height: 100%; min-height: 0; container: ds / inline-size; }
+.ds { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; height: 100%; min-height: 0; position: relative; }
+.ds-tables-toggle, .ds-list-close, .ds-drawer-close { display: none; }
+.ds-list, .ds-side { min-height: 0; overflow: auto; border-right: 1px solid var(--as-line); padding: 10px; }
+/* The find box fills the list column; its default width overflowed the 220px column. */
+.ds-find { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+.ds-list-head { display: flex; gap: 6px; align-items: center; }
+.ds-list-head .ds-find { flex: 1; }
+.ds-side { border-right: 0; border-left: 1px solid var(--as-line); }
+.ds-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
+.ds-toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--as-line); }
+.ds-grid { min-height: 0; min-width: 0; overflow: hidden; }
+.ds-group { margin: 12px 0 4px; font-size: var(--as-text-xs); color: var(--as-text-dim); text-transform: uppercase; letter-spacing: .06em; }
+.ds-table { display: flex; width: 100%; align-items: center; gap: 6px; border: 0; background: transparent; color: inherit; text-align: left; padding: 5px 6px; border-radius: 6px; cursor: pointer; font: inherit; }
+.ds-table[aria-current="true"] { background: var(--as-bg-raised); }
+.ds-table .ds-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-table .ds-path { display: block; font-size: 11px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; }
+.ds-form label.ds-locked { opacity: 0.6; }
+.ds-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--as-warn); visibility: hidden; }
+.ds-dot.on { visibility: visible; }
+.ds-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+.ds-tabs button { flex: 1; }
+.ds-tabs button[aria-selected="true"] { font-weight: 600; }
+.ds-hidden { display: none !important; }
+.ds-form label { display: grid; gap: 3px; margin-bottom: 10px; font-size: var(--as-text-sm); }
+.ds-form em { font-style: normal; color: var(--as-text-faint); font-size: var(--as-text-xs); }
+.ds-form input { width: 100%; box-sizing: border-box; }
+.ds-muted { color: var(--as-text-dim); }
+.ds-note { padding: 24px; color: var(--as-text-dim); }
+.ds-file { color: var(--as-text-dim); font-size: var(--as-text-xs); margin-left: auto; }
+/* Below 1100px the grid has the width: the table list and the Row/Check panel slide in as overlays from the
+   sides (.list-open, .row-open), each with a Close button. Nothing reflows under the grid. */
+@container ds (max-width: 1100px) {
+  .ds { grid-template-columns: minmax(0, 1fr); }
+  .ds-tables-toggle, .ds-list-close { display: inline-flex; }
+  .ds-list, .ds-side { position: absolute; top: 0; bottom: 0; z-index: 6; width: min(300px, 88%); background: var(--as-bg-panel); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); transition: transform 180ms ease; }
+  .ds-list { left: 0; border-right: 1px solid var(--as-line); transform: translateX(-100%); }
+  .ds-side { right: 0; border-left: 1px solid var(--as-line); border-right: 0; transform: translateX(100%); }
+  .ds.list-open .ds-list, .ds.row-open .ds-side { transform: none; }
+  .ds-drawer-close { display: inline-flex; }
+  .ds-tabs .ds-drawer-close { flex: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ds-list, .ds-side { transition: none; } }
+.ds-review { width: min(860px, 94vw); max-height: 86vh; padding: 0; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius-lg); background: var(--as-bg-panel); color: var(--as-text); box-shadow: var(--as-shadow-lg); }
+.ds-review::backdrop { background: var(--as-overlay); }
+.ds-review-body { padding: 18px 20px; overflow: auto; max-height: 86vh; }
+.ds-review h2 { margin: 0 0 12px; font-size: var(--as-text-lg); }
+.ds-diff { margin-bottom: 14px; }
+.ds-diff h3 { font-size: var(--as-text-sm); margin: 0 0 6px; font-family: var(--as-mono); }
+.ds-count { color: var(--as-text-faint); font-weight: 400; margin-left: 8px; }
+.ds-lines { margin: 0; max-height: 260px; overflow: auto; background: var(--as-bg-sunken); border: 1px solid var(--as-line); border-radius: var(--as-radius); font: var(--as-text-xs)/1.5 var(--as-mono); }
+.ds-line { padding: 0 10px; }
+.ds-line.ds-add { background: rgba(94, 191, 124, 0.14); color: var(--as-good); }
+.ds-line.ds-del { background: rgba(224, 100, 92, 0.14); color: var(--as-bad); }
+.ds-line.ds-ctx { color: var(--as-text-dim); }
+.ds-hunk { padding: 2px 10px; color: var(--as-info); background: var(--as-bg-raised); }
+.ds-review-status { margin: 10px 0; }
+.ds-review-status p { margin: 6px 0; }
+.ds-bad { color: var(--as-bad); }
+.ds-review-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.ds-grid .gk-undo, .ds-grid .gk-redo { display: none; }
+.ds-lines .ds-line { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* The tag model proposal: a read-only or derived-column note above the grid. */
+.ds-tm-banner { margin: 0 0 8px; padding: 8px 12px; border-radius: 8px; background: var(--surface-2, #f4f1ea); color: var(--text-2, #3d3a33); font-size: 13px; line-height: 1.4; }
+.ds-tm-banner[hidden] { display: none; }
+/* A visible banner takes its own row above the grid; hidden, it takes none. */
+.ds-main:has(> .ds-tm-banner:not([hidden])) { grid-template-rows: auto auto minmax(0, 1fr); }
