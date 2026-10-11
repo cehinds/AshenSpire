@@ -289,6 +289,52 @@ test('evasionFor: a plain numeric evasion still works, and an unknown armor name
   assert.throws(() => evasionFor({ armor: 'Tinsel', dex: 1 }, evasionTables()), RangeError);
 });
 
+// Wiring (DESIGN.md, Hit roll): a side's accuracy comes from accuracyFor() and its
+// evasion from evasionFor(). Defender evasion 0 means the target is 8, so the
+// attacker's accuracy decides which die hits.
+const PLAIN_TARGET = { id: 'guard', slot: 0, speed: 4, kind: 'other' };
+const attackerHit = (attacker, face) => resolvePair(
+  PLAIN_TARGET,
+  { id: 'foe', speed: 1, kind: 'attack', ...attacker },
+  d20Face(face),
+  {},
+);
+
+test('wiring: a level 5 attacker gets accuracy +1, so d20 7 hits (need 7)', () => {
+  assert.equal(find(attackerHit({ level: 5 }, 7), 'hit').hit, true);
+  assert.equal(find(attackerHit({ level: 0 }, 7), 'hit').hit, false, 'level 0 needs 8');
+});
+
+// Expected results through resolvePair: enemy accuracy 5 misses (2 + evasion) of
+// 20 faces for these player evasions. Passes before the wiring too, since these
+// are plain numbers and their needs sit inside the cap.
+test('wiring: enemy accuracy 5 through resolvePair misses (2 + evasion) of 20 faces', () => {
+  for (const evasion of [0, 1, 3, 8]) {
+    let missed = 0;
+    for (let face = 1; face <= 20; face += 1) {
+      const hit = find(resolvePair({ ...PLAIN_TARGET, evasion }, { id: 'foe', speed: 1, kind: 'attack', accuracy: 5 }, d20Face(face), {}), 'hit');
+      if (!hit.hit) missed += 1;
+    }
+    assert.equal(missed, 2 + evasion, `evasion ${evasion}`);
+  }
+});
+
+test('wiring: the telegraphed tag takes 2 off accuracy, so d20 9 misses (need 10)', () => {
+  assert.equal(find(attackerHit({ tags: ['telegraphed'] }, 9), 'hit').hit, false);
+  assert.equal(find(attackerHit({ tags: [] }, 9), 'hit').hit, true, 'no tag needs 8');
+});
+
+test('wiring: an unpaired attack uses playerDefense armor and DEX (Plated DEX 5 gives evasion 1)', () => {
+  const { events } = resolveRound(
+    [],
+    [{ id: 'foe', speed: 1, kind: 'attack' }],
+    1,
+    d20Face(8),
+    { decay: 0, evasionTables: evasionTables(), playerDefense: { armor: 'Plated', dex: 5 } },
+  );
+  assert.equal(events.find((e) => e.type === 'hit').hit, false, 'evasion 1 needs 9, so d20 8 misses');
+});
+
 test('hit roll rejects a d20 outside 1..20', () => {
   assert.throws(() => hitRoll({}, 0), RangeError);
   assert.throws(() => hitRoll({}, 21), RangeError);

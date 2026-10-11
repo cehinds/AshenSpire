@@ -232,7 +232,11 @@ function normalizeEvadeBonuses(list) {
   });
 }
 
-function normalizeSide(name, s) {
+// `tables` is { armor, cards } from parseEvasionArmor and parseEvasionCards, used
+// by evasionFor() when the side gives armor, dex, shield or card.
+// accuracy is the full total from accuracyFor() (attributes, level, attack tag and
+// any flat bonus). A plain numeric accuracy or evasion still gives the same number.
+function normalizeSide(name, s, tables) {
   if (!s || typeof s !== 'object') throw new TypeError(`${name} must be an object`);
   if (!Number.isFinite(s.speed)) throw new TypeError(`${name}.speed must be a finite number`);
   const kind = s.kind ?? 'other';
@@ -243,9 +247,9 @@ function normalizeSide(name, s) {
     kind,
     speed: s.speed,
     tags: Array.isArray(s.tags) ? [...s.tags] : [],
-    accuracy: Number(s.accuracy ?? 0),
+    accuracy: accuracyFor({ attrs: s.attrs, level: s.level, tags: s.tags, accuracy: s.accuracy }),
     attrs: s.attrs ?? {},
-    evasion: Number(s.evasion ?? 0),
+    evasion: evasionFor({ armor: s.armor, dex: s.dex, shield: s.shield, card: s.card, evasion: s.evasion }, tables),
     stance: s.stance ?? null,
     damage: Number(s.damage ?? 0),
     block: Number(s.block ?? 0),
@@ -265,7 +269,8 @@ function normalizeSide(name, s) {
 function rollAttack({ who, attacker, target, pool, rng, options, events }) {
   const targetKey = other(who);
   const d20 = rollD20(rng);
-  const { hit, need } = hitRoll({ accuracy: attacker.accuracy, attrs: attacker.attrs, evasion: target.evasion }, d20);
+  // attacker.accuracy already holds the attribute term (accuracyFor), so attrs is not passed again.
+  const { hit, need } = hitRoll({ accuracy: attacker.accuracy, evasion: target.evasion }, d20);
   // A full block (Block >= damage, damage > 0) absorbs a hit that rolled true.
   // The blocking side wins the slot, and the attack does not land.
   const blocked = hit && attacker.damage > 0 && target.block >= attacker.damage;
@@ -337,8 +342,8 @@ function rollAttack({ who, attacker, target, pool, rng, options, events }) {
 //   tie, player then enemy).
 export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   const side = {
-    player: normalizeSide('player', playerIn),
-    enemy: normalizeSide('enemy', enemyIn),
+    player: normalizeSide('player', playerIn, options.evasionTables),
+    enemy: normalizeSide('enemy', enemyIn, options.evasionTables),
   };
   // Shared charge pool by side, spent in this call (DESIGN.md, Evasion). A side
   // missing from options.charges uses its own intangibleCharges. The caller's
@@ -648,9 +653,12 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // options.decay: momentum decay step per round (default 1, 0 turns it off).
 // options.evadeBonuses: scoped evade bonuses, filtered here by scope, round,
 //   combatId and appliesTo (see inputBonuses below). Default none.
-// options.playerDefense: { evasion, evadePct, tags } for the player against an
-//   unpaired enemy attack. Default evasion 0, evadePct 0, no tags. The
-//   'intangible' tag draws on the player's pool in options.charges.
+// options.playerDefense: { evasion, evadePct, tags, armor, dex, shield, card } for the
+//   player against an unpaired enemy attack. Default evasion 0, evadePct 0, no tags.
+//   With armor, dex, shield or card, evasion comes from evasionFor() (options.evasionTables).
+//   The 'intangible' tag draws on the player's pool in options.charges.
+// options.evasionTables: { armor, cards } from parseEvasionArmor and parseEvasionCards.
+//   Needed only by a side that gives armor, dex, shield or card.
 // options.poiseDouble: { player?, [enemyId]: bool } flags from an earlier round. A
 //   flagged side's first landed hit this round carries poiseMultiplier 2 and clears
 //   the flag. Poise damage itself is not modelled.
@@ -771,11 +779,15 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const playerDefender = normalizeSide('player', {
     speed: 0,
     kind: 'other',
+    armor: defence.armor,
+    dex: defence.dex,
+    shield: defence.shield,
+    card: defence.card,
     evasion: defence.evasion,
     evadeBasePct: defence.evadePct,
     tags: defence.tags,
     evadeBonuses: bonusesFor(null, 'player'),
-  });
+  }, options.evasionTables);
 
   // Poise flags (owner, 2026-10-11; DESIGN.md, Momentum). Null-prototype, keyed by
   // 'player' or by enemy id. A side's first landed hit this round spends its flag.
@@ -848,7 +860,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       { ...pc, speed: pc.speed + momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(pc.evadeBonuses), ...bonusesFor(pc.id, 'player')] },
       { ...enemy, speed: enemy.speed - momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(enemy.evadeBonuses), ...bonusesFor(enemy.id, k)] },
       rng,
-      { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, charges: pool, poise: armed },
+      { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, evasionTables: options.evasionTables, charges: pool, poise: armed },
     );
     charges.player = pool.player;
     charges[k] = pool.enemy;
@@ -864,7 +876,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     push({ type: 'unpaired', slot, enemyId: k, visible, kind: enemy.kind ?? 'other', unpaired: true }, k);
     // Only an attack has an effect on an unpaired slot. It rolls against the player's defence.
     if ((enemy.kind ?? 'other') !== 'attack') return;
-    const attacker = normalizeSide('enemy', enemy);
+    const attacker = normalizeSide('enemy', enemy, options.evasionTables);
     const pool = { player: charges.player, enemy: charges[k] };
     const slotEvents = [];
     rollAttack({
