@@ -209,6 +209,21 @@ test('visible span and row runs: a filtered-out row inside the span is not part 
   assert.deepEqual(M.rowRuns([]), []);
 });
 
+test('shift selection in a filtered, sorted view selects only the visible rows', () => {
+  const order = [5, 4, 3, 1, 0]; // row 2 is hidden by a filter
+  let sel = M.selectCell(M.createSelection(), { r: 5, c: 0 }, {});
+  sel = M.selectCell(sel, { r: 0, c: 1 }, { shift: true, order });
+  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [0, 1, 3, 4, 5], 'the hidden row 2 is not selected');
+  // Without an order (the unfiltered case) the range is the document rectangle, as before.
+  const plain = M.selectCell(M.selectCell(M.createSelection(), { r: 5, c: 0 }, {}), { r: 0, c: 1 }, { shift: true });
+  assert.equal(M.selectedCells(plain, 6, 5).length, 6 * 2);
+  // Ctrl-shift keeps earlier ranges and adds the visible runs.
+  let ctrl = M.selectCell(M.createSelection(), { r: 0, c: 0 }, {});
+  ctrl = M.selectCell(ctrl, { r: 4, c: 0 }, { ctrl: true });
+  ctrl = M.selectCell(ctrl, { r: 3, c: 0 }, { shift: true, ctrl: true, order });
+  assert.deepEqual([...new Set(M.selectedCells(ctrl, 6, 5).map(c => c.r))].sort(), [0, 3, 4]);
+});
+
 test('export to CSV, TSV and JSON', () => {
   const d = fresh();
   assert.equal(M.toCSV(d).split('\n')[0], 'id,n,on,tag,data');

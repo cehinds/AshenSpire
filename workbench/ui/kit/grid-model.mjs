@@ -141,10 +141,13 @@ export function rowRuns(rows) {
 }
 const rectOf = (a, b) => ({ r0: Math.min(a.r, b.r), c0: Math.min(a.c, b.c), r1: Math.max(a.r, b.r), c1: Math.max(a.c, b.c) });
 
-function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ?? to } = {}) {
+// `order` (the visible row indices) makes a shift range follow the view: it covers the visible rows
+// between the anchor and `to`, split into document runs, so rows a filter hides are never selected.
+function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ?? to, order = null } = {}) {
   if (shift && sel.anchor) {
     const rect = rectOf(sel.anchor, to);
-    const ranges = ctrl && sel.ranges.length ? [...sel.ranges.slice(0, -1), rect] : [rect];
+    const runs = order ? rowRuns(visibleSpan(order, sel.anchor.r, to.r)).map(({ r0, r1 }) => ({ ...rect, r0, r1 })) : [rect];
+    const ranges = ctrl && sel.ranges.length ? [...sel.ranges.slice(0, -1), ...runs] : runs;
     return { ranges, anchor: sel.anchor, active: to };
   }
   const rect = rectOf(to, to);
