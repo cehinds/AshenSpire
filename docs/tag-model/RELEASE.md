@@ -28,11 +28,13 @@ input bytes give the same output bytes, with no timestamps or paths in it.
   do not) is stored as JS numbers, with `null` for an empty cell. Any other
   column stays a string column, so `TBD` and `+0.05` keep their text.
 - **Numeric ids for tag keys.** A tag's id is its row index in `tags.csv`.
-  Columns that name tags are stored as ids: `tags.parent`, `tags.school` and
-  `objects.skill`, `cardType`, `stance`, `rarity`, `costResource` as one id
-  (`-1` when empty); `tags.related`, `objects.tags` and `objects.exp` as a list
-  of ids (`[]` when empty). Every name must resolve to a tag key. Each list must
-  be single-space separated, so it decodes to the same text.
+  Columns that name tags are stored as ids. `tags.parent` holds the parent's
+  full id (kind `i`, `-1` when empty). `tags.school`, `objects.skill`,
+  `cardType`, `stance`, `rarity`, `costResource` and `relations.source` and
+  `target` hold one tag key (kind `g`, `-1` when empty). `tags.related`,
+  `objects.tags` and `objects.exp` hold a list of keys (kind `G`, `[]` when
+  empty). Every name must resolve; a list must be single-space separated, so
+  it decodes to the same text.
 - **Columnar arrays.** Each table is `{ n, cols: [[name, kind, data], ...] }`
   with one array per column. Kinds: `s` string index, `n` number or null, `g`
   tag id or -1, `G` tag id list, `c` formula code.
@@ -74,6 +76,13 @@ whether the constants are current.
 
 ## Reference semantics
 
+Three checks are stricter than the workbench, and each is a loud build error
+where the workbench would quietly give a wrong or odd answer: a malformed
+number such as `1.2.3`; a call with the wrong argument count (the workbench
+gives `NaN`); and an operator-like name inside `[ ]` read as an operator.
+Tag names are resolved by key, except `tags.parent`, which is an id. The
+workbench also accepts an id elsewhere; the release build does not.
+
 The formula grammar is copied from `docs/tag-model/workbench.html`, the formula
 engine, not imported from it: the same tokens (`[key]` references, numbers, names,
 `+ - * / % ^`, `< > <= >= == !=`, `&& ||`, `!`, parentheses, and `×` as `*`), the same
@@ -90,17 +99,29 @@ it fails the build, so a placeholder cannot quietly ship.
 
 ## Tests
 
-`tools/release.test.mjs` compiles the real tables, imports the emitted module,
-and decodes it with a reference decoder. It asserts:
+`tools/release.test.mjs` compiles the real tables, writes the emitted module to
+a temp file, imports it, and decodes it with a reference decoder that reads
+only the module's data. It asserts:
 
-- every kept table and column round-trips exactly, rows and values;
+- the module exports data only, with no functions, and `SOURCE_HASH` matches
+  the inputs;
+- every kept table and column round-trips exactly, rows and cells, and every
+  input table is present;
+- the tags table's parent and related references round-trip through ids;
 - each formula gives the same value as the workbench engine at rank 1 and rank
-  3, for every object and for no object. The workbench engine is run from the
-  source of `workbench.html`, so a change there that breaks the reference fails
-  the test;
-- two compiles give byte-identical output.
-
-It also prints the size before and after (CSV bytes, module bytes and gzip).
+  3, for no object and for each of the four objects (70 comparisons). The
+  engine is cut from the source of `workbench.html` between `function findTag(k)`
+  and `/* ---------- validation ---------- */`. A change that moves those markers
+  fails the test and says so;
+- the proposed placeholder is left out, with a note, as the workbench marks it;
+- two compiles, and two CLI runs, give byte-identical output, and `--check`
+  passes on a fresh file and fails on a stale one;
+- a formula that reads `[rank]` matches the workbench at rank 1 and 3;
+- each failure the design names fails the build, with its message: an
+  unresolved `[key]`, a reference to the placeholder, a loop, a tag with no
+  preview value, a wrong argument count, an unknown function, an unknown tag in
+  an object, an unresolved reference in a dropped column, and an unreadable rank
+  change.
 
 ## How the game would import it later (not wired now)
 

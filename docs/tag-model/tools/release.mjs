@@ -40,7 +40,7 @@ const BIN = Object.fromEntries(BINOPS.map((n, i) => [n, i]));
 
 // Columns that never reach the release module, per table. Each is prose or
 // provenance the game does not read at runtime (RELEASE.md, Encoding).
-const DROP = {
+export const DROP = {
   assets: ['note'],
   formulas: ['description', 'expr'],
   objects: ['description'],
@@ -63,9 +63,10 @@ const DROP = {
   'presentation.tokens': ['file', 'liveRef'],
 };
 
-// Columns that name tags. 'g' is one tag (or empty), 'G' a list of tags.
-const TAG_REF = {
-  tags: { parent: 'g', school: 'g', related: 'G' },
+// Columns that name tags. 'g' is one tag key (or empty), 'G' a list of tag
+// keys, 'i' one tag id (its full path, used by tags.parent).
+export const TAG_REF = {
+  tags: { parent: 'i', school: 'g', related: 'G' },
   objects: { cardType: 'g', stance: 'g', rarity: 'g', costResource: 'g', skill: 'g', exp: 'G', tags: 'G' },
   relations: { source: 'g', target: 'g' },
 };
@@ -228,7 +229,7 @@ export function compileInputs(inputs) {
     return parsed.get(name);
   };
 
-  // Tags: id = row index. Keys and ids both resolve (workbench findTag).
+  // Tags: id = row index. A tag column names a tag by key ('g', 'G') or by id ('i').
   const tagsT = need('tags');
   const tagIx = tagsT.header.indexOf('id');
   const tagKeyIx = tagsT.header.indexOf('key');
@@ -245,7 +246,8 @@ export function compileInputs(inputs) {
       tagById.set(r[tagIx], i);
     }
   });
-  const findTag = k => (tagByKey.has(k) ? tagByKey.get(k) : tagById.has(k) ? tagById.get(k) : -1);
+  const findTag = k => (tagByKey.has(k) ? tagByKey.get(k) : -1);
+  const findTagId = k => (tagById.has(k) ? tagById.get(k) : -1);
 
   // Values: id = row index.
   const valT = need('values');
@@ -384,9 +386,9 @@ export function compileInputs(inputs) {
   }
 
   // Tag reference columns: resolve every name to a tag id.
-  const tagOne = (where, text) => {
+  const tagOne = (where, text, find = findTag) => {
     if (text === '') return -1;
-    const id = findTag(text);
+    const id = find(text);
     if (id < 0) fail(`${where}: unknown tag "${text}"`);
     return id;
   };
@@ -422,8 +424,9 @@ export function compileInputs(inputs) {
     const columns = [];
 
     for (const { h, c } of cols) {
-      if (tagRefs[h] === 'g') {
-        columns.push([h, 'g', rows.map((r, i) => tagOne(`${name} row ${i + 2} ${h}`, r[c]))]);
+      if (tagRefs[h] === 'g' || tagRefs[h] === 'i') {
+        const find = tagRefs[h] === 'i' ? findTagId : findTag;
+        columns.push([h, tagRefs[h], rows.map((r, i) => tagOne(`${name} row ${i + 2} ${h}`, r[c], find))]);
         continue;
       }
       if (tagRefs[h] === 'G') {
