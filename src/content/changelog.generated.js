@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1857",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Generated game data is no longer rewritten when it hasn't changed",
+    "detail": "Development-process change only, nothing in the game changes. Two data builders rewrote their output on every run, so a test reading that data at the same moment could fail at random in CI; they now write only what changed.",
+    "build": "0.7.1.1303",
+    "pullRequest": 1857,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1857"
+  },
+  {
     "id": "pr-1852",
     "date": "2026-10-11",
     "group": "2026-10-11",

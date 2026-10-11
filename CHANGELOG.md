@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-11
 
+- **Generated game data is no longer rewritten when it hasn't changed** ([#1857](https://github.com/cehinds/AshenSpire/pull/1857), `0.7.1.1303`). Development-process change only, nothing in the game changes. Two data builders rewrote their output on every run, so a test reading that data at the same moment could fail at random in CI; they now write only what changed.
 - **Choosing equipment is a sortable table now** ([#1852](https://github.com/cehinds/AshenSpire/pull/1852), `0.7.1.1302`). When you press Replace or Choose on a slot, the Armoury lists every item that fits as a row: portrait, name and kind, an Equipped here / Not equipped / held-elsewhere status, and Inspect plus Equip, Move here or Unequip. Sort by Item or Status, show the items that don't fit along with the reason, and Inspect opens the full card in place. A single sceptre held in your main hand now says so and offers Move here for the off hand.
 
 - **One Workbench for every authoring tool** ([#1829](https://github.com/cehinds/AshenSpire/pull/1829), `0.7.1.1299`). For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.
