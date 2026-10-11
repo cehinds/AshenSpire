@@ -194,6 +194,32 @@ test('hit roll: evasion raises the target and accuracy lowers it', () => {
   assert.equal(hitRoll({ accuracy: 0, attrs: REAVER, evasion: 2 }, 4).hit, false);
 });
 
+// The required die is clamped to 2..16 (DESIGN.md, Hit roll): a hit is at least
+// 25% and a miss at most 75%, and natural 1 still misses.
+test('hit roll: the required die is clamped to 16 at the top, so accuracy 0 and evasion 20 needs 16', () => {
+  assert.equal(hitRoll({ accuracy: 0, evasion: 20 }, 15).hit, false);
+  assert.equal(hitRoll({ accuracy: 0, evasion: 20 }, 16).hit, true);
+  assert.equal(hitRoll({ accuracy: 0, evasion: 20 }, 16).need, 16);
+  assert.equal(hitRoll({ accuracy: 0, evasion: 20 }, 20).hit, true);
+});
+
+test('hit roll: the required die is clamped to 2 at the bottom, and natural 1 still misses', () => {
+  assert.equal(hitRoll({ accuracy: 30, evasion: 0 }, 1).hit, false);
+  assert.equal(hitRoll({ accuracy: 30, evasion: 0 }, 1).need, 2);
+  assert.equal(hitRoll({ accuracy: 30, evasion: 0 }, 2).hit, true);
+});
+
+// Enemy accuracy 5: the miss chance is (2 + evasion) / 20 for these evasions.
+test('hit roll: enemy accuracy 5 misses (2 + evasion) of 20 faces, exhaustively', () => {
+  for (const evasion of [0, 1, 3, 8]) {
+    let missed = 0;
+    for (let face = 1; face <= 20; face += 1) {
+      if (!hitRoll({ accuracy: 5, evasion }, face).hit) missed += 1;
+    }
+    assert.equal(missed, 2 + evasion, `evasion ${evasion}`);
+  }
+});
+
 test('hit roll rejects a d20 outside 1..20', () => {
   assert.throws(() => hitRoll({}, 0), RangeError);
   assert.throws(() => hitRoll({}, 21), RangeError);

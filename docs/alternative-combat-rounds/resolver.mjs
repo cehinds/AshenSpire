@@ -78,19 +78,21 @@ export function attributeBonus(attrs = {}) {
   return Math.floor(1 * v('STR') + 1 * v('DEX') + 0.5 * v('WIS') + 0.5 * v('INT'));
 }
 
-// Hit when d20 + accuracy + attributeBonus >= 8 + evasion.
-// `need` is the lowest d20 that hits (may fall outside 1..20 at the extremes).
+// Hit when d20 + accuracy + attributeBonus >= 8 + evasion (DESIGN.md, Hit roll).
+// The required die is clamped to HIT_NEED_MIN..HIT_NEED_MAX, so a hit is at
+// least 25% and a miss at most 75%. `need` is that clamped die.
+export const HIT_NEED_MIN = 2;
+export const HIT_NEED_MAX = 16;
 export function hitRoll({ accuracy = 0, attrs = {}, evasion = 0 } = {}, d20) {
   if (!Number.isInteger(d20) || d20 < 1 || d20 > 20) {
     throw new RangeError(`d20 must be an integer 1..20, got ${d20}`);
   }
   const bonus = Number(accuracy || 0) + attributeBonus(attrs);
   const target = AC_BASE + Number(evasion || 0);
-  // Natural 1 always misses and natural 20 always hits, whatever the totals.
-  let hit = d20 + bonus >= target;
-  if (d20 === 1) hit = false;
-  if (d20 === 20) hit = true;
-  return { hit, need: target - bonus };
+  const need = Math.min(HIT_NEED_MAX, Math.max(HIT_NEED_MIN, target - bonus));
+  // Natural 1 always misses (need is at least 2) and natural 20 always hits (need is at most 16).
+  const hit = d20 !== 1 && d20 >= need;
+  return { hit, need };
 }
 
 function rollUnit(rng) {

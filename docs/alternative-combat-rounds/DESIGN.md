@@ -248,7 +248,12 @@ Hit when:
 
     d20 + accuracy + floor(1·STR + 1·DEX + 0.5·WIS + 0.5·INT) >= 8 + evasion
 
+Equivalently, the required die is need = clamp(8 + evasion − bonus, 2, 16),
+where bonus is accuracy plus the attribute term, and the hit is d20 >= need.
+The clamp caps the chance to be missed at 75% (a hit is at least 25%).
+
 - Natural 1 always misses. Natural 20 always hits, whatever the totals.
+- Boundary: accuracy 0 and evasion 20 needs 16 (the clamp), not 28.
 - AC is 8 at evasion +0.
 - Example: Reaver with STR 3, DEX 1, WIS 1, INT 1 has floor(5) = 5, so with
   accuracy 0 and evasion 0 it needs 3 or more on the d20.
