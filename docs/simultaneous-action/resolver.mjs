@@ -171,6 +171,15 @@ export function resolvePair(playerIn, enemyIn, rng) {
   if (f.kind === 'counter' && s.kind === 'attack') {
     cancelled[second] = 'countered';
     events.push({ type: 'countered', by: first, target: second });
+    // A counter that fires can stagger or stun the attacker it cancelled.
+    for (const tag of f.tags) {
+      if (!STATUS_TAGS.includes(tag)) continue;
+      if (s.tags.includes('hyperArmor')) {
+        events.push({ type: 'resisted', status: tag, target: second });
+      } else {
+        events.push({ type: 'status', status: tag, target: second });
+      }
+    }
   }
   if (f.kind === 'attack') {
     const landed = rollHit(first);
@@ -268,6 +277,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   }
 
   const pending = {}; // summed raw deltas per enemy, applied at round end
+  const fullSet = {}; // enemy -> +-3, set by a counter that staggers (round end)
   const events = [];
   const paired = new Set();
   const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
@@ -305,6 +315,13 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
         push({ type: 'momentum', enemyId: k, by: winner, gain, bonus, delta, reason: 'success', slot }, k);
       }
     }
+    // A counter that staggers its target gives its side full momentum (set to +-3).
+    const counterWin = pairEvents.find((e) => e.type === 'countered');
+    if (counterWin && pairEvents.some((e) => e.type === 'status' && e.target === other(counterWin.by))) {
+      const sign = counterWin.by === 'player' ? 1 : -1;
+      fullSet[k] = sign * MOMENTUM_MAX;
+      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', set: fullSet[k], slot }, k);
+    }
   });
 
   enemyQueue.forEach((enemy, slot) => {
@@ -317,7 +334,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const momentum = {};
   for (const k of Object.keys(start)) {
     const from = start[k];
-    const to = clampMomentum(from + (pending[k] ?? 0));
+    const to = k in fullSet ? clampMomentum(fullSet[k]) : clampMomentum(from + (pending[k] ?? 0));
     momentum[k] = to;
     if (to !== from) {
       events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to, momentum: to });

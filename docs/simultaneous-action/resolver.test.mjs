@@ -543,3 +543,41 @@ test('the bonus goes to the winning stance only', () => {
   // Smash wins and earns its +2 (total -3). Block loses, so it earns no bonus.
   assert.equal(momentum.foe, -3);
 });
+
+// Owner example: if a counter staggers the attacker, the counter-user gains
+// full momentum, which sets M_e to +-3 in their favour (round end).
+test('counter stagger: a counter that staggers the attacker sets M_e to +3 for the player', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'counter', slot: 0, speed: 5, kind: 'counter', stance: 'counter', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 4, kind: 'attack', stance: 'attack' }],
+    1,
+    d20Face(20),
+    { stanceAdvantage: stanceTable() },
+  );
+  assert.deepEqual(find(events, 'status'), { type: 'status', status: 'stagger', target: 'enemy', slot: 0, visible: true, momentum: 0 });
+  assert.equal(momentum.foe, 3);
+  assert.deepEqual(find(events, 'momentum').reason, 'success');
+  assert.equal(events.find((e) => e.reason === 'counterStagger').set, 3);
+});
+
+test('counter stagger: when the enemy counter staggers the player, M_e is set to -3', () => {
+  const { momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack', stance: 'attack' }],
+    [{ id: 'foe', speed: 5, kind: 'counter', stance: 'counter', tags: ['stagger'] }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(momentum.foe, -3);
+});
+
+test('counter stagger: hyper armor resists the stagger, so no full momentum', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'counter', slot: 0, speed: 5, kind: 'counter', tags: ['stagger'] }],
+    [{ id: 'foe', speed: 4, kind: 'attack', tags: ['hyperArmor'] }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(find(events, 'resisted').status, 'stagger');
+  assert.equal(events.some((e) => e.reason === 'counterStagger'), false);
+  assert.equal(momentum.foe, 1);
+});
