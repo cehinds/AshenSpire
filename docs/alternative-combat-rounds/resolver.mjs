@@ -378,9 +378,10 @@ export const PERCEPTION_MAX = 3;
 
 // Perception stage 0..3, clamped. Anything not a finite number counts as 0.
 export function clampStage(stage) {
-  const n = Math.trunc(Number(stage));
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(PERCEPTION_MAX, Math.max(0, n));
+  const n = Number(stage);
+  // NaN counts as 0. +-Infinity clamp to the ends, like any other out-of-range number.
+  if (Number.isNaN(n)) return 0;
+  return Math.min(PERCEPTION_MAX, Math.max(0, Math.trunc(n)));
 }
 
 // The fields of one enemy action the player can see at a perception stage

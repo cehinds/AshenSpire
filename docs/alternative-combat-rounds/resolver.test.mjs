@@ -1100,3 +1100,9 @@ test('scope run: a run bonus applies with no round or combat set', () => {
   const { events } = resolveRound([SCOPED_CARDS[0]], [SCOPED_ENEMIES[0]], 1, () => 0.99, { evadeBonuses: [bonus] });
   assert.equal(rollAt(events, 0).evadePct, 50);
 });
+
+test('clampStage: Infinity clamps to 3, -Infinity and NaN clamp to 0', () => {
+  assert.equal(clampStage(Infinity), 3);
+  assert.equal(clampStage(-Infinity), 0);
+  assert.equal(clampStage(NaN), 0);
+});
