@@ -1934,17 +1934,21 @@ function showSettings() {
 // AFTER AN IMPORT, NO RELOAD. The restored profile is on disk; re-read it the way
 // boot does (persistSettingsChange's order) and redraw the title over the same page.
 // It goes through the Profile door's restore (onRestored in showProfile): the
-// stored profile is brought forward and its promoted defaults seeded the way
-// boot does, then applyRestoredSettings re-applies display, UI scale, pad and
-// key bindings, drops a stale Undo, and fills activeSettings IN PLACE (other
-// owners hold that object). The defaults choice is offered for the new profile.
+// stored profile is brought forward, then the same defaults choice as boot is
+// decided before any promoted value is seeded. With no choice pending the
+// promoted defaults are seeded; otherwise the imported values remain intact
+// for Keep local. applyRestoredSettings then re-applies display, UI scale, pad
+// and key bindings, drops a stale Undo, and fills activeSettings IN PLACE
+// (other owners hold that object).
 function refreshAfterImport() {
   activeMeta = saves.loadMeta();
   const settings = bringStoredProfileForward(activeMeta);
-  seedPromotedDefaults(activeMeta, settings);
+  settingsChoicePending = saves.profileStatus().ok
+    && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+  if (!settingsChoicePending) seedPromotedDefaults(activeMeta, settings);
   applyRestoredSettings(settings);
   rebuildRegistries(activeSettings);
-  settingsChoiceChecked = false;
+  settingsChoiceChecked = true;
   // The Settings door (opened from the title's Download & saves path) still shows the old profile.
   settingsDoor?.close?.(); settingsDoor = null;
   showTitle({ skipStartup: true });

@@ -72,6 +72,9 @@ test('an import refresh restores the profile the way the Profile door does', () 
     assert.ok(body.includes(step), `refreshAfterImport calls ${step}`);
   }
   assert.ok(body.indexOf('bringStoredProfileForward(') < body.indexOf('applyRestoredSettings('), 'migrate before applying');
+  assert.ok(body.indexOf('needsSettingsChoice(') < body.indexOf('seedPromotedDefaults('), 'decide whether imported preferences need a choice before promoting defaults');
+  assert.match(body, /if \(!settingsChoicePending\) seedPromotedDefaults\(activeMeta, settings\);/, 'promotion waits until no imported-settings choice is pending');
+  assert.match(body, /settingsChoiceChecked = true;/, 'showTitle consumes the pending flag without recomputing after import');
   assert.ok(!/activeSettings\s*=/.test(body), 'activeSettings is filled in place, never replaced');
 });
 
