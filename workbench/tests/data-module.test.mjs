@@ -383,3 +383,50 @@ test('a file with no final newline keeps none after a reorder', () => {
   const text = 'id,name\n# ca\na,1\n# cb\nb,2';
   assert.equal(reordered(text, [1, 0]), 'id,name\n# cb\nb,2\n# ca\na,1');
 });
+
+// Each data row with the comment and blank lines directly above it, in file order (the header is skipped).
+const pairsOf = (text) => {
+  const pairs = [];
+  let pending = [], headerSeen = false;
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) { pending.push(line); continue; }
+    if (!headerSeen) { headerSeen = true; pending = []; continue; }
+    pairs.push({ before: pending, line });
+    pending = [];
+  }
+  return { pairs, tail: pending };
+};
+
+test('tagging.csv: moving its first row to the bottom keeps every comment above the same data row', () => {
+  const rel = 'content/source/tagging.csv';
+  const text = read(rel);
+  const table = D.parseTable(rel, text);
+  const doc = docOf(table);
+  doc.rows = [...table.rows.slice(1), table.rows[0]];
+  const t0 = performance.now();
+  const out = D.serializeTable(table, doc);
+  console.log(`tagging.csv move: ${(performance.now() - t0).toFixed(1)} ms`);
+  const was = pairsOf(text), now = pairsOf(out);
+  assert.equal(was.pairs.length, table.rows.length);
+  assert.notEqual(out, text);
+  assert.deepEqual(now.pairs, [...was.pairs.slice(1), was.pairs[0]]);
+  assert.deepEqual(now.tail, was.tail);
+});
+
+test('tagging.csv: sorting its rows by objectId keeps every comment above the same data row', () => {
+  const rel = 'content/source/tagging.csv';
+  const text = read(rel);
+  const table = D.parseTable(rel, text);
+  const key = (i) => String(table.rows[i].objectId ?? '');
+  const order = table.rows.map((_, i) => i).sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : a - b));
+  const doc = docOf(table);
+  doc.rows = order.map((i) => table.rows[i]);
+  const t0 = performance.now();
+  const out = D.serializeTable(table, doc);
+  console.log(`tagging.csv sort: ${(performance.now() - t0).toFixed(1)} ms`);
+  const was = pairsOf(text), now = pairsOf(out);
+  assert.notEqual(out, text);
+  assert.deepEqual(now.pairs, order.map((i) => was.pairs[i]));
+  assert.deepEqual(now.tail, was.tail);
+});
