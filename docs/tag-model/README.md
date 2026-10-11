@@ -14,7 +14,7 @@ pull request (CONTRIBUTING.md, ground rule 1).
 |---|---|
 | `tables/tags.csv` | 517 nodes: 392 proposed tags plus 125 `meta.presentation` nodes. The game has 448 tag nodes today (`content/source/nodes.csv`). Columns: id, key, label, parent, erd, school, description, effect, variables, duration, stacking, related, status, glyph, color, liveId |
 | `tables/presentation/*.csv` | The presentation inventory: 13 tables of how the game looks (components, layouts, styles, tokens, breakpoints, assets, animations, effects, resolutions, settings, symbols, combat symbols, strings). See *Presentation layer* |
-| `tools/` | Node scripts that regenerate the presentation tables and tag changes (`build.mjs`), validate them (`check.mjs`), and hold the reviewed live-tag map (`live-map.mjs`, `legacy-status.json`) |
+| `tools/` | Node scripts. `build.mjs` regenerates the presentation tables and the tag changes; `check.mjs` validates the tables; `live-map.mjs` (with `SHARED_LIVE`) and `legacy-status.json` hold the reviewed live-tag map; `bands.mjs` normalises breakpoints; `csv.mjs` reads and writes the CSVs |
 | `tables/objects.csv` | Carriers: cards, weapons, armour, and the tags each one carries |
 | `tables/values.csv` | Every number, by key |
 | `tables/formulas.csv` | The math, written with `[key]` references |
@@ -93,15 +93,15 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 | `components.csv` | Named UI components by group (scene, battlefield, card-structure, HUD header, footer, button, modal, menu, background art, map, overlay, wireframe) |
 | `layouts.csv` | Each component's position and size, with its raw breakpoint condition and normalised `band` |
 | `styles.csv` | CSS declarations per selector, with raw breakpoint and `band`; `tag` is the style kind (color, typography, spacing, radius, shadow, motion, z-index, token, other) |
-| `tokens.csv` | CSS custom properties and the theme they are declared in |
-| `breakpoints.csv` | Every media or container condition in the stylesheets, with its band |
-| `assets.csv` | Art ids by category, with the light and high tier paths and sizes |
+| `tokens.csv` | CSS custom properties and the theme they are declared in. Key: token + theme + file (one token can be declared more than once in a scope, in different files) |
+| `breakpoints.csv` | Every media or container condition in the stylesheets and scripts, with its file and where it is used. Its band is in the `tag` column (there is no `band` column) |
+| `assets.csv` | Art ids by category, with the light and high tier paths and sizes. Its `id` is the `assets.id` that `components.assetRefs` and `combat-symbols.assignedAssetRef` resolve against |
 | `animations.csv` | Sprite and motion sequences by group (the id prefix) |
 | `effects.csv` | Visual effects by kind (sprite effect, aura, shadow, glow, float text, screen shake, flash, tint, particle) |
 | `resolutions.csv` | Art tiers (light, high, local high-res) and card sizes, with max width and format |
 | `settings.csv` | Every settings row, with `scope` (player or tuning) |
 | `symbols.csv` | Icons and sigils by group (the id prefix) |
-| `combat-symbols.csv` | Every combat concept and its icon. Concepts without one take the suggested asset as a `placeholder` in `assignedAssetRef` |
+| `combat-symbols.csv` | Every combat concept and its icon: `assignedAssetRef` is an `assets.id` or blank. See *Icons* below for the statuses |
 | `strings.csv` | Player-facing strings with their use: label, tooltip, or hardcoded in source |
 
 **Proposed named bands** (`tools/bands.mjs`). `band` is derived from the raw
@@ -122,9 +122,47 @@ and 4,424 tuning rows: almost every settings row reads from the advanced-config
 module, so the split is mostly a list of tuning knobs. Confirm the precedence
 before the split is used.
 
-**Placeholder symbols.** Combat concepts that had no icon now have an assigned
-asset, the suggestion in `combat-symbols.csv`, with `status = placeholder`. The
-suggested artwork is not drawn yet; every `placeholder` still needs art.
+**Icons.** `combat-symbols.csv` has one `status` per concept, and
+`assignedAssetRef` is an `assets.id` or blank:
+
+- `has symbol` (24): the concept's current icon is an asset file.
+- `placeholder` (54): no icon yet; `assignedAssetRef` is the suggested asset,
+  which exists in `assets.csv`. The artwork is not drawn yet, so every
+  `placeholder` still needs art.
+- `missing` (16): no asset file, so `assignedAssetRef` is blank. Fourteen are
+  `has symbol` rows whose icon is an inline SVG in code (`currentSymbol` names
+  it, so these drop from `has symbol`); two are `placeholder` rows whose
+  suggestion is an inline SVG (`earth`, `psychic`). `check.mjs` fails any row
+  where `missing` and a blank `assignedAssetRef` disagree.
+
+The suggested text that is not an `assets.id` (for example `card-icon:banner`)
+is mapped to the outline icon of that name under
+`assets/cards/default-outline/icons/` (or `assets/player-polish/ui/icons/` for
+`ui-icon:`) when that file is in `assets.csv`; otherwise it is blank.
+
+**Keys and cleaning.** `build.mjs` makes the presentation tables unique before
+it writes them:
+
+- Duplicate ids get a suffix: `effects.id` (2 rows, for example
+  `flash.hitflash-2`) and `breakpoints.name` (36 rows, for example
+  `css-max-width-640px-2`). Rows are kept, not deleted.
+- Exact duplicate rows are dropped: 55 in `layouts.csv` and 39 in
+  `styles.csv`.
+- `components.assetRefs` keeps only tokens that resolve: an `assets.id`, or a
+  `*` pattern that matches at least one `assets.id`. A `../` prefix (a
+  stylesheet-relative path) is dropped to get the root-relative id, and a
+  `${...}` template becomes a `*` pattern. Other tokens are removed. The
+  current extract removed 17 token occurrences: 15 footer paths
+  (`assets/ui/footer/*`) that are not in `assets.csv`, and the pattern
+  `assets/equipment/feet_*.webp` (twice), which matches no asset.
+- `check.mjs` requires each key to be unique: `id` (components, effects,
+  animations, symbols, assets, objects), `key` (settings, strings, values,
+  formulas), `tier` (resolutions), `name` (breakpoints), `tagKey`
+  (combat-symbols), `token` + `theme` + `file` (tokens), and the triples
+  object + rank + key (ranks) and source + relation + target (relations).
+  `layouts` and `styles` have no key; they are checked for exact duplicates.
+- Running `build.mjs` twice gives byte-identical output; a second run changes
+  nothing, so it is safe to re-run.
 
 **Release builds.** These tables are for review and regeneration. A release
 build would serialise them into compact runtime constants (generated code, one
@@ -139,18 +177,44 @@ node docs/tag-model/tools/check.mjs
 ```
 
 Without `--inv`, `build.mjs` rebuilds from the copies in `tables/presentation/`
-and is repeatable. `check.mjs` validates every CSV (column counts, LF, final
-newline), key uniqueness and shortest-suffix form, every reference column, and
-the `tag`, `band` and `scope` columns; it exits 1 on any problem.
+and is repeatable: a second run is byte-identical (checked on this branch by
+running it three times and diffing the tables). The `--inv` path is not run
+here, because the extracted inventory is not on this branch.
+
+`check.mjs` validates, and exits 1 on any problem:
+
+- shape: every CSV parses with a consistent column count, LF line endings and
+  a final newline, and every column the checks read exists (a missing column
+  fails by name);
+- keys: the uniqueness rules above; tag keys are the shortest unique suffix of
+  their id;
+- duplicates: no exact duplicate row in a presentation table;
+- references: tag `parent`, `school`, `related` and `variables`; object `tags`,
+  `skill`, `exp`, `cardType`, `stance`, `rarity`, `costResource` and `grants`;
+  rank and relation keys; formula `[key]`s; `components.parent`, and the
+  `componentId` of layouts and styles, against `components.id`; every
+  presentation `tag` against a presentation node;
+- assets: `assetRefs` and `assignedAssetRef` are blank, an `assets.id`, or a
+  `*` pattern with a match;
+- vocabularies: tag `status`, `band` (layouts, styles), `scope` (settings),
+  combat-symbols `status`;
+- live tags: `liveId` only on a `live-tag`, and it names a `nodes.csv` id; an id
+  claimed by two tags must be listed in `SHARED_LIVE` with a reason (none is
+  today); the *Moved* note appears once per description.
 
 **Tag status (Task 3).** `status` is one of `live-tag` (a node in
 `content/source/nodes.csv` clearly matches; its id is in `liveId`),
 `game-concept` (the game has the concept with no tag node, such as HP, Block
 or a status), or `new`. `live-tag` also covers the old `moved` tags, with a
 note in `description`. The matches are reviewed by hand in
-`tools/live-map.mjs`; the brief's renames (Force, Divine, Necrotic, Frost) map
-to the `damage:*` nodes. The matches marked *probable* there are label-level
-only and need a review.
+`tools/live-map.mjs`. Spellcraft elements map to the school nodes (Fire, Frost,
+Lightning, Force, Divine and Necrotic to `school:fire`, `school:frost`,
+`school:lightning`, `school:force`, `school:divine` and `school:decay`). The
+magic damage types map to the damage nodes (`damage:fire`, `damage:frost`,
+`damage:lightning`, `damage:arcane` for Force, `damage:sacred` for Divine,
+`damage:decay` for Necrotic). The matches marked *probable* there are
+label-level only and need a review. Today 71 tags are `live-tag` and no node
+is claimed by two tags, so `SHARED_LIVE` is empty.
 
 ## Open questions
 

@@ -109,7 +109,7 @@ shake.step4,screen-shake,,HP lost >= 15 (combatFeel SHAKE_STEPS),combat backdrop
 shake.max,screen-shake,,cap for any hit (SHAKE_MAX_PX),,4,4,,normal,,,200,src/content/combatFeel.js SHAKE_MAX_PX,screen-shake,src/content/combatFeel.js SHAKE_MAX_PX
 flash.hitflash,flash,,"fx.js:1062 flash(el,'hitflash', heavy ? 380 : 220, held)",target figure,,,,normal,,,"heavy ? 380 : 220, held",src/ui/fx.js:1062; CSS keyframes=[hitflash],flash,src/ui/fx.js:1062; CSS keyframes=[hitflash]
 flash.hit-heavy,flash,,"fx.js:1067 flash(el,'hit-heavy', 380 + held)",target figure,,,,normal,,,380,src/ui/fx.js:1067; CSS keyframes=[],flash,src/ui/fx.js:1067; CSS keyframes=[]
-flash.hitflash,flash,,"fx.js:1086 flash(el,'hitflash', 300)",target figure,,,,normal,,,300,src/ui/fx.js:1086; CSS keyframes=[hitflash],flash,src/ui/fx.js:1086; CSS keyframes=[hitflash]
+flash.hitflash-2,flash,,"fx.js:1086 flash(el,'hitflash', 300)",target figure,,,,normal,,,300,src/ui/fx.js:1086; CSS keyframes=[hitflash],flash,src/ui/fx.js:1086; CSS keyframes=[hitflash]
 flash.wobble,flash,,"fx.js:1141 flash(el,'wobble', 600)",element,,,,normal,,,600,src/ui/fx.js:1141; CSS keyframes=[wobble],flash,src/ui/fx.js:1141; CSS keyframes=[wobble]
 flash.proc,flash,,"fx.js:1174 flash(el,'proc', 320)",element,,,,normal,,,320,src/ui/fx.js:1174; CSS keyframes=[relicProc],flash,src/ui/fx.js:1174; CSS keyframes=[relicProc]
 flash.pulse,flash,,"fx.js:1179 flash(el,'pulse', 260)",element,,,,normal,,,260,src/ui/fx.js:1179; CSS keyframes=[pulse-gold],flash,src/ui/fx.js:1179; CSS keyframes=[pulse-gold]
@@ -178,7 +178,7 @@ css.box-shadow.styles/combat.643,glow,,@keyframes relicProc 0% {box-shadow: 0 0 
 css.box-shadow.styles/combat.648,glow,,"@keyframes orbPulse 0% {box-shadow: 0 0 34px rgba(201, 162, 39, 0.6)}",,0,0,,normal,0.6,"rgba(201, 162, 39, 0.6)",,styles/combat.css:648,glow,styles/combat.css:648
 css.flare.styles/combat.655,glow,,.stance-flare {animation: flare 300ms},,,,,normal,,,300,styles/combat.css:655,glow,styles/combat.css:655
 css.box-shadow.styles/combat.677,glow,,"@keyframes pulse-gold from {box-shadow: 0 0 6px rgba(201, 162, 39, 0.3)}",,0,0,,normal,0.3,"rgba(201, 162, 39, 0.3)",,styles/combat.css:677,glow,styles/combat.css:677
-css.box-shadow.styles/combat.677,glow,,"@keyframes pulse-gold to {box-shadow: 0 0 22px rgba(201, 162, 39, 0.8)}",,0,0,,normal,0.8,"rgba(201, 162, 39, 0.8)",,styles/combat.css:677,glow,styles/combat.css:677
+css.box-shadow.styles/combat.677-2,glow,,"@keyframes pulse-gold to {box-shadow: 0 0 22px rgba(201, 162, 39, 0.8)}",,0,0,,normal,0.8,"rgba(201, 162, 39, 0.8)",,styles/combat.css:677,glow,styles/combat.css:677
 css.filter.styles/combat.705,shadow,,".combatant .sprite > img.reaver-attack-sequence {filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58))}",,,,,normal,0.58,"rgba(0, 0, 0, 0.58)",,styles/combat.css:705,effect.shadow,styles/combat.css:705
 css.filter.styles/combat.718,glow,,".combatant.context-selected > .combatant-stack {filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)))}",,,,,normal,,,,styles/combat.css:718,glow,styles/combat.css:718
 css.box-shadow.styles/combat.926,shadow,,":root[data-layout='narrow'] .hand .card:hover,

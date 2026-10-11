@@ -289,12 +289,6 @@ meters,.meters,opacity,var(--combat-state-opacity),,styles/combat-layers.css:38,
 meters,.meters,filter,"var(--combat-state-filter, none)",,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
 statuses,.statuses),opacity,var(--combat-state-opacity),,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
 statuses,.statuses),filter,"var(--combat-state-filter, none)",,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
-dead,:root .combat[data-layout='formation'] .combatant:is(.dead,opacity,var(--combat-state-opacity),,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
-dead,:root .combat[data-layout='formation'] .combatant:is(.dead,filter,"var(--combat-state-filter, none)",,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
-ended,.ended,opacity,var(--combat-state-opacity),,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
-ended,.ended,filter,"var(--combat-state-filter, none)",,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
-down,.down,opacity,var(--combat-state-opacity),,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
-down,.down,filter,"var(--combat-state-filter, none)",,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
 away,.away)::after,opacity,var(--combat-state-opacity),,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
 away,.away)::after,filter,"var(--combat-state-filter, none)",,styles/combat-layers.css:38,all,style.other,styles/combat-layers.css:38
 alternative-card-fade,:root .combat[data-layout='formation'] > .alternative-card-fade,z-index,var(--combat-layer-fade),,styles/combat-layers.css:43,all,z-index,styles/combat-layers.css:43
@@ -1323,10 +1317,6 @@ alternative-silhouette,.alternative-silhouette,animation,none,,styles/combat.css
 enemy-expansion-bob,.enemy-expansion-bob),animation,none,,styles/combat.css:703,all,motion,styles/combat.css:703
 sprite,.combatant.down .sprite > img,animation,none,,styles/combat.css:703,all,motion,styles/combat.css:703
 facing,.combatant.down .sprite :is(.facing,animation,none,,styles/combat.css:703,all,motion,styles/combat.css:703
-pose-layer,.painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer,animation,none,,styles/combat.css:703,all,motion,styles/combat.css:703
-rendered-stage,.rendered-stage,animation,none,,styles/combat.css:703,all,motion,styles/combat.css:703
-alternative-silhouette,.alternative-silhouette,animation,none,,styles/combat.css:703,all,motion,styles/combat.css:703
-enemy-expansion-bob,.enemy-expansion-bob),animation,none,,styles/combat.css:703,all,motion,styles/combat.css:703
 reaver-attack-playing,.player .sprite.reaver-attack-playing,overflow,visible,,styles/combat.css:705,all,style.other,styles/combat.css:705
 reaver-attack-sequence,.combatant .sprite > img.reaver-attack-sequence,width,17rem,,styles/combat.css:706,all,spacing,styles/combat.css:706
 reaver-attack-sequence,.combatant .sprite > img.reaver-attack-sequence,height,17rem,,styles/combat.css:706,all,spacing,styles/combat.css:706
@@ -4501,10 +4491,6 @@ attr:data-tip,"[data-tip][role=""button""]",pointer-events,none,(pointer: coarse
 tag:a,a,pointer-events,none,(pointer: coarse),styles/kit.css:735,other,style.other,styles/kit.css:735
 tag:button,button)),pointer-events,none,(pointer: coarse),styles/kit.css:735,other,style.other,styles/kit.css:735
 tooltip-keyword,"#tooltip-2[data-open=""true""]:not([data-overflow=""true""]):not(:has(.tooltip-keyword[data-tip]",pointer-events,none,(pointer: coarse),styles/kit.css:735,other,style.other,styles/kit.css:735
-inspection-tag,.inspection-tag[data-tip],pointer-events,none,(pointer: coarse),styles/kit.css:735,other,style.other,styles/kit.css:735
-attr:data-tip,"[data-tip][role=""button""]",pointer-events,none,(pointer: coarse),styles/kit.css:735,other,style.other,styles/kit.css:735
-tag:a,a,pointer-events,none,(pointer: coarse),styles/kit.css:735,other,style.other,styles/kit.css:735
-tag:button,button)),pointer-events,none,(pointer: coarse),styles/kit.css:735,other,style.other,styles/kit.css:735
 is-fading,#tooltip.is-fading,opacity,0,,styles/kit.css:738,all,style.other,styles/kit.css:738
 is-fading,#tooltip.is-fading,transition,opacity var(--tooltip-fade-duration) ease-out,,styles/kit.css:738,all,motion,styles/kit.css:738
 reduced-motion,.reduced-motion #tooltip,transition,none !important,,styles/kit.css:739,all,motion,styles/kit.css:739
@@ -13837,7 +13823,6 @@ modal-close-face,.modal-close-face),border-radius,3px,,styles/player-polish.css:
 as-option,:is(.as-option,background-image,"linear-gradient(#ffffff08, transparent 40%, #00000024)",,styles/player-polish.css:52,all,color,styles/player-polish.css:52
 as-face,.as-face):is([data-control-role='primary'],background-image,"linear-gradient(#ffffff08, transparent 40%, #00000024)",,styles/player-polish.css:52,all,color,styles/player-polish.css:52
 attr:data-control-role=destructive,[data-control-role='destructive']):not(:disabled):not([aria-disabled='true']),background-image,"linear-gradient(#ffffff08, transparent 40%, #00000024)",,styles/player-polish.css:52,all,color,styles/player-polish.css:52
-as-option,:is(.as-option,background-image,"linear-gradient(#ffffff08, transparent 40%, #00000024)",,styles/player-polish.css:52,all,color,styles/player-polish.css:52
 as-face,.as-face)[data-control-role='exit']:is(:hover,background-image,"linear-gradient(#ffffff08, transparent 40%, #00000024)",,styles/player-polish.css:52,all,color,styles/player-polish.css:52
 global,:focus-visible),background-image,"linear-gradient(#ffffff08, transparent 40%, #00000024)",,styles/player-polish.css:52,all,color,styles/player-polish.css:52
 as-btn,:is(.as-btn,outline,2px solid var(--parchment),,styles/player-polish.css:56,all,style.other,styles/player-polish.css:56
@@ -16792,21 +16777,6 @@ set-search-toggle,[data-settings-host]) .set-search-toggle,border-radius,var(--r
 set-search-toggle,[data-settings-host]) .set-search-toggle,background,transparent,,styles/ui.css:1046,all,color,styles/ui.css:1046
 set-search-toggle,[data-settings-host]) .set-search-toggle,color,var(--parchment),,styles/ui.css:1046,all,color,styles/ui.css:1046
 set-search-toggle,[data-settings-host]) .set-search-toggle,box-shadow,none,,styles/ui.css:1046,all,style.shadow,styles/ui.css:1046
-settings-modal,:is(.settings-modal,display,inline-flex,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
-settings-modal,:is(.settings-modal,align-items,center,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
-settings-modal,:is(.settings-modal,justify-content,center,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
-settings-modal,:is(.settings-modal,width,var(--tap-floor),,styles/ui.css:1046,all,spacing,styles/ui.css:1046
-settings-modal,:is(.settings-modal,height,var(--tap-floor),,styles/ui.css:1046,all,spacing,styles/ui.css:1046
-settings-modal,:is(.settings-modal,min-width,var(--tap-floor),,styles/ui.css:1046,all,spacing,styles/ui.css:1046
-settings-modal,:is(.settings-modal,min-height,var(--tap-floor),,styles/ui.css:1046,all,spacing,styles/ui.css:1046
-settings-modal,:is(.settings-modal,flex,0 0 auto,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
-settings-modal,:is(.settings-modal,padding,0,,styles/ui.css:1046,all,spacing,styles/ui.css:1046
-settings-modal,:is(.settings-modal,margin,0,,styles/ui.css:1046,all,spacing,styles/ui.css:1046
-settings-modal,:is(.settings-modal,border,1px solid transparent,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
-settings-modal,:is(.settings-modal,border-radius,var(--r-2),,styles/ui.css:1046,all,radius,styles/ui.css:1046
-settings-modal,:is(.settings-modal,background,transparent,,styles/ui.css:1046,all,color,styles/ui.css:1046
-settings-modal,:is(.settings-modal,color,var(--parchment),,styles/ui.css:1046,all,color,styles/ui.css:1046
-settings-modal,:is(.settings-modal,box-shadow,none,,styles/ui.css:1046,all,style.shadow,styles/ui.css:1046
 set-options,[data-settings-host]) .set-options > summary,display,inline-flex,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
 set-options,[data-settings-host]) .set-options > summary,align-items,center,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
 set-options,[data-settings-host]) .set-options > summary,justify-content,center,,styles/ui.css:1046,all,style.other,styles/ui.css:1046
@@ -16869,27 +16839,18 @@ global,:focus-visible,color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.
 attr:aria-expanded=true,[aria-expanded='true']),background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
 attr:aria-expanded=true,[aria-expanded='true']),border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
 attr:aria-expanded=true,[aria-expanded='true']),color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
-settings-modal,:is(.settings-modal,background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
-settings-modal,:is(.settings-modal,border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
-settings-modal,:is(.settings-modal,color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
 set-options,[data-settings-host]) .set-options > summary:is(:hover,background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
 set-options,[data-settings-host]) .set-options > summary:is(:hover,border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
 set-options,[data-settings-host]) .set-options > summary:is(:hover,color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
 global,:focus-visible),background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
 global,:focus-visible),border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
 global,:focus-visible),color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
-settings-modal,:is(.settings-modal,background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
-settings-modal,:is(.settings-modal,border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
-settings-modal,:is(.settings-modal,color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
 set-options,[data-settings-host]) .set-options[open] > summary,background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
 set-options,[data-settings-host]) .set-options[open] > summary,border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
 set-options,[data-settings-host]) .set-options[open] > summary,color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
 settings-modal,.settings-modal .modal-close:is(:hover,background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
 settings-modal,.settings-modal .modal-close:is(:hover,border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
 settings-modal,.settings-modal .modal-close:is(:hover,color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
-global,:focus-visible),background,var(--panel),,styles/ui.css:1059,all,color,styles/ui.css:1059
-global,:focus-visible),border-color,var(--line-soft),,styles/ui.css:1059,all,color,styles/ui.css:1059
-global,:focus-visible),color,var(--gold),,styles/ui.css:1059,all,color,styles/ui.css:1059
 settings-modal,:is(.settings-modal,display,none,,styles/ui.css:1063,all,style.other,styles/ui.css:1063
 set-options,[data-settings-host]) .set-options > summary::-webkit-details-marker,display,none,,styles/ui.css:1063,all,style.other,styles/ui.css:1063
 set-inline-bar,[data-settings-host] > .set-inline-bar,flex,0 0 auto,,styles/ui.css:1068,all,style.other,styles/ui.css:1068

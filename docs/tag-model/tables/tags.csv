@@ -78,12 +78,12 @@ meta.character.armor.material.scale,scale,Scale,meta.character.armor.material,Ar
 meta.character.armor.material.plated,plated,Plated,meta.character.armor.material,Armor,,"heavy, high DR, resists blunt less",,,,,,game-concept,,,
 meta.character.armor.defensive-property,defensive-property,Defensive property,meta.character.armor,Armor,,,,,,,,new,,,
 meta.character.armor.defensive-property.absorption,absorption,Absorption,meta.character.armor.defensive-property,Armor,,converts part of damage taken to Block or Ward,,,,,,new,,,
-meta.character.armor.defensive-property.siphon,siphon,Siphon,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). drains HP or MP when hit or when breaking,,,,,,live-tag,,,siphon
+meta.character.armor.defensive-property.siphon,siphon,Siphon,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). drains HP or MP when hit or when breaking,,,,,,live-tag,,,siphon
 meta.character.armor.defensive-property.thorns,thorns,Thorns,meta.character.armor.defensive-property,Armor,,returns damage to melee attackers,,,,,,game-concept,,,
 meta.character.armor.defensive-property.padded,padded,Padded,meta.character.armor.defensive-property,Armor,,"+ Poise, resists Stagger",,,,,,new,,,
 meta.character.armor.defensive-property.warded,warded,Warded,meta.character.armor.defensive-property,Armor,,"+ Ward, resists magic impact",,,,,,game-concept,,,
-meta.character.armor.defensive-property.insulated,insulated,Insulated,meta.character.armor.defensive-property,Armor,,"Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). resists lightning, no conduction",,,,,,live-tag,,,trait:insulated
-meta.character.armor.defensive-property.grounded,defensive-property.grounded,Grounded,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). clears Paralysis pressure,,,,,,live-tag,,,trait:grounded
+meta.character.armor.defensive-property.insulated,insulated,Insulated,meta.character.armor.defensive-property,Armor,,"Moved: re-homed in the proposal (tag-tree.txt [m]). resists lightning, no conduction",,,,,,live-tag,,,trait:insulated
+meta.character.armor.defensive-property.grounded,defensive-property.grounded,Grounded,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). clears Paralysis pressure,,,,,,live-tag,,,trait:grounded
 meta.character.armor.defensive-property.fireproof,fireproof,Fireproof,meta.character.armor.defensive-property,Armor,,resists Burn,,,,,,new,,,
 meta.character.armor.defensive-property.frostlined,frostlined,Frostlined,meta.character.armor.defensive-property,Armor,,resists Frost build-up,,,,,,new,,,
 meta.character.armor.defensive-property.sanctified,sanctified,Sanctified,meta.character.armor.defensive-property,Armor,,resists necrotic and Blight,,,,,,new,,,
@@ -166,35 +166,35 @@ meta.combat.skill.armor-skill.light,armor-skill.light,Light,meta.combat.skill.ar
 meta.combat.skill.armor-skill.medium,armor-skill.medium,Medium,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.armor-skill.heavy,armor-skill.heavy,Heavy,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.technique,technique,Technique,meta.combat.skill,Skill,,,,,,,,game-concept,,,
-meta.combat.skill.technique.heavy,technique.heavy,Heavy,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:heavy
-meta.combat.skill.technique.precision,precision,Precision,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:precision
-meta.combat.skill.technique.pierce,technique.pierce,Pierce,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,pierce
-meta.combat.skill.technique.cleave,technique.cleave,Cleave,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:cleave
-meta.combat.skill.technique.flourish,flourish,Flourish,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:flourish
-meta.combat.skill.technique.guile,guile,Guile,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,,,guile
-meta.combat.skill.technique.blood,blood,Blood,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). pay HP for power,,,,,,live-tag,,,blood
-meta.combat.skill.technique.venom,venom,Venom,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). poison craft,,,,,,live-tag,,,venom
-meta.combat.skill.class-stance,class-stance,Class stance,meta.combat.skill,ClassStance,,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). card skill; holds a stance until changed,,,,,,live-tag,,,theme:stance
+meta.combat.skill.technique.heavy,technique.heavy,Heavy,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:heavy
+meta.combat.skill.technique.precision,precision,Precision,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:precision
+meta.combat.skill.technique.pierce,technique.pierce,Pierce,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,pierce
+meta.combat.skill.technique.cleave,technique.cleave,Cleave,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:cleave
+meta.combat.skill.technique.flourish,flourish,Flourish,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,technique:flourish
+meta.combat.skill.technique.guile,guile,Guile,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,,,guile
+meta.combat.skill.technique.blood,blood,Blood,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). pay HP for power,,,,,,live-tag,,,blood
+meta.combat.skill.technique.venom,venom,Venom,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). poison craft,,,,,,live-tag,,,venom
+meta.combat.skill.class-stance,class-stance,Class stance,meta.combat.skill,ClassStance,,Moved: re-homed in the proposal (tag-tree.txt [m]). card skill; holds a stance until changed,,,,,,live-tag,,,theme:stance
 meta.combat.skill.class-stance.gorefire-stance,gorefire-stance,Gorefire Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.class-stance.bulwark-stance,bulwark-stance,Bulwark Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.class-stance.brace,brace,Brace,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.spellcraft,spellcraft,Spellcraft,meta.combat.skill,Skill,,each school deals its damage type,,,,,,game-concept,,,
-meta.combat.skill.spellcraft.fire,spellcraft.fire,Fire,meta.combat.skill.spellcraft,Skill,spellcraft.fire,,,,,,,live-tag,,,damage:fire
-meta.combat.skill.spellcraft.fire.gorefire,gorefire,Gorefire,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). fire fed by blood,,,,,,live-tag,,,gorefire
-meta.combat.skill.spellcraft.fire.ash,ash,Ash,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,ash
-meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,,,damage:frost
-meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,,,damage:lightning
+meta.combat.skill.spellcraft.fire,spellcraft.fire,Fire,meta.combat.skill.spellcraft,Skill,spellcraft.fire,,,,,,,live-tag,,,school:fire
+meta.combat.skill.spellcraft.fire.gorefire,gorefire,Gorefire,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]). fire fed by blood,,,,,,live-tag,,,gorefire
+meta.combat.skill.spellcraft.fire.ash,ash,Ash,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,ash
+meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,,,school:frost
+meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,,,school:lightning
 meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,game-concept,,,
-meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,,,damage:arcane
-meta.combat.skill.spellcraft.force.starstone,starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,,live-tag,,,starstone
-meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,,,damage:sacred
-meta.combat.skill.spellcraft.divine.oath,oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,,live-tag,,,oath
-meta.combat.skill.spellcraft.necrotic,spellcraft.necrotic,Necrotic,meta.combat.skill.spellcraft,Skill,spellcraft.necrotic,,,,,,,live-tag,,,damage:decay
-meta.combat.skill.spellcraft.necrotic.blight,blight,Blight,meta.combat.skill.spellcraft.necrotic,Skill,spellcraft.necrotic,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,blight
+meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,,,school:force
+meta.combat.skill.spellcraft.force.starstone,starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,,live-tag,,,starstone
+meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,,,school:divine
+meta.combat.skill.spellcraft.divine.oath,oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,,live-tag,,,oath
+meta.combat.skill.spellcraft.necrotic,spellcraft.necrotic,Necrotic,meta.combat.skill.spellcraft,Skill,spellcraft.necrotic,,,,,,,live-tag,,,school:decay
+meta.combat.skill.spellcraft.necrotic.blight,blight,Blight,meta.combat.skill.spellcraft.necrotic,Skill,spellcraft.necrotic,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,,,blight
 meta.combat.skill.spellcraft.psychic,spellcraft.psychic,Psychic,meta.combat.skill.spellcraft,Skill,spellcraft.psychic,,,,,,,new,,,
-meta.combat.skill.spellcraft.psychic.illusion,illusion,Illusion,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). existing school,,,,,,live-tag,,,school:illusion
-meta.combat.skill.spellcraft.psychic.ritual,ritual,Ritual,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). madness,,,,,,live-tag,,,ritual
-meta.combat.skill.spellcraft.alteration,alteration,Alteration,meta.combat.skill.spellcraft,Skill,alteration,"Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). Moved: re-homed in the proposal (tag-tree.txt [m]). existing school, non-elemental",,,,,,live-tag,,,school:alteration
+meta.combat.skill.spellcraft.psychic.illusion,illusion,Illusion,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). existing school,,,,,,live-tag,,,school:illusion
+meta.combat.skill.spellcraft.psychic.ritual,ritual,Ritual,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). madness,,,,,,live-tag,,,ritual
+meta.combat.skill.spellcraft.alteration,alteration,Alteration,meta.combat.skill.spellcraft,Skill,alteration,"Moved: re-homed in the proposal (tag-tree.txt [m]). existing school, non-elemental",,,,,,live-tag,,,school:alteration
 meta.combat.damage,damage,Damage,meta.combat,DamageType,,,,,,,,live-tag,,,damage
 meta.combat.damage.physical,physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
 meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,,live-tag,,,damage:slashing

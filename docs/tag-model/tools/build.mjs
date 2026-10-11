@@ -5,11 +5,19 @@
 //
 // --inv copies the raw inventory CSVs into tables/presentation/ first. Without
 // it the script reads the copies there and strips the derived columns, so the
-// run is repeatable. It then:
+// run is repeatable: a second run over its own output is byte-identical. It then:
+//   0. cleans the inventory: id/name columns that repeat get a -2, -3 suffix
+//      (effects.id, breakpoints.name); exact duplicate rows are dropped
+//      (layouts, styles); components.assetRefs keeps only tokens that resolve
+//      against assets.id, a "../" prefix is dropped, a ${...} template becomes
+//      a "*" pattern (kept only if it matches an asset), anything else is blank;
 //   1. writes tables/presentation/<name>.csv with tag, liveRef and the
-//      per-table derived columns (band, scope, assignedAssetRef);
+//      per-table derived columns (band, scope, assignedAssetRef). combat-symbols
+//      assignedAssetRef resolves to an assets.id or is blank, and status is
+//      placeholder / has symbol / missing accordingly;
 //   2. rebuilds the meta.presentation nodes in tables/tags.csv;
-//   3. sets status (live-tag / game-concept / new) and liveId on every tag;
+//   3. sets status (live-tag / game-concept / new) and liveId on every tag. The
+//      "Moved: re-homed" note is written once, never appended again;
 //   4. recomputes every key as the shortest unique id suffix and rewrites the
 //      references to keys that changed (tags school/related, objects, relations).
 // Run tools/check.mjs afterwards.
@@ -19,7 +27,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv, toCsv } from './csv.mjs';
 import { bandOf } from './bands.mjs';
-import { LIVE, GAME } from './live-map.mjs';
+import { LIVE, GAME, SHARED_LIVE } from './live-map.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TM = join(HERE, '..');
@@ -47,6 +55,8 @@ const DERIVED_ALL = new Set(Object.values(DERIVED).flat());
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const presId = (...segs) => ['meta', 'presentation', ...segs].join('.');
 const parentOf = id => (id.includes('.') ? id.slice(0, id.lastIndexOf('.')) : '');
+const MOVED_NOTE = 'Moved: re-homed in the proposal (tag-tree.txt [m]).';
+const MOVED_PREFIX = /^(Moved: re-homed in the proposal \(tag-tree\.txt \[m\]\)\.\s*)+/;
 
 // ---------------------------------------------------------------- inventory
 function readInventory(name) {
@@ -64,6 +74,86 @@ function readInventory(name) {
 const inv = Object.fromEntries(INVENTORY.map(n => [n, readInventory(n)]));
 const col = (t, name) => t.header.indexOf(name);
 const get = (t, r, name) => r[col(t, name)];
+const need = (t, name, table) => {
+  if (col(t, name) < 0) throw new Error(`${table}: missing column ${name}`);
+  return col(t, name);
+};
+
+// --------------------------------------------------------------- cleaning
+// Each step changes only what it must, so a second run changes nothing.
+const assetIds = new Set(inv.assets.rows.map(r => get(inv.assets, r, 'id')));
+const assetIdsList = [...assetIds];
+const patternRe = pat => new RegExp('^' + pat.split('*').map(s => s.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$');
+const patternMatches = pat => { const re = patternRe(pat); return assetIdsList.some(id => re.test(id)); };
+
+// Keeps the first row of each duplicated id and renames later ones to -2, -3 ...
+function uniquifyColumn(t, colName, table) {
+  const idx = need(t, colName, table);
+  const all = new Set(t.rows.map(r => r[idx]));
+  const seen = new Set();
+  let renamed = 0;
+  t.rows = t.rows.map((r) => {
+    const v = r[idx];
+    if (!seen.has(v)) { seen.add(v); return r; }
+    let n = 2;
+    let cand;
+    do { cand = `${v}-${n++}`; } while (all.has(cand) || seen.has(cand));
+    all.add(cand);
+    seen.add(cand);
+    renamed++;
+    const nr = r.slice();
+    nr[idx] = cand;
+    return nr;
+  });
+  return renamed;
+}
+
+// Drops rows identical to an earlier row, in every column.
+function dropExactDuplicates(t) {
+  const seen = new Set();
+  const before = t.rows.length;
+  t.rows = t.rows.filter((r) => {
+    const k = JSON.stringify(r);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return before - t.rows.length;
+}
+
+// One token of components.assetRefs: an assets.id, a "*" pattern, or '' (dropped).
+function cleanAssetToken(tok) {
+  let t = tok.replace(/\$\{[^}]*\}/g, '*');
+  if (t.startsWith('../')) t = t.slice(3); // stylesheet-relative path to a root-relative id
+  if (t.includes('*')) return patternMatches(t) ? t : '';
+  return assetIds.has(t) ? t : '';
+}
+function cleanAssetRefs(text) {
+  const out = [...new Set(String(text).split(/\s+/).filter(Boolean).map(cleanAssetToken).filter(Boolean))];
+  return out.join(' ');
+}
+
+const cleaning = {};
+{
+  const c = inv.components;
+  const ai = need(c, 'assetRefs', 'components');
+  let changed = 0;
+  let dropped = 0;
+  c.rows = c.rows.map((r) => {
+    const before = String(r[ai]);
+    const after = cleanAssetRefs(before);
+    if (after !== before.trim().replace(/\s+/g, ' ')) { changed++; dropped += before.split(/\s+/).filter(Boolean).length - after.split(' ').filter(Boolean).length; }
+    const nr = r.slice();
+    nr[ai] = after;
+    return nr;
+  });
+  cleaning.assetRefsRowsChanged = changed;
+  cleaning.assetRefsTokensDropped = dropped;
+}
+cleaning.effectIdsRenamed = uniquifyColumn(inv.effects, 'id', 'effects');
+cleaning.breakpointNamesRenamed = uniquifyColumn(inv.breakpoints, 'name', 'breakpoints');
+cleaning.layoutRowsDropped = dropExactDuplicates(inv.layouts);
+cleaning.styleRowsDropped = dropExactDuplicates(inv.styles);
 
 // ------------------------------------------------------------- classifiers
 // Settings scope. Advanced/config rows are tuning even where they are also
@@ -124,7 +214,6 @@ function textKind(r) {
   return 'label';
 }
 
-const isMissing = r => ['missing', 'placeholder'].includes(get(inv['combat-symbols'], r, 'status'));
 
 // ------------------------------------------------------------ tree nodes
 const nodes = new Map(); // id -> { label, erd, description }
@@ -226,10 +315,38 @@ liveRefs['combat-symbols'] = rowMap('combat-symbols', r => {
   const m = get(inv['combat-symbols'], r, 'currentAssetRef').match(/src\/[^\s;]+/);
   return m ? m[0] : '';
 });
-// Every combat concept gets an icon: a missing one takes its suggested asset as a placeholder.
-const assignedAssetRef = rowMap('combat-symbols', r => (isMissing(r)
-  ? get(inv['combat-symbols'], r, 'suggestedAssetRef')
-  : get(inv['combat-symbols'], r, 'currentAssetRef')));
+// assignedAssetRef is an assets.id or blank. A row with a suggested asset (a
+// placeholder) takes that suggestion; a has-symbol row keeps its current file.
+// Text that is not an assets.id (inline SVG, a text glyph) is blank, and the row
+// is status "missing"; its code symbol stays in currentSymbol.
+const ICON_DIRS = {
+  'card-icon': ['assets/cards/default-outline/icons/', 'assets/player-polish/ui/icons/'],
+  'ui-icon': ['assets/player-polish/ui/icons/', 'assets/cards/default-outline/icons/'],
+};
+function mapIcon(text) {
+  const t = String(text).trim();
+  if (!t) return '';
+  if (assetIds.has(t)) return t;
+  const m = t.match(/^(card-icon|ui-icon):([A-Za-z0-9-]+)$/);
+  if (m) {
+    for (const dir of ICON_DIRS[m[1]]) {
+      const cand = dir + m[2] + '.svg';
+      if (assetIds.has(cand)) return cand;
+    }
+  }
+  return '';
+}
+const combatRows = inv['combat-symbols'];
+['tagKey', 'currentSymbol', 'currentAssetRef', 'suggestedAssetRef', 'status'].forEach(c => need(combatRows, c, 'combat-symbols'));
+const combatStatus = [];
+const assignedAssetRef = combatRows.rows.map((r) => {
+  const suggested = String(get(combatRows, r, 'suggestedAssetRef')).trim();
+  const current = String(get(combatRows, r, 'currentAssetRef')).trim();
+  const placeholder = suggested !== '';
+  const mapped = mapIcon(placeholder ? suggested : current);
+  combatStatus.push(mapped === '' ? 'missing' : placeholder ? 'placeholder' : 'has symbol');
+  return mapped;
+});
 
 tagIds.strings = rowMap('strings', r => presId('text', textKind(r)));
 liveRefs.strings = rowMap('strings', r => get(inv.strings, r, 'file'));
@@ -261,21 +378,30 @@ const legacyOut = legacyRows.map(r => {
   if (!legacy) throw new Error('no legacy status snapshot for ' + id);
   let status;
   let liveId = '';
-  let description = r[ci.description];
   if (LIVE[id]) { status = 'live-tag'; liveId = LIVE[id]; }
   else if (legacy === 'moved') status = 'live-tag';
   else if (legacy === 'existing') status = 'game-concept';
   else if (GAME.has(id)) status = 'game-concept';
   else status = 'new';
-  if (legacy === 'moved') {
-    const note = 'Moved: re-homed in the proposal (tag-tree.txt [m]).';
-    description = description ? `${note} ${description}` : note;
-  }
+  // The note is written once: strip any copies from an earlier run, then add it back.
+  const rest = r[ci.description].replace(MOVED_PREFIX, '');
+  const description = legacy === 'moved' ? (rest ? `${MOVED_NOTE} ${rest}` : MOVED_NOTE) : rest;
   statusCount[status] = (statusCount[status] || 0) + 1;
   if (liveId) liveByStatus[status] = (liveByStatus[status] || 0) + 1;
   const row = Object.fromEntries(TAG_HEAD.map(h => [h, r[ci[h]]]));
   return { id, row: { ...row, description, status, liveId } };
 });
+
+// A nodes.csv id claimed by two tags is an error unless SHARED_LIVE says why.
+const liveClaims = {};
+for (const { id, row } of legacyOut) if (row.liveId) (liveClaims[row.liveId] ||= []).push(id);
+const sharedLive = Object.entries(liveClaims).filter(([, ids]) => ids.length > 1);
+for (const [live, ids] of sharedLive) {
+  if (!SHARED_LIVE[live]) throw new Error(`liveId ${live} is claimed by ${ids.join(', ')} with no SHARED_LIVE reason`);
+}
+for (const live of Object.keys(SHARED_LIVE)) {
+  if (!sharedLive.some(([l]) => l === live)) throw new Error(`SHARED_LIVE entry ${live} is not shared by two tags`);
+}
 
 // Task 2: presentation nodes.
 const presRows = [...nodes.entries()].map(([id, n]) => ({
@@ -362,17 +488,14 @@ for (const name of INVENTORY) {
       scope: scopeCols[name] ? scopeCols[name][i] : undefined,
       assignedAssetRef: name === 'combat-symbols' ? assignedAssetRef[i] : undefined,
     };
-    if (name === 'combat-symbols' && isMissingRow(name, i)) b[t.header.indexOf('status')] = 'placeholder';
+    if (name === 'combat-symbols') b[t.header.indexOf('status')] = combatStatus[i];
     return [...b, ...extra.map(c => vals[c])];
   });
   presRowCounts[name] = rows.length;
   writeFileSync(join(PRES, name + '.csv'), toCsv(header, rows));
 }
-function isMissingRow(name, i) {
-  return ['missing', 'placeholder'].includes(inv[name].rows[i][inv[name].header.indexOf('status')]);
-}
 
-const combatPlaceholders = inv['combat-symbols'].rows.filter((_, i) => isMissingRow('combat-symbols', i)).length;
+const combatCounts = combatStatus.reduce((a, s) => ({ ...a, [s]: (a[s] || 0) + 1 }), {});
 console.log(JSON.stringify({
   tagRows: tagOut.length,
   legacyRows: legacyOut.length,
@@ -382,6 +505,8 @@ console.log(JSON.stringify({
   statusCount,
   liveIdByStatus: liveByStatus,
   liveIdTotal: Object.values(liveByStatus).reduce((a, b) => a + b, 0),
+  sharedLiveIds: sharedLive.map(([live, ids]) => `${live} <- ${ids.join(', ')}`),
+  cleaning,
   presentationRows: presRowCounts,
-  combatSymbolPlaceholders: combatPlaceholders,
+  combatSymbolStatus: combatCounts,
 }, null, 1));

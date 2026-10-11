@@ -91,7 +91,6 @@ test-build-grid,all,,,,,"grid-cols:repeat(3,minmax(0,1fr))",,styles/combat-test.
 test-build-choice,all,,,,,grid-cols:20px 1fr,px,styles/combat-test.css:8,all,all,styles/combat-test.css:8
 test-options,all,,,min 160px,,,px,styles/combat-test.css:13,all,all,styles/combat-test.css:13
 combat-test-setup,all,,,100%,min 46px,,px,styles/combat-test.css:14,all,all,styles/combat-test.css:14
-combat-test-setup,all,,,100%,min 46px,,px,styles/combat-test.css:14,all,all,styles/combat-test.css:14
 combat-test-setup,all,,,,min 48px,,px,styles/combat-test.css:15,all,all,styles/combat-test.css:15
 test-exit,all,,,,min 48px,,px,styles/combat-test.css:15,all,all,styles/combat-test.css:15
 test-help,all,,,,min 40px,,px,styles/combat-test.css:19,all,all,styles/combat-test.css:19
@@ -306,7 +305,6 @@ combat,(max-height: 700px),,,,,grid-rows:10% 55% 35%,,styles/combat.css:1582,oth
 combatant-info,(max-height: 480px) and (min-width: 600px),right calc(100% + 4px),bottom 0,,,absolute|right-anchored|bottom-anchored,kw+calc+px,styles/combat.css:1590,other,breakpoint.other,styles/combat.css:1590
 position-guides,all,inset 0,,100%,100%,absolute,kw,styles/combat.css:1605,all,all,styles/combat.css:1605
 formation-positioning,all,,,100%,,,,styles/combat.css:1608,all,all,styles/combat.css:1608
-formation-positioning,all,,,100%,,,,styles/combat.css:1608,all,all,styles/combat.css:1608
 position-inputs,all,,,,,grid-cols:1fr 1fr,,styles/combat.css:1611,all,all,styles/combat.css:1611
 position-nudges,all,,,max 70px,,,px,styles/combat.css:1613,all,all,styles/combat.css:1613
 position-snap,all,,,auto,,,kw,styles/combat.css:1617,all,all,styles/combat.css:1617
@@ -359,7 +357,6 @@ card-rank-bar,all,inset 0,,,,absolute,kw,styles/illustrated-cards.css:70,all,all
 card-rank-bar,all,inset .65cqw,,,,absolute,kw+cqw,styles/illustrated-cards.css:74,all,all,styles/illustrated-cards.css:74
 card-rank-text,all,,,,,relative,kw,styles/illustrated-cards.css:80,all,all,styles/illustrated-cards.css:80
 as-ornament,all,,,,1px,,px,styles/kit.css:47,all,all,styles/kit.css:47
-as-ornament,all,,,,1px,,px,styles/kit.css:47,all,all,styles/kit.css:47
 modal-btnrow,all,,,min 0,,,,styles/kit.css:54,all,all,styles/kit.css:54
 modal-tab,all,,,min 0,,,,styles/kit.css:54,all,all,styles/kit.css:54
 modal-head-status,all,,,min 0,,,,styles/kit.css:54,all,all,styles/kit.css:54
@@ -407,7 +404,6 @@ as-meters,all,,,min 0,,,,styles/kit.css:65,all,all,styles/kit.css:65
 as-cluster,all,,,min 0,,,,styles/kit.css:65,all,all,styles/kit.css:65
 as-band-row,all,,,min 0,,,,styles/kit.css:65,all,all,styles/kit.css:65
 as-detailbody,all,,,min 0,,,,styles/kit.css:65,all,all,styles/kit.css:65
-as-detailbody,all,,,min 0,,,,styles/kit.css:65,all,all,styles/kit.css:65
 as-btnrow,all,,,min 0,,,,styles/kit.css:69,all,all,styles/kit.css:69
 as-row,all,,,min 0,,,,styles/kit.css:69,all,all,styles/kit.css:69
 as-option,all,,,min 0,,,,styles/kit.css:69,all,all,styles/kit.css:69
@@ -425,9 +421,6 @@ as-optionrow,all,,,min 0 / max 100%,,,,styles/kit.css:76,all,all,styles/kit.css:
 as-options,all,,,min 0 / max 100%,,,,styles/kit.css:76,all,all,styles/kit.css:76
 as-statpair,all,,,min 0 / max 100%,,,,styles/kit.css:76,all,all,styles/kit.css:76
 ki,all,,,min 0 / max 100%,,,,styles/kit.css:76,all,all,styles/kit.css:76
-ob,all,,,min 0 / max 100%,,,,styles/kit.css:77,all,all,styles/kit.css:77
-ob,all,,,min 0 / max 100%,,,,styles/kit.css:77,all,all,styles/kit.css:77
-ob,all,,,min 0 / max 100%,,,,styles/kit.css:77,all,all,styles/kit.css:77
 ob,all,,,min 0 / max 100%,,,,styles/kit.css:77,all,all,styles/kit.css:77
 as-detailcard,all,,,min 0 / max 100%,,,,styles/kit.css:77,all,all,styles/kit.css:77
 as-row,all,,,min 0 / max 50%,,,,styles/kit.css:82,all,all,styles/kit.css:82
@@ -459,7 +452,6 @@ as-railitem,all,,,100%,min var(--tap-floor),,var,styles/kit.css:201,all,all,styl
 as-seg,all,,,,min calc(var(--tap-floor) - 2px),,var+calc+px,styles/kit.css:218,all,all,styles/kit.css:218
 as-toggle,all,,,5.2rem,2.8rem,relative,kw+rem,styles/kit.css:225,all,all,styles/kit.css:225
 as-toggle,all,0.3rem,0.3rem,2rem,2rem,absolute,kw+rem,styles/kit.css:231,all,all,styles/kit.css:231
-as-toggle,all,calc(100% - 2.3rem),,,,,calc+rem,styles/kit.css:233,all,all,styles/kit.css:233
 as-toggle,all,calc(100% - 2.3rem),,,,,calc+rem,styles/kit.css:233,all,all,styles/kit.css:233
 as-toggle,all,50%,50%,"max(100%, var(--tap-floor))","max(100%, var(--tap-floor))","absolute|transform:translate(-50%, -50%)",kw+var,styles/kit.css:240,all,all,styles/kit.css:240
 as-keycap,all,,,min 2rem,,,rem,styles/kit.css:257,all,all,styles/kit.css:257
@@ -521,7 +513,6 @@ as-foot-actions,(max-width: 640px),,,100%,,,,styles/kit.css:634,other,breakpoint
 modal-btnrow,(max-width: 640px),,,100%,,,,styles/kit.css:635,other,breakpoint.other,styles/kit.css:635
 as-btnrow,(max-width: 640px),,,100%,,,,styles/kit.css:635,other,breakpoint.other,styles/kit.css:635
 as-railed,(max-width: 640px),,,,,"grid-cols:10rem minmax(0, 1fr)",rem,styles/kit.css:637,other,breakpoint.other,styles/kit.css:637
-as-row,all,,,,min var(--tap-floor),,var,styles/kit.css:642,all,all,styles/kit.css:642
 as-row,all,,,,min var(--tap-floor),,var,styles/kit.css:642,all,all,styles/kit.css:642
 as-row,all,,,9rem,,,rem,styles/kit.css:647,all,all,styles/kit.css:647
 as-row,all,,,"min(100%, 30rem)",,,rem,styles/kit.css:648,all,all,styles/kit.css:648
@@ -606,7 +597,6 @@ shop-book-buy,(max-width: 600px),,,,"min max(4.4rem, calc(44px / var(--ui-zoom, 
 card-shelf,all,,,100%,,,,styles/kit.css:1309,all,all,styles/kit.css:1309
 card-shelf,all,,,,,transform:none,kw,styles/kit.css:1313,all,all,styles/kit.css:1313
 global,all,,,,,transform:none,kw,styles/kit.css:1313,all,all,styles/kit.css:1313
-global,all,,,,,transform:none,kw,styles/kit.css:1313,all,all,styles/kit.css:1313
 card-shelf,all,,,,,transform:translateY(-8px) scale(1.06),px,styles/kit.css:1316,all,all,styles/kit.css:1316
 ev-choice,all,,,,min var(--tap-floor),,var,styles/kit.css:1327,all,all,styles/kit.css:1327
 choice-door,all,,,"var(--choice-frame-width, 100%)","min 0 / max var(--choice-frame-height, 100%)",,var,styles/kit.css:1347,all,all,styles/kit.css:1347
@@ -625,7 +615,6 @@ armoury-equipment,all,,,,min 0 / max none,,kw,styles/kit.css:1397,all,all,styles
 armoury-body,all,,,min 0,min 0,"grid-cols:minmax(0, var(--armoury-character-ratio, 0.4fr)) minmax(0, var(--armoury-equipment-ratio, 0.6fr))",var,styles/kit.css:1403,all,all,styles/kit.css:1403
 armoury-body,all,,,,,"grid-cols:minmax(0, var(--armoury-character-ratio, 0.4fr)) 0.7rem minmax(0, var(--armoury-equipment-ratio, 0.6fr))",var+rem,styles/kit.css:1408,all,all,styles/kit.css:1408
 armoury-body,all,,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:1412,all,all,styles/kit.css:1412
-armoury-body,all,,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:1412,all,all,styles/kit.css:1412
 armoury-left,all,,,min 0,min 0,,,styles/kit.css:1414,all,all,styles/kit.css:1414
 armoury-right,all,,,min 0,min 0,,,styles/kit.css:1414,all,all,styles/kit.css:1414
 armoury-content,all,,,,,"grid-cols:minmax(0, var(--armoury-armaments-pane-width, 0.6fr)) 0.7rem minmax(0, var(--armoury-inventory-pane-width, 0.4fr))",var+rem,styles/kit.css:1416,all,all,styles/kit.css:1416
@@ -638,11 +627,9 @@ armoury-character,all,,,,,"grid-cols:minmax(0, var(--armoury-summary-pane-ratio,
 as-artwell,all,,,100%,100%,,,styles/kit.css:1444,all,all,styles/kit.css:1444
 armoury-figure,all,,,auto,"min(82%, 22rem)",relative|aspect:150 / 190,kw+rem,styles/kit.css:1445,all,all,styles/kit.css:1445
 armoury-figure,all,,,100%,100%,,,styles/kit.css:1446,all,all,styles/kit.css:1446
-armoury-figure,all,,,100%,100%,,,styles/kit.css:1446,all,all,styles/kit.css:1446
 armoury-figure,all,,,max 68%,"min(74%, 14rem)",,rem,styles/kit.css:1447,all,all,styles/kit.css:1447
 armoury-character-stats,all,,,min 0,min 0,,,styles/kit.css:1448,all,all,styles/kit.css:1448
 od,all,,,min 0,,,,styles/kit.css:1451,all,all,styles/kit.css:1451
-disc-face,all,,,min 2ch,,,,styles/kit.css:1455,all,all,styles/kit.css:1455
 disc-face,all,,,min 2ch,,,,styles/kit.css:1455,all,all,styles/kit.css:1455
 armoury-position-card,all,,,100%,,,,styles/kit.css:1463,all,all,styles/kit.css:1463
 armoury-position-grid-group,all,,,min 0,,,,styles/kit.css:1471,all,all,styles/kit.css:1471
@@ -721,7 +708,6 @@ reward-progress-row,all,,,,,"grid-cols:auto minmax(3rem, 1fr) auto",rem,styles/k
 reward-row,all,,,max 100%,,,,styles/kit.css:1690,all,all,styles/kit.css:1690
 reward-selected,all,,,,,transform:translateY(-8px) scale(1.06),px,styles/kit.css:1694,all,all,styles/kit.css:1694
 as-pagedoor,all,,,100%,100%,,rem,styles/kit.css:1714,all,all,styles/kit.css:1714
-as-pagedoor,all,,,100%,100%,,rem,styles/kit.css:1714,all,all,styles/kit.css:1714
 as-split,all,,,100%,,"grid-cols:minmax(18rem, var(--split-share)) auto minmax(0, 1fr)",var+rem,styles/kit.css:1734,all,all,styles/kit.css:1734
 as-split-pane,all,,,min 0,,,,styles/kit.css:1739,all,all,styles/kit.css:1739
 as-split-handle,all,,,var(--tap-floor),min 0,relative,kw+var,styles/kit.css:1742,all,all,styles/kit.css:1742
@@ -751,7 +737,6 @@ as-option,all,,,auto,,,kw,styles/kit.css:1859,all,all,styles/kit.css:1859
 as-option,all,,,auto,,,kw,styles/kit.css:1861,all,all,styles/kit.css:1861
 as-artwell,all,,,4rem,4rem,,rem,styles/kit.css:1867,all,all,styles/kit.css:1867
 as-option,all,,,min 0,,,,styles/kit.css:1874,all,all,styles/kit.css:1874
-as-option,all,,,min 0,,,,styles/kit.css:1874,all,all,styles/kit.css:1874
 as-option,all,,,,min var(--tap-floor),,var,styles/kit.css:1876,all,all,styles/kit.css:1876
 as-face,all,,,100%,min var(--tap-floor),,var,styles/kit.css:1887,all,all,styles/kit.css:1887
 as-row,all,,,100%,min var(--tap-floor),,var,styles/kit.css:1888,all,all,styles/kit.css:1888
@@ -778,30 +763,20 @@ as-row,all,,,min 0,,,,styles/kit.css:1983,all,all,styles/kit.css:1983
 as-title-s,all,,,max 60%,,,,styles/kit.css:1985,all,all,styles/kit.css:1985
 as-tray,all,,,,min 0,,,styles/kit.css:1988,all,all,styles/kit.css:1988
 as-tray,all,,,,max var(--tray-compact),,var,styles/kit.css:1993,all,all,styles/kit.css:1993
-as-tray,all,,,,max var(--tray-compact),,var,styles/kit.css:1993,all,all,styles/kit.css:1993
-as-tray,all,,,,min var(--tap-floor),,var,styles/kit.css:1994,all,all,styles/kit.css:1994
 as-tray,all,,,,min var(--tap-floor),,var,styles/kit.css:1994,all,all,styles/kit.css:1994
 as-tray,all,,,var(--tap-floor),,,var,styles/kit.css:1998,all,all,styles/kit.css:1998
-as-tray,all,,,var(--tap-floor),,,var,styles/kit.css:1998,all,all,styles/kit.css:1998
-tray-header,all,,,,100%,,,styles/kit.css:1999,all,all,styles/kit.css:1999
 tray-header,all,,,,100%,,,styles/kit.css:1999,all,all,styles/kit.css:1999
 as-row,all,,,var(--tap-floor),100%,,var,styles/kit.css:2000,all,all,styles/kit.css:2000
-as-row,all,,,var(--tap-floor),100%,,var,styles/kit.css:2000,all,all,styles/kit.css:2000
-as-tray,all,,,calc(100% - 0.6rem),auto,,calc+rem+kw,styles/kit.css:2005,all,all,styles/kit.css:2005
 as-tray,all,,,calc(100% - 0.6rem),auto,,calc+rem+kw,styles/kit.css:2005,all,all,styles/kit.css:2005
 tray-resize-handle,all,,,,,absolute,kw,styles/kit.css:2007,all,all,styles/kit.css:2007
 tray-resize-handle,all,,,,,absolute,kw,styles/kit.css:2008,all,all,styles/kit.css:2008
 tray-resize-handle,all,50%,,9.6rem,var(--tap-floor),transform:translateX(-50%),rem+var,styles/kit.css:2009,all,all,styles/kit.css:2009
-tray-resize-handle,all,50%,,9.6rem,var(--tap-floor),transform:translateX(-50%),rem+var,styles/kit.css:2009,all,all,styles/kit.css:2009
 tray-resize-handle,all,,bottom 0,,,"bottom-anchored|transform:translate(-50%, 50%)",,styles/kit.css:2010,all,all,styles/kit.css:2010
 tray-resize-handle,all,,0,,,"transform:translate(-50%, -50%)",,styles/kit.css:2011,all,all,styles/kit.css:2011
 tray-resize-handle,all,50%,50%,4.8rem,2px,"transform:translate(-50%, -50%)",rem+px,styles/kit.css:2012,all,all,styles/kit.css:2012
-tray-resize-handle,all,50%,50%,4.8rem,2px,"transform:translate(-50%, -50%)",rem+px,styles/kit.css:2012,all,all,styles/kit.css:2012
-tray-resize-handle,all,,50%,var(--tap-floor),9.6rem,transform:translateY(-50%),var+rem,styles/kit.css:2013,all,all,styles/kit.css:2013
 tray-resize-handle,all,,50%,var(--tap-floor),9.6rem,transform:translateY(-50%),var+rem,styles/kit.css:2013,all,all,styles/kit.css:2013
 tray-resize-handle,all,right 0,,,,right-anchored,,styles/kit.css:2014,all,all,styles/kit.css:2014
 tray-resize-handle,all,0,,,,,,styles/kit.css:2015,all,all,styles/kit.css:2015
-tray-resize-handle,all,50%,50%,2px,4.8rem,"transform:translate(-50%, -50%)",px+rem,styles/kit.css:2016,all,all,styles/kit.css:2016
 tray-resize-handle,all,50%,50%,2px,4.8rem,"transform:translate(-50%, -50%)",px+rem,styles/kit.css:2016,all,all,styles/kit.css:2016
 disc-reveal,all,,,100%,,,,styles/kit.css:2023,all,all,styles/kit.css:2023
 disc-fold-row,all,,,min 0,,,,styles/kit.css:2029,all,all,styles/kit.css:2029
@@ -818,7 +793,6 @@ cz-portrait,(max-width: 900px),,,,24rem,,rem,styles/kit.css:2070,other,breakpoin
 disc-summary,all,,,min 0,,,,styles/kit.css:2087,all,all,styles/kit.css:2087
 smith-candidate-card,all,,,,,relative,kw,styles/kit.css:2113,all,all,styles/kit.css:2113
 as-artwell,all,,,3.4rem,3.4rem,,rem,styles/kit.css:2117,all,all,styles/kit.css:2117
-as-artwell,all,,,100%,100%,,,styles/kit.css:2118,all,all,styles/kit.css:2118
 as-artwell,all,,,100%,100%,,,styles/kit.css:2118,all,all,styles/kit.css:2118
 smith-row-text,all,,,min 0,,,,styles/kit.css:2119,all,all,styles/kit.css:2119
 card-inspection-target,all,auto,50%,,,right-anchored|transform:translateY(-50%),px+kw,styles/kit.css:2123,all,all,styles/kit.css:2123
@@ -867,7 +841,6 @@ as-glyph,all,,,,,transform:rotate(90deg),deg,styles/kit.css:2368,all,all,styles/
 as-log,all,,,,min 18rem / max 100%,,rem,styles/kit.css:2374,all,all,styles/kit.css:2374
 as-pagedoor,all,,,,max 100%,,,styles/kit.css:2385,all,all,styles/kit.css:2385
 as-pagedoor,all,,,,auto,,kw,styles/kit.css:2386,all,all,styles/kit.css:2386
-as-pagedoor,all,,,,auto,,kw,styles/kit.css:2386,all,all,styles/kit.css:2386
 as-pagedoor,all,,,,min 0,,,styles/kit.css:2387,all,all,styles/kit.css:2387
 with-status,all,,,min 0,,,,styles/kit.css:2411,all,all,styles/kit.css:2411
 as-options,all,,,,min 0,,,styles/kit.css:2414,all,all,styles/kit.css:2414
@@ -887,7 +860,6 @@ as-slot,all,,,var(--iconbtn-size),var(--iconbtn-size),relative,kw+var,styles/kit
 as-slot,all,,,3rem,3rem,,rem,styles/kit.css:2534,all,all,styles/kit.css:2534
 sl-art,all,,,72%,72%,,,styles/kit.css:2537,all,all,styles/kit.css:2537
 sl-art,all,,,100%,100%,,,styles/kit.css:2539,all,all,styles/kit.css:2539
-sl-art,all,,,100%,100%,,,styles/kit.css:2541,all,all,styles/kit.css:2541
 sl-art,all,,,100%,100%,,,styles/kit.css:2541,all,all,styles/kit.css:2541
 as-pill,all,right 1px,1px,,,absolute|right-anchored,kw+px,styles/kit.css:2542,all,all,styles/kit.css:2542
 as-keycap,all,right 1px,bottom 1px,min 1.5rem,,absolute|right-anchored|bottom-anchored,kw+px+rem,styles/kit.css:2543,all,all,styles/kit.css:2543
@@ -1002,14 +974,12 @@ cc-preview-side,all,,,,min 0,,,styles/kit.css:3286,all,all,styles/kit.css:3286
 cz-portrait,all,,,"min(100%, 30rem)",auto,aspect:3 / 4,rem+kw,styles/kit.css:3287,all,all,styles/kit.css:3287
 cc-preview-fold,all,,,100%,,,,styles/kit.css:3291,all,all,styles/kit.css:3291
 armoury-figure,all,,,"min(78cqw, calc(82cqh * 150 / 190), 22rem)",auto,aspect:150 / 190,calc+cqw+cqh+rem+kw,styles/kit.css:3293,all,all,styles/kit.css:3293
-armoury-figure,all,,,"min(78cqw, calc(82cqh * 150 / 190), 22rem)",auto,aspect:150 / 190,calc+cqw+cqh+rem+kw,styles/kit.css:3293,all,all,styles/kit.css:3293
 as-cardgrid,all,,,,,"grid-cols:repeat(auto-fit, minmax(min(100%, calc(150px / var(--ui-zoom, 1))), 1fr))",var+calc+px,styles/kit.css:3300,all,all,styles/kit.css:3300
 pile-body,all,,,100%,auto,transform:none|aspect:var(--card-ratio),var+kw,styles/kit.css:3304,all,all,styles/kit.css:3304
 pile-body,all,,,100%,100%,,,styles/kit.css:3313,all,all,styles/kit.css:3313
 pile-body,all,,,"calc(24px / var(--ui-zoom, 1))","calc(24px / var(--ui-zoom, 1))",,var+calc+px,styles/kit.css:3315,all,all,styles/kit.css:3315
 modal-tab,all,,,,min var(--tap-floor),,var,styles/kit.css:3316,all,all,styles/kit.css:3316
 modal,all,,,max-content,,,,styles/kit.css:3324,all,all,styles/kit.css:3324
-r-label,all,,,max-content,,,,styles/kit.css:3324,all,all,styles/kit.css:3324
 r-label,all,,,max-content,,,,styles/kit.css:3324,all,all,styles/kit.css:3324
 modal,all,,,min 0,,,,styles/kit.css:3329,all,all,styles/kit.css:3329
 as-row,all,,,min 0,,,,styles/kit.css:3329,all,all,styles/kit.css:3329
@@ -1137,7 +1107,6 @@ inspection-tag,all,,,max 100%,,,,styles/kit.css:3872,all,all,styles/kit.css:3872
 equipment-poker-explanations,all,,,min 0,,,,styles/kit.css:3880,all,all,styles/kit.css:3880
 ctext,all,,,,max none,,kw,styles/kit.css:3882,all,all,styles/kit.css:3882
 card-inspection-layout,(max-width:600px),,,,,"grid-cols:minmax(0,1fr)",,styles/kit.css:3885,mobile,mobile,styles/kit.css:3885
-card-inspection-layout,(max-width:600px),,,,,"grid-cols:minmax(0,1fr)",,styles/kit.css:3885,mobile,mobile,styles/kit.css:3885
 card-inspection-art,(max-width:600px),,,100%,,,,styles/kit.css:3887,mobile,mobile,styles/kit.css:3887
 card-inspection-art,(max-width:600px),,,,,,,styles/kit.css:3888,mobile,mobile,styles/kit.css:3888
 card-inspection-art,(max-width:600px),,,160px,auto,aspect:var(--card-ratio),px+kw+var,styles/kit.css:3889,mobile,mobile,styles/kit.css:3889
@@ -1196,7 +1165,6 @@ equipment-poker-card,(prefers-reduced-motion:reduce),,,,,transform:none,kw,style
 equipment-poker-card,all,,,,,transform:none,kw,styles/kit.css:4463,all,all,styles/kit.css:4463
 shop-inspect-card,all,,,,,relative,kw,styles/kit.css:4465,all,all,styles/kit.css:4465
 epc-frame,all,,,,,"grid-rows:var(--epc-rows, 231.6px 22px 40px 18px 88.4px 18px 16px)",var+px,styles/kit.css:4470,all,all,styles/kit.css:4470
-epc-frame,all,,,,,"grid-rows:var(--epc-rows, 231.6px 22px 40px 18px 88.4px 18px 16px)",var+px,styles/kit.css:4470,all,all,styles/kit.css:4470
 card-inspection-modal,all,,,,auto,,kw,styles/kit.css:4485,all,all,styles/kit.css:4485
 epc-effects,all,,,,,relative,kw,styles/kit.css:4488,all,all,styles/kit.css:4488
 epc-effects,all,right 0,bottom 0,,,absolute|right-anchored|bottom-anchored,kw,styles/kit.css:4491,all,all,styles/kit.css:4491
@@ -1204,7 +1172,6 @@ epc-line,all,,,min 0,,,,styles/kit.css:4499,all,all,styles/kit.css:4499
 modal-head-id,all,,,,max none,,kw,styles/kit.css:4512,all,all,styles/kit.css:4512
 as-head-id,all,,,,max none,,kw,styles/kit.css:4512,all,all,styles/kit.css:4512
 as-tip,all,,,,max none,,kw,styles/kit.css:4512,all,all,styles/kit.css:4512
-as-ornament,all,,,min 0,,,,styles/kit.css:4516,all,all,styles/kit.css:4516
 as-ornament,all,,,min 0,,,,styles/kit.css:4516,all,all,styles/kit.css:4516
 as-titlemenu,all,,,max 60rem,,,rem,styles/kit.css:4520,all,all,styles/kit.css:4520
 title-home,all,,,,,"grid-cols:minmax(0, 1fr) minmax(0, 1fr)",,styles/kit.css:4525,all,all,styles/kit.css:4525
@@ -1226,8 +1193,6 @@ as-modal,all,,,,"min 0 / max calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-to
 modal,all,,,,"calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))",,var+calc+dvh+px,styles/kit.css:4643,all,all,styles/kit.css:4643
 as-modal,all,,,,"calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))",,var+calc+dvh+px,styles/kit.css:4643,all,all,styles/kit.css:4643
 modal,all,,,,auto,,kw,styles/kit.css:4647,all,all,styles/kit.css:4647
-modal,all,,,,auto,,kw,styles/kit.css:4647,all,all,styles/kit.css:4647
-as-modal,all,,,,auto,,kw,styles/kit.css:4647,all,all,styles/kit.css:4647
 as-modal,all,,,,auto,,kw,styles/kit.css:4647,all,all,styles/kit.css:4647
 modal-foot-actions,all,,,100%,,,,styles/kit.css:4690,all,all,styles/kit.css:4690
 modal-foot-actions,all,,,min 0 / max none,,,kw,styles/kit.css:4693,all,all,styles/kit.css:4693
@@ -1358,10 +1323,8 @@ w1-split,all,,,min 0,min 0,,,styles/kit.css:5262,all,all,styles/kit.css:5262
 cp-grid,all,,,,min 0,,,styles/kit.css:5265,all,all,styles/kit.css:5265
 w1-split,all,,,,,"grid-cols:minmax(0, 1fr)|grid-rows:minmax(0, 1fr) minmax(0, 1fr)",,styles/kit.css:5277,all,all,styles/kit.css:5277
 cp-grid,all,,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:5285,all,all,styles/kit.css:5285
-cp-grid,all,,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:5285,all,all,styles/kit.css:5285
 w1-split,all,,,,,"grid-rows:minmax(0, 7fr) minmax(0, 13fr)",,styles/kit.css:5286,all,all,styles/kit.css:5286
 as-row,all,,,100%,,,,styles/kit.css:5289,all,all,styles/kit.css:5289
-enemy-intent-prediction,all,,,100%,"min max(44px, calc(44px / var(--ui-zoom, 1)))",,var+calc+px,styles/kit.css:5290,all,all,styles/kit.css:5290
 enemy-intent-prediction,all,,,100%,"min max(44px, calc(44px / var(--ui-zoom, 1)))",,var+calc+px,styles/kit.css:5290,all,all,styles/kit.css:5290
 as-railed,all,,,,,relative,kw,styles/kit.css:5303,all,all,styles/kit.css:5303
 as-railed,all,,,,,"grid-cols:minmax(0, 1fr)|grid-rows:auto minmax(0, 1fr)",,styles/kit.css:5304,all,all,styles/kit.css:5304
@@ -1431,7 +1394,6 @@ cc-name-row,all,,,,,"grid-cols:auto minmax(0,1fr)",,styles/kit.css:5614,all,all,
 cc-name-row,all,,,100%,,,,styles/kit.css:5615,all,all,styles/kit.css:5615
 cz-name,all,,,100%,,,,styles/kit.css:5616,all,all,styles/kit.css:5616
 as-row,all,,,,min var(--tap-floor),,var,styles/kit.css:5617,all,all,styles/kit.css:5617
-as-row,all,,,,min var(--tap-floor),,var,styles/kit.css:5617,all,all,styles/kit.css:5617
 cc-primary-stat,all,,,,min var(--tap-floor),,var,styles/kit.css:5619,all,all,styles/kit.css:5619
 customize,all,,,,,"grid-cols:minmax(0,1fr) auto",,styles/kit.css:5624,all,all,styles/kit.css:5624
 cc-mode-edit,all,,,,min var(--tap-floor),,var,styles/kit.css:5625,all,all,styles/kit.css:5625
@@ -1468,12 +1430,10 @@ disc-fold-row,all,,,,100%,,,styles/kit.css:5732,all,all,styles/kit.css:5732
 disc-reveal,all,,,,100%,,,styles/kit.css:5733,all,all,styles/kit.css:5733
 cc-equip-group,all,,,100%,100%,"grid-cols:minmax(0,1.25fr) minmax(0,1fr)|grid-rows:minmax(0,1fr) auto",kw,styles/kit.css:5734,all,all,styles/kit.css:5734
 cc-card-selectors,all,,,,min 0,"grid-cols:repeat(auto-fit,minmax(0,var(--card-w-glance,152px)))",var+px,styles/kit.css:5735,all,all,styles/kit.css:5735
-cc-card-selectors,all,,,,min 0,"grid-cols:repeat(auto-fit,minmax(0,var(--card-w-glance,152px)))",var+px,styles/kit.css:5735,all,all,styles/kit.css:5735
 cc-card-selectors,all,,,,min 0,,,styles/kit.css:5737,all,all,styles/kit.css:5737
 cc-equipment-details,all,,,,min 0,,,styles/kit.css:5738,all,all,styles/kit.css:5738
 cc-equipment-continue,all,,,100%,,,,styles/kit.css:5739,all,all,styles/kit.css:5739
 cc-equip-group,(max-width:700px),,,,,"grid-cols:minmax(0,1fr)|grid-rows:auto minmax(0,1fr) auto",,styles/kit.css:5745,other,breakpoint.other,styles/kit.css:5745
-cc-card-selectors,(max-width:700px),,,,,grid-cols:none,kw,styles/kit.css:5746,other,breakpoint.other,styles/kit.css:5746
 cc-card-selectors,(max-width:700px),,,,,grid-cols:none,kw,styles/kit.css:5746,other,breakpoint.other,styles/kit.css:5746
 equipment-poker-card,(max-width:700px),,,100%,,,var+px,styles/kit.css:5749,other,breakpoint.other,styles/kit.css:5749
 cc-card-selectors,(max-width:700px),,,,max 32vh,,vh,styles/kit.css:5750,other,breakpoint.other,styles/kit.css:5750
@@ -1488,7 +1448,6 @@ cz-menu-button,all,,,var(--tap-floor),var(--tap-floor),,var,styles/kit.css:5780,
 modal-close,all,,,var(--tap-floor),var(--tap-floor),,var,styles/kit.css:5780,all,all,styles/kit.css:5780
 book-learning-panel,all,,,"min(90rem, 96vw)",max 94dvh,,rem+vw+dvh,styles/kit.css:5795,all,all,styles/kit.css:5795
 book-learning-body,all,,,,min 0,,,styles/kit.css:5796,all,all,styles/kit.css:5796
-book-learning-body,all,,,100%,min 44px,,px,styles/kit.css:5798,all,all,styles/kit.css:5798
 book-learning-body,all,,,100%,min 44px,,px,styles/kit.css:5798,all,all,styles/kit.css:5798
 book-lesson-columns,all,,,,,"grid-cols:minmax(0, 1fr) minmax(22rem, 1fr)",rem,styles/kit.css:5801,all,all,styles/kit.css:5801
 book-lesson-list,all,,,,max 42dvh,,dvh,styles/kit.css:5802,all,all,styles/kit.css:5802
@@ -1626,8 +1585,6 @@ atlas-terrain,all,inset 0,,100%,100%,absolute,kw,styles/map.css:398,all,all,styl
 atlas-node,all,,,44px,44px,"absolute|transform:translate(-50%,-50%)",kw+px,styles/map.css:401,all,all,styles/map.css:401
 atlas-landmark,all,50%,bottom 19px,110px,110px,absolute|bottom-anchored|transform:translateX(-50%),kw+px,styles/map.css:403,all,all,styles/map.css:403
 atlas-landmark,all,,,100%,100%,,,styles/map.css:404,all,all,styles/map.css:404
-atlas-landmark,all,,,100%,100%,,,styles/map.css:404,all,all,styles/map.css:404
-atlas-landmark,all,,,,,transform:translateX(-50%) scale(1.28),,styles/map.css:407,all,all,styles/map.css:407
 atlas-landmark,all,,,,,transform:translateX(-50%) scale(1.28),,styles/map.css:407,all,all,styles/map.css:407
 atlas-node-label,all,50%,38px,,,absolute|transform:translateX(-50%),kw+px,styles/map.css:408,all,all,styles/map.css:408
 atlas-compass,all,7%,5%,,,absolute,kw,styles/map.css:409,all,all,styles/map.css:409
@@ -1859,7 +1816,6 @@ shop-offers,all,,,,min 0,,,styles/player-polish.css:583,all,all,styles/player-po
 shop-shelf,all,,,,,"grid-cols:minmax(0,1fr)",,styles/player-polish.css:584,all,all,styles/player-polish.css:584
 shop-book-offer,all,,,100%,"var(--merchant-row-height,110px)","grid-cols:calc(60px / var(--ui-zoom,1)) minmax(0,1fr) calc(76px / var(--ui-zoom,1))",var+calc+px+kw,styles/player-polish.css:586,all,all,styles/player-polish.css:586
 merchant-offer,all,,,100%,"var(--merchant-row-height,110px)","grid-cols:calc(60px / var(--ui-zoom,1)) minmax(0,1fr) calc(76px / var(--ui-zoom,1))",var+calc+px+kw,styles/player-polish.css:586,all,all,styles/player-polish.css:586
-shop-book-offer,all,,,100%,"var(--merchant-row-height,110px)","grid-cols:calc(60px / var(--ui-zoom,1)) minmax(0,1fr) calc(76px / var(--ui-zoom,1))",var+calc+px+kw,styles/player-polish.css:586,all,all,styles/player-polish.css:586
 merchant-offer-details,all,,,min 0,,,,styles/player-polish.css:595,all,all,styles/player-polish.css:595
 shop-book-details,all,,,min 0,,,,styles/player-polish.css:595,all,all,styles/player-polish.css:595
 merchant-offer-actions,all,,,min 0,,,,styles/player-polish.css:600,all,all,styles/player-polish.css:600
@@ -1910,8 +1866,6 @@ pse-mode-button,all,,,,min 38px,,px,styles/prologue.css:51,all,all,styles/prolog
 pse-tab,all,,,,min 38px,,px,styles/prologue.css:53,all,all,styles/prologue.css:53
 pse-fields,all,,,,min 0,,,styles/prologue.css:55,all,all,styles/prologue.css:55
 pse-field,all,,,100%,min 40px,,px,styles/prologue.css:60,all,all,styles/prologue.css:60
-pse-field,all,,,100%,min 40px,,px,styles/prologue.css:60,all,all,styles/prologue.css:60
-pse-field,all,,,100%,min 40px,,px,styles/prologue.css:60,all,all,styles/prologue.css:60
 pse-field,all,,,,min 5.5rem,,rem,styles/prologue.css:61,all,all,styles/prologue.css:61
 pse-field,all,,,1.4rem,1.4rem,,rem,styles/prologue.css:62,all,all,styles/prologue.css:62
 pse-custom,all,,,1.3rem,1.3rem,,rem,styles/prologue.css:68,all,all,styles/prologue.css:68
@@ -1926,8 +1880,6 @@ pse-grip-sw,all,-6px,bottom -6px,,,bottom-anchored,px,styles/prologue.css:81,all
 pse-grip-se,all,right -6px,bottom -6px,,,right-anchored|bottom-anchored,px,styles/prologue.css:81,all,all,styles/prologue.css:81
 prologue-stage,all,inset 0,,,,absolute,kw,styles/prologue.css:83,all,all,styles/prologue.css:83
 prologue-screen,all,,,,,"grid-cols:1fr|grid-rows:minmax(0,1fr) auto",,styles/prologue.css:85,all,all,styles/prologue.css:85
-prologue-caption,all,,,max none,,,kw,styles/prologue.css:87,all,all,styles/prologue.css:87
-prologue-caption,all,,,max none,,,kw,styles/prologue.css:87,all,all,styles/prologue.css:87
 prologue-caption,all,,,max none,,,kw,styles/prologue.css:87,all,all,styles/prologue.css:87
 prologue-scene-editor,(max-width:900px),,,,"calc(96dvh / var(--ui-zoom,1))",,var+calc+dvh,styles/prologue.css:89,other,breakpoint.other,styles/prologue.css:89
 pse-visual,(max-width:900px),,,,"min min(95dvh,830px)",,dvh+px,styles/prologue.css:92,other,breakpoint.other,styles/prologue.css:92
@@ -1955,8 +1907,6 @@ prologue-layout-panelRight,all,,,,,"grid-cols:1fr minmax(18rem,34%)",rem,styles/
 prologue-layout-panelLeft,(max-width:760px) and (orientation:portrait),,,,,"grid-cols:1fr|grid-rows:minmax(14rem,1fr) auto auto",rem,styles/prologue.css:153,other,breakpoint.other,styles/prologue.css:153
 prologue-layout-panelRight,(max-width:760px) and (orientation:portrait),,,,,"grid-cols:1fr|grid-rows:minmax(14rem,1fr) auto auto",rem,styles/prologue.css:153,other,breakpoint.other,styles/prologue.css:153
 prologue-layout-overlay,(max-width:760px) and (orientation:portrait),,,,,"grid-cols:1fr|grid-rows:minmax(14rem,1fr) auto auto",rem,styles/prologue.css:153,other,breakpoint.other,styles/prologue.css:153
-prologue-caption,(max-width:760px) and (orientation:portrait),,,max none,,,kw,styles/prologue.css:155,other,breakpoint.other,styles/prologue.css:155
-prologue-caption,(max-width:760px) and (orientation:portrait),,,max none,,,kw,styles/prologue.css:155,other,breakpoint.other,styles/prologue.css:155
 prologue-caption,(max-width:760px) and (orientation:portrait),,,max none,,,kw,styles/prologue.css:155,other,breakpoint.other,styles/prologue.css:155
 set-swatch,all,,,2rem,2rem,,rem,styles/prologue.css:164,all,all,styles/prologue.css:164
 set-wheel,all,,,3.2rem,2.4rem,,rem,styles/prologue.css:165,all,all,styles/prologue.css:165
@@ -1992,8 +1942,6 @@ formation-grid-cell,all,,,,,"transform:translate(-50%, -50%)",,styles/ui.css:29,
 set-row,all,,,min 0,,,,styles/ui.css:36,all,all,styles/ui.css:36
 formation-preset-field,all,,,100%,,,,styles/ui.css:38,all,all,styles/ui.css:38
 formation-editor,all,,,min 0 / max 100%,,,,styles/ui.css:39,all,all,styles/ui.css:39
-formation-editor,all,,,min 0 / max 100%,,,,styles/ui.css:39,all,all,styles/ui.css:39
-formation-editor,all,,,,"min var(--tap-floor, 44px)",,var+px,styles/ui.css:40,all,all,styles/ui.css:40
 formation-editor,all,,,,"min var(--tap-floor, 44px)",,var+px,styles/ui.css:40,all,all,styles/ui.css:40
 formation-presets,all,,,,,"grid-cols:repeat(4, minmax(0, 1fr))",,styles/ui.css:41,all,all,styles/ui.css:41
 formation-presets,all,,,min 0,min 64px,,px,styles/ui.css:42,all,all,styles/ui.css:42
@@ -2062,7 +2010,6 @@ enemy-row,all,,,100%,min 0,,,styles/ui.css:665,all,all,styles/ui.css:665
 player,all,,,,,relative,kw,styles/ui.css:669,all,all,styles/ui.css:669
 coop-leave,all,,,,auto,,var+kw,styles/ui.css:676,all,all,styles/ui.css:676
 armoury-equipment-receipts,(max-width: 1000px),,,min 0,,,,styles/ui.css:693,other,breakpoint.other,styles/ui.css:693
-armoury-equipment-receipts,(max-width: 1000px),,,min 0,,,,styles/ui.css:693,other,breakpoint.other,styles/ui.css:693
 equip-role-receipts,(max-width: 1000px),,,,,"grid-cols:minmax(0, 1fr)",,styles/ui.css:694,other,breakpoint.other,styles/ui.css:694
 character-info-label,(max-width: 1000px),,,min 0,,,,styles/ui.css:696,other,breakpoint.other,styles/ui.css:696
 statproj-derived,all,,,max 44rem,,,rem,styles/ui.css:719,all,all,styles/ui.css:719
@@ -2102,9 +2049,7 @@ set-reset-defaults,all,,,,min var(--tap-floor),,var,styles/ui.css:1041,all,all,s
 set-header-tools,all,,,100%,min var(--tap-floor),,var,styles/ui.css:1042,all,all,styles/ui.css:1042
 settings-modal,all,,,var(--tap-floor),var(--tap-floor),,var,styles/ui.css:1046,all,all,styles/ui.css:1046
 set-search-toggle,all,,,var(--tap-floor),var(--tap-floor),,var,styles/ui.css:1046,all,all,styles/ui.css:1046
-settings-modal,all,,,var(--tap-floor),var(--tap-floor),,var,styles/ui.css:1046,all,all,styles/ui.css:1046
 set-options,all,,,var(--tap-floor),var(--tap-floor),,var,styles/ui.css:1046,all,all,styles/ui.css:1046
-settings-modal,all,,,var(--tap-floor),var(--tap-floor),,var,styles/ui.css:1046,all,all,styles/ui.css:1046
 settings-modal,all,,,1.8rem,1.8rem,,rem,styles/ui.css:1056,all,all,styles/ui.css:1056
 set-header-tools,all,,,1.8rem,1.8rem,,rem,styles/ui.css:1056,all,all,styles/ui.css:1056
 modal-close-face,all,,,100%,100%,,,styles/ui.css:1058,all,all,styles/ui.css:1058

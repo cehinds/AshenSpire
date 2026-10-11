@@ -4,9 +4,15 @@
 // then run tools/build.mjs.
 //
 // LIVE: proposal tag id -> nodes.csv id. Matches are by id, by label, or by the
-// known renames in the brief (Force=damage:arcane, Holy/Divine=damage:sacred,
-// Necrotic=damage:decay, Cold/Frost=damage:frost). Entries marked "probable"
-// are a label-level match that the reviewer did not confirm against the game.
+// known renames in the brief. Spellcraft elements map to the school nodes
+// (Force=school:force, Divine=school:divine, Necrotic=school:decay,
+// Frost=school:frost); the magic damage types map to the damage nodes
+// (Force=damage:arcane, Holy/Divine=damage:sacred, Necrotic=damage:decay,
+// Cold/Frost=damage:frost). Entries marked "probable" are a label-level match
+// that the reviewer did not confirm against the game.
+//
+// A nodes.csv id claimed by more than one tag is listed in SHARED_LIVE below,
+// with the reason. build.mjs fails on any other shared id.
 export const LIVE = {
   // damage
   'meta.combat.damage': 'damage',
@@ -21,13 +27,13 @@ export const LIVE = {
   'meta.combat.damage.magic.divine': 'damage:sacred',
   'meta.combat.damage.magic.necrotic': 'damage:decay',
   'meta.combat.damage.hybrid.force': 'damage:arcane',
-  // spellcraft (magic damage by element)
-  'meta.combat.skill.spellcraft.fire': 'damage:fire',
-  'meta.combat.skill.spellcraft.frost': 'damage:frost',
-  'meta.combat.skill.spellcraft.lightning': 'damage:lightning',
-  'meta.combat.skill.spellcraft.force': 'damage:arcane',
-  'meta.combat.skill.spellcraft.divine': 'damage:sacred',
-  'meta.combat.skill.spellcraft.necrotic': 'damage:decay',
+  // spellcraft (one school per element; the school nodes, not the damage types)
+  'meta.combat.skill.spellcraft.fire': 'school:fire',
+  'meta.combat.skill.spellcraft.frost': 'school:frost',
+  'meta.combat.skill.spellcraft.lightning': 'school:lightning',
+  'meta.combat.skill.spellcraft.force': 'school:force',
+  'meta.combat.skill.spellcraft.divine': 'school:divine',
+  'meta.combat.skill.spellcraft.necrotic': 'school:decay',
   'meta.combat.skill.spellcraft.alteration': 'school:alteration',
   'meta.combat.skill.spellcraft.psychic.illusion': 'school:illusion',
   // technique and card schools
@@ -164,3 +170,7 @@ export const GAME = new Set([
   'card.type.consumable',
   'card.cost.free',
 ]);
+
+// SHARED_LIVE: a nodes.csv id that more than one proposal tag maps to, on
+// purpose, with the reason. Empty means no node is shared.
+export const SHARED_LIVE = {};
