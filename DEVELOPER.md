@@ -50,7 +50,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
-| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | — | — |
+| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | yes | — |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | — |
 | `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | — |
 | `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | — |
@@ -73,6 +73,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push replaces the `installer-release` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) (also push to `main`) | — | — | — | yes |
 | `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`) | — | yes (push to `dev`) | yes | yes |
 | `pages-builds.yml` → deploy to GitHub Pages (push to `dev` only, or the owner's dispatch with `PUBLISH`) | — | yes (push to `dev`) | — | — |
+| `pages-builds.yml` → per-branch playable build at `branches/<branch>/latest/` for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AshenSpire-art`) | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → pin bump: opens `bot/art-pin-<tag>` into `dev` (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
 | `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |

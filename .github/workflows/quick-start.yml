@@ -10,8 +10,8 @@
 # character-creation route it is compared with is printed by a bare run.
 #
 # STAGE RULE (owner, 2026-10-11): this is part of the base smoke, the PR into
-# `dev` and the push to `dev` (about five minutes). The test-stage suites cover
-# it on push to `test`, so it does not run there; dispatch still starts it.
+# `dev` and the push to `dev` (about five minutes), and again on push to `test`
+# (no test-stage suite repeats it); dispatch still starts it.
 #
 # A JOB OF ITS OWN, as map-camera.yml and tutorial-reach.yml are: `core` is a
 # no-browser lane. It serves the SOURCE tree, so it needs no build and no LFS.
@@ -23,7 +23,7 @@ on:
   pull_request:
     branches: [dev, 'alternative/**/dev']
   push:
-    branches: [dev, 'alternative/**/dev']
+    branches: [dev, test, 'alternative/**/dev', 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:

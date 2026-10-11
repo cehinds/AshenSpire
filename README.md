@@ -27,7 +27,7 @@ build number and link to its history. Play and HTML follow that channel's latest
 · [Installation guide](desktop/windows/README.md).
 The chooser identifies the selected game build; its installer can be newer than the hosted Test badge.
 
-**Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev` has a playable build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` (for example [chore/CdCiPipelines](https://cehinds.github.io/AshenSpire/branches/chore/CdCiPipelines/latest/)); the pull request links it. CI starts publishing these with the CI restaging in `chore/CdCiStages`; until then the link 404s, so download the PR's `dev preview` artifact instead.
+**Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev` has a playable build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` (for example [chore/CdCiPipelines](https://cehinds.github.io/AshenSpire/branches/chore/CdCiPipelines/latest/)); the pull request links it.
 
 [All builds](https://cehinds.github.io/AshenSpire/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
 Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.
