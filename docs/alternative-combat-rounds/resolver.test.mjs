@@ -303,12 +303,15 @@ test('zero-sum: player value + enemy value is always 0, and round deltas add up 
       { id: 'y', enemyId: 'y', speed: 3, kind: 'counter' },
       { id: 'z', enemyId: 'z', speed: 1, kind: 'attack' },
     ];
-    const out = resolveRound(playerCards, queue, 3, rng, { momentum: map, decay: 0 });
+    const out = resolveRound(playerCards, queue, 3, rng, { momentum: map });
     for (const k of ['x', 'y', 'z']) {
       const moves = out.events.filter((e) => e.type === 'momentum' && e.enemyId === k);
       for (const mv of moves) {
+        // Decay moves M_e toward 0 for both sides, so it has no actor. Overflow is a marker (delta 0).
+        if (mv.reason === 'decay' || mv.reason === 'overflow') continue;
         assert.equal(mv.by === 'player' ? mv.delta >= 0 : mv.delta <= 0, true, 'a move helps only its actor');
       }
+      for (const mv of moves) assert.equal(Number.isFinite(mv.delta), true, 'every momentum event has a numeric delta');
       const raw = moves.reduce((sum, mv) => sum + mv.delta, 0);
       assert.equal(out.momentum[k], clampMomentum((map[k] ?? 0) + raw));
       assert.ok(out.momentum[k] >= -3 && out.momentum[k] <= 3);
@@ -745,7 +748,7 @@ test('decay: from +2 with no successes, M_e moves to +1 at round end, and the ch
   );
   assert.equal(momentum.e, 1);
   assert.equal(events.some((e) => e.type === 'momentum' && e.reason === 'success'), false, 'no successes');
-  assert.deepEqual(events.filter((e) => e.reason === 'decay'), [{ type: 'momentum', reason: 'decay', enemyId: 'e', from: 2, to: 1 }]);
+  assert.deepEqual(events.filter((e) => e.reason === 'decay'), [{ type: 'momentum', reason: 'decay', enemyId: 'e', from: 2, to: 1, delta: -1, by: null }]);
 });
 
 test('decay: from -1 with no successes, M_e moves to 0', () => {
@@ -757,7 +760,7 @@ test('decay: from -1 with no successes, M_e moves to 0', () => {
     { momentum: { e: -1 } },
   );
   assert.equal(momentum.e, 0);
-  assert.deepEqual(events.filter((e) => e.reason === 'decay'), [{ type: 'momentum', reason: 'decay', enemyId: 'e', from: -1, to: 0 }]);
+  assert.deepEqual(events.filter((e) => e.reason === 'decay'), [{ type: 'momentum', reason: 'decay', enemyId: 'e', from: -1, to: 0, delta: 1, by: null }]);
 });
 
 test('decay: a step larger than |M_e| stops at 0 and does not overshoot', () => {
@@ -779,7 +782,7 @@ test('decay: options.decay 0 turns decay off (M_e stays +2), and the default ste
 test('decay: an enemy in options.momentum but not in the queue also decays', () => {
   const { events, momentum } = resolveRound([], [], 0, d20Face(20), { momentum: { ghost: -2 } });
   assert.equal(momentum.ghost, -1);
-  assert.deepEqual(events.find((e) => e.reason === 'decay'), { type: 'momentum', reason: 'decay', enemyId: 'ghost', from: -2, to: -1 });
+  assert.deepEqual(events.find((e) => e.reason === 'decay'), { type: 'momentum', reason: 'decay', enemyId: 'ghost', from: -2, to: -1, delta: 1, by: null });
 });
 
 test('decay: pairings use the decayed start, so +2 decays to +1 and gives no speed shift', () => {

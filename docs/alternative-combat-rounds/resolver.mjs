@@ -623,7 +623,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const decayed = (k) => {
     const from = clampMomentum(Object.hasOwn(inputM, k) ? inputM[k] : 0);
     const to = from > 0 ? Math.max(0, from - decayStep) : Math.min(0, from + decayStep);
-    if (to !== from) events.push({ type: 'momentum', reason: 'decay', enemyId: k, from, to });
+    if (to !== from) events.push({ type: 'momentum', reason: 'decay', enemyId: k, from, to, delta: to - from, by: null });
     return to;
   };
 
