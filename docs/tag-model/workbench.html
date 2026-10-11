@@ -162,7 +162,7 @@ let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={};
 /* storage:begin */
 /* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
-const BLOB_MAX=170000, BLOB_MIN_ROWS=20, BLOB_CUT=64, GC_AGE_MS=120000;
+const BLOB_MAX=170000, BLOB_CUT=64, BLOB_FALLBACK=8, GC_AGE_MS=120000;
 function hash32(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return h>>>0; }
 /* FNV-1a 64-bit over UTF-16 code units, split into two 32-bit words; returns 16 hex digits */
 function hashText(s){
@@ -174,14 +174,21 @@ function hashText(s){
   }
   return hi.toString(16).padStart(8,'0')+lo.toString(16).padStart(8,'0');
 }
-/* content-defined cut: after a row whose hash32 % 64 is 0 (once 20 rows are in), or before a row that would pass 170000 bytes */
+/* content-defined cuts: after a row whose hash32 % 64 is 0; when a chunk passes the size cap, cut after the last row
+   whose hash32 % 8 is 0 (a fallback candidate), else before the row that overflowed. Every cut depends on row content,
+   so one inserted row changes only the chunks around it, even when the rows are wide. */
 function chunkRows(rows){
-  const out=[]; let cur=[], size=12;
+  const out=[]; let cur=[], sizes=[], hs=[], total=12;
+  const cut=(n)=>{ out.push(cur.slice(0,n)); cur=cur.slice(n); sizes=sizes.slice(n); hs=hs.slice(n); total=12+sizes.reduce((a,b)=>a+b,0); };
   for(const r of rows){
     const js=JSON.stringify(r), n=js.length+1;
-    if(cur.length && size+n>BLOB_MAX){ out.push(cur); cur=[]; size=12; }
-    cur.push(r); size+=n;
-    if(cur.length>=BLOB_MIN_ROWS && hash32(js)%BLOB_CUT===0){ out.push(cur); cur=[]; size=12; }
+    cur.push(r); sizes.push(n); hs.push(hash32(js)); total+=n;
+    while(total>BLOB_MAX && cur.length>1){
+      let c=-1;
+      for(let i=cur.length-2;i>=0;i--) if(hs[i]%BLOB_FALLBACK===0){ c=i; break; }
+      cut(c>=0? c+1 : cur.length-1);
+    }
+    if(hs[cur.length-1]%BLOB_CUT===0) cut(cur.length);
   }
   if(cur.length) out.push(cur);
   return out;

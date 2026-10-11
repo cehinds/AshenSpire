@@ -58,12 +58,11 @@ test('hashText matches FNV-1a 64 and is stable', () => {
   assert.equal(hashText('same'), hashText('same'));
 });
 
-test('chunkRows keeps order, respects the size cap and the 20-row minimum', () => {
+test('chunkRows keeps order and respects the size cap', () => {
   const { chunkRows } = loadStorage({}, '({ chunkRows })');
   const rows = Array.from({ length: 4000 }, (_, i) => [i, 'label ' + i, i % 7]);
   const chunks = chunkRows(rows);
   assert.equal(JSON.stringify(chunks.flat()), JSON.stringify(rows));
-  chunks.slice(0, -1).forEach((c) => assert.ok(c.length >= 20, 'chunk under 20 rows'));
   for (const c of chunks) assert.ok(JSON.stringify({ rows: c }).length <= 170000);
   assert.ok(chunks.length > 1);
   // large rows force the size cap instead of the hash cut
@@ -71,6 +70,18 @@ test('chunkRows keeps order, respects the size cap and the 20-row minimum', () =
   const bigChunks = chunkRows(big);
   assert.equal(JSON.stringify(bigChunks.flat()), JSON.stringify(big));
   for (const c of bigChunks) assert.ok(JSON.stringify({ rows: c }).length <= 170000);
+});
+
+test('inserting one wide row at the top, as wide as its neighbours, changes at most two chunks', () => {
+  const { chunkRows, hashText } = loadStorage({}, '({ chunkRows, hashText })');
+  for (const [n, width] of [[600, 3000], [120, 20000]]) {
+    const rows = Array.from({ length: n }, (_, i) => ['w' + i, 'z'.repeat(width - 8)]);
+    const ids = (rs) => chunkRows(rs).map((c) => hashText(JSON.stringify({ rows: c })));
+    const before = new Set(ids(rows));
+    const after = ids([['new', 'q'.repeat(width - 8)], ...rows]);
+    const changed = after.filter((h) => !before.has(h)).length;
+    assert.ok(changed <= 2, 'width ' + width + ': changed blobs ' + changed);
+  }
 });
 
 test('inserting one row at the top changes at most two chunks', () => {
