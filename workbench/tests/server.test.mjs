@@ -683,6 +683,28 @@ test('a generated-files lock held by another process (the editor, UI Studio) ref
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
 });
 
+test('close() ends a live-reload build waiting for a foreign build lock at once; it starts nothing and takes no lock', async (t) => {
+  const root = await project(t);
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(root, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Editor content build', startedAt: Date.now(), token: 'theirs' }));
+  await fs.mkdir(path.join(root, 'content/source'), { recursive: true });
+  // A builder that leaves a marker when it runs: none may run while the lock is foreign.
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/content-build.mjs'), "import fs from 'node:fs'; fs.writeFileSync('built.marker', 'ran');\n");
+  const { app } = await boot(t, root, { lockWaitMs: 60 * 1000 });
+  // An authored source changed: the live-reload build is announced, then waits for the foreign lock.
+  await collectEvents(app, 'building', () => true, {
+    onOpen: async () => { await new Promise((r) => setTimeout(r, 200)); await fs.writeFile(path.join(root, 'content/source/items.csv'), 'id,name\nsword,Sword\n'); },
+  });
+  const started = Date.now();
+  await app.close();
+  assert.ok(Date.now() - started < 1000, 'close() did not wait out the build-lock wait');
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'theirs', 'their lock stands; no lock of ours was written');
+  assert.equal(await fs.stat(path.join(root, 'built.marker')).then(() => true, () => false), false, 'the build never started');
+});
+
 test('JobRunner.acquire with an aborted signal ends an in-process or a cross-process wait at once, taking nothing', async (t) => {
   const root = await project(t);
   const runner = new JobRunner({ root, stateFile: path.join(root, '.wb-state/jobs.json') });

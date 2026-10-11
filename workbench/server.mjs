@@ -177,7 +177,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       // UI Studio, a terminal build) reloads only once that writer is done: wait
       // for the shared lock to be free, then reload once.
       if ([...mine].some(isBuildOutput) && !stepsFor([...mine]).length) {
-        try { await jobs.acquire(GENERATED, 'A live-reload', { timeoutMs: lockWaitMs }); jobs.release(GENERATED); } catch (e) {
+        try { await jobs.acquire(GENERATED, 'A live-reload', { timeoutMs: lockWaitMs, signal: closeAbort.signal }); jobs.release(GENERATED); } catch (e) {
           const files = take();
           hub.send('reload-failed', { files, startedAt, step: null, output: e.message }); return;
         }
@@ -189,7 +189,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
         hub.send('building', { files, steps });
         // Live-reload builds share the jobs' lock: never two writers of the generated trees.
         // It also waits for the editor or UI Studio when one of them is building (tools/lib/build-lock.mjs).
-        try { await jobs.acquire(GENERATED, 'A live-reload build', { timeoutMs: lockWaitMs }); } catch (e) { hub.send('reload-failed', { files, startedAt, step: steps[0], output: e.message }); return; }
+        try { await jobs.acquire(GENERATED, 'A live-reload build', { timeoutMs: lockWaitMs, signal: closeAbort.signal }); } catch (e) { hub.send('reload-failed', { files, startedAt, step: steps[0], output: e.message }); return; }
         watcher.mute();
         try {
           for (const step of steps) {
