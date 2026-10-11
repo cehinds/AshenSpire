@@ -623,9 +623,11 @@ function render(){ renderTabs(); const p=document.getElementById('panel'); p.tex
   if(TABLES[state.view]) renderTable(p,state.view); else if(state.view==='sheet') renderSheet(p); else renderCheck(p); }
 
 /* after a banner choice, move focus to the status line so it is not lost when the banner goes */
+/* banners:begin */
+/* a table's banners as buttons; a button runs its action (runBanner) and then moves focus to the status line */
+function btn(label,fn,cls){ const b=document.createElement('button'); b.type='button'; b.textContent=label; if(cls) b.className=cls; b.onclick=fn; return b; }
 function focusStatus(){ const s=document.getElementById('status'); if(s){ s.tabIndex=-1; s.focus(); } }
-function renderTable(p,t){
-  const def=TABLES[t], tbl=state.data[t];
+function renderBanners(p,t){
   const ts=TS(t), banners=tableBanners(t), seen=ts.announced||new Set();
   for(const bn of banners){
     const box=document.createElement('div'); box.className='banner '+bn.kind;
@@ -635,6 +637,11 @@ function renderTable(p,t){
     p.appendChild(box);
   }
   ts.announced=new Set(banners.map(b=>b.text)); /* a banner that goes away and comes back is announced again */
+}
+/* banners:end */
+function renderTable(p,t){
+  const def=TABLES[t], tbl=state.data[t];
+  renderBanners(p,t);
   const tools=document.createElement('div'); tools.className='toolbar';
   tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
   const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');
@@ -690,7 +697,6 @@ function uploadPreview(row){
     catch(e){ setStatus('bad','Upload failed ('+(e&&e.code||'error')+').'); } };
   f.click();
 }
-function btn(label,fn,cls){ const b=document.createElement('button'); b.type='button'; b.textContent=label; if(cls) b.className=cls; b.onclick=fn; return b; }
 
 function renderSheet(p){
   const objs=state.data.objects.rows;

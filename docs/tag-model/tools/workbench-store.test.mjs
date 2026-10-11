@@ -29,12 +29,44 @@ export function storageSource(edit) {
   return src;
 }
 
-// Evaluates the storage block in a context built from `ctx`. `expose` is a JS
-// expression evaluated after the block that returns the functions a test needs.
+// The banner block (renderBanners, btn, focusStatus) between its own markers.
+export function bannerSource() {
+  const html = readFileSync(PAGE, 'utf8');
+  const a = html.indexOf('/* banners:begin */');
+  const b = html.indexOf('/* banners:end */');
+  if (a < 0 || b < 0 || b < a) throw new Error('banner block markers missing in workbench.html');
+  return html.slice(a, b + '/* banners:end */'.length);
+}
+
+// Evaluates the storage and banner blocks in a context built from `ctx`. `expose` is a JS
+// expression evaluated after the blocks that returns the functions a test needs.
 export function loadStorage(ctx, expose, edit) {
   if (!('TextEncoder' in ctx)) ctx.TextEncoder = TextEncoder;
   const context = vm.createContext(ctx);
-  return vm.runInContext(storageSource(edit) + '\n;(' + expose + ')', context);
+  return vm.runInContext(storageSource(edit) + '\n' + bannerSource() + '\n;(' + expose + ')', context);
+}
+
+// The few DOM calls the banner block makes: elements with attributes, children, text, click and focus.
+export function makeDom() {
+  class El {
+    constructor(tag) {
+      this.tagName = tag.toUpperCase(); this.id = ''; this.className = ''; this.textContent = '';
+      this.attributes = {}; this.children = []; this.onclick = null; this.tabIndex = undefined;
+    }
+    setAttribute(k, v) { this.attributes[k] = String(v); }
+    getAttribute(k) { return this.attributes[k]; }
+    appendChild(c) { this.children.push(c); return c; }
+    append(...cs) { cs.forEach((c) => this.children.push(c)); }
+    click() { if (this.onclick) this.onclick(); }
+    focus() { doc.activeElement = this; }
+  }
+  const status = new El('div'); status.id = 'status';
+  const doc = {
+    activeElement: null,
+    createElement: (tag) => new El(tag),
+    getElementById: (id) => (id === 'status' ? status : null),
+  };
+  return doc;
 }
 
 test('storage block loads and chunkRows keeps every row in order', () => {
@@ -171,7 +203,7 @@ export function makeFakeDb() {
   return fake;
 }
 
-const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tableBanners, runBanner, tstate, chunkRows, hashText, headPath, blobPath })';
+const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tableBanners, runBanner, renderBanners, tstate, chunkRows, hashText, headPath, blobPath })';
 
 // One browser tab: its own state, sharing only the fake db with other tabs.
 export function makePage(db, tables, edit) {
@@ -187,7 +219,7 @@ export function makePage(db, tables, edit) {
     saveLocal() {},
     exported: [],
     exportCSV(t) { page.exported.push(t); }, // page function: records the export
-    focusStatus() { page.focused = (page.focused || 0) + 1; },
+    document: makeDom(),
   };
   for (const t of Object.keys(tables)) page.state.data[t] = { columns: [...tables[t].columns], rows: [] };
   const api = loadStorage(page, EXPOSE, edit);
@@ -487,7 +519,47 @@ test('the pinned state shows its own banner whose buttons export and load theirs
   assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(mine), 'the rejected edits stay on screen');
   await A.api.runBanner('t', banner.buttons[1].id);
   assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(theirs), 'Load theirs button adopts theirs');
-  assert.ok(A.page.focused >= 1, 'focus moves to the status line after a choice');
+  assert.equal(A.page.document.activeElement && A.page.document.activeElement.id, 'status', 'focus moves to the status line after a choice');
+});
+
+test('the pinned banner through its rendered buttons: Export, then Load theirs; role goes alert then group; focus lands on the status line', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T);
+  A.api.subscribeTable('t');
+  await settle(10);
+  const mine = sample(5, 'x');
+  editTable(A.page, mine);
+  db.failSet = (p) => (p === 'tables/t' ? { code: 'invalid_argument' } : null);
+  await A.api.flush('t');
+  const doc = A.page.document;
+  const buttonsOf = (box) => box.children.filter((c) => c.tagName === 'BUTTON');
+  // first render: the banner is announced
+  const first = doc.createElement('div');
+  A.api.renderBanners(first, 't');
+  assert.equal(first.children[0].getAttribute('role'), 'alert');
+  // a re-render while the banner is still up: no second announcement
+  const second = doc.createElement('div');
+  A.api.renderBanners(second, 't');
+  assert.equal(second.children[0].getAttribute('role'), 'group');
+  const [exportBtn, theirsBtn] = buttonsOf(second.children[0]);
+  assert.equal(JSON.stringify([exportBtn.textContent, theirsBtn.textContent]), JSON.stringify(['Export my edits (CSV)', 'Load theirs (discard mine)']));
+  // Export button: exports, and the banner stays
+  exportBtn.click();
+  await settle(5);
+  assert.equal(JSON.stringify(A.page.exported), JSON.stringify(['t']));
+  // Load theirs button: adopts the server table, and focus lands on the status line
+  db.failSet = null;
+  const theirs = sample(7, 'p');
+  await putBlobTable(db, A.api, 't', theirs);
+  await settle(40);
+  theirsBtn.click();
+  await settle(40);
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(theirs));
+  assert.equal(doc.activeElement && doc.activeElement.id, 'status', 'focus lands on #status');
+  // once the banner is gone, a render draws no banner
+  const after = doc.createElement('div');
+  A.api.renderBanners(after, 't');
+  assert.equal(after.children.length, 0);
 });
 
 test('invalid_argument on save pins the rejected edits: a peer head never replaces them until Load theirs', async () => {
