@@ -186,6 +186,64 @@ test('replace import and JSON import with typed inference', () => {
   assertRoundTrip(d, js);
 });
 
+test('JSON import with a __proto__ key: the row keeps Object.prototype and no inherited id', () => {
+  const d = fresh();
+  const out = M.importRows(d, '[{"__proto__":{"id":"x"},"name":"a"}]', { mode: 'replace' });
+  const row = out.rows[0];
+  assert.equal(Object.getPrototypeOf(row), Object.prototype);
+  assert.equal(row.id, '', 'id is the column empty value, not an inherited "x"');
+  assert.equal(row.name, 'a');
+  assert.deepEqual(Object.getOwnPropertyDescriptor(row, '__proto__').value, { id: 'x' }, 'kept as data');
+  assertRoundTrip(d, out);
+});
+
+test('visible span and row runs: a filtered-out row inside the span is not part of it', () => {
+  // Six rows; a filter hides row 2, and a sort puts the rest in this visible order.
+  const order = [5, 4, 3, 1, 0];
+  assert.deepEqual(M.visibleSpan(order, 5, 0), [5, 4, 3, 1, 0], 'hidden row 2 is skipped');
+  assert.deepEqual(M.visibleSpan(order, 4, 1), [4, 3, 1]);
+  assert.deepEqual(M.visibleSpan(order, 1, 4), [4, 3, 1], 'direction does not matter');
+  assert.deepEqual(M.visibleSpan(order, 2, 0), [0], 'a hidden anchor leaves only the target');
+  assert.deepEqual(M.rowRuns([4, 3, 1]), [{ r0: 1, r1: 1 }, { r0: 3, r1: 4 }]);
+  assert.deepEqual(M.rowRuns([3, 3, 2]), [{ r0: 2, r1: 3 }], 'duplicates merge');
+  assert.deepEqual(M.rowRuns([]), []);
+});
+
+test('shift selection in a filtered, sorted view selects only the visible rows', () => {
+  const order = [5, 4, 3, 1, 0]; // row 2 is hidden by a filter
+  let sel = M.selectCell(M.createSelection(), { r: 5, c: 0 }, {});
+  sel = M.selectCell(sel, { r: 0, c: 1 }, { shift: true, order });
+  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [0, 1, 3, 4, 5], 'the hidden row 2 is not selected');
+  // Without an order (the unfiltered case) the range is the document rectangle, as before.
+  const plain = M.selectCell(M.selectCell(M.createSelection(), { r: 5, c: 0 }, {}), { r: 0, c: 1 }, { shift: true });
+  assert.equal(M.selectedCells(plain, 6, 5).length, 6 * 2);
+  // Ctrl-shift keeps earlier ranges and adds the visible runs.
+  let ctrl = M.selectCell(M.createSelection(), { r: 0, c: 0 }, {});
+  ctrl = M.selectCell(ctrl, { r: 4, c: 0 }, { ctrl: true });
+  ctrl = M.selectCell(ctrl, { r: 3, c: 0 }, { shift: true, ctrl: true, order });
+  assert.deepEqual([...new Set(M.selectedCells(ctrl, 6, 5).map(c => c.r))].sort(), [0, 3, 4]);
+});
+
+test('shift row selection in a filtered view widens every run to whole rows', () => {
+  const order = [5, 4, 3, 1, 0]; // row 2 is hidden
+  let sel = M.selectRows(M.createSelection(), 4, {}, 5);
+  sel = M.selectRows(sel, 1, { shift: true, order }, 5);
+  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [1, 3, 4]);
+  assert.equal(M.selectedCells(sel, 6, 5).length, 3 * 5, 'every cell of each selected row, and no hidden row');
+});
+
+test('JSON import checks values against the column types and changes nothing on a bad value', () => {
+  const d = fresh();
+  const before = snap(d);
+  assert.throws(() => M.importRows(d, '[{"id":"a","n":"oops"}]', { mode: 'merge', key: 'id' }), /Row 1, n: Not a number/);
+  assert.throws(() => M.importRows(d, '[{"id":"a","n":1},{"id":"b","on":"yes"}]', { mode: 'merge', key: 'id' }), /Row 2, on: Not true or false/, 'all-or-nothing');
+  assert.deepEqual(snap(d), before, 'the document is untouched');
+  const ok = M.importRows(d, '[{"id":"a","n":7,"on":null}]', { mode: 'merge', key: 'id' });
+  assert.equal(ok.rows[0].n, 7);
+  assert.equal(ok.rows[0].on, null, 'null fits any type');
+  assertRoundTrip(d, ok);
+});
+
 test('export to CSV, TSV and JSON', () => {
   const d = fresh();
   assert.equal(M.toCSV(d).split('\n')[0], 'id,n,on,tag,data');

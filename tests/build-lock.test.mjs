@@ -8,7 +8,10 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { tryAcquire, acquire, lockPath, pidAlive, LOCK_NAME } from '../tools/lib/build-lock.mjs';
+import { tryAcquire, acquire, lockPath, pidAlive, procStartOf, LOCK_NAME } from '../tools/lib/build-lock.mjs';
+
+const HOUR = 60 * 60 * 1000;
+const LINUX = process.platform === 'linux';
 
 function tmpRoot(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'build-lock-'));
@@ -64,6 +67,45 @@ test('a lock from a live process is not stale, however old its startedAt', (t) =
   fs.writeFileSync(lockPath(root), JSON.stringify({ pid: foreign(t), holder: 'Long build', startedAt: twoHoursAgo, token: 'x' }));
   assert.equal(typeof tryAcquire(root, 'me'), 'object', 'a live owner keeps the lock, whatever its age');
   assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'Long build', 'left as it was');
+});
+
+test('the lock records the owner\'s process start identity', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'build-lock-'));
+  try {
+    const release = tryAcquire(root, 'me');
+    const info = JSON.parse(fs.readFileSync(lockPath(root), 'utf8'));
+    assert.equal(info.procStart, procStartOf(process.pid), 'procStart is this process\'s start identity');
+    if (LINUX) assert.match(info.procStart, /^\d+$/);
+    else assert.equal(info.procStart, null);
+    release();
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a lock whose pid was reused by another process (start identity differs) is stale', { skip: !LINUX && 'needs /proc' }, (t) => {
+  const root = tmpRoot(t);
+  // This process is alive, but its start identity is not the one the lock recorded: the pid was reused.
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: process.pid, holder: 'Crashed build', startedAt: Date.now(), token: 'x', procStart: '1' }));
+  const release = tryAcquire(root, 'me');
+  assert.equal(typeof release, 'function', 'a reused pid is not the owner');
+  release();
+});
+
+test('a lock whose start identity matches is not stale, however old its startedAt', { skip: !LINUX && 'needs /proc' }, (t) => {
+  const root = tmpRoot(t);
+  const pid = foreign(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid, holder: 'Verified long build', startedAt: Date.now() - 7 * HOUR, token: 'x', procStart: procStartOf(pid) }));
+  assert.equal(typeof tryAcquire(root, 'me'), 'object', 'a verified live owner never expires');
+});
+
+test('an unverified lock (procStart null) is stale past 6 h, and not before', (t) => {
+  const root = tmpRoot(t);
+  const pid = foreign(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid, holder: 'Unverified build', startedAt: Date.now() - 7 * HOUR, token: 'x', procStart: null }));
+  const release = tryAcquire(root, 'me');
+  assert.equal(typeof release, 'function', 'the 6 h ceiling breaks an unverifiable lock');
+  release();
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid, holder: 'Unverified build', startedAt: Date.now() - HOUR, token: 'x', procStart: null }));
+  assert.equal(typeof tryAcquire(root, 'me'), 'object', 'an hour-old unverifiable lock still holds');
 });
 
 test('a lock whose pid is dead is stale, however fresh its startedAt', (t) => {

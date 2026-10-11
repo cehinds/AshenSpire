@@ -119,25 +119,46 @@ export function filterIndices(rows, columns, { text = '', byColumn = {} } = {}) 
 // ---------- selection (ranges of {r0,c0,r1,c1}; last range is active) ----------
 
 export function createSelection() { return { ranges: [], anchor: null, active: null }; }
+
+/** Document row indices from `from` to `to` inclusive, in the VISIBLE order (`order` = the sorted,
+ *  filtered row indices). Rows hidden by a filter inside the span are skipped. If `from` is not
+ *  visible there is no span to walk: only `to` is returned. */
+export function visibleSpan(order, from, to) {
+  const a = order.indexOf(from), b = order.indexOf(to);
+  if (a < 0 || b < 0) return [to];
+  return order.slice(Math.min(a, b), Math.max(a, b) + 1);
+}
+
+/** Contiguous runs of document rows: [{ r0, r1 }] over the sorted unique indices. */
+export function rowRuns(rows) {
+  const sorted = [...new Set(rows)].sort((x, y) => x - y);
+  const runs = [];
+  for (const r of sorted) {
+    const last = runs.at(-1);
+    if (last && r === last.r1 + 1) last.r1 = r; else runs.push({ r0: r, r1: r });
+  }
+  return runs;
+}
 const rectOf = (a, b) => ({ r0: Math.min(a.r, b.r), c0: Math.min(a.c, b.c), r1: Math.max(a.r, b.r), c1: Math.max(a.c, b.c) });
 
-function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ?? to } = {}) {
+// `order` (the visible row indices) makes a shift range follow the view: it covers the visible rows
+// between the anchor and `to`, split into document runs, so rows a filter hides are never selected.
+// `columns` ([c0, c1]) overrides the columns of every range the call makes (whole rows).
+function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ?? to, order = null, columns = null } = {}) {
+  const cols = columns ? { c0: columns[0], c1: columns[1] } : {};
   if (shift && sel.anchor) {
-    const rect = rectOf(sel.anchor, to);
-    const ranges = ctrl && sel.ranges.length ? [...sel.ranges.slice(0, -1), rect] : [rect];
+    const rect = { ...rectOf(sel.anchor, to), ...cols };
+    const runs = order ? rowRuns(visibleSpan(order, sel.anchor.r, to.r)).map(({ r0, r1 }) => ({ ...rect, r0, r1 })) : [rect];
+    const ranges = ctrl && sel.ranges.length ? [...sel.ranges.slice(0, -1), ...runs] : runs;
     return { ranges, anchor: sel.anchor, active: to };
   }
-  const rect = rectOf(to, to);
+  const rect = { ...rectOf(to, to), ...cols };
   return { ranges: ctrl ? [...sel.ranges, rect] : [rect], anchor: to, active: to };
 }
 export function selectCell(sel, cell, opts) { return selectTo(sel, cell, opts); }
 /** Whole-row selection over colCount columns. */
 export function selectRows(sel, r, opts, colCount) {
-  const last = Math.max(0, colCount - 1);
-  const to = { r, c: 0 };
-  const base = selectTo(sel, to, opts);
-  const widen = rect => ({ ...rect, c0: 0, c1: last });
-  return { ...base, ranges: base.ranges.map((rect, i) => (i === base.ranges.length - 1 ? widen(rect) : rect)) };
+  return selectTo(sel, { r, c: 0 }, { ...opts, columns: [0, Math.max(0, colCount - 1)] });
 }
 /** Move the active cell by (dr, dc), clamped to bounds; extend keeps the anchor. */
 export function moveSelection(sel, dr, dc, { rowCount, colCount, extend = false }) {
@@ -378,14 +399,18 @@ export function importRows(doc, text, { format = 'auto', mode = 'merge', key = n
       columns.push({ key: n, label: n, type: format === 'json' ? inferType(values) : 'string' });
     }
   }
-  const typed = incoming.map(r => {
-    const out = {};
-    for (const [k, v] of Object.entries(r)) {
-      const col = columns.find(c => c.key === k);
-      out[k] = format === 'json' ? v : parseValue(v, col.type);
-    }
-    return out;
-  });
+  // Object.fromEntries defines each key as an own property, so an imported "__proto__" key
+  // stays data and cannot set the row's prototype.
+  // JSON values are checked against the existing column types (as CSV cells are parsed), and a
+  // bad value throws before anything changes. A column the import adds takes its type from the data.
+  const typed = incoming.map((r, i) => Object.fromEntries(Object.entries(r).map(([k, v]) => {
+    const col = columns.find(c => c.key === k);
+    if (format !== 'json') return [k, parseValue(v, col.type)];
+    const existing = doc.columns.find(c => c.key === k);
+    const problem = existing ? checkValue(v, existing.type) : null;
+    if (problem) throw Error(`Row ${i + 1}, ${k}: ${problem}`);
+    return [k, v];
+  })));
   const fill = row => Object.fromEntries(columns.map(c => [c.key, c.key in row ? row[c.key] : emptyValue(c.type)]));
   let rows;
   if (mode === 'replace' || !key) {
