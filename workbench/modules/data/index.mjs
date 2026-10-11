@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { refocusesGrid, listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable } from './model.mjs';
+import { TAG_MODEL_GROUP, refocusesGrid, listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -59,16 +59,18 @@ export default {
       if (state.parsed.has(path)) return state.parsed.get(path);
       const file = await ctx.api(`files/read?path=${encodeURIComponent(path)}`);
       const table = parseTable(path, file.text, { hash: file.hash });
+      table.tagModel = file.tagModel ?? null; // the server's rule for a tag-model table (core/tag-model.mjs)
       state.parsed.set(path, table);
       return table;
     }
 
     async function loadList() {
-      const [src, fw] = await Promise.all([
+      const [src, fw, tm] = await Promise.all([
         ctx.api('files/list?dir=content/source&ext=csv,json'),
         ctx.api('files/list?dir=content/framework&ext=json'),
+        ctx.api('files/list?dir=docs/tag-model/tables&ext=csv'),
       ]);
-      const found = listTables([...src.files, ...fw.files]);
+      const found = listTables([...src.files, ...fw.files, ...tm.files]);
       const tables = [];
       for (const t of found) {
         // A JSON file is a table only when it is an array of objects.
@@ -90,7 +92,7 @@ export default {
       const q = state.filter.trim().toLowerCase();
       const shown = state.tables.filter((t) => !q || t.name.toLowerCase().includes(q) || t.path.toLowerCase().includes(q));
       let html = '';
-      for (const group of ['Source', 'Framework']) {
+      for (const group of ['Source', 'Framework', TAG_MODEL_GROUP]) {
         const items = shown.filter((t) => t.group === group);
         if (!items.length) continue;
         html += `<div class="ds-group">${group}</div>`;
@@ -99,12 +101,36 @@ export default {
       groupsEl.innerHTML = html || '<p class="ds-muted">No tables match.</p>';
     }
 
+    // ---------- the tag model's tables ----------
+    // A table the server marks read-only opens with editing off. The banner says why, and what a save runs.
+    let tagBanner = null;
+    function syncTagModel() {
+      const table = state.selected ? state.parsed.get(state.selected) : null;
+      const tm = table?.tagModel ?? null;
+      if (!tagBanner) { tagBanner = document.createElement('div'); tagBanner.className = 'ds-tm-banner'; tagBanner.setAttribute('role', 'note'); gridEl.before(tagBanner); }
+      const lines = tm ? [tm.banner, tm.note].filter(Boolean) : [];
+      tagBanner.hidden = !lines.length;
+      tagBanner.textContent = lines.join(' ');
+      if (state.grid) state.grid.setReadOnly(Boolean(tm && !tm.savable));
+    }
+    // After a tag-model job: a table its build changed is read again from disk, unless it holds unsaved edits.
+    function onTagModelRun(report) {
+      if (!report?.files?.length) return;
+      for (const path of report.files) {
+        if (dirtyOf(path)) continue;
+        state.parsed.delete(path); state.drafts.delete(path);
+      }
+      loadList();
+      if (report.files.includes(state.selected) && !dirtyOf(state.selected)) select(state.selected);
+    }
+    document.addEventListener('workbench:tag-model', (ev) => onTagModelRun(ev.detail));
+
     // ---------- grid ----------
     function ensureGrid() {
       if (state.grid) return state.grid;
       gridEl.innerHTML = '';
       state.grid = createGrid(gridEl, { columns: [], rows: [], rules: [], onChange: (ev) => onGridChange(ev) });
-      state.grid.subscribe(() => syncActiveRow());
+      state.grid.subscribe(() => { syncActiveRow(); syncTagModel(); });
       createCheckPanel(checkPanel, state.grid);
       return state.grid;
     }
