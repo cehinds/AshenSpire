@@ -186,7 +186,7 @@ export default {
       if (state.selected && res.files.some((f) => f.path === state.selected)) await select(state.selected);
       refresh();
       ctx.toast({ kind: 'success', title: `Saved ${res.files.length} file${res.files.length === 1 ? '' : 's'}` });
-      ctx.preview.reload();
+      ctx.preview.reloadAfterBuild(res.files.map((f) => f.path));
     }
     /** Files that changed on disk since they were read: Reload takes the disk copy; Overwrite keeps the drafts. */
     async function conflicts(changes, status, found) {
