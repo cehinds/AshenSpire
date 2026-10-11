@@ -9,6 +9,7 @@ import {
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
   canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
+  rebaseOnConflicts,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -312,4 +313,22 @@ test('a dragged effect is recomputed against its anchor, and only that effect ch
   assert.equal(next.clips[0].x, 17, 'the offset follows the dragged handle');
   assert.equal(next.clips[0].y, 0);
   assert.deepEqual(next.anchors, project.anchors);
+});
+
+test('keep my version rebases each change on the hash a 409 reported, and a deleted file recreates with null', () => {
+  const changes = [
+    { path: 'pose-studio/renewal/a.pose.json', text: '{}', baseHash: 'old-a' },
+    { path: 'pose-studio/renewal/b.pose.json', text: '{}', baseHash: 'old-b' },
+    { path: 'pose-studio/renewal/c.pose.json', text: '{}', baseHash: 'old-c' },
+  ];
+  const conflicts = [
+    { path: 'pose-studio/renewal/a.pose.json', hash: null },
+    { path: 'pose-studio/renewal/b.pose.json', hash: 'disk-b' },
+  ];
+  const out = rebaseOnConflicts(changes, conflicts);
+  assert.equal(out[0].baseHash, null, 'a pose deleted on disk is saved as a new file');
+  assert.equal(out[1].baseHash, 'disk-b', 'a changed file keeps the hash now on disk');
+  assert.equal(out[2].baseHash, 'old-c', 'a file that did not conflict keeps its own hash');
+  assert.equal(changes[0].baseHash, 'old-a', 'the input is not changed');
+  assert.equal(out[0].text, '{}');
 });

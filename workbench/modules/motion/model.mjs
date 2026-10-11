@@ -230,6 +230,16 @@ export function serializePoseFile(project, original) {
   return body + tail;
 }
 
+/**
+ * The save changes rebased on the disk hashes a 409 reported ("Keep my version"). A file deleted
+ * on disk reports hash null, so its save carries baseHash null and recreates it; a file that
+ * changed keeps the hash now on disk. Changes without a conflict keep their own hash.
+ */
+export function rebaseOnConflicts(changes, conflicts) {
+  const disk = new Map((conflicts || []).map((c) => [c.path, c.hash ?? null]));
+  return changes.map((c) => (disk.has(c.path) ? { ...c, baseHash: disk.get(c.path) } : c));
+}
+
 /** True when the project differs from the file it was read from. */
 export function isDirty(original, project) {
   if (typeof original !== 'string' || !original.length) return false;
