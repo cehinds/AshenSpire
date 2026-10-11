@@ -6,4 +6,4 @@ dodgeRoll.block,([dodgeRoll.base] + [dr]) * [dodgeBlock.mod],dodgeRoll,"Block ga
 dodgeRoll.poise,[dodgeRoll.block],dodgeRoll,Poise guard gained,
 dodgeRoll.ward,[dodgeRoll.block],dodgeRoll,Ward guard gained,
 burned.tick,[burned] * [burned.tickPerStack],burned,HP lost at turn start,
-evasion.rating,TBD,character,Evasion formula: placeholder pending a proposal (owner decision 11),proposed
+evasion.rating,,character,"TBD: evasion formula, placeholder pending a proposal (owner decision 11)",proposed
