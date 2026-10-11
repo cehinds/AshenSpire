@@ -193,9 +193,9 @@
   pointer-events: auto; cursor: pointer;
 }
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud > .nm,
-:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='resource'],
-:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='stance'],
-:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud .statuses { display: none !important; }
+:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='resource'] { display: none !important; }
+/* Owner decision (2026-10-11): the stance chip and status icons stay visible
+   while the player is not selected; only the name and resource rows fold away. */
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: var(--hud-details-name-size, calc(11px / var(--ui-zoom,1))); }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { background: none; border: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { min-height: 0; line-height: calc(13px / var(--ui-zoom,1)); margin: 0; padding: 0; }
