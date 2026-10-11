@@ -505,9 +505,9 @@ test('a reaction guard block is spent before a queued guard block; the queued bl
   assert.equal(out.state.combatants.player.hp, 20);
 });
 
-test('a reaction guard that is cancelled by a counter gives no block to a later attack', () => {
-  // A queued counter (speed 6) cancels the 3-speed attack before any damage. The reaction
-  // guard's whole block 6 must not remain: the 4-damage attack after it takes full damage.
+test('a reaction guard keeps the queued counter, and its remainder gives no block to a later attack', () => {
+  // The reaction guard (block 6) answers the 2-damage attack a, so the queued counter (speed 6)
+  // does not cancel a; it waits and cancels b. The guard's remainder 4 is discarded after a.
   const st = duo({}, { hp: 20, hand: [guardCard()] });
   const out = createRound(st, {
     queues: {
@@ -515,12 +515,14 @@ test('a reaction guard that is cancelled by a counter gives no block to a later 
       goblin: [atk('a', 'player', 3, { damage: 2 }), atk('b', 'player', 1, { damage: 4 })],
     },
     rng: HIT_RNG,
-    onReaction: () => ({ id: 'guard' }),
+    onReaction: (attack) => (attack.cardId === 'a' ? { id: 'guard' } : null),
   }).resolveAll();
-  assert.ok(out.events.some((e) => e.type === 'countered' && e.target === 'goblin'));
+  const at = (type, cardId) => out.events.findIndex((e) => e.type === type && e.cardId === cardId);
   assert.equal(out.events.some((e) => e.type === 'reaction' && e.cardId === 'guard'), true);
+  assert.ok(out.events.some((e) => e.type === 'guardDiscard' && e.cardId === 'guard' && e.amount === 4));
+  assert.ok(at('countered', 'counter') > at('action', 'b'));
   assert.equal(out.state.active.player.guard, 0);
-  assert.equal(out.state.combatants.player.hp, 16);
+  assert.equal(out.state.combatants.player.hp, 20);
 });
 
 test('onReaction is offered only to the player, and only when SP is left for the card', () => {
@@ -743,6 +745,75 @@ test('a reaction evade answers the attack it was played against; a queued evade 
   // s1 uses re at base 20: roll 25 misses the evade. s2 then uses pe at 30: roll 25 evades.
   assert.deepEqual(rolls.map((r) => [r.evadePct, r.roll, r.success]), [[20, 25, false], [30, 25, true]]);
   assert.equal(out.state.combatants.player.hp, 19);
+});
+
+test('a reaction guard on an attack keeps a queued counter for the next attack from its foe', () => {
+  // d4 2 each (u 0.45). The player lane leads, so the queued counter (speed 6, total 9) is placed
+  // first. s1 (total 3) is answered by a reaction guard of block 6 that absorbs its 4 damage.
+  // The queued counter must not cancel s1. It cancels s2 (total 2) instead, and s2 deals no damage.
+  const out = createRound(duo({}, { hp: 20, hand: [guardCard('guard')] }), {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 6)],
+      goblin: [atk('s1', 'player', 1, { damage: 4 }), atk('s2', 'player', 0, { damage: 4 })],
+    },
+    rng: HIT_RNG,
+    merge: 'wholeQueue',
+    onReaction: (attack) => (attack.cardId === 's1' ? { id: 'guard' } : null),
+  }).resolveAll();
+  const at = (type, cardId) => out.events.findIndex((e) => e.type === type && e.cardId === cardId);
+  assert.equal(out.events.find((e) => e.type === 'reaction').cardId, 'guard');
+  assert.ok(at('guardUp', 'guard') >= 0);
+  // The counter does not cancel or fire on s1: its only event comes after s1 resolves.
+  assert.equal(out.events.some((e) => e.type === 'counterFired' && e.cardId === 'counter'), false);
+  // The counter is still active for s2: it cancels s2 (its event follows s2's action).
+  assert.ok(at('action', 's2') > at('action', 's1'));
+  assert.ok(at('countered', 'counter') > at('action', 's2'));
+  // s1 is absorbed by the reaction guard (block 6 covers 4), and s2 is cancelled: no damage.
+  assert.equal(out.state.combatants.player.hp, 20);
+});
+
+test('a reaction evade on an attack keeps a queued counter for the next attack from its foe', () => {
+  // Same lanes as the guard case. The reaction evade (95, the cap) evades s1, so the
+  // queued counter must not cancel s1. The counter then cancels s2, and s2 deals no damage.
+  const out = createRound(duo({}, { hp: 20, hand: [card('re', 'evade', 'self', 0, { evadePct: 95 })] }), {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 6)],
+      goblin: [atk('s1', 'player', 1, { damage: 4 }), atk('s2', 'player', 0, { damage: 4 })],
+    },
+    rng: HIT_RNG,
+    merge: 'wholeQueue',
+    onReaction: (attack) => (attack.cardId === 's1' ? { id: 're' } : null),
+  }).resolveAll();
+  const at = (type, cardId) => out.events.findIndex((e) => e.type === type && e.cardId === cardId);
+  assert.equal(out.events.find((e) => e.type === 'reaction').cardId, 're');
+  assert.ok(at('evadeUp', 're') >= 0);
+  // The counter fires on nothing before s1 and does not cancel s1.
+  assert.equal(out.events.some((e) => e.type === 'countered' && e.cardId === 'counter' && e.target === 'goblin'), true);
+  assert.ok(at('action', 's2') > at('action', 's1'));
+  assert.ok(at('countered', 'counter') > at('action', 's2'));
+  assert.equal(out.state.combatants.player.hp, 20);
+});
+
+test('with no reaction the queued counter still cancels the attack, with or without onReaction', () => {
+  // The unchanged case: a queued counter (total 9) cancels s1 (total 3), and s2 then lands.
+  const queues = () => ({
+    player: [card('counter', 'counter', 'goblin', 6)],
+    goblin: [atk('s1', 'player', 1, { damage: 4 }), atk('s2', 'player', 0, { damage: 4 })],
+  });
+  const none = createRound(duo({}, { hp: 20, hand: [guardCard('guard')] }), {
+    queues: queues(), rng: HIT_RNG, merge: 'wholeQueue', onReaction: () => null,
+  }).resolveAll();
+  const absent = createRound(duo({}, { hp: 20 }), {
+    queues: queues(), rng: HIT_RNG, merge: 'wholeQueue',
+  }).resolveAll();
+  for (const out of [none, absent]) {
+    assert.equal(out.events.some((e) => e.type === 'reaction'), false);
+    const at = (type, cardId) => out.events.findIndex((e) => e.type === type && e.cardId === cardId);
+    // The counter cancels s1, and s2 then lands for 4 (hp 20 - 4).
+    assert.ok(at('countered', 'counter') > -1);
+    assert.ok(at('countered', 'counter') < at('action', 's2'));
+    assert.equal(out.state.combatants.player.hp, 16);
+  }
 });
 
 test('a queued counter of a defeated player does not fire, cancel, or credit momentum', () => {

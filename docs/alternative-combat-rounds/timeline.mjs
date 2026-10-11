@@ -565,8 +565,10 @@ function takeCounter(cur, defenderId, attackerId) {
 // One attack after its reaction window (owner, 2026-10-11): a queued or reaction counter may
 // cancel it or fire on it, and the attack resolves. `reacted` is the reaction offer.
 function resolveExchange(cur, entry, events, options, run, reacted) {
-  // A reaction counter answers this attack; otherwise the first queued counter that fires.
-  const counter = reacted.counter ?? takeCounter(cur, entry.target, entry.actor);
+  // A reaction card that was played answers this attack, and a queued counter waits for a later
+  // attack (owner, DESIGN.md). Only when no reaction was played does the first queued counter fire.
+  const reactionPlayed = Boolean(reacted.evade || reacted.counter || reacted.guard);
+  const counter = reactionPlayed ? reacted.counter : takeCounter(cur, entry.target, entry.actor);
   // A counter fires or cancels only while its owner is alive (owner, 2026-10-11).
   const ownerAlive = () => Boolean(counter) && cur.combatants[counter.owner].hp > 0;
   // The enemy in this exchange: the attacker, or the defender when the player attacks.

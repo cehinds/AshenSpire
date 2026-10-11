@@ -593,7 +593,7 @@ numbers of 0 or more; otherwise the timeline throws a TypeError naming the field
   evade bonus, counter) applies only to the attack it answers and is used before queued
   defences: a reaction guard's block is spent first on that attack, then queued block, and any
   guard remainder is discarded once the attack is over. A reaction evade is used by it first, and
-  a reaction counter fires after it. None of them is left active, and queued defences stay for later attacks. A reaction counter never cancels its attack,
+  a reaction counter fires after it. None of them is left active, and queued defences stay for later attacks. When a reaction answers an attack, a queued counter does not fire on it; it waits for the next attack from its foe. Queued block still absorbs after the reaction guard's block (PLACEHOLDER: a choice, not owner-approved). A reaction counter never cancels its attack,
   so a queued counter does not cancel the attack a reaction counter answers (PLACEHOLDER: a choice, not
   owner-approved). Enemies never react.
 - Eligible cards are defensive cards in hand that are not queued this round and not
