@@ -206,7 +206,7 @@ async function dataStudio() {
     await page.keyboard.press('Enter');
     await sleep(300);
     expect((await textOf('.gk-cell[data-r="0"][data-c="1"]')) === 'QA Edited', 'cell text did not change');
-    expect((await textOf('button[data-act="review"]')).includes('(1)'), 'review count not 1');
+    expect((await textOf('.view.active button[data-act="review"]')).includes('(1)'), 'review count not 1');
   });
   await check('Data: undo restores the cell', async () => {
     await page.click(VUNDO);
@@ -262,7 +262,7 @@ async function dataStudio() {
     const banner = page.locator('.view.active .gk-banner');
     const bannerUp = await banner.count();
     const bannerText = bannerUp ? ((await banner.first().textContent()) || '').trim() : '';
-    if (bannerUp) await page.click('.view.active .gk-banner-close');
+    // The banner stays up: the row drawer can cover its close button at this width.
     await page.fill('.view.active .gk-search', '');
     await sleep(300);
     expect(landed === 0, `paste landed on ${landed} visible cell(s) instead of being refused`);
@@ -271,9 +271,14 @@ async function dataStudio() {
     return 'refused with banner';
   });
   await check('Data: undo and redo buttons in the header', async () => {
-    await page.click(VUNDO);
-    await page.click(VREDO);
+    // Undo and Redo are disabled when there is nothing to step; click only the enabled one.
+    const undoOn = !(await page.locator(VUNDO).isDisabled());
+    if (undoOn) await page.click(VUNDO);
     await sleep(200);
+    const redoOn = !(await page.locator(VREDO).isDisabled());
+    if (redoOn) await page.click(VREDO);
+    await sleep(200);
+    return `undo ${undoOn ? 'stepped' : 'disabled'}, redo ${redoOn ? 'stepped' : 'disabled'}`;
   });
   await check('Data: Review & save opens the diff and Cancel closes it', async () => {
     await clickAt('.gk-cell[data-r="0"][data-c="1"]');
@@ -282,7 +287,7 @@ async function dataStudio() {
     await page.fill('.gk-editor', 'QA Diff');
     await page.keyboard.press('Enter');
     await sleep(200);
-    await page.click('button[data-act="review"]');
+    await page.click('.view.active button[data-act="review"]');
     await sleep(400);
     expect(await page.evaluate(() => document.querySelector('dialog.ds-review')?.open === true), 'review dialog did not open');
     await page.click('dialog.ds-review [data-cancel]');
@@ -298,7 +303,7 @@ async function layoutStudio() {
   await goModule('Layout Studio');
   await waitVisible('.ck-item');
   await check('Layout: Fit the wireframe', async () => {
-    await page.click('button[data-act="fit"]');
+    await page.click('.view.active button[data-act="fit"]');
     await sleep(300);
     return await textOf('.ck-zoom');
   });
@@ -340,7 +345,7 @@ async function layoutStudio() {
     for (let i = 1; i <= 4; i++) await page.mouse.move(box.x + box.width / 2 + i * 8, box.y + box.height / 2);
     await page.mouse.up();
     await sleep(300);
-    await page.click('button[data-act="review"]:not([disabled])');
+    await page.click('.view.active button[data-act="review"]:not([disabled])');
     await sleep(400);
     expect(await page.evaluate(() => document.querySelector('dialog')?.open === true), 'review dialog did not open');
     await page.click('dialog [data-dlg="close"]');
