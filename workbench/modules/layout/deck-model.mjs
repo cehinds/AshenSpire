@@ -79,6 +79,17 @@ export function groupProblems(data) {
   return out;
 }
 
+/**
+ * The file's text as the Deck row view reads it: parsed, in the form a save writes, and with
+ * groups the compiler accepts. Load and reload both take the file through here.
+ */
+export function readDeckText(text) {
+  const data = parseDeck(text);
+  const problems = groupProblems(data);
+  if (problems.length) throw Error(problems[0]);
+  return data;
+}
+
 /** Return the next groups object, or throw with the first problem it would have. */
 function accept(data, groups) {
   const next = { ...data, components: { ...data.components, resourceGroups: groups } };
