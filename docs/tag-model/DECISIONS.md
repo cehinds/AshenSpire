@@ -116,3 +116,21 @@ Formula, relation and value keys follow the README conventions.
     entry. Add an `assets.csv` id when the art exists.
   - The other Evade cards (about 15 in the tree) are not in `objects.csv`. Only
     Dodge Roll is modelled, so only its stance is set.
+
+## 6. Card type and stance are two fields
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** A card has a type and a stance as two separate fields. The type
+  is Skill, Power, Curse, Status, Consumable or Stance. The stance is filled
+  only for stance cards.
+- **Tables changed:** none. `objects.csv` already keeps `cardType` and `stance`
+  as separate columns. The type vocabulary matches the `card.type` tags
+  (`type.skill`, `type.power`, `curse`, `type.status`, `type.consumable`,
+  `type.stance`). The two stance-card rows (Strike, stance `attack`; Dodge Roll,
+  stance `evade`) have type `type.stance`. The two non-stance rows have no
+  stance.
+- **Couldn't place:**
+  - `check.mjs` does not enforce "stance only when type is Stance". Adding that
+    rule is a check change, so it is not made here.
+  - The Curse tag's key is `curse`, not `type.curse`, unlike the other card
+    types. This is harmless, and it is left as it is.
