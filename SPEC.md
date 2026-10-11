@@ -624,12 +624,12 @@ and show the exact contributed cards, including counts.
 
 Shield signature identities are Shield Bash (Round Shield), Riposte (Buckler),
 Guardian (Kite Shield), Bastion (Tower Shield), and Spiked Reprisal (Spiked Shield).
-Guardian costs 1 Energy, grants 5 Block, adds a temporary 1-Energy Enter: Bulwark
+Guardian costs 1 Stamina, grants 5 Block, adds a temporary 1-Stamina Enter: Bulwark
 skill to the hand, and Exhausts. The generated skill also Exhausts, is usable by
 every class, and enters the existing Bulwark stance. A full hand sends it to
 discard. It never enters the permanent run deck and disappears after combat.
-Bastion costs 1 Energy, grants 12 Block, applies 1 Weak to self, and Exhausts.
-Spiked Reprisal costs 1 Energy, grants 4 Block, deals 4 damage, and applies 2
+Bastion costs 1 Stamina, grants 12 Block, applies 1 Weak to self, and Exhausts.
+Spiked Reprisal costs 1 Stamina, grants 4 Block, deals 4 damage, and applies 2
 Bleed. Existing card effects supply the other authored armament Arts.
 
 ### 3.9 Action queue
