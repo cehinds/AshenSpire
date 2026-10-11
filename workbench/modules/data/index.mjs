@@ -19,7 +19,7 @@ const basename = (p) => p.split('/').pop();
 
 export default {
   mount(el, ctx) {
-    el.innerHTML = `<link rel="stylesheet" href="/modules/data/data.css"><div class="ds">
+    el.innerHTML = `<link rel="stylesheet" href="/modules/data/data.css"><div class="ds-host"><div class="ds">
       <aside class="ds-list" id="ds-list" aria-label="Tables"><div class="ds-list-head"><input type="search" class="ds-find" placeholder="Find a table…" aria-label="Find a table"><button type="button" class="btn btn-sm ds-list-close">Close</button></div><div class="ds-groups"></div></aside>
       <section class="ds-main">
         <div class="ds-toolbar">
@@ -39,7 +39,7 @@ export default {
         <div class="ds-tabs" role="tablist"><button type="button" class="btn btn-sm" role="tab" data-tab="row" aria-selected="true">Row</button><button type="button" class="btn btn-sm" role="tab" data-tab="check" aria-selected="false">Check</button><button type="button" class="btn btn-sm ds-drawer-close">Close</button></div>
         <div class="ds-panel-row"></div>
         <div class="ds-panel-check ds-hidden"></div>
-      </aside></div>`;
+      </aside></div></div>`;
     const $ = (s) => el.querySelector(s);
     const groupsEl = $('.ds-groups'), gridEl = $('.ds-grid'), fileEl = $('.ds-file'), rowPanel = $('.ds-panel-row'), checkPanel = $('.ds-panel-check');
     const fileIn = $('.ds-file-in');

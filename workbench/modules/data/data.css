@@ -1,6 +1,7 @@
 /* workbench/modules/data/data.css — Data Studio layout. The grid kit styles come from ui/kit/grid.css. */
-/* The module is a size container: below 1100px the table list and the Row/Check panel become overlay drawers. */
-.ds { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; height: 100%; min-height: 0; position: relative; container: ds / inline-size; }
+/* The host is the size container: below 1100px the table list and the Row/Check panel become overlay drawers. */
+.ds-host { height: 100%; min-height: 0; container: ds / inline-size; }
+.ds { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; height: 100%; min-height: 0; position: relative; }
 .ds-tables-toggle, .ds-list-close, .ds-drawer-close { display: none; }
 .ds-list, .ds-side { min-height: 0; overflow: auto; border-right: 1px solid var(--as-line); padding: 10px; }
 /* The find box fills the list column; its default width overflowed the 220px column. */
