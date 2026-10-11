@@ -1738,7 +1738,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-tile > .deck-editor-main { flex: 1 1 100%; min-width: 0; }
   .deck-editor-tile > .deck-editor-actions { flex: 1 1 100%; justify-content: flex-end; align-self: auto; }
   .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { height: max(3rem, var(--deck-editor-target)); min-width: max(3rem, var(--deck-editor-target)); }
-  .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 2; grid-row: 1; flex-wrap: wrap; max-height: none; overflow: visible; row-gap: .1rem; }
+  .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 3; grid-row: 1; flex-wrap: wrap; max-height: none; overflow: visible; row-gap: .1rem; }
   .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-name { flex: 1 1 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
