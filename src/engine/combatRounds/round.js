@@ -15,8 +15,7 @@ import {
   reactionOffer,
   resolveAttackEntry,
   settleRound,
-  assertDefenceNumbers,
-  assertMomentumGain,
+  assertReactionCard,
 } from './timeline.js';
 
 const KIND = 'combatRound';
@@ -41,6 +40,19 @@ function callContext(round, hooks) {
     options: { rng: hooks.rng, evadeTable: hooks.evadeTable },
     run: { queuedIds: round.queuedIds, pending: round.pending, stanceTable: hooks.stanceAdvantage ?? null },
   };
+}
+
+// Runs fn, and if it throws puts the round back exactly as it was. A round is plain JSON, so a
+// snapshot taken first is a complete copy of it.
+function atomically(round, fn) {
+  const saved = JSON.parse(JSON.stringify(round));
+  try {
+    return fn();
+  } catch (err) {
+    for (const key of Object.keys(round)) delete round[key];
+    Object.assign(round, saved);
+    throw err;
+  }
 }
 
 // The start events (momentum decay) come out once, with the first call that returns events.
@@ -90,29 +102,33 @@ export function startRound(state, opts = {}) {
 export function stepRound(round, hooks = {}) {
   const ctx = callContext(round, hooks);
   if (round.awaiting) throw new TypeError('the round is waiting for a reaction: call answerReaction() first');
-  const events = takeStartEvents(round);
-  if (round.settled) return { events, awaitingReaction: null, done: true };
-  const entries = round.timeline.entries;
-  if (round.idx < entries.length) {
-    const entry = entries[round.idx];
-    const index = round.idx;
-    round.idx += 1;
-    if (enterEntry(round.cur, entry, events) === 'attack') {
-      const offer = reactionOffer(round.cur, entry, ctx.run);
-      if (offer) {
-        const eligible = offer.eligible.map((c) => ({ ...c }));
-        const attack = { ...offer.attack };
-        round.awaiting = { index, attack, eligible };
-        return {
-          events,
-          awaitingReaction: { attack: { ...attack }, eligible: eligible.map((c) => ({ ...c })) },
-          done: false,
-        };
+  return atomically(round, () => {
+    const events = takeStartEvents(round);
+    if (round.settled) return { events, awaitingReaction: null, done: true };
+    const entries = round.timeline.entries;
+    if (round.idx < entries.length) {
+      const entry = entries[round.idx];
+      const index = round.idx;
+      if (enterEntry(round.cur, entry, events) === 'attack') {
+        const offer = reactionOffer(round.cur, entry, ctx.run);
+        if (offer) {
+          const eligible = offer.eligible.map((c) => ({ ...c }));
+          const attack = { ...offer.attack };
+          round.awaiting = { index, attack, eligible };
+          round.idx += 1;
+          return {
+            events,
+            awaitingReaction: { attack: { ...attack }, eligible: eligible.map((c) => ({ ...c })) },
+            done: false,
+          };
+        }
+        resolveAttackEntry(round.cur, entry, events, ctx.options, ctx.run, null);
       }
-      resolveAttackEntry(round.cur, entry, events, ctx.options, ctx.run, null);
+      // The cursor moves only once this entry has resolved, so a throw leaves it on this entry.
+      round.idx += 1;
     }
-  }
-  return { events, awaitingReaction: null, done: round.idx >= entries.length };
+    return { events, awaitingReaction: null, done: round.idx >= entries.length };
+  });
 }
 
 // Answers the reaction that stepRound() paused for. cardId is one of the eligible card ids, or
@@ -124,16 +140,16 @@ export function answerReaction(round, cardId, hooks = {}) {
   const { index, eligible } = round.awaiting;
   const pick = cardId === null || cardId === undefined ? null : { id: cardId };
   const chosen = chooseReaction(eligible, pick);
-  // Validate before the pause is cleared, so a bad card throws and the round still waits.
-  if (chosen) {
-    assertDefenceNumbers(chosen);
-    assertMomentumGain(chosen);
-  }
-  const entry = round.timeline.entries[index];
-  round.awaiting = null;
-  const events = [];
-  resolveAttackEntry(round.cur, entry, events, ctx.options, ctx.run, chosen);
-  return { events, awaitingReaction: null, done: round.idx >= round.timeline.entries.length };
+  // Validate every field resolution reads before the pause is cleared, so a bad card throws and the
+  // round still waits. atomically() also restores the round if anything after this throws.
+  if (chosen) assertReactionCard(chosen);
+  return atomically(round, () => {
+    const entry = round.timeline.entries[index];
+    round.awaiting = null;
+    const events = [];
+    resolveAttackEntry(round.cur, entry, events, ctx.options, ctx.run, chosen);
+    return { events, awaitingReaction: null, done: round.idx >= round.timeline.entries.length };
+  });
 }
 
 // Settles the round once every entry has resolved: each enemy's momentum delta is added once and

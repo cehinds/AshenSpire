@@ -86,6 +86,28 @@ export function assertMomentumGain(card) {
   return g;
 }
 
+// Checks every field that resolving a defensive card reads: the defence numbers, momentumGain
+// (gainOf) and sp (cardSp). Throws the first error, before any round state changes. A paused
+// round checks its chosen card with this before un-pausing, and round start checks each player's
+// defensive hand cards with it, so a bad card never gets as far as a reaction.
+export function assertReactionCard(card) {
+  if (!card || typeof card !== 'object') throw new TypeError('a reaction card must be an object');
+  assertDefenceNumbers(card);
+  gainOf(card);
+  cardSp(card);
+}
+
+// Checks the defensive cards in each player's hand (reactionOffer reads their sp, and a reaction
+// reads their defence numbers and momentumGain). Enemies never react, so their hands are not read.
+function validateHands(combatants) {
+  for (const id of Object.keys(combatants)) {
+    if (combatants[id].side !== 'player') continue;
+    for (const card of combatants[id].hand ?? []) {
+      if (card && typeof card === 'object' && DEFENSIVE_KINDS.includes(card.kind)) assertReactionCard(card);
+    }
+  }
+}
+
 // Initiative base (owner, 2026-10-11, placeholder): floor(DEX / 2).
 function initiativeBase(c) {
   const dex = Number(c.attrs?.DEX ?? 0);
@@ -190,6 +212,7 @@ function validateQueues(queues, combatants) {
       if (!CARD_KINDS.includes(card.kind)) throw new TypeError(`card "${card.id}" kind must be one of ${CARD_KINDS.join(', ')}`);
       if (!Number.isFinite(Number(card.speed ?? 0))) throw new TypeError(`card "${card.id}" speed must be a finite number`);
       for (const field of DEFENCE_FIELDS) defenceNumber(card, field);
+      gainOf(card);
       if (!targetOk(card, foesOf(combatants, id))) {
         throw new TypeError(`card "${card.id}" of "${id}" has an invalid target "${card.target}"`);
       }
@@ -235,6 +258,7 @@ export function buildTimeline(queues, ctx = {}) {
   const momentum = ctx.momentum ?? {};
   if (typeof momentum !== 'object' || Array.isArray(momentum)) throw new TypeError('ctx.momentum must be an object keyed by enemy id');
   validateQueues(queues, combatants);
+  validateHands(combatants);
 
   // Lane order: player first, then the other combatants in key order.
   const laneIds = [

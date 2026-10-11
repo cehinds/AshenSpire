@@ -314,6 +314,77 @@ test('a reaction card with invalid momentum gain throws and leaves the paused ro
   assert.equal(round.awaiting, null);
 });
 
+function pausedRound() {
+  for (let seed = 1; seed <= 60; seed += 1) {
+    const fight = FIGHTS[0];
+    const combatRng = rng(seed);
+    const queueRng = rng(seed + 1000);
+    const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, queueRng), rng: combatRng, merge: fight.merge });
+    let res = stepRound(round, hooks(combatRng));
+    while (!res.awaitingReaction && !res.done) res = stepRound(round, hooks(combatRng));
+    if (res.awaitingReaction) return { round, combatRng };
+  }
+  assert.fail('some seed must pause for a reaction');
+}
+
+for (const [label, bad] of [['x', 'x'], ['NaN', NaN]]) {
+  test(`a reaction card with momentumGain ${label} throws before the pause clears and leaves the round unchanged`, () => {
+    const { round, combatRng } = pausedRound();
+    const card = round.awaiting.eligible[0];
+    card.momentumGain = bad;
+    const before = JSON.stringify(round);
+    assert.throws(() => answerReaction(round, card.id, hooks(combatRng)), TypeError);
+    assert.equal(JSON.stringify(round), before, 'nothing changed: still paused, no SP spent, card not used');
+    answerReaction(round, null, hooks(combatRng));
+    assert.equal(round.awaiting, null);
+  });
+}
+
+test('a queued card with a non-finite momentumGain fails queue validation before any event', () => {
+  const fight = FIGHTS[0];
+  const queues = makeQueues(fight, rng(1001));
+  const queued = Object.values(queues).find((q) => q.length > 0)[0];
+  queued.momentumGain = 'x';
+  assert.throws(() => startRound(makeFight(fight.specs, TABLES), { queues, rng: rng(1), merge: fight.merge }), TypeError);
+});
+
+test('a hand reaction card with a non-finite sp throws at round start, before any change', () => {
+  const fight = FIGHTS[0];
+  const state = makeFight(fight.specs, TABLES);
+  const hand = state.combatants.player.hand;
+  const card = hand.find((c) => ['guard', 'evade', 'counter'].includes(c.kind));
+  assert.ok(card, 'the player hand has a defensive card');
+  card.sp = 'x';
+  const before = JSON.stringify(state);
+  assert.throws(() => startRound(state, { queues: makeQueues(fight, rng(1001)), rng: rng(1), merge: fight.merge }), RangeError);
+  assert.equal(JSON.stringify(state), before, 'the fight state is untouched');
+});
+
+test('a stepRound that throws mid-round leaves the round exactly as it was', () => {
+  let threw = false;
+  for (let seed = 1; seed <= 60 && !threw; seed += 1) {
+    const fight = FIGHTS[0];
+    const combatRng = rng(seed);
+    const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, rng(seed + 1000)), rng: combatRng, merge: fight.merge });
+    // Tampered after start: every player hand card that can be offered gets a non-finite sp.
+    for (const c of round.cur.combatants.player.hand) if (c.kind !== 'attack') c.sp = 'x';
+    for (let guard = 0; guard < 200 && !round.settled; guard += 1) {
+      const before = JSON.stringify(round);
+      try {
+        const res = stepRound(round, hooks(combatRng));
+        if (res.awaitingReaction) break;
+        if (res.done) break;
+      } catch (err) {
+        threw = true;
+        assert.ok(err instanceof TypeError || err instanceof RangeError);
+        assert.equal(JSON.stringify(round), before, 'a throw changes nothing: same cursor, no SP spent');
+        break;
+      }
+    }
+  }
+  assert.ok(threw, 'some seed must reach a throwing offer');
+});
+
 test('the rng is passed per call and never stored in the round', () => {
   const fight = FIGHTS[0];
   const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, rng(3)), rng: rng(4), merge: 'speed' });
