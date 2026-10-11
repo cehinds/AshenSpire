@@ -352,6 +352,14 @@ async function flush(t, opts){
       setStatus('warn','Someone else saved this table while you were editing.'); render();
       return;
     }
+    /* blobs we skip because our base had them must still exist: rewrite any the server head does not carry (GC may have removed them).
+       Identical content, so a rewrite is harmless. */
+    const onServer=new Set(curHead&&curHead.format==='blobs'&&Array.isArray(curHead.blobs)? curHead.blobs : []);
+    for(const b of built){
+      if(onServer.has(b.hash)||written.has(b.hash)) continue;
+      await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:Date.now()});
+      written.add(b.hash);
+    }
     /* fencing: if the get took most of the lease, another tab may hold it by now. Do not write under it; try again */
     if(Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),50); return; }
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);

@@ -601,6 +601,36 @@ test('(f) GC never deletes a blob referenced by the current or the previous head
   assert.ok(gone.every((x) => !db.has(W.api.blobPath('t', x))), 'blobs of two heads back are collected');
 });
 
+test('Keep mine rewrites the blobs its base shared with the server head when GC removed them', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  const xs = sample(300, 'x');
+  editTable(A.page, xs);
+  await A.api.flush('t'); // H1
+  const h1 = db.read('tables/t').blobs.slice();
+  B.api.subscribeTable('t');
+  await waitFor(() => B.page.loaded.has('t')); // B's base is H1
+  const changed = xs.slice(0, 299).concat([{ id: 'last', name: 'changed', qty: 0 }]);
+  editTable(B.page, changed); // B has unsaved edits, so the heads A writes next are deferred, not adopted
+  const ageBlobs = () => { for (const p of [...db.docs.keys()].filter((k) => k.includes('/blobs/'))) db.put(p, { ...db.read(p), createdAt: 1 }); };
+  ageBlobs();
+  // each save must finish (not just start) before the next, so H2 and H3 really land in order
+  const saved = () => waitFor(() => !A.page.dirty.has('t') && !A.page.saving.has('t'), 8000);
+  editTable(A.page, sample(300, 'y'));
+  await A.api.flush('t');
+  await saved(); // H2: keeps H1 as the previous head
+  editTable(A.page, sample(300, 'z'));
+  await A.api.flush('t');
+  await saved(); // H3: GC drops the H1-only blobs
+  assert.ok(h1.some((h) => !db.has(B.api.blobPath('t', h))), 'GC removed a blob that B\'s base still lists');
+  await B.api.flush('t'); // conflict with H3
+  assert.ok(B.api.tstate.t.conflict, 'B is in conflict');
+  await B.api.keepMine('t');
+  const head = db.read('tables/t');
+  assert.ok(head.blobs.every((h) => db.has(B.api.blobPath('t', h))), 'every blob the new head names exists');
+  assert.equal(await storedRows(db), JSON.stringify(changed));
+});
+
 // One tab's view of the db: its first head get is slow, and every head set records how old its lease was.
 function slowFirstGetTracedDb(db, getMs, sets) {
   let lastAcq = 0, firstGet = true;
