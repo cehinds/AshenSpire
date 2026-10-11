@@ -1143,6 +1143,32 @@ test('DOM: a window that narrows to phone width leaves the deck pane; the listen
   }
 });
 
+test('DOM: an ordered deck narrowing to phone width shows the pane that holds focus', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');
+  const previous = globalThis.matchMedia;
+  const listeners = [];
+  const query = { matches: false,
+    addEventListener(type, fn) { if (type === 'change') listeners.push(fn); },
+    removeEventListener(type, fn) { const at = listeners.indexOf(fn); if (at >= 0) listeners.splice(at, 1); } };
+  const inert = { matches: false, addEventListener() {}, removeEventListener() {} };
+  globalThis.matchMedia = (q) => (q === '(max-width: 1000px)' ? query : inert);
+  try {
+    withDom(() => {
+      const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: { playInDeckOrder: true } });
+      // On desktop a deck row takes focus; the phone view still reads the library.
+      editor.root.querySelector('[data-pane="deck"] .deck-editor-main').focus();
+      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
+      query.matches = true;
+      for (const fn of [...listeners]) fn({ matches: true });
+      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck', 'the Draw order view follows the focused pane');
+      editor.close();
+    });
+  } finally {
+    if (had) globalThis.matchMedia = previous; else delete globalThis.matchMedia;
+  }
+});
+
 test('DOM: a phone-width change keeps an open deck-row inspection; Back then lands on the list', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');

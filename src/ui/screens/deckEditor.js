@@ -967,6 +967,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         return;
       }
     }
+    // An ordered deck keeps both panes on a phone (Draw order shows the deck),
+    // so the visible view follows the pane that holds focus.
+    if (ev?.matches && model.ordered && mobileView !== 'inspect' && mobileView !== pane) {
+      mobileView = pane;
+      draw();
+      return;
+    }
     // Widening back to desktop releases the panes too.
     syncInert();
   };
