@@ -2,10 +2,13 @@
 // helpers: the index rows, the filters, the five sorts, the facets, the chip
 // counts, the kind to source-table map, the deep link and the URLs it builds.
 import test from 'node:test';
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import { armamentIconAsset } from '../../src/model/equipmentArt.js';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
+  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -117,6 +120,63 @@ test('the deep link writes only the non-default state, and round-trips', () => {
   assert.equal(back.tab, 'worn');
 });
 
+test('the render page sets the game root as its base, and loads its own files by absolute path', () => {
+  const html = fs.readFileSync(new URL('../modules/entities/render.html', import.meta.url), 'utf8');
+  assert.match(html, /<base href="\/">/, 'game asset paths resolve from the game root, not the module folder');
+  assert.match(html, /<script type="module" src="\/workbench\/modules\/entities\/render\.mjs">/);
+  assert.match(html, /<link rel="stylesheet" href="\/workbench\/modules\/entities\/render\.css">/);
+});
+
+test('the inventory icon uses the game art key, as the game does', () => {
+  // The game's own rule (src/model/equipmentArt.js): inventoryArtKey first, then the id.
+  assert.equal(armamentIconAsset({ id: 'straightSword', inventoryArtKey: 'straightSwordInventory2026' }), 'assets/equipment/icon_straightSwordInventory2026.webp');
+  assert.equal(armamentIconAsset({ id: 'dagger', inventoryArtKey: '' }), 'assets/equipment/icon_dagger.webp');
+  const render = fs.readFileSync(new URL('../modules/entities/render.mjs', import.meta.url), 'utf8');
+  assert.match(render, /armamentIconAsset\(def\)/, 'the render page asks the game for the icon path');
+  assert.doesNotMatch(render, /icon_\$\{def\.id\}/, 'and no longer builds it from the id alone');
+});
+
+test('the render page announces the protocol version the module checks', () => {
+  assert.ok(Number.isInteger(RENDER_PROTOCOL) && RENDER_PROTOCOL >= 1);
+  const render = fs.readFileSync(new URL('../modules/entities/render.mjs', import.meta.url), 'utf8');
+  assert.match(render, /post\('ready', \{ protocol: RENDER_PROTOCOL \}\)/, 'ready carries the version');
+  const index = fs.readFileSync(new URL('../modules/entities/index.mjs', import.meta.url), 'utf8');
+  assert.match(index, /d\.protocol !== RENDER_PROTOCOL/, 'the module refuses a different version');
+  assert.match(index, /"This project's checkout has no Entity Browser render page, or an older one\. Update that checkout to this branch\."/, 'the checkout message names the fix');
+  assert.match(index, /clearTimeout\(readyTimer\)/, 'a page that never answers is reported after a wait');
+});
+
+test('a deep link filter stays pending until the kind index loads, then only a value the index has survives', () => {
+  const link = { class: 'reaver', type: 'Armor', tag: 'guard', rarity: 'rare' };
+  assert.deepEqual(settleFilters(link, null), link, 'before the index loads, nothing is dropped');
+  const facets = facetsOf([{ id: 'a', class: 'reaver', itemTypes: ['Armor'], tags: ['guard'], rarity: 'rare' }]);
+  assert.deepEqual(settleFilters(link, facets), link, 'values the index carries are kept');
+  assert.deepEqual(settleFilters({ ...link, class: 'nobody' }, facets), { ...link, class: '' }, 'an unknown value is cleared once the index is in');
+  assert.deepEqual(settleFilters({}, facets), { class: '', type: '', tag: '', rarity: '' }, 'no wanted value is an empty filter');
+});
+
+test('an entity maps to its Data Studio row key: armour by the raw outfit id, others as they are', () => {
+  assert.equal(tableRowOf('armor', 'reaver:default'), 'default');
+  assert.equal(tableRowOf('armor', 'starseer:vigil'), 'vigil');
+  assert.equal(tableRowOf('armaments', 'straightSword'), 'straightSword');
+  assert.equal(tableRowOf('relics', 'medallion'), 'medallion');
+  assert.equal(tableRowOf('armor', ''), '');
+  const csv = fs.readFileSync(new URL('../../content/source/outfits.csv', import.meta.url), 'utf8').split('\n').filter((l) => l && !l.startsWith('#'));
+  const keys = csv.slice(1).map((l) => l.split(',')[0]);
+  assert.equal(csv[0].split(',')[0], 'id', 'the outfit table is keyed by its id column');
+  assert.ok(keys.includes(tableRowOf('armor', 'reaver:default')), 'the mapped key is a row of the table');
+});
+
+test('on show the module keeps a working game and reloads when the origin changed or nothing answered', () => {
+  const up = 'http://localhost:4320/';
+  assert.equal(connectPlan({ base: null, currentOrigin: 'http://localhost:4320', ready: true }), 'setup', 'a down server shows the setup message');
+  assert.equal(connectPlan({ base: up, currentOrigin: 'http://localhost:4320', ready: true }), 'keep', 'the same origin, answering: nothing to do');
+  assert.equal(connectPlan({ base: 'http://localhost:4400/', currentOrigin: 'http://localhost:4320', ready: true }), 'load', 'a moved port reloads the frames');
+  assert.equal(connectPlan({ base: up, currentOrigin: null, ready: false }), 'load', 'the first connect loads');
+  assert.equal(connectPlan({ base: up, currentOrigin: 'http://localhost:4320', ready: false }), 'load', 'frames that never answered are loaded again');
+  assert.equal(connectPlan({ base: up, currentOrigin: 'http://localhost:4320', ready: true, force: true }), 'load', 'a forced reload loads anyway');
+});
+
 test('the render page URL carries the parent origin and only set parameters', () => {
   assert.equal(
     renderUrl('http://localhost:4320', { parentOrigin: 'http://127.0.0.1:4300', kind: 'cards', view: 'grid', q: '', id: null }),
@@ -135,4 +195,31 @@ test('the game base comes from the running game tool only', () => {
   assert.equal(gameBaseOf([{ id: 'game', status: 'down', url: 'http://localhost:4320' }]), null);
   assert.equal(gameBaseOf([{ id: 'editor', status: 'up', url: 'http://localhost:4317' }]), null);
   assert.equal(gameBaseOf(null), null);
+});
+
+test('escHtml escapes markup and quotes, so an id cannot break out of an attribute', () => {
+  assert.equal(escHtml(`"><img src=x onerror=1>&'`), '&quot;&gt;&lt;img src=x onerror=1&gt;&amp;&#39;');
+  assert.equal(escHtml(null), '');
+  assert.equal(escHtml(12), '12');
+});
+
+test('the Try in fight hands default to a sword and shield, and the off hand never copies the main hand by default', () => {
+  const ids = ['straightSword', 'roundShield', 'dagger'];
+  assert.deepEqual(handsFor({}, ids), { mainHand: 'straightSword', offHand: 'roundShield' });
+  assert.deepEqual(handsFor({ mainHand: 'roundShield', offHand: null }, ids), { mainHand: 'roundShield', offHand: 'straightSword' }, 'the default off hand skips the main hand');
+  assert.deepEqual(handsFor({ mainHand: 'dagger', offHand: null }, ids), { mainHand: 'dagger', offHand: 'roundShield' });
+  assert.deepEqual(handsFor({ mainHand: 'dagger', offHand: 'dagger' }, ids), { mainHand: 'dagger', offHand: 'dagger' }, 'a choice the reader made is kept');
+  assert.deepEqual(handsFor({ mainHand: '', offHand: '' }, ids), { mainHand: '', offHand: '' }, 'an empty hand is a choice');
+  assert.deepEqual(handsFor({ mainHand: 'nope', offHand: 'gone' }, ids), { mainHand: 'straightSword', offHand: 'roundShield' }, 'unknown ids fall back');
+  assert.deepEqual(handsFor({}, ['straightSword']), { mainHand: 'straightSword', offHand: '' }, 'a missing default is the empty hand');
+  assert.deepEqual(handsFor({ mainHand: 'straightSword', offHand: null }, ['straightSword']), { mainHand: 'straightSword', offHand: '' });
+});
+
+test('the Try in fight hand choices start with the empty hand and keep ids as given', () => {
+  assert.deepEqual(handChoices([{ id: 'straightSword', name: 'Straight Sword' }, { id: 'a"b', name: 'Odd' }]), [
+    ['', 'Empty hand'], ['straightSword', 'Straight Sword'], ['a"b', 'Odd'],
+  ]);
+  assert.deepEqual(handChoices(), [['', 'Empty hand']]);
+  const opts = handChoices([{ id: 'a"b', name: 'Odd' }]).map(([v, t]) => `<option value="${escHtml(v)}">${escHtml(t)}</option>`).join('');
+  assert.equal(opts, '<option value="">Empty hand</option><option value="a&quot;b">Odd</option>');
 });

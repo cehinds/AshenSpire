@@ -9,7 +9,8 @@
 
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
-  facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
+  facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
+  RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -19,7 +20,7 @@ const TABS = [['card', 'Card', 'detail'], ['inventory', 'Inventory', 'inventory'
 const FILTERS = ['class', 'type', 'tag', 'rarity'];
 const LABELS = { class: 'All classes', type: 'All types', tag: 'All tags', rarity: 'All rarities' };
 
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = escHtml;
 
 export default {
   mount(el, ctx) {
@@ -67,25 +68,62 @@ export default {
     const prefs = { density: ctx.settings.get('density', 'comfortable'), layout: ctx.settings.get('layout', 'grid') };
     // mainHand and offHand start null (not chosen yet); '' is a chosen empty hand.
     const st = { ...parseDeepLink({}), density: prefs.density, layout: prefs.layout, pose: 'idle', tab: 'card', classId: 'reaver', mainHand: null, offHand: null };
-    const game = { base: null, origin: null };
+    const game = { base: null, origin: null, ready: false };
     let seenParams = null;
-    let counts = {}, index = [], classes = [], armaments = [], files = null;
+    let counts = {}, index = [], indexKind = null, classes = [], armaments = [], files = null;
+    let tryFor = undefined; // the entity the Try in fight hands were last set for
 
     // ---------- the game server ----------
-    async function connect() {
-      setup.hidden = true;
+    const CHECKOUT_MESSAGE = "This project's checkout has no Entity Browser render page, or an older one. Update that checkout to this branch.";
+    const SERVER_HINT = 'The entities are drawn by the game server, so start it from the Library or Home, then';
+    const READY_WAIT_MS = 15000;
+    const ANSWER_WAIT_MS = 10000;
+    let readyTimer = 0, answerTimer = 0;
+    function showSetup(message, detail = '') {
+      setup.hidden = false;
+      setup.innerHTML = `<p>${esc(message)}${detail ? ` ${esc(detail)}` : ''} <button type="button" class="ent-retry">Try again</button></p>`;
+      setup.querySelector('.ent-retry').onclick = () => connect();
+    }
+    // A grid that was sent but never reported its state back means the page has stopped answering.
+    function expectAnswer() {
+      clearTimeout(answerTimer);
+      answerTimer = setTimeout(() => { if (game.ready) connect({ force: true }); }, ANSWER_WAIT_MS);
+    }
+    // A render page that never says ready is either missing from this checkout or the server has stopped.
+    function awaitReady() {
+      clearTimeout(readyTimer);
+      readyTimer = setTimeout(async () => {
+        if (game.ready) return;
+        let up = false;
+        try { up = !!gameBaseOf(await ctx.api('tools')); } catch { up = false; }
+        if (game.ready) return;
+        if (up) showSetup(CHECKOUT_MESSAGE);
+        else showSetup('The game server stopped answering.', SERVER_HINT);
+      }, READY_WAIT_MS);
+    }
+    // Resolves the game server the same way at mount, on show and on Try again. The frames load again
+    // unless the same origin is already answering; `force` reloads them anyway.
+    let runs = 0;
+    async function connect({ force = false } = {}) {
+      const run = ++runs;
+      let base = null, failure = null;
       try {
-        const base = gameBaseOf(await ctx.api('tools'));
+        base = gameBaseOf(await ctx.api('tools'));
         if (!base) throw new Error('The game server is not running.');
-        game.base = base;
-        game.origin = new URL(base).origin;
-        center.src = renderUrl(base, { parentOrigin: location.origin });
-        drawer.src = renderUrl(base, { parentOrigin: location.origin, kind: st.kind, view: 'detail' });
-      } catch (err) {
-        setup.hidden = false;
-        setup.innerHTML = `<p>${esc(err.message)} The entities are drawn by the game server, so start it from the Library or Home, then <button type="button" class="ent-retry">Try again</button>.</p>`;
-        setup.querySelector('.ent-retry').onclick = connect;
+      } catch (err) { failure = err; }
+      if (run !== runs) return; // a later connect has taken over
+      if (failure) {
+        clearTimeout(readyTimer); clearTimeout(answerTimer);
+        game.origin = null; game.ready = false;
+        showSetup(failure.message, SERVER_HINT);
+        return;
       }
+      setup.hidden = true;
+      if (connectPlan({ base, currentOrigin: game.origin, ready: game.ready, force }) === 'keep') return;
+      game.base = base; game.origin = new URL(base).origin; game.ready = false;
+      center.src = renderUrl(base, { parentOrigin: location.origin });
+      drawer.src = renderUrl(base, { parentOrigin: location.origin, kind: st.kind, view: 'detail' });
+      awaitReady();
     }
 
     // ---------- messages ----------
@@ -93,6 +131,7 @@ export default {
     const viewOf = (tab) => TABS.find(([id]) => id === tab)?.[2] || 'detail';
     function sendCenter() {
       post(center, { type: 'set', params: { kind: st.kind, view: 'grid', q: st.q, sort: st.sort, class: st.class, type: st.type, tag: st.tag, rarity: st.rarity, density: st.density, layout: st.layout } });
+      expectAnswer();
     }
     function sendDrawer() {
       if (st.tab === 'try') return;
@@ -107,6 +146,9 @@ export default {
       if (!fromCenter && !fromDrawer) return;
       switch (d.type) {
         case 'ready':
+          // A page from another checkout may be older or newer: it is not drawn, and the reader is told why.
+          if (d.protocol !== RENDER_PROTOCOL) { clearTimeout(readyTimer); showSetup(CHECKOUT_MESSAGE); break; }
+          game.ready = true; clearTimeout(readyTimer); setup.hidden = true;
           if (fromCenter) sendCenter(); else sendDrawer();
           break;
         case 'counts':
@@ -114,8 +156,16 @@ export default {
           counts = d.counts || {}; classes = d.classes || []; armaments = d.armaments || [];
           renderChips(); renderTry();
           break;
+        case 'shown':
+          if (fromCenter) clearTimeout(answerTimer);
+          break;
         case 'index':
-          if (fromCenter && d.kind === st.kind) { index = d.entries || []; renderFacets(); renderCount(); }
+          if (fromCenter && d.kind === st.kind) {
+            index = d.entries || []; indexKind = d.kind;
+            // The grid was sent with the pending filters; resend it only when the index dropped one.
+            if (renderFacets()) { sendCenter(); writeHash(); }
+            renderCount();
+          }
           break;
         case 'select':
           if (fromCenter && d.kind === st.kind) select(d.id);
@@ -131,20 +181,25 @@ export default {
       const list = chipCounts(counts);
       chips.innerHTML = list.map((c) => `<button type="button" role="tab" data-kind="${c.id}" aria-selected="${c.id === st.kind}"><span>${esc(c.label)}</span><span class="ent-n">${Object.keys(counts).length ? c.count : '–'}</span></button>`).join('');
     }
+    // Returns true when a filter value was dropped, so the grid must be sent again.
     function renderFacets() {
-      const f = facetsOf(index);
-      const opts = { class: f.classes, type: f.types, tag: f.tags, rarity: f.rarities };
+      const f = indexKind === st.kind ? facetsOf(index) : null;
+      const opts = f ? { class: f.classes, type: f.types, tag: f.tags, rarity: f.rarities } : {};
+      const settled = settleFilters(st, f);
+      let dropped = false;
       for (const name of FILTERS) {
         const sel = el.querySelector(`[data-f="${name}"]`);
-        const values = opts[name];
-        if (!values.some((v) => v.value === st[name])) st[name] = '';
-        sel.innerHTML = `<option value="">${LABELS[name]}</option>` + values.map((v) => `<option value="${esc(v.value)}">${esc(v.value)} (${v.count})</option>`).join('');
+        if (st[name] !== settled[name]) { st[name] = settled[name]; dropped = true; }
+        // While the index is loading, the pending value is the only option; its count is not known yet.
+        const values = f ? opts[name] : (st[name] ? [{ value: st[name], count: null }] : []);
+        sel.innerHTML = `<option value="">${LABELS[name]}</option>` + values.map((v) => `<option value="${esc(v.value)}">${esc(v.value)}${v.count == null ? '' : ` (${v.count})`}</option>`).join('');
         sel.value = st[name];
       }
       el.querySelector('[data-f="sort"]').value = st.sort;
       el.querySelector('[data-f="density"]').value = st.density;
       el.querySelectorAll('[data-layout]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.layout === st.layout)));
       q.value = st.q;
+      return dropped;
     }
     function renderCount() {
       const shown = filterEntries(index, st).length;
@@ -172,13 +227,16 @@ export default {
       const cls = tryForm.elements.class, main = tryForm.elements.mainHand, off = tryForm.elements.offHand;
       if (!classes.length) return;
       if (!cls.options.length) cls.innerHTML = classes.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
-      const hands = [['', 'Empty hand'], ...armaments.map((a) => [a.id, a.name])];
-      if (!main.options.length) { main.innerHTML = hands.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join(''); off.innerHTML = main.innerHTML; }
-      const pick = (v, fallback) => (v !== null && hands.some(([id]) => id === v) ? v : fallback);
+      const hands = handChoices(armaments);
+      if (!main.options.length) { main.innerHTML = hands.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(''); off.innerHTML = main.innerHTML; }
       st.classId = cls.value || st.classId;
-      if (st.kind === 'armaments' && st.id) st.mainHand = st.id;
-      st.mainHand = pick(st.mainHand, 'straightSword');
-      st.offHand = pick(st.offHand, 'roundShield');
+      // The main hand follows the selected armament, once per selection: switching tabs keeps the reader's hands.
+      if (st.id !== tryFor) {
+        tryFor = st.id;
+        if (st.kind === 'armaments' && st.id) st.mainHand = st.id;
+        if (st.offHand && st.offHand === st.mainHand) st.offHand = null;
+      }
+      Object.assign(st, handsFor({ mainHand: st.mainHand, offHand: st.offHand }, armaments.map((a) => a.id)));
       cls.value = classes.some((c) => c.id === st.classId) ? st.classId : classes[0]?.id;
       main.value = st.mainHand; off.value = st.offHand;
     }
@@ -191,7 +249,7 @@ export default {
     function setKind(kind, { keepFilters = false } = {}) {
       const next = kindOf(kind) ? kind : DEFAULT_KIND;
       if (next !== st.kind) {
-        st.kind = next; st.id = null; index = [];
+        st.kind = next; st.id = null; index = []; indexKind = null;
         if (!keepFilters) { st.class = ''; st.type = ''; st.tag = ''; st.rarity = ''; }
         renderChips(); sendCenter(); sendDrawer();
       }
@@ -212,7 +270,8 @@ export default {
       // The kind first: setKind clears the entity when the kind changes, so the link's entity is set after it.
       setKind(next.kind, { keepFilters: true });
       Object.assign(st, { q: next.q, sort: next.sort, class: next.class, type: next.type, tag: next.tag, rarity: next.rarity, id: next.id, tab: next.tab });
-      sendCenter(); sendDrawer(); renderChips(); renderTabs(); renderFacets(); renderCount(); renderTitle(); writeHash();
+      // The facets settle the filters first, so the grid is sent the values the column shows.
+      renderFacets(); sendCenter(); sendDrawer(); renderChips(); renderTabs(); renderCount(); renderTitle(); writeHash();
     }
 
     // ---------- events ----------
@@ -242,7 +301,7 @@ export default {
     });
     dsBtn.addEventListener('click', () => {
       const table = sourceTableFor(st.kind, files);
-      if (table && st.id) ctx.openModule('data', { table, row: st.id });
+      if (table && st.id) ctx.openModule('data', { table, row: tableRowOf(st.kind, st.id) });
     });
 
     // ---------- start ----------
@@ -256,6 +315,8 @@ export default {
       // The host calls onShow after mount, and again each time the module is opened. It keeps a
       // fresh params object per open, so a link or command applies once and a plain return keeps the state.
       onShow() {
+        // The game may have restarted or moved port while the module was away: resolve it again.
+        connect();
         const p = ctx.params;
         if (!p || p === seenParams) return;
         seenParams = p;

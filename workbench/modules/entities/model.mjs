@@ -22,6 +22,13 @@ export const VIEWS = Object.freeze(['grid', 'detail', 'worn', 'tooltip', 'invent
 export const DENSITIES = Object.freeze(['compact', 'comfortable', 'spacious']);
 export const LAYOUTS = Object.freeze(['grid', 'list']);
 
+/**
+ * The version of the messages between the module and the render page. The render page is served by
+ * the game's checkout, which may be another one; it sends this in `ready`, and the module refuses a
+ * page that sends a different number. Bump it when a message changes shape.
+ */
+export const RENDER_PROTOCOL = 1;
+
 /** The five sort orders. */
 export const SORTS = Object.freeze([
   { id: 'name', label: 'Name A–Z' },
@@ -34,6 +41,17 @@ export const DEFAULT_SORT = 'name';
 
 /** Rarity ranks: lower sorts first; anything unlisted goes after these, by name. */
 export const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'epic', 'legendary', 'boss', 'unique']);
+
+/**
+ * The key value of an entity's row in its Data Studio table (the table's `id` column). An armour entity
+ * is `classId:id` in the browser, but its table row is keyed by the outfit id alone; every other kind is
+ * keyed by its entity id as it is.
+ */
+export function tableRowOf(kind, entityId) {
+  const id = text(entityId);
+  if (kind === 'armor' && id.includes(':')) return id.slice(id.indexOf(':') + 1);
+  return id;
+}
 
 /**
  * The Data Studio table each kind is authored in (content/source), where one
@@ -50,6 +68,31 @@ export function sourceTableFor(kind, files = null) {
   if (!path) return null;
   if (!files) return path;
   return files.includes(path) ? path : null;
+}
+
+/** Escapes text for HTML element content and quoted attribute values. */
+export function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/**
+ * The hands the Try in fight form starts with. A hand is an armament id or '' (an empty hand).
+ * A hand that is unset (null) or names no known armament takes its default: main straightSword,
+ * off roundShield, each when available, else the empty hand. A default off hand never equals the
+ * main hand; a choice the reader made is kept as given.
+ */
+export function handsFor({ mainHand = null, offHand = null } = {}, armamentIds = []) {
+  const ids = list(armamentIds).map(String);
+  const known = (v) => v === '' || ids.includes(v);
+  const main = known(mainHand) ? mainHand : (known('straightSword') ? 'straightSword' : '');
+  let off = known(offHand) ? offHand : (known('roundShield') ? 'roundShield' : '');
+  if (!known(offHand) && off !== '' && off === main) off = ids.find((id) => id !== main) ?? '';
+  return { mainHand: main, offHand: off };
+}
+
+/** The hand choices for the Try in fight form: the empty hand, then each armament as [id, name]. */
+export function handChoices(armaments = []) {
+  return [['', 'Empty hand'], ...armaments.map((a) => [String(a.id), String(a.name ?? a.id)])];
 }
 
 export function kindOf(id) {
@@ -138,6 +181,22 @@ export function facetsOf(entries) {
   };
 }
 
+const FACET_OF = Object.freeze({ class: 'classes', type: 'types', tag: 'tags', rarity: 'rarities' });
+
+/**
+ * The filter values to show for the facets of the kind's loaded index. A value survives only when the
+ * facets carry it. Before the index has loaded (`facets` null) every wanted value stays pending, so a
+ * deep link's filters are not dropped while the index is still arriving.
+ */
+export function settleFilters(wanted = {}, facets = null) {
+  const out = {};
+  for (const [name, facet] of Object.entries(FACET_OF)) {
+    const want = text(wanted[name]);
+    out[name] = !facets || (facets[facet] || []).some((v) => v.value === want) ? want : '';
+  }
+  return out;
+}
+
 /** Counts per kind from a { kind: number } map, in KINDS order, zero when unknown. */
 export function chipCounts(counts = {}) {
   return KINDS.map((k) => ({ id: k.id, label: k.label, count: Number(counts[k.id]) || 0 }));
@@ -198,6 +257,17 @@ export function tryFightUrl(gameBase, { classId = 'reaver', mainHand = '', offHa
   const base = String(gameBase || '').replace(/\/?$/, '/');
   const q = new URLSearchParams({ shot: 'combat', shotKit: '1', shotClass: classId, shotMainHand: mainHand, shotOffHand: offHand });
   return `${base}index.html?${q}`;
+}
+
+/**
+ * What the module does after it resolves the game server: 'setup' (the server is down, show the setup
+ * message), 'keep' (the same origin is already answering, leave the frames) or 'load' (point the frames
+ * at the game, because the origin changed, the frames never answered, or a reload was forced).
+ */
+export function connectPlan({ base = null, currentOrigin = null, ready = false, force = false } = {}) {
+  if (!base) return 'setup';
+  const origin = new URL(base).origin;
+  return !force && ready && origin === currentOrigin ? 'keep' : 'load';
 }
 
 /** The Workbench's `tools` listing → the game server's base URL, or null when it is down. */
