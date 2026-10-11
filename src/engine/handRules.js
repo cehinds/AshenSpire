@@ -18,7 +18,7 @@ export function returnUnplayedCards(ctx, cards) {
 // the next turn will draw, the discard joins the returned cards in this same
 // shuffle, so a held hand cannot starve the discard of its reshuffle.
 function refreshHandIntoDraw(ctx, cards) {
-  const next = handDrawCount(ctx.handRules, ctx.attributes, { handSize: ctx.piles.hand.length, level: ctx.characterLevel }).wanted;
+  const next = handDrawCount(ctx.handRules, ctx.attributes, { handSize: ctx.piles.hand.length, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel }).value;
   const joins = ctx.handRules.reshuffle !== false && ctx.piles.discard.length > 0 && ctx.piles.draw.length < next;
   if (!cards.length && !joins) return;
   const moved = joins ? [...cards, ...ctx.piles.discard] : cards;

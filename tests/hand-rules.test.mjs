@@ -396,3 +396,17 @@ test('reshuffle: false keeps the discard out of the turn-end refresh', () => {
   assert.equal(c.piles.discard.length, 9);
   assert.equal(c.piles.hand.length + c.piles.draw.length, 4);
 });
+
+test('a kept hand that fills capacity leaves the discard alone at turn end, even when the draw pile is short', () => {
+  const c = refreshFight({ retain: true });
+  const seen = [];
+  const emit = c.emit;
+  c.emit = (type, payload) => { seen.push({ type, payload }); return emit(type, payload); };
+  c.piles.draw = [];
+  c.piles.hand = Array.from({ length: c.handMax }, (_, i) => ({ instanceId: `k${i}`, cardId: 'urgentHeal', upgraded: false }));
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.discard.length, 9, 'a full hand draws nothing, so the discard is not recycled');
+  assert.equal(c.piles.hand.length, c.handMax);
+  assert(!seen.some(e => e.type === 'deckShuffled' && e.payload?.reshuffledDiscard), 'no discard reshuffle was emitted');
+});
