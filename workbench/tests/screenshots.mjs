@@ -83,18 +83,10 @@ await page.reload({ waitUntil: 'domcontentloaded' });
 await sleep(7000);
 await shot('01-home');
 
-await go('Content Editor', 5000); await shot('02-content-editor');
-// Ctrl+K typed inside the (cross-origin) studio frame still opens the palette.
-await page.locator('#view-editor iframe').first().contentFrame().locator('body').click({ position: { x: 150, y: 40 } }).catch(() => {});
-const inFrame = await page.evaluate(() => document.activeElement?.tagName === 'IFRAME');
-await page.keyboard.press('Control+k');
-await sleep(400);
-if (!inFrame) console.warn('skipped: focus did not reach the Content Editor frame');
-else if (await page.locator('#palette').isHidden()) { console.error('FAIL: Ctrl+K inside the Content Editor frame did not open the palette'); process.exitCode = 1; }
-else console.log('Ctrl+K from the Content Editor frame opens the palette');
-await page.keyboard.press('Escape');
-await go('UI Studio', 5000); await shot('03-ui-studio');
-await go('Pose & FX', 6000); await shot('04-pose-fx');
+// The studios are native modules now (no frames); the first one is a placeholder.
+await go('Data Studio', 1500); await shot('02-data-studio');
+await go('Layout Studio', 1500); await shot('03-layout-studio');
+await go('Motion Studio', 1500); await shot('04-motion-studio');
 await go('Library', 7000); await shot('05-library');
 await go('Engine Export', 2000); await shot('06-engine-export');
 
