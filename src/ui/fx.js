@@ -1026,85 +1026,115 @@ export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
   }
 }
 
+// A visual in three parts, so the paced timeline can play an attack beat in
+// the owner's order (animationPace.js beatOrder): `contact` is the attacker's
+// side of the hit (its sound, spark, slash and effect sprite) at the swing's
+// impact frame; `reaction` is the defender's (hurt flash and pose, recoil,
+// shake, stagger wobble); `numbers` are the floats. Every part is optional.
+// visualFor plays all three at once, in that order, for every other path.
+function visualPartsFor(e, beatKind) {
+  const base = baseVisualParts(e, beatKind), effect = combatEffectForEvent(e);
+  if (!effect) return base;
+  const playEffect = (ctx) => {
+    const anchor = ctx.anchorFor(effect.targetId);
+    if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
+  };
+  const contact = base?.contact;
+  return { ...base, contact: contact ? (ctx) => { contact(ctx); playEffect(ctx); } : playEffect };
+}
+
 function visualFor(e, beatKind) {
-  const base=baseVisualFor(e,beatKind),effect=combatEffectForEvent(e);
-  if(!effect)return base;
-  return ctx=>{
-    base?.(ctx);
-    const anchor=ctx.anchorFor(effect.targetId);
-    if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),effect.kind,{size:190});
+  const parts = visualPartsFor(e, beatKind);
+  if (!parts) return null;
+  return (ctx) => {
+    parts.contact?.(ctx);
+    parts.reaction?.(ctx);
+    parts.numbers?.(ctx);
   };
 }
 
-function baseVisualFor(e, beatKind) {
+function baseVisualParts(e, beatKind) {
   switch (e.type) {
-    case 'damageDealt':
+    case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
       // only the HP residual as damage. Paired results sit side-by-side without
       // relying on random jitter, so phone and desktop read the same grammar.
-      return (ctx) => {
-        const parts = guardHitFloatParts(e);
-        const anchor = ctx.anchorFor(e.targetId);
-        const paired = !!(parts.guard && parts.damage);
-        if (parts.guard) {
-          if (!parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
-          sfx.play('block');
-          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
+      const parts = guardHitFloatParts(e);
+      const paired = !!(parts.guard && parts.damage);
+      const heavy = parts.residual >= 15;
+      return {
+        contact: (ctx) => {
+          const anchor = ctx.anchorFor(e.targetId);
+          if (parts.guard) {
+            sfx.play('block');
+            spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          }
+          if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
+          playHitSound(e);
+          // Attack impacts slash at the contact.
+          if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
+        },
+        reaction: (ctx) => {
+          const anchor = ctx.anchorFor(e.targetId);
+          if (parts.guard && !parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
+          if (!parts.damage) return;
+          // The victim flashes + recoils (CSS); heavy hits recoil further
+          // (hit-heavy) and kick the screen. A held hit (hit-stop) starts the
+          // recoil held and runs it that much longer, so the whole recoil still plays.
+          const held = hitStop;
+          flash(anchor, 'hitflash', heavy ? 380 : 220, held);
+          // An animated figure recoils in its own art as well as in CSS, and holds
+          // it as long as the flash it belongs to.
+          playPoseOn(anchor, 'hit', heavy ? 380 : 220);
+          if (held) stageFor(anchor)?.hold?.(held);
+          if (heavy) flash(anchor, 'hit-heavy', 380 + held);
+          hold(anchor, held);
+          // Every HP hit shakes, by the HP it cost (SPEC §7.4).
+          shake(ctx.combatEl, shakePxFor(parts.residual));
+        },
+        numbers: (ctx) => {
+          const anchor = ctx.anchorFor(e.targetId);
+          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
-        }
-        if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
-        playHitSound(e);
-        const heavy = parts.residual >= 15;
-        floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
-          { x: paired ? 26 : 0, jitter: !paired });
-        // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
-        // recoil further (hit-heavy) and kick the screen.
-        if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
-        // A held hit (hit-stop) starts the recoil held and runs it that much
-        // longer, so the whole recoil still plays.
-        const held = hitStop;
-        flash(anchor, 'hitflash', heavy ? 380 : 220, held);
-        // An animated figure recoils in its own art as well as in CSS, and holds
-        // it as long as the flash it belongs to.
-        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
-        if (held) stageFor(anchor)?.hold?.(held);
-        if (heavy) flash(anchor, 'hit-heavy', 380 + held);
-        hold(anchor, held);
-        // Every HP hit shakes, by the HP it cost (SPEC §7.4).
-        shake(ctx.combatEl, shakePxFor(parts.residual));
+          if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
+            { x: paired ? 26 : 0, jitter: !paired });
+        },
       };
+    }
     case 'blockGained':
       return e.amount > 0
-        ? (ctx) => {
-            sfx.play('block');
-            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
+        ? {
+            reaction: () => sfx.play('block'),
+            numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk'),
           }
         : null;
-    case 'hpLost':
+    case 'hpLost': {
       // #61 M2a: a proc burst's number is ITS OWN float, in the row's tint,
       // with the row's glyph — separate from and after the hit that tipped it.
-      if (typeof e.cause === 'string' && e.cause.startsWith('proc:')) {
-        return (ctx) => {
-          const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+      const proc = typeof e.cause === 'string' && e.cause.startsWith('proc:');
+      if (!proc && e.cause !== 'effect') return null; // attack damage already shown by damageDealt
+      return {
+        reaction: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
           if (e.amount > 0) { playPoseOn(anchor, 'hit', 300); flash(anchor, 'hitflash', 300); }
-          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
-        };
-      }
-      return e.cause === 'effect'
-        ? (ctx) => {
-            const anchor = ctx.anchorFor(e.targetId);
-            if (e.amount > 0) { playPoseOn(anchor, 'hit', 300); flash(anchor, 'hitflash', 300); }
-            floatNum(ctx.layer, anchor, `-${e.amount}`, 'burst');
-          }
-        : null; // attack damage already shown by damageDealt
+        },
+        numbers: proc
+          ? (ctx) => {
+              const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
+            }
+          : (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst'),
+      };
+    }
     case 'healed':
       return e.amount > 0
-        ? (ctx) => {
-            sfx.play('heal');
-            const anchor=ctx.anchorFor(e.targetId);if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),'heal');
-            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+        ? {
+            reaction: (ctx) => {
+              sfx.play('heal');
+              const anchor = ctx.anchorFor(e.targetId);
+              if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), 'heal');
+            },
+            numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal'),
           }
         : null;
     // #61 M2: the proc moment, three beats — banner + per-status SFX row here,
@@ -1113,75 +1143,88 @@ function baseVisualFor(e, beatKind) {
     // meterFilled banner generalized: any threshold row procs through this one
     // grammar, tint and name from its own data (M4).
     case 'procBurst':
-      return (ctx) => {
-        const info = ctx.statusInfo && ctx.statusInfo(e.status);
-        // Per-status SFX row by name — an unauthored id degrades to the sfx
-        // table's own default (audible, never silent), until the audio seat
-        // authors procBurst_<status> rows.
-        sfx.play(`procBurst_${e.status}`);
-        banner(ctx.layer, `${((info && info.name) || e.status).toUpperCase()} BURST`, 'blood');
-        // M2b: the drain is SEEN — the live bar transitions to empty before
-        // the re-render replaces it.
-        const anchor = ctx.anchorFor(e.targetId);
-        const card = anchor && anchor.closest ? anchor.closest('[data-eid]') : null;
-        const bar = card && card.querySelector(`.procbar[data-status="${e.status}"] .fill`);
-        if (bar) {
-          bar.style.transition = 'width 250ms ease-out';
-          bar.style.width = '0%';
-        }
+      return {
+        numbers: (ctx) => {
+          const info = ctx.statusInfo && ctx.statusInfo(e.status);
+          // Per-status SFX row by name — an unauthored id degrades to the sfx
+          // table's own default (audible, never silent), until the audio seat
+          // authors procBurst_<status> rows.
+          sfx.play(`procBurst_${e.status}`);
+          banner(ctx.layer, `${((info && info.name) || e.status).toUpperCase()} BURST`, 'blood');
+          // M2b: the drain is SEEN — the live bar transitions to empty before
+          // the re-render replaces it.
+          const anchor = ctx.anchorFor(e.targetId);
+          const card = anchor && anchor.closest ? anchor.closest('[data-eid]') : null;
+          const bar = card && card.querySelector(`.procbar[data-status="${e.status}"] .fill`);
+          if (bar) {
+            bar.style.transition = 'width 250ms ease-out';
+            bar.style.width = '0%';
+          }
+        },
       };
     // #61 M3: refusal has feedback — points blocked by an active resistance
     // answer with a gray tick, so a bleed card into resistance never reads as
     // the game eating the card.
     case 'procResisted':
-      return (ctx) => {
-        const info = ctx.statusInfo && ctx.statusInfo(e.status);
-        floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+      return {
+        numbers: (ctx) => {
+          const info = ctx.statusInfo && ctx.statusInfo(e.status);
+          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+        },
       };
     case 'meterFilled':
       return null; // poise fills speak through enemyStaggered below
     case 'ratingImpact':
-      if (e.breaks) return (ctx) => {
-        banner(ctx.layer, e.label.toUpperCase());
-        flash(ctx.anchorFor(e.targetId), 'wobble', 600);
+      if (e.breaks) return {
+        reaction: (ctx) => {
+          banner(ctx.layer, e.label.toUpperCase());
+          flash(ctx.anchorFor(e.targetId), 'wobble', 600);
+        },
       };
       // A Poise / Ward guard (the Dodge Roll) took some of the impact.
       return e.guarded > 0
-        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, 'blk small')
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, 'blk small') }
         : null;
     case 'meterGuardGained':
       return e.amount > 0
-        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, 'blk small')
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, 'blk small') }
         : null;
     case 'enemyStaggered':
-      return (ctx) => {
-        sfx.play('stagger');
-        banner(ctx.layer, 'STAGGERED');
-        const anchor = ctx.anchorFor(e.targetId);
-        flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
-        spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
-        shake(ctx.combatEl);
+      return {
+        reaction: (ctx) => {
+          sfx.play('stagger');
+          banner(ctx.layer, 'STAGGERED');
+          const anchor = ctx.anchorFor(e.targetId);
+          flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
+          spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
+          shake(ctx.combatEl);
+        },
       };
     case 'enemyDied':
-      return (ctx) => {
-        sfx.play('enemyDeath');
-        const anchor = ctx.anchorFor(e.targetId);
-        floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
-        if (anchor) { anchor.classList.remove('hitflash', 'hit-heavy'); playPoseOn(anchor, 'defeated'); }
+      // After the killing blow's reaction and numbers: the cross and the fall.
+      return {
+        numbers: (ctx) => {
+          sfx.play('enemyDeath');
+          const anchor = ctx.anchorFor(e.targetId);
+          floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
+          if (anchor) { anchor.classList.remove('hitflash', 'hit-heavy'); playPoseOn(anchor, 'defeated'); }
+        },
       };
     case 'stanceEntered':
-      return (ctx) => {
-        sfx.play('stance');
-      };
+      return { contact: () => sfx.play('stance') };
     case 'relicTriggered':
-      return (ctx) => {
-        sfx.play('relic');
-        if (ctx.relicAnchor) flash(ctx.relicAnchor(e.relicId), 'proc', 320);
+      return {
+        contact: (ctx) => {
+          sfx.play('relic');
+          if (ctx.relicAnchor) flash(ctx.relicAnchor(e.relicId), 'proc', 320);
+        },
       };
     case 'energySpent':
     case 'energyGained':
-      return (ctx) => {
-        if (ctx.orb) flash(ctx.orb(), 'pulse', 260);
+      return {
+        contact: (ctx) => {
+          if (ctx.orb) flash(ctx.orb(), 'pulse', 260);
+        },
       };
     default:
       return null;
