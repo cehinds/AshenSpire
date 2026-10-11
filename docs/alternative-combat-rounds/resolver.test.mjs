@@ -24,6 +24,9 @@ import {
   parseEvadeBonus,
   decayMomentum,
   accuracyFor,
+  evasionFor,
+  parseEvasionArmor,
+  parseEvasionCards,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
@@ -242,6 +245,48 @@ test('accuracyFor: a plain numeric accuracy still works, and an extra bonus adds
   assert.equal(accuracyFor({ accuracy: 5 }), 5);
   assert.equal(accuracyFor({ attrs: REAVER, accuracy: 2 }), 7);
   assert.equal(accuracyFor({}), 0);
+});
+
+// Evasion = armor base + min(DEX - 1, armor DEX cap) + shield + card bonus + extra
+// (DESIGN.md, Hit roll). Tables come from evasion-armor.csv and evasion-cards.csv.
+const EVASION_ARMOR_CSV = resolve(here, 'evasion-armor.csv');
+const EVASION_CARDS_CSV = resolve(here, 'evasion-cards.csv');
+const evasionTables = () => ({
+  armor: parseEvasionArmor(readFileSync(EVASION_ARMOR_CSV, 'utf8')),
+  cards: parseEvasionCards(readFileSync(EVASION_CARDS_CSV, 'utf8')),
+});
+
+test('evasionFor: Cloth at DEX 1 gives 0', () => {
+  assert.equal(evasionFor({ armor: 'Cloth', dex: 1 }, evasionTables()), 0);
+});
+
+test('evasionFor: Leather at DEX 3 gives 1 + min(2, 6) = 3 (rogue-like)', () => {
+  assert.equal(evasionFor({ armor: 'Leather', dex: 3 }, evasionTables()), 3);
+});
+
+test('evasionFor: Plated at DEX 5 gives 1, because its DEX cap is 0', () => {
+  assert.equal(evasionFor({ armor: 'Plated', dex: 5 }, evasionTables()), 1);
+});
+
+test('evasionFor: the DEX term is capped by the armor and is never negative', () => {
+  assert.equal(evasionFor({ armor: 'Chain', dex: 9 }, evasionTables()), 1 + 2, 'Chain caps DEX at 2');
+  assert.equal(evasionFor({ armor: 'Leather', dex: 0 }, evasionTables()), 1, 'DEX 0 adds nothing');
+});
+
+test('evasionFor: a buckler adds 1, and another shield adds 0', () => {
+  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, shield: 'buckler' }, evasionTables()), 1);
+  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, shield: 'kite' }, evasionTables()), 0);
+});
+
+test('evasionFor: Backstep adds 5, and an unlisted card adds 0', () => {
+  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, card: 'Backstep' }, evasionTables()), 5);
+  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, card: 'Strike' }, evasionTables()), 0);
+});
+
+test('evasionFor: a plain numeric evasion still works, and an unknown armor name throws', () => {
+  assert.equal(evasionFor({ evasion: 4 }), 4);
+  assert.equal(evasionFor({}), 0);
+  assert.throws(() => evasionFor({ armor: 'Tinsel', dex: 1 }, evasionTables()), RangeError);
 });
 
 test('hit roll rejects a d20 outside 1..20', () => {

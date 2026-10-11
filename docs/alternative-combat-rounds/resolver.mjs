@@ -114,6 +114,63 @@ export function accuracyFor({ attrs = {}, level = 0, tags = [], accuracy = 0 } =
     + (Number.isFinite(flat) ? flat : 0);
 }
 
+// Parses evasion-armor.csv (armor,base,dexCap) into a Map from armor name to
+// { base, dexCap } (DESIGN.md, Hit roll).
+export function parseEvasionArmor(text) {
+  const lines = String(text).split('\n').map((l) => l.trim()).filter(Boolean);
+  const header = (lines.shift() ?? '').split(',').slice(0, 3).join(',');
+  if (header !== 'armor,base,dexCap') throw new TypeError('evasion-armor.csv: unexpected header');
+  const table = new Map();
+  for (const line of lines) {
+    const [armor, baseCell, capCell] = line.split(',');
+    const base = Number(baseCell);
+    const dexCap = Number(capCell);
+    if (!Number.isFinite(base) || !Number.isFinite(dexCap)) {
+      throw new TypeError(`evasion-armor.csv: bad row "${line}"`);
+    }
+    table.set(armor, { base, dexCap });
+  }
+  return table;
+}
+
+// Parses evasion-cards.csv (card,bonus) into a Map from card name to bonus.
+export function parseEvasionCards(text) {
+  const lines = String(text).split('\n').map((l) => l.trim()).filter(Boolean);
+  const header = (lines.shift() ?? '').split(',').slice(0, 2).join(',');
+  if (header !== 'card,bonus') throw new TypeError('evasion-cards.csv: unexpected header');
+  const table = new Map();
+  for (const line of lines) {
+    const [card, bonusCell] = line.split(',');
+    const bonus = Number(bonusCell);
+    if (!Number.isFinite(bonus)) throw new TypeError(`evasion-cards.csv: bad bonus in "${line}"`);
+    table.set(card, bonus);
+  }
+  return table;
+}
+
+// Evasion (DESIGN.md, Hit roll): armor base + min(DEX - 1, armor DEX cap) + shield
+// + card bonus + `evasion` (any extra flat bonus). `tables` is { armor, cards }
+// from parseEvasionArmor and parseEvasionCards. A missing armor counts as Cloth,
+// and a missing DEX adds nothing. The DEX term is never negative. A buckler adds
+// 1 and any other shield adds 0. A card not in the table adds 0.
+// With none of armor, dex, shield or card given, the result is the plain
+// `evasion` number, so existing callers are unchanged.
+export const SHIELD_EVASION = Object.freeze({ buckler: 1 });
+
+export function evasionFor({ armor, dex, shield, card, evasion = 0 } = {}, tables = {}) {
+  const flat = Number(evasion ?? 0);
+  const extra = Number.isFinite(flat) ? flat : 0;
+  if (armor == null && dex == null && shield == null && card == null) return extra;
+  const armorName = armor ?? 'Cloth';
+  const row = tables?.armor?.get(armorName);
+  if (!row) throw new RangeError(`unknown armor "${armorName}"`);
+  const dexNum = Number(dex ?? 1);
+  const dexTerm = Math.max(0, Math.min(dexNum - 1, row.dexCap)) || 0;
+  const shieldBonus = shield != null && Object.hasOwn(SHIELD_EVASION, shield) ? SHIELD_EVASION[shield] : 0;
+  const cardBonus = card == null ? 0 : (tables?.cards?.get(card) ?? 0);
+  return row.base + dexTerm + shieldBonus + cardBonus + extra;
+}
+
 function rollUnit(rng) {
   if (typeof rng !== 'function') throw new TypeError('rng must be a function returning [0, 1)');
   const x = rng();
