@@ -300,7 +300,7 @@ export default {
         <td class="rv-thumb">${slot('diff', r.hasBaseline && r.hasCapture ? '…' : '—')}</td>
         <td><span class="rv-badge"></span></td>
         <td class="rv-num"></td>
-        <td class="rv-acts"><button type="button" data-view="${r.key}">View</button></td>
+        <td class="rv-acts"><button type="button" data-open="${r.key}">View</button></td>
       </tr>`;
     }
 
@@ -638,7 +638,8 @@ export default {
       if (ctl) paintStage();
     });
     el.querySelector('.rv-main').addEventListener('click', (ev) => {
-      const key = ev.target.closest?.('[data-view]')?.dataset.view;
+      // data-view belongs to the host's navigation, so this module's rows use data-open.
+      const key = ev.target.closest?.('[data-open]')?.dataset.open;
       if (key) openDetail(key);
     });
 
