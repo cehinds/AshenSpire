@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1850",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Deck editor: one card list with − and ＋, and every card shows its stance",
+    "detail": "Removing a card no longer jumps to the search box (on phones it opened the keyboard). Search is off for now and each list has one compact title row. Every row in the card library now has − count ＋ buttons, and the inspected card offers both Add to deck and Remove from deck. Phones drop the Library / Inspect / Deck tabs for one list; inspecting opens over it and Back returns to it, and a Draw order view appears only when Play in deck order is on. Each card names its stance (Attack, Defend, Counter, Smash, Sweep or Ranged; otherwise Spell, Power, Consumable or Skill) and its range (Melee, Reach or Ranged), with its rank as a badge on the art (Cantrip or Basic at rank 0) and a physical or magical mark beside its costs. A selected card shows an (i) on its art; the (i), or pressing the art again, opens Inspect.",
+    "build": "0.7.1.1345",
+    "pullRequest": 1850,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1850"
+  },
+  {
     "id": "pr-1861",
     "date": "2026-10-11",
     "group": "2026-10-11",
