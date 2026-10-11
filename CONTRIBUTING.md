@@ -126,7 +126,7 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
    - **Push to `release`: polish.** `ci.yml`'s polish jobs (the reproducible
      build, Fullscreen first, the build stamp and cold boot, layout, hint strip
      and motion), and `windows-installer.yml`. `release` receives only the
-     SHA already tested at `test`, so the functional suites are not re-run.
+     SHA already tested at `test`, so the functional suites are not re-run, unless its tree differs from `test` (a fix landed on `release` directly), in which case `ci.yml`'s `stage` job runs them too.
    To read a heavy suite on your PR before promotion, dispatch that workflow on
    your branch by hand; a red at `test` or `release` is yours to fix like any
    other.

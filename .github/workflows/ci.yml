@@ -158,6 +158,9 @@ on:
   #                              bundler parse gate and the functional browser
   #                              checks, the whole-run probe (browser-full-run)
   #                              among them (every job NOT in the polish list below).
+  #                              A push to release whose tree DIFFERS from test (a fix
+  #                              that landed on release directly) also runs the test-stage
+  #                              jobs: the `stage` job decides, and says so in the run.
   #   push to release          — the POLISH jobs: reproducibility, Fullscreen-first,
   #                              the build stamp's INK checks and cold boot
   #                              (browser-guard-stamp), layout, the hint strip,
@@ -213,6 +216,71 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # THE STAGE DECISION. Every functional (test-stage) job needs this job and
+  # runs only when its `functional` output is 'true'; `boundary` reads both
+  # outputs. A push to test is functional. A push to release is polish, and it
+  # is functional too when its tree differs from origin/test, because a fix
+  # landed on release directly was never run by the functional suites. A
+  # dispatch follows its `stage` input. Pure git, no tool runs here.
+  # ---------------------------------------------------------------------------
+  stage:
+    name: stage decision
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      functional: ${{ steps.decide.outputs.functional }}
+      polish: ${{ steps.decide.outputs.polish }}
+    steps:
+      # Trees only: a sparse checkout of .github and blobless history, so the
+      # 2 GB art tree is never fetched for a comparison of tree ids.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+
+      - name: Decide which stages run
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          STAGE: ${{ inputs.stage }}
+        run: |
+          functional=0
+          polish=0
+          if [ "$EVENT_NAME" = "push" ]; then
+            if [ "$REF_NAME" = "release" ]; then
+              polish=1
+              # A failed fetch or a failed diff counts as a difference: when in
+              # doubt the functional suites run, never silently skip.
+              if ! git fetch --no-tags --filter=blob:none origin test:refs/remotes/origin/test; then
+                differs=1
+                echo "could not fetch origin/test; running the functional stage"
+              elif git diff --quiet origin/test HEAD; then
+                differs=0
+              else
+                differs=1
+              fi
+              if [ "$differs" = 1 ]; then functional=1; fi
+            else
+              functional=1
+            fi
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            case "$STAGE" in
+              all) functional=1; polish=1 ;;
+              test) functional=1 ;;
+              release) polish=1 ;;
+            esac
+          fi
+          {
+            echo "functional=$([ "$functional" = 1 ] && echo true || echo false)"
+            echo "polish=$([ "$polish" = 1 ] && echo true || echo false)"
+          } >> "$GITHUB_OUTPUT"
+          echo "stage decision: functional=$functional polish=$polish (event=$EVENT_NAME ref=$REF_NAME stage=${STAGE:-n/a})"
+
+  # ---------------------------------------------------------------------------
   # LEAN CHECKOUTS (owner rule D38: a job over 20 minutes is refactored, never
   # given more time). Run 37055409943 (`test`, f15a2250b) cancelled three jobs
   # at 20 minutes, and all three spent the 20 minutes INSIDE actions/checkout:
@@ -236,7 +304,8 @@ jobs:
   # ---------------------------------------------------------------------------
   test:
     name: tests (${{ matrix.os }})
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -388,7 +457,8 @@ jobs:
   # ---------------------------------------------------------------------------
   test-discovered:
     name: discovered tests (${{ matrix.os }}, ${{ matrix.shard }})
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -449,7 +519,8 @@ jobs:
   # The two closed groups together are the original --selftests-only lane.
   test-selftests:
     name: tool self-tests (${{ matrix.os }}, ${{ matrix.group }})
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -490,7 +561,8 @@ jobs:
   # ---------------------------------------------------------------------------
   parse-gate:
     name: bundler parse gate
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -755,7 +827,8 @@ jobs:
     # in it. A job name is what a red run shows first; one naming a single check
     # sends the reader to the wrong tool. — Bjorn
     name: the checks that need a real browser
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -834,7 +907,8 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-full-run:
     name: a whole run in a real browser
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -909,7 +983,8 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-flask-menu:
     name: every flask menu in a real browser
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -934,7 +1009,8 @@ jobs:
 
   browser-flask-menu-plants:
     name: flask-menu known-bads in a real browser (${{ matrix.shard }})
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -966,7 +1042,8 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-guard-changelog:
     name: about-changelog known-bads in a real browser (${{ matrix.shard }})
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -1285,7 +1362,8 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-startup-plants:
     name: startup gate known-bads in a real browser (${{ matrix.shard }})
-    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -1349,29 +1427,25 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-discovered, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
+    needs: [stage, test, test-discovered, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Stage summary, which jobs ran here and which did not
         env:
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
-          STAGE: ${{ inputs.stage }}
+          FUNCTIONAL: ${{ needs.stage.outputs.functional }}
+          POLISH: ${{ needs.stage.outputs.polish }}
           NEEDS: ${{ toJSON(needs) }}
         run: |
-          # The same conditions as the job-level `if:` of each stage job (see the
-          # trigger comment above): a dispatch is narrowed by its stage input, a push
-          # to release is the release stage, any other push is the test stage.
+          # The same decision the `stage` job made and every stage job's `if:` reads:
+          # a stage ran here exactly when the stage job said so.
           ran_test=0
           ran_release=0
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            case "$STAGE" in
-              all) ran_test=1; ran_release=1 ;;
-              test) ran_test=1 ;;
-              release) ran_release=1 ;;
-            esac
-          elif [ "$EVENT_NAME" = "push" ]; then
-            if [ "$REF_NAME" = "release" ]; then ran_release=1; else ran_test=1; fi
+          if [ "$FUNCTIONAL" = "true" ]; then ran_test=1; fi
+          if [ "$POLISH" = "true" ]; then ran_release=1; fi
+          if [ "$EVENT_NAME" = "push" ] && [ "$REF_NAME" = "release" ] && [ "$ran_test" = 1 ]; then
+            echo "release tree differs from test: functional suites ran"
           fi
           TEST_JOBS="test test-discovered test-selftests parse-gate browser-guard browser-full-run browser-flask-menu browser-flask-menu-plants browser-guard-changelog browser-startup-plants"
           RELEASE_JOBS="reproducible reproducible-agree display-first browser-guard-stamp browser-layout-guard browser-layout-plants browser-layout-all browser-layout-hintstrip browser-hintstrip-plants browser-motion"
@@ -1591,6 +1665,7 @@ jobs:
               esac
             done
           }
+          check "stage"
           if [ "$RAN_TEST" = 1 ]; then check "$TEST_JOBS"; fi
           if [ "$RAN_RELEASE" = 1 ]; then check "$RELEASE_JOBS"; fi
           if [ "$failed" = 1 ]; then echo "The boundary is failing because a stage job did not pass."; fi
