@@ -579,6 +579,14 @@ numbers of 0 or more; otherwise the timeline throws a TypeError naming the field
   - Guard: the block pool absorbs the next attacks' damage.
   - Evade: adds its evade bonus to the next incoming attack's evadePct roll. The
     card is spent on the next attack, whether or not that attack hits.
+  - Evasion card table (owner, 2026-10-11): an evade card (queued or reaction) whose
+    `name`, or else `id`, is a row of `evasion-cards.csv` adds that row's bonus to the
+    hit-roll Evasion of the one attack it is spent on (Backstep 5, Shadowstep 4,
+    Quickstep 3, Acrobatics 3, Dodge 3, Evasive Guard 2). It does not get the 20%
+    default. Its percent is only its own `evadePct` (plus the preemptive buff), and 0
+    when it has none, so no percent roll happens. The table comes in through the
+    `tables` option of `makeCombatant`/`makeFight` (`parseEvasionCards`). A card not in
+    the table keeps the 20% default. The `evadeUp` event carries `evasion`.
   - Counter: fires on the next attack from its chosen foe, or from any foe when
     its target is `self`. A counter faster than the attack (strictly higher effective
     speed, the capped speed the merge uses, not the raw total) cancels it (`countered`), and deals its damage to the attacker. Otherwise

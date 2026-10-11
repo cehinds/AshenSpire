@@ -13,7 +13,7 @@ import {
   adaptChance,
   MERGE_MODES,
 } from './timeline.mjs';
-import { parseStanceAdvantage } from './resolver.mjs';
+import { parseStanceAdvantage, parseEvasionCards } from './resolver.mjs';
 
 // Rng helpers. d4 = floor(u*4)+1: u 0 -> 1, 0.3 -> 2, 0.5 -> 3, 0.75 -> 4.
 const constRng = (u) => () => u;
@@ -1304,4 +1304,57 @@ test('a reaction card with a bad block, evadePct or counterDamage throws TypeErr
       );
     }
   }
+});
+
+// ---- Evade cards from evasion-cards.csv (owner, 2026-10-11; DESIGN.md, Defensive cards) ----
+
+const EVASION_CARDS = parseEvasionCards('card,bonus\nDodge,3\nBackstep,5\n');
+// Goblin accuracy 1 (DEX 1). Player Cloth evasion 0, so need = 8 + 0 - 1 = 7.
+// rng: d4 player 1, d4 goblin 4, then d20 8. A Dodge (+3) makes need 10, which misses.
+// Any percent roll draws 0.99 (99), so it never avoids.
+const EVADE_RNG = () => rngThen([0, 0.75, 0.37], 0.99);
+const evadeFight = (playerExtra = {}) => makeFight([
+  { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 3, ...playerExtra },
+  { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 3 },
+], { cards: EVASION_CARDS });
+const goblinStab = () => ({ goblin: [atk('stab', 'player', 1, { damage: 4 })] });
+
+test('a queued evade card in evasion-cards.csv adds its Evasion to the hit roll, not a 20% roll', () => {
+  const out = createRound(evadeFight(), {
+    queues: { player: [card('Dodge', 'evade', 'self', 6)], ...goblinStab() },
+    rng: EVADE_RNG(),
+  }).resolveAll();
+  const hit = out.events.find((e) => e.type === 'hit');
+  assert.equal(hit.need, 10);
+  assert.equal(hit.hit, false);
+  assert.equal(out.events.some((e) => e.type === 'evadeRoll'), false);
+});
+
+test('an explicit evadePct on a table evade card still rolls, with the preemptive buff', () => {
+  const out = createRound(evadeFight(), {
+    queues: { player: [card('Dodge', 'evade', 'self', 6, { evadePct: 50 })], ...goblinStab() },
+    // d20 12 (u 0.55) meets need 10, so the hit lands and the percent roll happens.
+    rng: rngThen([0, 0.75, 0.55], 0.99),
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'hit').need, 10);
+  assert.equal(out.events.find((e) => e.type === 'evadeRoll').evadePct, 60);
+});
+
+test('an evade card not in the table keeps the 20% default and adds no Evasion', () => {
+  const out = createRound(evadeFight(), {
+    queues: { player: [card('Shield Bash', 'evade', 'self', 6)], ...goblinStab() },
+    rng: EVADE_RNG(),
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'hit').need, 7);
+  assert.equal(out.events.find((e) => e.type === 'evadeRoll').evadePct, 30);
+});
+
+test('a reaction evade card in the table adds its Evasion to the attack it answers', () => {
+  const out = createRound(evadeFight({ hand: [card('Dodge', 'evade', 'self', 1)] }), {
+    queues: goblinStab(),
+    rng: EVADE_RNG(),
+    onReaction: (attack, eligible) => eligible[0],
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'hit').need, 10);
+  assert.equal(out.events.some((e) => e.type === 'evadeRoll'), false);
 });

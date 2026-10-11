@@ -122,7 +122,19 @@ export function makeCombatant(spec = {}, tables = {}) {
     intangibleCharges: Number.isFinite(charges) && charges > 0 ? charges : 0,
     accuracyExtra: Number(spec.accuracy ?? 0) || 0,
     hand: Array.isArray(spec.hand) ? spec.hand.map((c) => ({ ...c })) : [],
+    // The evasion-cards.csv table (owner, 2026-10-11): a played evade card whose name or id is
+    // in it adds that bonus to the hit roll of the one attack it answers. Null when no table.
+    evadeCards: tables?.cards instanceof Map ? tables.cards : null,
   };
+}
+
+// The evasion-cards.csv bonus of a played evade card, or null when the card is not in the table.
+// Matches the card's name, then its id (names are case-sensitive, as in the table).
+function evadeCardBonus(combatant, card) {
+  const table = combatant.evadeCards;
+  if (!table) return null;
+  const key = [card.name, card.id].find((k) => typeof k === 'string' && table.has(k));
+  return key === undefined ? null : table.get(key);
 }
 
 // The foes a combatant may target: enemies for the player, the player for an enemy.
@@ -375,7 +387,8 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
   const d20 = rollD20(rng);
   const accuracy = accuracyFor({ attrs: attacker.attrs, level: attacker.level, tags: card.tags, accuracy: card.accuracy })
     + attacker.accuracyExtra;
-  const { hit, need } = hitRoll({ accuracy, evasion: target.evasion }, d20);
+  // The evade card spent on this attack adds its evasion-cards.csv bonus to the hit roll (owner, 2026-10-11).
+  const { hit, need } = hitRoll({ accuracy, evasion: target.evasion + (evadeUse?.evasion ?? 0) }, d20);
 
   // A full block: the block covers the whole hit (block >= damage, damage > 0).
   const blocked = hit && dmg > 0 && cur.active[target.id].guard >= dmg;
@@ -535,9 +548,16 @@ function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, spe
     act.guard += block;
     act.guardCards.push(record);
   } else if (card.kind === 'evade') {
-    const pct = (defenceNumber(card, 'evadePct') ?? DEFENSE_BASE.evadePct) + buff('evadePct');
-    const record = { cardId: card.id, pct, gain: card.momentumGain, stance: card.stance ?? null };
-    events.push({ type: 'evadeUp', by: owner, cardId: card.id, pct, buffed: preemptive });
+    // A table card (owner, 2026-10-11) gives its Evasion instead of the 20% default: its percent
+    // is only the card's own evadePct (plus the buff), and 0 when it has none.
+    const tableBonus = evadeCardBonus(cur.combatants[owner], card);
+    const explicit = defenceNumber(card, 'evadePct');
+    const pct = tableBonus === null
+      ? (explicit ?? DEFENSE_BASE.evadePct) + buff('evadePct')
+      : (explicit === undefined ? 0 : explicit + buff('evadePct'));
+    const evasion = tableBonus ?? 0;
+    const record = { cardId: card.id, pct, evasion, gain: card.momentumGain, stance: card.stance ?? null };
+    events.push({ type: 'evadeUp', by: owner, cardId: card.id, pct, evasion, buffed: preemptive });
     if (reaction) return record;
     act.evade.push(record);
   } else if (card.kind === 'counter') {
