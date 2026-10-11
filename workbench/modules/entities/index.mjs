@@ -68,20 +68,36 @@ export default {
     const prefs = { density: ctx.settings.get('density', 'comfortable'), layout: ctx.settings.get('layout', 'grid') };
     // mainHand and offHand start null (not chosen yet); '' is a chosen empty hand.
     const st = { ...parseDeepLink({}), density: prefs.density, layout: prefs.layout, pose: 'idle', tab: 'card', classId: 'reaver', mainHand: null, offHand: null };
-    const game = { base: null, origin: null };
+    const game = { base: null, origin: null, ready: false };
     let seenParams = null;
     let counts = {}, index = [], classes = [], armaments = [], files = null;
     let tryFor = undefined; // the entity the Try in fight hands were last set for
 
     // ---------- the game server ----------
-    const CHECKOUT_MESSAGE = 'This project’s checkout has no Entity Browser render page, or an older one. Update that checkout to this branch.';
+    const CHECKOUT_MESSAGE = "This project's checkout has no Entity Browser render page, or an older one. Update that checkout to this branch.";
+    const SERVER_HINT = 'The entities are drawn by the game server, so start it from the Library or Home, then';
+    const READY_WAIT_MS = 15000;
+    let readyTimer = 0;
     function showSetup(message, detail = '') {
       setup.hidden = false;
       setup.innerHTML = `<p>${esc(message)}${detail ? ` ${esc(detail)}` : ''} <button type="button" class="ent-retry">Try again</button></p>`;
       setup.querySelector('.ent-retry').onclick = connect;
     }
+    // A render page that never says ready is either missing from this checkout or the server has stopped.
+    function awaitReady() {
+      clearTimeout(readyTimer);
+      readyTimer = setTimeout(async () => {
+        if (game.ready) return;
+        let up = false;
+        try { up = !!gameBaseOf(await ctx.api('tools')); } catch { up = false; }
+        if (game.ready) return;
+        if (up) showSetup(CHECKOUT_MESSAGE);
+        else showSetup('The game server stopped answering.', SERVER_HINT);
+      }, READY_WAIT_MS);
+    }
     async function connect() {
       setup.hidden = true;
+      game.ready = false;
       try {
         const base = gameBaseOf(await ctx.api('tools'));
         if (!base) throw new Error('The game server is not running.');
@@ -89,8 +105,9 @@ export default {
         game.origin = new URL(base).origin;
         center.src = renderUrl(base, { parentOrigin: location.origin });
         drawer.src = renderUrl(base, { parentOrigin: location.origin, kind: st.kind, view: 'detail' });
+        awaitReady();
       } catch (err) {
-        showSetup(err.message, 'The entities are drawn by the game server, so start it from the Library or Home, then');
+        showSetup(err.message, SERVER_HINT);
       }
     }
 
@@ -114,7 +131,8 @@ export default {
       switch (d.type) {
         case 'ready':
           // A page from another checkout may be older or newer: it is not drawn, and the reader is told why.
-          if (d.protocol !== RENDER_PROTOCOL) { showSetup(CHECKOUT_MESSAGE); break; }
+          if (d.protocol !== RENDER_PROTOCOL) { clearTimeout(readyTimer); showSetup(CHECKOUT_MESSAGE); break; }
+          game.ready = true; clearTimeout(readyTimer); setup.hidden = true;
           if (fromCenter) sendCenter(); else sendDrawer();
           break;
         case 'counts':

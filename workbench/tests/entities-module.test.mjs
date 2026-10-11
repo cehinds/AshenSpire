@@ -142,6 +142,8 @@ test('the render page announces the protocol version the module checks', () => {
   assert.match(render, /post\('ready', \{ protocol: RENDER_PROTOCOL \}\)/, 'ready carries the version');
   const index = fs.readFileSync(new URL('../modules/entities/index.mjs', import.meta.url), 'utf8');
   assert.match(index, /d\.protocol !== RENDER_PROTOCOL/, 'the module refuses a different version');
+  assert.match(index, /"This project's checkout has no Entity Browser render page, or an older one\. Update that checkout to this branch\."/, 'the checkout message names the fix');
+  assert.match(index, /clearTimeout\(readyTimer\)/, 'a page that never answers is reported after a wait');
 });
 
 test('the render page URL carries the parent origin and only set parameters', () => {
