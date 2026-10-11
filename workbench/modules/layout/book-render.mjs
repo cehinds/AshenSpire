@@ -12,7 +12,7 @@
 import { renderBookArt } from '../../../src/ui/components/bookArt.js';
 import { BOOK_COVERS, BOOK_SYMBOLS, BOOK_TREATMENTS, BOOK_TRIMS, BOOK_PALETTE } from '../../../src/content/bookArt.js';
 import { consumables } from '../../../src/content/consumables.js';
-import { BOOK_RENDER_PROTOCOL, BOOK_RENDER_SOURCE, BOOK_MODULE_SOURCE } from './book-model.mjs';
+import { BOOK_RENDER_PROTOCOL, BOOK_RENDER_SOURCE, BOOK_MODULE_SOURCE, recipeProblems } from './book-model.mjs';
 
 const params = new URLSearchParams(location.search);
 const parentOrigin = params.get('po') || '';
@@ -43,6 +43,12 @@ function button(attrs, children) {
   return b;
 }
 
+/**
+ * A recipe the game's renderer can draw: every field is a valid value. An incomplete one (a field
+ * the file lacks, or a value the game would refuse) is not drawn; the Workbench inspector lists it.
+ */
+const drawable = (recipe) => Boolean(recipe) && recipeProblems(recipe, catalog).length === 0;
+
 /** Draw the selected book large and small, the book shelf, and the choices its recipe takes. */
 function draw() {
   const book = books.find((b) => b.id === current.bookId);
@@ -54,23 +60,32 @@ function draw() {
     return;
   }
   note.hidden = true;
+  const complete = drawable(recipe);
   const wrap = document.createElement('section');
   wrap.className = 'bkr';
-  const big = document.createElement('div');
-  big.className = 'bkr-stage';
-  big.append(renderBookArt(book, { recipe }));
-  const sizes = document.createElement('div');
-  sizes.className = 'bkr-sizes';
-  sizes.setAttribute('aria-label', 'Preview sizes');
-  for (const px of SIZES) {
-    const cell = document.createElement('figure');
-    cell.className = 'bkr-size';
-    cell.style.width = `${px}px`;
-    cell.append(renderBookArt(book, { recipe }));
-    const cap = document.createElement('figcaption');
-    cap.textContent = `${px}px`;
-    cell.append(cap);
-    sizes.append(cell);
+  if (complete) {
+    const big = document.createElement('div');
+    big.className = 'bkr-stage';
+    big.append(renderBookArt(book, { recipe }));
+    const sizes = document.createElement('div');
+    sizes.className = 'bkr-sizes';
+    sizes.setAttribute('aria-label', 'Preview sizes');
+    for (const px of SIZES) {
+      const cell = document.createElement('figure');
+      cell.className = 'bkr-size';
+      cell.style.width = `${px}px`;
+      cell.append(renderBookArt(book, { recipe }));
+      const cap = document.createElement('figcaption');
+      cap.textContent = `${px}px`;
+      cell.append(cap);
+      sizes.append(cell);
+    }
+    wrap.append(big, sizes);
+  } else {
+    const warn = document.createElement('p');
+    warn.className = 'bkr-note';
+    warn.textContent = `${book.name}: the recipe is incomplete (${recipeProblems(recipe, catalog).join(' ')}). Set the missing values in the Workbench inspector.`;
+    wrap.append(warn);
   }
   const shelf = document.createElement('div');
   shelf.className = 'bkr-shelf';
@@ -79,11 +94,14 @@ function draw() {
   for (const b of books) {
     const r = current.recipes[b.id];
     if (!r) continue;
-    const btn = button({ 'data-pick': b.id, 'aria-selected': b.id === book.id, title: b.name, 'aria-label': b.name }, [renderBookArt(b, { recipe: r })]);
+    // An incomplete recipe shows its name where its art would be, so the shelf still works.
+    const art = drawable(r) ? renderBookArt(b, { recipe: r }) : Object.assign(document.createElement('span'), { textContent: b.name });
+    const btn = button({ 'data-pick': b.id, 'aria-selected': b.id === book.id, title: b.name, 'aria-label': b.name }, [art]);
     btn.className = 'bkr-book';
     shelf.append(btn);
   }
-  wrap.append(big, sizes, group('Covers', 'cover', catalog.cover, recipe, book, (v) => v), group('Symbols', 'symbol', catalog.symbol, recipe, book, (v) => v), group('Treatment', 'treatment', catalog.treatment, recipe, book, (v) => `${v} · ${TREATMENT_LABELS[v] || v}`), group('Trim', 'trim', catalog.trim, recipe, book, (v) => v), shelfBlock(shelf));
+  if (complete) wrap.append(group('Covers', 'cover', catalog.cover, recipe, book, (v) => v), group('Symbols', 'symbol', catalog.symbol, recipe, book, (v) => v), group('Treatment', 'treatment', catalog.treatment, recipe, book, (v) => `${v} · ${TREATMENT_LABELS[v] || v}`), group('Trim', 'trim', catalog.trim, recipe, book, (v) => v));
+  wrap.append(shelfBlock(shelf));
   stage.replaceChildren(wrap);
   // The parent sizes the frame to the page, so every row shows without a scrollbar inside it.
   post({ type: 'size', height: Math.ceil(stage.getBoundingClientRect().height) });
