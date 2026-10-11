@@ -320,14 +320,30 @@ export function createBattlefieldView(root, host) {
       }
       paintStatus();
     },
-    /** Reload the file from disk after a conflict: the draft and its history go. */
+    /**
+     * Reload the file from disk after a conflict: the draft and its history go. A presets
+     * file deleted on disk (a 404) is the disk state: the draft goes, the canvas clears and
+     * the view stays read-only until the file exists again. It reports missing.
+     */
     async reload(path) {
-      if (path !== B.PRESETS_FILE || !st.parts) return;
-      const r = await host.api(`files/read?path=${encodeURIComponent(B.PRESETS_FILE)}`);
+      if (path !== B.PRESETS_FILE || !st.parts) return undefined;
+      let r;
+      try {
+        r = await host.api(`files/read?path=${encodeURIComponent(B.PRESETS_FILE)}`);
+      } catch (err) {
+        if (err.status !== 404) throw err;
+        st.parts = null; st.data = null; st.original = null; st.hash = null; st.layoutKey = null;
+        host.history.clear();
+        st.canvas?.setDoc({ width: 800, height: 600, items: [] });
+        st.error = `${B.PRESETS_FILE} was deleted on disk`;
+        paintAll();
+        return { missing: true };
+      }
       const parts = B.parsePresets(r.text);
       st.parts = parts; st.data = parts.data; st.original = r.text; st.hash = r.hash;
       host.history.clear();
       rebuild();
+      return undefined;
     },
     /** The hash the page last read or saved, for the conflict dialog. */
     hashOf(path) { return path === B.PRESETS_FILE ? st.hash : undefined; },

@@ -250,3 +250,14 @@ test('the sketch view\'s reload reads a 404 as the disk state: the sketch leaves
   assert.match(body, /setDoc\(\{ width: 800, height: 600, items: \[\] \}\)/, 'the canvas clears');
   assert.match(body, /return \{ missing: true \};/, 'the dialog is told the file is missing');
 });
+
+test('the battlefield view\'s reload reads a 404 as the disk state: the draft goes and the view is read-only', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/battlefield-view.mjs'), 'utf8');
+  const start = src.indexOf('async reload(path)');
+  const body = src.slice(start, src.indexOf('hashOf(path)', start));
+  assert.match(body, /err\.status !== 404/, 'only a 404 is the disk state');
+  assert.match(body, /st\.parts = null;/, 'the draft goes');
+  assert.match(body, /host\.history\.clear\(\);/, 'its history goes');
+  assert.match(body, /deleted on disk/, 'the view says the file was deleted');
+  assert.match(body, /return \{ missing: true \};/, 'the dialog is told the file is missing');
+});
