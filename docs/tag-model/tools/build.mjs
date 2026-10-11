@@ -284,10 +284,11 @@ const rowMap = (name, fn) => inv[name].rows.map((r) => fn(r));
 // whose notes start [catalog). Candidates are the class names its owning JS file
 // (the file column) puts on elements: className, classList, a class: key, a
 // class="..." in a template string, setAttribute('class') and cls() arguments.
+// Only the function or functions named by the notes' view= (the component's
+// renderer) are read, so components in one file no longer share a list.
 // They are kept when a styles/*.css selector uses them. A catalog id that is
 // itself a selector class gets that class alone. Nothing found: the cell is blank
-// and the notes gain css:unresolved. The owner is read one file at a time, so
-// components in one file share its list (see README, cssClasses).
+// and the notes gain css:unresolved (see README, cssClasses).
 const ROOT = join(TM, '..', '..');
 const selectorClasses = new Set();
 for (const f of readdirSync(join(ROOT, 'styles')).filter(f => f.endsWith('.css')).sort()) {
@@ -311,13 +312,54 @@ function classWordsOf(src) {
   }
   return out;
 }
-const ownerWords = new Map();
-const wordsOfOwner = file => {
-  if (!ownerWords.has(file)) {
-    const p = join(ROOT, file);
-    ownerWords.set(file, file.endsWith('.js') && existsSync(p) ? classWordsOf(readFileSync(p, 'utf8')) : new Set());
+// The body (braces included) of a function the owner file declares by name:
+// `function NAME(...) {` or `const NAME = (...) => {`. Parentheses are skipped
+// when looking for the opening brace, so destructured parameters do not end it.
+// A declaration without a block body (a plain value, a call) gives null.
+function functionBody(src, name) {
+  const re = new RegExp(`(?:\\bfunction\\s+${name}\\s*\\(|\\b(?:const|let|var)\\s+${name}\\s*=\\s*(?:async\\s*)?\\()`);
+  const m = re.exec(src);
+  if (!m) return null;
+  let i = m.index + m[0].length - 1; // on the parameter list's opening parenthesis
+  let paren = 0;
+  for (; i < src.length; i++) {
+    const c = src[i];
+    if (c === '(') paren++;
+    else if (c === ')') paren--;
+    else if (paren === 0 && c === '{') break;
+    else if (paren === 0 && c === ';') return null;
   }
-  return ownerWords.get(file);
+  if (i >= src.length) return null;
+  const start = i;
+  let depth = 0;
+  for (; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}' && --depth === 0) return src.slice(start, i + 1);
+  }
+  return null;
+}
+const ownerSource = new Map();
+const sourceOfOwner = file => {
+  if (!ownerSource.has(file)) {
+    const p = join(ROOT, file);
+    ownerSource.set(file, file.endsWith('.js') && existsSync(p) ? readFileSync(p, 'utf8') : '');
+  }
+  return ownerSource.get(file);
+};
+// The classes a catalog component's own code sets: the bodies of the functions
+// named in its notes `view=` (a renderer or model), not the whole owning file.
+const viewNamesOf = notes => {
+  const m = /view=([^;]*)/.exec(notes);
+  return m ? [...new Set([...m[1].matchAll(/[A-Za-z_$][\w$]*/g)].map(x => x[0]))] : [];
+};
+const wordsOfComponent = (file, notes) => {
+  const src = sourceOfOwner(file);
+  const out = new Set();
+  for (const name of viewNamesOf(notes)) {
+    const body = functionBody(src, name);
+    if (body) for (const w of classWordsOf(body)) out.add(w);
+  }
+  return out;
 };
 const CSS_UNRESOLVED = 'css:unresolved';
 const cssClassesOf = [];
@@ -336,7 +378,7 @@ const cssCounts = { catalog: 0, resolved: 0, unresolved: 0, sameAsId: 0 };
     if (isCatalog) {
       cssCounts.catalog++;
       if (selectorClasses.has(r[idI])) { classes = [r[idI]]; cssCounts.sameAsId++; }
-      else classes = [...wordsOfOwner(r[fileI])].filter(w => selectorClasses.has(w)).sort();
+      else classes = [...wordsOfComponent(r[fileI], base)].filter(w => selectorClasses.has(w)).sort();
       if (classes.length) cssCounts.resolved++;
       else cssCounts.unresolved++;
       nr[notesI] = classes.length ? base : (base ? base + '; ' : '') + CSS_UNRESOLVED;
