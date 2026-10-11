@@ -254,22 +254,54 @@ export function moveSlots(data, key, moves, { width, height }) {
 
 /** The columns and rows are the layout key ("2x2"): the game picks a preset by that key, so they are never edited. */
 export const LAYOUT_KEY_FIELDS = Object.freeze(['formationColumns', 'formationRows']);
+/**
+ * The presentation fields the game does not read from this file (it reads only formationGroups);
+ * the game takes them from the player's settings. They are a preview only and are never saved.
+ */
+export const PREVIEW_FIELDS = Object.freeze([...FIELDS.map((f) => f.key).filter((k) => !LAYOUT_KEY_FIELDS.includes(k)), 'formationPreset']);
 
-/** Set one of the layout's numeric fields (clamped to the game's limits) or its preset. */
-export function withField(data, key, field, value) {
+/** Refuse a value for a field the file does not hold: the layout key, or a player-settings field. */
+function refuseField(key, field) {
+  if (LAYOUT_KEY_FIELDS.includes(field)) throw Error(`Set by the layout key (${key}): ${field} cannot be edited`);
+  if (PREVIEW_FIELDS.includes(field)) throw Error(`${field} is a player setting, not saved in the file: preview it instead`);
+  throw Error(`${field} is not a Battlefield field`);
+}
+
+/** The layout's preview values clamped to the game's limits. Only preview fields are taken; nothing is written. */
+function clampPreview(field, value) {
+  if (field === 'formationPreset') {
+    if (!PRESETS.includes(value)) throw Error(`unknown preset ${value}`);
+    return value;
+  }
+  const spec = FIELDS.find((f) => f.key === field);
+  const v = Number(value);
+  if (!Number.isFinite(v)) throw Error(`${field} needs a number`);
+  return clamp(Math.round(v), spec.min, spec.max);
+}
+
+/**
+ * The layout's presentation with preview values applied, for drawing and the inspector only. It is
+ * never written: the stored presentation is the file's own, and the anchors are computed from it.
+ */
+export function previewPresentation(data, key, preview = {}) {
   const layout = data[key];
   if (!layout || !layout.presentation) throw Error(`${key} has no presentation`);
-  if (LAYOUT_KEY_FIELDS.includes(field)) throw Error(`Set by the layout key (${key}): ${field} cannot be edited`);
-  const spec = FIELDS.find((f) => f.key === field);
-  let v = value;
-  if (field === 'formationPreset') { if (!PRESETS.includes(value)) throw Error(`unknown preset ${value}`); }
-  else {
-    if (!spec) throw Error(`${field} is not a Battlefield field`);
-    v = Number(value);
-    if (!Number.isFinite(v)) throw Error(`${field} needs a number`);
-    v = clamp(Math.round(v), spec.min, spec.max);
+  const values = {};
+  for (const [field, value] of Object.entries(preview)) {
+    if (!PREVIEW_FIELDS.includes(field)) refuseField(key, field);
+    values[field] = clampPreview(field, value);
   }
-  return { ...data, [key]: { ...layout, presentation: { ...layout.presentation, [field]: v } } };
+  return formationConfig({ ...layout.presentation, ...values });
+}
+
+/**
+ * A write to one of the layout's Battlefield fields. The file writes only formationGroups, so every such
+ * field is refused: the layout key fields, and the player-settings fields (preview them with previewPresentation).
+ */
+export function withField(data, key, field) {
+  const layout = data[key];
+  if (!layout || !layout.presentation) throw Error(`${key} has no presentation`);
+  refuseField(key, field);
 }
 
 /**

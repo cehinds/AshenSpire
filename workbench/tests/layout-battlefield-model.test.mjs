@@ -213,13 +213,44 @@ test('withGroup replaces an existing group in place and clamps its values', () =
   assert.deepEqual(groups.filter((g) => g.id !== 'enemy'), parts.data['2x2'].presentation.formationGroups.filter((g) => g.id !== 'enemy'));
 });
 
-test('withField clamps numbers to the game\'s limits and refuses unknown fields', () => {
+test('withField refuses unknown fields and the presentation fields the game reads from player settings', () => {
   const parts = B.parsePresets(realText);
-  assert.equal(B.withField(parts.data, '2x2', 'formationDepth', 500)['2x2'].presentation.formationDepth, 100);
-  assert.equal(B.withField(parts.data, '2x2', 'formationDepth', '44.4')['2x2'].presentation.formationDepth, 44);
-  assert.equal(B.withField(parts.data, '2x2', 'formationPreset', 'classic-v')['2x2'].presentation.formationPreset, 'classic-v');
-  assert.throws(() => B.withField(parts.data, '2x2', 'formationPreset', 'zigzag'), /unknown preset/);
+  for (const field of ['formationWidth', 'formationDepth', 'formationGap', 'groundTilt', 'groundSkew', 'formationPreset']) {
+    assert.throws(() => B.withField(parts.data, '2x2', field, 50), /not saved in the file/, field);
+  }
   assert.throws(() => B.withField(parts.data, '2x2', 'frontLayer', 3), /not a Battlefield field/);
+  assert.equal(B.serializePresets(parts, parts.data), realText, 'the file is unchanged');
+});
+
+test('previewPresentation clamps preview values to the game\'s limits and never changes the data', () => {
+  const parts = B.parsePresets(realText);
+  const p = B.previewPresentation(parts.data, '2x2', { formationDepth: 500, formationWidth: '44.4', formationPreset: 'classic-v' });
+  assert.equal(p.formationDepth, 100);
+  assert.equal(p.formationWidth, 44);
+  assert.equal(p.formationPreset, 'classic-v');
+  assert.equal(parts.data['2x2'].presentation.formationDepth, 60, 'the stored value is untouched');
+  assert.equal(B.serializePresets(parts, parts.data), realText);
+  assert.throws(() => B.previewPresentation(parts.data, '2x2', { formationPreset: 'zigzag' }), /unknown preset/);
+  assert.throws(() => B.previewPresentation(parts.data, '2x2', { formationColumns: 3 }), /Set by the layout key/);
+});
+
+test('a preview at other player settings changes the geometry, and no file change', () => {
+  const parts = B.parsePresets(realText);
+  const stored = B.battlefieldGeometry(presentationOf(parts, '2x2'), { width: W, height: H });
+  const preview = B.previewPresentation(parts.data, '2x2', { formationWidth: 60 });
+  const seen = B.battlefieldGeometry(preview, { width: W, height: H });
+  assert.notEqual(seen.find((c) => c.cell === 'A1').x, stored.find((c) => c.cell === 'A1').x);
+  assert.equal(B.serializePresets(parts, parts.data), realText);
+});
+
+test('saving after a slot move leaves every presentation field byte-identical', () => {
+  const parts = B.parsePresets(realText);
+  const a1 = slots('2x2', parts).find((c) => c.cell === 'A1');
+  const moved = B.refreshAnchors(B.moveSlots(parts.data, '2x2', [{ groupId: B.slotGroupId(a1), dx: 30, dy: 10, name: 'A1' }], { width: W, height: H }), '2x2', parts.data);
+  const text = B.serializePresets(parts, moved);
+  // Everything from the first layout's presentation up to its formation groups is the file's own presentation block.
+  const block = (t) => t.slice(t.indexOf('"presentation"'), t.indexOf('"formationGroups"'));
+  assert.equal(block(text), block(realText));
 });
 
 test('the layout key fields are refused, and the file is unchanged', () => {
@@ -235,7 +266,6 @@ test('the layout key fields are refused, and the file is unchanged', () => {
 test('an edit refreshes its layout\'s anchors, so the game still reproduces them at full and half size', () => {
   const parts = B.parsePresets(realText);
   let next = B.moveSlots(parts.data, '2x2', [{ groupId: 'cell-player:1:0', dx: 40, dy: -10, name: 'B1' }], { width: W, height: H });
-  next = B.withField(next, '2x2', 'formationDepth', 70);
   next = B.refreshAnchors(next, '2x2', parts.data);
   for (const scale of [1, 0.5]) {
     const presentation = { ...next['2x2'].presentation, formationGroups: JSON.stringify(next['2x2'].presentation.formationGroups) };
@@ -252,9 +282,9 @@ test('an edit refreshes its layout\'s anchors, so the game still reproduces them
 test('refreshing an unedited layout keeps the file\'s bytes', () => {
   const parts = B.parsePresets(realText);
   assert.equal(B.refreshAnchors(parts.data, '2x2', parts.data), parts.data, 'the same data comes back');
-  const same = B.withField(parts.data, '2x2', 'formationDepth', parts.data['2x2'].presentation.formationDepth);
+  const same = B.moveSlots(parts.data, '2x2', [{ groupId: 'cell-player:1:0', dx: 0, dy: 0 }], { width: W, height: H });
   const text = B.serializePresets(parts, B.refreshAnchors(same, '2x2', parts.data));
-  assert.equal(text, realText, 'a re-set of the same value writes nothing');
+  assert.equal(text, realText, 'a zero move writes nothing');
 });
 
 const cellsOf = [
