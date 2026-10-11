@@ -355,6 +355,14 @@ export function createCardLayersView(root, host) {
     paintStage();
   }
 
+  /** The browser took the pointer: the gesture is dropped, the box goes back, and no history step is recorded. */
+  function onBoxCancel(e) {
+    const g = st.gesture;
+    if (!g || g.pointer !== e.pointerId) return;
+    st.gesture = null;
+    paintStage();
+  }
+
   function onKey(e) {
     if (!st.selected || e.target.closest?.('input, select, textarea') || !ARROWS[e.key]) return;
     const layer = layerOf(st.selected);
@@ -413,7 +421,7 @@ export function createCardLayersView(root, host) {
   boxes.addEventListener('pointerdown', onBoxDown);
   boxes.addEventListener('pointermove', onBoxMove);
   boxes.addEventListener('pointerup', onBoxUp);
-  boxes.addEventListener('pointercancel', onBoxUp);
+  boxes.addEventListener('pointercancel', onBoxCancel);
   root.addEventListener('keydown', onKey);
 
   return {

@@ -132,3 +132,14 @@ test('the layer list is front first, with visibility and lock state', () => {
     { id: 'back', type: 'image', index: 0, visible: true, locked: false },
   ]);
 });
+
+// The view's gestures and reload are DOM code; these check the wiring in its source, as the render
+// page test does for its module.
+const VIEW = fs.readFileSync(path.join(ROOT, 'workbench/modules/layout/card-layers-view.mjs'), 'utf8');
+
+test('a cancelled box drag drops the gesture without a history step', () => {
+  assert.match(VIEW, /boxes\.addEventListener\('pointercancel', onBoxCancel\)/);
+  const body = VIEW.slice(VIEW.indexOf('function onBoxCancel'), VIEW.indexOf('function onKey'));
+  assert.match(body, /st\.gesture = null;\s*paintStage\(\);/);
+  assert.doesNotMatch(body, /edit\(|setDraft\(|history\.push/);
+});
