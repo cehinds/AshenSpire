@@ -204,14 +204,20 @@ for (const mode of ['watch', 'poll']) {
   test(`SSE emits reload after a watched file changes (${mode})`, async (t) => {
     const root = await project(t);
     const { app } = await boot(t, root, { forcePoll: mode === 'poll' });
-    nextEvent.onOpen = async () => {
-      await new Promise((r) => setTimeout(r, 300));
-      await fs.writeFile(path.join(root, 'styles/main.css'), 'body{color:red}\n');
-      await fs.writeFile(path.join(root, 'src/new.js'), 'export {};\n');
-    };
-    const event = await nextEvent(app, 'reload');
-    assert.deepEqual(event.files, ['src/new.js', 'styles/main.css']);
-    assert.equal(event.count, 2);
+    const files = (evs) => [...new Set(evs.flatMap((e) => e.files))].sort();
+    const reloads = await collectEvents(app, 'reload', (evs) => files(evs).length >= 2, {
+      onOpen: async () => {
+        await new Promise((r) => setTimeout(r, 300));
+        await fs.writeFile(path.join(root, 'styles/main.css'), 'body{color:red}\n');
+        await fs.writeFile(path.join(root, 'src/new.js'), 'export {};\n');
+      },
+    });
+    assert.deepEqual(files(reloads), ['src/new.js', 'styles/main.css']);
+    // On macOS each watched folder has its own FSEvents stream, and one can deliver after the
+    // debounce, so the two writes may land in two batches. Elsewhere they are one batch.
+    if (process.platform !== 'darwin') assert.equal(reloads.length, 1, 'both writes are one batch');
+    const event = reloads[0];
+    assert.equal(event.count, event.files.length);
     assert.deepEqual(event.built, []);
     // When the batch's file set was fixed: a save sent after this cannot be the save this build answers.
     assert.equal(typeof event.startedAt, 'number');
