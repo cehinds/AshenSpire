@@ -93,6 +93,8 @@ export class JobRunner {
     const run = { runId: `${Date.now().toString(36)}-${randomBytes(3).toString('hex')}`, id, label: job.label, status: 'running', startedAt: Date.now(), endedAt: null, durationMs: null, exitCode: null, message: '', log: '' };
     this.runs.unshift(run); this.runs.length = Math.min(this.runs.length, HISTORY);
     this.active.set(id, run);
+    // Persist the new run before it executes: a crash leaves a 'running' record, which the constructor reads back as 'cancelled'.
+    this.persist();
     this.onEvent('job', this.summary(run));
     this.execute(run, job.steps(this.root)).catch((e) => this.finish(run, 'failed', e.message));
     return this.summary(run);

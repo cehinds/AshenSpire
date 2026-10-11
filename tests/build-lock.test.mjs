@@ -8,7 +8,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { tryAcquire, acquire, lockPath, pidAlive, STALE_MS, LOCK_NAME } from '../tools/lib/build-lock.mjs';
+import { tryAcquire, acquire, lockPath, pidAlive, LOCK_NAME } from '../tools/lib/build-lock.mjs';
 
 function tmpRoot(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'build-lock-'));
@@ -58,11 +58,31 @@ test('a lock from a live foreign process holds; one whose pid is gone is taken o
   assert.deepEqual(fs.readdirSync(root), [], 'nothing left behind');
 });
 
-test('a lock older than the stale limit is taken over even if its pid is alive', (t) => {
+test('a lock from a live process is not stale, however old its startedAt', (t) => {
   const root = tmpRoot(t);
-  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: foreign(t), holder: 'Hung', startedAt: Date.now() - STALE_MS - 1000, token: 'x' }));
+  const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: foreign(t), holder: 'Long build', startedAt: twoHoursAgo, token: 'x' }));
+  assert.equal(typeof tryAcquire(root, 'me'), 'object', 'a live owner keeps the lock, whatever its age');
+  assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'Long build', 'left as it was');
+});
+
+test('a lock whose pid is dead is stale, however fresh its startedAt', (t) => {
+  const root = tmpRoot(t);
+  const dead = deadPid();
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: dead, holder: 'Crashed build', startedAt: Date.now() - 2 * 60 * 60 * 1000, token: 'x' }));
   const release = tryAcquire(root, 'me');
-  assert.equal(typeof release, 'function');
+  assert.equal(typeof release, 'function', 'a dead owner is stale');
+  release();
+});
+
+test('an empty lock file is stale only once it is older than 10 s', (t) => {
+  const root = tmpRoot(t);
+  fs.writeFileSync(lockPath(root), '');
+  assert.equal(typeof tryAcquire(root, 'me'), 'object', 'a just-created lock may still be being written');
+  const old = new Date(Date.now() - 60 * 1000);
+  fs.utimesSync(lockPath(root), old, old);
+  const release = tryAcquire(root, 'me');
+  assert.equal(typeof release, 'function', 'an old unwritten lock is abandoned');
   release();
 });
 

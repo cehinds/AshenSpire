@@ -21,6 +21,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { compileEntries, readConfigTree, CONFIG_DIR } from '../tools/config-build.mjs';
 import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
+import { killTree } from '../workbench/core/jobs.mjs';
 import { artPath, packTreeOf } from '../tools/art-source.mjs';
 import { DEFAULT_SETTINGS, mergeSettings, settingsProblems, sketchProblems } from './model.mjs';
 
@@ -227,6 +228,13 @@ export class Workspace {
 // Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
 export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
 
+/** Resolve when `promise` settles or after `ms`, whichever is first; the timer does not keep the process alive. */
+async function settle(promise, ms) {
+  let timer;
+  await Promise.race([promise ?? null, new Promise((resolve) => { timer = setTimeout(resolve, ms); })]);
+  clearTimeout(timer);
+}
+
 export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir, frameAncestors = [], compileWaitMs = 2 * 60 * 1000 } = {}) {
   for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
   const ancestors = frameAncestors.join(' ');
@@ -235,6 +243,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
   const workspace = new Workspace(root, stateDir);
   const token = randomBytes(32).toString('hex');
   let job = null;
+  let closing = false; // set by close(): a compile still waiting for the lock must not start
   const send = (res, status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(JSON.stringify(data)); };
   async function body(req) {
     const chunks = []; let length = 0;
@@ -257,7 +266,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
     }
     job = { status: release ? 'running' : 'waiting', output: '' };
     const current = job;
-    workspace.serialize(async () => {
+    current.done = workspace.serialize(async () => {
       if (!release) {
         try { release = await acquire(root, HOLDER, { timeoutMs: compileWaitMs, pollMs: Math.min(250, compileWaitMs) }); } catch (e) {
           current.status = 'failed'; current.output = `${e.message}. The save stands; compile again when it finishes.\n`; return;
@@ -265,9 +274,11 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
         current.status = 'running';
       }
       try {
+        if (closing) { current.status = 'failed'; current.output += 'The studio closed before the compile ran.\n'; return; }
         await new Promise((resolve) => {
           // config-build runs under this compile's hold on the lock (tools/lib/build-lock.mjs).
-          const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) } });
+          // Its own process group on POSIX, so close() can stop what it started too.
+          const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true, detached: process.platform !== 'win32', env: { ...process.env, ...lockEnv(release) } });
           current.child = child;
           const append = (d) => { current.output = (current.output + d).slice(-60000); };
           child.stdout.on('data', append); child.stderr.on('data', append);
@@ -342,7 +353,14 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
     } catch (error) { send(res, error.status || (error.code === 'ENOENT' ? 404 : 400), { error: error.message }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
-  return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => { if (job && job.child) job.child.kill(); server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); } };
+  return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => {
+    // Stop the compiler and its tree, then wait (at most 5 s) for its run to end and the lock to be released.
+    closing = true;
+    killTree(job?.child);
+    await settle(job?.done, 5000);
+    server.closeAllConnections();
+    await new Promise((resolve) => server.close(resolve));
+  } };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
