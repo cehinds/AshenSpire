@@ -1,0 +1,351 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "asset": "panel-backed.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/panel-backed.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "panel-frame.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/panel-frame.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "panel-selected.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/panel-selected.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "button-neutral.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/button-neutral.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "button-primary-ready.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/button-primary-ready.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "button-selected.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/button-selected.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "divider-ornate.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/divider-ornate.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "selection-tick.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/selection-tick.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "item-slot.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/item-slot.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "item-slot-selected.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/ui/components/item-slot-selected.svg",
+      "operation": "SVG rasterization; no text added"
+    },
+    {
+      "asset": "reaver-portrait.png",
+      "source": "assets-mobile/painted-outfits/reaver/portrait.webp",
+      "operation": "Lossless PNG conversion of existing character portrait"
+    },
+    {
+      "asset": "starseer-portrait.png",
+      "source": "assets-mobile/painted-outfits/starseer/portrait.webp",
+      "operation": "Lossless PNG conversion of existing character portrait"
+    },
+    {
+      "asset": "rogue-portrait.png",
+      "source": "assets-mobile/painted-outfits/rogue/portrait.webp",
+      "operation": "Lossless PNG conversion of existing character portrait"
+    },
+    {
+      "asset": "herald-portrait.png",
+      "source": "assets-mobile/painted-outfits/herald/portrait.webp",
+      "operation": "Lossless PNG conversion of existing character portrait"
+    },
+    {
+      "asset": "pendant.png",
+      "source": "tools/hud-component-studio/assets/item-pendant.webp",
+      "operation": "Lossless PNG conversion; representative existing art"
+    },
+    {
+      "asset": "armor.png",
+      "source": "tools/hud-component-studio/assets/item-armor.webp",
+      "operation": "Lossless PNG conversion; representative existing art"
+    },
+    {
+      "asset": "spell-art.png",
+      "source": "tools/hud-component-studio/assets/card-art-bastion.webp",
+      "operation": "Lossless PNG conversion; representative existing art"
+    },
+    {
+      "asset": "weapon-art.png",
+      "source": "tools/hud-component-studio/assets/card-art-slash.webp",
+      "operation": "Lossless PNG conversion; representative existing art"
+    },
+    {
+      "asset": "soot-material.png",
+      "source": "docs/design/player-polish-asset-kit-2026-10-02/materials/soot-leather-material.png",
+      "operation": "Existing independent material downsampled to 256\u00d7256 for portable editable study; shared background separated from trim"
+    },
+    {
+      "asset": "medallion-background.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        58,
+        72,
+        354,
+        364
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "medallion-trim.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        379,
+        11,
+        776,
+        391
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "symbol-book.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        771,
+        118,
+        1169,
+        318
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text",
+      "transparentPadding": 8
+    },
+    {
+      "asset": "symbol-swords.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        1199,
+        58,
+        1517,
+        360
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "symbol-helmet.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        82,
+        383,
+        320,
+        701
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "symbol-star.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        415,
+        397,
+        752,
+        715
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "symbol-pouch.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        807,
+        404,
+        1099,
+        716
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "symbol-sun-rays.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        1154,
+        367,
+        1531,
+        760
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "prop-coins.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        75,
+        786,
+        359,
+        972
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "prop-leaf.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        476,
+        771,
+        677,
+        969
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "prop-glint.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        870,
+        786,
+        1036,
+        945
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "prop-gem.png",
+      "source": "ImageGen isolated component atlas",
+      "sourcePath": "/workspace/generated_images/exec-88d72951-af06-4060-a9ba-b6a07bbb8e3d.png",
+      "date": "2026-10-11",
+      "crop": [
+        1272,
+        776,
+        1421,
+        966
+      ],
+      "operation": "Alpha-connected component bounds with 2px padding; no hidden-layer recovery",
+      "promptSummary": "Separate reusable emerald medallion background, hollow antique-brass trim, unique feat symbols and independent props; transparent PNG, no text"
+    },
+    {
+      "asset": "comet-fragment.png",
+      "source": "assets-mobile/cards/extended/card-cometFragment-512.webp",
+      "operation": "Existing independent illustration converted to PNG; no baked labels"
+    },
+    {
+      "asset": "starblade-phalanx.png",
+      "source": "assets-mobile/cards/extended/card-starbladePhalanx-512.webp",
+      "operation": "Existing independent illustration converted to PNG; no baked labels"
+    },
+    {
+      "asset": "crystal-barrier.png",
+      "source": "assets-mobile/cards/extended/card-crystalBarrier-512.webp",
+      "operation": "Existing independent illustration converted to PNG; no baked labels"
+    },
+    {
+      "asset": "flask.png",
+      "source": "tools/hud-component-studio/assets/flask-crimson.webp",
+      "operation": "Existing independent illustration converted to PNG; no baked labels"
+    },
+    {
+      "asset": "whetstone.png",
+      "source": "assets-mobile/relics/travelersWhetstone.webp",
+      "operation": "Existing independent illustration converted to PNG; no baked labels"
+    }
+  ],
+  "references": [
+    {
+      "page": "feats",
+      "asset": "reference-feats.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Flat visual target; editable scene reconstructed with independent art/surfaces and true text, not recovered hidden layers"
+    },
+    {
+      "page": "class",
+      "asset": "reference-class.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Flat target; editable components reconstructed from independent existing/generated art; Class target illustrates noncaster branch"
+    },
+    {
+      "page": "attributes",
+      "asset": "reference-attributes.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Flat target; editable components reconstructed from independent existing/generated art; Class target illustrates noncaster branch"
+    },
+    {
+      "page": "keepsake",
+      "asset": "reference-keepsake.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Flat target; editable components reconstructed from independent existing/generated art; Class target illustrates noncaster branch"
+    },
+    {
+      "page": "equipment",
+      "asset": "reference-equipment.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Flat target; editable components reconstructed from independent existing/generated art; Class target illustrates noncaster branch"
+    },
+    {
+      "page": "spells",
+      "asset": "reference-spells.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Flat target; editable components reconstructed from independent existing/generated art; Class target illustrates noncaster branch"
+    },
+    {
+      "page": "review",
+      "asset": "reference-review.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Corrected coin artwork + 50 Cinders visual target; independently reconstructed scene"
+    },
+    {
+      "asset": "reference-emblem-atlas.png",
+      "source": "ImageGen",
+      "date": "2026-10-11",
+      "relationship": "Flattened six emblems retained as visual reference only; never used as editable scene artwork"
+    }
+  ]
+}

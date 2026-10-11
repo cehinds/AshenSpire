@@ -1,0 +1,38 @@
+{
+  "scene.json": {
+    "nodeCount": 794,
+    "assetCount": 36,
+    "states": [
+      "spells",
+      "keepsake",
+      "equipment",
+      "feats",
+      "review",
+      "class",
+      "attributes"
+    ],
+    "result": "pass"
+  },
+  "scene-noncaster.json": {
+    "nodeCount": 651,
+    "assetCount": 36,
+    "states": [
+      "keepsake",
+      "equipment",
+      "feats",
+      "review",
+      "class",
+      "attributes"
+    ],
+    "result": "pass"
+  },
+  "renders": {
+    "count": 14,
+    "canvas": "1440\u00d7900",
+    "result": "pass"
+  },
+  "visualInspection": [
+    "Feats artwork and exploded independent layers inspected",
+    "Spells existing illustrations / separate rank badge / cost / labels inspected"
+  ]
+}
