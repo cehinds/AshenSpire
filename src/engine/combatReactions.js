@@ -46,12 +46,18 @@ function attackKind(row) {
   return 'attack';
 }
 
-function candidateCardIds(ctx, row) {
-  const ids = [];
-  for (const inst of handOf(ctx, row)) {
-    if (candidateByManeuver(resolveCombatCard(ctx, inst)) && !ids.includes(inst.cardId)) ids.push(inst.cardId);
+function candidateCardIds(ctx, row, ownerId, hooks) {
+  const previous = ctx.playerKey;
+  if (ctx.players && ownerId !== previous) hooks?.setOwner?.(ctx, ownerId);
+  try {
+    const ids = [];
+    for (const inst of handOf(ctx, row)) {
+      if (candidateByManeuver(resolveCombatCard(ctx, inst)) && !ids.includes(inst.cardId)) ids.push(inst.cardId);
+    }
+    return ids;
+  } finally {
+    if (ctx.players && ownerId !== previous) hooks?.setOwner?.(ctx, previous);
   }
-  return ids;
 }
 
 function optionsFor(ctx, row, group, hooks, refusal = null) {
@@ -99,9 +105,9 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
 }
 
 // At most one receipt per incoming root and seat, and only for a seat holding a candidate.
-function reportUnavailable(ctx, group, id, row, reason, extra = {}) {
+function reportUnavailable(ctx, group, id, row, reason, extra = {}, hooks = null) {
   if (group.reactionNoticed?.includes(id)) return;
-  const cardIds = candidateCardIds(ctx, row);
+  const cardIds = candidateCardIds(ctx, row, id, hooks);
   if (!cardIds.length) return;
   (group.reactionNoticed ||= []).push(id);
   const { cardId = cardIds[0], ...rest } = extra;
@@ -116,13 +122,13 @@ function seatPresent(ctx, id) {
 }
 
 // Fallback for a later action of an already answered root (reportRestOfRoot usually fires first).
-function reportAlreadyAnswered(ctx, action, group) {
+function reportAlreadyAnswered(ctx, action, group, hooks) {
   const contacts = (action.meta?.expansionContacts || []).flat();
   for (const id of group.reactionAnswered || []) {
     const row = rowFor(ctx, group, id);
     if (!row || group.reactionNoticed?.includes(id) || !seatPresent(ctx, id)) continue;
     if (!contacts.some(contact => group.targets[contact.key] === row && positive(row.contacts[contact.index]))) continue;
-    reportUnavailable(ctx, group, id, row, 'alreadyAnswered');
+    reportUnavailable(ctx, group, id, row, 'alreadyAnswered', {}, hooks);
   }
 }
 
@@ -131,7 +137,7 @@ export function beforeReactionAction(ctx, action, hooks) {
   if (ctx.pendingReaction) return true;
   const group = action.meta?.expansionGroup;
   if (!group || group.carrier?.reactionDepth || action.source?.kind !== 'enemy') return false;
-  if (group.begun) { reportAlreadyAnswered(ctx, action, group); return false; }
+  if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (!action.source.alive) return false;
   const ids = ctx.players ? ctx.order : ['player'];
   const halted = action.source.skipNextTurn ? 'attackerStaggered'
@@ -140,7 +146,7 @@ export function beforeReactionAction(ctx, action, hooks) {
     for (const id of ids) {
       const row = rowFor(ctx, group, id);
       if (!row || !row.contacts.some(positive) || group.reactionAnswered?.includes(id) || !seatPresent(ctx, id)) continue;
-      reportUnavailable(ctx, group, id, row, halted);
+      reportUnavailable(ctx, group, id, row, halted, {}, hooks);
     }
     return false;
   }
@@ -151,7 +157,7 @@ export function beforeReactionAction(ctx, action, hooks) {
     const seat = ctx.players?.get(id);
     const entity = seat?.entity || ctx.player;
     if (!entity.alive || entity.reactionsEnabled === false || (seat && !seat.connected)) {
-      if (entity.reactionsEnabled === false && seatPresent(ctx, id)) reportUnavailable(ctx, group, id, row, 'switchOff');
+      if (entity.reactionsEnabled === false && seatPresent(ctx, id)) reportUnavailable(ctx, group, id, row, 'switchOff', {}, hooks);
       group.reactionAnswered.push(id); continue;
     }
     const previous = ctx.playerKey;
@@ -161,7 +167,7 @@ export function beforeReactionAction(ctx, action, hooks) {
     hooks.setOwner?.(ctx, previous);
     if (!options.length) {
       const { reason = 'other', ...extra } = refusal;
-      reportUnavailable(ctx, group, id, row, reason, extra);
+      reportUnavailable(ctx, group, id, row, reason, extra, hooks);
       group.reactionAnswered.push(id); continue;
     }
     ctx.pendingReaction = { id: `${group.key}:${id}`, groupKey: group.key, ownerId: id,

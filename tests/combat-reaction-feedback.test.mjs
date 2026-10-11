@@ -225,6 +225,25 @@ test('co-op reports the same reasons through the same offer door', () => {
   assert.ok(unavailable(frozen.eventLog).every(row => row.ownerId !== 'b'), 'a disconnected seat gets no receipt');
 });
 
+test('mixed-version co-op reports an expanded seat reaction using that seat\'s card rules', () => {
+  const registries = registriesWith({ cardTags: SWEEP });
+  const players = [
+    { id: 'legacy', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 1,
+      deck: [{ cardId: 'strike', instanceId: 'legacy:0', upgraded: false }] },
+    { id: 'expanded', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 2,
+      deck: [{ cardId: 'whirlingGuard', instanceId: 'expanded:0', upgraded: false }] },
+  ];
+  const combat = createCoopCombat({ registries, rng: createRng(701), players,
+    enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
+  for (const P of combat.players.values()) P.entity.block = 100;
+  for (const enemy of combat.enemies) enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
+  combat.players.get('expanded').entity.energy = 0;
+  endTurn(combat, 'expanded');
+  endTurn(combat, 'legacy');
+  assert.deepEqual(unavailable(combat.eventLog), [{ ownerId: 'expanded', sourceId: 'e1', reason: 'cost',
+    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 1, have: 0 }]);
+});
+
 const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);
 
 test('v2: an enemy Smash that breaks a defending seat\'s Guard emits combatGuardBroken once per root', () => {

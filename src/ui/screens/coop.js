@@ -209,6 +209,10 @@ export function coopCallouts(events = []) {
   return out;
 }
 
+export const shouldPaceCoopReceipts = (events = []) => events.some(event =>
+  ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'].includes(event.type)
+  || (event.type === 'cardPlayed' && event.cardType === 'attack'));
+
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
@@ -321,11 +325,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let pendingAnimations = new Map();
   const barrierVisuals = new Map();
   let effectEvents = [];
-  function prepareCombatAnimations(scene) {
+  function prepareCombatAnimations(scene, sourceSnapshot = snap) {
     pendingAnimations = new Map();
-    poseReactions = new Map();
     const seq = Number(scene.receiptSeq) || 0;
     if (seq <= animationReceiptSeq) return;
+    poseReactions = new Map();
     animationReceiptSeq = seq;
     effectEvents = decorateCombatEffects((scene.events || []).map(combatEffectReceipt), registries, barrierVisuals);
     for (const event of scene.events || []) {
@@ -338,10 +342,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
       const ownerId = event.playerId;
       if (!ownerId) continue;
-      const member = snap.party.find(member => member.id === ownerId);
+      const member = sourceSnapshot.party.find(member => member.id === ownerId);
       let plan;
       if (event.type === 'cardPlayed' && member) {
-        const definition = resolveCoopPlayedCombatCard(registries, snap, event);
+        const definition = resolveCoopPlayedCombatCard(registries, sourceSnapshot, event);
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
         heldStances.accept(event, { ...definition, cardTags: tags });
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
@@ -356,7 +360,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (event.type === 'playerTurnStart') { pendingAnimations.delete(ownerId); heldStances.accept(event); }
     }
   }
-  let pacing = false; // an enemy-turn replay is holding the render
+  let pacing = false; // an authoritative receipt timeline is holding the render
+  let enemyPacing = false; // only an enemy-turn replay owns the turn UI and controls
   let pendingSnaps = []; // every unrendered authoritative frame, causal order
   let latestWireSnap = null; // newest wire state, even while the old board paces
   let receivedSnapshots = 0;
@@ -425,7 +430,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (obj.t === 'playCard' && obj.upcastTier == null && upcastTiersByCard.has(upcastKey(obj.cardInstanceId))) obj = { ...obj, upcastTier: upcastTiersByCard.get(upcastKey(obj.cardInstanceId)) };
     if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
     if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
-    if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
+    if (enemyPacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
     if (obj.t === 'playCard' && obj.upcastTier == null && meta.settings?.askToUpcastAfterTarget) {
       const seat = latestWireSnap?.scene?.players?.find(entry => entry.id === me);
       const inst = seat?.hand.find(entry => entry.instanceId === obj.cardInstanceId);
@@ -532,7 +537,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!meP) return;
     const seatReason = (current) => !current ? 'Wait for your turn'
       : !current.connected ? 'This player is disconnected'
-        : !current.alive ? 'This player is down' : current.ended ? 'This turn has ended' : pacing ? 'Wait for your turn' : '';
+        : !current.alive ? 'This player is down' : current.ended ? 'This turn has ended' : enemyPacing ? 'Wait for your turn' : '';
     potionsShell = openCombatPotions({
       rows: combatPotionRows(registries, meP), opener: app.querySelector('.combat-potions'), shortcut, arm,
       useReason: ({ options }) => options.remaining <= 0 ? 'No charges remaining' : seatReason(meP),
@@ -686,7 +691,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
       return;
     }
-    if (pacing || !snap || snap.scene.kind !== 'combat') return;
+    if (enemyPacing || !snap || snap.scene.kind !== 'combat') return;
     const sc = snap.scene;
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
@@ -797,7 +802,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return { cardId: card.cardId, allyId: ally.id, receiptSeq: sc.receiptSeq };
     },
     state: () => ({
-      pacing, receivedSnapshots, lastReceiptSeq,
+      pacing, enemyPacing, receivedSnapshots, lastReceiptSeq,
       latestReceiptSeq: latestWireSnap?.scene?.receiptSeq || 0,
       pendingReceiptSeqs: pendingSnaps.map((entry) => entry.scene?.receiptSeq || 0),
     }),
@@ -1028,7 +1033,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     showPendingReaction();
     const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
     const pending = player?.pendingAbilityDiscard;
-    if (!pending || pending.playerId !== me || discardShell || pacing) return;
+    if (!pending || pending.playerId !== me || discardShell || enemyPacing) return;
     const owner = me;
     discardShell = openDiscardChoiceModal({
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
@@ -1043,7 +1048,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function showPendingReaction() {
     const sc = latestWireSnap?.scene;
     const owner = sc?.players?.find(player => seats.includes(player.id) && player.pendingReaction?.ownerId === player.id);
-    if (!owner || reactionShell || pacing || sc.players.some(player => player.pendingAbilityDiscard)) return;
+    if (!owner || reactionShell || enemyPacing || sc.players.some(player => player.pendingAbilityDiscard)) return;
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
@@ -1080,7 +1085,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const arming = armedFlask != null || armedFriendlyCard != null;
 
     app.innerHTML = `
-      <div class="combat coop" data-layout="formation" data-turn="${pacing || sc.phase === 'enemy' ? 'enemy' : 'player'}">
+      <div class="combat coop" data-layout="formation" data-turn="${enemyPacing || sc.phase === 'enemy' ? 'enemy' : 'player'}">
         <header class="topbar combat-hud">
           ${hudQuickSettingsHtml(hudQuickSettingsModel({
             place: 'combat',
@@ -1097,7 +1102,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
         ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}
-        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing || sc.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn'}</div>
+        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${enemyPacing || sc.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn'}</div>
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>
@@ -1113,7 +1118,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
                supplies only the viewer half below: snapshot-fed entries with
                spelled-out reasons, and network intents as the play wiring. -->
           <div class="hand"></div>
-          <div class="combat-recovery-controls">${(meP?.recoveryControls || []).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || meP.ended || pacing || meP.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(row.status)}`} · ${row.costPerStack} SP</button>`).join('')}</div>
+          <div class="combat-recovery-controls">${(meP?.recoveryControls || []).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || meP.ended || enemyPacing || meP.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(row.status)}`} · ${row.costPerStack} SP</button>`).join('')}</div>
           <!-- THE ACTION ROW: solo's own footer (components/combatActionRow.js)
                — Actions, Draw, End Turn, Discard/Exhaust and Potions — sized by
                the same layout adapter. The flasks live behind Potions. -->
@@ -1223,7 +1228,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         selectedEnemy = e.id;
         const selected = meP?.hand.find(card => card.instanceId === litCard());
         const selectedDef = selected && cardDef(selected);
-        if (!pacing && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
+        if (!enemyPacing && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
           clearSelection();
           send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: e.id });
           return true;
@@ -1259,7 +1264,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
     combatTools?.release();
     const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion === 1,
-      enabled: meP?.reactionsEnabled !== false, disabled: pacing || sc.phase !== 'player' || !!sc.reactionWaiting
+      enabled: meP?.reactionsEnabled !== false, disabled: enemyPacing || sc.phase !== 'player' || !!sc.reactionWaiting
         || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
       ...combatToolsState, entries: sc.combatLog || [] }));
     combatTools = mountCombatTools(app.querySelector('.combat'), { state: combatToolsState,
@@ -1275,7 +1280,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     wireCoopActionRow(meP);
     const hand = area.querySelector('.hand');
-    hand.inert = pacing || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;
+    hand.inert = enemyPacing || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;
     hand.setAttribute('aria-disabled', String(hand.inert));
 
     // My hand — THE hand renderer, mounted fresh per snapshot render (this
@@ -1289,7 +1294,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       registries:memberRegistries(), fitFan: true,
       wireCard: (el, entry) => {
         const play = () => {
-          if (pacing || meP?.ended || !entry.affordable) return;
+          if (enemyPacing || meP?.ended || !entry.affordable) return;
           if (friendlyTargetPlan(entry.def, me, sc.players).active) {
             armFriendlyTargeting(entry.inst.instanceId);
             return;
@@ -1301,7 +1306,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const surcharge = (entry.def.upcastTier ?? entry.def.upcast.baseTier) - entry.def.upcast.baseTier;
           wireCoopUpcastControl(el, {
             label: surcharge ? `Upcast +${surcharge}` : 'Upcast',
-            disabled: pacing || meP.ended || !meP.alive,
+            disabled: enemyPacing || meP.ended || !meP.alive,
             selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
             onPlay: play,
             onOpen: upcast => {
@@ -1900,7 +1905,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     const sc = s.scene;
     if (sc?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
-      && (sc.events || []).some(event => ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'].includes(event.type))) {
+      && shouldPaceCoopReceipts(sc.events)) {
       paceReactionReceipts(s);
       return;
     }
@@ -1915,6 +1920,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   async function paceEnemyTurn(s, moves) {
     pacing = true;
+    enemyPacing = true;
     try {
       const combat = app.querySelector('.combat');
       combat.dataset.turn = 'enemy';
@@ -1974,12 +1980,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           }
         : latest;
       pacing = false;
+      enemyPacing = false;
       render();
     }
   }
 
   function paceReactionReceipts(next) {
     pacing = true;
+    enemyPacing = false;
     const working = structuredClone(snap);
     working.scene.events = [];
     const events = (next.scene.events || []).map(event => ({ ...event,
@@ -2031,6 +2039,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       snap = working; render();
     };
     snap = working; render();
+    prepareCombatAnimations(next.scene, next);
+    const timelineAnimations = new Map(pendingAnimations);
+    pendingAnimations.clear();
     playTimeline(events, {
       get layer() { return app.querySelector('.fx-layer'); },
       get combatEl() { return app.querySelector('.combat'); }, anchorFor,
@@ -2047,6 +2058,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (!played && !moved) return null;
         const stage = stageFor(sprite);
         let pose = 'attack';
+        let actorAura = null;
         if (played) {
           const ownerId = played.sourcePlayerId || played.playerId;
           const member = next.party.find(member => member.id === ownerId);
@@ -2059,12 +2071,28 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             const tags = (def.cardTags || def.tags || []).filter(tag => !tag.startsWith('kind:') && !tag.startsWith('maneuver:'));
             def = { ...def, type: 'attack', kindIds: ['classification.attack'], cardTags: [...tags, 'maneuver:attack'] };
           }
-          const plan = resolveCombatAnimation(def, equippedPieces(registries, member?.loadout, member?.classId),
+          const plan = !returned && timelineAnimations.get(ownerId) || resolveCombatAnimation(def,
+            equippedPieces(registries, member?.loadout, member?.classId),
             { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId), classId: member?.classId,
               appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion, counterTriggered: !!returned });
+          actorAura = plan.aura || null;
+          timelineAnimations.delete(ownerId);
           sprite.dataset.actionFamily = plan.family;
           sprite.dataset.actionMotion = plan.motion;
           pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
+          const layer = app.querySelector('.fx-layer');
+          if (layer && plan.spriteEffect) {
+            const effectTargets = combatEffectTargetIds(plan.spriteEffect, plan.effectEvents, ownerId)
+              .map(id => app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`) || app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
+            const authoredTargets = presentationTargetIds(plan.effectEvents, ownerId, plan.spriteEffect?.bindingContext.objectId)
+              .map(id => app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`) || app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
+            const duration = stage?.actionTiming?.(pose, speed)?.totalMs ?? speed.lungeMs;
+            playCombatEffectPlan(layer, anchorLocalBox(layer, sprite), plan.spriteEffect, {
+              targets: effectTargets.map(el => anchorLocalBox(layer, el)),
+              authoredTargets: authoredTargets.map(el => anchorLocalBox(layer, el)),
+              duration, actor: sprite, localBox: anchorLocalBox,
+            });
+          }
         } else {
           const definition = registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
           const plan = resolveActionAnimation({ actorId: moved.enemyId, actionId: moved.moveId,
@@ -2075,7 +2103,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         }
         const timing = stage?.actionTiming?.(pose, speed);
         const duration = timing?.totalMs ?? speed.lungeMs;
-        stage?.play(pose, duration);
+        stage?.play(pose, duration, actorAura);
         return { impactMs: timing?.impactMs ?? Math.min(speed.impactCapMs, duration / 2), totalMs: duration,
           cancel: () => stage?.settle?.() };
       },
@@ -2093,6 +2121,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       prevCombat = next.scene;
       snap = next;
       pacing = false;
+      enemyPacing = false;
       render();
       const queued = pendingSnaps; pendingSnaps = [];
       for (const pending of queued) receiveSnapshot(pending);
