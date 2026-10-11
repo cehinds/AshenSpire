@@ -283,6 +283,18 @@ test('pasteVisible: a blank one-value fill clears the selected cells of every ty
   assertRoundTrip(d, out);
 });
 
+test('pasteVisible: an empty paste over a filtered selection clears only the visible selected cells', () => {
+  const d = fresh();
+  assert.ok(d.rows[0].n != null && d.rows[3].n != null, 'the cells start with values');
+  // Rows 1 and 2 are hidden by the filter; the selection covers rows 0..3 of the number column.
+  const out = M.pasteVisible(d.rows, d.columns, [0, 3], { r: 0, c: 1 }, '', selOf(range(0, 1, 3, 1)));
+  assert.equal(out.rows[0].n, null, 'visible selected row 0 clears');
+  assert.equal(out.rows[3].n, null, 'visible selected row 3 clears');
+  assert.deepEqual(out.rows[1], d.rows[1], 'hidden row 1 is untouched');
+  assert.deepEqual(out.rows[2], d.rows[2], 'hidden row 2 is untouched');
+  assert.deepEqual(out.errors, []);
+});
+
 test('pasteVisible: a blank value does not excuse a non-blank bad value in the same paste', () => {
   const d = fresh();
   const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, '\t\nx\tnope');

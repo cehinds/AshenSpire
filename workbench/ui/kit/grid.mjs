@@ -256,7 +256,7 @@ export function createGrid(el, options = {}) {
   // (gk-paste-errors) and the grid is unchanged. A paste that ran out of visible rows or columns
   // commits what fit and says what did not.
   function pasteText(text) {
-    if (readOnly || !text) return;
+    if (!pasteAccepted(text, sel, readOnly)) return;
     const anchor = sel.active ?? { r: 0, c: 0 };
     const res = M.pasteVisible(doc.rows, doc.columns, order, anchor, text, sel);
     if (res.errors.length) {
