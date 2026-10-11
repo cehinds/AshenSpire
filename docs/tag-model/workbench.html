@@ -163,6 +163,31 @@ const PART_BYTES=180000;
 const HOLDER='tab-'+Math.random().toString(36).slice(2,10);
 const stuck={};
 function chunk(rows){ const out=[]; let cur=[], size=2; for(const r of rows){ const n=JSON.stringify(r).length+1; if(cur.length&&size+n>PART_BYTES){ out.push(cur); cur=[]; size=2; } cur.push(r); size+=n; } out.push(cur); return out; }
+/* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
+const BLOB_MAX=170000, BLOB_MIN_ROWS=20, BLOB_CUT=64, GC_AGE_MS=120000;
+function hash32(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return h>>>0; }
+/* FNV-1a 64-bit over UTF-16 code units, split into two 32-bit words; returns 16 hex digits */
+function hashText(s){
+  let hi=0xcbf29ce4, lo=0x84222325;
+  for(let i=0;i<s.length;i++){
+    lo=(lo ^ s.charCodeAt(i))>>>0;
+    const p=lo*0x1b3, nlo=p%4294967296, carry=Math.floor(p/4294967296);
+    hi=(carry+hi*0x1b3+lo*0x100)%4294967296; lo=nlo;
+  }
+  return hi.toString(16).padStart(8,'0')+lo.toString(16).padStart(8,'0');
+}
+/* content-defined cut: after a row whose hash32 % 64 is 0 (once 20 rows are in), or before a row that would pass 170000 bytes */
+function chunkRows(rows){
+  const out=[]; let cur=[], size=12;
+  for(const r of rows){
+    const js=JSON.stringify(r), n=js.length+1;
+    if(cur.length && size+n>BLOB_MAX){ out.push(cur); cur=[]; size=12; }
+    cur.push(r); size+=n;
+    if(cur.length>=BLOB_MIN_ROWS && hash32(js)%BLOB_CUT===0){ out.push(cur); cur=[]; size=12; }
+  }
+  if(cur.length) out.push(cur);
+  return out;
+}
 /* storage:end */
 
 /* ---------- indexes ---------- */
