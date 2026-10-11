@@ -232,6 +232,9 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
   assert.equal(c.combatExpansionVersion === 2, false);
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId, poise }) => ({ targetId, sourceId, poise })),
     [{ targetId: 'e1', sourceId: 'player', poise: 3 }]);
+  // The bonus is nominal (Poise Guard may absorb it), so the log claims pressure, not damage taken.
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
+    ['Guard broken! (+3 Poise pressure)']);
 });
 
 test('v1: a Smash into an armed Counter breaks Guard through the synchronous door once', () => {

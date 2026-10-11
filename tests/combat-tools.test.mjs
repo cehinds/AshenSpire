@@ -40,7 +40,7 @@ test('log says why no reaction was offered and when a Smash breaks Guard', () =>
     'No reaction: Reactions are off.',
     'No reaction: Soldier is staggered.',
     "One reaction per attack: the rest of this attack can't be answered.",
-    'Guard broken! Soldier took 3 Poise damage.']);
+    'Guard broken! (+3 Poise pressure)']);
   const coopRows = combatLogEntries([{ ...why('switchOff'), ownerId: 'p1' }],
     { registries, players: [{ id: 'p1', name: 'Reaver' }, { id: 'p2', name: 'Herald' }] });
   assert.equal(coopRows[0].text, 'Reaver: No reaction: Reactions are off.');
