@@ -70,3 +70,12 @@ test('impact: the hit sound and the damage buzz stay at the contact', (t) => {
   assert.equal(timeOf(trace, isHitSound), IMPACT);
   assert.equal(timeOf(trace, (w) => w === 'haptic:damageTaken'), IMPACT);
 });
+
+test('sequential: an attack card\'s heal and Block sounds come with their numbers', (t) => {
+  const trace = drive(t, [{ type: 'cardPlayed', sourceId: 'player', cardId: 'x', cardType: 'attack' },
+    { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    { type: 'healed', targetId: 'player', amount: 3 },
+    { type: 'blockGained', targetId: 'player', amount: 5 }], 'sequential');
+  assert.equal(timeOf(trace, (w) => w === 'sound:heal'), timeOf(trace, (w) => w === 'float:+3'), 'heal sound with its number');
+  assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:+5'), 'block sound with its number');
+});

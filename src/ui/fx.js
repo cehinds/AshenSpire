@@ -1430,8 +1430,12 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
     case 'blockGained':
       return e.amount > 0
         ? {
-            reaction: () => sfx.play('block'),
-            numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk'),
+            // Sequential order: the sound arrives with its number (SPEC §7.4).
+            reaction: () => { if (!sequential) sfx.play('block'); },
+            numbers: (ctx) => {
+              if (sequential) sfx.play('block');
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
+            },
           }
         : null;
     case 'hpLost': {
@@ -1456,11 +1460,14 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       return e.amount > 0
         ? {
             reaction: (ctx) => {
-              sfx.play('heal');
+              if (!sequential) sfx.play('heal');
               const anchor = ctx.anchorFor(e.targetId);
               if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), 'heal');
             },
-            numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal'),
+            numbers: (ctx) => {
+              if (sequential) sfx.play('heal');
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+            },
           }
         : null;
     // #61 M2: the proc moment, three beats — banner + per-status SFX row here,
