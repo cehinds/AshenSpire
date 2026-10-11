@@ -19,6 +19,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { processAlive } from './process-tree.mjs';
 
 export const LOCK_NAME = '.build-lock';
 // A lock file another process has created but not written yet reads as empty;
@@ -31,9 +32,9 @@ const UNVERIFIED_CEILING_MS = 6 * 60 * 60 * 1000;
 
 export const lockPath = (root) => path.join(path.resolve(root), LOCK_NAME);
 
+/** True while the lock owner `pid` is alive; a zombie (unreaped, Linux /proc state Z or X) is not. */
 export function pidAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+  return processAlive(pid, { readFile: testHooks.readProcStat ?? undefined });
 }
 
 /** The start time of `pid` (field 22 of /proc/<pid>/stat), or null where it cannot be read.
@@ -72,8 +73,9 @@ function isStale(lock, now) {
 // A breaker that crashed leaves its break mutex behind; one this old is cleared.
 const BREAK_STALE_MS = 30 * 1000;
 
-/** Test seam: `beforeRecheck(file)` runs between the stale judgement and the re-check that guards the unlink. */
-export const testHooks = { beforeRecheck: null };
+/** Test seams: `beforeRecheck(file)` runs between the stale judgement and the re-check that guards the unlink;
+ *  `readProcStat(file, encoding)` replaces the /proc/<pid>/stat reader that decides whether an owner is alive. */
+export const testHooks = { beforeRecheck: null, readProcStat: null };
 
 const readText = (file) => { try { return fs.readFileSync(file, 'utf8'); } catch { return null; } };
 
