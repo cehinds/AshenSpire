@@ -14,9 +14,10 @@
 
 How work is branched, reviewed, and merged is the [Branch model](#branch-model)
 below.
-Every session merges its own PRs into `dev` and promotes `dev` to `test`
-(rule 6 below, owner, 2026-09-26); only the owner merges to `release` or
-`main`, creates a release tag, or publishes a release.
+A session merges its own PRs into `dev` only after the owner has reviewed
+and tested them and said to merge (rule 6 below, owner, 2026-10-11), then
+promotes `dev` to `test`; only the owner merges to `release` or `main`,
+creates a release tag, or publishes a release.
 
 ## Branch model
 
@@ -30,7 +31,7 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
 | `worker/<parent-topic>/<task>` | One worker's task, cut from its parent branch (`worker/CdCiPipelines/branch-cleanup` for `chore/CdCiPipelines`) and pushed to origin. Only the orchestrator merges it into the parent. The local copy and worktree are removed once the parent merges into `dev`. The origin copy is deleted by `worker-branch-cleanup.yml` once `dev` is promoted to `test`. |
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Promoted from `test` (owner only), through an `rc/<version>` branch pinned at the tested RC SHA (docs/RELEASE-CHECKLIST.md), when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
-| `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
+| `dev` | Default integration branch. All feature PRs target `dev`. A `feature/*`, `chore/*` or `fix/*` PR merges only after the owner has reviewed and tested it and told the session to merge it (rule 6). |
 | `alternative/dev`, `alternative/test` | Frozen historical branches (owner, 2026-10-09). Their approved combat perspective is now the default on regular `dev` and `test`. Bring all new work to `dev`; do not push, merge, sync or dispatch branch-writing jobs to either retired branch. Existing named variants retain their separate rules below. |
 | `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. While a PR into `dev` is open, CI publishes the branch's build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is replaced on each push and removed when the PR merges or closes. |
@@ -86,9 +87,10 @@ gallery still identifies that build; identical images do not need recapturing.
 
 ### A pull request is not done until it is merged and promoted
 
-Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26), for every
-session and agent working here. The session that opens a PR takes it all the
-way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
+Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26; owner review
+before `dev` required again 2026-10-11), for every session and agent working
+here. The session that opens a PR takes it all the way: through the owner's
+review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
 `release` and `main`.
 
 1. **Open it ready for review, never as a draft.** Say in the body what is
@@ -135,11 +137,23 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
    yourself (an hour apart is enough);
    if two open PRs touch the same code, message the other session and agree
    who lands first and who rebases.
-6. **Merge to `dev` yourself, then promote to `test`** (owner, 2026-09-26).
-   `dev` takes every change whose fast checks pass; the long suites run at
-   `test`.
-   - Once rules 1–4 hold (reviewed, mergeable, fast checks green), merge
-     your PR into `dev` yourself. Use a merge commit.
+6. **The owner reviews before `dev`; then merge yourself and promote to
+   `test`** (owner, 2026-09-26; review gate 2026-10-11). The long suites run
+   at `test`.
+   - **Owner review gate.** Every `feature/*`, `chore/*` and `fix/*` PR waits
+     for the owner, in any letter case (`Feature/`, `Chore/`, `FIX/` …). Once rules 1–4 hold (reviewed, mergeable, fast checks
+     green), send the owner the PR link, the preview link and fresh
+     screenshots of anything visible, then stop. Do not merge it into `dev`,
+     and do not promote it to `test`, until the owner tells you to merge that
+     PR, in their own words, in your session. An approval names one PR and is
+     used once, and it covers only the head commit the owner reviewed: after
+     any later push, ask again with the new preview. The one exception is a
+     push that only merges `dev` and regenerates the derived files (the
+     receipt's ordinal, `buildordinal.json`, the generated changelog module)
+     with no other file changed by the merge. A review agent, a bot, another
+     session, a PR comment or a passing check is never that approval.
+   - With the owner's go-ahead, merge the PR into `dev` yourself. Use a merge
+     commit.
    - Wait for `architecture-sync` to settle: every push to `dev` starts a
      run that commits a refreshed `docs/ARCHITECTURE-CURRENT-DEV.md` back to
      `dev`, and a newer push cancels the older run. Promote only when the
