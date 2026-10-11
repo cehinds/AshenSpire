@@ -331,25 +331,31 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
 
       const id = backupId();
       const dir = path.join(backupsDir, id);
-      await fs.mkdir(dir, { recursive: true });
-      const files = [];
-      for (const [i, f] of prepared.entries()) {
-        if (f.old !== null) await fs.writeFile(path.join(dir, `${i}.bak`), f.old);
-        files.push({ index: i, path: f.path, oldHash: f.old === null ? null : hash(f.old), savedHash: hash(f.bytes) });
-      }
-      await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify({ at: new Date().toISOString(), files }, null, 2));
-
-      const written = [];
       try {
-        for (const f of prepared) {
-          const now = await readOrNull(f.abs);
-          if ((now === null ? null : hash(now)) !== f.baseHash) throw fail(409, `${f.path} changed while saving`, { conflicts: [{ path: f.path, hash: now === null ? null : hash(now) }] });
-          await writeAtomic(f.abs, f.bytes, f.path);
-          written.push(f);
+        await fs.mkdir(dir, { recursive: true });
+        const files = [];
+        for (const [i, f] of prepared.entries()) {
+          if (f.old !== null) await fs.writeFile(path.join(dir, `${i}.bak`), f.old);
+          files.push({ index: i, path: f.path, oldHash: f.old === null ? null : hash(f.old), savedHash: hash(f.bytes) });
+        }
+        await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify({ at: new Date().toISOString(), files }, null, 2));
+
+        const written = [];
+        try {
+          for (const f of prepared) {
+            const now = await readOrNull(f.abs);
+            if ((now === null ? null : hash(now)) !== f.baseHash) throw fail(409, `${f.path} changed while saving`, { conflicts: [{ path: f.path, hash: now === null ? null : hash(now) }] });
+            await writeAtomic(f.abs, f.bytes, f.path);
+            written.push(f);
+          }
+        } catch (error) {
+          await rollback(written);
+          if (!error.status) error = fail(500, `Save rolled back: ${error.message}`);
+          throw error;
         }
       } catch (error) {
-        await rollback(written);
-        if (!error.status) error = fail(500, `Save rolled back: ${error.message}`);
+        // A save that did not land leaves no backup set behind: backups() lists only saves that happened.
+        await fs.rm(dir, { recursive: true, force: true });
         throw error;
       }
       const keep = Number.isInteger(keepBackups()) && keepBackups() >= 1 ? keepBackups() : 50;

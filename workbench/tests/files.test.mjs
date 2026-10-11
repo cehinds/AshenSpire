@@ -176,6 +176,47 @@ test('save with a bad second change writes nothing; a write failure rolls the fi
   assert.equal(await fs.readFile(path.join(root, 'src/engine/rules.js'), 'utf8'), 'export const x = 1;\n');
 });
 
+test('a save that fails with 409 after its backup set was written leaves backups() unchanged', async (t) => {
+  const root = await project(t);
+  const stateDir = path.join(root, '.wb-state');
+  // The first file's write also changes the second file on disk, so the second file's check
+  // fails after the backup set exists. The first file is rolled back.
+  const app = await createWorkbench({
+    root, port: 0, children: false, stateDir, debounceMs: 120,
+    fileFault: (rel) => { if (rel === 'styles/main.css') fsSync.writeFileSync(path.join(root, 'src/engine/rules.js'), 'export const x = 3;\n'); },
+  });
+  t.after(() => app.close());
+  const list = async () => (await (await fetch(`${app.url}/api/files/backups`, { headers: { 'x-studio-token': app.token } })).json()).backups;
+  const before = await list();
+  const res = await fetch(`${app.url}/api/files/save`, {
+    method: 'POST',
+    headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [
+      { path: 'styles/main.css', text: 'one{}\n', baseHash: sha('body{}\n') },
+      { path: 'src/engine/rules.js', text: 'export const x = 2;\n', baseHash: sha('export const x = 1;\n') },
+    ] }),
+  });
+  assert.equal(res.status, 409);
+  assert.equal(await fs.readFile(path.join(root, 'styles/main.css'), 'utf8'), 'body{}\n', 'rolled back');
+  assert.deepEqual(await list(), before, 'the failed save left no backup set');
+  assert.deepEqual((await fs.readdir(stateDir, { recursive: true })).filter((f) => /manifest\.json$/.test(f)), [], 'no manifest on disk');
+});
+
+test('a symlink inside an allowlisted directory that points outside the project is refused for read and save', async (t) => {
+  const root = await project(t);
+  const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'wb-outside-')));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.writeFile(path.join(outside, 'secret.css'), 'secret{}\n');
+  await fs.symlink(path.join(outside, 'secret.css'), path.join(root, 'styles/link.css'));
+  const { call, post } = await boot(t, root);
+  const read = await call('/api/files/read?path=styles%2Flink.css');
+  assert.equal(read.ok, false);
+  assert.doesNotMatch(await read.text(), /secret/);
+  const save = await post('/api/files/save', { changes: [{ path: 'styles/link.css', text: 'pwned{}\n', baseHash: sha('secret{}\n') }] });
+  assert.equal(save.ok, false);
+  assert.equal(await fs.readFile(path.join(outside, 'secret.css'), 'utf8'), 'secret{}\n', 'the file outside is untouched');
+});
+
 test('backups are listed and pruned to keepBackups sets', async (t) => {
   const root = await project(t);
   const { post, call } = await boot(t, root, { settings: { keepBackups: 2 } });
