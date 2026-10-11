@@ -310,6 +310,29 @@ export function fillDown(doc, rect) {
   }
   return result(doc, 'Fill down', { columns: doc.columns, rows });
 }
+/**
+ * Fill down over a selection in VISIBLE order. `orderedSelectedRowIndices` lists the selected document
+ * rows in the order the view shows them: it need not ascend, and may span several runs a filter split
+ * apart. For each column key, the first listed row's value goes to every other listed row. The change
+ * is one snapshot, so one undo step; with fewer than two rows or no column there is nothing to do and
+ * `change` is null.
+ * @returns {{ rows, columns, change: object | null }}
+ */
+export function fillDownVisible(rows, columns, orderedSelectedRowIndices, keys) {
+  const seen = new Set();
+  const ordered = [];
+  for (const r of orderedSelectedRowIndices) {
+    if (Number.isInteger(r) && r >= 0 && r < rows.length && !seen.has(r)) { seen.add(r); ordered.push(r); }
+  }
+  const colKeys = [...new Set(keys)].filter(k => columns.some(c => c.key === k));
+  if (ordered.length < 2 || !colKeys.length) return { rows, columns, change: null };
+  const next = rows.slice();
+  for (const key of colKeys) {
+    const v = rows[ordered[0]][key];
+    for (const r of ordered.slice(1)) next[r] = { ...next[r], [key]: v };
+  }
+  return { rows: next, columns, change: { label: 'Fill down', undo: { columns, rows }, redo: { columns, rows: next } } };
+}
 export function addRow(doc, index = doc.rows.length, values = {}) {
   const row = Object.fromEntries(doc.columns.map(c => [c.key, c.key in values ? values[c.key] : emptyValue(c.type)]));
   const rows = doc.rows.slice();
