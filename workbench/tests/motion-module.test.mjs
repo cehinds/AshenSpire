@@ -95,6 +95,14 @@ test('switching files keeps each open file as a draft: a dirty one comes back as
   assert.match(src, /dirtyChanges\(\) \{\s*return saveChangesOf\(/, 'the review and Mod+S cover every dirty draft');
 });
 
+test('the library marks each file with unsaved edits', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  const css = read('workbench/modules/motion/motion.css');
+  assert.match(src, /const dirty = new Set\(dirtyPathsOf\(st\.drafts\)\);/);
+  assert.match(src, /dirty\.has\(e\.id\) \? '<span class="mo-item-dirty">Unsaved<\/span>' : ''/);
+  assert.match(css, /\.mo-item-dirty \{/, 'the marker has a style');
+});
+
 test('Reload from disk drops the drafts of the conflicting files, so the reopen reads the disk copy', () => {
   const src = read('workbench/modules/motion/index.mjs');
   const reload = src.match(/if \(act === 'reload'\) \{[\s\S]*?\n      \}/);

@@ -207,9 +207,10 @@ export default {
       const all = entries();
       const shown = filterLibrary(all, st.filter);
       countEl.textContent = `${shown.length} of ${all.length}${st.setsListed ? '' : ' (animation sets still loading)'}`;
+      const dirty = new Set(dirtyPathsOf(st.drafts));
       list.innerHTML = shown.map((e) => {
         const current = (e.kind === 'outfit' && st.outfit === e.id) || ((e.kind === 'animation' || e.kind === 'stance') && st.file?.path === e.id);
-        return `<li><button type="button" class="mo-item" data-kind="${e.kind}" data-id="${esc(e.id)}" aria-current="${current ? 'true' : 'false'}"><span class="mo-item-label">${esc(e.label)}</span><span class="mo-item-sub">${esc(e.sub)}</span></button></li>`;
+        return `<li><button type="button" class="mo-item" data-kind="${e.kind}" data-id="${esc(e.id)}" aria-current="${current ? 'true' : 'false'}"><span class="mo-item-label">${esc(e.label)}</span>${dirty.has(e.id) ? '<span class="mo-item-dirty">Unsaved</span>' : ''}<span class="mo-item-sub">${esc(e.sub)}</span></button></li>`;
       }).join('') || '<li class="mo-empty">Nothing matches. Clear the search or the filters.</li>';
       el.querySelectorAll('.mo-kinds [data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === st.filter.kind)));
     }
