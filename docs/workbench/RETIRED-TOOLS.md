@@ -12,7 +12,7 @@ Source of truth: `workbench/tools.json` (`moved`). The tests in
 `workbench/tests/retired.test.mjs` check every link with `parseHash` and that
 each moved page carries its notice.
 
-Counts: **6 fully replaced**, **24 partly replaced** (30 registry entries).
+Counts: **6 fully replaced**, **27 partly replaced** (33 registry entries).
 
 ## Mapping
 
@@ -69,7 +69,7 @@ old page.
 
 ## Remaining gaps, by module
 
-- **Layout Studio:** deck-row, SP orb, book recipes and card layers modes (not built); group, lock and marquee selection; parallax and effect preview; UI Studio's Settings and Values tabs (to confirm).
+- **Layout Studio:** card layers mode (not built); the missing features of the deck row, SP orb and book recipes modes (see the mapping table); group, lock and marquee selection; parallax and effect preview; UI Studio's Settings and Values tabs (to confirm).
 - **Data Studio:** sprites, scripts, relation builder, Codex (the Content Editor's); the Tag Workbench is on `feature/TagRefactor`, not in this checkout.
 - **Motion Studio:** card-action preview by class; bindings editing (read-only today); Sequence mode; rig download.
 - **Entity Browser:** loadout compare; hover-timing lab.
