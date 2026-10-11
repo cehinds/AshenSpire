@@ -192,3 +192,16 @@ Formula, relation and value keys follow the README conventions.
     rank term, or stay as the rank-based Block gain.
   - "DR bonuses" is read as a share of DR, held in `dodgeBlock.drBonus`. The
     exact share is TBD.
+
+## 10. Block, Ward and Poise stay separate pools
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Block, Ward and Poise are separate pools. Nothing moves
+  between them.
+- **Tables changed:** `tables/relations.csv` gains three `SEPARATE_POOL` rows,
+  one per pair: `defensive-stats.block` with `poise`, `defensive-stats.block`
+  with `defensive-stats.ward`, and `defensive-stats.ward` with `poise`. The
+  relation is symmetric, so one row per pair is enough.
+- **Couldn't place:** the rule that stops a pool from feeding another is not
+  written in the tables. `SEPARATE_POOL` records the constraint. The
+  mechanics belong to SPEC once the owner adopts them.

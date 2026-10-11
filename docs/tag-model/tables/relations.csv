@@ -24,3 +24,6 @@ ward-counter,DEFAULT_DELIVERY,casting,,Ward counter cast delivery (to confirm)
 ranged-counter,DEFAULT_DELIVERY,ranged,,Ranged counter is a ranged delivery
 prepare,APPLIES,prepared,,Prepare sets Prepared (available to players and enemies)
 character.consumable,CREATES_CARD,type.consumable,,Using a consumable item can create a one-shot card; the item is also a Consumable card (owner decision 7)
+defensive-stats.block,SEPARATE_POOL,poise,,Block and Poise are separate pools (owner decision 10)
+defensive-stats.block,SEPARATE_POOL,defensive-stats.ward,,Block and Ward are separate pools (owner decision 10)
+defensive-stats.ward,SEPARATE_POOL,poise,,Ward and Poise are separate pools (owner decision 10)
