@@ -810,32 +810,54 @@ async function motionStudio() {
     expect(speed === '0.5' && onion, `speed ${speed}, onion ${onion}`);
     return `${playing} → ${paused} · ${time} · speed ${speed} · onion on`;
   });
-  await check('Motion: edit positions, drag a handle, inspector changes, undo', async () => {
+  await check('Motion: drag an anchor that is topmost at its centre; inspector follows, undo restores, library shows Unsaved', async () => {
     await page.click(`${V}button[data-mode="edit"]`);
     await sleep(600);
-    const item = page.locator(`${V}.mo-edit .ck-item:not(.locked)`).first();
-    await item.waitFor({ state: 'visible', timeout: 8000 });
-    // Select the item first, so the Inspector shows its fields (an anchor's X, or an effect's X).
-    const firstNum = () => page.locator(`${V}.mo-insp input[type="number"]`).first().inputValue().catch(() => null);
-    const box0 = await item.boundingBox();
-    await page.mouse.click(box0.x + box0.width / 2, box0.y + box0.height / 2);
-    await sleep(400);
-    const v0 = await firstNum();
-    expect(v0 !== null, 'no inspector number field after selecting an item');
-    const box = await item.boundingBox();
-    const x0 = box.x + box.width / 2, y0 = box.y + box.height / 2;
-    await page.mouse.move(x0, y0); await page.mouse.down();
-    for (let i = 1; i <= 6; i++) await page.mouse.move(x0 + i * 5, y0 + i * 2);
+    // Anchors are drawn above the effects. Pick one whose centre is not covered by another item.
+    // The canvas draws items in z-order, so the topmost item under a point is the last .ck-item (in DOM order) whose box holds it.
+    // (.ck-item has pointer-events: none: the kit resolves the hit in its model, so elementFromPoint cannot see an item.)
+    const pick = await page.evaluate(() => {
+      const items = [...document.querySelectorAll('.view.active .mo-edit .ck-item')];
+      const nodes = items.filter((n) => n.dataset.id?.startsWith('anchor:'));
+      const seen = [];
+      for (const n of nodes) {
+        n.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const r = n.getBoundingClientRect();
+        const x = r.x + r.width / 2, y = r.y + r.height / 2;
+        const covering = items.filter((o) => { const q = o.getBoundingClientRect(); return x >= q.left && x <= q.right && y >= q.top && y <= q.bottom; });
+        const top = covering[covering.length - 1];
+        if (top === n) return { id: n.dataset.id, x, y };
+        seen.push(`${n.dataset.id} covered by ${top?.dataset.id ?? 'nothing'}`);
+      }
+      return { none: seen.slice(0, 4).join(' | ') || `${nodes.length} anchors drawn` };
+    });
+    expect(pick && !pick.none, `no anchor is topmost at its centre: ${pick?.none ?? 'no anchors drawn'}`);
+    const name = pick.id.slice('anchor:'.length);
+    // The anchor's inspector fieldset holds its X and Y (0..1), the values the drag changes.
+    const read = () => page.evaluate((n) => {
+      const f = document.querySelector(`.view.active .mo-anchor[data-anchor="${n}"]`);
+      return f ? [...f.querySelectorAll('input')].map((i) => i.value).join(',') : null;
+    }, name);
+    const v0 = await read();
+    expect(v0 !== null, `no Inspector fields for anchor ${name}`);
+    await page.mouse.move(pick.x, pick.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(pick.x + i * 4, pick.y + i * 3);
     await page.mouse.up();
     await sleep(400);
-    const v1 = await firstNum();
-    expect(v1 !== v0, `the Inspector did not follow the drag (${v0} -> ${v1})`);
+    const v1 = await read();
+    expect(v1 !== v0, `the Inspector did not follow the drag of ${name} (${v0} -> ${v1})`);
+    await overlay('lib', true);
+    const unsaved = await page.locator(`${V}.mo-item[aria-current="true"] .mo-item-dirty`).count();
+    await overlay('lib', false);
+    expect(unsaved > 0, 'the library shows no Unsaved badge for the edited file');
+    await shot(`motion-${sizeName}`);
     await page.click(`${V}[data-mod-undo]`);
     await sleep(400);
-    const v2 = await firstNum();
-    expect(v2 === v0, `undo did not restore the position (${v1} -> ${v2}, was ${v0})`);
+    const v2 = await read();
+    expect(v2 === v0, `undo did not restore ${name} (${v1} -> ${v2}, was ${v0})`);
     await page.click(`${V}button[data-mode="stage"]`);
-    return `inspector ${v0} -> ${v1} -> undo ${v2}`;
+    return `anchor ${name} X,Y ${v0} -> ${v1} -> undo ${v2}`;
   });
   await check('Motion: stance file is read-only with the generated note', async () => {
     await overlay('lib', true);
