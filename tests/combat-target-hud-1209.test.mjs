@@ -96,7 +96,7 @@ test('historical1209 phone geometry packs full footers beside its original reser
     querySelectorAll:selector=>selector==='.combatant.player'?[player]:intents.map(box=>({...box,
       top:box.top+delta,bottom:box.bottom+delta}))};
   const tracking=runInNewContext(stage.slice(start,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
-    field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,playerInfoRects:[],combatPlayerActionRect,
+    field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,playerInfoRects:[],combatPlayerActionRect,placeRestingStance:()=>null,
     uiZoom:()=>1,visibleCombatPanelRect:node=>node,combatPlayerInfoRect:()=>null,
     currentSpriteArtBounds:()=>({...trackingArt,top:trackingArt.top+delta,bottom:trackingArt.bottom+delta}),
     readRestingHand:()=>({clearanceTop:handTop+delta}),

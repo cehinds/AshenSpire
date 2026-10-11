@@ -31,7 +31,7 @@ test('current HUD tracking and footer reads reserve the incoming independent Inf
   field.querySelectorAll=selector=>selector==='.combatant.player'?[player]:[];
   const settledTargets=[{id:'e1',x:264,y:200,width:88},{id:'e3',x:264,y:154,width:88}];
   const context={hudGeometry,offsetPlacement,getComputedStyle:()=>({}),field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
-    combatPlayerInfoRect,combatPlayerActionRect,visibleCombatPanelRect,uiZoom:()=>zoom,
+    combatPlayerInfoRect,combatPlayerActionRect,placeRestingStance:()=>null,visibleCombatPanelRect,uiZoom:()=>zoom,
     currentSpriteArtBounds:()=>({left:50,right:130,top:230+delta,bottom:300+delta}),readRestingHand:()=>({clearanceTop:404+delta}),
     playerDetailsPlacement:input=>{options=input;return playerDetailsPlacement(input);},
     anchorLocalBox:(host,rect,{zoom})=>({left:(rect.left-host.left)/zoom,top:(rect.top-host.top)/zoom}),
@@ -81,7 +81,7 @@ test('the first co-op panel reserves every later independently anchored Info bef
   const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
     field,uiZoom:()=>1,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,
     readRestingHand:()=>null,currentSpriteArtBounds:sprite=>({left:60+sprite.index*280,right:104+sprite.index*280,top:224,bottom:300}),
-    combatPlayerInfoRect:node=>node.infoRect,combatPlayerActionRect,combatTargetHudFootprints,playerInfoRects:[],
+    combatPlayerInfoRect:node=>node.infoRect,combatPlayerActionRect,placeRestingStance:()=>null,combatTargetHudFootprints,playerInfoRects:[],
     playerDetailsPlacement:options=>{calls.push([...options.obstacles]);return {left:130+calls.length*10,top:230};},
     anchorLocalBox:(host,rect)=>({left:rect.left-host.left,top:rect.top-host.top}),
   });

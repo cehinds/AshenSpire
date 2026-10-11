@@ -195,7 +195,13 @@
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud > .nm,
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='resource'] { display: none !important; }
 /* Owner decision (2026-10-11): the stance chip and status icons stay visible
-   while the player is not selected; only the name and resource rows fold away. */
+   while the player is not selected; only the name and resource rows fold away.
+   At rest the stance chip stands above the figure's head (battlefieldStage
+   placeRestingStance writes its spot), not under the HP plate at the feet. */
+:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud > .stance-chip[data-rest-above='true'] {
+  position: absolute; left: var(--rest-stance-left, 50%); top: var(--rest-stance-top, 0px); translate: -50% 0;
+  width: max-content; max-width: none; white-space: nowrap; margin: 0;
+}
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: var(--hud-details-name-size, calc(11px / var(--ui-zoom,1))); }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { background: none; border: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { min-height: 0; line-height: calc(13px / var(--ui-zoom,1)); margin: 0; padding: 0; }
