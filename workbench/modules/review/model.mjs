@@ -106,6 +106,46 @@ export function judge(summary, { thresholdPercent = DEFAULT_THRESHOLD } = {}) {
   return { status: changed ? 'changed' : 'unchanged', changed };
 }
 
+/**
+ * Keeps the rows the grid filters ask for: `changedOnly` keeps the changed rows
+ * (and size changes), `screen` and `device` keep one screen or one device ('' keeps all).
+ */
+export function filterRows(rows, { changedOnly = false, screen = '', device = '' } = {}) {
+  return rows.filter((r) => (!changedOnly || r.changed === true)
+    && (!screen || r.screen === screen)
+    && (!device || r.device === device));
+}
+
+/** Counts for the grid's status line: how many rows are changed, unchanged, unbaselined or missing a capture. */
+export function summarizeRows(rows) {
+  const out = { total: rows.length, changed: 0, unchanged: 0, noBaseline: 0, noCapture: 0 };
+  for (const r of rows) {
+    if (!r.hasCapture) out.noCapture++;
+    else if (!r.hasBaseline) out.noBaseline++;
+    if (r.changed === true) out.changed++;
+    else if (r.changed === false) out.unchanged++;
+  }
+  return out;
+}
+
+/**
+ * The deep link's params, #mod=review&screen=…&device=…. Unknown screens and
+ * devices are dropped, so a stale link opens the grid rather than failing.
+ */
+export function parseDeepLink(params = {}) {
+  const screen = screenById(params.screen) ? params.screen : null;
+  const device = deviceById(params.device) ? params.device : null;
+  return { screen, device };
+}
+
+/** The inverse of parseDeepLink: only the chosen filters appear in the link. */
+export function deepLinkOf({ screen = null, device = null } = {}) {
+  const out = {};
+  if (screenById(screen)) out.screen = screen;
+  if (deviceById(device)) out.device = device;
+  return out;
+}
+
 /** 0 reads as 0%, a tiny but non-zero share as <0.01%, and anything else to two places. */
 export function percentLabel(p) {
   if (!(p > 0)) return '0%';

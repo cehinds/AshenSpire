@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   SCREENS, DEVICES, screenById, deviceById, captureFile, rowsFor,
   diffPixels, diffImage, judge, percentLabel, DEFAULT_TOLERANCE,
+  filterRows, summarizeRows, parseDeepLink, deepLinkOf,
 } from '../modules/review/model.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -85,6 +86,42 @@ test('judge flags a screen only when its changed share is over the threshold', (
   assert.equal(judge({ percent: 0.05, sizeMismatch: false }, { thresholdPercent: 0.05 }).changed, false);
   assert.equal(judge({ percent: 0.06, sizeMismatch: false }, { thresholdPercent: 0.05 }).status, 'changed');
   assert.equal(judge(null).status, 'none');
+});
+
+const row = (screen, device, extra = {}) => ({ key: `${device}/${screen}`, screen, device, hasCapture: true, hasBaseline: true, changed: false, ...extra });
+
+test('filters: changed only, by screen and by device, combined', () => {
+  const rows = [
+    row('title', 'desk', { changed: true }),
+    row('title', 'phone', { changed: false }),
+    row('map', 'desk', { changed: true }),
+    row('map', 'phone', { changed: null, hasBaseline: false }),
+  ];
+  assert.deepEqual(filterRows(rows).length, 4);
+  assert.deepEqual(filterRows(rows, { changedOnly: true }).map((r) => r.key), ['desk/title', 'desk/map']);
+  assert.deepEqual(filterRows(rows, { screen: 'title' }).map((r) => r.key), ['desk/title', 'phone/title']);
+  assert.deepEqual(filterRows(rows, { device: 'phone' }).map((r) => r.key), ['phone/title', 'phone/map']);
+  assert.deepEqual(filterRows(rows, { changedOnly: true, device: 'desk', screen: 'map' }).map((r) => r.key), ['desk/map']);
+  assert.deepEqual(filterRows(rows, { screen: 'nope' }), []);
+});
+
+test('summarizeRows counts changed, unchanged, unbaselined and uncaptured rows', () => {
+  const rows = [
+    row('a', 'desk', { changed: true }),
+    row('a', 'tablet', { changed: false }),
+    row('b', 'desk', { changed: null, hasBaseline: false }),
+    row('b', 'tablet', { changed: null, hasCapture: false, hasBaseline: false }),
+  ];
+  assert.deepEqual(summarizeRows(rows), { total: 4, changed: 1, unchanged: 1, noBaseline: 1, noCapture: 1 });
+});
+
+test('the deep link reads screen and device, drops unknown values, and round-trips', () => {
+  assert.deepEqual(parseDeepLink({ screen: 'title', device: 'phone' }), { screen: 'title', device: 'phone' });
+  assert.deepEqual(parseDeepLink({ screen: 'nope', device: 'watch' }), { screen: null, device: null });
+  assert.deepEqual(parseDeepLink({}), { screen: null, device: null });
+  assert.deepEqual(deepLinkOf({ screen: 'map', device: null }), { screen: 'map' });
+  assert.deepEqual(deepLinkOf({ screen: 'bogus', device: 'tablet' }), { device: 'tablet' });
+  assert.deepEqual(deepLinkOf(parseDeepLink({ screen: 'shop', device: 'desk' })), { screen: 'shop', device: 'desk' });
 });
 
 test('percentLabel shows 0%, <0.01% for a trace, and two places otherwise', () => {
