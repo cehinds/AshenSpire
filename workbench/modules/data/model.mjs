@@ -43,6 +43,32 @@ export function keyColumnOf(columns) {
   return columns.find((c) => KEY_NAMES.includes(c.key)) ?? null;
 }
 
+/**
+ * The deep link's `match` param: `col:value` pairs separated by commas, e.g. `classId:reaver`.
+ * Returns [{ col, value }]; a blank or malformed piece is dropped. Empty input gives [].
+ */
+export function parseMatch(text) {
+  if (!text) return [];
+  const out = [];
+  for (const piece of String(text).split(',')) {
+    const at = piece.indexOf(':');
+    if (at <= 0) continue;
+    out.push({ col: piece.slice(0, at).trim(), value: piece.slice(at + 1).trim() });
+  }
+  return out;
+}
+
+/**
+ * The index of the first row whose key column equals `row` and whose columns named in `match` equal their
+ * values, or -1. A row with no match requirement is found by its key alone. Values compare as text.
+ */
+export function findRow(rows, keyCol, row, match = '') {
+  if (!keyCol || row == null) return -1;
+  const wanted = parseMatch(match);
+  return rows.findIndex((r) => String(r[keyCol] ?? '') === String(row)
+    && wanted.every((m) => String(r[m.col] ?? '') === m.value));
+}
+
 /** Validation rules for the grid: the key is required and unique; every value fits its column type. */
 export function tableRules(columns) {
   const key = keyColumnOf(columns);

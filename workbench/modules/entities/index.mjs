@@ -301,7 +301,10 @@ export default {
     });
     dsBtn.addEventListener('click', () => {
       const table = sourceTableFor(st.kind, files);
-      if (table && st.id) ctx.openModule('data', { table, row: tableRowOf(st.kind, st.id) });
+      if (table && st.id) {
+        const link = tableRowOf(st.kind, st.id);
+        ctx.openModule('data', { table, row: link.row, match: link.match || undefined });
+      }
     });
 
     // ---------- start ----------

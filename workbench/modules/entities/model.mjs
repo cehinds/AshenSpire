@@ -43,14 +43,16 @@ export const DEFAULT_SORT = 'name';
 export const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'epic', 'legendary', 'boss', 'unique']);
 
 /**
- * The key value of an entity's row in its Data Studio table (the table's `id` column). An armour entity
- * is `classId:id` in the browser, but its table row is keyed by the outfit id alone; every other kind is
- * keyed by its entity id as it is.
+ * The entity's row in its Data Studio table: `row` is the table's key value (the `id` column), and `match`
+ * is the `col:value` pair the deep link sends to tell repeated keys apart. An armour entity is `classId:id`
+ * in the browser, but its outfit ids repeat across classes, so its row is the outfit id and its match is
+ * `classId:<class>`. Every other kind is keyed by its entity id as it is, with no match.
  */
 export function tableRowOf(kind, entityId) {
   const id = text(entityId);
-  if (kind === 'armor' && id.includes(':')) return id.slice(id.indexOf(':') + 1);
-  return id;
+  const at = id.indexOf(':');
+  if (kind === 'armor' && at >= 0) return { row: id.slice(at + 1), match: `classId:${id.slice(0, at)}` };
+  return { row: id, match: '' };
 }
 
 /**

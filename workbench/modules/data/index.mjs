@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor, rebaseChanges } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor, rebaseChanges, findRow } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -326,26 +326,31 @@ export default {
     });
 
     ctx.shortcuts.register('Mod+S', 'Review & save', () => { openReview(); }, { inInput: true });
-    // Deep link: #mod=data&table=<path>[&row=<key>] selects that table; otherwise the first table opens.
-    // A row is the one whose key-column value equals it; it is selected and scrolled into view.
-    const rowAt = (key) => {
+    // Deep link: #mod=data&table=<path>[&row=<key>][&match=<col:value,...>] selects that table; otherwise the first table opens.
+    // A row is the one whose key-column value equals it, and whose match columns equal the given values when
+    // match is set; it is selected and scrolled into view. With no such row, the key alone picks the row, and an info toast says so.
+    const rowAt = (key, match = '') => {
       const data = state.grid?.getData();
       const keyCol = data && keyColumnOf(data.columns);
       if (!keyCol || key == null) return;
-      const r = data.rows.findIndex((row) => String(row[keyCol.key] ?? '') === String(key));
+      let r = findRow(data.rows, keyCol.key, key, match);
+      if (r < 0 && match) {
+        ctx.toast({ kind: 'info', title: `No ${key} row matches ${match}`, detail: 'Selected the first row with that key.' });
+        r = findRow(data.rows, keyCol.key, key);
+      }
       if (r < 0) return;
       state.activeRow = r;
       state.grid.focusCell(r, Math.max(0, data.columns.indexOf(keyCol)));
       renderRow();
     };
-    const openAt = async (path, row) => {
+    const openAt = async (path, row, match) => {
       await select(path);
-      if (row != null && state.selected === path) rowAt(row);
+      if (row != null && state.selected === path) rowAt(row, match);
     };
     const pick = () => {
       const want = ctx.params?.table;
       const hit = state.tables.find((t) => t.path === want);
-      if (hit) return openAt(hit.path, ctx.params?.row);
+      if (hit) return openAt(hit.path, ctx.params?.row, ctx.params?.match);
       const first = state.tables[0];
       if (first) return select(first.path);
       return null;
@@ -359,9 +364,9 @@ export default {
         const p = ctx.params;
         const want = p?.table;
         if (!want || !state.tables.some((t) => t.path === want)) return;
-        if (want !== state.selected) { openAt(want, p.row); return; }
+        if (want !== state.selected) { openAt(want, p.row, p.match); return; }
         // The same table again: a new link's row is selected; a plain return keeps the reader's row.
-        if (p.row != null && p !== seenRow) { seenRow = p; rowAt(p.row); }
+        if (p.row != null && p !== seenRow) { seenRow = p; rowAt(p.row, p.match); }
       },
       commands: () => [
         ...state.tables.map((t) => ({ title: `Open table… ${t.name}`, sub: t.group, run: () => select(t.path) })),

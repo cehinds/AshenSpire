@@ -209,3 +209,40 @@ test('Overwrite after a 409 rebases on the disk hash, and a file deleted on disk
   assert.equal(rebased[1].text, 'id\n2\n', 'the drafts are kept');
   assert.equal(changes[1].baseHash, 'old-b', 'the input is not mutated');
 });
+
+test('parseMatch reads col:value pairs and drops blank or malformed pieces', () => {
+  assert.deepEqual(D.parseMatch(''), []);
+  assert.deepEqual(D.parseMatch(null), []);
+  assert.deepEqual(D.parseMatch('classId:reaver'), [{ col: 'classId', value: 'reaver' }]);
+  assert.deepEqual(D.parseMatch('classId:reaver,plate:3E6157'), [{ col: 'classId', value: 'reaver' }, { col: 'plate', value: '3E6157' }]);
+  assert.deepEqual(D.parseMatch('nocolon,:orphan,classId:'), [{ col: 'classId', value: '' }]);
+});
+
+test('findRow picks the row whose key and match columns both equal the link, not the first key hit', () => {
+  const rows = [
+    { id: 'nightweave', classId: 'starseer' },
+    { id: 'default', classId: 'reaver' },
+    { id: 'nightweave', classId: 'reaver' },
+  ];
+  assert.equal(D.findRow(rows, 'id', 'nightweave', 'classId:reaver'), 2, 'the reaver row, though a starseer row comes first');
+  assert.equal(D.findRow(rows, 'id', 'nightweave', 'classId:starseer'), 0);
+  assert.equal(D.findRow(rows, 'id', 'nightweave'), 0, 'with no match, the key alone picks the first hit');
+  assert.equal(D.findRow(rows, 'id', 'nightweave', 'classId:herald'), -1, 'no row matches the pair');
+  assert.equal(D.findRow(rows, 'id', 'missing', 'classId:reaver'), -1);
+  assert.equal(D.findRow(rows, null, 'nightweave', ''), -1, 'no key column finds nothing');
+  assert.equal(D.findRow(rows, 'id', null, ''), -1);
+});
+
+test('findRow on the real outfits table tells apart the repeated armour ids by class', () => {
+  const table = D.parseTable('content/source/outfits.csv', read('content/source/outfits.csv'));
+  for (const id of ['default', 'nightweave', 'wayfarerPlate']) {
+    for (const classId of ['reaver', 'starseer', 'herald', 'rogue']) {
+      const r = D.findRow(table.rows, 'id', id, `classId:${classId}`);
+      if (r < 0) continue;
+      assert.equal(table.rows[r].id, id);
+      assert.equal(table.rows[r].classId, classId, `${id} for ${classId} is that class's row`);
+    }
+  }
+  assert.equal(table.rows[D.findRow(table.rows, 'id', 'nightweave', 'classId:reaver')].classId, 'reaver');
+  assert.equal(table.rows[D.findRow(table.rows, 'id', 'nightweave', 'classId:starseer')].classId, 'starseer');
+});
