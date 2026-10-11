@@ -89,7 +89,7 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
   `git branch -d` only when `git merge-base --is-ancestor <branch> origin/dev`; never `-D`).
   Ask the owner about anything unmerged.
 - Origin worker branches stay until `dev` is promoted to `test`. Then `worker-branch-cleanup.yml`
-  deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test` (lands with the CI restaging in `chore/CdCiStages`; until then delete merged origin worker branches by hand).
+  deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test`.
 
 ## 4. What a worker reports
 
