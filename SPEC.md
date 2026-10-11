@@ -432,9 +432,9 @@ Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, 
 
 | Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
 |---|---|---|
-| Act map | StS path-walk + typing constraints (§6), `mapgen.js` + `floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
-| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/actN.js`: pools, weights, elite/boss lists |
-| Rewards | rarity rolls + pity/decay counters, `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
+| Act map | StS path-walk + typing constraints (§6), `src/engine/mapgen.js` + `src/model/floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
+| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/<seat>.js` (marches, reach, weald): pools, weights, elite/boss lists |
+| Rewards | rarity odds in `model/rewardOdds.js`; flask decay in `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
 Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
