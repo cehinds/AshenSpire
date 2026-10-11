@@ -104,7 +104,20 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     step(300);assert.equal(stage.pose,'guard-brace');
     stage.play('hit');step(10);
     assert.ok(paints.some(p=>p.fill==='#ff2424'&&p.mode==='source-in'),'red mask follows sprite alpha');
-    step(150);assert.equal(raf.size,0,'hit flash terminates');
+    step(200);assert.equal(raf.size,1,'the default 220 ms reaction is still running');
+    step(11);assert.equal(raf.size,0,'hit reaction terminates after its duration');
+    // Knock-back: the painted body moves left mid-reaction and rests afterwards.
+    stage.play('hit',220);step(66);
+    assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<128-10,'the body is knocked left at the 30% peak');
+    assert.ok(stage.currentArt.left<128-10,'HUD ink source follows the knock-back');
+    step(160);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],128,'the knock-back returns to rest');
+    assert.equal(stage.currentArt.left,128);
+    // Hit-stop: a held reaction freezes at impact with its tint showing.
+    stage.play('hit',380);assert.equal(stage.hold(100),true,'a running reaction accepts a hold');
+    step(50);assert.equal(paints.at(-1).args[1],128,'a held hit freezes the knock-back at impact');
+    assert.ok(paints.at(-1).alpha>.7,'the red tint shows while hit-stop holds');
+    step(50);step(100);assert.ok(paints.at(-1).args[1]<128,'the knock-back resumes once the hold ends');
+    step(280);assert.equal(raf.size,0,'the held reaction ends after its own 380 ms of motion');
     stage.seek('sweep',70);assert.equal(stage.pose,'reaver.sweep.contact');assert.equal(raf.size,0);
     assert.equal(stage.el.dataset.effect,'reaver.sweep.effect-1');
     assert.ok(paints.at(-1).args[0].url.endsWith('/effect-1.webp'));

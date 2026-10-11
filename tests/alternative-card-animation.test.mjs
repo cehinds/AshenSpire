@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
-import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity } from '../src/model/alternativeCardAnimation.js';
+import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity, hitRecoilX } from '../src/model/alternativeCardAnimation.js';
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
 import { validate } from '../pose-studio/model.mjs';
@@ -94,9 +94,22 @@ test('every runtime frame ships in both tiers with matching recorded hashes and 
  }
 });
 
-test('hits flash red briefly and suppress flashing for reduced motion',()=>{
- assert.equal(hitFlashOpacity('hurt',0),.72);
- assert.ok(hitFlashOpacity('hurt',.2)>0);
- assert.equal(hitFlashOpacity('hurt',.55),0);
+test('hits flash red for the whole reaction and suppress flashing for reduced motion',()=>{
+ assert.ok(hitFlashOpacity('hurt',0)>.7);
+ assert.ok(hitFlashOpacity('hurt',.35)>.7,'the tint is held through the first 40%');
+ assert.ok(hitFlashOpacity('hurt',.7)>0 && hitFlashOpacity('hurt',.7)<.75,'the tint fades after 40%');
+ assert.equal(hitFlashOpacity('hurt',1),0);
  assert.equal(hitFlashOpacity('hurt',0,{reduced:true}),0);
+ // Elapsed-milliseconds form: the same curve over a 380 ms heavy reaction.
+ assert.ok(hitFlashOpacity('hurt',0,{duration:380})>.7);
+ assert.ok(hitFlashOpacity('hurt',133,{duration:380})>.7,'held through 40% of 380 ms');
+ assert.equal(hitFlashOpacity('hurt',380,{duration:380}),0);
+});
+
+test('the knock-back eases left to -14px at 30% and back to rest',()=>{
+ assert.equal(hitRecoilX(0),0);
+ assert.ok(Math.abs(hitRecoilX(0.3)+14)<1e-9);
+ assert.equal(hitRecoilX(1),0);
+ assert.ok(hitRecoilX(0.1)<0 && hitRecoilX(0.1)>-14,'moves left on the way out');
+ assert.ok(hitRecoilX(0.65)<0 && hitRecoilX(0.65)>-14,'returns on the way back');
 });

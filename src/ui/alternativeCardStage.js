@@ -2,7 +2,7 @@ import { alternativeCardAnimations } from '../content/alternativeCardAnimations.
 import { playerCounterSweepSprites } from '../content/playerCounterSweepSprites.js';
 import { playerAttackSprites } from '../content/playerAttackSprites.js';
 import { alternativeSelectedStances } from '../content/alternativeSelectedStances.js';
-import { durationFor, sampleSequence, hitFlashOpacity } from '../model/alternativeCardAnimation.js';
+import { durationFor, sampleSequence, hitFlashOpacity, hitRecoilX } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
@@ -90,7 +90,9 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   }
   let down = null;
   if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { if (!disposed) { down=image; paint(); } }).catch(()=>{});
-  let pose='ready', rest='idle', stance=null, playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, disposed=false;
+  // A hit reaction (red tint + knock-back) has its own clock: flashElapsed ms of
+  // flashMs, advanced only outside hold-stop. flashAt is non-null while it runs.
+  let pose='ready', rest='idle', stance=null, playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, flashMs=220, flashElapsed=0, disposed=false;
   let resources=[], reactionTimer=null, currentArt=null;
   const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? selected.stances.counter : ['defend','guard'].includes(rest) ? 'guard-brace' : 'ready';
   const filterFor = (frame, action, paid = resources, active = !!action) =>
@@ -111,20 +113,25 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     if (pose==='defeated' && down) { currentArt={canvas,image:down,left:128,top:16,width:512,height:512};ctx.drawImage(down,128,16,512,512); return; }
     const image=images.get(pose) || images.get('ready');
     if (!image) return;
-    currentArt={canvas,image,left:128+x,top:16,width:512,height:512};
+    // The canvas owns the hit reaction: the body (and its red mask) knocks back
+    // left while the reaction runs; the effects overlay stays on its own registration.
+    const reduced=reducedMotionRequested();
+    const reacting=flashAt!==null && !reduced;
+    const bodyX=x+(reacting?hitRecoilX(flashElapsed/flashMs):0);
+    currentArt={canvas,image,left:128+bodyX,top:16,width:512,height:512};
     ctx.save();
-    auraRenderer.draw(ctx,image,filterFor(pose,playing?.sequence.action || playing?.action),128+x,16,512,512,{materialize});ctx.restore();
+    auraRenderer.draw(ctx,image,filterFor(pose,playing?.sequence.action || playing?.action),128+bodyX,16,512,512,{materialize});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
       if(overlay){ctx.drawImage(overlay,128+x,16,512,512);el.dataset.effect=effect;}
     }
-    const flash=hitFlashOpacity('hurt',flashAt===null?1:(now-flashAt)/260,{reduced:reducedMotionRequested()});
+    const flash=flashAt===null?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
     if (flash) {
       maskCtx.clearRect(0,0,512,512);maskCtx.globalCompositeOperation='source-over';
       maskCtx.drawImage(image,0,0,512,512);maskCtx.globalCompositeOperation='source-in';
       maskCtx.fillStyle='#ff2424';maskCtx.fillRect(0,0,512,512);
-      ctx.save();ctx.globalAlpha=flash;ctx.drawImage(mask,128+x,16);ctx.restore();
+      ctx.save();ctx.globalAlpha=flash;ctx.drawImage(mask,128+bodyX,16);ctx.restore();
     }
   }
   function tick(now) {
@@ -134,7 +141,11 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       elapsed=Math.min(playing.duration,elapsed+Math.max(0,now-Math.max(last,holdUntil)));
       if (elapsed>=playing.duration || reducedMotionRequested()) { playing=null;resources=[];pose=restPose(); }
     }
-    if (flashAt!==null && now-flashAt>=143) flashAt=null;
+    if (flashAt!==null) {
+      // Hold-stop freezes the reaction at its start, exactly like the action clock.
+      flashElapsed+=Math.max(0,now-Math.max(last,holdUntil));
+      if (flashElapsed>=flashMs) flashAt=null;
+    }
     // A queued RAF can carry a timestamp from before synchronous first-paint
     // work. Never move the action clock backwards and count that work twice.
     last=Math.max(last,now);paint(now);
@@ -142,7 +153,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   }
   const wake=()=>{ if (request===null && !disposed) {last=performance.now();request=requestAnimationFrame(tick);} };
   function settle() { playing=null;resources=[];elapsed=0;pose=restPose();paint(); }
-  function hit() { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();wake();return true; }
+  function hit(ms=220) { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();flashMs=ms>0?ms:220;flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],
@@ -185,9 +196,10 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       const totalMs=durationFor(sequence,speed);
       return {totalMs,impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)/sequence.durations.reduce((a,b)=>a+b,0)*totalMs};
     },
-    play(action,ms=260,aura=[]){
+    play(action,ms,aura=[]){
       if(disposed || (rest==='defeated'&&action!=='defeated'))return false;
-      if(action==='hit'||action==='hurt')return hit();
+      if(action==='hit'||action==='hurt')return hit(ms);
+      ms??=260;
       if(action==='defeated'){rest='defeated';settle();return true;}
       const key=aliases[action]||action, sequence=family.sequences[key];
       if(!sequence)return false;
@@ -197,7 +209,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       resources=aura||[];elapsed=0;holdUntil=0;playing={action:key,sequence,duration:ms};
       paint(performance.now(),true);last=performance.now();wake();return true;
     },
-    hold(ms){if(!playing||!(ms>0))return false;holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;},
+    hold(ms){if(!(playing||flashAt!==null)||!(ms>0))return false;holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;},
     react(resource){clearTimeout(reactionTimer);el.dataset.poseReaction=resource;reactionTimer=setTimeout(()=>{el.dataset.poseReaction='';},180);},settle,
     dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;images.clear();down=null;auraRenderer.dispose();}
   });

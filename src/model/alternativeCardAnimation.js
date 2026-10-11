@@ -52,7 +52,31 @@ export function sampleSequence(sequence, elapsed, duration, { reduced = false } 
   return { index, x: progress === 1 ? 0 : x, progress, finished: progress === 1 };
 }
 
-export function hitFlashOpacity(action, progress, { reduced = false } = {}) {
-  if (reduced || action !== 'hurt' || progress < 0 || progress >= .55) return 0;
-  return .72 * (1 - progress / .55);
+/**
+ * Red hit tint for a hurt reaction: held at .75 for the first 40% of the
+ * reaction, then fading to 0 at its end. `progress` is a 0..1 fraction; pass
+ * `{ duration }` (ms) to give `progress` as elapsed milliseconds instead.
+ */
+export function hitFlashOpacity(action, progress, { reduced = false, duration } = {}) {
+  if (reduced || action !== 'hurt') return 0;
+  const t = duration > 0 ? progress / duration : progress;
+  if (!(t >= 0) || t >= 1) return 0;
+  return t < .4 ? .75 : .75 * (1 - (t - .4) / .6);
+}
+
+export const HIT_RECOIL_PX = -14;
+export const HIT_RECOIL_PEAK = .3;
+
+/**
+ * Horizontal knock-back (px, negative = left, away from enemies) for a 0..1
+ * hit reaction: ease-out to HIT_RECOIL_PX at 30%, ease-out back to 0 at 100%.
+ */
+export function hitRecoilX(progress) {
+  if (!(progress > 0) || progress >= 1) return 0;
+  if (progress <= HIT_RECOIL_PEAK) {
+    const s = progress / HIT_RECOIL_PEAK;
+    return HIT_RECOIL_PX * (1 - (1 - s) ** 2);
+  }
+  const s = (progress - HIT_RECOIL_PEAK) / (1 - HIT_RECOIL_PEAK);
+  return HIT_RECOIL_PX * (1 - s) ** 2;
 }

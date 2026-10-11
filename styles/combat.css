@@ -547,38 +547,38 @@
 .player .sprite.hitflash > :first-child { animation-name: hit-player; }
 .enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy; }
 .player .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-player-heavy; }
+/* The red tint is stepped (no interpolation through hue-rotate) and runs from
+   impact through 45%, so it is already on screen while hit-stop holds the
+   animation at 0%. */
 @keyframes hitflash {
-  0%, 32.99% { filter: none; }
-  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
-  67%, 100% { filter: none; }
+  0%, 44.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  45%, 100% { filter: none; }
   0%, 100% { transform: none; }
   30% { transform: translateX(4px); }
 }
 @keyframes hit-enemy {
-  0%, 32.99% { filter: none; }
-  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
-  67%, 100% { filter: none; }
-  0%, 100% { transform: none; }
-  30% { transform: translateX(13px); }
+  0%, 44.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  45%, 100% { filter: none; }
+  0% { transform: none; }
+  20%, 45% { transform: translateX(22px); }
+  100% { transform: none; }
 }
 @keyframes hit-player {
-  0%, 32.99% { filter: none; }
-  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
-  67%, 100% { filter: none; }
+  0%, 44.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  45%, 100% { filter: none; }
   0%, 100% { transform: none; }
   30% { transform: translateX(-13px); }
 }
 @keyframes hit-enemy-heavy {
-  0%, 32.99% { filter: none; }
-  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
-  67%, 100% { filter: none; }
-  0%, 100% { transform: none; }
-  30% { transform: translateX(26px); }
+  0%, 44.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  45%, 100% { filter: none; }
+  0% { transform: none; }
+  20%, 45% { transform: translateX(34px); }
+  100% { transform: none; }
 }
 @keyframes hit-player-heavy {
-  0%, 32.99% { filter: none; }
-  33%, 66.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
-  67%, 100% { filter: none; }
+  0%, 44.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  45%, 100% { filter: none; }
   0%, 100% { transform: none; }
   30% { transform: translateX(-26px); }
 }
@@ -629,15 +629,13 @@
   60% { transform: rotate(3deg); }
   80% { transform: rotate(-2deg); }
 }
-/* Rear stages own their travel inside the canvas. Hurt and stagger feedback
-   can tint that canvas, but must never translate, rotate or resize its root. */
+/* Rear stages own their travel inside the canvas. The canvas paints the red
+   hit tint and the knock-back itself (alternativeCardStage.js), so its root
+   takes no CSS filter, translate, rotation or resize: hurt and stagger
+   feedback switch the root's animation off. */
 .player .sprite:is(.hitflash, .wobble) > .alternative-card-stage:first-child,
 .player .sprite.hitflash.hit-heavy > .alternative-card-stage:first-child {
-  animation-name: rear-reaction-flash;
-}
-@keyframes rear-reaction-flash {
-  0%, 100% { filter: none; }
-  33%, 66% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  animation-name: none;
 }
 .relic.proc { animation: relicProc 300ms ease-out; }
 @keyframes relicProc {
