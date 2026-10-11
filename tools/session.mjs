@@ -967,7 +967,11 @@ export function createSession({ registries, seedString, endless = false, restore
     // a combat scene, so its digest rides the scene that replaces combat, for
     // the client to play its haptics (coop.js coopReceiptSounds).
     const last = combatScene();
-    const combatReceipts = { receiptSeq: last.receiptSeq, events: last.events };
+    // Keep the final authoritative combat frame with the replacement scene.
+    // The client paces its receipts against the still-mounted board before it
+    // renders the reward/complete door; sounds and haptics still read the same
+    // receiptSeq/events fields directly.
+    const combatReceipts = last;
     const outcome = coopOutcome(c);
     // The levels each seat's award bought, for its level card (SPEC §15.1).
     const levelUpsBy = {};
