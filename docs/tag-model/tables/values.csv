@@ -35,5 +35,4 @@ absorption.resist.hybrid,TBD,TBD,armor,"Resistance of absorption to hybrid damag
 siphon.resist.physical,TBD,TBD,armor,"Resistance of siphon to physical damage (TBD placeholder, owner decision 8)"
 siphon.resist.magic,TBD,TBD,armor,"Resistance of siphon to magic damage (TBD placeholder, owner decision 8)"
 siphon.resist.hybrid,TBD,TBD,armor,"Resistance of siphon to hybrid damage (TBD placeholder, owner decision 8)"
-dodgeBlock.drBonus,TBD,points,dodgeRoll,"Share of DR added to Dodge Block (TBD placeholder, owner decision 9)"
 dodgeBlock.mod,1,×,dodgeRoll,"Modifier on Dodge Block; relics and stances change this (owner decision 9)"

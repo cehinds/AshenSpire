@@ -209,7 +209,7 @@ if (need('relations', relations, ['source', 'relation', 'target'])) {
 }
 
 // [rank] is the object's own rank from ranks.csv, supplied at evaluation time
-// (dodgeRoll.block uses it). It is not a values key, so it is allowed here only.
+// (a formula row may read it). It is not a values key, so it is allowed here only.
 const RUNTIME_VARS = new Set(['rank']);
 if (formulasOk) {
   for (const r of formulas.rows) {

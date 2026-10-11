@@ -177,23 +177,19 @@ Formula, relation and value keys follow the README conventions.
 
 - **Date:** 2026-10-11 (owner).
 - **Decision:** Dodge Block is `3 + DR bonuses`, scaled by modifiers. It sits
-  in a formula row that relics and stances can modify.
+  in a formula row that relics and stances can modify. There is no rank term
+  and no upgrade (SPEC §12.1).
 - **Tables changed:**
-  - `tables/formulas.csv`: `dodgeRoll.dodgeBlock` =
-    `([dodgeRoll.base] + [dodgeBlock.drBonus]) * [dodgeBlock.mod]`, scope
-    `dodgeRoll`. `dodgeRoll.base` is already 3, so the base is unchanged.
-  - `tables/values.csv`: `dodgeBlock.drBonus` = `TBD` (the DR share, a
-    placeholder), and `dodgeBlock.mod` = `1` (the neutral modifier that relics
-    and stances change).
-  - `dodgeRoll.block` is unchanged. See below.
-- **Couldn't place:**
-  - **Conflict to confirm.** The existing `dodgeRoll.block` is
-    `[dodgeRoll.base] + ([rank] - 1) + [dr]`, which has a rank term. The decision
-    does not mention rank. The new row is added beside it, not in place of it.
-    Owner to say whether `dodgeRoll.block` should become Dodge Block, drop the
-    rank term, or stay as the rank-based Block gain.
-  - "DR bonuses" is read as a share of DR, held in `dodgeBlock.drBonus`. The
-    exact share is TBD.
+  - `tables/formulas.csv`: `dodgeRoll.block` =
+    `([dodgeRoll.base] + [dr]) * [dodgeBlock.mod]`, scope `dodgeRoll`. The rank
+    term is dropped. `dodgeRoll.base` is 3. `dodgeRoll.poise` and
+    `dodgeRoll.ward` stay derived from `dodgeRoll.block`. The separate
+    `dodgeRoll.dodgeBlock` row is removed, since it is now the block row.
+  - `tables/values.csv`: `dodgeBlock.mod` = `1` (the neutral modifier that relics
+    and stances change). `dodgeBlock.drBonus` is removed; the DR share is
+    `[dr]` itself.
+- **Couldn't place:** none. The owner's rule is "3 + DR bonuses", read as the
+  full DR value `[dr]` added to the base, so no share value is needed.
 
 ## 10. Block, Ward and Poise stay separate pools
 
