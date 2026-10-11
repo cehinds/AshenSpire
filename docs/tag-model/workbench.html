@@ -292,6 +292,20 @@ function subscribeTable(t){
   ts.unsub.push(db.doc(headPath(t)).onSnapshot(s=>onHead(t, s.exists? s.data() : null), e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.')));
 }
 /* ---------- writer: blobs first, then one head write guarded by the rev this view loaded ---------- */
+/* lists the blob collection once; deletes a blob only if it is not in `keep` and its createdAt is over 2 minutes old.
+   Blobs without createdAt are never deleted. Failures are ignored: garbage can wait for the next save. */
+async function gcBlobs(t, keep){
+  try{
+    const q=await db.collection('tables/'+t+'/blobs').get();
+    for(const d of q.docs){
+      if(keep.has(d.id)) continue;
+      const b=d.data()||{};
+      if(typeof b.createdAt!=='number'||Date.now()-b.createdAt<=GC_AGE_MS) continue;
+      await db.doc(blobPath(t,d.id)).delete().catch(()=>{});
+    }
+  }
+  catch(e){ /* best effort */ }
+}
 /* a short lease on the head doc, held only across its get and set. Every attempt uses a fresh holder id, so no
    attempt can renew a lease another attempt holds: a waiting writer waits at most one ttl (1.5 s), not forever.
    Busy retries run for up to 10 s, then false. Leases have no release verb, so they lapse on their own. */
@@ -341,6 +355,11 @@ async function flush(t, opts){
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
     ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null;
     ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
+    /* a legacy table converts on this first save: delete only the legacy part docs we read, now that the new head is written */
+    const oldParts=ts.legacyDocs||[]; ts.legacyDocs=[]; stopParts(t);
+    for(const id of oldParts) await db.doc('tables/'+t+'/parts/'+id).delete().catch(()=>{});
+    /* blobs referenced by neither the new head nor the head this save replaced are garbage */
+    await gcBlobs(t, new Set([...hashes, ...(curHead&&curHead.format==='blobs'&&Array.isArray(curHead.blobs)? curHead.blobs : [])]));
     /* a head seen during the save that is neither ours nor the one we started from came after ours (no clocks compared):
        if it was written on top of ours, apply it; otherwise a peer raced us and the conflict banner shows */
     const L=ts.latest;

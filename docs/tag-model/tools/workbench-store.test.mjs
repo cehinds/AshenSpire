@@ -213,7 +213,7 @@ async function putBlobTable(db, api, t, objs, cols = COLS, savedAt = 1, base = '
   const blobs = [];
   for (const rs of api.chunkRows(rows)) {
     const h = api.hashText(JSON.stringify({ rows: rs }));
-    await db.doc(api.blobPath(t, h)).set({ rows: rs, createdAt: 1 });
+    await db.doc(api.blobPath(t, h)).set({ rows: rs, createdAt: Date.now() }); // fresh, as a real writer leaves it
     blobs.push(h);
   }
   const head = { format: 'blobs', columns: cols, blobs, rev: 'r' + blobs.join('').slice(0, 12) + savedAt, base, savedAt };
@@ -533,6 +533,72 @@ test('a blob whose content does not hash to its id blocks the table', async () =
   await waitFor(() => page.statuses.some((s) => /incomplete on the server/.test(s.msg)));
   assert.equal(page.loaded.has('t'), false);
   assert.equal(page.state.data.t.rows.length, 0);
+});
+
+test('(d) a legacy (a) table loads, and its first save writes the new format and deletes only the parts it read', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { columns: COLS, parts: 2, format: 'arrays', revs: ['x', 'x'] });
+  db.put('tables/t/parts/p0', { index: 0, rev: 'x', rows: [['a1', 'n', 1]] });
+  db.put('tables/t/parts/p1', { index: 1, rev: 'x', rows: [['a2', 'm', 2]] });
+  db.put('tables/t/parts/extra', { index: 9, rev: 'z', rows: [['zz', 'z', 0]] }); // not part of the head: not ours to delete
+  api.subscribeTable('t');
+  await waitFor(() => page.loaded.has('t'));
+  const rows = [{ id: 'a1', name: 'n', qty: 1 }, { id: 'a2', name: 'm', qty: 2 }, { id: 'a3', name: 'new', qty: 3 }];
+  editTable(page, rows);
+  await api.flush('t');
+  assert.equal(db.read('tables/t').format, 'blobs', 'the first save writes the new format');
+  assert.equal(db.has('tables/t/parts/p0'), false);
+  assert.equal(db.has('tables/t/parts/p1'), false);
+  assert.equal(db.has('tables/t/parts/extra'), true, 'an unread part is left alone');
+  assert.equal(api.tstate.t.conflict, null, 'an unchanged legacy head is not a conflict');
+  assert.equal(await storedRows(db), JSON.stringify(rows));
+});
+
+test('(d) a legacy (b) object-parts table converts on its first save too', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { columns: COLS, parts: 1 });
+  db.put('tables/t/parts/q0', { index: 0, rows: [{ id: 'b1', name: 'n', qty: 3 }] });
+  api.subscribeTable('t');
+  await waitFor(() => page.loaded.has('t'));
+  editTable(page, [{ id: 'b1', name: 'n', qty: 3 }, { id: 'b2', name: 'm', qty: 4 }]);
+  await api.flush('t');
+  assert.equal(db.read('tables/t').format, 'blobs');
+  assert.equal(db.has('tables/t/parts/q0'), false);
+  assert.equal(await storedRows(db), JSON.stringify([{ id: 'b1', name: 'n', qty: 3 }, { id: 'b2', name: 'm', qty: 4 }]));
+});
+
+test('(f) GC never deletes a blob referenced by the current or the previous head', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  const ageBlobs = () => {
+    for (const p of [...db.docs.keys()].filter((k) => k.includes('/blobs/'))) db.put(p, { ...db.read(p), createdAt: 1 });
+  };
+  editTable(W.page, sample(300, 'v1'));
+  await W.api.flush('t');
+  const h1 = db.read('tables/t').blobs.slice();
+  ageBlobs();
+  // orphans: old (GC may delete), recent (kept), no createdAt (kept)
+  db.put(W.api.blobPath('t', 'orphanold'), { rows: [], createdAt: 1 });
+  db.put(W.api.blobPath('t', 'orphanrecent'), { rows: [], createdAt: Date.now() });
+  db.put(W.api.blobPath('t', 'orphannostamp'), { rows: [] });
+  editTable(W.page, sample(300, 'v2'));
+  await W.api.flush('t');
+  const h2 = db.read('tables/t').blobs.slice();
+  assert.ok(h1.every((x) => db.has(W.api.blobPath('t', x))), 'the previous head keeps its blobs');
+  assert.equal(db.has(W.api.blobPath('t', 'orphanold')), false, 'an old unreferenced blob is deleted');
+  assert.equal(db.has(W.api.blobPath('t', 'orphanrecent')), true, 'a recent blob is kept');
+  assert.equal(db.has(W.api.blobPath('t', 'orphannostamp')), true, 'a blob without createdAt is kept');
+  ageBlobs();
+  editTable(W.page, sample(300, 'v3'));
+  await W.api.flush('t');
+  const h3 = db.read('tables/t').blobs.slice();
+  assert.ok(h2.every((x) => db.has(W.api.blobPath('t', x))), 'the previous head keeps its blobs');
+  assert.ok(h3.every((x) => db.has(W.api.blobPath('t', x))), 'the current head keeps its blobs');
+  const gone = h1.filter((x) => !h2.includes(x) && !h3.includes(x));
+  assert.ok(gone.length > 0);
+  assert.ok(gone.every((x) => !db.has(W.api.blobPath('t', x))), 'blobs of two heads back are collected');
 });
 
 // Writer helper: a tab holding `objs` as its unsaved table.
