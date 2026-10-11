@@ -76,6 +76,20 @@ test('a canvas move at a breakpoint writes that breakpoint\'s override and keeps
   assert.ok(base.boxes.find((b) => b.id === 'hud').h > 10, 'a base edit writes the base');
 });
 
+test('the PNG drawing lists the visible boxes in layer order at the device size', () => {
+  const { data } = S.parseSketch(realText);
+  const plan = S.drawingFor(data, phone);
+  assert.equal(plan.width, 390);
+  assert.equal(plan.height, 844);
+  assert.equal(plan.title, 'Example: combat, one layout with a phone override');
+  assert.deepEqual(plan.rects.map((r) => r.label), ['HUD', 'Scene', 'Footer', 'Hand'], 'layer 0 first, then layer 1');
+  assert.equal(plan.rects.find((r) => r.label === 'Footer').locked, true);
+  assert.equal(plan.rects.find((r) => r.label === 'Scene').overridden, true, 'the phone override is drawn');
+  const hidden = S.updateBox(data, 'hand', { hidden: true });
+  assert.equal(S.drawingFor(hidden, phone).rects.length, 3, 'a hidden box is not drawn');
+  assert.deepEqual(S.drawingFor(S.setNotes(data, 'one\n\ntwo'), phone).notes, ['one', 'two']);
+});
+
 test('the notes are the sketch\'s own, and the export is the file\'s text', () => {
   const { data } = S.parseSketch(realText);
   const notes = S.setNotes(data, 'Try the hand at 40%');

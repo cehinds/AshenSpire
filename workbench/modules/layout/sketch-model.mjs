@@ -115,5 +115,17 @@ export function applyCanvasItems(sketch, items, viewport, { scope = 'base' } = {
   return out;
 }
 
+/**
+ * What the PNG export draws at a viewport, as data the page paints: the size, the
+ * title, each visible box in layer order with its px rect, and the notes line by line.
+ */
+export function drawingFor(sketch, viewport) {
+  const width = Math.round(viewport.width), height = Math.round(viewport.height);
+  const rects = canvasItems(sketch, viewport).sort((a, b) => a.z - b.z)
+    .map((it) => ({ x: Math.round(it.x), y: Math.round(it.y), w: Math.round(it.w), h: Math.round(it.h), label: it.label, locked: it.locked, overridden: it.overridden }));
+  const notes = String(sketch.notes || '').split('\n').filter((l) => l.trim() !== '');
+  return { width, height, title: sketch.name || 'Sketch', rects, notes };
+}
+
 /** The sketch as the JSON export carries it: the file's own text when it was read from one. */
 export const exportJson = (sketch, original = null) => serializeSketch(sketch, original);
