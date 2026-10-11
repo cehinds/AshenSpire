@@ -396,6 +396,35 @@ test('settings: checkouts are validated; the art checkout is served read-only on
   assert.equal((await fetch(entry.url, { headers: { 'sec-fetch-site': 'cross-site' } })).status, 403, 'another website cannot load art files');
 });
 
+test('art files under /ext/art/: an SVG, PNG or JSON gets the strict CSP; an HTML page keeps its own headers', async (t) => {
+  const root = await project(t);
+  const art = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-art-csp-')));
+  t.after(() => fs.rm(art, { recursive: true, force: true }));
+  await fs.mkdir(path.join(art, 'icons'), { recursive: true });
+  await fs.mkdir(path.join(art, 'enemy-poses'), { recursive: true });
+  await fs.writeFile(path.join(art, 'enemy-poses/index.html'), '<!doctype html><title>Poses</title>');
+  await fs.writeFile(path.join(art, 'icons/bad.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  await fs.writeFile(path.join(art, 'icons/pic.png'), Buffer.from('89504e470d0a1a0a', 'hex'));
+  await fs.writeFile(path.join(art, 'icons/data.json'), '{"a":1}\n');
+  await fs.writeFile(path.join(art, 'icons/page.html'), '<!doctype html><title>Tool</title><script src="tool.js"></script>');
+  const { call } = await boot(t, root, { env: {} });
+  assert.equal((await call('/api/settings', { method: 'POST', body: JSON.stringify({ artCheckout: art }) })).status, 200);
+  const entry = (await (await call('/api/library')).json()).entries.find((e) => e.id === 'art-enemy-poses');
+  const base = entry.url.replace(/ext\/art\/.*/, 'ext/art/');
+  const strict = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+  for (const name of ['icons/bad.svg', 'icons/pic.png', 'icons/data.json']) {
+    const res = await fetch(`${base}${name}`);
+    assert.equal(res.status, 200, name);
+    assert.equal(res.headers.get('content-security-policy'), strict, `${name} gets the strict policy`);
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff', `${name} is nosniff`);
+  }
+  const page = await fetch(`${base}icons/page.html`);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get('content-security-policy'), /^sandbox allow-scripts allow-same-origin /, 'the HTML page keeps its sandbox');
+  assert.match(page.headers.get('content-security-policy'), /frame-ancestors 'self' http:\/\/127\.0\.0\.1:\d+/);
+  assert.equal(page.headers.get('x-content-type-options'), 'nosniff');
+});
+
 test('a cancelled job keeps its slot until its process, and what it started, has exited', async (t) => {
   const root = await project(t);
   const { app, call } = await boot(t, root);
@@ -681,6 +710,70 @@ test('a generated-files lock held by another process (the editor, UI Studio) ref
   assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).holder, 'Config build (Workbench)');
   for (let i = 0; i < 100 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 30));
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
+});
+
+test('close() ends a live-reload build waiting for a foreign build lock at once; it starts nothing and takes no lock', async (t) => {
+  const root = await project(t);
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(root, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Editor content build', startedAt: Date.now(), token: 'theirs' }));
+  await fs.mkdir(path.join(root, 'content/source'), { recursive: true });
+  // A builder that leaves a marker when it runs: none may run while the lock is foreign.
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/content-build.mjs'), "import fs from 'node:fs'; fs.writeFileSync('built.marker', 'ran');\n");
+  const { app } = await boot(t, root, { lockWaitMs: 60 * 1000 });
+  // An authored source changed: the live-reload build is announced, then waits for the foreign lock.
+  await collectEvents(app, 'building', () => true, {
+    onOpen: async () => { await new Promise((r) => setTimeout(r, 200)); await fs.writeFile(path.join(root, 'content/source/items.csv'), 'id,name\nsword,Sword\n'); },
+  });
+  const started = Date.now();
+  await app.close();
+  assert.ok(Date.now() - started < 1000, 'close() did not wait out the build-lock wait');
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'theirs', 'their lock stands; no lock of ours was written');
+  assert.equal(await fs.stat(path.join(root, 'built.marker')).then(() => true, () => false), false, 'the build never started');
+});
+
+test('JobRunner.acquire with an aborted signal ends an in-process or a cross-process wait at once, taking nothing', async (t) => {
+  const root = await project(t);
+  const runner = new JobRunner({ root, stateFile: path.join(root, '.wb-state/jobs.json') });
+  await runner.acquire(GENERATED, 'A job');
+  const ctl = new AbortController();
+  const waiting = runner.acquire(GENERATED, 'A live-reload build', { timeoutMs: 60 * 1000, signal: ctl.signal });
+  setTimeout(() => ctl.abort(new Error('The Workbench is closing')), 50);
+  await assert.rejects(waiting, /The Workbench is closing/);
+  assert.equal(runner.locks.get(GENERATED), 'A job', 'the in-process hold is still the job\'s');
+  runner.release(GENERATED);
+  // Free in this process, held by a foreign process: the file-lock wait ends the same way and leaves no lock of ours.
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: other.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const ctl2 = new AbortController();
+  const waiting2 = runner.acquire(GENERATED, 'A live-reload build', { timeoutMs: 60 * 1000, pollMs: 5000, signal: ctl2.signal });
+  setTimeout(() => ctl2.abort(new Error('The Workbench is closing')), 50);
+  await assert.rejects(waiting2, /The Workbench is closing/);
+  assert.equal(runner.locks.has(GENERATED), false, 'nothing held here');
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, '.build-lock'), 'utf8')).token, 'theirs', 'their lock stands');
+});
+
+test('close() ends a save waiting for a foreign build lock at once: 503, nothing written, no lock of ours', async (t) => {
+  const root = await project(t);
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(root, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const { app } = await boot(t, root, { lockWaitMs: 60 * 1000 });
+  const saving = fetch(`${app.url}/api/files/save`, {
+    method: 'POST', headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [{ path: 'styles/x.css', text: 'x{}\n', baseHash: null }] }),
+  });
+  await new Promise((r) => setTimeout(r, 200));
+  const started = Date.now();
+  await app.close();
+  assert.ok(Date.now() - started < 1000, 'close() did not wait out the lock wait');
+  assert.equal((await saving).status, 503);
+  assert.equal(await fs.stat(path.join(root, 'styles/x.css')).then(() => true, () => false), false, 'nothing written');
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'theirs', 'their lock stands; ours was never taken');
 });
 
 test('close() waits for a save still writing, so its file is on disk when close resolves', async (t) => {

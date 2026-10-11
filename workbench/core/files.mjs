@@ -182,7 +182,7 @@ async function checkJs(rel, text) {
  * fileFault(rel) is a test seam: it may await or throw before a file is renamed into place.
  * pruneFault() is a test seam: it may throw where old backup sets are pruned.
  */
-export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null }) {
+export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null, signal = undefined }) {
   let tail = Promise.resolve();
   const serialize = (task) => { const run = tail.then(task, task); tail = run.catch(() => {}); return run; };
   const backupsDir = path.join(stateDir, 'backups');
@@ -320,7 +320,14 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     }
     // A change under a build's input tree holds the build lock, and validation (which reads the
     // config tree) runs under it, so no build reads the tree while it is being checked or written.
-    const release = changes.some((c) => BUILD_INPUT.test(c.path)) ? await acquire(root, 'Workbench file save', { timeoutMs: lockWaitMs }) : null;
+    // An aborted signal (the Workbench is closing) ends the wait: the save answers 503 and writes nothing.
+    let release = null;
+    if (changes.some((c) => BUILD_INPUT.test(c.path))) {
+      try { release = await acquire(root, 'Workbench file save', { timeoutMs: lockWaitMs, signal }); } catch (error) {
+        if (signal?.aborted) throw fail(503, 'The Workbench is closing');
+        throw error;
+      }
+    }
     try {
       const problems = await validate(changes);
       if (problems.length) throw fail(422, 'Nothing saved: some files do not validate', { problems });

@@ -139,7 +139,9 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   // What the file service wrote, so the watcher drops the echo of a save. onSaved still sends the batch itself:
   // with forcePoll or a disabled watcher nothing else would.
   const ownWrites = createOwnWrites();
-  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault });
+  // close() aborts this first: a save waiting for a build lock stops waiting and answers 503 (core/files.mjs).
+  const closeAbort = new AbortController();
+  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault, signal: closeAbort.signal });
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';
@@ -175,7 +177,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       // UI Studio, a terminal build) reloads only once that writer is done: wait
       // for the shared lock to be free, then reload once.
       if ([...mine].some(isBuildOutput) && !stepsFor([...mine]).length) {
-        try { await jobs.acquire(GENERATED, 'A live-reload', { timeoutMs: lockWaitMs }); jobs.release(GENERATED); } catch (e) {
+        try { await jobs.acquire(GENERATED, 'A live-reload', { timeoutMs: lockWaitMs, signal: closeAbort.signal }); jobs.release(GENERATED); } catch (e) {
           const files = take();
           hub.send('reload-failed', { files, startedAt, step: null, output: e.message }); return;
         }
@@ -187,7 +189,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
         hub.send('building', { files, steps });
         // Live-reload builds share the jobs' lock: never two writers of the generated trees.
         // It also waits for the editor or UI Studio when one of them is building (tools/lib/build-lock.mjs).
-        try { await jobs.acquire(GENERATED, 'A live-reload build', { timeoutMs: lockWaitMs }); } catch (e) { hub.send('reload-failed', { files, startedAt, step: steps[0], output: e.message }); return; }
+        try { await jobs.acquire(GENERATED, 'A live-reload build', { timeoutMs: lockWaitMs, signal: closeAbort.signal }); } catch (e) { hub.send('reload-failed', { files, startedAt, step: steps[0], output: e.message }); return; }
         watcher.mute();
         try {
           for (const step of steps) {
@@ -247,7 +249,13 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     const file = await safePath(realpathSync(checkout), rel);
     const type = MIME[path.extname(file).toLowerCase()];
     if (!type) return sendJson(res, 404, { error: 'Not a viewable file' });
-    res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads allow-popups; frame-ancestors 'self' http://${address}` });
+    // An HTML page keeps its scripts and frame policy. Anything else (an image, an SVG, JSON) gets the strict
+    // policy: an SVG there could otherwise run script on the preview origin.
+    const page = type.startsWith('text/html');
+    const csp = page
+      ? `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads allow-popups; frame-ancestors 'self' http://${address}`
+      : "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+    res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': csp });
     res.end(await fs.readFile(file));
   }
 
@@ -371,6 +379,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     get reloads() { return reloads; },
     killChildrenSync: () => { supervisor.killAllSync(); jobs.stopAll(); },
     close: () => closing ||= (async () => {
+      // Pending lock waits end now (saves answer 503, live-reload builds start nothing), not after lockWaitMs.
+      closeAbort.abort(new Error('The Workbench is closing'));
       watcher.close();
       closed = true;
       for (const child of liveBuilds) child.kill();

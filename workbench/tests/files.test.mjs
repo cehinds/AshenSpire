@@ -195,6 +195,20 @@ test('a save under styles/ waits for a foreign build lock; on timeout it writes 
   assert.equal(JSON.parse(await fs.readFile(path.join(root, '.build-lock'), 'utf8')).token, 'theirs', 'their lock stands');
 });
 
+test('a save waiting for a foreign build lock answers 503 once its signal aborts, and writes nothing', async (t) => {
+  const root = await project(t);
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => child.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: child.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const ctl = new AbortController();
+  const files = createFileService({ root, stateDir: path.join(root, '.wb-state'), lockWaitMs: 10 * 60 * 1000, signal: ctl.signal });
+  const saving = files.save([{ path: 'styles/x.css', text: 'x{}\n', baseHash: null }]);
+  setTimeout(() => ctl.abort(new Error('The Workbench is closing')), 100);
+  await assert.rejects(saving, (e) => e.status === 503 && /The Workbench is closing/.test(e.message));
+  assert.equal(await fs.stat(path.join(root, 'styles/x.css')).then(() => true, () => false), false, 'nothing written');
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, '.build-lock'), 'utf8')).token, 'theirs', 'their lock stands');
+});
+
 test('save with a bad second change writes nothing; a write failure rolls the first file back', async (t) => {
   const root = await project(t);
   const first = { path: 'styles/main.css', text: 'one{}\n', baseHash: sha('body{}\n') };
