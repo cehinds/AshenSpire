@@ -329,10 +329,17 @@ if (presOk.styles && presOk.components) {
     const owners = catalogOwnersOf(c);
     return owners.length === 1 ? owners[0] : null;
   };
-  // ".card .ctext" is owned by the sole owner of ctext, whatever .card is.
-  const ctext = soleOwner('ctext');
-  if (!ctext) fail('presentation/styles: guard expects exactly one catalog owner of class ctext');
-  else guard('.card .ctext', own => { if (own !== ctext) fail(`presentation/styles: ".card .ctext" componentId "${own}" should be the owner of ctext "${ctext}"`); });
+  // ctext is set by card.js's shared renderer (cardTooltip, upgradePreviewHtml), which has
+  // no catalog row. No catalog component owns it, so ".card .ctext" keeps its CSS-derived
+  // componentId, and smith-upgrade-preview (which embeds the renderer) says so in its notes.
+  if (catalogOwnersOf('ctext').length) fail(`presentation/styles: ctext must have no catalog owner (shared renderer), got ${catalogOwnersOf('ctext').join(', ')}`);
+  {
+    const ctextRows = st.rows.filter(r => at(st, r, 'selector') === '.card .ctext');
+    if (!ctextRows.length) fail('presentation/styles: guard selector ".card .ctext" has no rows');
+    for (const r of ctextRows) if (at(st, r, 'componentId') !== at(st, r, 'cssComponentId')) fail(`presentation/styles: ".card .ctext" componentId "${at(st, r, 'componentId')}" must stay unowned (cssComponentId "${at(st, r, 'cssComponentId')}")`);
+  }
+  const smithRow = comps.rows.find(r => at(comps, r, 'id') === 'smith-upgrade-preview');
+  if (!smithRow || !/owner:shared-renderer/.test(at(comps, smithRow, 'notes'))) fail('presentation/components: "smith-upgrade-preview" notes must say owner:shared-renderer');
   // circle:not(.node-halo) is styled by circle, so the :not() class does not name map-node-face.
   guard('.map-node.reachable > circle:not(.node-halo)', own => { if (own === 'map-node-face') fail('presentation/styles: "circle:not(.node-halo)" must not go to map-node-face'); });
   // .spent is generic: the deck editor owns the name, not the armoury card row.

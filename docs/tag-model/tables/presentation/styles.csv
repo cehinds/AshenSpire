@@ -91,7 +91,7 @@ hi-contrast,body.hi-contrast,--line,#6a5b43,,styles/base.css:187,all,token,style
 hi-contrast,body.hi-contrast,--line-soft,#85714f,,styles/base.css:187,all,token,styles/base.css:187,hi-contrast
 hi-contrast,body.hi-contrast,--map-structure,#85714f,,styles/base.css:187,all,token,styles/base.css:187,hi-contrast
 set-note,body.hi-contrast .set-note,color,#cdbf9e,,styles/base.css:194,all,color,styles/base.css:194,set-note
-smith-upgrade-preview,body.hi-contrast .card .ctext,color,#cdbf9e,,styles/base.css:194,all,color,styles/base.css:194,ctext
+ctext,body.hi-contrast .card .ctext,color,#cdbf9e,,styles/base.css:194,all,color,styles/base.css:194,ctext
 cz-keepsake,body.hi-contrast .cz-keepsake p,color,#cdbf9e,,styles/base.css:194,all,color,styles/base.css:194,cz-keepsake
 cb-safe,body.cb-safe,--blood,#d55e00,,styles/base.css:205,all,token,styles/base.css:205,cb-safe
 cb-safe,body.cb-safe,--res-hp,#d55e00,,styles/base.css:205,all,token,styles/base.css:205,cb-safe
@@ -1390,9 +1390,9 @@ art,:root[data-composition='short-wide'] .combat.coop .hand .card .art,font-size
 ctype,:root[data-composition='short-wide'] .combat.coop .hand .card .ctype,width,6.8rem,,styles/combat.css:761,all,spacing,styles/combat.css:761,ctype
 ctype,:root[data-composition='short-wide'] .combat.coop .hand .card .ctype,padding,0.1rem 0,,styles/combat.css:761,all,spacing,styles/combat.css:761,ctype
 ctype,:root[data-composition='short-wide'] .combat.coop .hand .card .ctype,font-size,0.65rem,,styles/combat.css:761,all,typography,styles/combat.css:761,ctype
-smith-upgrade-preview,:root[data-composition='short-wide'] .combat.coop .hand .card .ctext,margin-top,0.15rem,,styles/combat.css:764,all,spacing,styles/combat.css:764,ctext
-smith-upgrade-preview,:root[data-composition='short-wide'] .combat.coop .hand .card .ctext,font-size,0.68rem,,styles/combat.css:764,all,typography,styles/combat.css:764,ctext
-smith-upgrade-preview,:root[data-composition='short-wide'] .combat.coop .hand .card .ctext,line-height,1.15,,styles/combat.css:764,all,typography,styles/combat.css:764,ctext
+ctext,:root[data-composition='short-wide'] .combat.coop .hand .card .ctext,margin-top,0.15rem,,styles/combat.css:764,all,spacing,styles/combat.css:764,ctext
+ctext,:root[data-composition='short-wide'] .combat.coop .hand .card .ctext,font-size,0.68rem,,styles/combat.css:764,all,typography,styles/combat.css:764,ctext
+ctext,:root[data-composition='short-wide'] .combat.coop .hand .card .ctext,line-height,1.15,,styles/combat.css:764,all,typography,styles/combat.css:764,ctext
 card,:root[data-composition='short-wide'] .combat.coop .hand .card:hover,transform,translateY(-12px) scale(1.1) !important,,styles/combat.css:767,all,motion,styles/combat.css:767,card
 selected,:root[data-composition='short-wide'] .combat.coop .hand .card.selected,transform,translateY(-12px) scale(1.1) !important,,styles/combat.css:767,all,motion,styles/combat.css:767,selected
 combat,:root[data-composition='short-wide'] .combat,--action-row-drop,11.2rem,,styles/combat.css:771,all,token,styles/combat.css:771,combat
@@ -1704,8 +1704,8 @@ cname,:root .combat:not(.coop) .hand .card .cname,overflow-wrap,anywhere,,styles
 cname,:root .combat:not(.coop) .hand .card .cname,display,-webkit-box,,styles/combat.css:1101,all,style.other,styles/combat.css:1101,cname
 cname,:root .combat:not(.coop) .hand .card .cname,-webkit-box-orient,vertical,,styles/combat.css:1101,all,style.other,styles/combat.css:1101,cname
 cname,:root .combat:not(.coop) .hand .card .cname,-webkit-line-clamp,2,,styles/combat.css:1101,all,style.other,styles/combat.css:1101,cname
-smith-upgrade-preview,:root .combat:not(.coop) .hand .card .ctext,font-size,16px,,styles/combat.css:1105,all,typography,styles/combat.css:1105,ctext
-smith-upgrade-preview,:root .combat:not(.coop) .hand .card .ctext,line-height,20px,,styles/combat.css:1105,all,typography,styles/combat.css:1105,ctext
+ctext,:root .combat:not(.coop) .hand .card .ctext,font-size,16px,,styles/combat.css:1105,all,typography,styles/combat.css:1105,ctext
+ctext,:root .combat:not(.coop) .hand .card .ctext,line-height,20px,,styles/combat.css:1105,all,typography,styles/combat.css:1105,ctext
 card-costs,:root .combat:not(.coop) .hand .card .card-costs,display,flex,,styles/combat.css:1106,all,style.other,styles/combat.css:1106,card-costs
 card-costs,:root .combat:not(.coop) .hand .card .card-costs,align-items,center,,styles/combat.css:1106,all,style.other,styles/combat.css:1106,card-costs
 card-costs,:root .combat:not(.coop) .hand .card .card-costs,gap,4px,,styles/combat.css:1106,all,spacing,styles/combat.css:1106,card-costs
@@ -1957,8 +1957,8 @@ card,:root .combat[data-layout='formation'] .hand .card,height,calc(178px * var(
 card,:root .combat[data-layout='formation'] .hand .card,min-height,calc(178px * var(--card-height-per-width)),,styles/combat.css:1232,all,spacing,styles/combat.css:1232,card
 card,:root .combat[data-layout='formation'] .hand .card,max-height,calc(178px * var(--card-height-per-width)),,styles/combat.css:1232,all,spacing,styles/combat.css:1232,card
 card,:root .combat[data-layout='formation'] .hand .card,aspect-ratio,var(--card-ratio),,styles/combat.css:1232,all,style.other,styles/combat.css:1232,card
-smith-upgrade-preview,:root .combat[data-layout='formation'] .hand .card .ctext,min-height,0,,styles/combat.css:1242,all,spacing,styles/combat.css:1242,ctext
-smith-upgrade-preview,:root .combat[data-layout='formation'] .hand .card .ctext,overflow,hidden,,styles/combat.css:1242,all,style.other,styles/combat.css:1242,ctext
+ctext,:root .combat[data-layout='formation'] .hand .card .ctext,min-height,0,,styles/combat.css:1242,all,spacing,styles/combat.css:1242,ctext
+ctext,:root .combat[data-layout='formation'] .hand .card .ctext,overflow,hidden,,styles/combat.css:1242,all,style.other,styles/combat.css:1242,ctext
 hand,:root .combat[data-layout='formation'][data-turn='enemy'] .hand,filter,grayscale(.85),,styles/combat.css:1243,all,style.other,styles/combat.css:1243,hand
 hand,:root .combat[data-layout='formation'][data-turn='enemy'] .hand,opacity,.55,,styles/combat.css:1243,all,style.other,styles/combat.css:1243,hand
 hand,:root .combat[data-layout='formation'][data-turn='enemy'] .hand,pointer-events,none,,styles/combat.css:1243,all,style.other,styles/combat.css:1243,hand
@@ -2076,8 +2076,8 @@ card,:root .combat.coop[data-layout='formation'] .hand .card,--card-row,22px,,st
 card,:root .combat.coop[data-layout='formation'] .hand .card,--card-pad,8px,,styles/combat.css:1359,all,token,styles/combat.css:1359,card
 card,:root .combat.coop[data-layout='formation'] .hand .card,--card-gap,4px,,styles/combat.css:1359,all,token,styles/combat.css:1359,card
 cname,:root .combat.coop[data-layout='formation'] .hand .card .cname,font-size,16px,,styles/combat.css:1364,all,typography,styles/combat.css:1364,cname
-smith-upgrade-preview,:root .combat.coop[data-layout='formation'] .hand .card .ctext,font-size,18px,,styles/combat.css:1365,all,typography,styles/combat.css:1365,ctext
-smith-upgrade-preview,:root .combat.coop[data-layout='formation'] .hand .card .ctext,line-height,24px,,styles/combat.css:1365,all,typography,styles/combat.css:1365,ctext
+ctext,:root .combat.coop[data-layout='formation'] .hand .card .ctext,font-size,18px,,styles/combat.css:1365,all,typography,styles/combat.css:1365,ctext
+ctext,:root .combat.coop[data-layout='formation'] .hand .card .ctext,line-height,24px,,styles/combat.css:1365,all,typography,styles/combat.css:1365,ctext
 ctype,:root .combat.coop[data-layout='formation'] .hand .card .ctype,font-size,10px,,styles/combat.css:1366,all,typography,styles/combat.css:1366,ctype
 ctag,:root .combat.coop[data-layout='formation'] .hand .card .ctag,font-size,10px,,styles/combat.css:1366,all,typography,styles/combat.css:1366,ctag
 coop-arm-host,:root .combat.coop[data-layout='formation'] > .coop-arm-host,position,absolute,,styles/combat.css:1368,all,style.other,styles/combat.css:1368,coop-arm-host
@@ -4548,16 +4548,16 @@ ti-detail,#tooltip-2 .ti-detail,padding-top,0.9rem,,styles/kit.css:750,all,spaci
 ti-detail,#tooltip-2 .ti-detail,border-top,1px solid var(--line),,styles/kit.css:750,all,style.other,styles/kit.css:750,ti-detail
 ti-detail,#tooltip-2 .ti-detail,color,var(--muted),,styles/kit.css:750,all,color,styles/kit.css:750,ti-detail
 ti-detail,#tooltip-2 .ti-detail,font-size,1.28rem,,styles/kit.css:750,all,typography,styles/kit.css:750,ti-detail
-smith-upgrade-preview,#tooltip .tt-kw,margin-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip .tt-kw,padding-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip .tt-kw,border-top,1px solid var(--line),,styles/kit.css:750,all,style.other,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip .tt-kw,color,var(--muted),,styles/kit.css:750,all,color,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip .tt-kw,font-size,1.28rem,,styles/kit.css:750,all,typography,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip-2 .tt-kw,margin-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip-2 .tt-kw,padding-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip-2 .tt-kw,border-top,1px solid var(--line),,styles/kit.css:750,all,style.other,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip-2 .tt-kw,color,var(--muted),,styles/kit.css:750,all,color,styles/kit.css:750,tt-kw
-smith-upgrade-preview,#tooltip-2 .tt-kw,font-size,1.28rem,,styles/kit.css:750,all,typography,styles/kit.css:750,tt-kw
+tt-kw,#tooltip .tt-kw,margin-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
+tt-kw,#tooltip .tt-kw,padding-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
+tt-kw,#tooltip .tt-kw,border-top,1px solid var(--line),,styles/kit.css:750,all,style.other,styles/kit.css:750,tt-kw
+tt-kw,#tooltip .tt-kw,color,var(--muted),,styles/kit.css:750,all,color,styles/kit.css:750,tt-kw
+tt-kw,#tooltip .tt-kw,font-size,1.28rem,,styles/kit.css:750,all,typography,styles/kit.css:750,tt-kw
+tt-kw,#tooltip-2 .tt-kw,margin-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
+tt-kw,#tooltip-2 .tt-kw,padding-top,0.9rem,,styles/kit.css:750,all,spacing,styles/kit.css:750,tt-kw
+tt-kw,#tooltip-2 .tt-kw,border-top,1px solid var(--line),,styles/kit.css:750,all,style.other,styles/kit.css:750,tt-kw
+tt-kw,#tooltip-2 .tt-kw,color,var(--muted),,styles/kit.css:750,all,color,styles/kit.css:750,tt-kw
+tt-kw,#tooltip-2 .tt-kw,font-size,1.28rem,,styles/kit.css:750,all,typography,styles/kit.css:750,tt-kw
 ti-detail,#tooltip .ti-detail b,color,var(--parchment),,styles/kit.css:751,all,color,styles/kit.css:751,ti-detail
 tt-kw,#tooltip .tt-kw b,color,var(--parchment),,styles/kit.css:751,all,color,styles/kit.css:751,tt-kw
 tt-kw,#tooltip-2 .tt-kw b,color,var(--parchment),,styles/kit.css:751,all,color,styles/kit.css:751,tt-kw
@@ -4889,19 +4889,19 @@ ctag,.card .ctag,background,"color-mix(in srgb, var(--tag-color, var(--muted)) 1
 ctag,.card .ctag,border-radius,var(--r-1),,styles/kit.css:944,all,radius,styles/kit.css:944,ctag
 ctag,.card .ctag,padding,0.1rem 0.4rem,,styles/kit.css:944,all,spacing,styles/kit.css:944,ctag
 ctag,.card .ctag[hidden],display,none,,styles/kit.css:951,all,style.other,styles/kit.css:951,ctag
-smith-upgrade-preview,.card .ctext,flex,1 1 auto,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,min-height,0,,styles/kit.css:952,all,spacing,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,display,-webkit-box,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,-webkit-box-orient,vertical,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,overflow,hidden,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,line-height,var(--card-row),,styles/kit.css:952,all,typography,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,font-size,1.1rem,,styles/kit.css:952,all,typography,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,text-align,center,,styles/kit.css:952,all,typography,styles/kit.css:952,ctext
-smith-upgrade-preview,.card .ctext,color,var(--ink-dim),,styles/kit.css:952,all,color,styles/kit.css:952,ctext
+ctext,.card .ctext,flex,1 1 auto,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
+ctext,.card .ctext,min-height,0,,styles/kit.css:952,all,spacing,styles/kit.css:952,ctext
+ctext,.card .ctext,display,-webkit-box,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
+ctext,.card .ctext,-webkit-box-orient,vertical,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
+ctext,.card .ctext,overflow,hidden,,styles/kit.css:952,all,style.other,styles/kit.css:952,ctext
+ctext,.card .ctext,line-height,var(--card-row),,styles/kit.css:952,all,typography,styles/kit.css:952,ctext
+ctext,.card .ctext,font-size,1.1rem,,styles/kit.css:952,all,typography,styles/kit.css:952,ctext
+ctext,.card .ctext,text-align,center,,styles/kit.css:952,all,typography,styles/kit.css:952,ctext
+ctext,.card .ctext,color,var(--ink-dim),,styles/kit.css:952,all,color,styles/kit.css:952,ctext
 ctext,.ctext b,color,var(--parchment),,styles/kit.css:957,all,color,styles/kit.css:957,ctext
-smith-upgrade-preview,".card[data-tag-rows=""0""] .ctext",-webkit-line-clamp,4,,styles/kit.css:958,all,style.other,styles/kit.css:958,ctext
-smith-upgrade-preview,".card[data-tag-rows=""1""] .ctext",-webkit-line-clamp,3,,styles/kit.css:959,all,style.other,styles/kit.css:959,ctext
-smith-upgrade-preview,".card[data-tag-rows=""2""] .ctext",-webkit-line-clamp,2,,styles/kit.css:960,all,style.other,styles/kit.css:960,ctext
+ctext,".card[data-tag-rows=""0""] .ctext",-webkit-line-clamp,4,,styles/kit.css:958,all,style.other,styles/kit.css:958,ctext
+ctext,".card[data-tag-rows=""1""] .ctext",-webkit-line-clamp,3,,styles/kit.css:959,all,style.other,styles/kit.css:959,ctext
+ctext,".card[data-tag-rows=""2""] .ctext",-webkit-line-clamp,2,,styles/kit.css:960,all,style.other,styles/kit.css:960,ctext
 card,".card[data-wireframe=""WC1""]",aspect-ratio,var(--card-ratio),,styles/kit.css:973,all,style.other,styles/kit.css:973,card
 card,".card[data-wireframe=""WC1""]",height,auto,,styles/kit.css:973,all,spacing,styles/kit.css:973,card
 card,".card[data-wireframe=""WC1""]",padding,0,,styles/kit.css:973,all,spacing,styles/kit.css:973,card
@@ -4932,7 +4932,7 @@ art,".card[data-wireframe=""WC1""] > .art",overflow,hidden,,styles/kit.css:989,a
 ctags,".card[data-wireframe=""WC1""] .ctags",position,absolute,,styles/kit.css:993,all,style.other,styles/kit.css:993,ctags
 ctags,".card[data-wireframe=""WC1""] .ctags",inset,auto 0.25rem 0.25rem,,styles/kit.css:993,all,spacing,styles/kit.css:993,ctags
 cd-body,".card[data-wireframe=""WC1""] > .cd-body",padding,0.4rem,,styles/kit.css:996,all,spacing,styles/kit.css:996,cd-body
-smith-upgrade-preview,".card[data-wireframe=""WC1""] .ctext",-webkit-line-clamp,5,,styles/kit.css:997,all,style.other,styles/kit.css:997,ctext
+ctext,".card[data-wireframe=""WC1""] .ctext",-webkit-line-clamp,5,,styles/kit.css:997,all,style.other,styles/kit.css:997,ctext
 card-cost-rail,".card[data-wireframe=""WC1""] > .card-cost-rail",top,calc(var(--card-band-head) + 0.25rem),,styles/kit.css:1000,all,spacing,styles/kit.css:1000,card-cost-rail
 card-cost-rail,".card[data-wireframe=""WC1""] > .card-cost-rail",left,0.35rem,,styles/kit.css:1000,all,spacing,styles/kit.css:1000,card-cost-rail
 card-metadata,".card[data-wireframe=""WC1""] > .card-metadata",display,flex,,styles/kit.css:1001,all,style.other,styles/kit.css:1001,card-metadata
@@ -8907,8 +8907,8 @@ armoury-card-gallery,.armoury-card-gallery > .card,--card-name-h,3.5rem,,styles/
 cname,.armoury-card-gallery .cname,font-size,"max(1.6rem, calc(16px / var(--ui-zoom, 1)))",,styles/kit.css:3464,all,typography,styles/kit.css:3464,cname
 cname,.armoury-card-gallery .cname,line-height,1.2,,styles/kit.css:3464,all,typography,styles/kit.css:3464,cname
 cname,.armoury-card-gallery .cname,white-space,normal,,styles/kit.css:3464,all,typography,styles/kit.css:3464,cname
-smith-upgrade-preview,.armoury-card-gallery .ctext,font-size,"max(1.5rem, calc(15px / var(--ui-zoom, 1)))",,styles/kit.css:3465,all,typography,styles/kit.css:3465,ctext
-smith-upgrade-preview,.armoury-card-gallery .ctext,line-height,1.35,,styles/kit.css:3465,all,typography,styles/kit.css:3465,ctext
+ctext,.armoury-card-gallery .ctext,font-size,"max(1.5rem, calc(15px / var(--ui-zoom, 1)))",,styles/kit.css:3465,all,typography,styles/kit.css:3465,ctext
+ctext,.armoury-card-gallery .ctext,line-height,1.35,,styles/kit.css:3465,all,typography,styles/kit.css:3465,ctext
 armoury-card-gallery,.armoury-card-gallery .cost,font-size,"max(1.5rem, calc(15px / var(--ui-zoom, 1)))",,styles/kit.css:3466,all,typography,styles/kit.css:3466,armoury-card-gallery
 ctype,.armoury-card-gallery .ctype,font-size,"max(.9rem, calc(10px / var(--ui-zoom, 1)))",,styles/kit.css:3467,all,typography,styles/kit.css:3467,ctype
 ctag,.armoury-card-gallery .ctag,font-size,"max(.9rem, calc(10px / var(--ui-zoom, 1)))",,styles/kit.css:3467,all,typography,styles/kit.css:3467,ctag
@@ -9204,8 +9204,8 @@ ctype,.card.playing-poker-card .ctype,letter-spacing,.12em,,styles/kit.css:3636,
 ctags,.card.playing-poker-card .ctags,justify-content,flex-start,,styles/kit.css:3641,all,style.other,styles/kit.css:3641,ctags
 ctag,.card.playing-poker-card .ctag,border-radius,3px,,styles/kit.css:3642,all,radius,styles/kit.css:3642,ctag
 ctag,.card.playing-poker-card .ctag,background,#221b14,,styles/kit.css:3642,all,color,styles/kit.css:3642,ctag
-smith-upgrade-preview,.card.playing-poker-card .ctext,text-align,left,,styles/kit.css:3643,all,typography,styles/kit.css:3643,ctext
-smith-upgrade-preview,.card.playing-poker-card .ctext,color,#e5dccb,,styles/kit.css:3643,all,color,styles/kit.css:3643,ctext
+ctext,.card.playing-poker-card .ctext,text-align,left,,styles/kit.css:3643,all,typography,styles/kit.css:3643,ctext
+ctext,.card.playing-poker-card .ctext,color,#e5dccb,,styles/kit.css:3643,all,color,styles/kit.css:3643,ctext
 playing-poker-card,.card.playing-poker-card .cost,background,#211a12,,styles/kit.css:3644,all,color,styles/kit.css:3644,playing-poker-card
 playing-poker-card,.card.playing-poker-card .cost,border-color,#d0ac5d,,styles/kit.css:3644,all,color,styles/kit.css:3644,playing-poker-card
 playing-poker-card,.card.playing-poker-card .cost,color,#f0dfaf,,styles/kit.css:3644,all,color,styles/kit.css:3644,playing-poker-card
@@ -9504,8 +9504,8 @@ ti-meta,.playing-card-details .ti-meta,align-items,center,,styles/kit.css:3859,a
 ti-meta,.playing-card-details .ti-meta,gap,10px,,styles/kit.css:3859,all,spacing,styles/kit.css:3859,ti-meta
 ti-meta,.playing-card-details .ti-meta,padding-bottom,16px,,styles/kit.css:3859,all,spacing,styles/kit.css:3859,ti-meta
 ti-meta,.playing-card-details .ti-meta,border-bottom,1px solid var(--line),,styles/kit.css:3859,all,style.other,styles/kit.css:3859,ti-meta
-smith-upgrade-preview,.playing-card-details .ctext,font-size,18px,,styles/kit.css:3860,all,typography,styles/kit.css:3860,ctext
-smith-upgrade-preview,.playing-card-details .ctext,line-height,1.55,,styles/kit.css:3860,all,typography,styles/kit.css:3860,ctext
+ctext,.playing-card-details .ctext,font-size,18px,,styles/kit.css:3860,all,typography,styles/kit.css:3860,ctext
+ctext,.playing-card-details .ctext,line-height,1.55,,styles/kit.css:3860,all,typography,styles/kit.css:3860,ctext
 ti-flavor,.playing-card-details .ti-flavor,color,var(--muted),,styles/kit.css:3861,all,color,styles/kit.css:3861,ti-flavor
 ti-flavor,.playing-card-details .ti-flavor,line-height,1.5,,styles/kit.css:3861,all,typography,styles/kit.css:3861,ti-flavor
 card-inspection-play,.card-inspection-modal button.card-inspection-play:disabled,opacity,1,,styles/kit.css:3862,all,style.other,styles/kit.css:3862,card-inspection-play
@@ -9527,8 +9527,8 @@ card-inspection-art,.card-inspection-art > .card,min-width,0,,styles/kit.css:386
 card-inspection-art,.card-inspection-art > .card,max-width,100%,,styles/kit.css:3868,all,spacing,styles/kit.css:3868,card-inspection-art
 card-inspection-art,.card-inspection-art > .card,margin,0 auto,,styles/kit.css:3868,all,spacing,styles/kit.css:3868,card-inspection-art
 card-inspection-art,.card-inspection-art > .card,transform,none,,styles/kit.css:3868,all,motion,styles/kit.css:3868,card-inspection-art
-smith-upgrade-preview,.card-inspection-art > .card .ctext,overflow,hidden,,styles/kit.css:3869,all,style.other,styles/kit.css:3869,ctext
-smith-upgrade-preview,.card-inspection-art > .card .ctext,text-overflow,ellipsis,,styles/kit.css:3869,all,typography,styles/kit.css:3869,ctext
+ctext,.card-inspection-art > .card .ctext,overflow,hidden,,styles/kit.css:3869,all,style.other,styles/kit.css:3869,ctext
+ctext,.card-inspection-art > .card .ctext,text-overflow,ellipsis,,styles/kit.css:3869,all,typography,styles/kit.css:3869,ctext
 inspection-tags,.inspection-tags,display,flex,,styles/kit.css:3871,all,style.other,styles/kit.css:3871,inspection-tags
 inspection-tags,.inspection-tags,flex-wrap,wrap,,styles/kit.css:3871,all,style.other,styles/kit.css:3871,inspection-tags
 inspection-tags,.inspection-tags,gap,6px,,styles/kit.css:3871,all,spacing,styles/kit.css:3871,inspection-tags
@@ -9565,9 +9565,9 @@ inspection-requirement,.inspection-requirement,color,var(--gold),,styles/kit.css
 inspection-requirement,.inspection-requirement,line-height,1.5,,styles/kit.css:3879,all,typography,styles/kit.css:3879,inspection-requirement
 equipment-poker-explanations,.equipment-poker-explanations,min-width,0,,styles/kit.css:3880,all,spacing,styles/kit.css:3880,equipment-poker-explanations
 inspection-effect,.equipment-poker-explanations .inspection-effect:last-of-type,margin-bottom,0,,styles/kit.css:3881,all,spacing,styles/kit.css:3881,inspection-effect
-smith-upgrade-preview,.as-tip .ctext,white-space,normal,,styles/kit.css:3882,all,typography,styles/kit.css:3882,ctext
-smith-upgrade-preview,.as-tip .ctext,max-height,none,,styles/kit.css:3882,all,spacing,styles/kit.css:3882,ctext
-smith-upgrade-preview,.as-tip .ctext,overflow,visible,,styles/kit.css:3882,all,style.other,styles/kit.css:3882,ctext
+ctext,.as-tip .ctext,white-space,normal,,styles/kit.css:3882,all,typography,styles/kit.css:3882,ctext
+ctext,.as-tip .ctext,max-height,none,,styles/kit.css:3882,all,spacing,styles/kit.css:3882,ctext
+ctext,.as-tip .ctext,overflow,visible,,styles/kit.css:3882,all,style.other,styles/kit.css:3882,ctext
 inspection-tags,.as-tip .inspection-tags,gap,5px,,styles/kit.css:3883,all,spacing,styles/kit.css:3883,inspection-tags
 card-inspection-layout,.card-inspection-modal .card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:3885,mobile,style.other,styles/kit.css:3885,card-inspection-layout
 card-inspection-layout,.card-inspection-modal .card-inspection-layout,gap,16px,(max-width:600px),styles/kit.css:3885,mobile,spacing,styles/kit.css:3885,card-inspection-layout
@@ -9575,7 +9575,7 @@ card-inspection-layout,.card-inspection-modal .card-inspection-layout,padding,16
 card-inspection-layout,.card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:3885,mobile,style.other,styles/kit.css:3885,card-inspection-layout
 card-inspection-layout,.card-inspection-layout,gap,16px,(max-width:600px),styles/kit.css:3885,mobile,spacing,styles/kit.css:3885,card-inspection-layout
 card-inspection-layout,.card-inspection-layout,padding,16px,(max-width:600px),styles/kit.css:3885,mobile,spacing,styles/kit.css:3885,card-inspection-layout
-smith-upgrade-preview,.playing-card-details .ctext,font-size,16px,(max-width:600px),styles/kit.css:3886,mobile,typography,styles/kit.css:3886,ctext
+ctext,.playing-card-details .ctext,font-size,16px,(max-width:600px),styles/kit.css:3886,mobile,typography,styles/kit.css:3886,ctext
 card-inspection-art,.card-inspection-art,width,100%,(max-width:600px),styles/kit.css:3887,mobile,spacing,styles/kit.css:3887,card-inspection-art
 card-inspection-art,.card-inspection-art,max-width,100%,(max-width:600px),styles/kit.css:3887,mobile,spacing,styles/kit.css:3887,card-inspection-art
 card-inspection-art,.card-inspection-art,margin-inline,auto,(max-width:600px),styles/kit.css:3887,mobile,spacing,styles/kit.css:3887,card-inspection-art
@@ -10192,10 +10192,10 @@ card-inspection-art,.card-inspection-modal .card-inspection-art > .card,aspect-r
 cd-body,.card-inspection-art > .card .cd-body,flex,0 0 auto,,styles/kit.css:4590,all,style.other,styles/kit.css:4590,cd-body
 cd-body,.card-inspection-art > .card .cd-body,height,auto,,styles/kit.css:4590,all,spacing,styles/kit.css:4590,cd-body
 cd-body,.card-inspection-art > .card .cd-body,overflow,visible,,styles/kit.css:4590,all,style.other,styles/kit.css:4590,cd-body
-smith-upgrade-preview,.card-inspection-art > .card .ctext,display,block,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
-smith-upgrade-preview,.card-inspection-art > .card .ctext,flex,0 0 auto,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
-smith-upgrade-preview,.card-inspection-art > .card .ctext,overflow,visible,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
-smith-upgrade-preview,.card-inspection-art > .card .ctext,-webkit-line-clamp,unset,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
+ctext,.card-inspection-art > .card .ctext,display,block,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
+ctext,.card-inspection-art > .card .ctext,flex,0 0 auto,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
+ctext,.card-inspection-art > .card .ctext,overflow,visible,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
+ctext,.card-inspection-art > .card .ctext,-webkit-line-clamp,unset,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
 card-inspection-layout,.card-inspection-modal .card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:4593,mobile,style.other,styles/kit.css:4593,card-inspection-layout
 card-inspection-art,.card-inspection-modal .card-inspection-art,width,100%,(max-width:600px),styles/kit.css:4594,mobile,spacing,styles/kit.css:4594,card-inspection-art
 card-inspection-art,.card-inspection-modal .card-inspection-art,max-width,"var(--card-w-inspect, 320px)",(max-width:600px),styles/kit.css:4594,mobile,spacing,styles/kit.css:4594,card-inspection-art
@@ -10501,8 +10501,8 @@ art,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .ca
 art,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .art,margin,0,,styles/kit.css:4877,all,spacing,styles/kit.css:4877,art
 cname,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .cname,font-size,"max(calc(12px / var(--ui-zoom, 1)), .9rem)",,styles/kit.css:4880,all,typography,styles/kit.css:4880,cname
 cname,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .cname,min-height,0,,styles/kit.css:4880,all,spacing,styles/kit.css:4880,cname
-smith-upgrade-preview,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext,font-size,"max(calc((12px - 2pt) / var(--ui-zoom, 1)), calc(.8rem - 2pt))",,styles/kit.css:4883,all,typography,styles/kit.css:4883,ctext
-smith-upgrade-preview,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext,line-height,1.25,,styles/kit.css:4883,all,typography,styles/kit.css:4883,ctext
+ctext,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext,font-size,"max(calc((12px - 2pt) / var(--ui-zoom, 1)), calc(.8rem - 2pt))",,styles/kit.css:4883,all,typography,styles/kit.css:4883,ctext
+ctext,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext,line-height,1.25,,styles/kit.css:4883,all,typography,styles/kit.css:4883,ctext
 card-cost-rail,:root .combat[data-layout='formation'] .hand .card > .card-cost-rail,top,calc(10% + .25rem),,styles/kit.css:4886,all,spacing,styles/kit.css:4886,card-cost-rail
 card-cost-rail,:root .combat[data-layout='formation'] .hand .card > .card-cost-rail,left,.35rem,,styles/kit.css:4886,all,spacing,styles/kit.css:4886,card-cost-rail
 card-cost-rail,:root .combat[data-layout='formation'] .hand .card > .card-cost-rail,right,auto,,styles/kit.css:4886,all,spacing,styles/kit.css:4886,card-cost-rail
@@ -13886,7 +13886,7 @@ equipment-poker-card,.equipment-poker-card,background-repeat,no-repeat,,styles/p
 cname,.card .cname,font-family,var(--font-display),,styles/player-polish.css:85,all,typography,styles/player-polish.css:85,cname
 cname,.card .cname,color,var(--parchment),,styles/player-polish.css:85,all,color,styles/player-polish.css:85,cname
 ctype,.card .ctype,letter-spacing,.11em,,styles/player-polish.css:86,all,typography,styles/player-polish.css:86,ctype
-smith-upgrade-preview,.card .ctext,color,var(--parchment),,styles/player-polish.css:87,all,color,styles/player-polish.css:87,ctext
+ctext,.card .ctext,color,var(--parchment),,styles/player-polish.css:87,all,color,styles/player-polish.css:87,ctext
 art,.card .art,background-color,var(--bg),,styles/player-polish.css:88,all,color,styles/player-polish.css:88,art
 selected,.card:is(.selected,outline,2px solid var(--gold),,styles/player-polish.css:89,all,style.other,styles/player-polish.css:89,selected
 selected,.card:is(.selected,outline-offset,2px,,styles/player-polish.css:89,all,style.other,styles/player-polish.css:89,selected
@@ -17791,14 +17791,14 @@ deck-editor-reading,.deck-editor .deck-editor-reading > .card,pointer-events,non
 deck-editor-reading,.deck-editor .deck-editor-reading > .card,box-sizing,border-box,,styles/ui.css:1460,all,style.other,styles/ui.css:1460,deck-editor-reading
 cname,.deck-editor .deck-editor-reading .card > .cname,font-size,2.3rem,,styles/ui.css:1461,all,typography,styles/ui.css:1461,cname
 cname,.deck-editor .deck-editor-reading .card > .cname,padding,1rem,,styles/ui.css:1461,all,spacing,styles/ui.css:1461,cname
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .ctext,font-size,1.8rem,,styles/ui.css:1462,all,typography,styles/ui.css:1462,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .ctext,line-height,1.45,,styles/ui.css:1462,all,typography,styles/ui.css:1462,ctext
+ctext,.deck-editor .deck-editor-reading .card .ctext,font-size,1.8rem,,styles/ui.css:1462,all,typography,styles/ui.css:1462,ctext
+ctext,.deck-editor .deck-editor-reading .card .ctext,line-height,1.45,,styles/ui.css:1462,all,typography,styles/ui.css:1462,ctext
 cd-body,.deck-editor .deck-editor-reading .card .cd-body,display,flex,,styles/ui.css:1463,all,style.other,styles/ui.css:1463,cd-body
 cd-body,.deck-editor .deck-editor-reading .card .cd-body,flex-direction,column,,styles/ui.css:1463,all,style.other,styles/ui.css:1463,cd-body
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .cd-body .ctext,flex,1,,styles/ui.css:1464,all,style.other,styles/ui.css:1464,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .cd-body .ctext,display,block,,styles/ui.css:1464,all,style.other,styles/ui.css:1464,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .cd-body .ctext,padding-top,1.8rem,,styles/ui.css:1464,all,spacing,styles/ui.css:1464,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .cd-body .ctext,text-align,center,,styles/ui.css:1464,all,typography,styles/ui.css:1464,ctext
+ctext,.deck-editor .deck-editor-reading .card .cd-body .ctext,flex,1,,styles/ui.css:1464,all,style.other,styles/ui.css:1464,ctext
+ctext,.deck-editor .deck-editor-reading .card .cd-body .ctext,display,block,,styles/ui.css:1464,all,style.other,styles/ui.css:1464,ctext
+ctext,.deck-editor .deck-editor-reading .card .cd-body .ctext,padding-top,1.8rem,,styles/ui.css:1464,all,spacing,styles/ui.css:1464,ctext
+ctext,.deck-editor .deck-editor-reading .card .cd-body .ctext,text-align,center,,styles/ui.css:1464,all,typography,styles/ui.css:1464,ctext
 ctype,.deck-editor .deck-editor-reading .card .ctype,font-size,1.4rem,,styles/ui.css:1465,all,typography,styles/ui.css:1465,ctype
 ctype,.deck-editor .deck-editor-reading .card .ctype,letter-spacing,.16em,,styles/ui.css:1465,all,typography,styles/ui.css:1465,ctype
 card-cost-rail,.deck-editor .deck-editor-reading .card .card-cost-rail,font-size,1.6rem,,styles/ui.css:1466,all,typography,styles/ui.css:1466,card-cost-rail
@@ -17988,11 +17988,11 @@ cname,.deck-editor .deck-editor-reading .card > .cname,min-height,0,,styles/ui.c
 deck-editor-reading,.deck-editor .deck-editor-reading .card > .art,height,auto,,styles/ui.css:1554,all,spacing,styles/ui.css:1554,deck-editor-reading
 deck-editor-reading,.deck-editor .deck-editor-reading .card > .art,aspect-ratio,auto,,styles/ui.css:1554,all,style.other,styles/ui.css:1554,deck-editor-reading
 deck-editor-reading,.deck-editor .deck-editor-reading .card > .art,min-height,0,,styles/ui.css:1554,all,spacing,styles/ui.css:1554,deck-editor-reading
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .ctext,overflow,visible,,styles/ui.css:1555,all,style.other,styles/ui.css:1555,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .ctext,-webkit-line-clamp,unset,,styles/ui.css:1555,all,style.other,styles/ui.css:1555,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .ctext,max-height,none,,styles/ui.css:1555,all,spacing,styles/ui.css:1555,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .cd-body .ctext,padding,1.4rem 1.2rem .7rem,,styles/ui.css:1556,all,spacing,styles/ui.css:1556,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .cd-body .ctext,flex,none,,styles/ui.css:1556,all,style.other,styles/ui.css:1556,ctext
+ctext,.deck-editor .deck-editor-reading .card .ctext,overflow,visible,,styles/ui.css:1555,all,style.other,styles/ui.css:1555,ctext
+ctext,.deck-editor .deck-editor-reading .card .ctext,-webkit-line-clamp,unset,,styles/ui.css:1555,all,style.other,styles/ui.css:1555,ctext
+ctext,.deck-editor .deck-editor-reading .card .ctext,max-height,none,,styles/ui.css:1555,all,spacing,styles/ui.css:1555,ctext
+ctext,.deck-editor .deck-editor-reading .card .cd-body .ctext,padding,1.4rem 1.2rem .7rem,,styles/ui.css:1556,all,spacing,styles/ui.css:1556,ctext
+ctext,.deck-editor .deck-editor-reading .card .cd-body .ctext,flex,none,,styles/ui.css:1556,all,style.other,styles/ui.css:1556,ctext
 cd-body,.deck-editor .deck-editor-reading .card .cd-body,overflow-y,auto,,styles/ui.css:1557,all,style.other,styles/ui.css:1557,cd-body
 cd-body,.deck-editor .deck-editor-reading .card .cd-body,min-height,0,,styles/ui.css:1557,all,spacing,styles/ui.css:1557,cd-body
 cd-body,.deck-editor .deck-editor-reading .card .cd-body,pointer-events,auto,,styles/ui.css:1557,all,style.other,styles/ui.css:1557,cd-body
@@ -18046,7 +18046,7 @@ modal-btnrow,.deck-editor .deck-editor-foot > .modal-btnrow,margin-left,auto,,st
 deck-editor-reading,.deck-editor .deck-editor-reading > .card,width,"min(100%, var(--deck-inspect-width), max(180px, calc((100dvh - 340px) * var(--card-ratio))))",(min-width: 1001px) and (max-height: 820px),styles/ui.css:1570,other,spacing,styles/ui.css:1570,deck-editor-reading
 cname,.deck-editor .deck-editor-reading .card > .cname,font-size,2rem,(min-width: 1001px) and (max-height: 820px),styles/ui.css:1571,other,typography,styles/ui.css:1571,cname
 cname,.deck-editor .deck-editor-reading .card > .cname,padding-block,.8rem,(min-width: 1001px) and (max-height: 820px),styles/ui.css:1571,other,spacing,styles/ui.css:1571,cname
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .cd-body .ctext,padding-top,.8rem,(min-width: 1001px) and (max-height: 820px),styles/ui.css:1572,other,spacing,styles/ui.css:1572,ctext
+ctext,.deck-editor .deck-editor-reading .card .cd-body .ctext,padding-top,.8rem,(min-width: 1001px) and (max-height: 820px),styles/ui.css:1572,other,spacing,styles/ui.css:1572,ctext
 deck-editor-main,.deck-editor-tile .deck-editor-main,grid-template-columns,"5rem minmax(0, 1fr) auto",(max-width: 1100px) and (min-width: 1001px),styles/ui.css:1575,other,style.other,styles/ui.css:1575,deck-editor-main
 deck-editor-class,.deck-editor-class,display,none,(max-width: 1000px),styles/ui.css:1578,other,style.other,styles/ui.css:1578,deck-editor-class
 deck-editor-counter,.deck-editor-counter,margin-left,auto,(max-width: 1000px),styles/ui.css:1579,other,spacing,styles/ui.css:1579,deck-editor-counter
@@ -18335,8 +18335,8 @@ deck-editor-inspector,.deck-editor-inspector,padding-inline,1.4rem,(min-width: 1
 deck-editor-inspector,.deck-editor-inspector,gap,.5rem,(min-width: 1001px),styles/ui.css:1704,other,spacing,styles/ui.css:1704,deck-editor-inspector
 deck-editor-reading,.deck-editor-reading,padding,1.8rem 1rem .6rem,(min-width: 1001px),styles/ui.css:1705,other,spacing,styles/ui.css:1705,deck-editor-reading
 cname,.deck-editor .deck-editor-reading .card > .cname,font-size,1.8rem,(min-width: 1001px),styles/ui.css:1706,other,typography,styles/ui.css:1706,cname
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .ctext,font-size,1.4rem,(min-width: 1001px),styles/ui.css:1707,other,typography,styles/ui.css:1707,ctext
-smith-upgrade-preview,.deck-editor .deck-editor-reading .card .ctext,line-height,1.4,(min-width: 1001px),styles/ui.css:1707,other,typography,styles/ui.css:1707,ctext
+ctext,.deck-editor .deck-editor-reading .card .ctext,font-size,1.4rem,(min-width: 1001px),styles/ui.css:1707,other,typography,styles/ui.css:1707,ctext
+ctext,.deck-editor .deck-editor-reading .card .ctext,line-height,1.4,(min-width: 1001px),styles/ui.css:1707,other,typography,styles/ui.css:1707,ctext
 ctype,.deck-editor .deck-editor-reading .card .ctype,font-size,"max(1.1rem, var(--deck-min-text))",(min-width: 1001px),styles/ui.css:1708,other,typography,styles/ui.css:1708,ctype
 deck-editor-flavor,.deck-editor .deck-editor-reading .card .deck-editor-flavor,font-size,"max(1.1rem, var(--deck-min-text))",(min-width: 1001px),styles/ui.css:1709,other,typography,styles/ui.css:1709,deck-editor-flavor
 deck-editor-flavor,.deck-editor .deck-editor-reading .card .deck-editor-flavor,padding-inline,1rem,(min-width: 1001px),styles/ui.css:1709,other,spacing,styles/ui.css:1709,deck-editor-flavor

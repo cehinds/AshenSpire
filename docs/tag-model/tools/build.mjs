@@ -390,6 +390,37 @@ const kitNames = file => {
   return out;
 };
 const escapeRe = w => w.replace(/[$]/g, '\\$');
+// A shared module is one that another src module imports from. A catalog component
+// whose view clause says it runs `inside` another surface (smith-upgrade-preview:
+// view=card.upgradePreviewHtml inside smithUpgradeModal) is embedding a function of
+// a shared module, so the classes that function's own body sets belong to the
+// shared renderer, not to the embedding component. The renderer has no catalog row
+// of its own in that case, so those classes are left unowned (see README,
+// cssClasses).
+const moduleKey = p => p.replace(/\.js$/, '');
+const importedNamesOf = new Map(); // module key -> Set of names other modules import from it
+{
+  const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e => {
+    const p = join(dir, e.name);
+    return e.isDirectory() ? walk(p) : e.name.endsWith('.js') ? [p] : [];
+  });
+  for (const file of walk(join(ROOT, 'src'))) {
+    const from = moduleKey(file);
+    const dir = dirname(file);
+    for (const m of readFileSync(file, 'utf8').matchAll(/\bimport\s*\{([^}]*)\}\s*from\s*['"](\.{1,2}\/[^'"]+)['"]/g)) {
+      const t = resolve(dir, m[2]);
+      for (const key of new Set([moduleKey(t), moduleKey(join(t, 'index.js'))])) {
+        if (key === from) continue;
+        if (!importedNamesOf.has(key)) importedNamesOf.set(key, new Set());
+        for (const spec of m[1].split(',')) {
+          const name = spec.trim().split(/\s+as\s+/)[0].trim();
+          if (name && !name.startsWith('type ')) importedNamesOf.get(key).add(name);
+        }
+      }
+    }
+  }
+}
+const isSharedModule = file => (importedNamesOf.get(moduleKey(resolve(ROOT, file))) || new Set()).size > 0;
 const CALL_DEPTH = 2;
 const wordsOfComponent = (file, notes) => {
   const src = sourceOfOwner(file);
@@ -405,7 +436,8 @@ const wordsOfComponent = (file, notes) => {
   const addBody = (name, body, depth) => {
     if (least.has(name) && least.get(name) <= depth) return;
     least.set(name, depth);
-    for (const w of classWordsOf(body)) out.add(w);
+    const embeddedRenderer = depth === 0 && /view=[^;]*\binside\s+\S/.test(notes) && isSharedModule(file);
+    if (!embeddedRenderer) for (const w of classWordsOf(body)) out.add(w);
     for (const [local, exported] of kitNames(file)) {
       // A bare call only: not preceded by an identifier character, a dot or a $.
       if (new RegExp(`(?<![\\w$.])${escapeRe(local)}\\s*\\(`).test(body)) for (const w of kitClassesOf.get(exported)) out.add(w);
@@ -433,16 +465,21 @@ const cssCounts = { catalog: 0, resolved: 0, unresolved: 0, sameAsId: 0 };
   c.rows = c.rows.map((r) => {
     const nr = r.slice();
     // Notes are rewritten from their base text, so a second run changes nothing.
-    const base = String(r[notesI]).replace(/(; )?css:unresolved/g, '');
+    const base = String(r[notesI]).replace(/(; )?css:unresolved/g, '').replace(/(; )?owner:shared-renderer/g, '');
     const isCatalog = /\[catalog\b/.test(base);
     let classes = [];
     if (isCatalog) {
       cssCounts.catalog++;
+      // A view that runs inside another surface and names a function of a shared
+      // module: its own function's classes are the shared renderer's (see wordsOfComponent).
+      const embedsShared = /view=[^;]*\binside\s+\S/.test(base) && isSharedModule(r[fileI]) && !selectorClasses.has(r[idI]);
       if (selectorClasses.has(r[idI])) { classes = [r[idI]]; cssCounts.sameAsId++; }
       else classes = [...wordsOfComponent(r[fileI], base)].filter(w => selectorClasses.has(w)).sort();
       if (classes.length) cssCounts.resolved++;
       else cssCounts.unresolved++;
-      nr[notesI] = classes.length ? base : (base ? base + '; ' : '') + CSS_UNRESOLVED;
+      const owner = embedsShared ? 'owner:shared-renderer' : '';
+      const tail = [owner, classes.length ? '' : CSS_UNRESOLVED].filter(Boolean).join('; ');
+      nr[notesI] = [base, tail].filter(Boolean).join('; ');
     } else {
       nr[notesI] = base;
     }
