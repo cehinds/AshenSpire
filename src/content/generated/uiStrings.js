@@ -5225,6 +5225,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.stepperCount",
+    "extends": "",
+    "short": "{inDeck}/{owned}",
+    "full": "{inDeck} in deck of {owned} owned.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stepperCount.unlimited",
+    "extends": "",
+    "short": "{inDeck}/∞",
+    "full": "{inDeck} in deck; unlimited copies.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.count",
     "extends": "",
     "short": "×{count}",
@@ -5257,6 +5271,132 @@ export const uiStrings = [
     "extends": "",
     "short": "－",
     "full": "Take {name} out of the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.attack",
+    "extends": "",
+    "short": "Attack",
+    "full": "Attack stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.defend",
+    "extends": "",
+    "short": "Defend",
+    "full": "Defend stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.counter",
+    "extends": "",
+    "short": "Counter",
+    "full": "Counter stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.smash",
+    "extends": "",
+    "short": "Smash",
+    "full": "Smash stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.sweep",
+    "extends": "",
+    "short": "Sweep",
+    "full": "Sweep stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.ranged",
+    "extends": "",
+    "short": "Ranged",
+    "full": "Ranged stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.spell",
+    "extends": "",
+    "short": "Spell",
+    "full": "Spell card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "Skill card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.power",
+    "extends": "",
+    "short": "Power",
+    "full": "Power card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.consumable",
+    "extends": "",
+    "short": "Consumable",
+    "full": "Consumable card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank",
+    "extends": "",
+    "short": "Rank {rank}",
+    "full": "Card rank {rank}.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.cantrip",
+    "extends": "",
+    "short": "Cantrip",
+    "full": "Rank 0 spell, a cantrip.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.basic",
+    "extends": "",
+    "short": "Basic",
+    "full": "Rank 0 combat maneuver.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.melee",
+    "extends": "",
+    "short": "Melee",
+    "full": "Melee range: reaches the enemy in front.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.reach",
+    "extends": "",
+    "short": "Reach",
+    "full": "Reach range: reaches past the front enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.ranged",
+    "extends": "",
+    "short": "Ranged",
+    "full": "Ranged: reaches any enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.physical",
+    "extends": "",
+    "short": "Physical",
+    "full": "Physical card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.magical",
+    "extends": "",
+    "short": "Magical",
+    "full": "Magical card.",
     "tip": ""
   },
   {
@@ -7518,6 +7658,20 @@ export const uiStrings = [
     "extends": "",
     "short": "Inspect",
     "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspectIcon",
+    "extends": "",
+    "short": "i",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.drawOrder",
+    "extends": "",
+    "short": "Draw order",
+    "full": "Reorder the deck in the order it is drawn.",
     "tip": ""
   },
   {
