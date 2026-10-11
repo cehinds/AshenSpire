@@ -14,7 +14,7 @@ export const COMBAT_TIMING = Object.freeze({
   windupFraction: 0.55,    // share of a lunge before impact when no authored clip sets it
   castGlyphMs: 450,        // life of a non-attack actor's cast glyph
   watchdogBaseMs: 2000,    // fixed slack added to a timeline's watchdog budget
-  fightEndDelayMs: 350,    // pause between the last hit and the spoils screen
+  fightEndDelayMs: 210,    // pause between the last hit and the spoils screen
 });
 
 let animSpeed = 'normal';
