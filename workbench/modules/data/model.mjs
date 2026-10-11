@@ -312,6 +312,19 @@ export function isDirty(table, doc) {
   return serializeTable(table, doc) !== table.text;
 }
 
+/**
+ * Latest-wins gate for table loads. begin() numbers a load; current(n) is true
+ * only for the newest one. A load that finishes after a later click checks
+ * current() before it installs its table, so the last click wins.
+ */
+export function selectionGate() {
+  let latest = 0;
+  return {
+    begin() { latest += 1; return latest; },
+    current(generation) { return generation === latest; },
+  };
+}
+
 /** A save entry for the Workbench files API: { path, text, baseHash }. */
 export function changeFor(table, doc) {
   return { path: table.path, text: serializeTable(table, doc), baseHash: table.baseHash };

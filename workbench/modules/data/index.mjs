@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor, rebaseChanges, findRow } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor, rebaseChanges, findRow, selectionGate } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -49,6 +49,8 @@ export default {
 
     const state = { tables: [], parsed: new Map(), drafts: new Map(), selected: null, grid: null, activeRow: null, tab: 'row', filter: '' };
     let saving = false;
+    // Each table click takes a generation; a load that finishes after a newer click installs nothing.
+    const gate = selectionGate();
     // Only a pointer pick opens the Row panel; arrow keys move the grid's row without covering it.
     let pointerPick = false;
 
@@ -241,8 +243,13 @@ export default {
     }, true);
 
     async function select(path) {
-      const table = await parsedOf(path).catch((e) => { ctx.toast({ kind: 'error', title: `Cannot open ${basename(path)}`, detail: e.message }); return null; });
-      if (!table) return;
+      const generation = gate.begin();
+      let table;
+      try { table = await parsedOf(path); } catch (e) {
+        if (gate.current(generation)) ctx.toast({ kind: 'error', title: `Cannot open ${basename(path)}`, detail: e.message });
+        return;
+      }
+      if (!gate.current(generation)) return;
       const grid = ensureGrid();
       if (state.selected && state.selected !== path) state.drafts.set(state.selected, grid.getData());
       state.selected = path;

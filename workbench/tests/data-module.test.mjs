@@ -227,6 +227,17 @@ test('KEY_SCOPES lists only outfits, and keyScopeFor reads it by path', () => {
   assert.equal(D.keyScopeFor(undefined), null);
 });
 
+test('a selection gate: only the newest table click is current, so a slow earlier load is dropped', () => {
+  const gate = D.selectionGate();
+  const first = gate.begin();
+  const second = gate.begin();
+  assert.equal(gate.current(first), false, 'the earlier click is stale once a later one begins');
+  assert.equal(gate.current(second), true);
+  const third = gate.begin();
+  assert.equal(gate.current(second), false);
+  assert.equal(gate.current(third), true);
+});
+
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
   const { lineDiff } = await import('../core/files.mjs');
   const rel = 'content/source/speakers.csv';
