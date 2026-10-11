@@ -34,6 +34,22 @@ export class History {
     return true;
   }
 
+  /**
+   * Record a snapshot change: { label, undo: snapshot, redo: snapshot }, as the
+   * grid model returns. apply(snapshot) puts the document back to that state.
+   * Equal snapshots are a no-op and leave no step.
+   */
+  pushChange(change, apply) {
+    if (!change || typeof apply !== 'function' || change.undo === undefined || change.redo === undefined) return false;
+    return this.push({
+      label: change.label,
+      before: change.undo,
+      after: change.redo,
+      undo: () => apply(change.undo),
+      redo: () => apply(change.redo),
+    });
+  }
+
   /** Run fn; every push made inside it becomes one step (undone and redone together). */
   group(label, fn) {
     this.#groups.push([]);

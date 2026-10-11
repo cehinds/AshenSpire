@@ -104,6 +104,25 @@ test('a throwing undo keeps the entry where it was', () => {
   assert.equal(h.canRedo, false);
 });
 
+test('pushChange records snapshot changes from the grid model and applies them on undo and redo', () => {
+  const h = new History();
+  const doc = { rows: [1] };
+  const apply = (snap) => { doc.rows = snap.rows.slice(); };
+  // The grid model's shape: { label, undo: snapshot, redo: snapshot }.
+  const change = { label: 'Set cells', undo: { rows: [1] }, redo: { rows: [1, 2] } };
+  doc.rows = [1, 2];
+  assert.equal(h.pushChange(change, apply), true);
+  assert.deepEqual(h.list(), [{ label: 'Set cells', done: true }]);
+  h.undo();
+  assert.deepEqual(doc.rows, [1]);
+  h.redo();
+  assert.deepEqual(doc.rows, [1, 2]);
+  assert.equal(h.pushChange({ label: 'same', undo: { rows: [1] }, redo: { rows: [1] } }, apply), false, 'equal snapshots are a no-op');
+  assert.equal(h.pushChange(null, apply), false);
+  assert.equal(h.pushChange(change, null), false, 'an apply function is required');
+  assert.equal(h.pushChange({ label: 'no snapshots' }, apply), false);
+});
+
 test('the history is limited to 200 steps by default and drops the oldest', () => {
   const h = new History();
   for (let i = 0; i < 205; i += 1) h.push({ label: `s${i}`, undo() {}, redo() {} });
