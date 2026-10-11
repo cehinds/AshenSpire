@@ -161,8 +161,9 @@ export function battlefieldGeometry(presentation, { width, height, footerClearan
 // ---------------------------------------------------------------------------
 // Edits. Every edit returns a new presets object; the input is not changed, and
 // only the entries it names are replaced, so the other values keep their bytes.
-// A slot moves through its own group ("cell-side:row:column"), which the game
-// applies after the section and row offsets, so a px move is exact.
+// A slot moves through its own group ("cell-side:row:column"). The game applies
+// cell and row groups first, then columns, then the section, and clamps each
+// against its members, so a slot's move is solved against that same geometry.
 // ---------------------------------------------------------------------------
 
 const round = (v) => Math.round(v * 1e6) / 1e6;
@@ -195,15 +196,58 @@ export function withGroup(data, key, groupId, patch, { name = groupId } = {}) {
   return { ...data, [key]: { ...layout, presentation: { ...layout.presentation, formationGroups: groups } } };
 }
 
-/** Move slots by px: each slot's own group takes the move, as a percent of the battlefield. */
+/** The presentation with one group's x or y offset (percent) replaced; the group is appended when it does not exist. */
+function withOffset(presentation, groupId, axis, percent) {
+  const list = Array.isArray(presentation.formationGroups) ? presentation.formationGroups : [];
+  const at = list.findIndex((g) => g && g.id === groupId);
+  const base = at >= 0 ? list[at] : { id: groupId, name: groupId, members: [], x: 0, y: 0, scale: 1 };
+  const moved = { ...base, [axis]: percent };
+  return { ...presentation, formationGroups: at >= 0 ? list.map((g, i) => (i === at ? moved : g)) : [...list, moved] };
+}
+
+/**
+ * The slot's group offset (percent) on one axis that lands the slot at `target` px in the
+ * game's own geometry. A slot pushed past the battlefield edge is pinned there, and the
+ * game then shifts its section's other slots, so an out-of-range target takes the edge of
+ * that pinned run (the nearest one to the battlefield's middle) rather than the far side of it.
+ * The group's own range is ±100 percent; a target beyond it is clamped to that.
+ */
+function solveOffset(presentation, groupId, cell, axis, target, extent, size) {
+  const at = (percent) => {
+    const c = battlefieldGeometry(withOffset(presentation, groupId, axis, percent), size).find((p) => p.cell === cell.cell && p.side === cell.side);
+    return axis === 'x' ? c.x : c.ground;
+  };
+  const lowEdge = target < extent / 2;
+  const below = (percent) => (lowEdge ? at(percent) <= target : at(percent) < target);
+  let lo = -100, hi = 100;
+  if (below(hi)) return hi;
+  if (!below(lo)) return lo;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (below(mid)) lo = mid; else hi = mid;
+  }
+  return lowEdge ? lo : hi;
+}
+
+/**
+ * Move slots by px. A slot's move is its own cell-* group and nothing else: the group's offset is
+ * solved so the slot lands where it was dropped, clamped to the battlefield edge. The section,
+ * row and column groups are never written, and a slot clamped at the edge leaves its neighbours in place.
+ */
 export function moveSlots(data, key, moves, { width, height }) {
   let next = data;
   for (const m of moves) {
     if (!m.dx && !m.dy) continue;
-    const group = (next[key].presentation.formationGroups || []).find((g) => g && g.id === m.groupId);
-    const x = (group?.x || 0) + (m.dx / width) * 100;
-    const y = (group?.y || 0) + (m.dy / height) * 100;
-    next = withGroup(next, key, m.groupId, { x, y }, { name: m.name });
+    const found = /^cell-(player|enemy):([0-5]):([0-2])$/.exec(m.groupId);
+    if (!found) throw Error(`${m.groupId} is not a slot group`);
+    const cell = { side: found[1], row: Number(found[2]), column: Number(found[3]) };
+    const presentation = next[key].presentation;
+    const size = { width, height };
+    const here = battlefieldGeometry(presentation, size).find((c) => c.side === cell.side && c.row === cell.row && c.column === cell.column);
+    const patch = {};
+    if (m.dx) patch.x = solveOffset(presentation, m.groupId, here, 'x', clamp(here.x + m.dx, 0, width), width, size);
+    if (m.dy) patch.y = solveOffset(presentation, m.groupId, here, 'y', clamp(here.ground + m.dy, 0, height), height, size);
+    next = withGroup(next, key, m.groupId, patch, { name: m.name });
   }
   return next;
 }

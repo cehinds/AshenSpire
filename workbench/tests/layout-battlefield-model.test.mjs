@@ -89,6 +89,8 @@ test('the geometry constants match the config file the game reads', () => {
   for (const k of Object.keys(B.GRID)) assert.equal(B.GRID[k], grid[k], k);
 });
 
+// A stored percent is six places, so a px move is exact to about a millionth of a px; 1e-3 px is the bar for a moved slot.
+const near = (a, b, what) => assert.ok(Math.abs(a - b) < 1e-3, `${what}: ${a} vs ${b}`);
 const W = 1641, H = 526;
 const slots = (key, parts) => B.battlefieldGeometry(presentationOf(parts, key), { width: W, height: H });
 
@@ -116,6 +118,69 @@ test('dragging a slot by px moves exactly that slot, and the others keep their p
     // Offsets are stored as percent to six places, so a move is exact to a few millionths of a px.
     if (c.cell === 'B1') { assert.ok(Math.abs(c.x - old.x - 30) < 1e-3, 'B1 moved x'); assert.ok(Math.abs(c.ground - old.ground + 12) < 1e-3, 'B1 moved ground'); }
     else { eq(c.x, old.x, `${c.cell} x unchanged`); eq(c.ground, old.ground, `${c.cell} ground unchanged`); }
+  }
+});
+
+test('dragging A1 200px left on 2x2 moves A1 to its edge clamp and no neighbour', () => {
+  const parts = B.parsePresets(realText);
+  const before = slots('2x2', parts);
+  const a1 = before.find((c) => c.cell === 'A1');
+  const next = B.moveSlots(parts.data, '2x2', [{ groupId: B.slotGroupId(a1), dx: -200, dy: 0, name: 'A1' }], { width: W, height: H });
+  const after = slots('2x2', { ...parts, data: next });
+  for (const c of after) {
+    const old = before.find((p) => p.cell === c.cell);
+    if (c.cell === 'A1') {
+      // Its own clamp: the battlefield edge, where the game would otherwise shift the section's other slots.
+      near(c.x, 0, 'A1 lands at its edge clamp');
+      near(c.ground, old.ground, 'A1 keeps its ground');
+    } else {
+      near(c.x, old.x, `${c.cell} x unchanged`);
+      near(c.ground, old.ground, `${c.cell} ground unchanged`);
+    }
+  }
+});
+
+test('an in-range drag lands the slot exactly where it was dropped, and no neighbour moves', () => {
+  const parts = B.parsePresets(realText);
+  const before = slots('2x2', parts);
+  const a1 = before.find((c) => c.cell === 'A1');
+  const next = B.moveSlots(parts.data, '2x2', [{ groupId: B.slotGroupId(a1), dx: -40, dy: 25, name: 'A1' }], { width: W, height: H });
+  const after = slots('2x2', { ...parts, data: next });
+  for (const c of after) {
+    const old = before.find((p) => p.cell === c.cell);
+    if (c.cell === 'A1') { near(c.x, a1.x - 40, 'A1 x'); near(c.ground, a1.ground + 25, 'A1 ground'); }
+    else { near(c.x, old.x, `${c.cell} x unchanged`); near(c.ground, old.ground, `${c.cell} ground unchanged`); }
+  }
+});
+
+test('the output of a slot move, once its anchors are refreshed, passes the presets test', async () => {
+  // The same reproduction the presets test runs (tests/formation-positioning-presets.test.mjs), on the edited file's text.
+  const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { pathToFileURL } = await import('node:url');
+  const parts = B.parsePresets(realText);
+  const a1 = slots('2x2', parts).find((c) => c.cell === 'A1');
+  const moved = B.refreshAnchors(B.moveSlots(parts.data, '2x2', [{ groupId: B.slotGroupId(a1), dx: -200, dy: 0, name: 'A1' }], { width: W, height: H }), '2x2', parts.data);
+  const text = B.serializePresets(parts, moved);
+  const dir = mkdtempSync(join(tmpdir(), 'bf-presets-'));
+  try {
+    const file = join(dir, 'presets.mjs');
+    writeFileSync(file, text);
+    const { FORMATION_POSITIONING_PRESETS } = await import(pathToFileURL(file).href);
+    const { combatFormation } = await import('../../src/ui/models/CombatFormationModel.js');
+    for (const [layout, source] of Object.entries(FORMATION_POSITIONING_PRESETS)) {
+      for (const scale of [1, 0.5]) {
+        const presentation = { ...source.presentation, formationGroups: JSON.stringify(source.presentation.formationGroups) };
+        const plan = combatFormation({ width: source.battlefield.width * scale, height: source.battlefield.height * scale, presentation, friends: [], enemies: [] });
+        for (const expected of source.anchors) {
+          const actual = plan.cells.find((c) => c.cell === expected.cell);
+          eq(actual.x, expected.left * scale, `${layout} ${expected.cell} x at ${scale}`);
+          eq(actual.ground, expected.top * scale, `${layout} ${expected.cell} ground at ${scale}`);
+        }
+      }
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
 
