@@ -3,10 +3,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { createWorkbench } from '../server.mjs';
+import { createWorkbench, projectStateDir } from '../server.mjs';
 import { allowedKind, lineDiff } from '../core/files.mjs';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
@@ -101,19 +103,50 @@ test('save: hash mismatch is a 409 with the current hash, and the disk is untouc
   assert.equal(await fs.readFile(path.join(root, 'styles/main.css'), 'utf8'), 'external{}\n');
 });
 
-test('save writes atomically, returns new hashes, creates a backup set and releases the build lock', async (t) => {
+test('save writes atomically, returns new hashes, creates a backup set, and holds the build lock during the write', async (t) => {
   const root = await project(t);
-  const { post, stateDir } = await boot(t, root);
-  const res = await post('/api/files/save', { changes: [{ path: 'content/source/data.json', text: '{"rows":[{"id":"b"}]}\n', baseHash: sha('{"rows":[{"id":"a"}]}\n') }] });
+  const stateDir = path.join(root, '.wb-state');
+  // The fileFault seam runs just before the rename: the build lock must be held by this process then.
+  let heldDuringWrite = null;
+  const app = await createWorkbench({
+    root, port: 0, children: false, stateDir, debounceMs: 120,
+    fileFault: (rel) => { if (rel === 'content/source/data.json') heldDuringWrite = JSON.parse(fsSync.readFileSync(path.join(root, '.build-lock'), 'utf8')); },
+  });
+  t.after(() => app.close());
+  const res = await fetch(`${app.url}/api/files/save`, {
+    method: 'POST',
+    headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [{ path: 'content/source/data.json', text: '{"rows":[{"id":"b"}]}\n', baseHash: sha('{"rows":[{"id":"a"}]}\n') }] }),
+  });
   assert.equal(res.status, 200);
   const body = await res.json();
   assert.equal(body.files[0].hash, sha('{"rows":[{"id":"b"}]}\n'));
-  const dir = path.join(stateDir, 'backups', body.backup);
+  assert.equal(heldDuringWrite?.pid, process.pid, 'the lock was held by this process during the write');
+  assert.equal(heldDuringWrite?.holder, 'Workbench file save');
+  const dir = path.join(projectStateDir(root, stateDir), 'backups', body.backup);
   const manifest = JSON.parse(await fs.readFile(path.join(dir, 'manifest.json'), 'utf8'));
   assert.equal(manifest.files[0].oldHash, sha('{"rows":[{"id":"a"}]}\n'));
   assert.equal(await fs.readFile(path.join(dir, '0.bak'), 'utf8'), '{"rows":[{"id":"a"}]}\n');
   assert.deepEqual((await fs.readdir(path.join(root, 'content/source'))).filter((f) => f.endsWith('.tmp')), []);
-  assert.equal(await fs.stat(path.join(root, '.build-lock')).then(() => true, () => false), false);
+  assert.equal(await fs.stat(path.join(root, '.build-lock')).then(() => true, () => false), false, 'released after the save');
+});
+
+test('a save under styles/ waits for a foreign build lock; on timeout it writes nothing', async (t) => {
+  const root = await project(t);
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => child.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: child.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const app = await createWorkbench({ root, port: 0, children: false, stateDir: path.join(root, '.wb-state'), debounceMs: 120, lockWaitMs: 300 });
+  t.after(() => app.close());
+  const res = await fetch(`${app.url}/api/files/save`, {
+    method: 'POST',
+    headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [{ path: 'styles/x.css', text: 'x{}\n', baseHash: null }] }),
+  });
+  assert.equal(res.status, 409);
+  assert.match((await res.json()).error, /UI Studio config compile is running/);
+  assert.equal(await fs.stat(path.join(root, 'styles/x.css')).then(() => true, () => false), false, 'nothing written');
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, '.build-lock'), 'utf8')).token, 'theirs', 'their lock stands');
 });
 
 test('save with a bad second change writes nothing; a write failure rolls the first file back', async (t) => {
@@ -141,6 +174,47 @@ test('save with a bad second change writes nothing; a write failure rolls the fi
   assert.match((await res.json()).error, /rolled back/);
   assert.equal(await fs.readFile(path.join(root, 'styles/main.css'), 'utf8'), 'body{}\n');
   assert.equal(await fs.readFile(path.join(root, 'src/engine/rules.js'), 'utf8'), 'export const x = 1;\n');
+});
+
+test('a save that fails with 409 after its backup set was written leaves backups() unchanged', async (t) => {
+  const root = await project(t);
+  const stateDir = path.join(root, '.wb-state');
+  // The first file's write also changes the second file on disk, so the second file's check
+  // fails after the backup set exists. The first file is rolled back.
+  const app = await createWorkbench({
+    root, port: 0, children: false, stateDir, debounceMs: 120,
+    fileFault: (rel) => { if (rel === 'styles/main.css') fsSync.writeFileSync(path.join(root, 'src/engine/rules.js'), 'export const x = 3;\n'); },
+  });
+  t.after(() => app.close());
+  const list = async () => (await (await fetch(`${app.url}/api/files/backups`, { headers: { 'x-studio-token': app.token } })).json()).backups;
+  const before = await list();
+  const res = await fetch(`${app.url}/api/files/save`, {
+    method: 'POST',
+    headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [
+      { path: 'styles/main.css', text: 'one{}\n', baseHash: sha('body{}\n') },
+      { path: 'src/engine/rules.js', text: 'export const x = 2;\n', baseHash: sha('export const x = 1;\n') },
+    ] }),
+  });
+  assert.equal(res.status, 409);
+  assert.equal(await fs.readFile(path.join(root, 'styles/main.css'), 'utf8'), 'body{}\n', 'rolled back');
+  assert.deepEqual(await list(), before, 'the failed save left no backup set');
+  assert.deepEqual((await fs.readdir(stateDir, { recursive: true })).filter((f) => /manifest\.json$/.test(f)), [], 'no manifest on disk');
+});
+
+test('a symlink inside an allowlisted directory that points outside the project is refused for read and save', async (t) => {
+  const root = await project(t);
+  const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'wb-outside-')));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.writeFile(path.join(outside, 'secret.css'), 'secret{}\n');
+  await fs.symlink(path.join(outside, 'secret.css'), path.join(root, 'styles/link.css'));
+  const { call, post } = await boot(t, root);
+  const read = await call('/api/files/read?path=styles%2Flink.css');
+  assert.equal(read.ok, false);
+  assert.doesNotMatch(await read.text(), /secret/);
+  const save = await post('/api/files/save', { changes: [{ path: 'styles/link.css', text: 'pwned{}\n', baseHash: sha('secret{}\n') }] });
+  assert.equal(save.ok, false);
+  assert.equal(await fs.readFile(path.join(outside, 'secret.css'), 'utf8'), 'secret{}\n', 'the file outside is untouched');
 });
 
 test('backups are listed and pruned to keepBackups sets', async (t) => {

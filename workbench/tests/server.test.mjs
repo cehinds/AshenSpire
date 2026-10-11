@@ -6,8 +6,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createWorkbench, listPreviews } from '../server.mjs';
+import { createWorkbench, listPreviews, projectStateDir } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS, JobRunner, GENERATED, killTree } from '../core/jobs.mjs';
 import { Settings } from '../core/settings.mjs';
@@ -115,7 +116,7 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
   const { runs } = await (await call('/api/jobs')).json();
   assert.equal(runs[0].status, 'passed');
   assert.equal(runs[0].log, undefined, 'the list carries summaries, not logs');
-  const saved = JSON.parse(await fs.readFile(path.join(root, '.wb-state/jobs.json'), 'utf8'));
+  const saved = JSON.parse(await fs.readFile(path.join(projectStateDir(root, path.join(root, '.wb-state')), 'jobs.json'), 'utf8'));
   assert.equal(saved.length, 2);
   assert.match(saved[0].log, /built/);
 });
@@ -669,4 +670,35 @@ test('a started job is persisted at once, so a restart before it finishes lists 
   const run = second.list().find((r) => r.runId === started.runId);
   assert.equal(run.status, 'cancelled');
   assert.equal(run.message, 'The Workbench stopped while this ran');
+});
+
+test('two projects that share a state dir keep separate backups and job history', async (t) => {
+  const shared = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'wb-shared-')));
+  t.after(() => fs.rm(shared, { recursive: true, force: true }));
+  const stateDir = path.join(shared, 'state');
+  const rootA = await project(t);
+  const rootB = await project(t);
+  for (const root of [rootA, rootB]) {
+    await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+    await fs.writeFile(path.join(root, 'tools/config-build.mjs'), 'console.log("built");\n');
+  }
+  const appA = await createWorkbench({ root: rootA, port: 0, children: false, stateDir, debounceMs: 120 });
+  const appB = await createWorkbench({ root: rootB, port: 0, children: false, stateDir, debounceMs: 120 });
+  t.after(() => appA.close());
+  t.after(() => appB.close());
+  const get = (app, p) => fetch(`${app.url}${p}`, { headers: { 'x-studio-token': app.token } }).then((r) => r.json());
+  const post = (app, p, body) => fetch(`${app.url}${p}`, { method: 'POST', headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+  // A saves a file and runs a job; B does neither.
+  const save = await post(appA, '/api/files/save', { changes: [{ path: 'styles/main.css', text: 'a{}\n', baseHash: createHash('sha256').update('body{}\n').digest('hex') }] });
+  assert.equal(save.status, 200);
+  appA.jobs.start('config-build');
+  for (let i = 0; i < 100 && appA.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 20));
+
+  assert.notEqual(projectStateDir(rootA, stateDir), projectStateDir(rootB, stateDir));
+  assert.equal((await get(appA, '/api/files/backups')).backups.length, 1);
+  assert.equal((await get(appB, '/api/files/backups')).backups.length, 0, 'B does not list A\'s backup');
+  assert.equal((await get(appA, '/api/jobs')).runs.length, 1);
+  assert.equal((await get(appB, '/api/jobs')).runs.length, 0, 'B does not list A\'s job history');
+  assert.equal(await fs.readFile(path.join(rootB, 'styles/main.css'), 'utf8'), 'body{}\n', 'B\'s project is untouched');
 });
