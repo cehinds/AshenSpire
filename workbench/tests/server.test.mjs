@@ -609,7 +609,12 @@ test('a live-reload build waits for a job holding the generated-files lock, and 
   assert.throws(() => runner.start('content-build'), /A live-reload build is running/);
   runner.release(GENERATED);
   await fs.writeFile(path.join(root, 'tools/content-build.mjs'), '\n');
-  assert.equal(runner.start('content-build').status, 'running');
+  const rerun = runner.start('content-build');
+  assert.equal(rerun.status, 'running');
+  // The run persists .wb-state/jobs.json when it ends. Wait for that: a write that lands while the
+  // teardown removes the temp dir makes rmdir fail with ENOTEMPTY.
+  for (let i = 0; i < 200 && runner.active.size; i++) await new Promise((r) => setTimeout(r, 20));
+  assert.equal(runner.get(rerun.runId).status, 'passed', runner.get(rerun.runId).log);
 });
 
 test('a job\'s builder that takes the lock itself runs under the job\'s hold, not into a deadlock', async (t) => {
