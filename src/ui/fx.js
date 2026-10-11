@@ -987,7 +987,9 @@ export function playTimeline(events, ctx, done) {
               }
               traceBeat('numbers', event.type);
               if (parts.numbers) safe(() => parts.numbers(ctx));
-              if (ri >= reactions.length) applyBeat();
+              // The bars follow in the next task, so the number is laid out
+              // and painted before the beat's re-render, not after it.
+              if (ri >= reactions.length) schedule(applyBeat, 0);
               else schedule(stepR, speed.stepMs);
             };
             if (!parts.reaction) {
