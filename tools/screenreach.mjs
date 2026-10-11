@@ -205,7 +205,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/screens/map.js',
         // #498: the shortcut handler gained an action argument
         // (onArmoury(armouryAction)) and the plant died patching the bare call.
-        find: "if (onArmoury) onArmoury(armouryAction);",
+        find: "if (onArmoury) leaving(onArmoury)(armouryAction);",
         replace: "if (onMenu) onMenu('relics');",
         expectRed: /equipment shortcut did not open Armoury/,
       },

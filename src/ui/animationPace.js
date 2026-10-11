@@ -1,10 +1,27 @@
 // Shared presentation pace without effect, audio or DOM initialization.
 export const ANIM_SPEEDS = {
-  slow: { beatMs: 700, stepMs: 140, lungeMs: 340, impactCapMs: 420 },
-  normal: { beatMs: 400, stepMs: 90, lungeMs: 260, impactCapMs: 240 },
-  fast: { beatMs: 180, stepMs: 45, lungeMs: 160, impactCapMs: 140 },
+  slow: { beatMs: 420, stepMs: 105, lungeMs: 255, impactCapMs: 317 },
+  normal: { beatMs: 240, stepMs: 68, lungeMs: 195, impactCapMs: 186 },
+  fast: { beatMs: 108, stepMs: 34, lungeMs: 121, impactCapMs: 108 },
   instant: null,
 };
+
+// Fixed combat waits and fractions, named in one place. Values that scale with
+// the setting stay in ANIM_SPEEDS; these do not change with the setting.
+export const COMBAT_TIMING = Object.freeze({
+  instantStepMs: 80,       // stagger of animateEvents (Instant pace or reduced motion)
+  turnBannerFloorMs: 156,  // shortest hold for a turn-banner beat
+  windupFraction: 0.55,    // share of a lunge before impact when no authored clip sets it
+  castGlyphMs: 450,        // life of a non-attack actor's cast glyph
+  watchdogBaseMs: 2000,    // fixed slack added to a timeline's watchdog budget
+  fightEndDelayMs: 210,    // pause between the last hit and the spoils screen
+});
+
+// The wait a timeline holds after a turn-banner beat. The banner's own display
+// time is set from this same value (ui/fx.js), so it is gone when the next beat starts.
+export function turnBannerHoldMs(speed) {
+  return Math.max(COMBAT_TIMING.turnBannerFloorMs, speed.beatMs);
+}
 
 let animSpeed = 'normal';
 export function setAnimSpeed(v) {
