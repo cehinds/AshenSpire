@@ -53,15 +53,16 @@ export function sampleSequence(sequence, elapsed, duration, { reduced = false } 
 }
 
 /**
- * Red hit tint for a hurt reaction: held at .75 for the first 40% of the
- * reaction, then fading to 0 at its end. `progress` is a 0..1 fraction; pass
- * `{ duration }` (ms) to give `progress` as elapsed milliseconds instead.
+ * Red hit tint for a hurt reaction: a strobe over the hurt clip. Frames 2, 4
+ * and 6 of seven return the mask opacity; the other frames return 0. `progress`
+ * is a 0..1 fraction; pass `{ duration }` (ms) to give `progress` as elapsed
+ * milliseconds instead.
  */
 export function hitFlashOpacity(action, progress, { reduced = false, duration } = {}) {
   if (reduced || action !== 'hurt') return 0;
   const t = duration > 0 ? progress / duration : progress;
   if (!(t >= 0) || t >= 1) return 0;
-  return t < .4 ? .75 : .75 * (1 - (t - .4) / .6);
+  return hurtClipFrame(t).red ? HURT_RED_OPACITY : 0;
 }
 
 /** The hurt clip is seven equal frames; frames 2, 4 and 6 (indices 1, 3, 5) are red. */
@@ -76,6 +77,9 @@ export function hurtClipFrame(progress) {
   const index = Math.min(HURT_CLIP_FRAMES - 1, Math.floor(HURT_CLIP_FRAMES * p));
   return { index, red: index % 2 === 1 };
 }
+
+export const HURT_RED_OPACITY = .85;
+export const HURT_CLIP_MIN_MS = 280;
 
 export const HIT_RECOIL_PX = -14;
 export const HIT_RECOIL_PEAK = .3;

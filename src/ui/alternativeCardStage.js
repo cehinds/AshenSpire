@@ -2,7 +2,7 @@ import { alternativeCardAnimations } from '../content/alternativeCardAnimations.
 import { playerCounterSweepSprites } from '../content/playerCounterSweepSprites.js';
 import { playerAttackSprites } from '../content/playerAttackSprites.js';
 import { alternativeSelectedStances } from '../content/alternativeSelectedStances.js';
-import { durationFor, sampleSequence, hitFlashOpacity, hitRecoilX } from '../model/alternativeCardAnimation.js';
+import { durationFor, sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
@@ -158,7 +158,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   // keeps its own clock. A click-skip passes { reaction:true } to end it too.
   function endReaction() { if(flashAt===null)return false;flashAt=null;flashElapsed=0;holdUntil=0;paint();return true; }
   function settleStage({reaction=false}={}) { if(reaction){flashAt=null;flashElapsed=0;holdUntil=0;} settle(); }
-  function hit(ms=220) { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();flashMs=ms>0?ms:220;flashElapsed=0;wake();return true; }
+  function hit(ms=220) { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],

@@ -95,15 +95,17 @@ test('every runtime frame ships in both tiers with matching recorded hashes and 
  }
 });
 
-test('hits flash red for the whole reaction and suppress flashing for reduced motion',()=>{
- assert.ok(hitFlashOpacity('hurt',0)>.7);
- assert.ok(hitFlashOpacity('hurt',.35)>.7,'the tint is held through the first 40%');
- assert.ok(hitFlashOpacity('hurt',.7)>0 && hitFlashOpacity('hurt',.7)<.75,'the tint fades after 40%');
+test('hits strobe red on frames 2, 4 and 6 and suppress flashing for reduced motion',()=>{
+ assert.equal(hitFlashOpacity('hurt',0),0,'frame 1 is untinted');
+ assert.equal(hitFlashOpacity('hurt',1.5/7),.85);
+ assert.equal(hitFlashOpacity('hurt',2.5/7),0);
+ assert.equal(hitFlashOpacity('hurt',3.5/7),.85);
+ assert.equal(hitFlashOpacity('hurt',5.5/7),.85);
+ assert.equal(hitFlashOpacity('hurt',6.5/7),0);
  assert.equal(hitFlashOpacity('hurt',1),0);
- assert.equal(hitFlashOpacity('hurt',0,{reduced:true}),0);
- // Elapsed-milliseconds form: the same curve over a 380 ms heavy reaction.
- assert.ok(hitFlashOpacity('hurt',0,{duration:380})>.7);
- assert.ok(hitFlashOpacity('hurt',133,{duration:380})>.7,'held through 40% of 380 ms');
+ assert.equal(hitFlashOpacity('hurt',1.5/7,{reduced:true}),0);
+ // Elapsed-milliseconds form over a 380 ms heavy reaction.
+ assert.equal(hitFlashOpacity('hurt',1.5*380/7,{duration:380}),.85);
  assert.equal(hitFlashOpacity('hurt',380,{duration:380}),0);
 });
 
