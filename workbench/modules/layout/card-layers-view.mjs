@@ -368,24 +368,26 @@ export function createCardLayersView(root, host) {
 
   // ---- files -------------------------------------------------------------
 
-  /** Take the file's text as the saved base and parse it; a bad file is shown, not edited. */
+  /**
+   * Take the file's text as the saved base. The text is parsed and validated first: a bad file throws
+   * and touches no state, so the caller decides what to show and the draft and history survive it.
+   */
   function install(text, hash) {
+    const parsed = CL.layoutFromDisk(text);
     st.text = text;
     st.hash = hash;
+    st.data = parsed.data;
+    st.format = parsed.format;
+    st.problems = [];
+    st.error = null;
     st.note = '';
-    try {
-      const parsed = CL.parseLayout(text);
-      st.data = parsed.data;
-      st.format = parsed.format;
-      st.problems = parsed.problems;
-      st.error = null;
-    } catch (err) {
-      st.data = null;
-      st.problems = [];
-      st.error = `${CL.LAYOUT_FILE}: ${err.message}`;
-    }
-    if (st.data && !layerOf(st.selected)) st.selected = st.data.layers.at(-1)?.id ?? null;
+    if (!layerOf(st.selected)) st.selected = st.data.layers.at(-1)?.id ?? null;
     host.history.clear();
+  }
+
+  /** A reload that could not read the disk copy: the draft and its history stay, and the user is told why. */
+  function reloadFailed(message) {
+    host.toast({ kind: 'error', title: `Could not reload ${CL.LAYOUT_FILE}`, detail: message });
   }
 
   async function fetchLayout() {
@@ -397,6 +399,7 @@ export function createCardLayersView(root, host) {
       const r = await fetchLayout();
       install(r.text, r.hash);
     } catch (err) {
+      st.text = null; st.hash = null; st.data = null; st.problems = [];
       st.error = `Could not load ${CL.LAYOUT_FILE}: ${err.message}`;
     }
     paintAll();
@@ -438,16 +441,22 @@ export function createCardLayersView(root, host) {
     /** Reload after a conflict: the draft and its history go. A file deleted on disk reads as missing. */
     async reload(path) {
       if (path !== CL.LAYOUT_FILE) return undefined;
+      let r;
       try {
-        const r = await fetchLayout();
-        install(r.text, r.hash);
+        r = await fetchLayout();
       } catch (err) {
-        if (err.status !== 404) throw err;
+        if (err.status !== 404) { reloadFailed(err.message); return undefined; }
         st.text = null; st.data = null; st.hash = null;
         st.error = `${CL.LAYOUT_FILE} was deleted on disk`;
         host.history.clear();
         paintAll();
         return { missing: true };
+      }
+      try {
+        install(r.text, r.hash);
+      } catch (err) {
+        reloadFailed(err.message);
+        return undefined;
       }
       paintAll();
       return undefined;
