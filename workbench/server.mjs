@@ -143,17 +143,23 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';
+  // Requests being answered and live-reload builds can still write (a save lands its files and backup set;
+  // a build writes its output). close() stops the builds and waits for both before it resolves.
+  const pending = new Set();
+  const track = (promise) => { pending.add(promise); const done = () => pending.delete(promise); promise.then(done, done); return promise; };
+  let closed = false; const liveBuilds = new Set();
 
   // Live reload: one batch at a time; builds first when authored sources changed.
   let watcher = null; let chain = Promise.resolve();
-  const runBuild = (script) => new Promise((resolve) => {
+  const runBuild = (script) => track(new Promise((resolve) => {
     let out = '';
     const child = spawn(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0', ...jobs.lockEnv(GENERATED) }, windowsHide: true });
+    liveBuilds.add(child);
     child.stdout.on('data', (d) => { out = (out + d).slice(-20000); });
     child.stderr.on('data', (d) => { out = (out + d).slice(-20000); });
-    child.on('error', (e) => resolve({ code: -1, out: e.message }));
-    child.on('close', (code) => resolve({ code, out }));
-  });
+    child.on('error', (e) => { liveBuilds.delete(child); resolve({ code: -1, out: e.message }); });
+    child.on('close', (code) => { liveBuilds.delete(child); resolve({ code, out }); });
+  }));
   // Batches not yet taken by the chain; one arriving meanwhile joins them, so a
   // writer's files that land while the reload waits for it reload once.
   let queued = null;
@@ -185,6 +191,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
         watcher.mute();
         try {
           for (const step of steps) {
+            if (closed) return; // no new build once close() has begun
             const { code, out } = await runBuild(step);
             built.push(step);
             if (code !== 0) { hub.send('reload-failed', { files, startedAt, step, output: out.slice(-6000) }); return; }
@@ -196,9 +203,6 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     }).catch(() => { take(); });
   }
 
-  // Requests still being answered can still write (a save lands files and a backup set): close() waits for them.
-  const pending = new Set();
-  const track = (promise) => { pending.add(promise); const done = () => pending.delete(promise); promise.then(done, done); return promise; };
   const server = http.createServer((req, res) => track(answer(req, res)));
 
   const answer = async (req, res) => {
@@ -364,9 +368,11 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     killChildrenSync: () => { supervisor.killAllSync(); jobs.stopAll(); },
     close: () => closing ||= (async () => {
       watcher.close();
+      closed = true;
+      for (const child of liveBuilds) child.kill();
       // A running job's process must exit, and its slot and file lock be freed, before close() resolves.
       await jobs.stopAll();
-      // A request still answering may still write (a save lands its files and backup set): let it finish first.
+      // A request still answering, or a killed live-reload build, may still write: let each finish first.
       while (pending.size) await Promise.allSettled([...pending]);
       hub.close();
       await supervisor.stopAll();

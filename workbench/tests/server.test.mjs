@@ -710,6 +710,22 @@ test('close() waits for a save still writing, so its file is on disk when close 
   assert.equal(await saved, 200);
 });
 
+test('closing the Workbench stops a live-reload build it started, so the build writes nothing after close resolves', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.mkdir(path.join(root, 'src/config'), { recursive: true });
+  // The build announces itself, then would write its output a while later.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; fs.writeFileSync('started.txt', '1'); await new Promise((r) => setTimeout(r, 800)); fs.writeFileSync('src/config/late.js', 'export default 1;\\n');\n");
+  const { app } = await boot(t, root);
+  await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n');
+  const exists = (rel) => fs.stat(path.join(root, rel)).then(() => true, () => false);
+  for (let i = 0; i < 200 && !(await exists('started.txt')); i++) await new Promise((r) => setTimeout(r, 20));
+  assert.equal(await exists('started.txt'), true, 'the live-reload build started');
+  await app.close();
+  await new Promise((r) => setTimeout(r, 1200));
+  assert.equal(await exists('src/config/late.js'), false, 'the build was stopped before it could write');
+});
+
 test('a started job is persisted at once, so a restart before it finishes lists it as cancelled', async (t) => {
   const root = await project(t);
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });
