@@ -1315,9 +1315,9 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 | Grace Fragment | uncommon | Resting heals +15% more (shipped as Ember Fragment, §13.4j). |
 | Twinned Armor | uncommon | Every 10th card you play each combat: gain 6 Block. |
 | Goldbough Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
-| Dragon Heart | rare | +1 energy each turn. Shrines and chapels no longer offer Rest (shipped as Wyrm Heart, `restDenied: ['restHpPartial']`, §13.4j). |
+| Dragon Heart | rare | +1 Stamina each turn. Shrines and chapels no longer offer Rest (shipped as Wyrm Heart, `restDenied: ['restHpPartial']`, §13.4j). |
 | Ancestral Horn | rare | Powers cost 1 less. |
-| Ash of Remembrance | boss | **+1 energy each turn; at combat start, gain 1 Madness.** |
+| Ash of Remembrance | boss | **+1 Stamina each turn; at combat start, gain 1 Madness.** |
 
 Relic behavior uses the trigger DSL (§3.6) — the same declarative form as powers, statuses, and boss phases.
 
