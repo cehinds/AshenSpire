@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { latestReactionNote, createReactionNote, REACTION_NOTE_MS } from '../src/ui/components/reactionNote.js';
+import { latestReactionNote, createReactionNote, avoidRects, REACTION_NOTE_MS } from '../src/ui/components/reactionNote.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
@@ -73,4 +73,23 @@ test('co-op clears the reaction note when its fight ends, with the full log', ()
   const source = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
   const branch = source.slice(source.indexOf("if (snap.scene.kind !== 'combat') {\n      combatLayoutState = {};"));
   assert.match(branch.slice(0, 600), /closeCombatFullLog\(combatToolsState\);\s*reactionNote\.clear\(\);/);
+});
+
+test('the note moves up off the hero\'s HP readout (phone, owner 2026-10-11)', () => {
+  const note = { left: 120, top: 470, width: 260, height: 28 };
+  const hpBar = { left: 36, top: 475, width: 112, height: 29 };
+  assert.deepEqual(avoidRects(note, [hpBar], 6), { ...note, top: 475 - 6 - 28 }, 'bottom sits 6px above the HP bar');
+  const clear = { left: 0, top: 600, width: 50, height: 20 };
+  assert.deepEqual(avoidRects(note, [clear], 6), note, 'nothing overlapped: unchanged');
+  const plate = { left: 300, top: 460, width: 40, height: 20 };
+  assert.equal(avoidRects(note, [hpBar, plate], 6).top, 460 - 6 - 28, 'the highest overlapping rect wins');
+  const above = { left: 200, top: 430, width: 40, height: 20 };
+  assert.equal(avoidRects(note, [hpBar, above], 6).top, 430 - 6 - 28, 'a rect it meets after moving pushes it further');
+  assert.deepEqual(avoidRects(note, [{ left: 0, top: 0, width: 0, height: 0 }], 6), note, 'a hidden (zero) rect is ignored');
+});
+
+test('place() avoids the hero\'s mini HUD', () => {
+  const source = readFileSync(new URL('../src/ui/components/reactionNote.js', import.meta.url), 'utf8');
+  assert.match(source, /AVOID_SELECTOR = '\.combatant\.player \.combatant-mini-hud'/);
+  assert.match(source, /avoidRects\(\{ left: right - width, top: bottom - height, width, height \}, avoid, 6\)/);
 });
