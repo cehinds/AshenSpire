@@ -650,6 +650,39 @@ export function cardHint(card, enemyAction, ctx = {}) {
   return { border, speedDelta, arrow: speedArrow(speedDelta), breakdown };
 }
 
+// Target outline while choosing a target for a card (PREVIEW-PLAN, Screen; DESIGN.md,
+// Card hints). Separate from cardHint's border, which keeps its own rules.
+//
+// input: { card, foe, mods, momentum, stage, stanceTable }. card and foe take the
+// same shape as cardHint's. mods, momentum (decayed M_e) and stanceTable (from
+// parseStanceAdvantage) are passed on to cardHint. stage is the perception stage.
+//
+// Each dimension is an advantage, a disadvantage or neither. Speed is revealed at
+// stage 3 only: the card acts first (positive delta) is an advantage, last is a
+// disadvantage, equal is neither. Stance is revealed from stage 2: the table gives
+// the card a bonus over the foe's stance is an advantage, and a bonus for the
+// foe's stance over the card's is a disadvantage. An unrevealed dimension counts as
+// neither. Returns 'green' when both are advantages, 'yellow' when exactly one is
+// (even if the other is a disadvantage), 'red' when both are disadvantages, and
+// null otherwise, including stage 0 and 1 and self-target cards.
+export function targetOutline({ card, foe, mods = {}, momentum = 0, stage = 3, stanceTable = null } = {}) {
+  if (!card || typeof card !== 'object') throw new TypeError('card must be an object');
+  if (!foe || typeof foe !== 'object') throw new TypeError('foe must be an object');
+  const s = clampStage(stage);
+  if (card.target === 'self' || s < 2) return null;
+  const hint = cardHint(card, { ...foe, stage: s }, { mods, stanceAdvantage: stanceTable, momentum });
+  const speedSign = hint.speedDelta === null ? 0 : Math.sign(hint.speedDelta);
+  const speedAdv = speedSign > 0;
+  const speedDis = speedSign < 0;
+  const stanceAdv = stanceBonus(stanceTable, card.stance, foe.stance) > 0;
+  const stanceDis = stanceBonus(stanceTable, foe.stance, card.stance) > 0;
+  const advantages = Number(speedAdv) + Number(stanceAdv);
+  if (advantages === 2) return 'green';
+  if (advantages === 1) return 'yellow';
+  if (speedDis && stanceDis) return 'red';
+  return null;
+}
+
 // The side that wins the slot with this event, or null (DESIGN.md, Momentum). A
 // landed hit or a counter that fires is the attacker's success. Any miss is the
 // defender's success, whatever the defender did (owner, 2026-10-11).

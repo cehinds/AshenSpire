@@ -16,6 +16,7 @@ import {
   rollD20,
   parseStanceAdvantage,
   cardHint,
+  targetOutline,
   SPEED_TIERS,
   revealAction,
   clampStage,
@@ -1940,6 +1941,55 @@ test('cardHint at stage 3: a speed field without speed component ids still gives
   const hint = cardHint(HINT_CARD, revealAction({ id: 'x', speed: 1, kind: 'attack', stance: 'attack' }, 3), hintCtx());
   assert.equal(hint.speedDelta, 2, 'player 3 minus enemy speed 1');
   assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
+});
+
+// Target outline (PREVIEW-PLAN, Screen; DESIGN.md, Card hints). Speed counts from
+// stage 3, stance from stage 2. Each counts as an advantage, a disadvantage or neither.
+const outline = (card, foe, extra = {}) =>
+  targetOutline({ card, foe, mods: HINT_MODS, stanceTable: stanceTable(), momentum: 0, stage: 3, ...extra });
+const GREEN_CARD = { card: 'three', stance: 'counter' }; // faster, counter beats attack
+const GREEN_FOE = { card: 'one', stance: 'attack' };
+
+test('targetOutline: green when the card has the advantage in both speed and stance', () => {
+  assert.equal(outline(GREEN_CARD, GREEN_FOE), 'green');
+});
+
+test('targetOutline: yellow when one dimension is an advantage and the other is neutral', () => {
+  assert.equal(outline({ card: 'three', stance: 'attack' }, { card: 'one', stance: 'attack' }), 'yellow', 'speed only');
+  assert.equal(outline({ card: 'two', stance: 'counter' }, { card: 'two', stance: 'attack' }), 'yellow', 'stance only');
+});
+
+test('targetOutline: yellow when one dimension is an advantage even if the other is a disadvantage', () => {
+  // Faster (3 vs 1), but the foe's counter beats the card's attack.
+  assert.equal(outline({ card: 'three', stance: 'attack' }, { card: 'one', stance: 'counter' }), 'yellow', 'speed up, stance down');
+  // Slower (1 vs 3), but counter beats attack for the card.
+  assert.equal(outline({ card: 'one', stance: 'counter' }, { card: 'three', stance: 'attack' }), 'yellow', 'speed down, stance up');
+});
+
+test('targetOutline: red when the card is at a disadvantage in both speed and stance', () => {
+  assert.equal(outline({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'counter' }), 'red');
+});
+
+test('targetOutline: one disadvantage and the other neutral is no outline', () => {
+  assert.equal(outline({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'attack' }), null, 'speed down, stance neutral');
+  assert.equal(outline({ card: 'two', stance: 'attack' }, { card: 'two', stance: 'counter' }), null, 'speed equal, stance down');
+});
+
+test('targetOutline: equal speed with a neutral stance is no outline', () => {
+  assert.equal(outline({ card: 'two', stance: 'attack' }, { card: 'two', stance: 'attack' }), null);
+});
+
+test('targetOutline at stage 2: speed is hidden, so a stance advantage is yellow and a stance disadvantage is null', () => {
+  assert.equal(outline(GREEN_CARD, GREEN_FOE, { stage: 2 }), 'yellow', 'stance advantage only, speed unknown');
+  assert.equal(outline({ card: 'three', stance: 'attack' }, { card: 'one', stance: 'counter' }, { stage: 2 }), null, 'stance down, speed unknown');
+});
+
+test('targetOutline at stage 0 and 1: nothing is revealed, so no outline even for a green pair', () => {
+  for (const stage of [0, 1]) assert.equal(outline(GREEN_CARD, GREEN_FOE, { stage }), null, `stage ${stage}`);
+});
+
+test('targetOutline: a self-target card has no target outline', () => {
+  assert.equal(outline({ ...GREEN_CARD, target: 'self' }, GREEN_FOE), null);
 });
 
 test('cardHint speedDelta sign matches who acts first in resolvePair and resolveRound', () => {

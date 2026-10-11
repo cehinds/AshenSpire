@@ -288,6 +288,15 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 - Tapping a speed value shows the breakdown: base, weapon, armor, range, attack
   type, skill, initiative, and momentum (trunc(M_e / 2)).
 
+Target outline (`targetOutline()` in `resolver.mjs`, separate from the border above,
+which it does not change). It colours the target while a card is being chosen.
+Each revealed dimension is an advantage, a disadvantage or neither: speed from
+stage 3 (the card acts first, or last), stance from stage 2 (the stance table gives
+the card the bonus, or the foe's stance does). Green is an advantage in both,
+yellow exactly one (even if the other is a disadvantage), red a disadvantage in
+both, and no outline otherwise. An unrevealed dimension counts as neither, and
+stage 0 and 1 give no outline. Self-target cards have none.
+
 ## Hit roll (owner-approved model, 2026-10-11)
 
 Hit when:
