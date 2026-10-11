@@ -1,6 +1,6 @@
 /* workbench/modules/layout/layout.css — Layout Studio chrome. Colours are the
    Workbench tokens (shared/tokens.css); the canvas kit styles its own page. */
-.lay { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--as-bg); color: var(--as-text); }
+.lay { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--as-bg); color: var(--as-text); container: lay / inline-size; }
 
 .lay-modes { display: flex; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--as-line); background: var(--as-bg-panel); overflow-x: auto; flex: none; }
 .lay-modes button { height: 30px; padding: 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--as-radius) var(--as-radius) 0 0; background: transparent; color: var(--as-text-dim); font: inherit; font-size: var(--as-text-sm); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
@@ -16,7 +16,7 @@
 .lay-sep { width: 1px; height: 20px; background: var(--as-line); margin: 0 2px; }
 .lay-align { display: inline-flex; gap: 2px; flex-wrap: wrap; }
 
-.lay-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; }
+.lay-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; position: relative; }
 .lay-right .ck-grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .lay-right .ck-field { min-width: 0; }
 .lay-right .ck-grid2 input, .lay-right .ck-field input, .lay-right .ck-field select { width: 100%; min-width: 0; box-sizing: border-box; }
@@ -40,10 +40,20 @@
 .lay-chip.is-missing { color: var(--as-bad); border-color: rgba(224, 100, 92, 0.4); }
 .lay-note { color: var(--as-text-dim); font-size: var(--as-text-xs); margin: 4px 0 0; }
 
-@media (max-width: 760px) {
-  .lay-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
-  .lay-left, .lay-right { border: 0; border-top: 1px solid var(--as-line); max-height: 30vh; }
+/* Below 1100px the canvas has the width: the Layers panel and the inspector are overlays on the sides,
+   each opened from its toggle (.layers-open, .props-open) and closed by its Close button or Escape.
+   They slide with a transform, so the canvas never reflows under them. */
+.lay .lay-toggle, .lay .lay-panel-head { display: none; }
+@container lay (max-width: 1100px) {
+  .lay-body { grid-template-columns: minmax(0, 1fr); }
+  .lay .lay-toggle { display: inline-flex; }
+  .lay .lay-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid var(--as-line); font-size: var(--as-text-sm); font-weight: 600; }
+  .lay-left, .lay-right { position: absolute; top: 0; bottom: 0; z-index: 6; width: min(300px, 88%); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); transition: transform 180ms ease; }
+  .lay-left { left: 0; border-right: 1px solid var(--as-line); transform: translateX(-100%); }
+  .lay-right { right: 0; border-left: 1px solid var(--as-line); transform: translateX(100%); }
+  .lay.layers-open .lay-left, .lay.props-open .lay-right { transform: none; }
 }
+@media (prefers-reduced-motion: reduce) { .lay-left, .lay-right { transition: none; } }
 
 /* The kit's inspector also lists name, lock, hide and rotation; a region has none of them in the config, so they are not offered. */
 .lay-insp .ck-check, .lay-insp label.ck-field:has(> [data-key="label"]), .lay-insp label.ck-field:has(> [data-key="rot"]) { display: none; }

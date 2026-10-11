@@ -39,6 +39,8 @@ function ensureCss() {
 const SHELL = `<div class="lay">
   <div class="lay-modes" role="tablist" aria-label="Layout Studio modes">${MODES.map((m) => `<button type="button" role="tab" data-mode="${m.id}" aria-selected="${m.id === 'config'}"${m.id === 'config' ? '' : ' disabled title="Coming next"'}>${esc(m.label)}${m.id === 'config' ? '' : '<span class="lay-soon">coming next</span>'}</button>`).join('')}</div>
   <div class="lay-bar">
+    <button type="button" class="btn btn-sm lay-toggle" data-panel="layers" aria-expanded="false" aria-controls="lay-layers-pane">Layers</button>
+    <button type="button" class="btn btn-sm lay-toggle" data-panel="props" aria-expanded="false" aria-controls="lay-props-pane">Inspector</button>
     <label class="lay-field">Wireframe <select data-act="wireframe"></select></label>
     <label class="lay-field">Device <select data-act="device"></select></label>
     <button type="button" class="btn btn-sm btn-ghost" data-act="rotate" title="Rotate the device">${icon('reload')}Rotate</button>
@@ -57,9 +59,9 @@ const SHELL = `<div class="lay">
     <button type="button" class="btn btn-sm btn-primary" data-act="review" disabled>Review changes</button>
   </div>
   <div class="lay-body">
-    <aside class="lay-left"><div class="lay-layers"></div></aside>
+    <aside class="lay-left" id="lay-layers-pane"><div class="lay-panel-head"><span>Layers</span><button type="button" class="btn btn-sm" data-panel-close>Close</button></div><div class="lay-layers"></div></aside>
     <main class="lay-center"><div class="lay-canvas"><p class="lay-hint">Loading the UI config files…</p></div><div class="lay-status" aria-live="polite"></div></main>
-    <aside class="lay-right"><div class="lay-insp"></div><div class="lay-fields"></div></aside>
+    <aside class="lay-right" id="lay-props-pane"><div class="lay-panel-head"><span>Inspector</span><button type="button" class="btn btn-sm" data-panel-close>Close</button></div><div class="lay-insp"></div><div class="lay-fields"></div></aside>
   </div>
 </div>`;
 
@@ -391,6 +393,18 @@ export default {
 
     ctx.shortcuts.register('Mod+S', 'Review and save layout changes', () => { openReview(); }, { inInput: true });
 
+    // Below 1100px the Layers and Inspector overlays open one at a time from their toggles.
+    const lay = $('.lay');
+    const setPanel = (name) => {
+      for (const p of ['layers', 'props']) lay.classList.toggle(`${p}-open`, p === name);
+      for (const b of el.querySelectorAll('[data-panel]')) b.setAttribute('aria-expanded', String(b.dataset.panel === name));
+    };
+    lay.addEventListener('click', (e) => {
+      const toggle = e.target.closest('[data-panel]');
+      if (toggle) { const name = toggle.dataset.panel; setPanel(lay.classList.contains(`${name}-open`) ? null : name); return; }
+      if (e.target.closest('[data-panel-close]')) setPanel(null);
+    });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Escape') setPanel(null); });
     el.querySelector('.lay-bar').addEventListener('change', onBarChange);
     el.querySelector('.lay-bar').addEventListener('click', onBarClick);
     // UI config: arrow keys would nudge a region, which the layout places. The capture listener
