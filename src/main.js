@@ -678,8 +678,11 @@ function applyUiScale(settings) {
   document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');
   // The HUD form factor (docs/hud-layout-tokens.md) — which
   // content/hud-layout/<form-factor>.json styles the combat HUD. Written here,
-  // beside data-layout, so styling has no decider of its own; it picks look
-  // only, never the mode or the zoom above. Thresholds: balance.ui.uiScale.formFactor.
+  // beside data-layout, so styling has no decider of its own; it never picks
+  // the mode or the zoom above. It does change HUD geometry (the tools span
+  // and the px offset tokens), so the combat tools row and the battlefield
+  // stage observe this attribute and re-measure when it changes.
+  // Thresholds: balance.ui.uiScale.formFactor.
   document.documentElement.setAttribute('data-form-factor',
     formFactorFor(window.innerWidth, window.innerHeight, UI.uiScale.formFactor));
   // Publish the short/refusal value from that same decider for layout consumers too.

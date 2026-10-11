@@ -158,6 +158,26 @@ test('applyUiScale writes data-form-factor beside data-layout from the balance t
   assert.match(body.slice(formFactor, formFactor + 200), /formFactorFor\(window\.innerWidth, window\.innerHeight, UI\.uiScale\.formFactor\)/);
 });
 
+test('a form-factor change re-measures the tools row at once and refits the stage', () => {
+  const stage = read('src/ui/components/battlefieldStage.js');
+  assert.match(stage, /attributeFilter: \['style', 'data-layout', 'data-short', 'data-composition', 'data-form-factor',/, 'the stage refits on data-form-factor');
+  const tools = read('src/ui/components/combatTools.js');
+  const begin = tools.indexOf('  const formFactorObserver = new MutationObserver(');
+  const end = tools.indexOf('  function update(model)', begin);
+  assert.ok(begin > 0 && end > begin);
+  let callback, options, flushes = 0, current = 'tablet';
+  runInNewContext(tools.slice(begin, end), {
+    MutationObserver: class { constructor(fn) { callback = fn; } observe(_node, opts) { options = opts; } },
+    document: { documentElement: { getAttribute: () => current } }, flushGeometry: () => { flushes += 1; } });
+  assert.deepEqual(JSON.parse(JSON.stringify(options)), { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
+  callback([{ oldValue: 'tablet' }]);
+  assert.equal(flushes, 0, 'a rewrite of the same form factor measures nothing');
+  current = 'desktop';
+  callback([{ oldValue: 'tablet' }]);
+  assert.equal(flushes, 1, 'a real change flushes the tools geometry synchronously');
+  assert.match(tools, /release\(\) \{ released = true; observer\.disconnect\(\); formFactorObserver\.disconnect\(\);/);
+});
+
 test('index.html loads the generated sheet after the stylesheets it styles', () => {
   const html = read('index.html');
   const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]);

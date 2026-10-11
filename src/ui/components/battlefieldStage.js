@@ -973,7 +973,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // the Scenes choice, not because another attribute happened to change in
     // the same breath.
     attributes: true,
-    attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition', 'data-formation-settings',
+    // data-form-factor picks content/hud-layout/<ff>.json, whose geometry
+    // tokens this layout reads, so a form-factor change refits too.
+    attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition', 'data-form-factor', 'data-formation-settings',
       'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);

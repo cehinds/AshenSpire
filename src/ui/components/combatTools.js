@@ -173,6 +173,14 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const hand = combatEl.querySelector('.hand-overlay'); if (hand) observer.observe(hand);
   window.visualViewport?.addEventListener('resize', schedule);
   addEventListener('resize', schedule);
+  // applyUiScale writes data-form-factor after its debounced resize, when the
+  // observer above has already measured with the old form factor's span and
+  // offset. Re-measure at once on a real change, before the stage's refit
+  // (its own observer) reads this row as a footer obstacle.
+  const formFactorObserver = new MutationObserver(records => {
+    if (records.some(record => record.oldValue !== document.documentElement.getAttribute('data-form-factor'))) flushGeometry();
+  });
+  formFactorObserver.observe(document.documentElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
   function update(model) {
     const toggle = childModel(model, UI.reactionToggle).properties;
     const log = childModel(model, UI.combatLogDrawer).properties;
@@ -200,5 +208,5 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   return { update, flushGeometry,
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
-    release() { released = true; observer.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }
