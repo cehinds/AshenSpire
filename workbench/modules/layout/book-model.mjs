@@ -51,12 +51,36 @@ export function gameBaseOf(tools = []) {
   return game && game.status === 'up' && game.url ? String(game.url).replace(/\/?$/, '/') : null;
 }
 
-/** The URL of the render page on the game server (the page imports the game's own renderer). */
-export function renderUrl(gameBase, { parentOrigin = '' } = {}) {
+/** The game server's start time from the Workbench tool list: a restart gives a new one. */
+export function gameStartOf(tools = []) {
+  const game = (Array.isArray(tools) ? tools : []).find((t) => t && t.id === 'game');
+  return game && game.startedAt != null ? game.startedAt : null;
+}
+
+/**
+ * What the view does with the render page. 'setup': no game server is up. 'keep': the frame
+ * already shows this server's page and is ready. 'load': point the frame at the page (again).
+ * Mirrors the Motion and Entity Browser plans: a forced reload always loads, and a new start
+ * time on the same origin is a new server, so its frame is stale.
+ */
+export function connectPlan({ base = null, currentOrigin = null, ready = false, force = false, serverId = null, currentServerId = null } = {}) {
+  if (!base) return 'setup';
+  const origin = new URL(base).origin;
+  const sameServer = serverId == null || serverId === currentServerId;
+  return !force && ready && origin === currentOrigin && sameServer ? 'keep' : 'load';
+}
+
+/**
+ * The URL of the render page on the game server (the page imports the game's own renderer).
+ * A nonce changes the URL, so a reload of the same page is a real navigation.
+ */
+export function renderUrl(gameBase, { parentOrigin = '', nonce = 0 } = {}) {
   const base = String(gameBase || '').replace(/\/?$/, '/');
   const q = new URLSearchParams();
   if (parentOrigin) q.set('po', parentOrigin);
-  return `${base}workbench/modules/layout/book-render.html?${q}`;
+  if (nonce) q.set('r', String(nonce));
+  const query = q.toString();
+  return `${base}workbench/modules/layout/book-render.html${query ? `?${query}` : ''}`;
 }
 
 /**
