@@ -33,6 +33,32 @@ export function procGroupMembers(pgid, { readdir = fs.readdirSync, readFile = fs
 }
 
 /**
+ * The one-letter /proc state of `pid` (R, S, D, T, Z, X, ...), or null where /proc cannot be read.
+ */
+export function procState(pid, { readFile = fs.readFileSync } = {}) {
+  if (!Number.isInteger(pid) || pid <= 0) return null;
+  let text;
+  try { text = readFile(`/proc/${pid}/stat`, 'utf8'); } catch { return null; }
+  // Fields resume after the last ')' (the command name may hold spaces or parentheses).
+  return text.slice(text.lastIndexOf(')') + 2, text.lastIndexOf(')') + 3) || null;
+}
+
+/**
+ * True while process `pid` is alive. On Linux the /proc state decides: a zombie (Z) or dead (X)
+ * process has exited but is not reaped, and kill(pid, 0) still succeeds for it under an init that
+ * does not reap orphans, so it is not alive. Elsewhere, or where /proc cannot be read, kill(pid, 0)
+ * decides; EPERM counts as alive.
+ */
+export function processAlive(pid, { platform = process.platform, readFile = fs.readFileSync, kill = process.kill } = {}) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  if (platform === 'linux') {
+    const state = procState(pid, { readFile });
+    if (state) return state !== 'Z' && state !== 'X';
+  }
+  try { kill(pid, 0); return true; } catch (error) { return error.code === 'EPERM'; }
+}
+
+/**
  * True while any process that is not a zombie is in group `pgid`. EPERM counts as alive.
  * On Linux the members come from /proc: an unreaped zombie keeps the group id alive, so
  * kill(-pgid, 0) would keep succeeding forever under an init that does not reap orphans.
