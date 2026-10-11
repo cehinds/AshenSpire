@@ -3,6 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import * as timeline from './timeline.mjs';
 import {
   makeCombatant,
   buildTimeline,
@@ -37,7 +38,7 @@ const atk = (id, target, speed, extra = {}) => card(id, 'attack', target, speed,
 
 // DEX 1 gives base floor(1/2) = 0 and accuracy/evasion 1/0, so only d4 and
 // momentum move initiative in these cases.
-const mk = (id, extra = {}) => makeCombatant({ id, attrs: { DEX: 1 }, hp: 10, sp: 6, ...extra });
+const mk = (id, extra = {}) => makeCombatant({ id, attrs: { DEX: 1 }, hp: 10, sp: 3, ...extra });
 
 function trio() {
   return {
@@ -200,14 +201,42 @@ test('a seeded rng gives the same timeline every time', () => {
   assert.deepEqual(run(), run());
 });
 
-test('buildTimeline rejects a queue that costs more SP than the combatant has', () => {
+test('buildTimeline rejects a queue whose SP costs exceed the combatant SP', () => {
   const { player, goblin, wolf } = trio();
-  const queues = { player: [atk('a', 'goblin', 1), atk('b', 'goblin', 1), atk('c', 'goblin', 1)] };
-  // Three cards at 3 SP each cost 9; player has 6.
+  const queues = { player: [atk('a', 'goblin', 1, { sp: 2 }), atk('b', 'goblin', 1, { sp: 2 })] };
+  // A 2-SP card and another 2-SP card cost 4; player has 3.
   assert.throws(
     () => buildTimeline(queues, { combatants: { player, goblin, wolf }, rng: constRng(0) }),
     RangeError,
   );
+});
+
+test('a card with no sp costs 1, so three 1-SP cards fit in 3 SP', () => {
+  const { player, goblin, wolf } = trio();
+  const queues = { player: [atk('a', 'goblin', 1), atk('b', 'goblin', 1), atk('c', 'goblin', 1)] };
+  const tl = buildTimeline(queues, { combatants: { player, goblin, wolf }, rng: constRng(0) });
+  assert.equal(tl.entries.length, 3);
+  assert.deepEqual(tl.entries.map((e) => e.card.sp), [1, 1, 1]);
+});
+
+test('a Strike (1 SP) and a Smash (2 SP) fit in 3 SP; adding a 1-SP card does not', () => {
+  const { player, goblin, wolf } = trio();
+  const strike = atk('strike', 'goblin', 1, { sp: 1 });
+  const smash = atk('smash', 'goblin', 1, { sp: 2 });
+  const fits = buildTimeline({ player: [strike, smash] }, { combatants: { player, goblin, wolf }, rng: constRng(0) });
+  assert.deepEqual(fits.entries.map((e) => e.cardId), ['strike', 'smash']);
+  assert.throws(
+    () => buildTimeline({ player: [strike, smash, atk('extra', 'goblin', 1, { sp: 1 })] }, {
+      combatants: { player, goblin, wolf }, rng: constRng(0),
+    }),
+    RangeError,
+  );
+});
+
+test('SP defaults: DEFAULT_SP is 3 and the old CARD_SP_COST export is gone', () => {
+  assert.equal(timeline.DEFAULT_SP, 3);
+  assert.equal(Object.hasOwn(timeline, 'CARD_SP_COST'), false);
+  assert.equal(makeCombatant({ id: 'goblin', hp: 1 }).sp, 3);
 });
 
 test('buildTimeline rejects a target that is not a foe of the actor', () => {
@@ -232,8 +261,8 @@ test('buildTimeline rejects a target that is not a foe of the actor', () => {
 const HIT_RNG = constRng(0.45);
 const fightOf = (specs) => makeFight(specs);
 const duo = (goblinExtra = {}, playerExtra = {}) => fightOf([
-  { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 6, ...playerExtra },
-  { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 6, ...goblinExtra },
+  { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 3, ...playerExtra },
+  { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 3, ...goblinExtra },
 ]);
 
 test('makeFight builds combatants keyed by id, with empty momentum and charges', () => {
@@ -412,18 +441,21 @@ test('onReaction is offered only to the player, and only when SP is left for the
     calls.push({ attack, eligible: eligible.map((c) => c.id) });
     return null;
   };
-  // Two queued 3-SP cards use all 6 SP, so no reaction is offered.
+  // Three queued 1-SP cards use all 3 SP, so no reaction is offered.
   const spent = createRound(duo({}, { hand: [guardCard()] }), {
-    queues: { player: [card('x', 'other', 'self', 1), card('y', 'other', 'self', 1)], goblin: [stab(1, 4)] },
+    queues: {
+      player: [card('x', 'other', 'self', 1), card('y', 'other', 'self', 1), card('z', 'other', 'self', 1)],
+      goblin: [stab(1, 4)],
+    },
     rng: HIT_RNG,
     onReaction,
   }).resolveAll();
   assert.equal(calls.length, 0);
   assert.equal(spent.state.combatants.player.hp, 16);
 
-  // One queued card leaves 3 SP: the guard (cost 3) is eligible and offered.
+  // Two queued 1-SP cards leave 1 SP: the guard (cost 1) is eligible and offered.
   createRound(duo({}, { hand: [guardCard()] }), {
-    queues: { player: [card('x', 'other', 'self', 1)], goblin: [stab(1, 4)] },
+    queues: { player: [card('x', 'other', 'self', 1), card('y', 'other', 'self', 1)], goblin: [stab(1, 4)] },
     rng: HIT_RNG,
     onReaction,
   }).resolveAll();
@@ -451,7 +483,8 @@ test('a reaction spends the card cost, and a returned card must be eligible', ()
     onReaction: () => ({ id: 'guard' }),
   });
   const out = round.resolveAll();
-  assert.equal(out.state.spLeft.player, 3);
+  // Guard costs 1 SP by default; the player had 3 SP and queued nothing.
+  assert.equal(out.state.spLeft.player, 2);
   assert.throws(
     () => createRound(duo({}, { hand: [guardCard()] }), {
       queues: { goblin: [stab(1, 4)] },
@@ -460,6 +493,50 @@ test('a reaction spends the card cost, and a returned card must be eligible', ()
     }).resolveAll(),
     TypeError,
   );
+});
+
+test('a reaction spends the card SP from what is left, and the event records it', () => {
+  // Guard costs 2 SP; one queued 1-SP card leaves 2 SP, so the guard is offered and spends both.
+  const out = createRound(duo({}, { hand: [guardCard('guard', { sp: 2 })] }), {
+    queues: { player: [card('x', 'other', 'self', 1)], goblin: [stab(1, 4)] },
+    rng: HIT_RNG,
+    onReaction: (attack, eligible) => ({ id: eligible[0].id }),
+  }).resolveAll();
+  assert.equal(out.state.spLeft.player, 0);
+  assert.equal(out.events.find((e) => e.type === 'reaction').sp, 2);
+});
+
+test('a reaction with 0 SP left is refused: no card is offered and nothing is spent', () => {
+  const calls = [];
+  const out = createRound(duo({}, { hand: [guardCard()] }), {
+    queues: {
+      player: [card('x', 'other', 'self', 1), card('y', 'other', 'self', 1), card('z', 'other', 'self', 1)],
+      goblin: [stab(1, 4)],
+    },
+    rng: HIT_RNG,
+    onReaction: (attack, eligible) => {
+      calls.push(eligible);
+      return null;
+    },
+  }).resolveAll();
+  assert.equal(calls.length, 0);
+  assert.equal(out.events.some((e) => e.type === 'reaction'), false);
+  assert.equal(out.state.spLeft.player, 0);
+  assert.equal(out.state.combatants.player.hp, 16);
+});
+
+test('a defensive card costing more SP than is left is not eligible for a reaction', () => {
+  // Two queued 1-SP cards leave 1 SP; a 2-SP guard cannot be offered.
+  const calls = [];
+  createRound(duo({}, { hand: [guardCard('guard', { sp: 2 })] }), {
+    queues: { player: [card('x', 'other', 'self', 1), card('y', 'other', 'self', 1)], goblin: [stab(1, 4)] },
+    rng: HIT_RNG,
+    onReaction: (attack, eligible) => {
+      calls.push(eligible.map((c) => c.id));
+      return null;
+    },
+  }).resolveAll();
+  assert.equal(calls.length, 0);
 });
 
 test('a preemptive counter cancels the next attack when it is faster', () => {
@@ -526,9 +603,9 @@ const momentumOf = (out, id) => out.state.momentum[id];
 
 test('round start decays each enemy momentum 1 toward 0, with a decay event per change', () => {
   const st = makeFight([
-    { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 6 },
-    { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 6 },
-    { id: 'wolf', attrs: { DEX: 1 }, hp: 10, sp: 6 },
+    { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 3 },
+    { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 3 },
+    { id: 'wolf', attrs: { DEX: 1 }, hp: 10, sp: 3 },
   ]);
   st.momentum = { goblin: -2, wolf: 2 };
   const out = createRound(st, { queues: {}, rng: HIT_RNG }).resolveAll();
@@ -651,9 +728,9 @@ test('a set poiseDouble flag doubles the next landed hit of that side, then clea
 
 test('momentum is kept per enemy: a hit on the goblin leaves the wolf alone', () => {
   const st = makeFight([
-    { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 6 },
-    { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 6 },
-    { id: 'wolf', attrs: { DEX: 1 }, hp: 10, sp: 6 },
+    { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 3 },
+    { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 3 },
+    { id: 'wolf', attrs: { DEX: 1 }, hp: 10, sp: 3 },
   ]);
   const out = createRound(st, {
     queues: { player: [atk('jab', 'goblin', 6, { damage: 1 })] },

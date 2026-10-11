@@ -1,8 +1,9 @@
 // alternative-combat-rounds: timeline model (owner, 2026-10-11). Prototype only.
 //
 // Every combatant (the player and each enemy) builds a queue of cards each round.
-// Cards cost SP. buildTimeline() orders all queued actions under one of three merge
-// modes; createRound() resolves them one at a time. Reuses resolver.mjs primitives.
+// Each card has its own SP cost (`sp`, default 1). buildTimeline() orders all queued
+// actions under one of three merge modes; createRound() resolves them one at a time.
+// Reuses resolver.mjs primitives.
 // Not wired into src/. No DOM, no Math.random: randomness is injected as `rng`, a
 // function returning a float in [0, 1). Design: DESIGN.md, "Timeline model".
 
@@ -25,10 +26,9 @@ export const MERGE_MODES = Object.freeze(['speed', 'roundRobin', 'wholeQueue']);
 export const CARD_KINDS = Object.freeze(['attack', 'guard', 'evade', 'counter', 'other']);
 export const DEFENSIVE_KINDS = Object.freeze(['guard', 'evade', 'counter']);
 
-// PLACEHOLDER: every SP cost is 3 for testing, unless a card gives its own `cost`.
-export const CARD_SP_COST = 3;
-// PLACEHOLDER: SP budget per combatant per round when a spec gives none.
-export const DEFAULT_SP = 6;
+// PLACEHOLDER: SP budget per combatant per round when a spec gives none. SP is 3 for
+// testing and refills each round (owner, 2026-10-11).
+export const DEFAULT_SP = 3;
 
 // PLACEHOLDER: a queued (preemptive) defensive card gets this buff. Reactions use base values.
 export const REACTION_BUFF = Object.freeze({ speed: 1, block: 2, evadePct: 10, counterDamage: 1 });
@@ -37,9 +37,13 @@ export const DEFENSE_BASE = Object.freeze({ block: 6, evadePct: 20, counterDamag
 
 const SIDES = Object.freeze(['player', 'enemy']);
 
-const cardCost = (card) => {
-  const c = card.cost ?? CARD_SP_COST;
-  if (!Number.isFinite(Number(c)) || Number(c) < 0) throw new RangeError(`card "${card.id}" cost must be 0 or more`);
+// PLACEHOLDER (owner, 2026-10-11): a card spends its own `sp` (Strike 1, Smash 2). A card
+// with no `sp` costs 1.
+const DEFAULT_CARD_SP = 1;
+
+const cardSp = (card) => {
+  const c = card.sp ?? DEFAULT_CARD_SP;
+  if (!Number.isFinite(Number(c)) || Number(c) < 0) throw new RangeError(`card "${card.id}" sp must be 0 or more`);
   return Number(c);
 };
 
@@ -126,7 +130,7 @@ function validateQueues(queues, combatants) {
         : card.kind === 'guard' || card.kind === 'evade' ? t === 'self'
           : t === 'self' || foes.includes(t);
       if (!ok) throw new TypeError(`card "${card.id}" of "${id}" has an invalid target "${t}"`);
-      spent += cardCost(card);
+      spent += cardSp(card);
     }
     if (spent > combatants[id].sp) {
       throw new RangeError(`"${id}" queues ${spent} SP, more than its ${combatants[id].sp} SP`);
@@ -146,7 +150,7 @@ function momentumTerm(side, id, target, momentum) {
 // Orders the queued actions for one round (owner, 2026-10-11). Returns
 // { merge, initiative: { [id]: { base, d4, lead } }, entries }.
 //
-// queues:  { [combatantId]: [card] }. A card is { id, kind, target, speed, cost?, ... }.
+// queues:  { [combatantId]: [card] }. A card is { id, kind, target, speed, sp?, ... }.
 //          kind: attack | guard | evade | counter | other. target: a foe id or 'self'.
 // ctx:     { combatants: { [id]: record from makeCombatant }, rng, momentum?, merge? }.
 //          momentum is { [enemyId]: M } at the start of the round (already decayed).
@@ -198,7 +202,7 @@ export function buildTimeline(queues, ctx = {}) {
         cardId: c.id,
         target: c.target,
         preemptive,
-        card: { ...c, cost: cardCost(c) },
+        card: { ...c, sp: cardSp(c) },
         speed: {
           card,
           buff,
@@ -418,7 +422,7 @@ function stagger(run, { key, owner, cur, events, seq }) {
 
 // Offers the player's reaction window (owner, 2026-10-11): when an attack targets a
 // player, the player may play an unplayed defensive card from hand, if SP is left.
-// Enemies never react. The card uses base values and spends its cost.
+// Enemies never react. The card uses base values and spends its sp.
 function offerReaction(cur, entry, events, options, run) {
   const defender = cur.combatants[entry.target];
   if (defender.side !== 'player' || typeof options.onReaction !== 'function') return;
@@ -428,7 +432,7 @@ function offerReaction(cur, entry, events, options, run) {
   const eligible = defender.hand.filter((c) => DEFENSIVE_KINDS.includes(c.kind)
     && !queued.has(c.id)
     && !usedIds.includes(c.id)
-    && cardCost(c) <= cur.spLeft[id]
+    && cardSp(c) <= cur.spLeft[id]
     && (c.kind !== 'counter' || c.target === 'self' || c.target === entry.actor));
   if (eligible.length === 0) return;
   const attack = {
@@ -443,9 +447,9 @@ function offerReaction(cur, entry, events, options, run) {
   if (pick === null || pick === undefined) return;
   const chosen = eligible.find((c) => c.id === pick?.id);
   if (!chosen) throw new TypeError(`onReaction returned a card that is not eligible: ${pick?.id}`);
-  cur.spLeft[id] -= cardCost(chosen);
+  cur.spLeft[id] -= cardSp(chosen);
   cur.used[id] = [...usedIds, chosen.id];
-  events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, cost: cardCost(chosen) });
+  events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, sp: cardSp(chosen) });
   // Base values, no buff (owner, 2026-10-11). A reaction counter fires on this attack,
   // after it resolves, and never cancels it (placeholder).
   placeDefence(cur, id, chosen, { preemptive: false, foe: entry.actor, events, reaction: true });
@@ -596,7 +600,7 @@ export function createRound(state, options = {}) {
   });
   const spent = {};
   for (const id of Object.keys(cur.combatants)) spent[id] = 0;
-  for (const e of timeline.entries) spent[e.actor] += e.card.cost;
+  for (const e of timeline.entries) spent[e.actor] += e.card.sp;
   cur.spLeft = {};
   for (const id of Object.keys(cur.combatants)) cur.spLeft[id] = cur.combatants[id].sp - spent[id];
 
@@ -713,7 +717,7 @@ export function adaptEnemyQueues(queues, playerQueue, rng, options = {}) {
       kind: 'counter',
       target: 'player',
       speed: Number(old.speed ?? 0),
-      cost: cardCost(old),
+      sp: cardSp(old),
       counterDamage: ADAPT_COUNTER_DAMAGE,
       tags: [],
       replaces: old.id,
