@@ -266,6 +266,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
   // (tools/lib/build-lock.mjs). "Compile now" is refused with 409 while another
   // build holds it; a compile after a save (`wait`) waits up to waitMs for it.
   const HOLDER = 'UI Studio config compile';
+  const SAVE_HOLDER = 'UI Studio config save';
   function startCompile({ wait = false } = {}) {
     if (job && (job.status === 'running' || job.status === 'waiting')) throw Error('The compiler is already running');
     let release = null;
@@ -324,7 +325,10 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
           const data = await body(req);
           if (url.pathname === '/api/settings') return send(res, 200, await workspace.saveSettings(data));
           if (url.pathname === '/api/validate') return send(res, 200, await workspace.validate(data.changes));
-          if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes));
+          // The save holds the shared build lock across validation and the source writes, so an engine
+          // export or build never reads a half-saved tree. It waits like a compile after a save does, and
+          // is refused with 409 naming the holder when that wait runs out.
+          if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes, { lock: () => acquire(root, SAVE_HOLDER, { timeoutMs: compileWaitMs, pollMs: Math.min(250, compileWaitMs) }) }));
           if (url.pathname === '/api/sketch') return send(res, 200, await workspace.saveSketch(data.name, data.sketch, data.hash || null));
           if (url.pathname === '/api/backup') return send(res, 200, await workspace.backup(data.id));
           if (url.pathname === '/api/compile') return send(res, 200, startCompile({ wait: data.wait === true }));
