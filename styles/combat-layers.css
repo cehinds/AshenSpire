@@ -229,6 +229,10 @@
 :root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud :is(.nm,.m-label,.m-value) {
   font-family: var(--hud-details-font, var(--font-body));
 }
+/* Readable headings swaps every display face for the UI face; the token yields. */
+:root body.readable-ui .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud :is(.nm,.m-label,.m-value) {
+  font-family: var(--font-body);
+}
 :root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud .nm { text-shadow: var(--hud-text-shadow, none); }
 :root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud [data-meter-row='resource'] .m-label {
   color: var(--hud-details-label-color, var(--muted)); text-shadow: var(--hud-text-shadow, none);
