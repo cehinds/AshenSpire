@@ -25,7 +25,7 @@ export const GENERATED = 'generated-sources';
 export const JOBS = {
   'content-build': {
     lock: GENERATED, label: 'Content build', description: 'Compile content/source and content/framework into the generated modules under src/.',
-    steps: () => [{ args: ['tools/content-build.mjs'] }, { args: ['tools/framework-data-build.mjs'], optional: true }],
+    steps: () => [{ args: ['tools/framework-data-build.mjs'], optional: true }, { args: ['tools/content-build.mjs'] }],
   },
   'config-build': {
     lock: GENERATED, label: 'Config build', description: 'Compile content/config (UI tokens, scenes, screens) into src/config/generated/ui.js.',

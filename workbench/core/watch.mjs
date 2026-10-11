@@ -100,13 +100,16 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   };
 }
 
-/** What a batch needs before the preview reloads: the content compiler, the config compiler, or nothing. */
+/** What a batch needs before the preview reloads, in the order the builders require:
+ *  framework mirrors first (content-build rejects a framework file without its
+ *  src/framework/data mirror), then the config compiler, then the content compiler. */
 export function buildsFor(files, root) {
+  const content = files.some((f) => /^content\/(source|framework)\//.test(f));
+  const framework = files.some((f) => /^content\/framework\//.test(f));
+  const config = files.some((f) => /^content\/config\//.test(f));
   const steps = [];
-  if (files.some((f) => /^content\/(source|framework)\//.test(f))) {
-    steps.push('tools/content-build.mjs');
-    if (fs.existsSync(path.join(root, 'tools/framework-data-build.mjs'))) steps.push('tools/framework-data-build.mjs');
-  }
-  if (files.some((f) => /^content\/config\//.test(f))) steps.push('tools/config-build.mjs');
+  if (framework && fs.existsSync(path.join(root, 'tools/framework-data-build.mjs'))) steps.push('tools/framework-data-build.mjs');
+  if (config) steps.push('tools/config-build.mjs');
+  if (content) steps.push('tools/content-build.mjs');
   return steps;
 }

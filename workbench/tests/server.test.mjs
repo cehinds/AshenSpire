@@ -96,6 +96,7 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
   }
   const { defs } = await (await call('/api/jobs')).json();
   assert.deepEqual(defs.map((d) => d.id), Object.keys(JOBS));
+  assert.deepEqual(JOBS['content-build'].steps(root).map((st) => st.args[0]), ['tools/framework-data-build.mjs', 'tools/content-build.mjs']);
   assert.equal(defs.find((d) => d.id === 'engine-export').available, false, 'missing exporter is reported, not hidden');
   // The exporter is missing in this project: the run fails gracefully with a message.
   const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
@@ -220,6 +221,11 @@ test('a content/config change runs the config compiler before the reload; a fail
   await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; fs.mkdirSync('src/config/generated', { recursive: true }); fs.writeFileSync('src/config/generated/ui.js', 'export default 1;\\n');\n");
   assert.deepEqual(buildsFor(['content/config/ui/tokens.json'], root), ['tools/config-build.mjs']);
   assert.deepEqual(buildsFor(['styles/a.css'], root), []);
+  await fs.writeFile(path.join(root, 'tools/framework-data-build.mjs'), '\n');
+  assert.deepEqual(buildsFor(['content/source/a.csv', 'content/framework/new.json', 'content/config/ui/tokens.json'], root),
+    ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs'], 'framework mirrors and config before the content compiler');
+  assert.deepEqual(buildsFor(['content/source/a.csv'], root), ['tools/content-build.mjs']);
+  await fs.rm(path.join(root, 'tools/framework-data-build.mjs'));
   const { app } = await boot(t, root);
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 300)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n'); };
   const event = await nextEvent(app, 'reload');
