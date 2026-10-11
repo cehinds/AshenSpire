@@ -2706,6 +2706,71 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
   return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
+// ---- keeping the player's place across a rebuild --------------------------
+// A rebuild replaces the nodes under a root, which drops every scroll offset
+// and the focused control along with them, so the menu jumped back to the top.
+// captureView() remembers both; restoreView() puts them back on the new nodes.
+// Nodes are matched by shape (tag, id, class list, and order among nodes with
+// that same shape) for scroll, and by a setting's own attribute (data-key,
+// data-member, id, ...) plus its order among its peers for focus. A key with
+// no match is skipped, because the rebuild may have removed that control.
+const VIEW_FOCUS_ATTRS = ['id', 'data-key', 'data-member', 'data-topic', 'data-advanced-group', 'data-general-select', 'data-general-topic', 'data-setting', 'name'];
+const VIEW_FOCUS_TIES = ['data-val', 'data-color', 'data-action', 'type'];
+function viewNodes(root) { return [...root.querySelectorAll('*')]; }
+function viewShapeMatches(node, shape) {
+  return node.tagName === shape.tag && (node.getAttribute('id') || '') === shape.id && (node.getAttribute('class') || '') === shape.cls;
+}
+function viewShapeOf(node, root) {
+  const shape = { tag: node.tagName, id: node.getAttribute('id') || '', cls: node.getAttribute('class') || '' };
+  shape.n = viewNodes(root).filter((other) => viewShapeMatches(other, shape)).indexOf(node);
+  return shape;
+}
+function viewFindShape(root, shape) {
+  if (shape.root) return root;
+  return viewNodes(root).filter((node) => viewShapeMatches(node, shape))[shape.n] || null;
+}
+function viewFocusPeers(root, key) {
+  return viewNodes(root).filter((node) => node.hasAttribute(key.attr)
+    && node.getAttribute(key.attr) === key.value
+    && node.tagName === key.tag
+    && VIEW_FOCUS_TIES.every((attr, i) => node.getAttribute(attr) === key.ties[i]));
+}
+export function captureView(root, { scroll = true } = {}) {
+  const view = { scroll: [], focus: null };
+  if (!root) return view;
+  if (scroll) {
+    if (root.scrollTop > 0) view.scroll.push({ shape: { root: true }, top: root.scrollTop });
+    for (const node of viewNodes(root)) {
+      if (node.scrollTop > 0) view.scroll.push({ shape: viewShapeOf(node, root), top: node.scrollTop });
+    }
+  }
+  const active = globalThis.document?.activeElement;
+  if (active && active !== root && root.contains(active)) {
+    const attr = VIEW_FOCUS_ATTRS.find((name) => active.hasAttribute(name));
+    if (attr) {
+      const key = { attr, value: active.getAttribute(attr), tag: active.tagName, ties: VIEW_FOCUS_TIES.map((name) => active.getAttribute(name)) };
+      key.n = viewFocusPeers(root, key).indexOf(active);
+      view.focus = key;
+    }
+  }
+  return view;
+}
+export function restoreView(root, view) {
+  if (!root || !view) return;
+  for (const { shape, top } of view.scroll || []) {
+    const node = viewFindShape(root, shape);
+    if (node) node.scrollTop = top;
+  }
+  if (!view.focus) return;
+  // Focus is only handed back when the rebuild dropped it (the focused node was
+  // replaced, so the page is back on body). Focus a caller moved on purpose stays.
+  const active = globalThis.document?.activeElement;
+  const lost = !active || active === globalThis.document?.body || active.isConnected === false;
+  if (!lost) return;
+  const target = viewFocusPeers(root, view.focus)[view.focus.n];
+  if (target && typeof target.focus === 'function') target.focus({ preventScroll: true });
+}
+
 /**
  * renderSettings(container, { settings, onChange, grouped })
  * Fills `container` with the settings controls and wires change events.
@@ -2801,6 +2866,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   } else {
     html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
   }
+  const view = captureView(container);
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
   // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
@@ -2868,6 +2934,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
     const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
+    // A tab switch starts at the top on purpose, so only a keepScroll repaint
+    // carries the scroll offsets over; focus is kept either way.
+    const view = captureView(container, { scroll: keepScroll });
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
     panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
@@ -2878,6 +2947,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     wire();
     panel.scrollTop = scroll;
     if (panel.parentElement) panel.parentElement.scrollTop = outer;
+    restoreView(container, view);
   }
   // ---- the Undo bar, the first-open tip, the Changed toggle --------------
   let undoTimer = null;
@@ -3974,6 +4044,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const step = (d) => selectCategory(stepCategory(cats, current, d));
     setTabRing({ prev: () => step(-1), next: () => step(1) });
   }
+  restoreView(container, view);
   return { nav };
 }
 
@@ -4122,4 +4193,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
   });
   // The selected tab on a rail; the [Section ▾] selector on a compact host.
   (rendered?.nav?.start() || door.veil.querySelector('#set-close'))?.focus({ preventScroll: true });
+  // The shell's handle ({ close, ... }) so a caller that opened Settings can close it
+  // when an import replaces the profile under it (main.js refreshAfterImport).
+  return door;
 }

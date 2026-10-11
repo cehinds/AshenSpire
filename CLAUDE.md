@@ -55,7 +55,11 @@ run `git fetch --prune origin` and `git worktree prune`, then `git worktree
 remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that
 is clean (`git status --porcelain` empty) and whose branch is merged into
 `origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep any
-other worktree; ask the owner before discarding unmerged work. The loop, brief
+other worktree; ask the owner before discarding unmerged work. Before handing
+work to Haiku, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
+the key lines yourself, measure before tuning, one owner per file per wave,
+numbered steps with the design already decided, named traps, an acceptance
+Haiku can run, and orchestrator QA of every diff in a real browser. The loop, brief
 template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).

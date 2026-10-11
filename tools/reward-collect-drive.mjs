@@ -300,10 +300,9 @@ async function bootTreasure({ settings = null, storage = null } = {}) {
   await waitFor(`!!document.querySelector('[data-node="${door.treasure}"]')`, 'the treasure node on the map');
   const clicked = await ev(clickSel(`[data-node="${door.treasure}"]`));
   if (!clicked) throw new Error('treasure node vanished before the click');
-  // SELECT, THEN ENTER (#1024). A pick on a lit node no longer travels — it
-  // selects, and a second pick travels once the selection has stood
-  // `wireframeUi.map.repeatPickDelayMs` (400ms), so a fast double tap cannot
-  // enter in one gesture. This drive picked once and then waited for a reward
+  // SELECT, THEN ENTER (#1024). A pick on a lit node selects, and a second pick
+  // on that selected node travels with no time gate. The 400 ms wait below is
+  // only a settle wait for this browser drive. This drive picked once and then waited for a reward
   // menu that was never going to arrive: "timed out waiting for the reward
   // menu", which is a tool that had not been told, not a game that broke.
   await new Promise((resolve) => setTimeout(resolve, 400));
