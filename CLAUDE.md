@@ -52,7 +52,11 @@ run `git fetch --prune origin` and `git worktree prune`, then `git worktree
 remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that
 is clean (`git status --porcelain` empty) and whose branch is merged into
 `origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep any
-other worktree; ask the owner before discarding unmerged work. The loop, brief
+other worktree; ask the owner before discarding unmerged work. Worker branches
+are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/branch-cleanup`
+for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
+the parent branch merges into `dev`; origin worker branches are deleted by
+`worker-branch-cleanup.yml` after `dev` is promoted to `test`. The loop, brief
 template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).

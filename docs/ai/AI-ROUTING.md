@@ -54,7 +54,8 @@ orchestrator has seen the diff and the test output.
 Haiku does well when it is told exactly where to look and what "done" means, and it
 wanders when it is not. Every brief carries the following, in this order:
 
-1. **Setup.** `git fetch origin dev && git checkout -B <branch> origin/dev`.
+1. **Setup.** The brief's branch is `worker/<parent-topic>/<task>`, cut from the parent
+   branch, not `origin/dev`: `git fetch origin <parent> && git checkout -B worker/<topic>/<task> origin/<parent>`.
 2. **Read first.** The exact files: CLAUDE.md, the SPEC section with its line range, the
    contract doc.
 3. **The defect or goal.** File:line, the failing input and the wrong result, as the
@@ -75,6 +76,19 @@ wanders when it is not. Every brief carries the following, in this order:
 
 Give paths and line numbers, not a tour of the repo. One brief is one task: if a brief
 needs "and also", it is two briefs.
+
+### Branch lifecycle
+
+```text
+worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► test ──► release ──► main
+```
+
+- When the parent (feature) branch merges into `dev`, the session removes its local worker
+  worktrees and local worker branches (`git worktree remove <path>` if clean, then
+  `git branch -d` only when `git merge-base --is-ancestor <branch> origin/dev`; never `-D`).
+  Ask the owner about anything unmerged.
+- Origin worker branches stay until `dev` is promoted to `test`. Then `worker-branch-cleanup.yml`
+  deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test`.
 
 ## 4. What a worker reports
 
