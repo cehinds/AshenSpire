@@ -8,7 +8,9 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 const artifacts = process.env.HUD_STUDIO_ARTIFACTS || path.join(dir, 'artifacts');
+const shots = process.env.HUD_STUDIO_SHOTS || artifacts;
 await fs.mkdir(artifacts, { recursive: true });
+await fs.mkdir(shots, { recursive: true });
 const errors = [];
 const failedRequests = [];
 const browser = await chromium.launch({ ...(process.env.HUD_STUDIO_BROWSER ? { channel: process.env.HUD_STUDIO_BROWSER } : {}), headless: true });
@@ -21,6 +23,8 @@ page.on('requestfailed', request => failedRequests.push(`${request.method()} ${r
 function check(condition, message) { if (!condition) throw new Error(message); console.log(`PASS ${message}`); }
 function savedScene() { return page.evaluate(() => JSON.parse(localStorage.getItem('ashenspire-hud-component-studio-v1')).scene); }
 function effectiveNode(node, state = 'player-selected') { return { ...node, ...(node.states?.[state] || {}) }; }
+function formFactorNode(node, ff, state = 'player-selected') { return { ...node, ...(node.states?.[state] || {}), ...(node.formFactors?.[ff] || {}) }; }
+const ffButton = label => page.getByRole('button', { name: label, exact: true });
 async function selectTree(id) { await page.locator(`[data-layer="${id}"] .label`).click(); }
 async function switchState(id) {
   await page.locator(`[data-state="${id}"]`).click();
@@ -67,6 +71,26 @@ async function exportPng(filename) {
   const width = data.readUInt32BE(16), height = data.readUInt32BE(20);
   check(data.subarray(1, 4).toString() === 'PNG' && width > 0 && height > 0, `PNG exports with valid ${width}x${height} dimensions`);
   return dest;
+}
+// Opens Export CSS JSON, picks one menu item and collects the downloads it starts.
+async function cssExport(item, count) {
+  const downloads = [];
+  const onDownload = download => downloads.push(download);
+  page.on('download', onDownload);
+  await page.locator('#exportCss').click();
+  await page.getByRole('button', { name: item, exact: true }).click();
+  for (let waited = 0; downloads.length < count && waited < 15000; waited += 50) await page.waitForTimeout(50);
+  page.off('download', onDownload);
+  check(downloads.length === count, `${item} starts ${count} download(s) (${downloads.length})`);
+  const names = [], files = [];
+  for (const download of downloads) {
+    const name = download.suggestedFilename();
+    const dest = path.join(artifacts, name);
+    await download.saveAs(dest);
+    names.push(name);
+    files.push(JSON.parse(await fs.readFile(dest, 'utf8')));
+  }
+  return { names, files };
 }
 
 try {
@@ -233,17 +257,111 @@ try {
   await page.getByRole('button', { name: 'Reset current view' }).click();
   await page.locator('#dialogConfirm').click();
   current = await savedScene();
-  const originalText = seed.nodes.find(n => n.id === textNode.id);
   check(current.nodes.find(n => n.id === textNode.id).states?.['player-selected']?.fill !== '#ffffff', 'confirmed reset restores the selected view');
   await page.locator('#undo').click();
   check((await savedScene()).nodes.find(n => n.id === textNode.id).states?.['player-selected']?.fill === '#438ed2', 'undo restores edits after view reset');
+
+  // Form factors: each toggle is exclusive and named in the Inspector scope label.
+  const formFactors = [['mobile', 'Mobile'], ['tablet', 'Tablet'], ['desktop', 'Desktop'], ['widescreen', 'Widescreen']];
+  for (const [id, label] of formFactors) {
+    await ffButton(label).click();
+    const pressed = await page.locator('[data-ff]').evaluateAll(els => els.filter(el => el.getAttribute('aria-pressed') === 'true').map(el => el.dataset.ff));
+    check(JSON.stringify(pressed) === JSON.stringify([id]), `form factor ${label} is the only pressed toggle`);
+    check((await page.locator('#scopeLabel').innerText()).includes(label.toUpperCase()) || id === 'mobile', `Inspector scope names ${label}`);
+  }
+
+  // Mobile stays the base layout. A Tablet drag writes only the Tablet override.
+  await ffButton('Mobile').click();
+  await selectTree('player-details');
+  const detailsSeed = seed.nodes.find(n => n.id === 'player-details');
+  const mobileStart = formFactorNode((await savedScene()).nodes.find(n => n.id === 'player-details'), 'mobile');
+  check(mobileStart.x === detailsSeed.x && mobileStart.y === detailsSeed.y, 'Mobile player details start at the seed position');
+  await ffButton('Tablet').click();
+  await selectTree('player-details');
+  await dragElement(page.locator('#selection [data-move="player-details"]'), 40, 24);
+  current = await savedScene();
+  const detailsTablet = current.nodes.find(n => n.id === 'player-details');
+  check(detailsTablet.formFactors?.tablet && (detailsTablet.formFactors.tablet.x !== detailsSeed.x || detailsTablet.formFactors.tablet.y !== detailsSeed.y), 'Tablet drag moves player details through a Tablet override');
+  check(detailsTablet.x === detailsSeed.x && detailsTablet.y === detailsSeed.y && !detailsTablet.formFactors.mobile, 'Tablet drag leaves the base and Mobile placement untouched');
+  await ffButton('Mobile').click();
+  const mobileAfter = formFactorNode((await savedScene()).nodes.find(n => n.id === 'player-details'), 'mobile');
+  check(mobileAfter.x === detailsSeed.x && mobileAfter.y === detailsSeed.y, 'Mobile view is unchanged after the Tablet move');
+  await ffButton('Desktop').click();
+  const desktopPosition = formFactorNode((await savedScene()).nodes.find(n => n.id === 'player-details'), 'desktop');
+  check(desktopPosition.x === detailsSeed.x && desktopPosition.y === detailsSeed.y, 'Desktop view inherits the seed placement');
+
+  // CSS token export: this form factor, then all four files; the Tablet file round-trips through Import.
+  await ffButton('Tablet').click();
+  const single = await cssExport('This form factor', 1);
+  check(JSON.stringify(single.names) === JSON.stringify(['tablet.json']) && single.files[0].format === 'ashenspire-hud-layout/1' && single.files[0].formFactor === 'tablet' && single.files[0].source === 'hud-component-studio', 'This form factor downloads a valid tablet.json');
+  check(/^-?\d+px$/.test(single.files[0].tokens['--hud-player-details-dx'] ?? ''), 'tablet.json carries the Tablet player details offset');
+  const four = await cssExport('All four (separate files)', 4);
+  check(JSON.stringify(four.names) === JSON.stringify(['mobile.json', 'tablet.json', 'desktop.json', 'widescreen.json']), 'All four exports four separate downloads');
+  check(four.files.every((file, i) => file.format === 'ashenspire-hud-layout/1' && file.formFactor === formFactors[i][0] && file.source === 'hud-component-studio' && file.tokens && typeof file.tokens === 'object'), 'every exported file has the contract format and form factor');
+  check(four.files[0].tokens['--hud-player-details-dx'] === undefined && four.files[2].tokens['--hud-player-details-dx'] === undefined, 'Mobile and Desktop files do not inherit the Tablet offset');
+  await page.locator('#importCssFile').setInputFiles(path.join(artifacts, 'tablet.json'));
+  await page.waitForFunction(() => /Imported/.test(document.querySelector('#toast')?.textContent || ''), null, { timeout: 10000 });
+  check((await savedScene()).nodes.find(n => n.id === 'player-details').formFactors.tablet.x === detailsTablet.formFactors.tablet.x, 'Import CSS JSON restores the exported Tablet position');
+  // Undo reverts the drag and the CSS import together; redo reapplies both; JSON export and import carry overrides.
+  await page.locator('#undo').click();
+  await page.locator('#undo').click();
+  check(!(await savedScene()).nodes.find(n => n.id === 'player-details').formFactors?.tablet, 'Undo reverts the Tablet drag and CSS import');
+  await page.locator('#redo').click();
+  await page.locator('#redo').click();
+  check((await savedScene()).nodes.find(n => n.id === 'player-details').formFactors?.tablet?.x === detailsTablet.formFactors.tablet.x, 'Redo reapplies the Tablet drag and CSS import');
+  const formFactorLayout = await exportJson('form-factor-layout.json');
+  check(formFactorLayout.nodes.find(n => n.id === 'player-details').formFactors?.tablet?.x === detailsTablet.formFactors.tablet.x, 'JSON export carries form factor overrides');
+  const formFactorChooser = page.waitForEvent('filechooser');
+  await page.locator('#import').click();
+  await (await formFactorChooser).setFiles(path.join(artifacts, 'form-factor-layout.json'));
+  await page.waitForFunction(() => /Layout imported/.test(document.querySelector('#toast')?.textContent || ''), null, { timeout: 30000 });
+  check(JSON.stringify((await savedScene()).nodes.find(n => n.id === 'player-details').formFactors) === JSON.stringify(formFactorLayout.nodes.find(n => n.id === 'player-details').formFactors), 'JSON import restores form factor overrides');
+
+  // Inspector shadow and backing controls write the SVG filters, which the PNG export also renders.
+  await ffButton('Mobile').click();
+  await selectTree('header-hp-value');
+  await page.getByLabel('Text shadow blur', { exact: true }).fill('3');
+  await page.getByLabel('Text shadow blur', { exact: true }).press('Tab');
+  current = await savedScene();
+  check(formFactorNode(current.nodes.find(n => n.id === 'header-hp-value'), 'mobile').textShadow?.blur === 3, 'Inspector text shadow blur is saved');
+  check(await page.locator('#scene filter[id="tsh-header-hp-value"]').count() === 1 && (await page.locator('[data-node="header-hp-value"] text').getAttribute('filter')) === 'url(#tsh-header-hp-value)', 'SVG text shadow filter is rendered for the header HP value');
+  await selectTree('player-details-frame');
+  await page.getByLabel('Widget shadow Blur', { exact: true }).fill('8');
+  await page.getByLabel('Widget shadow Blur', { exact: true }).press('Tab');
+  current = await savedScene();
+  check(formFactorNode(current.nodes.find(n => n.id === 'player-details-frame'), 'mobile').shadow?.blur === 8, 'Inspector widget shadow blur is saved');
+  check(await page.locator('#scene filter[id="wsh-player-details-frame"]').count() === 1 && await page.locator('[data-node="player-details-frame"] g[filter="url(#wsh-player-details-frame)"]').count() === 1, 'SVG widget shadow filter wraps the details frame');
+  await page.getByLabel('Widget shadow Blur', { exact: true }).scrollIntoViewIfNeeded();
+  await page.locator('.inspector').screenshot({ path: path.join(shots, 'inspector-shadow-controls.png') });
+  await page.getByRole('button', { name: 'Clear widget shadow', exact: true }).click();
+  check(formFactorNode((await savedScene()).nodes.find(n => n.id === 'player-details-frame'), 'mobile').shadow === null, 'Clear widget shadow turns the effect off');
+  await page.locator('#undo').click();
+  check(formFactorNode((await savedScene()).nodes.find(n => n.id === 'player-details-frame'), 'mobile').shadow?.blur === 8, 'Undo restores the widget shadow after Clear');
+  await exportPng('form-factor-shadow.png');
+
+  // Each form factor in the Player selected view.
+  await switchState('player-selected');
+  for (const [id, label] of formFactors) {
+    await ffButton(label).click();
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(shots, `ff-${id}-player-selected.png`) });
+  }
+
+  // Reset form factor clears Tablet overrides only.
+  await ffButton('Tablet').click();
+  await page.locator('#reset').click();
+  await page.getByRole('button', { name: 'Reset form factor', exact: true }).click();
+  await page.locator('#dialogConfirm').click();
+  current = await savedScene();
+  check(!current.nodes.some(n => n.formFactors?.tablet), 'Reset form factor clears every Tablet override');
+  await ffButton('Mobile').click();
 
   // Narrow viewport sanity: controls remain inside the viewport bounds and clickable.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(250);
   const bounds = await page.evaluate(() => ({ width: innerWidth, nodes: [...document.querySelectorAll('.topbar button,.viewbar button,.layer-bottom button,#fit,#zoomIn,#zoomOut')].map(el => ({ text: el.innerText, right: el.getBoundingClientRect().right, left: el.getBoundingClientRect().left })) }));
   const offscreen = bounds.nodes.filter(node => node.right > bounds.width + 1 || node.left < -1);
-  check(offscreen.length === 0, `narrow viewport controls stay onscreen (${offscreen.length} offscreen)`);
+  check(offscreen.length === 0, `narrow viewport controls stay onscreen (${offscreen.length} offscreen: ${offscreen.map(o => o.text).join(' | ')})`);
   await page.screenshot({ path: path.join(artifacts, 'narrow-390x844.png'), fullPage: true });
 
   check(errors.length === 0, `no browser console/page errors (${errors.length})`);

@@ -1,0 +1,29 @@
+{
+  "format": "ashenspire-hud-css-bindings/1",
+  "contract": "docs/hud-layout-tokens.md",
+  "scale": { "numerator": 390, "denominator": 512, "note": "Design px on the 512-wide canvas to CSS px at the 390-wide mobile reference. Applies to every length, size, offset and shadow value." },
+  "tokens": {
+    "--hud-text-shadow": { "type": "shadow", "order": "text", "node": "header-hp-value", "path": "textShadow" },
+    "--hud-text-plate-bg": { "type": "color", "node": "player-feet-hp-value", "path": "textBacking.color" },
+    "--hud-text-plate-radius": { "type": "length", "node": "player-feet-hp-value", "path": "textBacking.radius" },
+    "--hud-text-plate-pad": { "type": "length", "node": "player-feet-hp-value", "path": "textBacking.padX" },
+    "--hud-panel-bg": { "type": "color", "node": "player-details-frame", "path": "fill" },
+    "--hud-panel-shadow": { "type": "shadow", "order": "box", "node": "player-details-frame", "path": "shadow" },
+    "--hud-panel-radius": { "type": "length", "node": "player-details-frame", "path": "radius" },
+    "--hud-player-panel-border": { "type": "color", "node": "player-details-frame", "path": "stroke" },
+    "--hud-enemy-panel-border": { "type": "color", "node": "enemy-nameplate-frame", "path": "stroke" },
+    "--hud-details-font": { "type": "font", "node": "player-details-name", "path": "fontFamily" },
+    "--hud-details-name-size": { "type": "length", "node": "player-details-name", "path": "fontSize" },
+    "--hud-details-value-size": { "type": "length", "node": "player-details-hp-value", "path": "fontSize" },
+    "--hud-details-label-color": { "type": "color", "node": "player-details-poise-label", "path": "fill" },
+    "--hud-details-min-width": { "type": "length", "node": "player-details", "path": "minWidth" },
+    "--hud-tools-bg": { "type": "color", "node": "hand-toolbar", "path": "fill" },
+    "--hud-header-hp-max-width": { "type": "length-or-none", "node": "header-hp-track", "path": "maxWidth" },
+    "--hud-tools-span": { "type": "keyword", "values": ["field", "hand"], "node": "hand-toolbar", "path": "span" },
+    "--hud-player-details-dx": { "type": "px", "node": "player-details", "axis": "x" },
+    "--hud-player-details-dy": { "type": "px", "node": "player-details", "axis": "y" },
+    "--hud-enemy-nameplate-dy": { "type": "px", "node": "enemy-nameplate", "axis": "y" },
+    "--hud-turn-ribbon-dy": { "type": "px", "node": "turn", "axis": "y" },
+    "--hud-tools-dy": { "type": "px", "node": "hand-toolbar", "axis": "y" }
+  }
+}
