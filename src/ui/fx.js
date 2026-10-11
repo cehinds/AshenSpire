@@ -638,6 +638,11 @@ export function groupBeats(events) {
 // Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
+// Opt-in beat trace for browser QA: set window.__fx.trace = [] and each paced
+// beat step pushes [performance.now(), step, detail].
+const traceBeat = (step, detail) => {
+  if (Array.isArray(dbg.trace)) dbg.trace.push([globalThis.performance?.now?.() ?? Date.now(), step, detail]);
+};
 
 // Is this figure out of its stance — mid-action, or showing a pose other than
 // its rest? A figure with no stage, or one that reports neither, is in stance.
@@ -819,6 +824,7 @@ export function playTimeline(events, ctx, done) {
       const stage = stageFor(actorEl);
       if (outOfStance(stage)) {
         safe(() => stage.settle());
+        traceBeat('stance');
         stanceLead = speed.stanceLeadMs > 0;
       }
     }
@@ -839,6 +845,7 @@ export function playTimeline(events, ctx, done) {
     if (actorEl && ctx.animateActor) {
       try {
         actorAnimation = ctx.animateActor(beat, actorEl, speed);
+        traceBeat('swing', actorAnimation && { impactMs: actorAnimation.impactMs, totalMs: actorAnimation.totalMs });
       } catch (e) {
         actorAnimation = null;
       }
@@ -894,7 +901,15 @@ export function playTimeline(events, ctx, done) {
     let heldMs = 0;
     const holdFor = (event) => ((beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
       ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0);
+    const markContact = (what) => {
+      // An observable contact marker (tools/click-impact-probe.mjs): the
+      // effects layer's data-contact counts the impact-frame moments played.
+      safe(() => { ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + 1); });
+      traceBeat('contact', what);
+    };
     schedule(() => {
+      // A beat with nothing to draw at impact still reaches its impact frame.
+      if (actorEl && !visuals.length) markContact('impact');
       let vi = 0;
       const stepV = () => {
         if (finished) return;
@@ -917,9 +932,7 @@ export function playTimeline(events, ctx, done) {
             hitStop = holdMs;
           }
           safe(() => v(ctx));
-          // An observable contact marker (tools/click-impact-probe.mjs): the
-          // effects layer's data-contact counts the impact-frame visuals played.
-          safe(() => { ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + 1); });
+          markContact(event.type);
           if (!damageCued.has(beatIndex) && playerLostHp(event)) {
             damageCued.add(beatIndex);
             safe(() => haptic.play('damageTaken'));
@@ -936,6 +949,7 @@ export function playTimeline(events, ctx, done) {
           // the sprite host; ordinary CSS lunges update immediately as before.
           cancelActorAnimation();
           safe(() => ctx.onBeatApplied && ctx.onBeatApplied(leadApplied ? { ...beat, events: beat.events.filter((e) => !lead.has(e)) } : beat));
+          traceBeat('bars');
           schedule(nextBeat, speed.beatMs);
         };
         // Sequential: once the attacker is back in its stance, each event's
@@ -951,6 +965,7 @@ export function playTimeline(events, ctx, done) {
             return;
           }
           cancelActorAnimation();
+          traceBeat('settle');
           let ri = 0;
           const stepR = () => {
             if (finished) return;
@@ -970,6 +985,7 @@ export function playTimeline(events, ctx, done) {
                 nextBeat();
                 return;
               }
+              traceBeat('numbers', event.type);
               if (parts.numbers) safe(() => parts.numbers(ctx));
               if (ri >= reactions.length) applyBeat();
               else schedule(stepR, speed.stepMs);
@@ -980,6 +996,7 @@ export function playTimeline(events, ctx, done) {
             }
             // The hit-stop held the attacker's impact frame alone; the target's
             // reaction plays unheld (SPEC §7.4, sequential).
+            traceBeat('reaction', event.type);
             safe(() => parts.reaction(ctx));
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
