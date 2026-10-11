@@ -122,7 +122,8 @@ export default {
       const path = state.selected;
       if (!path) return;
       state.drafts.set(path, state.grid.getData());
-      if (ev.change) ctx.history.pushChange(ev.change, (snap) => applyDoc(path, snap));
+      // The step is owned by its table, so reloading one table drops only that table's steps.
+      if (ev.change) ctx.history.scoped(path).pushChange(ev.change, (snap) => applyDoc(path, snap));
       refresh();
     }
     function applyDoc(path, snap) {
