@@ -223,7 +223,7 @@ defect this layering exists to catch.
 An effect is an array of opcode objects; playing a card, triggering a relic, or resolving an event choice enqueues them onto the action queue (§3.9).
 
 ```js
-// Bloodflame Slash: "Deal 5 damage. Apply 3 Bleed."
+// Gorefire Slash: "Deal 5 damage. Apply 3 Bleed."
 effects: [
   { op: 'damage',      target: 'enemy', amount: 5 },
   { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
