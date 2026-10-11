@@ -271,8 +271,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const reasons = [!addOn ? (addTile?.refusal || '') : '', !removeOn ? (row.lockSentence || '') : ''].filter(Boolean);
     const base = row.countText || (source === 'deck' ? t(`deckEditor.source.${row.source}`) : '');
     // The stance rides the selected-reason line, not the card's reading block
-    // (where the oversized card face covered it). A shown refusal stays alone.
-    const reasonText = reasons.length ? reasons.join(' ') : [base, stanceName(row)].filter(Boolean).join(' · ');
+    // (where the oversized card face covered it). It follows a refusal too, so
+    // the inspector always names the stance.
+    const reasonText = [reasons.length ? reasons.join(' ') : base, stanceName(row)].filter(Boolean).join(' · ');
     animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
     section.append(
