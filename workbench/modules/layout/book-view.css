@@ -1,0 +1,43 @@
+/* Layout Studio · Book recipes. The shared mode bar, body and panels come from layout.css. */
+.bk-body { min-height: 0; }
+.bk-main { padding: 12px 16px; overflow: auto; }
+.bk-h { margin: 14px 0 6px; font-size: 13px; font-weight: 600; color: var(--muted, #9aa1ad); }
+.bk-file { font-size: 12px; color: var(--muted, #9aa1ad); }
+
+.bk-stage { width: min(320px, 60vw); aspect-ratio: 1 / 1; margin: 0 auto; }
+.bk-stage .book-art { display: block; width: 100%; height: 100%; }
+
+.bk-sizes { display: flex; gap: 18px; align-items: flex-end; justify-content: center; margin-top: 12px; }
+.bk-size-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+.bk-size { display: inline-block; aspect-ratio: 1 / 1; }
+.bk-size .book-art { display: block; width: 100%; height: 100%; }
+.bk-size-wrap small { font-size: 11px; color: var(--muted, #9aa1ad); }
+
+.bk-row, .bk-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.bk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+.bk-choice {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer;
+}
+.bk-choice .book-art { width: 72px; height: 72px; display: block; }
+.bk-choice[aria-pressed="true"] { border-color: var(--accent, #7aa7ff); background: rgba(122, 167, 255, 0.12); }
+.bk-choice:focus-visible, .bk-book:focus-visible, .bk-swatch:focus-visible { outline: 2px solid var(--accent, #7aa7ff); outline-offset: 2px; }
+
+.bk-swatch {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer;
+  background: var(--swatch); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+.bk-swatch[aria-pressed="true"] { border-color: #fff; }
+
+.bk-library { display: flex; flex-direction: column; gap: 4px; padding: 6px; }
+.bk-book {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 4px 6px; border-radius: 6px;
+  border: 1px solid transparent; background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer;
+}
+.bk-book[aria-pressed="true"] { border-color: var(--accent, #7aa7ff); background: rgba(122, 167, 255, 0.12); }
+.bk-book:disabled { opacity: 0.5; cursor: default; }
+.bk-thumb { width: 40px; height: 40px; flex: none; }
+.bk-thumb .book-art { display: block; width: 100%; height: 100%; }
+.bk-dirty { color: var(--accent, #7aa7ff); }
+
+.bk-status { margin-top: 12px; font-size: 12px; color: var(--muted, #9aa1ad); }
