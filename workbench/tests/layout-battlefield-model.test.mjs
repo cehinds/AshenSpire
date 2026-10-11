@@ -88,3 +88,91 @@ test('the geometry constants match the config file the game reads', () => {
   const grid = JSON.parse(readFileSync(join(ROOT, 'content/config/ui/presentation/combatFormationModel.json'), 'utf8')).sizing.grid;
   for (const k of Object.keys(B.GRID)) assert.equal(B.GRID[k], grid[k], k);
 });
+
+const W = 1641, H = 526;
+const slots = (key, parts) => B.battlefieldGeometry(presentationOf(parts, key), { width: W, height: H });
+
+test('dragging a slot by px moves exactly that slot, and the others keep their place', () => {
+  const parts = B.parsePresets(realText);
+  const before = slots('2x2', parts);
+  const target = before.find((c) => c.cell === 'B1');
+  const id = B.slotGroupId(target);
+  const next = B.moveSlots(parts.data, '2x2', [{ groupId: id, dx: 30, dy: -12, name: B.slotGroupName(target) }], { width: W, height: H });
+  const bentParts = { ...parts, data: next };
+  const after = slots('2x2', bentParts);
+  for (const c of after) {
+    const old = before.find((p) => p.cell === c.cell);
+    // Offsets are stored as percent to six places, so a move is exact to a few millionths of a px.
+    if (c.cell === 'B1') { assert.ok(Math.abs(c.x - old.x - 30) < 1e-3, 'B1 moved x'); assert.ok(Math.abs(c.ground - old.ground + 12) < 1e-3, 'B1 moved ground'); }
+    else { eq(c.x, old.x, `${c.cell} x unchanged`); eq(c.ground, old.ground, `${c.cell} ground unchanged`); }
+  }
+});
+
+test('a slot move writes only the group it touches, and leaves the input untouched', () => {
+  const parts = B.parsePresets(realText);
+  const snapshot = JSON.stringify(parts.data);
+  const text = B.serializePresets(parts, B.moveSlots(parts.data, '2x2', [{ groupId: 'cell-player:1:0', dx: 10, dy: 0 }], { width: W, height: H }));
+  assert.equal(JSON.stringify(parts.data), snapshot, 'the input data is not mutated');
+  // Line multisets: the group before the new one gains a comma (one line out, one in), and the new group adds eight lines.
+  const count = (lines) => lines.reduce((m, l) => m.set(l, (m.get(l) || 0) + 1), new Map());
+  const before = count(realText.split('\n')), after = count(text.split('\n'));
+  const removed = [], added = [];
+  for (const [l, n] of before) if ((after.get(l) || 0) < n) removed.push(l);
+  for (const [l, n] of after) if ((before.get(l) || 0) < n) added.push(l);
+  assert.deepEqual(removed, [], 'the closing brace of the new group replaces the one the comma changed');
+  assert.equal(added.length, 8, 'the comma line and the new group\'s other seven lines');
+  assert.ok(added.includes('        },'));
+  assert.equal(text.split('\n').length - realText.split('\n').length, 8);
+  assert.equal(B.parsePresets(text).data['2x2'].presentation.formationGroups.at(-1).id, 'cell-player:1:0');
+});
+
+test('withGroup replaces an existing group in place and clamps its values', () => {
+  const parts = B.parsePresets(realText);
+  const next = B.withGroup(parts.data, '2x2', 'enemy', { x: 500, scale: 0.01 });
+  const groups = next['2x2'].presentation.formationGroups;
+  assert.equal(groups.length, parts.data['2x2'].presentation.formationGroups.length, 'no group is added');
+  const enemy = groups.find((g) => g.id === 'enemy');
+  assert.equal(enemy.x, 100);
+  assert.equal(enemy.scale, 0.25);
+  assert.deepEqual(groups.filter((g) => g.id !== 'enemy'), parts.data['2x2'].presentation.formationGroups.filter((g) => g.id !== 'enemy'));
+});
+
+test('withField clamps numbers to the game\'s limits and refuses unknown fields', () => {
+  const parts = B.parsePresets(realText);
+  assert.equal(B.withField(parts.data, '2x2', 'formationDepth', 500)['2x2'].presentation.formationDepth, 100);
+  assert.equal(B.withField(parts.data, '2x2', 'formationDepth', '44.4')['2x2'].presentation.formationDepth, 44);
+  assert.equal(B.withField(parts.data, '2x2', 'formationPreset', 'classic-v')['2x2'].presentation.formationPreset, 'classic-v');
+  assert.throws(() => B.withField(parts.data, '2x2', 'formationPreset', 'zigzag'), /unknown preset/);
+  assert.throws(() => B.withField(parts.data, '2x2', 'frontLayer', 3), /not a Battlefield field/);
+});
+
+const cellsOf = [
+  { id: 'a', x: 100, ground: 200 }, { id: 'b', x: 300, ground: 260 }, { id: 'c', x: 340, ground: 220 }, { id: 'd', x: 900, ground: 300 },
+];
+test('align puts every cell on the chosen edge and moves no other axis', () => {
+  const left = B.alignDeltas(cellsOf, 'left');
+  assert.deepEqual(left.map((m, i) => cellsOf[i].x + m.dx), [100, 100, 100, 100]);
+  assert.ok(left.every((m) => m.dy === 0));
+  const bottom = B.alignDeltas(cellsOf, 'bottom');
+  assert.ok(bottom.every((m, i) => cellsOf[i].ground + m.dy === 300));
+  assert.ok(bottom.every((m) => m.dx === 0));
+  const centre = B.alignDeltas(cellsOf, 'center');
+  assert.ok(centre.every((m, i) => cellsOf[i].x + m.dx === 500));
+  const middle = B.alignDeltas(cellsOf, 'middle');
+  assert.ok(middle.every((m, i) => cellsOf[i].ground + m.dy === 250));
+  assert.throws(() => B.alignDeltas(cellsOf, 'diagonal'), /unknown edge/);
+});
+
+test('distribute spaces the cells evenly and keeps the outer two in place', () => {
+  const moves = B.distributeDeltas(cellsOf, 'horizontal');
+  const xs = cellsOf.map((c, i) => c.x + moves[i].dx).sort((p, q) => p - q);
+  assert.equal(xs[0], 100);
+  assert.equal(xs[3], 900);
+  const gaps = xs.slice(1).map((x, i) => x - xs[i]);
+  assert.ok(gaps.every((g) => Math.abs(g - gaps[0]) < 1e-9), 'equal gaps');
+  assert.equal(moves[0].dx, 0, 'the leftmost stays');
+  assert.equal(moves[3].dx, 0, 'the rightmost stays');
+  const vertical = B.distributeDeltas(cellsOf, 'vertical');
+  assert.ok(vertical.every((m) => m.dx === 0));
+  assert.deepEqual(B.distributeDeltas(cellsOf.slice(0, 2), 'horizontal').map((m) => m.dx), [0, 0], 'two cells have nothing to spread');
+});

@@ -157,3 +157,102 @@ export function battlefieldGeometry(presentation, { width, height, footerClearan
   }
   return applyGroups(cells, config.formationGroups, width, height);
 }
+
+// ---------------------------------------------------------------------------
+// Edits. Every edit returns a new presets object; the input is not changed, and
+// only the entries it names are replaced, so the other values keep their bytes.
+// A slot moves through its own group ("cell-side:row:column"), which the game
+// applies after the section and row offsets, so a px move is exact.
+// ---------------------------------------------------------------------------
+
+const round = (v) => Math.round(v * 1e6) / 1e6;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/** The group id that moves one slot. */
+export const slotGroupId = (cell) => `cell-${cell.side}:${cell.row}:${cell.column}`;
+
+/** A readable name for a slot group, as the game's group menu words it. */
+export function slotGroupName(cell) {
+  const col = cell.side === 'player' ? cell.column + 1 : (cell.columns ?? 2) * 2 - cell.column;
+  return `${cell.side} · position ${FORMATION_ROWS[cell.row]}${col}`;
+}
+
+/**
+ * Set a group's offset (percent of the battlefield) and/or scale. The group is
+ * replaced in place when it exists, or appended when it does not.
+ */
+export function withGroup(data, key, groupId, patch, { name = groupId } = {}) {
+  const layout = data[key];
+  if (!layout || !layout.presentation) throw Error(`${key} has no presentation`);
+  const list = Array.isArray(layout.presentation.formationGroups) ? layout.presentation.formationGroups : [];
+  const at = list.findIndex((g) => g && g.id === groupId);
+  const current = at >= 0 ? list[at] : { id: groupId, name, members: [], x: 0, y: 0, scale: 1 };
+  const next = { ...current };
+  if (patch.x !== undefined) next.x = round(clamp(patch.x, -100, 100));
+  if (patch.y !== undefined) next.y = round(clamp(patch.y, -100, 100));
+  if (patch.scale !== undefined) next.scale = round(clamp(patch.scale, 0.25, 3));
+  const groups = at >= 0 ? list.map((g, i) => (i === at ? next : g)) : [...list, next];
+  return { ...data, [key]: { ...layout, presentation: { ...layout.presentation, formationGroups: groups } } };
+}
+
+/** Move slots by px: each slot's own group takes the move, as a percent of the battlefield. */
+export function moveSlots(data, key, moves, { width, height }) {
+  let next = data;
+  for (const m of moves) {
+    if (!m.dx && !m.dy) continue;
+    const group = (next[key].presentation.formationGroups || []).find((g) => g && g.id === m.groupId);
+    const x = (group?.x || 0) + (m.dx / width) * 100;
+    const y = (group?.y || 0) + (m.dy / height) * 100;
+    next = withGroup(next, key, m.groupId, { x, y }, { name: m.name });
+  }
+  return next;
+}
+
+/** Set one of the layout's numeric fields (clamped to the game's limits) or its preset. */
+export function withField(data, key, field, value) {
+  const layout = data[key];
+  if (!layout || !layout.presentation) throw Error(`${key} has no presentation`);
+  const spec = FIELDS.find((f) => f.key === field);
+  let v = value;
+  if (field === 'formationPreset') { if (!PRESETS.includes(value)) throw Error(`unknown preset ${value}`); }
+  else {
+    if (!spec) throw Error(`${field} is not a Battlefield field`);
+    v = Number(value);
+    if (!Number.isFinite(v)) throw Error(`${field} needs a number`);
+    v = clamp(Math.round(v), spec.min, spec.max);
+  }
+  return { ...data, [key]: { ...layout, presentation: { ...layout.presentation, [field]: v } } };
+}
+
+/**
+ * Align the cells on one edge: left, center, right (x) or top, middle, bottom (ground).
+ * Returns [{ id, dx, dy }] in px; a cell already on the edge gets 0.
+ */
+export function alignDeltas(cells, edge) {
+  const xs = cells.map((c) => c.x), gs = cells.map((c) => c.ground);
+  const target = {
+    left: Math.min(...xs), center: (Math.min(...xs) + Math.max(...xs)) / 2, right: Math.max(...xs),
+    top: Math.min(...gs), middle: (Math.min(...gs) + Math.max(...gs)) / 2, bottom: Math.max(...gs),
+  }[edge];
+  if (target === undefined || !Number.isFinite(target)) throw Error(`unknown edge ${edge}`);
+  const horizontal = ['left', 'center', 'right'].includes(edge);
+  return cells.map((c) => (horizontal ? { id: c.id, dx: target - c.x, dy: 0 } : { id: c.id, dx: 0, dy: target - c.ground }));
+}
+
+/**
+ * Distribute the cells evenly along an axis, the first and last kept in place.
+ * Returns [{ id, dx, dy }] in px.
+ */
+export function distributeDeltas(cells, axis) {
+  const key = axis === 'horizontal' ? 'x' : 'ground';
+  const sorted = [...cells].sort((a, b) => a[key] - b[key]);
+  const n = sorted.length;
+  if (n < 3) return cells.map((c) => ({ id: c.id, dx: 0, dy: 0 }));
+  const first = sorted[0][key], last = sorted[n - 1][key];
+  const step = (last - first) / (n - 1);
+  const moves = new Map(sorted.map((c, i) => [c.id, first + step * i - c[key]]));
+  return cells.map((c) => {
+    const d = moves.get(c.id);
+    return axis === 'horizontal' ? { id: c.id, dx: d, dy: 0 } : { id: c.id, dx: 0, dy: d };
+  });
+}
