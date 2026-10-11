@@ -236,11 +236,22 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     foldersUnder(p, knownFolders); // new, or a different folder now at a known path
     return true;
   };
+  // A known folder that is gone (deleted or moved out) is forgotten with all below it, so the
+  // same folder moved back later counts as new and its files are reloaded.
+  // The event's path and each folder above it up to the watched root are checked: macOS may
+  // report a moved-out folder by its files alone.
+  const forgetGone = (root, target) => {
+    for (let p = target; p.length > root.length && p.startsWith(root + path.sep); p = path.dirname(p)) {
+      if (!knownFolders.has(p) || fs.existsSync(p)) continue;
+      for (const k of [...knownFolders.keys()]) if (k === p || k.startsWith(p + path.sep)) knownFolders.delete(k);
+    }
+  };
   function watchRecursive(abs, d) {
     if (platform === 'darwin') foldersUnder(abs, knownFolders);
     let w;
     try {
       w = fs.watch(abs, { recursive: true }, (_event, name) => {
+        if (platform === 'darwin' && name) forgetGone(abs, path.join(abs, String(name)));
         for (const target of recursiveEventPaths(abs, name, platform, { isNewFolder })) note(target);
       });
     } catch { return false; /* recursive watch unsupported here: poll below */ }

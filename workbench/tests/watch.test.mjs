@@ -197,3 +197,23 @@ test('on macOS a folder replaced at a known path batches the new folder\'s files
   await waitFor(() => batches.flat().includes('content/ui/new.json'));
   assert.ok(batches.flat().includes('content/ui/new.json'), `the replacement folder's file is batched: ${batches.flat()}`);
 });
+
+test('on macOS a known folder moved out and back again batches its files', async (t) => {
+  if (process.platform !== 'darwin') return t.skip('needs FSEvents (macOS)');
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-out-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content/ui'), { recursive: true });
+  await fs.writeFile(path.join(root, 'content/ui/tokens.json'), '{}');
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'darwin', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  await sleep(500);
+  await fs.rename(path.join(root, 'content/ui'), path.join(outside, 'ui'));
+  await sleep(500);
+  batches.length = 0;
+  await fs.rename(path.join(outside, 'ui'), path.join(root, 'content/ui'));
+  await waitFor(() => batches.flat().includes('content/ui/tokens.json'));
+  assert.ok(batches.flat().includes('content/ui/tokens.json'), `the returned folder's file is batched: ${batches.flat()}`);
+});
