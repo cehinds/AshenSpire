@@ -1,0 +1,237 @@
+/* workbench/ui/kit/canvas.css — styles for canvas.mjs, canvas-panels.mjs.
+   Every colour is a Workbench token (--as-*, shared/tokens.css): the canvas is
+   dark inside the app. The --ck-* names are aliases for the kit's rules, and
+   the fallbacks are the same dark values. Text inks are above 4.5:1 on their
+   surfaces (WCAG AA); the accent, guide and locked lines are above 3:1. */
+:root {
+  --ck-bg: var(--as-bg, #131210);
+  --ck-page: var(--as-bg-panel, #1a1815);
+  --ck-ruler-bg: var(--as-bg-raised, #23201c);
+  --ck-text: var(--as-text, #ece5d8);
+  --ck-text-dim: var(--as-text-dim, #b0a593);
+  --ck-line: var(--as-line-strong, #453e35);
+  --ck-grid-line: rgba(236, 229, 216, 0.09);
+  --ck-accent: var(--as-accent, #e0a64a);
+  --ck-accent-soft: var(--as-accent-soft, rgba(224, 166, 74, 0.14));
+  --ck-item: rgba(224, 166, 74, 0.08);
+  --ck-guide: var(--as-bad, #e0645c);
+  --ck-locked: var(--as-warn, #e3b341);
+  color-scheme: dark;
+}
+
+/* Host: rulers in the top and left strips, the view fills the rest. */
+.ck-host {
+  --ck-ruler: 22px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--ck-ruler) minmax(0, 1fr);
+  grid-template-rows: var(--ck-ruler) minmax(0, 1fr);
+  min-height: 240px;
+  height: 100%;
+  background: var(--ck-bg);
+  color: var(--ck-text);
+  font: 12px/1.3 system-ui, sans-serif;
+}
+.ck-host.no-rulers { --ck-ruler: 0px; }
+.ck-host.no-rulers .ck-ruler,
+.ck-host.no-rulers .ck-corner { display: none; }
+.ck-corner { grid-column: 1; grid-row: 1; background: var(--ck-ruler-bg); }
+.ck-ruler { position: relative; overflow: hidden; background: var(--ck-ruler-bg); }
+.ck-ruler-top { grid-column: 2; grid-row: 1; }
+.ck-ruler-left { grid-column: 1; grid-row: 2; }
+.ck-track { position: absolute; top: 0; left: 0; height: 100%; width: 100%; }
+.ck-ruler-left .ck-track { width: 100%; height: auto; }
+.ck-tick { position: absolute; bottom: 0; width: 1px; height: 6px; background: var(--ck-line); }
+.ck-ruler-left .ck-tick { bottom: auto; left: auto; right: 0; width: 6px; height: 1px; }
+.ck-tick.major { height: 12px; }
+.ck-ruler-left .ck-tick.major { width: 12px; height: 1px; }
+.ck-rlabel { position: absolute; top: 2px; font-size: 10px; color: var(--ck-text-dim); }
+
+.ck-view {
+  grid-column: 2;
+  grid-row: 2;
+  overflow: auto;
+  position: relative;
+  outline: none;
+  background: var(--ck-bg);
+}
+.ck-view:focus-visible { box-shadow: inset 0 0 0 2px var(--ck-accent); }
+.ck-view.ck-pan, .ck-view.ck-pan * { cursor: grab; }
+.ck-stage { position: relative; padding: 24px; box-sizing: content-box; }
+.ck-page {
+  position: relative;
+  background: var(--ck-page);
+  box-shadow: 0 0 0 1px var(--ck-line);
+  user-select: none;
+}
+.ck-page.grid {
+  background-image:
+    linear-gradient(to right, var(--ck-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ck-grid-line) 1px, transparent 1px);
+  background-size: var(--ck-grid-px, 20px) var(--ck-grid-px, 20px);
+}
+.ck-page.grid.minor {
+  background-image:
+    linear-gradient(to right, var(--ck-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ck-grid-line) 1px, transparent 1px),
+    linear-gradient(to right, var(--ck-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ck-grid-line) 1px, transparent 1px);
+  background-size: var(--ck-grid-px) var(--ck-grid-px), var(--ck-grid-px) var(--ck-grid-px),
+    var(--ck-minor-px) var(--ck-minor-px), var(--ck-minor-px) var(--ck-minor-px);
+}
+
+.ck-item {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--ck-accent);
+  background: var(--ck-item);
+  pointer-events: none;
+  overflow: hidden;
+}
+.ck-item.locked { border-style: dashed; border-color: var(--ck-locked); }
+.ck-item.in-group { outline: 1px dotted var(--ck-text-dim); outline-offset: -3px; }
+.ck-item.dim { opacity: 0.35; }
+.ck-item.selected { box-shadow: 0 0 0 1px var(--ck-accent), 0 0 0 3px var(--ck-accent-soft); }
+/* The label sits at the region's top-left and is clipped to the region (.ck-item is overflow: hidden). */
+.ck-label {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: var(--ck-text);
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* A small region shows its label on hover or selection only. */
+.ck-item.tiny .ck-label { display: none; }
+.ck-item.tiny.hover .ck-label, .ck-item.tiny.selected .ck-label { display: block; }
+/* A label that would collide with another (labelsToHide) shows on hover or selection only. */
+.ck-item.label-hide .ck-label { display: none; }
+.ck-item.label-hide.hover .ck-label, .ck-item.label-hide.selected .ck-label { display: block; }
+
+.ck-handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  background: var(--ck-page);
+  border: 1px solid var(--ck-accent);
+  border-radius: 2px;
+  z-index: 2;
+  pointer-events: auto;
+}
+.ck-handle[data-handle="nw"], .ck-handle[data-handle="se"] { cursor: nwse-resize; }
+.ck-handle[data-handle="ne"], .ck-handle[data-handle="sw"] { cursor: nesw-resize; }
+.ck-handle[data-handle="n"], .ck-handle[data-handle="s"] { cursor: ns-resize; }
+.ck-handle[data-handle="e"], .ck-handle[data-handle="w"] { cursor: ew-resize; }
+
+.ck-guide { position: absolute; background: var(--ck-guide); pointer-events: none; z-index: 3; }
+.ck-guide.x { top: 0; bottom: 0; width: 1px; }
+.ck-guide.y { left: 0; right: 0; height: 1px; }
+.ck-marquee {
+  position: absolute;
+  border: 1px dashed var(--ck-accent);
+  background: var(--ck-accent-soft);
+  pointer-events: none;
+  z-index: 4;
+}
+.ck-zoom {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--ck-ruler-bg);
+  color: var(--ck-text-dim);
+  pointer-events: none;
+}
+
+/* Layers panel */
+.ck-layers, .ck-inspector {
+  position: relative;
+  background: var(--ck-bg);
+  color: var(--ck-text);
+  font: 12px/1.35 system-ui, sans-serif;
+  padding: 8px;
+}
+.ck-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0 8px;
+  font-weight: 600;
+}
+.ck-layer-list { list-style: none; margin: 0; padding: 0; }
+.ck-layer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: default;
+}
+.ck-layer.selected { background: var(--ck-accent-soft); }
+.ck-layer.is-hidden .ck-name { opacity: 0.5; }
+.ck-layer.drop-above { box-shadow: inset 0 2px 0 var(--ck-accent); }
+.ck-layer.drop-below { box-shadow: inset 0 -2px 0 var(--ck-accent); }
+.ck-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-tog, .ck-exit, .ck-menu button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--ck-line);
+  border-radius: 4px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+.ck-tog[aria-pressed="false"] { color: var(--ck-text-dim); }
+.ck-badge {
+  font-size: 10px;
+  color: var(--ck-text-dim);
+  border: 1px solid var(--ck-line);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+.ck-menu {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  padding: 4px;
+  background: var(--ck-page);
+  border: 1px solid var(--ck-line);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.ck-menu button { text-align: left; border-color: transparent; }
+.ck-menu button:hover { background: var(--ck-accent-soft); }
+.ck-hint { color: var(--ck-text-dim); margin: 0; }
+
+/* Inspector */
+.ck-inspector .ck-field { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+.ck-inspector .ck-field span { color: var(--ck-text-dim); }
+.ck-inspector .ck-field input[type="number"],
+.ck-inspector .ck-field input[type="text"],
+.ck-inspector .ck-field select {
+  width: 96px;
+  font: inherit;
+  color: inherit;
+  background: var(--ck-page);
+  border: 1px solid var(--ck-line);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+.ck-inspector .ck-field input::placeholder { color: var(--ck-text-dim); font-style: italic; }
+.ck-inspector .ck-check { justify-content: flex-start; }
+.ck-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+
+@media (max-width: 480px) {
+  .ck-host { min-height: 200px; }
+  .ck-inspector .ck-field input { width: 72px; }
+}

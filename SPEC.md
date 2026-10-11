@@ -640,7 +640,7 @@ Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Tri
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; `DEVELOPER.md` documents payloads):
+Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). The core events are (not exhaustive; `EVENTS` is):
 
 ```
 combatStart, combatEnd(victory)
@@ -653,6 +653,9 @@ enemySpawned, enemyDied, enemyStaggered
 energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
+combatReactionOffered, combatReactionChosen
+combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind) †
+combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?) †
 ```
 
 ### 3.11 Seeded RNG
@@ -1137,6 +1140,15 @@ refresh at player-turn start. The player mini HUD sits above visible artwork
 with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
 This specification precedes the runtime implementation and does not claim that
 the new reaction system has shipped.
+
+When a seat holds a Counter or defensive Sweep but no reaction is offered for
+an incoming root, the engine emits `combatReactionUnavailable` once per root and
+seat, naming the first failing check (`switchOff`, `attackerStaggered`,
+`attackerControlled`, `notCovered`, `cost`, `controlled`, `unplayable`,
+`alreadyAnswered` or `other`); a seat with no such card, a dead seat and a
+disconnected seat get none. A Smash that breaks physical Guard emits
+`combatGuardBroken` once per break. Both are informational receipts and change
+no rule.
 
 ## 5. Content specification
 
@@ -1890,7 +1902,7 @@ together.
 
 ### 7.4 Feedback & animation rules
 
-- Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the HP it cost (after Block) and never over 4 px (owner, 2026-10-05: "Combat latency + juice"; the amplitude steps and their floors are a data row, defaulting to 1 px from 1 HP, 2 px from 6, 3 px from 10 and 4 px from 15, so the old rule, 4 px for hits of 15 or more, is the top step); and a **hit-stop**: on a hit that costs 6 HP or more, the attacker's impact frame and the target's recoil hold for 60 ms (a data row; 0 turns it off) before the swing recovers. The hit-stop pauses only those two figures' animation: the damage number, sound and haptic fire at impact, and a click skips it with the rest. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep 60 ms, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
+- Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the HP it cost (after Block) and never over 4 px (owner, 2026-10-05: "Combat latency + juice"; the amplitude steps and their floors are a data row, defaulting to 1 px from 1 HP, 2 px from 6, 3 px from 10 and 4 px from 15, so the old rule, 4 px for hits of 15 or more, is the top step); and a **hit-stop**: on a hit that costs 6 HP or more, the attacker's impact frame and the target's recoil hold for 60 ms (a data row; 0 turns it off) before the swing recovers. Under the sequential beat order below, the hit-stop holds the attacker's impact frame alone; the target stays in its rest pose until its reaction starts. The hit-stop pauses only those two figures' animation, and a click skips it with the rest. **Beat order** (owner, 2026-10-11, presentation `beatOrder`, default `sequential`): an attack beat plays the attacker's stance, its attack clip and its return to stance first; then the target's reaction starts (hurt pose and flash, shake, evade, block or Stagger wobble); `reactionMs` after it starts (a data row, default 180 ms at Normal), the damage/guard/heal numbers fire with their sound and haptic, and then the HP, Poise and Block bars update. The numbers wait only for that `reactionMs`, never for a long fixed effect: the heavy hit flash and the Stagger wobble keep running underneath them. The contact spark and the attacker's hit-stop stay at the impact frame. `beatOrder: impact` keeps the earlier order, where the reaction, number, sound and haptic fire at impact. Counter return beats keep the impact order. The click-to-impact budget is measured to the contact effect (≤400 ms at Normal pacing), and on a plain single hit the first number lands ≤750 ms after the click. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep 60 ms, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
 - "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
 - Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.

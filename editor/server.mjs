@@ -3,10 +3,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { spawn, spawnSync, execFileSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
 import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
+import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
+import { spawnGroup } from '../tools/lib/process-tree.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -15,7 +17,23 @@ const commands = {
   build: [['tools/launch.mjs', '--build-only']],
   validate: [['tests/run-node.mjs'], ['tools/buildversion.mjs', '--check'], ['tools/verify-shipped.mjs']],
 };
-export async function createStudio({ root = path.resolve(HERE, '..'), port = 4317, stateDir, codexExecutable } = {}) {
+// Actions that write the generated trees (src/content/generated, src/framework/data,
+// src/config/generated) run under the cross-process lock the Workbench and UI
+// Studio share (tools/lib/build-lock.mjs); validate only reads them.
+const WRITES_GENERATED = new Set(['content', 'build']);
+// The trees a build reads (the same rule as workbench/core/files.mjs): a save
+// under them holds the shared lock from validation through the last write.
+const BUILD_INPUT = /^(?:content|src|styles)\//;
+
+// A build action can start builders of its own (notably launch.mjs). Each action runs in its own
+// process group (spawnGroup), and close() stops the complete group, so no orphan keeps writing after
+// the Editor's lock holder has exited.
+// A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
+// Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
+export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
+export async function createStudio({ root = path.resolve(HERE, '..'), port = 4317, stateDir, codexExecutable, frameAncestors = [], lockWaitMs = 10 * 60 * 1000 } = {}) {
+  for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
+  const ancestors = frameAncestors.join(' ');
   root = await fs.realpath(root);
   stateDir ||= path.join(HERE, '.studio', hash(root).slice(0, 16));
   const workspace = new Workspace(root, stateDir);
@@ -50,25 +68,36 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
   function startJob(name) {
     if (!commands[name]) throw Error('Unknown build action');
     if (job?.status === 'running') throw Error('Another check is already running');
+    let release = () => {};
+    if (WRITES_GENERATED.has(name)) {
+      const got = tryAcquire(root, `Editor ${name} build`);
+      if (typeof got !== 'function') throw Object.assign(Error(busyMessage(got.heldBy)), { status: 409 });
+      release = got;
+    }
     job = { id: randomUUID(), name, status: 'running', output: '' };
     const current = job;
-    workspace.serialize(async () => {
-      for (const args of commands[name]) {
-        current.output += `> node ${args.join(' ')}\n`;
-        const code = await new Promise(resolve => {
-          const child = spawn(process.execPath, args, { cwd: root, windowsHide: true });
-          current.child = child;
-          const append = data => { current.output = (current.output + data).slice(-120000); };
-          child.stdout.on('data', append); child.stderr.on('data', append);
-          child.on('error', error => { append(error.message); resolve(-1); });
-          child.on('close', resolve);
-        });
-        delete current.child;
-        if (code !== 0) { current.status = 'failed'; current.exitCode = code; return; }
-      }
-      current.status = 'passed';
+    current.done = workspace.serialize(async () => {
+      try { await runSteps(); } finally { release(); }
     }).catch(e => { current.status = 'failed'; current.output += e.message; });
     return { id: current.id };
+    async function runSteps() {
+      for (const args of commands[name]) {
+        if (current.stopping) return; // the Editor is closing: no further step starts
+        current.output += `> node ${args.join(' ')}\n`;
+        // Builders run under this action's hold on the lock (tools/lib/build-lock.mjs). The step runs in its own
+        // group, and the lock is released only once that group is empty (spawnGroup's done).
+        const group = spawnGroup(process.execPath, args, { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) } });
+        current.group = group;
+        const append = data => { current.output = (current.output + data).slice(-120000); };
+        group.child.stdout.on('data', append); group.child.stderr.on('data', append);
+        const { code, error } = await group.done;
+        if (error) append(error.message);
+        delete current.group;
+        const status = error ? -1 : code;
+        if (status !== 0) { current.status = 'failed'; current.exitCode = status; return; }
+      }
+      current.status = 'passed';
+    }
   }
   const server = http.createServer(async (req, res) => {
     try {
@@ -82,10 +111,10 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         if (req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: 'Cross-site request refused' });
         if (url.pathname !== '/api/session' && req.headers['x-studio-token'] !== token) return send(res, 403, { error: 'Reopen the editor to connect' });
         if (req.method === 'GET') {
-          if (url.pathname === '/api/session') return send(res, 200, { token });
+          if (url.pathname === '/api/session') return send(res, 200, { token, root });
           if (url.pathname === '/api/inventory') return send(res, 200, await inventory());
           if (url.pathname === '/api/file') return send(res, 200, await workspace.read(url.searchParams.get('path')));
-          if (url.pathname === '/api/job') { const { child, ...publicJob } = job || {}; return send(res, 200, publicJob); }
+          if (url.pathname === '/api/job') { const { child, done, ...publicJob } = job || {}; return send(res, 200, publicJob); }
           if (url.pathname === '/api/codex/events') return send(res, 200, { events: codex.events.filter(e => e.cursor > Number(url.searchParams.get('after') || 0)), active: codex.active });
           if (url.pathname === '/api/backups') {
             const dirs = (await fs.readdir(path.join(stateDir, 'backups')).catch(() => [])).sort().reverse().slice(0, 40);
@@ -95,13 +124,18 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         if (req.method === 'POST') {
           const data = await body(req);
           if (url.pathname === '/api/save') {
-            if (Array.isArray(data.changes)) for (const change of data.changes) {
-              if (change.path?.endsWith('.js') && typeof change.text === 'string') {
-                const checked = spawnSync(process.execPath, ['--check', '--input-type=module'], { input: change.text, encoding: 'utf8', windowsHide: true, timeout: 10000 });
-                if (checked.status !== 0) throw Error(`Syntax check failed for ${change.path}: ${checked.stderr || checked.error?.message}`);
+            // Waits for the shared build lock like the Workbench's file service; a busy lock is a 409 naming its holder.
+            const holdsLock = Array.isArray(data.changes) && data.changes.some(change => BUILD_INPUT.test(String(change?.path ?? '')));
+            const release = holdsLock ? await acquire(root, 'Editor save', { timeoutMs: lockWaitMs }) : null;
+            try {
+              if (Array.isArray(data.changes)) for (const change of data.changes) {
+                if (change.path?.endsWith('.js') && typeof change.text === 'string') {
+                  const checked = spawnSync(process.execPath, ['--check', '--input-type=module'], { input: change.text, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+                  if (checked.status !== 0) throw Error(`Syntax check failed for ${change.path}: ${checked.stderr || checked.error?.message}`);
+                }
               }
-            }
-            return send(res, 200, await workspace.save(data.changes));
+              return send(res, 200, await workspace.save(data.changes));
+            } finally { release?.(); }
           }
           if (url.pathname === '/api/job') return send(res, 200, startJob(data.name));
           if (url.pathname === '/api/codex/account') return send(res, 200, await codex.account());
@@ -163,17 +197,26 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         file = path.join(HERE, name);
       }
       const bytes = await fs.readFile(file);
-      res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', ...(url.pathname.startsWith('/game/') ? { 'Content-Security-Policy': `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads; frame-ancestors 'self' http://${address}` } : { 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http://${previewAddress} data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'` }) });
+      res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', ...(url.pathname.startsWith('/game/') ? { 'Content-Security-Policy': `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads; frame-ancestors 'self' http://${address}${ancestors ? ` ${ancestors}` : ''}` } : { 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http://${previewAddress} data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors ${ancestors || "'none'"}` }) });
       res.end(bytes);
-    } catch (error) { send(res, error.code === 'ENOENT' ? 404 : 400, { error: error.message }); }
+    } catch (error) { send(res, error.status || (error.code === 'ENOENT' ? 404 : 400), { error: error.message }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
-  return { server, workspace, codex, url: `http://127.0.0.1:${server.address().port}`, close: async () => { codex.close(); job?.child?.kill(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); } };
+  return { server, workspace, codex, url: `http://127.0.0.1:${server.address().port}`, close: async () => {
+    codex.close();
+    if (job) job.stopping = true;
+    // SIGTERM the step's group, SIGKILL it after the grace period, and wait until it is empty before the lock goes.
+    await job?.group?.stop();
+    await job?.done;
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+  } };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const index = process.argv.indexOf('--project');
   const portIndex = process.argv.indexOf('--port');
-  const app = await createStudio({ ...(index < 0 ? {} : { root: path.resolve(process.argv[index + 1]) }), port: portIndex < 0 ? 4317 : Number(process.argv[portIndex + 1]) });
+  const ancestorIndex = process.argv.indexOf('--frame-ancestor');
+  const app = await createStudio({ ...(index < 0 ? {} : { root: path.resolve(process.argv[index + 1]) }), port: portIndex < 0 ? 4317 : Number(process.argv[portIndex + 1]), frameAncestors: ancestorIndex < 0 ? [] : [process.argv[ancestorIndex + 1]] });
   console.log(`AshenSpire Studio: ${app.url}`);
   const close = async () => { await app.close(); process.exit(0); };
   process.on('SIGINT', close); process.on('SIGTERM', close);
