@@ -280,6 +280,19 @@ test('pasteVisible: a blank value does not excuse a non-blank bad value in the s
   assert.deepEqual(snap(out.rows), snap(d.rows), 'nothing applied');
 });
 
+test('pasteVisible: a hidden active row refuses the paste with a reason instead of landing on row 0', () => {
+  const d = { columns: [{ key: 'a', type: 'number', label: 'a' }], rows: [{ a: 1 }, { a: 2 }, { a: 4 }] };
+  const out = M.pasteVisible(d.rows, d.columns, [1, 2], { r: 0, c: 0 }, '9', selOf(range(0, 0, 0, 0)));
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(out.rows.map(r => r.a), [1, 2, 4], 'a is unchanged');
+  assert.equal(out.reason, 'The active cell is hidden by the filter; select a visible cell and paste again.');
+  assert.equal(out.reason, M.HIDDEN_ANCHOR_REASON);
+  const multi = M.pasteVisible(d.rows, d.columns, [1, 2], { r: 0, c: 0 }, '9\n8');
+  assert.equal(multi.change, null, 'a multi-line paste is refused the same way');
+  assert.equal(multi.reason, M.HIDDEN_ANCHOR_REASON);
+});
+
 test('pasteVisible: columns past the last one are counted as overflow', () => {
   const d = fresh();
   const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, [['a', '1', 'true', 'z', '{"q":1}', '6', '7']]);

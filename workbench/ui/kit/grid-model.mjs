@@ -339,6 +339,7 @@ export function pasteRange(doc, at, text, { fill = null } = {}) {
   }
   return { ...result(doc, 'Paste', { columns, rows }), errors };
 }
+export const HIDDEN_ANCHOR_REASON = 'The active cell is hidden by the filter; select a visible cell and paste again.';
 /**
  * Paste through the VISIBLE order. The clipboard's top-left lands on the anchor's visible position:
  * clipboard row i goes to order[pos + i], column j to column anchor.c + j. Past the last visible row,
@@ -358,7 +359,8 @@ export function pasteRange(doc, at, text, { fill = null } = {}) {
  * @param anchor { r, c } the active cell
  * @param matrixOrText clipboard text, or a parsed matrix
  * @param selection { ranges } or null
- * @returns {{ rows, columns, change: object | null, errors: object[], overflow: { rows: number, cols: number } }}
+ * A hidden anchor (not in order) refuses the paste: change null, and `reason` holds the message to show.
+ * @returns {{ rows, columns, change: object | null, errors: object[], overflow: { rows: number, cols: number }, reason?: string }}
  */
 export function pasteVisible(rows, columns, order, anchor, matrixOrText, selection = null) {
   const sel = selection ?? { ranges: [] };
@@ -372,8 +374,12 @@ export function pasteVisible(rows, columns, order, anchor, matrixOrText, selecti
   if (targets.length) {
     for (const { r, c } of targets) writes.push({ r, c, raw: matrix[0][0] });
   } else {
+    // A filter can hide the active row. Pasting from a hidden anchor would land on another row, so refuse.
+    if (order.indexOf(anchor.r) < 0) {
+      return { rows, columns, change: null, errors: [], overflow, reason: HIDDEN_ANCHOR_REASON };
+    }
     const identity = order.length === rows.length && order.every((r, i) => r === i);
-    const start = Math.max(0, order.indexOf(anchor.r));
+    const start = order.indexOf(anchor.r);
     const colRoom = Math.max(0, columns.length - anchor.c);
     overflow.cols = matrix.reduce((m, line) => Math.max(m, line.length - colRoom), 0);
     for (let i = 0; i < matrix.length; i++) {
