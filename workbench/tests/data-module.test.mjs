@@ -188,6 +188,16 @@ test('tableRules uses the compound unique key when the key repeats within a scop
   assert.deepEqual(dupe.filter((i) => /^Duplicate/.test(i.message)).map((i) => [i.row, i.key]), [[dupeRows.length - 1, 'id']]);
 });
 
+test('KEY_SCOPES lists only outfits, and keyScopeFor reads it by path', () => {
+  assert.deepEqual(D.KEY_SCOPES, { 'content/source/outfits.csv': 'classId' });
+  assert.equal(D.keyScopeFor('content/source/outfits.csv'), 'classId');
+  // Every other table keeps the single key, even one with a *Id column that would tell its rows apart.
+  assert.equal(D.keyScopeFor('content/source/startingKits.csv'), null);
+  assert.equal(D.keyScopeFor('content/source/nodes.csv'), null);
+  assert.equal(D.keyScopeFor('constructor'), null);
+  assert.equal(D.keyScopeFor(undefined), null);
+});
+
 test('keyScopeOf finds the *Id scope only when the key repeats and (scope, key) is unique', () => {
   const cols = [{ key: 'classId', type: 'string' }, { key: 'id', type: 'string' }, { key: 'n', type: 'number' }];
   const row = (classId, id) => ({ classId, id, n: 1 });

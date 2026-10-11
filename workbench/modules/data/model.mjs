@@ -17,6 +17,17 @@
 export const SOURCE_DIR = 'content/source';
 export const FRAMEWORK_DIR = 'content/framework';
 const KEY_NAMES = ['id', 'key', 'name'];
+/**
+ * Tables whose id is unique only within a scope column (file path -> scope column). Every other table's id is
+ * unique on its own. Listed explicitly, not inferred: a duplicate id under another *Id column is still an error.
+ * content/source/outfits.csv: a refs of the form armor/<classId>/<id>, so (classId, id) is the identity.
+ */
+export const KEY_SCOPES = Object.freeze({ 'content/source/outfits.csv': 'classId' });
+
+/** The scope column for a table path from KEY_SCOPES, or null. */
+export function keyScopeFor(path) {
+  return Object.hasOwn(KEY_SCOPES, path) ? KEY_SCOPES[path] : null;
+}
 // The content compiler's number grammar (tools/content-build.mjs coerce): integers and plain decimals.
 // Exponents ('1e3') and trailing dots ('1.') stay strings, so a round trip never rewrites them.
 const NUMBER = /^-?(\d+|\d*\.\d+)$/;
