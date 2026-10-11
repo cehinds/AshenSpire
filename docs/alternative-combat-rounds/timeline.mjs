@@ -133,6 +133,15 @@ function foesOf(combatants, id) {
   return ['player'];
 }
 
+// The target rule for one card (owner, 2026-10-11), shared by queues and reactions: an attack
+// hits a foe; a guard or evade is for its owner; a counter or other card is for its owner or a foe.
+function targetOk(card, foes) {
+  const t = card.target;
+  return card.kind === 'attack' ? foes.includes(t)
+    : card.kind === 'guard' || card.kind === 'evade' ? t === 'self'
+      : t === 'self' || foes.includes(t);
+}
+
 // Checks every queue: known combatant, card shape, target, and SP budget.
 function validateQueues(queues, combatants) {
   if (!queues || typeof queues !== 'object' || Array.isArray(queues)) throw new TypeError('queues must be an object keyed by combatant id');
@@ -147,12 +156,9 @@ function validateQueues(queues, combatants) {
       if (!CARD_KINDS.includes(card.kind)) throw new TypeError(`card "${card.id}" kind must be one of ${CARD_KINDS.join(', ')}`);
       if (!Number.isFinite(Number(card.speed ?? 0))) throw new TypeError(`card "${card.id}" speed must be a finite number`);
       for (const field of DEFENCE_FIELDS) defenceNumber(card, field);
-      const foes = foesOf(combatants, id);
-      const t = card.target;
-      const ok = card.kind === 'attack' ? foes.includes(t)
-        : card.kind === 'guard' || card.kind === 'evade' ? t === 'self'
-          : t === 'self' || foes.includes(t);
-      if (!ok) throw new TypeError(`card "${card.id}" of "${id}" has an invalid target "${t}"`);
+      if (!targetOk(card, foesOf(combatants, id))) {
+        throw new TypeError(`card "${card.id}" of "${id}" has an invalid target "${card.target}"`);
+      }
       spent += cardSp(card);
     }
     if (spent > combatants[id].sp) {
@@ -472,7 +478,9 @@ function offerReaction(cur, entry, events, options, run) {
   const id = defender.id;
   const usedIds = get(cur.used, id, []);
   const queued = get(run.queuedIds, id, new Set());
+  const foes = foesOf(cur.combatants, id);
   const eligible = defender.hand.filter((c) => DEFENSIVE_KINDS.includes(c.kind)
+    && targetOk(c, foes)
     && !queued.has(c.id)
     && !usedIds.includes(c.id)
     && cardSp(c) <= cur.spLeft[id]

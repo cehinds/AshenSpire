@@ -563,6 +563,22 @@ test('onReaction is offered only to the player, and only when SP is left for the
   assert.equal(calls.length, 1);
 });
 
+test('a hand card aimed at a foe is not a reaction: the same target rule as queues applies', () => {
+  const calls = [];
+  const onReaction = (attack, eligible) => {
+    calls.push(eligible.map((c) => c.id));
+    return null;
+  };
+  // A guard must target 'self', so a guard aimed at the attacking goblin is never offered.
+  // The self-target guard is still offered.
+  createRound(duo({}, { hand: [guardCard('foeGuard', { target: 'goblin' }), guardCard('selfGuard')] }), {
+    queues: { goblin: [stab(1, 4)] },
+    rng: HIT_RNG,
+    onReaction,
+  }).resolveAll();
+  assert.deepEqual(calls, [['selfGuard']]);
+});
+
 test('a reaction spends the card cost, and a returned card must be eligible', () => {
   const st = duo({}, { hand: [guardCard()] });
   const round = createRound(st, {
