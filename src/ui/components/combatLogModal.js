@@ -9,6 +9,7 @@
 import { el, button } from '../kit/index.js';
 import { openModal } from './modalShell.js';
 import { t, tFull } from '../strings.js';
+import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 
 /** Draw the public log into `container`, grouped by round. The drawer and the door share this face. */
 export function renderCombatLogEntries(container, entries) {
@@ -40,6 +41,7 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     name: 'combat-log', size: 'xl', className: 'combat-log-modal', title: t('combat.log.title'),
     titleId: 'combat-log-modal-title', body: list, secondary: [closeButton], opener, onClose,
   });
+  markUiComponent(modal.panel, UI.combatLogModal);
   closeButton.addEventListener('click', () => modal.close());
   modal.body.scrollTop = modal.body.scrollHeight;
   return Object.freeze({
