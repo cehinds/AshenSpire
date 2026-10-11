@@ -74,3 +74,23 @@ Formula, relation and value keys follow the README conventions.
     default delivery row. Defensive stances are not attacks, and counter
     children differ. Owner to say whether they should have a delivery.
   - `elemental-strike` is under Attack and inherits `melee`. Owner to confirm.
+
+## 4. Prepare is available to players
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Prepare is available to players, not only to enemies.
+- **Tables changed:**
+  - `tables/tags.csv`: new `meta.combat.skill.prepare` (key `prepare`, status
+    `new`), under Skill. The Prepared status it sets already existed as
+    `meta.combat.status-effect.buff.setup.prepared`.
+  - `tools/legacy-status.json`: `prepare` added as `new`.
+  - `tables/relations.csv`: `prepare APPLIES prepared`.
+  - No table recorded an enemy-only restriction on Prepare, so nothing needed
+    removing.
+- **Couldn't place:**
+  - Where Prepare belongs in the tree. I put it under Skill because the
+    tables have no Prepare card type or stance. Owner to say if it is a
+    stance or a Setup power.
+  - The Prepare card object. `assets/cards/extended/card-prepare-512.webp`
+    exists in `assets.csv`, but no `objects.csv` row was added because its cost
+    and type are not in the decision.

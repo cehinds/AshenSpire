@@ -178,6 +178,7 @@ meta.combat.skill.class-stance,class-stance,Class stance,meta.combat.skill,Class
 meta.combat.skill.class-stance.gorefire-stance,gorefire-stance,Gorefire Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.class-stance.bulwark-stance,bulwark-stance,Bulwark Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.class-stance.brace,brace,Brace,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
+meta.combat.skill.prepare,prepare,Prepare,meta.combat.skill,Skill,,"Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared",,,,,,new,,,
 meta.combat.skill.spellcraft,spellcraft,Spellcraft,meta.combat.skill,Skill,,each school deals its damage type,,,,,,game-concept,,,
 meta.combat.skill.spellcraft.fire,spellcraft.fire,Fire,meta.combat.skill.spellcraft,Skill,spellcraft.fire,,,,,,,live-tag,,,school:fire
 meta.combat.skill.spellcraft.fire.gorefire,gorefire,Gorefire,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]). fire fed by blood,,,,,,live-tag,,,gorefire
