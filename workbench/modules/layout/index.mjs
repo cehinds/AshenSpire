@@ -118,6 +118,7 @@ export default {
       api: ctx.api,
       history: ctx.history,
       preview: ctx.preview,
+      onReload: ctx.onReload,
       toast: ctx.toast,
       settings: st.settings,
       devices: () => st.settings.devices,
@@ -491,6 +492,7 @@ export default {
     function selectMode(next, { link = false } = {}) {
       const want = L.modeFor(next);
       if (want !== mode) {
+        views[mode]?.hide?.();
         mode = want;
         for (const m of L.MODES.filter((x) => x.built)) {
           const tab = el.querySelector(`.lay-modes [data-mode="${m.id}"]`);
@@ -561,6 +563,7 @@ export default {
         selectMode(requested ? requested : mode);
         paintReview();
       },
+      onHide() { views[mode]?.hide?.(); },
       commands: () => [
         { title: 'Fit the wireframe to the page', sub: '0', run: () => st.canvas?.fit() },
         { title: 'Rotate the device', sub: 'Layout Studio', run: () => rotate() },
