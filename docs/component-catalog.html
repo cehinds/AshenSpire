@@ -163,6 +163,22 @@
 </head>
 <body>
 <main>
+  <section class="token-panel" aria-labelledby="hud-studio-authoring-heading">
+    <h2 id="hud-studio-authoring-heading">HUD Component Studio · authoring tool</h2>
+    <p><code>tools/hud-component-studio/scene.json</code> describes an editable 512 × 960 canvas with 224 named nodes, 38 source assets, and Idle, Player selected, and Enemy selected views. The standalone SVG renderer provides Layers, an Inspector, drag/resize controls, local autosave, JSON import/export, and full-view or transparent component PNG export. Edits are authoring layouts; they do not change the game automatically.</p>
+    <svg viewBox="0 0 360 142" width="360" style="max-width:100%" role="img" aria-label="Schematic HUD editor with Layers, a selected combat component, and Inspector">
+      <rect x="1" y="1" width="358" height="140" rx="8" fill="#141510" stroke="#665536"/>
+      <rect x="9" y="9" width="342" height="16" fill="#302a1d"/><text x="17" y="21" fill="#e9d59d" font-size="10">HUD Component Studio · three selection views</text>
+      <rect x="9" y="33" width="80" height="99" fill="#211e17"/><text x="16" y="47" fill="#e9d59d" font-size="10">Layers</text>
+      <path d="M18 58h58M18 72h43M18 86h53M18 100h37" stroke="#8a7958" stroke-width="3"/>
+      <rect x="100" y="33" width="158" height="99" fill="#171f1a"/><rect x="111" y="40" width="136" height="7" fill="#813d37"/>
+      <circle cx="179" cy="78" r="18" fill="#334334" stroke="#70bc69"/><rect x="156" y="55" width="46" height="46" fill="none" stroke="#c9a227" stroke-dasharray="3 2"/>
+      <path d="M124 113h110" stroke="#cab68a" stroke-width="13"/>
+      <rect x="269" y="33" width="82" height="99" fill="#211e17"/><text x="277" y="47" fill="#e9d59d" font-size="10">Inspector</text>
+      <path d="M278 61h62M278 77h62M278 93h62M278 109h62" stroke="#8a7958" stroke-width="3"/>
+    </svg>
+    <p><a href="../tools/hud-component-studio/index.html">Open the studio</a> · <a href="../tools/hud-component-studio/README.md">Preview and editing guide</a> · <a href="../tools/hud-component-studio/scene-notes.md">Source art and reconstruction limits</a>. Serve the repository over HTTP, or use the tool's local preview launcher.</p>
+  </section>
   <section aria-label="Map route history">
     <h2>Map route history</h2>
     <p><code>ActRouteModel</code> and <code>actRouteStripHtml</code> compose the act title, Entrance, fixed evenly spaced encounter circles and Boss in one desktop row. Saved visits reuse map glyphs, the current position is ringed, and future circles remain empty. The title sits above the rail on phones; inspecting a destination does not change the receipt.</p>
