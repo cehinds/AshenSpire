@@ -13,11 +13,11 @@
 #     out while still reading "→ MET". The edit that turned automatic runs off
 #     changed `on:` and said so; this header sits fifty lines above it and nobody
 #     edited it. That is how a second copy is born — one fact, two homes,
-#     nothing checking they agree. EldenSpire#35. Today every job runs on a push
-#     to `test` or `release`, and a PR's legs are read at promotion (the `on:`
-#     block below states it once). A push to `dev` or a feature branch
-#     still fires nothing here: under SOP 2's silence guard that is `unknown`
-#     until the tree reaches `test`, and unknown blocks.
+#     nothing checking they agree. EldenSpire#35. Today the jobs run on a push
+#     to `test` (the test-stage jobs) or `release` (the polish jobs), split by
+#     stage as the `on:` block below states once. A push to `dev` or a feature
+#     branch still fires nothing here: under SOP 2's silence guard that is
+#     `unknown` until the tree reaches `test`, and unknown blocks.
 #
 #     THE STANDING BOUNDARY, and it belongs here rather than on a card. Nothing
 #     in this repo is `verified-at` a CI ref while this holds. The permanent
@@ -90,8 +90,9 @@ on:
   # one here: a 3-OS matrix on every push to every branch, where Windows bills at
   # 2x and macOS at 10x the Linux rate.
   #
-  # It now runs ONLY when started by hand: Actions tab -> "Run workflow".
-  # Nothing below this block changed; every job, guard and boundary is intact.
+  # SINCE 2026-09-26 it also runs on push to `test` and `release`, split by stage
+  # (AUTOMATIC TRIGGERS below), and by hand: Actions tab -> "Run workflow".
+  # Every job, guard and boundary is intact; the stage split moved none of them.
   #
   # DO NOT RE-ENABLE BY RESTORING WHAT WAS HERE. The old text told you to put
   # back `push: branches: ['**']` + `pull_request:`. That pair is a measured
@@ -148,20 +149,34 @@ on:
   # allowance; the allowance itself has never been read off this account's
   # billing page by anyone.
   #
-  # AUTOMATIC TRIGGERS. By the owner's ruling D7 (2026-09-24): a push to
-  # `release`, the one ref whose tree ships, so the 3-OS claims above are read
-  # there at least. By the owner's ruling of 2026-09-26 ("the long shipped
-  # artifact should be on test and release branches"): a push to `test` as well.
-  #   push to test / release   — every job below.
-  #   workflow_dispatch        — every job below, on any ref.
-  # Pull requests into `dev` do not run this file: re-enabling that is the
-  # owner's call (above), and `display-first`'s self-test has not been measured
-  # against the five-minute dev-PR budget. `push` names only `test` and
-  # `release`, so no commit runs twice. Nothing was removed: every job and step
-  # runs, unchanged, on every push to `test` and `release`.
+  # AUTOMATIC TRIGGERS, SPLIT BY STAGE (owner, 2026-10-11). `release` only ever
+  # receives the exact SHA already tested at `test`, so re-running the functional
+  # suites there is duplicate work; release runs the polish jobs alone.
+  # Ruling history: D7 (2026-09-24) put release here; 2026-09-26 added test.
+  #   push to test (and alternative test refs) — the TEST-STAGE jobs: the engine
+  #                              suite, discovered tests, tool self-tests, the
+  #                              bundler parse gate and the functional browser
+  #                              checks (every job NOT in the polish list below).
+  #   push to release          — the POLISH jobs: reproducibility, Fullscreen-first,
+  #                              the build stamp and cold boot, layout, the hint
+  #                              strip, idle and reduced motion.
+  #   both                     — `boundary`, which always runs and names what the
+  #                              run does not cover.
+  #   workflow_dispatch        — every job, on any ref. Its `stage` input (all,
+  #                              test or release; default all) narrows it to one
+  #                              stage. The job-level `if:` of each job says which.
+  # Pull requests into `dev` and pushes to `dev` do not run this file. `push`
+  # names only `test` and `release`, so no commit runs twice. Nothing else was
+  # removed: every job runs, unchanged, on the stage it is assigned to.
   push:
-    branches: [test, release, alternative/test, 'alternative/**/test']
+    branches: [test, release, 'alternative/**/test']
   workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Stage to run: all, test (functional jobs) or release (polish jobs)'
+        type: choice
+        options: [all, test, release]
+        default: all
 
 # A PUSH to `test` or `release` is a promotion, and each promoted tree is its
 # own answer: a second push must not cancel the first's 10-60 min run, nor
@@ -219,7 +234,7 @@ jobs:
   # ---------------------------------------------------------------------------
   test:
     name: tests (${{ matrix.os }})
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -371,7 +386,7 @@ jobs:
   # ---------------------------------------------------------------------------
   test-discovered:
     name: discovered tests (${{ matrix.os }}, ${{ matrix.shard }})
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -432,7 +447,7 @@ jobs:
   # The two closed groups together are the original --selftests-only lane.
   test-selftests:
     name: tool self-tests (${{ matrix.os }}, ${{ matrix.group }})
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -473,7 +488,7 @@ jobs:
   # ---------------------------------------------------------------------------
   parse-gate:
     name: bundler parse gate
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -537,7 +552,7 @@ jobs:
   # ---------------------------------------------------------------------------
   reproducible:
     name: shipped artifact is this source (${{ matrix.os }}, ${{ matrix.shard }})
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -672,9 +687,13 @@ jobs:
   reproducible-agree:
     name: the three runners built the same bytes
     needs: reproducible
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    # !cancelled(), not success(): when `reproducible` FAILS this job must still run
+    # and fail, rather than be skipped and read as an absent verdict.
+    if: ${{ !cancelled() && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release')) }}
     runs-on: ubuntu-latest
     steps:
+      - name: The build that the digests come from must have succeeded
+        run: test "${{ needs.reproducible.result }}" = success
       - uses: actions/download-artifact@v4
         with:
           pattern: build-digest-*
@@ -710,6 +729,7 @@ jobs:
   display-first:
     name: Fullscreen first through both Settings doors
     runs-on: ubuntu-latest
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
@@ -733,7 +753,7 @@ jobs:
     # in it. A job name is what a red run shows first; one naming a single check
     # sends the reader to the wrong tool. — Bjorn
     name: the checks that need a real browser
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -811,7 +831,7 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-guard-stamp:
     name: the build stamp and the cold boot in a real browser
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -865,7 +885,7 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-flask-menu:
     name: every flask menu in a real browser
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -890,7 +910,7 @@ jobs:
 
   browser-flask-menu-plants:
     name: flask-menu known-bads in a real browser (${{ matrix.shard }})
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -922,7 +942,7 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-guard-changelog:
     name: about-changelog known-bads in a real browser (${{ matrix.shard }})
-    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -963,7 +983,7 @@ jobs:
 
   browser-layout-guard:
     name: mobile and combat layout in a real browser
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -988,7 +1008,7 @@ jobs:
   # Four shards keep every original plant and a clean rendered edge per shard.
   browser-layout-plants:
     name: mobile visual reach known-bads (${{ matrix.shard }})
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -1011,7 +1031,7 @@ jobs:
 
   browser-layout-all:
     name: all five layouts in a real browser
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -1033,7 +1053,7 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-layout-hintstrip:
     name: menu scrollbars, combat action row and Armoury in a real browser
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -1198,7 +1218,7 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-hintstrip-plants:
     name: hint strip known-bads in a real browser (${{ matrix.shard }})
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -1241,7 +1261,7 @@ jobs:
   # ---------------------------------------------------------------------------
   browser-startup-plants:
     name: startup gate known-bads in a real browser (${{ matrix.shard }})
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -1274,7 +1294,7 @@ jobs:
   # the 20 below.
   browser-motion:
     name: idle animation and reduced motion in a real browser (${{ matrix.shard }})
-    if: github.event_name != 'pull_request'
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # SHARDED, NOT GIVEN MORE TIME (owner rule D38, 2026-10-02): each leg runs
