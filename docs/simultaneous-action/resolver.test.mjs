@@ -8,6 +8,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   actionSpeed,
+  momentumSpeed,
   clampMomentum,
   hitRoll,
   resolvePair,
@@ -129,20 +130,20 @@ test('momentum is clamped to -3..+3 in actionSpeed', () => {
   assert.equal(clampMomentum(NaN), 0);
 
   const high = actionSpeed({ card: 'strike', momentum: 9 }, { card: { strike: 1 } });
-  assert.equal(high.parts.momentum, 3);
-  assert.equal(high.total, 4);
+  assert.equal(high.parts.momentum, 1);
+  assert.equal(high.total, 2);
 
   const low = actionSpeed({ card: 'strike', momentum: -9 }, { card: { strike: 1 } });
-  assert.equal(low.parts.momentum, -3);
-  assert.equal(low.total, -2);
+  assert.equal(low.parts.momentum, -1);
+  assert.equal(low.total, 0);
 
   // The enemy side applies -M, so the same shared value helps the other side.
   const enemyHigh = actionSpeed({ card: 'strike', momentum: 9 }, { card: { strike: 1 } }, 'enemy');
-  assert.equal(enemyHigh.parts.momentum, -3);
-  assert.equal(enemyHigh.total, -2);
+  assert.equal(enemyHigh.parts.momentum, -1);
+  assert.equal(enemyHigh.total, 0);
   const enemyLow = actionSpeed({ card: 'strike', momentum: -9 }, { card: { strike: 1 } }, 'enemy');
-  assert.equal(enemyLow.parts.momentum, 3);
-  assert.equal(enemyLow.total, 4);
+  assert.equal(enemyLow.parts.momentum, 1);
+  assert.equal(enemyLow.total, 2);
 
   assert.throws(() => actionSpeed({}, {}, 'bogus'), TypeError);
 });
@@ -159,9 +160,10 @@ test('actionSpeed: owner table sums; a TBD (blank) value counts as 0', () => {
   assert.equal(counter.parts.range, 0);
 
   // Open question a: the owner's example as written (dagger +2, heavy -3,
-  // strike 1, momentum +1) totals +1 by the stated table, not +4.
+  // strike 1, momentum +1) totals +1 by the stated table, not +4. Under the
+  // half-value speed rule, momentum +1 adds 0, so the total is 0 (flagged).
   const example = actionSpeed({ card: 'strike', weapon: 'dagger', armor: 'heavy', momentum: 1 }, mods);
-  assert.equal(example.total, 1);
+  assert.equal(example.total, 0);
 });
 
 test('hit roll at AC 8: Reaver STR3 DEX1 WIS1 INT1 needs 3 or more', () => {
@@ -235,7 +237,7 @@ test('owner trace, per enemy and round end: 0/0, +1/-1, 0/0, -1/+1', () => {
   const foe = (id, speed, kind) => ({ id, enemyId: 'foe', speed, kind });
   // Round 1 (M = 0): player Strike at 4 hits first over enemy strike at 3.
   const step1 = resolveRound([{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }], [foe('enemyStrike', 3, 'attack')], 1, d20Face(20));
-  // Round 2 (M = +1): player attack 2+1 = 3, enemy counter 5-1 = 4. Enemy counters.
+  // Round 2 (M = +1): half of +1 is 0, so player attack 2, enemy counter 5. Enemy counters.
   const step2 = resolveRound(
     [{ id: 'strike', slot: 0, speed: 2, kind: 'attack' }],
     [foe('counter', 5, 'counter')],
@@ -274,7 +276,7 @@ test('zero-sum: player value + enemy value is always 0, and round deltas add up 
     const p = actionSpeed({ card: 'strike', momentum: m }, { card: { strike: 1 } }, 'player');
     const e = actionSpeed({ card: 'strike', momentum: m }, { card: { strike: 1 } }, 'enemy');
     assert.equal(p.parts.momentum + e.parts.momentum, 0);
-    assert.equal(p.total - e.total, 2 * m);
+    assert.equal(p.total - e.total, 2 * momentumSpeed(m));
   }
 
   const seq = [0.1, 0.7, 0.4, 0.9, 0.2, 0.55];
@@ -402,10 +404,10 @@ test('speed-mods.csv: every source_type maps to an actionSpeed component', async
 // Both sides land in one tie: the player's +1 and the enemy's -1 net to 0, so
 // M must stay where it was. Shift-then-clamp per side ends at +2 from +3.
 test('clamp after netting: a tie that lands on both sides at +3 stays at +3', () => {
-  // Effective speeds at M = +3: player 1+3 = 4, enemy 7-3 = 4, a tie.
+  // Effective speeds at M = +3 (half is +1): player 1+1 = 2, enemy 3-1 = 2, a tie.
   const { momentum } = resolveRound(
     [{ id: 'p', slot: 0, speed: 1, kind: 'attack' }],
-    [{ id: 'e', speed: 7, kind: 'attack' }],
+    [{ id: 'e', speed: 3, kind: 'attack' }],
     1,
     d20Face(20),
     { momentum: { e: 3 } },
@@ -416,9 +418,9 @@ test('clamp after netting: a tie that lands on both sides at +3 stays at +3', ()
 // Passes on c8776f4fd too: that code always shifts the player first, which
 // happens to be the right result at -3. It is kept as the symmetric guard.
 test('clamp after netting: the mirrored tie at -3 stays at -3', () => {
-  // Effective speeds at M = -3: player 7-3 = 4, enemy 1+3 = 4, a tie.
+  // Effective speeds at M = -3 (half is -1): player 3-1 = 2, enemy 1+1 = 2, a tie.
   const { momentum } = resolveRound(
-    [{ id: 'p', slot: 0, speed: 7, kind: 'attack' }],
+    [{ id: 'p', slot: 0, speed: 3, kind: 'attack' }],
     [{ id: 'e', speed: 1, kind: 'attack' }],
     1,
     d20Face(20),
@@ -580,4 +582,29 @@ test('counter stagger: hyper armor resists the stagger, so no full momentum', ()
   assert.equal(find(events, 'resisted').status, 'stagger');
   assert.equal(events.some((e) => e.reason === 'counterStagger'), false);
   assert.equal(momentum.foe, 1);
+});
+
+// Momentum adds half its value to speed, truncated toward zero (owner, 2026-10-11).
+// +-1 gives 0, +-2 gives +-1, +-3 gives +-1. (Flagged: "rounded down" read as truncation.)
+test('momentum adds half its value to speed, truncated toward zero', () => {
+  const shifts = { '-3': -1, '-2': -1, '-1': 0, '0': 0, '1': 0, '2': 1, '3': 1 };
+  for (const [m, shift] of Object.entries(shifts)) {
+    const v = Number(m);
+    assert.equal(momentumSpeed(v), shift);
+    const p = actionSpeed({ card: 'strike', momentum: v }, { card: { strike: 1 } }, 'player');
+    const e = actionSpeed({ card: 'strike', momentum: v }, { card: { strike: 1 } }, 'enemy');
+    assert.equal(p.parts.momentum, shift);
+    assert.equal(e.parts.momentum, 0 - shift);
+  }
+});
+
+test('momentum +2 adds +1 to the player pairing speed in resolveRound', () => {
+  const { events } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'foe', speed: 4, kind: 'other' }],
+    1,
+    d20Face(1),
+    { momentum: { foe: 2 } },
+  );
+  assert.deepEqual(find(events, 'order').speeds, { player: 5, enemy: 3 });
 });

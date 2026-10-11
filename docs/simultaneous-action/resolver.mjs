@@ -15,6 +15,13 @@ const SIDES = ['player', 'enemy'];
 
 const other = (who) => (who === 'player' ? 'enemy' : 'player');
 
+// Momentum adds half its value to speed, truncated toward zero, so the
+// shift is symmetric: +-1 gives 0, +-2 and +-3 give +-1 (DESIGN.md, Momentum).
+// `|| 0` turns a truncated -0 into +0.
+export function momentumSpeed(m) {
+  return Math.trunc(clampMomentum(m) / 2) || 0;
+}
+
 export function clampMomentum(m) {
   const n = Number(m);
   if (!Number.isFinite(n)) return 0;
@@ -38,9 +45,9 @@ export function actionSpeed(input = {}, mods = {}, side = 'player') {
     parts[key] = value;
     total += value;
   }
-  const shared = clampMomentum(input.momentum ?? 0);
-  // `0 - shared` rather than `-shared`, so a zero stays +0 for the enemy side.
-  parts.momentum = side === 'enemy' ? 0 - shared : shared;
+  const shift = momentumSpeed(clampMomentum(input.momentum ?? 0));
+  // `0 - shift` rather than `-shift`, so a zero stays +0 for the enemy side.
+  parts.momentum = side === 'enemy' ? 0 - shift : shift;
   total += parts.momentum;
   return { total, parts };
 }
@@ -245,7 +252,7 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // playerCards: [{ id, slot, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]
 // enemyQueue:  [{ id, enemyId?, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]   (3 per round)
 //   `speed` is the card's total without momentum. This function adds the
-//   momentum of that action's enemy: the player adds M_e, the enemy adds -M_e.
+//   momentum of that action's enemy: the player adds half of M_e, the enemy adds -half of M_e.
 // perception:  number of queued actions visible to the player. It only tags
 //              events with `visible`. Thresholds are open (DESIGN.md, Open q. e).
 // options.momentum: { [enemyId]: M_e } at the start of the round (default 0 each).
@@ -297,8 +304,8 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     const k = enemyKey(enemy);
     const visible = slot < visibleCount;
     const pairEvents = resolvePair(
-      { ...pc, speed: pc.speed + start[k] },
-      { ...enemy, speed: enemy.speed - start[k] },
+      { ...pc, speed: pc.speed + momentumSpeed(start[k]) },
+      { ...enemy, speed: enemy.speed - momentumSpeed(start[k]) },
       rng,
     );
     for (const e of pairEvents) {
