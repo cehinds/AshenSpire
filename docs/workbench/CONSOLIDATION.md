@@ -137,6 +137,19 @@ The card-layers explorer (UX 5) is promoted to a Layout Studio mode.
 - Jobs: compile content, compile UI config, build the game, run tool tests, with live logs and history.
 - **Engine export** (`tools/engine-export.mjs`): 152 tables and 16,779 rows as JSON, with JSON schemas and a manifest, plus importers for Unity and Unreal.
 
+### Found in past sessions and pull requests (2026-10-11 sweep)
+| Tool | Where | Fate |
+|---|---|---|
+| Spire Studio (Electron app: asset library, animation workspace, Pose Studio package import) | `spire-studio` repo, 0.2.0 | Listed as an external tool, like AshenedSpire-Editor. Its import formats `pose-studio.package/v1` and `ashenspire.pose-sequence/v1` stay supported by Motion Studio |
+| AshenedSpire-Editor: nine workspaces, including a scene timeline, battlefield rows and tag/nodeEffects saving with diff review | `AshenedSpire-Editor` repo (PR #31 still open) | Listed as an external tool. Its scene timeline ("Play all") and battlefield sizing are the feature bar for Motion Studio and Layout Studio |
+| In-game prologue scene editor | `src/ui/screens/prologueSceneEditor.js` + `tools/prologue-editor-save.mjs` | Scenes & Fixtures entry; Motion Studio "Sequence" mode reuses its save path |
+| In-game card-size settings (sliders + config export) | Settings → Advanced → Card size | Scenes & Fixtures entry |
+| Command-line exporters: `export-extended-card-art.mjs`, `book-art-export-preview.mjs`, `alternative-selected-stances-export.mjs`, `card-art-contact-sheets.py` | `tools/` | Become Build & Export jobs |
+| Review approval hub (#359, #401, #496, #503) | Removed from dev | Its approve/reject flow is covered by Visual Review |
+| Great-axe review gallery (PR #1218, closed) | Never merged | Covered by Asset Gallery |
+| Blender turnaround/compare tools (`asset_tool.py`, `compare.py`) | Owner's local `D:` drive only | Not in any repo; can be added as a job if committed |
+| Art-authoring scripts awaiting ART-REPO-PLAN step 5 | `tools/art-authoring.mjs` | Run against the art checkout path from Settings |
+
 **Not merged:**
 - `tools/palette-probe.html` is a CI test instrument and stays a test.
 - `cehinds/AshenedSpire-Editor` is linked as an external tool (owner decision).
