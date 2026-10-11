@@ -7,7 +7,7 @@
 // The rules, the listing and the deep link are in model.mjs; this file is the DOM and the events.
 
 import {
-  KINDS, SORTS, DEFAULT_SORT, rowsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
+  KINDS, SORTS, DEFAULT_SORT, rowsOf, tileLabelsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
   assetUrl, missingPacks, gridMetrics, visibleItems, sizeLabel, dimsLabel, clampZoom, clampOpacity, frameSetOf, groupUsage,
   entityLinkOf, exportOf,
 } from './model.mjs';
@@ -114,7 +114,7 @@ export default {
     // The files picked for comparison, in the order they were picked (exactly two compare).
     const picks = [];
     const compareBtn = $('.ast-compare-btn'), compareBox = $('.ast-compare'), exportBtn = $('.ast-export');
-    let all = [], byPath = new Map(), view = [], packs = [], missing = null, loadError = '', imageMisses = 0, metrics = null, raf = 0, seenParams = null;
+    let all = [], byPath = new Map(), labels = new Map(), view = [], packs = [], missing = null, loadError = '', imageMisses = 0, metrics = null, raf = 0, seenParams = null;
     // `userZoomed` is false while the picture is fitted to the viewport, so a resize refits it; a zoom or pan keeps its place.
     let zoom = { scale: 1, x: 0, y: 0 }, drag = null, userZoomed = false;
     size.value = String(st.size);
@@ -125,11 +125,13 @@ export default {
         const r = await ctx.api('assets/list');
         all = rowsOf(r.files);
         byPath = new Map(all.map((row) => [row.path, row]));
+        const tags = tileLabelsOf(all);
+        labels = new Map(all.map((row, i) => [row.path, tags[i]]));
         packs = r.packs || [];
         missing = missingPacks(packs);
         loadError = '';
       } catch (err) {
-        all = []; byPath = new Map(); packs = []; missing = null;
+        all = []; byPath = new Map(); labels = new Map(); packs = []; missing = null;
         loadError = err.message || 'The art listing failed.';
       }
       renderKinds(); renderFacets(); renderBanner(); renderPicks(); refresh(); renderDrawer();
@@ -196,9 +198,10 @@ export default {
         : `<span class="ast-noimg">${esc((row.audio ? 'audio' : row.format || 'file').toUpperCase())}</span>`;
       const active = row.path === st.path;
       const picked = picks.includes(row.path);
-      return `<div class="ast-tile${active ? ' is-active' : ''}${picked ? ' is-picked' : ''}" data-i="${i}" role="button" tabindex="-1" aria-label="${esc(row.name)}" title="${esc(row.path)}" style="${at}">
+      const label = labels.get(row.path) || row.name;
+      return `<div class="ast-tile${active ? ' is-active' : ''}${picked ? ' is-picked' : ''}" data-i="${i}" role="button" tabindex="-1" aria-label="${esc(label)}" title="${esc(row.path)}" style="${at}">
         <span class="ast-thumb">${media}</span>
-        <span class="ast-cap">${esc(row.name)}</span>
+        <span class="ast-cap">${esc(label)}</span>
         <label class="ast-pick" title="Pick to compare"><input type="checkbox" data-pick="${esc(row.path)}"${picked ? ' checked' : ''}><span class="ast-sr">Pick ${esc(row.name)} to compare</span></label>
       </div>`;
     }
