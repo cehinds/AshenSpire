@@ -58,6 +58,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
 | `quick-start.yml` → Title Quick start to the first card play within 6 inputs (`quick-start-inputs.mjs --only quick`, real browser), then click to impact ≤ 400 ms at Normal pacing (`click-impact-probe.mjs`, same job) | yes | yes (also on push to `dev`) |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
+| `workbench.yml` → Workbench, editor, UI Studio and engine-export tests, a full engine export and the Workbench screenshots (real browser); uploads `engine-export-<commit>` and `workbench-screenshots-<commit>` ([workbench/README.md](workbench/README.md)) | only when the PR touches `workbench/`, `editor/`, `ui-studio/`, `pose-studio/`, the engine exporter or `docs/workbench/` | no (runs on push to `feature/**`, `chore/**`, `fix/**` with the same paths) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |

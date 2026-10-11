@@ -115,9 +115,19 @@ keys, so click the rail or header first there.
 | ![Command palette](../docs/workbench/screenshots/08-command-palette.jpg) | ![Shortcuts](../docs/workbench/screenshots/09-shortcuts.jpg) |
 | ![Phone preview](../docs/workbench/screenshots/10-preview-phone.jpg) | ![Settings](../docs/workbench/screenshots/11-settings.jpg) |
 
-Regenerate with `node workbench/tests/screenshots.mjs` (needs Playwright:
+Regenerate with `node workbench/tests/screenshots.mjs [--out <dir>] [--port 4300]`
+(default `--out docs/workbench/screenshots`; needs Playwright:
 `npm i -g playwright`, or `PLAYWRIGHT_MODULE`; uses `/opt/pw-browsers/chromium`
-or `CHROME_PATH` when present).
+or `CHROME_PATH` when present). Run `node tools/engine-export.mjs` first so
+Engine Export shows the tables.
+
+**CI:** `.github/workflows/workbench.yml` runs on a push to `feature/**`,
+`chore/**` or `fix/**`, and on a pull request into `dev`, when the Workbench,
+the studios, the engine exporter or these docs change (or by hand). It runs the
+Workbench, editor, UI Studio and engine-export tests, a full export, and the
+screenshots, and uploads `engine-export-<commit>` and
+`workbench-screenshots-<commit>` as workflow artifacts. Nothing it writes is
+committed.
 
 ## Architecture
 

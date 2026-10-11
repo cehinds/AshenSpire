@@ -1,10 +1,15 @@
 // workbench/tests/screenshots.mjs — capture the Workbench for docs/workbench/screenshots/.
 //
-//   node workbench/tests/screenshots.mjs [--port 4300] [--out docs/workbench/screenshots]
+//   node workbench/tests/screenshots.mjs [--port 4300] [--out <dir>]
+//
+// --out defaults to docs/workbench/screenshots (relative paths are from the
+// repository root); CI writes to a temporary folder and uploads it as an
+// artifact (.github/workflows/workbench.yml). Run tools/engine-export.mjs
+// first so Engine Export shows the tables.
 //
 // Starts the Workbench with its child tools, drives it with Playwright's
-// Chromium at 1600×900 and saves one PNG per screen (a JPEG instead when a
-// PNG would pass 300 KB). Playwright is resolved from PLAYWRIGHT_MODULE, the
+// Chromium at 1600×900 and saves one JPEG per screen, at most 300 KB each
+// (lower quality when needed). Playwright is resolved from PLAYWRIGHT_MODULE, the
 // local node_modules, or the global npm root; it is a dev-only dependency and
 // is never committed. The browser is /opt/pw-browsers/chromium when present,
 // else CHROME_PATH, else Playwright's own.
@@ -61,10 +66,12 @@ fs.mkdirSync(OUT, { recursive: true });
 
 async function shot(name) {
   await sleep(300);
-  let file = path.join(OUT, `${name}.png`);
-  let buf = await page.screenshot({ type: 'png' });
-  if (buf.length > LIMIT) { fs.rmSync(file, { force: true }); file = path.join(OUT, `${name}.jpg`); buf = await page.screenshot({ type: 'jpeg', quality: 82 }); }
-  else fs.rmSync(path.join(OUT, `${name}.jpg`), { force: true });
+  // Always JPEG, so the names the READMEs link never change; lower the
+  // quality until the file fits the 300 KB budget.
+  const file = path.join(OUT, `${name}.jpg`);
+  let buf;
+  for (const quality of [82, 74, 66, 58]) { buf = await page.screenshot({ type: 'jpeg', quality }); if (buf.length <= LIMIT) break; }
+  fs.rmSync(path.join(OUT, `${name}.png`), { force: true });
   fs.writeFileSync(file, buf);
   console.log(`${path.relative(REPO, file)}  ${Math.round(buf.length / 1024)} KB`);
 }
@@ -73,10 +80,17 @@ const go = async (label, wait = 1500) => { await page.click(`.rail-item[aria-lab
 await page.goto(url, { waitUntil: 'domcontentloaded' });
 await page.evaluate(() => { try { localStorage.clear(); } catch { /* none */ } });
 await page.reload({ waitUntil: 'domcontentloaded' });
-await sleep(4000);
+await sleep(7000);
 await shot('01-home');
 
 await go('Content Editor', 5000); await shot('02-content-editor');
+// Ctrl+K typed inside the (cross-origin) studio frame still opens the palette.
+await page.locator('#view-editor iframe').first().contentFrame().locator('body').click({ position: { x: 150, y: 40 } }).catch(() => {});
+await page.keyboard.press('Control+k');
+await sleep(400);
+if (await page.locator('#palette').isHidden()) { console.error('FAIL: Ctrl+K inside the Content Editor frame did not open the palette'); process.exitCode = 1; }
+else console.log('Ctrl+K from the Content Editor frame opens the palette');
+await page.keyboard.press('Escape');
 await go('UI Studio', 5000); await shot('03-ui-studio');
 await go('Pose & FX', 6000); await shot('04-pose-fx');
 await go('Library', 7000); await shot('05-library');
@@ -120,4 +134,4 @@ await shot('11-settings');
 
 await browser.close();
 stop();
-process.exit(0);
+process.exit(process.exitCode || 0);

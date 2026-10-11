@@ -246,7 +246,7 @@ table.table { width: 100%; border-collapse: collapse; }
 .job-card { padding: var(--as-space-4); display: flex; flex-direction: column; gap: 8px; }
 .job-card h3 { font-size: var(--as-text-md); display: flex; align-items: center; gap: 8px; }
 .job-card p { color: var(--as-text-dim); font-size: var(--as-text-sm); flex: 1; }
-.job-card code { color: var(--as-text-faint); font-size: 10.5px; word-break: break-all; }
+.job-card code { color: var(--as-text-faint); font-size: 10.5px; overflow-wrap: anywhere; }
 .job-card .foot { display: flex; align-items: center; gap: 8px; }
 .note { color: var(--as-warn); font-size: var(--as-text-sm); }
 .runs { list-style: none; margin: 0; padding: 0; }
