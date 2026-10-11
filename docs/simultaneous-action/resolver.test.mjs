@@ -130,6 +130,16 @@ test('momentum is clamped to -3..+3 in actionSpeed', () => {
   const low = actionSpeed({ card: 'strike', momentum: -9 }, { card: { strike: 1 } });
   assert.equal(low.parts.momentum, -3);
   assert.equal(low.total, -2);
+
+  // The enemy side applies -M, so the same shared value helps the other side.
+  const enemyHigh = actionSpeed({ card: 'strike', momentum: 9 }, { card: { strike: 1 } }, 'enemy');
+  assert.equal(enemyHigh.parts.momentum, -3);
+  assert.equal(enemyHigh.total, -2);
+  const enemyLow = actionSpeed({ card: 'strike', momentum: -9 }, { card: { strike: 1 } }, 'enemy');
+  assert.equal(enemyLow.parts.momentum, 3);
+  assert.equal(enemyLow.total, 4);
+
+  assert.throws(() => actionSpeed({}, {}, 'bogus'), TypeError);
 });
 
 test('actionSpeed: owner table sums; a TBD (blank) value counts as 0', () => {
@@ -180,43 +190,39 @@ test('rollD20 maps [0, 1) to 1..20 and rejects an out-of-range rng', () => {
   assert.throws(() => rollD20(() => 1), RangeError);
 });
 
-test('resolveRound: correct counter gives +1, countered card gives -1', () => {
-  const queue = [
-    { id: 'strike', speed: 4, kind: 'attack' },
-    { id: 'strike2', speed: 4, kind: 'attack' },
-    { id: 'lunge', speed: 1, kind: 'attack' },
-  ];
-  const playerCards = [
-    { id: 'counter', slot: 0, speed: 5, kind: 'counter' },
-    { id: 'strike', slot: 1, speed: 3, kind: 'attack' },
-  ];
-  const { events, momentumDelta } = resolveRound(playerCards, queue, 3, d20Face(20));
+test('resolveRound: a counter that triggers moves M toward the player', () => {
+  const queue = [{ id: 'strike', speed: 4, kind: 'attack' }];
+  const { events, momentum } = resolveRound([{ id: 'counter', slot: 0, speed: 5, kind: 'counter' }], queue, 1, d20Face(20));
 
-  // Slot 0: counter at 5 beats strike at 4 (+1). Slot 1: enemy attack at 4 is
-  // faster than the player's strike at 3, so the strike is interrupted (no momentum).
-  assert.equal(momentumDelta, 1);
-  assert.equal(events.some((e) => e.type === 'momentum' && e.reason === 'correctCounter'), true);
-  assert.equal(events.some((e) => e.type === 'unpaired' && e.slot === 2), true);
+  assert.equal(find(events, 'countered').by, 'player');
+  assert.equal(momentum, 1);
+  assert.deepEqual(find(events, 'momentum'), {
+    type: 'momentum', by: 'player', gain: 1, delta: 1, reason: 'success', slot: 0, momentum: 1,
+  });
 });
 
-test('resolveRound: a player card countered by an enemy counter gives -1', () => {
-  const queue = [{ id: 'counter', speed: 5, kind: 'counter' }, { id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 1, kind: 'other' }];
-  const { momentumDelta } = resolveRound([{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }], queue, 0, d20Face(20));
-  assert.equal(momentumDelta, -1);
+test('resolveRound: a player card countered by an enemy counter moves M toward the enemy', () => {
+  const queue = [{ id: 'counter', speed: 5, kind: 'counter' }];
+  const { events, momentum } = resolveRound([{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }], queue, 0, d20Face(20));
+
+  assert.equal(find(events, 'countered').by, 'enemy');
+  assert.equal(momentum, -1);
+  assert.equal(find(events, 'momentum').by, 'enemy');
 });
 
-test('resolveRound: a listed combo played back to back gives +1, and a second card on a slot is rejected', () => {
-  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 1, kind: 'other' }, { id: 'c', speed: 1, kind: 'other' }];
+test('resolveRound: a second card on a taken slot is rejected and moves nothing', () => {
+  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 1, kind: 'other' }];
   const playerCards = [
     { id: 'quickstep', slot: 0, speed: 2, kind: 'other' },
-    { id: 'shieldBash', slot: 1, speed: 2, kind: 'other' },
-    { id: 'strike', slot: 1, speed: 1, kind: 'attack' },
+    { id: 'shieldBash', slot: 0, speed: 2, kind: 'attack' },
   ];
-  const { events, momentumDelta } = resolveRound(playerCards, queue, 3, d20Face(20), {
-    combos: [['quickstep', 'shieldBash']],
+  const { events, momentum } = resolveRound(playerCards, queue, 2, d20Face(20));
+
+  assert.deepEqual(find(events, 'rejected'), {
+    type: 'rejected', reason: 'slot taken', slot: 0, cardId: 'shieldBash', momentum: 0,
   });
-  assert.equal(momentumDelta, 1);
-  assert.deepEqual(find(events, 'rejected'), { type: 'rejected', reason: 'slot taken', slot: 1, cardId: 'strike' });
+  assert.equal(events.some((e) => e.type === 'momentum'), false);
+  assert.equal(momentum, 0);
 });
 
 test('resolveRound: perception tags visibility only; out-of-range slot throws', () => {
@@ -271,18 +277,134 @@ test('hit roll: natural 20 always hits, even against huge evasion', () => {
   assert.equal(hitRoll(walled, 19).hit, false);
 });
 
-test('combos count only played cards: a rejected card cannot start a combo', () => {
-  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 1, kind: 'other' }];
+test('owner trace: player and enemy values go 0/0, +1/-1, 0/0, -1/+1', () => {
+  // Step 1 (M = 0): player Strike at 4 hits first over enemy strike at 3.
+  const step1 = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'enemyStrike', speed: 3, kind: 'attack' }],
+    1,
+    d20Face(20),
+  );
+  // Step 2 (M = +1): player attack 2+1 = 3, enemy counter 5-1 = 4. Enemy counters.
+  const step2 = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 2, kind: 'attack' }],
+    [{ id: 'counter', speed: 5, kind: 'counter' }],
+    1,
+    d20Face(20),
+    { momentum: step1.momentum },
+  );
+  // Step 3 (M = 0): enemy strike at 4 hits first over player strike at 3.
+  const step3 = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 3, kind: 'attack' }],
+    [{ id: 'enemyStrike', speed: 4, kind: 'attack' }],
+    1,
+    d20Face(20),
+    { momentum: step2.momentum },
+  );
+
+  const values = [0, step1.momentum, step2.momentum, step3.momentum].map((m) => ({ player: m, enemy: 0 - m }));
+  assert.deepEqual(values, [
+    { player: 0, enemy: 0 },
+    { player: 1, enemy: -1 },
+    { player: 0, enemy: 0 },
+    { player: -1, enemy: 1 },
+  ]);
+  assert.equal(find(step2.events, 'countered').by, 'enemy');
+  assert.equal(find(step3.events, 'hit').by, 'enemy');
+});
+
+test('zero-sum: player value + enemy value is always 0, and each move is equal and opposite', () => {
+  for (let m = -3; m <= 3; m++) {
+    const p = actionSpeed({ card: 'strike', momentum: m }, { card: { strike: 1 } }, 'player');
+    const e = actionSpeed({ card: 'strike', momentum: m }, { card: { strike: 1 } }, 'enemy');
+    assert.equal(p.parts.momentum + e.parts.momentum, 0);
+    assert.equal(p.total - e.total, 2 * m);
+  }
+
+  const seq = [0.1, 0.7, 0.4, 0.9, 0.2, 0.55];
+  let i = 0;
+  const rng = () => seq[i++ % seq.length];
+  let m = 0;
+  for (let round = 0; round < 25; round++) {
+    const playerCards = [{ id: 'a', slot: 0, speed: 1 + (round % 4), kind: round % 2 ? 'attack' : 'counter' }];
+    const queue = [
+      { id: 'x', speed: 2, kind: 'attack' },
+      { id: 'y', speed: 3, kind: 'counter' },
+      { id: 'z', speed: 1, kind: 'attack' },
+    ];
+    const out = resolveRound(playerCards, queue, 3, rng, { momentum: m });
+    const moves = out.events.filter((e) => e.type === 'momentum');
+    for (const mv of moves) {
+      assert.equal(mv.by === 'player' ? mv.delta >= 0 : mv.delta <= 0, true, 'a move helps only its actor');
+    }
+    assert.equal(moves.reduce((sum, mv) => sum + mv.delta, 0), out.momentum - m);
+    assert.ok(out.momentum >= -3 && out.momentum <= 3);
+    m = out.momentum;
+  }
+});
+
+test('clamp: from +3 a player success stays at +3, and an enemy success goes to +2', () => {
+  const up = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'e', speed: 1, kind: 'other' }],
+    1,
+    d20Face(20),
+    { momentum: 3 },
+  );
+  assert.equal(up.momentum, 3);
+  assert.equal(find(up.events, 'momentum').delta, 0);
+
+  const down = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 1, kind: 'attack' }],
+    [{ id: 'enemyStrike', speed: 9, kind: 'attack' }],
+    1,
+    d20Face(20),
+    { momentum: 3 },
+  );
+  assert.equal(find(down.events, 'hit').by, 'enemy');
+  assert.equal(down.momentum, 2);
+});
+
+test('momentumGain: a card with momentumGain 2 moves M by 2 on success', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'heavy', slot: 0, speed: 4, kind: 'attack', momentumGain: 2 }],
+    [{ id: 'e', speed: 1, kind: 'other' }],
+    0,
+    d20Face(20),
+  );
+  assert.equal(momentum, 2);
+  assert.equal(find(events, 'momentum').gain, 2);
+  assert.equal(find(events, 'momentum').delta, 2);
+});
+
+test('a miss does not move M', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'e', speed: 1, kind: 'other' }],
+    1,
+    d20Face(1),
+  );
+  assert.equal(find(events, 'hit').hit, false);
+  assert.equal(events.some((e) => e.type === 'momentum'), false);
+  assert.equal(momentum, 0);
+});
+
+test('a later pair in the same round sees the updated M in its speed', () => {
+  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 3, kind: 'attack' }];
   const playerCards = [
-    { id: 'quickstep', slot: 0, speed: 1, kind: 'other' },
-    { id: 'shieldBash', slot: 0, speed: 1, kind: 'other' }, // rejected: slot taken
-    { id: 'strike', slot: 1, speed: 1, kind: 'attack' }, // played after the rejected card
+    { id: 'strike', slot: 0, speed: 4, kind: 'attack' },
+    { id: 'strike2', slot: 1, speed: 3, kind: 'attack' },
   ];
-  const { events, momentumDelta } = resolveRound(playerCards, queue, 2, d20Face(20), {
-    combos: [['shieldBash', 'strike']],
-  });
-  assert.deepEqual(find(events, 'rejected'), { type: 'rejected', reason: 'slot taken', slot: 0, cardId: 'shieldBash' });
-  assert.equal(momentumDelta, 0, 'strike follows only a rejected card, so no combo');
+  const { events, momentum } = resolveRound(playerCards, queue, 2, d20Face(20));
+
+  const orders = events.filter((e) => e.type === 'order');
+  assert.deepEqual(orders[0].speeds, { player: 4, enemy: 1 });
+  // M was +1 after pair 0, so the player's 3 becomes 4 and the enemy's 3 becomes 2.
+  assert.deepEqual(orders[1].speeds, { player: 4, enemy: 2 });
+  assert.equal(orders[1].simultaneous, false, 'without the updated M this pair would tie at 3');
+  assert.equal(orders[1].momentum, 1, 'each event carries the M after it');
+  assert.equal(momentum, 2);
+  assert.equal(events[events.length - 1].momentum, momentum);
 });
 
 // Every source_type in speed-mods.csv must name a component that actionSpeed()
