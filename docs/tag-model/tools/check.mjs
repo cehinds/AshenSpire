@@ -312,6 +312,34 @@ if (presOk.styles && presOk.components) {
   });
 }
 
+// Regression guards for the owner rules: the last compound decides, classes in
+// :not()/:is()/:where() and generic state classes do not, and an ancestor class
+// (.card in ".card .ctext") does not pick the owner.
+if (presOk.styles && presOk.components) {
+  const st = P('styles');
+  const catalogOwnersOf = c => comps.rows
+    .filter(r => /\[catalog\b/.test(at(comps, r, 'notes')) && splitRefs(at(comps, r, 'cssClasses')).includes(c))
+    .map(r => at(comps, r, 'id'));
+  const guard = (selector, check) => {
+    const rows = st.rows.filter(r => at(st, r, 'selector') === selector);
+    if (!rows.length) fail(`presentation/styles: guard selector "${selector}" has no rows`);
+    for (const r of rows) check(at(st, r, 'componentId'));
+  };
+  const soleOwner = c => {
+    const owners = catalogOwnersOf(c);
+    return owners.length === 1 ? owners[0] : null;
+  };
+  // ".card .ctext" is owned by the sole owner of ctext, whatever .card is.
+  const ctext = soleOwner('ctext');
+  if (!ctext) fail('presentation/styles: guard expects exactly one catalog owner of class ctext');
+  else guard('.card .ctext', own => { if (own !== ctext) fail(`presentation/styles: ".card .ctext" componentId "${own}" should be the owner of ctext "${ctext}"`); });
+  // circle:not(.node-halo) is styled by circle, so the :not() class does not name map-node-face.
+  guard('.map-node.reachable > circle:not(.node-halo)', own => { if (own === 'map-node-face') fail('presentation/styles: "circle:not(.node-halo)" must not go to map-node-face'); });
+  // .spent is generic: the deck editor owns the name, not the armoury card row.
+  // deck-editor-name is a catalog id styled by its own class (no cssClasses entry needed).
+  guard('.deck-editor-tile.spent .deck-editor-name', own => { if (own !== 'deck-editor-name') fail(`presentation/styles: ".deck-editor-tile.spent .deck-editor-name" componentId "${own}" should be "deck-editor-name"`); });
+}
+
 // cssClasses: every listed class is a selector class in styles/*.css; only a
 // catalog row (notes [catalog) lists classes, and it lists none exactly when its
 // notes say css:unresolved.
