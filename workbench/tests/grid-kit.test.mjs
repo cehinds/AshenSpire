@@ -186,6 +186,17 @@ test('replace import and JSON import with typed inference', () => {
   assertRoundTrip(d, js);
 });
 
+test('JSON import with a __proto__ key: the row keeps Object.prototype and no inherited id', () => {
+  const d = fresh();
+  const out = M.importRows(d, '[{"__proto__":{"id":"x"},"name":"a"}]', { mode: 'replace' });
+  const row = out.rows[0];
+  assert.equal(Object.getPrototypeOf(row), Object.prototype);
+  assert.equal(row.id, '', 'id is the column empty value, not an inherited "x"');
+  assert.equal(row.name, 'a');
+  assert.deepEqual(Object.getOwnPropertyDescriptor(row, '__proto__').value, { id: 'x' }, 'kept as data');
+  assertRoundTrip(d, out);
+});
+
 test('export to CSV, TSV and JSON', () => {
   const d = fresh();
   assert.equal(M.toCSV(d).split('\n')[0], 'id,n,on,tag,data');

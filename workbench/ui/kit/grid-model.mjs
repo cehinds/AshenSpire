@@ -378,14 +378,12 @@ export function importRows(doc, text, { format = 'auto', mode = 'merge', key = n
       columns.push({ key: n, label: n, type: format === 'json' ? inferType(values) : 'string' });
     }
   }
-  const typed = incoming.map(r => {
-    const out = {};
-    for (const [k, v] of Object.entries(r)) {
-      const col = columns.find(c => c.key === k);
-      out[k] = format === 'json' ? v : parseValue(v, col.type);
-    }
-    return out;
-  });
+  // Object.fromEntries defines each key as an own property, so an imported "__proto__" key
+  // stays data and cannot set the row's prototype.
+  const typed = incoming.map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => {
+    const col = columns.find(c => c.key === k);
+    return [k, format === 'json' ? v : parseValue(v, col.type)];
+  })));
   const fill = row => Object.fromEntries(columns.map(c => [c.key, c.key in row ? row[c.key] : emptyValue(c.type)]));
   let rows;
   if (mode === 'replace' || !key) {
