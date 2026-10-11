@@ -9,6 +9,7 @@
 import {
   KINDS, SORTS, DEFAULT_SORT, rowsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
   assetUrl, missingPacks, gridMetrics, visibleItems, sizeLabel, dimsLabel, clampZoom, clampOpacity, frameSetOf, groupUsage,
+  entityLinkOf, exportOf,
 } from './model.mjs';
 
 const TILE_MIN = 64;
@@ -32,6 +33,7 @@ export default {
           <label class="ast-field ast-size-field">Size<input type="range" class="ast-size" min="${TILE_MIN}" max="${TILE_MAX}" step="8"></label>
           <p class="ast-count" role="status"></p>
           <button type="button" class="ast-compare-btn" disabled>Compare</button>
+          <button type="button" class="ast-export" disabled title="Pick files to export them">Export list</button>
         </div>
       </header>
       <section class="ast-compare" aria-label="Compare two assets" hidden>
@@ -81,6 +83,10 @@ export default {
             <dt>From</dt><dd class="ast-f-from"></dd>
             <dt>Path</dt><dd class="ast-f-path"><code></code> <button type="button" class="ast-copy">Copy path</button></dd>
           </dl>
+          <div class="ast-actions">
+            <button type="button" class="ast-open-entity" hidden>Open in Entity Browser</button>
+            <button type="button" class="ast-reveal" title="Show this file's folder in the grid and scroll to it">Reveal path</button>
+          </div>
           <section class="ast-frames" aria-label="Frames" hidden>
             <h3>Frames</h3>
             <div class="ast-frame-bar">
@@ -106,7 +112,7 @@ export default {
     const st = { kind: '', q: '', folder: '', format: '', sort: DEFAULT_SORT, path: '', size: clampTile(ctx.settings.get('size', TILE_DEFAULT)) };
     // The files picked for comparison, in the order they were picked (exactly two compare).
     const picks = [];
-    const compareBtn = $('.ast-compare-btn'), compareBox = $('.ast-compare');
+    const compareBtn = $('.ast-compare-btn'), compareBox = $('.ast-compare'), exportBtn = $('.ast-export');
     let all = [], byPath = new Map(), view = [], packs = [], missing = null, loadError = '', imageMisses = 0, metrics = null, raf = 0, seenParams = null;
     // `userZoomed` is false while the picture is fitted to the viewport, so a resize refits it; a zoom or pan keeps its place.
     let zoom = { scale: 1, x: 0, y: 0 }, drag = null, userZoomed = false;
@@ -214,6 +220,7 @@ export default {
       $('.ast-f-dims').textContent = dimsLabel(row.w, row.h);
       $('.ast-f-from').textContent = row.from === 'tree' ? 'Tracked in this repository' : `Fetched pack: ${row.from}`;
       $('.ast-f-path code').textContent = row.path;
+      el.querySelector('.ast-open-entity').hidden = !entityLinkOf(row.path);
       img.hidden = row.audio;
       audio.hidden = !row.audio;
       if (row.audio) { audio.src = assetUrl(row.path); zoomBar(false); }
@@ -399,7 +406,45 @@ export default {
       compareBtn.disabled = !ok;
       compareBtn.textContent = picks.length ? `Compare (${picks.length})` : 'Compare';
       compareBtn.title = ok ? 'Compare the two picked images' : 'Pick two images (tick their boxes) to compare';
+      exportBtn.disabled = picks.length === 0;
+      exportBtn.textContent = picks.length ? `Export list (${picks.length})` : 'Export list';
     }
+    // The picked files as JSON (path, kind, format, dimensions), the list Unity and Unreal import.
+    function exportPicks() {
+      const rows = picks.map((p) => byPath.get(p)).filter(Boolean);
+      if (!rows.length) return;
+      const data = exportOf(rows, { exported: new Date().toISOString() });
+      const url = URL.createObjectURL(new Blob([`${JSON.stringify(data, null, 2)}\n`], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = 'ashen-assets.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      ctx.toast({ title: `Exported ${rows.length} file${rows.length === 1 ? '' : 's'}`, record: false, timeout: 1800 });
+    }
+    exportBtn.addEventListener('click', exportPicks);
+    // Reveal path: the file's folder becomes the folder filter, the grid scrolls to its tile and focuses it.
+    function reveal(p) {
+      const row = byPath.get(p);
+      if (!row) return;
+      if (!filterRows([row], st).length) { st.kind = ''; st.q = ''; st.format = ''; q.value = ''; }
+      st.folder = row.folder;
+      renderKinds(); renderFacets(); refresh();
+      const at = view.findIndex((r) => r.path === p);
+      if (at < 0) return;
+      const top = PAD + Math.floor(at / metrics.cols) * metrics.rowHeight;
+      const bottom = top + metrics.cell;
+      if (top < grid.scrollTop) grid.scrollTop = top - PAD;
+      else if (bottom > grid.scrollTop + grid.clientHeight) grid.scrollTop = bottom - grid.clientHeight + PAD;
+      renderGrid();
+      tiles.querySelector(`[data-i="${at}"]`)?.focus({ preventScroll: true });
+      writeHash();
+    }
+    el.querySelector('.ast-reveal').addEventListener('click', () => reveal(st.path));
+    // Equipment art maps to its entity: the Entity Browser opens on it (its own deep link: kind and id).
+    el.querySelector('.ast-open-entity').addEventListener('click', () => {
+      const link = entityLinkOf(st.path);
+      if (link) ctx.openModule('entities', link);
+    });
     function openCompare() {
       if (picks.length !== 2) return;
       const [a, b] = picks.map((p) => byPath.get(p));

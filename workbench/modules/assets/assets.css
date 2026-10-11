@@ -106,9 +106,11 @@
 .ast-pick { position: absolute; top: 4px; left: 4px; z-index: 1; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; background: rgba(6, 5, 4, 0.55); cursor: pointer; }
 .ast-pick input { margin: 0; width: 15px; height: 15px; accent-color: var(--as-accent, #e0a64a); cursor: pointer; }
 .ast-tile.is-picked { border-color: var(--as-accent, #e0a64a); }
-.ast-compare-btn { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--as-line, #2e2a25); background: transparent; color: inherit; }
-.ast-compare-btn:disabled { opacity: 0.45; cursor: default; }
-.ast-compare-btn:focus-visible, .ast-cmp-close:focus-visible, .ast-seg button:focus-visible { outline: 2px solid var(--as-accent, #e0a64a); outline-offset: 2px; }
+.ast-compare-btn, .ast-export, .ast-open-entity, .ast-reveal { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--as-line, #2e2a25); background: transparent; color: inherit; }
+.ast-compare-btn:disabled, .ast-export:disabled { opacity: 0.45; cursor: default; }
+.ast-compare-btn:focus-visible, .ast-export:focus-visible, .ast-open-entity:focus-visible, .ast-reveal:focus-visible, .ast-cmp-close:focus-visible, .ast-seg button:focus-visible { outline: 2px solid var(--as-accent, #e0a64a); outline-offset: 2px; }
+.ast-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.ast-open-entity { border-color: var(--as-accent, #e0a64a); }
 
 /* Compare covers the body; its stage shows the two images side by side, or stacked with an opacity slider. */
 .ast-compare { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; min-height: 0; background: var(--as-bg, #131210); }
