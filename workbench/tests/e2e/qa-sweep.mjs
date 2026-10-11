@@ -359,13 +359,13 @@ async function layoutStudio() {
 async function entityBrowser() {
   await goModule('Entity Browser', 2000);
   // The count and the tile frame are attached in the DOM; the frame is not always laid out yet.
-  await page.waitForSelector('.ent-count', { state: 'attached' });
-  await page.waitForSelector('.ent-center iframe', { state: 'attached' });
+  await page.waitForSelector('.view.active .ent-count', { state: 'attached' });
+  await page.waitForSelector('.view.active .ent-center iframe', { state: 'attached' });
   await check('Entity: switch through every kind', async () => {
-    const tabs = await page.locator('button[role="tab"]:has-text("Armaments"), button[role="tab"]:has-text("Armor"), button[role="tab"]:has-text("Potions"), button[role="tab"]:has-text("Relics"), button[role="tab"]:has-text("Cards"), button[role="tab"]:has-text("Statuses"), button[role="tab"]:has-text("Stances"), button[role="tab"]:has-text("Keywords"), button[role="tab"]:has-text("Enemies"), button[role="tab"]:has-text("Classes")').count();
+    const tabs = await page.locator('.view.active .ent-chips button[role="tab"]:has-text("Armaments"), .view.active .ent-chips button[role="tab"]:has-text("Armor"), .view.active .ent-chips button[role="tab"]:has-text("Potions"), .view.active .ent-chips button[role="tab"]:has-text("Relics"), .view.active .ent-chips button[role="tab"]:has-text("Cards"), .view.active .ent-chips button[role="tab"]:has-text("Statuses"), .view.active .ent-chips button[role="tab"]:has-text("Stances"), .view.active .ent-chips button[role="tab"]:has-text("Keywords"), .view.active .ent-chips button[role="tab"]:has-text("Enemies"), .view.active .ent-chips button[role="tab"]:has-text("Classes")').count();
     const seen = [];
     for (let i = 0; i < tabs; i++) {
-      const tab = page.locator('button[role="tab"]').nth(i);
+      const tab = page.locator('.view.active .ent-chips button[role="tab"]').nth(i);
       await tab.click();
       await sleep(350);
       seen.push((await tab.textContent()).trim().replace(/–.*/, ''));
@@ -374,33 +374,42 @@ async function entityBrowser() {
     return seen.join(', ');
   });
   await check('Entity: a text filter narrows the count, Clear filters restores it', async () => {
-    await page.click('button[role="tab"]:has-text("Armaments")');
+    await page.click('.view.active .ent-chips button[role="tab"]:has-text("Armaments")');
+    if (await page.locator('.view.active .ent-filter-toggle').isVisible()) await page.click('.view.active .ent-filter-toggle');
     await sleep(300);
-    const all = await textOf('.ent-count');
-    await page.fill('.ent-q', 'blade');
+    const all = await textOf('.view.active .ent-count');
+    await page.fill('.view.active .ent-q', 'blade');
     await sleep(400);
-    const some = await textOf('.ent-count');
+    const some = await textOf('.view.active .ent-count');
     expect(some !== all, `count did not change: ${all} / ${some}`);
-    await page.click('.ent-reset');
+    await page.click('.view.active .ent-reset');
     await sleep(300);
-    expect((await textOf('.ent-count')) === all, 'Clear filters did not restore the count');
+    expect((await textOf('.view.active .ent-count')) === all, 'Clear filters did not restore the count');
+    if (await page.getAttribute('.view.active .ent-filter-toggle', 'aria-expanded').catch(() => null) === 'true') await page.click('.view.active .ent-filter-toggle');
     return `${all} -> ${some}`;
   });
   await check('Entity: a select filter changes the count', async () => {
-    const sel = page.locator('select').first();
+    // Armour is the kind that carries class rows, so its Class facet has options.
+    await page.click('.view.active .ent-chips button[role="tab"]:has-text("Armor")');
+    await sleep(300);
+    if (await page.locator('.view.active .ent-filter-toggle').isVisible() && await page.getAttribute('.view.active .ent-filter-toggle', 'aria-expanded') !== 'true') await page.click('.view.active .ent-filter-toggle');
+    const sel = page.locator('.view.active select[data-f="class"]');
     const opts = await sel.locator('option').count();
     expect(opts > 1, 'class filter has no options');
     await sel.selectOption({ index: 1 });
     await sleep(400);
-    await page.click('.ent-reset');
+    await page.click('.view.active .ent-reset');
     await sleep(200);
+    // At this width the filter pane is an overlay over the grid; close it so the tiles can be clicked.
+    if (await page.getAttribute('.view.active .ent-filter-toggle', 'aria-expanded').catch(() => null) === 'true') await page.click('.view.active .ent-filter-toggle');
   });
   let pickedId = null;
   await check('Entity: a grid tile opens the drawer and sets the id', async () => {
-    await page.click('button[role="tab"]:has-text("Armaments")');
+    await page.click('.view.active .ent-chips button[role="tab"]:has-text("Armaments")');
     await sleep(400);
-    const frame = page.frameLocator('.ent-center iframe');
-    const tile = frame.locator('[data-id]').first();
+    const frame = page.frameLocator('.view.active .ent-center iframe');
+    await frame.locator('body[data-entities-ready="true"]').waitFor({ timeout: 20000 });
+    const tile = frame.locator('[data-entity-id]').first();
     await tile.click({ timeout: 8000 });
     await sleep(500);
     pickedId = new URL(`${url}/${await hashNow()}`).hash;
@@ -409,7 +418,7 @@ async function entityBrowser() {
   });
   await check('Entity: every drawer tab is clickable', async () => {
     const names = [];
-    const tabs = page.locator('.ent-tabs [role="tab"]');
+    const tabs = page.locator('.view.active .ent-tabs [role="tab"]');
     const n = await tabs.count();
     for (let i = 0; i < n; i++) {
       await tabs.nth(i).click();
@@ -423,43 +432,59 @@ async function entityBrowser() {
     const hash = (await hashNow()) || '#mod=entities&kind=armaments';
     await page.evaluate((h) => { location.hash = '#mod=data'; setTimeout(() => { location.hash = h.replace(/^#/, '#'); }, 50); }, hash);
     await sleep(1800);
-    const w = await page.locator('.ent-drawer').boundingBox();
+    const w = await page.locator('.view.active .ent-drawer').boundingBox();
     expect(w && w.width > 40, 'drawer is not open after a deep link with id');
     return `drawer width ${Math.round(w.width)}px`;
   });
   await check('Entity: armour "Edit in Data Studio" selects the class row', async () => {
     await page.evaluate(() => { location.hash = '#mod=entities&kind=armor'; });
     await sleep(1200);
-    await page.click('button[role="tab"]:has-text("Armor")');
+    await page.click('.view.active .ent-chips button[role="tab"]:has-text("Armor")');
     await sleep(500);
-    const tile = page.frameLocator('.ent-center iframe').locator('[data-id]').first();
+    // Prefer a class-keyed piece (id "classId:outfit"); a plain id is linked by row alone.
+    const frame = page.frameLocator('.view.active .ent-center iframe');
+    await frame.locator('body[data-entities-ready="true"]').waitFor({ timeout: 20000 });
+    const keyed = frame.locator('[data-entity-id*=":"]').first();
+    const tile = (await keyed.count()) ? keyed : frame.locator('[data-entity-id]').first();
     await tile.click();
     await sleep(500);
-    await page.click('.ent-ds');
+    const entId = new URLSearchParams((await hashNow()).replace(/^#/, '')).get('id');
+    expect(entId, 'no armour id in the entity link after picking a piece');
+    await page.click('.view.active .ent-ds');
     await sleep(1500);
     const h = await hashNow();
-    expect(h.includes('mod=data') && h.includes('match=classId'), `not a Data Studio link with a class match: ${h}`);
-    const active = await page.evaluate(() => document.querySelector('.gk-cell.gk-active')?.dataset.r ?? null);
-    expect(active !== null, 'no active row in Data Studio');
-    return `${h.slice(0, 120)} row ${active}`;
+    expect(h.includes('mod=data'), `not a Data Studio link: ${h}`);
+    // The active row must be this armour piece's row: one of its cells holds the outfit id.
+    const row = await page.evaluate((id) => {
+      const act = document.querySelector('.view.active .gk-cell.gk-active');
+      if (!act) return { active: null, hit: false };
+      const r = act.dataset.r;
+      const outfit = id.includes(':') ? id.slice(id.indexOf(':') + 1) : id;
+      const hit = [...document.querySelectorAll(`.view.active .gk-cell[data-r="${r}"]`)].some((c) => c.textContent.trim() === outfit);
+      return { active: r, hit };
+    }, entId);
+    expect(row.active !== null, 'no active row in Data Studio');
+    expect(row.hit, `active row ${row.active} does not hold "${entId}"`);
+    return `${entId} -> row ${row.active}`;
   });
   await check('Entity: Try in fight keeps the chosen main hand', async () => {
     await page.evaluate(() => { location.hash = '#mod=entities&kind=armaments'; });
     await sleep(1200);
-    await page.click('button[role="tab"]:has-text("Armaments")');
+    await page.click('.view.active .ent-chips button[role="tab"]:has-text("Armaments")');
     await sleep(400);
-    await page.frameLocator('.ent-center iframe').locator('[data-id]').first().click();
+    await page.frameLocator('.view.active .ent-center iframe').locator('body[data-entities-ready="true"]').waitFor({ timeout: 20000 });
+    await page.frameLocator('.view.active .ent-center iframe').locator('[data-entity-id]').first().click();
     await sleep(400);
-    await page.click('.ent-tabs [role="tab"]:has-text("Try in fight")');
+    await page.click('.view.active .ent-tabs [role="tab"]:has-text("Try in fight")');
     await sleep(400);
-    const main = await page.locator('.ent-try select[name="mainHand"]').inputValue().catch(() => null);
-    const chosen = await page.locator('.ent-try select[name="mainHand"] option:checked').count();
+    const main = await page.locator('.view.active .ent-try select[name="mainHand"]').inputValue().catch(() => null);
+    const chosen = await page.locator('.view.active .ent-try select[name="mainHand"] option:checked').count();
     expect(main !== null && chosen >= 0, 'no main hand selector in Try in fight');
-    await page.click('.ent-tabs [role="tab"]:has-text("Card")');
+    await page.click('.view.active .ent-tabs [role="tab"]:has-text("Card")');
     await sleep(300);
-    await page.click('.ent-tabs [role="tab"]:has-text("Try in fight")');
+    await page.click('.view.active .ent-tabs [role="tab"]:has-text("Try in fight")');
     await sleep(300);
-    const again = await page.locator('.ent-try select[name="mainHand"]').inputValue();
+    const again = await page.locator('.view.active .ent-try select[name="mainHand"]').inputValue();
     expect(again === main, `main hand changed on tab switch: ${main} -> ${again}`);
     return `main hand ${again || '(none)'}`;
   });
