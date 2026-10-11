@@ -398,6 +398,15 @@ export const LIVE = {
   'meta.combat.skill.technique.dawn-rite': 'ability:dawn-rite',
   'meta.combat.skill.technique.burden-bearer': 'ability:burden-bearer',
   'meta.combat.skill.technique.sepulchral-pact': 'ability:sepulchral-pact',
+  // proposed live mapping (domain pass)
+  'targeting': 'targeting',
+  'targeting.self': 'targeting.self',
+  'targeting.enemy': 'targeting.enemy',
+  'targeting.allEnemies': 'targeting.allEnemies',
+  'targeting.randomEnemy': 'targeting.randomEnemy',
+  'targeting.ally': 'targeting.ally',
+  'targeting.single': 'targeting:single',
+  'targeting.area': 'targeting:area',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

@@ -252,7 +252,7 @@ meta.combat.delivery.casting,casting,Casting,meta.combat.delivery,TagNode,,"7 ca
 meta.combat.delivery.casting.bolt,bolt,Bolt,meta.combat.delivery.casting,TagNode,,"Ember Dart, Rime Needle, Static Needle, Holy Spark, Force Nudge",,,,,,game-concept,,,
 meta.combat.delivery.casting.mote,mote,Mote,meta.combat.delivery.casting,TagNode,,"Drowsing Mote, Rot Mote",,,,,,game-concept,,,
 meta.combat.delivery.multi-hit,multi-hit,Multi-hit,meta.combat.delivery,TagNode,,,,,,,,new,,,
-meta.combat.delivery.area,area,Area,meta.combat.delivery,TagNode,,,,,,,,live-tag,,,delivery:area
+meta.combat.delivery.area,delivery.area,Area,meta.combat.delivery,TagNode,,,,,,,,live-tag,,,delivery:area
 meta.combat.magic,combat.magic,Magic,meta.combat,TagNode,,,,,,,,game-concept,,,
 meta.combat.magic.offensive-magic,offensive-magic,Offensive magic,meta.combat.magic,TagNode,,,,,,,,game-concept,,,
 meta.combat.magic.defensive-magic,defensive-magic,Defensive magic,meta.combat.magic,TagNode,,,,,,,,game-concept,,,
@@ -410,7 +410,7 @@ classification.flask,classification.flask,flask,classification,TagNode,,"What a 
 classification.keepsake,keepsake,keepsake,classification,TagNode,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.keepsake
 classification.event,classification.event,event,classification,TagNode,,"What a event is. Every object in the event collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.event
 classification.encounter,classification.encounter,encounter,classification,TagNode,,"What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.encounter
-classification.enemy,enemy,enemy,classification,TagNode,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.enemy
+classification.enemy,classification.enemy,enemy,classification,TagNode,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.enemy
 classification.armament,armament,armament,classification,TagNode,,"What a armament is. Every object in the armament collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armament
 classification.armour,armour,armour,classification,TagNode,,"What a armour is. Every object in the armour collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armour
 classification.basicCardProfile,basicCardProfile,basicCardProfile,classification,TagNode,,"What a basicCardProfile is. Every object in the basicCardProfile collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.basicCardProfile
@@ -690,6 +690,14 @@ meta.combat.skill.technique.scarred-rite,scarred-rite,Scarred Rite,meta.combat.s
 meta.combat.skill.technique.dawn-rite,dawn-rite,Dawn Rite,meta.combat.skill.technique,Skill,,Marks an authored removal of a specific negative status; it never removes every status implicitly.,,,,,,live-tag,✦,D7B36B,ability:dawn-rite
 meta.combat.skill.technique.burden-bearer,burden-bearer,Burden Bearer,meta.combat.skill.technique,Skill,,Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.,,,,,,live-tag,✦,D7B36B,ability:burden-bearer
 meta.combat.skill.technique.sepulchral-pact,sepulchral-pact,Sepulchral Pact,meta.combat.skill.technique,Skill,,Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.,,,,,,live-tag,✦,D7B36B,ability:sepulchral-pact
+targeting,targeting,targeting,,TagNode,,Target selection: the rules an action uses to choose the creature it hits. Grouping node for the targeting vocabulary.,,,,,,live-tag,,,targeting
+targeting.self,self,self,targeting,TagNode,,Targets the acting creature itself.,,,,,,live-tag,,,targeting.self
+targeting.enemy,targeting.enemy,enemy,targeting,TagNode,,Targets one enemy the player chooses.,,,,,,live-tag,,,targeting.enemy
+targeting.allEnemies,allEnemies,allEnemies,targeting,TagNode,,Targets every living enemy at once.,,,,,,live-tag,,,targeting.allEnemies
+targeting.randomEnemy,randomEnemy,randomEnemy,targeting,TagNode,,Targets one enemy chosen at random.,,,,,,live-tag,,,targeting.randomEnemy
+targeting.ally,ally,ally,targeting,TagNode,,Targets an ally of the acting player.,,,,,,live-tag,,,targeting.ally
+targeting.single,single,Single,targeting,TagNode,,One direct target.,,,,,,live-tag,◇,9FC3E8,targeting:single
+targeting.area,targeting.area,Area,targeting,TagNode,,An area action; most Counters do not cover it.,,,,,,live-tag,◇,9FC3E8,targeting:area
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

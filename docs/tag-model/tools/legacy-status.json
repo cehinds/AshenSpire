@@ -689,5 +689,13 @@
  "meta.combat.skill.technique.scarred-rite": "new",
  "meta.combat.skill.technique.dawn-rite": "new",
  "meta.combat.skill.technique.burden-bearer": "new",
- "meta.combat.skill.technique.sepulchral-pact": "new"
+ "meta.combat.skill.technique.sepulchral-pact": "new",
+ "targeting": "new",
+ "targeting.self": "new",
+ "targeting.enemy": "new",
+ "targeting.allEnemies": "new",
+ "targeting.randomEnemy": "new",
+ "targeting.ally": "new",
+ "targeting.single": "new",
+ "targeting.area": "new"
 }

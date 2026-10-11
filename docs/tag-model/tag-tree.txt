@@ -815,3 +815,11 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
     Sigil of the Last Vigil {A legendary vigil: a guard rises at the start of a fight you enter already wounded. Effects in nodeEffects.json: triggers on combatStart; ops block.}
     Pyre Sigil {A legendary pyre: every card you burn away raises a guard. Effects in nodeEffects.json: triggers on cardExhausted; ops block.}
     Gravelight Sigil {A legendary gravelight: a fallen foe mends you while you stand wounded. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+targeting {Target selection: the rules an action uses to choose the creature it hits. Grouping node for the targeting vocabulary.}
+  self {Targets the acting creature itself.}
+  enemy {Targets one enemy the player chooses.}
+  allEnemies {Targets every living enemy at once.}
+  randomEnemy {Targets one enemy chosen at random.}
+  ally {Targets an ally of the acting player.}
+  Single {One direct target.}
+  Area {An area action; most Counters do not cover it.}
