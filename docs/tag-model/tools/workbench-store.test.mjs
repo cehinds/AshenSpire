@@ -171,7 +171,7 @@ export function makeFakeDb() {
   return fake;
 }
 
-const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tstate, chunkRows, hashText, headPath, blobPath })';
+const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tableBanners, runBanner, tstate, chunkRows, hashText, headPath, blobPath })';
 
 // One browser tab: its own state, sharing only the fake db with other tabs.
 export function makePage(db, tables, edit) {
@@ -185,6 +185,9 @@ export function makePage(db, tables, edit) {
     setStatus(level, msg) { page.statuses.push({ level, msg }); },
     rebuild() {},
     saveLocal() {},
+    exported: [],
+    exportCSV(t) { page.exported.push(t); }, // page function: records the export
+    focusStatus() { page.focused = (page.focused || 0) + 1; },
   };
   for (const t of Object.keys(tables)) page.state.data[t] = { columns: [...tables[t].columns], rows: [] };
   const api = loadStorage(page, EXPOSE, edit);
@@ -426,6 +429,30 @@ test('a peer head that did not start from our save shows the conflict banner, an
   await settle(30);
   assert.ok(api.tstate.t.conflict, 'conflict shown');
   assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(mine));
+});
+
+test('the pinned state shows its own banner whose buttons export and load theirs', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T);
+  A.api.subscribeTable('t');
+  await settle(10);
+  const mine = sample(5, 'x');
+  editTable(A.page, mine);
+  db.failSet = (p) => (p === 'tables/t' ? { code: 'invalid_argument' } : null);
+  await A.api.flush('t');
+  const banner = A.api.tableBanners('t').find((b) => /could not be saved/.test(b.text));
+  assert.ok(banner, 'the pinned banner is shown');
+  assert.equal(JSON.stringify(banner.buttons.map((b) => b.label)), JSON.stringify(['Export my edits (CSV)', 'Load theirs (discard mine)']));
+  await A.api.runBanner('t', banner.buttons[0].id);
+  assert.equal(JSON.stringify(A.page.exported), JSON.stringify(['t']), 'Export button exports the table');
+  db.failSet = null;
+  const theirs = sample(7, 'p');
+  await putBlobTable(db, A.api, 't', theirs);
+  await settle(40);
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(mine), 'the rejected edits stay on screen');
+  await A.api.runBanner('t', banner.buttons[1].id);
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(theirs), 'Load theirs button adopts theirs');
+  assert.ok(A.page.focused >= 1, 'focus moves to the status line after a choice');
 });
 
 test('invalid_argument on save pins the rejected edits: a peer head never replaces them until Load theirs', async () => {

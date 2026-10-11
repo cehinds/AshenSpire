@@ -366,6 +366,16 @@ async function loadTheirs(t){
   render();
 }
 function keepMine(t){ return flush(t,{overwrite:true}).then(()=>render()); }
+/* the banners a table shows above its grid, and what their buttons do (the page draws them; tests run them) */
+const BANNER_ACTIONS={ export:(t)=>exportCSV(t), theirs:(t)=>loadTheirs(t), keep:(t)=>keepMine(t) };
+function tableBanners(t){
+  const ts=TS(t), out=[];
+  if(ts.pinned) out.push({kind:'warn', text:'This table could not be saved. Your edits are kept here, read-only.', buttons:[{id:'export',label:'Export my edits (CSV)'},{id:'theirs',label:'Load theirs (discard mine)'}]});
+  if(ts.conflict) out.push({kind:'warn', text:'Someone else saved this table while you were editing.', buttons:[{id:'theirs',label:'Load theirs (discard mine)'},{id:'keep',label:'Keep mine (overwrite)'}]});
+  if(ts.incomplete) out.push({kind:'bad', text:ts.incomplete.message, buttons:[]});
+  return out;
+}
+function runBanner(t,id){ return Promise.resolve(BANNER_ACTIONS[id](t)).then(()=>{ if(id!=='export') focusStatus(); }); }
 /* storage:end */
 
 /* ---------- indexes ---------- */
@@ -572,15 +582,20 @@ function renderTabs(){
 function render(){ renderTabs(); const p=document.getElementById('panel'); p.textContent='';
   if(TABLES[state.view]) renderTable(p,state.view); else if(state.view==='sheet') renderSheet(p); else renderCheck(p); }
 
+/* after a banner choice, move focus to the status line so it is not lost when the banner goes */
+function focusStatus(){ const s=document.getElementById('status'); if(s){ s.tabIndex=-1; s.focus(); } }
 function renderTable(p,t){
   const def=TABLES[t], tbl=state.data[t];
-  const ts=TS(t);
-  if(ts.conflict){ const b=document.createElement('div'); b.className='banner warn'; b.setAttribute('role','alert');
-    const msg=document.createElement('span'); msg.textContent='Someone else saved this table while you were editing. '; b.appendChild(msg);
-    b.append(btn('Load theirs (discard mine)',()=>loadTheirs(t)), btn('Keep mine (overwrite)',()=>keepMine(t)));
-    p.appendChild(b); }
-  if(ts.incomplete){ const b=document.createElement('div'); b.className='banner bad'; b.setAttribute('role','alert');
-    b.textContent=ts.incomplete.message; p.appendChild(b); }
+  const ts=TS(t), banners=tableBanners(t);
+  if(!banners.length) ts.announced=false;
+  for(const bn of banners){
+    const box=document.createElement('div'); box.className='banner '+bn.kind;
+    box.setAttribute('role', ts.announced? 'group' : 'alert'); /* announced once, when the banner first appears */
+    const msg=document.createElement('span'); msg.textContent=bn.text+' '; box.appendChild(msg);
+    for(const x of bn.buttons) box.appendChild(btn(x.label,()=>runBanner(t,x.id)));
+    p.appendChild(box);
+  }
+  ts.announced=banners.length>0;
   const tools=document.createElement('div'); tools.className='toolbar';
   tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
   const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');
