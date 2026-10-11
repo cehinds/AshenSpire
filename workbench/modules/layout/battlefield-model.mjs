@@ -30,6 +30,17 @@ export function parsePresets(text) {
   return { ...parts, data };
 }
 
+/**
+ * The presets file's text as the Battlefield view reads it: parsed, and in the form a save
+ * writes. Load and reload both take the file through here. Throws an Error that names what is wrong.
+ */
+export function readPresetsText(text) {
+  const parts = parsePresets(text);
+  // Saving writes the presets back in this form; a file in another form would show a diff that no edit made.
+  if (serializePresets(parts, parts.data) !== text) throw Error(`${PRESETS_FILE} is not in the form Layout Studio saves; edit it in the file`);
+  return parts;
+}
+
 const formatBody = (data) => JSON.stringify(data, null, 2);
 
 /** The module text for a parse with its data replaced. Unchanged data gives the original text. */
