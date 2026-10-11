@@ -20,7 +20,7 @@ import { spawn, execFile } from 'node:child_process';
 import { spawnGroup } from '../tools/lib/process-tree.mjs';
 import { safePath, createGate, newToken, createSseHub, readJson, sendJson, MIME } from './lib/index.mjs';
 import { ToolSupervisor, TOOL_STOP_MS } from './core/tools.mjs';
-import { JobRunner, GENERATED } from './core/jobs.mjs';
+import { JobRunner, GENERATED, TAG_MODEL } from './core/jobs.mjs';
 import { createWatcher, createOwnWrites, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 import { createFileService } from './core/files.mjs';
@@ -149,7 +149,9 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     const game = paths.filter((p) => !tagModelTable(p));
     if (game.length || !paths.length) onBatch(game);
     if (game.length < paths.length) runAfterTagModelSave({ root, jobs, paths, send: (r) => hub.send('tag-model', r) }).catch((e) => console.warn(`Workbench: tag model job: ${e.message}`));
-  }, onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault, signal: closeAbort.signal });
+  }, onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault, signal: closeAbort.signal,
+    // A tag-model save waits while a tag-model job runs (the group is held in this process), for lockWaitMs.
+    tagModelLock: async (opts) => { await jobs.acquire(TAG_MODEL, 'Tag model save', opts); return () => jobs.release(TAG_MODEL); } });
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';

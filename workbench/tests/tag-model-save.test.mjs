@@ -10,6 +10,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { allowedKind, createFileService } from '../core/files.mjs';
 import { buildsFor } from '../core/watch.mjs';
+import { JobRunner, TAG_MODEL } from '../core/jobs.mjs';
 import { hash } from '../../editor/core.mjs';
 import { parseTagCSV, writeTagCSV } from '../lib/tag-model-csv.mjs';
 
@@ -220,4 +221,43 @@ test('a table with no id: editing a base cell is accepted', async (t) => {
   const [a, b] = settingsRows();
   await f.files.save([await f.change(SETTINGS, rowsOf([{ ...a, label: 'Edited label' }, b]))]);
   assert.equal(parseTagCSV(await fs.readFile(path.join(f.root, SETTINGS), 'utf8')).rows[0].label, 'Edited label');
+});
+
+// A fixture whose tag-model build (docs/tag-model/tools/build.mjs) takes buildMs, with a file service whose tag-model
+// saves wait on the jobs' tag-model group, as the server wires them (server.mjs tagModelLock).
+async function buildingFixture(t, { buildMs, lockWaitMs }) {
+  const f = await fixture(t);
+  await fs.mkdir(path.join(f.root, 'docs/tag-model/tools'), { recursive: true });
+  await fs.writeFile(path.join(f.root, 'docs/tag-model/tools/build.mjs'), `await new Promise((r) => setTimeout(r, ${buildMs})); process.exitCode = 0;`);
+  await fs.writeFile(path.join(f.root, 'docs/tag-model/tools/check.mjs'), 'process.exitCode = 0;');
+  await fs.writeFile(path.join(f.root, 'docs/tag-model/tools/compile.mjs'), 'process.exitCode = 0;');
+  const jobs = new JobRunner({ root: f.root, stateFile: path.join(f.root, 'state', 'jobs.json') });
+  const saved = [];
+  const files = createFileService({
+    root: f.root, stateDir: path.join(f.root, '.wb-state-2'), onSaved: (paths) => saved.push(...paths), lockWaitMs,
+    tagModelLock: async (opts) => { await jobs.acquire(TAG_MODEL, 'Tag model save', opts); return () => jobs.release(TAG_MODEL); },
+  });
+  return { ...f, jobs, files, saved };
+}
+const idle = async (jobs, id) => { for (let i = 0; i < 500 && jobs.active.has(id); i += 1) await new Promise((r) => setTimeout(r, 10)); };
+
+test('a tag-model save waits for a running tag-model job, then writes', async (t) => {
+  const f = await buildingFixture(t, { buildMs: 300, lockWaitMs: 5000 });
+  const started = f.jobs.start('tag-model');
+  const change = await f.change(`${T}/values.csv`, 'id,value\nar,31\n');
+  await f.files.save([change]);
+  assert.equal(f.jobs.get(started.runId).status, 'passed', 'the save was written after the job ended');
+  assert.equal(await fs.readFile(path.join(f.root, `${T}/values.csv`), 'utf8'), 'id,value\nar,31\n');
+  await idle(f.jobs, 'tag-model');
+});
+
+test('a tag-model save that waits past lockWaitMs answers 409 with the message, and writes nothing', async (t) => {
+  const f = await buildingFixture(t, { buildMs: 1500, lockWaitMs: 100 });
+  f.jobs.start('tag-model');
+  const change = await f.change(`${T}/values.csv`, 'id,value\nar,31\n');
+  const err = await refused(f.files.save([change]), 409);
+  assert.equal(err.message, 'The tag model build is running; save again when it ends.');
+  assert.equal(await fs.readFile(path.join(f.root, `${T}/values.csv`), 'utf8'), 'id,value\nar,24\n');
+  assert.deepEqual(f.saved, []);
+  await idle(f.jobs, 'tag-model');
 });

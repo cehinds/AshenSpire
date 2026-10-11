@@ -186,8 +186,10 @@ async function checkJs(rel, text) {
  * with the stat the file was left with: the server uses it to drop the watcher's echo.
  * fileFault(rel) is a test seam: it may await or throw before a file is renamed into place.
  * pruneFault() is a test seam: it may throw where old backup sets are pruned.
+ * tagModelLock({ timeoutMs, signal }) resolves to a release function once no tag-model job runs (the server passes
+ * the jobs' tag-model group); a tag-model save takes it. Without it a tag-model save does not wait.
  */
-export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null, signal = undefined }) {
+export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null, signal = undefined, tagModelLock = null }) {
   let tail = Promise.resolve();
   const serialize = (task) => { const run = tail.then(task, task); tail = run.catch(() => {}); return run; };
   const backupsDir = path.join(stateDir, 'backups');
@@ -356,6 +358,16 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
         throw error;
       }
     }
+    // A tag-model table is written only while no tag-model job runs (build.mjs rewrites these tables).
+    // The save waits for the group like a content save waits for the build lock, for lockWaitMs; past that it answers 409 and writes nothing.
+    let releaseTagModel = null;
+    if (tagModelLock && changes.some((c) => tagModelTable(c.path))) {
+      try { releaseTagModel = await tagModelLock({ timeoutMs: lockWaitMs, signal }); } catch {
+        if (release) release();
+        if (signal?.aborted) throw fail(503, 'The Workbench is closing');
+        throw fail(409, 'The tag model build is running; save again when it ends.');
+      }
+    }
     try {
       const problems = await validate(changes);
       // The tag model's tables: a generated one is refused, and a save may change only the cells its rule allows.
@@ -417,7 +429,7 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
       // The save has landed: pruning old backup sets is housekeeping, so a failure there is logged, not reported as a failed save.
       try { await prune(keep); } catch (error) { console.warn(`Workbench: could not prune old backups: ${error.message}`); }
       return { backup: id, files: prepared.map((f) => ({ path: f.path, hash: hash(f.bytes) })) };
-    } finally { if (release) release(); }
+    } finally { if (releaseTagModel) releaseTagModel(); if (release) release(); }
   }
 
   async function save(changes) {
