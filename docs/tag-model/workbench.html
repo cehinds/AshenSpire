@@ -217,7 +217,9 @@ function adoptRows(t, hc, objs){
 /* one blob doc; retried twice with backoff when it is missing or unreadable, then null */
 async function fetchBlob(t,h){
   for(let i=0;;i++){
-    try{ const s=await db.doc(blobPath(t,h)).get(); if(s.exists){ const d=s.data(); if(d&&Array.isArray(d.rows)) return d.rows; } }
+    try{ const s=await db.doc(blobPath(t,h)).get(); if(s.exists){ const d=s.data();
+      /* the id is the hash of the content: a blob whose content does not hash to its id is treated as missing */
+      if(d&&Array.isArray(d.rows)&&hashText(JSON.stringify({rows:d.rows}))===h) return d.rows; } }
     catch(e){ /* counted as missing */ }
     if(i>=BLOB_RETRY_MS.length) return null;
     await sleepMs(BLOB_RETRY_MS[i]);

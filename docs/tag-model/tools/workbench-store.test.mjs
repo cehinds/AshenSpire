@@ -376,6 +376,20 @@ test('a row over 250 KB refuses the save, names the row, and writes nothing', as
   assert.ok(page.statuses.some((s) => s.level === 'bad' && /huge.*over 250 KB/.test(s.msg)));
 });
 
+test('a blob whose content does not hash to its id blocks the table', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  const head = await putBlobTable(db, api, 't', sample(40));
+  const id = head.blobs[0];
+  const doc = db.read(api.blobPath('t', id));
+  doc.rows[0][0] = 'tampered';
+  db.put(api.blobPath('t', id), doc);
+  api.subscribeTable('t');
+  await waitFor(() => page.statuses.some((s) => /incomplete on the server/.test(s.msg)));
+  assert.equal(page.loaded.has('t'), false);
+  assert.equal(page.state.data.t.rows.length, 0);
+});
+
 // Writer helper: a tab holding `objs` as its unsaved table.
 function editTable(page, objs) {
   page.state.data.t.rows = objs;
