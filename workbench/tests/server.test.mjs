@@ -787,3 +787,23 @@ for (const mode of ['watch', 'poll']) {
     assert.deepEqual(reloads[1].files, ['styles/main.css'], 'the later external edit is its own batch');
   });
 }
+
+test('stopAll escalates to SIGKILL after the grace period for a builder that ignores SIGTERM, and resolves after it is gone', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `
+    import fs from 'node:fs';
+    process.on('SIGTERM', () => {});
+    fs.writeFileSync('started', '');
+    setInterval(() => {}, 1000);
+  `);
+  const runner = new JobRunner({ root, stateFile: path.join(root, '.wb-state/jobs.json') });
+  t.after(() => runner.stopAll({ graceMs: 0 }));
+  runner.start('config-build');
+  for (let i = 0; i < 200 && !(await fs.stat(path.join(root, 'started')).then(() => true, () => false)); i++) await new Promise((r) => setTimeout(r, 20));
+  const began = Date.now();
+  await runner.stopAll({ graceMs: 200 });
+  assert.ok(Date.now() - began >= 150, 'waited for the grace period before escalating');
+  assert.equal(runner.active.size, 0, 'resolved only once the job slot was freed');
+  await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'the file lock is free');
+});
