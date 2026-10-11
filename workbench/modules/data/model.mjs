@@ -49,8 +49,8 @@ export function keyColumnOf(columns) {
  * unique across all rows is the scope. A scope must itself repeat, so a per-row id cannot hide a duplicate.
  * No repeated key, or no such column, gives null: the key stays unique on its own.
  */
-export function keyScopeOf(columns, rows = []) {
-  const key = keyColumnOf(columns);
+export function keyScopeOf(columns, rows = [], keyName = keyColumnOf(columns)?.key) {
+  const key = columns.find((c) => c.key === keyName);
   if (!key) return null;
   const textOf = (row, c) => cellText(row[c.key], c.type).trim();
   const keyed = rows.filter((r) => textOf(r, key) !== '');

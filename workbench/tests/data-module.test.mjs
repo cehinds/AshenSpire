@@ -198,6 +198,11 @@ test('keyScopeOf finds the *Id scope only when the key repeats and (scope, key) 
   // The real outfits.csv scope is classId.
   const outfits = D.parseTable('content/source/outfits.csv', read('content/source/outfits.csv'));
   assert.equal(D.keyScopeOf(outfits.columns, outfits.rows), 'classId');
+  // The key can be named explicitly: here name precedes id, so the default key would be name.
+  const named = [{ key: 'name', type: 'string' }, { key: 'classId', type: 'string' }, { key: 'id', type: 'string' }];
+  const namedRows = [{ name: 'a', classId: 'reaver', id: 'default' }, { name: 'b', classId: 'starseer', id: 'default' }, { name: 'c', classId: 'reaver', id: 'vigil' }];
+  assert.equal(D.keyScopeOf(named, namedRows, 'id'), 'classId');
+  assert.equal(D.keyScopeOf(named, namedRows), null);
 });
 
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
