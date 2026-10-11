@@ -712,6 +712,9 @@ scaling.dexterity,scaling.dexterity,dexterity,scaling,TagNode,,This card scales 
 scaling.constitution,scaling.constitution,constitution,scaling,TagNode,,This card scales with Constitution.,,,,,,live-tag,,,scaling.constitution
 scaling.intelligence,scaling.intelligence,intelligence,scaling,TagNode,,This card scales with Intelligence.,,,,,,live-tag,,,scaling.intelligence
 scaling.wisdom,scaling.wisdom,wisdom,scaling,TagNode,,This card scales with Wisdom.,,,,,,live-tag,,,scaling.wisdom
+costRoot,costRoot,cost,,TagNode,,How a card is paid for. Grouping node for the cost vocabulary.,,,,,,live-tag,,,cost
+costRoot.action,costRoot.action,action,costRoot,TagNode,,Costs Stamina to play.,,,,,,live-tag,,,cost.action
+costRoot.alternative,alternative,alternative,costRoot,TagNode,,May be paid with a complete alternative option instead of its listed cost.,,,,,,live-tag,,,cost.alternative
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

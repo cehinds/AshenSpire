@@ -711,5 +711,8 @@
  "scaling.dexterity": "new",
  "scaling.constitution": "new",
  "scaling.intelligence": "new",
- "scaling.wisdom": "new"
+ "scaling.wisdom": "new",
+ "costRoot": "new",
+ "costRoot.action": "new",
+ "costRoot.alternative": "new"
 }

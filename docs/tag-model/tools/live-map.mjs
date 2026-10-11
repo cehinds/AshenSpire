@@ -423,6 +423,10 @@ export const LIVE = {
   'scaling.constitution': 'scaling.constitution',
   'scaling.intelligence': 'scaling.intelligence',
   'scaling.wisdom': 'scaling.wisdom',
+  // proposed live mapping (domain pass)
+  'costRoot': 'cost',
+  'costRoot.action': 'cost.action',
+  'costRoot.alternative': 'cost.alternative',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

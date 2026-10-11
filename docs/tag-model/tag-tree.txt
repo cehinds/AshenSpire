@@ -837,3 +837,6 @@ scaling {Which attribute a card's effect scales with. Grouping node for the scal
   constitution {This card scales with Constitution.}
   intelligence {This card scales with Intelligence.}
   wisdom {This card scales with Wisdom.}
+cost {How a card is paid for. Grouping node for the cost vocabulary.}
+  action {Costs Stamina to play.}
+  alternative {May be paid with a complete alternative option instead of its listed cost.}
