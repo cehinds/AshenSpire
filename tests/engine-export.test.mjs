@@ -1,0 +1,144 @@
+// tests/engine-export.test.mjs — tools/engine-export.mjs writes a well-formed,
+// deterministic engine export, and its --check notices drift.
+// Runs the real tool against temporary directories; about four seconds.
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
+import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+const tool = join(root, 'tools', 'engine-export.mjs');
+const scratch = mkdtempSync(join(tmpdir(), 'engine-export-test-'));
+process.on('exit', () => rmSync(scratch, { recursive: true, force: true }));
+
+const run = (...args) => spawnSync(process.execPath, [tool, ...args], { cwd: root, encoding: 'utf8' });
+const exportTo = (name) => {
+  const out = join(scratch, name);
+  const r = run('--out', out);
+  assert.equal(r.status, 0, `export failed:\n${r.stdout}${r.stderr}`);
+  return { out, stdout: r.stdout };
+};
+const readJson = (dir, rel) => JSON.parse(readFileSync(join(dir, rel), 'utf8'));
+const listFiles = (dir) => readdirSync(dir, { recursive: true, withFileTypes: true })
+  .filter((e) => e.isFile())
+  .map((e) => relative(dir, join(e.parentPath ?? e.path, e.name)).split(sep).join('/'))
+  .sort();
+
+const first = exportTo('a');
+const manifest = readJson(first.out, 'manifest.json');
+
+// A deliberately small JSON Schema validator: the keywords the exporter emits
+// (type, enum, properties, required, items) and nothing else.
+function typeMatches(value, type) {
+  switch (type) {
+    case 'null': return value === null;
+    case 'array': return Array.isArray(value);
+    case 'object': return value !== null && typeof value === 'object' && !Array.isArray(value);
+    case 'integer': return Number.isInteger(value);
+    case 'number': return typeof value === 'number';
+    default: return typeof value === type;
+  }
+}
+function validate(schema, value, path = '$', errors = []) {
+  if (errors.length > 20) return errors;
+  if (schema.type) {
+    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+    if (!types.some((t) => typeMatches(value, t))) { errors.push(`${path}: expected ${types.join('|')}`); return errors; }
+  }
+  if (schema.enum && !schema.enum.includes(value)) errors.push(`${path}: ${JSON.stringify(value)} not in enum`);
+  if (schema.properties && typeMatches(value, 'object')) {
+    for (const key of schema.required || []) if (!(key in value)) errors.push(`${path}: missing required '${key}'`);
+    for (const [key, sub] of Object.entries(schema.properties)) if (key in value) validate(sub, value[key], `${path}.${key}`, errors);
+  }
+  if (schema.items && Array.isArray(value)) value.forEach((item, i) => validate(schema.items, item, `${path}[${i}]`, errors));
+  return errors;
+}
+
+test('the tool prints a one-line OK summary with the table and row counts', () => {
+  assert.match(first.stdout.trim(), /^engine-export: OK — \d+ tables, \d+ rows, \d+ config, \d+ art files → /);
+  assert.equal(first.stdout.trim().split('\n').length, 1);
+});
+
+test('the manifest names its format, build and every file it lists', () => {
+  assert.equal(manifest.format, 'ashenspire.engine-export/1');
+  assert.equal(typeof manifest.version, 'string');
+  assert.ok(manifest.buildOrdinal === null || Number.isInteger(manifest.buildOrdinal));
+  assert.ok(manifest.gitSha === null || /^[0-9a-f]{40}$/.test(manifest.gitSha));
+  assert.equal(manifest.rowKey, 'Name');
+  assert.ok(manifest.tables.length > 50, `only ${manifest.tables.length} tables`);
+  const ids = manifest.tables.map((t) => t.id);
+  for (const id of ['content.cards', 'content.enemies', 'content.relics', 'content.encounters', 'source.nodes', 'framework.terms.terms']) {
+    assert.ok(ids.includes(id), `no table ${id}`);
+  }
+  assert.ok(manifest.art.some((a) => a.file === 'art/art-manifest.json'), 'art manifest not copied');
+  for (const entry of [...manifest.tables, ...manifest.config, ...manifest.art]) {
+    const text = readFileSync(join(first.out, entry.file));
+    assert.equal(createHash('sha256').update(text).digest('hex'), entry.sha256, `${entry.file} hash`);
+  }
+  assert.ok(!/\d{4}-\d{2}-\d{2}T/.test(readFileSync(join(first.out, 'manifest.json'), 'utf8')), 'manifest carries a timestamp');
+  const scripts = manifest.config.find((c) => c.id === 'content.scripts');
+  assert.ok(scripts && scripts.omittedFunctions.length, 'the function in content.scripts is not reported as omitted');
+});
+
+test('every table parses, every row has a unique string Name first, and its schema accepts it', () => {
+  for (const table of manifest.tables) {
+    const rows = readJson(first.out, table.file);
+    assert.ok(Array.isArray(rows), `${table.file} is not an array`);
+    assert.equal(rows.length, table.rows, `${table.file} row count`);
+    const names = new Set();
+    for (const row of rows) {
+      assert.equal(typeof row.Name, 'string', `${table.file}: a row without a string Name`);
+      assert.equal(Object.keys(row)[0], 'Name', `${table.file}: Name is not the first field`);
+      assert.ok(!names.has(row.Name), `${table.file}: duplicate Name '${row.Name}'`);
+      names.add(row.Name);
+    }
+    const schema = readJson(first.out, table.schema);
+    assert.equal(schema.$schema, 'https://json-schema.org/draft/2020-12/schema');
+    assert.deepEqual(validate(schema, rows), [], `${table.schema} rejects ${table.file}`);
+  }
+});
+
+test('two exports are byte-identical', () => {
+  const second = exportTo('b');
+  const a = listFiles(first.out);
+  assert.deepEqual(listFiles(second.out), a);
+  for (const rel of a) {
+    assert.ok(readFileSync(join(first.out, rel)).equals(readFileSync(join(second.out, rel))), `${rel} differs between runs`);
+  }
+});
+
+test('--check passes on fresh output and fails after one file changes or the folder is absent', () => {
+  const ok = run('--check', '--out', first.out);
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /--check: OK/);
+
+  const file = join(first.out, manifest.tables[0].file);
+  writeFileSync(file, `${readFileSync(file, 'utf8')} `);
+  const bad = run('--check', '--out', first.out);
+  assert.equal(bad.status, 1);
+  assert.match(bad.stderr, new RegExp(`changed  ${manifest.tables[0].file.replace(/\./g, '\\.')}`));
+
+  const absent = run('--check', '--out', join(scratch, 'never-written'));
+  assert.equal(absent.status, 1);
+  assert.ok(!existsSync(join(scratch, 'never-written')));
+});
+
+test('--only limits the export and the tool refuses to clear a foreign folder', () => {
+  const out = join(scratch, 'only');
+  const r = run('--only', 'content.cards', '--out', out);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(readJson(out, 'manifest.json').tables.map((t) => t.id), ['content.cards']);
+
+  const foreign = join(scratch, 'foreign');
+  mkdirSync(foreign, { recursive: true });
+  writeFileSync(join(foreign, 'keep.txt'), 'mine');
+  const refused = run('--out', foreign);
+  assert.equal(refused.status, 2);
+  assert.match(refused.stderr, /refusing to clear it/);
+  assert.equal(readFileSync(join(foreign, 'keep.txt'), 'utf8'), 'mine');
+});

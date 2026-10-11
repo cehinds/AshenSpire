@@ -459,6 +459,10 @@ artifacts/combat-foundations/
 # and nothing reads it from version control.
 build/components/
 
+# tools/engine-export.mjs — the engine-ready JSON export (docs/ENGINE-EXPORT.md).
+# Derived from the content tree on every run; ~11MB with the art manifests.
+build/engine-export/
+
 # build/web/ — the de-inlined build's home until docs/EXTERNAL-ASSETS-PLAN.md
 # step 8e made the pack shape build/ itself (tools/launch.mjs now removes a
 # left-over build/web/). Still ignored, so an older checkout's copy never shows.
