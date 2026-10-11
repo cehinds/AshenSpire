@@ -40,8 +40,16 @@ jobs:
       - name: Refresh the generated README regions
         run: node tools/readme-sync.mjs --write
 
-      - name: Commit only README.md when a region changed
+      - name: Commit only README.md when a region changed, and push it behind dev
+        # architecture-sync.yml pushes to dev on the same push, in its own
+        # concurrency group, so the two race: the loser is rejected
+        # non-fast-forward. Before each push, rebase onto origin/dev. If the
+        # README rebase conflicts, abort it, reset to origin/dev, regenerate
+        # the regions there and recommit. A rejected push retries up to three
+        # times, with 2, 4 and 8 seconds of backoff.
         shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
           if git diff --quiet -- README.md; then
             echo "README generated regions already current."
@@ -51,5 +59,31 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- README.md
           git diff --cached --name-only
-          git commit -m "docs: refresh README [readme-sync]"
-          git push origin "HEAD:$GITHUB_REF_NAME"
+          git commit -q -m "docs: refresh README [readme-sync]"
+
+          delays=(2 4 8)
+          for attempt in 1 2 3 4; do
+            if ! git pull -q --rebase origin dev; then
+              echo "Rebase onto origin/dev conflicted; regenerating README on origin/dev."
+              git rebase --abort 2>/dev/null || true
+              git fetch -q origin dev
+              git reset -q --hard origin/dev
+              node tools/readme-sync.mjs --write
+              if git diff --quiet -- README.md; then
+                echo "origin/dev already carries the current README regions."
+                exit 0
+              fi
+              git add -- README.md
+              git commit -q -m "docs: refresh README [readme-sync]"
+            fi
+            if git push -q origin "HEAD:$REF_NAME"; then
+              echo "Pushed README refresh to $REF_NAME (attempt $attempt)."
+              exit 0
+            fi
+            echo "Push to $REF_NAME rejected (attempt $attempt)."
+            if [ "$attempt" -lt 4 ]; then
+              sleep "${delays[$((attempt - 1))]}"
+            fi
+          done
+          echo "::error::README refresh could not be pushed to $REF_NAME after 4 attempts."
+          exit 1

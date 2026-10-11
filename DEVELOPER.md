@@ -56,6 +56,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | — |
 | `ci.yml` → bundler parse gate (`tools/bundle.test.mjs`) | — | — | yes | — |
 | `ci.yml` → the checks that need a real browser (`browser-guard`) | — | — | yes | — |
+| `ci.yml` → a whole run in a real browser: title to a new run, 0 console errors (`browser-full-run`) | — | — | yes | — |
 | `ci.yml` → every flask menu, and the flask-menu known-bads (sharded) | — | — | yes | — |
 | `ci.yml` → about-changelog known-bads (sharded) | — | — | yes | — |
 | `ci.yml` → startup gate known-bads (sharded) | — | — | yes | — |
@@ -67,7 +68,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
 | `ci.yml` → shipped artifact is this source (3 OS shards) and the three runners built the same bytes (`reproducible`, `reproducible-agree`) | — | — | — | yes |
 | `ci.yml` → Fullscreen first through both Settings doors (`display-first`) | — | — | — | yes |
-| `ci.yml` → the build stamp and the cold boot in a real browser (`browser-guard-stamp`) | — | — | — | yes |
+| `ci.yml` → the build stamp's ink and the cold boot in a real browser (`browser-guard-stamp`) | — | — | — | yes |
 | `ci.yml` → mobile and combat layout, all five layouts, hint strip and Armoury, and their known-bads (`browser-layout-*`, `browser-hintstrip-plants`) | — | — | — | yes |
 | `ci.yml` → idle animation and reduced motion in a real browser (`browser-motion`, sharded) | — | — | — | yes |
 | `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push replaces the `installer-release` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) (also push to `main`) | — | — | — | yes |
@@ -367,7 +368,7 @@ act map. Red on any `console.error`, uncaught exception or browser-logged
 error over the drive; the optional `assets/sfx/<id>.ogg` sample 404s
 (`src/ui/audio.js`) are set aside by name and counted (about 18–19 a run;
 the count varies with timing). `--check` prints the verdict lines only; CI runs
-it in `ci.yml`'s *the build stamp and the cold boot in a real browser* job.
+it in `ci.yml`'s *a whole run in a real browser* job (`browser-full-run`, test stage).
 About 4 minutes locally. `--selftest` (seconds, no browser; run by
 `tests/full-run-probe.test.mjs`) plants a `console.error`, an uncaught
 exception and non-sound 404s through the drive's own classifier and requires

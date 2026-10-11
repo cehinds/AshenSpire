@@ -156,10 +156,12 @@ on:
   #   push to test (and alternative test refs) — the TEST-STAGE jobs: the engine
   #                              suite, discovered tests, tool self-tests, the
   #                              bundler parse gate and the functional browser
-  #                              checks (every job NOT in the polish list below).
+  #                              checks, the whole-run probe (browser-full-run)
+  #                              among them (every job NOT in the polish list below).
   #   push to release          — the POLISH jobs: reproducibility, Fullscreen-first,
-  #                              the build stamp and cold boot, layout, the hint
-  #                              strip, idle and reduced motion.
+  #                              the build stamp's INK checks and cold boot
+  #                              (browser-guard-stamp), layout, the hint strip,
+  #                              idle and reduced motion.
   #   both                     — `boundary`, which always runs and names what the
   #                              run does not cover.
   #   workflow_dispatch        — every job, on any ref. Its `stage` input (all,
@@ -825,6 +827,33 @@ jobs:
         run: node tools/verdict.mjs -- node tools/slot-load-door.mjs --selftest
 
   # ---------------------------------------------------------------------------
+  # The browser full run is a FUNCTIONAL check (title, class, map, fight, boss,
+  # death, a new run, 0 console errors), so it runs at test, not release. Its own
+  # job, not a step in browser-guard: about 4 minutes on top of that job's 20.
+  # It serves the SOURCE tree, so no build.
+  # ---------------------------------------------------------------------------
+  browser-full-run:
+    name: a whole run in a real browser
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","test"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name != 'release') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the probe serves the source tree
+      - uses: ./.github/actions/setup-node
+      # The art packs, before anything serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+
+      - name: A whole run in the browser — title, class, map, a fight, the boss, death, title, a new run, 0 console errors
+        # FINISH §3 "A browser full run". Serves the source tree (the art packs
+        # fetched above); about 4 minutes measured locally.
+        run: node tools/verdict.mjs -- node tools/full-run-probe.mjs --check
+
+  # ---------------------------------------------------------------------------
   # browser-guard's build-stamp and cold-boot checks, split off by the owner's
   # 20-minute rule (2026-10-02). Same steps, same commands; its own checkout,
   # build and browser.
@@ -873,11 +902,6 @@ jobs:
 
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
-
-      - name: A whole run in the browser — title, class, map, a fight, the boss, death, title, a new run, 0 console errors
-        # FINISH §3 "A browser full run". Serves the source tree (the art packs
-        # fetched above); about 4 minutes measured locally.
-        run: node tools/verdict.mjs -- node tools/full-run-probe.mjs --check
 
   # ---------------------------------------------------------------------------
   # The flask-menu probe, and its plants sharded two ways: their own jobs by the
@@ -1325,13 +1349,13 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-discovered, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
+    needs: [test, test-discovered, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
           echo "upstream results: test=${{ needs.test.result }} test-discovered=${{ needs['test-discovered'].result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
-          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
+          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-full-run=${{ needs['browser-full-run'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
           echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-plants=${{ needs['browser-layout-plants'].result }} browser-layout-all=${{ needs['browser-layout-all'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
           echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
