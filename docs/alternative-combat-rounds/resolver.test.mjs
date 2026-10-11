@@ -872,6 +872,15 @@ test('intangible: the player pool is shared across pairings, and each enemy has 
   assert.equal(charges.H, 3);
 });
 
+test('resolvePair partial pool: a side missing from options.charges falls back to its own intangibleCharges', () => {
+  // Only the player's pool is given (1). The enemy's own 1 charge must still avoid the player's hit.
+  const enemy = { id: 'ghost', speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 1 };
+  const events = resolvePair(ATTACKER, enemy, () => 0.99, { charges: { player: 1 } });
+  assert.deepEqual(find(events, 'evaded'), {
+    type: 'evaded', by: 'enemy', target: 'player', reason: 'intangible', charges: 0,
+  });
+});
+
 test('intangible pool: a side with no charges option takes the largest intangibleCharges of its cards', () => {
   // The first player card has no charges. The shield, second, has 1. The pool is 1, so the shield avoids one hit.
   const cards = [

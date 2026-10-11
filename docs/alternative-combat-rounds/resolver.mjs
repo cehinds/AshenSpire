@@ -187,8 +187,9 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   // What the evade bonus scopes see for this exchange (DESIGN.md, Evasion).
   const exchangeCtx = { inExchange: true, round: options.round, combatId: options.combatId };
   // Shared charge pool by side, mutated as charges are spent (DESIGN.md, Evasion).
-  // Without it, each side's own intangibleCharges is the pool.
-  const pool = options.charges ?? null;
+  // A side missing from options.charges uses its own intangibleCharges.
+  const pool = options.charges ?? {};
+  for (const who of SIDES) if (!(who in pool)) pool[who] = side[who].intangibleCharges;
   const events = [];
   const cancelled = { player: null, enemy: null };
   const tie = side.player.speed === side.enemy.speed;
@@ -215,7 +216,7 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     let avoid = null; // 'intangible' | 'evasion'
     let evade = null; // { evadePct, roll, success } when the percent roll is made
     const targetKey = other(who);
-    const chargesLeft = pool ? pool[targetKey] : target.intangibleCharges;
+    const chargesLeft = pool[targetKey];
     if (hit && !blocked) {
       if (target.tags.includes('intangible') && chargesLeft > 0) {
         avoid = 'intangible';
@@ -237,9 +238,8 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     if (blocked) {
       events.push({ type: 'absorbed', by: other(who), target: who });
     } else if (avoid === 'intangible') {
-      if (pool) pool[targetKey] -= 1;
-      else target.intangibleCharges -= 1;
-      const remaining = pool ? pool[targetKey] : target.intangibleCharges;
+      pool[targetKey] -= 1;
+      const remaining = pool[targetKey];
       events.push({ type: 'evaded', by: other(who), target: who, reason: 'intangible', charges: remaining });
     } else if (avoid === 'evasion') {
       events.push({ type: 'evaded', by: other(who), target: who, reason: 'evasion' });

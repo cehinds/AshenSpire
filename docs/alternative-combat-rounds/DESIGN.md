@@ -220,6 +220,8 @@ successes for momentum (see Momentum).
   counts are returned as `charges: { player, [enemyId]: n }`. At 0 charges
   the tag does nothing. Emits `evaded` with `reason: 'intangible'` and the
   pool left in `charges`.
+- `resolvePair` takes the same pool as `options.charges: { player, enemy }`.
+  A side missing from it falls back to that side's own `intangibleCharges`.
 - The evasion percent, `evadePct`. After an attack would land, the defender
   rolls once. `evadePct` is `evadeBasePct` plus the live bonuses for this
   exchange, clamped to 0..95. The roll is floor(rng x 100), and a roll under
