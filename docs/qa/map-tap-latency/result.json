@@ -1,6 +1,6 @@
 {
   "tool": "tools/map-tap-latency.mjs",
-  "measuredAt": "2026-10-11T01:03:59.308Z",
+  "measuredAt": "2026-10-11T01:27:35.249Z",
   "browser": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   "viewport": {
     "width": 390,
@@ -17,121 +17,121 @@
       "name": "A select (tap to tray shown)",
       "samples": [
         {
-          "latencyMs": 252,
-          "longtaskMs": 83
+          "latencyMs": 140,
+          "longtaskMs": 60
         },
         {
-          "latencyMs": 120,
-          "longtaskMs": 57
+          "latencyMs": 85,
+          "longtaskMs": 51
         },
         {
-          "latencyMs": 148,
-          "longtaskMs": 62
+          "latencyMs": 74,
+          "longtaskMs": 0
         },
         {
-          "latencyMs": 114,
-          "longtaskMs": 59
+          "latencyMs": 104,
+          "longtaskMs": 67
         },
         {
-          "latencyMs": 149,
-          "longtaskMs": 59
+          "latencyMs": 97,
+          "longtaskMs": 0
         }
       ],
-      "medianMs": 148,
-      "maxMs": 252,
-      "longtaskMedianMs": 59,
-      "longtaskMaxMs": 83,
+      "medianMs": 97,
+      "maxMs": 140,
+      "longtaskMedianMs": 51,
+      "longtaskMaxMs": 67,
       "completed": 5
     },
     "B_second_tap_travel": {
       "name": "B second tap travels",
       "samples": [
         {
-          "travelMs": 296,
-          "longtaskMs": 176
+          "travelMs": 180,
+          "longtaskMs": 158
         },
         {
-          "travelMs": 175,
-          "longtaskMs": 135
+          "travelMs": 237,
+          "longtaskMs": 148
         },
         {
-          "travelMs": 233,
-          "longtaskMs": 124
+          "travelMs": 222,
+          "longtaskMs": 131
         },
         {
-          "travelMs": 208,
-          "longtaskMs": 146
+          "travelMs": 259,
+          "longtaskMs": 86
         },
         {
-          "travelMs": 304,
-          "longtaskMs": 147
+          "travelMs": 226,
+          "longtaskMs": 131
         }
       ],
-      "medianMs": 233,
-      "maxMs": 304,
-      "longtaskMedianMs": 146,
-      "longtaskMaxMs": 176,
+      "medianMs": 226,
+      "maxMs": 259,
+      "longtaskMedianMs": 131,
+      "longtaskMaxMs": 158,
       "completed": 5
     },
     "C_enter_travel": {
       "name": "C Enter travels",
       "samples": [
         {
-          "travelMs": 200,
-          "longtaskMs": 122
+          "travelMs": 218,
+          "longtaskMs": 158
         },
         {
-          "travelMs": 267,
-          "longtaskMs": 89
+          "travelMs": 212,
+          "longtaskMs": 75
         },
         {
-          "travelMs": 258,
-          "longtaskMs": 129
+          "travelMs": 336,
+          "longtaskMs": 140
         },
         {
-          "travelMs": 342,
-          "longtaskMs": 176
+          "travelMs": 309,
+          "longtaskMs": 166
         },
         {
-          "travelMs": 266,
-          "longtaskMs": 155
+          "travelMs": 250,
+          "longtaskMs": 141
         }
       ],
-      "medianMs": 266,
-      "maxMs": 342,
-      "longtaskMedianMs": 129,
-      "longtaskMaxMs": 176,
+      "medianMs": 250,
+      "maxMs": 336,
+      "longtaskMedianMs": 141,
+      "longtaskMaxMs": 166,
       "completed": 5
     },
     "D_fast_double_tap": {
       "name": "D fast double tap (150 ms apart)",
       "samples": [
         {
-          "gapMs": 194,
+          "gapMs": 215,
           "travelMs": null,
           "travelledWithin1500": false,
           "tooltipSeen": false
         },
         {
-          "gapMs": 220,
+          "gapMs": 216,
           "travelMs": null,
           "travelledWithin1500": false,
           "tooltipSeen": false
         },
         {
-          "gapMs": 184,
+          "gapMs": 213,
           "travelMs": null,
           "travelledWithin1500": false,
           "tooltipSeen": false
         },
         {
-          "gapMs": 182,
+          "gapMs": 214,
           "travelMs": null,
           "travelledWithin1500": false,
           "tooltipSeen": false
         },
         {
-          "gapMs": 183,
+          "gapMs": 215,
           "travelMs": null,
           "travelledWithin1500": false,
           "tooltipSeen": false

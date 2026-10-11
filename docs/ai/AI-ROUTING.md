@@ -109,7 +109,10 @@ Haiku brief written this way landed first time.
 8. **Local branches, orchestrator merges.** Workers commit on
    `<feature>/<task>` in their worktree, and neither push nor open a PR. Worktrees
    lack the art cache: the brief says `ln -s <main checkout>/.art-cache .art-cache`
-   (never committed).
+   (never committed). Each worktree is a full checkout (about 2 GB here), so
+   remove it as soon as its branch is merged into the feature branch
+   (`git merge-base --is-ancestor`, then `git worktree remove`), not at the end of
+   the session. Nine open worktrees filled the session's disk in the FixModal run.
 9. **QA every diff, not the report.** Read the diff against the brief and look
    for the edge case the brief did not name (for example a registry entry whose
    element is removed without its close path). Fix small gaps directly and larger
