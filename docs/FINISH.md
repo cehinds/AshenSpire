@@ -5,7 +5,7 @@ works from. Every line has an acceptance test that can be run. SPEC.md,
 CONTRIBUTING.md and DEVELOPER.md govern, and nothing here overrides them. A
 target the spec does not set sits under **Owner decisions** as a proposal
 until the owner accepts it.
-[docs/plan-polish-review-2026-09.md](plan-polish-review-2026-09.md) remains
+The former polish review (removed 2026-10-11; see git history) remains
 the detailed evidence behind the feel, screen and structure items. Its IDs
 (A1, F, G…) are cited here instead of copied.
 

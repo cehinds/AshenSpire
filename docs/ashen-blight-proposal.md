@@ -1,8 +1,8 @@
 # Ashen Blight proposal
 
-**Status: EARLIER DESIGN NOTES.** Ashen Blight now has a version-2 runtime implementation, introduced in [#1723](https://github.com/cehinds/AshenSpire/pull/1723). Use [the revised combat notes](combat-cards-expansion-proposal.md) and [implementation contract](combat-expansion-contract.md) for its current rules. The concepts and alternatives below are retained as design history and do not override that contract. Existing runs keep their saved rules.
+**Status: EARLIER DESIGN NOTES.** Ashen Blight now has a version-2 runtime implementation, introduced in [#1723](https://github.com/cehinds/AshenSpire/pull/1723). Use the revised combat notes (removed 2026-10-11; see git history) and [implementation contract](combat-expansion-contract.md) for its current rules. The concepts and alternatives below are retained as design history and do not override that contract. Existing runs keep their saved rules.
 
-The [latest expansion notes](combat-cards-expansion-proposal.md#three-ashen-blight-reward-stages) propose three reward milestones at 25/50/75, with two buffs and one debuff per chosen feat, while retaining the requested 90% run-loss event at 100. Use that revision for the current recommended stages and card/status interactions; the material below records earlier corruption concepts and alternatives.
+The latest expansion notes (removed 2026-10-11; see git history) propose three reward milestones at 25/50/75, with two buffs and one debuff per chosen feat, while retaining the requested 90% run-loss event at 100. Use that revision for the current recommended stages and card/status interactions; the material below records earlier corruption concepts and alternatives.
 
 Ashen Blight offers cheap emergency power in exchange for risk that persists through the run. Native corruption cards Exhaust for the current combat and return at the next encounter. Corruption remains after those cards return.
 
