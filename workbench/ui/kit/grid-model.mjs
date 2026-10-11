@@ -331,6 +331,65 @@ export function pasteRange(doc, at, text, { fill = null } = {}) {
   }
   return { ...result(doc, 'Paste', { columns, rows }), errors };
 }
+/**
+ * Paste through the VISIBLE order. The clipboard's top-left lands on the anchor's visible position:
+ * clipboard row i goes to order[pos + i], column j to column anchor.c + j. Past the last visible row,
+ * blank rows are appended only when the view is unfiltered and unsorted (order is every row, in
+ * document order); otherwise the paste stops there and `overflow.rows` counts the lines that did not
+ * fit. Columns past the last column count in `overflow.cols`. A one-value clipboard fills every
+ * selected cell (all ranges, visible rows only) when the selection has cells; with none it lands at
+ * the anchor like any paste.
+ *
+ * Atomic: every value is parsed first. If any fails its column type, nothing is committed and the
+ * result is `{ rows, columns, change: null, errors }` with the original rows, where each error is
+ * { row, key, value, message } (row is the document row index).
+ *
+ * @param rows document rows (not mutated)
+ * @param columns document columns
+ * @param order number[] visible document row indices
+ * @param anchor { r, c } the active cell
+ * @param matrixOrText clipboard text, or a parsed matrix
+ * @param selection { ranges } or null
+ * @returns {{ rows, columns, change: object | null, errors: object[], overflow: { rows: number, cols: number } }}
+ */
+export function pasteVisible(rows, columns, order, anchor, matrixOrText, selection = null) {
+  const matrix = typeof matrixOrText === 'string' ? parseClipboard(matrixOrText) : matrixOrText;
+  const overflow = { rows: 0, cols: 0 };
+  const writes = [];
+  const sel = selection ?? { ranges: [] };
+  const targets = matrix.length === 1 && matrix[0].length === 1 && sel.ranges.length
+    ? coverage(sel, order, columns).cells : [];
+  if (targets.length) {
+    for (const { r, c } of targets) writes.push({ r, c, raw: matrix[0][0] });
+  } else {
+    const identity = order.length === rows.length && order.every((r, i) => r === i);
+    const start = Math.max(0, order.indexOf(anchor.r));
+    const colRoom = Math.max(0, columns.length - anchor.c);
+    overflow.cols = matrix.reduce((m, line) => Math.max(m, line.length - colRoom), 0);
+    for (let i = 0; i < matrix.length; i++) {
+      const idx = start + i;
+      const r = idx < order.length ? order[idx] : identity ? idx : null;
+      if (r === null) { overflow.rows = matrix.length - i; break; }
+      matrix[i].forEach((raw, j) => { if (anchor.c + j < columns.length) writes.push({ r, c: anchor.c + j, raw }); });
+    }
+  }
+  const errors = [];
+  const next = rows.slice();
+  const blank = () => Object.fromEntries(columns.map(c => [c.key, emptyValue(c.type)]));
+  const parsed = [];
+  for (const { r, c, raw } of writes) {
+    const col = columns[c];
+    try { parsed.push({ r, key: col.key, value: parseValue(raw, col.type) }); }
+    catch (e) { errors.push({ row: r, key: col.key, value: raw, message: e.message }); }
+  }
+  if (errors.length) return { rows, columns, change: null, errors, overflow };
+  for (const { r, key, value } of parsed) {
+    while (r >= next.length) next.push(blank());
+    next[r] = { ...next[r], [key]: value };
+  }
+  if (!parsed.length && next.length === rows.length) return { rows, columns, change: null, errors, overflow };
+  return { ...result({ columns, rows }, 'Paste', { columns, rows: next }), errors, overflow };
+}
 /** Fill down: each column of rect takes its top row's value in the rows below. */
 export function fillDown(doc, rect) {
   const rows = doc.rows.slice();

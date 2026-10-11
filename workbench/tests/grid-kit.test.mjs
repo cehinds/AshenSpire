@@ -168,6 +168,94 @@ test('copyVisible: an empty selection copies nothing', () => {
   assert.equal(M.copyVisible(d.rows, d.columns, [], selOf(range(0, 0, 3, 0))), '');
 });
 
+test('pasteVisible: clipboard rows follow the sorted view from the anchor\'s visible position', () => {
+  const d = fresh();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 1, c: 0 }, 'x\t5\ny\t6');
+  assert.equal(out.rows[1].id, 'x', 'b is the anchor: line 1 lands on the anchor row');
+  assert.equal(out.rows[1].n, 5);
+  assert.equal(out.rows[0].id, 'y', 'line 2 lands on the next visible row (a), not document row 1');
+  assert.equal(out.rows[0].n, 6);
+  assert.equal(out.rows[2].id, 'c', 'untouched');
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(out.overflow, { rows: 0, cols: 0 });
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a filtered view takes lines only on visible rows, and reports the overflow', () => {
+  const d = fresh();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 0, c: 0 }, 'p\t1\nq\t2\nr\t3');
+  assert.equal(out.rows[0].id, 'p');
+  assert.equal(out.rows[3].id, 'q', 'the next visible row is d, the hidden b and c are skipped');
+  assert.equal(out.rows[3].n, 2);
+  assert.equal(out.rows.length, 4, 'no rows appended in a filtered view');
+  assert.equal(out.rows[1], d.rows[1], 'hidden rows are the same objects');
+  assert.equal(out.rows[2], d.rows[2]);
+  assert.deepEqual(out.overflow, { rows: 1, cols: 0 }, 'the third line did not fit');
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a sorted view also stops at its last visible row instead of appending', () => {
+  const d = fresh();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 2, c: 0 }, 'x\t1\ny\t2'); // anchor c, the last row
+  assert.equal(out.rows[2].id, 'x');
+  assert.equal(out.rows.length, 4);
+  assert.deepEqual(out.overflow, { rows: 1, cols: 0 });
+});
+
+test('pasteVisible: an unfiltered, unsorted view appends blank rows past the end', () => {
+  const d = fresh();
+  const order = docOrder(4);
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 3, c: 0 }, Array(6).fill('v\t1').join('\n'));
+  assert.equal(out.rows.length, 9, 'row 3 is kept and six lines land on rows 3..8');
+  assert.equal(out.rows[4].id, 'v');
+  assert.equal(out.rows[8].n, 1);
+  assert.equal(out.rows[5].tag, '', 'appended rows start blank');
+  assert.deepEqual(out.overflow, { rows: 0, cols: 0 });
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a one-value paste fills every selected cell in all ranges, in visible rows only', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 1 }, '7', selOf(range(0, 1, 1, 1), range(3, 1, 3, 1)));
+  assert.deepEqual(out.rows.map(r => r.n), [7, 7, null, 7]);
+  assertRoundTrip(d, out);
+  const filtered = M.pasteVisible(d.rows, d.columns, [0, 3], { r: 0, c: 1 }, '7', selOf(range(0, 1, 3, 1)));
+  assert.deepEqual(filtered.rows.map(r => r.n), [7, 10, null, 7], 'hidden row b keeps its value');
+});
+
+test('pasteVisible: a one-value paste whose selection is all hidden lands at the anchor', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, [0, 3], { r: 0, c: 1 }, '7', selOf(range(1, 1, 2, 1)));
+  assert.deepEqual(out.rows.map(r => r.n), [7, 10, null, 2]);
+});
+
+test('pasteVisible: atomic. One bad value commits nothing and returns the errors', () => {
+  const d = fresh();
+  const before = snap(d);
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, 'ok\t1\nbad\tnope');
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors, [{ row: 1, key: 'n', value: 'nope', message: 'Enter a valid number' }]);
+  assert.deepEqual(snap({ columns: out.columns, rows: out.rows }), before, 'nothing applied, not even the good cells');
+});
+
+test('pasteVisible: a bad value in a one-value fill commits nothing and lists each cell', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 1 }, 'nope', selOf(range(0, 1, 2, 1)));
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors.map(e => e.row), [0, 1, 2]);
+  assert.deepEqual(snap(out.rows), snap(d.rows));
+});
+
+test('pasteVisible: columns past the last one are counted as overflow', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, [['a', '1', 'true', 'z', '{"q":1}', '6', '7']]);
+  assert.deepEqual(out.overflow, { rows: 0, cols: 2 });
+  assert.deepEqual(out.rows[0], { id: 'a', n: 1, on: true, tag: 'z', data: { q: 1 } });
+});
+
 test('selectedCells: columns are clipped to the column count', () => {
   const sc = M.selectedCells(selOf(range(0, 0, 0, 99)), [0], cols);
   assert.deepEqual(sc.cols, cols.map(c => c.key));
