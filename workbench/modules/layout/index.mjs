@@ -382,6 +382,8 @@ export default {
       if (act === 'reload') {
         const r = await ctx.api(`files/read?path=${encodeURIComponent(f.path)}`);
         Object.assign(f, C.fileState(f.rel, r.text, r.hash));
+        // The disk copy replaces the edits, so the steps that hold them must go: undo would write them back.
+        ctx.history.clear();
         rebuild();
         await openReview();
       }

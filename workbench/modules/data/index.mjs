@@ -196,6 +196,8 @@ export default {
       status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" data-reload>Reload from disk</button><button type="button" data-overwrite class="primary">Overwrite with my changes</button></div>`;
       status.querySelector('[data-reload]').onclick = async () => {
         for (const c of moved) { state.parsed.delete(c.path); state.drafts.delete(c.path); }
+        // The disk copies replace the drafts: the steps that hold the drafts must go, or undo writes them back.
+        ctx.history.clear();
         close();
         if (state.selected && moved.some((c) => c.path === state.selected)) await select(state.selected);
         refresh();

@@ -153,3 +153,18 @@ test('onChange fires on push, undo, redo and clear, and can unsubscribe', () => 
   h.push({ label: 'b', undo() {}, redo() {} });
   assert.equal(calls, 4);
 });
+
+test('after a reload from disk, clear() leaves no step that could write the dropped edits back', () => {
+  // The modules' contract: an edit is a step whose undo puts the old draft back. A reload drops the draft.
+  const h = new History();
+  let file = { v: 'disk' };
+  const prev = file, next = { v: 'edited' };
+  file = next;
+  h.push({ label: 'edit', before: prev, after: next, undo: () => { file = prev; }, redo: () => { file = next; } });
+  assert.equal(h.canUndo, true);
+  file = { v: 'disk, reloaded' };
+  h.clear();
+  assert.equal(h.undo(), null, 'nothing to undo');
+  assert.equal(h.canRedo, false, 'nothing to redo either');
+  assert.deepEqual(file, { v: 'disk, reloaded' }, 'the disk copy stays');
+});
