@@ -143,3 +143,9 @@ test('a cancelled box drag drops the gesture without a history step', () => {
   assert.match(body, /st\.gesture = null;\s*paintStage\(\);/);
   assert.doesNotMatch(body, /edit\(|setDraft\(|history\.push/);
 });
+
+test('a valid draft clears the refusal note when it is sent to the game page', () => {
+  const body = VIEW.slice(VIEW.indexOf('function sendSet'), VIEW.indexOf('async function connect'));
+  assert.match(body, /if \(!CL\.layoutProblems\(st\.data\)\.length\) st\.note = '';/);
+  assert.ok(body.indexOf("st.note = ''") < body.indexOf('postMessage'));
+});

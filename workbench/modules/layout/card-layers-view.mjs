@@ -81,6 +81,8 @@ export function createCardLayersView(root, host) {
   /** Send the draft to the render page, which draws it with the game's card renderer. */
   function sendSet() {
     if (!st.ready || !st.game || !frame.contentWindow || !st.data) return;
+    // A valid draft replaces an earlier refusal: the note said why that one was not drawn.
+    if (!CL.layoutProblems(st.data).length) st.note = '';
     frame.contentWindow.postMessage({ source: CL.MODULE_SOURCE, type: 'set', layout: st.data }, st.game.origin);
   }
 
