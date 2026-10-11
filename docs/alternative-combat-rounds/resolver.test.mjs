@@ -840,7 +840,7 @@ test('decay: options.decay must be a finite number of 0 or more', () => {
 const HINT_MODS = { card: { one: 1, two: 2, three: 3 }, weapon: { dagger: 2 } };
 const hintCtx = (extra = {}) => ({ mods: HINT_MODS, stanceAdvantage: stanceTable(), ...extra });
 
-test('cardHint: SPEED_TIERS placeholder is strong 2, slight 1', () => {
+test('cardHint: SPEED_TIERS is strong 2, slight 1 (owner answer 4, 2026-10-11)', () => {
   assert.deepEqual(SPEED_TIERS, { strong: 2, slight: 1 });
 });
 

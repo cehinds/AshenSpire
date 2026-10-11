@@ -454,8 +454,9 @@ export function revealAction(action, stage) {
   return { ...action, tags: Array.isArray(action.tags) ? [...action.tags] : [], stage: 3 };
 }
 
-// Card hint thresholds on the speed difference (placeholder, TBD: DESIGN.md
-// open question s). delta >= strong: '>>'. delta >= slight: '>'. Mirror for '<'.
+// Card hint thresholds on the speed difference (owner, 2026-10-11: arrow tiers stay
+// >=2 strong, >=1 slight; DESIGN.md open question s). delta >= strong: '>>'.
+// delta >= slight: '>'. Mirror for '<'.
 export const SPEED_TIERS = { strong: 2, slight: 1 };
 
 // Speed terms in display order, as [breakdown term, actionSpeed part key].

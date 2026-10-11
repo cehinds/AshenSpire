@@ -236,7 +236,7 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
   the speed term plus the momentum term, otherwise the component terms.
 - Left-edge arrow, from the speed difference (player minus enemy):
   - `>>` green, `>` yellow, none at 0, `<` yellow, `<<` red.
-  - Thresholds are placeholders in `SPEED_TIERS` (see open question s).
+  - Thresholds are in `SPEED_TIERS`: strong 2, slight 1 (owner, open question s).
 - If speed values are shown, the value is green when the card is faster and red
   when slower.
 - Tapping a speed value shows the breakdown: base, weapon, armor, range, attack
@@ -402,4 +402,4 @@ q. Resolved (owner, 2026-10-11). The stance bonus is added to the base gain.
 r. Resolved (owner, 2026-10-11). Counter stagger adds +-3 to the counter-user's
    side of the summed round delta. It is in addition to the normal slot win.
    Opposing staggers net naturally (+3 and -3), with no cancel rule.
-s. Card hint speed tiers: thresholds (placeholder >=2 strong, >=1 slight)?
+s. Resolved (owner, 2026-10-11): arrow tiers stay >=2 strong and >=1 slight.
