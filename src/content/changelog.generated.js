@@ -7,7 +7,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-11",
     "group": "2026-10-11",
     "summary": "The new Workbench tests pass on Windows too",
-    "detail": "Development-process change only, nothing in the game changes. Four tests added with the Workbench compared file paths written with forward slashes, so they failed on Windows, where the tools correctly use backslashes; they now build the expected paths the same way the tools do. The Workbench file-watcher tests for the Linux-only watch mode now run on Linux only, and one macOS watcher test tolerates the folder event macOS also reports.",
+    "detail": "Development-process change only, nothing in the game changes. Four tests added with the Workbench compared file paths written with forward slashes, so they failed on Windows, where the tools correctly use backslashes; they now build the expected paths the same way the tools do. On macOS the Workbench's file watcher no longer treats folder events, or the watched folder reported under its own name, as changed files, so a Mac no longer triggers stray reloads. The test runner now flushes its report before exiting, so a failing macOS test is named in the CI log.",
     "build": "0.7.1.1303",
     "pullRequest": 1855,
     "url": "https://github.com/cehinds/AshenSpire/pull/1855"
