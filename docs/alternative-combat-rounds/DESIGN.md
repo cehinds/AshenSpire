@@ -263,15 +263,16 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 
 - Border, per enemy:
   - green: the card is faster and its stance beats the enemy's (both advantages).
-  - yellow: one of the two.
-  - red: neither.
+  - yellow: one of the two is a player advantage.
+  - red: the card is slower and the enemy's stance beats the card's stance.
+  - none: any neutral or incomplete comparison not covered above.
   - blue: self-target card (skills). It highlights only the player.
 - Perception limits the hint (see Perception stages):
   - stage 0 and stage 1: speed and stance are not shown. The border is `grey`
     (unknown), and the speed delta and arrow are null.
   - stage 2: the stance is known, but speed is not. The border is yellow when
-    the card's stance has an advantage, otherwise red. Green is not possible,
-    and the speed delta and arrow are null.
+    the card's stance has an advantage, otherwise there is no outline. Green
+    and red are not possible, and the speed delta and arrow are null.
   - stage 3: the full border rules above, with speed and the arrow.
   - self-target (blue) cards: the speed delta is null below stage 3, as for
     other cards. A self-target card never shows an arrow.

@@ -1275,15 +1275,21 @@ test('cardHint: equal speed is not a speed advantage, so smash over block is yel
   assert.equal(hint.speedDelta, 0);
 });
 
-test('cardHint: equal speed with no stance advantage is red, not yellow', () => {
-  // Both total 2 and attack>attack is not in the CSV: neither holds.
+test('cardHint: equal speed with no stance advantage has no outline', () => {
+  // Both total 2 and attack>attack is not in the CSV: both dimensions are neutral.
   const hint = cardHint({ card: 'two', stance: 'attack' }, { card: 'two', stance: 'attack' }, hintCtx());
-  assert.equal(hint.border, 'red');
+  assert.equal(hint.border, null);
   assert.equal(hint.arrow, null);
 });
 
-test('cardHint: red when neither speed nor stance is in the card\'s favour', () => {
+test('cardHint: a speed disadvantage with neutral stances has no outline', () => {
   const hint = cardHint({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'attack' }, hintCtx());
+  assert.equal(hint.border, null);
+});
+
+test('cardHint: red only when speed and stance both favour the enemy', () => {
+  // The card is slower, and the enemy's smash stance beats the card's block.
+  const hint = cardHint({ card: 'one', stance: 'block' }, { card: 'three', stance: 'smash' }, hintCtx());
   assert.equal(hint.border, 'red');
 });
 
@@ -1920,8 +1926,11 @@ test('cardHint at perception stage 2: the stance is known and speed is not, so n
   assert.equal(advantage.arrow, null);
 
   const none = cardHint({ card: 'three', stance: 'attack' }, revealAction(HINT_FOE, 2), hintCtx());
-  assert.equal(none.border, 'red', 'no stance advantage, and speed is not used');
+  assert.equal(none.border, null, 'unknown speed is neutral and must not leak a disadvantage');
   assert.equal(none.speedDelta, null);
+
+  const enemyAdvantage = cardHint({ card: 'three', stance: 'block' }, revealAction({ ...HINT_FOE, stance: 'smash' }, 2), hintCtx());
+  assert.equal(enemyAdvantage.border, null, 'one known disadvantage is not enough for a red outline');
 });
 
 test('cardHint self-target card: blue border, but no speed delta while the enemy speed is unknown', () => {

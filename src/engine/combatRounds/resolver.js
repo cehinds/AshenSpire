@@ -599,16 +599,17 @@ function speedArrow(delta) {
 //
 // Returns { border, speedDelta, arrow, breakdown }:
 // - border: self-target -> 'blue'. Otherwise 'green' when the card is faster
-//   and its stance beats the enemy's, 'yellow' when only one holds, 'red' when
-//   neither does.
+//   and its stance beats the enemy's, 'yellow' when only one player advantage
+//   holds, 'red' when both speed and stance favour the enemy, and null when the
+//   comparison is neutral or incomplete.
 // - speedDelta: player total minus enemy total (momentum included).
 // - arrow: { glyph, colour } from SPEED_TIERS, or null when the delta is 0.
 //   Self-target cards always have arrow null.
 // - breakdown: the player's speed terms [{ term, value }], ending with momentum
 //   (trunc(M_e / 2)). The values sum to the player total.
 // Speed unknown (the action's stage below 3): speedDelta and arrow are null, and
-// the border uses stance only. A known stance gives yellow (stance advantage) or
-// red. An unknown stance gives 'grey'.
+// the border uses stance only. A known player advantage gives yellow; otherwise
+// there is no outline (null). An unknown stance gives 'grey'.
 //
 // Totals match resolveRound's pairing: a `speed` field wins (the player adds
 // momentumSpeed(M), the enemy subtracts it). Without one, the component total
@@ -637,16 +638,20 @@ export function cardHint(card, enemyAction, ctx = {}) {
     return { border: 'blue', speedDelta: speedKnown ? playerTotal - enemyTotal : null, arrow: null, breakdown };
   }
   const stanceKnown = stage >= 2 && Object.hasOwn(enemyAction, 'stance');
-  // Same rule as momentum: an advantage is a stance bonus above 0.
+  // Same rule as momentum: an advantage is a stance bonus above 0. Check both
+  // directions because a missing or zero row is neutral, not a disadvantage.
   const stanceAdv = stanceKnown && stanceBonus(ctx.stanceAdvantage ?? null, card.stance, enemyAction.stance) > 0;
+  const stanceDisadv = stanceKnown && stanceBonus(ctx.stanceAdvantage ?? null, enemyAction.stance, card.stance) > 0;
   if (!speedKnown) {
-    return { border: stanceKnown ? (stanceAdv ? 'yellow' : 'red') : 'grey', speedDelta: null, arrow: null, breakdown };
+    return { border: stanceKnown ? (stanceAdv ? 'yellow' : null) : 'grey', speedDelta: null, arrow: null, breakdown };
   }
   const speedDelta = playerTotal - enemyTotal;
   const speedAdv = speedDelta > 0;
-  let border = 'red';
+  const speedDisadv = speedDelta < 0;
+  let border = null;
   if (speedAdv && stanceAdv) border = 'green';
   else if (speedAdv || stanceAdv) border = 'yellow';
+  else if (speedDisadv && stanceDisadv) border = 'red';
   return { border, speedDelta, arrow: speedArrow(speedDelta), breakdown };
 }
 
