@@ -763,7 +763,7 @@ Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Blee
 
 ### 3.14 Content validation
 
-`model/validate.js` runs at boot in dev mode and from the test page. It checks, across ALL registries:
+`model/validate.js` runs at every boot (`src/main.js:182`) and from the test page. It checks, across ALL registries:
 
 1. Every content object conforms to its schema (fields, types, enums).
 2. Every id cross-reference resolves (cards in pools/decks, statuses in effects, encounters on maps, moves in `unlockMoves`, …).
@@ -776,9 +776,8 @@ Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Blee
    **naming the entry**, per Law 1 clause 5.
 7. Property rules (§3.3 PropertyRule): every `property` tag has exactly one rule; a rule's tag is
    a property tag; `requires`/`excludes` name property tags; `requires` has no cycle; a sidecar
-   `{ "balance": "path" }` names a real balance number; and `property` is paired with, or
-   written on, carrier families only — a card-family pairing or tagging row fails with
-   *cards never carry properties*. Each refusal names its row (`tests/engine.test.js` test 80).
+   `{ "balance": "path" }` names a real balance number; and any family may carry a
+   `property` tag. Each refusal names its row (`tests/engine.test.js` test 80).
 
 **Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
 failures *downstream of itself*, so the standing check is over observable outcome, in the
