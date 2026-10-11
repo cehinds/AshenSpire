@@ -2440,7 +2440,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
           //
           // The keydown handler already comes off here. The ☰ button did NOT,
-          // so for the 350 ms handoff below — plus the victory beat main.js
+          // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
           // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
           // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
           // Quit were all one tap away on a fight that had ALREADY ENDED.
