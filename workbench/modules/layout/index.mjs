@@ -239,7 +239,9 @@ export default {
 
     function onBarClick(e) {
       const btn = e.target.closest('button');
-      if (!btn || btn.disabled || !st.canvas) return;
+      if (!btn || btn.disabled) return;
+      if (btn.dataset.act === 'review') { openReview(); return; }
+      if (!st.canvas) return;
       if (btn.dataset.align) { st.canvas.align(btn.dataset.align); return; }
       if (btn.dataset.distribute) { st.canvas.distribute(btn.dataset.distribute); return; }
       const act = btn.dataset.act;
@@ -258,6 +260,105 @@ export default {
       }
       rebuild({ fit: true });
     }
+
+    // ---- review and save -------------------------------------------------
+    // ctx.api throws only the message, so a 422's problems and a 409's
+    // conflicts would be lost. The module reads the session token that the
+    // host's own /api/session answers, and posts to the file API itself.
+    let token = null;
+    async function fileCall(path, body) {
+      if (!token) token = (await (await fetch('/api/session')).json()).token;
+      const res = await fetch(`/api/${path}`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, data };
+    }
+
+    let dlg = null;
+    function ensureDialog() {
+      if (dlg) return dlg;
+      dlg = document.createElement('dialog');
+      dlg.className = 'lay-dlg';
+      dlg.innerHTML = '<div class="lay-dlg-head"><h2>Review changes</h2><button type="button" class="btn btn-sm btn-ghost" data-dlg="close">Close</button></div><div class="lay-dlg-body"></div>';
+      el.querySelector('.lay').append(dlg);
+      dlg.addEventListener('click', onDialogClick);
+      dlg.addEventListener('close', () => { dlg.querySelector('.lay-dlg-body').innerHTML = ''; });
+      return dlg;
+    }
+    const body = () => dlg.querySelector('.lay-dlg-body');
+
+    function hunksHtml(d) {
+      if (!d.hunks || !d.hunks.length) return '<p class="lay-note">No line changes.</p>';
+      return d.hunks.map((h) => `<div class="lay-hunk"><div class="lay-hunk-head">@@ -${h.oldStart},${h.oldLines} +${h.newStart},${h.newLines} @@</div>${h.lines.map((l) => `<div class="lay-ln ${l.op === '+' ? 'is-add' : l.op === '-' ? 'is-del' : ''}"><span class="lay-op">${esc(l.op === ' ' ? ' ' : l.op)}</span>${esc(l.text)}</div>`).join('')}</div>`).join('');
+    }
+
+    async function openReview(notice = '') {
+      const changes = C.changesFor(st.files);
+      if (!changes.length) { ctx.toast({ kind: 'info', title: 'Nothing to save', record: false }); return; }
+      ensureDialog();
+      body().innerHTML = '<p class="lay-note">Building the diff…</p>';
+      if (!dlg.open) dlg.showModal();
+      let diffs;
+      try {
+        diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })));
+      } catch (err) {
+        body().innerHTML = `<p class="lay-hint is-error">Could not build the diff: ${esc(err.message)}</p>`;
+        return;
+      }
+      const files = diffs.map((d) => `<section class="lay-file"><h3>${esc(d.path)} <span class="lay-stat">+${d.added} −${d.removed}</span></h3>${hunksHtml(d)}</section>`).join('');
+      body().innerHTML = `${notice}<p class="lay-note">${changes.length} file(s) under content/config. Saved through the same validation as the other studios: the content compiler checks the whole tree first.</p>${files}`
+        + `<div class="lay-dlg-actions"><button type="button" class="btn btn-sm btn-ghost" data-dlg="close">Cancel</button><button type="button" class="btn btn-sm btn-primary" data-dlg="save">Save ${changes.length} file(s)</button></div>`;
+      body().dataset.count = String(changes.length);
+    }
+
+    /** Save the dirty files; a 422 lists the compiler's problems, a 409 offers a choice per file. */
+    async function save() {
+      const changes = C.changesFor(st.files);
+      if (!changes.length) return;
+      const sent = new Map(changes.map((c) => [c.path, c]));
+      const res = await fileCall('files/save', { changes });
+      if (res.ok) {
+        for (const saved of res.data.files) {
+          const f = [...st.files.values()].find((x) => x.path === saved.path);
+          const c = sent.get(saved.path);
+          if (f && c) { f.original = c.text; f.hash = saved.hash; }
+        }
+        dlg.close();
+        rebuild();
+        ctx.toast({ kind: 'success', title: `Saved ${res.data.files.length} file(s)`, detail: `Backup ${res.data.backup}`, record: false });
+        ctx.preview.reload();
+        return;
+      }
+      if (res.status === 422) {
+        const list = (res.data.problems || []).map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
+        await openReview(`<div class="lay-problems"><p><strong>Nothing saved.</strong> The compiler found problems:</p><ul>${list}</ul></div>`);
+        return;
+      }
+      if (res.status === 409) {
+        const rows = (res.data.conflicts || []).map((c) => `<li><code>${esc(c.path)}</code> <button type="button" class="btn btn-sm" data-dlg="reload" data-path="${esc(c.path)}">Reload from disk</button> <button type="button" class="btn btn-sm" data-dlg="keep" data-path="${esc(c.path)}" data-hash="${esc(c.hash || '')}">Keep my version</button></li>`).join('');
+        await openReview(`<div class="lay-problems is-conflict"><p><strong>Changed on disk since it was opened.</strong> Choose per file:</p><ul>${rows}</ul><p class="lay-note">Reload drops your edits to that file. Keep my version overwrites the change made on disk.</p></div>`);
+        return;
+      }
+      await openReview(`<div class="lay-problems"><p><strong>Not saved:</strong> ${esc(res.data.error || `HTTP ${res.status}`)}</p></div>`);
+    }
+
+    async function onDialogClick(e) {
+      const btn = e.target.closest('[data-dlg]');
+      if (!btn) return;
+      const act = btn.dataset.dlg;
+      if (act === 'close') { dlg.close(); return; }
+      if (act === 'save') { await save(); return; }
+      const f = [...st.files.values()].find((x) => x.path === btn.dataset.path);
+      if (!f) return;
+      if (act === 'keep') { f.hash = btn.dataset.hash || null; await openReview(); return; }
+      if (act === 'reload') {
+        const r = await ctx.api(`files/read?path=${encodeURIComponent(f.path)}`);
+        Object.assign(f, C.fileState(f.rel, r.text, r.hash));
+        rebuild();
+        await openReview();
+      }
+    }
+
+    ctx.shortcuts.register('Mod+S', 'Review and save layout changes', () => { openReview(); }, { inInput: true });
 
     el.querySelector('.lay-bar').addEventListener('change', onBarChange);
     el.querySelector('.lay-bar').addEventListener('click', onBarClick);

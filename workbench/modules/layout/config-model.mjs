@@ -24,6 +24,9 @@ export function defaultSettings() {
 
 export const wireframeById = (settings, id) => settings.wireframes.find((w) => w.id === id) || settings.wireframes[0];
 
+/** The orientation a device is shown in when the page has not turned it. */
+export const naturalOrientation = (device) => M.naturalOrientation(device);
+
 /**
  * The CSS-px viewport a device shows. `orientation` is 'auto' (the device's
  * natural one), 'portrait' or 'landscape'; a resizable device uses freeSize.

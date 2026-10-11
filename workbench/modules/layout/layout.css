@@ -44,3 +44,24 @@
 
 /* The kit's inspector also lists name, lock, hide and rotation; a region has none of them in the config, so they are not offered. */
 .lay-insp .ck-check, .lay-insp label.ck-field:has(> [data-key="label"]), .lay-insp label.ck-field:has(> [data-key="rot"]) { display: none; }
+
+/* Review and save dialog. */
+.lay-dlg { width: min(900px, 94vw); max-height: 82vh; padding: 0; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius-lg); background: var(--as-bg-panel); color: var(--as-text); box-shadow: var(--as-shadow-lg); }
+.lay-dlg::backdrop { background: rgba(0, 0, 0, 0.35); }
+.lay-dlg[open] { display: flex; flex-direction: column; }
+.lay-dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--as-line); }
+.lay-dlg-head h2 { font-size: var(--as-text-lg); }
+.lay-dlg-body { padding: 14px; overflow: auto; }
+.lay-file { margin-top: 12px; }
+.lay-file h3 { font-family: var(--as-mono); font-size: var(--as-text-sm); font-weight: 600; }
+.lay-stat { color: var(--as-text-faint); font-weight: 400; margin-left: 6px; }
+.lay-hunk { border: 1px solid var(--as-line); border-radius: var(--as-radius); margin: 6px 0; overflow-x: auto; }
+.lay-hunk-head { padding: 2px 8px; background: var(--as-bg-raised); color: var(--as-text-faint); font-family: var(--as-mono); font-size: var(--as-text-xs); }
+.lay-ln { font-family: var(--as-mono); font-size: var(--as-text-xs); white-space: pre; padding: 0 8px; }
+.lay-ln.is-add { background: rgba(80, 180, 110, 0.14); }
+.lay-ln.is-del { background: rgba(224, 100, 92, 0.14); }
+.lay-op { display: inline-block; width: 1.2em; color: var(--as-text-faint); }
+.lay-problems { border: 1px solid rgba(224, 100, 92, 0.45); border-radius: var(--as-radius); padding: 8px 12px; margin-bottom: 10px; background: rgba(224, 100, 92, 0.08); }
+.lay-problems ul { margin: 6px 0; padding-left: 18px; }
+.lay-problems li { margin: 4px 0; }
+.lay-dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
