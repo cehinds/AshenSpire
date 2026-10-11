@@ -168,3 +168,24 @@ test('after a reload from disk, clear() leaves no step that could write the drop
   assert.equal(h.canRedo, false, 'nothing to redo either');
   assert.deepEqual(file, { v: 'disk, reloaded' }, 'the disk copy stays');
 });
+
+test('a scoped clear drops only that owner\'s steps, and the shared timeline keeps the rest in order', () => {
+  const h = new History();
+  const log = [];
+  const config = h.scoped('config');
+  const book = h.scoped('book-recipes');
+  config.push({ label: 'c1', undo: () => log.push('-c1'), redo: () => log.push('+c1') });
+  book.push({ label: 'b1', undo: () => log.push('-b1'), redo: () => log.push('+b1') });
+  book.group('b2', () => book.push({ label: 'inner', undo: () => log.push('-b2'), redo: () => log.push('+b2') }));
+  config.push({ label: 'c2', undo: () => log.push('-c2'), redo: () => log.push('+c2') });
+  h.undo();
+  assert.deepEqual(h.list().map((e) => e.label), ['c1', 'b1', 'b2', 'c2']);
+  book.clear();
+  assert.deepEqual(h.list(), [{ label: 'c1', done: true }, { label: 'c2', done: false }]);
+  assert.equal(config.canRedo, true);
+  config.redo();
+  config.undo(); config.undo();
+  assert.deepEqual(log, ['-c2', '+c2', '-c2', '-c1']);
+  config.clear();
+  assert.equal(h.canUndo || h.canRedo, false);
+});

@@ -114,9 +114,9 @@ export default {
     const dirtyCount = () => allChanges().length;
     /** The mode view that owns a saved path, or null for a UI config file. */
     const viewFor = (path) => (path === B.PRESETS_FILE ? 'battlefield' : path === O.FOOTER_FILE ? 'orb' : path === D.DECK_FILE ? 'deck' : path === K.RECIPES_FILE ? 'book-recipes' : path.startsWith(`${S.SKETCH_DIR}/`) ? 'sketch' : null);
+    const configHistory = ctx.history.scoped('config');
     const viewHost = {
       api: ctx.api,
-      history: ctx.history,
       preview: ctx.preview,
       onReload: ctx.onReload,
       toast: ctx.toast,
@@ -245,7 +245,7 @@ export default {
       if (JSON.stringify(prev) === JSON.stringify(next)) return false;
       const put = (data) => { f.data = data; rebuild(); };
       put(next);
-      ctx.history.push({ label, before: prev, after: next, undo: () => put(prev), redo: () => put(next) });
+      configHistory.push({ label, before: prev, after: next, undo: () => put(prev), redo: () => put(next) });
       return true;
     }
 
@@ -452,7 +452,7 @@ export default {
         const out = C.reloadFromDisk(st.files, f.rel, disk);
         st.files = out.files;
         // The disk copy replaces the edits, so the steps that hold them must go: undo would write them back.
-        ctx.history.clear();
+        configHistory.clear();
         rebuild();
         if (out.missing) {
           dlg.close();
@@ -512,7 +512,8 @@ export default {
         paintBar(); paintStatus();
         return;
       }
-      if (!views[mode]) views[mode] = VIEWS[mode](el.querySelector(`[data-view="${mode}"]`), viewHost);
+      // Each mode gets its own slice of the shared undo stack, so one mode reloading its file keeps the others' steps.
+      if (!views[mode]) views[mode] = VIEWS[mode](el.querySelector(`[data-view="${mode}"]`), Object.assign(Object.create(viewHost), { history: ctx.history.scoped(mode) }));
       views[mode].show();
     }
 

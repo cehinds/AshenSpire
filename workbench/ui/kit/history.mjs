@@ -24,11 +24,11 @@ export class History {
    * when undo/redo are not both functions, or when before and after are given
    * and equal (a no-op drag leaves no step).
    */
-  push({ label = 'Change', undo, redo, before, after } = {}) {
+  push({ label = 'Change', undo, redo, before, after, owner = null } = {}) {
     if (this.#busy) return false;
     if (typeof undo !== 'function' || typeof redo !== 'function') return false;
     if (before !== undefined && after !== undefined && same(before, after)) return false;
-    const entry = { label: String(label), undo, redo };
+    const entry = { label: String(label), undo, redo, owner };
     if (this.#groups.length) this.#groups[this.#groups.length - 1].push(entry);
     else this.#record(entry);
     return true;
@@ -39,9 +39,10 @@ export class History {
    * grid model returns. apply(snapshot) puts the document back to that state.
    * Equal snapshots are a no-op and leave no step.
    */
-  pushChange(change, apply) {
+  pushChange(change, apply, owner = null) {
     if (!change || typeof apply !== 'function' || change.undo === undefined || change.redo === undefined) return false;
     return this.push({
+      owner,
       label: change.label,
       before: change.undo,
       after: change.redo,
@@ -51,7 +52,7 @@ export class History {
   }
 
   /** Run fn; every push made inside it becomes one step (undone and redone together). */
-  group(label, fn) {
+  group(label, fn, owner = null) {
     this.#groups.push([]);
     let result;
     try { result = fn(); } finally {
@@ -59,6 +60,7 @@ export class History {
       if (items.length) {
         const entry = {
           label: String(label),
+          owner,
           undo: () => { for (let i = items.length - 1; i >= 0; i -= 1) items[i].undo(); },
           redo: () => { for (const item of items) item.redo(); },
         };
@@ -103,6 +105,34 @@ export class History {
   }
 
   clear() { this.#past = []; this.#future = []; this.#notify(); }
+
+  /** Drop only the steps one owner recorded; the other owners' steps stay in order. */
+  clearOwner(owner) {
+    this.#past = this.#past.filter((e) => e.owner !== owner);
+    this.#future = this.#future.filter((e) => e.owner !== owner);
+    this.#notify();
+  }
+
+  /**
+   * A view of this history for one owner (a mode of a module that shares one
+   * undo stack). Its steps join the shared timeline, and its clear() drops only
+   * its own steps, so reloading one file keeps the other owners' undo.
+   */
+  scoped(owner) {
+    const h = this;
+    return {
+      get canUndo() { return h.canUndo; },
+      get canRedo() { return h.canRedo; },
+      push: (step = {}) => h.push({ ...step, owner }),
+      pushChange: (change, apply) => h.pushChange(change, apply, owner),
+      group: (label, fn) => h.group(label, fn, owner),
+      undo: () => h.undo(),
+      redo: () => h.redo(),
+      list: () => h.list(),
+      clear: () => h.clearOwner(owner),
+      onChange: (fn) => h.onChange(fn),
+    };
+  }
 
   /** fn(history) is called after each recorded step, undo, redo or clear. Returns an unsubscribe. */
   onChange(fn) {
