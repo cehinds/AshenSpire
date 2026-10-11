@@ -9,7 +9,7 @@ import {
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
   canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
-  rebaseOnConflicts,
+  rebaseOnConflicts, viewOf,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -331,4 +331,35 @@ test('keep my version rebases each change on the hash a 409 reported, and a dele
   assert.equal(out[2].baseHash, 'old-c', 'a file that did not conflict keeps its own hash');
   assert.equal(changes[0].baseHash, 'old-a', 'the input is not changed');
   assert.equal(out[0].text, '{}');
+});
+
+test('a pose file with clips or bindings null shows as empty lists, the file is not changed, and an added effect is written', () => {
+  const text = JSON.stringify({
+    schemaVersion: 1, id: 'broken', name: 'Broken', actor: 'warrior', duration: 1000,
+    poses: ['a', 'b', 'c', 'd', 'e'], anchors: { hand: [0.5, 0.5], torso: [0.3, 0.4] }, clips: null, bindings: null,
+  });
+  const { project, problems } = parsePoseFile(text);
+  assert.ok(problems.includes('Clips missing'), 'the validation message names the missing clips');
+  assert.ok(problems.includes('Bindings missing'));
+  const view = viewOf(project);
+  assert.deepEqual(view.clips, []);
+  assert.deepEqual(view.bindings, []);
+  assert.doesNotThrow(() => canvasDocOf(view));
+  assert.doesNotThrow(() => bindingRows(view));
+  assert.equal(project.clips, null, 'the raw project keeps the null');
+  assert.equal(isDirty(text, project), false, 'showing the normalised lists is not a change');
+  assert.equal(serializePoseFile(project, text), text);
+  const made = addClip(project, 'burst');
+  assert.equal(made.project.clips.length, 1, 'an edit writes the list back');
+  assert.equal(made.project.bindings, null, 'only the edited field changes');
+});
+
+test('viewOf leaves a well-formed project as it is and fills missing poses and anchors for display', () => {
+  const { project } = parsePoseFile(readFixture('pose-studio/renewal/attack.pose.json'));
+  assert.deepEqual(viewOf(project), project);
+  const bare = viewOf({ id: 'x', name: 'x', actor: 'x', duration: 1000, poses: null, anchors: null, clips: undefined });
+  assert.deepEqual(bare.poses, []);
+  assert.deepEqual(bare.anchors, {});
+  assert.deepEqual(bare.clips, []);
+  assert.equal(viewOf(null), null);
 });

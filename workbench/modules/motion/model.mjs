@@ -206,6 +206,22 @@ export function checkProject(p) {
 }
 
 /**
+ * The project as the module shows it: a collection the file leaves out, or holds as a non-list,
+ * reads as empty, so rendering never throws on a malformed file. Display only; never saved.
+ */
+export function viewOf(project) {
+  if (!isObj(project)) return null;
+  const list = (v) => (Array.isArray(v) ? v : []);
+  return {
+    ...project,
+    poses: list(project.poses),
+    clips: list(project.clips),
+    bindings: list(project.bindings),
+    anchors: isObj(project.anchors) ? project.anchors : {},
+  };
+}
+
+/**
  * A pose file's layout: the indent of its first key ('' when the file is compact) and its
  * trailing whitespace, which a save keeps. Non-strings have no layout.
  */
@@ -295,12 +311,14 @@ export function addClip(project, effect, { cue = 'contact', anchor = ANCHOR_FOR_
   if (typeof effect !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/.test(effect)) throw new Error('Effect IDs are letters, digits and . _ : -');
   if (!CUE_NAMES.includes(cue)) throw new Error(`Unknown cue ${cue}`);
   if (!isObj(project.anchors) || !Array.isArray(project.anchors[anchor])) throw new Error(`No anchor ${anchor}`);
-  if (project.clips.length >= LIMITS.clips) throw new Error(`A project holds at most ${LIMITS.clips} effects`);
+  const clips = viewOf(project).clips;
+  if (clips.length >= LIMITS.clips) throw new Error(`A project holds at most ${LIMITS.clips} effects`);
+  // Only the clips list is written: a file with other fields missing keeps them missing.
   const next = copy(project);
-  const taken = new Set(next.clips.map((c) => c.id));
-  let n = next.clips.length + 1, id = `effect-${effect}-${n}`;
+  const taken = new Set(clips.map((c) => c.id));
+  let n = clips.length + 1, id = `effect-${effect}-${n}`;
   while (taken.has(id)) { n += 1; id = `effect-${effect}-${n}`; }
-  next.clips.push({ id, effect, cue, offset: 0, duration: 200, anchor, x: 0, y: 0, size: 160, opacity: 1, rotation: 0, layer: 'front', travel: false, muted: false });
+  next.clips = [...clips.map((c) => copy(c)), { id, effect, cue, offset: 0, duration: 200, anchor, x: 0, y: 0, size: 160, opacity: 1, rotation: 0, layer: 'front', travel: false, muted: false }];
   return { project: next, id };
 }
 
