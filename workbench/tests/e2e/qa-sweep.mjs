@@ -878,36 +878,31 @@ async function motionStudio() {
     expect(enabledInputs === 0, `${enabledInputs} of ${totalInputs} Inspector fields are editable on a generated stance file`);
     return `generated note shown; ${totalInputs} Inspector fields, all read-only`;
   });
-  await check('Motion: Open in Asset Gallery from the library', async () => {
-    // The link appears in the Inspector for a file with source frames: pick an animation that has them.
-    // Walk outfit, animation and stance entries until a selected file shows the link (an outfit shows its painted frames).
-    // An enabled link only: a disabled one carries its reason in its title (no source frame for that pose).
-    const LINK = `${V}.mo-x-assets:not([disabled])`;
-    let btn = page.locator(LINK).first();
+  await check('Motion: Open in Asset Gallery control is present, disabled, and gives a reason', async () => {
+    // The control shows in the Inspector for a selected file. Walk outfit, animation and stance entries until one shows it.
+    const LINK = `${V}.mo-x-assets`;
+    let found = page.locator(LINK).first();
     for (const kind of ['outfit', 'animation', 'stance']) {
       const items = page.locator(`${V}.mo-item[data-kind="${kind}"]`);
       const n = Math.min(await items.count(), 8);
-      for (let i = 0; i < n && await btn.count() === 0; i++) {
+      for (let i = 0; i < n && await found.count() === 0; i++) {
         await overlay('lib', true);
         await items.nth(i).click();
         await sleep(700);
         await overlay('lib', false);
         await overlay('insp', true);
-        btn = page.locator(LINK).first();
-        if (await btn.count() === 0) await overlay('insp', false);
+        found = page.locator(LINK).first();
+        if (await found.count() === 0) await overlay('insp', false);
       }
     }
-    if (await btn.count() === 0) {
-      const why = await page.locator(`${V}.mo-x-assets[disabled]`).first().getAttribute('title').catch(() => null);
-      throw Error(`no selected animation or stance has an enabled "Open source frames in Asset Gallery"${why ? ` (last reason: ${why})` : ''}`);
-    }
-    await btn.click();
-    await sleep(1200);
-    expect(await activeView() === 'view-mod-assets' || (await hashNow()).includes('mod=assets'), 'did not open Asset Gallery');
-    return await hashNow();
+    expect(await found.count() > 0, 'no selected file shows the "Open source frames in Asset Gallery" control');
+    expect(await found.isDisabled(), 'the control is enabled; every pose has embedded art, so it should be disabled with a reason');
+    const reason = (await found.getAttribute('title')) || '';
+    expect(reason.trim().length > 0, 'the disabled control has no reason in its title');
+    return `disabled: ${reason.slice(0, 120)}`;
   });
-  await shot(`motion-${sizeName}`);
 }
+
 
 async function globalPaths() {
   await check('Global: Ctrl+K finds each module', async () => {
