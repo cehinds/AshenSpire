@@ -52,3 +52,11 @@ test('the module gates every edit and every save on isGenerated, so build-writte
   assert.match(src, /function commitProject\(next, label\) \{[\s\S]*?isGenerated\(st\.file\.path\)[\s\S]*?return;/, 'commitProject refuses a generated file');
   assert.match(src, /function dirtyChanges\(\) \{[\s\S]*?isGenerated\(f\.path\)[\s\S]*?return \[\];/, 'no change reaches the save call for a generated file');
 });
+
+test('the inspector shows the generated note and disables every control for a generated file', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /esc\(GENERATED_NOTE\)\}/, 'the note text comes from the model, not a copy');
+  assert.match(src, /const lockAttr = \(\) => \(isGenerated\(st\.file\?\.path\) \? ' disabled' : ''\);/);
+  const controls = src.match(/\$\{lockAttr\(\)\}/g) || [];
+  assert.equal(controls.length, 9, `inspector inputs, selects, toggles, anchors and remove take lockAttr (${controls.length})`);
+});
