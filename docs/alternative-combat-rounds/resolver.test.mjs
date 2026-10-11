@@ -22,6 +22,7 @@ import {
   STANCE_GROUPS,
   activeEvadeBonuses,
   parseEvadeBonus,
+  decayMomentum,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
@@ -738,6 +739,23 @@ test('momentum +2 adds +1 to the player pairing speed in resolveRound', () => {
 
 // Momentum decay (owner, 2026-10-11; DESIGN.md, Timing). Before any pairing,
 // each enemy's starting M_e moves 1 toward 0. options.decay sets the step (0 off).
+test('decayMomentum: moves M toward 0 by step, never past it, after clamping the input', () => {
+  assert.equal(decayMomentum(2), 1);
+  assert.equal(decayMomentum(1), 0);
+  assert.equal(decayMomentum(0), 0);
+  assert.equal(decayMomentum(-1), 0);
+  assert.equal(decayMomentum(-2), -1);
+  assert.equal(decayMomentum(3, 2), 1);
+  assert.equal(decayMomentum(2, 5), 0, 'a step past 0 stops at 0');
+  assert.equal(decayMomentum(-3, 0), -3, 'step 0 turns decay off');
+  assert.equal(decayMomentum(5), 2, 'the input is clamped to +3 first, then decays by 1');
+  assert.equal(decayMomentum(-9, 1), -2, 'the input is clamped to -3 first');
+  assert.equal(decayMomentum(Number.NaN), 0);
+  assert.equal(decayMomentum(2, 1), decayMomentum(2), 'the step defaults to 1');
+  assert.throws(() => decayMomentum(2, -1), TypeError);
+  assert.throws(() => decayMomentum(2, Number.NaN), TypeError);
+});
+
 test('decay: from +2 with no successes, M_e moves to +1 at round end, and the change is an event', () => {
   const { events, momentum } = resolveRound(
     [{ id: 'guard', slot: 0, speed: 1, kind: 'other' }],

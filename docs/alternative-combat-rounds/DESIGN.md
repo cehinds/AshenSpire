@@ -227,6 +227,9 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 - Speed totals match the pairing in `resolveRound`: a `speed` field is used
   (the player adds momentum, the enemy subtracts it), and the component total
   is the fallback when there is no `speed` field.
+- Callers pass the decayed (current-round) M_e to cardHint, not the stored one:
+  `decayMomentum(stored M_e)`. resolveRound pairs with that decayed start (Timing),
+  so a hint given the stored value can disagree with the pairing.
 - The breakdown always sums to the player total: with a `speed` field it is
   the speed term plus the momentum term, otherwise the component terms.
 - Left-edge arrow, from the speed difference (player minus enemy):

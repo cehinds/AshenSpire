@@ -33,6 +33,18 @@ export function clampMomentum(m) {
   return Math.min(MOMENTUM_MAX, Math.max(MOMENTUM_MIN, n));
 }
 
+// Momentum decay step (owner, 2026-10-11; DESIGN.md, Timing): moves m toward 0 by
+// `step`, never past it. The input is clamped first. A step of 0 leaves m as it is.
+// resolveRound uses it before pairing. A caller that shows a card hint for the
+// current round passes the decayed M_e to cardHint, not the stored one.
+export function decayMomentum(m, step = 1) {
+  const s = Number(step);
+  if (!Number.isFinite(s) || s < 0) throw new TypeError('decay step must be a finite number of 0 or more');
+  const from = clampMomentum(m);
+  const to = from > 0 ? Math.max(0, from - s) : Math.min(0, from + s);
+  return to || 0;
+}
+
 // Looks up each component in `mods[component][id]`. A missing, blank or TBD
 // value counts as 0 and still appears in `parts` so the gap is visible.
 // `input.momentum` is the shared momentum M. The player side adds M, the
@@ -474,7 +486,8 @@ function speedArrow(delta) {
 // enemyAction: same speed ids, plus stance.
 // ctx:         { mods, stanceAdvantage, momentum }. mods is the speed-mods table,
 //              stanceAdvantage the Map from parseStanceAdvantage(), momentum the
-//              M_e for this enemy (default 0).
+//              decayed M_e for this enemy for the current round (decayMomentum;
+//              default 0). The stored value would not match resolveRound.
 //
 // Returns { border, speedDelta, arrow, breakdown }:
 // - border: self-target -> 'blue'. Otherwise 'green' when the card is faster
@@ -622,7 +635,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const events = [];
   const decayed = (k) => {
     const from = clampMomentum(Object.hasOwn(inputM, k) ? inputM[k] : 0);
-    const to = from > 0 ? Math.max(0, from - decayStep) : Math.min(0, from + decayStep);
+    const to = decayMomentum(from, decayStep);
     if (to !== from) events.push({ type: 'momentum', reason: 'decay', enemyId: k, from, to, delta: to - from, by: null });
     return to;
   };
