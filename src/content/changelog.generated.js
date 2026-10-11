@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1843",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Combat HUD reads better on every screen size, and its look is tunable from the HUD studio",
+    "detail": "On desktop and widescreen the Combat log and Reaction switch now sit just above your cards instead of at the far screen edges, and the top health bar no longer stretches across the whole screen (it also stops at 60% on tablets). On every screen, health and intent numbers sit on dark plates with a soft shadow, and the selected hero's panel uses the game's serif lettering with gold Poise and Ward labels and a green frame. The game now tells phones, tablets, desktops and ultra-wide screens apart (a sideways phone counts as a tablet), and each gets its own look from a file the HUD Component Studio exports.",
+    "build": "0.7.1.1295",
+    "pullRequest": 1843,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1843"
+  },
+  {
     "id": "pr-1834",
     "date": "2026-10-11",
     "group": "2026-10-11",

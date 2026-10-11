@@ -834,6 +834,36 @@ node tools/combat-save.mjs --selftest
 node tools/combat-save.mjs --artifact --screenshots
 ```
 
+## HUD layout tokens (`content/hud-layout/<form-factor>.json`)
+
+The combat HUD's tunable look — text shadows, panel backing, details-panel type,
+the tools row's span and backing, the header HP cap, and small px offsets — is a
+fixed set of `--hud-*` custom properties, one JSON file per form factor
+(`mobile`, `tablet`, `desktop`, `widescreen`). The contract, the token table and
+the form-factor thresholds are in [docs/hud-layout-tokens.md](docs/hud-layout-tokens.md);
+the allowlist and validators are `tools/hud-layout-tokens.mjs`.
+
+```
+node tools/hud-layout-css.mjs --write   # validate the four files, write styles/hud-layout.generated.css
+node tools/hud-layout-css.mjs --check   # exit 1 when the committed stylesheet is stale (tests/run-node.mjs runs it)
+node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …   # merge studio exports into the content files, then regenerate
+```
+
+To take a studio change into the game: **Export CSS JSON** in the HUD Component
+Studio, then `node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …` (one
+or more exported files), then rebuild. `--merge` validates every file first and
+writes nothing if any is refused; an exported value wins, and tokens the export
+does not carry are kept.
+
+`tools/launch.mjs` runs `--write` before bundling. Edit the JSON (or export it
+from the HUD Component Studio and `--merge` it), never the generated stylesheet. A token left
+out of a file keeps its default, and the defaults reproduce the pre-pipeline
+look; tokens whose consumers used different literals default to `initial`, so
+each consumer's `var(--hud-…, <old literal>)` fallback applies. Length tokens
+are CSS lengths under the page's `--ui-zoom` (they are not divided by it).
+`<html data-form-factor>` is written by `applyUiScale` in `src/main.js` from
+`balance.ui.uiScale.formFactor`.
+
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
 Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
