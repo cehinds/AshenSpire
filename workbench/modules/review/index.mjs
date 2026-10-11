@@ -598,6 +598,9 @@ export default {
       if (mode === 'side') {
         s.innerHTML = `<div class="rv-pane"><span class="rv-cap">Baseline</span>${u.base ? img(u.base, 'Baseline') : msg('No baseline yet. Accept this capture to make one.')}</div>`
           + `<div class="rv-pane"><span class="rv-cap">Current</span>${u.cur ? img(u.cur, 'Current') : msg('No capture for this screen and device.')}</div>`;
+        // The side-by-side early return must still fit the pair, or both captures stay at 100% and clip.
+        fitAfterLoad(s);
+        applyView();
         return;
       }
       if (!r.hasBaseline) s.innerHTML = msg('No baseline yet, so there is nothing to compare. Accept this capture to make one.');
@@ -609,13 +612,20 @@ export default {
       } else {
         s.innerHTML = `<div class="rv-layer">${img(u.base, 'Baseline')}</div><div class="rv-layer" style="opacity: ${opacity / 100}">${img(u.cur, 'Current')}</div>`;
       }
-      if (dstate.needFit) {
-        dstate.needFit = false;
-        const first = s.querySelector('img');
-        if (first?.complete && first.naturalWidth) fitView();
-        else first?.addEventListener('load', fitView, { once: true });
-      }
+      fitAfterLoad(s);
       applyView();
+    }
+
+    /** Fits the view once the stage's first image has loaded, when a new detail asked for it. */
+    function fitAfterLoad(s) {
+      if (!dstate.needFit) return;
+      dstate.needFit = false;
+      // Side by side the stage is as wide as both panes, so wait for every image on it, not only the first.
+      const pending = [...s.querySelectorAll('img')].filter((i) => !(i.complete && i.naturalWidth));
+      if (!pending.length) return fitView();
+      let left = pending.length;
+      const done = () => { if (--left === 0) fitView(); };
+      for (const i of pending) i.addEventListener('load', done, { once: true }), i.addEventListener('error', done, { once: true });
     }
 
     detail.addEventListener('click', (ev) => {
