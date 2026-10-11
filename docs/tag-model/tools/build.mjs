@@ -424,9 +424,23 @@ inv.components.rows.forEach((r, i) => {
 });
 // The classes of each selector's last compound: the element the rule styles.
 // Classes in its ancestors (".card .ctext" -> ctext) do not name its owner.
+// The classes inside :not(), :is() and :where() are not the element's own, so
+// they are removed (balanced parentheses) before the selector is split.
+function stripFunctionalPseudo(s) {
+  let out = s;
+  for (let m = /:(?:not|is|where)\(/.exec(out); m; m = /:(?:not|is|where)\(/.exec(out)) {
+    let i = m.index + m[0].length;
+    for (let depth = 1; i < out.length && depth > 0; i++) {
+      if (out[i] === '(') depth++;
+      else if (out[i] === ')') depth--;
+    }
+    out = out.slice(0, m.index) + out.slice(i);
+  }
+  return out;
+}
 function lastCompoundClasses(selector) {
   const out = new Set();
-  for (const alt of selector.replace(/\[[^\]]*\]/g, '').split(/\s*[|,]\s*/)) {
+  for (const alt of stripFunctionalPseudo(selector.replace(/\[[^\]]*\]/g, '')).split(/\s*[|,]\s*/)) {
     const parts = alt.trim().split(/\s*(?:[>+~]|\s)\s*/).filter(Boolean);
     const last = parts.length ? parts[parts.length - 1] : '';
     for (const m of last.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) out.add(m[1]);

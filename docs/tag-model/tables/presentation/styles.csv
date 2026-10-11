@@ -1067,7 +1067,7 @@ targetable,.enemy.targetable .sprite,outline,"var(--target-outline-width, 2px) d
 targetable,.enemy.targetable .sprite,outline-offset,"var(--target-outline-offset, 6px)",,styles/combat.css:223,all,style.other,styles/combat.css:223,targetable
 targetable,.enemy.targetable .sprite,border-radius,var(--r-3),,styles/combat.css:223,all,radius,styles/combat.css:223,targetable
 hover-target,.enemy.hover-target .sprite,outline-style,solid,,styles/combat.css:224,all,style.other,styles/combat.css:224,hover-target
-shrine-option-card,.enemy.targetable:is(.gp-focus,outline-style,solid,,styles/combat.css:224,all,style.other,styles/combat.css:224,targetable
+targetable,.enemy.targetable:is(.gp-focus,outline-style,solid,,styles/combat.css:224,all,style.other,styles/combat.css:224,targetable
 sprite,:focus-visible) .sprite,outline-style,solid,,styles/combat.css:224,all,style.other,styles/combat.css:224,sprite
 enemy-target-picker,.enemy-target-picker,position,absolute,,styles/combat.css:228,all,style.other,styles/combat.css:228,enemy-target-picker
 enemy-target-picker,.enemy-target-picker,inset,0,,styles/combat.css:228,all,spacing,styles/combat.css:228,enemy-target-picker
@@ -6508,7 +6508,7 @@ as-tray,.as-tray > .as-pane,overflow,auto,,styles/kit.css:1988,all,style.other,s
 as-tray,.as-tray > .as-pane,padding-top,0.9rem,,styles/kit.css:1988,all,spacing,styles/kit.css:1988,as-tray
 as-tray,.as-tray > .as-pane[hidden],display,none !important,,styles/kit.css:1989,all,style.other,styles/kit.css:1989,as-tray
 inventory-belt,".as-tray[data-collapsed=""1""]",flex,0 0 auto,,styles/kit.css:1990,all,style.other,styles/kit.css:1990,as-tray
-tray-header,".as-tray[data-collapsed=""1""] > :not(.tray-header)",display,none,,styles/kit.css:1991,all,style.other,styles/kit.css:1991,as-tray
+inventory-belt,".as-tray[data-collapsed=""1""] > :not(.tray-header)",display,none,,styles/kit.css:1991,all,style.other,styles/kit.css:1991,as-tray
 tray-header,".as-tray[data-collapsed=""0""] > .tray-header",border-bottom,1px solid var(--line),,styles/kit.css:1992,all,style.other,styles/kit.css:1992,tray-header
 inventory-belt,".as-tray[data-tray-edge=""top""][data-collapsed=""0""][data-sized=""0""]",max-height,var(--tray-compact),,styles/kit.css:1993,all,spacing,styles/kit.css:1993,as-tray
 inventory-belt,".as-tray[data-tray-edge=""bottom""][data-collapsed=""0""][data-sized=""0""]",max-height,var(--tray-compact),,styles/kit.css:1993,all,spacing,styles/kit.css:1993,as-tray
@@ -6690,7 +6690,7 @@ tag:p,p,font-size,inherit,,styles/kit.css:2047,all,typography,styles/kit.css:204
 tag:b,b,font-size,inherit,,styles/kit.css:2047,all,typography,styles/kit.css:2047,tag:b
 tag:i,i),font-size,inherit,,styles/kit.css:2047,all,typography,styles/kit.css:2047,tag:i
 kit.statRow,.customize .cc-equip-group .as-statrow,flex-wrap,wrap,,styles/kit.css:2048,all,style.other,styles/kit.css:2048,as-statrow
-kit.statRow,.customize .cc-equip-group :is(.sr-name,white-space,normal,,styles/kit.css:2049,all,typography,styles/kit.css:2049,sr-name
+sr-name,.customize .cc-equip-group :is(.sr-name,white-space,normal,,styles/kit.css:2049,all,typography,styles/kit.css:2049,sr-name
 as-statpair,.as-statpair),white-space,normal,,styles/kit.css:2049,all,typography,styles/kit.css:2049,as-statpair
 kit.statRow,.customize .cc-equip-group .sr-vals,flex,1 1 100%,,styles/kit.css:2050,all,style.other,styles/kit.css:2050,sr-vals
 kit.statRow,.customize .cc-equip-group .sr-vals,text-align,left,,styles/kit.css:2050,all,typography,styles/kit.css:2050,sr-vals
@@ -6734,11 +6734,11 @@ as-pane-head,.customize .as-pane-head > .r-trail,flex,1 1 100%,,styles/kit.css:2
 as-pane-head,.customize .as-pane-head > .r-trail,flex-wrap,wrap,,styles/kit.css:2061,all,style.other,styles/kit.css:2061,as-pane-head
 as-pane-head,.customize .as-pane-head > .r-trail,gap,8px,,styles/kit.css:2061,all,spacing,styles/kit.css:2061,as-pane-head
 as-pane-head,.customize .as-pane-head > .r-trail,justify-content,flex-start,,styles/kit.css:2061,all,style.other,styles/kit.css:2061,as-pane-head
-ob,.customize .disc-face :is(.ob,min-width,0,,styles/kit.css:2062,all,spacing,styles/kit.css:2062,ob
+character-disclosure,.customize .disc-face :is(.ob,min-width,0,,styles/kit.css:2062,all,spacing,styles/kit.css:2062,ob
 r-trail,.r-trail),min-width,0,,styles/kit.css:2062,all,spacing,styles/kit.css:2062,r-trail
-disc-name,.customize .disc-face :is(.disc-name,white-space,normal,,styles/kit.css:2063,all,typography,styles/kit.css:2063,disc-name
-disc-name,.customize .disc-face :is(.disc-name,overflow,visible,,styles/kit.css:2063,all,style.other,styles/kit.css:2063,disc-name
-disc-name,.customize .disc-face :is(.disc-name,text-overflow,clip,,styles/kit.css:2063,all,typography,styles/kit.css:2063,disc-name
+character-disclosure,.customize .disc-face :is(.disc-name,white-space,normal,,styles/kit.css:2063,all,typography,styles/kit.css:2063,disc-name
+character-disclosure,.customize .disc-face :is(.disc-name,overflow,visible,,styles/kit.css:2063,all,style.other,styles/kit.css:2063,disc-name
+character-disclosure,.customize .disc-face :is(.disc-name,text-overflow,clip,,styles/kit.css:2063,all,typography,styles/kit.css:2063,disc-name
 on,.on,white-space,normal,,styles/kit.css:2063,all,typography,styles/kit.css:2063,on
 on,.on,overflow,visible,,styles/kit.css:2063,all,style.other,styles/kit.css:2063,on
 on,.on,text-overflow,clip,,styles/kit.css:2063,all,typography,styles/kit.css:2063,on
@@ -7667,23 +7667,23 @@ shared-run-hud,.shared-hud,--hud-quick-tile-size,"max(2.8rem, var(--tap-floor))"
 shared-run-hud,.shared-hud,--hud-quick-tile-gap,0.45rem,,styles/kit.css:2736,all,token,styles/kit.css:2736,shared-hud
 quick-access-panel,.shared-hud .hud-control-grid,gap,var(--hud-quick-tile-gap),,styles/kit.css:2740,all,spacing,styles/kit.css:2740,hud-control-grid
 as-cluster,.shared-hud .hud-control-grid > .as-cluster,gap,var(--hud-quick-tile-gap),,styles/kit.css:2740,all,spacing,styles/kit.css:2740,as-cluster
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,position,relative,,styles/kit.css:2742,all,style.other,styles/kit.css:2742,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,width,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,height,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,min-width,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,min-height,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,position,relative,,styles/kit.css:2742,all,style.other,styles/kit.css:2742,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,width,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,height,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,min-width,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,min-height,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-iconbtn
 as-slot,.as-slot),position,relative,,styles/kit.css:2742,all,style.other,styles/kit.css:2742,as-slot
 as-slot,.as-slot),width,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-slot
 as-slot,.as-slot),height,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-slot
 as-slot,.as-slot),min-width,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-slot
 as-slot,.as-slot),min-height,var(--hud-quick-tile-size),,styles/kit.css:2742,all,spacing,styles/kit.css:2742,as-slot
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,content,'',,styles/kit.css:2747,all,style.other,styles/kit.css:2747,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,position,absolute,,styles/kit.css:2747,all,style.other,styles/kit.css:2747,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,left,50%,,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,top,50%,,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,width,var(--tap-floor),,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,height,var(--tap-floor),,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
-as-iconbtn,.shared-hud .hud-control-grid :is(.as-iconbtn,transform,"translate(-50%, -50%)",,styles/kit.css:2747,all,motion,styles/kit.css:2747,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,content,'',,styles/kit.css:2747,all,style.other,styles/kit.css:2747,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,position,absolute,,styles/kit.css:2747,all,style.other,styles/kit.css:2747,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,left,50%,,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,top,50%,,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,width,var(--tap-floor),,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,height,var(--tap-floor),,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-iconbtn
+quick-access-panel,.shared-hud .hud-control-grid :is(.as-iconbtn,transform,"translate(-50%, -50%)",,styles/kit.css:2747,all,motion,styles/kit.css:2747,as-iconbtn
 as-slot,.as-slot)::after,content,'',,styles/kit.css:2747,all,style.other,styles/kit.css:2747,as-slot
 as-slot,.as-slot)::after,position,absolute,,styles/kit.css:2747,all,style.other,styles/kit.css:2747,as-slot
 as-slot,.as-slot)::after,left,50%,,styles/kit.css:2747,all,spacing,styles/kit.css:2747,as-slot
@@ -7714,7 +7714,7 @@ inventory-belt,.shared-hud .hud-bottom,width,100%,,styles/kit.css:2768,all,spaci
 inventory-belt,.shared-hud .hud-bottom,align-self,start,,styles/kit.css:2768,all,style.other,styles/kit.css:2768,hud-bottom
 inventory-belt,.shared-hud .hud-bottom,pointer-events,none,,styles/kit.css:2768,all,style.other,styles/kit.css:2768,hud-bottom
 inventory-belt,.shared-hud .hud-bottom:empty,display,none,,styles/kit.css:2772,all,style.other,styles/kit.css:2772,hud-bottom
-hud-bottom,.shared-hud .hud-bottom > :not(.icon-tray),pointer-events,auto,,styles/kit.css:2773,all,style.other,styles/kit.css:2773,hud-bottom
+inventory-belt,.shared-hud .hud-bottom > :not(.icon-tray),pointer-events,auto,,styles/kit.css:2773,all,style.other,styles/kit.css:2773,hud-bottom
 as-band,.as-band,position,relative,,styles/kit.css:2774,all,style.other,styles/kit.css:2774,as-band
 tooltip-selected,.tooltip-selected:not(.overhead-control),outline,2px solid var(--gold),,styles/kit.css:2778,all,style.other,styles/kit.css:2778,tooltip-selected
 tooltip-selected,.tooltip-selected:not(.overhead-control),outline-offset,2px,,styles/kit.css:2778,all,style.other,styles/kit.css:2778,tooltip-selected
@@ -8000,8 +8000,8 @@ kit.pip,.icon-tray .as-pip,font-size,"calc(var(--icon-tray-size, calc(25px / var
 kit.pip,.icon-tray .as-pip,cursor,pointer,,styles/kit.css:2928,all,style.other,styles/kit.css:2928,as-pip
 kit.pip,.icon-tray .as-pip:focus-visible,outline,2px solid var(--gold),,styles/kit.css:2935,all,style.other,styles/kit.css:2935,as-pip
 kit.pip,.icon-tray .as-pip:focus-visible,outline-offset,2px,,styles/kit.css:2935,all,style.other,styles/kit.css:2935,as-pip
-as-pip,".icon-tray .as-pip[aria-disabled=""true""] > :not(.as-pill)",opacity,0.5,,styles/kit.css:2936,all,style.other,styles/kit.css:2936,as-pip
-as-pip,".icon-tray .as-pip[aria-disabled=""true""] > :not(.as-pill)",filter,grayscale(0.6),,styles/kit.css:2936,all,style.other,styles/kit.css:2936,as-pip
+kit.pip,".icon-tray .as-pip[aria-disabled=""true""] > :not(.as-pill)",opacity,0.5,,styles/kit.css:2936,all,style.other,styles/kit.css:2936,as-pip
+kit.pip,".icon-tray .as-pip[aria-disabled=""true""] > :not(.as-pill)",filter,grayscale(0.6),,styles/kit.css:2936,all,style.other,styles/kit.css:2936,as-pip
 flask-identity,.icon-tray .as-pip > .flask-identity,display,grid,,styles/kit.css:2938,all,style.other,styles/kit.css:2938,flask-identity
 flask-identity,.icon-tray .as-pip > .flask-identity,place-items,center,,styles/kit.css:2938,all,style.other,styles/kit.css:2938,flask-identity
 flask-identity,.icon-tray .as-pip > .flask-identity,width,78%,,styles/kit.css:2938,all,spacing,styles/kit.css:2938,flask-identity
@@ -8583,9 +8583,9 @@ kit.statRow,.as-tip) .as-statrow > .sr-vals,text-align,left,,styles/kit.css:3337
 modal,:is(.modal,white-space,normal,,styles/kit.css:3338,all,typography,styles/kit.css:3338,modal
 modal,:is(.modal,overflow-wrap,anywhere,,styles/kit.css:3338,all,style.other,styles/kit.css:3338,modal
 modal,:is(.modal,font-size,inherit,,styles/kit.css:3338,all,typography,styles/kit.css:3338,modal
-as-statpair,.as-tip) .as-statrow .sr-vals :is(.as-statpair,white-space,normal,,styles/kit.css:3338,all,typography,styles/kit.css:3338,as-statpair
-as-statpair,.as-tip) .as-statrow .sr-vals :is(.as-statpair,overflow-wrap,anywhere,,styles/kit.css:3338,all,style.other,styles/kit.css:3338,as-statpair
-as-statpair,.as-tip) .as-statrow .sr-vals :is(.as-statpair,font-size,inherit,,styles/kit.css:3338,all,typography,styles/kit.css:3338,as-statpair
+kit.statRow,.as-tip) .as-statrow .sr-vals :is(.as-statpair,white-space,normal,,styles/kit.css:3338,all,typography,styles/kit.css:3338,as-statpair
+kit.statRow,.as-tip) .as-statrow .sr-vals :is(.as-statpair,overflow-wrap,anywhere,,styles/kit.css:3338,all,style.other,styles/kit.css:3338,as-statpair
+kit.statRow,.as-tip) .as-statrow .sr-vals :is(.as-statpair,font-size,inherit,,styles/kit.css:3338,all,typography,styles/kit.css:3338,as-statpair
 sp-k,.sp-k,white-space,normal,,styles/kit.css:3338,all,typography,styles/kit.css:3338,sp-k
 sp-k,.sp-k,overflow-wrap,anywhere,,styles/kit.css:3338,all,style.other,styles/kit.css:3338,sp-k
 sp-k,.sp-k,font-size,inherit,,styles/kit.css:3338,all,typography,styles/kit.css:3338,sp-k
@@ -9473,8 +9473,8 @@ card-inspection-target,.card-inspection-target > .card-info-button,left,50%,,sty
 card-inspection-target,.card-inspection-target > .card-info-button,transform,translateX(-50%),,styles/kit.css:3848,all,motion,styles/kit.css:3848,card-inspection-target
 card-inspection-target,.card-inspection-target > .card-info-button,visibility,hidden,,styles/kit.css:3848,all,style.other,styles/kit.css:3848,card-inspection-target
 card-inspection-target,.card-inspection-target > .card-info-button,pointer-events,none,,styles/kit.css:3848,all,style.other,styles/kit.css:3848,card-inspection-target
-combat-coop-upcast-control,.card-inspection-target:is(.inspection-selected,visibility,visible,,styles/kit.css:3849,all,style.other,styles/kit.css:3849,inspection-selected
-combat-coop-upcast-control,.card-inspection-target:is(.inspection-selected,pointer-events,auto,,styles/kit.css:3849,all,style.other,styles/kit.css:3849,inspection-selected
+inspection-selected,.card-inspection-target:is(.inspection-selected,visibility,visible,,styles/kit.css:3849,all,style.other,styles/kit.css:3849,inspection-selected
+inspection-selected,.card-inspection-target:is(.inspection-selected,pointer-events,auto,,styles/kit.css:3849,all,style.other,styles/kit.css:3849,inspection-selected
 selected,.selected,visibility,visible,,styles/kit.css:3849,all,style.other,styles/kit.css:3849,selected
 selected,.selected,pointer-events,auto,,styles/kit.css:3849,all,style.other,styles/kit.css:3849,selected
 card-info-button,[aria-selected='true']) > .card-info-button,visibility,visible,,styles/kit.css:3849,all,style.other,styles/kit.css:3849,card-info-button
@@ -11142,9 +11142,9 @@ shared-run-hud,.dialogue-screen > .topbar,background,"rgba(13, 11, 8, 0.92)",,st
 shared-run-hud,.dialogue-screen[data-hud-compact='true'] > .topbar,padding-block,"var(--dialogue-hud-pad, 0.25rem)",,styles/kit.css:5361,all,spacing,styles/kit.css:5361,dialogue-screen
 shared-run-hud,.dialogue-screen[data-hud-compact='true'] > .topbar,font-size,"var(--dialogue-hud-scale, 0.85em)",,styles/kit.css:5361,all,typography,styles/kit.css:5361,dialogue-screen
 shared-run-hud,.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top,gap,"var(--dialogue-hud-row-gap, 0.15rem)",,styles/kit.css:5370,all,spacing,styles/kit.css:5370,hud-top
-hud-info-row,.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row,min-width,0,,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-info-row
-hud-info-row,.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row,margin,0,,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-info-row
-hud-info-row,.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row,column-gap,"var(--dialogue-hud-col-gap, 0.6rem)",,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-info-row
+shared-run-hud,.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row,min-width,0,,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-info-row
+shared-run-hud,.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row,margin,0,,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-info-row
+shared-run-hud,.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row,column-gap,"var(--dialogue-hud-col-gap, 0.6rem)",,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-info-row
 primary-hud-row,.hud-resource-row),min-width,0,,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-resource-row
 primary-hud-row,.hud-resource-row),margin,0,,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-resource-row
 primary-hud-row,.hud-resource-row),column-gap,"var(--dialogue-hud-col-gap, 0.6rem)",,styles/kit.css:5373,all,spacing,styles/kit.css:5373,hud-resource-row
@@ -11493,8 +11493,8 @@ class-resource-grid,.customize .cc-preview-detail-trigger,line-height,inherit,,s
 class-resource-grid,.customize .cc-preview-detail-trigger,text-align,start,,styles/kit.css:5596,all,typography,styles/kit.css:5596,cc-preview-detail-trigger
 class-resource-grid,.customize .cc-preview-detail-trigger,white-space,normal,,styles/kit.css:5596,all,typography,styles/kit.css:5596,cc-preview-detail-trigger
 class-resource-grid,.customize .cc-preview-detail-trigger,cursor,pointer,,styles/kit.css:5596,all,style.other,styles/kit.css:5596,cc-preview-detail-trigger
-ck,.customize .cc-preview-detail-trigger :is(.ck,text-decoration,underline dotted,,styles/kit.css:5597,all,typography,styles/kit.css:5597,ck
-ck,.customize .cc-preview-detail-trigger :is(.ck,text-underline-offset,3px,,styles/kit.css:5597,all,typography,styles/kit.css:5597,ck
+class-resource-grid,.customize .cc-preview-detail-trigger :is(.ck,text-decoration,underline dotted,,styles/kit.css:5597,all,typography,styles/kit.css:5597,ck
+class-resource-grid,.customize .cc-preview-detail-trigger :is(.ck,text-underline-offset,3px,,styles/kit.css:5597,all,typography,styles/kit.css:5597,ck
 class-preview-pane,.cc-unfold-relic-name),text-decoration,underline dotted,,styles/kit.css:5597,all,typography,styles/kit.css:5597,cc-unfold-relic-name
 class-preview-pane,.cc-unfold-relic-name),text-underline-offset,3px,,styles/kit.css:5597,all,typography,styles/kit.css:5597,cc-unfold-relic-name
 class-resource-grid,.customize .cc-preview-detail-trigger:hover,color,var(--gold),,styles/kit.css:5598,all,color,styles/kit.css:5598,cc-preview-detail-trigger
@@ -11920,16 +11920,16 @@ modal-close-face,.customize .modal-head .modal-close > .modal-close-face,width,1
 modal-close-face,.customize .modal-head .modal-close > .modal-close-face,height,100%,,styles/kit.css:5777,all,spacing,styles/kit.css:5777,modal-close-face
 modal-close-face,.customize .modal-head .modal-close > .modal-close-face,border,0,,styles/kit.css:5777,all,style.other,styles/kit.css:5777,modal-close-face
 modal-close-face,.customize .modal-head .modal-close > .modal-close-face,background,transparent,,styles/kit.css:5777,all,color,styles/kit.css:5777,modal-close-face
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,box-sizing,border-box,,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,flex,0 0 var(--tap-floor),,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,width,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,height,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,min-width,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,min-height,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,max-width,var(--tap-floor),,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,max-height,var(--tap-floor),,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,padding,0,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
-class-preview-pane,.customize .modal-head :is(.figure.cz-portrait,align-self,center,,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,box-sizing,border-box,,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,flex,0 0 var(--tap-floor),,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,width,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,height,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,min-width,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,min-height,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,max-width,var(--tap-floor),,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,max-height,var(--tap-floor),,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,padding,0,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-portrait
+cz-portrait,.customize .modal-head :is(.figure.cz-portrait,align-self,center,,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-portrait
 cz-menu-button,.cz-menu-button,box-sizing,border-box,,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-menu-button
 cz-menu-button,.cz-menu-button,flex,0 0 var(--tap-floor),,styles/kit.css:5780,all,style.other,styles/kit.css:5780,cz-menu-button
 cz-menu-button,.cz-menu-button,width,var(--tap-floor) !important,,styles/kit.css:5780,all,spacing,styles/kit.css:5780,cz-menu-button
@@ -12581,9 +12581,9 @@ combat-coop-upcast-control,.card-upcast-controls,border,1px solid var(--gold),,s
 combat-coop-upcast-control,.card-upcast-controls,border-radius,5px,,styles/kit.css:6099,all,radius,styles/kit.css:6099,card-upcast-controls
 selected,.card:is(.selected,display,flex,,styles/kit.css:6100,all,style.other,styles/kit.css:6100,selected
 combat-coop-upcast-control,.inspection-selected) > .card-upcast-controls,display,flex,,styles/kit.css:6100,all,style.other,styles/kit.css:6100,card-upcast-controls
-card-upcast-controls,.card-upcast-controls :is(button,min-height,32px,,styles/kit.css:6101,all,spacing,styles/kit.css:6101,card-upcast-controls
-card-upcast-controls,.card-upcast-controls :is(button,min-width,0,,styles/kit.css:6101,all,spacing,styles/kit.css:6101,card-upcast-controls
-card-upcast-controls,.card-upcast-controls :is(button,font-size,12px,,styles/kit.css:6101,all,typography,styles/kit.css:6101,card-upcast-controls
+combat-coop-upcast-control,.card-upcast-controls :is(button,min-height,32px,,styles/kit.css:6101,all,spacing,styles/kit.css:6101,card-upcast-controls
+combat-coop-upcast-control,.card-upcast-controls :is(button,min-width,0,,styles/kit.css:6101,all,spacing,styles/kit.css:6101,card-upcast-controls
+combat-coop-upcast-control,.card-upcast-controls :is(button,font-size,12px,,styles/kit.css:6101,all,typography,styles/kit.css:6101,card-upcast-controls
 tag:select,select),min-height,32px,,styles/kit.css:6101,all,spacing,styles/kit.css:6101,tag:select
 tag:select,select),min-width,0,,styles/kit.css:6101,all,spacing,styles/kit.css:6101,tag:select
 tag:select,select),font-size,12px,,styles/kit.css:6101,all,typography,styles/kit.css:6101,tag:select
@@ -12613,9 +12613,9 @@ combat-recovery-controls,.combat-recovery-controls button,white-space,normal,,st
 combat-expansion-controls,.combat-expansion-controls,width,"min(220px,46%)",(max-width:600px),styles/kit.css:6108,mobile,spacing,styles/kit.css:6108,combat-expansion-controls
 combat-recovery-controls,.combat-recovery-controls button,min-height,44px,(max-width:600px),styles/kit.css:6108,mobile,spacing,styles/kit.css:6108,combat-recovery-controls
 combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,pointer-events,auto,,styles/kit.css:6109,all,style.other,styles/kit.css:6109,card-upcast-controls
-card-upcast-controls,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,pointer-events,auto,,styles/kit.css:6109,all,style.other,styles/kit.css:6109,card-upcast-controls
+combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,pointer-events,auto,,styles/kit.css:6109,all,style.other,styles/kit.css:6109,card-upcast-controls
 tag:select,select),pointer-events,auto,,styles/kit.css:6109,all,style.other,styles/kit.css:6109,tag:select
-card-upcast-controls,.card-upcast-controls :is(button,min-height,"max(44px, var(--tap-floor))",(max-width:600px),styles/kit.css:6111,mobile,spacing,styles/kit.css:6111,card-upcast-controls
+combat-coop-upcast-control,.card-upcast-controls :is(button,min-height,"max(44px, var(--tap-floor))",(max-width:600px),styles/kit.css:6111,mobile,spacing,styles/kit.css:6111,card-upcast-controls
 tag:select,select),min-height,"max(44px, var(--tap-floor))",(max-width:600px),styles/kit.css:6111,mobile,spacing,styles/kit.css:6111,tag:select
 combat-expansion-controls,.field > .combat-expansion-controls,position,absolute,,styles/kit.css:6114,all,style.other,styles/kit.css:6114,combat-expansion-controls
 combat-expansion-controls,.field > .combat-expansion-controls,left,8px,,styles/kit.css:6114,all,spacing,styles/kit.css:6114,combat-expansion-controls
@@ -12753,9 +12753,9 @@ map-node,.map-node.current circle,fill,var(--parchment),,styles/map.css:100,all,
 map-node,.map-node.current circle,animation,nodePulse 1.5s ease-in-out infinite alternate,,styles/map.css:100,all,motion,styles/map.css:100,map-node
 map-node,.map-node.current text,fill,var(--panel),,styles/map.css:109,all,color,styles/map.css:109,map-node
 map-node,.map-node.reachable,cursor,pointer,,styles/map.css:111,all,style.other,styles/map.css:111,map-node
-map-node-face,.map-node.reachable > circle:not(.node-halo),stroke,var(--gold),,styles/map.css:112,all,color,styles/map.css:112,map-node
-map-node-face,.map-node.reachable > circle:not(.node-halo),stroke-width,2.5,,styles/map.css:112,all,style.other,styles/map.css:112,map-node
-map-node-face,.map-node.reachable > circle:not(.node-halo),animation,reachStroke 1.4s ease-in-out infinite alternate,,styles/map.css:112,all,motion,styles/map.css:112,map-node
+map-node,.map-node.reachable > circle:not(.node-halo),stroke,var(--gold),,styles/map.css:112,all,color,styles/map.css:112,map-node
+map-node,.map-node.reachable > circle:not(.node-halo),stroke-width,2.5,,styles/map.css:112,all,style.other,styles/map.css:112,map-node
+map-node,.map-node.reachable > circle:not(.node-halo),animation,reachStroke 1.4s ease-in-out infinite alternate,,styles/map.css:112,all,motion,styles/map.css:112,map-node
 mapscreen,.mapscreen,--halo-peak,1.35,,styles/map.css:126,all,token,styles/map.css:126,mapscreen
 map-tray,.mapscreen > .map-tray,position,relative,,styles/map.css:135,all,style.other,styles/map.css:135,map-tray
 map-tray,.mapscreen > .map-tray,z-index,30,,styles/map.css:135,all,z-index,styles/map.css:135,map-tray
@@ -12883,11 +12883,11 @@ map-tray-pair,.map-tray-pair,gap,.8rem,,styles/map.css:239,all,spacing,styles/ma
 map-tray-pair,.map-tray-pair,padding,.5rem 1.4rem,,styles/map.css:239,all,spacing,styles/map.css:239,map-tray-pair
 map-tray-pair,.map-tray-pair > .as-btn,flex,0 1 18rem,,styles/map.css:240,all,style.other,styles/map.css:240,map-tray-pair
 map-tray-pair,.map-tray-pair > .as-btn,min-width,0,,styles/map.css:240,all,spacing,styles/map.css:240,map-tray-pair
-map-node-face,.map-node.selected > circle:not(.node-halo),stroke,var(--parchment),,styles/map.css:241,all,color,styles/map.css:241,map-node
-map-node-face,.map-node.selected > circle:not(.node-halo),stroke-width,4,,styles/map.css:241,all,style.other,styles/map.css:241,map-node
-map-node-face,.map-node.selected > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--parchment)),,styles/map.css:248,all,style.other,styles/map.css:248,map-node
-map-node-face,.map-node.selected > circle:not(.node-halo),animation,none,,styles/map.css:248,all,motion,styles/map.css:248,map-node
-map-node-face,.map-node.selected > circle:not(.node-halo),stroke-opacity,1,,styles/map.css:248,all,style.other,styles/map.css:248,map-node
+map-node,.map-node.selected > circle:not(.node-halo),stroke,var(--parchment),,styles/map.css:241,all,color,styles/map.css:241,map-node
+map-node,.map-node.selected > circle:not(.node-halo),stroke-width,4,,styles/map.css:241,all,style.other,styles/map.css:241,map-node
+map-node,.map-node.selected > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--parchment)),,styles/map.css:248,all,style.other,styles/map.css:248,map-node
+map-node,.map-node.selected > circle:not(.node-halo),animation,none,,styles/map.css:248,all,motion,styles/map.css:248,map-node
+map-node,.map-node.selected > circle:not(.node-halo),stroke-opacity,1,,styles/map.css:248,all,style.other,styles/map.css:248,map-node
 map-node-face,.map-node.selected .node-halo,animation,none,,styles/map.css:252,all,motion,styles/map.css:252,node-halo
 map-node-face,.map-node.selected .node-halo,stroke-opacity,0.55,,styles/map.css:252,all,style.other,styles/map.css:252,node-halo
 map-node-face,.map-node.selected .node-halo,transform,scale(0.9),,styles/map.css:252,all,motion,styles/map.css:252,node-halo
@@ -12899,11 +12899,11 @@ map-node-face,.map-node .node-halo,stroke-width,2.5,,styles/map.css:262,all,styl
 map-node-face,.map-node .node-halo,transform-box,fill-box,,styles/map.css:262,all,motion,styles/map.css:262,node-halo
 map-node-face,.map-node .node-halo,transform-origin,center,,styles/map.css:262,all,motion,styles/map.css:262,node-halo
 map-node-face,.map-node .node-halo,animation,haloPulse 1.6s ease-in-out infinite,,styles/map.css:262,all,motion,styles/map.css:262,node-halo
-map-node-face,.map-node.reachable:hover circle:not(.node-halo),fill,#2e2517,,styles/map.css:272,all,color,styles/map.css:272,map-node
-map-node-face,.map-node.reachable:hover circle:not(.node-halo),stroke,var(--gold),,styles/map.css:272,all,color,styles/map.css:272,map-node
+map-node,.map-node.reachable:hover circle:not(.node-halo),fill,#2e2517,,styles/map.css:272,all,color,styles/map.css:272,map-node
+map-node,.map-node.reachable:hover circle:not(.node-halo),stroke,var(--gold),,styles/map.css:272,all,color,styles/map.css:272,map-node
 map-node,.map-node.reachable text,fill,var(--parchment),,styles/map.css:273,all,color,styles/map.css:273,map-node
-map-node-face,.reduced-motion .map-node.reachable > circle:not(.node-halo),animation,none,,styles/map.css:276,all,motion,styles/map.css:276,map-node
-map-node-face,.reduced-motion .map-node.reachable > circle:not(.node-halo),stroke-opacity,1,,styles/map.css:276,all,style.other,styles/map.css:276,map-node
+map-node,.reduced-motion .map-node.reachable > circle:not(.node-halo),animation,none,,styles/map.css:276,all,motion,styles/map.css:276,map-node
+map-node,.reduced-motion .map-node.reachable > circle:not(.node-halo),stroke-opacity,1,,styles/map.css:276,all,style.other,styles/map.css:276,map-node
 map-node-face,.reduced-motion .map-node .node-halo,animation,none,,styles/map.css:277,all,motion,styles/map.css:277,node-halo
 map-node-face,.reduced-motion .map-node .node-halo,stroke-opacity,0.5,,styles/map.css:277,all,style.other,styles/map.css:277,node-halo
 map-node,.reduced-motion .map-node.current circle,animation,none,,styles/map.css:278,all,motion,styles/map.css:278,map-node
@@ -12918,18 +12918,18 @@ shrine-lane,.map-edge.shrine-lane,stroke-width,3,,styles/map.css:302,all,style.o
 shrine-lane,.map-edge.shrine-lane,stroke-opacity,0.9,,styles/map.css:302,all,style.other,styles/map.css:302,shrine-lane
 shrine-lane,.map-edge.shrine-lane,filter,drop-shadow(0 0 5px var(--gold)),,styles/map.css:302,all,style.other,styles/map.css:302,shrine-lane
 shrine-lane,.map-edge.shrine-lane,animation,shrineLanePulse 2.2s ease-in-out infinite alternate,,styles/map.css:302,all,motion,styles/map.css:302,shrine-lane
-map-node-face,.map-node.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--gold)),,styles/map.css:309,all,style.other,styles/map.css:309,shrine-lane
-map-node-face,.map-node.shrine-lane > circle:not(.node-halo),animation,shrineLanePulse 2.2s ease-in-out infinite alternate,,styles/map.css:309,all,motion,styles/map.css:309,shrine-lane
+shrine-lane,.map-node.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--gold)),,styles/map.css:309,all,style.other,styles/map.css:309,shrine-lane
+shrine-lane,.map-node.shrine-lane > circle:not(.node-halo),animation,shrineLanePulse 2.2s ease-in-out infinite alternate,,styles/map.css:309,all,motion,styles/map.css:309,shrine-lane
 shrine-lane,.reduced-motion .map-edge.shrine-lane,animation,none,,styles/map.css:322,all,motion,styles/map.css:322,shrine-lane
 shrine-lane,.reduced-motion .map-edge.shrine-lane,filter,drop-shadow(0 0 5px var(--gold)),,styles/map.css:322,all,style.other,styles/map.css:322,shrine-lane
-map-node-face,.reduced-motion .map-node.shrine-lane > circle:not(.node-halo),animation,none,,styles/map.css:322,all,motion,styles/map.css:322,shrine-lane
-map-node-face,.reduced-motion .map-node.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--gold)),,styles/map.css:322,all,style.other,styles/map.css:322,shrine-lane
-map-node-face,.map-node.selected.shrine-lane > circle:not(.node-halo),animation,none,,styles/map.css:329,all,motion,styles/map.css:329,shrine-lane
-map-node-face,.map-node.selected.shrine-lane > circle:not(.node-halo),opacity,1,,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
-map-node-face,.map-node.selected.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--parchment)),,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
-map-node-face,.reduced-motion .map-node.selected.shrine-lane > circle:not(.node-halo),animation,none,,styles/map.css:329,all,motion,styles/map.css:329,shrine-lane
-map-node-face,.reduced-motion .map-node.selected.shrine-lane > circle:not(.node-halo),opacity,1,,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
-map-node-face,.reduced-motion .map-node.selected.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--parchment)),,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
+shrine-lane,.reduced-motion .map-node.shrine-lane > circle:not(.node-halo),animation,none,,styles/map.css:322,all,motion,styles/map.css:322,shrine-lane
+shrine-lane,.reduced-motion .map-node.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--gold)),,styles/map.css:322,all,style.other,styles/map.css:322,shrine-lane
+shrine-lane,.map-node.selected.shrine-lane > circle:not(.node-halo),animation,none,,styles/map.css:329,all,motion,styles/map.css:329,shrine-lane
+shrine-lane,.map-node.selected.shrine-lane > circle:not(.node-halo),opacity,1,,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
+shrine-lane,.map-node.selected.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--parchment)),,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
+shrine-lane,.reduced-motion .map-node.selected.shrine-lane > circle:not(.node-halo),animation,none,,styles/map.css:329,all,motion,styles/map.css:329,shrine-lane
+shrine-lane,.reduced-motion .map-node.selected.shrine-lane > circle:not(.node-halo),opacity,1,,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
+shrine-lane,.reduced-motion .map-node.selected.shrine-lane > circle:not(.node-halo),filter,drop-shadow(0 0 5px var(--parchment)),,styles/map.css:329,all,style.other,styles/map.css:329,shrine-lane
 map-fog-ground,.map-fog-ground rect,fill,"var(--fog-parchment, #17130d)",,styles/map.css:338,all,color,styles/map.css:338,map-fog-ground
 map-fog-ground,.map-fog-ground image,opacity,1,,styles/map.css:348,all,style.other,styles/map.css:348,map-fog-ground
 map-fog-ground,.map-fog-ground image,mix-blend-mode,soft-light,,styles/map.css:348,all,style.other,styles/map.css:348,map-fog-ground
@@ -13989,13 +13989,13 @@ map-header,.map-header,background-color,"color-mix(in srgb, var(--bg) 94%, trans
 legacy-dungeon-header,.legacy-dungeon-header,background-color,"color-mix(in srgb, var(--bg) 94%, transparent)",,styles/player-polish.css:136,all,color,styles/player-polish.css:136,legacy-dungeon-header
 shop-frame,:root[data-layout='wide']:not([data-composition='short-wide']) .shop-frame,width,78%,,styles/player-polish.css:140,all,spacing,styles/player-polish.css:140,shop-frame
 shop-frame,:root[data-layout='wide']:not([data-composition='short-wide']) .shop-frame,margin-inline,auto 0,,styles/player-polish.css:140,all,spacing,styles/player-polish.css:140,shop-frame
-blacksmith,:is(.blacksmith-workspace,width,100%,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,blacksmith-workspace
-blacksmith,:is(.blacksmith-workspace,max-width,none,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,blacksmith-workspace
-blacksmith,:is(.blacksmith-workspace,flex,0 0 100%,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
-blacksmith,:is(.blacksmith-workspace,flex-wrap,wrap,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
-blacksmith,:is(.blacksmith-workspace,gap,1rem,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,blacksmith-workspace
-blacksmith,:is(.blacksmith-workspace,align-items,center,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
-blacksmith,:is(.blacksmith-workspace,box-sizing,border-box,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,width,100%,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,max-width,none,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,flex,0 0 100%,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,flex-wrap,wrap,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,gap,1rem,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,align-items,center,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,box-sizing,border-box,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,blacksmith-workspace
 shop-shelf,.master-workspace) .shop-shelf > .class-pick,width,100%,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,shop-shelf
 shop-shelf,.master-workspace) .shop-shelf > .class-pick,max-width,none,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,shop-shelf
 shop-shelf,.master-workspace) .shop-shelf > .class-pick,flex,0 0 100%,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,shop-shelf
@@ -14003,13 +14003,13 @@ shop-shelf,.master-workspace) .shop-shelf > .class-pick,flex-wrap,wrap,,styles/p
 shop-shelf,.master-workspace) .shop-shelf > .class-pick,gap,1rem,,styles/player-polish.css:141,all,spacing,styles/player-polish.css:141,shop-shelf
 shop-shelf,.master-workspace) .shop-shelf > .class-pick,align-items,center,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,shop-shelf
 shop-shelf,.master-workspace) .shop-shelf > .class-pick,box-sizing,border-box,,styles/player-polish.css:141,all,style.other,styles/player-polish.css:141,shop-shelf
-blacksmith,:is(.blacksmith-workspace,flex,1 1 calc(180px / var(--ui-zoom)),,styles/player-polish.css:145,all,style.other,styles/player-polish.css:145,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,flex,1 1 calc(180px / var(--ui-zoom)),,styles/player-polish.css:145,all,style.other,styles/player-polish.css:145,blacksmith-workspace
 cp-body,.master-workspace) .shop-shelf > .class-pick > .cp-body,flex,1 1 calc(180px / var(--ui-zoom)),,styles/player-polish.css:145,all,style.other,styles/player-polish.css:145,cp-body
-blacksmith,:is(.blacksmith-workspace,white-space,normal,,styles/player-polish.css:146,all,typography,styles/player-polish.css:146,blacksmith-workspace
-blacksmith,:is(.blacksmith-workspace,overflow,visible,,styles/player-polish.css:146,all,style.other,styles/player-polish.css:146,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,white-space,normal,,styles/player-polish.css:146,all,typography,styles/player-polish.css:146,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,overflow,visible,,styles/player-polish.css:146,all,style.other,styles/player-polish.css:146,blacksmith-workspace
 master-workspace,.master-workspace) .class-pick h3,white-space,normal,,styles/player-polish.css:146,all,typography,styles/player-polish.css:146,master-workspace
 master-workspace,.master-workspace) .class-pick h3,overflow,visible,,styles/player-polish.css:146,all,style.other,styles/player-polish.css:146,master-workspace
-blacksmith,:is(.blacksmith-workspace,flex,0 0 100%,,styles/player-polish.css:147,all,style.other,styles/player-polish.css:147,blacksmith-workspace
+blacksmith-workspace,:is(.blacksmith-workspace,flex,0 0 100%,,styles/player-polish.css:147,all,style.other,styles/player-polish.css:147,blacksmith-workspace
 shop-offer-avail,.master-workspace) .class-pick > .shop-offer-avail,flex,0 0 100%,,styles/player-polish.css:147,all,style.other,styles/player-polish.css:147,shop-offer-avail
 player.engravedIcon,.class-pick > .glyph .engraved-icon,width,28px,,styles/player-polish.css:148,all,spacing,styles/player-polish.css:148,engraved-icon
 player.engravedIcon,.class-pick > .glyph .engraved-icon,height,28px,,styles/player-polish.css:148,all,spacing,styles/player-polish.css:148,engraved-icon
@@ -14033,10 +14033,10 @@ as-titlemenu,:root[data-layout='narrow'] .title-screen .as-titlemenu,box-sizing,
 tm-name,:root[data-layout='narrow'] .title-screen .tm-name,font-size,"min(11cqi, 4.8rem)",,styles/player-polish.css:163,all,typography,styles/player-polish.css:163,tm-name
 shop-workspace,:root[data-layout='narrow'] .shop-workspace,padding-top,18%,,styles/player-polish.css:164,all,spacing,styles/player-polish.css:164,shop-workspace
 shop-frame,:root[data-layout='narrow'] .shop-frame,width,100%,,styles/player-polish.css:165,all,spacing,styles/player-polish.css:165,shop-frame
-blacksmith,:root[data-layout='narrow'] :is(.blacksmith-workspace,flex-direction,row,,styles/player-polish.css:166,all,style.other,styles/player-polish.css:166,blacksmith-workspace
+blacksmith-workspace,:root[data-layout='narrow'] :is(.blacksmith-workspace,flex-direction,row,,styles/player-polish.css:166,all,style.other,styles/player-polish.css:166,blacksmith-workspace
 shop-shelf,.master-workspace) .shop-shelf > .class-pick,flex-direction,row,,styles/player-polish.css:166,all,style.other,styles/player-polish.css:166,shop-shelf
-blacksmith,:root[data-layout='narrow'] :is(.blacksmith-workspace,flex-basis,100%,,styles/player-polish.css:167,all,style.other,styles/player-polish.css:167,blacksmith-workspace
-blacksmith,:root[data-layout='narrow'] :is(.blacksmith-workspace,width,100%,,styles/player-polish.css:167,all,spacing,styles/player-polish.css:167,blacksmith-workspace
+blacksmith-workspace,:root[data-layout='narrow'] :is(.blacksmith-workspace,flex-basis,100%,,styles/player-polish.css:167,all,style.other,styles/player-polish.css:167,blacksmith-workspace
+blacksmith-workspace,:root[data-layout='narrow'] :is(.blacksmith-workspace,width,100%,,styles/player-polish.css:167,all,spacing,styles/player-polish.css:167,blacksmith-workspace
 master-workspace,.master-workspace) .class-pick > .as-btn,flex-basis,100%,,styles/player-polish.css:167,all,style.other,styles/player-polish.css:167,master-workspace
 master-workspace,.master-workspace) .class-pick > .as-btn,width,100%,,styles/player-polish.css:167,all,spacing,styles/player-polish.css:167,master-workspace
 shop-detail,:root[data-layout='narrow'] :is(.shop-detail,background-color,var(--bg),,styles/player-polish.css:168,all,color,styles/player-polish.css:168,shop-detail
@@ -14330,8 +14330,8 @@ shared-run-hud,.combat > .combat-hud::before,background-color,#201b15,,styles/pl
 shared-run-hud,.combat > .combat-hud::before,background-size,cover,,styles/player-polish.css:283,all,style.other,styles/player-polish.css:283,combat-hud
 shared-run-hud,.combat > .combat-hud::before,mask-image,"linear-gradient(#000 65%, transparent)",,styles/player-polish.css:283,all,style.other,styles/player-polish.css:283,combat-hud
 shared-run-hud,.combat > .combat-hud::before,-webkit-mask-image,"linear-gradient(#000 65%, transparent)",,styles/player-polish.css:283,all,style.other,styles/player-polish.css:283,combat-hud
-vitals-panel,.combat > .combat-hud :is(.hud-vitals-panel,background,none,,styles/player-polish.css:288,all,color,styles/player-polish.css:288,hud-vitals-panel
-vitals-panel,.combat > .combat-hud :is(.hud-vitals-panel,border-image,none,,styles/player-polish.css:288,all,style.other,styles/player-polish.css:288,hud-vitals-panel
+shared-run-hud,.combat > .combat-hud :is(.hud-vitals-panel,background,none,,styles/player-polish.css:288,all,color,styles/player-polish.css:288,hud-vitals-panel
+shared-run-hud,.combat > .combat-hud :is(.hud-vitals-panel,border-image,none,,styles/player-polish.css:288,all,style.other,styles/player-polish.css:288,hud-vitals-panel
 hud-identity,.hud-identity,background,none,,styles/player-polish.css:288,all,color,styles/player-polish.css:288,hud-identity
 hud-identity,.hud-identity,border-image,none,,styles/player-polish.css:288,all,style.other,styles/player-polish.css:288,hud-identity
 cinders-counter,.hud-center,background,none,,styles/player-polish.css:288,all,color,styles/player-polish.css:288,hud-center
@@ -14360,7 +14360,7 @@ shared-run-hud,:root main:has(> .shop-workspace) > .shared-hud,pointer-events,no
 vitals-panel,main:has(> .shop-workspace) > .shared-hud .hud-vitals-panel,max-width,28rem,,styles/player-polish.css:300,all,spacing,styles/player-polish.css:300,hud-vitals-panel
 vitals-panel,main:has(> .shop-workspace) > .shared-hud .hud-vitals-panel,padding,.5rem,,styles/player-polish.css:300,all,spacing,styles/player-polish.css:300,hud-vitals-panel
 vitals-panel,main:has(> .shop-workspace) > .shared-hud .hud-vitals-panel,background,#17130fe8,,styles/player-polish.css:300,all,color,styles/player-polish.css:300,hud-vitals-panel
-hud-info-row,main:has(> .shop-workspace) > .shared-hud :is(.hud-info-row,pointer-events,auto,,styles/player-polish.css:301,all,style.other,styles/player-polish.css:301,hud-info-row
+shared-run-hud,main:has(> .shop-workspace) > .shared-hud :is(.hud-info-row,pointer-events,auto,,styles/player-polish.css:301,all,style.other,styles/player-polish.css:301,hud-info-row
 vitals-panel,.hud-vitals-panel,pointer-events,auto,,styles/player-polish.css:301,all,style.other,styles/player-polish.css:301,hud-vitals-panel
 quick-access-panel,.hud-control-grid,pointer-events,auto,,styles/player-polish.css:301,all,style.other,styles/player-polish.css:301,hud-control-grid
 inventory-belt,.hud-bottom),pointer-events,auto,,styles/player-polish.css:301,all,style.other,styles/player-polish.css:301,hud-bottom
@@ -14483,7 +14483,7 @@ shared-run-hud,:root main:has(> .rest-screen) > .shared-hud,z-index,20,,styles/p
 shared-run-hud,:root main:has(> .rest-screen) > .shared-hud,background,none,,styles/player-polish.css:349,all,color,styles/player-polish.css:349,shared-hud
 shared-run-hud,:root main:has(> .rest-screen) > .shared-hud,border,0,,styles/player-polish.css:349,all,style.other,styles/player-polish.css:349,shared-hud
 shared-run-hud,:root main:has(> .rest-screen) > .shared-hud,pointer-events,none,,styles/player-polish.css:349,all,style.other,styles/player-polish.css:349,shared-hud
-hud-info-row,main:has(> .rest-screen) > .shared-hud :is(.hud-info-row,pointer-events,auto,,styles/player-polish.css:350,all,style.other,styles/player-polish.css:350,hud-info-row
+shared-run-hud,main:has(> .rest-screen) > .shared-hud :is(.hud-info-row,pointer-events,auto,,styles/player-polish.css:350,all,style.other,styles/player-polish.css:350,hud-info-row
 vitals-panel,.hud-vitals-panel,pointer-events,auto,,styles/player-polish.css:350,all,style.other,styles/player-polish.css:350,hud-vitals-panel
 quick-access-panel,.hud-control-grid,pointer-events,auto,,styles/player-polish.css:350,all,style.other,styles/player-polish.css:350,hud-control-grid
 inventory-belt,.hud-bottom),pointer-events,auto,,styles/player-polish.css:350,all,style.other,styles/player-polish.css:350,hud-bottom
@@ -14714,9 +14714,9 @@ combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wir
 combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,flex-wrap,wrap,,styles/player-polish.css:449,all,style.other,styles/player-polish.css:449,card-upcast-controls
 combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,box-sizing,border-box,,styles/player-polish.css:449,all,style.other,styles/player-polish.css:449,card-upcast-controls
 combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,font-size,"calc(12px / var(--ui-zoom,1))",,styles/player-polish.css:449,all,typography,styles/player-polish.css:449,card-upcast-controls
-card-upcast-controls,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,min-height,"calc(44px / var(--ui-zoom,1))",,styles/player-polish.css:453,all,spacing,styles/player-polish.css:453,card-upcast-controls
-card-upcast-controls,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,min-width,"calc(44px / var(--ui-zoom,1))",,styles/player-polish.css:453,all,spacing,styles/player-polish.css:453,card-upcast-controls
-card-upcast-controls,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,font-size,inherit,,styles/player-polish.css:453,all,typography,styles/player-polish.css:453,card-upcast-controls
+combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,min-height,"calc(44px / var(--ui-zoom,1))",,styles/player-polish.css:453,all,spacing,styles/player-polish.css:453,card-upcast-controls
+combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,min-width,"calc(44px / var(--ui-zoom,1))",,styles/player-polish.css:453,all,spacing,styles/player-polish.css:453,card-upcast-controls
+combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,font-size,inherit,,styles/player-polish.css:453,all,typography,styles/player-polish.css:453,card-upcast-controls
 tag:select,select),min-height,"calc(44px / var(--ui-zoom,1))",,styles/player-polish.css:453,all,spacing,styles/player-polish.css:453,tag:select
 tag:select,select),min-width,"calc(44px / var(--ui-zoom,1))",,styles/player-polish.css:453,all,spacing,styles/player-polish.css:453,tag:select
 tag:select,select),font-size,inherit,,styles/player-polish.css:453,all,typography,styles/player-polish.css:453,tag:select
@@ -14747,7 +14747,7 @@ shrine-option-card,:root .rest-screen.choice-screen .rest-door,flex,0 1 48%,,sty
 shrine-option-card,:root .rest-screen.choice-screen .rest-door,max-height,48%,,styles/player-polish.css:473,all,spacing,styles/player-polish.css:473,rest-door
 shrine-option-card,:root .rest-screen.choice-screen .rest-door,background-color,#17130fd4,,styles/player-polish.css:473,all,color,styles/player-polish.css:473,rest-door
 shrine-option-card,:root .rest-screen.choice-screen .rest-door,background-image,none,,styles/player-polish.css:473,all,color,styles/player-polish.css:473,rest-door
-modal-head,:root .rest-screen.choice-screen .rest-door > :is(.modal-head,min-height,4.5rem,,styles/player-polish.css:474,all,spacing,styles/player-polish.css:474,modal-head
+shrine-option-card,:root .rest-screen.choice-screen .rest-door > :is(.modal-head,min-height,4.5rem,,styles/player-polish.css:474,all,spacing,styles/player-polish.css:474,modal-head
 modal-foot,.modal-foot),min-height,4.5rem,,styles/player-polish.css:474,all,spacing,styles/player-polish.css:474,modal-foot
 shrine-option-card,:root[data-layout='narrow'] .rest-screen.choice-screen,padding,12rem 1rem 1rem,,styles/player-polish.css:475,all,spacing,styles/player-polish.css:475,choice-screen
 shrine-option-card,:root[data-layout='narrow'] .rest-screen.choice-screen .rest-door,flex-basis,60%,,styles/player-polish.css:476,all,style.other,styles/player-polish.css:476,rest-door
@@ -14834,7 +14834,7 @@ as-chip,.as-chip),background,none,,styles/player-polish.css:503,all,color,styles
 as-chip,.as-chip),border,0,,styles/player-polish.css:503,all,style.other,styles/player-polish.css:503,as-chip
 as-chip,.as-chip),border-image,none,,styles/player-polish.css:503,all,style.other,styles/player-polish.css:503,as-chip
 as-chip,.as-chip),box-shadow,none,,styles/player-polish.css:503,all,style.shadow,styles/player-polish.css:503,as-chip
-hud-info-row,:root .shared-hud :is(.hud-info-row,text-shadow,"0 1px 3px #000,0 0 5px #0009",,styles/player-polish.css:507,all,style.shadow,styles/player-polish.css:507,hud-info-row
+shared-run-hud,:root .shared-hud :is(.hud-info-row,text-shadow,"0 1px 3px #000,0 0 5px #0009",,styles/player-polish.css:507,all,style.shadow,styles/player-polish.css:507,hud-info-row
 resource-meter,.resbars),text-shadow,"0 1px 3px #000,0 0 5px #0009",,styles/player-polish.css:507,all,style.shadow,styles/player-polish.css:507,resbars
 combat,:root :is(.combat,grid-template-areas,'meters . actions' 'rail . actions',,styles/player-polish.css:509,all,style.other,styles/player-polish.css:509,combat
 tag:main,main:has(>.shop-workspace),grid-template-areas,'meters . actions' 'rail . actions',,styles/player-polish.css:509,all,style.other,styles/player-polish.css:509,tag:main
@@ -14904,15 +14904,15 @@ m-well,:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[
 m-track,:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-track,width,100% !important,,styles/player-polish.css:560,all,spacing,styles/player-polish.css:560,m-track
 m-track,:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-track,height,"calc(3px / var(--ui-zoom,1))",,styles/player-polish.css:560,all,spacing,styles/player-polish.css:560,m-track
 m-track,:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-track,border-radius,0,,styles/player-polish.css:560,all,radius,styles/player-polish.css:560,m-track
-shared-run-hud,:root :is(.shared-hud,text-shadow,"-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000",,styles/player-polish.css:565,all,style.shadow,styles/player-polish.css:565,shared-hud
+shared-hud,:root :is(.shared-hud,text-shadow,"-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000",,styles/player-polish.css:565,all,style.shadow,styles/player-polish.css:565,shared-hud
 atlas-header,.atlas-header),text-shadow,"-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000",,styles/player-polish.css:565,all,style.shadow,styles/player-polish.css:565,atlas-header
-hud-info-row,:root .shared-hud :is(.hud-info-row,text-shadow,inherit,,styles/player-polish.css:568,all,style.shadow,styles/player-polish.css:568,hud-info-row
+shared-run-hud,:root .shared-hud :is(.hud-info-row,text-shadow,inherit,,styles/player-polish.css:568,all,style.shadow,styles/player-polish.css:568,hud-info-row
 resource-meter,.resbars),text-shadow,inherit,,styles/player-polish.css:568,all,style.shadow,styles/player-polish.css:568,resbars
-quick-access-panel,:root .shared-hud :is(.illustrated-hud-icon,filter,drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000),,styles/player-polish.css:569,all,style.other,styles/player-polish.css:569,illustrated-hud-icon
+shared-run-hud,:root .shared-hud :is(.illustrated-hud-icon,filter,drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000),,styles/player-polish.css:569,all,style.other,styles/player-polish.css:569,illustrated-hud-icon
 kit.pip,.icon-tray .as-pip,filter,drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000),,styles/player-polish.css:569,all,style.other,styles/player-polish.css:569,as-pip
 player.engravedIcon,.resplate .engraved-icon),filter,drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000),,styles/player-polish.css:569,all,style.other,styles/player-polish.css:569,engraved-icon
 resbar,:root .shared-hud .resbar,box-shadow,0 0 0 1px #000,,styles/player-polish.css:572,all,style.shadow,styles/player-polish.css:572,resbar
-quick-access-panel,:root :is(.shared-hud .hud-actions,border,1px solid #000,,styles/player-polish.css:573,all,style.other,styles/player-polish.css:573,hud-actions
+hud-actions,:root :is(.shared-hud .hud-actions,border,1px solid #000,,styles/player-polish.css:573,all,style.other,styles/player-polish.css:573,hud-actions
 atlas-header-actions,.atlas-header-actions) > button,border,1px solid #000,,styles/player-polish.css:573,all,style.other,styles/player-polish.css:573,atlas-header-actions
 merchant-workspace,:root .shop-workspace.merchant-workspace,--merchant-gold,var(--gold),,styles/player-polish.css:578,all,token,styles/player-polish.css:578,merchant-workspace
 merchant-workspace,:root .shop-workspace.merchant-workspace,padding,7rem 2rem 1rem,,styles/player-polish.css:578,all,spacing,styles/player-polish.css:578,merchant-workspace
