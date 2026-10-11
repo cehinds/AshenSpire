@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Deck editor: one card list with − and ＋, and every card shows its stance",
     "detail": "Removing a card no longer jumps to the search box (on phones it opened the keyboard). Every row in the card library now has − count ＋ buttons, and the inspected card offers both Add to deck and Remove from deck. Phones drop the Library / Inspect / Deck tabs for one list; inspecting opens over it and Back returns to it, and a Draw order view appears only when Play in deck order is on. Each card names its stance: Offensive, Defensive, Casting, Counter, Sweep or Neutral.",
-    "build": "0.7.1.1312",
+    "build": "0.7.1.1317",
     "pullRequest": 1850,
     "url": "https://github.com/cehinds/AshenSpire/pull/1850"
+  },
+  {
+    "id": "pr-1861",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Every feature, chore and fix now waits for the owner's review before it reaches dev",
+    "detail": "Development-process change only, nothing in the game changes. Sessions open the pull request with a preview and screenshots, then wait; they merge into dev and promote to test only when the owner names that pull request.",
+    "build": "0.7.1.1315",
+    "pullRequest": 1861,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1861"
+  },
+  {
+    "id": "pr-1864",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Begin says so when a new run cannot start",
+    "detail": "If the game cannot save your profile when you press Begin or Quick start, a \"This run could not start\" banner now explains why. Before, the press simply did nothing.",
+    "build": "0.7.1.1313",
+    "pullRequest": 1864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1864"
   },
   {
     "id": "pr-1860",
