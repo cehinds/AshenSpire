@@ -8,7 +8,7 @@ import { armamentIconAsset } from '../../src/model/equipmentArt.js';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
-  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan, drawerOpenFor,
+  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters, tableRowOf, connectPlan, drawerOpenFor, gameStartOf,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -233,4 +233,18 @@ test('the Try in fight hand choices start with the empty hand and keep ids as gi
   assert.deepEqual(handChoices(), [['', 'Empty hand']]);
   const opts = handChoices([{ id: 'a"b', name: 'Odd' }]).map(([v, t]) => `<option value="${escHtml(v)}">${escHtml(t)}</option>`).join('');
   assert.equal(opts, '<option value="">Empty hand</option><option value="a&quot;b">Odd</option>');
+});
+
+test('the frames reload when the game server is a new start on the same origin', () => {
+  const up = 'http://localhost:4320/', origin = 'http://localhost:4320';
+  assert.equal(connectPlan({ base: up, currentOrigin: origin, ready: true, serverId: 2000, currentServerId: 1000 }), 'load', 'a restarted game on the same port has a new start time');
+  assert.equal(connectPlan({ base: up, currentOrigin: origin, ready: true, serverId: 1000, currentServerId: 1000 }), 'keep', 'the same start: nothing to do');
+  assert.equal(connectPlan({ base: up, currentOrigin: origin, ready: true, serverId: null, currentServerId: 1000 }), 'keep', 'an unknown start (a reused server) keeps the frames');
+});
+
+test('gameStartOf reads the game tool start time from the tools listing', () => {
+  assert.equal(gameStartOf([{ id: 'game', status: 'up', url: 'http://localhost:4320/', startedAt: 1000 }]), 1000);
+  assert.equal(gameStartOf([{ id: 'game', status: 'up', url: 'http://localhost:4320/', startedAt: null }]), null);
+  assert.equal(gameStartOf([{ id: 'editor', status: 'up', startedAt: 5 }]), null);
+  assert.equal(gameStartOf([]), null);
 });

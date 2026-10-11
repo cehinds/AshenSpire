@@ -271,10 +271,18 @@ export function drawerOpenFor({ id = null } = {}) {
  * message), 'keep' (the same origin is already answering, leave the frames) or 'load' (point the frames
  * at the game, because the origin changed, the frames never answered, or a reload was forced).
  */
-export function connectPlan({ base = null, currentOrigin = null, ready = false, force = false } = {}) {
+export function connectPlan({ base = null, currentOrigin = null, ready = false, force = false, serverId = null, currentServerId = null } = {}) {
   if (!base) return 'setup';
   const origin = new URL(base).origin;
-  return !force && ready && origin === currentOrigin ? 'keep' : 'load';
+  // A known start time that differs means a new game server on the same origin: its frames are stale.
+  const sameServer = serverId == null || serverId === currentServerId;
+  return !force && ready && origin === currentOrigin && sameServer ? 'keep' : 'load';
+}
+
+/** The game tool's start time in the Workbench's `tools` listing, or null (not started, or not spawned by the Workbench). */
+export function gameStartOf(tools = []) {
+  const game = list(tools).find((t) => t && t.id === 'game');
+  return game && typeof game.startedAt === 'number' ? game.startedAt : null;
 }
 
 /** The Workbench's `tools` listing → the game server's base URL, or null when it is down. */
