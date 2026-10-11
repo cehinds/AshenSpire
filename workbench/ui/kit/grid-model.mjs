@@ -680,3 +680,63 @@ export function validate(doc, rules = [], options = {}) {
   }
   return out.sort((a, b) => a.row - b.row || (colIndex[a.key] ?? -1) - (colIndex[b.key] ?? -1));
 }
+
+// ---------- locked cells (read-only parts of a grid) ----------
+// A lock names the derived parts of a table: { columns: [keys], rows: { column, prefix } | null }. A column in
+// `columns` is locked in every row; a row whose `rows.column` starts with `rows.prefix` is locked whole.
+// The Data Studio builds it from the tag-model summary (workbench/core/tag-model.mjs); the grid only reads it.
+
+/** Whether one row is a locked row under the lock rule. */
+export function isLockedRow(row, lock = {}) {
+  const rule = lock.rows ?? null;
+  return Boolean(rule && String(row?.[rule.column] ?? '').startsWith(rule.prefix));
+}
+
+/** The locked cells of a grid: a Set of `${r}\u0001${key}` for every locked cell (r = row index in rows). */
+export function lockedCellMap(rows = [], columns = [], lock = {}) {
+  const lockedCols = new Set(lock.columns ?? []);
+  const out = new Set();
+  rows.forEach((row, r) => {
+    const whole = isLockedRow(row, lock);
+    for (const c of columns) if (whole || lockedCols.has(c.key)) out.add(`${r}\u0001${c.key}`);
+  });
+  return out;
+}
+
+/** Whether row r, column key, is in a locked-cell map from lockedCellMap. */
+export const isLockedCell = (map, r, key) => map.has(`${r}\u0001${key}`);
+
+const sameValue = (a, b) => Object.is(a, b) || JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * Whether a change from `before` rows to `after` rows touches a locked part: a locked cell's value differs,
+ * a locked row is removed, or a new row is a locked row. Rows are copy-on-write, so an untouched row keeps its object.
+ */
+export function touchesLocked(before = [], after = [], columns = [], lock = {}) {
+  if (before.length === after.length) {
+    for (let r = 0; r < before.length; r++) {
+      if (before[r] === after[r]) continue;
+      for (const c of columns) {
+        const locked = isLockedRow(before[r], lock) || (lock.columns ?? []).includes(c.key);
+        if (locked && !sameValue(before[r][c.key], after[r][c.key])) return true;
+      }
+    }
+    return false;
+  }
+  const beforeSet = new Set(before), afterSet = new Set(after);
+  if (before.some(row => !afterSet.has(row) && isLockedRow(row, lock))) return true;
+  return after.some(row => !beforeSet.has(row) && isLockedRow(row, lock));
+}
+
+/**
+ * Whether a grid may apply a change at all. A read-only grid applies nothing; a change that touches a locked
+ * part is refused. Returns { ok: true } or { ok: false, reason }. The reason is the banner text.
+ */
+export function mutationAllowed({ readOnly = false, before = [], after = [], columns = [], lock = {} } = {}) {
+  if (readOnly) return { ok: false, reason: 'This table is read-only.' };
+  if (touchesLocked(before, after, columns, lock)) return { ok: false, reason: 'Derived by build.mjs: those cells cannot be changed here.' };
+  return { ok: true };
+}
+
+/** The tooltip of a locked cell. */
+export const LOCKED_NOTE = 'Derived by build.mjs';

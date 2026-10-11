@@ -37,6 +37,8 @@
 .gk-active { outline: 2px solid var(--gk-active); outline-offset: -2px; z-index: 3; }
 .gk-bad { box-shadow: inset 3px 0 0 var(--gk-bad); color: var(--gk-bad-ink); }
 .gk-warn { box-shadow: inset 3px 0 0 var(--gk-warn); }
+/* A derived cell (a lock from the tag model): greyed, and never edited, pasted or filled. */
+.gk-cell.gk-locked { color: var(--gk-muted, #8a8f98); background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(127, 127, 127, 0.10) 6px 12px); cursor: not-allowed; }
 .gk-row-bad .gk-num { color: var(--gk-bad-ink); font-weight: 600; }
 .gk-editor { position: absolute; z-index: 6; box-sizing: border-box; padding: 0 8px; border: 2px solid var(--gk-active); font: inherit; background: var(--gk-bg-deep); color: var(--gk-ink); outline: none; }
 .gk-editor.gk-invalid { border-color: var(--gk-bad); }

@@ -64,6 +64,8 @@ export function gridColumns(columns = []) {
 export function createGrid(el, options = {}) {
   let rules = options.rules ?? [], refs = options.refs ?? {};
   let readOnly = !!options.readOnly; const onChange = options.onChange ?? null;
+  // The derived parts (a lock: { columns, rows }, see grid-model.mjs lockedCellMap). Locked cells are greyed and never change.
+  let lock = options.lock ?? {}, lockedMap = new Set();
   let H = DENSITY[options.density] ?? DENSITY.compact;
   let doc = { columns: gridColumns(options.columns), rows: options.rows ?? [] };
   let issues = [], issueMap = new Map(), order = [], sortKeys = [], search = '';
@@ -94,6 +96,7 @@ export function createGrid(el, options = {}) {
     const filtered = M.filterIndices(doc.rows, doc.columns, { text: search });
     const sub = M.sortIndices(filtered.map(i => doc.rows[i]), doc.columns, sortKeys);
     order = sub.map(k => filtered[k]);
+    lockedMap = M.lockedCellMap(doc.rows, doc.columns, lock);
     issues = M.validate(doc, rules, { refs });
     issueMap = new Map();
     for (const is of issues) {
@@ -137,9 +140,12 @@ export function createGrid(el, options = {}) {
         if (selCells.has(r * 100000 + i)) cls.push('gk-sel');
         if (sel.active && sel.active.r === r && sel.active.c === i) cls.push('gk-active');
         const is = issueMap.get(`${r}|${c.key}`) ?? [];
+        const locked = M.isLockedCell(lockedMap, r, c.key);
+        if (locked) cls.push('gk-locked');
         if (is.some(x => x.level === 'error')) cls.push('gk-bad'); else if (is.length) cls.push('gk-warn');
         const left = frozen.has(i) ? frozen.get(i) : lefts[i];
-        html += `<div class="gk-cell gk-t-${c.type} ${cls.join(' ')}" data-r="${r}" data-c="${i}" style="left:${left}px;width:${w[i]}px" title="${esc(is.map(x => x.message).join('; ') || M.formatValue(row[c.key], c.type))}">${esc(M.formatValue(row[c.key], c.type))}</div>`;
+        const tip = [locked ? M.LOCKED_NOTE : '', ...is.map(x => x.message)].filter(Boolean).join(' · ') || M.formatValue(row[c.key], c.type);
+        html += `<div class="gk-cell gk-t-${c.type} ${cls.join(' ')}" data-r="${r}" data-c="${i}" style="left:${left}px;width:${w[i]}px" title="${esc(tip)}">${esc(M.formatValue(row[c.key], c.type))}</div>`;
       });
       html += '</div>';
     }
@@ -159,7 +165,7 @@ export function createGrid(el, options = {}) {
   function updateBar() {
     countEl.textContent = `${order.length} of ${doc.rows.length} rows · ${issues.filter(i => i.level === 'error').length} errors`;
     densityBtn.textContent = H === DENSITY.compact ? 'Comfortable' : 'Compact';
-    $('.gk-undo').disabled = !history.undo.length; $('.gk-redo').disabled = !history.redo.length;
+    $('.gk-undo').disabled = readOnly || !history.undo.length; $('.gk-redo').disabled = readOnly || !history.redo.length;
   }
   function render({ full = true } = {}) {
     if (full) renderHead();
@@ -168,13 +174,22 @@ export function createGrid(el, options = {}) {
   }
 
   // ---------- mutations through the model ----------
-  function commit(res, { history: track = true } = {}) {
+  // Every change to the document lands here. A read-only grid applies nothing, and a change that touches a
+  // locked part is refused (with a banner). A view change (a column width) is not a data change: `view` skips the
+  // check, and it is recorded for undo only when the grid is editable. Read-only grids never record a step.
+  function commit(res, { history: track = true, view = false } = {}) {
+    if (!view) {
+      const verdict = M.mutationAllowed({ readOnly, before: doc.rows, after: res.rows, columns: doc.columns, lock });
+      if (!verdict.ok) { if (!readOnly) showBanner({ title: 'Not applied', lines: [verdict.reason], more: 0 }); render({ full: false }); return false; }
+    }
     doc = { columns: res.columns, rows: res.rows };
-    if (track && res.change) { history.undo.push(res.change); history.redo = []; }
+    if (track && res.change && !readOnly) { history.undo.push(res.change); history.redo = []; }
     recompute(); render();
     if (onChange) onChange({ rows: doc.rows, columns: doc.columns, change: res.change, errors: res.errors ?? [] });
+    return true;
   }
   function step(direction) {
+    if (readOnly) return;
     const from = direction === 'undo' ? history.undo : history.redo;
     const to = direction === 'undo' ? history.redo : history.undo;
     if (!from.length) return;
@@ -192,6 +207,7 @@ export function createGrid(el, options = {}) {
   // ---------- editing ----------
   function startEdit(r, c, seed = null) {
     if (readOnly || !doc.columns[c] || r < 0 || r >= doc.rows.length) return;
+    if (M.isLockedCell(lockedMap, r, doc.columns[c].key)) return; // a derived cell is never edited
     cancelEdit();
     const col = doc.columns[c];
     const { lefts, widths: w } = colLefts();
@@ -381,7 +397,7 @@ export function createGrid(el, options = {}) {
     const up = () => {
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
       doc = base;
-      if (w !== startW) commit(M.resizeColumn(base, key, w));
+      if (w !== startW) commit(M.resizeColumn(base, key, w), { view: true });
       else render();
     };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
@@ -440,8 +456,13 @@ export function createGrid(el, options = {}) {
     setReadOnly(flag) {
       const next = !!flag;
       if (next === readOnly) return;
-      readOnly = next; cancelEdit(); el.querySelector('.gk-scroll')?.setAttribute('aria-readonly', String(readOnly)); render();
+      readOnly = next;
+      // A read-only grid keeps no undo steps: none are recorded while it is read-only, and the ones recorded before are dropped.
+      if (readOnly) { history.undo = []; history.redo = []; }
+      cancelEdit(); el.querySelector('.gk-scroll')?.setAttribute('aria-readonly', String(readOnly)); render();
     },
+    /** Which parts are derived (see grid-model.mjs lockedCellMap). Greyed, and never changed by any gesture. */
+    setLock(next) { lock = next ?? {}; recompute(); render(); },
     setRules(next, nextRefs = refs) { rules = next; refs = nextRefs; recompute(); render(); },
     setSearch(text) { searchEl.value = search = text; recompute(); render(); },
     setSort(keys) { sortKeys = keys.slice(); recompute(); render(); },
@@ -458,10 +479,11 @@ export function createGrid(el, options = {}) {
     },
     undo: () => step('undo'),
     redo: () => step('redo'),
-    addRow: (index) => commit(M.addRow(doc, index ?? doc.rows.length)),
-    deleteRows: (indices) => commit(M.deleteRows(doc, indices)),
-    importText: (text, opts) => commit(M.importRows(doc, text, opts)),
-    apply: (res) => commit(res),
+    // Each bulk path is refused by a read-only grid before it builds anything (commit checks the change too).
+    addRow: (index) => (readOnly ? false : commit(M.addRow(doc, index ?? doc.rows.length))),
+    deleteRows: (indices) => (readOnly ? false : commit(M.deleteRows(doc, indices))),
+    importText: (text, opts) => (readOnly ? false : commit(M.importRows(doc, text, opts))),
+    apply: (res) => (readOnly ? false : commit(res)),
     destroy() { cancelEdit(); closeMenu(); document.removeEventListener('paste', onPaste); document.removeEventListener('keydown', onGlobalKey); el.innerHTML = ''; el.classList.remove('gk-root'); listeners.clear(); },
   };
   el.dataset.density = options.density === 'comfortable' ? 'comfortable' : 'compact';
