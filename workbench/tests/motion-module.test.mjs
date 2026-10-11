@@ -61,6 +61,13 @@ test('the inspector shows the generated note and disables every control for a ge
   assert.equal(controls.length, 9, `inspector inputs, selects, toggles, anchors and remove take lockAttr (${controls.length})`);
 });
 
+test('the Asset Gallery link is always shown for a file, enabled only with a source frame, else disabled with its reason', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /const source = p \? sourceFrameOf\(\{ project: p, pose, frames \}\) : null;/);
+  assert.match(src, /source\.file\s*\n?\s*\? `<button[^`]*mo-x-assets" data-path="\$\{esc\(source\.file\)\}"/);
+  assert.match(src, /mo-x-assets" disabled title="\$\{esc\(source\.reason\)\}"/, 'the disabled link says why');
+});
+
 test('Keep my version saves on the hashes the 409 reported, and never reads the file (a deleted pose would 404)', () => {
   const src = read('workbench/modules/motion/index.mjs');
   const keep = src.match(/if \(act === 'keep'\) \{[\s\S]*?\n      \}/);

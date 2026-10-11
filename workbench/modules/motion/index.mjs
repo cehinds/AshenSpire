@@ -16,7 +16,7 @@ import {
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
   rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
-  isMissingOnDisk, forgetDeletedFile,
+  isMissingOnDisk, forgetDeletedFile, sourceFrameOf,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -373,7 +373,7 @@ export default {
       const outfitKey = st.outfit || cls;
       const frames = st.index.frames[outfitKey] || st.index.frames[cls] || {};
       const pose = p ? p.poses[poseIndexAt(p.poses.length, p.duration, st.time)] : null;
-      const frameFile = pose ? (p?.assets?.[`pose:${pose}`] ? null : frames[pose] || null) : null;
+      const source = p ? sourceFrameOf({ project: p, pose, frames }) : null;
       const problems = st.file?.problems || [];
       const sel = st.selected;
       const clip = sel?.kind === 'clip' ? p?.clips.find((c) => c.id === sel.id) : null;
@@ -396,7 +396,9 @@ export default {
         <h3>Links</h3>
         <div class="mo-links">
           ${cls ? `<button type="button" class="btn btn-sm mo-x-entities" data-class="${esc(cls)}">Open in Entity Browser</button>` : ''}
-          ${frameFile ? `<button type="button" class="btn btn-sm mo-x-assets" data-path="${esc(frameFile)}">Open source frames in Asset Gallery</button>` : ''}
+          ${p ? (source.file
+            ? `<button type="button" class="btn btn-sm mo-x-assets" data-path="${esc(source.file)}">Open source frames in Asset Gallery</button>`
+            : `<button type="button" class="btn btn-sm mo-x-assets" disabled title="${esc(source.reason)}">Open source frames in Asset Gallery</button>`) : ''}
         </div>`;
       insp.querySelector('.mo-x-entities')?.addEventListener('click', (e) => ctx.openModule('entities', { kind: 'classes', id: e.currentTarget.dataset.class }));
       insp.querySelector('.mo-x-assets')?.addEventListener('click', (e) => ctx.openModule('assets', { path: e.currentTarget.dataset.path }));

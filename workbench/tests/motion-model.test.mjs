@@ -10,6 +10,7 @@ import {
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
   canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
   rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
+  sourceFrameOf,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -438,4 +439,24 @@ test('the save changes are the dirty drafts only, each on its own base hash, reb
   const rebased = saveChangesOf([a, b], [{ path: b.path, hash: null }]);
   assert.equal(rebased[1].baseHash, null, 'a conflicted draft is saved against the hash the 409 reported');
   assert.equal(rebased[0].baseHash, 'h-pose-studio/renewal/a.pose.json');
+});
+
+test('a pose with embedded art has no source frame, and says why', () => {
+  const project = { assets: { 'pose:windup': 'data:image/webp;base64,AAAA' } };
+  const src = sourceFrameOf({ project, pose: 'windup', frames: { windup: 'assets/x/windup.webp' } });
+  assert.equal(src.file, null);
+  assert.match(src.reason, /embedded in this file/);
+});
+
+test('a pose with no embedded art opens the painted frame of its name', () => {
+  const frames = { guard: 'assets/painted-outfits/reaver/guard.webp' };
+  assert.deepEqual(sourceFrameOf({ project: { assets: {} }, pose: 'guard', frames }), { file: 'assets/painted-outfits/reaver/guard.webp', reason: '' });
+});
+
+test('a pose with neither embedded art nor a painted frame says which one is missing', () => {
+  const src = sourceFrameOf({ project: { assets: {} }, pose: 'windup', frames: { guard: 'g.webp' } });
+  assert.equal(src.file, null);
+  assert.match(src.reason, /No painted frame is named "windup"/);
+  assert.equal(sourceFrameOf({ project: {}, pose: null }).file, null);
+  assert.match(sourceFrameOf({ project: {}, pose: null }).reason, /No pose/);
 });

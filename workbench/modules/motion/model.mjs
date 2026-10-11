@@ -395,6 +395,24 @@ export function renamePose(project, index, name) {
 }
 
 // ---------------------------------------------------------------------------
+/**
+ * The painted source frame the Inspector's "Open source frames in Asset Gallery" link opens for a
+ * timeline pose, or the reason there is none. Every pose file carries its own art as
+ * assets["pose:<name>"] (an embedded image), and the stage draws that art, so a pose with embedded
+ * art has no separate source frame. Otherwise the source is the painted frame the actor's outfit
+ * (or class) has under the pose's name. Returns { file, reason }: file is the path to open or null,
+ * reason is the text to show when the link is disabled.
+ */
+export function sourceFrameOf({ project, pose, frames = {} } = {}) {
+  if (!pose) return { file: null, reason: 'No pose is showing at this time.' };
+  if (typeof project?.assets?.[`pose:${pose}`] === 'string') {
+    return { file: null, reason: `The art for "${pose}" is embedded in this file, so it has no separate source frame.` };
+  }
+  const file = frames && typeof frames[pose] === 'string' ? frames[pose] : null;
+  if (!file) return { file: null, reason: `No painted frame is named "${pose}" for this outfit or class.` };
+  return { file, reason: '' };
+}
+
 // The canvas kit view of a project: anchors and clip positions as items on a
 // REF-sized page. Anchor items are handles centred on the anchor; clip items are
 // handles centred on the clip's position (anchor + x/y in reference pixels).
