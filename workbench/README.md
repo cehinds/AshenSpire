@@ -52,7 +52,8 @@ then explain how to start each tool.
   `tools/content-build.mjs` and `tools/framework-data-build.mjs` first; under
   `content/config`, `tools/config-build.mjs`. Then the preview reloads and a
   toast says *Game reloaded (3 files)*. A failed build does not reload; its
-  output is in the error toast. Generated output never triggers a second reload.
+  output is in the error toast. Generated output never triggers a second reload;
+  an edit made while a build runs is kept and reloads right after it.
 - **Library** — every page in `workbench/tools.json`, grouped by area, with
   kind filters, search, an **Outputs** badge (what the page produces: JSON
   download, PNG …), live thumbnails that load as you scroll, and *Open* (in the

@@ -11,7 +11,7 @@ import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS } from '../core/jobs.mjs';
 import { Tool } from '../core/tools.mjs';
-import { buildsFor } from '../core/watch.mjs';
+import { buildsFor, isBuildOutput } from '../core/watch.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -226,6 +226,63 @@ test('a content/config change runs the config compiler before the reload; a fail
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 900)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{"x":1}\n'); };
   const failed = await nextEvent(app, 'reload-failed');
   assert.match(failed.output, /bad config/);
+});
+
+/** Every `name` event until `done(events)` is true; `onEvent(name, data)` sees each event of any name as it arrives. */
+async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 8000 } = {}) {
+  const res = await fetch(`${app.url}/api/events?token=${app.token}`);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const deadline = Date.now() + timeoutMs;
+  const events = []; let buffer = ''; let pending = null; let opened = false;
+  try {
+    while (Date.now() < deadline) {
+      pending ||= reader.read();
+      const result = await Promise.race([pending, new Promise((r) => setTimeout(() => r(null), 100))]);
+      if (result) pending = null;
+      if (result && result.done) break;
+      if (result && result.value) buffer += decoder.decode(result.value, { stream: true });
+      const frames = buffer.split('\n\n'); buffer = frames.pop();
+      for (const frame of frames) {
+        const ev = frame.match(/^event: (.+)$/m); const data = frame.match(/^data: (.+)$/m);
+        if (!ev || !data) continue;
+        const parsed = JSON.parse(data[1]);
+        if (onEvent) await onEvent(ev[1], parsed);
+        if (ev[1] === name) { events.push(parsed); if (done(events)) return events; }
+      }
+      if (!opened && onOpen) { opened = true; await onOpen(); }
+    }
+    throw Error(`${name} events so far: ${JSON.stringify(events)}`);
+  } finally { reader.cancel().catch(() => {}); }
+}
+
+test('an edit made while a build runs is kept for the next reload; only the build output is ignored', async (t) => {
+  assert.equal(isBuildOutput('src/config/generated/ui.js'), true);
+  assert.equal(isBuildOutput('src/content/generated/cards.js'), true);
+  assert.equal(isBuildOutput('src/framework/data/properties.js'), true);
+  assert.equal(isBuildOutput('src/config/generated'), true);
+  assert.equal(isBuildOutput('src/game.js'), false);
+  assert.equal(isBuildOutput('content/config/ui/tokens.json'), false);
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // A slow config build: the second edit lands while it is still running.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; await new Promise((r) => setTimeout(r, 1200)); fs.mkdirSync('src/config/generated', { recursive: true }); fs.writeFileSync('src/config/generated/ui.js', 'export default ' + Date.now() + ';\\n');\n");
+  const { app } = await boot(t, root);
+  let edited = false;
+  const reloads = await collectEvents(app, 'reload', (evs) => evs.some((e) => e.files.includes('styles/second.css')), {
+    onOpen: async () => { await new Promise((r) => setTimeout(r, 300)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n'); },
+    onEvent: async (name) => {
+      if (name !== 'building' || edited) return;
+      edited = true;
+      await new Promise((r) => setTimeout(r, 300));
+      await fs.writeFile(path.join(root, 'styles/second.css'), 'p{}\n');
+    },
+  });
+  assert.equal(edited, true);
+  assert.deepEqual(reloads[0].files, ['content/config/ui/tokens.json']);
+  assert.deepEqual(reloads[0].built, ['tools/config-build.mjs']);
+  assert.ok(reloads.at(-1).files.includes('styles/second.css'), 'the edit made during the build reloads');
+  for (const r of reloads) assert.ok(!r.files.some(isBuildOutput), `no batch carries the build's own output: ${r.files}`);
 });
 
 test('settings: checkouts are validated; the art checkout is served read-only on the preview origin only', async (t) => {
