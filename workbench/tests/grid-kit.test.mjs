@@ -139,6 +139,35 @@ test('selectedCells: a range over hidden rows only adds no columns and no rows',
   assert.deepEqual(sc.cols, ['id'], 'the data column of the hidden-row range is not selected');
 });
 
+test('copyVisible: TSV follows the sorted view, and skips hidden rows', () => {
+  const d = base();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const tsv = M.copyVisible(d.rows, d.columns, order, selOf(range(0, 0, 3, 1)));
+  assert.equal(tsv, 'b\t10\na\t2\nd\t2\nc\t');
+  const filtered = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  assert.equal(M.copyVisible(d.rows, d.columns, filtered, selOf(range(0, 0, 3, 0))), 'a\nd');
+});
+
+test('copyVisible: a Ctrl selection with mismatched columns uses the column union, blank where no range covers', () => {
+  const d = base();
+  const order = docOrder(4);
+  const text = M.copyVisible(d.rows, d.columns, order, selOf(range(3, 0, 3, 0), range(0, 1, 1, 1)));
+  // Rows 0, 1, 3. Columns id and n. Row 0 and 1 have n only, row 3 has id only.
+  assert.equal(text, '\t2\n\t10\nd\t');
+});
+
+test('copyVisible: overlapping ranges copy each cell once, and quoting survives', () => {
+  const rows = [{ id: 'a\tb', n: 1, on: true, tag: 'x', data: null }];
+  const d = { columns: cols.map(c => ({ ...c, label: c.key })), rows };
+  const text = M.copyVisible(rows, d.columns, [0], selOf(range(0, 0, 0, 1), range(0, 1, 0, 2)));
+  assert.equal(text, '"a\tb"\t1\ttrue');
+});
+
+test('copyVisible: an empty selection copies nothing', () => {
+  const d = base();
+  assert.equal(M.copyVisible(d.rows, d.columns, [], selOf(range(0, 0, 3, 0))), '');
+});
+
 test('selectedCells: columns are clipped to the column count', () => {
   const sc = M.selectedCells(selOf(range(0, 0, 0, 99)), [0], cols);
   assert.deepEqual(sc.cols, cols.map(c => c.key));

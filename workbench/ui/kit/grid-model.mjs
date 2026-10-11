@@ -240,6 +240,16 @@ export function toDelimited(matrix, delim = '\t') {
   };
   return matrix.map(r => r.map(esc).join(delim)).join('\n');
 }
+/**
+ * TSV for a copy of the selection. Rows run in view order and columns in column order; with several
+ * ranges the columns are the union, and a cell no range covers is blank. Empty when nothing is selected.
+ */
+export function copyVisible(rows, columns, order, selection) {
+  const { rows: picked, cols, has } = coverage(selection, order, columns);
+  if (!picked.length) return '';
+  const matrix = picked.map(r => cols.map(c => (has(r, c) ? formatValue(rows[r][columns[c].key], columns[c].type) : '')));
+  return toDelimited(matrix, '\t');
+}
 
 // ---------- mutations ----------
 

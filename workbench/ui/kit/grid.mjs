@@ -139,7 +139,6 @@ export function createGrid(el, options = {}) {
     if (onChange) onChange({ rows: doc.rows, columns: doc.columns, change, direction, errors: [] });
   }
   const selectedRows = () => M.selectedCells(sel, order, doc.columns).rows;
-  const rectOfSel = () => M.activeRect(sel);
   // The selected cells as {r, c} indices, in view order (for the model's cell-level ops).
   const selectedTargets = () => {
     const colIdx = new Map(doc.columns.map((c, i) => [c.key, i]));
@@ -215,12 +214,8 @@ export function createGrid(el, options = {}) {
 
   // ---------- clipboard and bulk actions ----------
   function copySelection() {
-    const rect = rectOfSel(); if (!rect) return;
-    const matrix = [];
-    for (let r = rect.r0; r <= rect.r1 && r < doc.rows.length; r++) {
-      matrix.push(doc.columns.slice(rect.c0, rect.c1 + 1).map(c => M.formatValue(doc.rows[r][c.key], c.type)));
-    }
-    const text = M.toDelimited(matrix, '\t');
+    if (!selectedRows().length) return;
+    const text = M.copyVisible(doc.rows, doc.columns, order, sel);
     try { navigator.clipboard?.writeText(text).catch(() => {}); } catch { /* clipboard blocked */ }
     lastCopied = text;
   }
