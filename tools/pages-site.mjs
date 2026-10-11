@@ -792,10 +792,29 @@ export function readBranchPreviews(dir, skipped = []) {
   if (!existsSync(file)) return [];
   const list = JSON.parse(readFileSync(file, 'utf8')).previews;
   if (!Array.isArray(list)) throw new Error(`${file}: no previews array`);
+  // SANITISING IS NOT INJECTIVE: feature/a+b and feature/a-b both become
+  // feature/a-b, and would share one folder and one site path. Such a path is
+  // served for neither branch; each is named, with its PR, and a warning is logged.
+  const branchesAt = new Map();
+  for (const entry of list) {
+    let path;
+    try { path = safeBranchDir(entry.branch); } catch { continue; }
+    if (!branchesAt.has(path)) branchesAt.set(path, []);
+    branchesAt.get(path).push(entry);
+  }
+  const collided = new Set();
+  for (const [path, group] of branchesAt) {
+    if (new Set(group.map((e) => e.branch)).size < 2) continue;
+    collided.add(path);
+    const who = group.map((e) => `PR #${e.pr} (${e.branch})`).join(' and ');
+    console.warn(`WARNING: branch paths collide at "${path}": ${who}. Neither is published.`);
+    for (const e of group) skipped.push({ branch: e.branch, reason: `its site path "${path}" is shared with another branch (${who}); neither is published` });
+  }
   const out = [];
   for (const entry of list) {
     try {
       const path = safeBranchDir(entry.branch);
+      if (collided.has(path)) continue;
       if (entry.dir !== path) throw new Error(`folder "${entry.dir}" is not the branch's site path "${path}"`);
       const from = join(dir, path);
       const htmls = existsSync(from) ? readdirSync(from).filter((f) => f.endsWith('.html')) : [];
