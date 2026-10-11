@@ -51,6 +51,13 @@ function cardBand(hand) {
   return right > left ? { left, right } : null;
 }
 
+/** Closes the Full log door for good: the combat has ended or the screen is leaving. */
+export function closeCombatFullLog(state) {
+  const door = state.fullLog;
+  state.fullLog = null;
+  door?.close();
+}
+
 export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
@@ -70,6 +77,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   // and is a plain text button: it is not one of the three drag sizes.
   const fullLog = button({ label: t('combat.log.full'), attrs: { 'data-combat-tool': 'full-log', 'aria-haspopup': 'dialog' } });
   fullLog.classList.add('combat-log-full');
+  // A remount draws a new Full log button. An open door is adopted by it: its
+  // focus return moves to this button, and a closed handle is dropped.
+  if (state.fullLog && !state.fullLog.panel.isConnected) state.fullLog = null;
+  state.fullLog?.setOpener(fullLog);
   const head = el('div', { class: 'combat-log-head' });
   head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
@@ -125,11 +136,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     state.open = true; onViewChange();
   });
   // The full log is a door of its own. It reads the same entries as the drawer
-  // and changes neither the drawer's open state nor its size.
-  let fullLogModal = null, latestEntries = [];
+  // and changes neither the drawer's open state nor its size. Its live handle
+  // sits on the screen's `state`, so a remount keeps the same door open; only
+  // the screen's teardown (closeCombatFullLog) or the reader's Close ends it.
+  let latestEntries = [];
   fullLog.addEventListener('click', () => {
-    if (fullLogModal) return;
-    fullLogModal = openCombatLogModal({ entries: latestEntries, opener: fullLog, onClose: () => { fullLogModal = null; } });
+    if (state.fullLog) return;
+    state.fullLog = openCombatLogModal({ entries: latestEntries, opener: fullLog, onClose: () => { state.fullLog = null; } });
   });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   let frame = 0, entryKey = '';
@@ -209,7 +222,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     latestEntries = log.entries;
     const key = JSON.stringify(log.entries);
     if (key !== entryKey) {
-      entryKey = key; renderCombatLogEntries(list, log.entries); fullLogModal?.setEntries(log.entries);
+      entryKey = key; renderCombatLogEntries(list, log.entries); state.fullLog?.setEntries(log.entries);
       list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
     }
     schedule();
@@ -217,5 +230,6 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   return { update, flushGeometry,
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
-    release() { released = true; fullLogModal?.close(); observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+    // A remount releases this instance but leaves an open full log to the next one.
+    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }

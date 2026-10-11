@@ -99,6 +99,20 @@ test('the Full log button is in the drawer header, outside the scrolling entries
   assert.doesNotMatch(source, /list\.append\([^)]*fullLog/);
 });
 
+test('setOpener moves focus return to the button that replaced the opener', () => {
+  withModalDom((dom) => {
+    resetModalState();
+    const first = openerButton(dom);
+    const log = openCombatLogModal({ entries, opener: first });
+    const second = dom.document.createElement('button');
+    dom.document.body.appendChild(second);
+    log.setOpener(second);
+    log.close();
+    assert.equal(dom.document.activeElement, second, 'focus lands on the new Full log button');
+    assert.notEqual(dom.document.activeElement, first);
+  });
+});
+
 test('touching the full log never skips the attack playing underneath it', () => {
   withModalDom((dom) => {
     resetModalState();
