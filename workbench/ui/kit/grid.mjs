@@ -63,7 +63,7 @@ export function gridColumns(columns = []) {
 
 export function createGrid(el, options = {}) {
   let rules = options.rules ?? [], refs = options.refs ?? {};
-  const readOnly = !!options.readOnly, onChange = options.onChange ?? null;
+  let readOnly = !!options.readOnly; const onChange = options.onChange ?? null;
   let H = DENSITY[options.density] ?? DENSITY.compact;
   let doc = { columns: gridColumns(options.columns), rows: options.rows ?? [] };
   let issues = [], issueMap = new Map(), order = [], sortKeys = [], search = '';
@@ -435,6 +435,12 @@ export function createGrid(el, options = {}) {
       doc = { columns: gridColumns(columns ?? doc.columns), rows: rows ?? doc.rows };
       history.undo = []; history.redo = []; sel = M.createSelection(); cancelEdit();
       recompute(); render();
+    },
+    /** Turns editing off or on. A read-only grid keeps its selection, search and copy. */
+    setReadOnly(flag) {
+      const next = !!flag;
+      if (next === readOnly) return;
+      readOnly = next; cancelEdit(); el.querySelector('.gk-scroll')?.setAttribute('aria-readonly', String(readOnly)); render();
     },
     setRules(next, nextRefs = refs) { rules = next; refs = nextRefs; recompute(); render(); },
     setSearch(text) { searchEl.value = search = text; recompute(); render(); },

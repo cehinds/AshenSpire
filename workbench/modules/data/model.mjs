@@ -35,10 +35,16 @@ const NUMBER = /^-?(\d+|\d*\.\d+)$/;
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isEmpty = (v) => v === undefined || v === null || v === '';
 
-/** The table files among repo paths: Source (csv and json) and Framework (json), each sorted by name. */
+/** The group the tag model proposal's tables are listed under in Data Studio. */
+export const TAG_MODEL_GROUP = 'Tag model (proposal)';
+
+/** The table files among repo paths: Source (csv and json), Framework (json) and the tag model proposal (csv), each sorted by name. */
 export function listTables(paths = []) {
   const out = [];
   for (const path of paths) {
+    // The tag model proposal (docs/tag-model/tables, see workbench/core/tag-model.mjs): listed only when its folder exists.
+    const t = /^docs\/tag-model\/tables\/((?:[\w-]+\/)*[\w-]+)\.csv$/.exec(String(path));
+    if (t) { out.push({ path, name: t[1], group: TAG_MODEL_GROUP, format: 'csv' }); continue; }
     const m = /^(content\/(source|framework))\/([^/]+)\.(csv|json)$/.exec(String(path));
     if (!m) continue;
     const group = m[2] === 'source' ? 'Source' : 'Framework';
@@ -46,7 +52,8 @@ export function listTables(paths = []) {
     if (group === 'Framework' && format !== 'json') continue;
     out.push({ path, name: m[3], group, format });
   }
-  return out.sort((a, b) => (a.group === b.group ? a.name.localeCompare(b.name) : a.group === 'Source' ? -1 : 1));
+  const rank = (g) => (g === 'Source' ? 0 : g === 'Framework' ? 1 : 2);
+  return out.sort((a, b) => (a.group === b.group ? a.name.localeCompare(b.name) : rank(a.group) - rank(b.group)));
 }
 
 /** The key column: the first column named id, key or name. None means no key rules. */

@@ -60,3 +60,9 @@
 .ds-review-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 .ds-grid .gk-undo, .ds-grid .gk-redo { display: none; }
 .ds-lines .ds-line { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* The tag model proposal: a read-only or derived-column note above the grid. */
+.ds-tm-banner { margin: 0 0 8px; padding: 8px 12px; border-radius: 8px; background: var(--surface-2, #f4f1ea); color: var(--text-2, #3d3a33); font-size: 13px; line-height: 1.4; }
+.ds-tm-banner[hidden] { display: none; }
+/* A visible banner takes its own row above the grid; hidden, it takes none. */
+.ds-main:has(> .ds-tm-banner:not([hidden])) { grid-template-rows: auto auto minmax(0, 1fr); }

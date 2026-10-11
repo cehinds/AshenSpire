@@ -28,6 +28,9 @@ const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests
  *  The group is also held across processes through <root>/.build-lock
  *  (tools/lib/build-lock.mjs), which the editor and UI Studio take too. */
 export const GENERATED = 'generated-sources';
+/** The tag model jobs share one group: they regenerate and check the same docs/tag-model tables. */
+export const TAG_MODEL = 'tag-model';
+export const TAG_MODEL_MISSING = 'docs/tag-model is not on this branch yet. It lands with feature/TagRefactor.';
 
 /** A job's params: absent or null means the defaults ({}); any other non-object is a 400. */
 export function jobParams(params) {
@@ -69,6 +72,20 @@ export const JOBS = {
   'engine-export': {
     lock: GENERATED, label: 'Engine export', description: 'Export the game data as JSON tables and schemas for Unity / Unreal into build/engine-export.',
     steps: () => [{ args: ['tools/engine-export.mjs', '--out', 'build/engine-export'], missing: 'tools/engine-export.mjs is not in this checkout yet. Pull the branch that adds the engine exporter, then run this again.' }],
+  },
+  // The tag model proposal (docs/tag-model, from feature/TagRefactor). It is not a game build input:
+  // these jobs only regenerate and check its own tables. Both share one lock group so they never overlap.
+  'tag-model': {
+    lock: TAG_MODEL, label: 'Tag model: build, check, compile', description: 'Regenerate the tag model tables, check their integrity, and write compile-report.md under docs/tag-model.',
+    steps: () => [
+      { args: ['docs/tag-model/tools/build.mjs'], missing: TAG_MODEL_MISSING },
+      { args: ['docs/tag-model/tools/check.mjs'], missing: TAG_MODEL_MISSING },
+      { args: ['docs/tag-model/tools/compile.mjs'], missing: TAG_MODEL_MISSING },
+    ],
+  },
+  'tag-model-check': {
+    lock: TAG_MODEL, label: 'Tag model: check', description: 'Check the tag model tables under docs/tag-model for integrity, without rebuilding them.',
+    steps: () => [{ args: ['docs/tag-model/tools/check.mjs'], missing: TAG_MODEL_MISSING }],
   },
   'tool-tests': {
     label: 'Tool tests', description: 'Run the editor, UI Studio and Workbench test suites (node --test).',
