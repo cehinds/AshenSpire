@@ -88,7 +88,8 @@ Workers return conclusions, never file dumps. The orchestrator never reads a wor
 transcript.
 
 ```text
-Branch / SHA:
+Branch:
+Commits: every SHA in order, oldest first, each with its subject
 Files changed:
 What the fix does (2–4 lines):
 Tests: <command> → <pass/fail counts>; failures named, with "environmental" or "real"
