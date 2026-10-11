@@ -113,8 +113,14 @@ export default {
     function applyDoc(path, snap) {
       const doc = { columns: snap.columns, rows: snap.rows };
       state.drafts.set(path, doc);
-      if (path === state.selected) { state.grid.setRules(tableRules(doc.columns)); state.grid.setData(doc); }
+      if (path === state.selected) showDoc(doc);
       refresh();
+    }
+    // Rules name columns, so they change only after the document holding those columns is set.
+    function showDoc(doc) {
+      state.grid.setRules([]);
+      state.grid.setData({ columns: doc.columns, rows: doc.rows });
+      state.grid.setRules(tableRules(doc.columns));
     }
     function refresh() { renderList(); showFile(); renderRow(); renderReviewCount(); }
     function renderReviewCount() {
@@ -185,6 +191,8 @@ export default {
       const doc = state.drafts.get(state.selected) ?? { rows: [] };
       fileEl.textContent = `${state.selected} · ${doc.rows.length} rows${dirtyOf(state.selected) ? ' · unsaved changes' : ''}`;
     }
+    // The grid redraws its rows on mousedown, which takes focus off the clicked cell; focus the grid again so its keys work.
+    gridEl.addEventListener('mousedown', () => setTimeout(() => gridEl.querySelector('.gk-scroll')?.focus({ preventScroll: true }), 0));
     // The grid's own Undo, Redo and keys go through the module's History instead, so one stack covers every table.
     gridEl.addEventListener('keydown', (ev) => {
       if (ev.target.tagName === 'INPUT') return;
@@ -208,9 +216,9 @@ export default {
       state.selected = path;
       try { history.replaceState(null, '', hashFor('data', { table: path })); } catch { /* the hash is a convenience */ }
       const doc = state.drafts.get(path) ?? { columns: table.columns, rows: table.rows };
+      state.drafts.set(path, doc);
       state.activeRow = null;
-      grid.setRules(tableRules(doc.columns));
-      grid.setData({ columns: doc.columns, rows: doc.rows });
+      showDoc(doc);
       refresh();
     }
 

@@ -30,7 +30,7 @@
 .ds-diff h3 { font-size: var(--as-text-sm); margin: 0 0 6px; font-family: var(--as-mono); }
 .ds-count { color: var(--as-text-faint); font-weight: 400; margin-left: 8px; }
 .ds-lines { margin: 0; max-height: 260px; overflow: auto; background: var(--as-bg-sunken); border: 1px solid var(--as-line); border-radius: var(--as-radius); font: var(--as-text-xs)/1.5 var(--as-mono); }
-.ds-line { padding: 0 10px; white-space: pre; }
+.ds-line { padding: 0 10px; }
 .ds-line.ds-add { background: rgba(94, 191, 124, 0.14); color: var(--as-good); }
 .ds-line.ds-del { background: rgba(224, 100, 92, 0.14); color: var(--as-bad); }
 .ds-line.ds-ctx { color: var(--as-text-dim); }
@@ -39,3 +39,5 @@
 .ds-review-status p { margin: 6px 0; }
 .ds-bad { color: var(--as-bad); }
 .ds-review-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.ds-grid .gk-undo, .ds-grid .gk-redo { display: none; }
+.ds-lines .ds-line { white-space: pre-wrap; overflow-wrap: anywhere; }
