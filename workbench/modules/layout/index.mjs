@@ -7,6 +7,7 @@
 import { icon } from '../../ui/icons.mjs';
 import { createCanvas, createLayersPanel, createInspector } from '../../ui/kit/canvas.mjs';
 import * as C from './config-model.mjs';
+import * as M from '../../../ui-studio/model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const CSS = ['/ui/kit/canvas.css', '/modules/layout/layout.css'];
@@ -104,6 +105,7 @@ export default {
       if (fit) st.canvas.fit();
       paintBar();
       paintStatus();
+      paintFields();
     }
 
     function paintBar() {
@@ -126,6 +128,49 @@ export default {
       const hasSel = st.canvas ? st.canvas.getSelection().length : 0;
       for (const b of el.querySelectorAll('[data-align]')) b.disabled = hasSel < 1;
       for (const b of el.querySelectorAll('[data-distribute]')) b.disabled = hasSel < 3;
+    }
+
+    /** The config values the selected region owns, each editable in place; a $name shows its value as a chip. */
+    function paintFields() {
+      const box = $('.lay-fields');
+      const f = activeFile(), v = st.view;
+      const ids = st.canvas ? st.canvas.getSelection() : [];
+      if (!f || !f.data || !v) { box.innerHTML = ''; return; }
+      if (ids.length !== 1) {
+        box.innerHTML = `<p class="lay-note">${ids.length ? `${ids.length} regions selected. Select one to see its config values.` : 'Select a region to see the config values it owns.'}</p>`;
+        return;
+      }
+      const region = v.regions.find((r) => r.id === ids[0]);
+      if (!region) { box.innerHTML = ''; return; }
+      const tokens = (st.files.get(C.TOKENS)?.data?.vars) || {};
+      const paths = C.pathsOf(region, f.data);
+      const rows = paths.map((path) => {
+        const value = M.getPath(f.data, path);
+        const key = esc(path);
+        let control;
+        if (typeof value === 'number') control = `<span><input type="number" step="any" data-path="${key}" value="${esc(value)}"> <span class="lay-unit">${esc(M.unitOf(path))}</span></span>`;
+        else if (M.isFraction(value)) control = `<span class="lay-note">fraction ${esc(value.numerator)}/${esc(value.denominator)}, edit in the file</span>`;
+        else if (M.isRef(value)) {
+          const ref = C.refInfo(value, f.data, tokens);
+          const chip = ref.from === 'missing' ? 'unknown' : `= ${Number.isFinite(ref.value) ? ref.value : 'NaN'} (${ref.from})`;
+          control = `<span><input type="text" data-path="${key}" value="${esc(value)}"> <span class="lay-chip${ref.from === 'missing' ? ' is-missing' : ''}">${esc(chip)}</span></span>`;
+        } else if (typeof value === 'string') control = `<span><input type="text" data-path="${key}" value="${esc(value)}"></span>`;
+        else control = `<span class="lay-note">${esc(M.leafKind(value))}</span>`;
+        return `<div class="lay-row"><code title="${key}">${esc(path)}</code>${control}</div>`;
+      }).join('');
+      const note = region.edit ? 'Drag its edge on the canvas, or type a value here.' : 'No config value drags here. Its size follows the others.';
+      box.innerHTML = `<h3>${esc(region.label)}</h3><p class="lay-note">${esc(note)}</p>${rows || '<p class="lay-note">This region owns no config value.</p>'}`;
+    }
+
+    function onFieldChange(e) {
+      const input = e.target;
+      const path = input.dataset ? input.dataset.path : null;
+      const f = activeFile();
+      if (!path || !f || !f.data) return;
+      if (input.value === '') { paintFields(); return; }
+      const value = input.type === 'number' ? Number(input.value) : input.value;
+      if (typeof value === 'number' && !Number.isFinite(value)) { paintFields(); return; }
+      setFileData(f.rel, C.setConfigValue(f.data, path, value), `Set ${path}`);
     }
 
     function paintStatus() {
@@ -174,10 +219,11 @@ export default {
         grid: { size: st.settings.grid.sizePx, subdivisions: st.settings.grid.subdivisions, show: st.settings.grid.show },
         rulers: st.settings.canvas.showRulers !== false,
         onChange: onCanvasChange,
-        onSelect: () => { paintBar(); paintStatus(); },
+        onSelect: () => { paintBar(); paintStatus(); paintFields(); },
       });
       st.layers = createLayersPanel($('.lay-layers'), st.canvas);
       st.inspector = createInspector($('.lay-insp'), st.canvas, []);
+      $('.lay-fields').addEventListener('change', onFieldChange);
       st.canvas.subscribe(() => paintBar());
     }
 

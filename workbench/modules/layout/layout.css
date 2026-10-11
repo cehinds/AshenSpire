@@ -41,3 +41,6 @@
   .lay-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
   .lay-left, .lay-right { border: 0; border-top: 1px solid var(--as-line); max-height: 30vh; }
 }
+
+/* The kit's inspector also lists name, lock, hide and rotation; a region has none of them in the config, so they are not offered. */
+.lay-insp .ck-check, .lay-insp label.ck-field:has(> [data-key="label"]), .lay-insp label.ck-field:has(> [data-key="rot"]) { display: none; }
