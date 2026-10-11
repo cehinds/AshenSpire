@@ -289,6 +289,16 @@ test('the battlefield view\'s reload reads a 404 as the disk state: the draft go
   assert.match(body, /return \{ missing: true \};/, 'the dialog is told the file is missing');
 });
 
+test('the SP orb\'s reload runs the load check before it changes any state, and reports a failure in the view', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/orb-view.mjs'), 'utf8');
+  const body = src.slice(src.indexOf('async reload(path)'), src.indexOf('hashOf(path)', src.indexOf('async reload(path)')));
+  const check = body.indexOf('O.readFooterText(r.text)');
+  assert.ok(check > 0, 'reload reads the file through the shared check');
+  assert.ok(check < body.indexOf('st.data = data;'), 'the check runs before the draft is replaced');
+  assert.ok(check < body.indexOf('host.history.clear();', check), 'the history goes only after the check passes (the 404 branch above is the disk state, not a load)');
+  assert.match(body, /host\.toast\(\{ kind: 'error', title: `Could not reload \$\{O\.FOOTER_FILE\}`, detail: err\.message \}\);\s*return undefined;/, 'a refused file is toasted in the view and returned, not thrown');
+});
+
 test('a sketch pick that finishes after a newer pick or a new sketch installs nothing and shows no error', () => {
   const src = readFileSync(join(ROOT, 'workbench/modules/layout/sketch-view.mjs'), 'utf8');
   const pick = src.slice(src.indexOf('async function pick(name)'), src.indexOf('function create()'));
