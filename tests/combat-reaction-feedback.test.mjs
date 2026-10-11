@@ -8,6 +8,9 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCoopCombat, endTurn, chooseReaction, setReactions, leaveCombat } from '../src/engine/coopCombat.js';
 import { beforeReactionAction } from '../src/engine/combatReactions.js';
+import { applyAttackDamage } from '../src/engine/actions.js';
+import { combatRules } from '../src/content/combatRules.js';
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 
 const SLASH = { intent: 'attack', damage: 1, hits: 2, weight: 1 };
 const SWEEP = ['camp:physical', 'maneuver:sweep', 'reach:contact', 'targeting:single'];
@@ -140,4 +143,52 @@ test('co-op reports the same reasons through the same offer door', () => {
   leaveCombat(frozen, 'b');
   endTurn(frozen, 'a');
   assert.ok(unavailable(frozen.eventLog).every(row => row.ownerId !== 'b'), 'a disconnected seat gets no receipt');
+});
+
+const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);
+
+test('v2: an enemy Smash that breaks a defending seat\'s Guard emits combatGuardBroken once per root', () => {
+  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] };
+  for (const [block, broken] of [[0, true], [200, false]]) {
+    const combat = solo({ cardIds: ['defend'], move: SMASH });
+    combat.player.block = 0;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });
+    combat.player.block += block;
+    assert.ok(combat.player.block > 0, 'Defend raised Guard');
+    const rows = guardBroken(soloEnd(combat));
+    assert.deepEqual(rows.map(({ targetId, sourceId }) => ({ targetId, sourceId })), broken ? [{ targetId: 'player', sourceId: 'e1' }] : []);
+    if (broken) assert.ok(rows[0].poise > 0);
+  }
+});
+
+test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or synchronous', () => {
+  const registries = createRegistries(contentBundle);
+  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
+      energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
+  const enemy = c.enemies[0];
+  enemy.hp = enemy.maxHp = 200; enemy.block = 3;
+  applyAttackDamage(c, c.player, enemy, 5, [], { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'slashing' },
+    attack: { source: 'weapon', damageType: 'slashing' }, combatRiderTargets: [] });
+  assert.equal(c.combatExpansionVersion === 2, false);
+  assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId, poise }) => ({ targetId, sourceId, poise })),
+    [{ targetId: 'e1', sourceId: 'player', poise: 3 }]);
+});
+
+test('v1: a Smash into an armed Counter breaks Guard through the synchronous door once', () => {
+  const profile = { camp: 'physical', maneuver: 'smash', damageType: 'slashing' };
+  const registries = createRegistries({ ...legacyContentBundle,
+    cards: legacyContentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card,
+      effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
+    enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
+  const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
+    player: { classId: 'reaver', hp: 200, maxHp: 200, energyMax: 10, drawPerTurn: 1,
+      deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] } });
+  const enemy = c.enemies[0];
+  enemy.block = 3; enemy.wardBlock = 0; enemy.poiseGuard = 0; enemy.poiseMeter = { value: 0, max: 100 };
+  enemy.combatCounter.mode = 'melee'; enemy.combatCounter.damage = 6; enemy.combatCounter.poiseDamage = 4;
+  c.player.poiseMeter = { value: 0, max: 100 };
+  dispatch(c, { type: 'playCard', cardInstanceId: 'smash1', targetId: enemy.id });
+  assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId, poise }) => ({ targetId, sourceId, poise })),
+    [{ targetId: enemy.id, sourceId: 'player', poise: 3 }]);
 });
