@@ -75,12 +75,12 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
 
 test('rear reactions tint and knock back in the canvas, not through CSS filters', () => {
   const css = src('styles/combat.css');
-  const rear = css.match(/\.player \.sprite\.hitflash > \.alternative-card-stage[^{]*\{[^}]*\}/)?.[0] || '';
+  const rear = css.match(/\.player \.sprite\.hitflash > \.alternative-card-stage:not\(\[data-still\]\)[^{]*\{[^}]*\}/)?.[0] || '';
   assert.match(rear, /animation-name: none;/, 'the rear root takes no hit animation');
   assert.doesNotMatch(css, /rear-reaction-flash/, 'the old interpolated rear tint is gone');
   assert.doesNotMatch(rear, /hue-rotate|filter|translate/);
   // A stagger keeps a visible, stepped (never interpolated) tint and no transform.
-  assert.match(css, /\.player \.sprite\.wobble:not\(\.hitflash\) > \.alternative-card-stage:first-child \{\s*animation-name: rear-stagger-flash;/);
+  assert.match(css, /\.player \.sprite\.wobble:not\(\.hitflash\) > \.alternative-card-stage:first-child,[^{]*\.player \.sprite\.hitflash > \.alternative-card-stage\[data-still\]:first-child[^{]*\{\s*animation-name: rear-stagger-flash;/, 'a still (Rendered) stage keeps a stepped CSS hit tint');
   const stagger = css.match(/@keyframes rear-stagger-flash \{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(stagger, /0%, 44\.99% \{ filter: sepia\(1\)/);
   assert.doesNotMatch(stagger, /transform/);

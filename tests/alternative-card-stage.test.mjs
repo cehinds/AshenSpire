@@ -42,6 +42,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
   const step=ms=>{time+=ms;wallTime+=ms;const callbacks=[...raf.values()];raf.clear();callbacks.forEach(fn=>fn(time));};
   try {
     setAnimSpeed('normal');
+    { const still=createAlternativeCardStage('reaver',{still:true});assert.equal(still.el.dataset.still,'','a still stage is marked for its CSS hit tint');assert.equal(still.play('hit'),false);still.dispose(); }
     stage=createAlternativeCardStage('reaver');await stage.ready;
     const visible=stage.el.querySelector('canvas');
     assert.deepEqual(contexts.find(c=>c.node===visible),{node:visible,kind:'2d',options:{willReadFrequently:true}});

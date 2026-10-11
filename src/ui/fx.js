@@ -689,7 +689,7 @@ export function playTimeline(events, ctx, done) {
     flushed = true;
     clearHeldFigures();
     // An unheld hit reaction (no hit-stop) is not in heldFigures; a skip ends it too.
-    for (const sprite of document.querySelectorAll('.combatant .sprite')) stageFor(sprite)?.endReaction?.();
+    for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
     clearCombatEffects(ctx.layer);
     cancelActorAnimation();
     clearTimeout(pendingTimer);

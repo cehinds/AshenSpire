@@ -52,6 +52,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
   const el = document.createElement('div');
   el.className = 'pose-stage painted-stage alternative-card-stage';
+  // A still (Rendered-style) stage paints no canvas reaction; CSS tints it instead.
+  if (still) el.dataset.still = '';
   el.dataset.animationSet = 'class-cards-'+classId;
   el.dataset.poseCoverage = 'card-actions';
   el.dataset.idleHeightRatio = '1';
