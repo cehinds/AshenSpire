@@ -12,11 +12,12 @@
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { keepShot } from './lib/shot-match.mjs';
+import { writeFileAtomic } from './lib/write-atomic.mjs';
 import { devtoolsClient, readyExpression, settledFrame } from './shotReady.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -285,7 +286,6 @@ async function capture(shot) {
 // written — a combat frame missing a figure is not evidence.
 async function captureReady(shot) {
   const out = shotPath(shot.name);
-  rmSync(out, { force: true });
   const [width, height] = VIEWPORT.split(',').map(Number);
   let session;
   try {
@@ -348,7 +348,7 @@ async function captureReady(shot) {
         console.error(`  ✗ ${shot.name}: no settled frame in ${MAX_TRIES} retakes; NOT captured.`);
         return false;
       }
-      writeFileSync(out, frame);
+      writeFileAtomic(out, frame);
       const figures = state.combatants.map((c) => `${c.eid} ${c.drawn}/${c.shown}`).join(', ');
       console.log(`  ✓ ${shot.name} → ${out} (art ready: ${figures})`);
       return true;
