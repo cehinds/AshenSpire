@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../ui/kit/grid-model.mjs';
-import { pasteSummary, pasteNotice } from '../ui/kit/grid.mjs';
+import { pasteSummary, pasteNotice, pasteAccepted } from '../ui/kit/grid.mjs';
 
 const cols = [
   { key: 'id', type: 'string' },
@@ -260,6 +260,17 @@ test('pasteVisible: a blank copied cell pastes as a clear, so copy-then-paste ro
   assert.deepEqual(out.errors, []);
   assert.deepEqual(snap(out.rows), snap(src.rows), 'the blank cell cleared to null');
   assertRoundTrip(target, out);
+});
+
+test('pasteAccepted: text proceeds; empty text proceeds only over a selection; read-only takes nothing', () => {
+  const sel = selOf(range(0, 1, 1, 1));
+  assert.equal(pasteAccepted('x', null), true, 'non-empty text pastes at the anchor as before');
+  assert.equal(pasteAccepted('x', selOf()), true);
+  assert.equal(pasteAccepted('', sel), true, 'an empty copied cell over a selection clears it');
+  assert.equal(pasteAccepted('', null), false, 'an empty paste with no selection does nothing');
+  assert.equal(pasteAccepted('', selOf()), false, 'an empty range list is no selection');
+  assert.equal(pasteAccepted('x', sel, true), false, 'a read-only grid takes no paste');
+  assert.equal(pasteAccepted('', sel, true), false, 'a read-only grid takes no empty paste either');
 });
 
 test('pasteVisible: a blank one-value fill clears the selected cells of every type', () => {
