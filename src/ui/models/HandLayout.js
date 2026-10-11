@@ -31,6 +31,32 @@ export function phoneFanCardWidth({ width, zoom = 1, fanCount }, config = wirefr
   return Math.min(compactCard.cardMaxWidthPx / zoom, readable);
 }
 
+// The phone hand band a full fan needs, in local px: the tool row, then the
+// readable fan's card height with handLayout's insets, arc, rotation and the
+// Upcast chooser's reserve (upcastReservePx, physical, less the selection
+// headroom the tool row gives). It is sized for the fan's capacity, the cards
+// shown before paging (a dealt hand), never the current count, so playing a
+// card resizes neither the band nor the battlefield above it.
+export function compactHandBandHeight({ width, zoom = 1, rem = 16 }, config = wireframeUi.hand) {
+  const tools = COMBAT_TOOLS_HEIGHT_PX / zoom;
+  const fanCount = requestedHandCapacity(width, rem, config);
+  const cardWidth = Math.max(compactCard.cardMinWidthPx / zoom, phoneFanCardWidth({ width, zoom, fanCount }, config));
+  const cardHeight = cardWidth / wireframeUi.card.ratio;
+  const lift = config.selectedLiftRem * rem;
+  const arc = config.arcRem * rem;
+  const baseInset = config.verticalInsetRem * rem;
+  const liftReserve = Math.max(0, lift - tools);
+  const controlsReserve = Math.max(0, compactCard.upcastReservePx / zoom - Math.max(lift, tools));
+  const angle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
+  const rotatedExtra = Math.max(0, (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2);
+  const inset = Math.max(baseInset, Math.sin(angle) * cardHeight / 2 + 1);
+  // handLayout gives this card height only when its available height holds
+  // it, and rests the fan's top at the inset within its bottom limit.
+  const fits = cardHeight + baseInset * 2 + liftReserve + arc + controlsReserve;
+  const rests = inset + liftReserve + cardHeight + arc + rotatedExtra + controlsReserve + 1 / zoom;
+  return tools + Math.max(fits, rests) + 1 / zoom;
+}
+
 // Presentation order is local, keyed by instance, and never mutates a pile.
 export function reconcileHandOrder(previous, current) {
   const live = new Set(current);

@@ -24,7 +24,8 @@
       "cardMinWidthPx": 72,
       "cardMaxWidthPx": 112,
       "cardVisibleFraction": 0.9,
-      "cardSideGutterPx": 6
+      "cardSideGutterPx": 6,
+      "upcastReservePx": 52
     },
     "hand": {
       "minimumHeightPx": 208,

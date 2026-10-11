@@ -1,6 +1,6 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { uiConfig } from '../../config/generated/ui.js';
-import { COMBAT_TOOLS_HEIGHT_PX } from './HandLayout.js';
+import { COMBAT_TOOLS_HEIGHT_PX, compactHandBandHeight } from './HandLayout.js';
 
 // The W4 bands, top to bottom.
 const SCENE_BANDS = Object.freeze(['hud', 'scene', 'context', 'footer']);
@@ -58,8 +58,12 @@ export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerA
     const compactConfig = uiConfig.scenes.w4a.sizing.compactCombat;
     const physicalHeight = height * zoom;
     const hud = Math.max(compactConfig.hudMinimumPx, physicalHeight * compactConfig.hudHeightFraction) / zoom;
-    const hand = Math.max(compactConfig.handMinimumPx,
+    // The band never outgrows the readable fan it holds: once a phone's fan is
+    // bound by width, the height a taller card would use goes to the
+    // battlefield instead of an empty strip under the cards.
+    const nominalHand = Math.max(compactConfig.handMinimumPx,
       Math.min(compactConfig.handMaximumPx, physicalHeight * compactConfig.handHeightFraction)) / zoom;
+    const hand = Math.min(nominalHand, Math.max(compactConfig.handMinimumPx / zoom, compactHandBandHeight({ width, zoom, rem })));
     const footer = compactConfig.footerPx / zoom;
     const battlefield = Math.max(0, height - hud - hand - footer);
     const minimumBattlefield = compactConfig.minimumBattlefieldPx / zoom;
