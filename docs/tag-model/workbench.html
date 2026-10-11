@@ -203,7 +203,8 @@ function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), l
 function headPath(t){ return 'tables/'+t; }
 function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
 /* a blob head's rev; legacy heads have none, so their base is '' */
-function revOf(h){ return h&&h.format==='blobs'? (h.rev||'') : ''; }
+/* a blob head's rev; a legacy head gets an identity derived from its JSON, so a later legacy write is a change; absent is '' */
+function revOf(h){ if(!h) return ''; if(h.format==='blobs') return h.rev||''; return 'legacy:'+hashText(JSON.stringify(h)); }
 function headCols(h,t){ return Array.isArray(h.columns)&&h.columns.length? h.columns : TABLES[t].columns; }
 function objectRows(hc, arrs){ return arrs.map(a=>{ const o={}; hc.forEach((c,j)=>{ o[c]=a[j]??''; }); return o; }); }
 function adoptRows(t, hc, objs){
@@ -265,13 +266,14 @@ async function applyHead(t,h){
     adoptRows(t, headCols(h,t), objectRows(headCols(h,t), arrs));
     return;
   }
+  if(h.format!==undefined&&h.format!=='arrays'&&h.format!=='blobs'){ blockTable(t,UNKNOWN_FORMAT); return; }
   if(Array.isArray(h.rows)){ /* oldest inline format: the rows are in the head itself */
-    stopParts(t); ts.legacy=null; ts.base=''; ts.blobs=new Map(); ts.incomplete=null; ts.legacyDocs=[];
+    stopParts(t); ts.legacy=null; ts.base=revOf(h); ts.blobs=new Map(); ts.incomplete=null; ts.legacyDocs=[];
     const hc=headCols(h,t); adoptRows(t, hc, h.rows.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r)); return;
   }
   if(!Number.isInteger(h.parts)||h.parts<1){ blockTable(t,UNKNOWN_FORMAT); return; } /* never adopt an empty table from an unknown head */
   /* legacy head: read only, its parts are assembled when all are present */
-  ts.legacy=h; ts.base=''; ts.blobs=new Map(); ts.incomplete=null;
+  ts.legacy=h; ts.base=revOf(h); ts.blobs=new Map(); ts.incomplete=null;
   ensureParts(t); legacyAssemble(t);
 }
 const UNKNOWN_FORMAT='This table is stored in a format this page does not recognise, so it is blocked and cannot be saved over. Reload later.';

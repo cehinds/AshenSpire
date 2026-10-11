@@ -259,6 +259,34 @@ test('legacy (a) with revs never assembles a part from another save', async () =
   assert.equal(page.state.data.t.rows.length, 2);
 });
 
+test('a head with an unknown format is blocked even when it has integer parts', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { format: 'sheets', columns: COLS, parts: 1 });
+  db.put('tables/t/parts/p0', { index: 0, rev: 'x', rows: [['a1', 'n', 1]] });
+  api.subscribeTable('t');
+  await waitFor(() => page.statuses.some((s) => /does not recognise/.test(s.msg)));
+  assert.equal(page.loaded.has('t'), false);
+  assert.equal(page.state.data.t.rows.length, 0);
+});
+
+test('a legacy write by an old tab after our load counts as a conflict', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T);
+  db.put('tables/t', { columns: COLS, parts: 1, format: 'arrays', revs: ['x'] });
+  db.put('tables/t/parts/p0', { index: 0, rev: 'x', rows: [['a1', 'n', 1]] });
+  A.api.subscribeTable('t');
+  await waitFor(() => A.page.loaded.has('t'));
+  editTable(A.page, sample(3, 'mine')); // this tab has an unsaved edit...
+  // ...when an old tab saves the table again
+  await db.doc('tables/t/parts/p0').set({ index: 0, rev: 'y', rows: [['a2', 'm', 2]] });
+  await db.doc('tables/t').set({ columns: COLS, parts: 1, format: 'arrays', revs: ['y'] });
+  await settle(20);
+  await A.api.flush('t');
+  assert.ok(A.api.tstate.t.conflict, 'the legacy change is a conflict');
+  assert.equal(A.page.dirty.has('t'), true);
+});
+
 test('legacy (b) object-parts head waits for every part, then assembles', async () => {
   const db = makeFakeDb();
   const { page, api } = makePage(db, T);
