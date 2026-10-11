@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { FORM_FACTORS, HUD_LAYOUT_FORMAT, HUD_LAYOUT_TOKENS, PER_CONSUMER, hudLayoutToken, checkTokenValue } from '../tools/hud-layout-tokens.mjs';
 import { buildHudLayoutCss, generateHudLayoutCss, readHudLayoutDocs, mergeHudLayoutExports, HUD_LAYOUT_CSS } from '../tools/hud-layout-css.mjs';
 import { formFactorFor } from '../src/ui/models/FormFactorModel.js';
-import { offsetPlacement, hudGeometry, offsetTargetPlate, targetPlateBox } from '../src/ui/models/HudLayoutOffsetModel.js';
+import { offsetPlacement, hudGeometry, offsetTargetPlate, targetPlateBox, toolsRowTop } from '../src/ui/models/HudLayoutOffsetModel.js';
 import { runInNewContext } from 'node:vm';
 import { balance } from '../src/content/balance.js';
 
@@ -181,6 +181,7 @@ test('every geometry offset is applied by the code that places its element', () 
   const stage = read('src/ui/components/battlefieldStage.js');
   for (const key of ['playerDetailsDx', 'playerDetailsDy', 'enemyNameplateDy', 'turnRibbonDy']) assert.match(stage, new RegExp(`hudOffsets\\.${key}`));
   assert.match(read('src/ui/components/combatTools.js'), /hudGeometry\(style\)\.toolsDy/);
+  assert.match(read('src/ui/components/combatTools.js'), /toolsRowTop\(\{ dockTop, dy: dy \* zoom/);
 });
 
 test('the nameplate offset moves the tap target with the plate, and a colliding offset is dropped', () => {
@@ -217,6 +218,41 @@ test('the stage applies the nameplate offset to the packed target the hit area a
   assert.deepEqual(run(-40, stacked).map((t) => t.y), [300, 240], 'an offset onto another packed target is dropped');
   assert.match(stage, /const target = platedTargets\.find\(target => target\.id === frame\.dataset\.eid\)/,
     'the hit area (--enemy-hit-x/y) and the footer translate read the offset target');
+});
+
+test('the tools offset only raises the row, stays on screen and is dropped over a control', () => {
+  const row = { left: 6, width: 378, height: 40 };
+  assert.equal(toolsRowTop({ dockTop: 500, dy: 0, row }), 500, 'dy 0: docked');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: 30, row }), 500, 'a positive dy is ignored: the cards are below the dock');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -30, row, screenTop: 0 }), 470, 'a negative dy raises the row');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -900, row, screenTop: 20 }), 20, 'clamped to the combat screen top');
+  const intent = { left: 150, right: 200, top: 440, bottom: 480 };
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -30, row, screenTop: 0, obstacles: [intent] }), 500, 'an offset that would cover an enemy intent is dropped');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -10, row, screenTop: 0, obstacles: [intent] }), 490, 'a raise that stops short of it is kept');
+});
+
+test('the tools pass reads its row height and obstacles only for a raise', () => {
+  const tools = read('src/ui/components/combatTools.js');
+  const begin = tools.indexOf('  let frame = 0, entryKey');
+  const end = tools.indexOf('  const observer =', begin);
+  const run = (dy) => {
+    let rowReads = 0, obstacleReads = 0;
+    const hand = { getBoundingClientRect: () => ({ width: 390, right: 390, left: 0, top: 500 }) };
+    const root = { isConnected: true, style: {}, dataset: {}, getBoundingClientRect: () => { rowReads += 1; return { height: 40, top: 500 }; } };
+    const combatEl = { clientWidth: 390, getBoundingClientRect: () => ({ width: 390, top: 0, bottom: 844 }), style: { setProperty() {} },
+      querySelector: (selector) => (selector === '.hand' ? hand : null) };
+    const api = runInNewContext(`${tools.slice(begin, end)}\n({ flushGeometry })`, {
+      combatToolsTokens: () => ({ span: 'field', dy }), cardBand: () => null, TOOLS_MIN_WIDTH: 240, toolsRowTop,
+      toolsObstacles: () => { obstacleReads += 1; return [{ left: 100, right: 200, top: 450, bottom: 480 }]; },
+      root, combatEl, state: { size: 'Small' }, panel: { style: {} }, innerWidth: 390, drag: null, snapHeights: () => ({ Small: 125 }),
+      VIEWPORT_ORIGIN: {}, anchorLocalBox: (_host, rect) => ({ ...rect }), requestAnimationFrame: () => 1, cancelAnimationFrame() {} });
+    api.flushGeometry();
+    return { rowReads, obstacleReads, top: parseFloat(root.style.top) };
+  };
+  assert.deepEqual(run(0), { rowReads: 0, obstacleReads: 0, top: 500 }, 'dy 0 forces no layout read');
+  assert.deepEqual(run(12), { rowReads: 0, obstacleReads: 0, top: 500 }, 'a positive dy is ignored without a read');
+  assert.deepEqual(run(-10), { rowReads: 1, obstacleReads: 1, top: 490 });
+  assert.deepEqual(run(-40), { rowReads: 1, obstacleReads: 1, top: 500 }, 'a raise onto a control is dropped');
 });
 
 test('the tools row keeps its field span unless the token asks for the card band', () => {

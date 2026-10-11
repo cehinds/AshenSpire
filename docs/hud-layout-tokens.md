@@ -97,7 +97,17 @@ The `px` geometry tokens are read once per layout pass with
 `getComputedStyle(combat).getPropertyValue(...)` by the JS that already places
 those elements, added after placement, and then clamped by the same
 reachability/clearance rules (an offset can never push a control off-screen or
-under another control).
+under another control). An offset that would land on another control is
+dropped whole: the element keeps its placed position.
+
+Each geometry token moves its element only in the directions it has room in:
+
+| Token | Moves | Why |
+|---|---|---|
+| `--hud-player-details-dx` / `-dy` | either way | clamped between the HUD band, the field sides and the hand; refused onto another reserved panel, control or target footprint |
+| `--hud-enemy-nameplate-dy` | up or down | the visible name/HP footer and its tap target move together; clamped to the field; refused onto the HUD, ribbon, tools, hand, the player's panel, another fighter's controls or another packed target |
+| `--hud-turn-ribbon-dy` | down only | it hangs from the HUD band's bottom edge, so a negative value is ignored (it would go under the band); clamped to the field floor |
+| `--hud-tools-dy` | up only | it docks on the hand's top edge, so a positive value is ignored (it would cover the cards); clamped to the combat screen top; refused onto the header, ribbon, intents, HP plates, Inspect buttons or fighter targets |
 
 ## Studio mapping
 

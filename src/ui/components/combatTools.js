@@ -5,7 +5,8 @@ import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { t, tFull } from '../strings.js';
 import { trackGesture } from '../gesture.js';
-import { hudGeometry } from '../models/HudLayoutOffsetModel.js';
+import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
+import { visibleCombatPanelRect } from './battlefieldStage.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -16,6 +17,26 @@ export function combatToolsTokens(combatEl) {
   const style = getComputedStyle(combatEl);
   const span = style.getPropertyValue('--hud-tools-span').trim() === 'hand' ? 'hand' : 'field';
   return { span, dy: hudGeometry(style).toolsDy };
+}
+
+// Controls a raised tools row must not cover (docs/hud-layout-tokens.md).
+const TOOLS_OBSTACLES = '.topbar, .turn-ribbon, .combat-hud, .combatant .intent, .combatant-card > :is(.nm,.meters),'
+  + ' .combatant-leading button, .combatant-info, .combatant-mini-hud, .player-action-intent';
+
+/** Screen boxes of every visible control and fighter tap target above the dock. */
+function toolsObstacles(combatEl, zoom) {
+  const boxes = [...combatEl.querySelectorAll(TOOLS_OBSTACLES)]
+    .map(node => visibleCombatPanelRect(node, combatEl)).filter(Boolean);
+  // A fighter's tap target is its ::after square, centred on --enemy-hit-x/y.
+  for (const frame of combatEl.querySelectorAll('.combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)')) {
+    const style = getComputedStyle(frame, '::after');
+    if (style.display === 'none' || style.pointerEvents === 'none') continue;
+    const box = frame.getBoundingClientRect();
+    const x = box.left + parseFloat(style.left) * zoom, y = box.top + parseFloat(style.top) * zoom;
+    const width = parseFloat(style.width) * zoom, height = parseFloat(style.height) * zoom;
+    if ([x, y, width, height].every(Number.isFinite)) boxes.push({ left: x - width / 2, right: x + width / 2, top: y - height / 2, bottom: y + height / 2 });
+  }
+  return boxes;
 }
 
 /** The horizontal extent of the hand's laid-out cards, or null when it has none. */
@@ -124,12 +145,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // A compact toolbar occupies the top of the card band. It never consumes
     // hand width: doing that collapsed every card onto one slot on phones.
     combatEl.style.setProperty('--combat-tools-reserve', '0px');
-    // The vertical offset is added after placement and clamped: the row may
-    // rise into the field but never leaves the combat screen or drops over
-    // the cards below its dock.
+    // The vertical offset only raises the row (toolsRowTop): it may rise into
+    // the field but never leaves the combat screen, never covers a control
+    // above it, and never drops over the cards below its dock (dy > 0 is
+    // ignored). Its height is read only for a raise: at 0 no layout is forced.
     const dockTop = handBox?.top || 0;
-    const rowHeight = root.getBoundingClientRect().height;
-    const top = dy ? Math.max(combatBox.top, Math.min(dockTop + dy * zoom, dockTop, combatBox.bottom - rowHeight)) : dockTop;
+    const top = dy < 0 ? toolsRowTop({ dockTop, dy: dy * zoom, screenTop: combatBox.top,
+      row: { left, width, height: root.getBoundingClientRect().height }, obstacles: toolsObstacles(combatEl, zoom) }) : dockTop;
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;

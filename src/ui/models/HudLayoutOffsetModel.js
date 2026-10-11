@@ -75,3 +75,18 @@ export function offsetTargetPlate({ target, plate, dy = 0, bounds, obstacles = [
   const shift = moved.top - plate.top;
   return shift ? { ...target, y: target.y + shift } : target;
 }
+
+/**
+ * toolsRowTop({ dockTop, dy, row, screenTop, obstacles }) → top (screen px)
+ *   The Combat log / Reaction row docks on the hand's top edge. Its offset
+ *   token only RAISES it: below the dock are the cards, so a positive dy is
+ *   ignored (the row stays docked). A negative dy is clamped to the combat
+ *   screen's top and refused when the raised row would newly cover a control
+ *   (header, ribbon, intents, HP plates, Inspect, targets).
+ *   row: { left, width, height } of the docked row.
+ */
+export function toolsRowTop({ dockTop, dy = 0, row, screenTop = -Infinity, obstacles = [] }) {
+  if (!(dy < 0)) return dockTop;
+  return offsetPlacement({ rect: { left: row.left, top: dockTop, width: row.width, height: row.height }, dy,
+    bounds: { left: -Infinity, right: Infinity, top: screenTop, bottom: dockTop + row.height }, obstacles }).top;
+}
