@@ -138,8 +138,29 @@ export default {
 
     // ---- gestures (config edits arrive in the next step) ----------------
 
-    function onCanvasChange() {
-      // Until the config mapping lands, a canvas gesture is reverted to the config.
+    /**
+     * Set a file's draft data as one history step. The data is replaced, never
+     * mutated, so the step can hold the old and the new tree; undo and redo put
+     * the file back and redraw from it.
+     */
+    function setFileData(rel, next, label) {
+      const f = st.files.get(rel);
+      if (!f || !f.data) return false;
+      const prev = f.data;
+      if (JSON.stringify(prev) === JSON.stringify(next)) return false;
+      const put = (data) => { f.data = data; rebuild(); };
+      put(next);
+      ctx.history.push({ label, before: prev, after: next, undo: () => put(prev), redo: () => put(next) });
+      return true;
+    }
+
+    /** One finished canvas gesture: map its geometry back to the config and record one step. */
+    function onCanvasChange(doc, change) {
+      const f = activeFile();
+      const v = st.view;
+      if (!f || !f.data || !v) { rebuild(); return; }
+      const next = C.applyCanvasEdits({ data: f.data, regions: v.regions, items: doc.items, viewport: v.vp, grid: st.settings.grid });
+      setFileData(f.rel, next, change.label);
       rebuild();
     }
 
