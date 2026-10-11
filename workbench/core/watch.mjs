@@ -10,6 +10,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+/**
+ * How a platform watches a source folder: 'folders' is one non-recursive watch per
+ * folder (Linux, where a recursive watch goes silent after a rename-into-place);
+ * 'recursive' is one { recursive: true } watch for the whole tree (win32, darwin,
+ * and any other platform, as before the per-folder change).
+ */
+export function watchModeFor(platform = process.platform) {
+  return platform === 'linux' ? 'folders' : 'recursive';
+}
+
 const IGNORED = (rel) => rel.split('/').some((p) => p.startsWith('.') || p === 'node_modules') || /(~|\.swp|\.swx|\.tmp|\.crdownload)$/.test(rel);
 
 function walk(dir, out = new Map()) {
