@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Faster checks on every change; release builds the Windows installer",
     "detail": "Development-process change only, nothing in the game changes. Pull requests now run a quick smoke check of about five minutes, the full test suites run when a build is promoted to Test, and Release runs the final polish checks and builds the Windows installer, whose download now follows the Release channel. Each open feature branch gets its own playable build, the README refreshes itself, and new high-resolution art moves to the art repository automatically.",
-    "build": "0.7.1.1288",
+    "build": "0.7.1.1289",
     "pullRequest": 1834,
     "url": "https://github.com/cehinds/AshenSpire/pull/1834"
+  },
+  {
+    "id": "pr-1833",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fighters visibly flinch when hit",
+    "detail": "When your hero takes damage they now play a short seven-frame hurt pose, flashing red on frames 2, 4 and 6 while they are knocked back a step. This replaces the brief rainbow flicker. Enemies recoil further and their red flash starts at the moment of impact. With Reduce flashes on, the hurt pose plays without the red.",
+    "build": "0.7.1.1287",
+    "pullRequest": 1833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1833"
   },
   {
     "id": "pr-1832",

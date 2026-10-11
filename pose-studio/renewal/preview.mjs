@@ -16,7 +16,7 @@ const family=()=>families.get($('#actor').value);
 const available=()=>!!defaultFamily(manifest,$('#actor').value);
 const seq=()=>family().sequences[action];
 const duration=()=>durationFor(seq(),ANIM_SPEEDS[$('#pace').value]);
-const hitProgress=now=>hitAt===null?1:(now-hitAt)*($('#slowmo').checked?.25:1)/260;
+const hitProgress=now=>hitAt===null?1:(now-hitAt)*($('#slowmo').checked?.25:1)/280;
 const message=t=>$('#message').textContent=t;
 async function image(url){
  if(!images.has(url))images.set(url,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Missing image: '+url));img.src=url;}));
@@ -43,7 +43,7 @@ function selection(){
  document.querySelectorAll('[data-action]').forEach(b=>b.textContent=b.dataset.action==='ranged'&&['starseer','herald'].includes($('#actor').value)?'Ranged · class default':family().sequences[b.dataset.action].label);
  $('#coverage').textContent='Base armour · '+family().referenceWeapon;
  $('#play').disabled=$('#restart').disabled=$('#scrub').disabled=!drafted||!ready;
- $('#hit').disabled=!ready||$('#reduced').checked||!duration();
+ $('#hit').disabled=!ready||$('#reduced').checked;
  document.querySelectorAll('[data-action]').forEach(b=>{b.disabled=!drafted;b.classList.toggle('active',b.dataset.action===action);});
  $('#stage-label').textContent=`${$('#actor').value.toUpperCase()} · BASE ARMOUR · ${seq().label.toUpperCase()}`;
  const notes={attack:'Load, dash into contact, and recover.',smash:'Raise for a heavy overhead blow, then return.',sweep:'Coil low and sweep across the target.',counter:'Deflect, riposte, and recover.',defend:'Raise guard, brace, and recover.',spell:'Gather, invoke, and recover.',ranged:'Aim, release, and recover. Uses the class’s base ranged weapon.',rangedMagic:'Cast toward the target. Staff points upward and spellbooks remain open.'};
@@ -74,7 +74,7 @@ function render(){
  const size=320*512/(464-family().frames.ready.bounds[1]);
  const x=410+(reduce?0:sampled.x)*size/512, floor=486+48*size/512;
  drawFigure(img,x,floor,size,filter);
- const flash=hitFlashOpacity('hurt',hitProgress(performance.now()),{reduced:reduce||instant});
+ const flash=hitFlashOpacity('hurt',hitProgress(performance.now()),{reduced:reduce});
  if(flash){
    flashContext.clearRect(0,0,512,512);
    flashContext.globalCompositeOperation='source-over';flashContext.drawImage(img,0,0,512,512);
@@ -106,7 +106,7 @@ for(const id of ['aura','quality','effect'])$('#'+id).onchange=render;
 $('#reduced').checked=matchMedia('(prefers-reduced-motion: reduce)').matches;
 $('#reduced').onchange=selection;
 function tick(now){
- if(hitAt!==null){if(hitProgress(now)>=.55)hitAt=null;render();}
+ if(hitAt!==null){if(hitProgress(now)>=1)hitAt=null;render();}
  if(playing&&document.visibilityState==='visible'){
   const dt=Math.min(80,now-last)*($('#slowmo').checked?.25:1);
   if(time<duration())time=Math.min(duration(),time+dt);
