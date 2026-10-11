@@ -242,6 +242,7 @@ export default {
       const btn = e.target.closest('button');
       if (!btn || btn.disabled) return;
       if (btn.dataset.act === 'review') { openReview(); return; }
+      if (btn.dataset.act === 'preview') { previewHere(); return; }
       if (!st.canvas) return;
       if (btn.dataset.align) { st.canvas.align(btn.dataset.align); return; }
       if (btn.dataset.distribute) { st.canvas.distribute(btn.dataset.distribute); return; }
@@ -250,6 +251,15 @@ export default {
       else if (act === 'zoom-out') st.canvas.zoomTo(st.canvas.getZoom() / ZOOM_STEP);
       else if (act === 'fit') st.canvas.fit();
       else if (act === 'rotate') rotate();
+    }
+
+    /** The game preview shows this wireframe's ?shot fixture; the dock device is the user's to set. */
+    function previewHere() {
+      const wf = wireframe();
+      const v = viewport();
+      ctx.preview.setOverride('shot', wf.shot || null);
+      ctx.preview.reload();
+      ctx.toast({ kind: 'info', title: `Previewing ${wf.label}`, detail: `Fixture ${wf.shot || 'default'}. Set the dock to ${v.width}×${v.height} to match this device; a module cannot set the dock size.`, record: false });
     }
 
     function rotate() {
