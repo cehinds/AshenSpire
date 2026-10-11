@@ -118,7 +118,14 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   // recursive watch goes silent for a file once a write has renamed it into place,
   // and every Workbench save is such a write, so a later edit would never reload.
   const watchedDirs = new Map(); // folder -> its fs watcher
+  // folder -> the files directly in it when last seen, so a removal can report them.
+  const folderFiles = new Map();
   const isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } };
+  function snapshotFolder(abs) {
+    let names = [];
+    try { names = fs.readdirSync(abs, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => path.join(abs, e.name)); } catch { /* gone */ }
+    folderFiles.set(abs, new Set(names));
+  }
   // Closes the watch on abs and on every folder below it: they went away or were renamed.
   function unwatchTree(abs) {
     for (const [dir, w] of [...watchedDirs]) {
@@ -127,29 +134,43 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
       try { w.close(); } catch { /* closed */ }
     }
   }
+  // abs (and every folder below it) went away or was renamed: report the files they held and
+  // the folder itself, then close their watches. Each folder's files come from its last snapshot.
+  function forgetTree(abs) {
+    for (const [dir, files] of [...folderFiles]) {
+      if (dir !== abs && !dir.startsWith(abs + path.sep)) continue;
+      folderFiles.delete(dir);
+      for (const f of files) note(f);
+    }
+    note(abs);
+    unwatchTree(abs);
+  }
   function watchFolder(abs) {
     if (watchedDirs.has(abs)) return true;
     let w;
     try {
       w = fs.watch(abs, (_event, name) => {
-        if (!isDir(abs)) { unwatchTree(abs); return; } // removed or renamed away: its watch is stale
+        if (!isDir(abs)) { forgetTree(abs); return; } // removed or renamed away: its watch is stale
         if (!name) return;
         const base = String(name);
         const child = path.join(abs, base);
         if (!isDir(child)) {
           // A watched folder that went away reported its own files as they were removed.
-          if (watchedDirs.has(child)) { unwatchTree(child); return; }
+          if (watchedDirs.has(child)) { forgetTree(child); return; }
+          const files = folderFiles.get(abs);
+          if (files) { if (fs.existsSync(child)) files.add(child); else files.delete(child); }
           note(child); return;
         }
         // A folder that appeared while watching: its files are new, and it gets watches of its own.
         if (base.startsWith('.') || base === 'node_modules') return;
-        unwatchTree(child); // a watch left under this name by a folder renamed away
+        if (watchedDirs.has(child)) forgetTree(child); // a watch left under this name by a folder renamed away
         for (const f of walk(child).keys()) note(f);
         if (!watchTree(child)) poll(child);
       });
     } catch { return false; }
     watchedDirs.set(abs, w);
-    w.on('error', () => { try { w.close(); } catch { /* closed */ } if (watchedDirs.get(abs) === w) watchedDirs.delete(abs); poll(abs); });
+    snapshotFolder(abs);
+    w.on('error', () => { try { w.close(); } catch { /* closed */ } if (watchedDirs.get(abs) === w) watchedDirs.delete(abs); folderFiles.delete(abs); poll(abs); });
     return true;
   }
   // A folder and, below it, every folder: each gets its own watch, or a poll where a watch throws.
@@ -195,7 +216,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     mute() { muted = true; },
     /** Resume after `graceMs`: late events from the build's own writes still land in the muted window. */
     unmute(graceMs = 600) { muted = false; mutedUntil = Date.now() + graceMs; },
-    close() { closed = true; clearTimeout(timer); for (const w of [...watchers, ...watchedDirs.values()]) w.close(); for (const t of polls) clearInterval(t); },
+    close() { closed = true; clearTimeout(timer); folderFiles.clear(); for (const w of [...watchers, ...watchedDirs.values()]) w.close(); for (const t of polls) clearInterval(t); },
   };
 }
 

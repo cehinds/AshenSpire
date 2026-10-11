@@ -83,6 +83,53 @@ test('a folder renamed while watching (Linux) batches its later writes under the
   assert.deepEqual(paths.filter((p) => p.startsWith('content/A/')), [], 'no path under the old name');
 });
 
+test('a subfolder moved out of the watched tree (Linux) batches the files that were under it, at any depth', async (t) => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content/d/sub'), { recursive: true });
+  await fs.writeFile(path.join(root, 'content/d/a.json'), '1');
+  await fs.writeFile(path.join(root, 'content/d/sub/deep.json'), '1');
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'linux', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  await sleep(200);
+  await fs.rename(path.join(root, 'content/d'), path.join(root, '.gone-d'));
+  await waitFor(() => batches.flat().includes('content/d/a.json') && batches.flat().includes('content/d/sub/deep.json'));
+  assert.ok(batches.flat().includes('content/d/a.json'), `the moved folder's file is in a batch: ${JSON.stringify(batches)}`);
+  assert.ok(batches.flat().includes('content/d/sub/deep.json'), `a file in a moved subfolder is in a batch: ${JSON.stringify(batches)}`);
+});
+
+test('a subfolder deleted while watching (Linux) batches the files that were under it, at any depth', async (t) => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content/d/sub'), { recursive: true });
+  await fs.writeFile(path.join(root, 'content/d/a.json'), '1');
+  await fs.writeFile(path.join(root, 'content/d/sub/deep.json'), '1');
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'linux', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  await sleep(200);
+  await fs.rm(path.join(root, 'content/d'), { recursive: true });
+  await waitFor(() => batches.flat().includes('content/d/a.json') && batches.flat().includes('content/d/sub/deep.json'));
+  assert.ok(batches.flat().includes('content/d/a.json'), `the deleted folder's file is in a batch: ${JSON.stringify(batches)}`);
+  assert.ok(batches.flat().includes('content/d/sub/deep.json'), `a file in a deleted subfolder is in a batch: ${JSON.stringify(batches)}`);
+});
+
+test('a folder renamed while watching (Linux) batches its old paths and its new ones', async (t) => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content/A'), { recursive: true });
+  await fs.writeFile(path.join(root, 'content/A/x.json'), '1');
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'linux', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  await sleep(200);
+  await fs.rename(path.join(root, 'content/A'), path.join(root, 'content/B'));
+  await waitFor(() => batches.flat().includes('content/A/x.json') && batches.flat().includes('content/B/x.json'));
+  assert.ok(batches.flat().includes('content/A/x.json'), `the old path is in a batch: ${JSON.stringify(batches)}`);
+  assert.ok(batches.flat().includes('content/B/x.json'), `the new path is in a batch: ${JSON.stringify(batches)}`);
+});
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(ok, ms = 3000) {
   for (let i = 0; i < ms / 20 && !ok(); i++) await sleep(20);
