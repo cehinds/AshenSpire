@@ -900,14 +900,23 @@ For an attack dealing `base` damage:
 
 ```
 dmg = base
+dmg = dmg + card rating bonus                    // ratings (§13.4l) run first
+dmg = dmg + school damage add                    // player cards with a damage school
 dmg = dmg + attacker.Strength                    // may go below base
 dmg = dmg * (attacker has Weak      ? 0.75 : 1)
 dmg = dmg * (defender has Vulnerable? 1.5  : 1)
-dmg = dmg * (defender is Staggered  ? 1.5  : 1)
+dmg = dmg * (defender is Staggered  ? 1.5  : 1)  // legacy ratings only (see below)
+dmg = dmg * defender's Poise or Ward resistance  // ratings on; Ward for magical hits
+dmg = dmg * (tag-scoped vulnerability, §3.7)
+dmg = dmg * (school resistance, then school vulnerability)
 dmg = floor(dmg); if dmg < 0 → 0
 ```
 
-(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
+The tactical matchup multipliers (§4.7) run after the floor. Staggered's ×1.5 is
+the `staggered` status's `damageTakenMult`, and it applies only under legacy
+ratings; with ratings on (the default), a break applies no status (see §4.4).
+
+(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses. The order is `computeAttackDamage` in `src/engine/actions.js`.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
 
 The combat health row shows ordinary Block as a blue shield beside HP. While
 that shield is positive, HP is blue; breaking it restores the normal red (or
@@ -924,7 +933,7 @@ snapshots carry the provenance with their damage and guard receipts.
 Narrow health lanes display current HP alone to prevent number collisions;
 the complete current/maximum value remains in the accessible label and tooltip.
 
-**Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
+**Card preview numbers in the UI are computed by the same engine function** (`previewCard(combat, cardInstanceId, targetId)`, which calls `computeAttackDamage`); no duplicated math in the UI (§3.13).
 
 ### 4.3 Card rules
 
