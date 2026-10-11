@@ -325,9 +325,26 @@ export function selectionGate() {
   };
 }
 
-/** A save entry for the Workbench files API: { path, text, baseHash }. */
+/**
+ * A save entry for the Workbench files API: { path, text, baseHash }, or null when
+ * there is no parsed table to serialize the draft against.
+ */
 export function changeFor(table, doc) {
+  if (!table || !doc) return null;
   return { path: table.path, text: serializeTable(table, doc), baseHash: table.baseHash };
+}
+
+/**
+ * The save entries Review lists, from { path, table, doc } drafts. A draft whose
+ * table is not parsed is skipped and its path returned in skipped, not thrown on.
+ */
+export function reviewableChanges(entries) {
+  const changes = [], skipped = [];
+  for (const entry of entries) {
+    const change = changeFor(entry.table, entry.doc);
+    if (change) changes.push(change); else skipped.push(entry.path);
+  }
+  return { changes, skipped };
 }
 
 /**

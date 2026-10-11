@@ -238,6 +238,22 @@ test('a selection gate: only the newest table click is current, so a slow earlie
   assert.equal(gate.current(third), true);
 });
 
+test('Review skips a draft with no parsed table and names it, instead of throwing', () => {
+  const rel = 'content/source/speakers.csv';
+  const table = D.parseTable(rel, read(rel), { hash: 'disk-1' });
+  const edited = docOf(table);
+  edited.rows = edited.rows.slice(1);
+  assert.equal(D.changeFor(null, edited), null, 'no parsed table means no save entry');
+  const out = D.reviewableChanges([
+    { path: 'content/source/gone.csv', table: null, doc: edited },
+    { path: rel, table, doc: edited },
+  ]);
+  assert.deepEqual(out.skipped, ['content/source/gone.csv']);
+  assert.equal(out.changes.length, 1);
+  assert.equal(out.changes[0].path, rel);
+  assert.equal(out.changes[0].baseHash, 'disk-1');
+});
+
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
   const { lineDiff } = await import('../core/files.mjs');
   const rel = 'content/source/speakers.csv';

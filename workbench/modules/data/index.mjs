@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor, rebaseChanges, findRow, selectionGate } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -154,7 +154,9 @@ export default {
     async function openReview() {
       const paths = changedPaths();
       if (!paths.length) { ctx.toast({ kind: 'info', title: 'Nothing to save', detail: 'No table has changes.' }); return; }
-      const changes = paths.map((p) => changeFor(state.parsed.get(p), state.drafts.get(p)));
+      const { changes, skipped } = reviewableChanges(paths.map((p) => ({ path: p, table: state.parsed.get(p), doc: state.drafts.get(p) })));
+      if (skipped.length) ctx.toast({ kind: 'warn', title: `Skipped ${skipped.length} table${skipped.length === 1 ? '' : 's'} with no parsed copy`, detail: `${skipped.join(', ')}. Reopen the table to read it again.` });
+      if (!changes.length) return;
       const diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })
         .catch((e) => ({ path: c.path, error: e.message, hunks: [], added: 0, removed: 0 }))));
       dlg.innerHTML = `<div class="ds-review-body"><h2>Review changes (${changes.length})</h2>${diffs.map(diffHtml).join('')}<div class="ds-review-status" role="status"></div><div class="ds-review-actions"><button type="button" class="btn btn-sm" data-cancel>Cancel</button><button type="button" class="btn btn-sm btn-primary" data-save>Save ${changes.length} file${changes.length === 1 ? '' : 's'}</button></div></div>`;
