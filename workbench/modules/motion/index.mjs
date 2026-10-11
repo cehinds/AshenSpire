@@ -16,7 +16,7 @@ import {
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
   rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
-  isMissingOnDisk, forgetDeletedFile, sourceFrameOf,
+  isMissingOnDisk, forgetDeletedFile, sourceFrameOf, connectPlan, gameStartOf,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -112,7 +112,7 @@ export default {
 
     // ---------- state ----------
     const st = {
-      game: { origin: null, base: null, ready: false },
+      game: { origin: null, base: null, ready: false, serverId: null },
       index: { classes: [], outfits: [], outfitClass: {}, frames: {}, cues: null, effects: [], labels: {} },
       sets: new Map(), // path -> { path, name, actor, poses, duration, stance }
       setsListed: false,
@@ -132,17 +132,27 @@ export default {
       setup.hidden = !message;
       setup.textContent = message || '';
     }
-    async function connectGame() {
-      let base = null;
-      try { base = gameUrlOf(await ctx.api('tools')); } catch { base = null; }
-      if (!base) {
-        st.game.ready = false;
+    // Resolves the game server on mount, on show, and on a game start or content reload. The render page
+    // loads again only when connectPlan says so. The file, drafts and playhead live in st, so they survive.
+    let gameRuns = 0;
+    async function connectGame({ force = false } = {}) {
+      const run = ++gameRuns;
+      let tools = [], base = null;
+      try { tools = await ctx.api('tools'); base = gameUrlOf(tools); } catch { base = null; }
+      if (run !== gameRuns || !mounted) return; // a later connect has taken over, or the module is gone
+      const serverId = gameStartOf(tools);
+      const plan = connectPlan({ base, currentOrigin: st.game.origin, ready: st.game.ready, force, serverId, currentServerId: st.game.serverId });
+      if (plan === 'keep') return;
+      if (plan === 'setup') {
+        st.game.ready = false; st.game.origin = null; st.game.serverId = null;
         frame.removeAttribute('src');
         setSetup('The game server is not running. Start it from the Library or Home, then try again.');
         return;
       }
       st.game.base = base;
       st.game.origin = new URL(base).origin;
+      st.game.serverId = serverId;
+      st.game.ready = false;
       setSetup('Loading the game renderer…');
       frame.src = `${base}workbench/modules/motion/render.html?po=${encodeURIComponent(location.origin)}`;
     }
@@ -763,6 +773,8 @@ export default {
 
     // ---------- start ----------
     connectGame();
+    // The content was rebuilt (a forced reload), or the game server came up or restarted (the plan decides).
+    const offReload = ctx.onReload((ev) => connectGame({ force: ev?.kind === 'reload' }));
     listSets();
     renderAll();
     renderLibrary();
@@ -784,6 +796,8 @@ export default {
 
     return {
       onShow() {
+        // The game may have stopped, restarted or moved while the module was away: resolve it again.
+        connectGame();
         // A fresh params object is a new visit: its link applies once, a plain return keeps the state.
         const p = ctx.params;
         if (p && Object.keys(p).length && p !== st.seenParams) {
@@ -797,6 +811,7 @@ export default {
       },
       unmount() {
         mounted = false;
+        offReload();
         window.removeEventListener('message', onMessage);
         resizer?.disconnect();
         cancelAnimationFrame(rafId);

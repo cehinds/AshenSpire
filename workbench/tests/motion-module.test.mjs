@@ -18,6 +18,28 @@ test('the render page is a frame of the game server, with its module and CSS wir
   assert.match(html, /href="\/workbench\/modules\/motion\/render\.css"/);
 });
 
+test('the game server is resolved through connectPlan, which keeps the frame unless its origin or start changed', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /import \{[^}]*connectPlan, gameStartOf[^}]*\} from '\.\/model\.mjs'/);
+  const body = src.match(/async function connectGame\(\{ force = false \} = \{\}\) \{[\s\S]*?\n    \}\n/);
+  assert.ok(body, 'connectGame takes a force flag');
+  assert.match(body[0], /connectPlan\(\{ base, currentOrigin: st\.game\.origin, ready: st\.game\.ready, force, serverId, currentServerId: st\.game\.serverId \}\)/);
+  assert.match(body[0], /if \(plan === 'keep'\) return;/);
+  assert.match(body[0], /st\.game\.serverId = serverId;/, 'the game start is recorded for the next comparison');
+  assert.match(body[0], /if \(run !== gameRuns \|\| !mounted\) return;/, 'a late answer never overrides a newer connect');
+});
+
+test('the module re-resolves the game on show and on reload, and unsubscribes in unmount', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /const offReload = ctx\.onReload\(\(ev\) => connectGame\(\{ force: ev\?\.kind === 'reload' \}\)\);/, 'content rebuilds force a reload; game events are planned');
+  const show = src.match(/onShow\(\) \{[\s\S]*?const p = ctx\.params;/);
+  assert.ok(show, 'onShow exists');
+  assert.match(show[0], /connectGame\(\);/, 'a show re-resolves the game server');
+  const unmount = src.match(/unmount\(\) \{[\s\S]*?cancelAnimationFrame\(rafId\);/);
+  assert.ok(unmount, 'unmount exists');
+  assert.match(unmount[0], /offReload\(\);/, 'the reload subscription is removed on unmount');
+});
+
 test('the render page obeys only its parent, at the origin given by ?po=', () => {
   const render = read('workbench/modules/motion/render.mjs');
   assert.match(render, /ev\.origin !== parentOrigin \|\| ev\.source !== window\.parent/);
