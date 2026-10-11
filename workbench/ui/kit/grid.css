@@ -38,6 +38,11 @@
 .gk-menu { position: absolute; z-index: 20; display: flex; flex-direction: column; min-width: 180px; padding: 4px; background: var(--gk-bg); border: 1px solid var(--gk-line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
 .gk-menu button { border: 0; text-align: left; border-radius: 4px; }
 .gk-menu button:hover, .gk-menu button:focus-visible { background: var(--gk-sel); }
+.gk-banner { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; padding: 6px 8px; border: 1px solid var(--gk-bad); border-radius: 8px; background: var(--gk-bg); color: var(--gk-ink); }
+.gk-banner-body { flex: 1; min-width: 0; }
+.gk-banner ul { margin: 4px 0 0; padding-left: 18px; }
+.gk-banner p { margin: 4px 0 0; color: var(--gk-muted); }
+.gk-banner-close { flex: none; padding: 0 6px; border: 0; background: transparent; color: inherit; font-size: 16px; line-height: 1; cursor: pointer; }
 .gk-check ul { list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow: auto; }
 .gk-check li button { width: 100%; text-align: left; padding: 6px 8px; border: 0; border-bottom: 1px solid var(--gk-line); background: transparent; color: inherit; cursor: pointer; }
 .gk-check li.gk-error .gk-where { color: var(--gk-bad); font-weight: 600; }
