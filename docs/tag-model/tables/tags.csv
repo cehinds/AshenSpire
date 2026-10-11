@@ -748,6 +748,7 @@ meta.combat.damage.blade,damage.blade,blade,meta.combat.damage,DamageType,,Damag
 meta.combat.damage.blunt,damage.blunt,blunt,meta.combat.damage,DamageType,,Damage dealt with mass and impact.,,,,,,live-tag,,,damage.blunt
 meta.combat.damage.piercing,piercing,piercing,meta.combat.damage,DamageType,,Damage dealt with a point.,,,,,,live-tag,,,damage.piercing
 damageType,damageType,Damage type,,TagNode,,Identity of a typed HP damage component.,,,,,,live-tag,,,damageType
+run,run,Run,,TagNode,,"Run structure — what an event, an encounter or an unlock is about.",,,,,,live-tag,,,run
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

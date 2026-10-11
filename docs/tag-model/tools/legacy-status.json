@@ -747,5 +747,6 @@
  "meta.combat.damage.blade": "new",
  "meta.combat.damage.blunt": "new",
  "meta.combat.damage.piercing": "new",
- "damageType": "new"
+ "damageType": "new",
+ "run": "new"
 }

@@ -471,6 +471,8 @@ export const LIVE = {
   'damageType': 'damageType',
   // proposed live mapping (domain pass)
   'meta.character.creature': 'creature',
+  // proposed live mapping (domain pass)
+  'run': 'run',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,
