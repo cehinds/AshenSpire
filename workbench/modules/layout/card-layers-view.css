@@ -27,5 +27,6 @@
 .cl-pick[aria-pressed="true"] code { font-weight: 700; }
 .cl-row .lay-check { display: inline-flex; gap: 4px; margin-right: 8px; }
 .cl-order { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+.cl-insp { padding: 0 12px 12px; box-sizing: border-box; }
 .cl-insp .lay-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
 .cl-insp .lay-row input[type="number"] { width: 7em; }

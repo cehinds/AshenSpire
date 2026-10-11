@@ -18,6 +18,9 @@ const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], Arrow
 const FIELDS = [['x', 'X'], ['y', 'Y'], ['w', 'Width'], ['h', 'Height'], ['rotation', 'Rotation'], ['opacity', 'Opacity']];
 
 const SHELL = `<div class="mode-bar cl-bar">
+    <button type="button" class="btn btn-sm lay-toggle" data-panel="layers" aria-expanded="false" aria-controls="cl-layers-pane">Layers</button>
+    <button type="button" class="btn btn-sm lay-toggle" data-panel="props" aria-expanded="false" aria-controls="cl-props-pane">Inspector</button>
+    <span class="lay-sep"></span>
     <button type="button" class="btn btn-sm btn-ghost" data-cl="zoom-out" title="Zoom out">−</button>
     <button type="button" class="btn btn-sm btn-ghost" data-cl="fit" title="Fit the card">Fit</button>
     <button type="button" class="btn btn-sm btn-ghost" data-cl="zoom-in" title="Zoom in">+</button>
@@ -27,7 +30,7 @@ const SHELL = `<div class="mode-bar cl-bar">
     <span class="cl-file" data-cl="file"></span>
   </div>
   <div class="mode-body cl-body">
-    <aside class="lay-left" aria-label="Layers"><div class="lay-panel-head"><span>Layers</span></div><ol class="cl-layers" aria-label="Layers, front first"></ol></aside>
+    <aside class="lay-left" id="cl-layers-pane" aria-label="Layers"><div class="lay-panel-head"><span>Layers</span><button type="button" class="btn btn-sm" data-panel-close>Close</button></div><ol class="cl-layers" aria-label="Layers, front first"></ol></aside>
     <main class="lay-center cl-main">
       <div class="cl-wrap">
         <div class="cl-stage">
@@ -38,7 +41,7 @@ const SHELL = `<div class="mode-bar cl-bar">
       </div>
       <div class="lay-status cl-status" aria-live="polite"></div>
     </main>
-    <aside class="lay-right" aria-label="Inspector"><div class="lay-panel-head"><span>Inspector</span></div><div class="cl-insp"></div></aside>
+    <aside class="lay-right" id="cl-props-pane" aria-label="Inspector"><div class="lay-panel-head"><span>Inspector</span><button type="button" class="btn btn-sm" data-panel-close>Close</button></div><div class="cl-insp"></div></aside>
   </div>`;
 
 function ensureCss() {
