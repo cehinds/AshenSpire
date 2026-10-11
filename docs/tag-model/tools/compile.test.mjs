@@ -92,3 +92,15 @@ test('synthetic lossless: a perfect one-to-one mapping with no usage gaps', () =
   const res = analyze({ tags, nodes, tagging: [] });
   assert.equal(res.verdict.lossless, true);
 });
+
+test('synthetic live root: a root mapped to a nested model tag is a parent difference', () => {
+  const tags = [
+    { id: 'meta.combat', parent: '', label: 'Combat', glyph: '', color: '', status: 'game-concept', liveId: '' },
+    { id: 'meta.combat.damage', parent: 'meta.combat', label: 'Damage', glyph: '', color: '', status: 'live-tag', liveId: 'damage' },
+  ];
+  const nodes = [{ id: 'damage', parentId: '', label: 'Damage', glyph: '', color: '' }];
+  const res = analyze({ tags, nodes, tagging: [] });
+  assert.deepEqual(res.parity, [
+    { tagId: 'meta.combat.damage', liveId: 'damage', field: 'parent', model: 'meta.combat', live: '(live root)' },
+  ]);
+});
