@@ -9,7 +9,7 @@
 import {
   KINDS, SORTS, DEFAULT_SORT, rowsOf, tileLabelsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
   assetUrl, missingPacks, gridMetrics, visibleItems, sizeLabel, dimsLabel, clampZoom, clampOpacity, frameSetOf, groupUsage,
-  entityLinkOf, exportOf,
+  entityLinkOf, exportOf, singleFlight,
 } from './model.mjs';
 
 const TILE_MIN = 64;
@@ -540,12 +540,14 @@ export default {
       renderKinds(); renderFacets(); refresh(); renderDrawer(); writeHash();
     }
 
-    load();
+    // mount() and the host's first onShow() share one listing request: a call made while a load runs gets that load.
+    const reload = singleFlight(load);
+    reload();
     return {
       // The host calls onShow after mount, and again each time the module is opened. A fresh params object
       // is a new visit: its link applies once, and a plain return keeps the state and refreshes the listing.
       onShow() {
-        load();
+        reload();
         const p = ctx.params;
         if (!p || p === seenParams) return;
         seenParams = p;

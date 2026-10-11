@@ -285,3 +285,14 @@ test('singleFlight: a synchronous throw rejects the run and frees the slot for t
   assert.equal(await load(), 'ok');
   assert.equal(runs, 2);
 });
+
+test('mount and onShow load the listing through one single-flight loader, so a first visit makes one request', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../modules/assets/index.mjs', import.meta.url), 'utf8');
+  assert.match(src, /const reload = singleFlight\(load\);/, 'the listing load is single-flight');
+  assert.match(src, /\n\s*reload\(\);\n\s*return \{/, 'mount starts the load through reload()');
+  const onShow = src.match(/\n\s*onShow\(\) \{([\s\S]*?)\n\s{6}\},/);
+  assert.ok(onShow, 'the module has an onShow()');
+  assert.match(onShow[1], /^\s*reload\(\);/, 'onShow refreshes through reload(), reusing an in-flight load');
+  assert.doesNotMatch(src.replace('const reload = singleFlight(load);', ''), /(^|[^.\w])load\(\);/m, 'nothing calls load() directly');
+});
