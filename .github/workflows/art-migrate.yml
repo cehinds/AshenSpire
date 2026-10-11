@@ -88,7 +88,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 1
-          persist-credentials: false
+          # GITHUB_TOKEN (contents: read) stays configured so the head-object
+          # fetch below works on a private repository; no head code ever runs.
 
       # The two commits' history without blobs: the diff needs trees only, and
       # the stage step reads the few art blobs on demand. Objects only; the
