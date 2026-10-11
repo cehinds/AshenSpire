@@ -15,6 +15,7 @@ import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
 import { openConfirmationModal } from './confirmationModal.js';
+import { registerModal } from '../modalState.js';
 import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
 import { saveStatusReview, savedAtLabel } from '../models/SaveStatusModel.js';
 import { t } from '../strings.js';
@@ -282,6 +283,7 @@ export function openSaveSlotSelector({
   let closed = false;
   let holdCleanups = [];
   let tooltipCleanup = null;
+  let unregisterModal = null;
 
   const clearSlotHolds = () => {
     for (const cleanup of holdCleanups.splice(0)) cleanup();
@@ -304,6 +306,8 @@ export function openSaveSlotSelector({
   const close = ({ restoreFocus = true } = {}) => {
     if (closed) return;
     closed = true;
+    unregisterModal?.();
+    unregisterModal = null;
     clearSlotHolds();
     tooltipCleanup?.();
     tooltipCleanup = null;
@@ -527,6 +531,7 @@ export function openSaveSlotSelector({
   document.addEventListener('keydown', onKeydown, true);
 
   host.appendChild(veil);
+  unregisterModal = registerModal('save-slots', veil);
   activeSelector = { veil, close };
   render();
   queueMicrotask(() => focus(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`));
