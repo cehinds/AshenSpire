@@ -1743,59 +1743,9 @@ engine is discoverable there. A setting descriptor names the source path, label,
 type, domain, shipped default, reset behavior and application timing. The editor and runtime
 resolver consume that same descriptor; UI code must not retype a default, range, enum or formula.
 Adding an eligible descriptor therefore adds its control without another hand-authored settings
-row. A CI inventory compares eligible authored configuration paths with rendered descriptors and
-fails on an unexplained omission.
+row.
 
-The editor groups the complete inventory into stable nested sections:
-
-- **Progression:** starting level; experience/cinder gain multiplier; first level cost; cost
-  increase per purchase; optional maximum level; attribute points granted per level; and points
-  required for each derived-stat tier. The resolved level-price preview shows representative
-  purchases before a run starts.
-- **Class defaults:** each registered class exposes its starting STR, DEX, CON, WIS and INT,
-  starting resource/flask allocation, and other schema-valid starting values. Class controls are
-  registry-derived, so adding a class cannot create an invisible default. Per-class values must
-  still satisfy the selected creation mode's bounds and total-allocation rules; invalid
-  combinations are explained and cannot be applied silently.
-- **Combat and actors:** up to six rows and three columns per side,
-  with front/back meaning identified per side; formation spacing, player and
-  enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
-  data-owned combat presentation values that do not alter asset identity.
-  Default spawns start on the lowest row in the outermost column of each team,
-  placing player and enemy starts farthest apart. Fill each row from outside toward
-  the centre, then move upward. For two columns and three rows, player rows read
-  `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
-  The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
-  Measurements remain responsive percentages; reference anchors at 1641×526 are checked
-  against the exports. Explicit saved group edits take precedence.
-  Formation settings offer group controls for the entire
-  battlefield, either team, individual columns, and named custom sets of positions. Dragging or
-  nudging translates every anchor in the group together. Offsets are stored as percentages of
-  battlefield width/height. Grid snapping defaults on with a 50 CSS px adjustable step; the group's
-  first anchor snaps to an intersection while all member spacing remains fixed. Snapping can be disabled.
-  Edge distances and nudge steps use CSS pixels. Characters and tiles
-  share the transformed anchors, and group translations stop at the battlefield edges. Custom
-  members retain their side, row and local column when the roster changes. Settings edits
-  require Apply layout. These are presentation edits, not tactical
-  movement, and do not spend actions or change combat range rules.
-  Groups may also target a row or one position and apply character size multipliers with feet
-  fixed to their anchors. Combat has no in-battle positioning control.
-- **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
-  tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
-  geometry. Dependent constraints are enforced together (for example, resting < selected <
-  reading) and the editor identifies the value preventing an invalid change.
-- **World, economy and rewards:** encounter/reward odds, currency and experience multipliers,
-  merchant and service pricing, map-generation tuning, and other global balance values whose
-  schema permits a runtime override.
-- **Rules and accessibility:** eligible boolean flags and closed-set modes used by gameplay or
-  presentation. Existing ordinary Display, Audio and Accessibility controls remain in their
-  approachable homes and appear in Advanced only when needed as part of the complete searchable
-  inventory; both surfaces resolve through one descriptor and one persisted value.
-- **Diagnostics:** development-only instrumentation and logs. Unsafe internals—content ids,
-  schema definitions, save-format versions, cryptographic/integrity values, file paths that are
-  not already an explicit user feature, and values whose mutation can only create invalid
-  state—are listed by the inventory check as excluded with a reason rather than exposed as dead
-  or dangerous controls.
+The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, Battlefield, Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab. A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
 
 Search and section navigation remain available at every supported viewport and text size. Each
 row shows the shipped default, the currently resolved value, whether it affects the current run
