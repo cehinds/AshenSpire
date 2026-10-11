@@ -1507,8 +1507,9 @@ jobs:
           # CORRECTED 2026-10-03 (#1520): "NOTHING HERE PLAYS IT" went false when the
           # full-run probe was wired into browser-guard-stamp. One step now plays one
           # bounded run; the line says exactly how far it goes and no further.
+          # MOVED 2026-10-11: the probe now lives in the test-only browser-full-run job.
           echo "  · that the game is playable in general. ONE step plays it, bounded:"
-          echo "    browser-guard-stamp's full run (tools/full-run-probe.mjs; push and dispatch,"
+          echo "    browser-full-run (tools/full-run-probe.mjs; push to test and dispatch,"
           echo "    not pull_request). One class, one seed, 1440x900: from the title it plays the"
           echo "    first fight with trusted presses, resolves later fights through window.__combat,"
           echo "    walks to the act-1 boss and LOSES to it, returns to the title and begins a second"
