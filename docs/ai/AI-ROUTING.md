@@ -55,7 +55,8 @@ Haiku does well when it is told exactly where to look and what "done" means, and
 wanders when it is not. Every brief carries the following, in this order:
 
 1. **Setup.** The brief's branch is `worker/<parent-topic>/<task>`, cut from the parent
-   branch, not `origin/dev`: `git fetch origin <parent> && git checkout -B worker/<topic>/<task> origin/<parent>`.
+   branch, not `origin/dev`. The orchestrator pushes the parent first (`git push -u origin <parent>`), then:
+   `git fetch origin <parent> && git checkout -B worker/<topic>/<task> origin/<parent>`.
 2. **Read first.** The exact files: CLAUDE.md, the SPEC section with its line range, the
    contract doc.
 3. **The defect or goal.** File:line, the failing input and the wrong result, as the
@@ -88,7 +89,7 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
   `git branch -d` only when `git merge-base --is-ancestor <branch> origin/dev`; never `-D`).
   Ask the owner about anything unmerged.
 - Origin worker branches stay until `dev` is promoted to `test`. Then `worker-branch-cleanup.yml`
-  deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test`.
+  deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test` (lands with the CI restaging in `chore/CdCiStages`; until then delete merged origin worker branches by hand).
 
 ## 4. What a worker reports
 
@@ -113,7 +114,7 @@ Stopped because (only if it stopped):
 | UI layout, CSS, docs, tools, tests only, mechanical renames | Haiku 5.5 reviewer |
 | Security, destructive git, CI permissions | `ashen-reviewer`, and the orchestrator reads the diff line by line |
 
-Give the reviewer the PR number (CONTRIBUTING requires it), the task, the constraints, the diff (`git diff origin/dev...<branch>`),
+Give the reviewer the PR number (CONTRIBUTING requires it), the task, the constraints, the diff (`git diff origin/<base>...<branch>`, where `<base>` is `dev` for a PR and the parent branch for a worker branch),
 the affected files and the specific risks. Do not give it the repo. Every finding is a
 claim the orchestrator verifies. Fix what stands (with a worker or directly), and record
 in the PR who reviewed, what changed, and what was declined and why.
