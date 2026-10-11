@@ -51,3 +51,64 @@ export const captureFile = (device, screen) => `${device}-${screen}.png`;
 export function rowsFor(screens = SCREENS, devices = DEVICES) {
   return screens.flatMap((s) => devices.map((d) => ({ key: `${d.id}/${s.id}`, screen: s.id, device: d.id, file: captureFile(d.id, s.id) })));
 }
+
+/** A channel may differ by this much (0-255) before a pixel counts as changed: anti-aliasing noise. */
+export const DEFAULT_TOLERANCE = 8;
+/** A screen is changed when more than this percentage of its pixels changed. */
+export const DEFAULT_THRESHOLD = 0.05;
+
+const pixelDiffers = (a, b, i, tolerance) => {
+  for (let c = 0; c < 4; c++) if (Math.abs(a[i + c] - b[i + c]) > tolerance) return true;
+  return false;
+};
+
+/**
+ * Compares two RGBA images, `{ width, height, data }` with four bytes a pixel.
+ * Returns { sizeMismatch, total, changed, percent }. Two images of different
+ * sizes are changed by definition: sizeMismatch is true and percent is 100.
+ */
+export function diffPixels(a, b, { tolerance = DEFAULT_TOLERANCE } = {}) {
+  if (a.width !== b.width || a.height !== b.height) {
+    return { sizeMismatch: true, total: Math.max(a.width * a.height, b.width * b.height), changed: null, percent: 100 };
+  }
+  const total = a.width * a.height;
+  const bytes = Math.min(a.data.length, b.data.length, total * 4);
+  let changed = 0;
+  for (let i = 0; i + 3 < bytes; i += 4) if (pixelDiffers(a.data, b.data, i, tolerance)) changed++;
+  return { sizeMismatch: false, total, changed, percent: total ? (changed * 100) / total : 0 };
+}
+
+/**
+ * The diff picture: a changed pixel is red, an unchanged one is the current
+ * image faded to a light grey, so the changes read at a glance. null when the
+ * two sizes differ, since no pixel lines up.
+ */
+export function diffImage(a, b, { tolerance = DEFAULT_TOLERANCE } = {}) {
+  if (a.width !== b.width || a.height !== b.height) return null;
+  const out = new Uint8ClampedArray(a.width * a.height * 4);
+  for (let i = 0; i + 3 < out.length; i += 4) {
+    if (pixelDiffers(a.data, b.data, i, tolerance)) {
+      out[i] = 255; out[i + 1] = 0; out[i + 2] = 80; out[i + 3] = 255;
+    } else {
+      const lum = 0.299 * a.data[i] + 0.587 * a.data[i + 1] + 0.114 * a.data[i + 2];
+      const v = Math.round(lum * 0.3 + 178);
+      out[i] = v; out[i + 1] = v; out[i + 2] = v; out[i + 3] = 255;
+    }
+  }
+  return { width: a.width, height: a.height, data: out };
+}
+
+/** The verdict on a diff summary: changed when it is a size mismatch or more than `thresholdPercent` of pixels changed. */
+export function judge(summary, { thresholdPercent = DEFAULT_THRESHOLD } = {}) {
+  if (!summary) return { status: 'none', changed: false };
+  if (summary.sizeMismatch) return { status: 'size', changed: true };
+  const changed = summary.percent > thresholdPercent;
+  return { status: changed ? 'changed' : 'unchanged', changed };
+}
+
+/** 0 reads as 0%, a tiny but non-zero share as <0.01%, and anything else to two places. */
+export function percentLabel(p) {
+  if (!(p > 0)) return '0%';
+  if (p < 0.01) return '<0.01%';
+  return `${p.toFixed(2)}%`;
+}
