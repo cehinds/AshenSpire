@@ -7,6 +7,30 @@ import { uiConfig } from '../../config/generated/ui.js';
 export const COMBAT_TOOLS_HEIGHT_PX = 34;
 const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
+// How many cards a fan shows before it pages, from the hand's width in rem.
+export function requestedHandCapacity(width, rem, config = wireframeUi.hand) {
+  const progress = Math.max(0, Math.min(1,
+    (width / rem - config.narrowWidthRem) / (config.wideWidthRem - config.narrowWidthRem)));
+  return Math.round(config.minCapacity + progress * (config.maxCapacity - config.minCapacity));
+}
+
+// The rotated face's extra half-width per unit of card width.
+function fanSpread(config) {
+  const angle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
+  return (Math.sin(angle) / wireframeUi.card.ratio + Math.cos(angle) - 1) / 2;
+}
+
+// The widest phone card a fan of `fanCount` cards can show readably, before
+// the band's height has its say: each card shows at least cardVisibleFraction
+// of its width past its neighbour, the outer rotated corners keep
+// cardSideGutterPx from the hand's edges, and no card passes the cap.
+export function phoneFanCardWidth({ width, zoom = 1, fanCount }, config = wireframeUi.hand) {
+  const gutter = compactCard.cardSideGutterPx / zoom;
+  const visible = Math.max(1, fanCount);
+  const readable = (width - gutter * 2) / (1 + (visible - 1) * compactCard.cardVisibleFraction + fanSpread(config) * 2);
+  return Math.min(compactCard.cardMaxWidthPx / zoom, readable);
+}
+
 // Presentation order is local, keyed by instance, and never mutates a pile.
 export function reconcileHandOrder(previous, current) {
   const live = new Set(current);
@@ -36,22 +60,14 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const controlsReserve = Math.max(0, controlsHeight - Math.max(lift, headroom));
   const arc = config.arcRem * rem;
   const available = Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
-  const progress = Math.max(0, Math.min(1,
-    (width / rem - config.narrowWidthRem) / (config.wideWidthRem - config.narrowWidthRem)));
-  const requested = Math.round(config.minCapacity + progress * (config.maxCapacity - config.minCapacity));
-  // A phone fan keeps every card's description and type line readable: each
-  // card shows at least cardVisibleFraction of its width past its neighbour,
-  // and the outer rotated corners keep cardSideGutterPx from the hand's edges.
-  // `spread` is the rotated face's extra half-width per unit of card width.
-  const fanAngle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
-  const spread = (Math.sin(fanAngle) / wireframeUi.card.ratio + Math.cos(fanAngle) - 1) / 2;
+  const requested = requestedHandCapacity(width, rem, config);
+  const spread = fanSpread(config);
   const gutter = compact ? compactCard.cardSideGutterPx / zoom : 0;
-  const fanCount = Math.max(1, Math.min(count, requested));
-  const readableWidth = (width - gutter * 2) / (1 + (fanCount - 1) * compactCard.cardVisibleFraction + spread * 2);
   const cardWidth = compact
     // Phone cards fill the band between a readable floor and a cap, both in
     // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
-    ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, available * wireframeUi.card.ratio))
+    ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(
+      phoneFanCardWidth({ width, zoom, fanCount: Math.min(count, requested) }, config), available * wireframeUi.card.ratio))
     : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
