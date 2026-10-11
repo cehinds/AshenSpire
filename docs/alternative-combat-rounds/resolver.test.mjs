@@ -1205,6 +1205,19 @@ test('stance evade bonus applies to that exchange only', () => {
   assert.equal(find(next, 'evadeRoll').success, false);
 });
 
+test('stance evade bonus adds to evadePct in the same exchange, and the total clamps at 95', () => {
+  // 90 + 20 = 110, clamped to EVADE_PCT_MAX (95). A roll of 94 avoids, a roll of 95 lands.
+  const evading = DEFENDER({ evadeBasePct: 90, stance: 'evade' });
+  const under = resolvePair(ATTACKER, evading, seqRng([D20_HIT, pctRng(94)]), { evadeTable: evadeTable() });
+  assert.equal(find(under, 'evadeRoll').evadePct, 95);
+  assert.equal(find(under, 'evadeRoll').success, true);
+  assert.equal(find(under, 'evaded').reason, 'evasion');
+
+  const atCap = resolvePair(ATTACKER, evading, seqRng([D20_HIT, pctRng(95)]), { evadeTable: evadeTable() });
+  assert.equal(find(atCap, 'evadeRoll').evadePct, 95);
+  assert.equal(find(atCap, 'evadeRoll').success, false);
+});
+
 test('stance evade bonus is not applied without the table', () => {
   // The evade stance would add 20 with the table. Without it, evadePct stays at the base.
   const evading = DEFENDER({ evadeBasePct: 40, stance: 'evade' });
