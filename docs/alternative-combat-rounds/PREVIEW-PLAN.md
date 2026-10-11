@@ -71,3 +71,19 @@ An opt-in setting that runs real fights on the alternative combat rounds
 
 Each phase keeps `node tests/run-node.mjs` green and gets a review agent before
 it is pushed.
+
+## Screen (owner, 2026-10-11)
+
+The preview screen is the live combat screen with only these additions:
+
+- Enemy intent box: the current action at today's size, then that enemy's
+  follow-up actions as smaller symbols in the same box.
+- Small symbols on each hand card: its speed and the hint arrow against the
+  target (› / » faster, ‹ / « slower).
+- Momentum on the turn banner, for the targeted enemy (the first enemy when
+  nothing is targeted): +2/+3 green outline with a "++" tab; ±1 orange outline
+  with a "+-" tab; −2/−3 red outline with a "--" tab; 0 no outline and no tab.
+- Target outline while choosing a target for a card: green when the card has the
+  advantage in both speed and stance type, yellow when in only one (even if the
+  other is a disadvantage), red when at a disadvantage in both, none otherwise.
+- No queue strip, no initiative track; End Turn stays as it is.
