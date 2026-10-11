@@ -403,7 +403,8 @@ Card-tag bonuses are passed on the side as `evadeBonuses`.
   same attack. A dodge needs a miss, and the percent roll happens only on a
   hit. Whether the evade stance's bonus should also apply to a dodge is not
   decided.
-- Charges are not carried between rounds. The pools are an input (from
+- Charge pools persist between rounds, but the resolver does not keep them
+  itself. The pools are an input (from
   `options.charges` or the sides' `intangibleCharges`), and `resolveRound`
   returns what is left in `charges`. The caller stores that for the next
   round. Every side in `options.charges` is returned, even an enemy with no
