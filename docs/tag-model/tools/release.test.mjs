@@ -424,8 +424,17 @@ test('an unresolved reference in a dropped object column still fails the build',
 });
 
 test('a rank change the workbench cannot read fails the build', () => {
-  const inputs = mutate('ranks.csv', appendRow('strike,4,strike.arScale,plus a bit,'));
-  assert.throws(() => compileInputs(inputs), /bad change "plus a bit"/);
+  for (const change of ['plus a bit', '+-3', '--3', '+ 3', '=+3']) {
+    const inputs = mutate('ranks.csv', appendRow(`strike,4,strike.arScale,${change},`));
+    assert.throws(() => compileInputs(inputs), new RegExp(`bad change "${change.replace(/[+*]/g, '\\$&')}"`), change);
+  }
+});
+
+test('the rank changes the workbench reads all compile', () => {
+  for (const change of ['+1', '-0.5', '=0', '=8', '×1.25', '*1.25', 'x2']) {
+    const inputs = mutate('ranks.csv', appendRow(`strike,4,strike.arScale,${change},`));
+    assert.doesNotThrow(() => compileInputs(inputs), change);
+  }
 });
 
 test('a formula that reads [rank] compiles and matches the workbench at rank 1 and 3', async () => {

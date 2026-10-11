@@ -73,7 +73,7 @@ export const TAG_REF = {
 
 const CANONICAL_NUMBER = /^-?\d+(\.\d+)?$/;
 const isCanonicalNumber = t => CANONICAL_NUMBER.test(t) && String(Number(t)) === t;
-const RANK_CHANGE = /^(?:[+\-=×*x])?-?\d+(\.\d+)?$/;
+const RANK_CHANGE = /^(?:[=×*x]-?|[+-])?\d+(\.\d+)?$/;
 const NUMBER_TOKEN = /^(\d+\.?\d*|\.\d+)$/;
 
 // ------------------------------------------------------------------ inputs
