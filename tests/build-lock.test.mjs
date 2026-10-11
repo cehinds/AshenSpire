@@ -198,6 +198,29 @@ test('acquire waits for the holder, and gives up naming it after the timeout', a
   release();
 });
 
+test('acquire with an aborted signal rejects at once with the reason, and never creates the lock', async (t) => {
+  const root = tmpRoot(t);
+  const ctl = new AbortController();
+  ctl.abort(new Error('The Workbench is closing'));
+  const started = Date.now();
+  await assert.rejects(acquire(root, 'me', { timeoutMs: 5000, signal: ctl.signal }), /The Workbench is closing/);
+  assert.ok(Date.now() - started < 500, 'rejects promptly');
+  assert.equal(fs.existsSync(lockPath(root)), false, 'no lock was created');
+});
+
+test('an abort while acquire waits for a foreign holder rejects at once and leaves that holder\'s lock alone', async (t) => {
+  const root = tmpRoot(t);
+  const first = tryAcquire(root, 'Engine export (Workbench)');
+  t.after(first);
+  const ctl = new AbortController();
+  const waiting = acquire(root, 'me', { timeoutMs: 5000, pollMs: 5000, signal: ctl.signal });
+  setTimeout(() => ctl.abort(new Error('The Workbench is closing')), 50);
+  const started = Date.now();
+  await assert.rejects(waiting, /The Workbench is closing/);
+  assert.ok(Date.now() - started < 1000, 'the wait ends at the abort, not at the poll');
+  assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'Engine export (Workbench)', 'their lock stands');
+});
+
 // A planted checkout whose tools/ holds the real lock helper and framework-data-build
 // (the smallest writer CLI), so the CLI's own lock is exercised end to end.
 function plantBuilder(t) {

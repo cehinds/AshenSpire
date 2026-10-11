@@ -137,14 +137,33 @@ export function tryAcquire(root, holder) {
   return { heldBy: { pid: lock?.info?.pid ?? null, holder: lock?.info?.holder || 'Another build', startedAt: lock?.info?.startedAt ?? null } };
 }
 
-/** Wait for the lock (polling), then hold it; rejects with `heldBy` after timeoutMs. */
-export async function acquire(root, holder, { timeoutMs = 10 * 60 * 1000, pollMs = 250 } = {}) {
+/** The rejection of a wait that `signal` aborted: its reason when that is an Error. */
+function abortError(signal) {
+  const reason = signal.reason;
+  return reason instanceof Error ? reason : Object.assign(new Error('Aborted'), { name: 'AbortError' });
+}
+
+/** Sleep for `ms`, or until `signal` aborts (then it resolves at once; the caller checks the signal). */
+function pause(ms, signal) {
+  return new Promise((resolve) => {
+    const done = () => { clearTimeout(timer); signal?.removeEventListener('abort', done); resolve(); };
+    const timer = setTimeout(done, ms);
+    signal?.addEventListener('abort', done, { once: true });
+  });
+}
+
+/**
+ * Wait for the lock (polling), then hold it; rejects with `heldBy` after timeoutMs.
+ * An aborted `signal` rejects at once with its reason and never takes the lock.
+ */
+export async function acquire(root, holder, { timeoutMs = 10 * 60 * 1000, pollMs = 250, signal } = {}) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
+    if (signal?.aborted) throw abortError(signal);
     const got = tryAcquire(root, holder);
     if (typeof got === 'function') return got;
     if (Date.now() >= deadline) throw Object.assign(Error(`${got.heldBy.holder} is running; try again when it finishes`), { status: 409, heldBy: got.heldBy });
-    await new Promise((resolve) => setTimeout(resolve, Math.max(1, Math.min(pollMs, deadline - Date.now()))));
+    await pause(Math.max(1, Math.min(pollMs, deadline - Date.now())), signal);
   }
 }
 
