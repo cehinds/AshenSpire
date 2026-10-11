@@ -369,7 +369,10 @@ b. Resolved (2026-10-11). Momentum is applied per slot, with a round-end
    total per enemy. Decay is resolved (k).
 c. Resolved (2026-10-11): one player card per enemy action. A second card is
    rejected.
-d. What happens to an unpaired enemy action?
+d. Resolved (owner, 2026-10-11): an unpaired enemy attack rolls its hit against
+   the player's defence. A landed hit wins the slot for that enemy (momentum -1 for
+   the player). Non-attack unpaired actions do nothing. See "Resolver placeholder
+   rules" and item 1.
 e. Resolved (2026-10-11): four perception stages, as in "Perception stages".
    The card hint consequence is flagged there.
 f. Resolved (2026-10-11): the guaranteed evasion becomes the `intangible` tag
