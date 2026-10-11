@@ -194,7 +194,7 @@ export function createGrid(el, options = {}) {
     if (dr) p = Math.min(Math.max(p + dr, 0), Math.max(order.length - 1, 0));
     const nr = order.length ? order[p] : 0;
     const nc = Math.min(Math.max(cur.c + dc, 0), Math.max(doc.columns.length - 1, 0));
-    sel = M.selectCell(sel, { r: nr, c: nc }, { shift: extend });
+    sel = M.selectCell(sel, { r: nr, c: nc }, { shift: extend, order });
     ensureVisible(p, nc);
     render({ full: false });
   }
@@ -271,18 +271,18 @@ export function createGrid(el, options = {}) {
     const cell = ev.target.closest('.gk-cell');
     if (!cell || cell.classList.contains('gk-num')) return;
     const r = Number(cell.dataset.r), c = Number(cell.dataset.c);
-    sel = M.selectCell(sel, { r, c }, { shift: ev.shiftKey, ctrl: ev.ctrlKey || ev.metaKey });
+    sel = M.selectCell(sel, { r, c }, { shift: ev.shiftKey, ctrl: ev.ctrlKey || ev.metaKey, order });
     dragging = true; render({ full: false });
   });
   scroll.addEventListener('mouseover', ev => {
     if (!dragging) return;
     const cell = ev.target.closest('.gk-cell');
-    if (cell && !cell.classList.contains('gk-num')) { sel = M.selectCell(sel, { r: Number(cell.dataset.r), c: Number(cell.dataset.c) }, { shift: true }); render({ full: false }); }
+    if (cell && !cell.classList.contains('gk-num')) { sel = M.selectCell(sel, { r: Number(cell.dataset.r), c: Number(cell.dataset.c) }, { shift: true, order }); render({ full: false }); }
   });
   window.addEventListener('mouseup', () => { dragging = false; });
   scroll.addEventListener('mousedown', ev => {
     const num = ev.target.closest('.gk-num');
-    if (num) { sel = M.selectRows(sel, Number(num.dataset.r), { shift: ev.shiftKey, ctrl: ev.ctrlKey || ev.metaKey }, doc.columns.length); render({ full: false }); }
+    if (num) { sel = M.selectRows(sel, Number(num.dataset.r), { shift: ev.shiftKey, ctrl: ev.ctrlKey || ev.metaKey, order }, doc.columns.length); render({ full: false }); }
   });
   scroll.addEventListener('dblclick', ev => {
     const cell = ev.target.closest('.gk-cell');
