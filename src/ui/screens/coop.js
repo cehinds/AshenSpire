@@ -86,7 +86,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
+import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, callout, calloutForEvent, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
@@ -193,6 +193,22 @@ export function levelCardStrips(registries, offer, picks) {
  * scene the host marks `opening` (the one carrying the setup cues); joining
  * after any action, turn 1 included, replays no history.
  */
+/**
+ * The on-character callouts (fx.js calloutForEvent) a batch of co-op receipts
+ * earns, with the shared player entity id 'player' named by its seat, the way
+ * the paced timeline (paceReactionReceipts) does → [{ kind, targetId }].
+ */
+export function coopCallouts(events = []) {
+  const out = [];
+  for (const event of events || []) {
+    if (!event) continue;
+    const targetId = event.targetId === 'player' ? event.targetPlayerId || event.playerId : event.targetId;
+    const said = calloutForEvent({ ...event, targetId });
+    if (said) out.push(said);
+  }
+  return out;
+}
+
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
@@ -2183,6 +2199,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const id=CSS.escape(String(effect.targetId));
       const anchor=app.querySelector('[data-eid="'+id+'"] .sprite')||app.querySelector('[data-eid="'+id+'"]')||app.querySelector('[data-seat="'+id+'"] .sprite');
       if(anchor)playCombatEffect(layer,anchorLocalBox(layer,anchor),effect.kind,{size:190});
+    }
+    // The callouts (STAGGERED, CRITICAL, GUARD BREAK, EVADED…) of an ordinary
+    // resolution. A paced timeline plays its own and advances lastReceiptSeq
+    // before it renders, so a receipt is never called out twice.
+    if (hasNewReceipts) for (const said of coopCallouts(now.events)) {
+      const id = CSS.escape(String(said.targetId));
+      const anchor = app.querySelector(`[data-seat="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"] .sprite`);
+      if (anchor) callout(layer, anchor, said.targetId, said.kind);
     }
     const receipts = (hasNewReceipts ? (now.events || []) : [])
       .filter((ev) => ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
