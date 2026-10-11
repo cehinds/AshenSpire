@@ -19,6 +19,14 @@ function assertRestores(before, result) {
 // Snapping
 // ---------------------------------------------------------------------------
 
+test('selection change: reported only when the ids differ from the starting selection', () => {
+  // A marquee ends by comparing its final selection with the pre-drag one, not with itself.
+  assert.equal(M.selectionChanged([], ['a']), true, 'a marquee that selects something');
+  assert.equal(M.selectionChanged(['a'], []), true, 'a marquee that clears the selection');
+  assert.equal(M.selectionChanged(['a', 'b'], ['a', 'b']), false, 'an unchanged selection is not reported');
+  assert.equal(M.selectionChanged(undefined, []), false, 'no selection is the empty one');
+});
+
 test('move snaps to the grid when no guide is near', () => {
   const r = M.snapRect({ x: 21, y: 39, w: 50, h: 50 }, { mode: 'move', grid: GRID, threshold: 6 });
   assert.equal(r.rect.x, 20);
