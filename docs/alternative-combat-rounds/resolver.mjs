@@ -342,8 +342,8 @@ export const EVADE_SCOPES = Object.freeze(['exchange', 'round', 'combat', 'run']
 
 // Keeps the bonuses whose scope is live in ctx, and whose condition passes.
 // - exchange: live when ctx.inExchange is true.
-// - round: live when ctx.round is set.
-// - combat: live when ctx.combatId is set.
+// - round: live when ctx.round is set, and equals bonus.round if that is set.
+// - combat: live when ctx.combatId is set, and equals bonus.combatId if that is set.
 // - run: live whenever the bonus is present.
 // Pure: does not change the bonuses.
 export function activeEvadeBonuses(bonuses = [], ctx = {}) {
@@ -355,8 +355,8 @@ export function activeEvadeBonuses(bonuses = [], ctx = {}) {
     }
     let live = true;
     if (b.scope === 'exchange') live = ctx.inExchange === true;
-    else if (b.scope === 'round') live = ctx.round != null;
-    else if (b.scope === 'combat') live = ctx.combatId != null;
+    else if (b.scope === 'round') live = ctx.round != null && (b.round == null || b.round === ctx.round);
+    else if (b.scope === 'combat') live = ctx.combatId != null && (b.combatId == null || b.combatId === ctx.combatId);
     if (!live) return false;
     return typeof b.condition !== 'function' || Boolean(b.condition(ctx));
   });
@@ -486,6 +486,8 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // perception:  number of queued actions visible to the player. It only tags
 //              events with `visible`. Thresholds are open (DESIGN.md, Open q. e).
 // options.momentum: { [enemyId]: M_e } at the start of the round (default 0 each).
+// options.evadeBonuses: scoped evade bonuses, filtered here by scope, round,
+//   combatId and appliesTo (see inputBonuses below). Default none.
 //
 // Returns { events, momentum }, where `momentum` is { [enemyId]: M_e } after the
 // round. Momentum updates at round end (DESIGN.md, Momentum):
@@ -505,6 +507,16 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   }
   const visibleCount = Math.max(0, Math.min(enemyQueue.length, Math.trunc(Number(perception) || 0)));
   const inputM = options.momentum ?? {};
+  // Scoped evade bonuses from the caller (DESIGN.md, Evade bonus scopes). An
+  // exchange bonus attaches to the card or action named by appliesTo, and only
+  // that defender sees it. Other scopes apply to every defender when appliesTo
+  // is unset, or only to the named one when it is set.
+  const inputBonuses = normalizeEvadeBonuses(options.evadeBonuses);
+  const attaches = (b, id) => (b.appliesTo == null ? b.scope !== 'exchange' : b.appliesTo === id);
+  const bonusesFor = (id) => activeEvadeBonuses(
+    inputBonuses.filter((b) => attaches(b, id)),
+    { inExchange: true, round: options.round, combatId: options.combatId },
+  );
   const stanceTable = options.stanceAdvantage ?? null; // Map from parseStanceAdvantage()
   if (typeof inputM !== 'object' || Array.isArray(inputM)) {
     throw new TypeError('options.momentum must be an object keyed by enemy id');
@@ -550,8 +562,8 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     const visible = slot < visibleCount;
     const pool = { player: charges.player, enemy: charges[k] };
     const pairEvents = resolvePair(
-      { ...pc, speed: pc.speed + momentumSpeed(start[k]) },
-      { ...enemy, speed: enemy.speed - momentumSpeed(start[k]) },
+      { ...pc, speed: pc.speed + momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(pc.evadeBonuses), ...bonusesFor(pc.id)] },
+      { ...enemy, speed: enemy.speed - momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(enemy.evadeBonuses), ...bonusesFor(enemy.id)] },
       rng,
       { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, charges: pool },
     );

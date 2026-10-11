@@ -1049,3 +1049,54 @@ test('resolveRound passes the evade table through: a stance bonus raises evadePc
   assert.equal(find(events, 'evadeRoll').evadePct, 60);
   assert.equal(find(events, 'momentum').by, 'enemy');
 });
+
+// Scope filter in resolveRound (DESIGN.md, Evade bonus scopes). Bonuses passed in
+// options.evadeBonuses are filtered by resolveRound itself. Player cards defend
+// against enemy attacks, so each evadeRoll is the defending card's own roll.
+const SCOPED_CARDS = [
+  { id: 'A', slot: 0, speed: 1, kind: 'other', evadeBasePct: 30 },
+  { id: 'B', slot: 1, speed: 1, kind: 'other', evadeBasePct: 30 },
+];
+const SCOPED_ENEMIES = [
+  { id: 'eA', speed: 4, kind: 'attack' },
+  { id: 'eB', speed: 4, kind: 'attack' },
+];
+const rollAt = (events, slot) => events.find((e) => e.type === 'evadeRoll' && e.slot === slot);
+
+test('scope exchange: a bonus attached to card A changes only A\'s evadePct in that round', () => {
+  const bonus = { source: 'ring', pct: 20, scope: 'exchange', appliesTo: 'A' };
+  const { events } = resolveRound(SCOPED_CARDS, SCOPED_ENEMIES, 2, () => 0.99, { evadeBonuses: [bonus] });
+  assert.equal(rollAt(events, 0).evadePct, 50, 'card A gets the bonus');
+  assert.equal(rollAt(events, 1).evadePct, 30, 'card B does not');
+});
+
+test('scope exchange: a bonus with no appliesTo attaches to nothing', () => {
+  const attached = { source: 'ring', pct: 20, scope: 'exchange', appliesTo: 'A' };
+  const loose = { source: 'ring', pct: 20, scope: 'exchange' };
+  assert.equal(rollAt(resolveRound(SCOPED_CARDS, SCOPED_ENEMIES, 2, () => 0.99, { evadeBonuses: [attached] }).events, 0).evadePct, 50);
+  const { events } = resolveRound(SCOPED_CARDS, SCOPED_ENEMIES, 2, () => 0.99, { evadeBonuses: [loose] });
+  assert.equal(rollAt(events, 0).evadePct, 30);
+  assert.equal(rollAt(events, 1).evadePct, 30);
+});
+
+test('scope round: a bonus with round 1 applies at options.round 1 and not at round 2', () => {
+  const bonus = { source: 'round1', pct: 20, scope: 'round', round: 1 };
+  const one = resolveRound([SCOPED_CARDS[0]], [SCOPED_ENEMIES[0]], 1, () => 0.99, { round: 1, evadeBonuses: [bonus] });
+  assert.equal(rollAt(one.events, 0).evadePct, 50, 'round 1 matches');
+  const two = resolveRound([SCOPED_CARDS[0]], [SCOPED_ENEMIES[0]], 1, () => 0.99, { round: 2, evadeBonuses: [bonus] });
+  assert.equal(rollAt(two.events, 0).evadePct, 30, 'round 2 does not match');
+});
+
+test('scope combat: a bonus with combatId c1 applies in c1 and not in c2', () => {
+  const bonus = { source: 'c1', pct: 20, scope: 'combat', combatId: 'c1' };
+  const inC1 = resolveRound([SCOPED_CARDS[0]], [SCOPED_ENEMIES[0]], 1, () => 0.99, { combatId: 'c1', evadeBonuses: [bonus] });
+  assert.equal(rollAt(inC1.events, 0).evadePct, 50);
+  const inC2 = resolveRound([SCOPED_CARDS[0]], [SCOPED_ENEMIES[0]], 1, () => 0.99, { combatId: 'c2', evadeBonuses: [bonus] });
+  assert.equal(rollAt(inC2.events, 0).evadePct, 30);
+});
+
+test('scope run: a run bonus applies with no round or combat set', () => {
+  const bonus = { source: 'run', pct: 20, scope: 'run' };
+  const { events } = resolveRound([SCOPED_CARDS[0]], [SCOPED_ENEMIES[0]], 1, () => 0.99, { evadeBonuses: [bonus] });
+  assert.equal(rollAt(events, 0).evadePct, 50);
+});
