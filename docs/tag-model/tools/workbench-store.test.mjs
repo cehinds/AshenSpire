@@ -674,13 +674,17 @@ function loadBlock(name, expose) {
 const evalStub = (e) => (String(e || '').trim() ? { v: 1 } : { err: 'empty expression', soft: false });
 const TT_FORMULAS = (cols) => ({ t: { label: 'Formulas', key: 'key', columns: [...cols], refs: {} } });
 
-test('the real formulas.csv imports, saves, loads and exports with its status column; evasion.rating is a note', async () => {
+test('the real formulas.csv imports, saves, loads and exports with its status column; a proposed placeholder is a note', async () => {
   const { FORMULA_COLUMNS } = loadBlock('formula-columns', '({ FORMULA_COLUMNS })');
   const { parseCSV, importRows, toCSV } = loadBlock('csv', '({ parseCSV, importRows, toCSV })');
   const { formulaRowIssue } = loadBlock('formula-issues', '({ formulaRowIssue })');
   const csv = readFileSync(path.join(HERE, '..', 'tables', 'formulas.csv'), 'utf8');
   const tbl = { columns: [...FORMULA_COLUMNS], rows: [] };
-  importRows(tbl, 'key', parseCSV(csv), 'replace');
+  const parsed = parseCSV(csv);
+  // A synthetic proposed placeholder, so the note rule is tested without a placeholder in the real table.
+  parsed.rows.push(Object.fromEntries(FORMULA_COLUMNS.map(c => [c, ''])));
+  Object.assign(parsed.rows[parsed.rows.length - 1], { key: 'proposed.placeholder', status: 'proposed' });
+  importRows(tbl, 'key', parsed, 'replace');
   const db = makeFakeDb();
   const W = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
   W.page.loaded.add('t');
@@ -691,10 +695,13 @@ test('the real formulas.csv imports, saves, loads and exports with its status co
   R.api.subscribeTable('t');
   await waitFor(() => R.page.loaded.has('t'));
   const loaded = R.page.state.data.t;
+  const placeholder = loaded.rows.find((r) => r.key === 'proposed.placeholder');
+  assert.ok(placeholder, 'the fixture row loads');
+  assert.equal(placeholder.status, 'proposed');
+  assert.equal(formulaRowIssue(placeholder, evalStub).note, true, 'the fixture row is shown as a note, not a problem');
   const row = loaded.rows.find((r) => r.key === 'evasion.rating');
-  assert.ok(row, 'the row loads');
+  assert.ok(row, 'evasion.rating loads');
   assert.equal(row.status, 'proposed');
-  assert.equal(formulaRowIssue(row, evalStub).note, true, 'shown as a note, not a problem');
   assert.match(toCSV(loaded.columns, loaded.rows).split('\n')[0], /,status$/, 'export keeps the status column');
 });
 
