@@ -479,6 +479,7 @@ function offerReaction(cur, entry, events, options, run) {
   return {
     evade: chosen.kind === 'evade' ? record : null,
     counter: chosen.kind === 'counter' ? record : null,
+    guard: chosen.kind === 'guard' ? record : null,
   };
 }
 
@@ -491,9 +492,12 @@ function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, spe
   const act = cur.active[owner];
   if (card.kind === 'guard') {
     const block = (card.block ?? DEFENSE_BASE.block) + buff('block');
-    act.guard += block;
-    act.guardCards.push({ cardId: card.id, momentumGain: card.momentumGain, stance: card.stance ?? null, left: block });
+    const record = { cardId: card.id, momentumGain: card.momentumGain, stance: card.stance ?? null, left: block };
     events.push({ type: 'guardUp', by: owner, cardId: card.id, block, buffed: preemptive });
+    // A reaction guard belongs to one attack: it is returned, not added to the round's pool.
+    if (reaction) return record;
+    act.guard += block;
+    act.guardCards.push(record);
   } else if (card.kind === 'evade') {
     const pct = (card.evadePct ?? DEFENSE_BASE.evadePct) + buff('evadePct');
     const record = { cardId: card.id, pct, gain: card.momentumGain, stance: card.stance ?? null };
@@ -529,6 +533,62 @@ function takeCounter(cur, defenderId, attackerId) {
   return i < 0 ? null : list.splice(i, 1)[0];
 }
 
+// One attack after its reaction window (owner, 2026-10-11): a queued or reaction counter may
+// cancel it or fire on it, and the attack resolves. `reacted` is the reaction offer.
+function resolveExchange(cur, entry, events, options, run, reacted) {
+  // A reaction counter answers this attack; otherwise the first queued counter that fires.
+  const counter = reacted.counter ?? takeCounter(cur, entry.target, entry.actor);
+  // A counter fires or cancels only while its owner is alive (owner, 2026-10-11).
+  const ownerAlive = () => Boolean(counter) && cur.combatants[counter.owner].hp > 0;
+  // The enemy in this exchange: the attacker, or the defender when the player attacks.
+  const key = entry.side === 'enemy' ? entry.actor : entry.target;
+  const attackCard = { momentumGain: entry.card.momentumGain, stance: entry.card.stance ?? null };
+  const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
+  const credited = new Set();
+  const sideOf = (id) => cur.combatants[id].side;
+  if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
+    // A faster counter cancels the attack. A tie or a slower counter does not.
+    events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
+    applyDamage(cur, entry.actor, counter.damage, events);
+    credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
+    if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
+    return;
+  }
+  const out = resolveAttack(cur, entry, events, options.rng, options, reacted.evade);
+  if (out.landed) {
+    credit(cur, run, { key, winner: entry.side, winCard: attackCard, foeCard: out.defenseCard ?? {}, events, seq: entry.seq, credited });
+  } else {
+    credit(cur, run, { key, winner: sideOf(entry.target), winCard: out.defenseCard ?? {}, foeCard: attackCard, events, seq: entry.seq, credited });
+  }
+  if (ownerAlive()) {
+    events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
+    applyDamage(cur, entry.actor, counter.damage, events);
+    credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
+    if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
+  }
+}
+
+// A reaction guard's block joins its target's pool for the one attack it was played against
+// (owner, Codex review 2026-10-11). Returns the record it was given.
+function joinReactionGuard(cur, targetId, record) {
+  const act = cur.active[targetId];
+  act.guard += record.left;
+  act.guardCards.push(record);
+  return record;
+}
+
+// Discards what is left of a reaction guard's block once its attack is over, so a later attack
+// cannot consume it. A cancelled attack leaves its whole block to be discarded here.
+function discardReactionGuard(cur, targetId, record, events) {
+  const act = cur.active[targetId];
+  const i = act.guardCards.indexOf(record);
+  if (i < 0) return;
+  act.guardCards.splice(i, 1);
+  act.guard -= record.left;
+  if (record.left > 0) events.push({ type: 'guardDiscard', by: targetId, cardId: record.cardId, amount: record.left });
+  record.left = 0;
+}
+
 // Resolves one timeline entry into `events`, updating `cur` in place.
 function applyEntry(cur, entry, events, options, run) {
   const actor = cur.combatants[entry.actor];
@@ -545,36 +605,9 @@ function applyEntry(cur, entry, events, options, run) {
   const kind = entry.card.kind;
   if (kind === 'attack') {
     const reacted = offerReaction(cur, entry, events, options, run);
-    // A reaction counter answers this attack; otherwise the first queued counter that fires.
-    const counter = reacted.counter ?? takeCounter(cur, entry.target, entry.actor);
-    // A counter fires or cancels only while its owner is alive (owner, 2026-10-11).
-    const ownerAlive = () => Boolean(counter) && cur.combatants[counter.owner].hp > 0;
-    // The enemy in this exchange: the attacker, or the defender when the player attacks.
-    const key = entry.side === 'enemy' ? entry.actor : entry.target;
-    const attackCard = { momentumGain: entry.card.momentumGain, stance: entry.card.stance ?? null };
-    const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
-    const credited = new Set();
-    const sideOf = (id) => cur.combatants[id].side;
-    if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
-      // A faster counter cancels the attack. A tie or a slower counter does not.
-      events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
-      applyDamage(cur, entry.actor, counter.damage, events);
-      credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
-      if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
-      return;
-    }
-    const out = resolveAttack(cur, entry, events, options.rng, options, reacted.evade);
-    if (out.landed) {
-      credit(cur, run, { key, winner: entry.side, winCard: attackCard, foeCard: out.defenseCard ?? {}, events, seq: entry.seq, credited });
-    } else {
-      credit(cur, run, { key, winner: sideOf(entry.target), winCard: out.defenseCard ?? {}, foeCard: attackCard, events, seq: entry.seq, credited });
-    }
-    if (ownerAlive()) {
-      events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
-      applyDamage(cur, entry.actor, counter.damage, events);
-      credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
-      if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
-    }
+    const reactionGuard = reacted.guard ? joinReactionGuard(cur, entry.target, reacted.guard) : null;
+    resolveExchange(cur, entry, events, options, run, reacted);
+    if (reactionGuard) discardReactionGuard(cur, entry.target, reactionGuard, events);
   } else if (kind === 'guard' || kind === 'evade' || kind === 'counter') {
     // A queued defensive card is preemptive: it becomes active for its owner now.
     placeDefence(cur, entry.actor, entry.card, {

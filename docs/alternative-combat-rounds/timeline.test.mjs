@@ -435,6 +435,43 @@ test('a guard block that covers the whole hit absorbs it and keeps the rest', ()
   assert.equal(round.resolveAll().state.active.player.guard, 0); // the round ends and clears it
 });
 
+test('a reaction guard covers only its own attack: its leftover block is discarded', () => {
+  // Reaction guard block 6 meets a 2-damage attack: 4 is left over. A later 4-damage attack
+  // must not be absorbed by that leftover (owner, Codex finding, 2026-10-11).
+  const round = createRound(duo({}, { hp: 20, hand: [guardCard()] }), {
+    queues: { goblin: [atk('a', 'player', 3, { damage: 2 }), atk('b', 'player', 1, { damage: 4 })] },
+    rng: HIT_RNG,
+    onReaction: () => ({ id: 'guard' }),
+  });
+  const first = round.next();
+  assert.equal(first.entry.cardId, 'a');
+  assert.equal(first.events.find((e) => e.type === 'reaction').cardId, 'guard');
+  assert.equal(first.state.active.player.guard, 0);
+  assert.deepEqual(first.state.active.player.guardCards, []);
+  assert.equal(first.state.combatants.player.hp, 20);
+  const out = round.resolveAll();
+  assert.equal(out.events.some((e) => e.type === 'reaction'), false);
+  assert.equal(out.state.combatants.player.hp, 16);
+});
+
+test('a reaction guard that is cancelled by a counter gives no block to a later attack', () => {
+  // A queued counter (speed 6) cancels the 3-speed attack before any damage. The reaction
+  // guard's whole block 6 must not remain: the 4-damage attack after it takes full damage.
+  const st = duo({}, { hp: 20, hand: [guardCard()] });
+  const out = createRound(st, {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 6)],
+      goblin: [atk('a', 'player', 3, { damage: 2 }), atk('b', 'player', 1, { damage: 4 })],
+    },
+    rng: HIT_RNG,
+    onReaction: () => ({ id: 'guard' }),
+  }).resolveAll();
+  assert.ok(out.events.some((e) => e.type === 'countered' && e.target === 'goblin'));
+  assert.equal(out.events.some((e) => e.type === 'reaction' && e.cardId === 'guard'), true);
+  assert.equal(out.state.active.player.guard, 0);
+  assert.equal(out.state.combatants.player.hp, 16);
+});
+
 test('onReaction is offered only to the player, and only when SP is left for the card', () => {
   const calls = [];
   const onReaction = (attack, eligible) => {
