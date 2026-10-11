@@ -23,19 +23,19 @@ export default {
       <aside class="ds-list" aria-label="Tables"><input type="search" class="ds-find" placeholder="Find a table…" aria-label="Find a table"><div class="ds-groups"></div></aside>
       <section class="ds-main">
         <div class="ds-toolbar">
-          <button type="button" data-act="add">Add row</button>
-          <button type="button" data-act="dup">Duplicate</button>
-          <button type="button" data-act="del">Delete</button>
-          <button type="button" data-act="import">Import CSV/JSON</button>
-          <button type="button" data-act="export">Export</button>
-          <button type="button" data-act="review" class="primary">Review &amp; save (0)</button>
+          <button type="button" class="btn btn-sm" data-act="add">Add row</button>
+          <button type="button" class="btn btn-sm" data-act="dup">Duplicate</button>
+          <button type="button" class="btn btn-sm" data-act="del">Delete</button>
+          <button type="button" class="btn btn-sm" data-act="import">Import CSV/JSON</button>
+          <button type="button" class="btn btn-sm" data-act="export">Export</button>
+          <button type="button" class="btn btn-sm btn-primary" data-act="review">Review &amp; save (0)</button>
           <input type="file" class="ds-file-in" accept=".csv,.json,.tsv,.txt" hidden>
           <span class="ds-file"></span>
         </div>
         <div class="ds-grid"><div class="ds-note">Loading tables…</div></div>
       </section>
       <aside class="ds-side">
-        <div class="ds-tabs" role="tablist"><button type="button" role="tab" data-tab="row" aria-selected="true">Row</button><button type="button" role="tab" data-tab="check" aria-selected="false">Check</button></div>
+        <div class="ds-tabs" role="tablist"><button type="button" class="btn btn-sm" role="tab" data-tab="row" aria-selected="true">Row</button><button type="button" class="btn btn-sm" role="tab" data-tab="check" aria-selected="false">Check</button></div>
         <div class="ds-panel-row"></div>
         <div class="ds-panel-check ds-hidden"></div>
       </aside></div>`;
