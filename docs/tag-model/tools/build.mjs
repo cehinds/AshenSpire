@@ -394,8 +394,10 @@ const CALL_DEPTH = 2;
 const wordsOfComponent = (file, notes) => {
   const src = sourceOfOwner(file);
   const out = new Set();
-  // A renderer's classes include those set by the same-file functions it calls
-  // (renderArmouryOverlay -> renderArmouryPanel), followed to CALL_DEPTH levels.
+  // A renderer's classes include those set by the same-file functions it calls,
+  // followed to CALL_DEPTH levels. Cross-file calls are not followed: the armoury
+  // overlay owns only modal-veil, since renderArmouryOverlay never calls
+  // renderArmouryPanel; equipment.js composes the panel into the overlay's wrap.
   // The least depth each function has been reached at. A function first met deep
   // in the walk is expanded again when a shallower path reaches it, so its own
   // callees are still followed to the full depth from there.
