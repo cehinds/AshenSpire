@@ -16,7 +16,7 @@ const family=()=>families.get($('#actor').value);
 const available=()=>!!defaultFamily(manifest,$('#actor').value);
 const seq=()=>family().sequences[action];
 const duration=()=>durationFor(seq(),ANIM_SPEEDS[$('#pace').value]);
-const hitProgress=now=>hitAt===null?1:(now-hitAt)*($('#slowmo').checked?.25:1)/260;
+const hitProgress=now=>hitAt===null?1:(now-hitAt)*($('#slowmo').checked?.25:1)/280;
 const message=t=>$('#message').textContent=t;
 async function image(url){
  if(!images.has(url))images.set(url,new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Missing image: '+url));img.src=url;}));
@@ -106,7 +106,7 @@ for(const id of ['aura','quality','effect'])$('#'+id).onchange=render;
 $('#reduced').checked=matchMedia('(prefers-reduced-motion: reduce)').matches;
 $('#reduced').onchange=selection;
 function tick(now){
- if(hitAt!==null){if(hitProgress(now)>=.55)hitAt=null;render();}
+ if(hitAt!==null){if(hitProgress(now)>=1)hitAt=null;render();}
  if(playing&&document.visibilityState==='visible'){
   const dt=Math.min(80,now-last)*($('#slowmo').checked?.25:1);
   if(time<duration())time=Math.min(duration(),time+dt);
