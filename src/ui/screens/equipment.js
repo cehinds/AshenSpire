@@ -76,6 +76,7 @@ import { renderBookArt } from '../components/bookArt.js';
 import { equipClassCard } from '../../model/classLibrary.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
+import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
 import {
   armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
 } from '../models/ArmouryWorkspaceModel.js';
@@ -834,6 +835,8 @@ export function mountEquipment(host, {
   let paneObserver = null;
   let paneFrame = 0;
   let inventoryDisclosure = null;
+  let pickerSort = { column: 'status', direction: 'asc' };
+  let pickerShowAll = false;
   let holdDisarms = [];
   const clearHoldDisarms = () => {
     for (const disarm of holdDisarms.splice(0)) disarm();
@@ -1467,6 +1470,122 @@ export function mountEquipment(host, {
     return section;
   }
 
+  /** While a position is picked: the candidates as an Item / Status / Actions table. */
+  function pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, draggableRows, attachInventoryDrag }) {
+    // A redraw replaces every control; put keyboard focus back on the one pressed.
+    const redrawFocus = (selector) => { draw(); wrap.querySelector(selector)?.focus({ preventScroll: true }); };
+    const all = sortEquipPickerRows(equipPickerTableRows(allRows, selectedSlot, { setIndex: picking.setIndex, loadout: run.loadout }), pickerSort);
+    const shown = pickerShowAll ? all : all.filter((r) => r.fits);
+    const slotLabel = (id) => (eq.slots || []).find((s) => s.id === id)?.label || id;
+    const root = el('div', { class: 'equip-picker', dataset: { component: 'armoury.equipPickerTable' } });
+    const filter = button({
+      label: pickerShowAll ? t('armoury.picker.fitsOnly') : t('armoury.picker.showAll'),
+      className: 'equip-picker-filter',
+      attrs: { 'aria-pressed': String(pickerShowAll) },
+    });
+    filter.addEventListener('click', () => { pickerShowAll = !pickerShowAll; redrawFocus('.equip-picker-filter'); });
+    root.append(filter);
+    if (!shown.length) {
+      root.append(flavour(`Nothing in Inventory fits ${selectedSlot.label}.`, { class: 'ep-hint' }));
+      setFooterPrimary(null);
+      return root;
+    }
+    const sortHead = (key, label) => {
+      const active = pickerSort.column === key;
+      const sortButton = el('button', { type: 'button', class: 'equip-picker-sort', dataset: { sort: key } }, [label]);
+      sortButton.addEventListener('click', () => {
+        pickerSort = pickerSort.column === key
+          ? { column: key, direction: pickerSort.direction === 'asc' ? 'desc' : 'asc' }
+          : { column: key, direction: 'asc' };
+        redrawFocus(`.equip-picker-sort[data-sort="${key}"]`);
+      });
+      return el('th', { 'aria-sort': active ? (pickerSort.direction === 'asc' ? 'ascending' : 'descending') : 'none' }, [sortButton]);
+    };
+    const thead = el('thead', {}, [el('tr', {}, [
+      sortHead('name', t('armoury.picker.col.item')),
+      sortHead('status', t('armoury.picker.col.status')),
+      el('th', {}, [el('span', { class: 'sr-only' }, [t('armoury.picker.col.actions')])]),
+    ])]);
+    const tbody = el('tbody', {});
+    let openShown = false;
+    for (const r of shown) {
+      const open = selectedInventoryKey === r.key;
+      const parts = pickerParts.get(r.key);
+      const first = r.elsewhere[0];
+      const metaBits = [r.category];
+      if (r.status === 'nofit') metaBits.push(t(r.reason === 'kind' ? 'armoury.picker.reason.kind' : 'armoury.picker.reason.hand', { slot: selectedSlot.label }));
+      if (r.status === 'elsewhere' && r.row.count === 1) metaBits.push(t('armoury.picker.onlyCopy', { slot: slotLabel(first.slotId), n: first.setIndex + 1 }));
+      const statusLabel = r.status === 'elsewhere'
+        ? t('armoury.picker.status.elsewhere', { slot: slotLabel(first.slotId), n: first.setIndex + 1 })
+        : t(`armoury.picker.status.${r.status}`, {});
+      const img = el('img', { class: 'equip-picker-thumb', src: thumbSrc(r.row.item), alt: '', loading: 'lazy', decoding: 'async' });
+      // The cell stays a table cell; its flex layout lives on an inner wrapper.
+      // Phones drop the Status column, so the pill also rides under the name.
+      const statusPill = () => pill({ label: statusLabel, attrs: { class: `equip-picker-pill is-${r.status}` } });
+      const itemCell = el('td', {}, [el('div', { class: 'equip-picker-item' }, [img, el('div', {}, [
+        el('strong', { class: 'equip-picker-name' }, [r.name]),
+        el('span', { class: 'equip-picker-meta' }, [metaBits.join(' · ')]),
+        el('span', { class: 'equip-picker-inline-status' }, [statusPill()]),
+      ])])]);
+      const statusCell = el('td', { class: 'equip-picker-status' }, [statusPill()]);
+      const inspect = button({
+        label: open ? t('armoury.picker.hide') : t('armoury.action.inspect'),
+        className: 'equip-picker-inspect',
+        attrs: { 'aria-expanded': String(open) },
+      });
+      inspect.addEventListener('click', () => {
+        selectedInventoryKey = open ? null : r.key;
+        redrawFocus(`.equip-picker-row[data-row-key="${CSS.escape(r.key)}"] .equip-picker-inspect`);
+      });
+      const actions = [inspect];
+      if (r.fits && parts?.target) {
+        const target = parts.target;
+        // The row already names the slot, so its button is the short verb;
+        // the full destination stays in the accessible name.
+        const act = button({
+          label: t(`armoury.picker.act.${target.kind}`),
+          weight: target.kind === 'unequip' ? 'danger' : 'primary',
+          className: 'equip-picker-act',
+          attrs: { 'aria-label': parts.actionLabel, title: parts.actionLabel },
+        });
+        act.dataset.act = target.kind;
+        if (!parts.seal.ok) { act.disabled = true; refuses(act, () => parts.seal.reason); }
+        else if (!parts.transition.ok) { act.disabled = true; refuses(act, () => parts.transition.reason); }
+        else act.addEventListener('click', () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
+        actions.push(act);
+      }
+      const actionsCell = el('td', {}, [el('div', { class: 'equip-picker-actions' }, actions)]);
+      // Buttons are taps, not drag handles: keep the row's pointer capture off them.
+      actionsCell.addEventListener('pointerdown', (event) => event.stopPropagation());
+      const tr = el('tr', {
+        class: `equip-picker-row is-${r.status}${open ? ' is-open' : ''}`,
+        dataset: { itemId: r.id, rowKey: r.key, status: r.status },
+      }, [itemCell, statusCell, actionsCell]);
+      // Mouse and pen users can still drag a row onto any named position.
+      const draggableRow = draggableRows.get(r.key);
+      if (draggableRow) attachInventoryDrag(tr, draggableRow);
+      tbody.append(tr);
+      if (open) {
+        openShown = true;
+        const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+        const body = r.fits
+          ? parts.revealed
+          : inventoryReveal(registries, r.row, { holdDuration, registerHold, classModel: layout.cardClasses.armamentItem });
+        const cell = el('td', {}, [body]);
+        cell.colSpan = 3;
+        tbody.append(el('tr', { class: 'equip-picker-detail', dataset: { detailFor: r.key } }, [cell]));
+        setFooterPrimary(footerAction(footerPlans.get(r.key)) || null);
+      }
+    }
+    if (!openShown) setFooterPrimary(null);
+    root.append(el('table', { class: 'equip-picker-table' }, [
+      el('caption', { class: 'sr-only' }, [t('armoury.picker.caption', { slot: `${selectedSlot.label} · ${picking.setIndex + 1}` })]),
+      thead,
+      tbody,
+    ]));
+    return root;
+  }
+
   /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
   function inventoryBlock() {
     const box = document.createElement('div');
@@ -1490,6 +1609,7 @@ export function mountEquipment(host, {
     const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
+    const pickerParts = new Map();
     const draggableRows = new Map();
     // An action can still be unavailable because its destination is locked,
     // its requirements fail, or a combat mount omitted the engine callback.
@@ -1602,6 +1722,7 @@ export function mountEquipment(host, {
 
     }
     const entries = rows.map((row) => {
+      let lastSeal = null, lastTransition = null;
       const target = inventoryTarget(row);
       const armament = row.item && ['Armour', 'Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category);
       const cardClass = armament ? layout.cardClasses.armamentItem : inventoryItemClass;
@@ -1634,7 +1755,8 @@ export function mountEquipment(host, {
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
-        const wholeCardHold = cardClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
+        lastSeal = seal; lastTransition = transition;
+        const wholeCardHold = !selectedSlot && cardClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
         // The act is a kit Button — danger for an unequip, primary for an equip.
         // When the whole card is the hold target the act is a lit StatePill that
         // names it, not a second control.
@@ -1700,6 +1822,7 @@ export function mountEquipment(host, {
         onClassAction: armament ? null : (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
       });
       if (armament) revealed.prepend(destinationChoices(row));
+      pickerParts.set(row.key, { revealed, target, actionLabel, seal: target ? lastSeal : null, transition: target ? lastTransition : null });
       return {
         key: row.key,
         kind: 'item',
@@ -1717,59 +1840,66 @@ export function mountEquipment(host, {
         },
       };
     });
-    inventoryDisclosure = mountDisclosure(collection, entries, {
-      moreLabel: 'more items',
-      layout: 'column',
-      revealHost: detail,
-      onReveal: (key) => {
-        selectedInventoryKey = key;
-        prompt.hidden = !!key;
-        // Phone rows collapse the detail track until an item is chosen (kit.css).
-        box.dataset.detailOpen = key ? 'true' : 'false';
-        setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
-      },
-      armFace: ({ button, entry, onTap }) => {
-        const draggableRow = draggableRows.get(entry.key);
-        if (draggableRow) attachInventoryDrag(button, draggableRow);
-        if (entry.face?.classModel?.holdAction !== true) return false;
-        const act = faceActions.get(entry.key);
-        if (!act) return false;
-        button.dataset.cardClass = entry.face.className;
-        button.dataset.holdCapable = 'true';
-        if (holdDuration > 0) {
-          const disarm = armHold(button, {
-            ms: holdDuration,
-            id: 'equipInventory',
-            // Same card, same scrolling list — see the whole-card hold above.
-            settleMs: HOLD_DRAG_SETTLE_MS,
-            onConfirm: act,
-            onTap: () => {
-              // The hold controller consumes its trailing click; reveal the
-              // nested card's Information control through the short-tap path.
-              button.querySelector('.card-inspection-target')?.dispatchEvent(new CustomEvent('cardinspectionrequest'));
-              onTap();
-            },
-            hintHost: button.querySelector('.inventory-face'),
-            hintBefore: button.querySelector('.inventory-category'),
-            feedbackHosts: () => {
-              // W1n: the reveal is in the detail column, not beside the face.
-              const reveal = detail.querySelector('.disc-reveal');
-              return [button.querySelector('.inventory-face'), reveal?.dataset.revealFor === entry.key ? reveal : null];
-            },
-          });
-          registerHold(disarm);
-        } else if (selectedSlot) {
-          button.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            act();
-          });
-        } else {
-          return false;
-        }
-        return true;
-      },
-    });
+    if (selectedSlot) {
+      inventoryDisclosure = null;
+      collection.append(pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, draggableRows, attachInventoryDrag }));
+      detail.remove();            // the table expands inline; no side column
+      box.classList.add('is-picker-table');
+    } else {
+      inventoryDisclosure = mountDisclosure(collection, entries, {
+        moreLabel: 'more items',
+        layout: 'column',
+        revealHost: detail,
+        onReveal: (key) => {
+          selectedInventoryKey = key;
+          prompt.hidden = !!key;
+          // Phone rows collapse the detail track until an item is chosen (kit.css).
+          box.dataset.detailOpen = key ? 'true' : 'false';
+          setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
+        },
+        armFace: ({ button, entry, onTap }) => {
+          const draggableRow = draggableRows.get(entry.key);
+          if (draggableRow) attachInventoryDrag(button, draggableRow);
+          if (entry.face?.classModel?.holdAction !== true) return false;
+          const act = faceActions.get(entry.key);
+          if (!act) return false;
+          button.dataset.cardClass = entry.face.className;
+          button.dataset.holdCapable = 'true';
+          if (holdDuration > 0) {
+            const disarm = armHold(button, {
+              ms: holdDuration,
+              id: 'equipInventory',
+              // Same card, same scrolling list — see the whole-card hold above.
+              settleMs: HOLD_DRAG_SETTLE_MS,
+              onConfirm: act,
+              onTap: () => {
+                // The hold controller consumes its trailing click; reveal the
+                // nested card's Information control through the short-tap path.
+                button.querySelector('.card-inspection-target')?.dispatchEvent(new CustomEvent('cardinspectionrequest'));
+                onTap();
+              },
+              hintHost: button.querySelector('.inventory-face'),
+              hintBefore: button.querySelector('.inventory-category'),
+              feedbackHosts: () => {
+                // W1n: the reveal is in the detail column, not beside the face.
+                const reveal = detail.querySelector('.disc-reveal');
+                return [button.querySelector('.inventory-face'), reveal?.dataset.revealFor === entry.key ? reveal : null];
+              },
+            });
+            registerHold(disarm);
+          } else if (selectedSlot) {
+            button.addEventListener('click', (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              act();
+            });
+          } else {
+            return false;
+          }
+          return true;
+        },
+      });
+    }
     if (selectedSlot) {
       const clear = button({ label: t('armoury.destination.showAll') });
       clear.addEventListener('click', () => { picking = null; draw(); });
@@ -1779,10 +1909,11 @@ export function mountEquipment(host, {
         prose(`${selectedSlot.label} · ${index + 1} — ${index === run.loadout.active[selectedSlot.id] ? 'Active' : 'Reserve'} · ${current.name}`), clear]));
     }
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
-    if (!entries.length) {
+    // While picking, the table owns its own empty state.
+    if (!entries.length && !selectedSlot) {
       // Nothing to select: the collection says why and takes the whole pane.
       collection.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
-      detail.remove();
+      if (detail.isConnected) detail.remove();
       box.classList.add('is-empty');
     }
     return box;

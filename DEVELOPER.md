@@ -7,6 +7,19 @@ How to run, test, and add content. The architecture contract lives in
 For how work is branched, reviewed, and merged, see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Workbench — every authoring tool in one window
+
+`node workbench/server.mjs` (or **workbench/Start Workbench.cmd** on Windows,
+`workbench/start.sh` elsewhere) opens <http://127.0.0.1:4300>: the Content
+Editor, UI Studio and Pose & FX side by side with a live game preview that
+reloads (rebuilding content or config first) when content/, src/ or styles/
+change; a Library of every editor, viewer, exporter and QA page
+(`workbench/tools.json`); Engine Export; and Build & Checks (allowlisted
+builds and the tool tests, with logs and history). Ctrl+K searches everything.
+See [workbench/README.md](workbench/README.md). A new HTML tool page must be
+added to `workbench/tools.json`; `workbench/tests/registry.test.mjs` fails
+otherwise.
+
 ## Run & test
 
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).
@@ -66,6 +79,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | only when release differs from test |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | only when release differs from test |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | only when release differs from test |
+| `workbench.yml` → Workbench, editor, UI Studio and engine-export tests, a full engine export and the Workbench screenshots (real browser); uploads `engine-export-<commit>` and `workbench-screenshots-<commit>` ([workbench/README.md](workbench/README.md)) | — | a PR into `dev` only when it touches `workbench/`, `editor/`, `ui-studio/`, `pose-studio/`, `content/`, `src/content/`, `.github/actions/`, `tools/launch.mjs`, the engine exporter, the build-lock and build-step libraries or `docs/workbench/` (the full list is in the workflow; also a push to `feature/**`, `chore/**`, `Chore/**`, `fix/**` with the same paths). It also runs those tests on Windows and macOS, each test limited to 3 minutes. Path-filtered, so never make it a required check | — | — |
 | `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
 | `ci.yml` → shipped artifact is this source (3 OS shards) and the three runners built the same bytes (`reproducible`, `reproducible-agree`) | — | — | — | yes |
 | `ci.yml` → Fullscreen first through both Settings doors (`display-first`) | — | — | — | yes |

@@ -32,6 +32,7 @@
 // are findable from either end.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { holdForCli } from './lib/build-lock.mjs';
 import { resolve, dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -402,6 +403,8 @@ export function configSourceErrors(contentRoot) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
+  // Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
+  if (!check) await holdForCli(ROOT, 'config-build');
   const entries = readConfigTree(resolve(ROOT, 'content'));
   if (!entries.length) {
     console.error(`config-build: no JSON under ${CONFIG_DIR}/`);
@@ -420,6 +423,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.error(`STALE: ${GENERATED} does not match ${CONFIG_DIR}/ — run node tools/config-build.mjs`);
       process.exit(1);
     }
+    console.log(`config-build: ${GENERATED} is current with ${entries.length} source file(s)`);
+  } else if ((existsSync(outPath) ? lf(readFileSync(outPath, 'utf8')) : null) === text) {
+    // Unchanged output is left alone, so a test importing it in a sibling
+    // process never reads it mid-rewrite (engine-export runs this build).
     console.log(`config-build: ${GENERATED} is current with ${entries.length} source file(s)`);
   } else {
     mkdirSync(dirname(outPath), { recursive: true });
