@@ -624,14 +624,12 @@ export function animateEvents(events, ctx, done) {
   pending = events.filter((e) => visualFor(e) !== null);
   const skip = (event) => {
     // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
-    if (event?.target?.closest?.('[data-combat-read-only]')) {
-      addEventListener('pointerdown', skip, { once: true, capture: true });
-      return;
-    }
+    // It stays registered until the walk ends (removed below), so a read-only click leaves it armed.
+    if (event?.target?.closest?.('[data-combat-read-only]')) return;
     flushRequested = true;
     clearCallouts(ctx.layer);
   };
-  addEventListener('pointerdown', skip, { once: true, capture: true });
+  addEventListener('pointerdown', skip, { capture: true });
 
   let i = 0;
   const step = () => {
