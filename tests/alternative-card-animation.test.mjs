@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
 import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity, hitRecoilX, hurtClipFrame } from '../src/model/alternativeCardAnimation.js';
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
+import { playerHurtFrames } from '../src/content/playerHurtFrames.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
 import { validate } from '../pose-studio/model.mjs';
 import { webpDimensions } from '../tools/mobileart-policy.mjs';
@@ -116,6 +117,18 @@ test('the hurt clip strobes seven equal frames with red on frames 2, 4 and 6',()
  assert.deepEqual(hurtClipFrame(1),{index:6,red:false},'the last frame is clamped');
  assert.deepEqual(hurtClipFrame(-1),{index:0,red:false});
  assert.deepEqual(hurtClipFrame(NaN),{index:0,red:false});
+});
+
+test('every class has a registered HURT clip backed by manifest art in both tiers',()=>{
+ const manifest=json('art-manifest.json').assets;
+ for(const classId of CARD_ACTION_CLASSES){
+  const entry=playerHurtFrames[classId];
+  assert.ok(entry,classId+' has a HURT registration');
+  assert.ok(Number.isFinite(entry.scale)&&entry.scale>0,classId+' scale is finite');
+  assert.ok(Number.isFinite(entry.dx)&&Number.isFinite(entry.dy),classId+' offset is finite');
+  assert.match(entry.file,/^assets\/animations\/.+\/HURT\.webp$/);
+  assert.ok(manifest[entry.file]?.light&&manifest[entry.file]?.high,classId+' HURT art is in art-manifest.json for both tiers');
+ }
 });
 
 test('the knock-back eases left to -14px at 30% and back to rest',()=>{
