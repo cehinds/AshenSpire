@@ -637,6 +637,14 @@ test('validation: required, unique, type, ref, custom, with row and key', () => 
   assert.ok(issues.some(i => i.row === 1 && i.key === null && i.message === 'bad b'));
   const dupe = M.validate({ columns: [{ key: 'id', type: 'string' }], rows: [{ id: 'a' }, { id: 'a' }] }, [{ kind: 'unique', key: 'id' }]);
   assert.deepEqual(dupe, [{ row: 1, key: 'id', level: 'error', message: 'Duplicate id "a"' }]);
+  // keys: a compound unique key. Only the same (scope, key) pair repeats; a blank key cell is skipped.
+  const scoped = { columns: [{ key: 'classId', type: 'string' }, { key: 'id', type: 'string' }], rows: [
+    { classId: 'reaver', id: 'default' }, { classId: 'starseer', id: 'default' },
+    { classId: 'reaver', id: 'default' }, { classId: 'reaver', id: '' },
+  ] };
+  assert.deepEqual(M.validate(scoped, [{ kind: 'unique', keys: ['classId', 'id'] }]),
+    [{ row: 2, key: 'id', level: 'error', message: 'Duplicate classId + id "reaver / default"' }]);
+  assert.throws(() => M.validate(scoped, [{ kind: 'unique', keys: ['classId', 'nope'] }]), /unknown column "nope"/);
   const typed = M.validate({ columns: [{ key: 'n', type: 'number' }], rows: [{ n: 'x' }] }, [{ kind: 'type', key: 'n' }]);
   assert.equal(typed[0].message, 'Not a number');
 });

@@ -593,7 +593,8 @@ export function toJSON(doc) { return JSON.stringify(doc.rows, null, 2) + '\n'; }
 /**
  * rules (each { kind, key?, level?, message? }):
  *   required — empty value
- *   unique   — later duplicates of a non-empty value
+ *   unique   — later duplicates of a non-empty value; `key` names one column, `keys` (an array) names
+ *              a compound key: the tuple of those columns, blank key cells skipped, flagged on the last key
  *   type     — value does not fit the column type
  *   ref      — value (or whitespace list when multi) not in the target; the target is
  *              `has(value)`, `ids` (iterable), or options.refs[table] (Set or fn)
@@ -613,6 +614,20 @@ export function validate(doc, rules = [], options = {}) {
     throw Error(`ref rule needs a target for "${rule.key}"`);
   };
   for (const rule of rules) {
+    if (rule.kind === 'unique' && Array.isArray(rule.keys)) {
+      const cols = rule.keys.map(k => doc.columns.find(c => c.key === k));
+      const unknown = rule.keys.find((k, j) => !cols[j]);
+      if (unknown !== undefined) throw Error(`Rule names unknown column "${unknown}"`);
+      const seen = new Set();
+      doc.rows.forEach((row, i) => {
+        const parts = cols.map(c => formatValue(row[c.key], c.type).trim());
+        if (!parts.at(-1)) return;
+        const tuple = JSON.stringify(parts);
+        if (seen.has(tuple)) push(i, cols.at(-1).key, rule.level, rule.message ?? `Duplicate ${rule.keys.join(' + ')} "${parts.join(' / ')}"`);
+        else seen.add(tuple);
+      });
+      continue;
+    }
     if (rule.kind === 'custom') {
       doc.rows.forEach((row, i) => {
         const res = rule.fn(row, i, doc);
