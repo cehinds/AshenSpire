@@ -2,6 +2,7 @@
 // helpers: the index rows, the filters, the five sorts, the facets, the chip
 // counts, the kind to source-table map, the deep link and the URLs it builds.
 import test from 'node:test';
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
@@ -116,6 +117,13 @@ test('the deep link writes only the non-default state, and round-trips', () => {
   assert.equal(back.q, 'plate & leather');
   assert.equal(back.id, 'reaver:default');
   assert.equal(back.tab, 'worn');
+});
+
+test('the render page sets the game root as its base, and loads its own files by absolute path', () => {
+  const html = fs.readFileSync(new URL('../modules/entities/render.html', import.meta.url), 'utf8');
+  assert.match(html, /<base href="\/">/, 'game asset paths resolve from the game root, not the module folder');
+  assert.match(html, /<script type="module" src="\/workbench\/modules\/entities\/render\.mjs">/);
+  assert.match(html, /<link rel="stylesheet" href="\/workbench\/modules\/entities\/render\.css">/);
 });
 
 test('the render page URL carries the parent origin and only set parameters', () => {
