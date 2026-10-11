@@ -90,6 +90,24 @@ test('save refuses invalid JSON, CSV, duplicate ids, JS syntax and a broken conf
   }
 });
 
+test('save accepts the real outfits.csv (id repeats across classes) and refuses a true duplicate', async (t) => {
+  const root = await project(t);
+  const { post } = await boot(t, root);
+  const real = await fs.readFile(new URL('../../content/source/outfits.csv', import.meta.url), 'utf8');
+  const file = 'content/source/outfits.csv';
+  await fs.writeFile(path.join(root, file), real);
+  const edited = real.replace('The armour you were buried in.', 'The armour you were buried in!');
+  const ok = await post('/api/files/save', { changes: [{ path: file, text: edited, baseHash: sha(real) }] });
+  assert.equal(ok.status, 200);
+  assert.equal(await fs.readFile(path.join(root, file), 'utf8'), edited);
+  const firstReaver = edited.split('\n').find((line) => line.startsWith('default,reaver,'));
+  const dupe = `${edited}${firstReaver}\n`;
+  const res = await post('/api/files/save', { changes: [{ path: file, text: dupe, baseHash: sha(edited) }] });
+  assert.equal(res.status, 422);
+  assert.match((await res.json()).problems[0].message, /duplicate id: default/);
+  assert.equal(await fs.readFile(path.join(root, file), 'utf8'), edited);
+});
+
 test('save: hash mismatch is a 409 with the current hash, and the disk is untouched', async (t) => {
   const root = await project(t);
   const { post } = await boot(t, root);
