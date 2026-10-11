@@ -82,6 +82,7 @@ import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
+import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -1926,11 +1927,21 @@ function showSettings() {
   });
 }
 
+// AFTER AN IMPORT, NO RELOAD. The restored profile is on disk; re-read it the way
+// boot does (persistSettingsChange's order) and redraw the title over the same page.
+function refreshAfterImport() {
+  activeMeta = saves.loadMeta();
+  activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  applyDisplaySettings(activeSettings);
+  rebuildRegistries(activeSettings);
+  showTitle({ skipStartup: true });
+}
+
 function showOfflinePlay() {
   const transfer = createSaveTransfer(bootStorage, registries);
   const ownedTransfer = { ...transfer, restore: text => saves.withProfile
     ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
-  openOfflinePlay({ transfer: ownedTransfer, assertImportAllowed: () => {
+  openOfflinePlay({ transfer: ownedTransfer, onImported: refreshAfterImport, assertImportAllowed: () => {
     if (run) throw new Error('Return to the title screen before importing saves.');
     let persistent = false;
     try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
@@ -2375,8 +2386,21 @@ const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'classicAppearance
 // has no Potions control, and a remount drops its selected destination
 // (#1474 review).
 const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
+// A remount that lands while a modal is open (Settings over the map) waits for
+// the modal to close. One deferred remount is kept; later changes merge into it.
+let deferredMapRemount = null;
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
+  if (modalOpen()) {
+    if (deferredMapRemount) { Object.assign(deferredMapRemount, changed); return; }
+    const pending = { ...changed };
+    deferredMapRemount = pending;
+    onModalsClosed(() => {
+      if (deferredMapRemount === pending) deferredMapRemount = null;
+      remountMapIfShowing(pending);
+    });
+    return;
+  }
   const screen = app.querySelector('.mapscreen');
   if (!screen) return;
   const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);

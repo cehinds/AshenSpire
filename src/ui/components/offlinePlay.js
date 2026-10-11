@@ -150,6 +150,9 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
         el('div', { class: 'offline-actions' }, [exportSave, importSave, recovery, reload]), file, status);
     }, primary: done });
   done.addEventListener('click', door.close);
+  // An import changes the profile under the open game. The panel closes first, so the
+  // caller's refresh (or the default reload) never runs with this modal still registered.
+  const imported = () => { door.close(); onImported(); };
   recovery.hidden = !transfer.previous();
   const showRelease = data => {
     const size = data.bytes === null ? 'Size available after preparation' : `${(data.bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -266,12 +269,12 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
             assertImportAllowed();
             await transfer.restore(text); status.textContent = 'Saves imported. Reload the game to use them.';
             reload.hidden = false; importSave.disabled = true; reload.focus();
-            onImported();
+            imported();
           } catch (error) { status.textContent = error.message; }
           recovery.hidden = !transfer.previous();
         } });
     } catch (error) { status.textContent = error.message; }
   });
-  reload.addEventListener('click', onImported);
+  reload.addEventListener('click', imported);
   void refreshRelease();
 }
