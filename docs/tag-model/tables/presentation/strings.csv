@@ -2095,14 +2095,14 @@ hardcoded.option_decision_needs_one_commit_callback,option decision needs one co
 hardcoded.go_to.1,Go to…,,hardcoded,src/ui/components/overlay.js:281,hardcoded,src/ui/components/overlay.js:281,common.goTo,content/source/uiStrings.csv
 hardcoded.menu,Menu,,hardcoded,src/ui/components/runHud.js:271,hardcoded,src/ui/components/runHud.js:271,common.menu,content/source/uiStrings.csv
 hardcoded.delete_slot,Delete slot,,hardcoded,src/ui/components/saveSlotSelector.js:128,hardcoded,src/ui/components/saveSlotSelector.js:128,saveSlotSelector.deleteSlot,content/source/uiStrings.csv
-hardcoded.load_game,Load game,,hardcoded,src/ui/components/saveSlotSelector.js:186,hardcoded,src/ui/components/saveSlotSelector.js:186,saveSlotSelector.loadGame,content/source/uiStrings.csv
+hardcoded.load_game,Load game,,hardcoded,src/ui/components/saveSlotSelector.js:186,hardcoded,src/ui/components/saveSlotSelector.js:186,title.slots.door.load,content/source/uiStrings.csv
 hardcoded.load_slot,Load slot ?,,hardcoded,src/ui/components/saveSlotSelector.js:186,hardcoded,src/ui/components/saveSlotSelector.js:186,saveSlotSelector.loadSlot,content/source/uiStrings.csv
 hardcoded.load_this_saved_climb_now,Load this saved climb now?,,hardcoded,src/ui/components/saveSlotSelector.js:186,hardcoded,src/ui/components/saveSlotSelector.js:186,saveSlotSelector.loadThisSavedClimbNow,content/source/uiStrings.csv
 hardcoded.load_save,Load Save,,hardcoded,src/ui/components/saveSlotSelector.js:186,hardcoded,src/ui/components/saveSlotSelector.js:186,saveSlotSelector.loadSave,content/source/uiStrings.csv
 hardcoded.slot_is_empty,Slot is empty,,hardcoded,src/ui/components/saveSlotSelector.js:187,hardcoded,src/ui/components/saveSlotSelector.js:187,saveSlotSelector.slotIsEmpty,content/source/uiStrings.csv
 hardcoded.nothing_is_saved_here_yet_start_a_new_climb_in_this_slot,Nothing is saved here yet. Start a new climb in this slot?,,hardcoded,src/ui/components/saveSlotSelector.js:187,hardcoded,src/ui/components/saveSlotSelector.js:187,saveSlotSelector.nothingIsSavedHereYetStart,content/source/uiStrings.csv
 hardcoded.new_game,New Game,,hardcoded,src/ui/components/saveSlotSelector.js:187,hardcoded,src/ui/components/saveSlotSelector.js:187,saveSlotSelector.newGame,content/source/uiStrings.csv
-hardcoded.new_game.1,New game,,hardcoded,src/ui/components/saveSlotSelector.js:188,hardcoded,src/ui/components/saveSlotSelector.js:188,saveSlotSelector.newGame.2,content/source/uiStrings.csv
+hardcoded.new_game.1,New game,,hardcoded,src/ui/components/saveSlotSelector.js:188,hardcoded,src/ui/components/saveSlotSelector.js:188,title.slots.door.new,content/source/uiStrings.csv
 hardcoded.start_in_slot,Start in slot ?,,hardcoded,src/ui/components/saveSlotSelector.js:188,hardcoded,src/ui/components/saveSlotSelector.js:188,saveSlotSelector.startInSlot,content/source/uiStrings.csv
 hardcoded.this_slot_is_empty_the_new_climb_will_be_saved_here,This slot is empty. The new climb will be saved here.,,hardcoded,src/ui/components/saveSlotSelector.js:188,hardcoded,src/ui/components/saveSlotSelector.js:188,saveSlotSelector.thisSlotIsEmptyTheNew,content/source/uiStrings.csv
 hardcoded.start,Start,,hardcoded,src/ui/components/saveSlotSelector.js:188,hardcoded,src/ui/components/saveSlotSelector.js:188,saveSlotSelector.start,content/source/uiStrings.csv
@@ -2334,7 +2334,7 @@ hardcoded.return_to_the_fire,Return to the fire,,hardcoded,src/ui/screens/coop.j
 hardcoded.ascension_up_to,Ascension · up to,,hardcoded,src/ui/screens/customRun.js:135,hardcoded,src/ui/screens/customRun.js:135,customRun.ascensionUpTo,content/source/uiStrings.csv
 hardcoded.seed.1,Seed,,hardcoded,src/ui/screens/customRun.js:140,hardcoded,src/ui/screens/customRun.js:140,common.seed,content/source/uiStrings.csv
 hardcoded.the_same_seed_produces_the_same_climb,The same seed produces the same climb.,,hardcoded,src/ui/screens/customRun.js:140,hardcoded,src/ui/screens/customRun.js:140,common.theSameSeedProducesTheSame,content/source/uiStrings.csv
-hardcoded.your_climb,Your climb,,hardcoded,src/ui/screens/customRun.js:141,hardcoded,src/ui/screens/customRun.js:141,customRun.yourClimb,content/source/uiStrings.csv
+hardcoded.your_climb,Your climb,,hardcoded,src/ui/screens/customRun.js:141,hardcoded,src/ui/screens/customRun.js:141,title.save.eyebrow,content/source/uiStrings.csv
 hardcoded.estimated_length,Estimated length,,hardcoded,src/ui/screens/customRun.js:155,hardcoded,src/ui/screens/customRun.js:155,customRun.estimatedLength,content/source/uiStrings.csv
 hardcoded.floors_per_act,Floors per act,,hardcoded,src/ui/screens/customRun.js:159,hardcoded,src/ui/screens/customRun.js:159,customRun.floorsPerAct,content/source/uiStrings.csv
 hardcoded.map_width,Map width,,hardcoded,src/ui/screens/customRun.js:162,hardcoded,src/ui/screens/customRun.js:162,customRun.mapWidth,content/source/uiStrings.csv
@@ -2488,7 +2488,7 @@ hardcoded.duplicate,Duplicate,,hardcoded,src/ui/screens/settings.js:1716,hardcod
 hardcoded.add_a_scene,Add a scene,,hardcoded,src/ui/screens/settings.js:1725,hardcoded,src/ui/screens/settings.js:1725,settings.addAScene,content/source/uiStrings.csv
 hardcoded.open_live_scene_editor,Open live scene editor,,hardcoded,src/ui/screens/settings.js:1725,hardcoded,src/ui/screens/settings.js:1725,settings.openLiveSceneEditor,content/source/uiStrings.csv
 hardcoded.empty_slot_left,empty slot left,,hardcoded,src/ui/screens/settings.js:1725,hardcoded,src/ui/screens/settings.js:1725,settings.emptySlotLeft,content/source/uiStrings.csv
-hardcoded.load,Load,,hardcoded,src/ui/screens/settings.js:1741,hardcoded,src/ui/screens/settings.js:1741,settings.load,content/source/uiStrings.csv
+hardcoded.load,Load,,hardcoded,src/ui/screens/settings.js:1741,hardcoded,src/ui/screens/settings.js:1741,title.slots.primary.load,content/source/uiStrings.csv
 hardcoded.clear,Clear,,hardcoded,src/ui/screens/settings.js:1741,hardcoded,src/ui/screens/settings.js:1741,settings.clear,content/source/uiStrings.csv
 hardcoded.colour_wheel,Colour wheel,,hardcoded,src/ui/screens/settings.js:1766,hardcoded,src/ui/screens/settings.js:1766,settings.colourWheel,content/source/uiStrings.csv
 hardcoded.on_iphone_use_safari_s_share_menu_add_to_home_screen_then_la,"On iPhone, use Safari’s Share menu → Add to Home Screen, then launch the saved game icon.",,hardcoded,src/ui/screens/settings.js:1832,hardcoded,src/ui/screens/settings.js:1832,settings.onIphoneUseSafariSShare,content/source/uiStrings.csv

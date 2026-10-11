@@ -798,16 +798,39 @@ for (const i of hcIdx) {
 }
 const proposedKeyOf = inv.strings.rows.map(() => '');
 const migrateToOf = inv.strings.rows.map(() => '');
+// A text the shared table already says (its short, full or tip cell) reuses that
+// row's id instead of a new key. Comment lines are skipped, as in the table reader.
+const UI_TABLE = join(TM, '..', '..', 'content', 'source', 'uiStrings.csv');
+const uiRows = parseCsv(readFileSync(UI_TABLE, 'utf8').split('\n').filter(l => l && !l.startsWith('#')).join('\n') + '\n');
+const uiHeader = uiRows.shift();
+const uiCol = c => uiHeader.indexOf(c);
+const uiIds = new Set();
+const uiIdByText = new Map();
+for (const r of uiRows) {
+  const id = r[uiCol('id')];
+  if (!id) continue;
+  uiIds.add(id);
+  for (const c of ['short', 'full', 'tip']) {
+    const v = r[uiCol(c)];
+    if (v && !uiIdByText.has(v)) uiIdByText.set(v, id);
+  }
+}
 const keyOfText = new Map();
 const textOfKey = new Map();
 for (const i of hcIdx) {
   const text = textOfRow(i);
   if (!keyOfText.has(text)) {
-    const files = filesByText.get(text);
-    const area = files.size > 1 ? 'common' : areaOfFile(fileOfRow(i));
-    const base = `${area}.${wordsOfText(text).join('')}`;
-    let key = base;
-    for (let n = 2; textOfKey.has(key); n++) key = `${base}.${n}`;
+    let key;
+    if (uiIdByText.has(text)) {
+      key = uiIdByText.get(text);
+      if (textOfKey.has(key) && textOfKey.get(key) !== text) throw new Error('strings: id ' + key + ' already names another text');
+    } else {
+      const files = filesByText.get(text);
+      const area = files.size > 1 ? 'common' : areaOfFile(fileOfRow(i));
+      const base = `${area}.${wordsOfText(text).join('')}`;
+      key = base;
+      for (let n = 2; textOfKey.has(key) || uiIds.has(key); n++) key = `${base}.${n}`;
+    }
     keyOfText.set(text, key);
     textOfKey.set(key, text);
   }

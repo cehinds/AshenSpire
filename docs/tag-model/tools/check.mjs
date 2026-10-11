@@ -55,6 +55,7 @@ const TM = join(HERE, '..');
 const TABLES = join(TM, 'tables');
 const PRES = join(TABLES, 'presentation');
 const NODES = join(TM, '..', '..', 'content', 'source', 'nodes.csv');
+const UI_TABLE = join(TM, '..', '..', 'content', 'source', 'uiStrings.csv');
 
 const errors = [];
 const fail = msg => errors.push(msg);
@@ -288,6 +289,21 @@ if (presOk.strings) {
     if (!textKeys.has(text)) textKeys.set(text, new Set());
     textKeys.get(text).add(key);
   });
+  // A reused id must be a uiStrings row whose short, full or tip cell is the text;
+  // any other key must not be a uiStrings id (it would name a different row).
+  const uiRows = parseCsv(readFileSync(UI_TABLE, 'utf8').split('\n').filter(l => l && !l.startsWith('#')).join('\n') + '\n');
+  const uiHead = uiRows.shift();
+  const uiCell = (r, c) => r[uiHead.indexOf(c)];
+  const uiById = new Map(uiRows.map(r => [uiCell(r, 'id'), r]));
+  for (const [key, texts] of keyTexts) {
+    const row = uiById.get(key);
+    const [text] = [...texts];
+    if (row) {
+      if (!['short', 'full', 'tip'].some(c => uiCell(row, c) === text)) fail(`presentation/strings: proposedKey "${key}" is a uiStrings id but its cells do not hold "${text.slice(0, 60)}"`);
+    } else if (uiById.has(key)) {
+      fail(`presentation/strings: proposedKey "${key}" names a uiStrings id`);
+    }
+  }
   for (const [key, texts] of keyTexts) {
     if (texts.size > 1) fail(`presentation/strings: proposedKey "${key}" names ${texts.size} different texts`);
   }
