@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Your discard pile reshuffles back in, and your hand size now grows",
     "detail": "Holding cards at the end of a turn no longer stops the discard pile from coming back: when your draw pile can't cover the next turn's draw, the whole discard is shuffled in with your unplayed cards. Hand size now starts at 7 and grows with Intelligence (one more for every five points above 4, up to 20) instead of a flat 15. When the cards you keep already fill your hand, the end-of-turn discard lets you throw away as many as you like before you draw.",
-    "build": "0.7.1.1301",
+    "build": "0.7.1.1305",
     "pullRequest": 1854,
     "url": "https://github.com/cehinds/AshenSpire/pull/1854"
+  },
+  {
+    "id": "pr-1857",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Generated game data is no longer rewritten when it hasn't changed",
+    "detail": "Development-process change only, nothing in the game changes. Two data builders rewrote their output on every run, so a test reading that data at the same moment could fail at random in CI; they now write only what changed.",
+    "build": "0.7.1.1303",
+    "pullRequest": 1857,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1857"
+  },
+  {
+    "id": "pr-1852",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Choosing equipment is a sortable table now",
+    "detail": "When you press Replace or Choose on a slot, the Armoury lists every item that fits as a row: portrait, name and kind, an Equipped here / Not equipped / held-elsewhere status, and Inspect plus Equip, Move here or Unequip. Sort by Item or Status, show the items that don't fit along with the reason, and Inspect opens the full card in place. A single sceptre held in your main hand now says so and offers Move here for the off hand.",
+    "build": "0.7.1.1302",
+    "pullRequest": 1852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1852"
   },
   {
     "id": "pr-1829",

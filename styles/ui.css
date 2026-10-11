@@ -1782,6 +1782,30 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-responsive="phone"] .armament-list-inspection { display: none; padding: 0; border: 0; }
 .armoury[data-responsive="phone"] .armament-list-workspace.is-inspecting > .armoury-position-list { display: none; }
 .armoury[data-responsive="phone"] .armament-list-workspace.is-inspecting > .armament-list-inspection { display: block; }
+.armoury .ep-list.armoury-split.is-picker-table > .armoury-item-collection { grid-column: 1 / -1; }
+.armoury .equip-picker { display: grid; gap: .8rem; min-width: 0; }
+.armoury .equip-picker-filter { justify-self: end; }
+.armoury .equip-picker-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.armoury .equip-picker-table th { text-align: left; font-weight: 600; color: var(--muted); padding: .4rem .6rem; border-bottom: 1px solid var(--line-soft); }
+.armoury .equip-picker-table th:nth-child(2) { width: 9.5em; }
+.armoury .equip-picker-table th:nth-child(3) { width: 12em; }
+.armoury .equip-picker-sort { background: none; border: 0; color: inherit; font: inherit; padding: 0; cursor: pointer; }
+.armoury .equip-picker-table td { padding: .5rem .6rem; border-bottom: 1px solid var(--line); vertical-align: middle; min-width: 0; }
+.armoury .equip-picker-item { display: flex; gap: .8rem; align-items: center; }
+.armoury .equip-picker-item > div { display: grid; min-width: 0; }
+.armoury .equip-picker-thumb { width: 3.6rem; height: 5rem; object-fit: cover; border-radius: .4rem; border: 1px solid var(--line-soft); flex: none; }
+.armoury .equip-picker-name { overflow-wrap: break-word; }
+.armoury .equip-picker-meta { color: var(--muted); font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); overflow-wrap: break-word; }
+.armoury .equip-picker-inline-status { display: none; }
+.armoury .equip-picker-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.armoury .equip-picker-row.is-nofit { opacity: .6; }
+.armoury .equip-picker-row.is-open > td { background: var(--bg-raise); }
+.armoury .equip-picker-detail > td { background: var(--bg-raise); padding: 1rem; }
+.armoury[data-responsive="phone"] .equip-picker-table :is(th:nth-child(2), td.equip-picker-status) { display: none; }
+.armoury[data-responsive="phone"] .equip-picker-inline-status { display: block; padding-top: .3rem; }
+.armoury[data-responsive="phone"] .equip-picker-table th:nth-child(3) { width: 8.5em; }
+.armoury[data-responsive="phone"] .equip-picker-actions { flex-direction: column; align-items: stretch; }
+.armoury[data-responsive="phone"] .equip-picker-actions > button { min-height: 44px; padding-inline: .6rem; white-space: normal; }
 .armoury[data-responsive="phone"] .armament-inspection-back { display: inline-flex; }
 .armoury[data-responsive="phone"] .armament-list-inspection > .equipment-poker-inspection { max-width: calc(var(--armament-inspection-width) * 1px); margin-inline: auto; }
 .armoury .armament-position-group { min-width: 0; border: 1px solid var(--line); border-radius: .7rem; padding: .6rem; background: var(--bg-raise); }
