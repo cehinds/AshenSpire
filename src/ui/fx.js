@@ -15,6 +15,7 @@ import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
+import { t } from './strings.js';
 
 
 // ---------------------------------------------------------------------------
@@ -372,6 +373,75 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   el.style.left = `${at.left + half}px`;
   setTimeout(() => el.remove(), 600);
   return el;
+}
+
+// ---------------------------------------------------------------------------
+// On-character callouts (owner, 2026-10-11): one short word that rises from
+// above a fighter's head — STAGGERED, COUNTERED, EVADED, CRITICAL, GUARD BREAK.
+// Larger than a damage float and coloured per kind; the words are UI strings.
+// Two on one fighter stack (never overlap) and at most two show at once; the
+// same word already showing on that fighter is not repeated.
+// ---------------------------------------------------------------------------
+export const CALLOUT_KINDS = {
+  staggered: { string: 'combat.callout.staggered', tone: 'gold' },
+  disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
+  countered: { string: 'combat.callout.countered', tone: 'gold' },
+  evaded: { string: 'combat.callout.evaded', tone: 'gold' },
+  critical: { string: 'combat.callout.critical', tone: 'red' },
+  guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
+};
+export const CALLOUT_MS = 900;
+export const CALLOUT_INSTANT_MS = 500;
+const CALLOUT_MAX = 2;
+// One slot's height, in layer px: a slot-1 callout sits this far above slot 0.
+const CALLOUT_SLOT_PX = 34;
+
+const liveCallouts = (layer, forId) => [...(layer.children || [])]
+  .filter((node) => node.dataset?.calloutFor === String(forId));
+
+/** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
+export function callout(layer, anchor, forId, kind) {
+  const def = CALLOUT_KINDS[kind];
+  if (!layer || !anchor || !def || forId == null) return null;
+  const live = liveCallouts(layer, forId);
+  if (live.some((node) => node.dataset.calloutKind === kind)) return null;
+  const used = new Set(live.map((node) => Number(node.dataset.calloutSlot)));
+  let slot = [...Array(CALLOUT_MAX).keys()].find((s) => !used.has(s));
+  if (slot === undefined) {
+    const oldest = live[0];
+    slot = Number(oldest.dataset.calloutSlot) || 0;
+    oldest.remove();
+  }
+  const b = anchorLocalBox(layer, anchor);
+  const el = document.createElement('div');
+  el.className = `fx-callout ${def.tone}`;
+  el.dataset.calloutFor = String(forId);
+  el.dataset.calloutKind = kind;
+  el.dataset.calloutSlot = String(slot);
+  el.setAttribute('aria-hidden', 'true');
+  el.textContent = t(def.string);
+  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
+  el.style.setProperty('--fx-callout-ms', `${ms}ms`);
+  // `left` is the centre (translate -50% in CSS); `top` is the callout's
+  // bottom edge (translate -100%), just above the head, one slot higher each.
+  const centre = b.left + b.width / 2;
+  const bottom = b.top + 4 - slot * CALLOUT_SLOT_PX;
+  el.style.left = `${centre}px`;
+  el.style.top = `${bottom}px`;
+  layer.appendChild(el);
+  const width = el.offsetWidth || 0, height = el.offsetHeight || 0;
+  if (width && height) {
+    const at = clampBox({ left: centre - width / 2, top: bottom - height, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
+    el.style.left = `${at.left + width / 2}px`;
+    el.style.top = `${at.top + height}px`;
+  }
+  setTimeout(() => el.remove(), ms);
+  return el;
+}
+
+/** A click-skip ends every callout in the layer. */
+export function clearCallouts(layer) {
+  for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
 }
 
 /**

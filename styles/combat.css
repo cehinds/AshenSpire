@@ -431,6 +431,32 @@
 .float-num.burst { color: var(--ember); font-size: 3.6rem; }
 /* Reduced motion: a plain rise, no bounce/overshoot. */
 .reduced-motion .float-num { animation: float-up 260ms ease-out forwards; }
+/* On-character callouts (ui/fx.js callout): one word rising from above a
+   fighter's head. `left` is the centre and `top` the bottom edge; the HUD
+   text shadow keeps it legible, the glow pulse is the flash Reduce flashes
+   drops, and Reduced motion shows it in place with no rise. Under the
+   floats in paint order, so a number is never hidden by a word. */
+.fx-callout {
+  position: absolute; translate: -50% -100%; z-index: 0; white-space: nowrap;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.9rem; letter-spacing: 0.08em;
+  color: var(--gold); pointer-events: none;
+  text-shadow: var(--hud-text-shadow, 0 0 3px #000, 0 2px 5px #000);
+  animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards,
+    callout-glow var(--fx-callout-ms, 900ms) ease-out forwards;
+}
+.fx-callout.red { color: var(--ember); }
+.float-num { z-index: 1; }
+.reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }
+.reduced-motion .fx-callout { animation: callout-fade var(--fx-callout-ms, 900ms) ease-out forwards; }
+@keyframes callout-rise {
+  0% { opacity: 0; transform: translateY(8px) scale(0.85); }
+  14% { opacity: 1; transform: translateY(0) scale(1.06); }
+  26% { transform: translateY(-2px) scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-26px) scale(1); }
+}
+@keyframes callout-fade { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes callout-glow { 0%, 100% { filter: none; } 18% { filter: drop-shadow(0 0 10px currentColor); } 45% { filter: none; } }
 .fx-banner {
   position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%);
   font-family: var(--font-display); font-size: 3rem; letter-spacing: 0.3em; color: var(--gold);
