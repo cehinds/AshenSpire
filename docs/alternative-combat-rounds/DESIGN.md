@@ -388,8 +388,8 @@ k. Resolved (owner, 2026-10-11). Momentum decays 1 toward 0 each round, before
 l. Resolved (owner, 2026-10-11): a success that overflows the cap sets double
    poise on that side's next landed hit (see Overflow and double poise). It is a
    flag only: poise is not yet modelled in the prototype.
-m. Does the speed effect (half of M, truncated, so at most +-1) feel right next
-   to base speeds of 1 to 3? Not answered.
+m. Resolved (owner, 2026-10-11): the speed effect stays at most +-1, that is
+   trunc(M / 2), against base speeds of 1 to 3.
 n. Resolved (2026-10-11): no combos. Only slot wins and stance advantage move
    momentum. Examples such as a quickstep followed by a shieldBash are not
    counted.
