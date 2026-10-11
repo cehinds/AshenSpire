@@ -917,6 +917,9 @@ export function playTimeline(events, ctx, done) {
             hitStop = holdMs;
           }
           safe(() => v(ctx));
+          // An observable contact marker (tools/click-impact-probe.mjs): the
+          // effects layer's data-contact counts the impact-frame visuals played.
+          safe(() => { ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + 1); });
           if (!damageCued.has(beatIndex) && playerLostHp(event)) {
             damageCued.add(beatIndex);
             safe(() => haptic.play('damageTaken'));

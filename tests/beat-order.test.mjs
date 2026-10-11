@@ -50,7 +50,7 @@ function drive(t, fn) {
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
     const finish = () => { for (let i = 0; i < 4000 && !completed; i++) t.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
-    try { fn({ dom, anchors, trace, run, finish, tick: (ms) => t.mock.timers.tick(ms) }); }
+    try { fn({ dom, anchors, layer, trace, run, finish, tick: (ms) => t.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
@@ -98,9 +98,10 @@ test('an enemy attack plays in the same order, and a hit-stop lengthens the swin
 });
 
 test('a multi-hit beat: every contact in the swing, then reaction and number per hit, then bars', (t) => {
-  drive(t, ({ trace, run, finish }) => {
+  drive(t, ({ layer, trace, run, finish }) => {
     run(playerHit(3, 4));
     finish();
+    assert.equal(layer.dataset.contact, '2', 'the layer counts each contact (tools/click-impact-probe.mjs watches it)');
     assert.deepEqual(order(trace), ['contact', 'contact', 'settle', 'reaction:e1', 'float:-3', 'reaction:e1', 'float:-4', 'bars']);
     const { stepMs, reactionMs } = ANIM_SPEEDS.normal;
     assert.equal(trace.filter((e) => e.what === 'contact')[1].at, IMPACT + stepMs, 'contacts stay stepMs apart');
