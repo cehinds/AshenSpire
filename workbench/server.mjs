@@ -249,7 +249,13 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     const file = await safePath(realpathSync(checkout), rel);
     const type = MIME[path.extname(file).toLowerCase()];
     if (!type) return sendJson(res, 404, { error: 'Not a viewable file' });
-    res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads allow-popups; frame-ancestors 'self' http://${address}` });
+    // An HTML page keeps its scripts and frame policy. Anything else (an image, an SVG, JSON) gets the strict
+    // policy: an SVG there could otherwise run script on the preview origin.
+    const page = type.startsWith('text/html');
+    const csp = page
+      ? `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads allow-popups; frame-ancestors 'self' http://${address}`
+      : "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+    res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': csp });
     res.end(await fs.readFile(file));
   }
 

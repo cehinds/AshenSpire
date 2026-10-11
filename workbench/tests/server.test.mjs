@@ -396,6 +396,35 @@ test('settings: checkouts are validated; the art checkout is served read-only on
   assert.equal((await fetch(entry.url, { headers: { 'sec-fetch-site': 'cross-site' } })).status, 403, 'another website cannot load art files');
 });
 
+test('art files under /ext/art/: an SVG, PNG or JSON gets the strict CSP; an HTML page keeps its own headers', async (t) => {
+  const root = await project(t);
+  const art = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-art-csp-')));
+  t.after(() => fs.rm(art, { recursive: true, force: true }));
+  await fs.mkdir(path.join(art, 'icons'), { recursive: true });
+  await fs.mkdir(path.join(art, 'enemy-poses'), { recursive: true });
+  await fs.writeFile(path.join(art, 'enemy-poses/index.html'), '<!doctype html><title>Poses</title>');
+  await fs.writeFile(path.join(art, 'icons/bad.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  await fs.writeFile(path.join(art, 'icons/pic.png'), Buffer.from('89504e470d0a1a0a', 'hex'));
+  await fs.writeFile(path.join(art, 'icons/data.json'), '{"a":1}\n');
+  await fs.writeFile(path.join(art, 'icons/page.html'), '<!doctype html><title>Tool</title><script src="tool.js"></script>');
+  const { call } = await boot(t, root, { env: {} });
+  assert.equal((await call('/api/settings', { method: 'POST', body: JSON.stringify({ artCheckout: art }) })).status, 200);
+  const entry = (await (await call('/api/library')).json()).entries.find((e) => e.id === 'art-enemy-poses');
+  const base = entry.url.replace(/ext\/art\/.*/, 'ext/art/');
+  const strict = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+  for (const name of ['icons/bad.svg', 'icons/pic.png', 'icons/data.json']) {
+    const res = await fetch(`${base}${name}`);
+    assert.equal(res.status, 200, name);
+    assert.equal(res.headers.get('content-security-policy'), strict, `${name} gets the strict policy`);
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff', `${name} is nosniff`);
+  }
+  const page = await fetch(`${base}icons/page.html`);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get('content-security-policy'), /^sandbox allow-scripts allow-same-origin /, 'the HTML page keeps its sandbox');
+  assert.match(page.headers.get('content-security-policy'), /frame-ancestors 'self' http:\/\/127\.0\.0\.1:\d+/);
+  assert.equal(page.headers.get('x-content-type-options'), 'nosniff');
+});
+
 test('a cancelled job keeps its slot until its process, and what it started, has exited', async (t) => {
   const root = await project(t);
   const { app, call } = await boot(t, root);
