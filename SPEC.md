@@ -1964,7 +1964,7 @@ Build: Reaver, Starseer, Herald and the full-parity Rogue slice (§5.1), Acts 2�
 **Accept when:** all 4 classes can complete 3-act runs; every class owns its complete card/equipment/art slice; every card/relic/event is reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes); `scripts.js` budget still < 5%.
 
 ### M4 — Polish
-Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete), performance check (60 fps on a mid-range laptop; no per-frame allocations in fx loops).
+Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete).
 **Accept when:** DEVELOPER.md documents the layer rules, state shape, every opcode/formula op/event/predicate, and "add a card/relic/status/enemy/event in <10 lines" walkthroughs — each verified by actually adding a throwaway example.
 
 ---
