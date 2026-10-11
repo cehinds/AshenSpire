@@ -350,9 +350,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const def = resolveCard(registries, row.ref);
     const profile = combatProfileFor(def);
     if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
-    if (profile.camp === 'spell') return 'spell';
+    // Power and Consumable come before the spell camp: a magical Power is a Power.
     if (def.type === 'power') return 'power';
     if (def.type === 'consumable' || (def.kindIds || []).some(id => String(id).startsWith('classification.consumable'))) return 'consumable';
+    if (profile.camp === 'spell') return 'spell';
     return 'skill';
   };
   const stanceName = (row) => t(`deckEditor.stance.${stanceKey(row)}`);
@@ -384,7 +385,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const def = resolveCard(registries, row.ref);
     const profile = combatProfileFor(def);
     const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
-    const reach = profile.reach || (attacking ? (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact') : null);
+    if (!attacking) return null;
+    const reach = profile.reach || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact');
     const range = RANGE_BY_REACH[reach];
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };

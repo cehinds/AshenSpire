@@ -1288,7 +1288,7 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
 test('DOM: range follows the player card combat default; the mark follows the camp', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 1 });
-  for (const cardId of ['cometFragment', 'ricochet', 'strike']) {
+  for (const cardId of ['cometFragment', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
     if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
   }
   withDom(() => {
@@ -1298,6 +1298,12 @@ test('DOM: range follows the player card combat default; the mark follows the ca
     // An untagged spell resolves at contact in combat (combatMatchups.js), so it reads Melee.
     assert.deepEqual(read('cometFragment'), ['melee', 'magical']);
     assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged maneuver reaches near');
+    // Phase Ward carries reach:contact but attacks nothing: no range.
+    assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
+    // A magical Power is a Power, with no Cantrip badge.
+    const stargazer = row('stargazerCard');
+    assert.equal(stargazer?.querySelector('.deck-editor-stance')?.dataset.stance, 'power');
+    assert.equal(stargazer.querySelector('.deck-editor-rank'), null);
     editor.close();
   });
 });
