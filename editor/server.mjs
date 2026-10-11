@@ -8,6 +8,7 @@ import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
 import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
 import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
+import { stopGroup, waitGroupEmpty } from '../tools/lib/process-tree.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -90,6 +91,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
     return { id: current.id };
     async function runSteps() {
       for (const args of commands[name]) {
+        if (current.stopping) return; // the Editor is closing: no further step starts
         current.output += `> node ${args.join(' ')}\n`;
         const code = await new Promise(resolve => {
           // Builders run under this action's hold on the lock (tools/lib/build-lock.mjs).
@@ -98,7 +100,11 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
           const append = data => { current.output = (current.output + data).slice(-120000); };
           child.stdout.on('data', append); child.stderr.on('data', append);
           child.on('error', error => { append(error.message); resolve(-1); });
-          child.on('close', resolve);
+          // A stopping step frees the lock only once its whole group is gone (tools/lib/process-tree.mjs).
+          child.on('close', async code => {
+            if (current.stopping && process.platform !== 'win32') await waitGroupEmpty(child.pid);
+            resolve(code);
+          });
         });
         delete current.child;
         if (code !== 0) { current.status = 'failed'; current.exitCode = code; return; }
@@ -211,7 +217,10 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   return { server, workspace, codex, url: `http://127.0.0.1:${server.address().port}`, close: async () => {
     codex.close();
+    if (job) job.stopping = true;
     killTree(job?.child);
+    // POSIX: SIGKILL the group after the grace period, and wait until it is empty before the lock goes.
+    if (job?.child && process.platform !== 'win32') await stopGroup(job.child.pid);
     await job?.done;
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));

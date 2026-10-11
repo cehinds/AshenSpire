@@ -1,7 +1,7 @@
 // workbench/app.mjs — the Workbench page: rail, tool frames, preview dock,
 // library, engine export, jobs, settings, palette, toasts and shortcuts.
 // Talks to workbench/server.mjs; DOM-free helpers live in ui/logic.mjs.
-import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT, apiError } from './ui/logic.mjs';
+import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT, apiError, toolCameUp } from './ui/logic.mjs';
 import { icon } from './ui/icons.mjs';
 import { MODULES } from './modules/index.mjs';
 import { createModulePrefs, parseHash, hashFor, withPreviewOverrides, createReloadWaiter, buildAction } from './modules/host.mjs';
@@ -188,7 +188,7 @@ function modRecord(id) {
   section.dataset.view = MODULE_VIEW(id); section.id = `view-mod-${id}`;
   section.innerHTML = `<div class="toolbar"><h1>${esc(def.label)}</h1><span class="url" title="${esc(def.blurb)}">${esc(def.blurb)}</span><div class="actions"><button class="btn btn-sm btn-ghost" type="button" data-mod-undo>${icon('undo')}Undo</button><button class="btn btn-sm btn-ghost" type="button" data-mod-redo>${icon('redo')}Redo</button></div></div><div class="mod-body"></div>`;
   $('#main').append(section);
-  const rec = { def, section, body: $('.mod-body', section), history: new History(), params: {}, instance: null, mounting: false, offs: [] };
+  const rec = { def, section, body: $('.mod-body', section), history: new History(), params: {}, instance: null, mounting: false, offs: [], reloads: new Set() };
   rec.history.onChange(() => historyButtons(rec));
   $('[data-mod-undo]', section).onclick = () => stepHistory(rec, 'undo');
   $('[data-mod-redo]', section).onclick = () => stepHistory(rec, 'redo');
@@ -214,6 +214,8 @@ function moduleContext(rec) {
       showUrl: (url) => { previewShow = url || null; if (previewShow) state.dockEntry = null; renderDock(); },
       setOverride: (key, value) => { if (value === undefined || value === null) delete previewOverrides[key]; else previewOverrides[key] = value; renderDock(); },
     },
+    /** Calls fn({ kind: 'reload' | 'game' }) when the content is rebuilt or the game server comes up again; returns the unsubscribe. */
+    onReload: (fn) => { rec.reloads.add(fn); return () => rec.reloads.delete(fn); },
     settings: createModulePrefs(id, prefsStore()),
     openModule: (mid, params) => openModuleById(mid, params),
     get params() { return rec.params; },
@@ -321,9 +323,16 @@ function updateTool(next) {
   if (i >= 0) state.tools[i] = next; else state.tools.push(next);
 }
 
+// Tells every mounted module that asked (ctx.onReload) what happened; one throwing listener does not stop the rest.
+function notifyModules(event) {
+  for (const rec of modules.values()) for (const fn of [...rec.reloads]) { try { fn(event); } catch (err) { console.error(err); } }
+}
+
 function onTools(list) {
   const before = new Map(state.tools.map((t) => [t.id, t.status]));
+  const prior = state.tools;
   state.tools = list;
+  if (toolCameUp(prior, list, 'game')) notifyModules({ kind: 'game' });
   for (const t of list) {
     const was = before.get(t.id);
     if (was && was !== t.status) {
@@ -999,6 +1008,7 @@ function connectEvents() {
   let building = null;
   on('building', (b) => { building = toast({ title: 'Rebuilding…', detail: `${b.steps.map((s) => s.replace(/^tools\//, '')).join(', ')} for ${b.files.length} changed file${b.files.length === 1 ? '' : 's'}`, record: false, timeout: 15000 }); });
   on('reload', (r) => {
+    notifyModules({ kind: 'reload' });
     if (building) { building(); building = null; }
     const detail = `${r.files.slice(0, 3).join('\n')}${r.files.length > 3 ? `\n+${r.files.length - 3} more` : ''}${r.built.length ? `\nRebuilt with ${r.built.map((s) => s.replace(/^tools\//, '')).join(', ')}` : ''}`;
     const n = `${r.count} file${r.count === 1 ? '' : 's'}`;

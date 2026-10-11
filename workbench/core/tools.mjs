@@ -69,7 +69,8 @@ export class Tool {
   set(status, message = '') { if (status === this.status && message === this.message) return; this.status = status; this.message = message; this.onChange?.(this); }
   toJSON() {
     const { id, name, blurb, internal } = this.def;
-    return { id, name, blurb, internal: Boolean(internal), url: this.url, port: this.port, status: this.status, message: this.message, owned: this.owned, embeddable: this.embeddable, log: this.log.slice(-20) };
+    // startedAt names this start of the tool: a restart on the same port has a new one.
+    return { id, name, blurb, internal: Boolean(internal), url: this.url, port: this.port, status: this.status, message: this.message, owned: this.owned, embeddable: this.embeddable, startedAt: this.startedAt, log: this.log.slice(-20) };
   }
   addLog(text) {
     for (const line of String(text).split(/\r?\n/)) {

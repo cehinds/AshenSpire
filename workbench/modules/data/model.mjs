@@ -322,7 +322,17 @@ export function selectionGate() {
   return {
     begin() { latest += 1; return latest; },
     current(generation) { return generation === latest; },
+    /** The newest generation so far, read without starting a new one. */
+    latest() { return latest; },
   };
+}
+
+/**
+ * A file read for an import lands only while the same table is still selected under the same
+ * click: `read` is { generation, path } taken before the await; `selected` is the table now shown.
+ */
+export function importStillTargets(gate, read, selected) {
+  return gate.current(read.generation) && selected === read.path;
 }
 
 /** True when a files/read failure says the file is not on disk (a table deleted on disk). */
