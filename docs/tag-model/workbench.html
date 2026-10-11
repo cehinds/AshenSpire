@@ -345,7 +345,7 @@ async function flush(t, opts){
   try{
     for(const b of built){
       if(ts.blobs.has(b.hash)||written.has(b.hash)) continue;   /* blobs are immutable: a known hash is never rewritten */
-      await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:now});
+      await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:Date.now()}); /* stamped when written, not when the save began */
       written.add(b.hash);
     }
     /* the head's get and set run under a short lease, so a peer cannot slip a head in between them */

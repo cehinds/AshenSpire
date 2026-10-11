@@ -643,6 +643,18 @@ function gcView(db, onList) {
   };
 }
 
+test('each blob is stamped with the time it was written, not the time the save began', async () => {
+  const db = makeFakeDb();
+  db.delay = async (op, p) => { if (op === 'set' && p.includes('/blobs/')) await settle(20); };
+  const W = makePage(db, T);
+  const start = Date.now();
+  editTable(W.page, sample(3000, 'r')); // about 47 blobs, written one after another
+  await W.api.flush('t');
+  const stamps = [...db.docs.keys()].filter((k) => k.includes('/blobs/')).map((k) => JSON.parse(db.docs.get(k)).createdAt);
+  assert.ok(stamps.length > 10);
+  assert.ok(Math.max(...stamps) >= start + 20 * (stamps.length - 1) * 0.8, 'the last blob is stamped when it was written');
+});
+
 test('GC re-gets each candidate: a blob the listing shows as old, but which was just rewritten, is kept', async () => {
   const db = makeFakeDb();
   const W = makePage(gcView(db, (p, q) => (p.endsWith('/blobs')
