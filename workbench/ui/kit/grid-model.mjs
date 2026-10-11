@@ -119,6 +119,26 @@ export function filterIndices(rows, columns, { text = '', byColumn = {} } = {}) 
 // ---------- selection (ranges of {r0,c0,r1,c1}; last range is active) ----------
 
 export function createSelection() { return { ranges: [], anchor: null, active: null }; }
+
+/** Document row indices from `from` to `to` inclusive, in the VISIBLE order (`order` = the sorted,
+ *  filtered row indices). Rows hidden by a filter inside the span are skipped. If `from` is not
+ *  visible there is no span to walk: only `to` is returned. */
+export function visibleSpan(order, from, to) {
+  const a = order.indexOf(from), b = order.indexOf(to);
+  if (a < 0 || b < 0) return [to];
+  return order.slice(Math.min(a, b), Math.max(a, b) + 1);
+}
+
+/** Contiguous runs of document rows: [{ r0, r1 }] over the sorted unique indices. */
+export function rowRuns(rows) {
+  const sorted = [...new Set(rows)].sort((x, y) => x - y);
+  const runs = [];
+  for (const r of sorted) {
+    const last = runs.at(-1);
+    if (last && r === last.r1 + 1) last.r1 = r; else runs.push({ r0: r, r1: r });
+  }
+  return runs;
+}
 const rectOf = (a, b) => ({ r0: Math.min(a.r, b.r), c0: Math.min(a.c, b.c), r1: Math.max(a.r, b.r), c1: Math.max(a.c, b.c) });
 
 function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ?? to } = {}) {

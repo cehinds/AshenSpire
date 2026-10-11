@@ -197,6 +197,18 @@ test('JSON import with a __proto__ key: the row keeps Object.prototype and no in
   assertRoundTrip(d, out);
 });
 
+test('visible span and row runs: a filtered-out row inside the span is not part of it', () => {
+  // Six rows; a filter hides row 2, and a sort puts the rest in this visible order.
+  const order = [5, 4, 3, 1, 0];
+  assert.deepEqual(M.visibleSpan(order, 5, 0), [5, 4, 3, 1, 0], 'hidden row 2 is skipped');
+  assert.deepEqual(M.visibleSpan(order, 4, 1), [4, 3, 1]);
+  assert.deepEqual(M.visibleSpan(order, 1, 4), [4, 3, 1], 'direction does not matter');
+  assert.deepEqual(M.visibleSpan(order, 2, 0), [0], 'a hidden anchor leaves only the target');
+  assert.deepEqual(M.rowRuns([4, 3, 1]), [{ r0: 1, r1: 1 }, { r0: 3, r1: 4 }]);
+  assert.deepEqual(M.rowRuns([3, 3, 2]), [{ r0: 2, r1: 3 }], 'duplicates merge');
+  assert.deepEqual(M.rowRuns([]), []);
+});
+
 test('export to CSV, TSV and JSON', () => {
   const d = fresh();
   assert.equal(M.toCSV(d).split('\n')[0], 'id,n,on,tag,data');
