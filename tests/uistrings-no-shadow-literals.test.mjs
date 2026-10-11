@@ -48,6 +48,8 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/previews/itemCards.js', 'Casting', 'a pose-preview option label in a dev preview; not the deck editor stance face'],
+  ['src/ui/screens/deckEditor.js', 'disabled', 'DOM attribute name; not reaction switch copy'],
   ['src/ui/audio.js', 'disabled', 'stored music status value; not the optional reaction switch face'],
   ['src/ui/components/coopProgressionDoor.js', 'disabled', 'DOM property key; not reaction switch copy'],
   ['src/ui/components/holdconfirm.js', 'disabled', 'stored hold mode; not reaction switch copy'],
