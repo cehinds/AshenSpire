@@ -90,9 +90,15 @@ export function recursiveEventPaths(abs, name, platform = process.platform, { ex
   return isNewFolder(target) ? filesUnder(target) : [];
 }
 
-/** Every folder under abs (abs included), skipping hidden ones and node_modules. */
-function foldersUnder(abs, out = new Set()) {
-  out.add(abs);
+/**
+ * Every folder under abs (abs included) into `out`, as path -> inode, skipping hidden
+ * ones and node_modules. The inode tells a folder replaced at the same path (deleted,
+ * then another moved in) from the one that was there.
+ */
+function foldersUnder(abs, out = new Map()) {
+  let st;
+  try { st = fs.statSync(abs); } catch { return out; }
+  out.set(abs, st.ino);
   let entries = [];
   try { entries = fs.readdirSync(abs, { withFileTypes: true }); } catch { return out; }
   for (const e of entries) if (e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules') foldersUnder(path.join(abs, e.name), out);
@@ -220,12 +226,14 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   }
 
   // One { recursive: true } watch per source folder where the platform has one.
-  // The folders there when the watch began, and those seen since: on macOS only a
-  // folder not among them is walked for its files (see recursiveEventPaths).
-  const knownFolders = new Set();
+  // The folders there when the watch began, and those seen since, with their inodes:
+  // on macOS only a folder not among them is walked for its files (see recursiveEventPaths).
+  const knownFolders = new Map(); // folder -> inode
   const isNewFolder = (p) => {
-    if (knownFolders.has(p)) return false;
-    foldersUnder(p, knownFolders);
+    let ino;
+    try { ino = fs.statSync(p).ino; } catch { return false; }
+    if (knownFolders.get(p) === ino) return false;
+    foldersUnder(p, knownFolders); // new, or a different folder now at a known path
     return true;
   };
   function watchRecursive(abs, d) {
