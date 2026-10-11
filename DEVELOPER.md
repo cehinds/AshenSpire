@@ -51,15 +51,16 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
 | `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | yes | — |
-| `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | — |
-| `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | — |
-| `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | — |
-| `ci.yml` → bundler parse gate (`tools/bundle.test.mjs`) | — | — | yes | — |
-| `ci.yml` → the checks that need a real browser (`browser-guard`) | — | — | yes | — |
-| `ci.yml` → a whole run in a real browser: title to a new run, 0 console errors (`browser-full-run`) | — | — | yes | — |
-| `ci.yml` → every flask menu, and the flask-menu known-bads (sharded) | — | — | yes | — |
-| `ci.yml` → about-changelog known-bads (sharded) | — | — | yes | — |
-| `ci.yml` → startup gate known-bads (sharded) | — | — | yes | — |
+| `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
+| `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → bundler parse gate (`tools/bundle.test.mjs`) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → the checks that need a real browser (`browser-guard`) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → a whole run in a real browser: title to a new run, 0 console errors (`browser-full-run`) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → every flask menu, and the flask-menu known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → about-changelog known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → startup gate known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
 | `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | — |
 | `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | — |
 | `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | — |

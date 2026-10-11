@@ -26,7 +26,8 @@ test('the whole-run probe runs in a test-stage job, not in the release-only stam
   const probing = [...all].filter(([, job]) => /run: .*node tools\/full-run-probe\.mjs/.test(job)).map(([name]) => name);
   assert.deepEqual(probing, ['browser-full-run'], `full-run-probe runs in: ${probing.join(', ')}`);
   const job = all.get('browser-full-run');
-  assert.match(job, /if: \$\{\{ \(github\.event_name == 'workflow_dispatch' && contains\(fromJSON\('\["all","test"\]'\), inputs\.stage\)\) \|\| \(github\.event_name == 'push' && github\.ref_name != 'release'\) \}\}/, 'browser-full-run is not a test-stage job');
+  assert.match(job, /needs: stage\n/, 'browser-full-run does not depend on the stage decision');
+  assert.match(job, /if: \$\{\{ needs\.stage\.outputs\.functional == 'true' \}\}/, 'browser-full-run is not gated on the functional stage output');
   assert.match(job, /uses: \.\/\.github\/actions\/fetch-art/, 'browser-full-run runs without the fetched art packs');
   assert.match(job, /uses: \.\/\.github\/actions\/which-browser/, 'browser-full-run runs without a browser');
   assert.match(all.get('boundary'), /browser-full-run/, 'boundary does not name browser-full-run');
@@ -41,10 +42,11 @@ test('the boundary stage summary lists the same test and release jobs the job-le
     return m[1].split(' ').sort();
   };
   const stageOf = (job) => {
-    const m = job.match(/\["all","(test|release)"\]/);
+    if (/needs\.stage\.outputs\.functional/.test(job)) return 'test';
+    const m = job.match(/\["all","(release)"\]/);
     return m ? m[1] : null;
   };
-  const needed = [...boundary.matchAll(/needs: \[([^\]]+)\]/g)][0][1].split(',').map((s) => s.trim());
+  const needed = [...boundary.matchAll(/needs: \[([^\]]+)\]/g)][0][1].split(',').map((s) => s.trim()).filter((j) => j !== 'stage');
   const testJobs = needed.filter((j) => stageOf(all.get(j)) === 'test').sort();
   const releaseJobs = needed.filter((j) => stageOf(all.get(j)) === 'release').sort();
   assert.deepEqual(listed('TEST_JOBS'), testJobs, 'TEST_JOBS differs from the test-stage if: lines');
@@ -81,4 +83,23 @@ test('the boundary claims print per stage, and only for a stage that ran', () =>
   assert.match(release.claims, /the build version has ONE home/, 'build-version claim is not in the release-stage block');
   assert.doesNotMatch(release.claims, /the whole engine suite passes|\?shot= cannot write/, 'a test-stage claim is in the release-stage block');
   assert.match(release.otherwise, /THE RELEASE-STAGE CLAIMS DO NOT APPLY TO THIS RUN/, 'release stage has no does-not-apply line');
+});
+
+test('every functional job depends on the stage decision and is gated on its functional output', () => {
+  const all = jobs(readFileSync(CI, 'utf8').replace(/\r\n/g, '\n'));
+  const functional = ['test', 'test-discovered', 'test-selftests', 'parse-gate', 'browser-guard', 'browser-full-run', 'browser-flask-menu', 'browser-flask-menu-plants', 'browser-guard-changelog', 'browser-startup-plants'];
+  for (const name of functional) {
+    const job = all.get(name);
+    assert.ok(job, `ci.yml has no ${name} job`);
+    assert.match(job, /\n    needs: stage\n/, `${name} does not need the stage job`);
+    assert.match(job, /if: \$\{\{ needs\.stage\.outputs\.functional == 'true' \}\}/, `${name} is not gated on needs.stage.outputs.functional`);
+    assert.doesNotMatch(job, /github\.ref_name != 'release'/, `${name} still decides its stage from the ref`);
+  }
+  const stage = all.get('stage');
+  assert.ok(stage, 'ci.yml has no stage job');
+  assert.match(stage, /functional: \$\{\{ steps\.decide\.outputs\.functional \}\}/, 'stage job does not output functional');
+  assert.match(stage, /polish: \$\{\{ steps\.decide\.outputs\.polish \}\}/, 'stage job does not output polish');
+  assert.match(stage, /git diff --quiet origin\/test HEAD/, 'stage job does not compare the release tree with test');
+  assert.match(all.get('boundary'), /needs: \[stage,/, 'boundary does not need the stage job');
+  assert.match(all.get('boundary'), /release tree differs from test: functional suites ran/, 'boundary does not print the differing-tree line');
 });
