@@ -10,8 +10,6 @@
 //   tablet      w <= tabletMaxWidth
 //   desktop     otherwise
 
-export const FORM_FACTOR_VALUES = Object.freeze(['mobile', 'tablet', 'desktop', 'widescreen']);
-
 export function formFactorFor(width, height, thresholds) {
   const t = thresholds || {};
   const w = Number(width), h = Number(height);

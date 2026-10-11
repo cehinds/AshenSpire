@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+// HUD layout geometry tokens unset (getComputedStyle → {}): every offset is 0.
+import {hudGeometry,offsetPlacement} from '../src/ui/models/HudLayoutOffsetModel.js';
 import {combatPlayerInfoRect,combatPlayerActionRect,combatFrameTarget,combatTargetHudFootprints} from '../src/ui/components/battlefieldStage.js';
 import {COMBAT_TARGET_HIT_PX,combatTargetPackSize} from '../src/ui/models/CombatOverheadModel.js';
 
@@ -26,7 +28,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const combat={getBoundingClientRect:()=>viewport,querySelector:()=>null};
     const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),querySelectorAll:s=>s==='.combatant.player'?players:[]};
     const begin=source.indexOf('  function placePlayerHud('),end=source.indexOf('  function trackPlayerHud()',begin);
-    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{
+    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
       field,uiZoom:()=>zoom,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,playerInfoRects:[],
       readRestingHand:()=>({clearanceTop:340}),currentSpriteArtBounds:s=>({left:40+s.index*160,right:100+s.index*160,top:190,bottom:300}),
       combatPlayerInfoRect,combatPlayerActionRect,combatTargetHudFootprints,
