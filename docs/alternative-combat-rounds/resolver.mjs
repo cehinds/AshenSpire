@@ -92,7 +92,7 @@ export function rollD20(rng) {
   return Math.floor(rollUnit(rng) * 20) + 1;
 }
 
-// Evade percent cap (placeholder, flagged in DESIGN.md, Evasion).
+// Evade percent cap (owner, 2026-10-11; DESIGN.md, Evasion).
 export const EVADE_PCT_MAX = 95;
 
 export function clampEvadePct(n) {
