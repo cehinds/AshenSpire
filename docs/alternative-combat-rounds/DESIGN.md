@@ -187,6 +187,8 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
     the card's stance has an advantage, otherwise red. Green is not possible,
     and the speed delta and arrow are null.
   - stage 3: the full border rules above, with speed and the arrow.
+  - self-target (blue) cards: the speed delta is null below stage 3, as for
+    other cards. A self-target card never shows an arrow.
 - Selecting a card highlights each enemy in that card's colour. One card can be
   red on one foe and green on two others.
 - Speed totals match the pairing in `resolveRound`: a `speed` field is used

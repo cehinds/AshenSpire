@@ -1214,6 +1214,18 @@ test('cardHint at perception stage 2: the stance is known and speed is not, so n
   assert.equal(none.speedDelta, null);
 });
 
+test('cardHint self-target card: blue border, but no speed delta while the enemy speed is unknown', () => {
+  const self = { card: 'three', target: 'self' };
+  const hidden = cardHint(self, revealAction(HINT_FOE, 2), hintCtx());
+  assert.equal(hidden.border, 'blue');
+  assert.equal(hidden.speedDelta, null, 'stage 2 hides the enemy speed');
+  assert.equal(hidden.arrow, null);
+
+  const known = cardHint(self, revealAction(HINT_FOE, 3), hintCtx());
+  assert.equal(known.speedDelta, 2, 'at stage 3 the delta is shown');
+  assert.equal(known.arrow, null, 'self-target cards never show an arrow');
+});
+
 test('cardHint at stage 3: a speed field without speed component ids still gives a speed delta and arrow', () => {
   // The action carries only `speed`, the field resolveRound pairs with. Speed is known at stage 3.
   const hint = cardHint(HINT_CARD, revealAction({ id: 'x', speed: 1, kind: 'attack', stance: 'attack' }, 3), hintCtx());

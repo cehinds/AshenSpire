@@ -463,13 +463,13 @@ export function cardHint(card, enemyAction, ctx = {}) {
   const enemyTotal = Number.isFinite(enemyAction.speed) ? enemyAction.speed - shift : enemy.total;
   const breakdown = BREAKDOWN_TERMS.map(([term, key]) => ({ term, value: player.parts[key] }));
 
-  if (card.target === 'self') {
-    return { border: 'blue', speedDelta: playerTotal - enemyTotal, arrow: null, breakdown };
-  }
   // Speed is known from stage 3 (a missing stage counts as 3). The stance is known
   // from stage 2 (the key is present, even when null). Stage 1 shows only the group: grey.
   const stage = enemyAction.stage ?? 3;
   const speedKnown = stage >= 3;
+  if (card.target === 'self') {
+    return { border: 'blue', speedDelta: speedKnown ? playerTotal - enemyTotal : null, arrow: null, breakdown };
+  }
   const stanceKnown = stage >= 2 && Object.hasOwn(enemyAction, 'stance');
   // Same rule as momentum: an advantage is a stance bonus above 0.
   const stanceAdv = stanceKnown && stanceBonus(ctx.stanceAdvantage ?? null, card.stance, enemyAction.stance) > 0;
