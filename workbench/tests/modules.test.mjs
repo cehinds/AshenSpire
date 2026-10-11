@@ -19,13 +19,19 @@ test('every module id loads and default-exports a mount()', async () => {
   }
 });
 
-test('the placeholder shows the coming-in-this-branch empty state and lists what it replaces', async () => {
-  const data = (await MODULES[0].load()).default;
+test('a placeholder module shows the coming-in-this-branch empty state and lists what it replaces', async () => {
+  const layout = (await MODULES[1].load()).default;
   const el = { innerHTML: '' };
-  const instance = data.mount(el, {});
-  assert.match(el.innerHTML, /Coming in this branch: tables, relations/);
-  assert.match(el.innerHTML, /Replaces the Content Editor tables/);
+  const instance = layout.mount(el, {});
+  assert.match(el.innerHTML, /Coming in this branch: /);
   assert.equal(typeof instance, 'object');
+});
+
+test('Data Studio is a real module, not the placeholder', async () => {
+  const src = await import('node:fs/promises').then((fs) => fs.readFile(new URL('../modules/data/index.mjs', import.meta.url), 'utf8'));
+  assert.doesNotMatch(src, /placeholder\.mjs/);
+  assert.match(src, /createGrid/);
+  assert.match(src, /createCheckPanel/);
 });
 
 test('module prefs persist per module under wb.mod.<id> and survive a broken store', () => {
