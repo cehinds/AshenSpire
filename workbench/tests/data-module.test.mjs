@@ -325,3 +325,20 @@ test('a table listed in KEY_SCOPES pairs edited rows by the (classId, id) key, n
   doc.rows = [{ ...table.rows[1], name: 22 }, { ...table.rows[0], name: 11 }];
   assert.equal(D.serializeTable(table, doc), 'classId,id,name\n# s\nstarseer,default,22\n# r\nreaver,default,11\n');
 });
+
+// Reordering: each row is saved in the order given by `order` (indices into the read rows), with optional edits.
+const COMMENTED = 'id,name\n# ca\na,1\n# cb\nb,2\n# cc\nc,3\n';
+const reordered = (text, order, edits = {}) => {
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = order.map((i) => ({ ...table.rows[i], ...(edits[i] ?? {}) }));
+  return D.serializeTable(table, doc);
+};
+
+test('a reverse sort keeps each comment above its own row', () => {
+  assert.equal(reordered(COMMENTED, [2, 1, 0]), 'id,name\n# cc\nc,3\n# cb\nb,2\n# ca\na,1\n');
+});
+
+test('moving the last row to the top keeps each comment with its row', () => {
+  assert.equal(reordered(COMMENTED, [2, 0, 1]), 'id,name\n# cc\nc,3\n# ca\na,1\n# cb\nb,2\n');
+});
