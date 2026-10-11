@@ -12,8 +12,12 @@ const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 test('a refused run start shows a banner when Settings did not speak', () => {
   assert.match(
     source,
-    /if \(!showSettingsNotice\(message, 'profile'\)\) failureBanner\('run:start', 'THIS RUN COULD NOT START'/,
+    /if \(!showSettingsNotice\(message, 'profile'\)\) failureBanner\(`run:start:\$\{error\.message\}`, 'THIS RUN COULD NOT START'/,
   );
+});
+
+test('the refusal reaches the command log, which the banner overflow points to', () => {
+  assert.match(source, /dlog\('ERROR', `run start refused: \$\{error\.message\}`\)/);
 });
 
 test('newRun no longer hands the failure to Settings alone as a bare one-liner', () => {
