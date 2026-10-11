@@ -144,7 +144,11 @@ async function resetDoc(mod) {
 async function newPage(size) {
   const context = await browser.newContext({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1, colorScheme: 'dark' });
   const p = await context.newPage();
-  p.on('pageerror', (e) => globalIssues.push({ size: size.name, kind: 'pageerror', detail: e.message.split('\n')[0] }));
+  p.on('pageerror', (e) => {
+    // The first stack frame says where the error was thrown.
+    const frame = (e.stack || '').split('\n').find((l) => /\.m?js|\.html/.test(l))?.trim() ?? '';
+    globalIssues.push({ size: size.name, kind: 'pageerror', detail: `${e.message.split('\n')[0]}${frame ? ` @ ${frame}` : ''}` });
+  });
   p.on('requestfailed', (r) => globalIssues.push({ size: size.name, kind: 'requestfailed', detail: `${r.url()} ${r.failure()?.errorText || ''}` }));
   p.on('response', (r) => { if (r.status() >= 400) globalIssues.push({ size: size.name, kind: `http ${r.status()}`, detail: r.url() }); });
   p.on('console', (m) => { if (m.type() === 'error') globalIssues.push({ size: size.name, kind: 'console', detail: m.text().slice(0, 200) }); });
@@ -152,10 +156,14 @@ async function newPage(size) {
   return { context, page: p };
 }
 const want = (id) => !ONLY || ONLY.includes(id);
+// Screenshot names: the narrow (dock open) picture is `<module>.jpg`, the wide (dock collapsed) one `<module>-wide.jpg`.
+const SHOT_NAMES = { 'motion-stance': 'motion-stance-readonly' };
 const shot = async (name) => {
   if (!SHOTS) return;
   fs.mkdirSync(SHOTS, { recursive: true });
-  await page.screenshot({ path: path.join(SHOTS, `${name}.jpg`), type: 'jpeg', quality: 80 });
+  const base = SHOT_NAMES[name.replace(/-(narrow|wide)$/, '')] ?? name.replace(/-(narrow|wide)$/, '');
+  const file = sizeName === 'wide' ? `${base}-wide` : base;
+  await page.screenshot({ path: path.join(SHOTS, `${file}.jpg`), type: 'jpeg', quality: 80 });
 };
 
 // ---------- the paths ----------
@@ -163,22 +171,27 @@ const shot = async (name) => {
 async function dataStudio() {
   await goModule('Data Studio');
   await waitVisible('.ds-grid .gk-row');
+  // Wide (dock collapsed) the table list is a fixed sidebar and the toggle and Close are hidden.
+  const listToggle = () => page.locator('.ds-tables-toggle').isVisible();
   await check('Data: Tables toggle opens the list', async () => {
+    if (!(await listToggle())) return 'table list is a fixed sidebar at this width';
     await page.click('.ds-tables-toggle');
     expect(await page.getAttribute('.ds-tables-toggle', 'aria-expanded') === 'true', 'aria-expanded did not become true');
   });
   await check('Data: Close button closes the table list', async () => {
+    if (!(await listToggle())) return 'table list is a fixed sidebar at this width';
     await page.click('.ds-list-close');
     expect(await page.getAttribute('.ds-tables-toggle', 'aria-expanded') === 'false', 'list still open after Close');
   });
   await check('Data: Escape closes the table list', async () => {
+    if (!(await listToggle())) return 'table list is a fixed sidebar at this width';
     await page.click('.ds-tables-toggle');
     await page.focus('.ds-find');
     await page.keyboard.press('Escape');
     expect(await page.getAttribute('.ds-tables-toggle', 'aria-expanded') === 'false', 'list still open after Escape');
   });
   await check('Data: pick a table from the list', async () => {
-    await page.click('.ds-tables-toggle');
+    if (await listToggle()) await page.click('.ds-tables-toggle');
     await page.click('.ds-table[data-path="content/source/weapons.csv"]');
     await sleep(600);
     expect((await textOf('.ds-file')).includes('weapons.csv'), 'weapons.csv did not open');
@@ -192,6 +205,7 @@ async function dataStudio() {
     return await textOf('.ds-panel-row h3');
   });
   await check('Data: drawer Close button hides the drawer', async () => {
+    if (!(await page.locator('.ds-drawer-close').isVisible())) return 'no drawer Close control at this width';
     await page.click('.ds-drawer-close');
     await sleep(200);
     expect(await page.evaluate(() => !document.querySelector('.ds')?.classList.contains('row-open')), 'drawer still open after Close');
@@ -318,21 +332,25 @@ async function layoutStudio() {
   await check('Layout: drag a region and see it move', async () => {
     const box = await page.locator('.view.active .ck-item >> nth=1').boundingBox();
     const x0 = box.x + box.width / 2, y0 = box.y + box.height / 2;
-    const before = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
+    // Region 2 is a full-width band: it moves on the vertical axis only, so the drag runs down.
+    const pos = () => page.locator('.view.active .ck-item >> nth=1').evaluate((n) => `${n.style.left} ${n.style.top}`);
+    const before = await pos();
     await page.mouse.move(x0, y0); await page.mouse.down();
-    for (let i = 1; i <= 8; i++) await page.mouse.move(x0 + i * 6, y0);
+    for (let i = 1; i <= 8; i++) await page.mouse.move(x0, y0 + i * 6);
     await page.mouse.up();
     await sleep(300);
-    const after = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
+    const after = await pos();
     expect(before !== after, `region did not move (${before} -> ${after})`);
     return `${before} -> ${after}`;
   });
   await check('Layout: undo reverts the drag', async () => {
-    const before = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
+    const pos = () => page.locator('.view.active .ck-item >> nth=1').evaluate((n) => `${n.style.left} ${n.style.top}`);
+    const before = await pos();
+    expect(await page.isEnabled(VUNDO), 'Undo is disabled after the drag');
     await page.click(VUNDO);
     await sleep(300);
-    const after = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
-    expect(before !== after, 'undo did not change the region position');
+    const after = await pos();
+    expect(before !== after, `undo did not change the region position (${before})`);
   });
   await check('Layout: More menu opens and lists the coming modes', async () => {
     await page.click('.view.active .lay-more > summary');
@@ -634,10 +652,14 @@ async function visualReview() {
   await check('Review: detail view modes all render', async () => {
     await page.locator('.view.active button:has-text("View")').first().click();
     await sleep(600);
-    const modes = await page.locator('[data-mode]').evaluateAll((els) => els.map((e) => e.dataset.mode));
+    // Only the detail's own view modes: the module's other tabs also carry data-mode.
+    const detailModes = '.view.active .rv-detail [data-mode]';
+    const modes = await page.locator(detailModes).evaluateAll((els) => els.map((e) => e.dataset.mode));
+    expect(modes.length === 5, `expected the five view modes, found ${modes.length}`);
     for (const m of modes) {
-      await page.locator(`[data-mode="${m}"]`).first().click();
+      await page.locator(`${detailModes}[data-mode="${m}"]`).first().click();
       await sleep(250);
+      expect(await page.getAttribute(`${detailModes}[data-mode="${m}"]`, 'aria-pressed') === 'true', `mode "${m}" did not become pressed`);
     }
     return modes.join(', ');
   });
@@ -681,7 +703,9 @@ async function motionStudio() {
   const V = '.view.active ';
   // The Library and Inspector are overlays at this width; open or close one to the wanted state.
   const overlay = async (name, want) => {
-    const now = await page.getAttribute(`${V}.mo-toggle[data-overlay="${name}"]`, 'aria-expanded');
+    // Wide (dock collapsed) the Library and Inspector are fixed panels and their toggles are hidden.
+    if (!(await page.locator(`${V}.mo-toggle[data-overlay="${name}"]`).isVisible())) return;
+    const now =await page.getAttribute(`${V}.mo-toggle[data-overlay="${name}"]`, 'aria-expanded');
     if ((now === 'true') === want) { await sleep(100); return; }
     // An open overlay can cover its own toggle at this width: close it through the scrim.
     if (!want && await page.locator(`${V}.mo-scrim`).isVisible()) await page.click(`${V}.mo-scrim`, { position: { x: 4, y: 4 } });
