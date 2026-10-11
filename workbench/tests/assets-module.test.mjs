@@ -6,8 +6,31 @@ import assert from 'node:assert/strict';
 import {
   KINDS, kindOfPath, formatOf, folderOf, nameOf, rowsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
   assetUrl, usageNeedles, lineUses, groupUsage, entityLinkOf, frameSetOf, exportOf, clampOpacity, clampZoom, sizeLabel, dimsLabel,
-  missingPacks, gridMetrics, visibleItems,
+  missingPacks, gridMetrics, visibleItems, tileLabelsOf,
 } from '../modules/assets/model.mjs';
+
+test('tileLabelsOf labels each tile with its parent folder and name, growing to the shortest unique suffix', () => {
+  const rows = rowsOf([
+    { path: 'assets-mobile/herald/BOW-01.webp' },
+    { path: 'assets-mobile/reaver/BOW-01.webp' },
+    { path: 'assets-mobile/herald/BOW-02.webp' },
+    { path: 'assets-mobile/herald/sub/BOW-01.webp' },
+    { path: 'music/theme.ogg' },
+    { path: 'idle.png' },
+    { path: 'assets-mobile/x/a.png' },
+    { path: 'assets-mobile/x/a.webp' },
+  ]);
+  const labels = tileLabelsOf(rows);
+  assert.equal(labels[0], 'herald / BOW-01', 'a repeated name gets its parent folder');
+  assert.equal(labels[1], 'reaver / BOW-01');
+  assert.equal(labels[2], 'herald / BOW-02', 'a unique name still shows its parent folder');
+  assert.equal(labels[3], 'sub / BOW-01');
+  assert.equal(labels[4], 'music / theme');
+  assert.equal(labels[5], 'idle', 'a root file has no folder to show');
+  assert.equal(labels[6], 'x / a.png', 'same stem, two extensions: the extension tells them apart');
+  assert.equal(labels[7], 'x / a.webp');
+  assert.deepEqual(tileLabelsOf([]), [], 'no rows, no labels');
+});
 
 const files = [
   { path: 'assets-mobile/poses/idle_01.webp', bytes: 2048, from: 'tree', w: 640, h: 480 },
