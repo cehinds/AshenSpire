@@ -109,7 +109,12 @@ Haiku brief written this way landed first time.
    discovered shard that holds the touched files. Named tests alone missed four
    guards in the FixModal run (zoom units, module URL paths, a component
    contract that pins a renamed line, and the page-listener registry), so they
-   surfaced only at the orchestrator's full run. When the fake DOM in `tests/helpers/` cannot mount the
+   surfaced only at the orchestrator's full run. A change to `src/` also runs
+   `node tools/launch.mjs --build-only` (the bundler rejects things no test
+   loads, such as a comment reading "import (") and `node tools/plantsites.mjs
+   --check` (other tools' selftest plants match exact source lines), plus the
+   real-browser gates for the screens it touches (map: `map-two-axis-pan`,
+   `map-camera-persistence`). Run `git checkout -- buildordinal.json` after the build. When the fake DOM in `tests/helpers/` cannot mount the
    screen, ask for a source test plus the existing real-browser tool.
 8. **Local branches, orchestrator merges.** Workers commit on
    `<feature>/<task>` in their worktree, and neither push nor open a PR. Worktrees

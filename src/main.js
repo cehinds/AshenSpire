@@ -1916,8 +1916,8 @@ const quickMenuControls = {
   },
 };
 
-// The Settings door showSettings opened, so an import (which replaces the profile
-// under it) can close it. Its toggles read the stale DOM otherwise.
+// The Settings door showSettings opened, so an import, which replaces the profile
+// under it, can close it. Its toggles read the stale DOM otherwise.
 let settingsDoor = null;
 
 function showSettings() {

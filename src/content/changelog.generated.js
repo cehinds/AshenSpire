@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Menus and pop-ups no longer reset the screen, and map taps answer faster on phones",
     "detail": "Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, so a double tap travels, and selecting a node takes about half as long.",
-    "build": "0.7.1.1282",
+    "build": "0.7.1.1284",
     "pullRequest": 1830,
     "url": "https://github.com/cehinds/AshenSpire/pull/1830"
   },
