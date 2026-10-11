@@ -26,9 +26,9 @@ An opt-in setting that runs real fights on the alternative combat rounds
 - Perception: visible enemy actions = 1 + the player's perception level; each is
   shown at stage 3 when today's intent read is exact, `?` when hidden (reuses the
   §4.9 knowledge rolls).
-- Initiative track: stage 0 (`?`) actions within the read count are left out of
-  the order; stage 1 and up are placed; actions beyond the read count are placed as
-  `?`.
+- Intent box: an action within the read count shows at its revealed stage (`?`
+  when the read is not exact); an action beyond the read count shows as `?`. There
+  is no initiative track (see Screen).
 - A queued card pays only its Stamina cost as SP (Mana as MP); live Actions costs
   are not paid in the preview.
 - A queued Counter answers only the next attack from its target, then is spent.
@@ -45,7 +45,10 @@ An opt-in setting that runs real fights on the alternative combat rounds
 - `src/model/combatRounds.js` turns the setting into rules; `createRunCombat`
   reads it once and `createCombat` / `createCoopCombat` stamp
   `combat.combatRounds`. The field is absent when the toggle is off, so normal
-  fights and saves are byte-identical.
+  fights and saves are byte-identical. The preview RNG stream's counter is written
+  to `streamCounters` only when it is non-zero (P2 makes `getCounters()` omit a
+  zero preview counter and treat a missing one as 0 on load), so an off-mode save
+  gains no new key.
 - Player turn: playing a card queues it (cost paid at queue time; an unqueue
   intent refunds). End Turn keeps its label and commits the round: enemy queues adapt, the round steps
   through the timeline, a player-targeted attack can pause for a reaction through
