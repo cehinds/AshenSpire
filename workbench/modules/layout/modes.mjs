@@ -5,7 +5,7 @@ export const MODES = Object.freeze([
   { id: 'config', label: 'UI config', built: true },
   { id: 'sketch', label: 'Sketch', built: true },
   { id: 'battlefield', label: 'Battlefield', built: true },
-  { id: 'deck', label: 'Deck row', built: false },
+  { id: 'deck', label: 'Deck row', built: true },
   { id: 'orb', label: 'SP orb', built: true },
   { id: 'book-recipes', label: 'Book recipes', built: false },
   { id: 'card-layers', label: 'Card layers', built: false },
