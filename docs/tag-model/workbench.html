@@ -223,14 +223,19 @@ function stopParts(t){ const ts=TS(t); if(ts.partsUnsub){ ts.partsUnsub(); ts.pa
 function legacyAssemble(t){
   const ts=TS(t), h=ts.legacy; if(!h||dirty.has(t)||saving.has(t)) return;
   const n=Number(h.parts)||0, hc=headCols(h,t), arrs=[], ids=[];
-  for(let i=0;i<n;i++){ const p=ts.parts.get(i); if(!p) return; ids.push(p.id); arrs.push(...p.rows); }
+  for(let i=0;i<n;i++){
+    const p=ts.parts.get(i); if(!p) return;
+    /* a legacy head with revs lists the rev of each part; a part from another save is still in flight, so wait */
+    if(Array.isArray(h.revs) && p.rev!==h.revs[i]){ setStatus('warn','Waiting for every part of '+TABLES[t].label+' to match its head.'); return; }
+    ids.push(p.id); arrs.push(...p.rows);
+  }
   ts.legacyDocs=ids;
   adoptRows(t, hc, arrs.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r));
 }
 function ensureParts(t){
   const ts=TS(t); if(ts.partsUnsub) return;
   ts.partsUnsub=db.collection('tables/'+t+'/parts').onSnapshot(q=>{
-    ts.parts=new Map(q.docs.map(d=>{ const b=d.data()||{}; return [Number(b.index), {id:d.id, rows:Array.isArray(b.rows)? b.rows : []}]; }));
+    ts.parts=new Map(q.docs.map(d=>{ const b=d.data()||{}; return [Number(b.index), {id:d.id, rev:b.rev, rows:Array.isArray(b.rows)? b.rows : []}]; }));
     legacyAssemble(t);
   }, e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.'));
 }

@@ -213,6 +213,21 @@ test('legacy (a) arrays-with-revs head assembles from its parts', async () => {
   assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify([{ id: 'a1', name: 'n', qty: 1 }, { id: 'a2', name: 'm', qty: 2 }]));
 });
 
+test('legacy (a) with revs never assembles a part from another save', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { columns: COLS, parts: 2, format: 'arrays', revs: ['x', 'y'] });
+  db.put('tables/t/parts/p0', { index: 0, rev: 'x', rows: [['a1', 'n', 1]] });
+  db.put('tables/t/parts/p1', { index: 1, rev: 'z', rows: [['a2', 'm', 2]] });
+  api.subscribeTable('t');
+  await settle(30);
+  assert.equal(page.loaded.has('t'), false, 'part 1 has a rev its head does not list');
+  assert.equal(page.state.data.t.rows.length, 0);
+  await db.doc('tables/t/parts/p1').set({ index: 1, rev: 'y', rows: [['a2', 'm', 2]] });
+  await waitFor(() => page.loaded.has('t'));
+  assert.equal(page.state.data.t.rows.length, 2);
+});
+
 test('legacy (b) object-parts head waits for every part, then assembles', async () => {
   const db = makeFakeDb();
   const { page, api } = makePage(db, T);
