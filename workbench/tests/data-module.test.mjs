@@ -227,6 +227,48 @@ test('KEY_SCOPES lists only outfits, and keyScopeFor reads it by path', () => {
   assert.equal(D.keyScopeFor(undefined), null);
 });
 
+test('a selection gate: only the newest table click is current, so a slow earlier load is dropped', () => {
+  const gate = D.selectionGate();
+  const first = gate.begin();
+  const second = gate.begin();
+  assert.equal(gate.current(first), false, 'the earlier click is stale once a later one begins');
+  assert.equal(gate.current(second), true);
+  const third = gate.begin();
+  assert.equal(gate.current(second), false);
+  assert.equal(gate.current(third), true);
+});
+
+test('Review skips a draft with no parsed table and names it, instead of throwing', () => {
+  const rel = 'content/source/speakers.csv';
+  const table = D.parseTable(rel, read(rel), { hash: 'disk-1' });
+  const edited = docOf(table);
+  edited.rows = edited.rows.slice(1);
+  assert.equal(D.changeFor(null, edited), null, 'no parsed table means no save entry');
+  const out = D.reviewableChanges([
+    { path: 'content/source/gone.csv', table: null, doc: edited },
+    { path: rel, table, doc: edited },
+  ]);
+  assert.deepEqual(out.skipped, ['content/source/gone.csv']);
+  assert.equal(out.changes.length, 1);
+  assert.equal(out.changes[0].path, rel);
+  assert.equal(out.changes[0].baseHash, 'disk-1');
+});
+
+test('a table deleted on disk: a 404 reads as missing, and withoutTable drops its copy and draft only', () => {
+  assert.equal(D.isMissingFile({ status: 404 }), true);
+  assert.equal(D.isMissingFile({ status: 500 }), false);
+  assert.equal(D.isMissingFile(new Error('network')), false);
+  const rel = 'content/source/speakers.csv', other = 'content/source/weapons.csv';
+  const parsed = new Map([[rel, { path: rel }], [other, { path: other }]]);
+  const drafts = new Map([[rel, { rows: [] }], [other, { rows: [] }]]);
+  const out = D.withoutTable({ parsed, drafts, selected: rel }, rel);
+  assert.deepEqual([...out.parsed.keys()], [other]);
+  assert.deepEqual([...out.drafts.keys()], [other]);
+  assert.equal(out.selected, null, 'the deleted table was shown, so nothing is selected now');
+  assert.equal(parsed.size, 2, 'the maps given are not changed');
+  assert.equal(D.withoutTable({ parsed, drafts, selected: other }, rel).selected, other, 'another selection stays');
+});
+
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
   const { lineDiff } = await import('../core/files.mjs');
   const rel = 'content/source/speakers.csv';

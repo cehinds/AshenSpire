@@ -162,6 +162,21 @@ test('save writes atomically, returns new hashes, creates a backup set, and hold
   assert.equal(await fs.stat(path.join(root, '.build-lock')).then(() => true, () => false), false, 'released after the save');
 });
 
+test('a save that committed still succeeds, and calls onSaved, when pruning old backups throws', async (t) => {
+  const root = await project(t);
+  const saved = [];
+  const files = createFileService({
+    root, stateDir: path.join(root, '.wb-state'),
+    onSaved: (paths) => saved.push(paths),
+    pruneFault: () => { throw Error('prune failed (simulated)'); },
+  });
+  const text = 'a{color:red}\n';
+  const result = await files.save([{ path: 'styles/main.css', text, baseHash: sha('body{}\n') }]);
+  assert.equal(result.files[0].hash, sha(text));
+  assert.equal(await fs.readFile(path.join(root, 'styles/main.css'), 'utf8'), text, 'the save landed');
+  assert.deepEqual(saved, [['styles/main.css']], 'onSaved queued the build and the echo suppression');
+});
+
 test('a save under styles/ waits for a foreign build lock; on timeout it writes nothing', async (t) => {
   const root = await project(t);
   const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });

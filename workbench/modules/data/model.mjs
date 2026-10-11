@@ -312,9 +312,54 @@ export function isDirty(table, doc) {
   return serializeTable(table, doc) !== table.text;
 }
 
-/** A save entry for the Workbench files API: { path, text, baseHash }. */
+/**
+ * Latest-wins gate for table loads. begin() numbers a load; current(n) is true
+ * only for the newest one. A load that finishes after a later click checks
+ * current() before it installs its table, so the last click wins.
+ */
+export function selectionGate() {
+  let latest = 0;
+  return {
+    begin() { latest += 1; return latest; },
+    current(generation) { return generation === latest; },
+  };
+}
+
+/** True when a files/read failure says the file is not on disk (a table deleted on disk). */
+export function isMissingFile(error) {
+  return error?.status === 404;
+}
+
+/**
+ * A table deleted on disk: its parsed copy and its draft go, and the selection
+ * clears when it was the shown table. New Maps are returned; the ones given are not changed.
+ */
+export function withoutTable({ parsed, drafts, selected }, path) {
+  const nextParsed = new Map(parsed), nextDrafts = new Map(drafts);
+  nextParsed.delete(path); nextDrafts.delete(path);
+  return { parsed: nextParsed, drafts: nextDrafts, selected: selected === path ? null : selected };
+}
+
+/**
+ * A save entry for the Workbench files API: { path, text, baseHash }, or null when
+ * there is no parsed table to serialize the draft against.
+ */
 export function changeFor(table, doc) {
+  if (!table || !doc) return null;
   return { path: table.path, text: serializeTable(table, doc), baseHash: table.baseHash };
+}
+
+/**
+ * The save entries Review lists, from { path, table, doc } drafts. A draft whose
+ * table is not parsed is skipped and its path returned in skipped, not thrown on.
+ */
+export function reviewableChanges(entries) {
+  const changes = [], skipped = [];
+  for (const entry of entries) {
+    const change = changeFor(entry.table, entry.doc);
+    if (change) changes.push(change); else skipped.push(entry.path);
+  }
+  return { changes, skipped };
 }
 
 /**
