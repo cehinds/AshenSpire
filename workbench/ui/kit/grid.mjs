@@ -307,9 +307,20 @@ export function createGrid(el, options = {}) {
   head.addEventListener('pointerdown', ev => {
     const rz = ev.target.closest('.gk-rz'); if (!rz) return;
     ev.preventDefault();
-    const c = Number(rz.dataset.c), startX = ev.clientX, startW = doc.columns[c].width ?? 140;
-    const move = e => { const cols = doc.columns.slice(); cols[c] = { ...cols[c], width: Math.max(48, startW + e.clientX - startX) }; doc = { ...doc, columns: cols }; render(); };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    // The drag previews on a copy; the document is only changed by one commit on pointer-up,
+    // made from the document as it was at pointer-down, so the change is undoable and reported.
+    const base = doc, c = Number(rz.dataset.c), key = base.columns[c].key, startX = ev.clientX, startW = base.columns[c].width ?? 140;
+    let w = startW;
+    const move = e => {
+      w = Math.max(M.MIN_COLUMN_WIDTH, startW + e.clientX - startX);
+      const cols = base.columns.slice(); cols[c] = { ...cols[c], width: w }; doc = { ...base, columns: cols }; render();
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+      doc = base;
+      if (w !== startW) commit(M.resizeColumn(base, key, w));
+      else render();
+    };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   });
   scroll.addEventListener('keydown', ev => {
