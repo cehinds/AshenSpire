@@ -9,7 +9,7 @@
 
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
-  facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices,
+  facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -70,6 +70,7 @@ export default {
     const game = { base: null, origin: null };
     let seenParams = null;
     let counts = {}, index = [], classes = [], armaments = [], files = null;
+    let tryFor = undefined; // the entity the Try in fight hands were last set for
 
     // ---------- the game server ----------
     async function connect() {
@@ -174,11 +175,14 @@ export default {
       if (!cls.options.length) cls.innerHTML = classes.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
       const hands = handChoices(armaments);
       if (!main.options.length) { main.innerHTML = hands.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(''); off.innerHTML = main.innerHTML; }
-      const pick = (v, fallback) => (v !== null && hands.some(([id]) => id === v) ? v : fallback);
       st.classId = cls.value || st.classId;
-      if (st.kind === 'armaments' && st.id) st.mainHand = st.id;
-      st.mainHand = pick(st.mainHand, 'straightSword');
-      st.offHand = pick(st.offHand, 'roundShield');
+      // The main hand follows the selected armament, once per selection: switching tabs keeps the reader's hands.
+      if (st.id !== tryFor) {
+        tryFor = st.id;
+        if (st.kind === 'armaments' && st.id) st.mainHand = st.id;
+        if (st.offHand && st.offHand === st.mainHand) st.offHand = null;
+      }
+      Object.assign(st, handsFor({ mainHand: st.mainHand, offHand: st.offHand }, armaments.map((a) => a.id)));
       cls.value = classes.some((c) => c.id === st.classId) ? st.classId : classes[0]?.id;
       main.value = st.mainHand; off.value = st.offHand;
     }

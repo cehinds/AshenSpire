@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
-  escHtml, handChoices,
+  escHtml, handChoices, handsFor,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -142,6 +142,18 @@ test('escHtml escapes markup and quotes, so an id cannot break out of an attribu
   assert.equal(escHtml(`"><img src=x onerror=1>&'`), '&quot;&gt;&lt;img src=x onerror=1&gt;&amp;&#39;');
   assert.equal(escHtml(null), '');
   assert.equal(escHtml(12), '12');
+});
+
+test('the Try in fight hands default to a sword and shield, and the off hand never copies the main hand by default', () => {
+  const ids = ['straightSword', 'roundShield', 'dagger'];
+  assert.deepEqual(handsFor({}, ids), { mainHand: 'straightSword', offHand: 'roundShield' });
+  assert.deepEqual(handsFor({ mainHand: 'roundShield', offHand: null }, ids), { mainHand: 'roundShield', offHand: 'straightSword' }, 'the default off hand skips the main hand');
+  assert.deepEqual(handsFor({ mainHand: 'dagger', offHand: null }, ids), { mainHand: 'dagger', offHand: 'roundShield' });
+  assert.deepEqual(handsFor({ mainHand: 'dagger', offHand: 'dagger' }, ids), { mainHand: 'dagger', offHand: 'dagger' }, 'a choice the reader made is kept');
+  assert.deepEqual(handsFor({ mainHand: '', offHand: '' }, ids), { mainHand: '', offHand: '' }, 'an empty hand is a choice');
+  assert.deepEqual(handsFor({ mainHand: 'nope', offHand: 'gone' }, ids), { mainHand: 'straightSword', offHand: 'roundShield' }, 'unknown ids fall back');
+  assert.deepEqual(handsFor({}, ['straightSword']), { mainHand: 'straightSword', offHand: '' }, 'a missing default is the empty hand');
+  assert.deepEqual(handsFor({ mainHand: 'straightSword', offHand: null }, ['straightSword']), { mainHand: 'straightSword', offHand: '' });
 });
 
 test('the Try in fight hand choices start with the empty hand and keep ids as given', () => {

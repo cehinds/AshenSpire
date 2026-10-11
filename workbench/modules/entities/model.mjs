@@ -57,6 +57,21 @@ export function escHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+/**
+ * The hands the Try in fight form starts with. A hand is an armament id or '' (an empty hand).
+ * A hand that is unset (null) or names no known armament takes its default: main straightSword,
+ * off roundShield, each when available, else the empty hand. A default off hand never equals the
+ * main hand; a choice the reader made is kept as given.
+ */
+export function handsFor({ mainHand = null, offHand = null } = {}, armamentIds = []) {
+  const ids = list(armamentIds).map(String);
+  const known = (v) => v === '' || ids.includes(v);
+  const main = known(mainHand) ? mainHand : (known('straightSword') ? 'straightSword' : '');
+  let off = known(offHand) ? offHand : (known('roundShield') ? 'roundShield' : '');
+  if (!known(offHand) && off !== '' && off === main) off = ids.find((id) => id !== main) ?? '';
+  return { mainHand: main, offHand: off };
+}
+
 /** The hand choices for the Try in fight form: the empty hand, then each armament as [id, name]. */
 export function handChoices(armaments = []) {
   return [['', 'Empty hand'], ...armaments.map((a) => [String(a.id), String(a.name ?? a.id)])];
