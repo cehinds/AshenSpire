@@ -100,3 +100,9 @@ test('the ribbon reads enemy pacing only; the hand and controls hold for either'
   assert.match(coop, /const busy = \(\) => pacing \|\| playerPacing;/);
   assert.match(body('spawnCombatFx'), /if \(!prev \|\| busy\(\)\) return;/);
 });
+
+test("a paced beat's re-render keeps the numbers its timeline just floated", () => {
+  const render = body('render');
+  assert.match(render, /const carriedFx = busy\(\) && snap\.scene\.kind === 'combat' \? \[\.\.\.\(app\.querySelector\('\.fx-layer'\)\?\.children \|\| \[\]\)\] : \[\];/);
+  assert.match(render, /renderCombat\(\);app\.querySelector\('\.fx-layer'\)\?\.append\(\.\.\.carriedFx\);/);
+});

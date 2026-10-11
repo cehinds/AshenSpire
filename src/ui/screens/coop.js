@@ -846,6 +846,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if(['combat','complete','lobby'].includes(snap.scene.kind))disposeProgression();
     posePresentations = new Map([...app.querySelectorAll('.coop-seat')].map(node => [node.dataset.seat, stageFor(node)?.presentation]));
     clearCombatEffects(app.querySelector('.fx-layer'));
+    // A paced timeline's numbers and callouts land just before its beat
+    // re-renders the board; they ride into the new layer to finish their float
+    // (each removes itself on its own timer).
+    const carriedFx = busy() && snap.scene.kind === 'combat' ? [...(app.querySelector('.fx-layer')?.children || [])] : [];
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
@@ -886,7 +890,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     renderSeatTabs();
     switch (snap.scene.kind) {
       case 'map': renderMap();break;
-      case 'combat': renderCombat();showPendingDiscard();break;
+      case 'combat': renderCombat();app.querySelector('.fx-layer')?.append(...carriedFx);showPendingDiscard();break;
       case 'reward': renderReward();break;
       case 'shrine': renderShrine();break;
       case 'event': renderEvent();break;
