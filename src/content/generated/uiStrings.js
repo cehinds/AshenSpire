@@ -7831,7 +7831,7 @@ export const uiStrings = [
   {
     "id": "armoury.picker.status.here",
     "extends": "",
-    "short": "Equipped",
+    "short": "Equipped here",
     "full": "",
     "tip": ""
   },
@@ -7880,14 +7880,14 @@ export const uiStrings = [
   {
     "id": "armoury.picker.showAll",
     "extends": "",
-    "short": "Show all",
+    "short": "Show items that don't fit",
     "full": "",
     "tip": ""
   },
   {
     "id": "armoury.picker.fitsOnly",
     "extends": "",
-    "short": "Fits only",
+    "short": "Hide items that don't fit",
     "full": "",
     "tip": ""
   },
@@ -7895,6 +7895,27 @@ export const uiStrings = [
     "id": "armoury.picker.hide",
     "extends": "",
     "short": "Hide",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.equip",
+    "extends": "",
+    "short": "Equip",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.move",
+    "extends": "",
+    "short": "Move here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.unequip",
+    "extends": "",
+    "short": "Unequip",
     "full": "",
     "tip": ""
   },

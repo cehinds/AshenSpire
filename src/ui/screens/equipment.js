@@ -1517,13 +1517,15 @@ export function mountEquipment(host, {
         ? t('armoury.picker.status.elsewhere', { slot: slotLabel(first.slotId), n: first.setIndex + 1 })
         : t(`armoury.picker.status.${r.status}`, {});
       const img = el('img', { class: 'equip-picker-thumb', src: thumbSrc(r.row.item), alt: '', loading: 'lazy', decoding: 'async' });
-      const itemCell = el('td', { class: 'equip-picker-item' }, [img, el('div', {}, [
+      // The cell stays a table cell; its flex layout lives on an inner wrapper.
+      // Phones drop the Status column, so the pill also rides under the name.
+      const statusPill = () => pill({ label: statusLabel, attrs: { class: `equip-picker-pill is-${r.status}` } });
+      const itemCell = el('td', {}, [el('div', { class: 'equip-picker-item' }, [img, el('div', {}, [
         el('strong', { class: 'equip-picker-name' }, [r.name]),
         el('span', { class: 'equip-picker-meta' }, [metaBits.join(' · ')]),
-      ])]);
-      const statusCell = el('td', { class: 'equip-picker-status' }, [
-        pill({ label: statusLabel, attrs: { class: `equip-picker-pill is-${r.status}` } }),
-      ]);
+        el('span', { class: 'equip-picker-inline-status' }, [statusPill()]),
+      ])])]);
+      const statusCell = el('td', { class: 'equip-picker-status' }, [statusPill()]);
       const inspect = button({
         label: open ? t('armoury.picker.hide') : t('armoury.action.inspect'),
         className: 'equip-picker-inspect',
@@ -1533,10 +1535,13 @@ export function mountEquipment(host, {
       const actions = [inspect];
       if (r.fits && parts?.target) {
         const target = parts.target;
+        // The row already names the slot, so its button is the short verb;
+        // the full destination stays in the accessible name.
         const act = button({
-          label: parts.actionLabel,
+          label: t(`armoury.picker.act.${target.kind}`),
           weight: target.kind === 'unequip' ? 'danger' : 'primary',
           className: 'equip-picker-act',
+          attrs: { 'aria-label': parts.actionLabel, title: parts.actionLabel },
         });
         act.dataset.act = target.kind;
         if (!parts.seal.ok) { act.disabled = true; refuses(act, () => parts.seal.reason); }
@@ -1544,7 +1549,7 @@ export function mountEquipment(host, {
         else act.addEventListener('click', () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
         actions.push(act);
       }
-      const actionsCell = el('td', { class: 'equip-picker-actions' }, actions);
+      const actionsCell = el('td', {}, [el('div', { class: 'equip-picker-actions' }, actions)]);
       tbody.append(el('tr', {
         class: `equip-picker-row is-${r.status}${open ? ' is-open' : ''}`,
         dataset: { itemId: r.id, rowKey: r.key, status: r.status },
@@ -1893,7 +1898,8 @@ export function mountEquipment(host, {
         prose(`${selectedSlot.label} · ${index + 1} — ${index === run.loadout.active[selectedSlot.id] ? 'Active' : 'Reserve'} · ${current.name}`), clear]));
     }
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
-    if (!entries.length) {
+    // While picking, the table owns its own empty state.
+    if (!entries.length && !selectedSlot) {
       // Nothing to select: the collection says why and takes the whole pane.
       collection.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
       if (detail.isConnected) detail.remove();
