@@ -1,6 +1,8 @@
 /* workbench/modules/data/data.css — Data Studio layout. The grid kit styles come from ui/kit/grid.css. */
 .ds { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; height: 100%; min-height: 0; }
 .ds-list, .ds-side { min-height: 0; overflow: auto; border-right: 1px solid var(--as-line); padding: 10px; }
+/* The find box fills the list column; its default width overflowed the 220px column. */
+.ds-find { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
 .ds-side { border-right: 0; border-left: 1px solid var(--as-line); }
 .ds-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
 .ds-toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--as-line); }
