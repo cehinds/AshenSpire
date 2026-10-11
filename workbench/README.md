@@ -24,7 +24,7 @@ The Workbench starts its tools as child servers and stops them when it exits
 |---|---|---|
 | Workbench | 4300 | `node workbench/server.mjs` |
 | Content Editor | 4317 | `node editor/server.mjs --project <root> --port 4317 --frame-ancestor <workbench>` |
-| Pose & FX | 4318 | `POSE_STUDIO_PORT=4318 node pose-studio/server.mjs` |
+| Pose & FX | 4318 | `POSE_STUDIO_PORT=4318 node pose-studio/server.mjs --project <root>` |
 | UI Studio | 4319 | `node ui-studio/server.mjs --project <root> --port 4319 --frame-ancestor <workbench>` |
 | Game server | 4320 | `node tools/serve.mjs --port 4320 --no-open --no-lan --root <root>` |
 

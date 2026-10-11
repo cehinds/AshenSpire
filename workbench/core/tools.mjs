@@ -36,7 +36,7 @@ export function toolDefs({ repo, root, origin, ports = {} }) {
     {
       id: 'pose', name: 'Pose & FX', port: p.pose, host: '127.0.0.1', path: '/pose-studio/index.html', health: '/pose-studio/index.html',
       blurb: 'Poses, stances and effect timing on the live combat figures.',
-      command: () => [path.join(repo, 'pose-studio/server.mjs')], env: (port) => ({ POSE_STUDIO_PORT: String(port) }),
+      command: () => [path.join(repo, 'pose-studio/server.mjs'), '--project', root], env: (port) => ({ POSE_STUDIO_PORT: String(port) }),
     },
     {
       id: 'game', name: 'Game server', port: p.game, host: 'localhost', path: '/', health: '/index.html',

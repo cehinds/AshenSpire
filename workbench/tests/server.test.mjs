@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS } from '../core/jobs.mjs';
-import { Tool } from '../core/tools.mjs';
+import { Tool, toolDefs } from '../core/tools.mjs';
 import { buildsFor, isBuildOutput } from '../core/watch.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
@@ -359,4 +359,23 @@ test('two Restart presses at once spawn one child, not an orphaned second', asyn
   tool.spawn = () => { spawned++; tool.child = { kill() {}, once() {} }; };
   await Promise.all([tool.restart(), tool.restart(), tool.start()]);
   assert.equal(spawned, 1);
+});
+
+test('Pose & FX is started on the Workbench project, and serves that project', async (t) => {
+  const root = await project(t);
+  const pose = toolDefs({ repo: path.resolve(HERE, '../..'), root, origin: 'http://127.0.0.1:1' }).find((d) => d.id === 'pose');
+  const args = pose.command(4318);
+  assert.equal(args[0], path.resolve(HERE, '../../pose-studio/server.mjs'));
+  assert.deepEqual(args.slice(1), ['--project', root]);
+  assert.deepEqual(pose.env(4318), { POSE_STUDIO_PORT: '4318' });
+  await fs.mkdir(path.join(root, 'pose-studio'), { recursive: true });
+  await fs.writeFile(path.join(root, 'pose-studio/index.html'), '<!doctype html><title>project copy</title>');
+  const child = spawn(process.execPath, [...args], { env: { ...process.env, ...pose.env(0) }, stdio: ['ignore', 'pipe', 'pipe'] });
+  t.after(() => child.kill('SIGKILL'));
+  const url = await new Promise((resolve, reject) => {
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; const m = out.match(/ready: (http:\/\/127\.0\.0\.1:\d+\/pose-studio\/index\.html)/); if (m) resolve(m[1]); });
+    child.on('exit', (c) => reject(Error(`exited ${c}`)));
+  });
+  assert.match(await (await fetch(url)).text(), /project copy/);
 });
