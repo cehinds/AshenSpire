@@ -1321,10 +1321,10 @@
    "focus": "[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"]",
    "expect": {
     "present": {
-     "the selected-position list of compatible options": "[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .inventory-face"
+     "the selected-position list of compatible options": "[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .equip-picker-row"
     },
     "measure": {
-     "options": "[...document.querySelectorAll('[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .inventory-face')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,24)).join(' | ')"
+     "options": "[...document.querySelectorAll('[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .equip-picker-row')].map(e=>e.querySelector('.equip-picker-name').innerText.replace(/\\s+/g,' ').slice(0,24)).join(' | ')"
     }
    }
   },
