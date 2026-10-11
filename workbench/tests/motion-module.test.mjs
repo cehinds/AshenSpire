@@ -45,3 +45,23 @@ test('edits go through the canvas kit and one history step per change, and save 
   assert.match(src, /saveFailure\(err\)/, 'problems and conflicts go through the shared failure reader');
   assert.match(src, /locked: true, label: pose, data: \{ kind: 'figure', src \}/, 'the figure is a locked reference item');
 });
+
+test('the module gates every edit and every save on isGenerated, so build-written stance files stay read-only', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /isGenerated,/, 'the module imports the generated-file rule from the model');
+  assert.match(src, /function commitProject\(next, label\) \{[\s\S]*?isGenerated\(st\.file\.path\)[\s\S]*?return;/, 'commitProject refuses a generated file');
+  assert.match(src, /function dirtyChanges\(\) \{[\s\S]*?isGenerated\(f\.path\)[\s\S]*?return \[\];/, 'no change reaches the save call for a generated file');
+});
+
+test('the inspector shows the generated note and disables every control for a generated file', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /esc\(GENERATED_NOTE\)\}/, 'the note text comes from the model, not a copy');
+  assert.match(src, /const lockAttr = \(\) => \(isGenerated\(st\.file\?\.path\) \? ' disabled' : ''\);/);
+  const controls = src.match(/\$\{lockAttr\(\)\}/g) || [];
+  assert.equal(controls.length, 9, `inspector inputs, selects, toggles, anchors and remove take lockAttr (${controls.length})`);
+});
+
+test('the position editor locks every handle of a generated file', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /if \(isGenerated\(st\.file\.path\)\) for \(const item of doc\.items\) item\.locked = true;/);
+});

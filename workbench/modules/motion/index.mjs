@@ -13,7 +13,7 @@ import { saveFailure } from '../../ui/logic.mjs';
 import {
   LIBRARY_KINDS, SPEEDS, FACINGS, SIZES, BACKGROUNDS, REF,
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
-  parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty,
+  parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
 } from './model.mjs';
 
@@ -337,6 +337,7 @@ export default {
           <dt>Effects</dt><dd>${p.clips.length} · bindings ${p.bindings.length}</dd>
           <dt>Source</dt><dd><code>${esc(st.file.path)}</code></dd>
         </dl>` : '<p class="mo-note">Choose an animation set, stance or outfit in the library. Stances and sets open here; an outfit alone shows its painted frames.</p>'}
+        ${p && isGenerated(st.file.path) ? `<p class="mo-note mo-generated">${esc(GENERATED_NOTE)}</p>` : ''}
         ${problems.length ? `<div class="mo-problems"><p>This file does not match the game format:</p><ul>${problems.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
         ${clip ? clipInspector(clip) : ''}
         ${p ? anchorInspector(p) : ''}
@@ -351,7 +352,9 @@ export default {
       insp.querySelector('.mo-x-assets')?.addEventListener('click', (e) => ctx.openModule('assets', { path: e.currentTarget.dataset.path }));
     }
     const num = (v) => (Number.isFinite(v) ? v : 0);
-    const field = (label, key, value, attrs = '') => `<label class="mo-field">${esc(label)}<input type="number" step="1" data-clip-field="${key}" value="${num(value)}" ${attrs}></label>`;
+    /** Generated files show their values but take no input: the attribute disables every control. */
+    const lockAttr = () => (isGenerated(st.file?.path) ? ' disabled' : '');
+    const field = (label, key, value, attrs = '') => `<label class="mo-field">${esc(label)}<input type="number" step="1" data-clip-field="${key}" value="${num(value)}" ${attrs}${lockAttr()}></label>`;
     function clipInspector(c) {
       return `<h3>Effect · ${esc(c.effect)}</h3>
         <div class="mo-fields" data-clip="${esc(c.id)}">
@@ -362,18 +365,18 @@ export default {
           ${field('Y (px)', 'y', c.y)}
           ${field('Size', 'size', c.size, 'min="20" max="800"')}
           ${field('Rotation (deg)', 'rotation', c.rotation)}
-          <label class="mo-field">Opacity<input type="number" step="0.05" min="0" max="1" data-clip-field="opacity" value="${num(c.opacity)}"></label>
-          <label class="mo-field">Layer<select data-clip-field="layer">${['front', 'behind', 'aura'].map((l) => `<option value="${l}"${l === c.layer ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
-          <label class="mo-check"><input type="checkbox" data-clip-field="travel"${c.travel ? ' checked' : ''}> Travels to target</label>
-          <label class="mo-check"><input type="checkbox" data-clip-field="muted"${c.muted ? ' checked' : ''}> Muted</label>
-          <p><button type="button" class="btn btn-sm" data-remove-clip="${esc(c.id)}">Remove effect</button></p>
+          <label class="mo-field">Opacity<input type="number" step="0.05" min="0" max="1" data-clip-field="opacity" value="${num(c.opacity)}"${lockAttr()}></label>
+          <label class="mo-field">Layer<select data-clip-field="layer"${lockAttr()}>${['front', 'behind', 'aura'].map((l) => `<option value="${l}"${l === c.layer ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label class="mo-check"><input type="checkbox" data-clip-field="travel"${c.travel ? ' checked' : ''}${lockAttr()}> Travels to target</label>
+          <label class="mo-check"><input type="checkbox" data-clip-field="muted"${c.muted ? ' checked' : ''}${lockAttr()}> Muted</label>
+          <p><button type="button" class="btn btn-sm" data-remove-clip="${esc(c.id)}"${lockAttr()}>Remove effect</button></p>
         </div>`;
     }
     function effectsInspector() {
       const effects = st.index.effects || [];
       return `<h3>Add effect</h3><div class="mo-add">
-        <label class="mo-field">Effect<select class="mo-effect-pick">${effects.map((e) => `<option value="${esc(e)}">${esc(st.index.labels[e] || e)}</option>`).join('')}</select></label>
-        <button type="button" class="btn btn-sm" data-add-effect${effects.length ? '' : ' disabled'}>Add on the contact cue</button>
+        <label class="mo-field">Effect<select class="mo-effect-pick"${lockAttr()}>${effects.map((e) => `<option value="${esc(e)}">${esc(st.index.labels[e] || e)}</option>`).join('')}</select></label>
+        <button type="button" class="btn btn-sm" data-add-effect${effects.length && !lockAttr() ? '' : ' disabled'}>Add on the contact cue</button>
       </div>`;
     }
     function bindingsInspector(p) {
@@ -405,8 +408,8 @@ export default {
     insp.addEventListener('click', onInspClick);
     function anchorInspector(p) {
       return `<h3>Anchors</h3><div class="mo-fields">${Object.entries(p.anchors).map(([k, v]) => `<fieldset class="mo-anchor" data-anchor="${esc(k)}"><legend>${esc(k)}</legend>
-        <label class="mo-field">X<input type="number" step="0.001" min="0" max="1" data-axis="0" value="${num(v[0])}"></label>
-        <label class="mo-field">Y<input type="number" step="0.001" min="0" max="1" data-axis="1" value="${num(v[1])}"></label></fieldset>`).join('')}</div>`;
+        <label class="mo-field">X<input type="number" step="0.001" min="0" max="1" data-axis="0" value="${num(v[0])}"${lockAttr()}></label>
+        <label class="mo-field">Y<input type="number" step="0.001" min="0" max="1" data-axis="1" value="${num(v[1])}"${lockAttr()}></label></fieldset>`).join('')}</div>`;
     }
 
     // ---------- edits: one History step per change, through the host's undo ----------
@@ -414,7 +417,7 @@ export default {
     function setProject(next) { st.file.project = next; sendLoad(); renderAll(); }
     function commitProject(next, label) {
       const before = st.file?.project;
-      if (!before || JSON.stringify(before) === JSON.stringify(next)) return;
+      if (!before || isGenerated(st.file.path) || JSON.stringify(before) === JSON.stringify(next)) return;
       const undo = clone(before), redo = clone(next);
       ctx.history.pushChange({ label, undo, redo }, (snap) => { if (st.file) setProject(clone(snap)); });
       setProject(redo);
@@ -447,6 +450,8 @@ export default {
     function editDoc() {
       const p = st.file.project;
       const doc = canvasDocOf(p);
+      // A generated file's handles show where the anchors and effects sit but cannot be dragged.
+      if (isGenerated(st.file.path)) for (const item of doc.items) item.locked = true;
       const pose = p.poses[poseIndexAt(p.poses.length, p.duration, st.time)];
       const side = Math.round(REF.height * FIGURE_SCALE);
       const feet = (p.anchors.feet?.[1] ?? 0.85) * REF.height;
@@ -528,7 +533,7 @@ export default {
     /** The open file's change, if its project differs from the bytes read: the same text a save would write. */
     function dirtyChanges() {
       const f = st.file;
-      if (!f || !isDirty(f.original, f.project)) return [];
+      if (!f || isGenerated(f.path) || !isDirty(f.original, f.project)) return [];
       return [{ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }];
     }
     function renderDirty() {

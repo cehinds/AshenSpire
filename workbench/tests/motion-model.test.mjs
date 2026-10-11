@@ -8,7 +8,7 @@ import {
   FRAME_MS, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks,
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
-  canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows,
+  canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -211,4 +211,71 @@ test('bindings read as rows with their tags, enabled state and priority', () => 
 test('snap rounds to the grid step and leaves the value alone without one', () => {
   assert.equal(snap(13, 5), 15);
   assert.equal(snap(13, 0), 13);
+});
+
+test('generated files are the stance projects the build writes; renewal and other sets are editable', () => {
+  assert.equal(isGenerated('pose-studio/stances/projects/reaver-default/offensive.pose.json'), true);
+  assert.equal(isGenerated('pose-studio/stances/projects/herald-default/casting.pose.json'), true);
+  assert.equal(isGenerated('pose-studio/stances/registry.json'), true);
+  assert.equal(isGenerated('pose-studio/renewal/attack.pose.json'), false);
+  assert.equal(isGenerated('pose-studio/renewal/base-attack.pose.json'), false);
+  assert.equal(isGenerated('pose-studio/stancesX/file.pose.json'), false, 'a prefix match needs the folder separator');
+  assert.equal(isGenerated(undefined), false);
+});
+
+test('an edited indented pose file keeps its indent, its trailing newline, and changes only the edited line', () => {
+  const real = readFixture('pose-studio/stances/projects/herald-default/casting.pose.json');
+  const { project: base } = parsePoseFile(real);
+  const compact = JSON.stringify(base);
+  // The shipped files escape non-ASCII as \uXXXX, so the synthetic variants do too.
+  const ascii = (s) => s.replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  const variants = [
+    ['two spaces', real],
+    ['four spaces', ascii(JSON.stringify(base, null, 4)) + '\n'],
+    ['a tab', ascii(JSON.stringify(base, null, '\t')) + '\n'],
+  ];
+  for (const [label, text] of variants) {
+    const { project } = parsePoseFile(text);
+    const hand = project.anchors.hand;
+    const edited = setAnchor(project, 'hand', [hand[0] === 0.5 ? 0.25 : 0.5, hand[1]]);
+    const out = serializePoseFile(edited, text);
+    const before = text.split('\n');
+    const after = out.split('\n');
+    assert.equal(after.length, before.length, `${label}: same line count`);
+    assert.equal(after.filter((line, i) => line !== before[i]).length, 1, `${label}: one line differs`);
+    assert.deepEqual(JSON.parse(out), edited, `${label}: parses back to the edit`);
+    assert.equal(out.endsWith('\n'), text.endsWith('\n'), `${label}: trailing newline kept`);
+  }
+  assert.notEqual(compact, real, 'the fixture is indented, not compact');
+});
+
+test('a pose file layout is its indent (none, two spaces, four spaces or a tab) and its trailing whitespace', () => {
+  const { project } = parsePoseFile(readFixture('pose-studio/renewal/attack.pose.json'));
+  assert.deepEqual(layoutOf(JSON.stringify(project)), { indent: '', tail: '' });
+  assert.deepEqual(layoutOf(`${JSON.stringify(project, null, 2)}\n`), { indent: '  ', tail: '\n' });
+  assert.deepEqual(layoutOf(JSON.stringify(project, null, 4)), { indent: '    ', tail: '' });
+  assert.deepEqual(layoutOf(`${JSON.stringify(project, null, '\t')}\n\n`), { indent: '\t', tail: '\n\n' });
+  assert.deepEqual(layoutOf(undefined), { indent: '', tail: '' });
+});
+
+/** Every *.pose.json under a repo folder, found without a build step. */
+function poseFilesUnder(rel, out = []) {
+  for (const entry of fs.readdirSync(new URL(`../../${rel}`, import.meta.url), { withFileTypes: true })) {
+    const child = `${rel}/${entry.name}`;
+    if (entry.isDirectory()) poseFilesUnder(child, out);
+    else if (entry.name.endsWith('.pose.json')) out.push(child);
+  }
+  return out;
+}
+
+test('every shipped pose file (renewal, stances and the rest) round-trips byte-identically with no edits', () => {
+  const files = poseFilesUnder('pose-studio');
+  assert.ok(files.length >= 68, `found ${files.length} pose files`);
+  for (const rel of files) {
+    const text = readFixture(rel);
+    const { project } = parsePoseFile(text);
+    assert.ok(project, `${rel} parses`);
+    assert.equal(serializePoseFile(project, text), text, `${rel} is byte-exact`);
+    assert.equal(isDirty(text, project), false, `${rel} is not dirty`);
+  }
 });
