@@ -413,6 +413,27 @@ export function sourceFrameOf({ project, pose, frames = {} } = {}) {
   return { file, reason: '' };
 }
 
+/** The game tool's start time in the Workbench's `tools` listing (an array or { tools }), or null (not started, or not spawned by the Workbench). */
+export function gameStartOf(tools = []) {
+  const list = Array.isArray(tools) ? tools : tools?.tools || [];
+  const game = list.find((t) => t && t.id === 'game');
+  return game && typeof game.startedAt === 'number' ? game.startedAt : null;
+}
+
+/**
+ * What Motion Studio does when it resolves the game server again (on mount, on show, or on a game
+ * start or content reload): 'setup' when no game server is up; 'keep' when the render page is
+ * answering from the same origin and the same game start; otherwise 'load' the render page again.
+ * A forced reload always loads. Mirrors the Entity Browser's connectPlan.
+ */
+export function connectPlan({ base = null, currentOrigin = null, ready = false, force = false, serverId = null, currentServerId = null } = {}) {
+  if (!base) return 'setup';
+  const origin = new URL(base).origin;
+  // A known start time that differs means a new game server on the same origin: its frame is stale.
+  const sameServer = serverId == null || serverId === currentServerId;
+  return !force && ready && origin === currentOrigin && sameServer ? 'keep' : 'load';
+}
+
 // The canvas kit view of a project: anchors and clip positions as items on a
 // REF-sized page. Anchor items are handles centred on the anchor; clip items are
 // handles centred on the clip's position (anchor + x/y in reference pixels).

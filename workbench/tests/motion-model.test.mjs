@@ -10,7 +10,7 @@ import {
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
   canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
   rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
-  sourceFrameOf,
+  sourceFrameOf, connectPlan, gameStartOf,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -459,4 +459,39 @@ test('a pose with neither embedded art nor a painted frame says which one is mis
   assert.match(src.reason, /No painted frame is named "windup"/);
   assert.equal(sourceFrameOf({ project: {}, pose: null }).file, null);
   assert.match(sourceFrameOf({ project: {}, pose: null }).reason, /No pose/);
+});
+
+test('connectPlan: no game server is the setup state, so a later show or game start can retry', () => {
+  assert.equal(connectPlan({ base: null, currentOrigin: 'http://localhost:4320', ready: true }), 'setup');
+  assert.equal(connectPlan({ base: null }), 'setup');
+});
+
+test('connectPlan: a server that came up after it was recorded unavailable loads the render page', () => {
+  const up = 'http://localhost:4320/';
+  assert.equal(connectPlan({ base: up, currentOrigin: null, ready: false }), 'load', 'the first connect loads');
+  assert.equal(connectPlan({ base: up, currentOrigin: 'http://localhost:4320', ready: false }), 'load', 'a render page that never answered is loaded again');
+});
+
+test('connectPlan: a changed game start time on the same port reloads the render page', () => {
+  const origin = 'http://localhost:4320';
+  assert.equal(connectPlan({ base: `${origin}/`, currentOrigin: origin, ready: true, serverId: 2000, currentServerId: 1000 }), 'load');
+  assert.equal(connectPlan({ base: `${origin}/`, currentOrigin: origin, ready: true, serverId: 1000, currentServerId: 1000 }), 'keep');
+  assert.equal(connectPlan({ base: `${origin}/`, currentOrigin: origin, ready: true, serverId: null, currentServerId: 1000 }), 'keep', 'an unknown start keeps the frame');
+});
+
+test('connectPlan: a moved port reloads; a forced reload (content rebuilt) always loads', () => {
+  assert.equal(connectPlan({ base: 'http://localhost:4400/', currentOrigin: 'http://localhost:4320', ready: true }), 'load');
+  assert.equal(connectPlan({ base: 'http://localhost:4320/', currentOrigin: 'http://localhost:4320', ready: true, force: true }), 'load');
+});
+
+test('connectPlan: nothing changed keeps the frame, so the open file, drafts and playhead are not touched', () => {
+  assert.equal(connectPlan({ base: 'http://localhost:4320/', currentOrigin: 'http://localhost:4320', ready: true }), 'keep');
+});
+
+test('gameStartOf reads the game start from the tools listing in either shape, and null otherwise', () => {
+  assert.equal(gameStartOf([{ id: 'game', status: 'up', url: 'http://x/', startedAt: 42 }]), 42);
+  assert.equal(gameStartOf({ tools: [{ id: 'game', startedAt: 7 }] }), 7);
+  assert.equal(gameStartOf([{ id: 'game', status: 'up' }]), null, 'no start time: not spawned by the Workbench');
+  assert.equal(gameStartOf([]), null);
+  assert.equal(gameStartOf(), null);
 });
