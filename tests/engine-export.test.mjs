@@ -290,5 +290,7 @@ test('the Unity importer prunes only the paths its import record lists', () => {
   assert.doesNotMatch(body, /Directory\.GetFiles\(/, 'pruning must not scan the folders');
   assert.match(body, /ReadRecord\(\)/, 'pruning reads the previous import record');
   assert.match(body, /AssetDatabase\.DeleteAsset\(stale\)/, 'only recorded stale paths are deleted');
+  assert.match(body, /if \(manifest\.partial\)/, 'a partial (--only) manifest prunes nothing');
+  assert.match(source, /public bool partial;/, 'the manifest carries the partial marker');
   assert.match(source, /ashenspire-import\.json/, 'the record file is named in the importer');
 });

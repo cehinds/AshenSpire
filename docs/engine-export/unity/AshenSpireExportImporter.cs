@@ -20,7 +20,8 @@
 // the assets it created or updated. The next import deletes only the listed
 // assets that the new manifest no longer has. Assets you made by hand in those
 // folders are never listed, so they are kept. With no record (a first import,
-// or an upgrade from an importer that wrote none) nothing is pruned.
+// or an upgrade from an importer that wrote none) nothing is pruned. A manifest
+// from an --only export is marked partial, and nothing is pruned from it either.
 // Reading rows at runtime: AshenSpireTable.ParseRows<T>().
 
 #if UNITY_EDITOR
@@ -64,6 +65,8 @@ namespace AshenSpire.EngineExport
         public ManifestTable[] tables;
         public ManifestFile[] config;
         public ManifestFile[] art;
+        // Set by an --only export: it lists some tables, so nothing is pruned.
+        public bool partial;
     }
 
     // Written after every successful import: the asset paths that import created
@@ -147,10 +150,18 @@ namespace AshenSpire.EngineExport
                 // these folders are not in the record, so they are never deleted.
                 // No record (first run, or an upgrade from an older importer) prunes nothing.
                 var previous = ReadRecord();
-                if (previous != null)
+                if (manifest.partial)
+                {
+                    // An --only export lists some tables, so nothing is stale. The record
+                    // keeps the earlier paths, so a later full import can still prune them.
+                    if (previous != null) imported.UnionWith(previous);
+                }
+                else if (previous != null)
+                {
                     foreach (var stale in previous)
                         if (stale.StartsWith(Root + "/") && !imported.Contains(stale))
                             AssetDatabase.DeleteAsset(stale);
+                }
             }
             finally
             {
