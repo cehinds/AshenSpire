@@ -42,10 +42,15 @@ name: art-migrate
 #     through env:, never through ${{ }} inside run:.
 #
 # SECRETS. ART_REPO_WRITE_TOKEN (owner adds it): contents and pull-requests
-# write on cehinds/AshenSpire-art. It is read only by the push and gh steps of
-# the intake job, and only for a pull request from this repository. The pin
-# bump reads the public art repository with GITHUB_TOKEN and opens its pull
-# request with GITHUB_TOKEN.
+# write on cehinds/AshenSpire-art, and (owner, 2026-10-11) contents and
+# pull-requests write on this repository too. In the intake job it is read only
+# by the push and gh steps, and only for a pull request from this repository.
+# In the pin-bump job it is read only by the push and the gh pr create step: the
+# bot branch is pushed and its pull request opened with that token, so the pull
+# request into dev triggers CI (a GITHUB_TOKEN push or pull request does not). If
+# the secret is empty the job falls back to GITHUB_TOKEN and says so with a
+# warning; that pull request then gets no CI run. The pin-bump job reads the
+# public art repository with GITHUB_TOKEN and checks out dev's own tree only.
 
 on:
   pull_request:
@@ -263,9 +268,12 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      # dev's own tree only (never a ref from an event payload). No credential is
+      # left on disk: the push step passes its token per command.
       - uses: actions/checkout@v5
         with:
           ref: dev
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-node
 
@@ -324,13 +332,31 @@ jobs:
           node tools/art-manifest.mjs --write
           node tools/art-manifest.mjs --check
 
+      # The push and the pull request use ART_REPO_WRITE_TOKEN, so the pull request
+      # into dev triggers CI. Without the secret, GITHUB_TOKEN does the job and the
+      # pull request gets no CI run; the warning says so. The token is passed in
+      # env only and never interpolated into run:.
       - name: Commit, push, and open the pin pull request
         if: steps.check.outputs.tag != ''
         env:
           TAG: ${{ steps.check.outputs.tag }}
+          BOT_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          FALLBACK_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           branch="bot/art-pin-$TAG"
+          if [ -n "$BOT_TOKEN" ]; then
+            tok="$BOT_TOKEN"
+          else
+            echo "::warning title=ART_REPO_WRITE_TOKEN is not set::The pin pull request is opened with GITHUB_TOKEN, which does not trigger CI on it. Add the secret to get CI on pin pull requests."
+            tok="$FALLBACK_TOKEN"
+          fi
+          # One-off credential for this step's git and gh only; none is written to disk.
+          export GH_TOKEN="$tok"
+          auth="$(printf 'x-access-token:%s' "$tok" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$branch"
