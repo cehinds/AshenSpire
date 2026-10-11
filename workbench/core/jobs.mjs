@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { tryAcquire as tryFileLock, acquire as waitFileLock, busyMessage, lockEnv } from '../../tools/lib/build-lock.mjs';
-import { STOP_GRACE_MS } from '../../tools/lib/process-tree.mjs';
+import { STOP_GRACE_MS, stopGroup, groupAlive } from '../../tools/lib/process-tree.mjs';
 import { SCREENS, screenById, deviceById } from '../modules/review/model.mjs';
 
 export const HISTORY = 30;
@@ -97,6 +97,7 @@ export class JobRunner {
     this.fileLocks = new Map(); // lock group → release() of the cross-process lock
     this.stopping = new Set(); // runs stopAll() asked to stop: they start no further step
     this.slotWaiters = []; // checks run whenever a job slot is freed (see slotFreed)
+    this.groups = new Map(); // run → process group id (the step's pid) of the step it is running
     try { this.runs = JSON.parse(fs.readFileSync(stateFile, 'utf8')).slice(0, HISTORY).map((r) => (r.status === 'running' ? { ...r, status: 'cancelled', message: STOPPED } : r)); } catch { /* no history yet */ }
   }
 
@@ -164,12 +165,16 @@ export class JobRunner {
         const held = JOBS[run.id]?.lock ? lockEnv(this.fileLocks.get(JOBS[run.id].lock)) : {};
         const child = spawn(process.execPath, step.args, { cwd: this.root, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1', ...held }, windowsHide: true, detached: process.platform !== 'win32' });
         run.child = child;
+        this.groups.set(run, child.pid);
         child.stdout.on('data', (d) => this.append(run, d.toString()));
         child.stderr.on('data', (d) => this.append(run, d.toString()));
         child.on('error', (e) => { this.append(run, `${e.message}\n`); resolve(-1); });
         child.on('close', (c, signal) => resolve(signal ? signal : c));
       });
       delete run.child;
+      // The step's own process has exited, but a background process it left in the group still
+      // runs under this job's lock: wait for the group before the next step or the release.
+      await settleGroup(this.groups.get(run), { signalled: this.stopping.has(run) || run.status !== 'running' });
       if (run.status !== 'running') return;
       if (this.stopping.has(run)) return this.finish(run, 'cancelled', STOPPED);
       if (code !== 0) { run.exitCode = code; return this.finish(run, 'failed', `${step.args[0]} exited with ${code}`); }
@@ -184,13 +189,16 @@ export class JobRunner {
     // A cancelled step keeps the job's slot until its process has really exited,
     // so a re-run cannot write the same output alongside it.
     const child = run.child;
+    const pgid = this.groups.get(run);
     const free = () => {
       if (this.active.get(run.id) !== run) return;
       this.active.delete(run.id);
+      this.groups.delete(run);
       if (JOBS[run.id]?.lock) this.release(JOBS[run.id].lock);
       for (const check of [...this.slotWaiters]) check();
     };
-    if (child && child.exitCode === null && child.signalCode === null) child.once('close', free);
+    if (pgid != null && process.platform !== 'win32') settleGroup(pgid, { signalled: status === 'cancelled' || this.stopping.has(run) }).then(free);
+    else if (child && child.exitCode === null && child.signalCode === null) child.once('close', free);
     else free();
     this.persist();
     this.onEvent('job', this.summary(run));
@@ -252,6 +260,10 @@ export class JobRunner {
     return Promise.all(runs.map((run) => {
       this.stopping.add(run);
       const freed = this.slotFreed(run);
+      const pgid = this.groups.get(run);
+      // POSIX: the group is SIGTERMed now and SIGKILLed after graceMs, whatever the step's own
+      // process does; the wait is bounded and does not depend on the step's close event.
+      if (pgid != null && process.platform !== 'win32') return Promise.all([freed, stopGroup(pgid, { graceMs })]);
       const child = run.child;
       killTree(child);
       if (child && child.exitCode === null && child.signalCode === null) {
@@ -261,6 +273,21 @@ export class JobRunner {
       return freed;
     })).then(() => {});
   }
+}
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Resolves once no process is left in the step's group `pgid` (POSIX). A signalled group has
+ *  already been asked to stop, so it gets the grace at once; otherwise leftover background
+ *  processes get the grace to finish on their own first. Either way the group is SIGTERMed and
+ *  SIGKILLed after the grace, and the wait is bounded (stopGroup). */
+export async function settleGroup(pgid, { signalled = false, graceMs = STOP_GRACE_MS } = {}) {
+  if (pgid == null || process.platform === 'win32') return;
+  if (!signalled) {
+    const until = Date.now() + graceMs;
+    while (groupAlive(pgid) && Date.now() < until) await delay(50);
+  }
+  if (groupAlive(pgid)) await stopGroup(pgid, { graceMs });
 }
 
 /** Stop a step and everything it started: the process group on POSIX, the
