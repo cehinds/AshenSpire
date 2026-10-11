@@ -1262,3 +1262,25 @@ test('workbench default columns contain every column in the matching CSV header'
     assert.deepEqual(missing, [], table + ' (' + file + ') is missing CSV columns in the workbench');
   }
 });
+
+// One named function of the page, read from its single source line (loadLocal is one line).
+function pageFunctionLine(name) {
+  const line = readFileSync(PAGE, 'utf8').split('\n').find((l) => l.startsWith('function ' + name + '('));
+  if (!line) throw new Error('function ' + name + ' missing from workbench.html');
+  return line;
+}
+
+test('a local save from an older page gains the default columns that are new', () => {
+  const tables = workbenchTableDefaults();
+  const order = vm.runInNewContext(readFileSync(PAGE, 'utf8').split('\n').find((l) => l.startsWith('const ORDER = ')) + '\n;ORDER', {});
+  const saved = { objects: { columns: ['id', 'name'], rows: [{ id: 'o1', name: 'Dagger' }] } };
+  const ctx = {
+    localStorage: { getItem: () => JSON.stringify(saved) },
+    state: { data: {} }, TABLES: tables, ORDER: order, LS: 'ashen-tag-workbench-v1',
+  };
+  vm.runInNewContext(pageFunctionLine('loadLocal') + '\n;loadLocal();', ctx);
+  const got = ctx.state.data.objects;
+  assert.equal(JSON.stringify(got.columns.slice(0, 2)), JSON.stringify(['id', 'name']), 'saved columns keep their order');
+  for (const c of tables.objects.columns) assert.ok(got.columns.includes(c), 'default column kept: ' + c);
+  assert.equal(JSON.stringify(got.rows), JSON.stringify([{ id: 'o1', name: 'Dagger' }]), 'saved rows are kept as they were');
+});

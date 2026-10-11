@@ -640,7 +640,7 @@ function importRows(tbl, key, parsed, mode){
 /* ---------- persistence ---------- */
 const LS='ashen-tag-workbench-v1';
 function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
-function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)) state.data[t]=d[t]; } }catch(e){} }
+function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)){ const cols=Array.isArray(d[t].columns)? d[t].columns.slice() : []; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c); state.data[t]={columns:cols, rows:d[t].rows}; } } }catch(e){} }
 function editable(t){ return localMode || (!!db && canWrite && loaded.has(t)); }
 function setStatus(level,msg){
   const el=document.getElementById('status');
