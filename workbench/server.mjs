@@ -300,7 +300,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       const data = await readJson(req, { limit: 64 * 1024 });
       const restart = p.match(/^\/api\/tools\/([\w-]+)\/restart$/);
       if (restart) return sendJson(res, 200, await supervisor.restart(restart[1]));
-      if (p === '/api/jobs') return sendJson(res, 200, jobs.start(data.id));
+      if (p === '/api/jobs') return sendJson(res, 200, jobs.start(data.id, data.params));
       const cancel = p.match(/^\/api\/jobs\/runs\/([\w-]+)\/cancel$/);
       if (cancel) return sendJson(res, 200, jobs.cancel(cancel[1]));
       if (p === '/api/settings') { const saved = settings.save(data); hub.send('settings', saved); return sendJson(res, 200, saved); }
