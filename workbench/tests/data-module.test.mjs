@@ -308,3 +308,125 @@ test('findRow on the real outfits table tells apart the repeated armour ids by c
   assert.equal(table.rows[D.findRow(table.rows, 'id', 'nightweave', 'classId:reaver')].classId, 'reaver');
   assert.equal(table.rows[D.findRow(table.rows, 'id', 'nightweave', 'classId:starseer')].classId, 'starseer');
 });
+
+// Rows pair by identity, not position: an edited row that moves keeps its own comments.
+test('two edited CSV rows that move keep their own leading comments (paired by key)', () => {
+  const text = 'id,name\n# ca\na,1\n# cb\nb,2\n# cc\nc,3\n';
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = [{ ...table.rows[1], name: 20 }, table.rows[2], { ...table.rows[0], name: 10 }];
+  assert.equal(D.serializeTable(table, doc), 'id,name\n# cb\nb,20\n# cc\nc,3\n# ca\na,10\n');
+});
+
+test('a table listed in KEY_SCOPES pairs edited rows by the (classId, id) key, not id alone', () => {
+  const text = 'classId,id,name\n# r\nreaver,default,1\n# s\nstarseer,default,2\n';
+  const table = D.parseTable('content/source/outfits.csv', text);
+  const doc = docOf(table);
+  doc.rows = [{ ...table.rows[1], name: 22 }, { ...table.rows[0], name: 11 }];
+  assert.equal(D.serializeTable(table, doc), 'classId,id,name\n# s\nstarseer,default,22\n# r\nreaver,default,11\n');
+});
+
+// Reordering: each row is saved in the order given by `order` (indices into the read rows), with optional edits.
+const COMMENTED = 'id,name\n# ca\na,1\n# cb\nb,2\n# cc\nc,3\n';
+const reordered = (text, order, edits = {}) => {
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = order.map((i) => ({ ...table.rows[i], ...(edits[i] ?? {}) }));
+  return D.serializeTable(table, doc);
+};
+
+test('a reverse sort keeps each comment above its own row', () => {
+  assert.equal(reordered(COMMENTED, [2, 1, 0]), 'id,name\n# cc\nc,3\n# cb\nb,2\n# ca\na,1\n');
+});
+
+test('moving the last row to the top keeps each comment with its row', () => {
+  assert.equal(reordered(COMMENTED, [2, 0, 1]), 'id,name\n# cc\nc,3\n# ca\na,1\n# cb\nb,2\n');
+});
+
+test('an edited row that moves keeps its own comment, and the others keep theirs', () => {
+  assert.equal(reordered(COMMENTED, [1, 2, 0], { 0: { name: 10 } }), 'id,name\n# cb\nb,2\n# cc\nc,3\n# ca\na,10\n');
+});
+
+test('an untouched non-canonical row (a, 1) that moves keeps its bytes', () => {
+  assert.equal(reordered('id,name\n# ca\na, 1\n# cb\nb,2\n', [1, 0]), 'id,name\n# cb\nb,2\n# ca\na, 1\n');
+});
+
+test('duplicate identical rows reordered keep every comment and no row is duplicated', () => {
+  const text = 'id,name\n# first\nx,1\n# second\nx,1\n# third\ny,2\n';
+  assert.equal(reordered(text, [1, 2, 0]), 'id,name\n# first\nx,1\n# third\ny,2\n# second\nx,1\n');
+});
+
+test('deleting the first, a middle or the last row moves its comment to the next kept row, or the end', () => {
+  assert.equal(reordered(COMMENTED, [1, 2]), 'id,name\n# ca\n# cb\nb,2\n# cc\nc,3\n');
+  assert.equal(reordered(COMMENTED, [0, 2]), 'id,name\n# ca\na,1\n# cb\n# cc\nc,3\n');
+  assert.equal(reordered(COMMENTED, [0, 1]), 'id,name\n# ca\na,1\n# cb\nb,2\n# cc\n');
+});
+
+test('inserted rows sit where they are placed and carry no comments of their own', () => {
+  const table = D.parseTable('content/source/x.csv', COMMENTED);
+  const doc = docOf(table);
+  doc.rows = [{ id: 'n0', name: 0 }, table.rows[0], { id: 'n1', name: 5 }, table.rows[1], table.rows[2], { id: 'n2', name: 7 }];
+  assert.equal(D.serializeTable(table, doc), 'id,name\nn0,0\n# ca\na,1\nn1,5\n# cb\nb,2\n# cc\nc,3\nn2,7\n');
+});
+
+test('CRLF line endings survive a reorder', () => {
+  const text = 'id,name\r\n# ca\r\na,1\r\n# cb\r\nb,2\r\n';
+  assert.equal(reordered(text, [1, 0]), 'id,name\r\n# cb\r\nb,2\r\n# ca\r\na,1\r\n');
+});
+
+test('quoted cells with commas and quotes survive a reorder byte for byte', () => {
+  const text = 'id,name\n# ca\na,"x, y"\n# cb\nb,"p""q"\n';
+  assert.equal(reordered(text, [1, 0]), 'id,name\n# cb\nb,"p""q"\n# ca\na,"x, y"\n');
+});
+
+test('a file with no final newline keeps none after a reorder', () => {
+  const text = 'id,name\n# ca\na,1\n# cb\nb,2';
+  assert.equal(reordered(text, [1, 0]), 'id,name\n# cb\nb,2\n# ca\na,1');
+});
+
+// Each data row with the comment and blank lines directly above it, in file order (the header is skipped).
+const pairsOf = (text) => {
+  const pairs = [];
+  let pending = [], headerSeen = false;
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) { pending.push(line); continue; }
+    if (!headerSeen) { headerSeen = true; pending = []; continue; }
+    pairs.push({ before: pending, line });
+    pending = [];
+  }
+  return { pairs, tail: pending };
+};
+
+test('tagging.csv: moving its first row to the bottom keeps every comment above the same data row', () => {
+  const rel = 'content/source/tagging.csv';
+  const text = read(rel);
+  const table = D.parseTable(rel, text);
+  const doc = docOf(table);
+  doc.rows = [...table.rows.slice(1), table.rows[0]];
+  const t0 = performance.now();
+  const out = D.serializeTable(table, doc);
+  console.log(`tagging.csv move: ${(performance.now() - t0).toFixed(1)} ms`);
+  const was = pairsOf(text), now = pairsOf(out);
+  assert.equal(was.pairs.length, table.rows.length);
+  assert.notEqual(out, text);
+  assert.deepEqual(now.pairs, [...was.pairs.slice(1), was.pairs[0]]);
+  assert.deepEqual(now.tail, was.tail);
+});
+
+test('tagging.csv: sorting its rows by objectId keeps every comment above the same data row', () => {
+  const rel = 'content/source/tagging.csv';
+  const text = read(rel);
+  const table = D.parseTable(rel, text);
+  const key = (i) => String(table.rows[i].objectId ?? '');
+  const order = table.rows.map((_, i) => i).sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : a - b));
+  const doc = docOf(table);
+  doc.rows = order.map((i) => table.rows[i]);
+  const t0 = performance.now();
+  const out = D.serializeTable(table, doc);
+  console.log(`tagging.csv sort: ${(performance.now() - t0).toFixed(1)} ms`);
+  const was = pairsOf(text), now = pairsOf(out);
+  assert.notEqual(out, text);
+  assert.deepEqual(now.pairs, order.map((i) => was.pairs[i]));
+  assert.deepEqual(now.tail, was.tail);
+});
