@@ -652,6 +652,9 @@ jobs:
           REPO: ${{ github.repository }}
           # Branch-derived values reach the shell only through env, never ${{ }} in run.
           TARGETS: ${{ needs.assemble.outputs.comment_targets }}
+          # The PR this run closed (pull_request_target, closed), or empty. Its preview is
+          # removed with the close, so its own sticky comment is edited to say so.
+          CLOSED_PR: ${{ github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.number || '' }}
         run: |
           set -uo pipefail
           # One upsert per PR. A failure on one PR is named and the rest still run; the
@@ -674,8 +677,8 @@ jobs:
           # comment, which would point at a removed path. That comment is edited to say
           # so. Only an existing comment is edited: no comment is created to say it.
           withdraw() {
-            local pr="$1" id body
-            body=$(printf '%s\n' '<!-- ashen-playable-build -->' "Preview withdrawn: the current commit's build did not succeed; it returns when a build passes.")
+            local pr="$1" text="$2" id body
+            body=$(printf '%s\n' '<!-- ashen-playable-build -->' "$text")
             id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
               --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->")) | .id' | sed -n '1p') || return 1
             if [ -z "$id" ]; then return 0; fi
@@ -693,13 +696,21 @@ jobs:
               failed=1
             fi
           done <<< "$rows"
+          # The closed PR joins the withdrawal set. A closed PR is not in the open list
+          # below, so it is handled here, once, and its comment says the PR is closed.
+          if [ -n "$CLOSED_PR" ]; then
+            if ! withdraw "$CLOSED_PR" "Preview removed: this pull request is closed."; then
+              echo "::error title=Closed-PR comment failed::PR #$CLOSED_PR"
+              failed=1
+            fi
+          fi
           open=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
             | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/")) | .number') \
             || { echo "::error::could not list the open pull requests into dev"; exit 1; }
           while read -r pr; do
             [ -n "$pr" ] || continue
             [ -n "${published[$pr]:-}" ] && continue
-            if ! withdraw "$pr"; then
+            if ! withdraw "$pr" "Preview withdrawn: the current commit's build did not succeed; it returns when a build passes."; then
               echo "::error title=Withdrawn-preview comment failed::PR #$pr"
               failed=1
             fi
