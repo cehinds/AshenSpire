@@ -661,7 +661,7 @@ combatReactionOffered, combatReactionChosen
 
 - `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
 - **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
-  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` is drawn exactly once, at run creation, for the seat order (§13); it exists so that order can be seeded without moving a single draw on any other stream.
+  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats`, `rewardRolls`, `shopOffers`, `sigils`, `enemyIntentVisibility`, `combatAvoidance`, `statusRecovery`, `statusPressure`, `ashenBlight`, `enemyIntentClue` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` gets one shuffle call at run creation, for the seat order (§13), which makes n−1 counter steps on that stream; it exists so that order can be seeded without moving a single draw on any other stream.
 - Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
 ### 3.12 Save format, and the durable profile
