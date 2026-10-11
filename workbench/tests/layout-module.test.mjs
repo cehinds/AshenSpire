@@ -238,6 +238,14 @@ test('a save sets the base to the text that was sent, so edits made while it ran
   assert.equal(C.savedBase([{ path: f.path, hash: 'x' }], new Map(), f.path), null, 'a file not in the save keeps its base');
 });
 
+test('the review dialog sets every UI config file\'s base from the sent text, not the live draft', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/index.mjs'), 'utf8');
+  const save = src.slice(src.indexOf('async function save()'), src.indexOf('function setSaveBusy'));
+  assert.match(save, /const sent = new Map\(changes\.map\(\(c\) => \[c\.path, c\.text\]\)\);/, 'the sent map holds the submitted text');
+  assert.match(save, /C\.savedBase\(data\.files, sent, f\.path\)/, 'UI config files take their base from it');
+  assert.doesNotMatch(save, /\.original = c\.text|proposedText\(/, 'no base is taken from the live draft');
+});
+
 test('a plain number typed into a $ref field is saved as a number; a $name or text stays text', () => {
   assert.equal(C.fieldValue('42', '$gap'), 42);
   assert.equal(C.fieldValue(' 3.5 ', '$gap'), 3.5);

@@ -364,7 +364,7 @@ export default {
     async function save() {
       const changes = allChanges();
       if (!changes.length || saving) return;
-      const sent = new Map(changes.map((c) => [c.path, c]));
+      const sent = new Map(changes.map((c) => [c.path, c.text]));
       saving = true;
       setSaveBusy(true);
       let data;
@@ -387,10 +387,10 @@ export default {
         return;
       }
       saving = false;
-      for (const saved of data.files) {
-        const f = st.files ? [...st.files.values()].find((x) => x.path === saved.path) : null;
-        const c = sent.get(saved.path);
-        if (f && c) { f.original = c.text; f.hash = saved.hash; }
+      // A file's base is the text that was sent, so an edit made while the save ran stays unsaved.
+      for (const f of st.files ? st.files.values() : []) {
+        const base = C.savedBase(data.files, sent, f.path);
+        if (base) Object.assign(f, base);
       }
       if (views.battlefield) views.battlefield.saved(data.files);
       if (views.sketch) await views.sketch.saved(data.files);
