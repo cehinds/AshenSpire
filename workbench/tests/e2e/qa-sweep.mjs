@@ -287,6 +287,9 @@ async function dataStudio() {
     await page.fill('.gk-editor', 'QA Diff');
     await page.keyboard.press('Enter');
     await sleep(200);
+    // The row drawer covers the toolbar's right end at this width; close it first.
+    if (await page.locator('.view.active .ds-drawer-close').isVisible()) await page.click('.view.active .ds-drawer-close');
+    await sleep(200);
     await page.click('.view.active button[data-act="review"]');
     await sleep(400);
     expect(await page.evaluate(() => document.querySelector('dialog.ds-review')?.open === true), 'review dialog did not open');
@@ -496,10 +499,10 @@ async function assetGallery() {
   await waitVisible('.ast-tile');
   await check('Assets: a kind filter changes the count', async () => {
     const all = await textOf('.ast-count');
-    await page.click('button:has-text("Sprites")');
+    await page.click('.view.active .ast-kinds button:has(span:text-is("Sprites"))');
     await sleep(400);
     const sprites = await textOf('.ast-count');
-    await page.click('button:has-text("All")');
+    await page.click('.view.active .ast-kinds button[data-kind=""]');
     await sleep(300);
     expect(sprites !== all, `kind filter did not change count (${all})`);
     return `${all} -> ${sprites}`;
@@ -521,25 +524,45 @@ async function assetGallery() {
   await check('Assets: detail view opens from a tile', async () => {
     await page.fill('.ast-q', 'ashheart');
     await sleep(400);
-    await page.locator('.ast-tile').first().click();
+    await page.locator('.view.active .ast-tile').first().click();
     await sleep(600);
-    expect(await page.locator('.ast-detail, [data-view="detail"], .ast-zoom').count() > 0 || await page.evaluate(() => document.querySelectorAll('dialog[open], .ast-detail:not([hidden])').length > 0), 'detail view did not open');
+    expect(await page.locator('.view.active .ast-drawer:not([hidden])').count() > 0, 'detail drawer did not open');
   });
   await check('Assets: zoom in and out in detail', async () => {
-    const zin = page.locator('button[aria-label*="oom in" i], button[title*="oom in" i], button:has-text("+")').first();
-    await zin.click();
+    const label = () => page.locator('.view.active .ast-zlabel').textContent();
+    const before = await label();
+    await page.click('.view.active .ast-zoombar button[data-zoom="in"]');
     await sleep(200);
-    await page.locator('button[aria-label*="oom out" i], button[title*="oom out" i], button:has-text("−"), button:has-text("-")').first().click();
+    const zoomedIn = await label();
+    await page.click('.view.active .ast-zoombar button[data-zoom="out"]');
     await sleep(200);
+    expect(zoomedIn !== before, `zoom in did not change the level (${before})`);
+    return `${before} -> ${zoomedIn} -> ${await label()}`;
   });
   await check('Assets: Used in lists references', async () => {
     expect(await page.getByText(/Used in/i).count() > 0, 'no "Used in" section in detail');
   });
   await check('Assets: frames playback controls work', async () => {
-    const play = page.locator('button:has-text("Play"), button[aria-label*="play" i]').first();
-    await play.click({ timeout: 3000 });
+    // Frames show only for an animated asset: step the grid until a picked tile has a Frames section.
+    await page.fill('.view.active .ast-q', 'greatsword');
     await sleep(400);
-    await page.locator('button:has-text("Pause"), button[aria-label*="pause" i]').first().click({ timeout: 3000 });
+    const tiles = page.locator('.view.active .ast-tile');
+    const n = Math.min(await tiles.count(), 40);
+    let found = false;
+    for (let i = 0; i < n && !found; i++) {
+      if (await page.locator('.view.active .ast-drawer:not([hidden])').count()) await page.click('.view.active .ast-drawer-close');
+      await tiles.nth(i).click();
+      await sleep(250);
+      found = await page.locator('.view.active .ast-frames:not([hidden])').count() > 0;
+    }
+    expect(found, `no animated asset among the first ${n} tiles (count "${await textOf('.view.active .ast-count')}", search "${await page.inputValue('.view.active .ast-q')}")`);
+    await page.click('.view.active .ast-frame-play');
+    await sleep(400);
+    const playing = await page.getAttribute('.view.active .ast-frame-play', 'aria-pressed');
+    await page.click('.view.active .ast-frame-play');
+    await sleep(200);
+    expect(playing === 'true', `Play did not start (aria-pressed ${playing})`);
+    return `frames playing then stopped (${await page.locator('.view.active .ast-frame-label').textContent()})`;
   });
   await check('Assets: compare two assets side by side and onion skin', async () => {
     await page.keyboard.press('Escape');
@@ -549,9 +572,15 @@ async function assetGallery() {
     await boxes.nth(1).check({ force: true });
     await page.click('.ast-compare-btn');
     await sleep(600);
-    expect(await page.getByText(/side by side/i).count() > 0 || await page.getByText(/onion/i).count() > 0, 'compare view not shown');
-    await page.getByText(/onion/i).first().click({ timeout: 3000 }).catch(() => {});
+    expect(await page.locator('.view.active .ast-compare:not([hidden])').count() > 0, 'compare view not shown');
+    const side = await page.getAttribute('.view.active .ast-cmp-stage', 'data-mode');
+    await page.click('.view.active .ast-cmp-bar button:has-text("Onion")');
     await sleep(300);
+    const onion = await page.getAttribute('.view.active .ast-cmp-stage', 'data-mode');
+    expect(side === 'side' && onion === 'onion', `compare modes were ${side} then ${onion}`);
+    await page.click('.view.active .ast-cmp-close');
+    await sleep(300);
+    return 'side by side, then onion skin';
   });
   await check('Assets: switching module stops frame timer and audio', async () => {
     await goModule('Data Studio');
@@ -560,9 +589,20 @@ async function assetGallery() {
     await goModule('Asset Gallery');
   });
   await check('Assets: Open in Entity Browser for a class asset', async () => {
-    const b = page.locator('.ast-open-entity');
-    if (await b.count() === 0 || !(await b.first().isVisible())) return 'no class asset selected; button not shown (tested only the absence)';
-    await b.first().click();
+    // Class assets are equipment/…/icon_<id> or body_<class>_<id>: search for icons and open one.
+    await page.fill('.view.active .ast-q', 'ashStaff');
+    await sleep(400);
+    const tiles = page.locator('.view.active .ast-tile');
+    const n = Math.min(await tiles.count(), 20);
+    let linked = false;
+    for (let i = 0; i < n && !linked; i++) {
+      if (await page.locator('.view.active .ast-drawer:not([hidden])').count()) await page.click('.view.active .ast-drawer-close');
+      await tiles.nth(i).click();
+      await sleep(250);
+      linked = await page.locator('.view.active .ast-open-entity:not([hidden])').count() > 0;
+    }
+    expect(linked, `no class asset among the first ${n} icon tiles has an Entity Browser link`);
+    await page.click('.view.active .ast-open-entity');
     await sleep(1200);
     expect((await hashNow()).includes('mod=entities'), 'did not open Entity Browser');
   });
