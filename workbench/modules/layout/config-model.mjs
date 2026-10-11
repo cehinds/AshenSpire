@@ -210,6 +210,19 @@ export function applyCanvasEdits(args) {
   return canvasEditReport(args).data;
 }
 
+/**
+ * The value a text field saves as. A field that holds a $name keeps its
+ * reference while the text starts with `$`; a plain finite number typed into
+ * it is saved as a number. Any other text stays text.
+ */
+export function fieldValue(text, current) {
+  if (M.isRef(current) && !String(text).startsWith('$')) {
+    const t = String(text).trim();
+    if (t !== '' && Number.isFinite(Number(t))) return Number(t);
+  }
+  return text;
+}
+
 /** Set one config value by path. Immutable: returns a new tree. */
 export function setConfigValue(data, path, value) {
   return M.setPath(data, path, value);

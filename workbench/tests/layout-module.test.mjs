@@ -199,3 +199,15 @@ test('the viewport of a rotated device swaps its sides', () => {
   const free = settings.devices.find((d) => d.resizable);
   assert.equal(C.viewportOf(free, { freeSize: { width: 500, height: 300 } }).width, 500);
 });
+
+test('a plain number typed into a $ref field is saved as a number; a $name or text stays text', () => {
+  assert.equal(C.fieldValue('42', '$gap'), 42);
+  assert.equal(C.fieldValue(' 3.5 ', '$gap'), 3.5);
+  assert.equal(C.fieldValue('1e3', '$gap'), 1000);
+  assert.equal(C.fieldValue('$gap2', '$gap'), '$gap2', 'a reference stays a reference');
+  assert.equal(C.fieldValue('$', '$gap'), '$');
+  assert.equal(C.fieldValue('abc', '$gap'), 'abc', 'text that is not a number stays text');
+  assert.equal(C.fieldValue('Infinity', '$gap'), 'Infinity', 'only a finite number is a number');
+  assert.equal(C.fieldValue('', '$gap'), '', 'an empty field is not zero');
+  assert.equal(C.fieldValue('12', 'plain'), '12', 'a field that holds plain text stays text');
+});

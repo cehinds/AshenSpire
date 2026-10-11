@@ -170,7 +170,7 @@ export default {
       const f = activeFile();
       if (!path || !f || !f.data) return;
       if (input.value === '') { paintFields(); return; }
-      const value = input.type === 'number' ? Number(input.value) : input.value;
+      const value = input.type === 'number' ? Number(input.value) : C.fieldValue(input.value, M.getPath(f.data, path));
       if (typeof value === 'number' && !Number.isFinite(value)) { paintFields(); return; }
       setFileData(f.rel, C.setConfigValue(f.data, path, value), `Set ${path}`);
     }
