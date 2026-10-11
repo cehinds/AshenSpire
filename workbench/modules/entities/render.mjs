@@ -83,12 +83,15 @@ function dataCard(def) {
 }
 
 /** The grid's and the card tab's face for one entity: the game's own renderer where one exists. */
-function cardFor(kind, def) {
+// In the grid a click selects the entity in the drawer, so the card's own inspection
+// modal is off there (`inspection: false`); the drawer's Card and Tooltip views keep it.
+function cardFor(kind, def, { inGrid = false } = {}) {
   const r = registries;
-  if (isEquipment(kind)) return renderEquipmentCard(r, def).card;
-  if (kind === 'potions') return renderCollectibleCard(r, def, 'Potion').card;
-  if (kind === 'relics') return renderCollectibleCard(r, def, 'Relic').card;
-  if (kind === 'cards') return renderCard(r, { cardId: def.id, upgraded: false }, { inspectReadOnly: true });
+  const inspection = !inGrid;
+  if (isEquipment(kind)) return renderEquipmentCard(r, def, { inspection }).card;
+  if (kind === 'potions') return renderCollectibleCard(r, def, 'Potion', { inspection }).card;
+  if (kind === 'relics') return renderCollectibleCard(r, def, 'Relic', { inspection }).card;
+  if (kind === 'cards') return renderCard(r, { cardId: def.id, upgraded: false }, { inspectReadOnly: true, inspection });
   if (isTag(kind)) {
     const sample = inspectionTag(def.name, statusTooltipText(def));
     sample.classList.add('status-sample');
@@ -215,11 +218,18 @@ function drawGrid(state) {
     article.dataset.entityId = entry.id;
     article.setAttribute('aria-label', entry.name);
     article.tabIndex = 0;
-    article.append(cardFor(state.kind, def));
-    article.addEventListener('click', () => post('select', { kind: state.kind, id: entry.id }));
-    article.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') post('select', { kind: state.kind, id: entry.id }); });
+    article.append(cardFor(state.kind, def, { inGrid: true }));
     grid.append(article);
   }
+  // Capture phase: a card's own handlers stop click propagation, so the grid listens first.
+  grid.addEventListener('click', (ev) => {
+    const article = ev.target.closest?.('[data-entity-id]');
+    if (article) post('select', { kind: state.kind, id: article.dataset.entityId });
+  }, true);
+  grid.addEventListener('keydown', (ev) => {
+    const article = ev.target.closest?.('[data-entity-id]');
+    if (article && ev.key === 'Enter') post('select', { kind: state.kind, id: article.dataset.entityId });
+  }, true);
   stage.replaceChildren(grid);
   if (!shown.length) stage.append(messageBox('Nothing matches these filters.'));
   return { shown: shown.length, total: all.length };
