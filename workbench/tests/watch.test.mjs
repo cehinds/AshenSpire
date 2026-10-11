@@ -7,6 +7,10 @@ import path from 'node:path';
 import os from 'node:os';
 import { createWatcher, watchModeFor } from '../core/watch.mjs';
 
+// The per-folder mode is what Linux runs. Elsewhere a watched subfolder holds a handle that
+// blocks renaming or removing its parent (Windows: EPERM), so those tests run on Linux only.
+const LINUX_ONLY = { skip: process.platform !== 'linux' && 'the per-folder watch mode runs on Linux only; on Windows a watched subfolder blocks renaming its parent' };
+
 test('Linux watches folder by folder; Windows, macOS and others watch recursively', () => {
   assert.equal(watchModeFor('linux'), 'folders');
   assert.equal(watchModeFor('win32'), 'recursive');
@@ -25,10 +29,13 @@ test('a watcher on a recursive platform watches the whole tree with one watch', 
   await new Promise((r) => setTimeout(r, 200));
   await fs.writeFile(path.join(root, 'content/deep/a.json'), '1');
   await waitFor(() => batches.length > 0);
-  assert.deepEqual(batches.flat(), ['content/deep/a.json']);
+  // macOS FSEvents may also report the content/deep folder made just before the watch began.
+  const seen = batches.flat();
+  assert.ok(seen.includes('content/deep/a.json'), `the write is batched: ${seen}`);
+  assert.deepEqual(seen.filter((f) => f !== 'content/deep'), ['content/deep/a.json']);
 });
 
-test('a folder that appears while watching (Linux) batches the files written into it', async (t) => {
+test('a folder that appears while watching (Linux) batches the files written into it', LINUX_ONLY, async (t) => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'content'), { recursive: true });
@@ -45,7 +52,7 @@ test('a folder that appears while watching (Linux) batches the files written int
   assert.ok(batches.flat().includes('content/newdir/a.json'), `a write in the new folder reaches a batch: ${JSON.stringify(batches)}`);
 });
 
-test('a folder deleted and recreated while watching (Linux) batches its new files', async (t) => {
+test('a folder deleted and recreated while watching (Linux) batches its new files', LINUX_ONLY, async (t) => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'content/d'), { recursive: true });
@@ -64,7 +71,7 @@ test('a folder deleted and recreated while watching (Linux) batches its new file
   assert.deepEqual(batches.flat(), ['content/d/b.json'], 'the recreated folder is watched again');
 });
 
-test('a folder renamed while watching (Linux) batches its later writes under the new name only', async (t) => {
+test('a folder renamed while watching (Linux) batches its later writes under the new name only', LINUX_ONLY, async (t) => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'content/A'), { recursive: true });
@@ -83,7 +90,7 @@ test('a folder renamed while watching (Linux) batches its later writes under the
   assert.deepEqual(paths.filter((p) => p.startsWith('content/A/')), [], 'no path under the old name');
 });
 
-test('a subfolder moved out of the watched tree (Linux) batches the files that were under it, at any depth', async (t) => {
+test('a subfolder moved out of the watched tree (Linux) batches the files that were under it, at any depth', LINUX_ONLY, async (t) => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'content/d/sub'), { recursive: true });
@@ -99,7 +106,7 @@ test('a subfolder moved out of the watched tree (Linux) batches the files that w
   assert.ok(batches.flat().includes('content/d/sub/deep.json'), `a file in a moved subfolder is in a batch: ${JSON.stringify(batches)}`);
 });
 
-test('a subfolder deleted while watching (Linux) batches the files that were under it, at any depth', async (t) => {
+test('a subfolder deleted while watching (Linux) batches the files that were under it, at any depth', LINUX_ONLY, async (t) => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'content/d/sub'), { recursive: true });
@@ -115,7 +122,7 @@ test('a subfolder deleted while watching (Linux) batches the files that were und
   assert.ok(batches.flat().includes('content/d/sub/deep.json'), `a file in a deleted subfolder is in a batch: ${JSON.stringify(batches)}`);
 });
 
-test('a folder renamed while watching (Linux) batches its old paths and its new ones', async (t) => {
+test('a folder renamed while watching (Linux) batches its old paths and its new ones', LINUX_ONLY, async (t) => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'content/A'), { recursive: true });
