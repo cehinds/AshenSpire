@@ -136,7 +136,7 @@ touch the engine.
 ## Size and commit decision
 
 Measured on the 20 inputs at this commit's tables (`tools/release.mjs` stats;
-gzip at level 9):
+gzip at level 9, computed by the CLI and the tests; the compile does not):
 
 | | Bytes | Gzip |
 |---|---|---|

@@ -11,10 +11,9 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { gzipSync } from 'node:zlib';
 import { parseCsv } from './csv.mjs';
 import {
-  compileInputs, compileRelease, readInputs, sourceHash, DEFAULT_OUT, DROP, TAG_REF,
+  compileInputs, compileRelease, readInputs, sourceHash, gzipSize, DEFAULT_OUT, DROP, TAG_REF,
   FORMAT, OPCODES, FUNCS, BINOPS,
 } from './release.mjs';
 
@@ -389,10 +388,10 @@ test('--check passes on a current file and fails on a stale one', () => {
 
 test('size before and after: CSV bytes, module bytes, gzip', t => {
   const s = COMPILED.stats;
-  const gz = gzipSync(Buffer.from(COMPILED.source, 'utf8'), { level: 9 }).length;
-  assert.equal(s.gzipBytes, gz);
+  const gz = gzipSize(COMPILED.source);
   assert.equal(s.moduleBytes, Buffer.byteLength(COMPILED.source, 'utf8'));
-  const csvGz = gzipSync(Buffer.from(INPUTS.map(i => i.text).join(''), 'utf8'), { level: 9 }).length;
+  assert.equal(s.gzipBytes, undefined, 'the compile does not compute gzip');
+  const csvGz = gzipSize(INPUTS.map(i => i.text).join(''));
   t.diagnostic(`CSV ${s.csvBytes} bytes (${csvGz} gzip); module ${s.moduleBytes} bytes (${gz} gzip)`);
 });
 

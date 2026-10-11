@@ -464,7 +464,6 @@ export function compileInputs(inputs) {
       inputs: inputs.length,
       csvBytes: inputs.reduce((n, i) => n + Buffer.byteLength(i.text, 'utf8'), 0),
       moduleBytes: Buffer.byteLength(source, 'utf8'),
-      gzipBytes: gzipSync(Buffer.from(source, 'utf8'), { level: 9 }).length,
       strings: strings.length,
       columns: kept,
       formulas: formulaRows.length,
@@ -477,6 +476,12 @@ function bracketRefs(text) {
   const out = [];
   String(text ?? '').replace(/\[([^\]]+)\]/g, (m, k) => { out.push(k.trim()); return m; });
   return out;
+}
+
+// Level-9 gzip size of a module. Only the CLI and the tests ask for it; the
+// compile itself does not, so check.mjs stays fast.
+export function gzipSize(source) {
+  return gzipSync(Buffer.from(source, 'utf8'), { level: 9 }).length;
 }
 
 export function sourceHash(inputs) {
@@ -552,7 +557,7 @@ function main(argv) {
   }
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, result.source);
-  process.stdout.write(`wrote ${rel(out)}: ${s.moduleBytes} bytes, ${s.columns} columns, ${s.strings} strings, ${s.formulas} formulas\n`);
+  process.stdout.write(`wrote ${rel(out)}: ${s.moduleBytes} bytes (${gzipSize(result.source)} gzip), ${s.columns} columns, ${s.strings} strings, ${s.formulas} formulas\n`);
   for (const n of result.notes) process.stdout.write(`note: ${n}\n`);
 }
 
