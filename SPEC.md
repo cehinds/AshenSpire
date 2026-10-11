@@ -641,7 +641,7 @@ Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Tri
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). The core events are (not exhaustive; `EVENTS` is):
+Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. The core events are (not exhaustive; `EVENTS` is):
 
 ```
 combatStart, combatEnd(victory)
@@ -651,12 +651,10 @@ damageDealt(source,target,amount,blocked,isAttack)
 blockGained, hpLost, healed
 statusApplied, statusExpired, meterFilled, stanceEntered, stanceExited
 enemySpawned, enemyDied, enemyStaggered
-energyGained, energySpent
+energyGained, energySpent   // legacy names: `energy` is the retired alias of Stamina, the one cost pool
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
 combatReactionOffered, combatReactionChosen
-combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind) †
-combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?) †
 ```
 
 ### 3.11 Seeded RNG
