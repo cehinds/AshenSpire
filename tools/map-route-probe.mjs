@@ -6,7 +6,7 @@ import { launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const output = resolve(root, 'docs/qa/map-route-history');
+const output = resolve(root, 'scratch/qa/map-route-history');
 mkdirSync(output, { recursive: true });
 const served = await serve({ root, port: 0, open: false });
 const browser = await launchBrowser({ prefix: 'route-', browser: resolveBrowser([

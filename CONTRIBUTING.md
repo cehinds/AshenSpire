@@ -190,9 +190,9 @@ Owner's ruling, 2026-10-10. Bulk machine-generated evidence — full browser-run
 and similar raw output — is uploaded with `actions/upload-artifact` by the
 workflow that produces it, or kept outside the repository for a local run, and
 is never committed (#1781 added ~1.1M lines of it; history is not being
-rewritten). A QA folder commits its README, the screenshots the README shows
-and a small curated summary. `.gitignore` ignores those raw patterns under
-`docs/qa/` (`git add -f` a small curated one), and
+rewritten). `docs/qa/` is no longer kept in the tree (owner, 2026-10-11): it is
+ignored, and the local QA tools write to the ignored `scratch/qa/`. Evidence a
+document needs to show goes under one of the folders below, and
 `tests/qa-evidence-size.test.mjs` (a discovered test, so it gates a PR into
 `dev`) fails any tracked JSON over 256 KiB under `docs/qa/`, `docs/evidence/`,
 `docs/art-evidence/`, `docs/preview/`, `docs/screenshots/` or a `receipts/` or
