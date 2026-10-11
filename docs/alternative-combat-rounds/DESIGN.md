@@ -583,8 +583,8 @@ value.
     its damage. A tie does not cancel.
 - Reaction (in hand). A player may play an unplayed defensive card from `hand` as a
   reaction, when an attack targets that player, if SP is left for the card: the
-  card's `sp` must be at most the SP left after the queue. With 0 SP left, no
-  reaction is offered. The player's `onReaction(attack, eligibleCards)` callback
+  card's `sp` must be at most the SP left after the queue. With 0 SP left, only a
+  0-SP card can react (a free reaction is a deliberate card design, not a loophole). The player's `onReaction(attack, eligibleCards)` callback
   returns a card, or null. The card must be eligible. A reaction uses base values,
   no buff, and spends the card's `sp` from what is left. A reaction's effect (guard block,
   evade bonus, counter) applies only to the attack it answers and is used before queued
