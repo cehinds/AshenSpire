@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1846",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "A test now passes on Windows too",
+    "detail": "Development-process change only, nothing in the game changes. One source check compared file paths with forward slashes and failed on the Windows test runners at Test; it now reads paths the same way on every system.",
+    "build": "0.7.1.1296",
+    "pullRequest": 1846,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1846"
+  },
+  {
     "id": "pr-1843",
     "date": "2026-10-11",
     "group": "2026-10-11",
