@@ -147,6 +147,9 @@ The card-layers explorer (UX 5) is promoted to a Layout Studio mode.
 | Command-line exporters: `export-extended-card-art.mjs`, `book-art-export-preview.mjs`, `alternative-selected-stances-export.mjs`, `card-art-contact-sheets.py` | `tools/` | Become Build & Export jobs |
 | Review approval hub (#359, #401, #496, #503) | Removed from dev | Its approve/reject flow is covered by Visual Review |
 | Great-axe review gallery (PR #1218, closed) | Never merged | Covered by Asset Gallery |
+| Codex-built gallery and package builders: `player-polish-asset-kit/package-kit.py`, `player-components/build-gallery.py`, `board-fidelity/build-package.cjs`, `class-armor-rear/build.py`, `combat-depth/pack.py` | `docs/design/*` (Codex PRs #1481–#1757) | Become Build & Export jobs; their outputs feed the Asset Gallery |
+| Painted equipment rig preview (`equipment-rig-preview.html`, PR #789, closed) | Never merged | Covered by Asset Gallery and Entity Browser "Worn" tab |
+| Card layout save tools (`tools/card-layout-save.mjs`), open PR #1780 on `alternative/dev` | dev already has copies | Card layers mode in Layout Studio uses the dev copy |
 | Blender turnaround/compare tools (`asset_tool.py`, `compare.py`) | Owner's local `D:` drive only | Not in any repo; can be added as a job if committed |
 | Art-authoring scripts awaiting ART-REPO-PLAN step 5 | `tools/art-authoring.mjs` | Run against the art checkout path from Settings |
 
