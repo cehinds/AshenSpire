@@ -1,7 +1,7 @@
 // Pure model for the Armoury equip-picker table (Item / Status / Actions).
 // It groups and sorts candidate rows for one equipment position. No UI here:
 // fit comes from fitsSlot() in loadout.js, the only predicate for it.
-import { fitsSlot, pieceHand, slotHand } from './loadout.js';
+import { fitsSlot } from './loadout.js';
 
 export const EQUIP_PICKER_CATEGORIES = Object.freeze(['Armour', 'Weapon', 'Shield', 'Staff', 'Armament']);
 export const EQUIP_PICKER_STATUS_ORDER = Object.freeze({ here: 0, free: 1, elsewhere: 2, nofit: 3 });
