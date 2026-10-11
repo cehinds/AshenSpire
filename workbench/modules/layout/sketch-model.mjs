@@ -83,6 +83,19 @@ export const setNotes = (sketch, notes) => ({ ...M.clone(sketch), notes: String(
  */
 export const deletedSketch = (names, name) => ({ names: names.filter((n) => n !== name), name: null, sketch: null, original: null, hash: null, error: null, problems: [] });
 
+/**
+ * Latest-wins gate for sketch picks, as Data Studio's selectionGate: begin() numbers a
+ * load; current(n) is true only for the newest one. A load that finishes after a later
+ * pick checks current() before it installs its sketch or shows its error.
+ */
+export function selectionGate() {
+  let latest = 0;
+  return {
+    begin() { latest += 1; return latest; },
+    current(generation) { return generation === latest; },
+  };
+}
+
 /** The breakpoint a viewport falls in, for the sketch's own breakpoints. */
 export const breakpointOf = (sketch, viewport) => M.breakpointFor(sketch.breakpoints || [], viewport);
 

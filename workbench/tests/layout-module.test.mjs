@@ -261,3 +261,12 @@ test('the battlefield view\'s reload reads a 404 as the disk state: the draft go
   assert.match(body, /deleted on disk/, 'the view says the file was deleted');
   assert.match(body, /return \{ missing: true \};/, 'the dialog is told the file is missing');
 });
+
+test('a sketch pick that finishes after a newer pick or a new sketch installs nothing and shows no error', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/sketch-view.mjs'), 'utf8');
+  const pick = src.slice(src.indexOf('async function pick(name)'), src.indexOf('function create()'));
+  assert.match(pick, /const generation = gate\.begin\(\);/, 'the pick takes a generation');
+  assert.equal((pick.match(/if \(!gate\.current\(generation\)\) return;/g) || []).length, 2, 'the completion and its error both drop when stale');
+  const create = src.slice(src.indexOf('function create()'), src.indexOf('async function listNames()'));
+  assert.match(create, /gate\.begin\(\);/, 'a new sketch takes a generation too');
+});

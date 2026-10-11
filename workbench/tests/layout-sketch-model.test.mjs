@@ -99,6 +99,14 @@ test('the notes are the sketch\'s own, and the export is the file\'s text', () =
   assert.equal(JSON.parse(S.exportJson(notes, realText)).notes, 'Try the hand at 40%');
 });
 
+test('the newest sketch pick wins: an earlier pick that finishes later is stale', () => {
+  const gate = S.selectionGate();
+  const first = gate.begin();
+  const second = gate.begin();
+  assert.equal(gate.current(first), false, 'the earlier pick installs nothing');
+  assert.equal(gate.current(second), true, 'the newest pick installs');
+});
+
 test('a sketch deleted on disk leaves the list, and no sketch stays open', () => {
   const gone = S.deletedSketch(['alpha', 'beta'], 'alpha');
   assert.deepEqual(gone.names, ['beta']);
