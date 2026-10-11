@@ -69,6 +69,18 @@ test('Keep my version saves on the hashes the 409 reported, and never reads the 
   assert.match(src, /rebaseOnConflicts\(/, 'the save changes are rebased on the reported hashes');
 });
 
+test('the drawing code reads the display view of a project, so a null collection cannot throw before the problems show', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /function viewProject\(\) \{[\s\S]*?viewOf\(st\.file\.project\)/);
+  for (const fn of ['renderTransport', 'renderTimeline', 'renderInspector']) {
+    const body = src.match(new RegExp(`function ${fn}\\(\\) \\{\\s*const p = viewProject\\(\\)`));
+    assert.ok(body, `${fn} draws from viewProject()`);
+  }
+  assert.match(src, /<div class="mo-problems mo-banner" role="alert" hidden><\/div>/, 'the stage has a problems banner');
+  assert.match(src, /function renderBanner\(\) \{[\s\S]*?st\.file\?\.problems[\s\S]*?banner\.hidden/, 'the banner shows the parsePoseFile problems');
+  assert.match(src, /renderAll\(\) \{[\s\S]*?renderBanner\(\);/);
+});
+
 test('the position editor locks every handle of a generated file', () => {
   const src = read('workbench/modules/motion/index.mjs');
   assert.match(src, /if \(isGenerated\(st\.file\.path\)\) for \(const item of doc\.items\) item\.locked = true;/);

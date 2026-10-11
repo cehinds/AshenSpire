@@ -15,7 +15,7 @@ import {
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
-  rebaseOnConflicts,
+  rebaseOnConflicts, viewOf,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -76,6 +76,7 @@ export default {
             <label class="mo-check mo-edit-only" hidden><input type="checkbox" class="mo-grid"> Grid</label>
           </div>
           <div class="mo-stagewrap">
+            <div class="mo-problems mo-banner" role="alert" hidden></div>
             <div class="mo-frame-box"><iframe class="mo-frame" title="Figure rendered by the game"></iframe><p class="mo-setup" hidden></p></div>
             <div class="mo-edit" hidden aria-label="Position editor. Drag anchors and effects; arrow keys nudge."></div>
           </div>
@@ -104,7 +105,7 @@ export default {
     const scrub = $('.mo-scrub'), timeEl = $('.mo-time'), playBtn = $('.mo-play'), loopEl = $('.mo-loop');
     const speedEl = $('.mo-speed'), bgEl = $('.mo-bg'), prevEl = $('.mo-onion-prev'), nextEl = $('.mo-onion-next');
     const classEl = $('.mo-class'), qEl = $('.mo-q'), countEl = $('.mo-count'), fileEl = $('.mo-file'), dirtyEl = $('.mo-dirty');
-    const reviewBtn = $('.mo-review');
+    const reviewBtn = $('.mo-review'), banner = $('.mo-banner');
     const scrim = $('.mo-scrim'), editEl = $('.mo-edit'), snapEl = $('.mo-snap'), gridEl = $('.mo-grid');
     let canvas = null;
 
@@ -155,7 +156,7 @@ export default {
       sendToStage('set', { state: { time: st.time, facing: st.facing, background: st.background, onion: { prev, next } } });
     }
     function onionIndexes() {
-      const p = st.file?.project;
+      const p = viewProject();
       if (!p) return { prev: null, next: null };
       const n = onionNeighbours(p.poses.length, p.duration, st.time);
       return { prev: st.onion.prev ? n.prev : null, next: st.onion.next ? n.next : null };
@@ -271,7 +272,7 @@ export default {
       if (pendingLink?.frame != null) { applyFrame(pendingLink.frame); }
     }
     function applyFrame(index) {
-      const p = st.file?.project;
+      const p = viewProject();
       if (!p) return;
       st.time = poseStart(p.poses.length, p.duration, index);
       pendingLink = pendingLink && { ...pendingLink, frame: null };
@@ -280,13 +281,21 @@ export default {
 
     // ---------- transport and timeline ----------
     function duration() { return st.file?.project?.duration || 0; }
+    /** What the stage and inspector draw: the open project with its lists filled in. Never saved. */
+    function viewProject() { return st.file ? viewOf(st.file.project) : null; }
+    /** The problems parsePoseFile found, always on the stage (the inspector may be closed). */
+    function renderBanner() {
+      const problems = st.file?.problems || [];
+      banner.hidden = !problems.length;
+      banner.innerHTML = problems.length ? `<p>This file does not match the game format:</p><ul>${problems.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+    }
     function seek(t) {
       st.time = clampTime(t, duration());
       renderTransport();
       sendView();
     }
     function renderTransport() {
-      const p = st.file?.project;
+      const p = viewProject();
       const d = duration();
       scrub.max = String(d || 1000);
       scrub.value = String(Math.round(st.time));
@@ -310,7 +319,7 @@ export default {
       editEl.hidden = st.mode !== 'edit';
     }
     function renderTimeline() {
-      const p = st.file?.project;
+      const p = viewProject();
       const d = duration();
       if (!p) { ticks.innerHTML = ''; clipsEl.innerHTML = ''; return; }
       ticks.innerHTML = poseTicks(p.poses.length, d).map((t) => `<button type="button" class="mo-tick" style="left:${t.at * 100}%" data-pose="${t.index}" title="Pose ${t.index + 1}: ${esc(p.poses[t.index])}" aria-label="Pose ${t.index + 1}, ${esc(p.poses[t.index])}"><span>${esc(p.poses[t.index])}</span></button>`).join('');
@@ -321,7 +330,7 @@ export default {
       }).join('') || '';
     }
     function renderInspector() {
-      const p = st.file?.project;
+      const p = viewProject();
       const cls = st.filter.classId || p?.actor || '';
       const outfitKey = st.outfit || cls;
       const frames = st.index.frames[outfitKey] || st.index.frames[cls] || {};
@@ -451,7 +460,7 @@ export default {
     // ---------- the position editor (canvas kit) ----------
     /** The figure as the stage draws it, so the handles sit over it. Locked: it is the reference, not an edit. */
     function editDoc() {
-      const p = st.file.project;
+      const p = viewProject();
       const doc = canvasDocOf(p);
       // A generated file's handles show where the anchors and effects sit but cannot be dragged.
       if (isGenerated(st.file.path)) for (const item of doc.items) item.locked = true;
@@ -515,6 +524,7 @@ export default {
 
     function renderAll() {
       renderLibrary();
+      renderBanner();
       renderTransport();
       renderTimeline();
       renderInspector();
@@ -671,7 +681,7 @@ export default {
     loopEl.addEventListener('change', () => { st.loop = loopEl.checked; });
     playBtn.addEventListener('click', () => setPlaying(!st.playing));
     scrub.addEventListener('input', () => { setPlaying(false); seek(Number(scrub.value)); });
-    const poseCount = () => st.file?.project?.poses.length || 0;
+    const poseCount = () => viewProject()?.poses.length || 0;
     $('.mo-pprev').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, -1)); });
     $('.mo-pnext').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, 1)); });
     $('.mo-fprev').addEventListener('click', () => { setPlaying(false); seek(stepFrame(st.time, -1, duration())); });
