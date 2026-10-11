@@ -373,3 +373,11 @@ test('distribute spaces the cells evenly and keeps the outer two in place', () =
   assert.ok(vertical.every((m) => m.dx === 0));
   assert.deepEqual(B.distributeDeltas(cellsOf.slice(0, 2), 'horizontal').map((m) => m.dx), [0, 0], 'two cells have nothing to spread');
 });
+
+test('a battlefield save takes its base from the sent text, not the live draft', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/battlefield-view.mjs'), 'utf8');
+  const start = src.indexOf('    saved(files, sent) {');
+  const saved = src.slice(start, src.indexOf('    },', start));
+  assert.match(saved, /C\.savedBase\(files, sent, B\.PRESETS_FILE\)/, 'the base is the submitted text');
+  assert.doesNotMatch(saved, /serializePresets/, 'the live draft is never the base');
+});

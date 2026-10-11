@@ -392,7 +392,7 @@ export default {
         const base = C.savedBase(data.files, sent, f.path);
         if (base) Object.assign(f, base);
       }
-      if (views.battlefield) views.battlefield.saved(data.files);
+      if (views.battlefield) views.battlefield.saved(data.files, sent);
       if (views.sketch) await views.sketch.saved(data.files);
       dlg.close();
       rebuild();
