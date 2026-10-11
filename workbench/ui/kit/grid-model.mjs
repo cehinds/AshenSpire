@@ -204,7 +204,6 @@ export function coverage(selection, order, columns) {
   for (const r of rows) for (const c of cols) if (inside.has(r * stride + c)) cells.push({ r, c });
   return { rows, cols, cells, has: (r, c) => inside.has(r * stride + c) };
 }
-export function activeRect(sel) { return sel.ranges.at(-1) ?? null; }
 
 // ---------- delimited text (clipboard, CSV/TSV import) ----------
 
