@@ -327,6 +327,8 @@ async function acquireHead(t){
   }
 }
 /* a conflict keeps local edits dirty and waits for the user; opts.overwrite writes the head on top of their rev */
+/* the set of blob hashes a head names (empty for a missing head or another format) */
+function headBlobs(h){ return new Set(h&&h.format==='blobs'&&Array.isArray(h.blobs)? h.blobs : []); }
 async function flush(t, opts){
   opts=opts||{};
   const ts=TS(t);
@@ -334,6 +336,12 @@ async function flush(t, opts){
   if(!dirty.has(t)) return;
   if(ts.pinned) return; /* a rejected table is never saved again from this view, Keep mine included */
   if(ts.conflict&&!opts.overwrite) return;
+  /* one 10 s budget for the whole save, retries included; blobs written by earlier attempts stay written */
+  opts.deadline=opts.deadline??(Date.now()+10000);
+  opts.written=opts.written||new Set();
+  const written=opts.written;
+  const giveUp=()=>{ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Could not save this table in time. Choose which version to keep.'); render(); };
+  if(Date.now()>opts.deadline){ giveUp(); return; }
   const cols0=[...state.data[t].columns], keyCol=TABLES[t].key;
   const tooBig=state.data[t].rows.findIndex(r=>byteLen(JSON.stringify(cols0.map(c=>r[c]??'')))>BLOB_ROW_MAX);
   if(tooBig>=0){ const k=keyCol&&state.data[t].rows[tooBig][keyCol]; setStatus('bad','Row '+(tooBig+1)+(k?' ('+k+')':'')+' is over 250 KB, so this table cannot be saved yet. Shorten that row.'); return; }
@@ -341,11 +349,16 @@ async function flush(t, opts){
   const cols=[...state.data[t].columns];
   const now=Date.now();
   const built=chunkRows(state.data[t].rows.map(r=>cols.map(c=>r[c]??''))).map(rows=>({hash:hashText(JSON.stringify({rows})), rows}));
-  const hashes=built.map(b=>b.hash), written=new Set();
+  const hashes=built.map(b=>b.hash);
   let newer=null;
   try{
+    /* before the lease: write every blob the server head does not carry. Blobs are immutable, so a hash the head
+       already carries is never rewritten. A slow write here cannot expire the lease, and the deadline bounds it. */
+    const pre=await db.doc(headPath(t)).get();
+    const carried=headBlobs(pre.exists? pre.data() : null);
     for(const b of built){
-      if(ts.blobs.has(b.hash)||written.has(b.hash)) continue;   /* blobs are immutable: a known hash is never rewritten */
+      if(carried.has(b.hash)||written.has(b.hash)) continue;
+      if(Date.now()>opts.deadline){ giveUp(); return; }
       await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:Date.now()}); /* stamped when written, not when the save began */
       written.add(b.hash);
     }
@@ -359,16 +372,10 @@ async function flush(t, opts){
       setStatus('warn','Someone else saved this table while you were editing.'); render();
       return;
     }
-    /* blobs we skip because our base had them must still exist: rewrite any the server head does not carry (GC may have removed them).
-       Identical content, so a rewrite is harmless. */
-    const onServer=new Set(curHead&&curHead.format==='blobs'&&Array.isArray(curHead.blobs)? curHead.blobs : []);
-    for(const b of built){
-      if(onServer.has(b.hash)||written.has(b.hash)) continue;
-      await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:Date.now()});
-      written.add(b.hash);
-    }
-    /* fencing: if the get took most of the lease, another tab may hold it by now. Do not write under it; try again */
-    if(Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),50); return; }
+    /* the leased head must need no blob we have neither written nor seen: if a peer changed it under us, retry the save.
+       Fencing: if the get took most of the lease, another tab may hold it by now, so do not write under it. Both retry. */
+    const verified=new Set([...written, ...headBlobs(curHead)]);
+    if(hashes.some(h=>!verified.has(h)) || Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),50); return; }
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
     const base=opts.overwrite? curRev : ts.base, prevBase=ts.base;
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});

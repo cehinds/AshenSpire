@@ -791,6 +791,32 @@ test('GC keeps the blobs of a live head that lands while it is listing', async (
   assert.equal(db.has(W.api.blobPath('t', 'peerblob')), true, 'the live head\'s blob is kept');
 });
 
+test('slow blob writes stop at the save deadline, show the warning, and make no further writes', async () => {
+  const db = makeFakeDb();
+  db.delay = async (op, p) => { if (op === 'set' && p.includes('/blobs/')) await settle(400); };
+  const W = makePage(db, T);
+  editTable(W.page, sample(1500, 'b')); // about 20 blobs at 400 ms each
+  await W.api.flush('t', { deadline: Date.now() + 1500 });
+  await waitFor(() => W.api.tstate.t.conflict, 8000);
+  assert.ok(W.page.statuses.some((s) => s.level === 'warn' && /in time/.test(s.msg)), 'the warning is shown');
+  const before = db.log.sets.length;
+  await settle(3000);
+  assert.equal(db.log.sets.length, before, 'no writes after the deadline');
+});
+
+test('a head get that is always slow gives up at the save deadline instead of retrying forever', async () => {
+  const db = makeFakeDb();
+  db.delay = async (op, p) => { if (op === 'get' && p === 'tables/t') await settle(1400); };
+  const W = makePage(db, T);
+  editTable(W.page, sample(3, 'g'));
+  await W.api.flush('t', { deadline: Date.now() + 2500 });
+  await waitFor(() => W.api.tstate.t.conflict, 8000);
+  assert.ok(W.page.statuses.some((s) => s.level === 'warn' && /in time/.test(s.msg)), 'the warning is shown');
+  const gets = db.log.gets.filter((p) => p === 'tables/t').length;
+  await settle(3000);
+  assert.equal(db.log.gets.filter((p) => p === 'tables/t').length, gets, 'no retries after the deadline');
+});
+
 // One tab's view of the db: its first head get is slow, and every head set records how old its lease was.
 function slowFirstGetTracedDb(db, getMs, sets) {
   let lastAcq = 0, firstGet = true;
