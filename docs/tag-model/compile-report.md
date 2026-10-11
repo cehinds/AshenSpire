@@ -420,3 +420,7 @@ UNMAPPED: 377
 | warlord | 0 |
 | warmth | 0 |
 | whettedGuard | 0 |
+
+## 2. Collisions
+
+None: every live id is mapped by at most one tag.

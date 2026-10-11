@@ -68,13 +68,27 @@ export function usageByNode(tagging) {
   return new Map([...carriers].map(([id, set]) => [id, set.size]));
 }
 
+// Live ids mapped by more than one tag: [{ liveId, tagIds }], sorted by liveId.
+export function collisions(tags) {
+  const byLive = new Map();
+  for (const t of tags) {
+    if (!t.liveId) continue;
+    if (!byLive.has(t.liveId)) byLive.set(t.liveId, []);
+    byLive.get(t.liveId).push(t.id);
+  }
+  return [...byLive]
+    .filter(([, ids]) => ids.length > 1)
+    .map(([liveId, tagIds]) => ({ liveId, tagIds }))
+    .sort((a, b) => a.liveId.localeCompare(b.liveId));
+}
+
 export function analyze({ tags, nodes, tagging }) {
   const usage = usageByNode(tagging);
   const cov = coverage(tags, nodes);
   const unmapped = cov.unmappedIds
     .map(id => ({ id, usage: usage.get(id) || 0 }))
     .sort((a, b) => b.usage - a.usage || a.id.localeCompare(b.id));
-  return { ...cov, unmapped };
+  return { ...cov, unmapped, collisions: collisions(tags) };
 }
 
 export function render(res) {
@@ -92,6 +106,13 @@ export function render(res) {
   out.push('| Live id | Carriers using it |', '|---|---:|');
   for (const u of res.unmapped) out.push(`| ${u.id} | ${u.usage} |`);
   out.push('');
+  out.push('## 2. Collisions', '');
+  if (res.collisions.length === 0) out.push('None: every live id is mapped by at most one tag.', '');
+  else {
+    out.push('| Live id | Tags mapping it |', '|---|---|');
+    for (const c of res.collisions) out.push(`| ${c.liveId} | ${c.tagIds.join(', ')} |`);
+    out.push('');
+  }
   return out.join('\n');
 }
 
