@@ -117,6 +117,48 @@ test('a lock whose pid is dead is stale, however fresh its startedAt', (t) => {
   release();
 });
 
+/** Read the /proc state of `pid` as `state` (other /proc files are read as usual), for the lock's owner check. */
+function procStateReads(t, pid, state) {
+  testHooks.readProcStat = (file, enc) => (file === `/proc/${pid}/stat`
+    ? `${pid} (node) ${state} 1 ${pid} ${pid} 0 -1 0 0 0 0 0 0 0 0 20 0 1 0 555 0 0`
+    : fs.readFileSync(file, enc));
+  t.after(() => { testHooks.readProcStat = null; });
+}
+
+test('a lock whose owner is an unreaped zombie is stale and taken, though kill still reaches it', { skip: !LINUX && 'needs /proc' }, (t) => {
+  const root = tmpRoot(t);
+  const pid = foreign(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid, holder: 'Orphaned build', startedAt: Date.now(), token: 'x', procStart: procStartOf(pid) }));
+  procStateReads(t, pid, 'Z');
+  assert.equal(pidAlive(pid), false, 'a zombie owner is not alive');
+  const release = tryAcquire(root, 'me');
+  assert.equal(typeof release, 'function', 'a zombie owner\'s lock is stale and taken');
+  assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'me');
+  release();
+  assert.deepEqual(fs.readdirSync(root), [], 'nothing left behind');
+});
+
+test('a dead (X) lock owner is stale too', { skip: !LINUX && 'needs /proc' }, (t) => {
+  const root = tmpRoot(t);
+  const pid = foreign(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid, holder: 'Dying build', startedAt: Date.now(), token: 'x', procStart: procStartOf(pid) }));
+  procStateReads(t, pid, 'X');
+  assert.equal(typeof tryAcquire(root, 'me'), 'function');
+});
+
+test('a live lock owner in state S or R stays held', { skip: !LINUX && 'needs /proc' }, (t) => {
+  const root = tmpRoot(t);
+  const pid = foreign(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid, holder: 'Running build', startedAt: Date.now(), token: 'x', procStart: procStartOf(pid) }));
+  for (const state of ['S', 'R']) {
+    procStateReads(t, pid, state);
+    assert.equal(pidAlive(pid), true, `state ${state} is alive`);
+    const held = tryAcquire(root, 'me');
+    assert.equal(held.heldBy.holder, 'Running build', `state ${state} keeps the lock`);
+    assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'Running build', 'left as it was');
+  }
+});
+
 test('an empty lock file is stale only once it is older than 10 s', (t) => {
   const root = tmpRoot(t);
   fs.writeFileSync(lockPath(root), '');
@@ -228,6 +270,7 @@ function plantBuilder(t) {
   const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   fs.mkdirSync(path.join(root, 'tools/lib'), { recursive: true });
   fs.copyFileSync(path.join(repo, 'tools/lib/build-lock.mjs'), path.join(root, 'tools/lib/build-lock.mjs'));
+  fs.copyFileSync(path.join(repo, 'tools/lib/process-tree.mjs'), path.join(root, 'tools/lib/process-tree.mjs'));
   fs.copyFileSync(path.join(repo, 'tools/framework-data-build.mjs'), path.join(root, 'tools/framework-data-build.mjs'));
   fs.mkdirSync(path.join(root, 'content/framework'), { recursive: true });
   fs.writeFileSync(path.join(root, 'content/framework/probe.json'), '{"a": 1}\n');
@@ -304,7 +347,11 @@ test('the workbench workflow runs this suite and triggers on the lock and its te
   const yml = fs.readFileSync(new URL('../.github/workflows/workbench.yml', import.meta.url), 'utf8');
   const run = yml.split('\n').find((l) => /run: node --test workbench\/tests/.test(l)) || '';
   assert.match(run, /tests\/build-lock\.test\.mjs/, 'the test step runs tests/build-lock.test.mjs');
-  for (const file of ['tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs']) {
+  for (const suite of ['tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs']) {
+    assert.match(run, new RegExp(suite.replace(/[./]/g, (c) => `\\${c}`)), `the test step runs ${suite}`);
+  }
+  const shared = ['tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs', 'tools/lib/process-tree.mjs', 'tools/lib/build-steps.mjs', 'tools/lib/write-atomic.mjs', 'tools/lib/shot-match.mjs', 'tools/launch.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs'];
+  for (const file of shared) {
     assert.equal(yml.split(`- '${file}'`).length - 1, 2, `${file} is in both the push and pull_request paths filters`);
   }
 });

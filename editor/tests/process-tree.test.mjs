@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
-import { groupAlive, procGroupMembers, stopGroup, spawnGroup, runGroup } from '../../tools/lib/process-tree.mjs';
+import { groupAlive, procGroupMembers, processAlive, stopGroup, spawnGroup, runGroup } from '../../tools/lib/process-tree.mjs';
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -146,4 +146,36 @@ test('runGroup resolves with the exit code of a step that runs to completion', a
   const result = await runGroup(process.execPath, ['-e', 'process.exit(3)'], { stdio: 'ignore' });
   assert.equal(result.code, 3);
   assert.equal(result.error, null);
+});
+
+// processAlive reads the /proc state on Linux: a zombie or dead process is not alive even though
+// kill(pid, 0) still succeeds for it. The reader is injected, so the states are exact.
+const procReader = (state) => () => `4242 (node job) ${state} 1 4242 4242 0 -1 4194304 0 0 0 0 0 0 0 0 20 0 1 0 555 0 0`;
+const alive = () => {};
+const gone = () => { throw Object.assign(new Error('ESRCH'), { code: 'ESRCH' }); };
+
+test('processAlive: a zombie or dead process is not alive, even when kill succeeds', () => {
+  assert.equal(processAlive(4242, { platform: 'linux', readFile: procReader('Z'), kill: alive }), false);
+  assert.equal(processAlive(4242, { platform: 'linux', readFile: procReader('X'), kill: alive }), false);
+});
+
+test('processAlive: sleeping, running, disk-waiting and stopped processes are alive', () => {
+  for (const state of ['S', 'R', 'D', 'T']) {
+    assert.equal(processAlive(4242, { platform: 'linux', readFile: procReader(state), kill: gone }), true, state);
+  }
+});
+
+test('processAlive: without /proc, kill(pid, 0) decides, and EPERM counts as alive', () => {
+  const noProc = () => { throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' }); };
+  assert.equal(processAlive(4242, { platform: 'linux', readFile: noProc, kill: alive }), true);
+  assert.equal(processAlive(4242, { platform: 'linux', readFile: noProc, kill: gone }), false);
+  const eperm = () => { throw Object.assign(new Error('EPERM'), { code: 'EPERM' }); };
+  assert.equal(processAlive(4242, { platform: 'darwin', kill: eperm }), true);
+  assert.equal(processAlive(4242, { platform: 'darwin', readFile: procReader('Z'), kill: alive }), true, 'off Linux /proc is not read');
+});
+
+test('processAlive: a pid that is not a positive integer is not alive', () => {
+  assert.equal(processAlive(0), false);
+  assert.equal(processAlive(-3), false);
+  assert.equal(processAlive(1.5), false);
 });
