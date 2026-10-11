@@ -298,6 +298,29 @@ test('clear over a sorted view with a hidden row inside the span: only visible s
   assertRoundTrip(d, out);
 });
 
+test('delete rows under a filter: only the visible selected rows go, hidden rows stay', () => {
+  const d = fresh();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  const out = M.deleteVisibleRows(d, selOf(range(0, 0, 3, 4)), order); // the whole span, rows 0..3
+  assert.deepEqual(out.rows.map(r => r.id), ['b', 'c'], 'a and d are deleted, hidden b and c survive');
+  assert.equal(out.change.label, 'Delete rows');
+  assertRoundTrip(d, out);
+});
+
+test('delete rows in a sorted view removes the selected rows and keeps document order', () => {
+  const d = fresh();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const out = M.deleteVisibleRows(d, selOf(range(1, 0, 2, 4)), order); // rows 1 and 2 (b, c)
+  assert.deepEqual(out.rows.map(r => r.id), ['a', 'd']);
+  assertRoundTrip(d, out);
+});
+
+test('delete rows with no selected row changes nothing', () => {
+  const d = fresh();
+  assert.equal(M.deleteVisibleRows(d, M.createSelection(), docOrder(4)).change, null);
+  assert.equal(M.deleteVisibleRows(d, selOf(range(1, 0, 1, 4)), [0, 3]).change, null, 'only a hidden row is selected');
+});
+
 test('clear with no selected cell changes nothing and records no step', () => {
   const d = fresh();
   assert.equal(M.clearVisible(d, M.createSelection(), docOrder(4)).change, null);

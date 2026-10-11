@@ -283,7 +283,11 @@ export function createGrid(el, options = {}) {
       ['Insert row above', () => commit(M.addRow(doc, rows[0]))],
       ['Insert row below', () => commit(M.addRow(doc, rows.at(-1) + 1))],
       ['Duplicate row' + (rows.length > 1 ? 's' : ''), () => commit(M.duplicateRows(doc, rows))],
-      ['Delete row' + (rows.length > 1 ? 's' : ''), () => { sel = M.createSelection(); commit(M.deleteRows(doc, rows)); }],
+      ['Delete row' + (rows.length > 1 ? 's' : ''), () => {
+        const res = M.deleteVisibleRows(doc, sel, order);
+        sel = M.createSelection();
+        if (res.change) commit(res);
+      }],
       ['Clear cells', clearSelection],
       ['Fill down', fillDownSel],
       ['Copy', copySelection],

@@ -443,6 +443,15 @@ export function deleteRows(doc, indices) {
   const drop = new Set(indices);
   return result(doc, 'Delete rows', { columns: doc.columns, rows: doc.rows.filter((_, i) => !drop.has(i)) });
 }
+/**
+ * Delete the selected rows (every range, visible rows only). A hidden row inside the selection's span
+ * survives. With no selected row there is nothing to do: change is null.
+ */
+export function deleteVisibleRows(doc, selection, order) {
+  const { rows } = coverage(selection, order, doc.columns);
+  if (!rows.length) return { rows: doc.rows, columns: doc.columns, change: null };
+  return deleteRows(doc, rows);
+}
 /** Each duplicate lands directly under its source row. */
 export function duplicateRows(doc, indices) {
   const want = new Set(indices);
