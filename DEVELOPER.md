@@ -27,36 +27,60 @@ names that ordinal. CI rebuilds and requires the rebuild to change nothing
 committed, then runs `node tools/buildversion.mjs --check` against the fresh
 build, so the box and the receipt are still checked to agree.
 
-**Which checks gate a pull request** (owner, 2026-09-26: a PR into `dev` is gated
-by fast checks only, about five minutes or less; the heavy suites run when code
-is pushed to `test` and `release`). Nothing was removed: every check below still
-runs, unchanged, on every push to `test` and `release`, and any workflow can
-still be started by hand on any branch (Actions → *Run workflow*).
+**Which checks gate a pull request** (owner, 2026-10-11, the stage rules). Every
+check runs in one of four stages, and this table is the only list of them. Each
+row is one check; a job that a trigger does not start shows as *skipped* on that
+trigger, not as missing. The rows are read off each workflow's `on:` block and
+the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
-| Check (workflow → job) | PR into `dev` | Push to `test` / `release` |
-|---|---|---|
-| `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
-| `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
-| `tests.yml` → core suite | yes | yes (also on push to `dev`) |
-| `tests.yml` → discovered tests, four shards, without `SLOW_DISCOVERED` | yes | yes (also on push to `dev`) |
-| `tests.yml` → discovered tests (slow simulations: `SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`) | no | yes |
-| `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
-| `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
-| `quick-start.yml` → Title Quick start to the first card play within 6 inputs (`quick-start-inputs.mjs --only quick`, real browser), then click to impact ≤ 400 ms at Normal pacing (`click-impact-probe.mjs`, same job) | yes | yes (also on push to `dev`) |
-| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
-| `tests.yml` → tool self-tests, bundler parse gate | no | yes |
-| `ci.yml` → Fullscreen first through both Settings doors | no | yes |
-| `ci.yml` → what this green does NOT cover (boundary) | no | yes |
-| `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
-| `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
-| `ci.yml` → the checks that need a real browser | no | yes |
-| `ci.yml` → idle animation and reduced motion in a real browser (`motion-probe.mjs` and its `--selftest`) | no | yes |
-| `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
-| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push also replaces the `installer-<branch>` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
+- **Worker push**: a push to `worker/**`, before the orchestrator merges that
+  worker branch into its parent (`docs/ai/AI-ROUTING.md`).
+- **PR → dev / push to dev**: the base smoke, about five minutes or less. A
+  pull request into `dev` is gated by these rows only.
+- **test**: a push to `test` (and `alternative/**/test`). The higher-level
+  functional suites run here, and `release` never re-runs them.
+- **release**: a push to `release`. The polish jobs run here.
 
-The workflows' own `on:` blocks and job `if:` conditions are the source of this
-table; a skipped job shows on the PR as *skipped*, not as missing.
+Any workflow can be started by hand on any branch (Actions → *Run workflow*).
+
+| Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
+|---|---|---|---|---|
+| `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
+| `receipts.yml` → receipts: selftest; a PR runs `--check --pr auto`, a push to `dev` the range to `origin/test` | — | yes | — | — |
+| `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
+| `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
+| `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
+| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | — | — |
+| `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | — |
+| `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | — |
+| `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | — |
+| `ci.yml` → bundler parse gate (`tools/bundle.test.mjs`) | — | — | yes | — |
+| `ci.yml` → the checks that need a real browser (`browser-guard`) | — | — | yes | — |
+| `ci.yml` → every flask menu, and the flask-menu known-bads (sharded) | — | — | yes | — |
+| `ci.yml` → about-changelog known-bads (sharded) | — | — | yes | — |
+| `ci.yml` → startup gate known-bads (sharded) | — | — | yes | — |
+| `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | — |
+| `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | — |
+| `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | — |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | — |
+| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | — |
+| `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
+| `ci.yml` → shipped artifact is this source (3 OS shards) and the three runners built the same bytes (`reproducible`, `reproducible-agree`) | — | — | — | yes |
+| `ci.yml` → Fullscreen first through both Settings doors (`display-first`) | — | — | — | yes |
+| `ci.yml` → the build stamp and the cold boot in a real browser (`browser-guard-stamp`) | — | — | — | yes |
+| `ci.yml` → mobile and combat layout, all five layouts, hint strip and Armoury, and their known-bads (`browser-layout-*`, `browser-hintstrip-plants`) | — | — | — | yes |
+| `ci.yml` → idle animation and reduced motion in a real browser (`browser-motion`, sharded) | — | — | — | yes |
+| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push replaces the `installer-release` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) (also push to `main`) | — | — | — | yes |
+| `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`) | — | yes (push to `dev`) | yes | yes |
+| `pages-builds.yml` → deploy to GitHub Pages (push to `dev` only, or the owner's dispatch with `PUBLISH`) | — | yes (push to `dev`) | — | — |
+| `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AshenSpire-art`) | — | yes (PR into `dev`) | — | — |
+| `art-migrate.yml` → pin bump: opens `bot/art-pin-<tag>` into `dev` (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
+| `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
+| `architecture-sync.yml` → refreshes `docs/ARCHITECTURE-CURRENT-DEV.md` (not a gate) | — | yes (push to `dev`) | — | — |
+| `readme-sync.yml` → refreshes the README generated regions with `--write` (not a gate) | — | yes (push to `dev`) | — | — |
+| `sync-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
+| `worker-branch-cleanup.yml` → deletes origin `worker/**` branches merged into `test` (not a gate) | — | — | yes | — |
+| `restore-test-branch.yml` → recreates `test` from `release` when it is deleted (not a gate) | — | — | — | — |
 
 
 Settings: the header exposes **Reset to defaults** in both the title modal and
@@ -447,13 +471,12 @@ registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. A file that spawns full simulation runs goes in
 `SLOW_DISCOVERED` (`tests/run-node-lanes.mjs`), also with its reason: the
 discovered shards on a pull request into `dev` pass `--no-slow`, and
-`tests.yml`'s `discovered-slow` job runs those files alone (`--slow-only`) on
-every push to `test` and `release`. `.github/workflows/tests.yml` runs the core
-suite, the four discovered shards, the slow files, the tools' self-tests and the
-bundler's parse-gate fixtures (`node tools/bundle.test.mjs`, several minutes) as
-separate Linux jobs; on a pull request into `dev` only the core suite and the
-discovered shards run, and all of them run on every push to `test` and
-`release` (see *Which checks gate a pull request* above).
+`ci.yml`'s `test-discovered` shards run those files, with no `--no-slow`, on
+every push to `test`. `.github/workflows/tests.yml` runs the core suite and the
+four discovered shards as Linux jobs on a pull request into `dev` and on a push
+to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
+fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a
+push to `test` (see *Which checks gate a pull request* above).
 
 Every browser tool launches Chromium through `tools/browser.mjs` (`CHROME`
 picks the binary). The wait for Chrome's DevTools endpoint is never shorter
@@ -1070,7 +1093,8 @@ and, after a reload, reads `seenTutorial` back from durable storage. Run it
 after any change to the tutorial, to `--ui-zoom`, or to the combat board's
 layout; it prints the boundary of what it did not cover. `--only` takes a comma
 list of cases (viewport names, `resize`, `first-run`); `tutorial-reach.yml`
-runs the whole sweep as three such shards on every pull request into `dev`.
+runs the whole sweep as three such shards on every push to `test` (and on
+dispatch), not on a pull request into `dev`.
 
 ## Character creation — the short form (D26)
 
