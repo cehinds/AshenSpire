@@ -1512,6 +1512,18 @@ test('evadePct: a roll under the percent avoids the hit and emits evaded with re
   assert.equal(events.some((e) => e.type === 'interrupted'), false, 'an avoided hit does not interrupt');
 });
 
+test('evadePct: a paired defender field evadePct (the documented name) avoids the hit like evadeBasePct', () => {
+  const events = resolvePair(ATTACKER, DEFENDER({ evadePct: 50 }), seqRng([D20_HIT, pctRng(10)]));
+  assert.equal(find(events, 'hit').avoided, true);
+  assert.deepEqual(find(events, 'evadeRoll'), { type: 'evadeRoll', by: 'enemy', target: 'player', evadePct: 50, roll: 10, success: true });
+  assert.deepEqual(find(events, 'evaded'), { type: 'evaded', by: 'enemy', target: 'player', reason: 'evasion' });
+});
+
+test('evadePct: evadeBasePct wins over evadePct when both are set', () => {
+  const events = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 30, evadePct: 80 }), seqRng([D20_HIT, pctRng(0)]));
+  assert.equal(find(events, 'evadeRoll').evadePct, 30);
+});
+
 test('evadePct: a roll at or over the percent lands the hit', () => {
   const events = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 50 }), seqRng([D20_HIT, pctRng(60)]));
   assert.equal(find(events, 'evadeRoll').success, false);

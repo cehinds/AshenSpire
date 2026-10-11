@@ -390,8 +390,10 @@ successes for momentum (see Momentum).
 - `resolvePair` takes the same pool as `options.charges: { player, enemy }`.
   A side missing from it falls back to that side's own `intangibleCharges`.
 - The evasion percent, `evadePct`. After an attack would land, the defender
-  rolls once. `evadePct` is `evadeBasePct` plus the live bonuses for this
-  exchange, clamped to 0..95. The roll is floor(rng x 100), and a roll under
+  rolls once. `evadePct` is the base percent (the `evadePct` field on the side,
+  or `playerDefense.evadePct`) plus the live bonuses for this exchange, clamped
+  to 0..95. `evadeBasePct` is accepted as an alias for the base field; if both
+  are set, `evadeBasePct` wins. The roll is floor(rng x 100), and a roll under
   `evadePct` avoids the attack. Emits `evaded` with `reason: 'evasion'`.
 - Order for an attack that would land: a full block first (absorbed, no
   charge spent). Then `intangible`. Then the percent roll. Only an attack that

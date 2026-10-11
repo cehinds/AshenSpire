@@ -276,7 +276,11 @@ function normalizeSide(name, s, tables) {
     // Charges for the 'intangible' tag (DESIGN.md, Evasion). Never negative.
     intangibleCharges: Math.max(0, Math.trunc(Number(s.intangibleCharges ?? 0)) || 0),
     // Percent to avoid an attack that would land, before bonuses (DESIGN.md, Evasion).
-    evadeBasePct: Number.isFinite(Number(s.evadeBasePct ?? 0)) ? Number(s.evadeBasePct ?? 0) : 0,
+    // The field is evadePct; evadeBasePct is accepted as an alias and wins if both are set.
+    evadeBasePct: (() => {
+      const base = Number(s.evadeBasePct ?? s.evadePct ?? 0);
+      return Number.isFinite(base) ? base : 0;
+    })(),
     evadeBonuses: normalizeEvadeBonuses(s.evadeBonuses),
   };
 }
