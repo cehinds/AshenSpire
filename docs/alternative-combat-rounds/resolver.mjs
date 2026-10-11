@@ -243,6 +243,33 @@ export function stanceBonus(table, stance, opposing) {
   return table.get(`${stance}>${opposing}`) ?? 0;
 }
 
+// Evade bonus scopes (DESIGN.md, Evasion). Every tag or stance bonus to evade
+// is { source, pct, scope, condition? }. The same scope model is meant for all
+// tag bonuses, not only evasion.
+export const EVADE_SCOPES = Object.freeze(['exchange', 'round', 'combat', 'run']);
+
+// Keeps the bonuses whose scope is live in ctx, and whose condition passes.
+// - exchange: live when ctx.inExchange is true.
+// - round: live when ctx.round is set.
+// - combat: live when ctx.combatId is set.
+// - run: live whenever the bonus is present.
+// Pure: does not change the bonuses.
+export function activeEvadeBonuses(bonuses = [], ctx = {}) {
+  if (!Array.isArray(bonuses)) throw new TypeError('evade bonuses must be an array');
+  return bonuses.filter((b) => {
+    if (!b || typeof b !== 'object') throw new TypeError('evade bonus must be an object');
+    if (!EVADE_SCOPES.includes(b.scope)) {
+      throw new TypeError(`evade bonus scope must be one of ${EVADE_SCOPES.join(', ')}, got ${b.scope}`);
+    }
+    let live = true;
+    if (b.scope === 'exchange') live = ctx.inExchange === true;
+    else if (b.scope === 'round') live = ctx.round != null;
+    else if (b.scope === 'combat') live = ctx.combatId != null;
+    if (!live) return false;
+    return typeof b.condition !== 'function' || Boolean(b.condition(ctx));
+  });
+}
+
 // Stance groups shown at perception stage 1 (DESIGN.md, Round flow and
 // perception). Only the shape is decided; every group name is TBD until the
 // owner names them. Stances come from stance-advantage.csv and the stance tree.

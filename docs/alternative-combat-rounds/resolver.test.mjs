@@ -20,6 +20,7 @@ import {
   revealAction,
   clampStage,
   STANCE_GROUPS,
+  activeEvadeBonuses,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
@@ -828,4 +829,51 @@ test('intangible: a full block takes precedence, so no charge is spent', () => {
   );
   assert.ok(find(events, 'absorbed'));
   assert.equal(events.some((e) => e.type === 'evaded'), false);
+});
+
+// Evasion, part 2a: evade bonus scopes (owner addendum, 2026-10-11). A bonus is
+// { source, pct, scope, condition? }. Only bonuses whose scope is live, and
+// whose condition passes, count.
+const EX = (extra = {}) => ({ source: 'tag', pct: 10, scope: 'exchange', ...extra });
+const ctxOf = (extra = {}) => ({ inExchange: false, round: 1, combatId: 'c1', ...extra });
+
+test('evade scope exchange: live only inside the exchange', () => {
+  assert.equal(activeEvadeBonuses([EX()], ctxOf({ inExchange: true })).length, 1);
+  assert.equal(activeEvadeBonuses([EX()], ctxOf({ inExchange: false })).length, 0);
+});
+
+test('evade scope round: live while a round is set', () => {
+  const b = { source: 'r', pct: 5, scope: 'round' };
+  assert.equal(activeEvadeBonuses([b], ctxOf({ round: 2 })).length, 1);
+  assert.equal(activeEvadeBonuses([b], ctxOf({ round: null })).length, 0);
+});
+
+test('evade scope combat: live while a combat id is set', () => {
+  const b = { source: 'c', pct: 5, scope: 'combat' };
+  assert.equal(activeEvadeBonuses([b], ctxOf({ combatId: 'c9' })).length, 1);
+  assert.equal(activeEvadeBonuses([b], ctxOf({ combatId: undefined })).length, 0);
+});
+
+test('evade scope run: always live while the bonus is present', () => {
+  const b = { source: 'run', pct: 5, scope: 'run' };
+  assert.equal(activeEvadeBonuses([b], {}).length, 1);
+});
+
+test('evade condition: a failing condition drops the bonus, a passing one keeps it', () => {
+  const b = { source: 'third', pct: 5, scope: 'round', condition: (ctx) => ctx.round === 3 };
+  assert.equal(activeEvadeBonuses([b], ctxOf({ round: 2 })).length, 0, 'condition fails');
+  assert.equal(activeEvadeBonuses([b], ctxOf({ round: 3 })).length, 1, 'condition passes');
+});
+
+test('evade scope: exchange bonuses do not leak into the next exchange', () => {
+  // The bonus is only in the first exchange's list. Outside that exchange it is not live.
+  const bonuses = [EX({ pct: 30 })];
+  assert.equal(activeEvadeBonuses(bonuses, ctxOf({ inExchange: true })).length, 1);
+  assert.equal(activeEvadeBonuses(bonuses, ctxOf({ inExchange: false })).length, 0, 'between exchanges');
+  assert.equal(activeEvadeBonuses([], ctxOf({ inExchange: true })).length, 0, 'the next exchange has no such bonus');
+});
+
+test('evade scope: unknown scope and non-array input throw', () => {
+  assert.throws(() => activeEvadeBonuses([{ source: 'x', pct: 1, scope: 'day' }], {}), TypeError);
+  assert.throws(() => activeEvadeBonuses('nope', {}), TypeError);
 });
