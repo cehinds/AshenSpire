@@ -37,8 +37,9 @@ Formula, relation and value keys follow the README conventions.
 ## 2. Device bands gain `wide`
 
 - **Date:** 2026-10-11 (owner).
-- **Decision:** Four device bands. Phone is 600px and under, tablet 601px to
-  1023px, desktop 1024px to 1439px, and a new `wide` band from 1440px. Phone
+- **Decision:** Four device bands. Phone is 600px and under, tablet above 600px
+  up to 1023px, desktop above 1023px up to 1439px, and a new `wide` band above
+  1439px. Phone
   matches the game CSS breakpoint `max-width:600px` (used 27 times).
 - **Tables changed:**
   - `tools/bands.mjs`: the ranges, and `wide` in `BAND_NAMES`.
@@ -49,8 +50,8 @@ Formula, relation and value keys follow the README conventions.
     and under, rows that a 599px edge had sent to `other` return to `mobile`:
     45 layouts, 128 styles and 5 breakpoints (before to after: layouts other 237
     to 192, styles other 905 to 777, breakpoints other 117 to 112). No row lands
-    in `wide` or `tablet` because the inventory has no condition at or above
-    1440px and none that sits wholly inside 600px to 1023px.
+    in `wide` or `tablet` because the inventory has no condition above 1439px
+    and none that sits wholly inside above 600px to 1023px.
   - `layouts.csv` does not key by band (its key is component and breakpoint), so
     only its derived `band` column changes.
   - `breakpoints.csv` has no `band` column; its band lives in `tag`.

@@ -108,9 +108,9 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 `breakpoint` or `condition`; the raw text is kept.
 
 - `mobile`: phone, max-width at or below 600px, or pointer:coarse with orientation:portrait
-- `tablet`: 601px to 1023px
-- `desktop`: 1024px to 1439px
-- `wide`: 1440px and up (owner decision 2, 2026-10-11; see `DECISIONS.md`)
+- `tablet`: above 600px up to 1023px
+- `desktop`: above 1023px up to 1439px
+- `wide`: above 1439px (owner decision 2, 2026-10-11; see `DECISIONS.md`)
 - `all`: no condition
 - `state`: `data-*` or `body.*` hooks, which are not viewport conditions
 - `other`: anything else. A condition goes to a band only when its whole width range lies inside that band, so `max-width: 640px` and `max-width: 900px` are `other` (they straddle a band edge)
