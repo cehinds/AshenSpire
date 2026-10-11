@@ -62,6 +62,13 @@ async function api(path, body) {
   if (!res.ok) throw apiError(res.status, data);
   return data;
 }
+
+/** A binary reply of the same API (for example a PNG), with the session token; a non-OK reply throws as api() does. */
+async function apiBlob(path) {
+  const res = await fetch(`/api/${path}`, { headers: { 'x-studio-token': state.session?.token || '' } });
+  if (!res.ok) throw apiError(res.status, await res.json().catch(() => null));
+  return res.blob();
+}
 const refreshGit = async () => { try { state.git = await api('git'); } catch { state.git = null; } renderChips(); if (state.view === 'home') renderHome(); };
 const refreshJobs = async () => { try { state.jobs = await api('jobs'); } catch { /* keep the last list */ } renderChips(); renderRail(); if (state.view === 'jobs') renderJobs(); if (state.view === 'home') renderHome(); };
 async function refreshLibrary() {
@@ -196,6 +203,7 @@ function moduleContext(rec) {
   return {
     id,
     api,
+    apiBlob,
     toast,
     history: rec.history,
     shortcuts: { register: (combo, label, handler, opts) => { const off = shortcuts.register(id, combo, label, handler, opts); rec.offs.push(off); return off; } },

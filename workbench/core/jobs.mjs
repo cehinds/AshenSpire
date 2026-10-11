@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { tryAcquire as tryFileLock, acquire as waitFileLock, busyMessage, lockEnv } from '../../tools/lib/build-lock.mjs';
+import { SCREENS, screenById, deviceById } from '../modules/review/model.mjs';
 
 export const HISTORY = 30;
 const LOG_CAP = 400 * 1024;
@@ -27,7 +28,22 @@ const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests
  *  (tools/lib/build-lock.mjs), which the editor and UI Studio take too. */
 export const GENERATED = 'generated-sources';
 
-/** id → { label, description, lock?, steps(root) → [{ args, optional?, missing? }] } */
+/**
+ * The screens and device a Visual capture run takes, checked against the
+ * allowlist (workbench/modules/review/model.mjs). Anything else is a 400, so a
+ * request names a screen id, never a path or a flag.
+ */
+export function reviewCaptureParams(params = {}) {
+  const device = params.device ?? 'desk';
+  if (!deviceById(device)) throw Object.assign(Error(`Unknown device: ${String(device).slice(0, 40)}`), { status: 400 });
+  const asked = params.screens ?? SCREENS.map((s) => s.id);
+  if (!Array.isArray(asked) || !asked.length) throw Object.assign(Error('Choose at least one screen'), { status: 400 });
+  for (const id of asked) if (!screenById(id)) throw Object.assign(Error(`Unknown screen: ${String(id).slice(0, 40)}`), { status: 400 });
+  const wanted = new Set(asked);
+  return { device, screens: SCREENS.map((s) => s.id).filter((id) => wanted.has(id)) };
+}
+
+/** id → { label, description, lock?, steps(root, { params?, stateDir? }) → [{ args, optional?, missing? }] } */
 export const JOBS = {
   'content-build': {
     lock: GENERATED, label: 'Content build', description: 'Compile content/source and content/framework into the generated modules under src/.',
@@ -49,6 +65,16 @@ export const JOBS = {
     label: 'Tool tests', description: 'Run the editor, UI Studio and Workbench test suites (node --test).',
     steps: (root) => [{ args: ['--test', ...testFiles(root)] }],
   },
+  // The game's own screenshot tool (tools/screenshot.mjs) at one device size. Captures go to
+  // <project state dir>/review/captures, never into the repo tree; Visual Review reads them there.
+  'review-capture': {
+    label: 'Visual capture', description: 'Photograph the chosen game screens at one device size into the project state folder, for Visual Review.',
+    steps: (root, { params = {}, stateDir = path.join(root, 'workbench', '.state') } = {}) => {
+      const { device, screens } = reviewCaptureParams(params);
+      const { width, height } = deviceById(device);
+      return [{ args: ['tools/screenshot.mjs', '--out', path.join(stateDir, 'review', 'captures'), '--viewport', `${width}x${height}`, '--prefix', `${device}-`, '--only', screens.join(',')] }];
+    },
+  },
 };
 
 export const commandLine = (step) => `node ${step.args.join(' ')}`;
@@ -67,7 +93,7 @@ export class JobRunner {
 
   defs() {
     return Object.entries(JOBS).map(([id, job]) => {
-      const steps = job.steps(this.root);
+      const steps = job.steps(this.root, { stateDir: path.dirname(this.stateFile) });
       const missing = steps.find((s) => s.missing && !fs.existsSync(path.join(this.root, s.args[0])));
       return { id, label: job.label, description: job.description, commands: steps.map(commandLine), available: !missing, note: missing ? missing.missing : '', running: this.active.has(id) };
     });
@@ -85,10 +111,12 @@ export class JobRunner {
     } catch { /* history is a convenience; a read-only state dir must not fail a job */ }
   }
 
-  start(id) {
+  /** Starts an allowlisted job. `params` go to its steps (checked there: a bad value throws a 400 before anything runs). */
+  start(id, params = {}) {
     const job = Object.hasOwn(JOBS, id) ? JOBS[id] : null;
     if (!job) throw Object.assign(Error(`Unknown job: ${String(id).slice(0, 60)}`), { status: 400 });
     if (this.active.has(id)) throw Object.assign(Error(`${job.label} is already running`), { status: 409 });
+    const steps = job.steps(this.root, { params, stateDir: path.dirname(this.stateFile) });
     if (job.lock && this.locks.has(job.lock)) throw Object.assign(Error(`${this.locks.get(job.lock)} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
     if (job.lock) {
       const got = tryFileLock(this.root, `${job.label} (Workbench)`);
@@ -101,7 +129,7 @@ export class JobRunner {
     // Persist the new run before it executes: a crash leaves a 'running' record, which the constructor reads back as 'cancelled'.
     this.persist();
     this.onEvent('job', this.summary(run));
-    this.execute(run, job.steps(this.root)).catch((e) => this.finish(run, 'failed', e.message));
+    this.execute(run, steps).catch((e) => this.finish(run, 'failed', e.message));
     return this.summary(run);
   }
 
