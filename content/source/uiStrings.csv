@@ -56,6 +56,13 @@ combat.reaction.play,,Play,,
 combat.reaction.upcast,,Upcast {tier},,
 combat.reaction.sp,,{amount} SP,,
 combat.reaction.mp,,{amount} MP,,
+# on-character combat callouts (src/ui/fx.js callout): one word over the fighter
+combat.callout.staggered,,STAGGERED,,
+combat.callout.disrupted,,DISRUPTED,,
+combat.callout.countered,,COUNTERED,,
+combat.callout.evaded,,EVADED,,
+combat.callout.critical,,CRITICAL,,
+combat.callout.guardBreak,,GUARD BREAK,,
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue
