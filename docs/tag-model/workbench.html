@@ -157,11 +157,10 @@ const PAGE = 150;
 const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
-const dirty=new Set(), saving=new Set(), timers={}, saved={}, live={};
+const dirty=new Set(), saving=new Set(), timers={}, saved={};
 /* storage:begin */
 const PART_BYTES=180000;
 const HOLDER='tab-'+Math.random().toString(36).slice(2,10);
-const stuck={};
 function chunk(rows){ const out=[]; let cur=[], size=2; for(const r of rows){ const n=JSON.stringify(r).length+1; if(cur.length&&size+n>PART_BYTES){ out.push(cur); cur=[]; size=2; } cur.push(r); size+=n; } out.push(cur); return out; }
 /* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
 const BLOB_MAX=170000, BLOB_MIN_ROWS=20, BLOB_CUT=64, GC_AGE_MS=120000;
@@ -187,6 +186,82 @@ function chunkRows(rows){
   }
   if(cur.length) out.push(cur);
   return out;
+}
+/* ---------- reader: subscribe to the head, assemble only complete heads ---------- */
+const BLOB_RETRY_MS=[250,500];
+const tstate={};
+const sleepMs=ms=>new Promise(r=>setTimeout(r,ms));
+function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map()}); }
+function headPath(t){ return 'tables/'+t; }
+function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
+/* a blob head's rev; legacy heads have none, so their base is '' */
+function revOf(h){ return h&&h.format==='blobs'? (h.rev||'') : ''; }
+function headCols(h,t){ return Array.isArray(h.columns)&&h.columns.length? h.columns : TABLES[t].columns; }
+function objectRows(hc, arrs){ return arrs.map(a=>{ const o={}; hc.forEach((c,j)=>{ o[c]=a[j]??''; }); return o; }); }
+function adoptRows(t, hc, objs){
+  if(dirty.has(t)||saving.has(t)) return;
+  const cols=[...hc]; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
+  loaded.add(t); pending.delete(t);
+  if(JSON.stringify(objs)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
+  state.data[t]={columns:cols, rows:objs};
+  rebuild(); setStatus(); render();
+}
+/* one blob doc; retried twice with backoff when it is missing or unreadable, then null */
+async function fetchBlob(t,h){
+  for(let i=0;;i++){
+    try{ const s=await db.doc(blobPath(t,h)).get(); if(s.exists){ const d=s.data(); if(d&&Array.isArray(d.rows)) return d.rows; } }
+    catch(e){ /* counted as missing */ }
+    if(i>=BLOB_RETRY_MS.length) return null;
+    await sleepMs(BLOB_RETRY_MS[i]);
+  }
+}
+async function assembleBlobs(t,h){
+  const ts=TS(t), want=[...new Set(h.blobs||[])], got=new Map(); let missing=null;
+  await Promise.all(want.map(async x=>{ const rows=ts.blobs.get(x)||await fetchBlob(t,x); if(rows) got.set(x,rows); else missing=missing||x; }));
+  return {missing, got};
+}
+function stopParts(t){ const ts=TS(t); if(ts.partsUnsub){ ts.partsUnsub(); ts.partsUnsub=null; } ts.parts=new Map(); }
+function legacyAssemble(t){
+  const ts=TS(t), h=ts.legacy; if(!h||dirty.has(t)||saving.has(t)) return;
+  const n=Number(h.parts)||0, hc=headCols(h,t), arrs=[], ids=[];
+  for(let i=0;i<n;i++){ const p=ts.parts.get(i); if(!p) return; ids.push(p.id); arrs.push(...p.rows); }
+  ts.legacyDocs=ids;
+  adoptRows(t, hc, arrs.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r));
+}
+function ensureParts(t){
+  const ts=TS(t); if(ts.partsUnsub) return;
+  ts.partsUnsub=db.collection('tables/'+t+'/parts').onSnapshot(q=>{
+    ts.parts=new Map(q.docs.map(d=>{ const b=d.data()||{}; return [Number(b.index), {id:d.id, rows:Array.isArray(b.rows)? b.rows : []}]; }));
+    legacyAssemble(t);
+  }, e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.'));
+}
+async function applyHead(t,h){
+  const ts=TS(t), seq=++ts.seq;
+  if(!h){ stopParts(t); ts.base=''; ts.blobs=new Map(); ts.legacy=null; ts.incomplete=null; adoptRows(t, TABLES[t].columns, []); return; }
+  if(h.format==='blobs'){
+    stopParts(t); ts.legacy=null;
+    if(loaded.has(t)&&!ts.incomplete&&revOf(h)===ts.base) return;
+    const r=await assembleBlobs(t,h);
+    if(seq!==ts.seq||dirty.has(t)||saving.has(t)) return;
+    if(r.missing){ ts.incomplete={rev:revOf(h), hash:r.missing}; loaded.delete(t); setStatus('bad','This table is incomplete on the server (missing part '+r.missing+'). Reload later.'); render(); return; }
+    const arrs=[]; for(const x of h.blobs||[]) arrs.push(...r.got.get(x));
+    ts.incomplete=null; ts.base=revOf(h); ts.blobs=r.got; ts.legacyDocs=[];
+    adoptRows(t, headCols(h,t), objectRows(headCols(h,t), arrs));
+    return;
+  }
+  /* legacy head: read only, its parts are assembled when all are present */
+  ts.legacy=h; ts.base=''; ts.blobs=new Map(); ts.incomplete=null;
+  if(!(Number(h.parts)>0)){ stopParts(t); ts.legacyDocs=[]; adoptRows(t, headCols(h,t), []); return; }
+  ensureParts(t); legacyAssemble(t);
+}
+function onHead(t,h){
+  const ts=TS(t); ts.latest=h;
+  if(dirty.has(t)||saving.has(t)){ ts.seq++; return; } /* keep local edits; the save step's get() detects a newer head */
+  applyHead(t,h);
+}
+function subscribeTable(t){
+  const ts=TS(t); if(ts.unsub.length) return;
+  ts.unsub.push(db.doc(headPath(t)).onSnapshot(s=>onHead(t, s.exists? s.data() : null), e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.')));
 }
 /* storage:end */
 
@@ -622,32 +697,7 @@ rebuild(); setStatus(); render();
   db=d; downloads=dl; assetsCap=as; render();
   if(!db){ localMode=true; ORDER.forEach(t=>loaded.add(t)); loadLocal(); rebuild(); setStatus('warn','The shared table store is not available here.'); render(); return; }
   if(u){ try{ const w=await u.can('data.write'); if(w===false) canWrite=false; }catch(e){} }
-  const unsub={};
-  const onErr=t=>e=>setStatus('bad','Lost the live connection to "'+t+'" ('+e.code+'). Reload to reconnect.');
-  window.__subscribe=t=>{
-    live[t]={head:null, parts:new Map(), partMeta:new Map()};
-    const apply=()=>{
-      if(dirty.has(t)||saving.has(t)) return;
-      const h=live[t].head; if(!h) return;
-      let rows;
-      if(Array.isArray(h.rows)) rows=h.rows;
-      else { rows=[]; const hc=h.columns||[]; let mismatch=false;
-        for(let i=0;i<(h.parts||0);i++){ const pp=live[t].partMeta.get(i); if(!live[t].parts.get(i)) return; if(Array.isArray(h.revs) && (!pp || pp.rev!==h.revs[i])) mismatch=true; }
-        if(mismatch){ if(!stuck[t]) stuck[t]=setTimeout(()=>{ stuck[t]='late'; apply(); },6000); if(stuck[t]!=='late') return; }
-        clearTimeout(stuck[t]); const late=stuck[t]==='late'; stuck[t]=null;
-        for(let i=0;i<(h.parts||0);i++){ const p=live[t].parts.get(i); for(const r of p) rows.push(Array.isArray(r)? Object.fromEntries(hc.map((c,j)=>[c,r[j]??''])) : r); } }
-      const cols=Array.isArray(h.columns)&&h.columns.length? [...h.columns] : [...TABLES[t].columns];
-      for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
-      loaded.add(t); pending.delete(t);
-      saved[t]= (Array.isArray(h.rows)||late)? {parts:[],head:'',revs:[]} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts,format:h.format,revs:h.revs}), revs:Array.isArray(h.revs)? [...h.revs] : []};
-      if(JSON.stringify(rows)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
-      state.data[t]={columns:cols, rows:JSON.parse(JSON.stringify(rows))};
-      loaded.add(t); pending.delete(t);
-      rebuild(); setStatus(); render();
-    };
-    unsub[t]=[db.doc('tables/'+t).onSnapshot(s=>{ live[t].head=s.exists? s.data() : null; if(!s.exists){ pending.delete(t); loaded.add(t); render(); } apply(); }, onErr(t)),
-      db.collection('tables/'+t+'/parts').onSnapshot(q=>{ live[t].parts=new Map(q.docs.map(d=>{ const b=d.data(); return [Number(b.index), b.rows||[]]; })); live[t].partMeta=new Map(q.docs.map(d=>{ const b=d.data(); return [Number(b.index), {rev:b.rev}]; })); apply(); }, onErr(t))];
-  };
+  window.__subscribe=subscribeTable;
   for(const t of ORDER) if(CORE.has(t)) ensure(t);
   if(TABLES[state.view]) ensure(state.view);
 })();
