@@ -138,8 +138,13 @@ export function createGrid(el, options = {}) {
     recompute(); render();
     if (onChange) onChange({ rows: doc.rows, columns: doc.columns, change, direction, errors: [] });
   }
-  const selectedRows = () => [...new Set(M.selectedCells(sel, doc.rows.length, doc.columns.length).map(c => c.r))];
+  const selectedRows = () => M.selectedCells(sel, order, doc.columns).rows;
   const rectOfSel = () => M.activeRect(sel);
+  // The selected cells as {r, c} indices, in view order (for the model's cell-level ops).
+  const selectedTargets = () => {
+    const colIdx = new Map(doc.columns.map((c, i) => [c.key, i]));
+    return M.selectedCells(sel, order, doc.columns).cells.map(([r, key]) => ({ r, c: colIdx.get(key) }));
+  };
   function setActive(r, c, opts = {}) {
     sel = M.selectCell(sel, { r, c }, opts);
   }
@@ -231,16 +236,14 @@ export function createGrid(el, options = {}) {
   }
   function clearSelection() {
     if (readOnly) return;
-    const cells = M.selectedCells(sel, doc.rows.length, doc.columns.length);
+    const cells = selectedTargets();
     if (cells.length) commit(M.clearCells(doc, cells));
   }
   // Every selected row (all runs), in the order the view shows them, and every selected column.
   function fillDownSel() {
     if (readOnly) return;
-    const picked = new Set(selectedRows());
-    const visibleRows = order.filter(r => picked.has(r));
-    const colIdx = [...new Set(M.selectedCells(sel, doc.rows.length, doc.columns.length).map(c => c.c))];
-    commit(M.fillDownVisible(doc.rows, doc.columns, visibleRows, colIdx.map(c => doc.columns[c]?.key)));
+    const { rows: visibleRows, cols } = M.selectedCells(sel, order, doc.columns);
+    commit(M.fillDownVisible(doc.rows, doc.columns, visibleRows, cols));
   }
   function rowMenu(x, y, rowIdx) {
     closeMenu();

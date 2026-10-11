@@ -169,18 +169,40 @@ export function moveSelection(sel, dr, dc, { rowCount, colCount, extend = false 
   };
   return selectTo({ ...sel, anchor: sel.anchor ?? base, active: base }, to, { shift: extend });
 }
-/** Unique cells inside the selection, clipped to the current bounds. */
-export function selectedCells(sel, rowCount, colCount) {
-  const seen = new Set(), out = [];
-  for (const g of sel.ranges) {
-    for (let r = g.r0; r <= Math.min(g.r1, rowCount - 1); r++) {
-      for (let c = g.c0; c <= Math.min(g.c1, colCount - 1); c++) {
-        const k = r * colCount + c;
-        if (!seen.has(k)) { seen.add(k); out.push({ r, c }); }
-      }
-    }
+/**
+ * Every cell of the selection (all ranges, Ctrl-selections included), read in the VISIBLE order.
+ * Rows come from `order` (the visible document row indices), so a row a filter hides is never
+ * selected, and a sorted view lists its rows in the sorted sequence. Overlapping ranges count a
+ * cell once. Column indices are clipped to `columns`.
+ * @param selection { ranges }
+ * @param order number[] visible document row indices
+ * @param columns column objects (only `.key` is read)
+ * @returns {{ rows: number[], cols: string[], cells: [number, string][] }}
+ *   rows:  selected document rows in view order, each once.
+ *   cols:  selected column keys in column order (the union over the selected rows).
+ *   cells: [row, key] for each selected cell, row by row in view order, columns in column order.
+ */
+export function selectedCells(selection, order, columns) {
+  const { rows, cols, cells } = coverage(selection, order, columns);
+  return { rows, cols: cols.map(c => columns[c].key), cells: cells.map(({ r, c }) => [r, columns[c].key]) };
+}
+/** Shared walk behind selectedCells and the copy/paste/clear ops: indices, plus has(r, c) membership. */
+export function coverage(selection, order, columns) {
+  const last = columns.length - 1;
+  const ranges = selection.ranges
+    .map(g => ({ r0: g.r0, r1: g.r1, c0: Math.max(0, g.c0), c1: Math.min(last, g.c1) }))
+    .filter(g => g.c0 <= g.c1);
+  const rows = [], colSet = new Set(), inside = new Set(), stride = Math.max(1, columns.length);
+  for (const r of order) {
+    const hit = ranges.filter(g => g.r0 <= r && r <= g.r1);
+    if (!hit.length) continue;
+    rows.push(r);
+    for (const g of hit) for (let c = g.c0; c <= g.c1; c++) { colSet.add(c); inside.add(r * stride + c); }
   }
-  return out;
+  const cols = [...colSet].sort((a, b) => a - b);
+  const cells = [];
+  for (const r of rows) for (const c of cols) if (inside.has(r * stride + c)) cells.push({ r, c });
+  return { rows, cols, cells, has: (r, c) => inside.has(r * stride + c) };
 }
 export function activeRect(sel) { return sel.ranges.at(-1) ?? null; }
 

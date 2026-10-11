@@ -73,20 +73,76 @@ test('filter by text across the row and per column', () => {
   assert.deepEqual(M.filterIndices(d.rows, d.columns, { text: '  ' }), [0, 1, 2, 3]);
 });
 
+const range = (r0, c0, r1, c1) => ({ r0, c0, r1, c1 });
+const selOf = (...ranges) => ({ ranges, anchor: null, active: null });
+const docOrder = n => Array.from({ length: n }, (_, i) => i);
+
 test('selection: plain, ctrl, shift, rows, and moves', () => {
   let s = M.createSelection();
   s = M.selectCell(s, { r: 1, c: 1 }, {});
   s = M.selectCell(s, { r: 3, c: 2 }, { shift: true });
-  assert.equal(M.selectedCells(s, 4, 5).length, 3 * 2);
+  assert.equal(M.selectedCells(s, docOrder(4), cols).cells.length, 3 * 2);
   s = M.selectCell(s, { r: 0, c: 0 }, { ctrl: true });
   assert.equal(s.ranges.length, 2);
-  assert.equal(M.selectedCells(s, 4, 5).length, 7);
+  assert.equal(M.selectedCells(s, docOrder(4), cols).cells.length, 7);
   let rowsSel = M.selectRows(M.createSelection(), 2, {}, cols.length);
-  assert.deepEqual(M.selectedCells(rowsSel, 4, 5).length, 5);
+  assert.equal(M.selectedCells(rowsSel, docOrder(4), cols).cells.length, 5);
   s = M.moveSelection(M.createSelection(), 0, 0, { rowCount: 4, colCount: 5 });
   s = M.moveSelection(s, 9, 9, { rowCount: 4, colCount: 5, extend: true });
   assert.deepEqual(s.active, { r: 3, c: 4 });
-  assert.equal(M.selectedCells(s, 4, 5).length, 20);
+  assert.equal(M.selectedCells(s, docOrder(4), cols).cells.length, 20);
+});
+
+test('selectedCells: sorted order lists rows in the sorted sequence, not document order', () => {
+  const d = base();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  assert.deepEqual(order, [1, 0, 3, 2]);
+  const sel = selOf(range(0, 0, 3, 0)); // column id, every row
+  const sc = M.selectedCells(sel, order, d.columns);
+  assert.deepEqual(sc.rows, [1, 0, 3, 2]);
+  assert.deepEqual(sc.cols, ['id']);
+  assert.deepEqual(sc.cells, [[1, 'id'], [0, 'id'], [3, 'id'], [2, 'id']]);
+});
+
+test('selectedCells: filtered order never includes a hidden row, even inside the range', () => {
+  const d = base();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // rows 0 and 3 only
+  assert.deepEqual(order, [0, 3]);
+  const sc = M.selectedCells(selOf(range(0, 0, 3, 1)), order, d.columns); // rows 0..3 in the range
+  assert.deepEqual(sc.rows, [0, 3]);
+  assert.deepEqual(sc.cells, [[0, 'id'], [0, 'n'], [3, 'id'], [3, 'n']]);
+});
+
+test('selectedCells: multi-range (Ctrl) selections keep every range, in view order, each cell once', () => {
+  const order = docOrder(6);
+  const sc = M.selectedCells(selOf(range(4, 0, 4, 0), range(0, 1, 1, 2)), order, cols);
+  assert.deepEqual(sc.rows, [0, 1, 4], 'the later range comes out in row order, not range order');
+  assert.deepEqual(sc.cols, ['id', 'n', 'on'], 'the union of columns, in column order');
+  assert.deepEqual(sc.cells, [[0, 'n'], [0, 'on'], [1, 'n'], [1, 'on'], [4, 'id']], 'each cell only from its own range');
+});
+
+test('selectedCells: overlapping ranges count each cell once', () => {
+  const order = docOrder(4);
+  // A covers rows 0-2 x cols 0-1; B covers rows 1-3 x cols 1-2. Union: 2+3+3+2 = 10 cells.
+  const sc = M.selectedCells(selOf(range(0, 0, 2, 1), range(1, 1, 3, 2)), order, cols);
+  assert.equal(sc.cells.length, 10);
+  assert.equal(new Set(sc.cells.map(([r, k]) => `${r}|${k}`)).size, 10, 'no duplicate cells');
+  assert.deepEqual(sc.rows, [0, 1, 2, 3]);
+  assert.deepEqual(sc.cols, ['id', 'n', 'on']);
+});
+
+test('selectedCells: a range over hidden rows only adds no columns and no rows', () => {
+  const d = base();
+  const order = [0, 3];
+  const sc = M.selectedCells(selOf(range(1, 4, 2, 4), range(0, 0, 0, 0)), order, d.columns);
+  assert.deepEqual(sc.rows, [0]);
+  assert.deepEqual(sc.cols, ['id'], 'the data column of the hidden-row range is not selected');
+});
+
+test('selectedCells: columns are clipped to the column count', () => {
+  const sc = M.selectedCells(selOf(range(0, 0, 0, 99)), [0], cols);
+  assert.deepEqual(sc.cols, cols.map(c => c.key));
+  assert.equal(sc.cells.length, cols.length);
 });
 
 test('parse clipboard text as TSV or CSV, with quotes and trailing newline', () => {
@@ -257,23 +313,23 @@ test('shift selection in a filtered, sorted view selects only the visible rows',
   const order = [5, 4, 3, 1, 0]; // row 2 is hidden by a filter
   let sel = M.selectCell(M.createSelection(), { r: 5, c: 0 }, {});
   sel = M.selectCell(sel, { r: 0, c: 1 }, { shift: true, order });
-  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [0, 1, 3, 4, 5], 'the hidden row 2 is not selected');
+  assert.deepEqual(M.selectedCells(sel, order, cols).rows.slice().sort((a, b) => a - b), [0, 1, 3, 4, 5], 'the hidden row 2 is not selected');
   // Without an order (the unfiltered case) the range is the document rectangle, as before.
   const plain = M.selectCell(M.selectCell(M.createSelection(), { r: 5, c: 0 }, {}), { r: 0, c: 1 }, { shift: true });
-  assert.equal(M.selectedCells(plain, 6, 5).length, 6 * 2);
+  assert.equal(M.selectedCells(plain, docOrder(6), cols).cells.length, 6 * 2);
   // Ctrl-shift keeps earlier ranges and adds the visible runs.
   let ctrl = M.selectCell(M.createSelection(), { r: 0, c: 0 }, {});
   ctrl = M.selectCell(ctrl, { r: 4, c: 0 }, { ctrl: true });
   ctrl = M.selectCell(ctrl, { r: 3, c: 0 }, { shift: true, ctrl: true, order });
-  assert.deepEqual([...new Set(M.selectedCells(ctrl, 6, 5).map(c => c.r))].sort(), [0, 3, 4]);
+  assert.deepEqual(M.selectedCells(ctrl, order, cols).rows.slice().sort((a, b) => a - b), [0, 3, 4]);
 });
 
 test('shift row selection in a filtered view widens every run to whole rows', () => {
   const order = [5, 4, 3, 1, 0]; // row 2 is hidden
   let sel = M.selectRows(M.createSelection(), 4, {}, 5);
   sel = M.selectRows(sel, 1, { shift: true, order }, 5);
-  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [1, 3, 4]);
-  assert.equal(M.selectedCells(sel, 6, 5).length, 3 * 5, 'every cell of each selected row, and no hidden row');
+  assert.deepEqual(M.selectedCells(sel, order, cols).rows.slice().sort((a, b) => a - b), [1, 3, 4]);
+  assert.equal(M.selectedCells(sel, order, cols).cells.length, 3 * 5, 'every cell of each selected row, and no hidden row');
 });
 
 test('JSON import checks values against the column types and changes nothing on a bad value', () => {
