@@ -2,7 +2,7 @@
 //
 // Bands (proposal, see docs/tag-model/README.md, "Presentation layer"):
 //   mobile  = phone: max-width <= 600px, or pointer:coarse with orientation:portrait
-//   tablet  = 600px to 1023px
+//   tablet  = 601px to 1023px
 //   desktop = 1024px to 1439px
 //   wide    = >= 1440px (owner decision 2, 2026-10-11; see DECISIONS.md)
 //   all     = no condition
@@ -12,7 +12,7 @@
 
 const BANDS = {
   mobile: [0, 600],
-  tablet: [600, 1023],
+  tablet: [601, 1023],
   desktop: [1024, 1439],
   wide: [1440, Infinity],
 };

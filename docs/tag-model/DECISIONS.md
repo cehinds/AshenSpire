@@ -37,7 +37,7 @@ Formula, relation and value keys follow the README conventions.
 ## 2. Device bands gain `wide`
 
 - **Date:** 2026-10-11 (owner).
-- **Decision:** Four device bands. Phone is 600px and under, tablet 600px to
+- **Decision:** Four device bands. Phone is 600px and under, tablet 601px to
   1023px, desktop 1024px to 1439px, and a new `wide` band from 1440px. Phone
   matches the game CSS breakpoint `max-width:600px` (used 27 times).
 - **Tables changed:**
@@ -56,8 +56,8 @@ Formula, relation and value keys follow the README conventions.
   - `breakpoints.csv` has no `band` column; its band lives in `tag`.
   - `README.md`: the band list.
 - **Couldn't place:** none for the phone edge. The pointer:coarse portrait rule
-  is unchanged. `tablet` still starts at 600px, so it shares that edge with
-  `mobile`; a `max-width:600px` condition is `mobile` (checked first).
+  is unchanged. `tablet` starts at 601px, so 600px belongs only to `mobile`
+  (review follow-up). No table row moved.
 
 ## 3. Delivery is a type of its own (melee, ranged, cast)
 

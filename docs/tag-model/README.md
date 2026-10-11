@@ -108,7 +108,7 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 `breakpoint` or `condition`; the raw text is kept.
 
 - `mobile`: phone, max-width at or below 600px, or pointer:coarse with orientation:portrait
-- `tablet`: 600px to 1023px
+- `tablet`: 601px to 1023px
 - `desktop`: 1024px to 1439px
 - `wide`: 1440px and up (owner decision 2, 2026-10-11; see `DECISIONS.md`)
 - `all`: no condition
