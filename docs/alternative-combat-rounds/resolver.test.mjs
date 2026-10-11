@@ -15,6 +15,8 @@ import {
   resolveRound,
   rollD20,
   parseStanceAdvantage,
+  cardHint,
+  SPEED_TIERS,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
@@ -607,4 +609,92 @@ test('momentum +2 adds +1 to the player pairing speed in resolveRound', () => {
     { momentum: { foe: 2 } },
   );
   assert.deepEqual(find(events, 'order').speeds, { player: 5, enemy: 3 });
+});
+
+// Card hints (DESIGN.md, Card hints). Speed ids: one=1, two=2, three=3.
+const HINT_MODS = { card: { one: 1, two: 2, three: 3 }, weapon: { dagger: 2 } };
+const hintCtx = (extra = {}) => ({ mods: HINT_MODS, stanceAdvantage: stanceTable(), ...extra });
+
+test('cardHint: SPEED_TIERS placeholder is strong 2, slight 1', () => {
+  assert.deepEqual(SPEED_TIERS, { strong: 2, slight: 1 });
+});
+
+test('cardHint: green when faster and the stance beats the enemy stance', () => {
+  // counter (3) beats strike (1) on speed; counter beats attack in the CSV.
+  const hint = cardHint({ card: 'three', stance: 'counter' }, { card: 'one', stance: 'attack' }, hintCtx());
+  assert.equal(hint.border, 'green');
+});
+
+test('cardHint: yellow when only speed is in the card\'s favour', () => {
+  // Faster (3 vs 1), but attack>attack is not in the CSV.
+  const hint = cardHint({ card: 'three', stance: 'attack' }, { card: 'one', stance: 'attack' }, hintCtx());
+  assert.equal(hint.border, 'yellow');
+});
+
+test('cardHint: yellow when only the stance is in the card\'s favour', () => {
+  // Slower (1 vs 3), but smash beats block in the CSV.
+  const hint = cardHint({ card: 'one', stance: 'smash' }, { card: 'three', stance: 'block' }, hintCtx());
+  assert.equal(hint.border, 'yellow');
+});
+
+test('cardHint: red when neither speed nor stance is in the card\'s favour', () => {
+  const hint = cardHint({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'attack' }, hintCtx());
+  assert.equal(hint.border, 'red');
+});
+
+test('cardHint: blue for a self-target card, with no arrow', () => {
+  const hint = cardHint({ card: 'three', stance: 'smash', target: 'self' }, { card: 'one', stance: 'block' }, hintCtx());
+  assert.equal(hint.border, 'blue');
+  assert.equal(hint.arrow, null);
+  assert.equal(hint.speedDelta, 2);
+});
+
+test('cardHint: arrow tiers >> > 0 < << and thresholds from SPEED_TIERS', () => {
+  const stance = { stance: 'attack' };
+  const arrow = (p, e, ctx = hintCtx()) => cardHint({ card: p, ...stance }, { card: e, ...stance }, ctx).arrow;
+
+  assert.deepEqual(arrow('three', 'one'), { glyph: '>>', colour: 'green' }, 'delta +2');
+  assert.deepEqual(arrow('two', 'one'), { glyph: '>', colour: 'yellow' }, 'delta +1');
+  assert.equal(arrow('one', 'one'), null, 'delta 0 has no arrow');
+  assert.deepEqual(arrow('one', 'two'), { glyph: '<', colour: 'yellow' }, 'delta -1');
+  assert.deepEqual(arrow('one', 'three'), { glyph: '<<', colour: 'red' }, 'delta -2');
+
+  // Speed difference is reported exactly, and the arrow follows SPEED_TIERS.
+  assert.equal(cardHint({ card: 'two', ...stance }, { card: 'one', ...stance }, hintCtx()).speedDelta, 1);
+});
+
+test('cardHint: breakdown lists every speed term and sums to the player total', () => {
+  const card = { card: 'three', weapon: 'dagger', armor: 'heavy', stance: 'attack' };
+  const enemy = { card: 'one', stance: 'attack' };
+  const mods = { ...HINT_MODS, armor: { heavy: -3 } };
+  const hint = cardHint(card, enemy, hintCtx({ mods }));
+
+  assert.deepEqual(
+    hint.breakdown.map((b) => b.term),
+    ['base', 'weapon', 'armor', 'range', 'attackType', 'skill', 'initiative', 'momentum'],
+  );
+  assert.deepEqual(hint.breakdown.find((b) => b.term === 'weapon'), { term: 'weapon', value: 2 });
+  assert.deepEqual(hint.breakdown.find((b) => b.term === 'armor'), { term: 'armor', value: -3 });
+  const sum = hint.breakdown.reduce((n, b) => n + b.value, 0);
+  assert.equal(sum, 3 + 2 - 3);
+});
+
+test('cardHint: momentum term is trunc(M_e / 2) on the player breakdown', () => {
+  const card = { card: 'one', stance: 'attack' };
+  const enemy = { card: 'one', stance: 'attack' };
+  const momentumOf = (m) => cardHint(card, enemy, hintCtx({ momentum: m })).breakdown.find((b) => b.term === 'momentum').value;
+
+  assert.equal(momentumOf(2), 1);
+  assert.equal(momentumOf(-3), -1);
+  assert.equal(momentumOf(1), 0);
+  assert.equal(momentumOf(-1), 0);
+});
+
+test('cardHint: momentum moves the speed delta the same way as resolveRound (player +, enemy -)', () => {
+  const card = { card: 'one', stance: 'attack' };
+  const enemy = { card: 'one', stance: 'attack' };
+  // M_e = +2: player 1 + 1 = 2, enemy 1 - 1 = 0, so the delta is +2.
+  const hint = cardHint(card, enemy, hintCtx({ momentum: 2 }));
+  assert.equal(hint.speedDelta, 2);
+  assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
 });
