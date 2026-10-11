@@ -11,15 +11,18 @@
 # viewport watch back to `centerOnCurrent()` and that test stays green while
 # `--check` goes red. Nothing called `--check`, so the guard ran nowhere.
 #
-# WHERE IT RUNS, by the owner's ruling of 2026-09-26 (DEVELOPER.md, *Which
-# checks gate a pull request*): a pull request into `dev` is gated by fast
-# checks only, about five minutes or less.
-#   pull_request into dev / push to dev — `--check` only: the one re-fit case,
-#                              about ten seconds of browser time.
-#   push to test / release, workflow_dispatch — also the full persistence drive
-#                              (nine judged cases through the real Map ->
+# WHERE IT RUNS (owner, 2026-10-11, the stage rules): a pull request into `dev`
+# and a push to `dev` run only the base smoke, about five minutes or less, and
+# this file is not part of it. It runs on a push to `test` (and
+# `alternative/**/test`) and on workflow_dispatch, where the higher-level
+# testing lives:
+#   push to test, workflow_dispatch — the re-fit case (`--check`, about ten
+#                              seconds of browser time) and the full persistence
+#                              drive (nine judged cases through the real Map ->
 #                              Armaments -> Map remount, character creation and
 #                              Save & Quit), about a minute more.
+# Nothing here runs on `release`: the test stage already ran this check on the
+# same code before it was promoted.
 #
 # A JOB OF ITS OWN, not a step in tests.yml's core suite: `core` is a no-browser
 # lane, and this needs Chrome. It serves the SOURCE tree (no --entry), so it
@@ -30,15 +33,13 @@
 name: map camera
 
 on:
-  pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev']
   push:
-    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
+    branches: [test, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
-  group: map-camera-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: map-camera-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -77,6 +78,6 @@ jobs:
       - name: A settled map camera re-fits to its scrollport and keeps the tray's node (#1142, #1314)
         run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --check --no-screenshots
 
-      - name: The full map-camera persistence drive (push to test/release, or dispatch)
+      - name: The full map-camera persistence drive (push to test, or dispatch)
         if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
         run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --no-screenshots

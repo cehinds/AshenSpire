@@ -4,28 +4,25 @@ name: windows installer
 # Windows runner, installs it silently with the high-resolution art (the real
 # download from the pinned art release, through Windows PowerShell 5.1), checks
 # what landed, starts the game once, uninstalls, and uploads the installer as the
-# `windows-installer-<commit>` artifact. A push to `test`, `release` or `main`
-# also replaces the `installer-<branch>` prerelease, whose fixed asset
-# AshenSpire-Setup.exe is the direct download the README links.
+# `windows-installer-<commit>` artifact. A push to `release` or `main` also
+# replaces the `installer-<branch>` prerelease, whose fixed asset
+# AshenSpire-Setup.exe is the direct download the README links (the README
+# links `installer-release`).
 #
-# NOT A PULL-REQUEST GATE FOR THE GAME (owner, 2026-09-26: a PR into `dev` is
-# gated by fast checks only). It runs on a pull request only when the PR touches
-# the desktop wrapper or this file, on every push to `test`, `release` and `main`,
-# and by hand (Actions → windows installer → Run workflow) on any branch.
+# RELEASE BUILDS THE INSTALLER (owner, 2026-10-11, the stage rules). Push to
+# `release` (the polish, high-resolution and installer stage) and push to `main`
+# run it, and so does a hand dispatch (Actions → windows installer → Run
+# workflow) on any branch. It does not run on a pull request into `dev`, on a
+# push to `dev`, or on a push to `test`.
 
 on:
   push:
-    branches: [test, release, main, alternative/test, 'alternative/**/test']
-  pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev']
-    paths:
-      - 'desktop/**'
-      - '.github/workflows/windows-installer.yml'
+    branches: [release, main]
   workflow_dispatch:
 
 concurrency:
-  group: windows-installer-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: windows-installer-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
