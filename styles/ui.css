@@ -1782,8 +1782,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { width: 4.4rem; }
   .deck-editor .deck-editor-tile .deck-editor-costs { gap: .25rem; }
   .deck-editor .deck-editor-tile > .deck-editor-actions { gap: .2rem; }
-  .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { width: var(--deck-step); min-width: 0; min-height: 0; padding: 0; }
-  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-rank { font-size: .74rem; padding: .05rem 0; }
+  .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { position: relative; width: var(--deck-step); min-width: 0; min-height: 0; padding: 0; overflow: visible; }
+  /* Owner's 33px look; an invisible ring keeps the full tap target. */
+  .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step::before { content: ''; position: absolute; inset: min(0px, calc((var(--deck-step) - var(--deck-editor-target)) / 2)); }
+  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-rank { font-size: var(--deck-min-text); padding: .05rem 0; letter-spacing: -.02em; }
 }
 /* Rank sits on the top of the art as a badge (owner's wireframe, 2026-10-11);
    a row without art carries it at the end of its name line. Range follows the
