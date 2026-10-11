@@ -25,4 +25,8 @@ test('the link for a mode round-trips through the host\'s hash helpers', () => {
   assert.equal(hashFor('layout', L.paramsFor('battlefield')), '#mod=layout&mode=battlefield');
   assert.equal(hashFor('layout', L.paramsFor('config')), '#mod=layout');
   assert.equal(L.modeFor(parseHash(hashFor('layout', L.paramsFor('sketch'))).params.mode), 'sketch');
+  assert.equal(hashFor('layout', L.paramsFor('orb')), '#mod=layout&mode=orb');
+  assert.equal(hashFor('layout', L.paramsFor('deck')), '#mod=layout&mode=deck');
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=deck').params.mode), 'deck');
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=orb').params.mode), 'orb');
 });
