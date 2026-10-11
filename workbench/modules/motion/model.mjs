@@ -342,8 +342,13 @@ export function canvasDocOf(project) {
   return { width: REF.width, height: REF.height, items };
 }
 
-/** Applies the canvas document's item positions back to the project (anchors and clip offsets). */
+/**
+ * Applies the canvas document's item positions back to the project (anchors and clip offsets).
+ * A clip's offset is recomputed only when its own handle moved: an anchor-only drag keeps the
+ * stored offsets of the effects bound to that anchor, so they follow it.
+ */
 export function applyCanvasDoc(project, doc) {
+  const before = new Map(canvasDocOf(project).items.map((i) => [i.id, i]));
   let next = copy(project);
   for (const item of doc.items || []) {
     const cx = item.x + item.w / 2, cy = item.y + item.h / 2;
@@ -353,6 +358,8 @@ export function applyCanvasDoc(project, doc) {
     } else if (item.id.startsWith('clip:')) {
       const clip = next.clips.find((c) => `clip:${c.id}` === item.id);
       if (!clip) continue;
+      const prev = before.get(item.id);
+      if (prev && prev.x === item.x && prev.y === item.y) continue;
       const [ax, ay] = next.anchors?.[clip.anchor] || [0.5, 0.5];
       next = moveClip(next, clip.id, Math.round(cx - ax * REF.width), Math.round(cy - ay * REF.height));
     }

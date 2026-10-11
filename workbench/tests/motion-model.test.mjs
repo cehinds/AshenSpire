@@ -279,3 +279,37 @@ test('every shipped pose file (renewal, stances and the rest) round-trips byte-i
     assert.equal(isDirty(text, project), false, `${rel} is not dirty`);
   }
 });
+
+test('an anchor-only drag leaves the offsets of the effects bound to it, so they follow the anchor', () => {
+  const project = {
+    anchors: { hand: [0.5, 0.5], torso: [0.3, 0.4] },
+    clips: [
+      { id: 'bound', effect: 'burst', anchor: 'hand', x: 10, y: -20 },
+      { id: 'other', effect: 'spark', anchor: 'torso', x: 0, y: 0 },
+    ],
+  };
+  const doc = canvasDocOf(project);
+  const moved = applyCanvasDoc(project, {
+    ...doc,
+    items: doc.items.map((i) => (i.id === 'anchor:hand' ? { ...i, x: i.x + 30, y: i.y - 15 } : i)),
+  });
+  assert.ok(Math.abs(moved.anchors.hand[0] - (0.5 + 30 / 1000)) < 1e-9, 'the anchor moved');
+  assert.equal(moved.clips[0].x, 10, 'the bound effect keeps its x offset');
+  assert.equal(moved.clips[0].y, -20, 'the bound effect keeps its y offset');
+  assert.deepEqual(moved.clips[1], project.clips[1], 'an unbound effect is untouched');
+});
+
+test('a dragged effect is recomputed against its anchor, and only that effect changes', () => {
+  const project = {
+    anchors: { hand: [0.5, 0.5] },
+    clips: [{ id: 'a', effect: 'burst', anchor: 'hand', x: 10, y: 0 }],
+  };
+  const doc = canvasDocOf(project);
+  const next = applyCanvasDoc(project, {
+    ...doc,
+    items: doc.items.map((i) => (i.id === 'clip:a' ? { ...i, x: i.x + 7 } : i)),
+  });
+  assert.equal(next.clips[0].x, 17, 'the offset follows the dragged handle');
+  assert.equal(next.clips[0].y, 0);
+  assert.deepEqual(next.anchors, project.anchors);
+});
