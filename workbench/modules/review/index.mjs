@@ -41,8 +41,9 @@ export default {
           <div class="rv-seg" role="group" aria-label="View mode">${MODES.map(([id, label]) => `<button type="button" data-mode="${id}" aria-pressed="false">${label}</button>`).join('')}</div>
           <label class="rv-ctl rv-swipe-ctl">Position <input type="range" min="0" max="100" data-ctl="pos"></label>
           <label class="rv-ctl rv-onion-ctl">Current opacity <input type="range" min="0" max="100" data-ctl="opacity"></label>
+          <div class="rv-zoom" role="group" aria-label="Zoom"><button type="button" data-zoom="out" aria-label="Zoom out">−</button><button type="button" data-zoom="fit">Fit</button><button type="button" data-zoom="100">100%</button><button type="button" data-zoom="in" aria-label="Zoom in">+</button><span class="rv-zl" aria-live="polite"></span></div>
         </div>
-        <div class="rv-view"><div class="rv-stage"></div></div>
+        <div class="rv-view" tabindex="0" aria-label="Pictures: drag to pan, wheel or + and − to zoom, 0 to fit"><div class="rv-stage"></div></div>
         <footer class="rv-dfoot"><button type="button" class="rv-accept primary">Accept as baseline</button><button type="button" class="rv-layout">Open in Layout Studio</button></footer>
       </section>
     </div>`;
@@ -385,8 +386,74 @@ export default {
 
     // ---------- detail view ----------
     const detail = el.querySelector('.rv-detail');
-    const dstate = { row: null, mode: ctx.settings.get('mode', 'side'), pos: 50, opacity: 50, urls: {}, token: 0 };
+    const dstate = { row: null, mode: ctx.settings.get('mode', 'side'), pos: 50, opacity: 50, urls: {}, token: 0, view: { s: 1, x: 12, y: 12 }, needFit: false };
     const stage = () => detail.querySelector('.rv-stage');
+    const viewEl = () => detail.querySelector('.rv-view');
+
+    // Zoom and pan move the one stage every mode draws into, so the panes in every mode stay in step.
+    function applyView() {
+      const s = stage();
+      if (s) s.style.transform = `translate(${dstate.view.x}px, ${dstate.view.y}px) scale(${dstate.view.s})`;
+      const zl = detail.querySelector('.rv-zl');
+      if (zl) zl.textContent = `${Math.round(dstate.view.s * 100)}%`;
+    }
+    /** Shows the whole picture, never enlarged past 100%, centred across. Needs the images' sizes, so it waits for them. */
+    function fitView() {
+      const v = viewEl(); const s = stage();
+      const cw = s.offsetWidth; const ch = s.offsetHeight;
+      if (!cw || !ch) return;
+      const k = Math.min(1, (v.clientWidth - 24) / cw, (v.clientHeight - 24) / ch);
+      dstate.view = { s: k, x: Math.max(12, (v.clientWidth - cw * k) / 2), y: 12 };
+      applyView();
+    }
+    function zoomAt(factor, cx, cy) {
+      const { s, x, y } = dstate.view;
+      const ns = Math.min(8, Math.max(0.1, s * factor));
+      const r = ns / s;
+      dstate.view = { s: ns, x: cx - (cx - x) * r, y: cy - (cy - y) * r };
+      applyView();
+    }
+    function zoomCentre(factor) { const v = viewEl(); zoomAt(factor, v.clientWidth / 2, v.clientHeight / 2); }
+    function zoomTo(scale) { const v = viewEl(); const { s } = dstate.view; zoomAt(scale / s, v.clientWidth / 2, v.clientHeight / 2); }
+
+    let drag = null;
+    detail.addEventListener('pointerdown', (ev) => {
+      const v = ev.target.closest?.('.rv-view');
+      if (!v || ev.button !== 0) return;
+      drag = { id: ev.pointerId, x: ev.clientX, y: ev.clientY };
+      v.setPointerCapture(ev.pointerId);
+      v.classList.add('dragging');
+    });
+    detail.addEventListener('pointermove', (ev) => {
+      if (!drag || drag.id !== ev.pointerId) return;
+      dstate.view.x += ev.clientX - drag.x;
+      dstate.view.y += ev.clientY - drag.y;
+      drag.x = ev.clientX; drag.y = ev.clientY;
+      applyView();
+    });
+    const endDrag = (ev) => {
+      if (!drag || drag.id !== ev.pointerId) return;
+      drag = null;
+      viewEl()?.classList.remove('dragging');
+    };
+    detail.addEventListener('pointerup', endDrag);
+    detail.addEventListener('pointercancel', endDrag);
+    detail.addEventListener('wheel', (ev) => {
+      const v = ev.target.closest?.('.rv-view');
+      if (!v) return;
+      ev.preventDefault();
+      const r = v.getBoundingClientRect();
+      zoomAt(ev.deltaY < 0 ? 1.15 : 1 / 1.15, ev.clientX - r.left, ev.clientY - r.top);
+    }, { passive: false });
+    detail.addEventListener('keydown', (ev) => {
+      if (!ev.target.closest?.('.rv-view')) return;
+      if (ev.key === '+' || ev.key === '=') zoomCentre(1.25);
+      else if (ev.key === '-') zoomCentre(1 / 1.25);
+      else if (ev.key === '0') fitView();
+      else if (ev.key === '1') zoomTo(1);
+      else return;
+      ev.preventDefault();
+    });
     const msg = (text) => `<p class="rv-empty">${esc(text)}</p>`;
 
     async function openDetail(key) {
@@ -398,6 +465,7 @@ export default {
       main().hidden = true;
       detail.hidden = false;
       paintDetailHead();
+      dstate.needFit = true;
       stage().innerHTML = msg('Loading…');
       try {
         const u = {};
@@ -476,15 +544,22 @@ export default {
           + `<div class="rv-pane"><span class="rv-cap">Current</span>${u.cur ? img(u.cur, 'Current') : msg('No capture for this screen and device.')}</div>`;
         return;
       }
-      if (!r.hasBaseline) { s.innerHTML = msg('No baseline yet, so there is nothing to compare. Accept this capture to make one.'); return; }
-      if (mode === 'diff') { s.innerHTML = u.diff ? img(u.diff, 'Diff: changed pixels in red') : msg('The two images differ in size, so no pixel lines up.'); return; }
-      if (mode === 'swipe') {
+      if (!r.hasBaseline) s.innerHTML = msg('No baseline yet, so there is nothing to compare. Accept this capture to make one.');
+      else if (mode === 'diff') s.innerHTML = u.diff ? img(u.diff, 'Diff: changed pixels in red') : msg('The two images differ in size, so no pixel lines up.');
+      else if (mode === 'swipe') {
         s.innerHTML = `<div class="rv-layer">${img(u.base, 'Baseline')}</div>`
           + `<div class="rv-layer rv-clip" style="clip-path: inset(0 0 0 ${pos}%)">${img(u.cur, 'Current')}</div>`
           + `<div class="rv-divider" style="left: ${pos}%"></div>`;
-        return;
+      } else {
+        s.innerHTML = `<div class="rv-layer">${img(u.base, 'Baseline')}</div><div class="rv-layer" style="opacity: ${opacity / 100}">${img(u.cur, 'Current')}</div>`;
       }
-      s.innerHTML = `<div class="rv-layer">${img(u.base, 'Baseline')}</div><div class="rv-layer" style="opacity: ${opacity / 100}">${img(u.cur, 'Current')}</div>`;
+      if (dstate.needFit) {
+        dstate.needFit = false;
+        const first = s.querySelector('img');
+        if (first?.complete && first.naturalWidth) fitView();
+        else first?.addEventListener('load', fitView, { once: true });
+      }
+      applyView();
     }
 
     detail.addEventListener('click', (ev) => {
@@ -492,6 +567,14 @@ export default {
       if (t.closest('.rv-back')) return closeDetail();
       if (t.closest('.rv-prev')) return stepDetail(-1);
       if (t.closest('.rv-next')) return stepDetail(1);
+      const zoom = t.closest('[data-zoom]')?.dataset.zoom;
+      if (zoom) {
+        if (zoom === 'in') zoomCentre(1.25);
+        else if (zoom === 'out') zoomCentre(1 / 1.25);
+        else if (zoom === 'fit') fitView();
+        else zoomTo(1);
+        return;
+      }
       const mode = t.closest('[data-mode]')?.dataset.mode;
       if (mode) { dstate.mode = mode; ctx.settings.set('mode', mode); paintStage(); }
     });

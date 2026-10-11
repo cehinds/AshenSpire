@@ -62,8 +62,13 @@
 .rv-dtools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .rv-ctl { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
 .rv-ctl[hidden] { display: none; }
-.rv-view { flex: 1; min-height: 320px; overflow: auto; border: 1px solid var(--as-line, #3a2f20); border-radius: 8px; background: var(--as-bg-sunken, #0d0c0a); padding: 12px; }
-.rv-stage { display: inline-block; min-width: 100%; }
+.rv-view { flex: 1; min-height: 320px; overflow: hidden; position: relative; border: 1px solid var(--as-line, #3a2f20); border-radius: 8px; background: var(--as-bg-sunken, #0d0c0a); cursor: grab; touch-action: none; }
+.rv-view.dragging { cursor: grabbing; }
+.rv-view:focus-visible { outline: 2px solid var(--as-accent-strong, #f0b95c); outline-offset: 2px; }
+.rv-stage { display: inline-block; transform-origin: 0 0; }
+.rv-zoom { display: inline-flex; align-items: center; gap: 4px; }
+.rv-zoom button { padding: 4px 9px; font-size: 12px; }
+.rv-zl { min-width: 46px; font-size: 12px; font-variant-numeric: tabular-nums; opacity: 0.8; }
 .rv-stage[data-mode="side"] { display: flex; gap: 14px; align-items: flex-start; }
 .rv-stage:not([data-mode="side"]) { position: relative; }
 .rv-pane { position: relative; flex: 0 0 auto; }
