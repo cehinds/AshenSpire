@@ -106,12 +106,12 @@ dropped whole: the element keeps its placed position.
 
 Each geometry token moves its element only in the directions it has room in:
 
-| Token | Moves | Why |
+| Element (token) | Moves | Why |
 |---|---|---|
-| `--hud-player-details-dx` / `-dy` | either way | clamped between the HUD band, the field sides and the hand; refused onto another reserved panel, control or target footprint |
-| `--hud-enemy-nameplate-dy` | up or down | the visible name/HP footer and its tap target move together; clamped to the field; refused onto the HUD, ribbon, tools, hand, the player's panel, another fighter's controls or another packed target |
-| `--hud-turn-ribbon-dy` | down only | it hangs from the HUD band's bottom edge, so a negative value is ignored (it would go under the band); clamped to the field floor |
-| `--hud-tools-dy` | up only | it docks on the hand's top edge, so a positive value is ignored (it would cover the cards); clamped to the combat screen top; refused onto the header, ribbon, intents, HP plates, Inspect buttons or fighter targets |
+| Player details (`--hud-player-details-dx`, `-dy`) | either way | clamped between the HUD band, the field sides and the hand; refused onto another reserved panel, control or target footprint |
+| Selected enemy nameplate (`--hud-enemy-nameplate-dy`) | up or down | the visible name/HP footer and its tap target move together; clamped to the field; refused onto the HUD, ribbon, tools, hand, the player's panel, another fighter's controls or another packed target |
+| Turn ribbon (`--hud-turn-ribbon-dy`) | down only | it hangs from the HUD band's bottom edge, so a negative value is ignored (it would go under the band); clamped to the field floor |
+| Combat log / Reaction row (`--hud-tools-dy`) | up only | it docks on the hand's top edge, so a positive value is ignored (it would cover the cards); clamped to the combat screen top; refused onto the header, ribbon, intents, HP plates, Inspect buttons or fighter targets |
 
 ## Studio mapping
 
@@ -128,6 +128,24 @@ An export carries only the tokens whose value differs from the studio's seed
 studio exports `"tokens": {}` for every form factor, so exporting without edits
 changes nothing in the game. Export-settings values (`minWidth`, `maxWidth`,
 `span`) count as set once the designer sets them in the Inspector.
+
+Each binding names the view (`state`) where its component is shown, and the
+export reads the node in that view: the enemy nameplate and enemy panel border
+in *Enemy selected*, the idle HP plates (`--hud-text-plate-*`) in *Idle*,
+everything else in *Player selected*. On Mobile with **Edit all views** off, an
+edit to a token-bound component made in another view is not exported; the
+Inspector says so ("Exports from <view>").
+
+**Import CSS JSON** accepts every committed `content/hud-layout/*.json`.
+A shadow the canvas cannot draw as one design-px layer (several layers,
+`inset`, `rem`/`em`) keeps its CSS text and exports verbatim until its first
+layer is edited; then the edit replaces that layer and the others are kept.
+A unitless `0` is a length; `--hud-header-hp-max-width` may be a `%`, `rem` or
+`em` length, kept as text. Re-exporting an untouched import yields the same
+tokens, except one whose value equals the studio seed (not exported; `--merge`
+keeps it). The imported tokens become that form factor's baseline: a baseline
+token whose value is later reset to the seed exports as `null`, so `--merge`
+removes the committed override. Without an import, an export never holds `null`.
 
 Workflow:
 
