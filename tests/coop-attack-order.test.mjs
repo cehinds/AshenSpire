@@ -9,7 +9,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { createSession } from '../tools/session.mjs';
-import { coopTimelineRoute } from '../src/ui/screens/coop.js';
+import { coopTimelineRoute, coopReceiptOverlays } from '../src/ui/screens/coop.js';
+import { decorateCombatEffects, combatEffectReceipt } from '../src/model/combatEffectEvents.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -105,4 +106,21 @@ test("every combat re-render, the timeline's final one included, keeps live numb
   const render = body('render');
   assert.match(render, /const carriedFx = snap\.scene\.kind === 'combat' \? \[\.\.\.\(app\.querySelector\('\.fx-layer'\)\?\.children \|\| \[\]\)\] : \[\];/);
   assert.match(render, /renderCombat\(\);app\.querySelector\('\.fx-layer'\)\?\.append\(\.\.\.carriedFx\);/);
+});
+
+test('a paced player attack still earns its receipt overlays, played after the final render', () => {
+  // A seat's attack that bursts bleed and meets an enemy's guard, as the
+  // session digest carries it (sourceId "player", seat ids beside it).
+  const events = [
+    { type: 'cardPlayed', playerId: 'p1', sourcePlayerId: 'p1', cardId: 'gorefireSlash', cardType: 'attack' },
+    { type: 'damageDealt', sourceId: 'player', sourcePlayerId: 'p1', targetId: 'e1', amount: 5, blocked: 3, blockRemaining: 2, isAttack: true },
+    { type: 'procBurst', status: 'bleed', sourceId: 'player', sourcePlayerId: 'p1', targetId: 'e1' },
+  ];
+  assert.equal(coopTimelineRoute(events, ['p1']), 'player');
+  const overlays = coopReceiptOverlays(decorateCombatEffects(events.map(combatEffectReceipt), registries));
+  assert.deepEqual(overlays, [{ kind: 'physicalGuard', targetId: 'e1' }, { kind: 'bloodLoss', targetId: 'e1' }]);
+  const pace = body('paceReactionReceipts');
+  const final = pace.lastIndexOf('render();');
+  assert.ok(pace.indexOf('playReceiptOverlays(') > final, 'the overlays play on the final board, not a board the next render replaces');
+  assert.match(body('spawnCombatFx'), /if\(hasNewReceipts\)playReceiptOverlays\(effectEvents\);/);
 });

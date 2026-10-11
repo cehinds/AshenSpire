@@ -226,6 +226,11 @@ export function coopTimelineRoute(events = [], seatIds = []) {
   return list.some(event => attack(event) && fromPlayer(event)) ? 'player' : null;
 }
 
+/** The receipt overlays ({ kind, targetId }) a batch of decorated co-op receipts earns. */
+export function coopReceiptOverlays(decorated = []) {
+  return (decorated || []).map(event => event && combatEffectForEvent(event)).filter(Boolean);
+}
+
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
@@ -380,6 +385,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (event.type === 'playerTurnStart') { plans.delete(ownerId); heldStances.accept(event); }
     }
     return plans;
+  }
+  // Receipt overlays (bleed/poison bursts, stance auras, dodge, guard and
+  // barrier hits) over each receipt's target, from decorated receipts.
+  function playReceiptOverlays(decorated) {
+    const layer = app.querySelector('.fx-layer');
+    if (!layer) return;
+    for (const effect of coopReceiptOverlays(decorated)) {
+      const id = CSS.escape(String(effect.targetId));
+      const anchor = app.querySelector('[data-eid="' + id + '"] .sprite') || app.querySelector('[data-eid="' + id + '"]') || app.querySelector('[data-seat="' + id + '"] .sprite');
+      if (anchor) playCombatEffect(layer, anchorLocalBox(layer, anchor), effect.kind, { size: 190 });
+    }
   }
   // A seat's card sprite effect, played from its figure toward its targets.
   function playCardEffects(ownerId, plan, duration) {
@@ -2153,6 +2169,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       snap = next;
       setPacing(false);
       render();
+      // The final render is not a new-receipt render (lastReceiptSeq already
+      // moved), so the paced receipts' overlays play here, on the final board.
+      playReceiptOverlays(hasCardPlay ? effectEvents
+        : decorateCombatEffects((next.scene.events || []).map(combatEffectReceipt), registries, barrierVisuals));
       const queued = pendingSnaps; pendingSnaps = [];
       for (const pending of queued) receiveSnapshot(pending);
     });
@@ -2256,12 +2276,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // receiptSeq, not local object identity, owns whether these receipts are new.
     const receiptSeq = Number(now.receiptSeq) || 0;
     const hasNewReceipts = receiptSeq > lastReceiptSeq;
-    if(hasNewReceipts)for(const event of effectEvents){
-      const effect=combatEffectForEvent(event);if(!effect)continue;
-      const id=CSS.escape(String(effect.targetId));
-      const anchor=app.querySelector('[data-eid="'+id+'"] .sprite')||app.querySelector('[data-eid="'+id+'"]')||app.querySelector('[data-seat="'+id+'"] .sprite');
-      if(anchor)playCombatEffect(layer,anchorLocalBox(layer,anchor),effect.kind,{size:190});
-    }
+    if(hasNewReceipts)playReceiptOverlays(effectEvents);
     // The callouts (STAGGERED, CRITICAL, GUARD BREAK, EVADED…) of an ordinary
     // resolution. A paced timeline plays its own and advances lastReceiptSeq
     // before it renders, so a receipt is never called out twice.
