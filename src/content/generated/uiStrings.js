@@ -7801,6 +7801,104 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "armoury.picker.caption",
+    "extends": "",
+    "short": "Items for {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.item",
+    "extends": "",
+    "short": "Item",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.status",
+    "extends": "",
+    "short": "Status",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.actions",
+    "extends": "",
+    "short": "Actions",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.here",
+    "extends": "",
+    "short": "Equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.free",
+    "extends": "",
+    "short": "Not equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.elsewhere",
+    "extends": "",
+    "short": "{slot} {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.nofit",
+    "extends": "",
+    "short": "Doesn't fit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.onlyCopy",
+    "extends": "",
+    "short": "Only copy: moving it empties {slot} {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.reason.kind",
+    "extends": "",
+    "short": "Doesn't fit {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.reason.hand",
+    "extends": "",
+    "short": "Only fits the other hand",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.showAll",
+    "extends": "",
+    "short": "Show all",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.fitsOnly",
+    "extends": "",
+    "short": "Fits only",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.hide",
+    "extends": "",
+    "short": "Hide",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "characterSheet.open",
     "extends": "",
     "short": "Character sheet",
