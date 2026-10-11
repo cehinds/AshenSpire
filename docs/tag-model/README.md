@@ -195,7 +195,7 @@ mapping, and they approximate it; they are not exact:
   reads the last compound selector (the element the rule styles) only. Classes
   in ancestors, and inside `:not()`, `:is()` and `:where()`, are ignored; generic
   state classes (spent, outline, active, selected, disabled, hidden, `is-*` and
-  any class more than three components add) never decide. A selector whose
+  any class three or more catalog components add) never decide. A selector whose
   parentheses or brackets do not balance keeps its CSS id: 1507 inventory rows
   are such fragments, left by the inventory's selector extraction, which this
   tree does not contain, so they are counted (`brokenSelectors`) rather than

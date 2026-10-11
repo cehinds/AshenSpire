@@ -532,7 +532,7 @@ function lastCompoundClasses(selector) {
 const GENERIC_STATE = new Set(['spent', 'outline', 'active', 'selected', 'disabled', 'hidden', 'on', 'off', 'open', 'closed',
   'focus', 'focused', 'hover', 'pressed', 'current', 'locked', 'dim', 'show', 'visible', 'collapsed', 'expanded', 'invalid',
   'error', 'highlighted', 'primary', 'danger', 'reduced-motion']);
-const GENERIC_OWNERS = 3; // a class that more than this many components add is generic
+const GENERIC_OWNERS = 3; // a class that three or more catalog components add is generic
 const isGenericClass = c => GENERIC_STATE.has(c) || /^(is|has)-/.test(c) || (catalogOfClass.get(c)?.size ?? 0) >= GENERIC_OWNERS;
 const styleCssIds = [];
 // A selector whose parentheses or brackets do not balance is a fragment left by

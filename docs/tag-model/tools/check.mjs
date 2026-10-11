@@ -345,6 +345,10 @@ if (presOk.styles && presOk.components) {
   // .spent is generic: the deck editor owns the name, not the armoury card row.
   // deck-editor-name is a catalog id styled by its own class (no cssClasses entry needed).
   guard('.deck-editor-tile.spent .deck-editor-name', own => { if (own !== 'deck-editor-name') fail(`presentation/styles: ".deck-editor-tile.spent .deck-editor-name" componentId "${own}" should be "deck-editor-name"`); });
+  // "outline" is a generic state class that more than one catalog component adds, so it
+  // never picks the owner: the rule belongs to deck-editor-art. Without the generic skip
+  // the owner becomes formation-layout-editor, so this guard fails then.
+  guard('.deck-editor-art.outline', own => { if (own !== 'deck-editor-art') fail(`presentation/styles: ".deck-editor-art.outline" componentId "${own}" should be "deck-editor-art"`); });
 }
 
 // Kit helper matching: a component gets a kit helper's classes only when its file
