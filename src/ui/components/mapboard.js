@@ -1248,6 +1248,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   function releaseLook() {
     insetBottom = 0;
     look = null;
+    // A re-fit taken while the tray was open sized the board with the tray's
+    // inset; drop that padding so no empty strip stays below the map.
+    sizeSvg();
   }
   function resetFraming({ glideMs = 0 } = {}) {
     insetBottom = 0;

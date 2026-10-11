@@ -1929,11 +1929,18 @@ function showSettings() {
 
 // AFTER AN IMPORT, NO RELOAD. The restored profile is on disk; re-read it the way
 // boot does (persistSettingsChange's order) and redraw the title over the same page.
+// It goes through the Profile door's restore (onRestored in showProfile): the
+// stored profile is brought forward and its promoted defaults seeded the way
+// boot does, then applyRestoredSettings re-applies display, UI scale, pad and
+// key bindings, drops a stale Undo, and fills activeSettings IN PLACE (other
+// owners hold that object). The defaults choice is offered for the new profile.
 function refreshAfterImport() {
   activeMeta = saves.loadMeta();
-  activeSettings = activeMeta.settings || (activeMeta.settings = {});
-  applyDisplaySettings(activeSettings);
+  const settings = bringStoredProfileForward(activeMeta);
+  seedPromotedDefaults(activeMeta, settings);
+  applyRestoredSettings(settings);
   rebuildRegistries(activeSettings);
+  settingsChoiceChecked = false;
   showTitle({ skipStartup: true });
 }
 

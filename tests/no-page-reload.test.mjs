@@ -40,7 +40,7 @@ test('showOfflinePlay passes onImported, so an import does not reload the page',
   assert.match(body, /onImported:\s*refreshAfterImport/);
   const refresh = bodyOf(main, 'function refreshAfterImport() {');
   assert.match(refresh, /saves\.loadMeta\(\)/);
-  assert.match(refresh, /applyDisplaySettings\(activeSettings\)/);
+  assert.match(refresh, /applyRestoredSettings\(settings\)/);
   assert.match(refresh, /rebuildRegistries\(activeSettings\)/);
   assert.match(refresh, /showTitle\(\{ skipStartup: true \}\)/);
 });
@@ -63,4 +63,14 @@ test('remountMapIfShowing defers to the modal registry', () => {
   assert.match(body, /modalOpen\(\)/);
   assert.match(body, /onModalsClosed\(/);
   assert.match(main, /import \{ modalOpen, onModalsClosed \} from '\.\/ui\/modalState\.js';/);
+});
+
+test('an import refresh restores the profile the way the Profile door does', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const body = main.match(/function refreshAfterImport\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  for (const step of ['bringStoredProfileForward(', 'seedPromotedDefaults(', 'applyRestoredSettings(', 'rebuildRegistries(', 'showTitle(']) {
+    assert.ok(body.includes(step), `refreshAfterImport calls ${step}`);
+  }
+  assert.ok(body.indexOf('bringStoredProfileForward(') < body.indexOf('applyRestoredSettings('), 'migrate before applying');
+  assert.ok(!/activeSettings\s*=/.test(body), 'activeSettings is filled in place, never replaced');
 });
