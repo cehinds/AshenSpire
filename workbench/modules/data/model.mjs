@@ -190,7 +190,7 @@ function parseCsv(text) {
   const types = Object.fromEntries(columns.map((c) => [c.key, c.type]));
   const rows = cellRows.map((cells) => Object.fromEntries(columns.map((c, j) => [c.key, typedCell(cells[j], c.type)])));
   // Each read row keeps its line, the comment and blank lines above it, and its canonical text.
-  const leads = rows.map((row, i) => ({ ...lead[i], text: csvLine(row, columns, types) }));
+  const leads = rows.map((row, i) => ({ ...lead[i], text: csvLine(row, columns, types), row }));
   return {
     columns, rows,
     meta: { format: 'csv', bom, eol, trailingNewline, pre: lines.slice(0, headerAt), headerLine, names, leads, tail: pending },
@@ -198,38 +198,59 @@ function parseCsv(text) {
 }
 
 /**
- * Pairs each saved row with the read row it came from, or -1 for a new row.
- * Identity, not order: a read row pairs at most once. Pass 1 pairs equal
- * canonical text, first to first in read order. Pass 3 pairs the rows left
- * over, in order. Read rows nothing pairs with were deleted. O(n) with a map.
+ * The identity of a row for pairing: its key column's text, with the scope column first when the table's path
+ * is in KEY_SCOPES. null when the table has no key column.
  */
-function alignRows(readTexts, savedTexts) {
-  const at = new Array(savedTexts.length).fill(-1);
-  const taken = new Uint8Array(readTexts.length);
-  const byText = new Map();
-  // Pushed last to first, so pop() yields the earliest unused read row of a text.
-  for (let i = readTexts.length - 1; i >= 0; i--) {
-    const list = byText.get(readTexts[i]);
-    if (list) list.push(i); else byText.set(readTexts[i], [i]);
-  }
-  savedTexts.forEach((text, j) => {
-    const list = byText.get(text);
-    if (list?.length) { at[j] = list.pop(); taken[at[j]] = 1; }
-  });
+function rowKey(row, keyName, scope) {
+  if (!keyName) return null;
+  return JSON.stringify([scope ? row[scope] : null, row[keyName]].map((v) => String(v ?? '')));
+}
+
+/**
+ * Pairs each saved row with the read row it came from, or -1 for a new row.
+ * `read` and `saved` are arrays of { text, key }: canonical text and row key
+ * (null when the table has none). Identity, not order: a read row pairs at
+ * most once. Pass 1 pairs equal text, first to first in read order. Pass 2
+ * pairs the same key. Pass 3 pairs the rows left over, in order. Read rows
+ * nothing pairs with were deleted. O(n) with maps.
+ */
+function alignRows(read, saved) {
+  const at = new Array(saved.length).fill(-1);
+  const taken = new Uint8Array(read.length);
+  // Each pass pairs saved rows, in saved order, with the untaken read rows that share its value.
+  // Read rows are pushed last to first, so pop() yields the earliest one.
+  const pass = (readValue, savedValue) => {
+    const queues = new Map();
+    for (let i = read.length - 1; i >= 0; i--) {
+      const v = readValue(read[i]);
+      if (taken[i] || v === null) continue;
+      const list = queues.get(v);
+      if (list) list.push(i); else queues.set(v, [i]);
+    }
+    saved.forEach((s, j) => {
+      const v = savedValue(s);
+      const list = at[j] < 0 && v !== null ? queues.get(v) : undefined;
+      if (list?.length) { at[j] = list.pop(); taken[at[j]] = 1; }
+    });
+  };
+  pass((r) => r.text, (s) => s.text);
+  pass((r) => r.key, (s) => s.key);
   const freeSaved = [], freeRead = [];
   at.forEach((i, j) => { if (i < 0) freeSaved.push(j); });
-  for (let i = 0; i < readTexts.length; i++) if (!taken[i]) freeRead.push(i);
+  for (let i = 0; i < read.length; i++) if (!taken[i]) freeRead.push(i);
   freeSaved.forEach((j, k) => { if (k < freeRead.length) { at[j] = freeRead[k]; taken[freeRead[k]] = 1; } });
   return at;
 }
 
-function serializeCsv(meta, { columns, rows }) {
+function serializeCsv(meta, { columns, rows }, path) {
   const types = Object.fromEntries(columns.map((c) => [c.key, c.type]));
   const keys = columns.map((c) => c.key);
   const sameNames = keys.length === meta.names.length && keys.every((k, i) => k === meta.names[i]);
   const out = [...meta.pre, sameNames ? meta.headerLine : columns.map((c) => csvCell(c.key)).join(',')];
-  const saved = rows.map((row) => csvLine(row, columns, types));
-  const at = alignRows(meta.leads.map((l) => l.text), saved);
+  const keyName = keyColumnOf(columns)?.key ?? null, scope = keyScopeFor(path);
+  const read = meta.leads.map((l) => ({ text: l.text, key: rowKey(l.row, keyName, scope) }));
+  const saved = rows.map((row) => ({ text: csvLine(row, columns, types), key: rowKey(row, keyName, scope) }));
+  const at = alignRows(read, saved);
   const paired = new Uint8Array(meta.leads.length);
   for (const i of at) if (i >= 0) paired[i] = 1;
   // Leading lines of deleted rows wait for the next kept row in file order, or the end of the file.
@@ -239,7 +260,7 @@ function serializeCsv(meta, { columns, rows }) {
     if (paired[i]) { inherited[i] = pending; pending = []; }
     else pending.push(...lead.before);
   });
-  saved.forEach((text, j) => {
+  saved.forEach(({ text }, j) => {
     const i = at[j];
     if (i < 0) { out.push(text); return; }
     const lead = meta.leads[i];
@@ -283,7 +304,7 @@ export function parseTable(path, text, { hash = null } = {}) {
 
 /** The text a table's { columns, rows } would be saved as. Unchanged data gives the original text. */
 export function serializeTable(table, doc = { columns: table.columns, rows: table.rows }) {
-  return table.format === 'csv' ? serializeCsv(table.meta, doc) : serializeJson(table.meta, doc);
+  return table.format === 'csv' ? serializeCsv(table.meta, doc, table.path) : serializeJson(table.meta, doc);
 }
 
 /** True when the grid's document differs from the file as read. */

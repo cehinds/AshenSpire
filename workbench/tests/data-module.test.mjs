@@ -308,3 +308,20 @@ test('findRow on the real outfits table tells apart the repeated armour ids by c
   assert.equal(table.rows[D.findRow(table.rows, 'id', 'nightweave', 'classId:reaver')].classId, 'reaver');
   assert.equal(table.rows[D.findRow(table.rows, 'id', 'nightweave', 'classId:starseer')].classId, 'starseer');
 });
+
+// Rows pair by identity, not position: an edited row that moves keeps its own comments.
+test('two edited CSV rows that move keep their own leading comments (paired by key)', () => {
+  const text = 'id,name\n# ca\na,1\n# cb\nb,2\n# cc\nc,3\n';
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = [{ ...table.rows[1], name: 20 }, table.rows[2], { ...table.rows[0], name: 10 }];
+  assert.equal(D.serializeTable(table, doc), 'id,name\n# cb\nb,20\n# cc\nc,3\n# ca\na,10\n');
+});
+
+test('a table listed in KEY_SCOPES pairs edited rows by the (classId, id) key, not id alone', () => {
+  const text = 'classId,id,name\n# r\nreaver,default,1\n# s\nstarseer,default,2\n';
+  const table = D.parseTable('content/source/outfits.csv', text);
+  const doc = docOf(table);
+  doc.rows = [{ ...table.rows[1], name: 22 }, { ...table.rows[0], name: 11 }];
+  assert.equal(D.serializeTable(table, doc), 'classId,id,name\n# s\nstarseer,default,22\n# r\nreaver,default,11\n');
+});
