@@ -137,3 +137,29 @@ test('packsOf and pinOf read the pin and report an unfetched pack as not fetched
   assert.equal(packs.find((p) => p.id === 'common').fetched, false);
   assert.equal(await pinOf(path.join(root, 'nowhere')), null);
 });
+
+test('listArt reads at most 32 headers at once, so a large art tree does not run out of file descriptors', async (t) => {
+  const root = await project(t, { pin: false });
+  clearArtCache();
+  const dir = path.join(root, 'assets-mobile/many');
+  await fs.mkdir(dir, { recursive: true });
+  const N = 2000;
+  await Promise.all(Array.from({ length: N }, (_, i) => fs.writeFile(path.join(dir, `tile-${i}.png`), png(16, 16))));
+  // Count the handles open at once: a header read holds one from fs.open until its close.
+  const realOpen = fs.open;
+  let open = 0, peak = 0;
+  fs.open = async (...args) => {
+    const fh = await realOpen.apply(fs, args);
+    open += 1; peak = Math.max(peak, open);
+    const close = fh.close.bind(fh);
+    fh.close = async () => { open -= 1; return close(); };
+    return fh;
+  };
+  t.after(() => { fs.open = realOpen; });
+  const list = await listArt(root, { limit: N + 100 });
+  fs.open = realOpen;
+  assert.equal(list.files.filter((f) => f.path.startsWith('assets-mobile/many/')).length, N);
+  assert.equal(list.files.find((f) => f.path === 'assets-mobile/many/tile-7.png').w, 16, 'the header is still read');
+  assert.ok(peak <= 32, `at most 32 handles open at once, saw ${peak}`);
+  assert.ok(peak > 1, 'the reads do run concurrently');
+});

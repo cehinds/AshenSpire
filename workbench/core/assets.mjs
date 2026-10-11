@@ -24,6 +24,23 @@ const HEADER_BYTES = 512;
 const SVG_BYTES = 4096;
 
 const cache = new Map(); // absolute path -> { mtimeMs, size, dims }: a header is read once per file version
+/** The most header reads in flight at once: each holds a file descriptor, and a tree can hold thousands of files. */
+export const HEADER_CONCURRENCY = 32;
+
+/** `fn` over `items`, at most `limit` calls in flight; the results keep the items' order. */
+export async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next;
+      next += 1;
+      out[i] = await fn(items[i], i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
 
 /** The pinned tag and its packs, from art-release.json. Null when the pin is missing or unreadable. */
 export async function pinOf(root) {
@@ -134,10 +151,10 @@ export async function listArt(root, { limit = MAX_FILES } = {}) {
       seen.set(gamePath, { path: gamePath, bytes: stat.size, from: src.from, file: f.full, ext, stat });
     }
   }
-  const files = await Promise.all([...seen.values()].map(async ({ path: p, bytes, from, file, ext, stat }) => {
+  const files = await mapLimit([...seen.values()], HEADER_CONCURRENCY, async ({ path: p, bytes, from, file, ext, stat }) => {
     const dims = await headerOf(file, ext, stat);
     return { path: p, bytes, from, ...(dims ? { w: dims.w, h: dims.h } : {}) };
-  }));
+  });
   files.sort((a, b) => a.path.localeCompare(b.path));
   // The light tier is also tracked in this repository (assets-mobile/), so it is available without a fetch.
   const tracked = files.some((f) => f.from === 'tree' && f.path.startsWith('assets-mobile/'));
