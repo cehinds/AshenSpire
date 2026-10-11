@@ -3,6 +3,7 @@
 // the paced timeline instead of a plain render (coopTimelineRoute).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
@@ -59,4 +60,43 @@ test('a real session attack snapshot routes to the player timeline', () => {
   const after = host.snapshot().scene;
   assert.equal(after.kind, 'combat');
   assert.equal(coopTimelineRoute(after.events, ['p1', 'p2']), 'player', JSON.stringify(after.events.map(event => event.type)));
+});
+
+// The node runner has no DOM for mountCoop, so the wiring is pinned on the
+// source (as coop-layout-cache.test.mjs does): the player route reuses the
+// paced timeline under its own flag, the ribbon reads only enemy pacing, and
+// a paced timeline's per-beat renders float nothing as snapshot deltas.
+const coop = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
+const body = (name) => {
+  const start = coop.indexOf(`\n  function ${name}(`);
+  assert.ok(start > 0, `coop.js must define ${name}()`);
+  const next = coop.indexOf('\n  function ', start + 1);
+  return coop.slice(start, next > 0 ? next : undefined);
+};
+
+test('co-op routes a new player attack through the paced timeline under the player flag', () => {
+  const receive = body('receiveSnapshot');
+  assert.match(receive, /if \(busy\(\)\) \{/, 'any running timeline queues the next snapshot');
+  assert.match(receive, /coopTimelineRoute\(sc\.events/);
+  assert.match(receive, /route === 'player' && \(Number\(sc\.receiptSeq\) \|\| 0\) > lastReceiptSeq\) \{\s*paceReactionReceipts\(s, \{ mode: 'player' \}\);/,
+    'only new receipts replay, through the same timeline');
+  const pace = body('paceReactionReceipts');
+  assert.match(pace, /mode === 'player'\) playerPacing = on; else pacing = on;/);
+  assert.match(pace, /playTimeline\(events,/);
+  assert.match(pace, /onBeatApplied: apply/, 'the bars apply per beat, after its numbers');
+  assert.match(pace, /playCardEffects\(effectOwner, ownerPlan, duration\)/, 'the card effect plays on the swing');
+  assert.match(pace, /stage\?\.play\(pose, duration, ownerPlan\?\.aura\)/, 'the resource aura plays on the swing');
+  // lastReceiptSeq advances before the final render, so spawnCombatFx never refloats.
+  assert.ok(pace.indexOf('lastReceiptSeq = Math.max') < pace.lastIndexOf('render();'));
+});
+
+test('the ribbon reads enemy pacing only; the hand and controls hold for either', () => {
+  const combat = body('renderCombat');
+  assert.match(combat, /data-turn="\$\{pacing \|\| sc\.phase === 'enemy' \? 'enemy' : 'player'\}"/);
+  assert.match(combat, /\$\{pacing \|\| sc\.phase === 'enemy' \? 'Enemy Turn' : 'Player Turn'\}/);
+  assert.doesNotMatch(combat, /playerPacing/, 'the ribbon never reads the player flag');
+  assert.match(combat, /hand\.inert = busy\(\)/);
+  assert.match(combat, /meP\.ended \|\| busy\(\) \|\| meP\.energy < row\.costPerStack/, 'recovery controls hold');
+  assert.match(coop, /const busy = \(\) => pacing \|\| playerPacing;/);
+  assert.match(body('spawnCombatFx'), /if \(!prev \|\| busy\(\)\) return;/);
 });

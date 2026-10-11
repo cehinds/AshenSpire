@@ -1931,9 +1931,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return;
     }
     const sc = s.scene;
-    if (sc?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
-      && (sc.events || []).some(event => ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'].includes(event.type))) {
+    // One route per snapshot: enemy beats (with any player attack riding
+    // along) play the enemy timeline; a seat's own new attack plays the player
+    // timeline, in the solo order (SPEC §7.4); anything else renders at once.
+    const route = sc?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
+      ? coopTimelineRoute(sc.events, (sc.players || []).map(player => player.id)) : null;
+    if (route === 'enemy') {
       paceReactionReceipts(s);
+      return;
+    }
+    if (route === 'player' && (Number(sc.receiptSeq) || 0) > lastReceiptSeq) {
+      paceReactionReceipts(s, { mode: 'player' });
       return;
     }
     const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
@@ -2010,8 +2018,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   }
 
-  function paceReactionReceipts(next) {
-    pacing = true;
+  function paceReactionReceipts(next, { mode = 'enemy' } = {}) {
+    // The enemy timeline shows the Enemy Turn ribbon; a player's own attack
+    // holds only the hand and controls (busy()).
+    const setPacing = on => { if (mode === 'player') playerPacing = on; else pacing = on; };
+    setPacing(true);
+    // The seats' card plans (sprite effect, aura, held stance) for these
+    // receipts, collected once: when the card's owner swings, or at the end
+    // when no swing played them (a skip, Instant, reduced motion).
+    let plans = null;
+    const seatPlans = () => plans || (plans = collectCombatAnimations(next.scene, next.party));
+    const hasCardPlay = (next.scene.events || []).some(event => event.type === 'cardPlayed');
     const working = structuredClone(snap);
     working.scene.events = [];
     const events = (next.scene.events || []).map(event => ({ ...event,
@@ -2079,8 +2096,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (!played && !moved) return null;
         const stage = stageFor(sprite);
         let pose = 'attack';
+        let effectOwner = null;
+        let ownerPlan = null;
         if (played) {
           const ownerId = played.sourcePlayerId || played.playerId;
+          if (!returned) { effectOwner = ownerId; ownerPlan = seatPlans().get(ownerId) || null; }
           const member = next.party.find(member => member.id === ownerId);
           const instance = played.cardInstance || working.scene.players.find(player => player.id === ownerId)?.hand.find(card => card.instanceId === played.cardInstanceId)
             || { cardId: played.cardId };
@@ -2107,24 +2127,27 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         }
         const timing = stage?.actionTiming?.(pose, speed);
         const duration = timing?.totalMs ?? speed.lungeMs;
-        stage?.play(pose, duration);
+        stage?.play(pose, duration, ownerPlan?.aura);
+        if (ownerPlan) playCardEffects(effectOwner, ownerPlan, duration);
         return { impactMs: timing?.impactMs ?? Math.min(speed.impactCapMs, duration / 2), totalMs: duration,
           cancel: () => stage?.settle?.() };
       },
       onBeatApplied: apply,
       onFlush() {
+        if (hasCardPlay) seatPlans();
         animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
         lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
         lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
         snap = next; render();
       },
     }, () => {
+      if (hasCardPlay) seatPlans();
       animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
       lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
       lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
       prevCombat = next.scene;
       snap = next;
-      pacing = false;
+      setPacing(false);
       render();
       const queued = pendingSnaps; pendingSnaps = [];
       for (const pending of queued) receiveSnapshot(pending);
@@ -2142,7 +2165,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // consecutive combat scenes: HP down -> damage float + hit recoil, block up ->
   // block float, HP up -> heal float, death -> crumble. Reuses the solo FX CSS.
   function spawnCombatFx(now, prev) {
-    if (!prev) return;
+    // A paced timeline plays its own floats, callouts and effects; its per-beat
+    // renders must not float the bar changes again as snapshot deltas.
+    if (!prev || busy()) return;
     const layer = app.querySelector('.fx-layer');
     if (!layer) return;
     const put = (sel, cls, text, dy = 0.35, dx = 0, receiptRow = null) => {
