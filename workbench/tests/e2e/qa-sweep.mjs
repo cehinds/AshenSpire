@@ -548,9 +548,12 @@ async function visualReview() {
   await goModule('Visual Review', 1500);
   await waitVisible('.rv-run');
   await check('Review: pick one screen and capture on Desk', async () => {
-    await page.evaluate(() => { for (const cb of document.querySelectorAll('input[type="checkbox"][value]')) cb.checked = cb.value === 'title'; });
-    await page.evaluate(() => { for (const cb of document.querySelectorAll('input[type="checkbox"][value="title"]')) cb.dispatchEvent(new Event('change', { bubbles: true })); });
-    await page.click('.rv-seg button:has-text("Desk")');
+    // Screens: open the picker, clear it with None, then tick Title with real clicks.
+    await page.click('.view.active .rv-pick > summary');
+    await page.click('.view.active .rv-pick [data-pick="none"]');
+    await page.click('.view.active .rv-pick-list input[value="title"]');
+    await page.click('.view.active .rv-pick > summary');
+    await page.click('.view.active .rv-seg button:has-text("Desk")');
     await sleep(200);
     await page.click('.rv-run');
     await sleep(300);
@@ -564,7 +567,7 @@ async function visualReview() {
     return await textOf('.rv-job');
   });
   await check('Review: detail view modes all render', async () => {
-    await page.locator('button:has-text("View")').first().click();
+    await page.locator('.view.active button:has-text("View")').first().click();
     await sleep(600);
     const modes = await page.locator('[data-mode]').evaluateAll((els) => els.map((e) => e.dataset.mode));
     for (const m of modes) {
@@ -574,11 +577,35 @@ async function visualReview() {
     return modes.join(', ');
   });
   await check('Review: accept one row writes a baseline', async () => {
-    const btn = page.locator('.rv-accept').first();
+    const btn = page.locator('.view.active .rv-accept').first();
     if (await btn.isDisabled()) throw Error('Accept disabled with no capture running');
     await btn.click();
     await sleep(1200);
     expect(await page.getByText(/Accepted 1 baseline/i).count() > 0 || await page.getByText(/Accepted/i).count() > 0, 'no "Accepted" toast');
+  });
+  await check('Review: side-by-side detail fits both pictures in the view', async () => {
+    // A fresh load, so this is the first detail opened: its view has not been fitted yet.
+    // Drop the detail from the hash first: a reload would reopen the linked detail rather than the list.
+    await page.evaluate(() => { history.replaceState(null, '', '#mod=review'); location.reload(); });
+    await sleep(2500);
+    await waitVisible('.view.active .rv-run', 20000);
+    await page.locator('.view.active button[data-open="desk/title"]').first().click();
+    // Wait for every picture in the stage to decode, so the measured size is the real one.
+    await page.waitForFunction(() => { const imgs = [...document.querySelectorAll('.view.active .rv-stage img')]; return imgs.length > 0 && imgs.every((i) => i.complete && i.naturalWidth > 0); }, null, { timeout: 10000 }).catch(() => {});
+    await sleep(400);
+    const fit = await page.evaluate(() => {
+      const d = document.querySelector('.view.active .rv-detail');
+      const v = d?.querySelector('.rv-view');
+      const s = d?.querySelector('.rv-stage');
+      const imgs = [...(s?.querySelectorAll('img') ?? [])].filter((i) => i.naturalWidth);
+      return { mode: s?.dataset.mode ?? null, imgs: imgs.length, stageW: Math.round(s?.getBoundingClientRect().width ?? 0), viewW: Math.round(v?.getBoundingClientRect().width ?? 0), zoom: d?.querySelector('.rv-zl')?.textContent ?? '' };
+    });
+    expect(fit.mode === 'side', `detail did not open in side-by-side (${JSON.stringify(fit)})`);
+    // Both pictures when the screen has a baseline; a screen with only a capture still shows one.
+    expect(fit.imgs >= 1, `no picture loaded in the side-by-side detail (${JSON.stringify(fit)})`);
+    expect(/\d+%$/.test(fit.zoom), `the view was never fitted: no zoom level shown (${JSON.stringify(fit)})`);
+    expect(fit.stageW <= fit.viewW,`side-by-side stage ${fit.stageW}px is wider than the view ${fit.viewW}px (zoom ${fit.zoom})`);
+    return `zoom ${fit.zoom}, stage ${fit.stageW}px in ${fit.viewW}px`;
   });
   await shot(`review-${sizeName}`);
 }
