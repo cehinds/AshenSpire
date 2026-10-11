@@ -569,11 +569,13 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
 }
 
 // A reaction guard's block joins its target's pool for the one attack it was played against
-// (owner, Codex review 2026-10-11). Returns the record it was given.
+// (owner, Codex review 2026-10-11). The reaction is used first (owner, 2026-10-11): its record
+// goes to the front of guardCards, so applyDamage spends it before any queued block. Returns
+// the record it was given.
 function joinReactionGuard(cur, targetId, record) {
   const act = cur.active[targetId];
   act.guard += record.left;
-  act.guardCards.push(record);
+  act.guardCards.unshift(record);
   return record;
 }
 

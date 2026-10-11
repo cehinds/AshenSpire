@@ -454,6 +454,32 @@ test('a reaction guard covers only its own attack: its leftover block is discard
   assert.equal(out.state.combatants.player.hp, 16);
 });
 
+test('a reaction guard block is spent before a queued guard block; the queued block is kept', () => {
+  // Queued guard qg: block 8 (5 + 1 + 2). Reaction guard rg: base block 6. The 5-damage attack
+  // is absorbed by the reaction first: 5 of its 6 is used and 1 is discarded. The queued 8 is
+  // untouched, so the 8-damage attack after it is fully absorbed too.
+  const round = createRound(duo({}, { hp: 20, hand: [guardCard('rg')] }), {
+    queues: {
+      player: [guardCard('qg')],
+      goblin: [atk('a', 'player', 1, { damage: 5 }), atk('b', 'player', 1, { damage: 8 })],
+    },
+    rng: HIT_RNG,
+    onReaction: () => ({ id: 'rg' }),
+  });
+  round.next(); // queued guard: block 8
+  const first = round.next(); // a: 5 damage
+  assert.equal(first.events.find((e) => e.type === 'reaction').cardId, 'rg');
+  assert.ok(first.events.some((e) => e.type === 'absorbed' && e.amount === 5));
+  assert.ok(first.events.some((e) => e.type === 'guardDiscard' && e.cardId === 'rg' && e.amount === 1));
+  assert.equal(first.state.active.player.guard, 8);
+  assert.deepEqual(first.state.active.player.guardCards.map((g) => [g.cardId, g.left]), [['qg', 8]]);
+  assert.equal(first.state.combatants.player.hp, 20);
+  const out = round.resolveAll(); // b: 8 damage against the queued 8
+  assert.equal(out.events.some((e) => e.type === 'guardDiscard' && e.cardId === 'qg'), false);
+  assert.equal(out.state.active.player.guard, 0);
+  assert.equal(out.state.combatants.player.hp, 20);
+});
+
 test('a reaction guard that is cancelled by a counter gives no block to a later attack', () => {
   // A queued counter (speed 6) cancels the 3-speed attack before any damage. The reaction
   // guard's whole block 6 must not remain: the 4-damage attack after it takes full damage.
