@@ -877,3 +877,90 @@ test('evade scope: unknown scope and non-array input throw', () => {
   assert.throws(() => activeEvadeBonuses([{ source: 'x', pct: 1, scope: 'day' }], {}), TypeError);
   assert.throws(() => activeEvadeBonuses('nope', {}), TypeError);
 });
+
+// Evasion, part 2b: evadePct (DESIGN.md, Evasion). After an attack would land,
+// the defender rolls a separate percent check against evadePct. evadePct is
+// evadeBasePct plus the live evade bonuses, clamped to 0..95.
+// The percent roll is floor(rng() * 100), so a roll of n is wanted as n / 100 + 0.005.
+const pctRng = (n) => n / 100 + 0.005;
+const seqRng = (values) => {
+  let i = 0;
+  return () => {
+    if (i >= values.length) throw new Error('rng called more times than the test expects');
+    return values[i++];
+  };
+};
+const D20_HIT = d20Face(20)(); // d20 of 20: always hits, so the percent roll comes next
+const DEFENDER = (extra = {}) => ({ speed: 1, kind: 'other', ...extra });
+const ATTACKER = { speed: 4, kind: 'attack' };
+
+test('evadePct: a roll under the percent avoids the hit and emits evaded with reason evasion', () => {
+  const events = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 50 }), seqRng([D20_HIT, pctRng(10)]));
+  assert.equal(find(events, 'hit').avoided, true);
+  assert.deepEqual(find(events, 'evadeRoll'), { type: 'evadeRoll', by: 'enemy', target: 'player', evadePct: 50, roll: 10, success: true });
+  assert.deepEqual(find(events, 'evaded'), { type: 'evaded', by: 'enemy', target: 'player', reason: 'evasion' });
+  assert.equal(events.some((e) => e.type === 'interrupted'), false, 'an avoided hit does not interrupt');
+});
+
+test('evadePct: a roll at or over the percent lands the hit', () => {
+  const events = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 50 }), seqRng([D20_HIT, pctRng(60)]));
+  assert.equal(find(events, 'evadeRoll').success, false);
+  assert.equal(find(events, 'hit').avoided, false);
+  assert.equal(events.some((e) => e.type === 'evaded'), false);
+  assert.ok(find(events, 'interrupted'), 'the landed hit still interrupts');
+});
+
+test('evadePct: a roll exactly equal to the percent lands the hit', () => {
+  const events = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 50 }), seqRng([D20_HIT, pctRng(50)]));
+  assert.equal(find(events, 'evadeRoll').success, false);
+});
+
+test('evadePct: clamped to 95 at the top, and to 0 at the bottom with no percent roll', () => {
+  const top = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 200 }), seqRng([D20_HIT, pctRng(95)]));
+  assert.equal(find(top, 'evadeRoll').evadePct, 95);
+  assert.equal(find(top, 'evadeRoll').success, false, 'a roll of 95 is not under 95');
+
+  const edge = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 200 }), seqRng([D20_HIT, pctRng(94)]));
+  assert.equal(find(edge, 'evadeRoll').success, true);
+
+  // evadePct 0 draws no percent roll: the seeded RNG only has the d20 value.
+  const none = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: -20 }), seqRng([D20_HIT]));
+  assert.equal(find(none, 'evadeRoll'), undefined);
+  assert.equal(find(none, 'hit').avoided, false);
+});
+
+test('evadePct: a card-tag bonus adds to evadePct for this exchange only', () => {
+  const nimble = [{ source: 'nimble', pct: 20, scope: 'exchange' }];
+  const withBonus = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 30, evadeBonuses: nimble }), seqRng([D20_HIT, pctRng(0)]));
+  assert.equal(find(withBonus, 'evadeRoll').evadePct, 50);
+
+  // The next exchange has no such card: the same base alone.
+  const next = resolvePair(ATTACKER, DEFENDER({ evadeBasePct: 30 }), seqRng([D20_HIT, pctRng(0)]));
+  assert.equal(find(next, 'evadeRoll').evadePct, 30);
+});
+
+test('evadePct: a bonus with a failing condition is dropped', () => {
+  const onRoundTwo = [{ source: 'round2', pct: 20, scope: 'round', condition: (ctx) => ctx.round === 2 }];
+  const events = resolvePair(
+    ATTACKER,
+    DEFENDER({ evadeBasePct: 30, evadeBonuses: onRoundTwo }),
+    seqRng([D20_HIT, pctRng(0)]),
+    { round: 1, combatId: 'c1' },
+  );
+  assert.equal(find(events, 'evadeRoll').evadePct, 30);
+});
+
+test('evadePct: an evasion avoid credits momentum the same way as a dodge', () => {
+  const { momentum, events } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'dodger', speed: 1, kind: 'other', evadeBasePct: 50 }],
+    1,
+    seqRng([D20_HIT, pctRng(10)]),
+  );
+  assert.equal(find(events, 'momentum').by, 'enemy');
+  assert.equal(momentum.dodger, -1);
+});
+
+test('evadePct: a card-tag bonus that is not a number is rejected', () => {
+  assert.throws(() => resolvePair(ATTACKER, DEFENDER({ evadeBonuses: [{ source: 'x', pct: 'many', scope: 'run' }] }), d20Face(1)), TypeError);
+});

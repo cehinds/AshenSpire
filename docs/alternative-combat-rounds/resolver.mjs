@@ -76,11 +76,42 @@ export function hitRoll({ accuracy = 0, attrs = {}, evasion = 0 } = {}, d20) {
   return { hit, need: target - bonus };
 }
 
-export function rollD20(rng) {
+function rollUnit(rng) {
   if (typeof rng !== 'function') throw new TypeError('rng must be a function returning [0, 1)');
   const x = rng();
   if (!(x >= 0 && x < 1)) throw new RangeError(`rng must return a value in [0, 1), got ${x}`);
-  return Math.floor(x * 20) + 1;
+  return x;
+}
+
+export function rollD20(rng) {
+  return Math.floor(rollUnit(rng) * 20) + 1;
+}
+
+// Evade percent cap (placeholder, flagged in DESIGN.md, Evasion).
+export const EVADE_PCT_MAX = 95;
+
+export function clampEvadePct(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.min(EVADE_PCT_MAX, Math.max(0, v));
+}
+
+// evadePct for one defender in one exchange: evadeBasePct plus the live
+// evadeBonuses, clamped to 0..EVADE_PCT_MAX (DESIGN.md, Evasion).
+export function evadePctFor(side, ctx = {}) {
+  const live = activeEvadeBonuses(side.evadeBonuses ?? [], ctx);
+  const bonus = live.reduce((n, b) => n + Number(b.pct), 0);
+  return clampEvadePct(Number(side.evadeBasePct ?? 0) + bonus);
+}
+
+function normalizeEvadeBonuses(list) {
+  if (list === undefined || list === null) return [];
+  if (!Array.isArray(list)) throw new TypeError('evadeBonuses must be an array');
+  return list.map((b) => {
+    if (!b || typeof b !== 'object') throw new TypeError('evade bonus must be an object');
+    if (!Number.isFinite(Number(b.pct))) throw new TypeError('evade bonus pct must be a finite number');
+    return { ...b, pct: Number(b.pct) };
+  });
 }
 
 function normalizeSide(name, s) {
@@ -102,6 +133,9 @@ function normalizeSide(name, s) {
     block: Number(s.block ?? 0),
     // Charges for the 'intangible' tag (DESIGN.md, Evasion). Never negative.
     intangibleCharges: Math.max(0, Math.trunc(Number(s.intangibleCharges ?? 0)) || 0),
+    // Percent to avoid an attack that would land, before bonuses (DESIGN.md, Evasion).
+    evadeBasePct: Number.isFinite(Number(s.evadeBasePct ?? 0)) ? Number(s.evadeBasePct ?? 0) : 0,
+    evadeBonuses: normalizeEvadeBonuses(s.evadeBonuses),
   };
 }
 
@@ -119,11 +153,13 @@ function normalizeSide(name, s) {
 // - Each attack that is not cancelled rolls a hit with hitRoll(). The d20
 //   is drawn from `rng`, in resolution order (first actor, then second; on a
 //   tie, player then enemy).
-export function resolvePair(playerIn, enemyIn, rng) {
+export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   const side = {
     player: normalizeSide('player', playerIn),
     enemy: normalizeSide('enemy', enemyIn),
   };
+  // What the evade bonus scopes see for this exchange (DESIGN.md, Evasion).
+  const exchangeCtx = { inExchange: true, round: options.round, combatId: options.combatId };
   const events = [];
   const cancelled = { player: null, enemy: null };
   const tie = side.player.speed === side.enemy.speed;
@@ -144,20 +180,37 @@ export function resolvePair(playerIn, enemyIn, rng) {
     // A full block (Block >= damage, damage > 0) absorbs a hit that rolled true.
     // The blocking side wins the slot, and the attack does not land.
     const blocked = hit && attacker.damage > 0 && target.block >= attacker.damage;
-    // 'intangible': a holder with a charge left avoids a hit that would land.
-    // Only a hit that would land spends a charge (DESIGN.md, Evasion).
-    const avoided = hit && !blocked && target.tags.includes('intangible') && target.intangibleCharges > 0;
-    events.push({ type: 'hit', by: who, target: other(who), d20, hit, need, blocked, avoided });
+    // Avoiding a hit that would land (DESIGN.md, Evasion). A charge of
+    // 'intangible' avoids it outright and is spent only then. Otherwise the
+    // defender rolls its evadePct, and only a hit that would land is rolled.
+    let avoid = null; // 'intangible' | 'evasion'
+    let evade = null; // { evadePct, roll, success } when the percent roll is made
+    if (hit && !blocked) {
+      if (target.tags.includes('intangible') && target.intangibleCharges > 0) {
+        avoid = 'intangible';
+      } else {
+        const evadePct = evadePctFor(target, exchangeCtx);
+        if (evadePct > 0) {
+          const roll = Math.floor(rollUnit(rng) * 100);
+          evade = { evadePct, roll, success: roll < evadePct };
+          if (evade.success) avoid = 'evasion';
+        }
+      }
+    }
+    events.push({ type: 'hit', by: who, target: other(who), d20, hit, need, blocked, avoided: avoid !== null });
+    if (evade) events.push({ type: 'evadeRoll', by: other(who), target: who, ...evade });
     if (blocked) {
       events.push({ type: 'absorbed', by: other(who), target: who });
-    } else if (avoided) {
+    } else if (avoid === 'intangible') {
       target.intangibleCharges -= 1;
       events.push({ type: 'evaded', by: other(who), target: who, reason: 'intangible', charges: target.intangibleCharges });
+    } else if (avoid === 'evasion') {
+      events.push({ type: 'evaded', by: other(who), target: who, reason: 'evasion' });
     } else if (!hit && target.stance === 'evade') {
       // A miss against an evade action is a dodge: the defender wins the slot.
       events.push({ type: 'evaded', by: other(who), target: who });
     }
-    return hit && !blocked && !avoided;
+    return hit && !blocked && avoid === null;
   };
 
   if (tie) {
@@ -445,6 +498,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       { ...pc, speed: pc.speed + momentumSpeed(start[k]) },
       { ...enemy, speed: enemy.speed - momentumSpeed(start[k]) },
       rng,
+      { round: options.round, combatId: options.combatId },
     );
     for (const e of pairEvents) {
       push({ ...e, slot, visible }, k);
