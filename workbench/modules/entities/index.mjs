@@ -10,7 +10,7 @@
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
   facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
-  RENDER_PROTOCOL, settleFilters,
+  RENDER_PROTOCOL, settleFilters, tableRowOf,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -282,7 +282,7 @@ export default {
     });
     dsBtn.addEventListener('click', () => {
       const table = sourceTableFor(st.kind, files);
-      if (table && st.id) ctx.openModule('data', { table, row: st.id });
+      if (table && st.id) ctx.openModule('data', { table, row: tableRowOf(st.kind, st.id) });
     });
 
     // ---------- start ----------
