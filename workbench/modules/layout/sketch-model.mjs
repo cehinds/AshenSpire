@@ -77,28 +77,49 @@ export function removeBoxes(sketch, ids, { force = false } = {}) {
 
 export const setNotes = (sketch, notes) => ({ ...M.clone(sketch), notes: String(notes ?? '') });
 
+/**
+ * The view's state once the open sketch is gone from disk: it leaves the list and
+ * no sketch stays open, so there is no draft to save.
+ */
+export const deletedSketch = (names, name) => ({ names: names.filter((n) => n !== name), name: null, sketch: null, original: null, hash: null, error: null, problems: [] });
+
+/**
+ * Latest-wins gate for sketch picks, as Data Studio's selectionGate: begin() numbers a
+ * load; current(n) is true only for the newest one. A load that finishes after a later
+ * pick checks current() before it installs its sketch or shows its error.
+ */
+export function selectionGate() {
+  let latest = 0;
+  return {
+    begin() { latest += 1; return latest; },
+    current(generation) { return generation === latest; },
+  };
+}
+
 /** The breakpoint a viewport falls in, for the sketch's own breakpoints. */
 export const breakpointOf = (sketch, viewport) => M.breakpointFor(sketch.breakpoints || [], viewport);
 
 /**
  * The boxes as canvas items at a viewport: px rects of the resolved geometry at the
- * breakpoint, in layer order. Hidden boxes are not drawn; locked ones are locked.
+ * breakpoint, in layer order. Hidden boxes stay in the document with hidden set, so
+ * Layers still lists them and can show them again; the canvas kit does not draw them.
+ * Locked ones are locked.
  */
 export function canvasItems(sketch, viewport) {
   const bp = breakpointOf(sketch, viewport);
   const bpId = bp ? bp.id : null;
   return sketch.boxes
     .map((b) => ({ box: M.resolveBox(b, bpId), base: b }))
-    .filter(({ box }) => !box.hidden)
     .map(({ box, base }) => {
       const r = M.boxToPx(box, sketch.unit, viewport);
-      return { id: base.id, x: r.x, y: r.y, w: r.w, h: r.h, z: Number(base.layer) || 0, locked: Boolean(base.locked), label: base.label || base.id, overridden: box.overridden };
+      return { id: base.id, x: r.x, y: r.y, w: r.w, h: r.h, z: Number(base.layer) || 0, locked: Boolean(base.locked), hidden: Boolean(box.hidden), label: base.label || base.id, overridden: box.overridden };
     });
 }
 
 /**
- * Apply canvas geometry (after a gesture) to the sketch. Only the items whose rect
- * changed are written; in breakpoint scope the change goes to that breakpoint.
+ * Apply canvas items (after a gesture or a Layers show/hide) to the sketch. Only the
+ * items whose rect or hidden flag changed are written; a rect change in breakpoint
+ * scope goes to that breakpoint, and the hidden flag is a base value.
  */
 export function applyCanvasItems(sketch, items, viewport, { scope = 'base' } = {}) {
   const bp = breakpointOf(sketch, viewport);
@@ -107,6 +128,7 @@ export function applyCanvasItems(sketch, items, viewport, { scope = 'base' } = {
   for (const it of items) {
     const old = before.get(it.id);
     if (!old) continue;
+    if (it.hidden !== undefined && Boolean(it.hidden) !== old.hidden) out = updateBox(out, it.id, { hidden: Boolean(it.hidden) });
     if (old.x === it.x && old.y === it.y && old.w === it.w && old.h === it.h) continue;
     out = M.applyResolvedRect(out, it.id, { x: it.x, y: it.y, w: it.w, h: it.h }, viewport, {
       breakpointId: bp ? bp.id : null, scope: scope === 'breakpoint' && bp ? 'breakpoint' : 'base',
@@ -121,7 +143,7 @@ export function applyCanvasItems(sketch, items, viewport, { scope = 'base' } = {
  */
 export function drawingFor(sketch, viewport) {
   const width = Math.round(viewport.width), height = Math.round(viewport.height);
-  const rects = canvasItems(sketch, viewport).sort((a, b) => a.z - b.z)
+  const rects = canvasItems(sketch, viewport).filter((it) => !it.hidden).sort((a, b) => a.z - b.z)
     .map((it) => ({ x: Math.round(it.x), y: Math.round(it.y), w: Math.round(it.w), h: Math.round(it.h), label: it.label, locked: it.locked, overridden: it.overridden }));
   const notes = String(sketch.notes || '').split('\n').filter((l) => l.trim() !== '');
   return { width, height, title: sketch.name || 'Sketch', rects, notes };

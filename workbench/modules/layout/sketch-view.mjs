@@ -250,15 +250,26 @@ export function createSketchView(root, host) {
 
   // ---- files ---------------------------------------------------------
 
-  /** Load a sketch by name. A file that UI Studio would refuse is shown, not edited. */
-  async function open(name) {
+  // Each pick and each new sketch takes a generation; a sketch that finishes after a newer one installs nothing.
+  const gate = S.selectionGate();
+
+  /** Read and parse a sketch by name, without installing it. A file that UI Studio would refuse is shown, not edited. */
+  async function fetchSketch(name) {
     const r = await host.api(`files/read?path=${encodeURIComponent(pathOf(name))}`);
     const parsed = S.parseSketch(r.text);
-    st.name = name; st.sketch = parsed.data; st.original = r.text; st.hash = r.hash;
-    st.problems = parsed.problems;
-    st.error = parsed.problems.length ? `Not editable here: ${parsed.problems.join('; ')}` : null;
+    return {
+      name, sketch: parsed.data, original: r.text, hash: r.hash, problems: parsed.problems,
+      error: parsed.problems.length ? `Not editable here: ${parsed.problems.join('; ')}` : null,
+    };
+  }
+
+  function install(loaded) {
+    Object.assign(st, loaded);
     host.history.clear();
   }
+
+  /** Load a sketch by name into the view. */
+  async function open(name) { install(await fetchSketch(name)); }
 
   function startNew(name) {
     st.name = name; st.sketch = S.newSketch(name); st.original = null; st.hash = null; st.error = null; st.problems = [];
@@ -268,7 +279,15 @@ export function createSketchView(root, host) {
   async function pick(name) {
     if (name === st.name) return;
     if (isDirty() && !window.confirm(`Leave ${st.name} with unsaved changes?`)) { paintBar(); return; }
-    try { await open(name); } catch (err) { st.error = `Could not open ${name}: ${err.message}`; }
+    const generation = gate.begin();
+    try {
+      const loaded = await fetchSketch(name);
+      if (!gate.current(generation)) return;
+      install(loaded);
+    } catch (err) {
+      if (!gate.current(generation)) return;
+      st.error = `Could not open ${name}: ${err.message}`;
+    }
     st.canvas.select([]);
     rebuild({ fit: true });
   }
@@ -279,6 +298,7 @@ export function createSketchView(root, host) {
     if (!S.validSketchName(name)) { host.toast({ kind: 'warn', title: 'Sketch names use lower-case letters, digits and dashes', record: false }); return; }
     if (st.names.includes(name)) { host.toast({ kind: 'warn', title: `${name} already exists`, record: false }); return; }
     if (isDirty() && !window.confirm(`Leave ${st.name} with unsaved changes?`)) return;
+    gate.begin();
     startNew(name);
     input.value = '';
     st.canvas.select([]);
@@ -387,11 +407,25 @@ export function createSketchView(root, host) {
       await listNames();
       paintAll();
     },
-    /** Reload the open sketch from disk after a conflict: the draft and its history go. */
+    /**
+     * Reload the open sketch from disk after a conflict: the draft and its history go. A
+     * sketch deleted on disk (a 404) leaves the list and the canvas clears; it reports missing.
+     */
     async reload(path) {
-      if (path !== pathOf(st.name)) return;
-      await open(st.name);
+      if (path !== pathOf(st.name)) return undefined;
+      try {
+        await open(st.name);
+      } catch (err) {
+        if (err.status !== 404) throw err;
+        Object.assign(st, S.deletedSketch(st.names, st.name));
+        host.history.clear();
+        st.canvas?.setDoc({ width: 800, height: 600, items: [] });
+        st.canvas?.select([]);
+        paintAll();
+        return { missing: true };
+      }
       rebuild();
+      return undefined;
     },
     hashOf(path) { return path === pathOf(st.name) ? st.hash : undefined; },
     /** "Keep my version" in the conflict dialog: the draft is saved over the disk copy, so it takes the disk hash. */

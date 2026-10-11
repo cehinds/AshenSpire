@@ -417,7 +417,12 @@ export default {
       if (!f && owner) {
         // The presets or a sketch: its own view takes the reload, or keeps the draft against the disk hash.
         if (act === 'keep') { owner.keep(btn.dataset.path, btn.dataset.hash || null); await openReview(); return; }
-        if (act === 'reload') { await owner.reload(btn.dataset.path); await openReview(); }
+        if (act === 'reload') {
+          // An owner reports a file deleted on disk as missing: its draft is gone, so the dialog closes with a toast.
+          const out = await owner.reload(btn.dataset.path);
+          if (out?.missing) { dlg.close(); ctx.toast({ kind: 'warn', title: `${btn.dataset.path} was deleted on disk`, detail: 'Its edits to that file were dropped.' }); return; }
+          await openReview();
+        }
         return;
       }
       if (!f) return;

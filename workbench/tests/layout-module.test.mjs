@@ -230,3 +230,43 @@ test('a plain number typed into a $ref field is saved as a number; a $name or te
   assert.equal(C.fieldValue('', '$gap'), '', 'an empty field is not zero');
   assert.equal(C.fieldValue('12', 'plain'), '12', 'a field that holds plain text stays text');
 });
+
+test('a conflict reload of a mode file deleted on disk closes the dialog with a toast, not a stuck draft', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/index.mjs'), 'utf8');
+  const start = src.indexOf('// The presets or a sketch');
+  const branch = src.slice(start, src.indexOf('if (!f) return;', start));
+  assert.match(branch, /const out = await owner\.reload\(btn\.dataset\.path\);/, 'the owner reports what the disk state is');
+  assert.match(branch, /if \(out\?\.missing\)/, 'a missing file is not a failure');
+  assert.match(branch, /dlg\.close\(\);/, 'the dialog closes');
+  assert.match(branch, /was deleted on disk/, 'the deletion is toasted');
+});
+
+test('the sketch view\'s reload reads a 404 as the disk state: the sketch leaves the list and the canvas clears', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/sketch-view.mjs'), 'utf8');
+  const start = src.indexOf('async reload(path)');
+  const body = src.slice(start, src.indexOf('hashOf(path)', start));
+  assert.match(body, /err\.status !== 404/, 'only a 404 is the disk state');
+  assert.match(body, /S\.deletedSketch\(st\.names, st\.name\)/, 'the sketch leaves the list and the draft goes');
+  assert.match(body, /setDoc\(\{ width: 800, height: 600, items: \[\] \}\)/, 'the canvas clears');
+  assert.match(body, /return \{ missing: true \};/, 'the dialog is told the file is missing');
+});
+
+test('the battlefield view\'s reload reads a 404 as the disk state: the draft goes and the view is read-only', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/battlefield-view.mjs'), 'utf8');
+  const start = src.indexOf('async reload(path)');
+  const body = src.slice(start, src.indexOf('hashOf(path)', start));
+  assert.match(body, /err\.status !== 404/, 'only a 404 is the disk state');
+  assert.match(body, /st\.parts = null;/, 'the draft goes');
+  assert.match(body, /host\.history\.clear\(\);/, 'its history goes');
+  assert.match(body, /deleted on disk/, 'the view says the file was deleted');
+  assert.match(body, /return \{ missing: true \};/, 'the dialog is told the file is missing');
+});
+
+test('a sketch pick that finishes after a newer pick or a new sketch installs nothing and shows no error', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/sketch-view.mjs'), 'utf8');
+  const pick = src.slice(src.indexOf('async function pick(name)'), src.indexOf('function create()'));
+  assert.match(pick, /const generation = gate\.begin\(\);/, 'the pick takes a generation');
+  assert.equal((pick.match(/if \(!gate\.current\(generation\)\) return;/g) || []).length, 2, 'the completion and its error both drop when stale');
+  const create = src.slice(src.indexOf('function create()'), src.indexOf('async function listNames()'));
+  assert.match(create, /gate\.begin\(\);/, 'a new sketch takes a generation too');
+});
