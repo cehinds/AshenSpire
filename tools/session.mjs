@@ -790,6 +790,11 @@ export function createSession({ registries, seedString, endless = false, restore
         requested: e.requested, attempted: e.attempted,
         threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
         turn: e.turn,
+        // Reaction notes (model/combatLog.js) and callouts (fx.js calloutForEvent).
+        ownerId: e.ownerId, attackKind: e.attackKind, need: e.need, have: e.have, resource: e.resource,
+        ...(Array.isArray(e.cardIds) ? { cardIds: [...e.cardIds] } : {}),
+        avoided: e.avoided, ...(e.evade && typeof e.evade === 'object' ? { evade: structuredClone(e.evade) } : {}),
+        breaks: e.breaks, label: e.label, poise: e.poise,
       }));
     // THE OPENING IS A MARKER, NOT A TURN NUMBER: only the scene that carries
     // the setup cues is the fight's opening (coop.js coopReceiptSounds), so a
