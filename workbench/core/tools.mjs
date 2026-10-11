@@ -9,6 +9,7 @@
 // Workbench never kills a process it did not start.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 
 const LOG_LINES = 60;
@@ -50,6 +51,32 @@ export function toolDefs({ repo, root, origin, ports = {} }) {
       portFrom: /live at http:\/\/localhost:(\d+)/, internal: true, serveRoot: '/__serve/info',
     },
   ];
+}
+
+/** True when nothing holds 127.0.0.1:port (a listen on it succeeds and is released at once). */
+export function portFree(port, host = '127.0.0.1') {
+  return new Promise((resolve) => {
+    const probe = net.createServer();
+    probe.once('error', () => resolve(false));
+    probe.once('listening', () => probe.close(() => resolve(true)));
+    probe.listen(port, host);
+  });
+}
+
+/**
+ * The port a child tool should listen on: `base` when it is free, else base+10,
+ * base+20, ... (`tries` candidates), else an OS-assigned free port.
+ */
+export async function pickPort(base, { tries = 5, step = 10, host = '127.0.0.1' } = {}) {
+  for (let i = 0; i < tries; i++) {
+    const port = base + i * step;
+    if (port <= 65535 && await portFree(port, host)) return port;
+  }
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once('error', reject);
+    probe.listen(0, host, () => { const { port } = probe.address(); probe.close(() => resolve(port)); });
+  });
 }
 
 async function get(url, timeoutMs = 1500) {
