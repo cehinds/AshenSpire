@@ -135,15 +135,15 @@ namespace AshenSpire.EngineExport
                 // Config objects and art manifests stay JSON: copied as TextAssets.
                 imported.UnionWith(CopyAll(folder, manifest.config, Root + "/Config", false));
                 imported.UnionWith(CopyAll(folder, manifest.art, Root + "/Art", true));
-                // The imported folders mirror this manifest: anything an earlier
-                // export left behind (a removed or renamed table) is deleted.
-                foreach (var sub in new[] { "/Tables", "/Config", "/Art" })
-                    foreach (var file in Directory.GetFiles(Root + sub, "*", SearchOption.AllDirectories))
-                    {
-                        var rel = file.Replace('\\', '/');
-                        if (rel.EndsWith(".meta") || imported.Contains(rel)) continue;
-                        AssetDatabase.DeleteAsset(rel);
-                    }
+                // Prune only what an earlier import recorded and this manifest no
+                // longer lists (a removed or renamed table). Files the user made in
+                // these folders are not in the record, so they are never deleted.
+                // No record (first run, or an upgrade from an older importer) prunes nothing.
+                var previous = ReadRecord();
+                if (previous != null)
+                    foreach (var stale in previous)
+                        if (stale.StartsWith(Root + "/") && !imported.Contains(stale))
+                            AssetDatabase.DeleteAsset(stale);
             }
             finally
             {
@@ -153,6 +153,21 @@ namespace AshenSpire.EngineExport
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return tables.Length;
+        }
+
+        // Returns the paths the previous import recorded, or null when there is no readable record.
+        private static HashSet<string> ReadRecord()
+        {
+            if (!File.Exists(RecordPath)) return null;
+            try
+            {
+                var record = JsonUtility.FromJson<ImportRecord>(File.ReadAllText(RecordPath));
+                return record == null || record.paths == null ? null : new HashSet<string>(record.paths);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
         }
 
         private static void WriteRecord(HashSet<string> imported)
