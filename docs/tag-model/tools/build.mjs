@@ -396,9 +396,13 @@ const wordsOfComponent = (file, notes) => {
   const out = new Set();
   // A renderer's classes include those set by the same-file functions it calls
   // (renderArmouryOverlay -> renderArmouryPanel), followed to CALL_DEPTH levels.
-  const seen = new Set();
+  // The least depth each function has been reached at. A function first met deep
+  // in the walk is expanded again when a shallower path reaches it, so its own
+  // callees are still followed to the full depth from there.
+  const least = new Map();
   const addBody = (name, body, depth) => {
-    seen.add(name);
+    if (least.has(name) && least.get(name) <= depth) return;
+    least.set(name, depth);
     for (const w of classWordsOf(body)) out.add(w);
     for (const [local, exported] of kitNames(file)) {
       // A bare call only: not preceded by an identifier character, a dot or a $.
@@ -406,13 +410,11 @@ const wordsOfComponent = (file, notes) => {
     }
     if (depth >= CALL_DEPTH) return;
     for (const callee of new Set([...body.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)].map(m => m[1]))) {
-      if (seen.has(callee)) continue;
       const calleeBody = functionBody(src, callee);
       if (calleeBody) addBody(callee, calleeBody, depth + 1);
     }
   };
   for (const name of viewNamesOf(notes)) {
-    if (seen.has(name)) continue;
     const body = functionBody(src, name);
     if (body) addBody(name, body, 0);
   }
