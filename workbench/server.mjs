@@ -24,6 +24,8 @@ import { JobRunner, GENERATED } from './core/jobs.mjs';
 import { createWatcher, createOwnWrites, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 import { createFileService } from './core/files.mjs';
+import { tagModelTable } from './core/tag-model.mjs';
+import { runAfterTagModelSave } from './core/tag-model-run.mjs';
 import { listArt, resolveArt, findUsage } from './core/assets.mjs';
 import { MIME as ASSET_MIME } from '../tools/assetmime.mjs';
 import { createReviewStore } from './core/review.mjs';
@@ -142,7 +144,12 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   const ownWrites = createOwnWrites();
   // close() aborts this first: a save waiting for a build lock stops waiting and answers 503 (core/files.mjs).
   const closeAbort = new AbortController();
-  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault, signal: closeAbort.signal });
+  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => {
+    // A docs/tag-model table is not a game build input: it reaches no build, only its own job (core/tag-model-run.mjs).
+    const game = paths.filter((p) => !tagModelTable(p));
+    if (game.length || !paths.length) onBatch(game);
+    if (game.length < paths.length) runAfterTagModelSave({ root, jobs, paths, send: (r) => hub.send('tag-model', r) }).catch((e) => console.warn(`Workbench: tag model job: ${e.message}`));
+  }, onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault, signal: closeAbort.signal });
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';
