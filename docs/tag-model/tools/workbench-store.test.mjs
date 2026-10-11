@@ -106,7 +106,7 @@ test('inserting one row at the top changes at most two chunks', () => {
 export function makeFakeDb() {
   const docs = new Map();
   const listeners = [];
-  const log = { sets: [], deletes: [], gets: [] };
+  const log = { sets: [], deletes: [], gets: [], leases: [] };
   const leases = new Map(); // path -> {holder, exp}; leases expire on their own, no release
   const parentOf = (p) => p.slice(0, p.lastIndexOf('/'));
   const idOf = (p) => p.slice(p.lastIndexOf('/') + 1);
@@ -149,6 +149,7 @@ export function makeFakeDb() {
         async delete() { log.deletes.push(p); await fake.delay('delete', p); docs.delete(p); emit(p); },
         async acquire(o) {
           await fake.delay('acquire', p);
+          log.leases.push({ path: p, holder: o.holder, ttlMs: o.ttlMs });
           const now = Date.now(), L = leases.get(p);
           if (!L || L.exp <= now || L.holder === o.holder) {
             leases.set(p, { holder: o.holder, exp: now + Math.max(1000, o.ttlMs || 30000) });
@@ -565,6 +566,24 @@ test('a conflict re-renders the panel, and Keep mine re-renders after it saves o
   await B.api.keepMine('t');
   assert.ok(B.page.renders > beforeKeep, 'Keep mine re-renders after the save');
   assert.equal(db.read('tables/t').base, theirRev, 'the overwrite is based on their rev');
+});
+
+test('head leases use a fresh holder per attempt and a 1.5 s ttl, so no tab can renew past a waiting writer', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  editTable(A.page, sample(3, 'x'));
+  await A.api.flush('t');
+  editTable(A.page, sample(3, 'x2'));
+  await A.api.flush('t'); // a second save by the same tab
+  const holders = db.log.leases.map((l) => l.holder);
+  assert.equal(new Set(holders).size, holders.length, 'every attempt has its own holder');
+  for (const l of db.log.leases) assert.ok(l.ttlMs >= 1000 && l.ttlMs <= 1500, 'ttl ' + l.ttlMs);
+  // B waits at most about one ttl behind A's lease, then gets its turn and conflicts
+  editTable(B.page, sample(3, 'y'));
+  const started = Date.now();
+  await B.api.flush('t');
+  assert.ok(Date.now() - started < 4000, 'B waited ' + (Date.now() - started) + ' ms');
+  assert.ok(B.api.tstate.t.conflict, 'B gets its turn and sees the conflict');
 });
 
 test('(a) conflict choices: Load theirs drops local edits; Keep mine overwrites on their rev', async () => {

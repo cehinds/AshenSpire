@@ -290,13 +290,14 @@ function subscribeTable(t){
   ts.unsub.push(db.doc(headPath(t)).onSnapshot(s=>onHead(t, s.exists? s.data() : null), e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.')));
 }
 /* ---------- writer: blobs first, then one head write guarded by the rev this view loaded ---------- */
-/* a short lease on the head doc, held only across its get and set; busy retries for up to 10 s, then false.
-   Leases have no release verb, so it lapses on its own after 3 s. */
-const TAB_ID='tab-'+Math.random().toString(36).slice(2,10);
+/* a short lease on the head doc, held only across its get and set. Every attempt uses a fresh holder id, so no
+   attempt can renew a lease another attempt holds: a waiting writer waits at most one ttl (1.5 s), not forever.
+   Busy retries run for up to 10 s, then false. Leases have no release verb, so they lapse on their own. */
 async function acquireHead(t){
   const end=Date.now()+10000;
   for(;;){
-    const r=await db.doc(headPath(t)).acquire({holder:TAB_ID, ttlMs:3000}).catch(()=>null);
+    const holder='save-'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+    const r=await db.doc(headPath(t)).acquire({holder, ttlMs:1500}).catch(()=>null);
     if(r&&r.acquired) return true;
     if(Date.now()>end) return false;
     await sleepMs(50+Math.random()*350);
