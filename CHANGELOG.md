@@ -32,6 +32,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-11
+
+- **Fighters visibly flinch when hit** ([#1833](https://github.com/cehinds/AshenSpire/pull/1833), `0.7.1.1287`). When your hero takes damage they now play a short seven-frame hurt pose, flashing red on frames 2, 4 and 6 while they are knocked back a step. This replaces the brief rainbow flicker. Enemies recoil further and their red flash starts at the moment of impact. With Reduce flashes on, the hurt pose plays without the red.
+
+- **AI sessions: work lands in small commits, reviewed as they land** ([#1831](https://github.com/cehinds/AshenSpire/pull/1831), `0.7.1.1281`). Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.
+
 ## 2026-10-10
 
 - **Clicking a target no longer shuffles enemy labels** ([#1825](https://github.com/cehinds/AshenSpire/pull/1825), `0.7.1.1280`). Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Clicking any target after keyboard navigation clears the old cursor first, while keyboard focus still moves the cursor to the target.

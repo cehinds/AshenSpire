@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1833",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fighters visibly flinch when hit",
+    "detail": "When your hero takes damage they now play a short seven-frame hurt pose, flashing red on frames 2, 4 and 6 while they are knocked back a step. This replaces the brief rainbow flicker. Enemies recoil further and their red flash starts at the moment of impact. With Reduce flashes on, the hurt pose plays without the red.",
+    "build": "0.7.1.1287",
+    "pullRequest": 1833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1833"
+  },
+  {
+    "id": "pr-1831",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "AI sessions: work lands in small commits, reviewed as they land",
+    "detail": "Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.",
+    "build": "0.7.1.1281",
+    "pullRequest": 1831,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1831"
+  },
+  {
     "id": "pr-1825",
     "date": "2026-10-10",
     "group": "2026-10-10",

@@ -73,6 +73,31 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
   assert.doesNotMatch(fast, /hit-stop|hitStopMsFor/, 'the instant path never holds');
 });
 
+test('rear reactions tint and knock back in the canvas, not through CSS filters', () => {
+  const css = src('styles/combat.css');
+  const rear = css.match(/\.player \.sprite\.hitflash > \.alternative-card-stage:not\(\[data-still\]\)[^{]*\{[^}]*\}/)?.[0] || '';
+  assert.match(rear, /animation-name: none;/, 'the rear root takes no hit animation');
+  assert.doesNotMatch(css, /rear-reaction-flash/, 'the old interpolated rear tint is gone');
+  assert.doesNotMatch(rear, /hue-rotate|filter|translate/);
+  // A stagger keeps a visible, stepped (never interpolated) tint and no transform.
+  assert.match(css, /\.player \.sprite\.wobble:not\(\.hitflash\) > \.alternative-card-stage:first-child,[^{]*\.player \.sprite\.hitflash > \.alternative-card-stage\[data-still\]:first-child[^{]*\{\s*animation-name: rear-stagger-flash;/, 'a still (Rendered) stage keeps a stepped CSS hit tint');
+  const stagger = css.match(/@keyframes rear-stagger-flash \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(stagger, /0%, 44\.99% \{ filter: sepia\(1\)/);
+  assert.doesNotMatch(stagger, /transform/);
+  // A click-skip ends every hit reaction, held by hit-stop or not.
+  const fx = src('src/ui/fx.js');
+  assert.match(fx, /stageFor\(sprite\)\?\.endReaction\?\.\(\)/);
+});
+
+test('enemy hits knock back 22px held through the peak and tint from impact', () => {
+  const css = src('styles/combat.css');
+  const enemy = css.match(/@keyframes hit-enemy \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(enemy, /translateX\(22px\)/);
+  assert.match(enemy, /20%, 45% \{ transform: translateX\(22px\); \}/);
+  assert.match(enemy, /0%, 44\.99% \{ filter: sepia\(1\) saturate\(8\) hue-rotate\(315deg\); \}/, 'the tint starts at impact');
+  assert.match(css, /@keyframes hit-enemy-heavy \{[\s\S]*?translateX\(34px\)/);
+});
+
 test('the CSS pauses a held figure and scales the shake by --shake-px', () => {
   const css = src('styles/combat.css');
   assert.match(css, /^\.hit-stop \{ animation-play-state: paused !important; \}$/m);

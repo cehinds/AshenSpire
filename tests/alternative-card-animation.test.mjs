@@ -5,8 +5,9 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
-import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity } from '../src/model/alternativeCardAnimation.js';
+import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity, hitRecoilX, hurtClipFrame } from '../src/model/alternativeCardAnimation.js';
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
+import { playerHurtFrames } from '../src/content/playerHurtFrames.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
 import { validate } from '../pose-studio/model.mjs';
 import { webpDimensions } from '../tools/mobileart-policy.mjs';
@@ -94,9 +95,48 @@ test('every runtime frame ships in both tiers with matching recorded hashes and 
  }
 });
 
-test('hits flash red briefly and suppress flashing for reduced motion',()=>{
- assert.equal(hitFlashOpacity('hurt',0),.72);
- assert.ok(hitFlashOpacity('hurt',.2)>0);
- assert.equal(hitFlashOpacity('hurt',.55),0);
- assert.equal(hitFlashOpacity('hurt',0,{reduced:true}),0);
+test('hits strobe red on frames 2, 4 and 6 and suppress flashing for reduced motion',()=>{
+ assert.equal(hitFlashOpacity('hurt',0),0,'frame 1 is untinted');
+ assert.equal(hitFlashOpacity('hurt',1.5/7),.85);
+ assert.equal(hitFlashOpacity('hurt',2.5/7),0);
+ assert.equal(hitFlashOpacity('hurt',3.5/7),.85);
+ assert.equal(hitFlashOpacity('hurt',5.5/7),.85);
+ assert.equal(hitFlashOpacity('hurt',6.5/7),0);
+ assert.equal(hitFlashOpacity('hurt',1),0);
+ assert.equal(hitFlashOpacity('hurt',1.5/7,{reduced:true}),0);
+ // Elapsed-milliseconds form over a 380 ms heavy reaction.
+ assert.equal(hitFlashOpacity('hurt',1.5*380/7,{duration:380}),.85);
+ assert.equal(hitFlashOpacity('hurt',380,{duration:380}),0);
+});
+
+test('the hurt clip strobes seven equal frames with red on frames 2, 4 and 6',()=>{
+ assert.deepEqual(hurtClipFrame(0),{index:0,red:false});
+ assert.deepEqual(hurtClipFrame(1.5/7),{index:1,red:true});
+ assert.deepEqual(hurtClipFrame(2.5/7),{index:2,red:false});
+ assert.deepEqual(hurtClipFrame(3.5/7),{index:3,red:true});
+ assert.deepEqual(hurtClipFrame(5.5/7),{index:5,red:true});
+ assert.deepEqual(hurtClipFrame(6.5/7),{index:6,red:false});
+ assert.deepEqual(hurtClipFrame(1),{index:6,red:false},'the last frame is clamped');
+ assert.deepEqual(hurtClipFrame(-1),{index:0,red:false});
+ assert.deepEqual(hurtClipFrame(NaN),{index:0,red:false});
+});
+
+test('every class has a registered HURT clip backed by manifest art in both tiers',()=>{
+ const manifest=json('art-manifest.json').assets;
+ for(const classId of CARD_ACTION_CLASSES){
+  const entry=playerHurtFrames[classId];
+  assert.ok(entry,classId+' has a HURT registration');
+  assert.ok(Number.isFinite(entry.scale)&&entry.scale>0,classId+' scale is finite');
+  assert.ok(Number.isFinite(entry.dx)&&Number.isFinite(entry.dy),classId+' offset is finite');
+  assert.match(entry.file,/^assets\/animations\/.+\/HURT\.webp$/);
+  assert.ok(manifest[entry.file]?.light&&manifest[entry.file]?.high,classId+' HURT art is in art-manifest.json for both tiers');
+ }
+});
+
+test('the knock-back eases left to -14px at 30% and back to rest',()=>{
+ assert.equal(hitRecoilX(0),0);
+ assert.ok(Math.abs(hitRecoilX(0.3)+14)<1e-9);
+ assert.equal(hitRecoilX(1),0);
+ assert.ok(hitRecoilX(0.1)<0 && hitRecoilX(0.1)>-14,'moves left on the way out');
+ assert.ok(hitRecoilX(0.65)<0 && hitRecoilX(0.65)>-14,'returns on the way back');
 });
