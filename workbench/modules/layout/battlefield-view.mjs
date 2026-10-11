@@ -308,9 +308,7 @@ export function createBattlefieldView(root, host) {
       // The scene size comes from the UI config files, so the first drawing waits for them.
       if (host.ready) await host.ready();
       const r = await host.api(`files/read?path=${encodeURIComponent(B.PRESETS_FILE)}`);
-      const parts = B.parsePresets(r.text);
-      // Saving writes the presets back in this form; a file in another form would show a diff that no edit made.
-      if (B.serializePresets(parts, parts.data) !== r.text) throw Error(`${B.PRESETS_FILE} is not in the form Layout Studio saves; edit it in the file`);
+      const parts = B.readPresetsText(r.text);
       st.parts = parts; st.data = parts.data; st.original = r.text; st.hash = r.hash;
       st.layoutKey = B.layoutKeys(st.data)[0];
       st.deviceId = host.devices().some((d) => d.id === DEFAULT_DEVICE) ? DEFAULT_DEVICE : host.devices()[0]?.id ?? null;
@@ -362,7 +360,12 @@ export function createBattlefieldView(root, host) {
         paintAll();
         return { missing: true };
       }
-      const parts = B.parsePresets(r.text);
+      // The same checks as load(), before any state changes: a file that fails them leaves the draft, its history and the canvas as they were.
+      let parts;
+      try { parts = B.readPresetsText(r.text); } catch (err) {
+        host.toast({ kind: 'error', title: `Could not reload ${B.PRESETS_FILE}`, detail: err.message });
+        return undefined;
+      }
       st.parts = parts; st.data = parts.data; st.original = r.text; st.hash = r.hash;
       st.preview = {};
       host.history.clear();
