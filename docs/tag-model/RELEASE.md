@@ -37,7 +37,11 @@ input bytes give the same output bytes, with no timestamps or paths in it.
   it decodes to the same text.
 - **Columnar arrays.** Each table is `{ n, cols: [[name, kind, data], ...] }`
   with one array per column. Kinds: `s` string index, `n` number or null, `g`
-  tag id or -1, `G` tag id list, `c` formula code.
+  tag key id or -1, `i` tag id or -1 (`tags.parent`), `G` tag key id list,
+  `c` formula code, and `p` a path derived from the row's `id`. A `p` cell is
+  null where the path is the derived one, and a string index where it differs.
+  The only derivation is `assets/…` to `assets-mobile/…`, applied to
+  `presentation.assets.lightPath` (`mobilePath()` in `tools/release.mjs`).
 - **Formulas pre-parsed to RPN.** Each formula's `expr` is parsed with the
   workbench grammar (see below) and stored as a flat postfix code array. Each
   opcode is followed by its arguments:
@@ -140,12 +144,16 @@ gzip at level 9, computed by the CLI and the tests; the compile does not):
 
 | | Bytes | Gzip |
 |---|---|---|
-| CSV, all 20 inputs | 11,733,776 | 888,565 |
-| Module `tag-constants.js` | 4,923,991 | 668,113 |
+| CSV, all 20 inputs | 11,802,698 | 900,649 |
+| Module `tag-constants.js` | 4,480,047 | 632,010 |
 
-The module is 2,744,985 bytes of string table and 2,169,047 bytes of tables.
-The largest table is `presentation.styles` (783,376 bytes). Most of the string
-table is asset paths and animation frame lists, which the game does read.
+Before derivation the module was 4,957,139 bytes (676,914 gzip). Deriving
+`lightPath` saved 477,092 bytes raw and 44,904 gzip. 7,176 of 7,322 light
+paths match the derived form; the other 146 (fonts and similar) are stored.
+
+The module is 2,291,305 bytes of string table and 2,178,783 bytes of tables.
+Most of the string table is asset paths and animation frame lists, which the
+game does read.
 
 **Decision: not committed.** The module is over the 1 MB limit. Its path,
 `docs/tag-model/release/`, is already ignored by `.gitignore` line 23

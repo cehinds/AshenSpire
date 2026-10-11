@@ -63,6 +63,16 @@ export const DROP = {
   'presentation.tokens': ['file', 'liveRef'],
 };
 
+// Columns that are usually the id with a prefix swapped. Kind 'p' stores the
+// cell only where it differs from the derived path; null means derived. The
+// derivation is mobilePath() below and is named in RELEASE.md.
+const DERIVED_PATH = {
+  'presentation.assets': ['lightPath'],
+};
+export function mobilePath(id) {
+  return id.startsWith('assets/') ? 'assets-mobile/' + id.slice('assets/'.length) : null;
+}
+
 // Columns that name tags. 'g' is one tag key (or empty), 'G' a list of tag
 // keys, 'i' one tag id (its full path, used by tags.parent).
 export const TAG_REF = {
@@ -431,6 +441,15 @@ export function compileInputs(inputs) {
       }
       if (tagRefs[h] === 'G') {
         columns.push([h, 'G', rows.map((r, i) => tagList(`${name} row ${i + 2} ${h}`, r[c]))]);
+        continue;
+      }
+      if ((DERIVED_PATH[name] || []).includes(h)) {
+        const idc = t.header.indexOf('id');
+        if (idc < 0) fail(`${name}: no id column to derive ${h} from`);
+        columns.push([h, 'p', rows.map(r => {
+          if (mobilePath(r[idc]) === r[c]) return null;
+          return intern(r[c]);
+        })]);
         continue;
       }
       const values = rows.map(r => r[c]);

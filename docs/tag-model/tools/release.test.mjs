@@ -79,11 +79,25 @@ function makeDecoder(M) {
       default: throw new Error(`unknown kind ${kind} for ${h}`);
     }
   }
+  // Kind 'p': null means the path is derived from the row's id by the
+  // assets/ -> assets-mobile/ prefix swap; anything else is stored text.
+  const mobileOf = id => {
+    if (!id.startsWith('assets/')) throw new Error(`cannot derive a mobile path from ${id}`);
+    return 'assets-mobile/' + id.slice('assets/'.length);
+  };
   function decodeTable(name) {
     const t = M.TABLES[name];
     if (!t) throw new Error(`no table ${name}`);
+    const idPos = t.cols.findIndex(c => c[0] === 'id');
     const rows = [];
-    for (let i = 0; i < t.n; i++) rows.push(t.cols.map(([h, kind, data]) => cellText(kind, data[i], h)));
+    for (let i = 0; i < t.n; i++) {
+      const row = t.cols.map(([h, kind, data]) => (kind === 'p' ? null : cellText(kind, data[i], h)));
+      t.cols.forEach(([h, kind, data], j) => {
+        if (kind !== 'p') return;
+        row[j] = data[i] === null ? mobileOf(row[idPos]) : S(data[i]);
+      });
+      rows.push(row);
+    }
     return { n: t.n, header: t.cols.map(c => c[0]), kinds: t.cols.map(c => c[1]), rows };
   }
 
@@ -269,6 +283,22 @@ test('every kept table and column round-trips exactly, rows and values', async (
     const gotRows = got.rows.map(r => textCols.map(c => r[c.i]));
     assert.deepEqual(gotRows, want, `${name}: cells`);
   }
+});
+
+test('asset light paths are stored only where they differ from the derived mobile path', async () => {
+  const M = await loadModule();
+  const { header, rows } = csvOf(INPUTS.find(i => i.path === 'presentation/assets.csv').text);
+  const col = M.TABLES['presentation.assets'].cols.find(c => c[0] === 'lightPath');
+  assert.equal(col[1], 'p', 'lightPath is kind p');
+  const id = header.indexOf('id');
+  const light = header.indexOf('lightPath');
+  let stored = 0;
+  rows.forEach((r, i) => {
+    const derived = r[id].startsWith('assets/') ? 'assets-mobile/' + r[id].slice(7) : null;
+    if (col[2][i] !== null) stored++;
+    assert.equal(col[2][i] === null, derived === r[light], `row ${i + 2}: stored only when it differs`);
+  });
+  assert.ok(stored < rows.length / 2, `${stored} of ${rows.length} rows store a light path`);
 });
 
 test('the tags table and its references round-trip through numeric ids', async () => {
