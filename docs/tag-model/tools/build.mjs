@@ -19,6 +19,8 @@
 //   2. rebuilds the meta.presentation nodes in tables/tags.csv;
 //   3. sets status (live-tag / game-concept / new) and liveId on every tag. The
 //      "Moved: re-homed" note is written once, never appended again;
+//   3b. strings: proposedKey and migrateTo for every hardcoded row (one key per
+//      distinct text; see docs/tag-model/STRINGS-MIGRATION.md)
 //   4. recomputes every key as the shortest unique id suffix and rewrites the
 //      references to keys that changed (tags school/related, objects, relations).
 // Run tools/check.mjs afterwards.
@@ -51,7 +53,7 @@ const DERIVED = {
   tokens: ['tag', 'liveRef'], breakpoints: ['tag', 'liveRef'], assets: ['tag', 'liveRef'],
   animations: ['tag', 'liveRef'], effects: ['tag', 'liveRef'], resolutions: ['tag', 'liveRef'],
   settings: ['scope', 'deviceScope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
-  'combat-symbols': ['assignedAssetRef', 'tag', 'liveRef'], strings: ['tag', 'liveRef'],
+  'combat-symbols': ['assignedAssetRef', 'tag', 'liveRef', 'artBrief', 'priority'], strings: ['tag', 'liveRef', 'proposedKey', 'migrateTo'],
 };
 const DERIVED_ALL = new Set(Object.values(DERIVED).flat());
 
@@ -693,6 +695,50 @@ const assignedAssetRef = combatRows.rows.map((r) => {
 tagIds.strings = rowMap('strings', r => presId('text', textKind(r)));
 liveRefs.strings = rowMap('strings', r => get(inv.strings, r, 'file'));
 
+// Migration plan for the hardcoded UI strings (docs/tag-model/STRINGS-MIGRATION.md).
+// One proposedKey per distinct text: rows that repeat a text share its key, and
+// no two texts share one. The area is the file's base name (src/ui/screens/combat.js
+// -> combat), or common when the text sits in more than one file. The words are
+// the first six of the text, camel-cased; a clash in one area gets .2, .3 ... in
+// table order. migrateTo is the shared table the text moves to.
+const SHARED_STRINGS = 'content/source/uiStrings.csv';
+const hcIdx = inv.strings.rows.map((r, i) => (textKind(r) === 'hardcoded' ? i : -1)).filter(i => i >= 0);
+const textOfRow = i => get(inv.strings, inv.strings.rows[i], 'text');
+const fileOfRow = i => get(inv.strings, inv.strings.rows[i], 'file').replace(/:\d+$/, '');
+const areaOfFile = file => {
+  const base = file.replace(/^.*\//, '').replace(/\.[^.]+$/, '');
+  return base.replace(/[^A-Za-z0-9]+(.)?/g, (_, c) => (c ? c.toUpperCase() : '')).replace(/^./, c => c.toLowerCase());
+};
+const wordsOfText = text => {
+  const w = String(text).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9 ]+/g, ' ')
+    .trim().split(/\s+/).filter(Boolean).slice(0, 6);
+  return w.length ? w.map((x, i) => (i === 0 ? x.toLowerCase() : x[0].toUpperCase() + x.slice(1).toLowerCase())) : ['text'];
+};
+const filesByText = new Map();
+for (const i of hcIdx) {
+  const t = textOfRow(i);
+  if (!filesByText.has(t)) filesByText.set(t, new Set());
+  filesByText.get(t).add(fileOfRow(i));
+}
+const proposedKeyOf = inv.strings.rows.map(() => '');
+const migrateToOf = inv.strings.rows.map(() => '');
+const keyOfText = new Map();
+const textOfKey = new Map();
+for (const i of hcIdx) {
+  const text = textOfRow(i);
+  if (!keyOfText.has(text)) {
+    const files = filesByText.get(text);
+    const area = files.size > 1 ? 'common' : areaOfFile(fileOfRow(i));
+    const base = `${area}.${wordsOfText(text).join('')}`;
+    let key = base;
+    for (let n = 2; textOfKey.has(key); n++) key = `${base}.${n}`;
+    keyOfText.set(text, key);
+    textOfKey.set(key, text);
+  }
+  proposedKeyOf[i] = keyOfText.get(text);
+  migrateToOf[i] = SHARED_STRINGS;
+}
+
 // ------------------------------------------------------- tags.csv (legacy rows)
 const TAG_HEAD = ['id', 'key', 'label', 'parent', 'erd', 'school', 'description', 'effect', 'variables', 'duration', 'stacking', 'related', 'status', 'glyph', 'color'];
 const tagsPath = join(TABLES, 'tags.csv');
@@ -834,6 +880,8 @@ for (const name of INVENTORY) {
       assignedAssetRef: name === 'combat-symbols' ? assignedAssetRef[i] : undefined,
       cssClasses: name === 'components' ? cssClassesOf[i] : undefined,
       cssComponentId: name === 'styles' ? styleCssIds[i] : undefined,
+      proposedKey: name === 'strings' ? proposedKeyOf[i] : undefined,
+      migrateTo: name === 'strings' ? migrateToOf[i] : undefined,
     };
     if (name === 'combat-symbols') b[t.header.indexOf('status')] = combatStatus[i];
     return [...b, ...extra.map(c => vals[c])];

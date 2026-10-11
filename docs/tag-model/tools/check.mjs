@@ -18,6 +18,8 @@
 //   - css: components cssClasses are selector classes in styles/*.css; a
 //     catalog row lists them exactly when its notes do not say css:unresolved
 //   - duplicates: no presentation table holds two identical rows
+//   - strings migration: every hardcoded row has a dotted proposedKey and a
+//     migrateTo; one proposedKey names one text and one text has one proposedKey
 //   - references: tags parent (id), school and related (keys), variables (values
 //     or formulas keys); objects tags, skill, exp, cardType, stance, rarity,
 //     costResource (keys) and grants (object ids); ranks object (object id) and
@@ -243,7 +245,7 @@ const PRES_SPEC = {
   settings: { key: ['key'], cols: ['key', 'scope', 'deviceScope', 'tag', 'liveRef'] },
   symbols: { key: ['id'], cols: ['id', 'tag', 'liveRef'] },
   'combat-symbols': { key: ['tagKey'], cols: ['tagKey', 'status', 'assignedAssetRef', 'tag', 'liveRef'] },
-  strings: { key: ['key'], cols: ['key', 'tooltip', 'file', 'tag', 'liveRef'] },
+  strings: { key: ['key'], cols: ['key', 'text', 'context', 'tooltip', 'file', 'tag', 'liveRef', 'proposedKey', 'migrateTo'] },
 };
 const presOk = {};
 for (const [name, spec] of Object.entries(PRES_SPEC)) {
@@ -260,6 +262,32 @@ for (const [name, spec] of Object.entries(PRES_SPEC)) {
     if (!keySet.has(tag)) fail(`${label}: row ${i + 2} tag "${tag}" is not a tag key`);
     else if (!keyToId[tag] || !keyToId[tag].startsWith('meta.presentation')) fail(`${label}: row ${i + 2} tag "${tag}" is not a presentation node`);
   });
+}
+
+// hardcoded UI strings (STRINGS-MIGRATION.md): every hardcoded row carries a
+// proposedKey and a migrateTo. Rows that repeat a text share one key, so the key
+// is unique per text: one key never names two texts, and one text never has two keys.
+if (presOk.strings) {
+  const st = P('strings');
+  const hard = st.rows.filter(r => at(st, r, 'context') === 'hardcoded');
+  const keyTexts = new Map();
+  const textKeys = new Map();
+  hard.forEach((r, i) => {
+    const key = at(st, r, 'proposedKey');
+    const text = at(st, r, 'text');
+    if (!/^[A-Za-z][A-Za-z0-9]*(\.[A-Za-z0-9]+)+$/.test(key)) fail(`presentation/strings: hardcoded row "${at(st, r, 'key')}" proposedKey "${key}" is not a dotted key`);
+    if (!at(st, r, 'migrateTo')) fail(`presentation/strings: hardcoded row "${at(st, r, 'key')}" has no migrateTo`);
+    if (!keyTexts.has(key)) keyTexts.set(key, new Set());
+    keyTexts.get(key).add(text);
+    if (!textKeys.has(text)) textKeys.set(text, new Set());
+    textKeys.get(text).add(key);
+  });
+  for (const [key, texts] of keyTexts) {
+    if (texts.size > 1) fail(`presentation/strings: proposedKey "${key}" names ${texts.size} different texts`);
+  }
+  for (const [text, keys] of textKeys) {
+    if (keys.size > 1) fail(`presentation/strings: text "${text.slice(0, 60)}" has ${keys.size} proposedKeys (${[...keys].join(', ')})`);
+  }
 }
 
 // vocabularies
