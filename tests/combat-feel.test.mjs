@@ -143,15 +143,22 @@ function drive(t, fn) {
   });
 }
 
+// Sequential beat order (animationPace.js, owner 2026-10-11): the attacker
+// holds its impact frame at each contact; the target's recoil — and its hold —
+// play after the swing has settled (impactMs 100, totalMs 800 + both holds).
 test('each qualifying multi-hit impact holds both figures, and buzzes at first impact once', (t) => {
   drive(t, ({ start, tick, holds, buzzes, reactions }) => {
     start([6, 10]); tick(100);
-    assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]]);
-    assert.deepEqual(reactions, [['hit', 220]], 'target playback keeps its base duration');
+    assert.deepEqual(holds, [['actor', 60, 10100]], 'the attacker holds at impact');
+    assert.deepEqual(reactions, [], 'the target has not reacted mid-swing');
     assert.deepEqual(buzzes, [['damageTaken', 10100]], 'buzz arrives before recovery');
-    tick(150);
-    assert.deepEqual(holds.slice(2), [['actor', 60, 10250], ['target', 60, 10250]]);
+    tick(128);
+    assert.deepEqual(holds.slice(1), [['actor', 60, 10228]], 'the second hit holds the attacker after its step and the first hold');
+    tick(128); tick(564);
+    assert.deepEqual(holds.slice(2), [['target', 60, 10920]], 'the first reaction holds the target once the swing (800 + 120 ms) is over');
+    assert.deepEqual(reactions, [['hit', 220]], 'target playback keeps its base duration');
     for (let i = 0; i < 100; i++) tick(20);
+    assert.deepEqual(holds.slice(3).map(([who, ms]) => [who, ms]), [['target', 60]], 'the second reaction holds the target too');
     assert.equal(buzzes.length, 1, 'recovery does not buzz twice');
   });
 });
@@ -159,8 +166,10 @@ test('each qualifying multi-hit impact holds both figures, and buzzes at first i
 test('a click during hit-stop clears both held figures and flushes once without a second buzz', (t) => {
   drive(t, ({ start, tick, actor, target, fire, stats, buzzes }) => {
     start([6]); tick(100);
-    assert.ok(actor.classList.contains('hit-stop'));
-    assert.ok(target.classList.contains('hit-stop'));
+    assert.ok(actor.classList.contains('hit-stop'), 'the attacker holds at impact');
+    assert.ok(!target.classList.contains('hit-stop'), 'the target reacts only after the swing (sequential)');
+    tick(760);
+    assert.ok(target.classList.contains('hit-stop'), 'the target holds its recoil after the swing');
     fire('pointerdown');
     assert.ok(!actor.classList.contains('hit-stop'));
     assert.ok(!target.classList.contains('hit-stop'));
@@ -194,7 +203,8 @@ for (const mode of ['instant', 'reduced-motion', 'no-shake']) {
       if (mode === 'instant') setAnimSpeed('instant');
       else dom.document.body.classList.add(mode);
       start([6]); tick(100);
-      assert.equal(holds.length, mode === 'no-shake' ? 2 : 0);
+      // Sequential: only the attacker holds at impact; the target holds at its reaction.
+      assert.equal(holds.length, mode === 'no-shake' ? 1 : 0);
       assert.equal(combatEl.classList.contains('shake'), mode === 'instant');
       for (let i = 0; i < 100; i++) tick(20);
     });

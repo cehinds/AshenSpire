@@ -27,8 +27,8 @@ import { reducedMotionRequested } from './motion.js';
 // (model/equipmentAnimation.js animationTiming), so the hit, its number and its
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
-import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs } from './animationPace.js';
-export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed };
+import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
+export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
 
 let pending = [];
 let flushRequested = false;
@@ -629,6 +629,8 @@ export function groupBeats(events) {
  *     onBeatApplied(beat)  — apply this beat's events to the display state
  *                            (HP/block bars, hand, statuses) AFTER its visuals,
  *     onFlush()            — skip: jump display to true final state,
+ *     beatOrder?           — 'sequential' | 'impact'; defaults to the
+ *                            animationPace.js setting (getBeatOrder),
  *   }
  * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
  * animateEvents' classic behavior (final state + fast floats).
@@ -637,10 +639,33 @@ export function groupBeats(events) {
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
 
+// Is this figure out of its stance — mid-action, or showing a pose other than
+// its rest? A figure with no stage, or one that reports neither, is in stance.
+function outOfStance(stage) {
+  if (!stage) return false;
+  const presentation = stage.presentation;
+  if (presentation && typeof presentation === 'object') return !!presentation.action;
+  if (typeof stage.pose !== 'string') return false;
+  return stage.pose !== (typeof stage.rest === 'string' ? stage.rest : 'idle');
+}
+
 export function playTimeline(events, ctx, done) {
   const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
+  const beatOrder = ctx.beatOrder || getBeatOrder();
   if (!speed || reduced) {
+    // No added waits. 'sequential' still updates the bars after the
+    // reactions and numbers have shown; 'impact' updates them first.
+    if (beatOrder === 'sequential') {
+      animateEvents(events, ctx, () => {
+        try {
+          if (ctx.onFlush) ctx.onFlush();
+        } finally {
+          if (done) done();
+        }
+      });
+      return;
+    }
     if (ctx.onFlush) ctx.onFlush();
     animateEvents(events, ctx, done);
     return;
@@ -727,7 +752,13 @@ export function playTimeline(events, ctx, done) {
     ? Number(ctx.maxActorAnimationMs(speed)) || 0
     : Number(ctx.maxActorAnimationMs) || 0;
   const actorBudgetMs = Math.max(speed.lungeMs, customActorMs);
-  const budget = COMBAT_TIMING.watchdogBaseMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  // A sequential attack beat adds its stance lead and, per event, a reaction
+  // hold and a step after the swing.
+  const sequentialMs = beatOrder === 'sequential'
+    ? beats.filter((beat) => beat.kind === 'attack')
+      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.length * (speed.reactionMs + speed.stepMs), 0)
+    : 0;
+  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
@@ -776,6 +807,27 @@ export function playTimeline(events, ctx, done) {
       return;
     }
 
+    // An attack beat in the 'sequential' order (animationPace.js beatOrder):
+    // stance → swing → back to stance → the defender's reaction → numbers →
+    // bars. Counter beats and every other kind keep the 'impact' order.
+    const sequential = beatOrder === 'sequential' && beat.kind === 'attack';
+    const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
+    // Stance first: an attacker caught mid-pose (a hurt frame, an unfinished
+    // action) returns to its stance, and holds it a moment, before it swings.
+    let stanceLead = false;
+    if (sequential && actorEl) {
+      const stage = stageFor(actorEl);
+      if (outOfStance(stage)) {
+        safe(() => stage.settle());
+        stanceLead = speed.stanceLeadMs > 0;
+      }
+    }
+    const playBeat = () => {
+    if (finished) return;
+    if (flushed) {
+      nextBeat();
+      return;
+    }
     // 1) actor animation (lunge for attacks, glow-step otherwise)
     //
     // A figure drawn in the animated style also changes pose for the beat. Asking
@@ -783,7 +835,6 @@ export function playTimeline(events, ctx, done) {
     // does not replay one frame and an actor with no frames cannot advance
     // anyone else's rotation. Anything else takes the guard frame, and
     // playPoseOn is a no-op for a figure with no frames at all.
-    const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
     let actorAnimation = null;
     if (actorEl && ctx.animateActor) {
       try {
@@ -820,7 +871,16 @@ export function playTimeline(events, ctx, done) {
     if (leadApplied) safe(() => ctx.onLeadApplied({ ...beat, events: beat.lead }));
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = beat.events.filter((e) => !lead.has(e)).map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    // (sequential: only the contact parts here; reactions and numbers follow
+    // the recovery).
+    const rest = beat.events.filter((e) => !lead.has(e));
+    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind)]));
+    const visualEvents = sequential
+      ? rest.filter((e) => partsOf.get(e)?.contact)
+      : rest.filter((e) => partsOf.get(e));
+    const visuals = sequential
+      ? visualEvents.map((e) => partsOf.get(e).contact)
+      : visualEvents.map((e) => visualFor(e, beat.kind));
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
@@ -832,7 +892,8 @@ export function playTimeline(events, ctx, done) {
     // Every qualifying hit holds at its own visual, including multi-hit and
     // multi-target attacks. Recovery includes only the holds actually played.
     let heldMs = 0;
-    const visualEvents = beat.events.filter((e) => !lead.has(e) && visualFor(e, beat.kind));
+    const holdFor = (event) => ((beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
+      ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0);
     schedule(() => {
       let vi = 0;
       const stepV = () => {
@@ -843,8 +904,7 @@ export function playTimeline(events, ctx, done) {
         }
         if (vi < visuals.length) {
           const event = visualEvents[vi];
-          const holdMs = (beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
-            ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0;
+          const holdMs = holdFor(event);
           const held = holdMs > 0;
           const v = visuals[vi++];
           if (held) {
@@ -875,14 +935,73 @@ export function playTimeline(events, ctx, done) {
           safe(() => ctx.onBeatApplied && ctx.onBeatApplied(leadApplied ? { ...beat, events: beat.events.filter((e) => !lead.has(e)) } : beat));
           schedule(nextBeat, speed.beatMs);
         };
+        // Sequential: once the attacker is back in its stance, each event's
+        // reaction plays, then (reactionMs later) its numbers, in event order;
+        // the bars follow the last number.
+        const reactions = sequential
+          ? rest.filter((e) => partsOf.get(e)?.reaction || partsOf.get(e)?.numbers)
+          : [];
+        const react = () => {
+          if (finished) return;
+          if (flushed) {
+            nextBeat();
+            return;
+          }
+          cancelActorAnimation();
+          let ri = 0;
+          const stepR = () => {
+            if (finished) return;
+            if (flushed) {
+              nextBeat();
+              return;
+            }
+            if (ri >= reactions.length) {
+              applyBeat();
+              return;
+            }
+            const event = reactions[ri++];
+            const parts = partsOf.get(event);
+            const numbers = () => {
+              if (finished) return;
+              if (flushed) {
+                nextBeat();
+                return;
+              }
+              if (parts.numbers) safe(() => parts.numbers(ctx));
+              if (ri >= reactions.length) applyBeat();
+              else schedule(stepR, speed.stepMs);
+            };
+            if (!parts.reaction) {
+              numbers();
+              return;
+            }
+            // The target's recoil holds as long as the attacker held its impact frame.
+            hitStop = holdFor(event);
+            safe(() => parts.reaction(ctx));
+            hitStop = 0;
+            if (!parts.numbers) {
+              if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
+              else schedule(stepR, speed.reactionMs);
+              return;
+            }
+            schedule(numbers, speed.reactionMs);
+          };
+          stepR();
+        };
+        const after = sequential ? react : applyBeat;
+        // Sequential waits out a plain CSS lunge too, so the reaction never
+        // starts mid-swing.
         const recovery = actorAnimation
           ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt))
-          : 0;
-        if (recovery > 0) schedule(applyBeat, recovery);
-        else applyBeat();
+          : sequential && actorEl ? Math.max(0, speed.lungeMs + heldMs - (Date.now() - actorStartedAt)) : 0;
+        if (recovery > 0) schedule(after, recovery);
+        else after();
       };
       stepV();
     }, windup);
+    };
+    if (stanceLead) schedule(playBeat, speed.stanceLeadMs);
+    else playBeat();
   };
   nextBeat();
 }
