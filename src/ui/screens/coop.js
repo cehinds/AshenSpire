@@ -228,7 +228,7 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
   clearSelection();
   let disposed = false;
-  const releaseAppearance = onDisplayAppearanceChange(app, () => { if (!disposed && snap && !pacing) render(); });
+  const releaseAppearance = onDisplayAppearanceChange(app, () => { if (!disposed && snap && !busy()) render(); });
   const banking = new Set();
   const bankFailures = new Map();
   const bankAttempts = new Map();
@@ -356,7 +356,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (event.type === 'playerTurnStart') { pendingAnimations.delete(ownerId); heldStances.accept(event); }
     }
   }
-  let pacing = false; // an enemy-turn replay is holding the render
+  let pacing = false; // enemy beats are playing: the ribbon reads Enemy Turn
+  let playerPacing = false; // a player's own attack beats are playing (SPEC §7.4)
+  // Either timeline holds the hand, recovery and tools, as solo does during its playback.
+  const busy = () => pacing || playerPacing;
   let pendingSnaps = []; // every unrendered authoritative frame, causal order
   let latestWireSnap = null; // newest wire state, even while the old board paces
   let receivedSnapshots = 0;
@@ -425,7 +428,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (obj.t === 'playCard' && obj.upcastTier == null && upcastTiersByCard.has(upcastKey(obj.cardInstanceId))) obj = { ...obj, upcastTier: upcastTiersByCard.get(upcastKey(obj.cardInstanceId)) };
     if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
     if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
-    if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
+    if (busy() && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
     if (obj.t === 'playCard' && obj.upcastTier == null && meta.settings?.askToUpcastAfterTarget) {
       const seat = latestWireSnap?.scene?.players?.find(entry => entry.id === me);
       const inst = seat?.hand.find(entry => entry.instanceId === obj.cardInstanceId);
@@ -532,7 +535,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!meP) return;
     const seatReason = (current) => !current ? 'Wait for your turn'
       : !current.connected ? 'This player is disconnected'
-        : !current.alive ? 'This player is down' : current.ended ? 'This turn has ended' : pacing ? 'Wait for your turn' : '';
+        : !current.alive ? 'This player is down' : current.ended ? 'This turn has ended' : busy() ? 'Wait for your turn' : '';
     potionsShell = openCombatPotions({
       rows: combatPotionRows(registries, meP), opener: app.querySelector('.combat-potions'), shortcut, arm,
       useReason: ({ options }) => options.remaining <= 0 ? 'No charges remaining' : seatReason(meP),
@@ -686,7 +689,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
       return;
     }
-    if (pacing || !snap || snap.scene.kind !== 'combat') return;
+    if (busy() || !snap || snap.scene.kind !== 'combat') return;
     const sc = snap.scene;
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
@@ -797,7 +800,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return { cardId: card.cardId, allyId: ally.id, receiptSeq: sc.receiptSeq };
     },
     state: () => ({
-      pacing, receivedSnapshots, lastReceiptSeq,
+      pacing, playerPacing, receivedSnapshots, lastReceiptSeq,
       latestReceiptSeq: latestWireSnap?.scene?.receiptSeq || 0,
       pendingReceiptSeqs: pendingSnaps.map((entry) => entry.scene?.receiptSeq || 0),
     }),
@@ -1028,7 +1031,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     showPendingReaction();
     const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
     const pending = player?.pendingAbilityDiscard;
-    if (!pending || pending.playerId !== me || discardShell || pacing) return;
+    if (!pending || pending.playerId !== me || discardShell || busy()) return;
     const owner = me;
     discardShell = openDiscardChoiceModal({
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
@@ -1043,7 +1046,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function showPendingReaction() {
     const sc = latestWireSnap?.scene;
     const owner = sc?.players?.find(player => seats.includes(player.id) && player.pendingReaction?.ownerId === player.id);
-    if (!owner || reactionShell || pacing || sc.players.some(player => player.pendingAbilityDiscard)) return;
+    if (!owner || reactionShell || busy() || sc.players.some(player => player.pendingAbilityDiscard)) return;
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
@@ -1113,7 +1116,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
                supplies only the viewer half below: snapshot-fed entries with
                spelled-out reasons, and network intents as the play wiring. -->
           <div class="hand"></div>
-          <div class="combat-recovery-controls">${(meP?.recoveryControls || []).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || meP.ended || pacing || meP.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(row.status)}`} · ${row.costPerStack} SP</button>`).join('')}</div>
+          <div class="combat-recovery-controls">${(meP?.recoveryControls || []).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || meP.ended || busy() || meP.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(row.status)}`} · ${row.costPerStack} SP</button>`).join('')}</div>
           <!-- THE ACTION ROW: solo's own footer (components/combatActionRow.js)
                — Actions, Draw, End Turn, Discard/Exhaust and Potions — sized by
                the same layout adapter. The flasks live behind Potions. -->
@@ -1223,7 +1226,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         selectedEnemy = e.id;
         const selected = meP?.hand.find(card => card.instanceId === litCard());
         const selectedDef = selected && cardDef(selected);
-        if (!pacing && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
+        if (!busy() && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
           clearSelection();
           send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: e.id });
           return true;
@@ -1259,7 +1262,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
     combatTools?.release();
     const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion === 1,
-      enabled: meP?.reactionsEnabled !== false, disabled: pacing || sc.phase !== 'player' || !!sc.reactionWaiting
+      enabled: meP?.reactionsEnabled !== false, disabled: busy() || sc.phase !== 'player' || !!sc.reactionWaiting
         || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
       ...combatToolsState, entries: sc.combatLog || [] }));
     combatTools = mountCombatTools(app.querySelector('.combat'), { state: combatToolsState,
@@ -1275,7 +1278,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     wireCoopActionRow(meP);
     const hand = area.querySelector('.hand');
-    hand.inert = pacing || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;
+    hand.inert = busy() || !!sc.reactionWaiting || sc.phase !== 'player' || !!meP?.ended;
     hand.setAttribute('aria-disabled', String(hand.inert));
 
     // My hand — THE hand renderer, mounted fresh per snapshot render (this
@@ -1289,7 +1292,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       registries:memberRegistries(), fitFan: true,
       wireCard: (el, entry) => {
         const play = () => {
-          if (pacing || meP?.ended || !entry.affordable) return;
+          if (busy() || meP?.ended || !entry.affordable) return;
           if (friendlyTargetPlan(entry.def, me, sc.players).active) {
             armFriendlyTargeting(entry.inst.instanceId);
             return;
@@ -1301,7 +1304,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const surcharge = (entry.def.upcastTier ?? entry.def.upcast.baseTier) - entry.def.upcast.baseTier;
           wireCoopUpcastControl(el, {
             label: surcharge ? `Upcast +${surcharge}` : 'Upcast',
-            disabled: pacing || meP.ended || !meP.alive,
+            disabled: busy() || meP.ended || !meP.alive,
             selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
             onPlay: play,
             onOpen: upcast => {
@@ -1892,7 +1895,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     latestWireSnap = s;
     if (reactionShell && reactionOfferId !== s.scene?.reactionWaiting?.id) reactionShell.dismiss();
     receivedSnapshots += 1;
-    if (pacing) {
+    if (busy()) {
       const seq = s.scene?.kind === 'combat' ? Number(s.scene.receiptSeq) || 0 : 0;
       const duplicate = seq > 0 && pendingSnaps.some((entry) => entry.scene?.receiptSeq === seq);
       if (!duplicate) pendingSnaps.push(s);
