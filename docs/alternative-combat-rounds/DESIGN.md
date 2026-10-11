@@ -1,4 +1,4 @@
-# Simultaneous action: design notes
+# Alternative combat rounds: design notes
 
 Status: exploration only. Captures the owner's design of 2026-10-11. Nothing
 here is engine code, and no game content changes. The numbers in this file

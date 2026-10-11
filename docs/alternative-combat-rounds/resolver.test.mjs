@@ -1,5 +1,5 @@
 // Tests for the simultaneous-action resolver prototype (node:test).
-// Run: node --test docs/simultaneous-action/*.test.mjs
+// Run: node --test docs/alternative-combat-rounds/*.test.mjs
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
