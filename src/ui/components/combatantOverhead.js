@@ -12,7 +12,12 @@ export function selectCombatantInfo(root, id) {
     frame.classList.toggle('context-selected', selected);
     frame.setAttribute('aria-pressed', String(selected));
   }
-  root.dispatchEvent(new CustomEvent('combatantselectionchange'));
+  // The battlefield listens on its own `.combat`. A co-op root is that
+  // `.combat`'s parent, so dispatch on the board(s) inside root, not on root.
+  const boards = root.matches?.('.combat') ? [root] : [...root.querySelectorAll('.combat')];
+  for (const board of (boards.length ? boards : [root])) {
+    board.dispatchEvent(new CustomEvent('combatantselectionchange'));
+  }
 }
 
 export function combatantInfo(name, open) {
