@@ -229,3 +229,10 @@ Formula, relation and value keys follow the README conventions.
   - **AR and PR placement.** The owner lists AR, DR and PR as defenses. In the
     tables, AR and PR are under `offensive-stats`, and DR is under
     `defensive-stats`. Nothing was moved. Owner to say if AR and PR should move.
+
+## 12. Fight speed is being reworked on its own branch (note only)
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Fight speed is being reworked on its own branch to `dev`. This
+  folder does not change it.
+- **Tables changed:** none.
