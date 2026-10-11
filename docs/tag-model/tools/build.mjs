@@ -46,7 +46,7 @@ const INVENTORY = ['components', 'layouts', 'styles', 'tokens', 'breakpoints', '
   'effects', 'resolutions', 'settings', 'symbols', 'combat-symbols', 'strings'];
 // Columns this script derives. They are stripped when reading the copies.
 const DERIVED = {
-  components: ['tag', 'liveRef', 'cssClasses'], layouts: ['band', 'tag', 'liveRef'], styles: ['band', 'tag', 'liveRef'],
+  components: ['tag', 'liveRef', 'cssClasses'], layouts: ['band', 'tag', 'liveRef'], styles: ['band', 'tag', 'liveRef', 'cssComponentId'],
   tokens: ['tag', 'liveRef'], breakpoints: ['tag', 'liveRef'], assets: ['tag', 'liveRef'],
   animations: ['tag', 'liveRef'], effects: ['tag', 'liveRef'], resolutions: ['tag', 'liveRef'],
   settings: ['scope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
@@ -69,6 +69,13 @@ function readInventory(name) {
     copyFileSync(src, join(PRES, name + '.csv'));
   }
   const t = readTable(join(PRES, name + '.csv'));
+  // styles: an earlier run re-pointed componentId to a catalog component and kept
+  // the CSS-derived id in cssComponentId. That id is the source value again here.
+  if (name === 'styles' && t.header.includes('cssComponentId')) {
+    const ci = t.header.indexOf('componentId');
+    const cc = t.header.indexOf('cssComponentId');
+    t.rows = t.rows.map((r) => { const nr = r.slice(); nr[ci] = r[cc]; return nr; });
+  }
   const keep = t.header.map((h, i) => [h, i]).filter(([h]) => !DERIVED_ALL.has(h));
   return { header: keep.map(([h]) => h), rows: t.rows.map(r => keep.map(([, i]) => r[i])) };
 }
@@ -341,6 +348,41 @@ const cssCounts = { catalog: 0, resolved: 0, unresolved: 0, sameAsId: 0 };
   });
 }
 
+// ----------------------------------------------- styles -> catalog component
+// A style row's componentId is the catalog component that owns its selector when
+// exactly one catalog component's cssClasses use a class of that selector. Other
+// rows keep their CSS-derived componentId. cssComponentId keeps that CSS-derived id
+// for every row.
+const catalogOfClass = new Map();
+inv.components.rows.forEach((r, i) => {
+  if (!/\[catalog\b/.test(get(inv.components, r, 'notes'))) return;
+  for (const c of cssClassesOf[i].split(' ').filter(Boolean)) {
+    if (!catalogOfClass.has(c)) catalogOfClass.set(c, new Set());
+    catalogOfClass.get(c).add(get(inv.components, r, 'id'));
+  }
+});
+const styleCssIds = [];
+const styleRepointed = { rows: 0, distinctTargets: 0 };
+{
+  const s = inv.styles;
+  const selI = need(s, 'selector', 'styles');
+  const cidI = need(s, 'componentId', 'styles');
+  const targets = new Set();
+  s.rows = s.rows.map((r) => {
+    styleCssIds.push(r[cidI]);
+    const sel = String(r[selI]).replace(/\[[^\]]*\]/g, '');
+    const owners = new Set();
+    for (const m of sel.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) for (const id of catalogOfClass.get(m[1]) || []) owners.add(id);
+    const nr = r.slice();
+    if (owners.size === 1) {
+      nr[cidI] = [...owners][0];
+      if (nr[cidI] !== r[cidI]) { styleRepointed.rows++; targets.add(nr[cidI]); }
+    }
+    return nr;
+  });
+  styleRepointed.distinctTargets = targets.size;
+}
+
 tagIds.components = rowMap('components', r => presId(groupOfComponent(get(inv.components, r, 'group'))));
 liveRefs.components = rowMap('components', r => get(inv.components, r, 'file'));
 
@@ -571,6 +613,7 @@ for (const name of INVENTORY) {
       scope: scopeCols[name] ? scopeCols[name][i] : undefined,
       assignedAssetRef: name === 'combat-symbols' ? assignedAssetRef[i] : undefined,
       cssClasses: name === 'components' ? cssClassesOf[i] : undefined,
+      cssComponentId: name === 'styles' ? styleCssIds[i] : undefined,
     };
     if (name === 'combat-symbols') b[t.header.indexOf('status')] = combatStatus[i];
     return [...b, ...extra.map(c => vals[c])];
@@ -592,6 +635,7 @@ console.log(JSON.stringify({
   sharedLiveIds: sharedLive.map(([live, ids]) => `${live} <- ${ids.join(', ')}`),
   cleaning,
   cssClasses: cssCounts,
+  stylesRepointed: styleRepointed,
   presentationRows: presRowCounts,
   combatSymbolStatus: combatCounts,
 }, null, 1));

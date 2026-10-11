@@ -231,7 +231,7 @@ const COMBAT_STATUS = new Set(['has symbol', 'placeholder', 'missing']);
 const PRES_SPEC = {
   components: { key: ['id'], cols: ['id', 'group', 'parent', 'file', 'assetRefs', 'notes', 'cssClasses', 'tag', 'liveRef'] },
   layouts: { key: null, cols: ['componentId', 'breakpoint', 'band', 'tag', 'liveRef'] },
-  styles: { key: null, cols: ['componentId', 'selector', 'property', 'breakpoint', 'band', 'tag', 'liveRef'] },
+  styles: { key: null, cols: ['componentId', 'cssComponentId', 'selector', 'property', 'breakpoint', 'band', 'tag', 'liveRef'] },
   tokens: { key: ['token', 'theme', 'file'], cols: ['token', 'theme', 'file', 'tag', 'liveRef'] },
   breakpoints: { key: ['name'], cols: ['name', 'condition', 'file', 'tag', 'liveRef'] },
   assets: { key: ['id'], cols: ['id', 'category', 'tag', 'liveRef'] },
@@ -287,6 +287,28 @@ for (const name of ['layouts', 'styles']) {
   P(name).rows.forEach((r, i) => {
     const c = at(P(name), r, 'componentId');
     if (!compIds.has(c)) fail(`presentation/${name}: row ${i + 2} componentId "${c}" is not a components id`);
+  });
+}
+
+// styles: cssComponentId is a components id. componentId equals it, or is a
+// catalog component whose cssClasses include a class of the row's selector.
+if (presOk.styles && presOk.components) {
+  const st = P('styles');
+  const compById = new Map(comps.rows.map(r => [at(comps, r, 'id'), r]));
+  st.rows.forEach((r, i) => {
+    const css = at(st, r, 'cssComponentId');
+    const own = at(st, r, 'componentId');
+    if (!compIds.has(css)) fail(`presentation/styles: row ${i + 2} cssComponentId "${css}" is not a components id`);
+    if (own === css) return;
+    const row = compById.get(own);
+    if (!row || !/\[catalog\b/.test(at(comps, row, 'notes'))) {
+      fail(`presentation/styles: row ${i + 2} componentId "${own}" differs from cssComponentId "${css}" but is not a catalog component`);
+      return;
+    }
+    const sel = new Set([...at(st, r, 'selector').replace(/\[[^\]]*\]/g, '').matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)].map(m => m[1]));
+    if (!splitRefs(at(comps, row, 'cssClasses')).some(c => sel.has(c))) {
+      fail(`presentation/styles: row ${i + 2} componentId "${own}" shares no class with selector "${at(st, r, 'selector')}"`);
+    }
   });
 }
 
