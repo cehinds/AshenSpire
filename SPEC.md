@@ -23,8 +23,8 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 |---|---|---|---|
 | top | Combat and equipment revision ([COMBAT-EQUIPMENT-RULES](docs/COMBAT-EQUIPMENT-RULES.md)) | **partly built** | Parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1). The full framework cutover is not performed ([framework-cutover-report](docs/framework-cutover-report.md)); the three-build prototype gate and the 36→50 class pools are post-1.0 (D3). |
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
-| 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
-| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
+| 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
+| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 23 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
@@ -68,7 +68,7 @@ on the prototype gate; both remain the contract for the work after 1.0, unchange
 
 | | |
 |---|---|
-| Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
+| Title | **Ashen Spire** (`AshenSpire` — the bundle name; page title `index.html:8`; title screen `src/ui/screens/title.js`) |
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
 | Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
@@ -90,7 +90,7 @@ These override everything else in the spec.
    - **Kenney.nl** (CC0) — UI nine-slices, buttons, panel borders.
    - **OpenGameArt.org** (filter CC0/CC-BY) — combat backgrounds, enemy portraits if suitable ones exist.
    - **Google Fonts** (OFL) — display serif (e.g. *Cinzel*) + body sans (e.g. *Inter*).
-4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code never hardcodes an asset path. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
+4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code never hardcodes an asset path; the CSS backdrops in `styles/` are outside this item until §2.4 lands. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
 5. Third-party **code** may be vendored only if MIT/BSD/Apache/CC0, kept in `src/vendor/`, attributed in `CREDITS.md`. Expected: none beyond possibly a PRNG snippet (mulberry32 is public domain).
 
 ### 2.1 The AI-use acknowledgement — one home, two surfaces
@@ -153,9 +153,9 @@ Design laws (contractual):
 1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. All content is validated at boot (dev mode) and in tests — unknown fields, bad enums, and dangling id references fail loudly (§3.14).
 2. **The engine contains no entity-specific code.** There is no `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), and a generic status model (§3.7) — and *all* game behavior is content data composing those primitives. Adding a card, relic, status, stance, enemy, or event = adding data.
 3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection are seeded algorithms (§3.8) — but every knob they consume lives in content data, never as code constants.
-4. **All tuning is data.** `content/balance.js` holds every global constant that is not a stat row (reward odds, rune ranges, prices, flask drop decay); every stat is a row of `content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
-5. **Headless engine.** Nothing under `src/engine/` or `src/model/` references `document`, `window`, `localStorage`, or timers. A combat runs to completion from `tests/index.html` with no UI imports.
-6. **Budgeted escape hatch.** `content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
+4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, rune ranges, prices, flask drop decay); every stat is a row of `src/content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
+5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage`, or timers. Under `src/model/`, only `offlineDownload.js` sets timers (its request timeouts). A combat runs to completion from `tests/index.html` with no UI imports.
+6. **Budgeted escape hatch.** `src/content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
 
 ### 3.2 File tree — the layer contract, not an inventory
 
@@ -185,7 +185,7 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `src/net/` | LAN co-op client (§11). Absent behind the launcher → the feature hides itself. |
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
-| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only — no UI imports. |
+| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only; no test needs a DOM. |
 | `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
@@ -200,10 +200,10 @@ defect this layering exists to catch.
 | Entity | Key fields |
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: `runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, swapCostDelta, exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). `restDenied` is `true` or a list of location tags (§13.4j): the one passive whose value is not a number or a flag. The passive readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: every key of `PASSIVE_TYPES` (`src/model/schemas.js:317-348`), for example `runeGainMult`, `restDenied`, `swapCostDelta` and `exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). `restDenied` is `true` or a list of location tags (§13.4j): the one passive whose value is not a number or a flag. The passive readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does |
 | PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` — what one `property`-domain node confers, keyed by the node. A VIEW: derived by `tools/content-build.mjs` from the tag tree (below) — the node row, its `REQUIRES`/`CONFLICTS_WITH` edges in `nodeRelations.csv`, its sentence in `nodeTerms.csv`, its effects in `nodeEffects.json` with every `{variable}` replaced by the balance path its `default` binding names — and joined in `src/content/propertyRules.js`, which resolves those paths at load. Its `passives` node is built from the same `PASSIVE_TYPES` fields as the relic's. Exactly one rule per property node. **Every family may carry a property node**; what the mount path can hold is the engine's narrower list (`engine/properties.js` `MOUNTABLE_KINDS`). Property nodes are stamped onto a holder's `propertyTags`, never its `tags` |
 | Tag tree | `content/source/nodes.csv` — `id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb`. THE one vocabulary: every tag any object carries is a node, and a node's parent is `parentId` and nothing else (an id's dotted spelling is an opaque key). Roots are domains; `domain` (the framework's enum word) and `aside` (a root whose tags never join a tag list — `presentation`, `classification`) are written on roots only. Companions: `nodeRelations.csv` (`sourceId, relation ∈ NODE_RELATIONS, targetId, precedence`), `familyNodes.csv` (family × subtree root — who may carry what), `nodeTerms.csv` (`playerTermId, tooltipTermId, template`), `nodeVariables.csv` (`nodeId, variable, role` — a node carries no numbers), `variableBindings.csv` (`scope ∈ VARIABLE_SCOPES, scopeId, nodeId, variable, balancePath` — what a variable reads, per scope; `instance › upgrade › class › default`), `nodeEffects.json` (`{ [nodeId]: { passives?, triggers? } }` naming variables). Derived from it: the five tag tables, the property rules, and `src/framework/data/{properties,relations}.js`. Every collection-backed object carries exactly one `classification.*` node, stamped as `kindIds` (§3.14) |
-| Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
+| Status | `id, name, icon, stackMode, decay, proc?, modifiers?, hooks?` (§3.7) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
@@ -216,7 +216,7 @@ defect this layering exists to catch.
 
 - `registries.js` loads all content into typed, deep-frozen registries keyed by id. **Cross-references are by id only**; registry getters throw on unknown ids (caught by validation before runtime).
 - **Definitions vs instances:** state (`model/state.js`) stores instance data referencing definitions by id — a deck card is `{ instanceId, cardId, upgraded }`, an enemy is `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, **never definitions** — saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
-- **Player intents are a closed set** (everything the UI may ask the engine to do): `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `discardFlask(slot)`, `chooseMapNode(nodeId)`, `chooseReward(choice)`, `restAction('rest'|'smith', cardId?)`, `shopAction(...)`, `eventChoice(index)`, `abandonRun()`.
+- **Player intents are a closed set** (everything the UI may ask the combat engine to do; the solo dispatch switch in `src/engine/combat.js:850-915`): `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `swapArmament`, `changeEquipment`. The co-op engine mirrors `playCard`, `endTurn` and `useFlask` in `src/engine/coopCombat.js`. Run-level actions are not intents: each screen calls its own function in `src/engine/`, for example `restAt(visit)` in `src/engine/locations.js:121`.
 
 ### 3.4 Effect DSL (opcodes)
 
@@ -238,12 +238,12 @@ effects: [
 
 **Opcode list** (closed set; extending it is an engine PR):
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`).
-- Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
+- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`).
+- Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
 
-`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much buildup from a meter status). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
+`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much build-up from a status that carries `proc`). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
 
 **Card rating values are cost-derived.** Before card definitions enter the
 registries, primary values are recalculated as:
@@ -297,8 +297,8 @@ adding a second formula in UI or engine code. The run snapshots the resolved for
 birth, so later tuning applies to new runs and never silently re-stats an in-progress save.
 
 **One row, one formula, one editor (derived-stat ruleset 7, owner 2026-09-24).** Every stat a
-character has — HP, Mana, Stamina, Actions, the opening hand, the per-turn draw, the hand size,
-AR, DR, PR, Ward and Poise — is ONE row of `content/derivedStats.js`, in one shape:
+character has — HP, Mana, Stamina, the opening hand, the per-turn draw, the hand size,
+AR, DR, PR, Ward and Poise — is ONE row of `src/content/derivedStats.js`, in one shape:
 
 `{ base, strength, dexterity, constitution, wisdom, intelligence, perLevel, min?, max? }`
 
@@ -327,22 +327,22 @@ keep their snapshotted rules.
 |---|---|---|---|---|---|---|---|---|---|
 | HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Owner's +1 main-bonus defaults (2026-10-06); stock pools including starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. The run clamps max HP to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
-| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | Pays card and combat costs; refills each turn. |
-| Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
+| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget: pays card and combat costs and refills each turn. The HUD calls it Actions. |
+| Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Not a second pool: `energy` is an alias of `stamina` (`src/model/turnStamina.js`), and combat reads Stamina (`src/content/derivedStats.js`). Historical: DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27), the first extra Action at DEX 4. |
 | Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
 | Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
-| Hand size (`handSize`) | 15 | — | — | — | — | — | — | 1–15 | Flat absolute capacity by default, independently configurable. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | INT scales it like Draw: only points above 4 count (`attributeBaseline`), so +1 per five INT above 4. Independently configurable. |
 | AR (`ar`) | 0 | 1 | — | — | — | — | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | — | 1 | — | — | — | — | — | 〃 |
 | PR (`pr`) | 0 | — | — | — | — | 1 | — | — | 〃 |
 | Ward (`ward`) | 1 | — | — | — | 1 | — | — | — | 〃 |
 | Poise (`poise`) | 1 | — | — | 1 | — | — | — | — | ONE Poise: the rating with ratings on, the vessel with them off; armour and relics add. |
 
-| Output | Default formula | Meaning |
+| Output | Source | Meaning |
 |---|---|---|
-| Defense | `-6 + DEX` | The data-owned base value used by the basic guard/defense profile. |
-| Strike | `-6 + STR` | The data-owned base value used by the basic physical strike profile. |
-| Magic | `-6 + WIS` | The data-owned base value used by the basic magic profile. |
+| Defense | `baseValue` of the guard profiles, e.g. `unarmedGuard` = 1 (`ratingId` `dr`) | The data-owned base value used by the basic guard/defense profile. |
+| Strike | `baseValue` of the attack profiles, e.g. `unarmedAttack` = 3 (`ratingId` `ar`) | The data-owned base value used by the basic physical strike profile. |
+| Magic | `baseValue` of the magic profiles (`content/source/basicCardProfiles.csv`) | The data-owned base value used by the basic magic profile. |
 
 **Retired homes.** Ruleset 7 removed three second homes: the rating formula (`ratings.<id>` plus
 one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabled, stat,
@@ -392,13 +392,13 @@ Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStat
 
 ### 3.7 Status model — statuses are content, not code
 
-`content/statuses.js` defines every status over a generic model interpreted by `engine/statuses.js`. **Adding a status requires no engine change.** Schema:
+`src/content/statuses.js` defines every status over a generic model interpreted by `src/engine/statuses.js`. **Adding a status requires no engine change.** Schema:
 
 ```
 { id, name, icon,
   stackMode: 'add' | 'refresh' | 'unique',
   decay: 'none' | 'perTurnEnd' | { duration: n } | 'onConsume',
-  meter?: { max: n, growthMult: x, onFill: [effects] },   // build-up statuses
+  proc?: { threshold, burstPercent, burstMin, burstMax, poiseDamage?, effects?, stagger?, resistance? },   // build-up statuses: at threshold, burst, then reset to zero
   modifiers?: { damageDealtMult?, damageTakenMult?, blockGainedMult?,
                 attackDamageAdd?, blockAdd? },             // consulted by §4.2 math
   hooks?: [triggers §3.6] }                                // ownerTurnStart etc.
@@ -409,24 +409,25 @@ The Elden Ring layer, fully as data — no engine special cases:
 ```js
 bleed: {
   stackMode: 'add', decay: 'none',
-  meter: { max: 12, growthMult: 1.5,
-    onFill: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 } }] },
+  proc: { threshold: 7, burstPercent: 15, burstMin: 8, burstMax: 35, poiseDamage: 3,
+    resistance: { status: 'bleedResist', tags: ['beast', 'humanoid'] } },
 },
-scarletRot: {
+crimsonBlight: {
   stackMode: 'add', decay: { duration: 3 },   // re-apply adds stacks + refreshes
   hooks: [{ on: 'ownerTurnStart',
     do: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'stacks', status: 'scarletRot', of: 'owner' } }] }],
+      amount: { f: 'stacks', status: 'crimsonBlight', of: 'owner' } }] }],
 },
 weak:       { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageDealtMult: 0.75 } },
 vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.5 } },
-frostbite:  { stackMode: 'unique', decay: 'onConsume', /* +30% on next big hit: hook on damaged ≥10 */ },
+frost:      { stackMode: 'add', decay: 'none',
+  proc: { threshold: 10, burstPercent: 8, burstMin: 4, burstMax: 20,
+    effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
 ```
 
-Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, `onFill` applies a `staggered` status whose modifiers/hooks implement the skipped turn and +50% window; `growthMult: 1.25`). Stances (`content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
+Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, `onFill` applies a `staggered` status whose modifiers/hooks implement the skipped turn and +50% window; `growthMult: 1.25`). Stances (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
 
-**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `content/keywords.js` supplies only their display names and tooltip text.
+**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `src/content/keywords.js` supplies only their display names and tooltip text.
 
 ### 3.8 Procedural systems — kept procedural, parameterized by data
 
