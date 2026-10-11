@@ -413,6 +413,10 @@ function adoptTitle(el) {
 export function attachTooltip(el, contentFn, {
   intent = 'above', align = 'start', clear = null, delayMs = null, focusDelayMs = null,
   appearance = null, placementModel = null, autoHideMs = 0, expand = false, expandTitle = null, showFn = null, tapToExplain = false, selectionFirst = false, activate = null,
+  // secondTap: false turns off explain-on-second-tap (a click on a non-control
+  // detail selects it, and the next click answers). Map nodes pass false: a
+  // tap there selects the node. Hover and focus are never affected.
+  secondTap = true,
 } = {}) {
   adoptTitle(el);
   el.dataset.tipAttached = 'true';
@@ -517,7 +521,7 @@ export function attachTooltip(el, contentFn, {
       explainOnSecondTap(ev);
     };
     el.addEventListener('click', answer); el.addEventListener('keydown', answer);
-  } else if (!selectionFirst && !expand) {
+  } else if (secondTap && !selectionFirst && !expand) {
     el.addEventListener('click', ev => {
       if (isControl() || ev.target?.closest('[data-tip-attached], [data-tip]') !== el) return;
       explainOnSecondTap(ev);

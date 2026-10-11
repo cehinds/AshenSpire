@@ -82,6 +82,7 @@ import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
+import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -1741,10 +1742,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       const empty = slots.find((s) => !s.summary);
       startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
     },
-    // A delete returns to the door it came from, with the slot now empty.
+    // The Title updates in place from the returned list (no remount). The
+    // snapshot below is this showTitle's own `slots`, which onQuickStart and
+    // onCustom read, so it is refreshed too.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);
-      showTitle({ reopen: from });
+      const fresh = saveSlotRecords();
+      slots.splice(0, slots.length, ...fresh);
+      return fresh;
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
@@ -1911,8 +1916,12 @@ const quickMenuControls = {
   },
 };
 
+// The Settings door showSettings opened, so an import, which replaces the profile
+// under it, can close it. Its toggles read the stale DOM otherwise.
+let settingsDoor = null;
+
 function showSettings() {
-  openSettings({
+  settingsDoor = openSettings({
     meta: activeMeta,
     previewAttributes: run?.attributes,
     previewLevel: run ? characterLevelOf(run) : null,
@@ -1922,11 +1931,34 @@ function showSettings() {
   });
 }
 
+// AFTER AN IMPORT, NO RELOAD. The restored profile is on disk; re-read it the way
+// boot does (persistSettingsChange's order) and redraw the title over the same page.
+// It goes through the Profile door's restore (onRestored in showProfile): the
+// stored profile is brought forward, then the same defaults choice as boot is
+// decided before any promoted value is seeded. With no choice pending the
+// promoted defaults are seeded; otherwise the imported values remain intact
+// for Keep local. applyRestoredSettings then re-applies display, UI scale, pad
+// and key bindings, drops a stale Undo, and fills activeSettings IN PLACE
+// (other owners hold that object).
+function refreshAfterImport() {
+  activeMeta = saves.loadMeta();
+  const settings = bringStoredProfileForward(activeMeta);
+  settingsChoicePending = saves.profileStatus().ok
+    && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+  if (!settingsChoicePending) seedPromotedDefaults(activeMeta, settings);
+  applyRestoredSettings(settings);
+  rebuildRegistries(activeSettings);
+  settingsChoiceChecked = true;
+  // The Settings door (opened from the title's Download & saves path) still shows the old profile.
+  settingsDoor?.close?.(); settingsDoor = null;
+  showTitle({ skipStartup: true });
+}
+
 function showOfflinePlay() {
   const transfer = createSaveTransfer(bootStorage, registries);
   const ownedTransfer = { ...transfer, restore: text => saves.withProfile
     ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
-  openOfflinePlay({ transfer: ownedTransfer, assertImportAllowed: () => {
+  openOfflinePlay({ transfer: ownedTransfer, onImported: refreshAfterImport, assertImportAllowed: () => {
     if (run) throw new Error('Return to the title screen before importing saves.');
     let persistent = false;
     try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
@@ -2371,8 +2403,21 @@ const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'classicAppearance
 // has no Potions control, and a remount drops its selected destination
 // (#1474 review).
 const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
+// A remount that lands while a modal is open (Settings over the map) waits for
+// the modal to close. One deferred remount is kept; later changes merge into it.
+let deferredMapRemount = null;
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
+  if (modalOpen()) {
+    if (deferredMapRemount) { Object.assign(deferredMapRemount, changed); return; }
+    const pending = { ...changed };
+    deferredMapRemount = pending;
+    onModalsClosed(() => {
+      if (deferredMapRemount === pending) deferredMapRemount = null;
+      remountMapIfShowing(pending);
+    });
+    return;
+  }
   const screen = app.querySelector('.mapscreen');
   if (!screen) return;
   const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
