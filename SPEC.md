@@ -640,7 +640,7 @@ Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Tri
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`). The core events are:
+Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). The core events are (not exhaustive; `EVENTS` is):
 
 ```
 combatStart, combatEnd(victory)
@@ -653,8 +653,9 @@ enemySpawned, enemyDied, enemyStaggered
 energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
-combatReactionUnavailable(ownerId,sourceId,reason,cardIds,attackKind)
-combatGuardBroken(targetId,sourceId,poise)
+combatReactionOffered, combatReactionChosen
+combatReactionUnavailable(ownerId,sourceId,reason,cardIds,attackKind) †
+combatGuardBroken(targetId,sourceId,poise) †
 ```
 
 ### 3.11 Seeded RNG
