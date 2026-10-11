@@ -2,12 +2,13 @@
 // docs/tag-model/workbench.html into a node vm context with a fake db.
 //
 //   node --test docs/tag-model/tools/workbench-store.test.mjs
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readTable } from './csv.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PAGE = path.join(HERE, '..', 'workbench.html');
@@ -1219,4 +1220,45 @@ test('(c) inserting one row at the top rewrites at most two blobs', async () => 
   const blobWrites = db.log.sets.slice(mark).filter((p) => p.includes('/blobs/'));
   assert.ok(blobWrites.length <= 2, 'blob writes: ' + blobWrites.length);
   assert.equal(await storedRows(db), JSON.stringify([{ id: 'top', name: 'new', qty: 0 }, ...objs]));
+});
+
+// Column drift: every workbench table's default columns must contain the whole header
+// of its CSV in docs/tag-model/tables, so a column added to a CSV cannot go missing here.
+const CSV_DIR = path.join(HERE, '..', 'tables');
+const CSV_FOR = {
+  tags: 'tags.csv', objects: 'objects.csv', values: 'values.csv', formulas: 'formulas.csv',
+  ranks: 'ranks.csv', relations: 'relations.csv',
+  assets: 'presentation/assets.csv', components: 'presentation/components.csv', layouts: 'presentation/layouts.csv',
+  styles: 'presentation/styles.csv', tokens: 'presentation/tokens.csv', breakpoints: 'presentation/breakpoints.csv',
+  animations: 'presentation/animations.csv', effects: 'presentation/effects.csv', resolutions: 'presentation/resolutions.csv',
+  symbols: 'presentation/symbols.csv', combatSymbols: 'presentation/combat-symbols.csv',
+  settings: 'presentation/settings.csv', strings: 'presentation/strings.csv',
+};
+
+function workbenchTableDefaults() {
+  const html = readFileSync(PAGE, 'utf8');
+  const fa = html.indexOf('/* formula-columns:begin */');
+  const fb = html.indexOf('/* formula-columns:end */');
+  const ta = html.indexOf('const TABLES = {');
+  const tb = html.indexOf('\n};', ta);
+  if (fa < 0 || fb < fa || ta < 0 || tb < ta) throw new Error('TABLES or formula-columns markers missing in workbench.html');
+  const src = html.slice(fa, fb + '/* formula-columns:end */'.length) + '\n' + html.slice(ta, tb + 3) + '\n;TABLES';
+  return vm.runInNewContext(src, {});
+}
+
+test('every workbench table has a CSV mapping, and every mapped CSV exists', () => {
+  const tables = workbenchTableDefaults();
+  assert.deepEqual(Object.keys(CSV_FOR).sort(), Object.keys(tables).sort());
+  for (const file of Object.values(CSV_FOR)) {
+    assert.ok(existsSync(path.join(CSV_DIR, file)), 'missing CSV: ' + file);
+  }
+});
+
+test('workbench default columns contain every column in the matching CSV header', () => {
+  const tables = workbenchTableDefaults();
+  for (const [table, file] of Object.entries(CSV_FOR)) {
+    const { header } = readTable(path.join(CSV_DIR, file));
+    const missing = header.filter((c) => !tables[table].columns.includes(c));
+    assert.deepEqual(missing, [], table + ' (' + file + ') is missing CSV columns in the workbench');
+  }
 });
