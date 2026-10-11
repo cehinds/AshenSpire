@@ -121,13 +121,28 @@ export function parity(tags, nodes) {
   return diffs;
 }
 
+// Model tags with status live-tag whose liveId is not a live node (an empty
+// liveId counts as missing). Returns [{ tagId, liveId }].
+export function reverseMissing(tags, nodes) {
+  const live = new Set(nodes.map(n => n.id));
+  return tags
+    .filter(t => t.status === 'live-tag' && !live.has(t.liveId))
+    .map(t => ({ tagId: t.id, liveId: t.liveId }));
+}
+
 export function analyze({ tags, nodes, tagging }) {
   const usage = usageByNode(tagging);
   const cov = coverage(tags, nodes);
   const unmapped = cov.unmappedIds
     .map(id => ({ id, usage: usage.get(id) || 0 }))
     .sort((a, b) => b.usage - a.usage || a.id.localeCompare(b.id));
-  return { ...cov, unmapped, collisions: collisions(tags), parity: parity(tags, nodes) };
+  return {
+    ...cov,
+    unmapped,
+    collisions: collisions(tags),
+    parity: parity(tags, nodes),
+    reverse: reverseMissing(tags, nodes),
+  };
 }
 
 export function render(res) {
@@ -160,6 +175,13 @@ export function render(res) {
     for (const d of res.parity) {
       out.push(`| ${d.tagId} | ${d.liveId} | ${d.field} | ${d.model || '(empty)'} | ${d.live || '(empty)'} |`);
     }
+    out.push('');
+  }
+  out.push('## 4. Reverse: live-tag with no live node', '');
+  if (res.reverse.length === 0) out.push('None: every live-tag points at a live node.', '');
+  else {
+    out.push('| Model tag | liveId |', '|---|---|');
+    for (const r of res.reverse) out.push(`| ${r.tagId} | ${r.liveId || '(empty)'} |`);
     out.push('');
   }
   return out.join('\n');

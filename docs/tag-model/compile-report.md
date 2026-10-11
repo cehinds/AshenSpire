@@ -626,3 +626,7 @@ None: every live id is mapped by at most one tag.
 | card.cost.mana | cost.mana | parent | card.cost | cost (live parent unmapped) |
 | card.upgrade.upgraded | internal.upgraded | label | Upgraded | upgraded |
 | card.upgrade.upgraded | internal.upgraded | parent | card.upgrade | internal (live parent unmapped) |
+
+## 4. Reverse: live-tag with no live node
+
+None: every live-tag points at a live node.
