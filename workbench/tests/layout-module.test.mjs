@@ -158,3 +158,12 @@ test('the viewport of a rotated device swaps its sides', () => {
   const free = settings.devices.find((d) => d.resizable);
   assert.equal(C.viewportOf(free, { freeSize: { width: 500, height: 300 } }).width, 500);
 });
+
+test('a failed save is read from the api error: 422 problems, 409 conflicts, anything else an error message', () => {
+  const problems = [{ path: 'content/config/ui/scenes/w4.json', message: 'bad band' }];
+  assert.deepEqual(C.saveFailureOf(Object.assign(new Error('x'), { status: 422, body: { problems } })), { kind: 'problems', problems });
+  const conflicts = [{ path: 'content/config/ui/tokens.json', hash: 'h2' }];
+  assert.deepEqual(C.saveFailureOf(Object.assign(new Error('x'), { status: 409, body: { conflicts } })), { kind: 'conflicts', conflicts });
+  assert.deepEqual(C.saveFailureOf(new TypeError('Failed to fetch')), { kind: 'error', message: 'Failed to fetch' });
+  assert.deepEqual(C.saveFailureOf(Object.assign(new Error('HTTP 500'), { status: 500, body: null })), { kind: 'error', message: 'HTTP 500' });
+});

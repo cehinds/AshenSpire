@@ -210,3 +210,15 @@ export function isDirty(file) {
 export function changesFor(files) {
   return [...files.values()].filter(isDirty).map((f) => ({ path: f.path, text: proposedText(f), baseHash: f.hash }));
 }
+
+/**
+ * What a failed files/save means for the dialog, from the error ctx.api threw:
+ *   problems: 422, the compiler's { path, message } list;
+ *   conflicts: 409, the files changed on disk ({ path, hash });
+ *   error: anything else, a network error included, with its message.
+ */
+export function saveFailureOf(err) {
+  if (err && err.status === 422) return { kind: 'problems', problems: Array.isArray(err.body?.problems) ? err.body.problems : [] };
+  if (err && err.status === 409) return { kind: 'conflicts', conflicts: Array.isArray(err.body?.conflicts) ? err.body.conflicts : [] };
+  return { kind: 'error', message: (err && err.message) || 'network error' };
+}
