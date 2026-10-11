@@ -22,6 +22,13 @@ export const VIEWS = Object.freeze(['grid', 'detail', 'worn', 'tooltip', 'invent
 export const DENSITIES = Object.freeze(['compact', 'comfortable', 'spacious']);
 export const LAYOUTS = Object.freeze(['grid', 'list']);
 
+/**
+ * The version of the messages between the module and the render page. The render page is served by
+ * the game's checkout, which may be another one; it sends this in `ready`, and the module refuses a
+ * page that sends a different number. Bump it when a message changes shape.
+ */
+export const RENDER_PROTOCOL = 1;
+
 /** The five sort orders. */
 export const SORTS = Object.freeze([
   { id: 'name', label: 'Name A–Z' },

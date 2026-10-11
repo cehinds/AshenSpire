@@ -20,7 +20,7 @@ import { inventoryItemCardModel, inventoryDetailCardModel } from '../../../src/u
 import { renderInventoryItemCard, renderInventoryDetailCard } from '../../../src/ui/components/armouryComponents.js';
 import { cardLevelCssProperties, cardShapeCssProperties } from '../../../src/ui/models/CardSizeModel.js';
 import { armamentIconAsset } from '../../../src/model/equipmentArt.js';
-import { KINDS, entryOf, filterEntries, sortEntries, parseDeepLink } from './model.mjs';
+import { KINDS, RENDER_PROTOCOL, entryOf, filterEntries, sortEntries, parseDeepLink } from './model.mjs';
 
 const SOURCE = 'ashen-entities';
 const params = new URLSearchParams(location.search);
@@ -273,6 +273,6 @@ if (!parentOrigin) {
     classes: defsOf('classes').map((c) => ({ id: c.id, name: c.name })),
     armaments: defsOf('armaments').map((a) => ({ id: a.id, name: a.name })),
   });
-  post('ready', {});
+  post('ready', { protocol: RENDER_PROTOCOL });
   apply(parseDeepLink(params));
 }

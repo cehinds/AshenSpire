@@ -10,6 +10,7 @@
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
   facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
+  RENDER_PROTOCOL,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -73,6 +74,12 @@ export default {
     let tryFor = undefined; // the entity the Try in fight hands were last set for
 
     // ---------- the game server ----------
+    const CHECKOUT_MESSAGE = 'This project’s checkout has no Entity Browser render page, or an older one. Update that checkout to this branch.';
+    function showSetup(message, detail = '') {
+      setup.hidden = false;
+      setup.innerHTML = `<p>${esc(message)}${detail ? ` ${esc(detail)}` : ''} <button type="button" class="ent-retry">Try again</button></p>`;
+      setup.querySelector('.ent-retry').onclick = connect;
+    }
     async function connect() {
       setup.hidden = true;
       try {
@@ -83,9 +90,7 @@ export default {
         center.src = renderUrl(base, { parentOrigin: location.origin });
         drawer.src = renderUrl(base, { parentOrigin: location.origin, kind: st.kind, view: 'detail' });
       } catch (err) {
-        setup.hidden = false;
-        setup.innerHTML = `<p>${esc(err.message)} The entities are drawn by the game server, so start it from the Library or Home, then <button type="button" class="ent-retry">Try again</button>.</p>`;
-        setup.querySelector('.ent-retry').onclick = connect;
+        showSetup(err.message, 'The entities are drawn by the game server, so start it from the Library or Home, then');
       }
     }
 
@@ -108,6 +113,8 @@ export default {
       if (!fromCenter && !fromDrawer) return;
       switch (d.type) {
         case 'ready':
+          // A page from another checkout may be older or newer: it is not drawn, and the reader is told why.
+          if (d.protocol !== RENDER_PROTOCOL) { showSetup(CHECKOUT_MESSAGE); break; }
           if (fromCenter) sendCenter(); else sendDrawer();
           break;
         case 'counts':

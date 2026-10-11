@@ -8,7 +8,7 @@ import { armamentIconAsset } from '../../src/model/equipmentArt.js';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
-  escHtml, handChoices, handsFor,
+  escHtml, handChoices, handsFor, RENDER_PROTOCOL,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -134,6 +134,14 @@ test('the inventory icon uses the game art key, as the game does', () => {
   const render = fs.readFileSync(new URL('../modules/entities/render.mjs', import.meta.url), 'utf8');
   assert.match(render, /armamentIconAsset\(def\)/, 'the render page asks the game for the icon path');
   assert.doesNotMatch(render, /icon_\$\{def\.id\}/, 'and no longer builds it from the id alone');
+});
+
+test('the render page announces the protocol version the module checks', () => {
+  assert.ok(Number.isInteger(RENDER_PROTOCOL) && RENDER_PROTOCOL >= 1);
+  const render = fs.readFileSync(new URL('../modules/entities/render.mjs', import.meta.url), 'utf8');
+  assert.match(render, /post\('ready', \{ protocol: RENDER_PROTOCOL \}\)/, 'ready carries the version');
+  const index = fs.readFileSync(new URL('../modules/entities/index.mjs', import.meta.url), 'utf8');
+  assert.match(index, /d\.protocol !== RENDER_PROTOCOL/, 'the module refuses a different version');
 });
 
 test('the render page URL carries the parent origin and only set parameters', () => {
