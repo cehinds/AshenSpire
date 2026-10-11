@@ -452,6 +452,12 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Horizontal swipes scroll excess cards; vertical drags still aim a card. */
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] .card { touch-action:pan-x; }
 /* Its complete controls stay below the selected face, above the footer. */
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-tools {
+  /* Owner (2026-10-11): on a phone the Combat log / Reaction row sits a little
+     lower, nearer the cards. A margin keeps the docked top (the --hud-tools-dy
+     token only raises it) and the cards clear below it. */
+  margin-top:calc(8px / var(--ui-zoom,1));
+}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls {
  top:100%; bottom:auto; width:max-content; min-width:100%; max-width:var(--hand-controls-max-width,100%);
  right:auto; flex-wrap:wrap; box-sizing:border-box; font-size:calc(12px / var(--ui-zoom,1));
