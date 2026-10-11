@@ -139,7 +139,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return el('header', { class: 'deck-editor-head' }, [
       el('div', {}, [
         el('h2', { id: 'deck-editor-title', class: 'deck-editor-title', text: t('deckEditor.readingDesk') }),
-        el('p', { class: 'deck-editor-subtitle', text: t('deckEditor.readingHint') }),
       ]),
       el('span', { class: 'deck-editor-class', text: registries.classes.get(run.class)?.name || run.class }),
       counter,
