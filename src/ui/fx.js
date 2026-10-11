@@ -16,7 +16,6 @@ import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 
-const STEP_MS = 80;
 
 // ---------------------------------------------------------------------------
 // Animation speed (settings-driven; 'instant' collapses paced playback to the
@@ -28,7 +27,7 @@ const STEP_MS = 80;
 // (model/equipmentAnimation.js animationTiming), so the hit, its number and its
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
-import { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed } from './animationPace.js';
+import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed };
 
 let pending = [];
@@ -512,7 +511,7 @@ function flare(layer, anchor, color) {
 /**
  * animateEvents(events, ctx, done)
  *   ctx = { layer, combatEl, anchorFor(entityId) → element|null }
- * Events are staggered STEP_MS apart; clicking anywhere flushes instantly.
+ * Events are staggered COMBAT_TIMING.instantStepMs apart; clicking anywhere flushes instantly.
  */
 export function animateEvents(events, ctx, done) {
   flushRequested = false;
@@ -548,7 +547,7 @@ export function animateEvents(events, ctx, done) {
     const fn = visualFor(pending[i]);
     if (fn) fn(ctx);
     i++;
-    setTimeout(step, STEP_MS);
+    setTimeout(step, COMBAT_TIMING.instantStepMs);
   };
   step();
 }
@@ -723,7 +722,7 @@ export function playTimeline(events, ctx, done) {
     ? Number(ctx.maxActorAnimationMs(speed)) || 0
     : Number(ctx.maxActorAnimationMs) || 0;
   const actorBudgetMs = Math.max(speed.lungeMs, customActorMs);
-  const budget = 2000 + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  const budget = COMBAT_TIMING.watchdogBaseMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
@@ -767,7 +766,7 @@ export function playTimeline(events, ctx, done) {
       safe(() => playBeatCues(beat.events));
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-      schedule(nextBeat, Math.max(260, speed.beatMs));
+      schedule(nextBeat, Math.max(COMBAT_TIMING.turnBannerFloorMs, speed.beatMs));
       return;
     }
 
@@ -819,11 +818,11 @@ export function playTimeline(events, ctx, done) {
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
-      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', 450, '✦'));
+      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', COMBAT_TIMING.castGlyphMs, '✦'));
     }
     const windup = actorAnimation
       ? actorAnimation.impactMs
-      : (actorEl ? Math.round(speed.lungeMs * 0.55) : 0);
+      : (actorEl ? Math.round(speed.lungeMs * COMBAT_TIMING.windupFraction) : 0);
     // Every qualifying hit holds at its own visual, including multi-hit and
     // multi-target attacks. Recovery includes only the holds actually played.
     let heldMs = 0;
