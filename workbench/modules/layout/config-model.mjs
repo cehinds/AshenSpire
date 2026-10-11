@@ -67,6 +67,19 @@ export async function loadWorkspace(api) {
   return { files: new Map(pairs), truncated: Boolean(listing.truncated) };
 }
 
+/**
+ * "Reload from disk" for one file. disk is the files/read result, or null when the disk has no
+ * such file (it was deleted): then the draft and its state are dropped, which is how the studio
+ * marks a missing file (paintBar shows it as missing). Returns a new Map and whether the file is gone;
+ * the map given is not changed.
+ */
+export function reloadFromDisk(files, rel, disk) {
+  const next = new Map(files);
+  if (disk) next.set(rel, fileState(rel, disk.text, disk.hash));
+  else next.delete(rel);
+  return { files: next, missing: !disk };
+}
+
 /** Plain { rel: data } for the regions model (it reads a parent and sibling files by rel). */
 export function configsOf(files) {
   const out = {};

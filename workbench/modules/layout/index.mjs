@@ -383,11 +383,19 @@ export default {
       if (!f) return;
       if (act === 'keep') { f.hash = btn.dataset.hash || null; await openReview(); return; }
       if (act === 'reload') {
-        const r = await ctx.api(`files/read?path=${encodeURIComponent(f.path)}`);
-        Object.assign(f, C.fileState(f.rel, r.text, r.hash));
+        // A 404 is the disk state of a file deleted on disk, not a failure: its draft goes and it reads as missing.
+        let disk = null;
+        try { disk = await ctx.api(`files/read?path=${encodeURIComponent(f.path)}`); } catch (err) { if (err.status !== 404) throw err; }
+        const out = C.reloadFromDisk(st.files, f.rel, disk);
+        st.files = out.files;
         // The disk copy replaces the edits, so the steps that hold them must go: undo would write them back.
         ctx.history.clear();
         rebuild();
+        if (out.missing) {
+          dlg.close();
+          ctx.toast({ kind: 'warn', title: `${f.path} was deleted on disk`, detail: 'Its edits to that file were dropped.' });
+          return;
+        }
         await openReview();
       }
     }
