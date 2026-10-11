@@ -609,7 +609,12 @@ test('a live-reload build waits for a job holding the generated-files lock, and 
   assert.throws(() => runner.start('content-build'), /A live-reload build is running/);
   runner.release(GENERATED);
   await fs.writeFile(path.join(root, 'tools/content-build.mjs'), '\n');
-  assert.equal(runner.start('content-build').status, 'running');
+  const rerun = runner.start('content-build');
+  assert.equal(rerun.status, 'running');
+  // The run persists .wb-state/jobs.json when it ends. Wait for that: a write that lands while the
+  // teardown removes the temp dir makes rmdir fail with ENOTEMPTY.
+  for (let i = 0; i < 200 && runner.active.size; i++) await new Promise((r) => setTimeout(r, 20));
+  assert.equal(runner.get(rerun.runId).status, 'passed', runner.get(rerun.runId).log);
 });
 
 test('a job\'s builder that takes the lock itself runs under the job\'s hold, not into a deadlock', async (t) => {
@@ -676,6 +681,49 @@ test('a generated-files lock held by another process (the editor, UI Studio) ref
   assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).holder, 'Config build (Workbench)');
   for (let i = 0; i < 100 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 30));
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
+});
+
+test('close() waits for a save still writing, so its file is on disk when close resolves', async (t) => {
+  const root = await project(t);
+  const styles = path.join(root, 'styles/main.css');
+  const sha = (s) => createHash('sha256').update(s).digest('hex');
+  let app = null; let closing = null; let onDiskAtClose = null; let enter = null;
+  const entered = new Promise((resolve) => { enter = resolve; });
+  // The save holds at its write seam while the Workbench is closed, as a save in flight would.
+  app = await createWorkbench({
+    root, port: 0, children: false, stateDir: path.join(root, '.wb-state'), debounceMs: 120,
+    fileFault: async (rel) => {
+      if (rel !== 'styles/main.css' || closing) return;
+      enter();
+      closing = app.close().then(async () => { onDiskAtClose = await fs.readFile(styles, 'utf8'); });
+      await new Promise((r) => setTimeout(r, 150));
+    },
+  });
+  t.after(() => app.close());
+  const saved = fetch(`${app.url}/api/files/save`, {
+    method: 'POST', headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [{ path: 'styles/main.css', text: 'body{color:red}\n', baseHash: sha('body{}\n') }] }),
+  }).then((r) => r.status, (e) => e.message);
+  await entered;
+  await closing;
+  assert.equal(onDiskAtClose, 'body{color:red}\n', 'the save landed before close resolved');
+  assert.equal(await saved, 200);
+});
+
+test('closing the Workbench stops a live-reload build it started, so the build writes nothing after close resolves', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.mkdir(path.join(root, 'src/config'), { recursive: true });
+  // The build announces itself, then would write its output a while later.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; fs.writeFileSync('started.txt', '1'); await new Promise((r) => setTimeout(r, 800)); fs.writeFileSync('src/config/late.js', 'export default 1;\\n');\n");
+  const { app } = await boot(t, root);
+  await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n');
+  const exists = (rel) => fs.stat(path.join(root, rel)).then(() => true, () => false);
+  for (let i = 0; i < 200 && !(await exists('started.txt')); i++) await new Promise((r) => setTimeout(r, 20));
+  assert.equal(await exists('started.txt'), true, 'the live-reload build started');
+  await app.close();
+  await new Promise((r) => setTimeout(r, 1200));
+  assert.equal(await exists('src/config/late.js'), false, 'the build was stopped before it could write');
 });
 
 test('a started job is persisted at once, so a restart before it finishes lists it as cancelled', async (t) => {

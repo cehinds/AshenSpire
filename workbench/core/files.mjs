@@ -179,7 +179,7 @@ async function checkJs(rel, text) {
  * a successful save or restore (the server sends the live-reload batch).
  * onWritten(abs, stat) runs after each file is renamed into place (saves and rollbacks),
  * with the stat the file was left with: the server uses it to drop the watcher's echo.
- * fileFault(rel) is a test seam: it may throw before a file is renamed into place.
+ * fileFault(rel) is a test seam: it may await or throw before a file is renamed into place.
  * pruneFault() is a test seam: it may throw where old backup sets are pruned.
  */
 export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null }) {
@@ -278,7 +278,7 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     const temp = `${abs}.${randomUUID()}.tmp`;
     try {
       await fs.writeFile(temp, bytes, { flag: 'wx' });
-      if (fileFault) fileFault(rel);
+      if (fileFault) await fileFault(rel);
       // The temp file is the same inode after the rename, so its stat is abs's stat.
       const stat = await fs.stat(temp);
       await fs.rename(temp, abs);
