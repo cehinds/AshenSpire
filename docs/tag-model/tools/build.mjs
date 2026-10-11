@@ -468,7 +468,14 @@ const GENERIC_STATE = new Set(['spent', 'outline', 'active', 'selected', 'disabl
 const GENERIC_OWNERS = 3; // a class that more than this many components add is generic
 const isGenericClass = c => GENERIC_STATE.has(c) || /^(is|has)-/.test(c) || (catalogOfClass.get(c)?.size ?? 0) >= GENERIC_OWNERS;
 const styleCssIds = [];
-const styleRepointed = { rows: 0, distinctTargets: 0 };
+// A selector whose parentheses or brackets do not balance is a fragment left by
+// a multi-line selector in the inventory (".card :is(.ctag", ".ctext)"). Its
+// last compound cannot be trusted, so its row keeps the CSS-derived componentId.
+const selectorBalanced = sel => {
+  const count = (ch) => [...sel].filter(c => c === ch).length;
+  return count('(') === count(')') && count('[') === count(']');
+};
+const styleRepointed = { rows: 0, distinctTargets: 0, brokenSelectors: 0 };
 {
   const s = inv.styles;
   const selI = need(s, 'selector', 'styles');
@@ -477,9 +484,12 @@ const styleRepointed = { rows: 0, distinctTargets: 0 };
   s.rows = s.rows.map((r) => {
     styleCssIds.push(r[cidI]);
     const owners = new Set();
-    for (const c of lastCompoundClasses(String(r[selI]))) {
-      if (isGenericClass(c)) continue;
-      for (const id of catalogOfClass.get(c) || []) owners.add(id);
+    if (!selectorBalanced(String(r[selI]))) styleRepointed.brokenSelectors++;
+    else {
+      for (const c of lastCompoundClasses(String(r[selI]))) {
+        if (isGenericClass(c)) continue;
+        for (const id of catalogOfClass.get(c) || []) owners.add(id);
+      }
     }
     const nr = r.slice();
     if (owners.size === 1) {
