@@ -768,7 +768,8 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = [...(live.opening || []), ...c.eventLog.slice(live.evCursor || 0)]
-      .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'impactDealt', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'impactDealt', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak',
+        'combatReactionUnavailable', 'critHit', 'combatGuardBroken', 'attackEvaded', 'combatAvoidanceResolved', 'playerStaggered', 'ratingImpact'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         eventIndex: c.eventLog.indexOf(e),
@@ -789,6 +790,11 @@ export function createSession({ registries, seedString, endless = false, restore
         requested: e.requested, attempted: e.attempted,
         threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
         turn: e.turn,
+        // Reaction notes (model/combatLog.js) and callouts (fx.js calloutForEvent).
+        ownerId: e.ownerId, attackKind: e.attackKind, need: e.need, have: e.have, resource: e.resource,
+        ...(Array.isArray(e.cardIds) ? { cardIds: [...e.cardIds] } : {}),
+        avoided: e.avoided, ...(e.evade && typeof e.evade === 'object' ? { evade: structuredClone(e.evade) } : {}),
+        breaks: e.breaks, label: e.label, poise: e.poise,
       }));
     // THE OPENING IS A MARKER, NOT A TURN NUMBER: only the scene that carries
     // the setup cues is the fight's opening (coop.js coopReceiptSounds), so a
