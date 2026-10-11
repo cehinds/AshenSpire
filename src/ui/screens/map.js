@@ -233,7 +233,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const trayRow = el('div', { class: 'map-tray-row' });
   trayRow.insertAdjacentHTML('beforeend', hintBarHtml('map'));
   const tray = el('div', { class: 'map-tray', dataset: { open: 'false', shown: 'false' } }, [trayReveal, trayRow]);
-  mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { onSave?.(); remount(); } });
+  mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { dropPendingSave(); onSave?.(); remount(); } });
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
