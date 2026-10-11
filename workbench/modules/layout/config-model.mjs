@@ -3,12 +3,13 @@
 // this file turns content/config/ui JSON into wireframe regions, maps a canvas
 // edit back to the config values it came from, and serializes the changed files.
 //
-// The arithmetic is UI Studio's (ui-studio/model.mjs, browser-safe ESM with no
-// imports, so it is imported directly rather than copied): regionsFor for the
-// regions, applyRegionDrag for an edge drag, formatJson for byte-preserving
-// output, gameLayoutFor and viewportFor for the device. What is new here is the
-// mapping from a canvas item's geometry change to the edge that moved.
-import * as M from '../../../ui-studio/model.mjs';
+// The arithmetic is UI Studio's: regionsFor for the regions, applyRegionDrag
+// for an edge drag, formatJson for byte-preserving output, gameLayoutFor and
+// viewportFor for the device. The workbench server serves only workbench/, so
+// studio-model.mjs is a byte-identical copy of ui-studio/model.mjs; the layout
+// tests fail if the two drift. What is new here is the mapping from a canvas
+// item's geometry change to the edge that moved.
+import * as M from './studio-model.mjs';
 
 export const CONFIG_DIR = 'content/config';
 export const UI_DIR = `${CONFIG_DIR}/ui`;

@@ -7,7 +7,7 @@
 import { icon } from '../../ui/icons.mjs';
 import { createCanvas, createLayersPanel, createInspector } from '../../ui/kit/canvas.mjs';
 import * as C from './config-model.mjs';
-import * as M from '../../../ui-studio/model.mjs';
+import * as M from './studio-model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // The kit stylesheet is linked by index.html; only the module's own sheet is injected here.
@@ -103,7 +103,8 @@ export default {
       const v = computeView();
       if (!st.canvas) return;
       st.canvas.setDoc(C.canvasDocFor(v.vp, v.regions));
-      if (fit) st.canvas.fit();
+      // A hidden view measures as zero, so a fit waits until the module shows.
+      if (fit) { if (el.clientWidth) st.canvas.fit(); else st.fitPending = true; }
       paintBar();
       paintStatus();
       paintFields();
@@ -397,7 +398,11 @@ export default {
     load();
 
     return {
-      onShow() { if (st.canvas) { paintBar(); paintStatus(); } },
+      onShow() {
+        if (!st.canvas) return;
+        if (st.fitPending) { st.fitPending = false; st.canvas.fit(); }
+        paintBar(); paintStatus();
+      },
       commands: () => [
         { title: 'Fit the wireframe to the page', sub: '0', run: () => st.canvas?.fit() },
         { title: 'Rotate the device', sub: 'Layout Studio', run: () => rotate() },
