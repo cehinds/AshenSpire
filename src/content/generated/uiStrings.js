@@ -101,6 +101,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.log.full",
+    "extends": "",
+    "short": "Full log",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.log.round",
     "extends": "",
     "short": "Round {round}",

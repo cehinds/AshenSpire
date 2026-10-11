@@ -294,8 +294,8 @@
 }
 /* Owner decision (2026-10-11): an Inspect "i" shows only while its combatant is
    selected. The rest-state hide below is !important so no shared rule reopens it. */
-:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
-:root .combat .combatant:not(.context-selected):not(.selected-target) .combatant-leading > .combatant-info { display: none !important; }
+:root .combat[data-layout='formation'] .player.context-selected .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
+:root .combat .combatant:not(.context-selected) .combatant-leading > .combatant-info { display: none !important; }
 /* A door shows only once battlefieldStage has written its spot (data-placed).
    Visibility, not display, so a hidden door still measures for placement. */
 :root .combat .combatant-info:not([data-placed='true']) { visibility: hidden !important; }

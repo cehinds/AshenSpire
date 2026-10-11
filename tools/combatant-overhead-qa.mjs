@@ -38,7 +38,7 @@ try {
     // Owner decision (2026-10-11): no Inspect at rest. A combatant's Inspect shows only
     // while that combatant is selected, and it is placed on its first paint.
     const visibleInfo = () => page.locator('.combatant-info:visible').count();
-    const selectedInfo = () => page.locator('.combatant:is(.context-selected,.selected-target) .combatant-info').count();
+    const selectedInfo = () => page.locator('.combatant.context-selected .combatant-info').count();
     assert.equal(await visibleInfo(), 0, 'no combatant shows Information at rest');
     const geometry = () => page.locator('.combatant').evaluateAll(es => es.map(e => ({
       id:e.dataset.eid, height:e.dataset.spriteVisibleHeight,

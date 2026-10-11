@@ -15,14 +15,14 @@ const overhead = read('../src/ui/components/combatantOverhead.js');
 const tools = read('../tools/combat-mobile-touch-qa.mjs');
 
 test('B: the always-visible Inspect rule is scoped to a selected combatant', () => {
-  assert.match(combatLayers, /:root \.combat\[data-layout='formation'\] \.player:is\(\.context-selected,\.selected-target\) \.combatant-leading > \.combatant-info \{ display: flex;/);
+  assert.match(combatLayers, /:root \.combat\[data-layout='formation'\] \.player\.context-selected \.combatant-leading > \.combatant-info \{ display: flex;/);
   assert.doesNotMatch(combatLayers, /\.player \.combatant-leading > \.combatant-info \{ display: flex;/,
     'the unscoped always-visible rule must not return');
 });
 
 test('B: an unselected combatant hides its Inspect with !important', () => {
   assert.match(combatLayers,
-    /:root \.combat \.combatant:not\(\.context-selected\):not\(\.selected-target\) \.combatant-leading > \.combatant-info \{ display: none !important; \}/);
+    /:root \.combat \.combatant:not\(\.context-selected\) \.combatant-leading > \.combatant-info \{ display: none !important; \}/);
 });
 
 test('A: an Inspect is hidden until battlefieldStage has placed it', () => {
@@ -115,4 +115,8 @@ test('B: the selected enemy gets context-selected and aria-pressed from the app 
   selectCombatantInfo(app, 'e1');
   assert.equal(enemy.classes.has('context-selected'), true);
   assert.equal(enemy.attributes['aria-pressed'], 'true');
+});
+
+test('B: a target marker (.selected-target) alone never shows Inspect — co-op keeps one on the default enemy', () => {
+  assert.doesNotMatch(combatLayers, /\.selected-target[^{,]*\.combatant-leading > \.combatant-info/);
 });
