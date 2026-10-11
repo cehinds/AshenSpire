@@ -18,6 +18,52 @@
 
 export const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 
+// Region labels. A label sits at its region's top-left, inset, and is clipped to the region. A region on
+// screen narrower than SMALL_W or shorter than SMALL_H (px) is "small": its label shows on hover or selection.
+export const SMALL_W = 120, SMALL_H = 30;
+export const LABEL = { inset: 4, top: 2, height: 14, charW: 6.2 };
+export const isSmallRegion = (it, zoom) => it.w * zoom < SMALL_W || it.h * zoom < SMALL_H;
+
+/** The screen box a label occupies, or null for an empty label or a region too narrow for it. */
+export function labelRect(it, zoom) {
+  const text = String(it.label ?? '');
+  const avail = it.w * zoom - 2 * LABEL.inset;
+  if (!text || avail <= 0) return null;
+  const w = Math.min(text.length * LABEL.charW + 2, avail);
+  return { x: it.x * zoom + LABEL.inset, y: it.y * zoom + LABEL.top, w, h: LABEL.height };
+}
+
+const boxOverlap = (a, b) => !!a && !!b && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+const boxContains = (a, b) => a.x <= b.x && a.y <= b.y && a.x + a.w >= b.x + b.w && a.y + a.h >= b.y + b.h;
+
+/**
+ * The ids whose labels should not draw because they would collide with another label. Kept first: the
+ * selected regions, then the top-level ones (not inside another shown region), then the rest, larger first;
+ * a label is hidden when it overlaps one already kept. Small regions show their label only when selected or
+ * hovered, so they do not compete. Hover is a CSS state: a hovered label always shows.
+ */
+export function labelsToHide(doc, zoom, { selection = [] } = {}) {
+  const sel = new Set(selection);
+  const shown = doc.items.filter((it) => !it.hidden && (sel.has(it.id) || !isSmallRegion(it, zoom)));
+  const entries = shown.map((it) => ({
+    id: it.id,
+    box: labelRect(it, zoom),
+    region: { x: it.x * zoom, y: it.y * zoom, w: it.w * zoom, h: it.h * zoom },
+    area: it.w * it.h,
+  }));
+  const topLevel = (e) => !entries.some((o) => o !== e && boxContains(o.region, e.region) && !boxContains(e.region, o.region));
+  const rank = (e) => (sel.has(e.id) ? 2 : topLevel(e) ? 1 : 0);
+  const order = [...entries].sort((a, b) => rank(b) - rank(a) || b.area - a.area);
+  const kept = [];
+  const hide = new Set();
+  for (const e of order) {
+    if (rank(e) === 2) { kept.push(e.box); continue; }
+    if (kept.some((k) => boxOverlap(k, e.box))) hide.add(e.id);
+    else kept.push(e.box);
+  }
+  return hide;
+}
+
 /**
  * The zoom at which a document fits a view: the view minus the stage padding on each
  * axis, clamped to the zoom range and rounded DOWN to 3 decimals so the page never
