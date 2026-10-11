@@ -103,3 +103,24 @@ test('every functional job depends on the stage decision and is gated on its fun
   assert.match(all.get('boundary'), /needs: \[stage,/, 'boundary does not need the stage job');
   assert.match(all.get('boundary'), /release tree differs from test: functional suites ran/, 'boundary does not print the differing-tree line');
 });
+
+// The four browser-check workflows run on a push to release only when its tree
+// differs from origin/test, through the same stage decision as ci.yml, and their
+// gated job waits on that decision.
+const STAGED = ['tutorial-reach.yml', 'map-camera.yml', 'coop-hud.yml', 'quick-start.yml'];
+
+test('tutorial-reach, map-camera, coop-hud and quick-start gate their job on the stage output', () => {
+  for (const file of STAGED) {
+    const text = readFileSync(new URL(`../.github/workflows/${file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+    const all = jobs(text);
+    assert.match(text, /^  push:\n    branches: \[[^\]\n]*\brelease\b/m, `${file} does not push-trigger on release`);
+    const stage = all.get('stage');
+    assert.ok(stage, `${file} has no stage job`);
+    assert.match(stage, /outputs:\n      run: \$\{\{ steps\.decide\.outputs\.run \}\}/, `${file} stage job does not output run`);
+    assert.match(stage, /filter: blob:none/, `${file} stage checkout is not blobless`);
+    assert.match(stage, /git diff --quiet origin\/test HEAD/, `${file} stage job does not compare the release tree with test`);
+    const gated = [...all].filter(([name, job]) => name !== 'stage' && /\n    needs: stage\n/.test(job));
+    assert.equal(gated.length, 1, `${file} gates ${gated.length} jobs on the stage, expected one`);
+    assert.match(gated[0][1], /\n    if: needs\.stage\.outputs\.run == 'true'\n/, `${file} job ${gated[0][0]} is not gated on needs.stage.outputs.run`);
+  }
+});

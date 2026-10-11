@@ -50,7 +50,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
-| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | yes | — |
+| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
@@ -62,10 +62,10 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → about-changelog known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → startup gate known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
 | `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | — |
-| `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | — |
-| `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | — |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | — |
-| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | — |
+| `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | only when release differs from test |
+| `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | only when release differs from test |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | only when release differs from test |
+| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | only when release differs from test |
 | `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
 | `ci.yml` → shipped artifact is this source (3 OS shards) and the three runners built the same bytes (`reproducible`, `reproducible-agree`) | — | — | — | yes |
 | `ci.yml` → Fullscreen first through both Settings doors (`display-first`) | — | — | — | yes |
