@@ -1454,7 +1454,7 @@ Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed 
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
-Screen router in `main.js`; each screen module exports a `mountX(app, opts)` function (`mountMap` in `src/ui/screens/map.js`), and a re-mount releases the previous mount's handlers. No screen exports `unmount()`. **A Shrine, a camp, an inn or a chapel is a location — a property carrier whose tag set says what it restores** (§13.4j): **arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1) because the Shrine carries `restFlasks`; the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
+Screen router in `main.js`; each routed full-screen module exports a `mountX(app, opts)` function (`mountMap` in `src/ui/screens/map.js`), and a re-mount releases the previous mount's handlers; no screen exports `unmount()`. Overlay and panel modules expose open/render helpers instead (`openCharacterSheet` in `characterSheet.js`; the settings and profile-archive render/open APIs). **A Shrine, a camp, an inn or a chapel is a location — a property carrier whose tag set says what it restores** (§13.4j): **arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1) because the Shrine carries `restFlasks`; the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
 
 Cold boot mounts the `startup-gate` component before the Title DOM exists. It contains only the
 Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source
@@ -1731,7 +1731,7 @@ keeps the same state and focus contract without meaningful animation.
   MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red generic threshold-proc bar, only when >0), status icon row, and **intent icon + number above the head**.
+- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
 - **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
 - **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
