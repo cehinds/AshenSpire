@@ -832,6 +832,46 @@ test('intangible: a full block takes precedence, so no charge is spent', () => {
   assert.equal(events.some((e) => e.type === 'evaded'), false);
 });
 
+test('intangible: one charge per enemy per round is spent once, across its queued actions', () => {
+  // Two queued actions both belong to enemy G, each tagged intangible with 1 charge.
+  // The charge is G's, so only the first pairing avoids its hit.
+  const cards = [
+    { id: 'a', slot: 0, speed: 4, kind: 'attack' },
+    { id: 'b', slot: 1, speed: 4, kind: 'attack' },
+  ];
+  const g = (slot) => ({ id: `g${slot}`, enemyId: 'G', speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 1 });
+  const { events, charges } = resolveRound(cards, [g(0), g(1)], 2, () => 0.99);
+  const evaded = events.filter((e) => e.type === 'evaded');
+  assert.equal(evaded.length, 1, 'exactly one charge is spent');
+  assert.equal(evaded[0].reason, 'intangible');
+  assert.equal(evaded[0].slot, 0);
+  const second = events.find((e) => e.type === 'hit' && e.slot === 1);
+  assert.equal(second.hit, true);
+  assert.equal(second.avoided, false, 'the second hit lands');
+  assert.equal(charges.G, 0, 'the round reports the pool left for G');
+});
+
+test('intangible: the player pool is shared across pairings, and each enemy has its own pool', () => {
+  // Two enemies, each with 1 charge. Player defends against two enemy attacks with
+  // 1 charge on the player's first card. The second attack lands.
+  const cards = [
+    { id: 'shield', slot: 0, speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 1 },
+    { id: 'plain', slot: 1, speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 1 },
+  ];
+  const enemies = [
+    { id: 'e0', enemyId: 'G', speed: 4, kind: 'attack', intangibleCharges: 2 },
+    { id: 'e1', enemyId: 'H', speed: 4, kind: 'attack', intangibleCharges: 3 },
+  ];
+  const { events, charges } = resolveRound(cards, enemies, 2, () => 0.99);
+  const evaded = events.filter((e) => e.type === 'evaded');
+  assert.equal(evaded.length, 1, 'the player pool holds one charge, spent on the first pairing');
+  assert.equal(evaded[0].by, 'player', 'the player avoids; by is the defender');
+  assert.equal(evaded[0].slot, 0);
+  assert.equal(charges.player, 0);
+  assert.equal(charges.G, 2, 'G is an attacker, not a tagged defender, so its pool is untouched');
+  assert.equal(charges.H, 3);
+});
+
 // Evasion, part 2a: evade bonus scopes (owner addendum, 2026-10-11). A bonus is
 // { source, pct, scope, condition? }. Only bonuses whose scope is live, and
 // whose condition passes, count.

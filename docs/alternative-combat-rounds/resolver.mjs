@@ -183,6 +183,9 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   };
   // What the evade bonus scopes see for this exchange (DESIGN.md, Evasion).
   const exchangeCtx = { inExchange: true, round: options.round, combatId: options.combatId };
+  // Shared charge pool by side, mutated as charges are spent (DESIGN.md, Evasion).
+  // Without it, each side's own intangibleCharges is the pool.
+  const pool = options.charges ?? null;
   const events = [];
   const cancelled = { player: null, enemy: null };
   const tie = side.player.speed === side.enemy.speed;
@@ -208,8 +211,10 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     // defender rolls its evadePct, and only a hit that would land is rolled.
     let avoid = null; // 'intangible' | 'evasion'
     let evade = null; // { evadePct, roll, success } when the percent roll is made
+    const targetKey = other(who);
+    const chargesLeft = pool ? pool[targetKey] : target.intangibleCharges;
     if (hit && !blocked) {
-      if (target.tags.includes('intangible') && target.intangibleCharges > 0) {
+      if (target.tags.includes('intangible') && chargesLeft > 0) {
         avoid = 'intangible';
       } else {
         const stanceBonus = stanceEvadeBonuses(target.stance, options.evadeTable);
@@ -229,8 +234,10 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     if (blocked) {
       events.push({ type: 'absorbed', by: other(who), target: who });
     } else if (avoid === 'intangible') {
-      target.intangibleCharges -= 1;
-      events.push({ type: 'evaded', by: other(who), target: who, reason: 'intangible', charges: target.intangibleCharges });
+      if (pool) pool[targetKey] -= 1;
+      else target.intangibleCharges -= 1;
+      const remaining = pool ? pool[targetKey] : target.intangibleCharges;
+      events.push({ type: 'evaded', by: other(who), target: who, reason: 'intangible', charges: remaining });
     } else if (avoid === 'evasion') {
       events.push({ type: 'evaded', by: other(who), target: who, reason: 'evasion' });
     } else if (!hit && target.stance === 'evade') {
@@ -290,6 +297,11 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   }
   if (!cancelled[second] && s.kind === 'attack') rollHit(second);
   return events;
+}
+
+// Intangible charges: a non-negative whole number, NaN and blanks count as 0.
+function chargeCount(v) {
+  return Math.max(0, Math.trunc(Number(v ?? 0)) || 0);
 }
 
 // Momentum gain on success: the card's `momentumGain`, default 1.
@@ -487,6 +499,10 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 export function resolveRound(playerCards, enemyQueue, perception, rng, options = {}) {
   if (!Array.isArray(playerCards)) throw new TypeError('playerCards must be an array');
   if (!Array.isArray(enemyQueue)) throw new TypeError('enemyQueue must be an array');
+  const chargeIn = options.charges ?? {};
+  if (typeof chargeIn !== 'object' || Array.isArray(chargeIn)) {
+    throw new TypeError('options.charges must be an object keyed by side or enemy id');
+  }
   const visibleCount = Math.max(0, Math.min(enemyQueue.length, Math.trunc(Number(perception) || 0)));
   const inputM = options.momentum ?? {};
   const stanceTable = options.stanceAdvantage ?? null; // Map from parseStanceAdvantage()
@@ -499,6 +515,17 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   for (const enemy of enemyQueue) {
     const k = enemyKey(enemy);
     if (!(k in start)) start[k] = clampMomentum(inputM[k] ?? 0);
+  }
+
+  // Intangible charge pools for the round (DESIGN.md, Evasion): one for the
+  // player, one per enemy. Each starts from options.charges, else from the
+  // first card or first queued action of that side, and is spent in place.
+  const charges = { player: 0 };
+  charges.player = chargeCount(chargeIn.player ?? playerCards[0]?.intangibleCharges);
+  for (const enemy of enemyQueue) {
+    const k = enemyKey(enemy);
+    if (k === 'player') throw new TypeError('an enemy id cannot be "player"');
+    if (!(k in charges)) charges[k] = chargeCount(chargeIn[k] ?? enemy.intangibleCharges);
   }
 
   const pending = {}; // summed raw deltas per enemy, applied at round end
@@ -521,12 +548,15 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     const enemy = enemyQueue[slot];
     const k = enemyKey(enemy);
     const visible = slot < visibleCount;
+    const pool = { player: charges.player, enemy: charges[k] };
     const pairEvents = resolvePair(
       { ...pc, speed: pc.speed + momentumSpeed(start[k]) },
       { ...enemy, speed: enemy.speed - momentumSpeed(start[k]) },
       rng,
-      { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable },
+      { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, charges: pool },
     );
+    charges.player = pool.player;
+    charges[k] = pool.enemy;
     for (const e of pairEvents) {
       push({ ...e, slot, visible }, k);
       const winner = successSide(e);
@@ -570,5 +600,5 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     if (!(k in momentum)) momentum[k] = clampMomentum(inputM[k]);
   }
 
-  return { events, momentum };
+  return { events, momentum, charges };
 }
