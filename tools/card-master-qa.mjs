@@ -15,7 +15,7 @@ const server=await serve({root,port:0,open:false,editorWrite:true,quiet:true}),b
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'docs/qa/card-layers/index.html#editor',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'tools/card-layers/index.html#editor',{waitUntil:'domcontentloaded'});
  await page.locator('.edit-save').filter({hasText:'Connected to game JSON'}).waitFor({timeout:120000});
  await page.locator('[data-visual-part]').selectOption('action-icon');await page.locator('[data-visual-href]').fill(image);await page.locator('[data-visual-apply]').click();
  assert.equal(await page.locator('.edit-plane[data-edit-part="action-icon"] .combat-sigil-action img').count(),1,'PNG visible in draft');

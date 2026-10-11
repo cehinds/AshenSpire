@@ -1,6 +1,6 @@
 # Card layer explorer and layout editor
 
-Open `/docs/qa/card-layers/index.html#editor` on the existing source-preview server.
+Open `/tools/card-layers/index.html#editor` on the existing source-preview server.
 The editor uses native card components, with the original wireframe retained in
 `wireframe.html`.
 
