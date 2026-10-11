@@ -437,6 +437,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return paneSection('collection', t('deckEditor.pane.collection'), list, [
       chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
       chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
+      tools(),
       search,
     ]);
   }
@@ -688,7 +689,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         tab.dataset.modalTab === 'deck' ? 'Edit your deck' : `Save deck and open ${tab.textContent}`);
       panel.append(head);
     }
-    panel.append(header(), el('div', { class: 'deck-editor-toolbar' }, [navigation(), tools()].filter(Boolean)), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
+    // The toolbar row holds only the phone's Draw order chip; it is left out
+    // when there is nothing for it (the filters live on the collection's bar).
+    const nav = navigation();
+    panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
     syncInert();
     restoreFocus();
   }
