@@ -253,7 +253,7 @@ function normalizeEvadeBonuses(list) {
 }
 
 // `tables` is { armor, cards } from parseEvasionArmor and parseEvasionCards, used
-// by evasionFor() when the side gives evasionArmor, dex, shield or evasionCard.
+// by evasionFor() when the side gives evasionArmor, dex, shield, evasionCard or attrs.DEX.
 // accuracy is the full total from accuracyFor() (attributes, level, attack tag and
 // any flat bonus). A plain numeric accuracy or evasion still gives the same number.
 function normalizeSide(name, s, tables) {
@@ -673,12 +673,13 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // options.decay: momentum decay step per round (default 1, 0 turns it off).
 // options.evadeBonuses: scoped evade bonuses, filtered here by scope, round,
 //   combatId and appliesTo (see inputBonuses below). Default none.
-// options.playerDefense: { evasion, evadePct, tags, evasionArmor, dex, shield, evasionCard } for the
+// options.playerDefense: { evasion, evadePct, tags, evasionArmor, dex, shield, evasionCard, attrs } for the
 //   player against an unpaired enemy attack. Default evasion 0, evadePct 0, no tags.
-//   With evasionArmor, dex, shield or evasionCard, evasion comes from evasionFor() (options.evasionTables).
+//   With evasionArmor, dex, shield, evasionCard or attrs.DEX, evasion comes from evasionFor() (options.evasionTables).
 //   The 'intangible' tag draws on the player's pool in options.charges.
 // options.evasionTables: { armor, cards } from parseEvasionArmor and parseEvasionCards.
-//   Needed only by a side that gives evasionArmor, dex, shield or evasionCard.
+//   Needed only by a side that gives evasionArmor, dex, shield, evasionCard or attrs.DEX
+//   (a built-in Cloth row covers attrs.DEX without tables).
 // options.poiseDouble: { player?, [enemyId]: bool } flags from an earlier round. A
 //   flagged side's first landed hit this round carries poiseMultiplier 2 and clears
 //   the flag. Poise damage itself is not modelled.
@@ -811,6 +812,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     dex: defence.dex,
     shield: defence.shield,
     evasionCard: defence.evasionCard,
+    attrs: defence.attrs,
     evasion: defence.evasion,
     evadeBasePct: defence.evadePct,
     tags: defence.tags,

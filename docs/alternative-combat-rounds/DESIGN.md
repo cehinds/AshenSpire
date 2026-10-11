@@ -443,7 +443,8 @@ silent. They are placeholders for testing the shape, not decisions.
 - An enemy slot with no player card is unpaired ('unpaired' event). Its
   events carry `unpaired: true`. An unpaired enemy attack rolls its hit against
   the player's defence (`options.playerDefense`: `evasion`, `evadePct`, `tags`,
-  zero defaults). A landed hit wins the slot for that enemy (moves momentum by the enemy action's gain, default 1, against the
+  `evasionArmor`, `dex`, `shield`, `evasionCard`, `attrs`, zero defaults). `attrs.DEX`
+  runs the Cloth evasion formula here, the same as on a paired card. A landed hit wins the slot for that enemy (moves momentum by the enemy action's gain, default 1, against the
   player, once per pairing). A miss or an avoid (intangible, evadePct) gives the
   player no slot credit: an unanswered attack that does not land moves no momentum,
   and the events are still emitted (owner, 2026-10-11). Non-attack unpaired actions
