@@ -11,6 +11,16 @@
 const stack = [];
 const waiters = [];
 
+// An entry whose element left the page without its close path running (a
+// screen remount wiped the host it was appended to) is not open any more.
+// Dropping it here keeps one missed release() from reporting a modal open
+// forever, which would hold every whenNoOverlay() redraw back.
+function prune() {
+  for (let i = stack.length - 1; i >= 0; i--) {
+    if (stack[i].element && stack[i].element.isConnected === false) stack.splice(i, 1);
+  }
+}
+
 function notifyIfEmpty() {
   if (stack.length > 0) return;
   for (const fn of waiters.splice(0)) fn();
@@ -38,16 +48,20 @@ export function registerModal(name, element) {
 
 /** True while at least one registered modal is open. */
 export function modalOpen() {
+  prune();
+  if (stack.length === 0) notifyIfEmpty();
   return stack.length > 0;
 }
 
 /** The topmost registered modal ({ name, element }), or null. */
 export function topModal() {
+  prune();
   return stack.length ? stack[stack.length - 1] : null;
 }
 
 /** A copy of the stack, bottom to top. Mutating it changes nothing. */
 export function openModals() {
+  prune();
   return stack.slice();
 }
 
@@ -58,6 +72,7 @@ export function openModals() {
  * stack becomes empty. cancel() drops a waiter that has not fired yet.
  */
 export function onModalsClosed(fn) {
+  prune();
   if (stack.length === 0) {
     fn();
     return () => {};

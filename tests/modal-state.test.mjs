@@ -198,3 +198,20 @@ test('a confirmation is a modal from open until confirm or cancel', async () => 
     else delete globalThis.window;
   }
 });
+
+test('a modal whose element left the page without release() is not open', async () => {
+  const { registerModal, modalOpen, openModals, onModalsClosed, resetModalState } = await import('../src/ui/modalState.js');
+  resetModalState();
+  const element = { isConnected: true };
+  registerModal('wiped-by-remount', element);
+  let fired = 0;
+  onModalsClosed(() => { fired++; });
+  assert.equal(modalOpen(), true);
+  element.isConnected = false;
+  assert.equal(modalOpen(), false, 'a detached element no longer counts as an open modal');
+  assert.deepEqual(openModals(), []);
+  assert.equal(fired, 1, 'waiters run once the stale entry is dropped');
+  registerModal('no element', null);
+  assert.equal(modalOpen(), true, 'an entry without an element is kept until released');
+  resetModalState();
+});
