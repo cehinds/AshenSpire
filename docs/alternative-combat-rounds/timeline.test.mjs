@@ -10,6 +10,7 @@ import {
   makeFight,
   MERGE_MODES,
 } from './timeline.mjs';
+import { parseStanceAdvantage } from './resolver.mjs';
 
 // Rng helpers. d4 = floor(u*4)+1: u 0 -> 1, 0.3 -> 2, 0.5 -> 3, 0.75 -> 4.
 const constRng = (u) => () => u;
@@ -515,4 +516,147 @@ test('a reaction evade uses its base 20, so the same roll of 25 is not evaded', 
   const roll = out.events.find((e) => e.type === 'evadeRoll');
   assert.deepEqual([roll.evadePct, roll.success], [20, false]);
   assert.equal(out.state.combatants.player.hp, 15);
+});
+
+// ---- Momentum: per enemy, summed per exchange, settled once at round end ----
+
+const momentumOf = (out, id) => out.state.momentum[id];
+
+test('round start decays each enemy momentum 1 toward 0, with a decay event per change', () => {
+  const st = makeFight([
+    { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 6 },
+    { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 6 },
+    { id: 'wolf', attrs: { DEX: 1 }, hp: 10, sp: 6 },
+  ]);
+  st.momentum = { goblin: -2, wolf: 2 };
+  const out = createRound(st, { queues: {}, rng: HIT_RNG }).resolveAll();
+  assert.equal(out.state.momentum.goblin, -1);
+  assert.equal(out.state.momentum.wolf, 1);
+  const decays = out.events.filter((e) => e.type === 'momentum' && e.reason === 'decay');
+  assert.deepEqual(decays.map((e) => [e.enemyId, e.from, e.to]), [['goblin', -2, -1], ['wolf', 2, 1]]);
+});
+
+test('a landed hit is the attacker success; momentum changes only at round end', () => {
+  const st = duo();
+  // A trailing 'other' card keeps the round open after the jab.
+  const round = createRound(st, {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 1 }), card('x', 'other', 'self', 0)] },
+    rng: HIT_RNG,
+  });
+  round.next();
+  assert.equal(round.state.momentum.goblin, 0); // still the round's start value
+  const out = round.resolveAll();
+  assert.equal(momentumOf(out, 'goblin'), 0 + 1);
+  const applied = out.events.filter((e) => e.type === 'momentumApplied');
+  assert.deepEqual(applied.map((e) => [e.enemyId, e.from, e.to]), [['goblin', 0, 1]]);
+});
+
+test("a miss is the defender's success, so the enemy's momentum moves toward the player", () => {
+  // Constant 0: natural 1 on the d20, so the goblin's stab misses.
+  const out = createRound(duo(), {
+    queues: { goblin: [atk('stab', 'player', 3, { damage: 4 })] },
+    rng: constRng(0),
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'hit').hit, false);
+  assert.equal(momentumOf(out, 'goblin'), 1);
+});
+
+test('a stance advantage adds its bonus to the success gain', () => {
+  // A counter (stance block) cancels the attack (stance attack). Gain 1 + bonus 2 = 3.
+  const out = createRound(duo({ hp: 20 }, { hp: 20 }), {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 6, { stance: 'block' })],
+      goblin: [atk('stab', 'player', 1, { damage: 10, stance: 'attack' })],
+    },
+    rng: HIT_RNG,
+    stanceAdvantage: parseStanceAdvantage('attacker_stance,defender_stance,bonus\nblock,attack,2'),
+  }).resolveAll();
+  const win = out.events.find((e) => e.type === 'momentum' && e.reason === 'success');
+  assert.deepEqual([win.by, win.gain, win.bonus, win.delta], ['player', 1, 2, 3]);
+  assert.equal(momentumOf(out, 'goblin'), 3);
+});
+
+test('a counter stagger adds 3 on top of its slot win, summed then clamped once', () => {
+  // Start -2 decays to -1. A cancelling counter with stagger gives +1 + 3 = +4, so -1 + 4 = 3.
+  const cancelWith = (tags) => {
+    const st = duo({ hp: 20 }, { hp: 20 });
+    st.momentum = { goblin: -2 };
+    return createRound(st, {
+      queues: {
+        player: [card('counter', 'counter', 'goblin', 6, { tags })],
+        goblin: [atk('stab', 'player', 1, { damage: 10 })],
+      },
+      rng: HIT_RNG,
+    }).resolveAll();
+  };
+  const staggered = cancelWith(['stagger']);
+  assert.equal(staggered.events.find((e) => e.reason === 'counterStagger').delta, 3);
+  assert.equal(momentumOf(staggered, 'goblin'), 3);
+  assert.equal(momentumOf(cancelWith([]), 'goblin'), 0);
+});
+
+test('each side wins at most once per exchange: a landed hit and a fired counter net to 0', () => {
+  // wholeQueue, as in the counter test: the stab lands (goblin +, wins), then the counter
+  // fires (player +). Each side is credited once, so the momentum is unchanged.
+  const out = createRound(duo({}, { hp: 20 }), {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 0)],
+      goblin: [atk('stab', 'player', 9, { damage: 1 })],
+    },
+    rng: rngThen([0.75, 0.3], 0.45),
+    merge: 'wholeQueue',
+  }).resolveAll();
+  assert.equal(out.events.filter((e) => e.type === 'momentum' && e.reason === 'success').length, 2);
+  assert.equal(momentumOf(out, 'goblin'), 0);
+});
+
+test('an overflow above +3 clamps to 3 and sets the player poiseDouble flag', () => {
+  // Start 3 decays to 2. Two landed player hits give +2, so raw 4 clamps to 3.
+  const st = duo();
+  st.momentum = { goblin: 3 };
+  const out = createRound(st, {
+    queues: { player: [atk('a', 'goblin', 6, { damage: 1 }), atk('b', 'goblin', 5, { damage: 1 })] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.equal(momentumOf(out, 'goblin'), 3);
+  assert.equal(out.state.poiseDouble.player, true);
+  assert.ok(out.events.some((e) => e.type === 'momentum' && e.reason === 'overflow' && e.side === 'player'));
+});
+
+test('an overflow below -3 clamps to -3 and sets that enemy poiseDouble flag', () => {
+  // Start -3 decays to -2. Two landed goblin hits on the player give -2, so raw -4 clamps to -3.
+  const st = duo({}, { hp: 30 });
+  st.momentum = { goblin: -3 };
+  const out = createRound(st, {
+    queues: { goblin: [atk('a', 'player', 6, { damage: 1 }), atk('b', 'player', 5, { damage: 1 })] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.equal(momentumOf(out, 'goblin'), -3);
+  assert.equal(out.state.poiseDouble.goblin, true);
+  assert.equal(out.state.poiseDouble.player, false);
+});
+
+test('a set poiseDouble flag doubles the next landed hit of that side, then clears', () => {
+  const st = duo();
+  st.poiseDouble = { player: true };
+  const out = createRound(st, {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 1 })] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'hit').poiseMultiplier, 2);
+  assert.equal(out.state.poiseDouble.player, false);
+});
+
+test('momentum is kept per enemy: a hit on the goblin leaves the wolf alone', () => {
+  const st = makeFight([
+    { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 6 },
+    { id: 'goblin', attrs: { DEX: 1 }, hp: 10, sp: 6 },
+    { id: 'wolf', attrs: { DEX: 1 }, hp: 10, sp: 6 },
+  ]);
+  const out = createRound(st, {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 1 })] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.equal(momentumOf(out, 'goblin'), 1);
+  assert.equal(momentumOf(out, 'wolf'), 0);
 });

@@ -16,6 +16,9 @@ import {
   momentumSpeed,
   rollD20,
   rollUnit,
+  stanceBonus,
+  MOMENTUM_MAX,
+  MOMENTUM_MIN,
 } from './resolver.mjs';
 
 export const MERGE_MODES = Object.freeze(['speed', 'roundRobin', 'wholeQueue']);
@@ -380,6 +383,37 @@ function resolveAttack(cur, entry, events, rng, options) {
   } else if (landed) {
     applyDamage(cur, target.id, dmg, events);
   }
+  // The defender's card that was spent on this attack, for momentum gain and stance.
+  const defenseCard = evadeUse ? { momentumGain: evadeUse.gain, stance: evadeUse.stance } : null;
+  return { landed, defenseCard };
+}
+
+// Momentum gain of a card: its momentumGain, default 1 (as in resolver.mjs).
+function gainOf(card) {
+  const g = Number(card?.momentumGain ?? 1);
+  if (!Number.isFinite(g)) throw new TypeError('momentumGain must be a finite number');
+  return g;
+}
+
+// Credits one side's success in an exchange (owner, 2026-10-11; DESIGN.md, Momentum).
+// A side wins an exchange at most once. The gain is the winner's card gain plus the
+// stance bonus against the other side's card. The enemy key is the enemy in the exchange.
+function credit(cur, run, { key, winner, winCard, foeCard, events, seq, credited }) {
+  if (credited.has(winner)) return;
+  credited.add(winner);
+  const gain = gainOf(winCard);
+  const bonus = stanceBonus(run.stanceTable, winCard?.stance ?? null, foeCard?.stance ?? null);
+  const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
+  run.pending[key] = (run.pending[key] ?? 0) + delta;
+  events.push({ type: 'momentum', reason: 'success', enemyId: key, by: winner, gain, bonus, delta, seq });
+}
+
+// A counter with the 'stagger' tag adds +-3 to its side's summed delta (owner, 2026-10-11).
+function stagger(run, { key, owner, cur, events, seq }) {
+  const sign = cur.combatants[owner].side === 'player' ? 1 : -1;
+  const delta = sign * MOMENTUM_MAX;
+  run.pending[key] = (run.pending[key] ?? 0) + delta;
+  events.push({ type: 'momentum', reason: 'counterStagger', enemyId: key, by: cur.combatants[owner].side, delta, seq });
 }
 
 // Offers the player's reaction window (owner, 2026-10-11): when an attack targets a
@@ -473,16 +507,31 @@ function applyEntry(cur, entry, events, options, run) {
   if (kind === 'attack') {
     offerReaction(cur, entry, events, options, run);
     const counter = takeCounter(cur, entry.target, entry.actor);
+    // The enemy in this exchange: the attacker, or the defender when the player attacks.
+    const key = entry.side === 'enemy' ? entry.actor : entry.target;
+    const attackCard = { momentumGain: entry.card.momentumGain, stance: entry.card.stance ?? null };
+    const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
+    const credited = new Set();
+    const sideOf = (id) => cur.combatants[id].side;
     if (counter && !counter.reaction && counter.speed > entry.speed.total) {
       // A faster counter cancels the attack. A tie or a slower counter does not.
       events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
       applyDamage(cur, entry.actor, counter.damage, events);
+      credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
+      if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
       return;
     }
-    resolveAttack(cur, entry, events, options.rng, options);
+    const out = resolveAttack(cur, entry, events, options.rng, options);
+    if (out.landed) {
+      credit(cur, run, { key, winner: entry.side, winCard: attackCard, foeCard: out.defenseCard ?? {}, events, seq: entry.seq, credited });
+    } else {
+      credit(cur, run, { key, winner: sideOf(entry.target), winCard: out.defenseCard ?? {}, foeCard: attackCard, events, seq: entry.seq, credited });
+    }
     if (counter) {
       events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
       applyDamage(cur, entry.actor, counter.damage, events);
+      credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
+      if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
     }
   } else if (kind === 'guard' || kind === 'evade' || kind === 'counter') {
     // A queued defensive card is preemptive: it becomes active for its owner now.
@@ -526,6 +575,8 @@ export function createRound(state, options = {}) {
   cur.momentum = { ...(cur.momentum ?? {}) };
   cur.poiseDouble = { ...(cur.poiseDouble ?? {}) };
   cur.charges = { ...(cur.charges ?? {}) };
+  // Every combatant has a poise flag, false unless an overflow set it.
+  for (const id of Object.keys(cur.combatants)) cur.poiseDouble[id] = cur.poiseDouble[id] === true;
   // Round-scoped effects (block, evade, counters) start empty each round.
   cur.active = {};
   for (const c of Object.values(cur.combatants)) {
@@ -551,7 +602,7 @@ export function createRound(state, options = {}) {
 
   // Round-scoped: reactions played (by card id) and each combatant's queued card ids.
   cur.used = {};
-  const run = { queuedIds: {} };
+  const run = { queuedIds: {}, pending: {}, stanceTable: options.stanceAdvantage ?? null };
   for (const e of timeline.entries) {
     run.queuedIds[e.actor] = run.queuedIds[e.actor] ?? new Set();
     run.queuedIds[e.actor].add(e.card.id);
@@ -563,8 +614,26 @@ export function createRound(state, options = {}) {
   const entries = timeline.entries;
   const snapshot = () => structuredClone(cur);
 
+  // Round end (owner, 2026-10-11): each enemy's summed delta is added to its start M
+  // once, then clamped. A raw total past the cap sets that side's poiseDouble flag.
   const settle = (events) => {
     settled = true;
+    for (const k of Object.keys(cur.combatants)) {
+      if (cur.combatants[k].side !== 'enemy') continue;
+      const from = cur.momentum[k] ?? 0;
+      const raw = from + (run.pending[k] ?? 0);
+      const to = clampMomentum(raw);
+      cur.momentum[k] = to;
+      if (to !== from) events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to });
+      if (raw > MOMENTUM_MAX) {
+        events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'player', delta: 0, by: null });
+        cur.poiseDouble.player = true;
+      }
+      if (raw < MOMENTUM_MIN) {
+        events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'enemy', delta: 0, by: null });
+        cur.poiseDouble[k] = true;
+      }
+    }
     events.push({ type: 'roundEnd' });
     for (const id of Object.keys(cur.active)) cur.active[id] = { guard: 0, evade: [], counters: [] };
   };
