@@ -46,6 +46,7 @@ export const BUILD_OUTPUTS = {
   'tools/content-build.mjs': ['src/content/generated/', 'src/framework/data/'],
   'tools/framework-data-build.mjs': ['src/framework/data/'],
   'tools/config-build.mjs': ['src/config/generated/'],
+  'tools/card-components.mjs': ['src/content/cardComponents.generated.js'],
 };
 export const isBuildOutput = (rel) => Object.values(BUILD_OUTPUTS).some((dirs) => dirs.some((d) => rel.startsWith(d) || `${rel}/` === d));
 
@@ -222,14 +223,17 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
 
 /** What a batch needs before the preview reloads, in the order the builders require:
  *  framework mirrors first (content-build rejects a framework file without its
- *  src/framework/data mirror), then the config compiler, then the content compiler. */
+ *  src/framework/data mirror), then the config compiler, then the content compiler,
+ *  then the card components the card layout compiles to (src/content/card-layout.json). */
 export function buildsFor(files, root) {
   const content = files.some((f) => /^content\/(source|framework)\//.test(f));
   const framework = files.some((f) => /^content\/framework\//.test(f));
   const config = files.some((f) => /^content\/config\//.test(f));
+  const cardLayout = files.includes('src/content/card-layout.json');
   const steps = [];
   if (framework && fs.existsSync(path.join(root, 'tools/framework-data-build.mjs'))) steps.push('tools/framework-data-build.mjs');
   if (config) steps.push('tools/config-build.mjs');
   if (content) steps.push('tools/content-build.mjs');
+  if (cardLayout && fs.existsSync(path.join(root, 'tools/card-components.mjs'))) steps.push('tools/card-components.mjs');
   return steps;
 }

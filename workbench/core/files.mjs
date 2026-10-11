@@ -27,6 +27,7 @@ import { editable, validateText, hash } from '../../editor/core.mjs';
 import { tableData } from '../../editor/tables.mjs';
 import { compileEntries, readConfigTree } from '../../tools/config-build.mjs';
 import { acquire } from '../../tools/lib/build-lock.mjs';
+import { LAYOUT_FILE, layoutProblems } from '../modules/layout/card-layers-model.mjs';
 
 export const MAX_TEXT = 4 * 1024 * 1024;
 export const MAX_CHANGES = 100;
@@ -36,6 +37,8 @@ const SET_ID = /^\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9]{6}$/;
 
 // Workbench additions to the editor's rules (the editor's editable() is kept as is).
 const JSON_TREE = /^(?:content\/config|pose-studio\/renewal|docs\/design)\/(?:[\w.-]+\/)*[\w.-]+\.json$/;
+// One named file the game reads through tools/card-components.mjs (Layout Studio's Card layers mode).
+const JSON_FILES = new Set([LAYOUT_FILE]);
 const TEXT_TREE = /^(?:pose-studio\/stances|workbench\/workspace|ui-studio\/workspace)\/(?:[\w.-]+\/)*[\w.-]+$/;
 const TEXT_EXT = /\.(json|csv|js|mjs|css|html|md|txt|svg)$/i;
 // The trees a build reads: a save under any of them holds the build lock.
@@ -54,7 +57,7 @@ function kindOf(rel) {
 /** The kind of an allowlisted path ('json' | 'csv' | 'js' | 'css' | 'text'), or null when it may not be touched. */
 export function allowedKind(rel) {
   if (typeof rel !== 'string' || refusedPath(rel)) return null;
-  if (!(editable(rel) || JSON_TREE.test(rel) || (TEXT_TREE.test(rel) && TEXT_EXT.test(rel)))) return null;
+  if (!(editable(rel) || JSON_TREE.test(rel) || JSON_FILES.has(rel) || (TEXT_TREE.test(rel) && TEXT_EXT.test(rel)))) return null;
   return kindOf(rel);
 }
 
@@ -243,8 +246,11 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     for (const c of changes) {
       try {
         if (c.kind === 'json') {
-          try { JSON.parse(c.text); } catch (e) { throw Error(`Invalid JSON: ${e.message}`); }
+          let parsed;
+          try { parsed = JSON.parse(c.text); } catch (e) { throw Error(`Invalid JSON: ${e.message}`); }
           validateText(c.path, c.text);
+          // The card layout is a schema the game compiler reads: each problem is listed on its own.
+          if (c.path === LAYOUT_FILE) for (const message of layoutProblems(parsed)) problems.push({ path: c.path, message });
         } else if (c.kind === 'csv') {
           tableData(c.path, c.text);
           validateText(c.path, c.text);

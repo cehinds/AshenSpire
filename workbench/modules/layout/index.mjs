@@ -3,9 +3,11 @@
 // canvas kit, config-model.mjs), "Battlefield" (the combat formation slots,
 // battlefield-view.mjs), "Sketch" (free wireframe boxes, sketch-view.mjs), "SP orb"
 // (the combat footer's SP group, orb-view.mjs) and "Deck row" (the deck editor's cost
-// badges, saved, and the card row reference, preview only, deck-view.mjs). The other
-// modes sit in More until their work lands. This file owns the mode tabs,
-// the one review-and-save for every mode, and the #mod=layout&mode=… deep link.
+// badges, saved, and the card row reference, preview only, deck-view.mjs), "Book recipes"
+// (the skill books, book-view.mjs) and "Card layers" (the shared card's layers, drawn by the game's
+// card renderer, card-layers-view.mjs). Every built mode is a tab; a mode not built yet would sit in
+// More. This file owns the mode tabs, the one review-and-save for every mode, and the
+// #mod=layout&mode=… deep link.
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { createCanvas, createLayersPanel, createInspector } from '../../ui/kit/canvas.mjs';
@@ -20,15 +22,17 @@ import * as K from './book-model.mjs';
 import { createBookView } from './book-view.mjs';
 import { createOrbView } from './orb-view.mjs';
 import { createDeckView } from './deck-view.mjs';
+import { createCardLayersView } from './card-layers-view.mjs';
 import * as O from './orb-model.mjs';
 import * as D from './deck-model.mjs';
+import * as CL from './card-layers-model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // The kit stylesheet is linked by index.html; only the module's own sheet is injected here.
 const CSS = ['/modules/layout/layout.css'];
 const ZOOM_STEP = 1.25;
 const ALIGN = [['left', 'Align left'], ['center', 'Align centre'], ['right', 'Align right'], ['top', 'Align top'], ['middle', 'Align middle'], ['bottom', 'Align bottom']];
-const VIEWS = { battlefield: createBattlefieldView, sketch: createSketchView, 'book-recipes': createBookView, orb: createOrbView, deck: createDeckView };
+const VIEWS = { battlefield: createBattlefieldView, sketch: createSketchView, 'book-recipes': createBookView, orb: createOrbView, deck: createDeckView, 'card-layers': createCardLayersView };
 
 function ensureCss() {
   for (const href of CSS) {
@@ -42,7 +46,7 @@ function ensureCss() {
 }
 
 const SHELL = `<div class="lay">
-  <div class="lay-modes">${L.MODES.filter((m) => m.built).map((m) => `<button type="button" role="tab" data-mode="${m.id}" aria-selected="${m.id === 'config'}">${esc(m.label)}</button>`).join('')}<details class="lay-more"><summary>More <span class="lay-soon">${L.comingNext().length} coming next</span></summary><div class="lay-more-list" role="list" aria-label="Modes coming next">${L.comingNext().map((m) => `<span role="listitem" class="lay-more-item">${esc(m.label)}<span class="lay-soon">coming next</span></span>`).join('')}</div></details>
+  <div class="lay-modes">${L.MODES.filter((m) => m.built).map((m) => `<button type="button" role="tab" data-mode="${m.id}" aria-selected="${m.id === 'config'}">${esc(m.label)}</button>`).join('')}${L.comingNext().length ? `<details class="lay-more"><summary>More <span class="lay-soon">${L.comingNext().length} coming next</span></summary><div class="lay-more-list" role="list" aria-label="Modes coming next">${L.comingNext().map((m) => `<span role="listitem" class="lay-more-item">${esc(m.label)}<span class="lay-soon">coming next</span></span>`).join('')}</div></details>` : ''}
     <span class="lay-modes-end"><button type="button" class="btn btn-sm btn-primary" data-review disabled>Review changes</button></span></div>
   <div class="lay-view" data-view="config">
   <div class="lay-bar">
@@ -75,6 +79,7 @@ const SHELL = `<div class="lay">
   <div class="lay-view" data-view="book-recipes" hidden></div>
   <div class="lay-view" data-view="orb" hidden></div>
   <div class="lay-view" data-view="deck" hidden></div>
+  <div class="lay-view" data-view="card-layers" hidden></div>
 </div>`;
 
 export default {
@@ -101,7 +106,7 @@ export default {
     const viewport = () => C.viewportOf(device(), { orientation: st.orientation, freeSize: st.freeSize });
     const activeFile = () => (st.files ? st.files.get(wireframe().file) || null : null);
     // The review and save cover every mode: UI config's drafts, the presets and the sketch.
-    const views = { battlefield: null, sketch: null, 'book-recipes': null, orb: null, deck: null };
+    const views = { battlefield: null, sketch: null, 'book-recipes': null, orb: null, deck: null, 'card-layers': null };
     let mode = 'config';
     const allChanges = () => [
       ...(st.files ? C.changesFor(st.files) : []),
@@ -110,10 +115,11 @@ export default {
       ...(views['book-recipes'] ? views['book-recipes'].changes() : []),
       ...(views.orb ? views.orb.changes() : []),
       ...(views.deck ? views.deck.changes() : []),
+      ...(views['card-layers'] ? views['card-layers'].changes() : []),
     ];
     const dirtyCount = () => allChanges().length;
     /** The mode view that owns a saved path, or null for a UI config file. */
-    const viewFor = (path) => (path === B.PRESETS_FILE ? 'battlefield' : path === O.FOOTER_FILE ? 'orb' : path === D.DECK_FILE ? 'deck' : path === K.RECIPES_FILE ? 'book-recipes' : path.startsWith(`${S.SKETCH_DIR}/`) ? 'sketch' : null);
+    const viewFor = (path) => (path === B.PRESETS_FILE ? 'battlefield' : path === O.FOOTER_FILE ? 'orb' : path === D.DECK_FILE ? 'deck' : path === K.RECIPES_FILE ? 'book-recipes' : path === CL.LAYOUT_FILE ? 'card-layers' : path.startsWith(`${S.SKETCH_DIR}/`) ? 'sketch' : null);
     const configHistory = ctx.history.scoped('config');
     const viewHost = {
       api: ctx.api,
@@ -412,6 +418,7 @@ export default {
       if (views['book-recipes']) views['book-recipes'].saved(data.files, sent);
       if (views.orb) views.orb.saved(data.files, sent);
       if (views.deck) views.deck.saved(data.files, sent);
+      if (views['card-layers']) views['card-layers'].saved(data.files, sent);
       dlg.close();
       rebuild();
       ctx.toast({ kind: 'success', title: `Saved ${data.files.length} file(s)`, detail: `Backup ${data.backup}`, record: false });
@@ -573,6 +580,7 @@ export default {
         ...(views['book-recipes'] ? views['book-recipes'].commands() : []),
         ...(views.orb ? views.orb.commands() : []),
         ...(views.deck ? views.deck.commands() : []),
+        ...(views['card-layers'] ? views['card-layers'].commands() : []),
       ],
     };
   },
