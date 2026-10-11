@@ -142,33 +142,44 @@ export function refInfo(value, data, tokens = {}) {
 // ---------------------------------------------------------------------------
 
 /**
- * How far the edge a region's edit moves has travelled, in viewport px.
+ * How far the edge a region's edit moves has travelled, in viewport px. A pure
+ * move (the size did not change) moves no edge, so it is 0: the layout places a
+ * region, and only a resize maps to config. A resize whose edge is not the one
+ * the config owns is also 0 (the left handle of a right-anchored region).
  *   bandEdge:  the band's bottom edge.
  *   width:     the right edge; a centred region grows on both sides, so half.
  *   height:    the bottom edge; an edit anchored at the bottom moves its top
  *              edge; a centred region half.
- *   no axis:   a line (the floor) moves on y.
+ *   no axis:   a line (the floor, `line`) moves on y, as a position; any other
+ *              region without an axis moves its top edge when it is resized.
  */
-export function movementFor(edit, before, after) {
+export function movementFor(edit, before, after, { line = false } = {}) {
   if (!edit) return 0;
-  if (edit.kind === 'bandEdge') return (after.y + after.h) - (before.y + before.h);
-  if (edit.axis === 'w') return edit.centered ? (after.w - before.w) / 2 : (after.x + after.w) - (before.x + before.w);
+  if (edit.kind === 'bandEdge') return after.h === before.h ? 0 : (after.y + after.h) - (before.y + before.h);
+  if (edit.axis === 'w') {
+    if (after.w === before.w) return 0;
+    return edit.centered ? (after.w - before.w) / 2 : (after.x + after.w) - (before.x + before.w);
+  }
   if (edit.axis === 'h') {
+    if (after.h === before.h) return 0;
     if (edit.centered) return (after.h - before.h) / 2;
     return edit.anchor === 'bottom' ? after.y - before.y : (after.y + after.h) - (before.y + before.h);
   }
-  return after.y - before.y;
+  if (line) return after.y - before.y;
+  return after.h === before.h ? 0 : after.y - before.y;
 }
 
 /**
  * Apply the canvas geometry of `items` (the canvas doc after a gesture) to the
- * config `data` of the active file. `regions` are the regions the canvas was
- * built from; a region whose geometry did not change, or whose edit has no
- * edge moving (a sideways move of a centred frame), changes nothing. Returns
- * the new data; the input is not touched when nothing moved.
+ * config `data` of the active file. Returns { data, notes }: `data` is the new
+ * tree (the input is not touched, and is the same object when nothing maps);
+ * `notes` lists the regions whose gesture mapped to no config change, each with
+ * why: 'move' (the region was moved, which the layout decides) or 'zero' (a
+ * resize of an edge the config does not own). The page snaps those back.
  */
-export function applyCanvasEdits({ data, regions, items, viewport, grid }) {
+export function canvasEditReport({ data, regions, items, viewport, grid }) {
   let next = data;
+  const notes = [];
   const after = new Map(items.map((it) => [it.id, it]));
   for (const r of regions) {
     if (!r.edit) continue;
@@ -177,14 +188,26 @@ export function applyCanvasEdits({ data, regions, items, viewport, grid }) {
     const before = { x: r.x, y: r.y, w: r.w, h: r.h };
     const now = { x: it.x, y: it.y, w: it.w, h: it.h };
     if (before.x === now.x && before.y === now.y && before.w === now.w && before.h === now.h) continue;
-    const drags = [{ edit: r.edit, delta: movementFor(r.edit, before, now) }];
+    const opts = { line: Boolean(r.line) };
+    const drags = [{ edit: r.edit, delta: movementFor(r.edit, before, now, opts) }];
     if (r.edit.pathH) drags.push({ edit: { kind: 'path', path: r.edit.pathH, unit: r.edit.unitH, axis: 'h', centered: r.edit.centered }, delta: movementFor({ axis: 'h', centered: r.edit.centered }, before, now) });
+    let mapped = false;
     for (const { edit, delta } of drags) {
       if (!delta) continue;
+      mapped = true;
       next = M.applyRegionDrag(next, { ...r, edit }, delta, viewport, { grid, regions });
     }
+    if (!mapped) {
+      const resized = before.w !== now.w || before.h !== now.h;
+      notes.push({ id: r.id, label: r.label, outcome: resized ? 'zero' : 'move' });
+    }
   }
-  return next;
+  return { data: next, notes };
+}
+
+/** The data alone: canvasEditReport without its notes. */
+export function applyCanvasEdits(args) {
+  return canvasEditReport(args).data;
 }
 
 /** Set one config value by path. Immutable: returns a new tree. */

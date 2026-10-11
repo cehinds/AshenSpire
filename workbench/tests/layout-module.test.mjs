@@ -24,6 +24,7 @@ const W4A_FILES = ['ui/scenes/w4.json', 'ui/scenes/w4a-combat.json', 'ui/tokens.
 const settings = C.defaultSettings();
 const wireframe = C.wireframeById(settings, 'w4a');
 const device = settings.devices.find((d) => d.id === 'desk-1280');
+const vp0 = () => C.viewportOf(device);
 
 test('the vendored studio model is byte-identical to ui-studio/model.mjs', () => {
   const mine = readFileSync(join(ROOT, 'workbench/modules/layout/studio-model.mjs'), 'utf8');
@@ -77,6 +78,46 @@ test('dragging a band\'s bottom edge maps back to the band percents', () => {
   const sum = Object.values(M.getPath(next, 'sizing.bands')).reduce((a, b) => a + b, 0);
   assert.equal(sum, 100, 'the percents still sum to 100');
   assert.deepEqual(f.data, JSON.parse(f.original), 'the input file data is not mutated');
+});
+
+test('moving band.scene sideways and down maps to no config change, and says the layout places it', () => {
+  const files = loadedFiles(W4A_FILES);
+  const f = files.get('ui/scenes/w4a-combat.json');
+  const vp = C.viewportOf(device);
+  const v = C.regionsFor({ wireframe, files, viewport: vp, settings });
+  const doc = C.canvasDocFor(vp, v.regions);
+  const moved = doc.items.map((it) => (it.id === 'band.scene' ? { ...it, x: it.x + 30, y: it.y + 40 } : it));
+  const report = C.canvasEditReport({ data: f.data, regions: v.regions, items: moved, viewport: vp, grid: settings.grid });
+  assert.equal(report.data, f.data, 'a pure move leaves the data as it was: the same object comes back');
+  assert.deepEqual(report.notes, [{ id: 'band.scene', label: v.regions.find((r) => r.id === 'band.scene').label, outcome: 'move' }]);
+  assert.equal(M.getPath(report.data, 'sizing.bands.scene'), 55, 'the scene keeps its 55%');
+  assert.equal(M.getPath(report.data, 'sizing.bands.context'), 30, 'the context keeps its 30%');
+});
+
+test('resizing band.scene\'s bottom edge maps to the bands change and no note', () => {
+  const files = loadedFiles(W4A_FILES);
+  const f = files.get('ui/scenes/w4a-combat.json');
+  const vp = C.viewportOf(device);
+  const v = C.regionsFor({ wireframe, files, viewport: vp, settings });
+  const doc = C.canvasDocFor(vp, v.regions);
+  const resized = doc.items.map((it) => (it.id === 'band.scene' ? { ...it, h: it.h + 40 } : it));
+  const report = C.canvasEditReport({ data: f.data, regions: v.regions, items: resized, viewport: vp, grid: settings.grid });
+  assert.notEqual(M.getPath(report.data, 'sizing.bands.scene'), 55, 'the bottom edge drives the scene percent');
+  assert.deepEqual(report.notes, []);
+});
+
+test('a resize whose edge the config does not own maps to nothing, and is noted as zero', () => {
+  // A right-anchored region: the left handle moves x and w, the right edge stays.
+  const region = { id: 'rail', label: 'rail', x: 100, y: 0, w: 200, h: 300, line: false, edit: { kind: 'path', path: 'sizing.railFraction', unit: 'fractionOfWidth', axis: 'w' } };
+  const data = { sizing: { railFraction: 0.2 } };
+  const report = C.canvasEditReport({ data, regions: [region], items: [{ ...region, x: 80, w: 220 }], viewport: vp0(), grid: settings.grid });
+  assert.equal(report.data, data);
+  assert.deepEqual(report.notes, [{ id: 'rail', label: 'rail', outcome: 'zero' }]);
+  // The bottom handle of a bottom-anchored region moves its height, not its top edge.
+  const footer = { id: 'footer', label: 'footer', x: 0, y: 500, w: 300, h: 100, edit: { kind: 'path', path: 'sizing.footerMinVh', unit: 'vh', axis: 'h', anchor: 'bottom' } };
+  const grown = C.canvasEditReport({ data, regions: [footer], items: [{ ...footer, h: 120 }], viewport: vp0(), grid: settings.grid });
+  assert.equal(grown.data, data);
+  assert.deepEqual(grown.notes, [{ id: 'footer', label: 'footer', outcome: 'zero' }]);
 });
 
 test('a move that changes no edge changes nothing, and so does a locked region', () => {
