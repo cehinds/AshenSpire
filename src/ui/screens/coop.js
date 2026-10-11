@@ -339,10 +339,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const barrierVisuals = new Map();
   let effectEvents = [];
   function prepareCombatAnimations(scene) {
-    pendingAnimations = new Map();
     poseReactions = new Map();
+    pendingAnimations = collectCombatAnimations(scene);
+  }
+  // A scene's new receipts → each seat's card animation plan (sprite effect,
+  // resource aura), updating the stance, rest and readiness ledgers once per
+  // receiptSeq. The direct render plays the plans at once; a paced timeline
+  // plays a seat's plan when that seat swings (paceReactionReceipts).
+  function collectCombatAnimations(scene, party = snap.party) {
+    const plans = new Map();
     const seq = Number(scene.receiptSeq) || 0;
-    if (seq <= animationReceiptSeq) return;
+    if (seq <= animationReceiptSeq) return plans;
     animationReceiptSeq = seq;
     effectEvents = decorateCombatEffects((scene.events || []).map(combatEffectReceipt), registries, barrierVisuals);
     for (const event of scene.events || []) {
@@ -355,7 +362,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
       const ownerId = event.playerId;
       if (!ownerId) continue;
-      const member = snap.party.find(member => member.id === ownerId);
+      const member = party.find(member => member.id === ownerId);
       let plan;
       if (event.type === 'cardPlayed' && member) {
         const definition = resolveCoopPlayedCombatCard(registries, snap, event);
@@ -367,11 +374,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
         plan.spriteEffect=combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},event);plan.targetId=event.targetId;plan.effectEvents=effectEvents;
-        pendingAnimations.set(ownerId, plan);
+        plans.set(ownerId, plan);
       }
       combatRests.set(ownerId, combatRestAfterEvent(combatRests.get(ownerId) || 'idle', event, ownerId, plan));
-      if (event.type === 'playerTurnStart') { pendingAnimations.delete(ownerId); heldStances.accept(event); }
+      if (event.type === 'playerTurnStart') { plans.delete(ownerId); heldStances.accept(event); }
     }
+    return plans;
+  }
+  // A seat's card sprite effect, played from its figure toward its targets.
+  function playCardEffects(ownerId, plan, duration) {
+    const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
+    const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,ownerId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
+    const authoredTargets=presentationTargetIds(plan.effectEvents,ownerId,plan.spriteEffect?.bindingContext.objectId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
+    if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
   }
   let pacing = false; // enemy beats are playing: the ribbon reads Enemy Turn
   let playerPacing = false; // a player's own attack beats are playing (SPEC §7.4)
@@ -1421,12 +1436,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
     for (const [ownerId, plan] of pendingAnimations) {
       const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
-      const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
-      const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,ownerId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
-      const authoredTargets=presentationTargetIds(plan.effectEvents,ownerId,plan.spriteEffect?.bindingContext.objectId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       const pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
       const duration = stage?.actionTiming?.(pose, ANIM_SPEEDS[getAnimSpeed()])?.totalMs ?? 420;
-      if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
+      playCardEffects(ownerId, plan, duration);
       stage?.play(pose, duration, plan.aura);
     }
     lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq, seats);
