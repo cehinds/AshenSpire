@@ -392,3 +392,26 @@ test('canvas view and panels import without a DOM', async () => {
   assert.equal(typeof kit.createLayersPanel, 'function');
   assert.equal(typeof kit.createInspector, 'function');
 });
+
+// ---------------------------------------------------------------------------
+// Fit zoom: the page fits the view minus the stage padding, rounded down.
+// ---------------------------------------------------------------------------
+test('fitZoom takes the tighter axis, less the padding on both', () => {
+  // 765px wide, 652px tall, 24px padding: width gives 717/1280, height 604/800.
+  assert.equal(M.fitZoom({ viewW: 765, viewH: 652, docW: 1280, docH: 800, pad: 24 }), 0.56);
+  // A tall view: height is the limit.
+  assert.equal(M.fitZoom({ viewW: 1200, viewH: 500, docW: 1280, docH: 800, pad: 24 }), 0.565);
+});
+
+test('fitZoom rounds down so the page never overflows', () => {
+  assert.equal(M.fitZoom({ viewW: 1000, viewH: 1000, docW: 3000, docH: 3000 }), 0.333);
+});
+
+test('fitZoom clamps to the zoom range', () => {
+  assert.equal(M.fitZoom({ viewW: 40, viewH: 40, docW: 1280, docH: 800, pad: 24, minZoom: 0.1, maxZoom: 4 }), 0.1);
+  assert.equal(M.fitZoom({ viewW: 2000, viewH: 2000, docW: 10, docH: 10, pad: 0, minZoom: 0.1, maxZoom: 4 }), 4);
+});
+
+test('fitZoom on a hidden view (zero size) falls back to the minimum zoom', () => {
+  assert.equal(M.fitZoom({ viewW: 0, viewH: 0, docW: 1280, docH: 800, pad: 24, minZoom: 0.1 }), 0.1);
+});

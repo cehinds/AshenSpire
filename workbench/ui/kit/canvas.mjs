@@ -343,9 +343,7 @@ export function createCanvas(el, opts = {}) {
   }
 
   function fit() {
-    const vw = view.clientWidth - 2 * PAD, vh = view.clientHeight - 2 * PAD;
-    const z = Math.min(vw / state.doc.width, vh / state.doc.height);
-    setZoom(Math.floor(clamp(z, MIN_ZOOM, MAX_ZOOM) * 1000) / 1000);
+    setZoom(M.fitZoom({ viewW: view.clientWidth, viewH: view.clientHeight, docW: state.doc.width, docH: state.doc.height, pad: PAD, minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM }));
     view.scrollLeft = 0;
     view.scrollTop = 0;
   }

@@ -17,6 +17,18 @@
 //     restore is exact regardless of the doc passed in.
 
 export const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+
+/**
+ * The zoom at which a document fits a view: the view minus the stage padding on each
+ * axis, clamped to the zoom range and rounded DOWN to 3 decimals so the page never
+ * overflows the view by a pixel. The rulers sit outside the view, so they are not
+ * subtracted here.
+ */
+export function fitZoom({ viewW, viewH, docW, docH, pad = 0, minZoom = 0.1, maxZoom = 4 }) {
+  const z = Math.min((viewW - 2 * pad) / docW, (viewH - 2 * pad) / docH);
+  const clamped = Math.min(maxZoom, Math.max(minZoom, Number.isFinite(z) ? z : minZoom));
+  return Math.floor(clamped * 1000) / 1000;
+}
 export const EDGES = ['left', 'center', 'right', 'top', 'middle', 'bottom'];
 export const NUDGE = { small: 1, large: 10 };
 const DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
