@@ -12,7 +12,7 @@ Source of truth: `workbench/tools.json` (`moved`). The tests in
 `workbench/tests/retired.test.mjs` check every link with `parseHash` and that
 each moved page carries its notice.
 
-Counts: **6 fully replaced**, **28 partly replaced** (34 registry entries).
+Counts: **6 fully replaced**, **27 partly replaced** (33 registry entries). The HUD comparison page left the tree with the rest of `docs/qa` (dev, 2026-10-11).
 
 ## Mapping
 
@@ -28,7 +28,7 @@ old page.
 | Item card review | `item-cards-preview.html` | Entity Browser | `#mod=entities&kind=armor&view=worn` | full | none |
 | Held stances | `pose-studio/stances/index.html` | Motion Studio | `#mod=motion` | full | none |
 | Stance options (2026-10-08) | `pose-studio/stances/options-20261008/index.html` | Asset Gallery | `#mod=assets` | full | none |
-| Card layer explorer | `docs/qa/card-layers/index.html` | Layout Studio, Card layers | `#mod=layout&mode=card-layers` | partial | Layout groups (text box, trim, rank as one), per-card overrides and cost layouts, snap, grid and multi-select, drag-to-reorder grips and Export JSON download, card samples other than the one shown |
+| Card layer explorer | `tools/card-layers/index.html` | Layout Studio, Card layers | `#mod=layout&mode=card-layers` | partial | Layout groups (text box, trim, rank as one), per-card overrides and cost layouts, snap, grid and multi-select, drag-to-reorder grips and Export JSON download, card samples other than the one shown |
 | Layered Battlefield Editor (legacy) | `docs/design/combat-depth-2026-10-05/editor/editor-legacy.html` | Layout Studio, Battlefield | `#mod=layout&mode=battlefield` | partial | group and ungroup, lock, marquee selection |
 | Combat Studio | `docs/design/combat-depth-2026-10-05/editor/battlefield-wireframe-editor.html` | Layout Studio, Battlefield | `#mod=layout&mode=battlefield` | partial | parallax and effect preview |
 | Armament combat kits | `armament-kits-preview.html` | Entity Browser | `#mod=entities&kind=armaments` | partial | loadout compare |
@@ -52,7 +52,6 @@ old page.
 | Concise card tooltips | `docs/preview/concise-card-tooltips/index.html` | Visual Review | `#mod=review` | partial | zip download; verdicts export; screens not in the capture job list |
 | Starting equipment review (screenshots) | `docs/preview/starting-equipment/index.html` | Visual Review | `#mod=review` | partial | zip download; verdicts export; screens not in the capture job list |
 | World Journey screenshot review | `docs/preview/world-atlas/index.html` | Visual Review | `#mod=review` | partial | zip download; verdicts export; screens not in the capture job list |
-| HUD comparison (approved vs built) | `docs/qa/mobile-combat-20261009/hud-comparison.html` | Visual Review | `#mod=review` | partial | zip download; verdicts export; screens not in the capture job list |
 | Deck row layout editor | `docs/design/deck-row-editor/index.html` | Layout Studio, Deck row | `#mod=layout&mode=deck` | partial | wireframe view; reset layout; JSON file download and file import (the mode pastes and copies JSON) |
 | SP Atelier | `docs/design/sp-orb-editor/index.html` | Layout Studio, SP orb | `#mod=layout&mode=orb` | partial | assembled and selected-only views; reset; import and export layout JSON; SP scaling and resources stats |
 | Book Atelier | `docs/preview/book-library/layers/atelier.html` | Layout Studio, Book recipes | `#mod=layout&mode=book-recipes` | partial | cover variations (four); JSON export and import of a cover |
