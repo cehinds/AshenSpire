@@ -319,6 +319,43 @@ async function dataStudio() {
 async function layoutStudio() {
   await goModule('Layout Studio');
   await waitVisible('.view.active .ck-item');
+  const V = '.view.active ';
+  // Eight pointer moves from (x, y) by (dx, dy): a drag the canvas reads as a gesture.
+  const dragBy = async (x, y, dx, dy) => {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(x + (dx * i) / 8, y + (dy * i) / 8);
+    await page.mouse.up();
+    await sleep(300);
+  };
+  const centreOf = async (sel) => {
+    const box = await page.locator(sel).first().boundingBox();
+    if (!box) throw Error(`no box for ${sel}`);
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+  // Region 2 is the scene band. Its lower edge (scene / hand) is the edge the config owns, so its bottom handle resizes it.
+  const BAND = `${V}.ck-item >> nth=1`;
+  const bandGeom = () => page.locator(BAND).evaluate((n) => `${n.style.top} ${n.style.height}`);
+  const undoOn = () => page.isEnabled(VUNDO);
+  const reviewOn = () => page.isEnabled(`${V}[data-review]`);
+  const DLG = 'dialog.lay-dlg[open]';
+  // Opens Review changes, checks it shows a diff, then Cancel closes it without saving.
+  const reviewAndCancel = async () => {
+    expect(await reviewOn(), 'Review changes is disabled while a change is pending');
+    await page.click(`${V}[data-review]`);
+    await page.locator(`${DLG} .lay-hunk`).first().waitFor({ state: 'visible', timeout: 8000 });
+    const changed = await page.locator(`${DLG} .lay-ln.is-add, ${DLG} .lay-ln.is-del`).count();
+    expect(changed > 0, 'the review opened without a diff');
+    await page.click(`${DLG} button[data-dlg="close"]:text-is("Cancel")`);
+    await sleep(300);
+    expect(await page.evaluate(() => document.querySelector('dialog')?.open !== true), 'dialog still open after Cancel');
+    return changed;
+  };
+  let bandStart = null;
+  let slotStart = null;
+  const SLOT = `${V}.ck-item[data-id^="slot:"] >> nth=0`;
+  const slotGeom = () => page.locator(SLOT).evaluate((n) => `${n.style.left} ${n.style.top}`);
+
   await check('Layout: Fit the wireframe', async () => {
     await page.click('.view.active button[data-act="fit"]');
     await sleep(300);
@@ -329,28 +366,43 @@ async function layoutStudio() {
     await sleep(300);
     expect(await page.locator('.view.active .lay-insp input[data-key]').count() > 0, 'inspector has no fields after selecting a region');
   });
-  await check('Layout: drag a region and see it move', async () => {
-    const box = await page.locator('.view.active .ck-item >> nth=1').boundingBox();
-    const x0 = box.x + box.width / 2, y0 = box.y + box.height / 2;
-    // Region 2 is a full-width band: it moves on the vertical axis only, so the drag runs down.
-    const pos = () => page.locator('.view.active .ck-item >> nth=1').evaluate((n) => `${n.style.left} ${n.style.top}`);
-    const before = await pos();
-    await page.mouse.move(x0, y0); await page.mouse.down();
-    for (let i = 1; i <= 8; i++) await page.mouse.move(x0, y0 + i * 6);
-    await page.mouse.up();
-    await sleep(300);
-    const after = await pos();
-    expect(before !== after, `region did not move (${before} -> ${after})`);
-    return `${before} -> ${after}`;
+  await check('Layout: a centre drag of a band snaps back and the toast says the layout places it', async () => {
+    const geom = await bandGeom();
+    const undo = await undoOn();
+    const c = await centreOf(BAND);
+    await dragBy(c.x, c.y, 0, 48);
+    const after = await bandGeom();
+    expect(after === geom, `a pure move changed the band (${geom} -> ${after})`);
+    expect((await undoOn()) === undo, 'a pure move changed the Undo history');
+    await page.getByText('positioned by the layout').first().waitFor({ state: 'visible', timeout: 3000 });
+    return 'snapped back; toast shown';
   });
-  await check('Layout: undo reverts the drag', async () => {
-    const pos = () => page.locator('.view.active .ck-item >> nth=1').evaluate((n) => `${n.style.left} ${n.style.top}`);
-    const before = await pos();
-    expect(await page.isEnabled(VUNDO), 'Undo is disabled after the drag');
+  await check('Layout: drag the band\'s bottom handle to resize it', async () => {
+    const c = await centreOf(BAND);
+    await page.mouse.click(c.x, c.y);
+    await sleep(200);
+    const handle = `${V}.ck-handle[data-handle="s"]`;
+    await page.locator(handle).waitFor({ state: 'visible', timeout: 3000 });
+    bandStart = await bandGeom();
+    const h = await centreOf(handle);
+    await dragBy(h.x, h.y, 0, 48);
+    const after = await bandGeom();
+    expect(after !== bandStart, `the bottom handle did not resize the band (${bandStart} -> ${after})`);
+    expect(await undoOn(), 'Undo is disabled after the resize');
+    await shot(`layout-${sizeName}`);
+    return `${bandStart} -> ${after}`;
+  });
+  await check('Layout: Review changes shows the diff, and Cancel closes it', async () => {
+    const changed = await reviewAndCancel();
+    expect((await bandGeom()) !== bandStart, 'Cancel reverted the resize');
+    return `${changed} changed lines`;
+  });
+  await check('Layout: undo restores the band height', async () => {
     await page.click(VUNDO);
     await sleep(300);
-    const after = await pos();
-    expect(before !== after, `undo did not change the region position (${before})`);
+    const now = await bandGeom();
+    expect(now === bandStart, `undo did not restore the band (${now}, was ${bandStart})`);
+    return `restored to ${bandStart}`;
   });
   await check('Layout: More menu opens and lists the coming modes', async () => {
     await page.click('.view.active .lay-more > summary');
@@ -358,23 +410,37 @@ async function layoutStudio() {
     expect(await page.locator('.view.active .lay-more[open] .lay-more-list').count() === 1, 'More menu did not open');
     await page.click('.view.active .lay-more > summary');
   });
-  await check('Layout: Review changes opens and Close cancels', async () => {
-    await page.click('.view.active .ck-item >> nth=1', { force: true });
-    await page.mouse.move(0, 0);
-    const box = await page.locator('.view.active .ck-item >> nth=1').boundingBox();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
-    for (let i = 1; i <= 4; i++) await page.mouse.move(box.x + box.width / 2 + i * 8, box.y + box.height / 2);
-    await page.mouse.up();
-    await sleep(300);
-    await page.click('.view.active button[data-act="review"]:not([disabled])');
-    await sleep(400);
-    expect(await page.evaluate(() => document.querySelector('dialog')?.open === true), 'review dialog did not open');
-    await page.click('dialog [data-dlg="close"]');
-    await sleep(200);
-    expect(await page.evaluate(() => document.querySelector('dialog')?.open !== true), 'dialog still open');
-    await page.click(VUNDO);
+  await check('Layout: Battlefield mode draws the formation slots', async () => {
+    await page.click(`${V}.lay-modes [data-mode="battlefield"]`);
+    await sleep(800);
+    await page.locator(SLOT).waitFor({ state: 'visible', timeout: 8000 });
+    return `${await page.locator(`${V}.ck-item[data-id^="slot:"]`).count()} slots`;
   });
-  await shot(`layout-${sizeName}`);
+  await check('Layout: Battlefield: drag a slot and see it move', async () => {
+    slotStart = await slotGeom();
+    const c = await centreOf(SLOT);
+    await dragBy(c.x, c.y, 48, 0);
+    const after = await slotGeom();
+    expect(after !== slotStart, `slot did not move (${slotStart} -> ${after})`);
+    expect(await undoOn(), 'Undo is disabled after the slot move');
+    return `${slotStart} -> ${after}`;
+  });
+  await check('Layout: Battlefield: undo restores the slot', async () => {
+    await page.click(VUNDO);
+    await sleep(300);
+    const now = await slotGeom();
+    expect(now === slotStart, `undo did not restore the slot (${now}, was ${slotStart})`);
+  });
+  await check('Layout: Battlefield: Review changes shows the diff, and Cancel closes it', async () => {
+    const c = await centreOf(SLOT);
+    await dragBy(c.x, c.y, 48, 0);
+    const changed = await reviewAndCancel();
+    await page.click(VUNDO);
+    await sleep(300);
+    expect((await slotGeom()) === slotStart, 'undo did not restore the slot after the review');
+    return `${changed} changed lines`;
+  });
+  try { await page.click(`${V}.lay-modes [data-mode="config"]`); await sleep(400); } catch { /* the mode tab is always drawn */ }
 }
 
 async function entityBrowser() {
