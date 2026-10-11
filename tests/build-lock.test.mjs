@@ -84,3 +84,12 @@ test('acquire waits for the holder, and gives up naming it after the timeout', a
   assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'me');
   release();
 });
+
+test('the workbench workflow runs this suite and triggers on the lock and its tests', () => {
+  const yml = fs.readFileSync(new URL('../.github/workflows/workbench.yml', import.meta.url), 'utf8');
+  const run = yml.split('\n').find((l) => /run: node --test workbench\/tests/.test(l)) || '';
+  assert.match(run, /tests\/build-lock\.test\.mjs/, 'the test step runs tests/build-lock.test.mjs');
+  for (const file of ['tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs']) {
+    assert.equal(yml.split(`- '${file}'`).length - 1, 2, `${file} is in both the push and pull_request paths filters`);
+  }
+});

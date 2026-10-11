@@ -2,7 +2,7 @@
 # engine export, on the branches and pull requests that touch them.
 #
 # WHAT IT RUNS: the node --test suites of workbench/, editor/ and ui-studio/
-# plus tests/engine-export.test.mjs; a full engine export into
+# plus tests/engine-export.test.mjs and tests/build-lock.test.mjs; a full engine export into
 # build/engine-export (uploaded as engine-export-<commit>, never committed);
 # and workbench/tests/screenshots.mjs, which starts the Workbench with its child
 # tools and captures every screen in a real browser (uploaded as
@@ -29,6 +29,8 @@ on:
       - '.github/actions/**'
       - 'tools/engine-export.mjs'
       - 'tests/engine-export.test.mjs'
+      - 'tools/lib/build-lock.mjs'
+      - 'tests/build-lock.test.mjs'
       - 'docs/workbench/**'
       - '.github/workflows/workbench.yml'
   pull_request:
@@ -43,6 +45,8 @@ on:
       - '.github/actions/**'
       - 'tools/engine-export.mjs'
       - 'tests/engine-export.test.mjs'
+      - 'tools/lib/build-lock.mjs'
+      - 'tests/build-lock.test.mjs'
       - 'docs/workbench/**'
       - '.github/workflows/workbench.yml'
   workflow_dispatch:
@@ -76,8 +80,8 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
 
-      - name: Workbench, editor, UI Studio and engine-export tests
-        run: node --test workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs
+      - name: Workbench, editor, UI Studio, engine-export and build-lock tests
+        run: node --test workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs
 
       - name: Engine export
         run: node tools/engine-export.mjs --out build/engine-export
