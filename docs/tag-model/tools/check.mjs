@@ -223,7 +223,7 @@ const assetsTop = T('assets');
 if (need('assets', assetsTop, ['id'])) checkUnique('assets', assetsTop, ['id']);
 
 // ------------------------------------------------------ presentation tables
-const BAND_OK = new Set(['mobile', 'tablet', 'desktop', 'state', 'other', 'all']);
+const BAND_OK = new Set(['mobile', 'tablet', 'desktop', 'wide', 'state', 'other', 'all']);
 const SCOPE_OK = new Set(['player', 'tuning']);
 const COMBAT_STATUS = new Set(['has symbol', 'placeholder', 'missing']);
 

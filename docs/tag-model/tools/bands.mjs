@@ -1,18 +1,20 @@
 // Breakpoint normalisation: raw CSS condition -> named band.
 //
 // Bands (proposal, see docs/tag-model/README.md, "Presentation layer"):
-//   mobile  = max-width <= 600px, or pointer:coarse with orientation:portrait
-//   tablet  = 601px to 1024px
-//   desktop = >= 1025px
+//   mobile  = phone: max-width <= 599px, or pointer:coarse with orientation:portrait
+//   tablet  = 600px to 1023px
+//   desktop = 1024px to 1439px
+//   wide    = >= 1440px (owner decision 2, 2026-10-11; see DECISIONS.md)
 //   all     = no condition
 //   state   = data-* / body.* hooks (not a viewport condition)
 //   other   = anything that does not fit a band (strictly: the condition's
 //             width range must lie inside the band's range)
 
 const BANDS = {
-  mobile: [0, 600],
-  tablet: [601, 1024],
-  desktop: [1025, Infinity],
+  mobile: [0, 599],
+  tablet: [600, 1023],
+  desktop: [1024, 1439],
+  wide: [1440, Infinity],
 };
 
 function lengthPx(num, unit) {
@@ -57,4 +59,4 @@ export function bandOf(raw) {
   return 'other';
 }
 
-export const BAND_NAMES = ['mobile', 'tablet', 'desktop', 'state', 'other', 'all'];
+export const BAND_NAMES = ['mobile', 'tablet', 'desktop', 'wide', 'state', 'other', 'all'];

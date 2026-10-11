@@ -103,7 +103,7 @@ backdrop,all,50%,20%,46rem,46rem,"absolute|transform:translate(-50%, -50%)",kw+r
 backdrop,all,inset 0,,,,absolute,kw,styles/combat.css:37,all,all,styles/combat.css:37
 environment-backdrop,all,,"var(--environment-top, 0)",,"var(--environment-height, 65%)",bottom-anchored,var+kw,styles/combat.css:43,all,all,styles/combat.css:43
 environment-backdrop,all,inset 0,,100%,100%,absolute|transform:scale(1.06),kw,styles/combat.css:44,all,all,styles/combat.css:44
-environment-backdrop,(max-width:600px),,,,,transform:scale(1.02),,styles/combat.css:45,mobile,mobile,styles/combat.css:45
+environment-backdrop,(max-width:600px),,,,,transform:scale(1.02),,styles/combat.css:45,other,breakpoint.other,styles/combat.css:45
 environment-backdrop,all,,,,,transform:none,kw,styles/combat.css:49,all,all,styles/combat.css:49
 sprite,all,12%,bottom -3px,,12px,absolute|right-anchored|bottom-anchored,kw+px,styles/combat.css:65,all,all,styles/combat.css:65
 field,all,,,,,relative,kw,styles/combat.css:81,all,all,styles/combat.css:81
@@ -227,7 +227,7 @@ selected,all,,,,,transform:var(--card-fan-transform),var,styles/combat.css:1143,
 card,all,,,,,transform:var(--card-fan-transform),var,styles/combat.css:1144,all,all,styles/combat.css:1144
 card-hold-progress,all,6px,bottom 6px,,"max(6px, calc(6px / var(--ui-zoom, 1)))",absolute|right-anchored|bottom-anchored,kw+px+var+calc,styles/combat.css:1150,all,all,styles/combat.css:1150
 card-hold-progress,all,,,100%,100%,"transform:scaleX(var(--hold, 0))",var,styles/combat.css:1157,all,all,styles/combat.css:1157
-defeated-frame,(max-width: 600px),100%,,,,,,styles/combat.css:1165,mobile,mobile,styles/combat.css:1165
+defeated-frame,(max-width: 600px),100%,,,,,,styles/combat.css:1165,other,breakpoint.other,styles/combat.css:1165
 combat,all,,,,"calc(100dvh / var(--ui-zoom, 1))",grid-rows:10% 45% 45%,var+calc+dvh,styles/combat.css:1170,all,all,styles/combat.css:1170
 topbar,all,,,,auto,,var+px+kw,styles/combat.css:1174,all,all,styles/combat.css:1174
 field,all,,,,100%,,,styles/combat.css:1175,all,all,styles/combat.css:1175
@@ -592,8 +592,8 @@ shop-book-details,all,,,min 0,,,,styles/kit.css:1252,all,all,styles/kit.css:1252
 shop-book-actions,all,,,min 0,,,,styles/kit.css:1257,all,all,styles/kit.css:1257
 shop-book-buy,all,,,100%,min 4.4rem,,rem,styles/kit.css:1258,all,all,styles/kit.css:1258
 shop-book-offer,@container (max-width: 460px),,,,,"grid-cols:var(--book-compact-art-width) minmax(0, 1fr) var(--book-compact-action-width)",var,styles/kit.css:1278,other,breakpoint.other,styles/kit.css:1278
-shop-book-offer,(max-width: 600px),,,,,"grid-cols:max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1))) minmax(0, 1fr) max(var(--book-compact-action-width), calc(var(--book-compact-action-width) / var(--ui-zoom, 1)))",var+calc,styles/kit.css:1289,mobile,mobile,styles/kit.css:1289
-shop-book-buy,(max-width: 600px),,,,"min max(4.4rem, calc(44px / var(--ui-zoom, 1)))",,var+calc+rem+px,styles/kit.css:1298,mobile,mobile,styles/kit.css:1298
+shop-book-offer,(max-width: 600px),,,,,"grid-cols:max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1))) minmax(0, 1fr) max(var(--book-compact-action-width), calc(var(--book-compact-action-width) / var(--ui-zoom, 1)))",var+calc,styles/kit.css:1289,other,breakpoint.other,styles/kit.css:1289
+shop-book-buy,(max-width: 600px),,,,"min max(4.4rem, calc(44px / var(--ui-zoom, 1)))",,var+calc+rem+px,styles/kit.css:1298,other,breakpoint.other,styles/kit.css:1298
 card-shelf,all,,,100%,,,,styles/kit.css:1309,all,all,styles/kit.css:1309
 card-shelf,all,,,,,transform:none,kw,styles/kit.css:1313,all,all,styles/kit.css:1313
 global,all,,,,,transform:none,kw,styles/kit.css:1313,all,all,styles/kit.css:1313
@@ -990,10 +990,10 @@ modal,all,,,min 0,,,,styles/kit.css:3337,all,all,styles/kit.css:3337
 sr-vals,all,,,min 0,,,,styles/kit.css:3337,all,all,styles/kit.css:3337
 inventory-model,all,,,"clamp(8.4rem, 16vw, 14rem)",auto,aspect:1,rem+vw+kw,styles/kit.css:3375,all,all,styles/kit.css:3375
 inventory-information,all,,,min 0,,,,styles/kit.css:3379,all,all,styles/kit.css:3379
-inventory-item-art,(max-width: 600px),,,3.6rem,3.6rem,,rem,styles/kit.css:3384,mobile,mobile,styles/kit.css:3384
-inventory-face,(max-width: 600px),,,100%,,,,styles/kit.css:3385,mobile,mobile,styles/kit.css:3385
-inventory-detail,(max-width: 600px),,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:3386,mobile,mobile,styles/kit.css:3386
-inventory-model,(max-width: 600px),,,"min(100%, 13rem)",,,rem,styles/kit.css:3387,mobile,mobile,styles/kit.css:3387
+inventory-item-art,(max-width: 600px),,,3.6rem,3.6rem,,rem,styles/kit.css:3384,other,breakpoint.other,styles/kit.css:3384
+inventory-face,(max-width: 600px),,,100%,,,,styles/kit.css:3385,other,breakpoint.other,styles/kit.css:3385
+inventory-detail,(max-width: 600px),,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:3386,other,breakpoint.other,styles/kit.css:3386
+inventory-model,(max-width: 600px),,,"min(100%, 13rem)",,,rem,styles/kit.css:3387,other,breakpoint.other,styles/kit.css:3387
 as-face,all,,,,,"grid-cols:auto minmax(0, 1fr)",,styles/kit.css:3390,all,all,styles/kit.css:3390
 as-face,all,,,auto,,,kw,styles/kit.css:3393,all,all,styles/kit.css:3393
 sr-id,all,,,auto,,,kw,styles/kit.css:3398,all,all,styles/kit.css:3398
@@ -1106,12 +1106,12 @@ card-inspection-art,all,,,220px,308px,transform:none,px+kw,styles/kit.css:3868,a
 inspection-tag,all,,,max 100%,,,,styles/kit.css:3872,all,all,styles/kit.css:3872
 equipment-poker-explanations,all,,,min 0,,,,styles/kit.css:3880,all,all,styles/kit.css:3880
 ctext,all,,,,max none,,kw,styles/kit.css:3882,all,all,styles/kit.css:3882
-card-inspection-layout,(max-width:600px),,,,,"grid-cols:minmax(0,1fr)",,styles/kit.css:3885,mobile,mobile,styles/kit.css:3885
-card-inspection-art,(max-width:600px),,,100%,,,,styles/kit.css:3887,mobile,mobile,styles/kit.css:3887
-card-inspection-art,(max-width:600px),,,,,,,styles/kit.css:3888,mobile,mobile,styles/kit.css:3888
-card-inspection-art,(max-width:600px),,,160px,auto,aspect:var(--card-ratio),px+kw+var,styles/kit.css:3889,mobile,mobile,styles/kit.css:3889
-equipment-poker-card,(max-width:600px),,,100%,auto,,kw,styles/kit.css:3890,mobile,mobile,styles/kit.css:3890
-inspection-tag,(max-width:600px),,,,min 32px,,px,styles/kit.css:3893,mobile,mobile,styles/kit.css:3893
+card-inspection-layout,(max-width:600px),,,,,"grid-cols:minmax(0,1fr)",,styles/kit.css:3885,other,breakpoint.other,styles/kit.css:3885
+card-inspection-art,(max-width:600px),,,100%,,,,styles/kit.css:3887,other,breakpoint.other,styles/kit.css:3887
+card-inspection-art,(max-width:600px),,,,,,,styles/kit.css:3888,other,breakpoint.other,styles/kit.css:3888
+card-inspection-art,(max-width:600px),,,160px,auto,aspect:var(--card-ratio),px+kw+var,styles/kit.css:3889,other,breakpoint.other,styles/kit.css:3889
+equipment-poker-card,(max-width:600px),,,100%,auto,,kw,styles/kit.css:3890,other,breakpoint.other,styles/kit.css:3890
+inspection-tag,(max-width:600px),,,,min 32px,,px,styles/kit.css:3893,other,breakpoint.other,styles/kit.css:3893
 equipment-choose,all,,,100%,min var(--tap-floor),,var,styles/kit.css:3895,all,all,styles/kit.css:3895
 cc-card-selectors,all,,,,,"grid-cols:repeat(auto-fill,minmax(132px,1fr))",px,styles/kit.css:3957,all,all,styles/kit.css:3957
 poker-equipment-choice,all,,,100%,,relative,kw,styles/kit.css:3958,all,all,styles/kit.css:3958
@@ -1186,8 +1186,8 @@ card-inspection-target,all,auto,50%,,,right-anchored|transform:translateY(-50%),
 card-inspection-art,all,,,,min 308px,,px,styles/kit.css:4588,all,all,styles/kit.css:4588
 card-inspection-art,all,,,,auto,aspect:auto,kw,styles/kit.css:4589,all,all,styles/kit.css:4589
 cd-body,all,,,,auto,,kw,styles/kit.css:4590,all,all,styles/kit.css:4590
-card-inspection-layout,(max-width:600px),,,,,"grid-cols:minmax(0,1fr)",,styles/kit.css:4593,mobile,mobile,styles/kit.css:4593
-card-inspection-art,(max-width:600px),,,100%,,,var+px,styles/kit.css:4594,mobile,mobile,styles/kit.css:4594
+card-inspection-layout,(max-width:600px),,,,,"grid-cols:minmax(0,1fr)",,styles/kit.css:4593,other,breakpoint.other,styles/kit.css:4593
+card-inspection-art,(max-width:600px),,,100%,,,var+px,styles/kit.css:4594,other,breakpoint.other,styles/kit.css:4594
 modal,all,,,,"min 0 / max calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))",,var+calc+dvh+px,styles/kit.css:4642,all,all,styles/kit.css:4642
 as-modal,all,,,,"min 0 / max calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))",,var+calc+dvh+px,styles/kit.css:4642,all,all,styles/kit.css:4642
 modal,all,,,,"calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))",,var+calc+dvh+px,styles/kit.css:4643,all,all,styles/kit.css:4643
@@ -1440,7 +1440,7 @@ cc-card-selectors,(max-width:700px),,,,max 32vh,,vh,styles/kit.css:5750,other,br
 disc-fold-row,all,,,,,relative,kw,styles/kit.css:5755,all,all,styles/kit.css:5755
 disc-reveal,all,inset 0,,,auto,absolute,kw,styles/kit.css:5756,all,all,styles/kit.css:5756
 cz-menu-button,all,,,min var(--tap-floor),min var(--tap-floor),,var,styles/kit.css:5764,all,all,styles/kit.css:5764
-cc-view-option,(max-width: 600px),,,min var(--tap-floor),,,var,styles/kit.css:5767,mobile,mobile,styles/kit.css:5767
+cc-view-option,(max-width: 600px),,,min var(--tap-floor),,,var,styles/kit.css:5767,other,breakpoint.other,styles/kit.css:5767
 cz-header-menu,all,inset auto,,220px,,fixed,kw+px,styles/kit.css:5772,all,all,styles/kit.css:5772
 modal-close-face,all,,,100%,100%,,,styles/kit.css:5777,all,all,styles/kit.css:5777
 cz-portrait,all,,,var(--tap-floor),var(--tap-floor),,var,styles/kit.css:5780,all,all,styles/kit.css:5780
@@ -1453,8 +1453,8 @@ book-lesson-columns,all,,,,,"grid-cols:minmax(0, 1fr) minmax(22rem, 1fr)",rem,st
 book-lesson-list,all,,,,max 42dvh,,dvh,styles/kit.css:5802,all,all,styles/kit.css:5802
 book-lesson-option,all,,,100%,min 44px,,px,styles/kit.css:5803,all,all,styles/kit.css:5803
 book-lesson-detail,all,,,100%,,,,styles/kit.css:5806,all,all,styles/kit.css:5806
-book-lesson-columns,(max-width: 600px),,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:5810,mobile,mobile,styles/kit.css:5810
-book-lesson-list,(max-width: 600px),,,,max 25dvh,,dvh,styles/kit.css:5811,mobile,mobile,styles/kit.css:5811
+book-lesson-columns,(max-width: 600px),,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:5810,other,breakpoint.other,styles/kit.css:5810
+book-lesson-list,(max-width: 600px),,,,max 25dvh,,dvh,styles/kit.css:5811,other,breakpoint.other,styles/kit.css:5811
 book-art,all,,,100%,,relative|aspect:1,kw,styles/kit.css:5814,all,all,styles/kit.css:5814
 book-art,all,,,100%,100%,,,styles/kit.css:5815,all,all,styles/kit.css:5815
 book-reading-art,all,,,5.5rem,,,rem,styles/kit.css:5816,all,all,styles/kit.css:5816
@@ -1472,8 +1472,8 @@ combat-health-badge,all,inset 0,,,,absolute,kw,styles/kit.css:5860,all,all,style
 combat-health-shield,all,,,,,aspect:40/44,,styles/kit.css:5862,all,all,styles/kit.css:5862
 combat-health-badge-value,all,,,,,transform:translateY(-.23em),em,styles/kit.css:5863,all,all,styles/kit.css:5863
 combat-health-badge,all,,,min max-content,,,,styles/kit.css:5867,all,all,styles/kit.css:5867
-combat-health-row,(max-width: 600px),,,"min calc(70px / var(--ui-zoom, 1))",,,var+calc+px,styles/kit.css:5876,mobile,mobile,styles/kit.css:5876
-combat-health-badge,(max-width: 600px),,,,,,var+calc+px,styles/kit.css:5877,mobile,mobile,styles/kit.css:5877
+combat-health-row,(max-width: 600px),,,"min calc(70px / var(--ui-zoom, 1))",,,var+calc+px,styles/kit.css:5876,other,breakpoint.other,styles/kit.css:5876
+combat-health-badge,(max-width: 600px),,,,,,var+calc+px,styles/kit.css:5877,other,breakpoint.other,styles/kit.css:5877
 character-level-action,all,,,100%,min 44px,,px,styles/kit.css:5880,all,all,styles/kit.css:5880
 character-sheet-action,all,,,100%,min 44px,,px,styles/kit.css:5881,all,all,styles/kit.css:5881
 character-sheet-body,all,,,,min 0,,,styles/kit.css:5887,all,all,styles/kit.css:5887
@@ -1500,8 +1500,8 @@ shop-offer-avail,all,,,,,static,kw,styles/kit.css:5965,all,all,styles/kit.css:59
 merchant-offer-actions,all,,,min 0,,,,styles/kit.css:5968,all,all,styles/kit.css:5968
 merchant-offer-action,all,,,100%,min 44px,,px,styles/kit.css:5969,all,all,styles/kit.css:5969
 class-row,all,,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:5971,all,all,styles/kit.css:5971
-merchant-offer,(max-width: 600px),,,,,"grid-cols:minmax(0, 9rem) minmax(0, 1fr)",rem,styles/kit.css:5973,mobile,mobile,styles/kit.css:5973
-merchant-offer-actions,(max-width: 600px),,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:5974,mobile,mobile,styles/kit.css:5974
+merchant-offer,(max-width: 600px),,,,,"grid-cols:minmax(0, 9rem) minmax(0, 1fr)",rem,styles/kit.css:5973,other,breakpoint.other,styles/kit.css:5973
+merchant-offer-actions,(max-width: 600px),,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:5974,other,breakpoint.other,styles/kit.css:5974
 reward-progress-row,all,,,,,grid-cols:subgrid,,styles/kit.css:5985,all,all,styles/kit.css:5985
 reward-progress-row,all,,,,,"grid-cols:minmax(0, 1fr) auto",,styles/kit.css:5990,all,all,styles/kit.css:5990
 armoury-railed,all,,,,,"grid-cols:minmax(0, 1fr)",,styles/kit.css:6000,all,all,styles/kit.css:6000
@@ -1542,12 +1542,12 @@ tag:select,all,,,min 0,min 32px,,px,styles/kit.css:6101,all,all,styles/kit.css:6
 card-upcast-rank,all,,,100%,,,,styles/kit.css:6102,all,all,styles/kit.css:6102
 combat-expansion-controls,all,right 8px,bottom 8px,"min(260px,44%)",,absolute|right-anchored|bottom-anchored,kw+px,styles/kit.css:6104,all,all,styles/kit.css:6104
 combat-recovery-controls,all,,,,min 36px,,px,styles/kit.css:6107,all,all,styles/kit.css:6107
-combat-expansion-controls,(max-width:600px),,,"min(220px,46%)",,,px,styles/kit.css:6108,mobile,mobile,styles/kit.css:6108
-combat-recovery-controls,(max-width:600px),,,,min 44px,,px,styles/kit.css:6108,mobile,mobile,styles/kit.css:6108
-card-upcast-controls,(max-width:600px),,,,"min max(44px, var(--tap-floor))",,var+px,styles/kit.css:6111,mobile,mobile,styles/kit.css:6111
-tag:select,(max-width:600px),,,,"min max(44px, var(--tap-floor))",,var+px,styles/kit.css:6111,mobile,mobile,styles/kit.css:6111
+combat-expansion-controls,(max-width:600px),,,"min(220px,46%)",,,px,styles/kit.css:6108,other,breakpoint.other,styles/kit.css:6108
+combat-recovery-controls,(max-width:600px),,,,min 44px,,px,styles/kit.css:6108,other,breakpoint.other,styles/kit.css:6108
+card-upcast-controls,(max-width:600px),,,,"min max(44px, var(--tap-floor))",,var+px,styles/kit.css:6111,other,breakpoint.other,styles/kit.css:6111
+tag:select,(max-width:600px),,,,"min max(44px, var(--tap-floor))",,var+px,styles/kit.css:6111,other,breakpoint.other,styles/kit.css:6111
 combat-expansion-controls,all,8px,8px,,,absolute|right-anchored|bottom-anchored,kw+px,styles/kit.css:6114,all,all,styles/kit.css:6114
-combat-expansion-controls,(max-width:600px),,48px,,,,px,styles/kit.css:6115,mobile,mobile,styles/kit.css:6115
+combat-expansion-controls,(max-width:600px),,48px,,,,px,styles/kit.css:6115,other,breakpoint.other,styles/kit.css:6115
 combat-blight-hud,all,50%,"calc(6px / var(--ui-zoom, 1))","min(calc(600px / var(--ui-zoom, 1)), calc(100% - 460px / var(--ui-zoom, 1)))",,absolute|transform:translateX(-50%),kw+var+calc+px,styles/kit.css:6119,all,all,styles/kit.css:6119
 ashen-blight-track,all,,,,"calc(18px / var(--ui-zoom, 1))",,var+calc+px,styles/kit.css:6127,all,all,styles/kit.css:6127
 combat-blight-hud,(max-width:700px),auto,auto,100%,,relative|transform:none,kw,styles/kit.css:6129,other,breakpoint.other,styles/kit.css:6129
@@ -1637,7 +1637,7 @@ atlas-location-body,(max-width:700px),,,,,"grid-rows:minmax(0,1.2fr) minmax(0,.8
 atlas-local-zoom-tools,(max-width:700px),,,min 38px,,,px,styles/map.css:530,other,breakpoint.other,styles/map.css:530
 atlas-local-port,(max-height:500px) and (min-width:701px),,,,min 80px,,px,styles/map.css:536,other,breakpoint.other,styles/map.css:536
 atlas-node-label,all,,40px,max 130px,,,px,styles/map.css:546,all,all,styles/map.css:546
-atlas-world,(max-width:600px),,,min 0,,,,styles/map.css:550,mobile,mobile,styles/map.css:550
+atlas-world,(max-width:600px),,,min 0,,,,styles/map.css:550,other,breakpoint.other,styles/map.css:550
 atlas-node,all,,,"calc(var(--atlas-node-size) * var(--atlas-face-scale,1))","calc(var(--atlas-node-size) * var(--atlas-face-scale,1))",,var+calc,styles/map.css:555,all,all,styles/map.css:555
 atlas-node-face,all,,,100%,100%,,,styles/map.css:556,all,all,styles/map.css:556
 atlas-node-label,all,,calc(100% + 8px),,,,calc+px,styles/map.css:557,all,all,styles/map.css:557
@@ -2060,8 +2060,8 @@ set-row-dropdown,all,,,,,"grid-cols:minmax(0, 1fr) minmax(0, 45%)",,styles/ui.cs
 set-row-dropdown,all,,,100%,,,kw,styles/ui.css:1081,all,all,styles/ui.css:1081
 set-choice-select,all,,,100%,min var(--tap-floor),,var,styles/ui.css:1082,all,all,styles/ui.css:1082
 set-general-pickers,all,,,min 0,,,,styles/ui.css:1085,all,all,styles/ui.css:1085
-modal-head-actions,(max-width: 600px),,,,,,,styles/ui.css:1088,mobile,mobile,styles/ui.css:1088
-set-header-tools,(max-width: 600px),,,100%,,,,styles/ui.css:1091,mobile,mobile,styles/ui.css:1091
+modal-head-actions,(max-width: 600px),,,,,,,styles/ui.css:1088,other,breakpoint.other,styles/ui.css:1088
+set-header-tools,(max-width: 600px),,,100%,,,,styles/ui.css:1091,other,breakpoint.other,styles/ui.css:1091
 set-topic-panel,(min-width: 800px),,,,,"grid-cols:repeat(2, minmax(0, 1fr))",,styles/ui.css:1094,other,breakpoint.other,styles/ui.css:1094
 set-mobile-pickers,all,,,min 0,,,,styles/ui.css:1099,all,all,styles/ui.css:1099
 set-example-lines,all,,,,,"grid-cols:minmax(7rem, max-content) 1fr",rem,styles/ui.css:1118,all,all,styles/ui.css:1118
@@ -2079,12 +2079,12 @@ set-section-select,all,,,100%,min var(--tap-floor),,var,styles/ui.css:1152,all,a
 set-topic-select,all,,,100%,min var(--tap-floor),,var,styles/ui.css:1152,all,all,styles/ui.css:1152
 set-config-search,all,,,100%,min var(--tap-floor),,var,styles/ui.css:1158,all,all,styles/ui.css:1158
 set-config-count,all,,,,min 1em,,em,styles/ui.css:1160,all,all,styles/ui.css:1160
-settings-modal,(max-width: 600px),,,100%,,,,styles/ui.css:1162,mobile,mobile,styles/ui.css:1162
-set-subtabs,(max-width: 600px),,,100%,,"grid-cols:repeat(2, minmax(0, 1fr))",,styles/ui.css:1163,mobile,mobile,styles/ui.css:1163
-set-subtabs,(max-width: 600px),,,min 0,,,,styles/ui.css:1164,mobile,mobile,styles/ui.css:1164
-set-panel,(max-width: 600px),,,100%,,,,styles/ui.css:1171,mobile,mobile,styles/ui.css:1171
-choice-group,(max-width: 600px),,,100%,,"grid-cols:repeat(auto-fit, minmax(7rem, 1fr))",rem,styles/ui.css:1174,mobile,mobile,styles/ui.css:1174
-choice-group,(max-width: 600px),,,min 0,,,,styles/ui.css:1178,mobile,mobile,styles/ui.css:1178
+settings-modal,(max-width: 600px),,,100%,,,,styles/ui.css:1162,other,breakpoint.other,styles/ui.css:1162
+set-subtabs,(max-width: 600px),,,100%,,"grid-cols:repeat(2, minmax(0, 1fr))",,styles/ui.css:1163,other,breakpoint.other,styles/ui.css:1163
+set-subtabs,(max-width: 600px),,,min 0,,,,styles/ui.css:1164,other,breakpoint.other,styles/ui.css:1164
+set-panel,(max-width: 600px),,,100%,,,,styles/ui.css:1171,other,breakpoint.other,styles/ui.css:1171
+choice-group,(max-width: 600px),,,100%,,"grid-cols:repeat(auto-fit, minmax(7rem, 1fr))",rem,styles/ui.css:1174,other,breakpoint.other,styles/ui.css:1174
+choice-group,(max-width: 600px),,,min 0,,,,styles/ui.css:1178,other,breakpoint.other,styles/ui.css:1178
 set-panel,(min-width: 601px),,,100%,,,,styles/ui.css:1184,other,breakpoint.other,styles/ui.css:1184
 choice-group,(min-width: 601px),,,100%,,,,styles/ui.css:1187,other,breakpoint.other,styles/ui.css:1187
 choice-group,(min-width: 601px),,,min 7rem,,,rem,styles/ui.css:1190,other,breakpoint.other,styles/ui.css:1190
@@ -2108,10 +2108,10 @@ set-tip,all,,,,min var(--tap-floor),,var,styles/ui.css:1253,all,all,styles/ui.cs
 set-text,all,,,min 0,min var(--tap-floor),,var,styles/ui.css:1259,all,all,styles/ui.css:1259
 set-sync-select,all,,,min 0 / max 100%,min var(--tap-floor),,var,styles/ui.css:1260,all,all,styles/ui.css:1260
 set-text,all,,,100%,min var(--tap-floor),,var,styles/ui.css:1268,all,all,styles/ui.css:1268
-as-row,(max-width: 600px),,,max 100%,,,,styles/ui.css:1273,mobile,mobile,styles/ui.css:1273
-as-labelstack,(max-width: 600px),,,min 0,,,,styles/ui.css:1278,mobile,mobile,styles/ui.css:1278
-set-stepper,(max-width: 600px),,,4.6rem,,,rem,styles/ui.css:1280,mobile,mobile,styles/ui.css:1280
-set-row-dropdown,(max-width: 600px),,,,,grid-cols:1fr,,styles/ui.css:1281,mobile,mobile,styles/ui.css:1281
+as-row,(max-width: 600px),,,max 100%,,,,styles/ui.css:1273,other,breakpoint.other,styles/ui.css:1273
+as-labelstack,(max-width: 600px),,,min 0,,,,styles/ui.css:1278,other,breakpoint.other,styles/ui.css:1278
+set-stepper,(max-width: 600px),,,4.6rem,,,rem,styles/ui.css:1280,other,breakpoint.other,styles/ui.css:1280
+set-row-dropdown,(max-width: 600px),,,,,grid-cols:1fr,,styles/ui.css:1281,other,breakpoint.other,styles/ui.css:1281
 set-preview,all,,,min 0 / max 100%,,,,styles/ui.css:1286,all,all,styles/ui.css:1286
 set-preview-summary,all,,,,"min var(--tap-floor, 44px)",,var+px,styles/ui.css:1287,all,all,styles/ui.css:1287
 set-preview-body,all,,,min 0,,,,styles/ui.css:1288,all,all,styles/ui.css:1288
@@ -2263,7 +2263,7 @@ armament-inspection-back,(pointer: coarse),,,,"min max(var(--tap-floor, 48px), c
 class-respec-body,all,,,min 0,,,,styles/ui.css:1815,all,all,styles/ui.css:1815
 class-respec-body,all,,,min 0 / max 60%,,,,styles/ui.css:1817,all,all,styles/ui.css:1817
 class-respec-tree,all,,,,,"grid-cols:repeat(auto-fit,minmax(220px,1fr))",px,styles/ui.css:1818,all,all,styles/ui.css:1818
-class-respec-slots,(max-width:600px),,,100%,,,,styles/ui.css:1823,mobile,mobile,styles/ui.css:1823
+class-respec-slots,(max-width:600px),,,100%,,,,styles/ui.css:1823,other,breakpoint.other,styles/ui.css:1823
 tag:html,all,,,,auto,,kw,styles/weapon-cards-preview.css:1,all,all,styles/weapon-cards-preview.css:1
 weapon-preview,all,,,,auto,,kw+vh,styles/weapon-cards-preview.css:2,all,all,styles/weapon-cards-preview.css:2
 weapon-preview,all,,,max 1180px,,,px,styles/weapon-cards-preview.css:3,all,all,styles/weapon-cards-preview.css:3
@@ -2281,11 +2281,11 @@ id:weapon-gallery,all,,,,,"grid-cols:repeat(auto-fill,minmax(0,280px))",px,style
 id:weapon-gallery,all,,,min 0,,,,styles/weapon-cards-preview.css:20,all,all,styles/weapon-cards-preview.css:20
 weapon-enlarge,all,,,100%,min 44px,,px,styles/weapon-cards-preview.css:21,all,all,styles/weapon-cards-preview.css:21
 id:weapon-gallery,(max-width:1000px),,,,,"grid-cols:repeat(2,minmax(0,1fr))",,styles/weapon-cards-preview.css:22,other,breakpoint.other,styles/weapon-cards-preview.css:22
-id:weapon-gallery,(max-width:600px),,,max 360px,,"grid-cols:minmax(0,1fr)",px,styles/weapon-cards-preview.css:23,mobile,mobile,styles/weapon-cards-preview.css:23
-weapon-preview,(max-width:600px),,,100%,,,,styles/weapon-cards-preview.css:23,mobile,mobile,styles/weapon-cards-preview.css:23
+id:weapon-gallery,(max-width:600px),,,max 360px,,"grid-cols:minmax(0,1fr)",px,styles/weapon-cards-preview.css:23,other,breakpoint.other,styles/weapon-cards-preview.css:23
+weapon-preview,(max-width:600px),,,100%,,,,styles/weapon-cards-preview.css:23,other,breakpoint.other,styles/weapon-cards-preview.css:23
 equipment-poker-card,all,,,100%,,,,styles/weapon-cards-preview.css:25,all,all,styles/weapon-cards-preview.css:25
 id:weapon-gallery,(max-width:1000px),,,,,"grid-cols:repeat(auto-fit,minmax(0,280px))",px,styles/weapon-cards-preview.css:26,other,breakpoint.other,styles/weapon-cards-preview.css:26
-id:weapon-gallery,(max-width:600px),,,,,"grid-cols:minmax(0,280px)",px,styles/weapon-cards-preview.css:27,mobile,mobile,styles/weapon-cards-preview.css:27
+id:weapon-gallery,(max-width:600px),,,,,"grid-cols:minmax(0,280px)",px,styles/weapon-cards-preview.css:27,other,breakpoint.other,styles/weapon-cards-preview.css:27
 card.layer.base,all,0,0,360,540,card-coords 360x540; z=0,card-units,src/content/card-layout.json layers[0],all,all,src/content/card-layout.json layers[0]
 card.layer.art,all,10,40,340,336.25,card-coords 360x540; z=1,card-units,src/content/card-layout.json layers[1],all,all,src/content/card-layout.json layers[1]
 card.layer.panel,all,24,346,312,147,card-coords 360x540; z=2,card-units,src/content/card-layout.json layers[2],all,all,src/content/card-layout.json layers[2]

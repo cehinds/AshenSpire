@@ -410,6 +410,7 @@ meta.presentation.layout.breakpoint,breakpoint,Breakpoint,meta.presentation.layo
 meta.presentation.layout.breakpoint.mobile,mobile,Mobile,meta.presentation.layout.breakpoint,Breakpoint,,Band mobile.,,,,,,new,,,
 meta.presentation.layout.breakpoint.tablet,tablet,Tablet,meta.presentation.layout.breakpoint,Breakpoint,,Band tablet.,,,,,,new,,,
 meta.presentation.layout.breakpoint.desktop,desktop,Desktop,meta.presentation.layout.breakpoint,Breakpoint,,Band desktop.,,,,,,new,,,
+meta.presentation.layout.breakpoint.wide,wide,Wide,meta.presentation.layout.breakpoint,Breakpoint,,Band wide.,,,,,,new,,,
 meta.presentation.layout.breakpoint.state,state,State,meta.presentation.layout.breakpoint,Breakpoint,,Band state.,,,,,,new,,,
 meta.presentation.layout.breakpoint.all,all,All,meta.presentation.layout.breakpoint,Breakpoint,,Band all.,,,,,,new,,,
 meta.presentation.layout.breakpoint.other,breakpoint.other,Other,meta.presentation.layout.breakpoint,Breakpoint,,Band other.,,,,,,new,,,

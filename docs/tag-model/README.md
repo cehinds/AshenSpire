@@ -107,9 +107,10 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 **Proposed named bands** (`tools/bands.mjs`). `band` is derived from the raw
 `breakpoint` or `condition`; the raw text is kept.
 
-- `mobile`: max-width at or below 600px, or pointer:coarse with orientation:portrait
-- `tablet`: 601px to 1024px
-- `desktop`: 1025px and up
+- `mobile`: phone, max-width at or below 599px, or pointer:coarse with orientation:portrait
+- `tablet`: 600px to 1023px
+- `desktop`: 1024px to 1439px
+- `wide`: 1440px and up (owner decision 2, 2026-10-11; see `DECISIONS.md`)
 - `all`: no condition
 - `state`: `data-*` or `body.*` hooks, which are not viewport conditions
 - `other`: anything else. A condition goes to a band only when its whole width range lies inside that band, so `max-width: 640px` and `max-width: 900px` are `other` (they straddle a band edge)

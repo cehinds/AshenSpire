@@ -236,7 +236,7 @@ for (const [g, label, d] of GROUPS) node(presId(g), label, 'Component', d);
 
 node(presId('layout'), 'Layout', 'Layout', 'Positions and sizes of components.');
 node(presId('layout', 'breakpoint'), 'Breakpoint', 'Breakpoint', 'Layout condition, normalised to a band.');
-const BANDS = ['mobile', 'tablet', 'desktop', 'state', 'all', 'other'];
+const BANDS = ['mobile', 'tablet', 'desktop', 'wide', 'state', 'all', 'other'];
 for (const b of BANDS) node(presId('layout', 'breakpoint', b), b[0].toUpperCase() + b.slice(1), 'Breakpoint', `Band ${b}.`);
 node(presId('layout', 'anchor'), 'Anchor', 'Layout', 'Anchor and transform rules.');
 node(presId('layout', 'z-layer'), 'Z-layer', 'Layout', 'Stacking layers.');
