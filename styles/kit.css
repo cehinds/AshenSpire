@@ -5019,6 +5019,8 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 .combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face[data-art-fit='contain'] { height: calc(56px / var(--ui-zoom, 1)); }
 .combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .combat-potions .footer-art-face[data-art-fit='contain'] { height: calc(60px / var(--ui-zoom, 1)); }
+/* The art bottom meets its label: the face drops by its blank strip (--art-drop, a fraction of its own height). */
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .footer-art-face[data-art-fit='contain'] { transform: translateY(calc(var(--art-drop, 0) * 100% + 1.6px)); }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }

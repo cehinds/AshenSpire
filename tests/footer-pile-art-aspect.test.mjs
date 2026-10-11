@@ -31,12 +31,12 @@ test('draw, discard and potions faces are contain-fit with their box aspect', as
       assert.ok(face, `${sel} carries an art face`);
       assert.equal(face.getAttribute('data-art-fit'), 'contain', `${sel} is contain-fit`);
       const [vbw, vbh] = face.getAttribute('viewBox').split(' ').slice(2).map(Number);
-      assert.equal(face.getAttribute('style'), `aspect-ratio:${vbw} / ${vbh}`, `${sel} face takes its viewBox aspect`);
+      assert.match(face.getAttribute('style'), new RegExp(`^aspect-ratio:${vbw} / ${vbh};--art-drop:[0-9.]+$`), `${sel} face takes its viewBox aspect and drop`);
       const images = [...face.querySelectorAll('image')];
       assert.ok(images.length >= 1, `${sel} draws its artwork`);
       for (const image of images) {
-        assert.equal(image.getAttribute('preserveAspectRatio'), 'xMidYMid meet',
-          `${sel} artwork keeps its natural shape inside its authored box`);
+        assert.equal(image.getAttribute('preserveAspectRatio'), 'xMidYMax meet',
+          `${sel} artwork keeps its natural shape and sits on the bottom of its box`);
       }
     }
   });
@@ -65,4 +65,10 @@ test('phone piles and potions take a 56px art face in an 88px column, not the 28
   assert.match(css, /\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-art-face\[data-art-fit='contain'\] \{ height: calc\(56px \/ var\(--ui-zoom, 1\)\); \}/);
   assert.match(css, /\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.combat-potions \.footer-art-face\[data-art-fit='contain'\] \{ height: calc\(60px \/ var\(--ui-zoom, 1\)\); \}/);
   assert.match(css, /height: calc\(88px \/ var\(--ui-zoom, 1\)\); min-height: calc\(88px \/ var\(--ui-zoom, 1\)\);/);
+});
+
+test('compact contain faces drop onto their labels by their blank strip', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  assert.match(css, /\.footer-art-face\[data-art-fit='contain'\] \{ transform: translateY\(calc\(var\(--art-drop, 0\) \* 100% \+ 1\.6px\)\); \}/);
 });

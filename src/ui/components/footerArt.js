@@ -23,8 +23,14 @@ function svg(nodes, b, fit = 'stretch') {
   // Stretch to the control box, as the box's percentage sizing does; meet would
   // letterbox the art inside a box that is itself stretched, so they drift apart.
   const contain = fit === 'contain';
-  const image = contain ? 'xMidYMid meet' : 'none';
-  const style = contain ? ` style="aspect-ratio:${b.w} / ${b.h}"` : '';
+  // Contained art bottom-aligns in its authored box, so its bottom edge is the
+  // box bottom. The viewBox also holds the blank strip where the desktop counts
+  // and label sit; --art-drop is that strip as a fraction of the face, so a
+  // compact face can drop onto its label and the art sits on it.
+  const image = contain ? 'xMidYMax meet' : 'none';
+  const artBottom = Math.max(...nodes.filter(n => n.asset !== 'text' && footerAssets[n.asset]).map(n => n.y + n.h));
+  const drop = contain ? Math.max(0, (b.y + b.h - artBottom) / b.h) : 0;
+  const style = contain ? ` style="aspect-ratio:${b.w} / ${b.h};--art-drop:${drop.toFixed(4)}"` : '';
   return `<svg class="footer-art-face" data-art-fit="${fit}"${style} viewBox="${b.x} ${b.y} ${b.w} ${b.h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${nodes.map(n => {
     if (n.asset !== 'text') return footerAssets[n.asset] ? `<image data-footer-asset="${esc(n.asset)}" href="${esc(assetUrl(footerAssets[n.asset]))}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="${image}"/>` : '';
     const align = n.textAlign || 'center', x = n.x + (align === 'right' ? n.w : align === 'center' ? n.w / 2 : 0);
