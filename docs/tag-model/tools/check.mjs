@@ -31,6 +31,7 @@
 //     is blank, an assets id, or an svg:<Module>.<NAME>.<key> reference whose
 //     module, NAME and key all appear in its source file (svg-source.mjs); a
 //     combat-symbols row is status missing exactly when assignedAssetRef is blank
+//     combat-symbols artBrief and priority (P1-P3) are set on every placeholder row and nowhere else
 //   - vocabularies: tags status; layouts and styles band; settings scope and deviceScope;
 //     combat-symbols status
 //   - tag status: liveId only on a live-tag, resolves to a nodes.csv id, and a
@@ -230,6 +231,7 @@ const BAND_OK = new Set(['mobile', 'tablet', 'desktop', 'wide', 'state', 'other'
 const SCOPE_OK = new Set(['player', 'tuning']);
 const DEVICE_SCOPE_OK = new Set(['device', 'global']);
 const COMBAT_STATUS = new Set(['has symbol', 'placeholder', 'missing']);
+const PRIORITY_OK = new Set(['P1', 'P2', 'P3']);
 
 // name -> key columns (unique together) and the columns the checks read.
 const PRES_SPEC = {
@@ -244,7 +246,7 @@ const PRES_SPEC = {
   resolutions: { key: ['tier'], cols: ['tier', 'tag', 'liveRef'] },
   settings: { key: ['key'], cols: ['key', 'scope', 'deviceScope', 'tag', 'liveRef'] },
   symbols: { key: ['id'], cols: ['id', 'tag', 'liveRef'] },
-  'combat-symbols': { key: ['tagKey'], cols: ['tagKey', 'status', 'assignedAssetRef', 'tag', 'liveRef'] },
+  'combat-symbols': { key: ['tagKey'], cols: ['tagKey', 'status', 'assignedAssetRef', 'tag', 'liveRef', 'artBrief', 'priority'] },
   strings: { key: ['key'], cols: ['key', 'text', 'context', 'tooltip', 'file', 'tag', 'liveRef', 'proposedKey', 'migrateTo'] },
 };
 const presOk = {};
@@ -465,6 +467,9 @@ if (presOk['combat-symbols'] && presOk.assets) {
       fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) assignedAssetRef "${tok}" is not an assets id, an svg: reference, a pattern with a match, or blank`);
     }
     if (!COMBAT_STATUS.has(status)) fail(`presentation/combat-symbols: row ${i + 2} status "${status}" not in vocabulary`);
+    const prio = at(cs, r, 'priority');
+    if (status === 'placeholder' && (!at(cs, r, 'artBrief') || !PRIORITY_OK.has(prio))) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) is a placeholder with no artBrief or a priority outside P1-P3`);
+    if (status !== 'placeholder' && (at(cs, r, 'artBrief') || prio)) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) has an artBrief or priority but is not a placeholder`);
     if ((status === 'missing') !== (tok === '')) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) status "${status}" does not match assignedAssetRef "${tok}"`);
   });
 }
