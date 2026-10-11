@@ -397,9 +397,9 @@ jobs:
               continue
             fi
             run=$(gh api -X GET "repos/$REPO/actions/workflows/dev-preview.yml/runs" -f event=pull_request -f branch="$ref" -f per_page=30 \
-              | jq -r --arg sha "$sha" '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")][0].id // empty')
+              | jq -r --arg sha "$sha" '[.workflow_runs[] | select(.head_sha == $sha)][0] | select(.conclusion == "success") | .id // empty')
             if [ -z "$run" ]; then
-              echo "::notice title=No build yet::PR #$pr ($ref) has no successful dev preview for $sha yet"
+              echo "::notice title=No build yet::PR #$pr ($ref): the newest dev preview for $sha has not succeeded"
               continue
             fi
             # Only a live artifact counts: the standalone build is kept 14 days, and an

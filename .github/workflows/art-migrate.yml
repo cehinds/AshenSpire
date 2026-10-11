@@ -313,9 +313,17 @@ jobs:
               migrate)
                 echo "### Art in this pull request: moved to the art repository"
                 echo
-                echo "This pull request adds art files, which live in [$ART_REPO](https://github.com/$ART_REPO) (CONTRIBUTING.md, ground rule 2). They have been staged in ${ART_PR_URL:-(the art pull request could not be opened: see the log of this job)}."
+                echo "This pull request adds art files, which live in [$ART_REPO](https://github.com/$ART_REPO) (CONTRIBUTING.md, ground rule 2)."
                 echo
-                echo "Next: 1. remove these files from this pull request (they stay tracked in the art repository). 2. Once the art pull request merges, its release publishes, and the pin-bump job opens the \`art-release.json\` bump." ;;
+                if [ -n "$ART_PR_URL" ]; then
+                  echo "They have been staged in $ART_PR_URL."
+                  echo
+                  echo "Next: 1. remove these files from this pull request (they stay tracked in the art repository). 2. Once the art pull request merges, its release publishes, and the pin-bump job opens the \`art-release.json\` bump."
+                else
+                  # No art PR URL: do NOT ask for removal, or the next run (state none)
+                  # would pass with the art on an orphan branch and no review.
+                  echo "**The art pull request could not be opened** (see the log of this job). Keep the files in this pull request and re-run this check; it opens or updates the art pull request on the branch it already pushed."
+                fi ;;
               blocked-fork)
                 echo "### Art in this pull request: manual path"
                 echo
@@ -340,9 +348,15 @@ jobs:
         if: steps.gate.outputs.state != 'none' && steps.gate.outputs.state != 'skip'
         env:
           STATE: ${{ steps.gate.outputs.state }}
+          ART_PR_URL: ${{ steps.artpr.outputs.url }}
         run: |
           case "$STATE" in
-            migrate) echo "::error title=Art files in this pull request::They belong in $ART_REPO and were staged there. Remove them from this pull request; this check stays red until they are gone (so they never land on dev)." ;;
+            migrate)
+              if [ -n "$ART_PR_URL" ]; then
+                echo "::error title=Art files in this pull request::They belong in $ART_REPO and were staged in $ART_PR_URL. Remove them from this pull request; this check stays red until they are gone (so they never land on dev)."
+              else
+                echo "::error title=Art pull request not opened::The art was pushed to $ART_REPO but its pull request could not be opened. Keep the files here and re-run this check."
+              fi ;;
             blocked-fork) echo "::error title=Art files from a fork::This pull request comes from a fork, so the art cannot be moved automatically. Remove the art files and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
             blocked-token) echo "::error title=ART_REPO_WRITE_TOKEN is not set::The art cannot be moved automatically. Remove the art files from this pull request and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
           esac

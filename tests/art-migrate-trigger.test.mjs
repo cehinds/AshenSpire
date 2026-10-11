@@ -69,7 +69,7 @@ test('pages: a failed or cancelled feature, fix or chore preview still runs asse
 
 test('pages: the current-head check still drops a preview with no successful run for its head', () => {
   const step = pages.slice(pages.indexOf('- name: Fetch each open pull request'), pages.indexOf('- name: Assemble the site'));
-  assert.match(step, /select\(\.head_sha == \$sha and \.conclusion == "success"\)/);
+  assert.match(step, /select\(\.head_sha == \$sha\)\]\[0\] \| select\(\.conclusion == "success"\)/);
   assert.match(step, /if \[ -z "\$run" \]; then[\s\S]*?continue/);
 });
 
@@ -119,4 +119,14 @@ test('the art PR body lists every file on the intake branch, not only this run\'
 
 test('no list in art-migrate is cut by an early-closing pipe (SIGPIPE under pipefail)', () => {
   assert.doesNotMatch(art, /\|\s*head\b/);
+});
+
+test('removal is requested only once the art PR exists', () => {
+  const block = jobBlock(art, 'intake');
+  const sticky = block.slice(block.indexOf('- name: Sticky comment'), block.indexOf('- name: Fail while'));
+  assert.match(sticky, /if \[ -n "\$ART_PR_URL" \]; then[\s\S]*?remove these files[\s\S]*?else[\s\S]*?Keep the files/);
+});
+
+test('pages: the newest run for the head SHA must itself be the success', () => {
+  assert.ok(pages.includes(`[.workflow_runs[] | select(.head_sha == $sha)][0] | select(.conclusion == "success")`));
 });
