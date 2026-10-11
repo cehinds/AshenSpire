@@ -46,7 +46,7 @@ const INVENTORY = ['components', 'layouts', 'styles', 'tokens', 'breakpoints', '
   'effects', 'resolutions', 'settings', 'symbols', 'combat-symbols', 'strings'];
 // Columns this script derives. They are stripped when reading the copies.
 const DERIVED = {
-  components: ['tag', 'liveRef'], layouts: ['band', 'tag', 'liveRef'], styles: ['band', 'tag', 'liveRef'],
+  components: ['tag', 'liveRef', 'cssClasses'], layouts: ['band', 'tag', 'liveRef'], styles: ['band', 'tag', 'liveRef'],
   tokens: ['tag', 'liveRef'], breakpoints: ['tag', 'liveRef'], assets: ['tag', 'liveRef'],
   animations: ['tag', 'liveRef'], effects: ['tag', 'liveRef'], resolutions: ['tag', 'liveRef'],
   settings: ['scope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
@@ -271,6 +271,75 @@ const liveRefs = {};
 const bandCols = {};
 const scopeCols = {};
 const rowMap = (name, fn) => inv[name].rows.map((r) => fn(r));
+
+// ------------------------------------------------- catalog component CSS classes
+// cssClasses lists the CSS class selectors that style a catalog component (a row
+// whose notes start [catalog). Candidates are the class names its owning JS file
+// (the file column) puts on elements: className, classList, a class: key, a
+// class="..." in a template string, setAttribute('class') and cls() arguments.
+// They are kept when a styles/*.css selector uses them. A catalog id that is
+// itself a selector class gets that class alone. Nothing found: the cell is blank
+// and the notes gain css:unresolved. The owner is read one file at a time, so
+// components in one file share its list (see README, cssClasses).
+const ROOT = join(TM, '..', '..');
+const selectorClasses = new Set();
+for (const f of readdirSync(join(ROOT, 'styles')).filter(f => f.endsWith('.css')).sort()) {
+  const css = readFileSync(join(ROOT, 'styles', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of css.matchAll(/([^{}]+)\{/g)) {
+    const prelude = m[1].trim();
+    if (prelude.startsWith('@')) continue;
+    for (const c of prelude.replace(/\[[^\]]*\]/g, '').matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) selectorClasses.add(c[1]);
+  }
+}
+const CLASS_KEY = /className|classList|\bclass\s*:|\bclass=|setAttribute\(\s*['"]class|\bcls\(/;
+const CLASS_WORD = /^-?[_a-zA-Z][\w-]*$/;
+function classWordsOf(src) {
+  const out = new Set();
+  for (const line of src.split('\n')) {
+    const k = line.search(CLASS_KEY);
+    if (k < 0) continue;
+    const rest = line.slice(k);
+    const quoted = [...rest.matchAll(/(['"`])((?:(?!\1).)*)\1/g), ...rest.matchAll(/\\"([^\\]*)\\"/g)];
+    for (const m of quoted) for (const w of m[m.length - 1].split(/\s+/)) if (CLASS_WORD.test(w)) out.add(w);
+  }
+  return out;
+}
+const ownerWords = new Map();
+const wordsOfOwner = file => {
+  if (!ownerWords.has(file)) {
+    const p = join(ROOT, file);
+    ownerWords.set(file, file.endsWith('.js') && existsSync(p) ? classWordsOf(readFileSync(p, 'utf8')) : new Set());
+  }
+  return ownerWords.get(file);
+};
+const CSS_UNRESOLVED = 'css:unresolved';
+const cssClassesOf = [];
+const cssCounts = { catalog: 0, resolved: 0, unresolved: 0, sameAsId: 0 };
+{
+  const c = inv.components;
+  const idI = need(c, 'id', 'components');
+  const fileI = need(c, 'file', 'components');
+  const notesI = need(c, 'notes', 'components');
+  c.rows = c.rows.map((r) => {
+    const nr = r.slice();
+    // Notes are rewritten from their base text, so a second run changes nothing.
+    const base = String(r[notesI]).replace(/(; )?css:unresolved/g, '');
+    const isCatalog = /\[catalog\b/.test(base);
+    let classes = [];
+    if (isCatalog) {
+      cssCounts.catalog++;
+      if (selectorClasses.has(r[idI])) { classes = [r[idI]]; cssCounts.sameAsId++; }
+      else classes = [...wordsOfOwner(r[fileI])].filter(w => selectorClasses.has(w)).sort();
+      if (classes.length) cssCounts.resolved++;
+      else cssCounts.unresolved++;
+      nr[notesI] = classes.length ? base : (base ? base + '; ' : '') + CSS_UNRESOLVED;
+    } else {
+      nr[notesI] = base;
+    }
+    cssClassesOf.push(classes.join(' '));
+    return nr;
+  });
+}
 
 tagIds.components = rowMap('components', r => presId(groupOfComponent(get(inv.components, r, 'group'))));
 liveRefs.components = rowMap('components', r => get(inv.components, r, 'file'));
@@ -501,6 +570,7 @@ for (const name of INVENTORY) {
       band: bandCols[name] ? bandCols[name][i] : undefined,
       scope: scopeCols[name] ? scopeCols[name][i] : undefined,
       assignedAssetRef: name === 'combat-symbols' ? assignedAssetRef[i] : undefined,
+      cssClasses: name === 'components' ? cssClassesOf[i] : undefined,
     };
     if (name === 'combat-symbols') b[t.header.indexOf('status')] = combatStatus[i];
     return [...b, ...extra.map(c => vals[c])];
@@ -521,6 +591,7 @@ console.log(JSON.stringify({
   liveIdTotal: Object.values(liveByStatus).reduce((a, b) => a + b, 0),
   sharedLiveIds: sharedLive.map(([live, ids]) => `${live} <- ${ids.join(', ')}`),
   cleaning,
+  cssClasses: cssCounts,
   presentationRows: presRowCounts,
   combatSymbolStatus: combatCounts,
 }, null, 1));
