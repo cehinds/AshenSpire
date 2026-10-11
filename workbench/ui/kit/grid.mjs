@@ -220,14 +220,13 @@ export function createGrid(el, options = {}) {
     lastCopied = text;
   }
   let lastCopied = '';
+  // Atomic: a bad value anywhere commits nothing; the errors are reported (event) and the grid is unchanged.
   function pasteText(text) {
     if (readOnly || !text) return;
-    const cell = sel.active ?? { r: 0, c: 0 };
-    const single = !text.includes('\n') && !text.includes('\t');
-    const fill = single && sel.ranges.length ? M.activeRect(sel) : null;
-    const res = M.pasteRange(doc, cell, text, { fill });
-    commit(res);
-    if (res.errors.length) el.dispatchEvent(new CustomEvent('gk-paste-errors', { detail: res.errors }));
+    const anchor = sel.active ?? { r: 0, c: 0 };
+    const res = M.pasteVisible(doc.rows, doc.columns, order, anchor, text, sel);
+    if (res.errors.length) { el.dispatchEvent(new CustomEvent('gk-paste-errors', { detail: res.errors })); return; }
+    if (res.change) commit(res);
   }
   function clearSelection() {
     if (readOnly) return;
