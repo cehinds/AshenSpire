@@ -357,7 +357,8 @@ async function loadTheirs(t){
   const ts=TS(t);
   while(saving.has(t)) await sleepMs(20); /* an in-flight save must end first, or the local rows would win */
   const s=await db.doc(headPath(t)).get();
-  ts.conflict=null; ts.pinned=false; dirty.delete(t);
+  /* an explicit choice adopts that head: clear the recent-save marker so the backstop does not refuse it again */
+  ts.conflict=null; ts.pinned=false; ts.lastSaveAt=0; dirty.delete(t);
   await applyHead(t, s.exists? s.data() : null);
   render();
 }

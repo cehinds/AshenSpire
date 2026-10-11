@@ -285,6 +285,20 @@ test('backstop: a head not written on top of our recent save shows a conflict in
   assert.equal(A.page.dirty.has('t'), true);
 });
 
+test('Load theirs right after our own save adopts theirs instead of tripping the backstop again', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  editTable(A.page, sample(20, 'x'));
+  await A.api.flush('t'); // our save is recent
+  A.api.subscribeTable('t');
+  await waitFor(() => A.page.loaded.has('t'));
+  await putBlobTable(db, B.api, 't', sample(9, 'peer'), COLS, Date.now() + 1000, 'not-our-rev');
+  await waitFor(() => A.api.tstate.t.conflict);
+  await A.api.loadTheirs('t');
+  assert.equal(A.api.tstate.t.conflict, null, 'no conflict after an explicit choice');
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(sample(9, 'peer')));
+});
+
 test('a legacy write by an old tab after our load counts as a conflict', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);
