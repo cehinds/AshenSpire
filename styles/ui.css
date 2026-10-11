@@ -1771,20 +1771,18 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor .deck-editor-tile .deck-editor-inline-inspect { left: calc(var(--deck-tile-pad) + 1.4rem + .6rem); right: auto; bottom: .1rem; width: 4.8rem; min-height: 0; text-align: center; }
   .deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) > .deck-editor-main { padding-bottom: calc(var(--deck-tile-pad) + 1.8rem); }
 }
-/* Narrow phones (320px): the right column would starve the text, so the
-   costs drop to the card's last line beside the stepper and the text takes
-   the full width. */
-@media (max-width: 380px) {
-  .deck-editor .deck-editor-tile > .deck-editor-main {
-    grid-template-columns: 1.4rem 3.6rem minmax(0, 1fr); grid-template-rows: auto auto auto auto;
-    padding-bottom: calc(2 * var(--deck-tile-pad));
-  }
-  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { width: 3.6rem; }
-  .deck-editor .deck-editor-tile .deck-editor-grip { grid-row: 1 / 5; }
-  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { grid-row: 1 / 4; }
-  .deck-editor .deck-editor-tile .deck-editor-costs { grid-column: 2 / 4; grid-row: 4; justify-self: start; align-self: center; min-height: var(--deck-step); }
-  .deck-editor .deck-editor-tile .deck-editor-inline-inspect { width: 3.6rem; }
-  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-rank { font-size: .78rem; padding: .05rem 0; }
+/* Small phones keep the same card at every width (owner, 2026-10-11, "make it
+   exactly the same even if it means I miss out on px for tapping"): costs top
+   right, stepper bottom right, smaller art, costs and stepper. */
+@media (max-width: 400px) {
+  .deck-editor { --deck-tile-pad: .45rem; --deck-step: 3.3rem; --deck-row-cost: 2.6rem; --deck-stepper-w: calc(2 * var(--deck-step) + 3rem + .4rem); }
+  .deck-editor .deck-editor-tile > .deck-editor-main { grid-template-columns: 1rem 4.4rem minmax(0, 1fr) var(--deck-stepper-w); column-gap: .45rem; min-height: calc(var(--deck-row-cost) + var(--deck-step) + .6rem + 2 * var(--deck-tile-pad)); }
+  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { width: 4.4rem; }
+  .deck-editor .deck-editor-tile .deck-editor-inline-inspect { left: calc(var(--deck-tile-pad) + 1rem + .45rem); width: 4.4rem; }
+  .deck-editor .deck-editor-tile .deck-editor-costs { gap: .25rem; }
+  .deck-editor .deck-editor-tile > .deck-editor-actions { gap: .2rem; }
+  .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { width: var(--deck-step); min-width: 0; min-height: 0; padding: 0; }
+  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-rank { font-size: .74rem; padding: .05rem 0; }
 }
 /* Rank sits on the top of the art as a badge (owner's wireframe, 2026-10-11);
    a row without art carries it at the end of its name line. Range follows the
@@ -1795,7 +1793,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   background: rgba(18, 32, 74, .9); border: 1px solid #5a7bd6; color: #dfe8ff;
   font: 700 max(1rem, var(--deck-min-text)) system-ui, sans-serif; letter-spacing: 0; line-height: 1.2;
 }
-.deck-editor .deck-editor-main[data-illustrated="false"] > .deck-editor-rank { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; margin: 0; }
+/* A row without art gives its badge its own track between the text and the
+   costs, so the badge never covers the name, stance or range. */
+.deck-editor .deck-editor-main[data-illustrated="false"]:has(> .deck-editor-rank) { grid-template-columns: 1rem minmax(0, 1fr) auto var(--deck-row-costs); }
+.deck-editor .deck-editor-main[data-illustrated="false"]:has(> .deck-editor-rank) > :is(.deck-editor-row-rules, .deck-editor-meta) { grid-column: 2 / 4; }
+.deck-editor .deck-editor-main[data-illustrated="false"] > .deck-editor-rank { grid-column: 3; grid-row: 1; justify-self: end; align-self: center; margin: 0; }
 .deck-editor .deck-editor-heading .deck-editor-range { flex: none; font: 600 max(.9rem, var(--deck-min-text)) system-ui, sans-serif; letter-spacing: .035em; color: #e5c36a; }
 .deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #9fd0ff; }
 .deck-editor .deck-editor-costs .deck-editor-camp[data-camp="physical"] { color: #e3c9a0; }
