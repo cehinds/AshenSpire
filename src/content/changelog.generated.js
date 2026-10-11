@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1860",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Branch previews start a game again",
+    "detail": "On a branch preview page, pressing Begin after creating a character (or Quick start) did nothing. The preview plays the game in a locked-down frame that refuses browser storage and the cross-tab save lock, and every new run failed on that lock. The game already keeps saves in memory there, and memory saves no longer ask for the lock, so the run starts and the opening plays. In a normal browser, saves work as before.",
+    "build": "0.7.1.1308",
+    "pullRequest": 1860,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1860"
+  },
+  {
     "id": "pr-1855",
     "date": "2026-10-11",
     "group": "2026-10-11",
