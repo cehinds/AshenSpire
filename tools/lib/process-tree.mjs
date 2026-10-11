@@ -5,6 +5,11 @@
 
 import fs from 'node:fs';
 
+/** How long a stopping group gets after SIGTERM before it is SIGKILLed. */
+export const STOP_GRACE_MS = 5000;
+/** How long stopGroup waits after the SIGKILL before it resolves anyway (zombies left behind). */
+export const KILL_WAIT_MS = 2000;
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -45,15 +50,25 @@ export async function waitGroupEmpty(pgid, { pollMs = 50, alive = groupAlive } =
 
 /**
  * SIGTERM the group now; if anything is still in it after graceMs, SIGKILL the group.
- * Resolves once the group is empty.
+ * Resolves once the group is empty, or killWaitMs after the SIGKILL, whichever comes first.
+ * The result says whether the group was SIGKILLed, whether anything is still alive, and which
+ * members are unreaped zombies (they cannot run or write; their parent or init has to reap them).
  */
-export async function stopGroup(pgid, { graceMs = 5000, pollMs = 50, kill = process.kill } = {}) {
+export async function stopGroup(pgid, { graceMs = STOP_GRACE_MS, killWaitMs = KILL_WAIT_MS, pollMs = 50, kill = process.kill, platform = process.platform, members = procGroupMembers } = {}) {
+  const opts = { platform, members };
   const send = (signal) => { try { kill(-pgid, signal); } catch { /* already gone */ } };
   send('SIGTERM');
   const deadline = Date.now() + graceMs;
-  let forced = false;
-  while (groupAlive(pgid, kill)) {
-    if (!forced && Date.now() >= deadline) { forced = true; send('SIGKILL'); }
+  let killedAt = null;
+  while (groupAlive(pgid, kill, opts)) {
+    const now = Date.now();
+    if (killedAt === null && now >= deadline) { killedAt = now; send('SIGKILL'); }
+    else if (killedAt !== null && now - killedAt >= killWaitMs) break;
     await delay(pollMs);
   }
+  return {
+    forced: killedAt !== null,
+    stillAlive: groupAlive(pgid, kill, opts),
+    zombies: platform === 'linux' ? (members(pgid) || []).filter((m) => m.state === 'Z').map((m) => m.pid) : [],
+  };
 }

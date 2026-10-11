@@ -51,6 +51,26 @@ test('stopGroup sends SIGKILL to a group that outlives the grace period', async 
   assert.equal(exitedOrZombie(grandchildPid), true, 'the grandchild was killed');
 });
 
+test('stopGroup resolves within its bound when SIGKILLed members linger, and reports them', async () => {
+  // Elsewhere kill(-pgid, 0) keeps succeeding for zombies, so the group never looks empty.
+  const sent = [];
+  const kill = (target, signal) => { if (signal !== 0) sent.push(signal); };
+  const started = Date.now();
+  const result = await stopGroup(7, { graceMs: 100, killWaitMs: 200, pollMs: 10, kill, platform: 'darwin' });
+  const took = Date.now() - started;
+  assert.ok(took >= 280 && took < 1500, `resolved after grace + killWait, took ${took} ms`);
+  assert.deepEqual(sent, ['SIGTERM', 'SIGKILL']);
+  assert.deepEqual(result, { forced: true, stillAlive: true, zombies: [] });
+});
+
+test('stopGroup on Linux reports the unreaped zombies a SIGKILL left behind', async () => {
+  let killed = false;
+  const members = () => (killed ? [{ pid: 50, state: 'Z' }] : [{ pid: 49, state: 'S' }]);
+  const kill = (target, signal) => { if (signal === 'SIGKILL') killed = true; };
+  const result = await stopGroup(7, { graceMs: 50, killWaitMs: 2000, pollMs: 10, kill, platform: 'linux', members });
+  assert.deepEqual(result, { forced: true, stillAlive: false, zombies: [50] });
+});
+
 test('on Linux a group whose only members are zombies counts as empty', () => {
   const zombiesOnly = () => [{ pid: 40, state: 'Z' }, { pid: 41, state: 'X' }];
   const kill = () => {}; // kill(-pgid, 0) still succeeds while zombies hold the group id
