@@ -14,6 +14,26 @@ import * as M from './grid-model.mjs';
 const GUTTER = 48, HEAD = 32, OVERSCAN = 8, DENSITY = { compact: 24, comfortable: 34 };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
+/**
+ * What the paste banner says. Errors: a title, the first `limit` errors as lines, and `more` for the rest.
+ * No errors but an overflow: a title and one line per overflow kind. Nothing to say: null.
+ * @returns {{ title: string, lines: string[], more: number } | null}
+ */
+export function pasteSummary(errors = [], overflow = { rows: 0, cols: 0 }, limit = 10) {
+  if (errors.length) {
+    const n = errors.length;
+    return {
+      title: `Paste not applied: ${n} value${n === 1 ? '' : 's'} did not fit the column type`,
+      lines: errors.slice(0, limit).map(e => `Row ${e.row + 1}, ${e.key}: ${e.message} ("${String(e.value ?? '').slice(0, 40)}")`),
+      more: Math.max(0, n - limit),
+    };
+  }
+  const lines = [];
+  if (overflow.rows) lines.push(`${overflow.rows} clipboard row${overflow.rows === 1 ? '' : 's'} did not fit: the view ends at its last visible row.`);
+  if (overflow.cols) lines.push(`${overflow.cols} clipboard column${overflow.cols === 1 ? '' : 's'} did not fit: the grid ends at its last column.`);
+  return lines.length ? { title: 'Paste partly applied', lines, more: 0 } : null;
+}
+
 export function createGrid(el, options = {}) {
   let rules = options.rules ?? [], refs = options.refs ?? {};
   const readOnly = !!options.readOnly, onChange = options.onChange ?? null;
@@ -138,8 +158,7 @@ export function createGrid(el, options = {}) {
     recompute(); render();
     if (onChange) onChange({ rows: doc.rows, columns: doc.columns, change, direction, errors: [] });
   }
-  const selectedRows = () => [...new Set(M.selectedCells(sel, doc.rows.length, doc.columns.length).map(c => c.r))];
-  const rectOfSel = () => M.activeRect(sel);
+  const selectedRows = () => M.selectedCells(sel, order, doc.columns).rows;
   function setActive(r, c, opts = {}) {
     sel = M.selectCell(sel, { r, c }, opts);
   }
@@ -210,37 +229,51 @@ export function createGrid(el, options = {}) {
 
   // ---------- clipboard and bulk actions ----------
   function copySelection() {
-    const rect = rectOfSel(); if (!rect) return;
-    const matrix = [];
-    for (let r = rect.r0; r <= rect.r1 && r < doc.rows.length; r++) {
-      matrix.push(doc.columns.slice(rect.c0, rect.c1 + 1).map(c => M.formatValue(doc.rows[r][c.key], c.type)));
-    }
-    const text = M.toDelimited(matrix, '\t');
+    if (!selectedRows().length) return;
+    const text = M.copyVisible(doc.rows, doc.columns, order, sel);
     try { navigator.clipboard?.writeText(text).catch(() => {}); } catch { /* clipboard blocked */ }
     lastCopied = text;
   }
   let lastCopied = '';
+    // Atomic: a bad value anywhere commits nothing; the errors are shown in the banner and dispatched
+  // (gk-paste-errors) and the grid is unchanged. A paste that ran out of visible rows or columns
+  // commits what fit and says what did not.
   function pasteText(text) {
     if (readOnly || !text) return;
-    const cell = sel.active ?? { r: 0, c: 0 };
-    const single = !text.includes('\n') && !text.includes('\t');
-    const fill = single && sel.ranges.length ? M.activeRect(sel) : null;
-    const res = M.pasteRange(doc, cell, text, { fill });
-    commit(res);
-    if (res.errors.length) el.dispatchEvent(new CustomEvent('gk-paste-errors', { detail: res.errors }));
+    const anchor = sel.active ?? { r: 0, c: 0 };
+    const res = M.pasteVisible(doc.rows, doc.columns, order, anchor, text, sel);
+    if (res.errors.length) {
+      showBanner(pasteSummary(res.errors, res.overflow));
+      el.dispatchEvent(new CustomEvent('gk-paste-errors', { detail: res.errors }));
+      return;
+    }
+    hideBanner();
+    if (res.change) commit(res);
+    const note = pasteSummary([], res.overflow);
+    if (note) showBanner(note);
   }
+  // Inline banner above the grid. Dismissible; a new paste replaces it.
+  let banner = null;
+  function showBanner(summary) {
+    hideBanner();
+    if (!summary) return;
+    banner = document.createElement('div');
+    banner.className = 'gk-banner'; banner.setAttribute('role', 'alert');
+    banner.innerHTML = `<div class="gk-banner-body"><strong>${esc(summary.title)}</strong><ul>${summary.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>${summary.more ? `<p>and ${summary.more} more</p>` : ''}</div><button type="button" class="gk-banner-close" aria-label="Dismiss">×</button>`;
+    banner.querySelector('.gk-banner-close').addEventListener('click', hideBanner);
+    el.insertBefore(banner, scroll);
+  }
+  function hideBanner() { if (banner) { banner.remove(); banner = null; } }
   function clearSelection() {
     if (readOnly) return;
-    const cells = M.selectedCells(sel, doc.rows.length, doc.columns.length);
-    if (cells.length) commit(M.clearCells(doc, cells));
+    const res = M.clearVisible(doc, sel, order);
+    if (res.change) commit(res);
   }
   // Every selected row (all runs), in the order the view shows them, and every selected column.
   function fillDownSel() {
     if (readOnly) return;
-    const picked = new Set(selectedRows());
-    const visibleRows = order.filter(r => picked.has(r));
-    const colIdx = [...new Set(M.selectedCells(sel, doc.rows.length, doc.columns.length).map(c => c.c))];
-    commit(M.fillDownVisible(doc.rows, doc.columns, visibleRows, colIdx.map(c => doc.columns[c]?.key)));
+    const { rows: visibleRows, cols } = M.selectedCells(sel, order, doc.columns);
+    commit(M.fillDownVisible(doc.rows, doc.columns, visibleRows, cols));
   }
   function rowMenu(x, y, rowIdx) {
     closeMenu();
@@ -250,7 +283,11 @@ export function createGrid(el, options = {}) {
       ['Insert row above', () => commit(M.addRow(doc, rows[0]))],
       ['Insert row below', () => commit(M.addRow(doc, rows.at(-1) + 1))],
       ['Duplicate row' + (rows.length > 1 ? 's' : ''), () => commit(M.duplicateRows(doc, rows))],
-      ['Delete row' + (rows.length > 1 ? 's' : ''), () => { sel = M.createSelection(); commit(M.deleteRows(doc, rows)); }],
+      ['Delete row' + (rows.length > 1 ? 's' : ''), () => {
+        const res = M.deleteVisibleRows(doc, sel, order);
+        sel = M.createSelection();
+        if (res.change) commit(res);
+      }],
       ['Clear cells', clearSelection],
       ['Fill down', fillDownSel],
       ['Copy', copySelection],

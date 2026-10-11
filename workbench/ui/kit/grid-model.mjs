@@ -169,20 +169,41 @@ export function moveSelection(sel, dr, dc, { rowCount, colCount, extend = false 
   };
   return selectTo({ ...sel, anchor: sel.anchor ?? base, active: base }, to, { shift: extend });
 }
-/** Unique cells inside the selection, clipped to the current bounds. */
-export function selectedCells(sel, rowCount, colCount) {
-  const seen = new Set(), out = [];
-  for (const g of sel.ranges) {
-    for (let r = g.r0; r <= Math.min(g.r1, rowCount - 1); r++) {
-      for (let c = g.c0; c <= Math.min(g.c1, colCount - 1); c++) {
-        const k = r * colCount + c;
-        if (!seen.has(k)) { seen.add(k); out.push({ r, c }); }
-      }
-    }
-  }
-  return out;
+/**
+ * Every cell of the selection (all ranges, Ctrl-selections included), read in the VISIBLE order.
+ * Rows come from `order` (the visible document row indices), so a row a filter hides is never
+ * selected, and a sorted view lists its rows in the sorted sequence. Overlapping ranges count a
+ * cell once. Column indices are clipped to `columns`.
+ * @param selection { ranges }
+ * @param order number[] visible document row indices
+ * @param columns column objects (only `.key` is read)
+ * @returns {{ rows: number[], cols: string[], cells: [number, string][] }}
+ *   rows:  selected document rows in view order, each once.
+ *   cols:  selected column keys in column order (the union over the selected rows).
+ *   cells: [row, key] for each selected cell, row by row in view order, columns in column order.
+ */
+export function selectedCells(selection, order, columns) {
+  const { rows, cols, cells } = coverage(selection, order, columns);
+  return { rows, cols: cols.map(c => columns[c].key), cells: cells.map(({ r, c }) => [r, columns[c].key]) };
 }
-export function activeRect(sel) { return sel.ranges.at(-1) ?? null; }
+/** Shared walk behind selectedCells and the copy/paste/clear ops: indices, plus has(r, c) membership. */
+export function coverage(selection, order, columns) {
+  const last = columns.length - 1;
+  const ranges = selection.ranges
+    .map(g => ({ r0: g.r0, r1: g.r1, c0: Math.max(0, g.c0), c1: Math.min(last, g.c1) }))
+    .filter(g => g.c0 <= g.c1);
+  const rows = [], colSet = new Set(), inside = new Set(), stride = Math.max(1, columns.length);
+  for (const r of order) {
+    const hit = ranges.filter(g => g.r0 <= r && r <= g.r1);
+    if (!hit.length) continue;
+    rows.push(r);
+    for (const g of hit) for (let c = g.c0; c <= g.c1; c++) { colSet.add(c); inside.add(r * stride + c); }
+  }
+  const cols = [...colSet].sort((a, b) => a - b);
+  const cells = [];
+  for (const r of rows) for (const c of cols) if (inside.has(r * stride + c)) cells.push({ r, c });
+  return { rows, cols, cells, has: (r, c) => inside.has(r * stride + c) };
+}
 
 // ---------- delimited text (clipboard, CSV/TSV import) ----------
 
@@ -217,6 +238,16 @@ export function toDelimited(matrix, delim = '\t') {
     return s.includes(delim) || /["\r\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
   };
   return matrix.map(r => r.map(esc).join(delim)).join('\n');
+}
+/**
+ * TSV for a copy of the selection. Rows run in view order and columns in column order; with several
+ * ranges the columns are the union, and a cell no range covers is blank. Empty when nothing is selected.
+ */
+export function copyVisible(rows, columns, order, selection) {
+  const { rows: picked, cols, has } = coverage(selection, order, columns);
+  if (!picked.length) return '';
+  const matrix = picked.map(r => cols.map(c => (has(r, c) ? formatValue(rows[r][columns[c].key], columns[c].type) : '')));
+  return toDelimited(matrix, '\t');
 }
 
 // ---------- mutations ----------
@@ -268,6 +299,15 @@ export function clearCells(doc, cells) {
   return setCells(doc, cells, (old, col) => emptyValue(col.type), 'Clear cells');
 }
 /**
+ * Clear every selected cell, all ranges, visible rows only (rows a filter hides are untouched).
+ * With no selected cell there is nothing to do: change is null.
+ */
+export function clearVisible(doc, selection, order) {
+  const { cells } = coverage(selection, order, doc.columns);
+  if (!cells.length) return { rows: doc.rows, columns: doc.columns, change: null };
+  return clearCells(doc, cells);
+}
+/**
  * Paste a clipboard matrix (text or parsed matrix) with its top-left at `at`.
  * Expands rows past the end. Cells that do not parse are skipped and listed in
  * errors; the rest still apply. fill: when the clipboard is one value, it fills
@@ -298,6 +338,65 @@ export function pasteRange(doc, at, text, { fill = null } = {}) {
     });
   }
   return { ...result(doc, 'Paste', { columns, rows }), errors };
+}
+/**
+ * Paste through the VISIBLE order. The clipboard's top-left lands on the anchor's visible position:
+ * clipboard row i goes to order[pos + i], column j to column anchor.c + j. Past the last visible row,
+ * blank rows are appended only when the view is unfiltered and unsorted (order is every row, in
+ * document order); otherwise the paste stops there and `overflow.rows` counts the lines that did not
+ * fit. Columns past the last column count in `overflow.cols`. A one-value clipboard fills every
+ * selected cell (all ranges, visible rows only) when the selection has cells; with none it lands at
+ * the anchor like any paste.
+ *
+ * Atomic: every value is parsed first. If any fails its column type, nothing is committed and the
+ * result is `{ rows, columns, change: null, errors }` with the original rows, where each error is
+ * { row, key, value, message } (row is the document row index).
+ *
+ * @param rows document rows (not mutated)
+ * @param columns document columns
+ * @param order number[] visible document row indices
+ * @param anchor { r, c } the active cell
+ * @param matrixOrText clipboard text, or a parsed matrix
+ * @param selection { ranges } or null
+ * @returns {{ rows, columns, change: object | null, errors: object[], overflow: { rows: number, cols: number } }}
+ */
+export function pasteVisible(rows, columns, order, anchor, matrixOrText, selection = null) {
+  const matrix = typeof matrixOrText === 'string' ? parseClipboard(matrixOrText) : matrixOrText;
+  const overflow = { rows: 0, cols: 0 };
+  const writes = [];
+  const sel = selection ?? { ranges: [] };
+  const targets = matrix.length === 1 && matrix[0].length === 1 && sel.ranges.length
+    ? coverage(sel, order, columns).cells : [];
+  if (targets.length) {
+    for (const { r, c } of targets) writes.push({ r, c, raw: matrix[0][0] });
+  } else {
+    const identity = order.length === rows.length && order.every((r, i) => r === i);
+    const start = Math.max(0, order.indexOf(anchor.r));
+    const colRoom = Math.max(0, columns.length - anchor.c);
+    overflow.cols = matrix.reduce((m, line) => Math.max(m, line.length - colRoom), 0);
+    for (let i = 0; i < matrix.length; i++) {
+      const idx = start + i;
+      const r = idx < order.length ? order[idx] : identity ? idx : null;
+      if (r === null) { overflow.rows = matrix.length - i; break; }
+      matrix[i].forEach((raw, j) => { if (anchor.c + j < columns.length) writes.push({ r, c: anchor.c + j, raw }); });
+    }
+  }
+  const errors = [];
+  const next = rows.slice();
+  const blank = () => Object.fromEntries(columns.map(c => [c.key, emptyValue(c.type)]));
+  const parsed = [];
+  for (const { r, c, raw } of writes) {
+    const col = columns[c];
+    try { parsed.push({ r, key: col.key, value: parseValue(raw, col.type) }); }
+    catch (e) { errors.push({ row: r, key: col.key, value: raw, message: e.message }); }
+  }
+  if (errors.length) return { rows, columns, change: null, errors, overflow };
+  for (const { r, key, value } of parsed) {
+    while (r >= next.length) next.push(blank());
+    next[r] = { ...next[r], [key]: value };
+  }
+  if (!parsed.length && next.length === rows.length) return { rows, columns, change: null, errors, overflow };
+  return { ...result({ columns, rows }, 'Paste', { columns, rows: next }), errors, overflow };
 }
 /** Fill down: each column of rect takes its top row's value in the rows below. */
 export function fillDown(doc, rect) {
@@ -342,6 +441,15 @@ export function addRow(doc, index = doc.rows.length, values = {}) {
 export function deleteRows(doc, indices) {
   const drop = new Set(indices);
   return result(doc, 'Delete rows', { columns: doc.columns, rows: doc.rows.filter((_, i) => !drop.has(i)) });
+}
+/**
+ * Delete the selected rows (every range, visible rows only). A hidden row inside the selection's span
+ * survives. With no selected row there is nothing to do: change is null.
+ */
+export function deleteVisibleRows(doc, selection, order) {
+  const { rows } = coverage(selection, order, doc.columns);
+  if (!rows.length) return { rows: doc.rows, columns: doc.columns, change: null };
+  return deleteRows(doc, rows);
 }
 /** Each duplicate lands directly under its source row. */
 export function duplicateRows(doc, indices) {

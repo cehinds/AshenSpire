@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../ui/kit/grid-model.mjs';
+import { pasteSummary } from '../ui/kit/grid.mjs';
 
 const cols = [
   { key: 'id', type: 'string' },
@@ -73,20 +74,263 @@ test('filter by text across the row and per column', () => {
   assert.deepEqual(M.filterIndices(d.rows, d.columns, { text: '  ' }), [0, 1, 2, 3]);
 });
 
+const range = (r0, c0, r1, c1) => ({ r0, c0, r1, c1 });
+const selOf = (...ranges) => ({ ranges, anchor: null, active: null });
+const docOrder = n => Array.from({ length: n }, (_, i) => i);
+
 test('selection: plain, ctrl, shift, rows, and moves', () => {
   let s = M.createSelection();
   s = M.selectCell(s, { r: 1, c: 1 }, {});
   s = M.selectCell(s, { r: 3, c: 2 }, { shift: true });
-  assert.equal(M.selectedCells(s, 4, 5).length, 3 * 2);
+  assert.equal(M.selectedCells(s, docOrder(4), cols).cells.length, 3 * 2);
   s = M.selectCell(s, { r: 0, c: 0 }, { ctrl: true });
   assert.equal(s.ranges.length, 2);
-  assert.equal(M.selectedCells(s, 4, 5).length, 7);
+  assert.equal(M.selectedCells(s, docOrder(4), cols).cells.length, 7);
   let rowsSel = M.selectRows(M.createSelection(), 2, {}, cols.length);
-  assert.deepEqual(M.selectedCells(rowsSel, 4, 5).length, 5);
+  assert.equal(M.selectedCells(rowsSel, docOrder(4), cols).cells.length, 5);
   s = M.moveSelection(M.createSelection(), 0, 0, { rowCount: 4, colCount: 5 });
   s = M.moveSelection(s, 9, 9, { rowCount: 4, colCount: 5, extend: true });
   assert.deepEqual(s.active, { r: 3, c: 4 });
-  assert.equal(M.selectedCells(s, 4, 5).length, 20);
+  assert.equal(M.selectedCells(s, docOrder(4), cols).cells.length, 20);
+});
+
+test('selectedCells: sorted order lists rows in the sorted sequence, not document order', () => {
+  const d = base();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  assert.deepEqual(order, [1, 0, 3, 2]);
+  const sel = selOf(range(0, 0, 3, 0)); // column id, every row
+  const sc = M.selectedCells(sel, order, d.columns);
+  assert.deepEqual(sc.rows, [1, 0, 3, 2]);
+  assert.deepEqual(sc.cols, ['id']);
+  assert.deepEqual(sc.cells, [[1, 'id'], [0, 'id'], [3, 'id'], [2, 'id']]);
+});
+
+test('selectedCells: filtered order never includes a hidden row, even inside the range', () => {
+  const d = base();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // rows 0 and 3 only
+  assert.deepEqual(order, [0, 3]);
+  const sc = M.selectedCells(selOf(range(0, 0, 3, 1)), order, d.columns); // rows 0..3 in the range
+  assert.deepEqual(sc.rows, [0, 3]);
+  assert.deepEqual(sc.cells, [[0, 'id'], [0, 'n'], [3, 'id'], [3, 'n']]);
+});
+
+test('selectedCells: multi-range (Ctrl) selections keep every range, in view order, each cell once', () => {
+  const order = docOrder(6);
+  const sc = M.selectedCells(selOf(range(4, 0, 4, 0), range(0, 1, 1, 2)), order, cols);
+  assert.deepEqual(sc.rows, [0, 1, 4], 'the later range comes out in row order, not range order');
+  assert.deepEqual(sc.cols, ['id', 'n', 'on'], 'the union of columns, in column order');
+  assert.deepEqual(sc.cells, [[0, 'n'], [0, 'on'], [1, 'n'], [1, 'on'], [4, 'id']], 'each cell only from its own range');
+});
+
+test('selectedCells: overlapping ranges count each cell once', () => {
+  const order = docOrder(4);
+  // A covers rows 0-2 x cols 0-1; B covers rows 1-3 x cols 1-2. Union: 2+3+3+2 = 10 cells.
+  const sc = M.selectedCells(selOf(range(0, 0, 2, 1), range(1, 1, 3, 2)), order, cols);
+  assert.equal(sc.cells.length, 10);
+  assert.equal(new Set(sc.cells.map(([r, k]) => `${r}|${k}`)).size, 10, 'no duplicate cells');
+  assert.deepEqual(sc.rows, [0, 1, 2, 3]);
+  assert.deepEqual(sc.cols, ['id', 'n', 'on']);
+});
+
+test('selectedCells: a range over hidden rows only adds no columns and no rows', () => {
+  const d = base();
+  const order = [0, 3];
+  const sc = M.selectedCells(selOf(range(1, 4, 2, 4), range(0, 0, 0, 0)), order, d.columns);
+  assert.deepEqual(sc.rows, [0]);
+  assert.deepEqual(sc.cols, ['id'], 'the data column of the hidden-row range is not selected');
+});
+
+test('copyVisible: TSV follows the sorted view, and skips hidden rows', () => {
+  const d = base();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const tsv = M.copyVisible(d.rows, d.columns, order, selOf(range(0, 0, 3, 1)));
+  assert.equal(tsv, 'b\t10\na\t2\nd\t2\nc\t');
+  const filtered = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  assert.equal(M.copyVisible(d.rows, d.columns, filtered, selOf(range(0, 0, 3, 0))), 'a\nd');
+});
+
+test('copyVisible: a Ctrl selection with mismatched columns uses the column union, blank where no range covers', () => {
+  const d = base();
+  const order = docOrder(4);
+  const text = M.copyVisible(d.rows, d.columns, order, selOf(range(3, 0, 3, 0), range(0, 1, 1, 1)));
+  // Rows 0, 1, 3. Columns id and n. Row 0 and 1 have n only, row 3 has id only.
+  assert.equal(text, '\t2\n\t10\nd\t');
+});
+
+test('copyVisible: overlapping ranges copy each cell once, and quoting survives', () => {
+  const rows = [{ id: 'a\tb', n: 1, on: true, tag: 'x', data: null }];
+  const d = { columns: cols.map(c => ({ ...c, label: c.key })), rows };
+  const text = M.copyVisible(rows, d.columns, [0], selOf(range(0, 0, 0, 1), range(0, 1, 0, 2)));
+  assert.equal(text, '"a\tb"\t1\ttrue');
+});
+
+test('copyVisible: an empty selection copies nothing', () => {
+  const d = base();
+  assert.equal(M.copyVisible(d.rows, d.columns, [], selOf(range(0, 0, 3, 0))), '');
+});
+
+test('pasteVisible: clipboard rows follow the sorted view from the anchor\'s visible position', () => {
+  const d = fresh();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 1, c: 0 }, 'x\t5\ny\t6');
+  assert.equal(out.rows[1].id, 'x', 'b is the anchor: line 1 lands on the anchor row');
+  assert.equal(out.rows[1].n, 5);
+  assert.equal(out.rows[0].id, 'y', 'line 2 lands on the next visible row (a), not document row 1');
+  assert.equal(out.rows[0].n, 6);
+  assert.equal(out.rows[2].id, 'c', 'untouched');
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(out.overflow, { rows: 0, cols: 0 });
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a filtered view takes lines only on visible rows, and reports the overflow', () => {
+  const d = fresh();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 0, c: 0 }, 'p\t1\nq\t2\nr\t3');
+  assert.equal(out.rows[0].id, 'p');
+  assert.equal(out.rows[3].id, 'q', 'the next visible row is d, the hidden b and c are skipped');
+  assert.equal(out.rows[3].n, 2);
+  assert.equal(out.rows.length, 4, 'no rows appended in a filtered view');
+  assert.equal(out.rows[1], d.rows[1], 'hidden rows are the same objects');
+  assert.equal(out.rows[2], d.rows[2]);
+  assert.deepEqual(out.overflow, { rows: 1, cols: 0 }, 'the third line did not fit');
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a sorted view also stops at its last visible row instead of appending', () => {
+  const d = fresh();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 2, c: 0 }, 'x\t1\ny\t2'); // anchor c, the last row
+  assert.equal(out.rows[2].id, 'x');
+  assert.equal(out.rows.length, 4);
+  assert.deepEqual(out.overflow, { rows: 1, cols: 0 });
+});
+
+test('pasteVisible: an unfiltered, unsorted view appends blank rows past the end', () => {
+  const d = fresh();
+  const order = docOrder(4);
+  const out = M.pasteVisible(d.rows, d.columns, order, { r: 3, c: 0 }, Array(6).fill('v\t1').join('\n'));
+  assert.equal(out.rows.length, 9, 'row 3 is kept and six lines land on rows 3..8');
+  assert.equal(out.rows[4].id, 'v');
+  assert.equal(out.rows[8].n, 1);
+  assert.equal(out.rows[5].tag, '', 'appended rows start blank');
+  assert.deepEqual(out.overflow, { rows: 0, cols: 0 });
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a one-value paste fills every selected cell in all ranges, in visible rows only', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 1 }, '7', selOf(range(0, 1, 1, 1), range(3, 1, 3, 1)));
+  assert.deepEqual(out.rows.map(r => r.n), [7, 7, null, 7]);
+  assertRoundTrip(d, out);
+  const filtered = M.pasteVisible(d.rows, d.columns, [0, 3], { r: 0, c: 1 }, '7', selOf(range(0, 1, 3, 1)));
+  assert.deepEqual(filtered.rows.map(r => r.n), [7, 10, null, 7], 'hidden row b keeps its value');
+});
+
+test('pasteVisible: a one-value paste whose selection is all hidden lands at the anchor', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, [0, 3], { r: 0, c: 1 }, '7', selOf(range(1, 1, 2, 1)));
+  assert.deepEqual(out.rows.map(r => r.n), [7, 10, null, 2]);
+});
+
+test('pasteVisible: atomic. One bad value commits nothing and returns the errors', () => {
+  const d = fresh();
+  const before = snap(d);
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, 'ok\t1\nbad\tnope');
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors, [{ row: 1, key: 'n', value: 'nope', message: 'Enter a valid number' }]);
+  assert.deepEqual(snap({ columns: out.columns, rows: out.rows }), before, 'nothing applied, not even the good cells');
+});
+
+test('pasteVisible: a bad value in a one-value fill commits nothing and lists each cell', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 1 }, 'nope', selOf(range(0, 1, 2, 1)));
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors.map(e => e.row), [0, 1, 2]);
+  assert.deepEqual(snap(out.rows), snap(d.rows));
+});
+
+test('pasteVisible: columns past the last one are counted as overflow', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, [['a', '1', 'true', 'z', '{"q":1}', '6', '7']]);
+  assert.deepEqual(out.overflow, { rows: 0, cols: 2 });
+  assert.deepEqual(out.rows[0], { id: 'a', n: 1, on: true, tag: 'z', data: { q: 1 } });
+});
+
+test('paste banner text: the first 10 errors, "and N more", and the overflow notes', () => {
+  assert.equal(pasteSummary([], { rows: 0, cols: 0 }), null, 'a clean paste shows no banner');
+  const errs = Array.from({ length: 12 }, (_, i) => ({ row: i, key: 'n', value: 'x', message: 'Enter a valid number' }));
+  const s = pasteSummary(errs);
+  assert.equal(s.lines.length, 10);
+  assert.equal(s.more, 2, 'and 2 more');
+  assert.equal(s.lines[0], 'Row 1, n: Enter a valid number ("x")', 'rows are shown 1-based');
+  assert.match(s.title, /12 values/);
+  assert.deepEqual(pasteSummary([{ row: 0, key: 'n', value: 'x', message: 'm' }]).more, 0);
+  const o = pasteSummary([], { rows: 1, cols: 2 });
+  assert.equal(o.lines.length, 2);
+  assert.match(o.lines[0], /1 clipboard row did not fit/);
+  assert.match(o.lines[1], /2 clipboard columns did not fit/);
+  assert.equal(pasteSummary([{ row: 0, key: 'n', value: 'a'.repeat(80), message: 'm' }]).lines[0].length < 120, true, 'long values are cut');
+});
+
+test('clear under a filter: hidden rows inside the selection keep their values', () => {
+  const d = fresh();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  const out = M.clearVisible(d, selOf(range(0, 0, 3, 1)), order); // rows 0..3, columns id and n
+  assert.deepEqual(out.rows.map(r => r.id), ['', 'b', 'c', '']);
+  assert.deepEqual(out.rows.map(r => r.n), [null, 10, null, null]);
+  assert.equal(out.rows[1], d.rows[1], 'hidden row b is the same object');
+  assert.equal(out.rows[2], d.rows[2], 'hidden row c is the same object');
+  assert.equal(out.change.label, 'Clear cells');
+  assertRoundTrip(d, out);
+});
+
+test('clear over a sorted view with a hidden row inside the span: only visible selected cells clear', () => {
+  // c (row 2) is hidden by a filter but sits inside the selected span and holds a value.
+  const columns = base().columns;
+  const rows = base().rows.map((r, i) => (i === 2 ? { ...r, tag: 'keep' } : r));
+  const d = { columns, rows };
+  const viewOrder = [3, 1, 0]; // d, b, a: sorted id desc, c hidden
+  const out = M.clearVisible(d, selOf(range(0, 3, 3, 3), range(3, 4, 3, 4)), viewOrder);
+  assert.deepEqual(out.rows.map(r => r.tag), ['', '', 'keep', ''], 'the hidden c keeps its tag');
+  assert.deepEqual(out.rows.map(r => r.data), [{ k: 1 }, [1], null, null], 'd.data cleared, the rest of the data column untouched');
+  assert.deepEqual(out.rows.map(r => r.id), ['a', 'b', 'c', 'd'], 'columns outside the selection are untouched');
+  assertRoundTrip(d, out);
+});
+
+test('delete rows under a filter: only the visible selected rows go, hidden rows stay', () => {
+  const d = fresh();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  const out = M.deleteVisibleRows(d, selOf(range(0, 0, 3, 4)), order); // the whole span, rows 0..3
+  assert.deepEqual(out.rows.map(r => r.id), ['b', 'c'], 'a and d are deleted, hidden b and c survive');
+  assert.equal(out.change.label, 'Delete rows');
+  assertRoundTrip(d, out);
+});
+
+test('delete rows in a sorted view removes the selected rows and keeps document order', () => {
+  const d = fresh();
+  const order = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]); // b, a, d, c
+  const out = M.deleteVisibleRows(d, selOf(range(1, 0, 2, 4)), order); // rows 1 and 2 (b, c)
+  assert.deepEqual(out.rows.map(r => r.id), ['a', 'd']);
+  assertRoundTrip(d, out);
+});
+
+test('delete rows with no selected row changes nothing', () => {
+  const d = fresh();
+  assert.equal(M.deleteVisibleRows(d, M.createSelection(), docOrder(4)).change, null);
+  assert.equal(M.deleteVisibleRows(d, selOf(range(1, 0, 1, 4)), [0, 3]).change, null, 'only a hidden row is selected');
+});
+
+test('clear with no selected cell changes nothing and records no step', () => {
+  const d = fresh();
+  assert.equal(M.clearVisible(d, M.createSelection(), docOrder(4)).change, null);
+  assert.equal(M.clearVisible(d, selOf(range(1, 0, 1, 0)), [0, 3]).change, null, 'only a hidden row is selected');
+});
+
+test('selectedCells: columns are clipped to the column count', () => {
+  const sc = M.selectedCells(selOf(range(0, 0, 0, 99)), [0], cols);
+  assert.deepEqual(sc.cols, cols.map(c => c.key));
+  assert.equal(sc.cells.length, cols.length);
 });
 
 test('parse clipboard text as TSV or CSV, with quotes and trailing newline', () => {
@@ -257,23 +501,23 @@ test('shift selection in a filtered, sorted view selects only the visible rows',
   const order = [5, 4, 3, 1, 0]; // row 2 is hidden by a filter
   let sel = M.selectCell(M.createSelection(), { r: 5, c: 0 }, {});
   sel = M.selectCell(sel, { r: 0, c: 1 }, { shift: true, order });
-  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [0, 1, 3, 4, 5], 'the hidden row 2 is not selected');
+  assert.deepEqual(M.selectedCells(sel, order, cols).rows.slice().sort((a, b) => a - b), [0, 1, 3, 4, 5], 'the hidden row 2 is not selected');
   // Without an order (the unfiltered case) the range is the document rectangle, as before.
   const plain = M.selectCell(M.selectCell(M.createSelection(), { r: 5, c: 0 }, {}), { r: 0, c: 1 }, { shift: true });
-  assert.equal(M.selectedCells(plain, 6, 5).length, 6 * 2);
+  assert.equal(M.selectedCells(plain, docOrder(6), cols).cells.length, 6 * 2);
   // Ctrl-shift keeps earlier ranges and adds the visible runs.
   let ctrl = M.selectCell(M.createSelection(), { r: 0, c: 0 }, {});
   ctrl = M.selectCell(ctrl, { r: 4, c: 0 }, { ctrl: true });
   ctrl = M.selectCell(ctrl, { r: 3, c: 0 }, { shift: true, ctrl: true, order });
-  assert.deepEqual([...new Set(M.selectedCells(ctrl, 6, 5).map(c => c.r))].sort(), [0, 3, 4]);
+  assert.deepEqual(M.selectedCells(ctrl, order, cols).rows.slice().sort((a, b) => a - b), [0, 3, 4]);
 });
 
 test('shift row selection in a filtered view widens every run to whole rows', () => {
   const order = [5, 4, 3, 1, 0]; // row 2 is hidden
   let sel = M.selectRows(M.createSelection(), 4, {}, 5);
   sel = M.selectRows(sel, 1, { shift: true, order }, 5);
-  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [1, 3, 4]);
-  assert.equal(M.selectedCells(sel, 6, 5).length, 3 * 5, 'every cell of each selected row, and no hidden row');
+  assert.deepEqual(M.selectedCells(sel, order, cols).rows.slice().sort((a, b) => a - b), [1, 3, 4]);
+  assert.equal(M.selectedCells(sel, order, cols).cells.length, 3 * 5, 'every cell of each selected row, and no hidden row');
 });
 
 test('JSON import checks values against the column types and changes nothing on a bad value', () => {
