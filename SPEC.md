@@ -1385,12 +1385,12 @@ It remains history, not a second implementable mode.
 | Flask | Effect |
 |---|---|
 | Crimson Flask | Heal 25% max HP. |
-| Azure Flask | Restore 20 Mana. |
+| Azure Flask | Restore 1 Mana. |
 | Flask of Ferocity | Gain 2 Strength this combat. |
 | Flask of Stone | Gain 15 Block. |
-| Rot Coating | Apply 4 Scarlet Rot to target. |
-| Blood Grease | Your attacks apply +2 Bleed this turn. |
-| Wondrous Physick (rare) | Two random flask effects at once. |
+| Blight Coating | Apply 4 Crimson Blight to target. |
+| Blood Unction | Your attacks apply 2 extra Bleed per hit this turn. |
+| Wondrous Draught (rare) | Two random flask effects at once. |
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
