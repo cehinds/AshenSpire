@@ -668,8 +668,8 @@ combatReactionOffered, combatReactionChosen
 
 **Two schemas, one home each — this is the contract, and the values are not restated here.**
 `RUN_SCHEMA_VERSION` lives in `src/model/state.js`; `META_SCHEMA_VERSION` lives in
-`src/engine/save.js`. Neither number appears anywhere else, and a second copy of either is a
-defect.
+`src/engine/save.js`. Neither number is restated as a current value anywhere else, and a second copy of
+either is a defect; the dated bumps below are history.
 
 **The run.** Key `sote_run_v1`, **three slots, one run each** (`SLOTS`, `save.js`). The
 persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`, with
@@ -683,8 +683,9 @@ id only (§3.3).
   **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
   `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
   piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. A live action queue
-  or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
+  record restores it without replaying combat start, draws, or enemy rolls. A live event buffer, or an
+  action queue that no pending reaction or ability discard holds, is not a committed
+  boundary and refuses the save. Older `combatEntered`
   records without a snapshot remain compatible and restart the encounter deterministically.
 - An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
@@ -747,7 +748,7 @@ five durability properties (#66/#67), each of which is a claim a command can fal
    filename. While in that state the profile is **quarantined**: the next ordinary settings
    write cannot overwrite the original bytes, which are the evidence of every other failure.
 5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `replacePrimaryWith()` are reachable by the player from **Profile on the title screen**
+   `restoreProfile(id)` are reachable by the player from **Profile on the title screen**
    (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
    primary — which archives the outgoing one and clears the quarantine. An archive nothing can
    open is a promise, not a feature.
