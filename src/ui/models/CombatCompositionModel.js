@@ -70,10 +70,16 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
       : (size.x - center) * (spacious ? 1.3 : 1) + width * (spacious ? .66 : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
+    // Enemies stand back on the floor, about half-way up the field. A short
+    // portrait field (a phone with browser bars) keeps that depth too, rather
+    // than dropping its enemies onto the player's foot line; the clamp keeps
+    // their intent and HP clear under the ribbon. Only a short landscape strip
+    // (width > 2 x height) keeps the near foot line for its stacked lanes.
+    const backRow = spacious || width <= height * 2;
     const ground = player && solo && Number.isFinite(handTop)
       ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
       : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground)
-        : spacious ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
+        : backRow ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
           : (size.ground ?? actor.slot.ground) - height * .07);
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
       separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };
