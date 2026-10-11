@@ -1403,65 +1403,75 @@ jobs:
           echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-plants=${{ needs['browser-layout-plants'].result }} browser-layout-all=${{ needs['browser-layout-all'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
           echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
-          echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
-          # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
-          # this branch existed. Not corrected to 35: this job has no checkout and no
-          # node, so it cannot count, and a hardcoded total in a BOUNDARY block goes
-          # quietly false every time the suite grows — which is the exact failure this
-          # block exists to prevent. The `test` job prints the real count.
-          # — Sunna, 2026-07-28, one line in Rune's file, said out loud rather than silently.
-          echo "  · the whole engine suite passes on Linux, Windows and macOS"
-          echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
-          echo "  · a rebuild changes nothing committed (buildordinal.json is this source's), on each runner"
-          echo "  · the three runners build byte-identical standalones (reproducible-agree)"
-          echo "  · the light single file (root AshenSpire.html, download/) carries its inlined art,"
-          echo "    dist/AshenSpire.html its pinned packs, and each IS that build"
-          echo "  · no version-stamped build artifact is tracked in dist/"
-          echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
-          echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
-          echo "  · the directory-order comparator sorts the real 40c5b21 sprites listing"
-          echo "    into byte order on all three runners, and five reinstatements of the"
-          echo "    collation defect were each caught by that corpus"
-          echo "  · the browser probe's three UNAVAILABLE branches were each triggered and"
-          echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
-          echo "  · the build version has ONE home, is derived at build time rather than typed,"
-          echo "    and derives the same string on all three runners — with known-bads,"
-          echo "    including a tree that re-types it, each observed red by its own row"
-          echo "  · that version is INK on the main menu, the map and combat, at 390x844 and"
-          echo "    1200x730 — pixels, not DOM presence, with six ways to lose the ink caught"
-          # #295: the first LAYOUT invariant this workflow has ever run. No count
-          # and no cell list here — hintstrip declares its own population and
-          # prints it, and a number typed beside the list that owns it is the
-          # second-home defect this block has already been trimmed for twice.
-          echo "  · the combat action row's CONTROLS (orb, piles, END TURN and its key label — the"
-          echo "    contextual strip is retired on combat, #527) are clear of every card, whole, on"
-          echo "    screen, and the row touches NO other combat furniture — at every cell hintstrip"
-          echo "    declares, the phone cell under a coarse pointer, including one written through"
-          echo "    the game's own rebind store; its known-bads are each observed red through the"
-          echo "    same door. THIS IS RENDERED GEOMETRY of the controls: the row's empty gutters are"
-          echo "    not furniture, and a card dipping into them touching nothing is not measured."
-          echo "  · every legal left/right armament slot reaches the correct rendered side"
-          echo "    of the viewer-facing figure, with all five same-door known-bads caught"
-          echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
-          echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
-          echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
-          echo "    flipbook, with sixteen same-door known-bads caught (browser-motion, in 3 shards)"
-          # WAS: "...and it is the only rendered claim in this file that is about the
-          # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
-          # Armoury step below — a second browser-driven rendered-layout claim in this
-          # same job. Codex found it at `b9b3e81`, in the same act that wired the gate
-          # in. A boundary that has silently stopped being true is D104 arriving from
-          # the other side: there the narrowing lived only in a comment, here the
-          # narrowing was real and the world moved out from under it. Same cure —
-          # the claim and the coverage change in ONE act, or the green lies.
-          # — Sunna, 2026-08-22, wiring the Armoury gate.
-          echo "  · the Armoury arrives with the FIGURE WHOLE where a view declares one, CARDS"
-          echo "    arrives COLLAPSED on every shape, and ONE click expands it to a box with"
-          echo "    AREA above the fold and folds it back — at 1440x860 and 390x844, with"
-          echo "    #305's single compositing mirror required as a literal transform, so a"
-          echo "    mirror that is DOUBLED or GONE both fail. THIS IS RENDERED GEOMETRY."
-          echo "    Its known-bads were hand-planted and are NOT re-run here: this step proves"
-          echo "    the tree passes and proves NOTHING about whether the check can still fail."
+          if [ "$RAN_TEST" = 1 ]; then
+            echo "A GREEN TEST STAGE MEANS:"
+            # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
+            # this branch existed. Not corrected to 35: this job has no checkout and no
+            # node, so it cannot count, and a hardcoded total in a BOUNDARY block goes
+            # quietly false every time the suite grows — which is the exact failure this
+            # block exists to prevent. The `test` job prints the real count.
+            # — Sunna, 2026-07-28, one line in Rune's file, said out loud rather than silently.
+            echo "  · the whole engine suite passes on Linux, Windows and macOS"
+            echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
+            echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
+            echo "  · the directory-order comparator sorts the real 40c5b21 sprites listing"
+            echo "    into byte order on all three runners, and five reinstatements of the"
+            echo "    collation defect were each caught by that corpus"
+            echo "  · the browser probe's three UNAVAILABLE branches were each triggered and"
+            echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
+          else
+            echo "THE TEST-STAGE CLAIMS DO NOT APPLY TO THIS RUN: the test stage did not run here."
+          fi
+          echo ""
+          if [ "$RAN_RELEASE" = 1 ]; then
+            echo "A GREEN RELEASE STAGE MEANS:"
+            echo "  · a rebuild changes nothing committed (buildordinal.json is this source's), on each runner"
+            echo "  · the three runners build byte-identical standalones (reproducible-agree)"
+            echo "  · the light single file (root AshenSpire.html, download/) carries its inlined art,"
+            echo "    dist/AshenSpire.html its pinned packs, and each IS that build"
+            echo "  · no version-stamped build artifact is tracked in dist/"
+            echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
+            echo "  · the build version has ONE home, is derived at build time rather than typed,"
+            echo "    and derives the same string on all three runners — with known-bads,"
+            echo "    including a tree that re-types it, each observed red by its own row"
+            echo "  · that version is INK on the main menu, the map and combat, at 390x844 and"
+            echo "    1200x730 — pixels, not DOM presence, with six ways to lose the ink caught"
+            # #295: the first LAYOUT invariant this workflow has ever run. No count
+            # and no cell list here — hintstrip declares its own population and
+            # prints it, and a number typed beside the list that owns it is the
+            # second-home defect this block has already been trimmed for twice.
+            echo "  · the combat action row's CONTROLS (orb, piles, END TURN and its key label — the"
+            echo "    contextual strip is retired on combat, #527) are clear of every card, whole, on"
+            echo "    screen, and the row touches NO other combat furniture — at every cell hintstrip"
+            echo "    declares, the phone cell under a coarse pointer, including one written through"
+            echo "    the game's own rebind store; its known-bads are each observed red through the"
+            echo "    same door. THIS IS RENDERED GEOMETRY of the controls: the row's empty gutters are"
+            echo "    not furniture, and a card dipping into them touching nothing is not measured."
+            echo "  · every legal left/right armament slot reaches the correct rendered side"
+            echo "    of the viewer-facing figure, with all five same-door known-bads caught"
+            echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
+            echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
+            echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
+            echo "    flipbook, with sixteen same-door known-bads caught (browser-motion, in 3 shards)"
+            # WAS: "...and it is the only rendered claim in this file that is about the
+            # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
+            # Armoury step below — a second browser-driven rendered-layout claim in this
+            # same job. Codex found it at `b9b3e81`, in the same act that wired the gate
+            # in. A boundary that has silently stopped being true is D104 arriving from
+            # the other side: there the narrowing lived only in a comment, here the
+            # narrowing was real and the world moved out from under it. Same cure —
+            # the claim and the coverage change in ONE act, or the green lies.
+            # — Sunna, 2026-08-22, wiring the Armoury gate.
+            echo "  · the Armoury arrives with the FIGURE WHOLE where a view declares one, CARDS"
+            echo "    arrives COLLAPSED on every shape, and ONE click expands it to a box with"
+            echo "    AREA above the fold and folds it back — at 1440x860 and 390x844, with"
+            echo "    #305's single compositing mirror required as a literal transform, so a"
+            echo "    mirror that is DOUBLED or GONE both fail. THIS IS RENDERED GEOMETRY."
+            echo "    Its known-bads were hand-planted and are NOT re-run here: this step proves"
+            echo "    the tree passes and proves NOTHING about whether the check can still fail."
+          else
+            echo "THE RELEASE-STAGE CLAIMS DO NOT APPLY TO THIS RUN: the release stage did not run here."
+          fi
           echo ""
           echo "IT DOES NOT MEAN:"
           echo "  · that the build stamp is LEGIBLE, or in the right place. The ink gate proves"

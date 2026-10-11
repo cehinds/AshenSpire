@@ -52,3 +52,33 @@ test('the boundary stage summary lists the same test and release jobs the job-le
   assert.equal(testJobs.length + releaseJobs.length, needed.length, 'a boundary need has no stage');
   assert.match(boundary, /NOT RUN AT THIS STAGE/, 'boundary does not print what did not run at this stage');
 });
+
+test('the boundary claims print per stage, and only for a stage that ran', () => {
+  const boundary = jobs(readFileSync(CI, 'utf8').replace(/\r\n/g, '\n')).get('boundary');
+  const step = boundary.slice(boundary.indexOf('      - name: Named boundary'), boundary.indexOf('      - name: Fail when a job that ran'));
+  assert.doesNotMatch(step, /A GREEN RUN OF THIS WORKFLOW MEANS/, 'the unconditional both-stage claim header is still printed');
+  // Each stage's claims sit between its own `if [ "$RAN_… " = 1 ]; then` and the `else`
+  // line, and the `else` prints one line saying those claims do not apply to this run.
+  const branch = (gate) => {
+    const start = step.indexOf(`if [ "$${gate}" = 1 ]; then`);
+    assert.ok(start >= 0, `boundary has no if [ "$${gate}" = 1 ] block`);
+    const elseAt = step.indexOf('\n          else\n', start);
+    const fiAt = step.indexOf('\n          fi\n', elseAt);
+    assert.ok(elseAt > start && fiAt > elseAt, `${gate} block has no else/fi`);
+    return { claims: step.slice(start, elseAt), otherwise: step.slice(elseAt, fiAt) };
+  };
+  const test = branch('RAN_TEST');
+  const release = branch('RAN_RELEASE');
+  // test-stage claims: engine suite, the cold-boot storage gate, the UNAVAILABLE probe branches.
+  assert.match(test.claims, /the whole engine suite passes/, 'engine-suite claim is not in the test-stage block');
+  assert.match(test.claims, /\?shot= cannot write to localStorage/, 'storage claim is not in the test-stage block');
+  assert.match(test.claims, /UNAVAILABLE branches/, 'UNAVAILABLE claim is not in the test-stage block');
+  assert.doesNotMatch(test.claims, /reproducible|byte-identical|Armoury arrives|build version has ONE home/, 'a release-stage claim is in the test-stage block');
+  assert.match(test.otherwise, /THE TEST-STAGE CLAIMS DO NOT APPLY TO THIS RUN/, 'test stage has no does-not-apply line');
+  // release-stage claims: the reproducible build, the three runners, the ink, layout, motion.
+  assert.match(release.claims, /the three runners build byte-identical standalones/, 'byte-identical claim is not in the release-stage block');
+  assert.match(release.claims, /the Armoury arrives with the FIGURE WHOLE/, 'Armoury claim is not in the release-stage block');
+  assert.match(release.claims, /the build version has ONE home/, 'build-version claim is not in the release-stage block');
+  assert.doesNotMatch(release.claims, /the whole engine suite passes|\?shot= cannot write/, 'a test-stage claim is in the release-stage block');
+  assert.match(release.otherwise, /THE RELEASE-STAGE CLAIMS DO NOT APPLY TO THIS RUN/, 'release stage has no does-not-apply line');
+});
