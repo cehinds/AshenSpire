@@ -36,11 +36,21 @@ The table of values lives in `speed-mods.csv`. The total is computed by
 
 ## Round flow and perception
 
-- Each round the enemy queues 3 actions.
-- Perception decides how many of those actions are visible to the player.
-- Visible actions show as action icons.
+- Each enemy has an SP pool and a limited hidden deck of cards with SP costs.
+  Each round it plays as many cards as its SP affords, the same rule the player
+  follows (see Resources). Each played card is one intent slot.
+- The number of slots per round is not fixed. It is the total of what the
+  enemies played, so it can be one slot or many. (Owner, 2026-10-11.)
+- The slots form one queue for the round, in play order. Each slot names its
+  enemy, so slots from different enemies can sit side by side in the queue.
+  A slot's index is its position in that queue, from 0 to n-1.
+- Perception decides how many slots are visible to the player. The visible
+  slots are the first ones in play order, so perception is a count (a prefix
+  of the queue), not a set of chosen slots. Perception still hides details:
+  each visible slot is revealed only to the stage described below.
+- Visible slots show as action icons, in play order.
 - When the player plays a card, it is played against one of the enemy's
-  queued actions (one of the visible ones, or any, see Open questions).
+  queued slots (one of the visible ones, or any, see Open questions).
 - Each pairing is resolved on its own, in the order described below.
 
 ### Perception stages
@@ -64,6 +74,25 @@ Flagged: at stage 1 and 2 the card hint cannot show a speed advantage.
   known at stage 1.
 - The left-edge arrow needs the enemy's total speed, so it appears only at
   stage 3.
+
+## Resources (SP/MP)
+
+- Actions and Stamina are one resource, SP. SP and MP are stat-driven, with
+  base values of 3 (SP) and 1 (MP). (Owner, 2026-10-11.)
+- For testing, SP is fixed at 3 for the player and for each enemy.
+- Every card has an SP cost, and may also have an MP cost.
+- The player plays as many cards as SP affords. The same rule applies to each
+  enemy, with that enemy's own SP pool and hidden deck. Each card it plays is
+  one intent slot (see Round flow and perception).
+- Whether MP also limits how many cards a side plays is not stated yet. See
+  Open questions, t.
+- Unanswered slots resolve against the player as already specified (see
+  Pairing and resolution order: unpaired slots).
+- Costs are a caller concern for now. `resolveRound()` takes the cards already
+  chosen and the queue already built. It does not check SP or MP, and it does
+  not spend them. The caller must enforce the SP and MP limits before it calls
+  `resolveRound()`. Modelling costs inside the resolver is deferred unless it
+  stays trivial.
 
 ## Pairing and resolution order
 
@@ -499,3 +528,8 @@ r. Resolved (owner, 2026-10-11). Counter stagger adds +-3 to the counter-user's
    side of the summed round delta. It is in addition to the normal slot win.
    Opposing staggers net naturally (+3 and -3), with no cancel rule.
 s. Resolved (owner, 2026-10-11): arrow tiers stay >=2 strong and >=1 slight.
+t. Open (owner, 2026-10-11): does MP limit how many cards a side plays, as SP
+   does? The owner's rule names SP as the play limit and gives MP only a base
+   of 1 and optional card costs. Blocks any caller that enforces MP limits.
+u. Open: how enemy SP pools and hidden decks are built per enemy. For testing,
+   SP is fixed at 3 for every side. Blocks real enemy queues with varying length.
