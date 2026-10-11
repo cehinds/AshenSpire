@@ -42,3 +42,10 @@ test('mapboard.js map nodes turn off explain-on-second-tap', () => {
   assert.match(tooltipSrc, /\bsecondTap = true,/);
   assert.match(tooltipSrc, /\} else if \(secondTap && !selectionFirst && !expand\) \{/);
 });
+
+test('an explicit Save drops the queued camera save instead of flushing it (one Save, one write)', () => {
+  const map = readFileSync(new URL('../src/ui/screens/map.js', import.meta.url), 'utf8');
+  assert.match(map, /onSave: saving\(onSave\)/);
+  assert.doesNotMatch(map, /leaving\(onSave\)/);
+  assert.match(map, /const saving = \(fn\) =>[^\n]*dropPendingSave\(\)/);
+});

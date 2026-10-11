@@ -107,6 +107,15 @@ if (typeof window !== 'undefined') {
 }
 // A callback that hands control away: flush the queued save first, then run it.
 const leaving = (fn) => (typeof fn === 'function' ? (...args) => { flushPendingSave(); return fn(...args); } : fn);
+// The explicit Save writes the same run the queued commit would: drop the
+// queued one instead of flushing it, so one Save is one write (PR #1830 review).
+function dropPendingSave() {
+  const entry = pendingSave;
+  if (!entry) return;
+  pendingSave = null;
+  entry.cancel();
+}
+const saving = (fn) => (typeof fn === 'function' ? (...args) => { dropPendingSave(); return fn(...args); } : fn);
 
 export function releaseMapScreen() {
   flushPendingSave();
@@ -164,7 +173,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // every room, so the map cannot drift from the merchant or the Shrine any
   // more than it could from combat (E9 / #254).
   wireRunHud(app, {
-    registries, run, meta, onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: leaving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange, remount,
+    registries, run, meta, onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: saving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange, remount,
   });
   // ---- THE BOARD -------------------------------------------------------
   //
