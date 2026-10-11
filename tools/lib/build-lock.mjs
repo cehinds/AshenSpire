@@ -69,17 +69,40 @@ function isStale(lock, now) {
   return now - started > UNVERIFIED_CEILING_MS;
 }
 
-/** Remove a stale lock without removing a fresh one another process just took:
- *  move it aside, check it is the one judged stale, and put it back if not. */
+// A breaker that crashed leaves its break mutex behind; one this old is cleared.
+const BREAK_STALE_MS = 30 * 1000;
+
+/** Test seam: `beforeRecheck(file)` runs between the stale judgement and the re-check that guards the unlink. */
+export const testHooks = { beforeRecheck: null };
+
+const readText = (file) => { try { return fs.readFileSync(file, 'utf8'); } catch { return null; } };
+
+/** Take the break mutex (`<lock>.break`, created exclusively). A mutex older than BREAK_STALE_MS is cleared first. */
+function takeBreak(mutex, token) {
+  const create = () => {
+    try { fs.writeFileSync(mutex, token, { flag: 'wx' }); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; }
+  };
+  if (create()) return true;
+  let age;
+  try { age = Date.now() - fs.statSync(mutex).mtimeMs; } catch { return create(); }
+  if (age <= BREAK_STALE_MS) return false;
+  try { fs.unlinkSync(mutex); } catch { /* gone */ }
+  return create();
+}
+
+/** Remove the lock only if it is still the stale text judged. Breaks are serialized by the break mutex,
+ *  and a lock file is only replaced after it is removed (writers create it with 'wx'), so a fresh lock
+ *  cannot be removed here. Returns without breaking when another break is in progress; the caller retries. */
 function breakStale(file, seen) {
-  const aside = `${file}.stale-${process.pid}-${randomBytes(4).toString('hex')}`;
-  try { fs.renameSync(file, aside); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
-  let text = null;
-  try { text = fs.readFileSync(aside, 'utf8'); } catch { /* gone */ }
-  if (text === seen.text) { try { fs.unlinkSync(aside); } catch { /* gone */ } return; }
-  // We moved a lock that is not the stale one: restore it unless someone took the slot meanwhile.
-  try { fs.linkSync(aside, file); } catch { /* the slot is taken again; that holder keeps it */ }
-  try { fs.unlinkSync(aside); } catch { /* gone */ }
+  const mutex = `${file}.break`;
+  const token = randomBytes(8).toString('hex');
+  if (!takeBreak(mutex, token)) return;
+  try {
+    testHooks.beforeRecheck?.(file);
+    if (readText(file) === seen.text) { try { fs.unlinkSync(file); } catch { /* gone */ } }
+  } finally {
+    if (readText(mutex) === token) { try { fs.unlinkSync(mutex); } catch { /* gone */ } }
+  }
 }
 
 /**

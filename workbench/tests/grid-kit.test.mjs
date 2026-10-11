@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../ui/kit/grid-model.mjs';
-import { pasteSummary, pasteNotice } from '../ui/kit/grid.mjs';
+import { pasteSummary, pasteNotice, pasteAccepted } from '../ui/kit/grid.mjs';
 
 const cols = [
   { key: 'id', type: 'string' },
@@ -262,6 +262,17 @@ test('pasteVisible: a blank copied cell pastes as a clear, so copy-then-paste ro
   assertRoundTrip(target, out);
 });
 
+test('pasteAccepted: text proceeds; empty text proceeds only over a selection; read-only takes nothing', () => {
+  const sel = selOf(range(0, 1, 1, 1));
+  assert.equal(pasteAccepted('x', null), true, 'non-empty text pastes at the anchor as before');
+  assert.equal(pasteAccepted('x', selOf()), true);
+  assert.equal(pasteAccepted('', sel), true, 'an empty copied cell over a selection clears it');
+  assert.equal(pasteAccepted('', null), false, 'an empty paste with no selection does nothing');
+  assert.equal(pasteAccepted('', selOf()), false, 'an empty range list is no selection');
+  assert.equal(pasteAccepted('x', sel, true), false, 'a read-only grid takes no paste');
+  assert.equal(pasteAccepted('', sel, true), false, 'a read-only grid takes no empty paste either');
+});
+
 test('pasteVisible: a blank one-value fill clears the selected cells of every type', () => {
   const d = fresh();
   const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 1 }, '', selOf(range(0, 1, 2, 2), range(0, 4, 2, 4)));
@@ -270,6 +281,18 @@ test('pasteVisible: a blank one-value fill clears the selected cells of every ty
   assert.deepEqual(out.rows.map(r => r.data), [null, null, null, 'str'], 'json cells clear');
   assert.deepEqual(out.errors, []);
   assertRoundTrip(d, out);
+});
+
+test('pasteVisible: an empty paste over a filtered selection clears only the visible selected cells', () => {
+  const d = fresh();
+  assert.ok(d.rows[0].n != null && d.rows[3].n != null, 'the cells start with values');
+  // Rows 1 and 2 are hidden by the filter; the selection covers rows 0..3 of the number column.
+  const out = M.pasteVisible(d.rows, d.columns, [0, 3], { r: 0, c: 1 }, '', selOf(range(0, 1, 3, 1)));
+  assert.equal(out.rows[0].n, null, 'visible selected row 0 clears');
+  assert.equal(out.rows[3].n, null, 'visible selected row 3 clears');
+  assert.deepEqual(out.rows[1], d.rows[1], 'hidden row 1 is untouched');
+  assert.deepEqual(out.rows[2], d.rows[2], 'hidden row 2 is untouched');
+  assert.deepEqual(out.errors, []);
 });
 
 test('pasteVisible: a blank value does not excuse a non-blank bad value in the same paste', () => {

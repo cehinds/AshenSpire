@@ -34,6 +34,17 @@ export function pasteSummary(errors = [], overflow = { rows: 0, cols: 0 }, limit
   return lines.length ? { title: 'Paste partly applied', lines, more: 0 } : null;
 }
 
+/**
+ * Whether a paste of `text` proceeds. A read-only grid takes no paste. Non-empty text always proceeds.
+ * Empty text is a blank copied cell: over a selection it clears the selected cells, so it proceeds only
+ * when there is a selection to clear.
+ */
+export function pasteAccepted(text, selection = null, readOnly = false) {
+  if (readOnly) return false;
+  if (text) return true;
+  return Boolean(selection?.ranges?.length);
+}
+
 /** The banner for a paste that did not apply cleanly without errors: its refusal reason, else the overflow notes. */
 export function pasteNotice(res) {
   if (res.reason) return { title: 'Paste not applied', lines: [res.reason], more: 0 };
@@ -245,7 +256,7 @@ export function createGrid(el, options = {}) {
   // (gk-paste-errors) and the grid is unchanged. A paste that ran out of visible rows or columns
   // commits what fit and says what did not.
   function pasteText(text) {
-    if (readOnly || !text) return;
+    if (!pasteAccepted(text, sel, readOnly)) return;
     const anchor = sel.active ?? { r: 0, c: 0 };
     const res = M.pasteVisible(doc.rows, doc.columns, order, anchor, text, sel);
     if (res.errors.length) {
