@@ -156,14 +156,17 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   function onBatch(batch) {
     if (queued) { for (const f of batch) queued.add(f); return; }
     const mine = queued = new Set(batch);
-    const take = () => { if (queued === mine) queued = null; return [...mine].sort(); };
+    // The batch's file set is fixed here; startedAt says when, so a save sent later cannot match this build.
+    let startedAt = 0;
+    const take = () => { if (queued === mine) queued = null; startedAt = Date.now(); return [...mine].sort(); };
     chain = chain.then(async () => {
       // Generated output written by another writer (a Workbench job, the editor,
       // UI Studio, a terminal build) reloads only once that writer is done: wait
       // for the shared lock to be free, then reload once.
       if ([...mine].some(isBuildOutput) && !stepsFor([...mine]).length) {
         try { await jobs.acquire(GENERATED, 'A live-reload', { timeoutMs: lockWaitMs }); jobs.release(GENERATED); } catch (e) {
-          hub.send('reload-failed', { files: take(), step: null, output: e.message }); return;
+          const files = take();
+          hub.send('reload-failed', { files, startedAt, step: null, output: e.message }); return;
         }
       }
       const files = take();
@@ -173,18 +176,18 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
         hub.send('building', { files, steps });
         // Live-reload builds share the jobs' lock: never two writers of the generated trees.
         // It also waits for the editor or UI Studio when one of them is building (tools/lib/build-lock.mjs).
-        try { await jobs.acquire(GENERATED, 'A live-reload build', { timeoutMs: lockWaitMs }); } catch (e) { hub.send('reload-failed', { files, step: steps[0], output: e.message }); return; }
+        try { await jobs.acquire(GENERATED, 'A live-reload build', { timeoutMs: lockWaitMs }); } catch (e) { hub.send('reload-failed', { files, startedAt, step: steps[0], output: e.message }); return; }
         watcher.mute();
         try {
           for (const step of steps) {
             const { code, out } = await runBuild(step);
             built.push(step);
-            if (code !== 0) { hub.send('reload-failed', { files, step, output: out.slice(-6000) }); return; }
+            if (code !== 0) { hub.send('reload-failed', { files, startedAt, step, output: out.slice(-6000) }); return; }
           }
         } finally { watcher.unmute(); jobs.release(GENERATED); }
       }
       reloads += 1;
-      hub.send('reload', { files, count: files.length, built, at: Date.now() });
+      hub.send('reload', { files, count: files.length, built, startedAt, at: Date.now() });
     }).catch(() => { take(); });
   }
 

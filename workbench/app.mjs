@@ -202,7 +202,7 @@ function moduleContext(rec) {
     preview: {
       reload: () => reloadPreview(),
       /** Reloads the preview once the server has built these saved paths (or reports that the build failed). */
-      reloadAfterBuild: (paths) => { const hit = previewWaiter.add(paths); if (hit) settleSave(hit); },
+      reloadAfterBuild: (paths, sentAt) => { const hit = previewWaiter.add(paths, sentAt); if (hit) settleSave(hit); },
       showUrl: (url) => { previewShow = url || null; if (previewShow) state.dockEntry = null; renderDock(); },
       setOverride: (key, value) => { if (value === undefined || value === null) delete previewOverrides[key]; else previewOverrides[key] = value; renderDock(); },
     },

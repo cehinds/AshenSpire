@@ -189,32 +189,75 @@ function parseCsv(text) {
   });
   const types = Object.fromEntries(columns.map((c) => [c.key, c.type]));
   const rows = cellRows.map((cells) => Object.fromEntries(columns.map((c, j) => [c.key, typedCell(cells[j], c.type)])));
-  // Original lines keyed by the canonical text of their row; reused for unchanged rows, in order.
-  const queues = new Map();
-  rows.forEach((row, i) => {
-    const key = csvLine(row, columns, types);
-    if (!queues.has(key)) queues.set(key, []);
-    queues.get(key).push(lead[i]);
-  });
+  // Each read row keeps its line, the comment and blank lines above it, and its canonical text.
+  const leads = rows.map((row, i) => ({ ...lead[i], key: csvLine(row, columns, types) }));
   return {
     columns, rows,
-    meta: { format: 'csv', bom, eol, trailingNewline, pre: lines.slice(0, headerAt), headerLine, names, queues, tail: pending },
+    meta: { format: 'csv', bom, eol, trailingNewline, pre: lines.slice(0, headerAt), headerLine, names, leads, tail: pending },
   };
+}
+
+/**
+ * Pairs each saved row with the read row it came from (its position when
+ * read), or -1 for a new row. Rows that match by canonical text pair up in
+ * order (a longest common subsequence). Between two matches the rows left
+ * over pair in order, so an edited row keeps its place. Read rows nothing
+ * pairs with were deleted.
+ */
+function alignRows(oldKeys, newKeys) {
+  const n = oldKeys.length, m = newKeys.length;
+  const at = new Array(m).fill(-1);
+  let pre = 0;
+  while (pre < n && pre < m && oldKeys[pre] === newKeys[pre]) { at[pre] = pre; pre++; }
+  let suf = 0;
+  while (suf < n - pre && suf < m - pre && oldKeys[n - 1 - suf] === newKeys[m - 1 - suf]) { at[m - 1 - suf] = n - 1 - suf; suf++; }
+  const a0 = pre, a1 = n - suf, b0 = pre, b1 = m - suf;
+  const A = a1 - a0, B = b1 - b0;
+  const matches = [];
+  // A table this big is not worth it; the middle then pairs in order only.
+  if (A * B <= 4e6) {
+    const L = Array.from({ length: A + 1 }, () => new Uint32Array(B + 1));
+    for (let i = A - 1; i >= 0; i--) {
+      for (let j = B - 1; j >= 0; j--) {
+        L[i][j] = oldKeys[a0 + i] === newKeys[b0 + j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+      }
+    }
+    let i = 0, j = 0;
+    while (i < A && j < B) {
+      if (oldKeys[a0 + i] === newKeys[b0 + j]) { matches.push([a0 + i, b0 + j]); i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) i++;
+      else j++;
+    }
+  }
+  for (const [o, q] of matches) at[q] = o;
+  let oi = a0, nj = b0;
+  for (const [o, q] of [...matches, [a1, b1]]) {
+    for (let k = 0; oi + k < o && nj + k < q; k++) at[nj + k] = oi + k;
+    oi = o + 1; nj = q + 1;
+  }
+  return at;
 }
 
 function serializeCsv(meta, { columns, rows }) {
   const types = Object.fromEntries(columns.map((c) => [c.key, c.type]));
-  const queues = new Map([...meta.queues].map(([k, v]) => [k, v.slice()]));
   const keys = columns.map((c) => c.key);
   const sameNames = keys.length === meta.names.length && keys.every((k, i) => k === meta.names[i]);
   const out = [...meta.pre, sameNames ? meta.headerLine : columns.map((c) => csvCell(c.key)).join(',')];
-  for (const row of rows) {
-    const canonical = csvLine(row, columns, types);
-    const entry = queues.get(canonical)?.shift();
-    if (entry) out.push(...entry.before, entry.line);
-    else out.push(canonical);
-  }
-  out.push(...meta.tail);
+  const saved = rows.map((row) => csvLine(row, columns, types));
+  const at = alignRows(meta.leads.map((l) => l.key), saved);
+  // Comments of deleted rows wait for the next row that is kept, or the end of the file.
+  let carried = [], next = 0;
+  saved.forEach((key, j) => {
+    const i = at[j];
+    if (i < 0) { out.push(key); return; }
+    for (; next < i; next++) carried.push(...meta.leads[next].before);
+    const lead = meta.leads[i];
+    out.push(...carried, ...lead.before, key === lead.key ? lead.line : key);
+    carried = [];
+    next = i + 1;
+  });
+  for (; next < meta.leads.length; next++) carried.push(...meta.leads[next].before);
+  out.push(...carried, ...meta.tail);
   return (meta.bom ? '﻿' : '') + out.join(meta.eol) + (meta.trailingNewline ? meta.eol : '');
 }
 

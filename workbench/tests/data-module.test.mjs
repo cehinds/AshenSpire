@@ -111,6 +111,33 @@ test('CSV cells the content compiler keeps as strings (1e3, 1.) stay strings and
   assert.equal(out, 'id,code,ratio\nalphaEdited,1e3,-0.5\nbeta,2e4,.5\ngamma,1.,12\n');
 });
 
+// Leading comments and blank lines belong to the row they sit above, so an
+// edit or a delete never drops them (Data Studio save path).
+test('an edited CSV row keeps the comment and blank lines above it', () => {
+  const text = 'id,name\n# note for a\na,1\n\n# note for b\nb,2\n';
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows[0] = { ...doc.rows[0], name: '9' };
+  assert.equal(D.serializeTable(table, doc), 'id,name\n# note for a\na,9\n\n# note for b\nb,2\n');
+});
+
+
+test('a deleted CSV row keeps its leading comment, moved to the next surviving row', () => {
+  const text = 'id,name\n# note for a\na,1\n# note for b\nb,2\n';
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = doc.rows.filter((r) => r.id !== 'a');
+  assert.equal(D.serializeTable(table, doc), 'id,name\n# note for a\n# note for b\nb,2\n');
+});
+
+test('a deleted last CSV row keeps its leading comment at the end of the file', () => {
+  const text = 'id,name\na,1\n# note for b\nb,2\n';
+  const table = D.parseTable('content/source/x.csv', text);
+  const doc = docOf(table);
+  doc.rows = doc.rows.filter((r) => r.id !== 'b');
+  assert.equal(D.serializeTable(table, doc), 'id,name\na,1\n# note for b\n');
+});
+
 test('a CSV number column accepts integers and ordinary decimals only', () => {
   const kind = (v) => D.parseTable('content/source/x.csv', `v\n${v}\n`).columns[0].type;
   assert.equal(kind('-0.5'), 'number');

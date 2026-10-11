@@ -168,6 +168,25 @@ test('an edited file is dirty and its save carries the base hash it was read wit
   assert.equal(JSON.parse(change.text).sizing.bands.hud, 11);
 });
 
+test('Reload from disk of a file deleted on disk drops its draft and marks it missing', () => {
+  const rel = 'ui/scenes/w4a-combat.json';
+  const files = loadedFiles([rel]);
+  const f = files.get(rel);
+  files.set(rel, { ...f, data: C.setConfigValue(f.data, 'sizing.bands.hud', 11) });
+  assert.equal(C.changesFor(files).length, 1, 'the draft is dirty before the reload');
+  // The read found no file: the disk has none, so the draft and its state go and the file reads as missing.
+  const gone = C.reloadFromDisk(files, rel, null);
+  assert.equal(gone.missing, true);
+  assert.equal(gone.files.has(rel), false);
+  assert.deepEqual(C.changesFor(gone.files), [], 'a missing file saves nothing');
+  assert.equal(files.has(rel), true, 'the map it was given is not changed');
+  // A file still on disk takes the disk copy and its hash.
+  const back = C.reloadFromDisk(files, rel, { text: readRel(rel), hash: 'disk-2' });
+  assert.equal(back.missing, false);
+  assert.equal(back.files.get(rel).hash, 'disk-2');
+  assert.deepEqual(C.changesFor(back.files), []);
+});
+
 test('a $token reads as a chip with its resolved value, and an unknown name is flagged', () => {
   const tokens = { gap: 12 };
   const data = { vars: { local: 4 } };
