@@ -236,3 +236,12 @@ test('a modal whose element left the page without release() is not open', async 
   assert.equal(modalOpen(), true, 'an entry without an element is kept until released');
   resetModalState();
 });
+
+test('confirmation and save-slot shells release the registry after focus returns (#1830)', () => {
+  const confirm = read('src/ui/components/confirmationModal.js');
+  assert.match(confirm, /returnFocusElement\.focus\(\{ preventScroll: true \}\);\s*\}\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*unregisterModal\(\);\s*\};/,
+    'the confirmation releases its entry as the last step of close');
+  const slots = read('src/ui/components/saveSlotSelector.js');
+  assert.match(slots, /queueMicrotask\(\(\) => \{ restoreLauncher\(\); unregister\?\.\(\); \}\)/,
+    'the save-slot selector releases its entry after the launcher has focus back');
+});

@@ -144,7 +144,6 @@ export function openConfirmationModal({
   const close = ({ restoreFocus = true, retainInputShield = false } = {}) => {
     if (closed) return;
     closed = true;
-    unregisterModal();
     window.removeEventListener('keydown', onKeydown, true);
     if (retainInputShield) dialog.remove();
     else veil.remove();
@@ -152,6 +151,9 @@ export function openConfirmationModal({
     if (restoreFocus && returnFocusElement instanceof HTMLElement && returnFocusElement.isConnected) {
       returnFocusElement.focus({ preventScroll: true });
     }
+    // Last: releasing the last modal runs whenNoOverlay() waiters at once, and
+    // one of those may replace the element focus just returned to.
+    unregisterModal();
   };
   activeClose = close;
 

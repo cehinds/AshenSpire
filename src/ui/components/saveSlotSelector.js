@@ -306,7 +306,7 @@ export function openSaveSlotSelector({
   const close = ({ restoreFocus = true } = {}) => {
     if (closed) return;
     closed = true;
-    unregisterModal?.();
+    const unregister = unregisterModal;
     unregisterModal = null;
     clearSlotHolds();
     tooltipCleanup?.();
@@ -315,7 +315,11 @@ export function openSaveSlotSelector({
     document.removeEventListener('keydown', onKeydown, true);
     veil.remove();
     if (activeSelector?.veil === veil) activeSelector = null;
-    if (restoreFocus) queueMicrotask(restoreLauncher);
+    // The registry entry goes last, after focus is back: releasing the last
+    // modal runs whenNoOverlay() waiters at once, and one may replace the
+    // launcher focus returns to.
+    if (restoreFocus) queueMicrotask(() => { restoreLauncher(); unregister?.(); });
+    else unregister?.();
   };
   const requestLoad = (slot, trigger) => {
     const record = slots.find((candidate) => candidate.slot === slot);
