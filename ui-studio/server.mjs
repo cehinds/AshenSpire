@@ -18,8 +18,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
-import { spawn, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import { spawnGroup, STOP_GRACE_MS } from '../tools/lib/process-tree.mjs';
 import { compileEntries, readConfigTree, CONFIG_DIR } from '../tools/config-build.mjs';
+import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
 import { artPath, packTreeOf } from '../tools/art-source.mjs';
 import { DEFAULT_SETTINGS, mergeSettings, settingsProblems, sketchProblems } from './model.mjs';
 
@@ -120,38 +122,48 @@ export class Workspace {
     return { errors: result.errors, files: tree.length };
   }
 
-  /** Write config files after the whole tree validates and every expected hash matches. */
-  async save(changes) {
+  /**
+   * Write config files after the whole tree validates and every expected hash matches.
+   * `lock` (optional) takes the shared build lock and resolves to its release. It is
+   * taken before validation and held across the source writes, so a running engine
+   * export or build never reads a half-saved config tree.
+   */
+  async save(changes, { lock = null } = {}) {
     if (!Array.isArray(changes) || !changes.length) throw Error('Nothing to save');
     return this.serialize(async () => {
-      // Validated INSIDE the queue, against the tree as every earlier write
-      // left it: two tabs saving disjoint files could each pass against the
-      // old tree (one dropping a token, one adding a reference to it) and
-      // leave a combined tree the compiler refuses.
-      const { errors } = await this.validate(changes);
-      if (errors.length) throw Error(`The compiler refuses this tree:\n${errors.join('\n')}`);
-      const targets = [];
-      for (const c of changes) {
-        const abs = await safePath(this.root, `${CONFIG_DIR}/${c.rel}`, { creating: true });
-        let current = null;
-        try { current = await fs.readFile(abs, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') throw e; }
-        if (current !== null && hash(current) !== c.hash) throw Error(`${c.rel} changed on disk since it was opened; reload it before saving`);
-        if (current === null && c.hash) throw Error(`${c.rel} no longer exists on disk; reload before saving`);
-        targets.push({ abs, rel: c.rel, current, text: c.text });
-      }
-      const id = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-      const dir = path.join(this.stateDir, 'backups', id);
-      await fs.mkdir(dir, { recursive: true });
-      const manifest = [];
-      for (const [i, t] of targets.entries()) {
-        if (t.current !== null) await fs.writeFile(path.join(dir, `${i}.bak`), t.current);
-        manifest.push({ index: i, path: `${CONFIG_DIR}/${t.rel}`, oldHash: t.current === null ? null : hash(t.current), savedHash: hash(t.text) });
-      }
-      await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
-      for (const t of targets) { await fs.mkdir(path.dirname(t.abs), { recursive: true }); await fs.writeFile(t.abs, t.text); }
-      await this.pruneBackups((await this.settings()).save.keepBackups);
-      return { backup: id, files: targets.map((t) => ({ rel: t.rel, hash: hash(t.text) })) };
+      const release = lock ? await lock() : null;
+      try { return await this.writeConfig(changes); } finally { if (release) release(); }
     });
+  }
+
+  async writeConfig(changes) {
+    // Validated INSIDE the queue, against the tree as every earlier write
+    // left it: two tabs saving disjoint files could each pass against the
+    // old tree (one dropping a token, one adding a reference to it) and
+    // leave a combined tree the compiler refuses.
+    const { errors } = await this.validate(changes);
+    if (errors.length) throw Error(`The compiler refuses this tree:\n${errors.join('\n')}`);
+    const targets = [];
+    for (const c of changes) {
+      const abs = await safePath(this.root, `${CONFIG_DIR}/${c.rel}`, { creating: true });
+      let current = null;
+      try { current = await fs.readFile(abs, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+      if (current !== null && hash(current) !== c.hash) throw Error(`${c.rel} changed on disk since it was opened; reload it before saving`);
+      if (current === null && c.hash) throw Error(`${c.rel} no longer exists on disk; reload before saving`);
+      targets.push({ abs, rel: c.rel, current, text: c.text });
+    }
+    const id = `${Date.now()}-${randomBytes(4).toString('hex')}`;
+    const dir = path.join(this.stateDir, 'backups', id);
+    await fs.mkdir(dir, { recursive: true });
+    const manifest = [];
+    for (const [i, t] of targets.entries()) {
+      if (t.current !== null) await fs.writeFile(path.join(dir, `${i}.bak`), t.current);
+      manifest.push({ index: i, path: `${CONFIG_DIR}/${t.rel}`, oldHash: t.current === null ? null : hash(t.current), savedHash: hash(t.text) });
+    }
+    await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+    for (const t of targets) { await fs.mkdir(path.dirname(t.abs), { recursive: true }); await fs.writeFile(t.abs, t.text); }
+    await this.pruneBackups((await this.settings()).save.keepBackups);
+    return { backup: id, files: targets.map((t) => ({ rel: t.rel, hash: hash(t.text) })) };
   }
 
   async pruneBackups(keep = 40) {
@@ -222,12 +234,26 @@ export class Workspace {
   }
 }
 
-export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir } = {}) {
+// A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
+// Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
+export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
+
+/** Resolve when `promise` settles or after `ms`, whichever is first; the timer does not keep the process alive. */
+async function settle(promise, ms) {
+  let timer;
+  await Promise.race([promise ?? null, new Promise((resolve) => { timer = setTimeout(resolve, ms); })]);
+  clearTimeout(timer);
+}
+
+export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir, frameAncestors = [], compileWaitMs = 2 * 60 * 1000, stopGraceMs = STOP_GRACE_MS } = {}) {
+  for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
+  const ancestors = frameAncestors.join(' ');
   root = await fs.realpath(root);
   stateDir ||= path.join(HERE, '.state', hash(root).slice(0, 16));
   const workspace = new Workspace(root, stateDir);
   const token = randomBytes(32).toString('hex');
   let job = null;
+  let closing = false; // set by close(): a compile still waiting for the lock must not start
   const send = (res, status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(JSON.stringify(data)); };
   async function body(req) {
     const chunks = []; let length = 0;
@@ -235,19 +261,49 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
     return JSON.parse(Buffer.concat(chunks).toString() || '{}');
   }
   function branch() { try { return execFileSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return 'unknown'; } }
-  function startCompile() {
-    if (job && job.status === 'running') throw Error('The compiler is already running');
-    job = { status: 'running', output: '' };
+  // The compiler writes src/config/generated, which Workbench jobs and the
+  // editor's builds also write: it runs under the shared lock
+  // (tools/lib/build-lock.mjs). "Compile now" is refused with 409 while another
+  // build holds it; a compile after a save (`wait`) waits up to waitMs for it.
+  const HOLDER = 'UI Studio config compile';
+  const SAVE_HOLDER = 'UI Studio config save';
+  function startCompile({ wait = false } = {}) {
+    if (job && (job.status === 'running' || job.status === 'waiting')) throw Error('The compiler is already running');
+    let release = null;
+    if (!wait) {
+      const got = tryAcquire(root, HOLDER);
+      if (typeof got !== 'function') throw Object.assign(Error(busyMessage(got.heldBy)), { status: 409 });
+      release = got;
+    }
+    job = { status: release ? 'running' : 'waiting', output: '' };
     const current = job;
-    workspace.serialize(() => new Promise((resolve) => {
-      const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true });
-      current.child = child;
-      const append = (d) => { current.output = (current.output + d).slice(-60000); };
-      child.stdout.on('data', append); child.stderr.on('data', append);
-      child.on('error', (e) => { append(e.message); current.status = 'failed'; resolve(); });
-      child.on('close', (code) => { current.status = code === 0 ? 'passed' : 'failed'; resolve(); });
-    }));
-    return { ok: true };
+    current.done = workspace.serialize(async () => {
+      if (!release) {
+        try { release = await acquire(root, HOLDER, { timeoutMs: compileWaitMs, pollMs: Math.min(250, compileWaitMs) }); } catch (e) {
+          current.status = 'failed'; current.output = `${e.message}. The save stands; compile again when it finishes.\n`; return;
+        }
+        current.status = 'running';
+      }
+      try {
+        if (closing) { current.status = 'failed'; current.output += 'The studio closed before the compile ran.\n'; return; }
+        await new Promise((resolve) => {
+          // config-build runs under this compile's hold on the lock (tools/lib/build-lock.mjs).
+          // Its own process group on POSIX, so close() can stop what it started too. The hold is released
+          // only once that group is empty (spawnGroup's done), so no orphan writes under a free lock.
+          const group = spawnGroup(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) }, graceMs: stopGraceMs });
+          current.group = group;
+          const append = (d) => { current.output = (current.output + d).slice(-60000); };
+          group.child.stdout.on('data', append); group.child.stderr.on('data', append);
+          group.done.then(({ code, error }) => {
+            if (error) append(error.message);
+            current.status = !error && code === 0 ? 'passed' : 'failed';
+            delete current.group;
+            resolve();
+          });
+        });
+      } finally { release(); }
+    }).catch((e) => { current.status = 'failed'; current.output += e.message; });
+    return { ok: true, status: current.status };
   }
 
   const server = http.createServer(async (req, res) => {
@@ -268,16 +324,19 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
           if (url.pathname === '/api/sketches') return send(res, 200, await workspace.sketches());
           if (url.pathname === '/api/sketch') return send(res, 200, await workspace.sketch(url.searchParams.get('name')));
           if (url.pathname === '/api/backups') return send(res, 200, await workspace.backups());
-          if (url.pathname === '/api/compile') { const { child, ...publicJob } = job || { status: 'idle', output: '' }; return send(res, 200, publicJob); }
+          if (url.pathname === '/api/compile') { const { group, ...publicJob } = job ||{ status: 'idle', output: '' }; return send(res, 200, publicJob); }
         }
         if (req.method === 'POST') {
           const data = await body(req);
           if (url.pathname === '/api/settings') return send(res, 200, await workspace.saveSettings(data));
           if (url.pathname === '/api/validate') return send(res, 200, await workspace.validate(data.changes));
-          if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes));
+          // The save holds the shared build lock across validation and the source writes, so an engine
+          // export or build never reads a half-saved tree. It waits like a compile after a save does, and
+          // is refused with 409 naming the holder when that wait runs out.
+          if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes, { lock: () => acquire(root, SAVE_HOLDER, { timeoutMs: compileWaitMs, pollMs: Math.min(250, compileWaitMs) }) }));
           if (url.pathname === '/api/sketch') return send(res, 200, await workspace.saveSketch(data.name, data.sketch, data.hash || null));
           if (url.pathname === '/api/backup') return send(res, 200, await workspace.backup(data.id));
-          if (url.pathname === '/api/compile') return send(res, 200, startCompile());
+          if (url.pathname === '/api/compile') return send(res, 200, startCompile({ wait: data.wait === true }));
         }
         return send(res, 404, { error: 'Unknown studio action' });
       }
@@ -306,19 +365,27 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
       const bytes = await fs.readFile(file);
       const headers = { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
       headers['Content-Security-Policy'] = url.pathname.startsWith('/game/')
-        ? `sandbox allow-scripts allow-same-origin allow-forms allow-modals; frame-ancestors 'self' http://${address}`
-        : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`;
+        ? `sandbox allow-scripts allow-same-origin allow-forms allow-modals; frame-ancestors 'self' http://${address}${ancestors ? ` ${ancestors}` : ''}`
+        : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors ${ancestors || "'none'"}`;
       res.writeHead(200, headers);
       res.end(bytes);
-    } catch (error) { send(res, error.code === 'ENOENT' ? 404 : 400, { error: error.message }); }
+    } catch (error) { send(res, error.status || (error.code === 'ENOENT' ? 404 : 400), { error: error.message }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
-  return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => { if (job && job.child) job.child.kill(); server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); } };
+  return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => {
+    // Stop the compiler and its whole group (SIGTERM, then SIGKILL after the grace), and wait until the group
+    // is empty. Then wait (at most 5 s, for a compile still queued for the lock) for its run to release the lock.
+    closing = true;
+    await job?.group?.stop();
+    await settle(job?.done, 5000);
+    server.closeAllConnections();
+    await new Promise((resolve) => server.close(resolve));
+  } };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const at = (flag) => { const i = process.argv.indexOf(flag); return i < 0 ? null : process.argv[i + 1]; };
-  const app = await createUiStudio({ ...(at('--project') ? { root: path.resolve(at('--project')) } : {}), port: Number(at('--port') || process.env.UI_STUDIO_PORT || 4319) });
+  const app = await createUiStudio({ ...(at('--project') ? { root: path.resolve(at('--project')) } : {}), port: Number(at('--port') || process.env.UI_STUDIO_PORT || 4319), frameAncestors: at('--frame-ancestor') ? [at('--frame-ancestor')] : [] });
   console.log(`AshenSpire UI Studio: ${app.url}`);
   const close = async () => { await app.close(); process.exit(0); };
   process.on('SIGINT', close); process.on('SIGTERM', close);
