@@ -28,7 +28,8 @@ lands, is countered, or trades with its opponent.
   +2 or +3.
 - Weapon: dagger +2. Other weapons are TBD.
 - Range, attack-type, skill and initiative mods are TBD.
-- Momentum runs from -3 to +3 (see Momentum).
+- Momentum: the player adds M, the enemy adds -M, where M is the shared
+  momentum value (see Momentum).
 
 The table of values lives in `speed-mods.csv`. The total is computed by
 `actionSpeed()` in `resolver.mjs`.
@@ -65,13 +66,47 @@ The table of values lives in `speed-mods.csv`. The total is computed by
 
 ## Momentum
 
-- Runs from -3 to +3. Clamped by the resolver.
-- Rises when certain cards are played back to back (combo pairs, TBD list).
-- Rises when the player correctly counters an enemy card.
-- Placeholder rule used by `resolveRound()`: +1 for a correct counter or a
-  listed combo pair, -1 when the player's card is countered.
-- Per-card versus per-round application and decay are open (see Open
-  questions).
+Momentum is one shared tug-of-war value, M. It is clamped to -3..+3. Every
+fight starts at M = 0.
+
+- The player side holds M. The enemy side holds -M.
+- A gain for one side is the same loss for the other.
+- Each side's momentum adds to that side's action speed: the player adds M,
+  the enemy adds -M.
+- Most successful actions move M by 1 toward the actor. Some card types and
+  card tags move it by more on success.
+
+### Owner's trace (2026-10-11)
+
+| Step | What happens                                | M  | Player | Enemy |
+|------|---------------------------------------------|----|--------|-------|
+| 0    | Fight start                                 | 0  | 0      | 0     |
+| 1    | Player's Strike hits first                  | +1 | +1     | -1    |
+| 2    | Enemy counters the next attack successfully | 0  | 0      | 0     |
+| 3    | Enemy succeeds again                        | -1 | -1     | +1    |
+
+### Worked speed example (shared momentum)
+
+The player side is at +1, so the enemy side is at -1.
+
+    Player: dagger +2, heavy armor -3, Strike base 1, momentum +1
+            = 2 - 3 + 1 + 1 = +1
+    Enemy:  momentum -1 (the other half of the same M = +1)
+
+### Placeholder rules
+
+These are placeholders until the owner answers (see Open questions g to m).
+
+- **Success means:** a landed hit, a counter that triggers, or a fully
+  absorbed hit (Block >= damage). A miss or an interruption is not a success,
+  and it does not move M on its own.
+- **When M updates:** right after each pair resolves, in resolution order. A
+  later pair in the same round uses the updated M.
+- **Size of the move:** a card's `momentumGain` (default 1) applies on
+  success. A tag can add to it.
+- **Multiple enemies:** one M between the player side and the enemy side.
+- **Between rounds:** M persists within a fight, with no decay. It resets to
+  0 at fight start.
 
 ## Hit roll
 
@@ -100,14 +135,14 @@ silent. They are placeholders for testing the shape, not decisions.
 - One player card per enemy slot. A second card on a paired slot is rejected.
 - An enemy slot with no player card is unpaired and has no effect.
 - Perception only tags events as visible. It does not gate targeting.
-- Momentum: +1 for a correct counter, +1 for a listed combo pair played back
-  to back, -1 when a player card is countered.
+- Momentum: one shared value, updated per pair. See the Momentum section for
+  the placeholder rules.
 
 ## Open questions
 
-a. The owner's worked example says dagger +2, heavy -3, strike base 1,
-   momentum +1 totals "+4". By the stated table it totals +1. Reaching +4
-   would need armor +0. Which is meant?
+a. Resolved by the owner's 2026-10-11 correction. Momentum is shared, so the
+   player at +1 means the enemy at -1. The example is dagger +2, heavy armor
+   -3, Strike 1, momentum +1, total +1. The earlier "+4" reading is withdrawn.
 
 b. Is momentum applied per card or per round, and how does it decay?
 
@@ -118,3 +153,14 @@ d. What happens to an unpaired enemy action?
 e. What do perception thresholds reveal?
 
 f. Does this replace the current Evade charges?
+g. What counts as a success? (Placeholder: a landed hit, a triggered counter,
+   or a fully absorbed hit.)
+h. Does a whiff hand momentum to the other side?
+i. Does momentum update mid-round or at round end? (Placeholder: after each
+   pair, in resolution order.)
+j. With several enemies, is momentum per pairing or per side? (Placeholder:
+   one shared M between the two sides.)
+k. Does momentum decay between rounds? (Placeholder: no decay within a fight.)
+l. At +3 or -3, does a further success do anything extra?
+m. Does the full +-3 speed swing (a 6-point gap between sides at the cap) feel
+   too strong next to base speeds of 1 to 3?
