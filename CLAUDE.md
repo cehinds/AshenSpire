@@ -42,7 +42,9 @@ to CI artifacts, not the tree*).
 This is the standing policy for every session: the main session manages,
 coordinates and reviews; workers do the work. Scoped implementation, searches
 and test runs go to the `ashen-worker` agent (`.claude/agents/`); risky diffs
-go to `ashen-reviewer`. Models track the newest release of each tier: workers
+go to `ashen-reviewer`. Every agent works in very small steps, one self-contained
+commit per step, pushed as soon as it is made so reviewers review each commit as it
+lands (owner, 2026-10-11). Models track the newest release of each tier: workers
 run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
 on the newest Opus (Opus 5.5 today). Agent files pin the tier aliases
 (`model: haiku` / `model: opus`), which resolve to the newest model. When a new
