@@ -743,3 +743,24 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
   Dawn Cantor {The first Dawn Rite removal each turn also grants 3 Block. Effects in nodeEffects.json: triggers on statusRemoved; ops block.}
   Bearer of Burdens {The first negative status newly applied to you by an enemy each turn restores 1 Mana. Effects in nodeEffects.json: triggers on statusApplied; ops restoreMana.}
   Sepulchral Promise {Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Emberjaw Token {What Emberjaw Token confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Cracked War Anvil {What Cracked War Anvil confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Cinderbound Crown {What Cinderbound Crown confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Moonwell Lens {What Moonwell Lens confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.}
+  Nightglass Rosary {What Nightglass Rosary confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops restoreMana.}
+  Fragment of the Third Sky {What Fragment of the Third Sky confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.}
+  Whisperglass Die {What Whisperglass Die confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Purse of Borrowed Shadows {What Purse of Borrowed Shadows confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardDiscarded; ops block.}
+  Ember Alms Bowl {What Ember Alms Bowl confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops block.}
+  Ossuary Prayer Wheel {What Ossuary Prayer Wheel confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops restoreMana.}
+  Companion {What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it.}
+    Hollow Squire {A squire without a knight raises a shield before you. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+    Ember Hound {A hound of banked coals bites at your foes. Effects in nodeEffects.json: triggers on playerTurnStart; ops damage.}
+  Sigil {What a sigil confers while it sits in a slot of an equipped armament: a branch, not a tag; each sigil's own node sits under it.}
+    Ember Sigil {An ember set in steel warms a guard before the first blow. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+    Thorn Sigil {A thorn set in steel opens the first wound of a fight. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+    Tide Sigil {A tide set in steel brings a card back with every fifth one played. Effects in nodeEffects.json: triggers on cardPlayed; ops draw.}
+    Hearth Sigil {A hearth set in steel turns every mending into a guard. Effects in nodeEffects.json: triggers on healed; ops block.}
+    Sigil of the Last Vigil {A legendary vigil: a guard rises at the start of a fight you enter already wounded. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+    Pyre Sigil {A legendary pyre: every card you burn away raises a guard. Effects in nodeEffects.json: triggers on cardExhausted; ops block.}
+    Gravelight Sigil {A legendary gravelight: a fallen foe mends you while you stand wounded. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
