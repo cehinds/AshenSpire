@@ -3,10 +3,43 @@
 // leave descendants behind after the leader exits; they keep the step's work, and any lock
 // the step holds, until they exit too.
 
+import fs from 'node:fs';
+
+/** How long a stopping group gets after SIGTERM before it is SIGKILLed. */
+export const STOP_GRACE_MS = 5000;
+/** How long stopGroup waits after the SIGKILL before it resolves anyway (zombies left behind). */
+export const KILL_WAIT_MS = 2000;
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** True while any process is still in group `pgid`. EPERM counts as alive. */
-export function groupAlive(pgid, kill = process.kill) {
+/**
+ * Linux only: the /proc entries whose process group is `pgid`, as { pid, state }. State is the
+ * one-letter /proc state; Z is an unreaped zombie. Null when /proc cannot be read.
+ */
+export function procGroupMembers(pgid, { readdir = fs.readdirSync, readFile = fs.readFileSync } = {}) {
+  let names;
+  try { names = readdir('/proc'); } catch { return null; }
+  const members = [];
+  for (const name of names) {
+    if (!/^\d+$/.test(name)) continue;
+    let stat;
+    try { stat = readFile(`/proc/${name}/stat`, 'utf8'); } catch { continue; } // exited meanwhile
+    // "pid (comm) state ppid pgrp ..." — comm may hold spaces or parentheses, so split after the last ')'.
+    const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+    if (Number(fields[2]) === pgid) members.push({ pid: Number(name), state: fields[0] });
+  }
+  return members;
+}
+
+/**
+ * True while any process that is not a zombie is in group `pgid`. EPERM counts as alive.
+ * On Linux the members come from /proc: an unreaped zombie keeps the group id alive, so
+ * kill(-pgid, 0) would keep succeeding forever under an init that does not reap orphans.
+ * Elsewhere kill(-pgid, 0) decides.
+ */
+export function groupAlive(pgid, kill = process.kill, { platform = process.platform, members = procGroupMembers } = {}) {
+  const listed = platform === 'linux' ? members(pgid) : null;
+  if (listed) return listed.some((m) => m.state !== 'Z' && m.state !== 'X');
   try { kill(-pgid, 0); return true; } catch (error) { return error.code !== 'ESRCH'; }
 }
 
@@ -17,15 +50,25 @@ export async function waitGroupEmpty(pgid, { pollMs = 50, alive = groupAlive } =
 
 /**
  * SIGTERM the group now; if anything is still in it after graceMs, SIGKILL the group.
- * Resolves once the group is empty.
+ * Resolves once the group is empty, or killWaitMs after the SIGKILL, whichever comes first.
+ * The result says whether the group was SIGKILLed, whether anything is still alive, and which
+ * members are unreaped zombies (they cannot run or write; their parent or init has to reap them).
  */
-export async function stopGroup(pgid, { graceMs = 5000, pollMs = 50, kill = process.kill } = {}) {
+export async function stopGroup(pgid, { graceMs = STOP_GRACE_MS, killWaitMs = KILL_WAIT_MS, pollMs = 50, kill = process.kill, platform = process.platform, members = procGroupMembers } = {}) {
+  const opts = { platform, members };
   const send = (signal) => { try { kill(-pgid, signal); } catch { /* already gone */ } };
   send('SIGTERM');
   const deadline = Date.now() + graceMs;
-  let forced = false;
-  while (groupAlive(pgid, kill)) {
-    if (!forced && Date.now() >= deadline) { forced = true; send('SIGKILL'); }
+  let killedAt = null;
+  while (groupAlive(pgid, kill, opts)) {
+    const now = Date.now();
+    if (killedAt === null && now >= deadline) { killedAt = now; send('SIGKILL'); }
+    else if (killedAt !== null && now - killedAt >= killWaitMs) break;
     await delay(pollMs);
   }
+  return {
+    forced: killedAt !== null,
+    stillAlive: groupAlive(pgid, kill, opts),
+    zombies: platform === 'linux' ? (members(pgid) || []).filter((m) => m.state === 'Z').map((m) => m.pid) : [],
+  };
 }

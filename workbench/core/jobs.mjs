@@ -9,13 +9,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { tryAcquire as tryFileLock, acquire as waitFileLock, busyMessage, lockEnv } from '../../tools/lib/build-lock.mjs';
+import { STOP_GRACE_MS } from '../../tools/lib/process-tree.mjs';
 import { SCREENS, screenById, deviceById } from '../modules/review/model.mjs';
 
 export const HISTORY = 30;
 const LOG_CAP = 400 * 1024;
 const DISK_LOG_CAP = 48 * 1024;
 /** How long a stopping job's process may take to exit after SIGTERM before it is killed (SIGKILL). */
-export const STOP_GRACE_MS = 5000;
+export { STOP_GRACE_MS };
 const STOPPED = 'The Workbench stopped while this ran';
 
 const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests'].flatMap((dir) => {
