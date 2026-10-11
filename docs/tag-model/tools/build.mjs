@@ -422,6 +422,17 @@ inv.components.rows.forEach((r, i) => {
     catalogOfClass.get(c).add(get(inv.components, r, 'id'));
   }
 });
+// The classes of each selector's last compound: the element the rule styles.
+// Classes in its ancestors (".card .ctext" -> ctext) do not name its owner.
+function lastCompoundClasses(selector) {
+  const out = new Set();
+  for (const alt of selector.replace(/\[[^\]]*\]/g, '').split(/\s*[|,]\s*/)) {
+    const parts = alt.trim().split(/\s*(?:[>+~]|\s)\s*/).filter(Boolean);
+    const last = parts.length ? parts[parts.length - 1] : '';
+    for (const m of last.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) out.add(m[1]);
+  }
+  return out;
+}
 const styleCssIds = [];
 const styleRepointed = { rows: 0, distinctTargets: 0 };
 {
@@ -431,9 +442,8 @@ const styleRepointed = { rows: 0, distinctTargets: 0 };
   const targets = new Set();
   s.rows = s.rows.map((r) => {
     styleCssIds.push(r[cidI]);
-    const sel = String(r[selI]).replace(/\[[^\]]*\]/g, '');
     const owners = new Set();
-    for (const m of sel.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) for (const id of catalogOfClass.get(m[1]) || []) owners.add(id);
+    for (const c of lastCompoundClasses(String(r[selI]))) for (const id of catalogOfClass.get(c) || []) owners.add(id);
     const nr = r.slice();
     if (owners.size === 1) {
       nr[cidI] = [...owners][0];
