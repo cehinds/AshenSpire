@@ -2044,6 +2044,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // The enemy timeline shows the Enemy Turn ribbon; a player's own attack
     // holds only the hand and controls (busy()).
     const setPacing = on => { if (mode === 'player') playerPacing = on; else pacing = on; };
+    // A throw before the timeline takes over (the working clone, a render)
+    // must not lock the hand for good: clear the flag, land the snapshot plainly.
+    let started = false;
+    try {
+      playPacedReceipts(next, setPacing, () => { started = true; });
+    } catch (error) {
+      console.error('[coop] paced receipts failed', error);
+      if (started) return;
+      setPacing(false);
+      snap = next;
+      if (!disposed) { try { render(); } catch (renderError) { console.error('[coop] render failed', renderError); } }
+      const queued = pendingSnaps; pendingSnaps = [];
+      for (const pending of queued) receiveSnapshot(pending);
+    }
+  }
+
+  function playPacedReceipts(next, setPacing, onStarted) {
     setPacing(true);
     // The seats' card plans (sprite effect, aura, held stance) for these
     // receipts, collected once: when the card's owner swings, or at the end
@@ -2061,6 +2078,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       || app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`);
     const entityFor = id => [...working.scene.enemies, ...working.scene.players].find(entity => entity.id === id);
     const apply = beat => {
+      if (disposed) return;
       for (const event of beat.events) {
         if (Number.isSafeInteger(event.eventIndex) && event.eventIndex >= 0)
           working.scene.combatLog = (next.scene.combatLog || []).filter(entry => entry.id <= event.eventIndex);
@@ -2157,6 +2175,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       },
       onBeatApplied: apply,
       onFlush() {
+        if (disposed) return;
         if (hasCardPlay) seatPlans();
         animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
         lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
@@ -2164,6 +2183,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         snap = next; render();
       },
     }, () => {
+      if (disposed) { setPacing(false); return; }
       if (hasCardPlay) seatPlans();
       animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
       lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
@@ -2172,16 +2192,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       snap = next;
       setPacing(false);
       render();
-      // The final render is not a new-receipt render (lastReceiptSeq already
-      // moved), so the paced receipts' overlays play here, on the final board.
       // A plan no swing played (Instant, reduced motion, a skip before that
       // seat swung) plays now, as the direct render would have.
       for (const [ownerId, plan] of plans || []) if (!playedPlans.has(ownerId)) playSeatPlan(ownerId, plan);
+      // The final render is not a new-receipt render (lastReceiptSeq already
+      // moved), so the paced receipts' overlays play here, on the final board.
       playReceiptOverlays(hasCardPlay ? effectEvents
         : decorateCombatEffects((next.scene.events || []).map(combatEffectReceipt), registries, barrierVisuals));
       const queued = pendingSnaps; pendingSnaps = [];
       for (const pending of queued) receiveSnapshot(pending);
     });
+    onStarted();
   }
 
   function banner(text, small) {

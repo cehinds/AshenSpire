@@ -81,7 +81,7 @@ test('co-op routes a new player attack through the paced timeline under the play
   assert.match(receive, /coopTimelineRoute\(sc\.events/);
   assert.match(receive, /route === 'player' && \(Number\(sc\.receiptSeq\) \|\| 0\) > lastReceiptSeq\) \{\s*paceReactionReceipts\(s, \{ mode: 'player' \}\);/,
     'only new receipts replay, through the same timeline');
-  const pace = body('paceReactionReceipts');
+  const pace = body('paceReactionReceipts') + body('playPacedReceipts');
   assert.match(pace, /mode === 'player'\) playerPacing = on; else pacing = on;/);
   assert.match(pace, /playTimeline\(events,/);
   assert.match(pace, /onBeatApplied: apply/, 'the bars apply per beat, after its numbers');
@@ -119,18 +119,29 @@ test('a paced player attack still earns its receipt overlays, played after the f
   assert.equal(coopTimelineRoute(events, ['p1']), 'player');
   const overlays = coopReceiptOverlays(decorateCombatEffects(events.map(combatEffectReceipt), registries));
   assert.deepEqual(overlays, [{ kind: 'physicalGuard', targetId: 'e1' }, { kind: 'bloodLoss', targetId: 'e1' }]);
-  const pace = body('paceReactionReceipts');
+  const pace = body('playPacedReceipts');
   const final = pace.lastIndexOf('render();');
   assert.ok(pace.indexOf('playReceiptOverlays(') > final, 'the overlays play on the final board, not a board the next render replaces');
   assert.match(body('spawnCombatFx'), /if\(hasNewReceipts\)playReceiptOverlays\(effectEvents\);/);
 });
 
 test('a card plan no swing played (Instant, reduced motion, a skip) plays on the final board', () => {
-  const pace = body('paceReactionReceipts');
+  const pace = body('playPacedReceipts');
   assert.match(pace, /if \(ownerPlan\) \{ playCardEffects\(effectOwner, ownerPlan, duration\); playedPlans\.add\(effectOwner\); \}/);
   const unplayed = pace.indexOf('for (const [ownerId, plan] of plans || []) if (!playedPlans.has(ownerId)) playSeatPlan(ownerId, plan);');
   assert.ok(unplayed > pace.lastIndexOf('render();'), 'after the final render');
   assert.match(body('playSeatPlan'), /playCardEffects\(ownerId, plan, duration\);\s*stage\?\.play\(pose, duration, plan\.aura\);/,
     'the effect and the resource aura both play');
   assert.match(body('renderCombat'), /for \(const \[ownerId, plan\] of pendingAnimations\) playSeatPlan\(ownerId, plan\);/);
+});
+
+test('a throw before the timeline starts clears the flag; a torn-down screen renders nothing', () => {
+  const pace = body('paceReactionReceipts');
+  assert.match(pace, /try \{\s*playPacedReceipts\(next, setPacing, \(\) => \{ started = true; \}\);\s*\} catch \(error\) \{/);
+  assert.match(pace, /if \(started\) return;\s*setPacing\(false\);\s*snap = next;/, 'the input lock clears and the snapshot lands');
+  const timeline = body('playPacedReceipts');
+  assert.ok(timeline.lastIndexOf('onStarted();') > timeline.indexOf('playTimeline(events,'), 'started only once playTimeline owns completion');
+  assert.match(timeline, /const apply = beat => \{\s*if \(disposed\) return;/);
+  assert.match(timeline, /onFlush\(\) \{\s*if \(disposed\) return;/);
+  assert.match(timeline, /\}, \(\) => \{\s*if \(disposed\) \{ setPacing\(false\); return; \}/);
 });
