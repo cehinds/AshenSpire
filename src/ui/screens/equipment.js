@@ -1471,7 +1471,9 @@ export function mountEquipment(host, {
   }
 
   /** While a position is picked: the candidates as an Item / Status / Actions table. */
-  function pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, detail, prompt, box }) {
+  function pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, draggableRows, attachInventoryDrag }) {
+    // A redraw replaces every control; put keyboard focus back on the one pressed.
+    const redrawFocus = (selector) => { draw(); wrap.querySelector(selector)?.focus({ preventScroll: true }); };
     const all = sortEquipPickerRows(equipPickerTableRows(allRows, selectedSlot, { setIndex: picking.setIndex, loadout: run.loadout }), pickerSort);
     const shown = pickerShowAll ? all : all.filter((r) => r.fits);
     const slotLabel = (id) => (eq.slots || []).find((s) => s.id === id)?.label || id;
@@ -1481,7 +1483,7 @@ export function mountEquipment(host, {
       className: 'equip-picker-filter',
       attrs: { 'aria-pressed': String(pickerShowAll) },
     });
-    filter.addEventListener('click', () => { pickerShowAll = !pickerShowAll; draw(); });
+    filter.addEventListener('click', () => { pickerShowAll = !pickerShowAll; redrawFocus('.equip-picker-filter'); });
     root.append(filter);
     if (!shown.length) {
       root.append(flavour(`Nothing in Inventory fits ${selectedSlot.label}.`, { class: 'ep-hint' }));
@@ -1495,7 +1497,7 @@ export function mountEquipment(host, {
         pickerSort = pickerSort.column === key
           ? { column: key, direction: pickerSort.direction === 'asc' ? 'desc' : 'asc' }
           : { column: key, direction: 'asc' };
-        draw();
+        redrawFocus(`.equip-picker-sort[data-sort="${key}"]`);
       });
       return el('th', { 'aria-sort': active ? (pickerSort.direction === 'asc' ? 'ascending' : 'descending') : 'none' }, [sortButton]);
     };
@@ -1531,7 +1533,10 @@ export function mountEquipment(host, {
         className: 'equip-picker-inspect',
         attrs: { 'aria-expanded': String(open) },
       });
-      inspect.addEventListener('click', () => { selectedInventoryKey = open ? null : r.key; draw(); });
+      inspect.addEventListener('click', () => {
+        selectedInventoryKey = open ? null : r.key;
+        redrawFocus(`.equip-picker-row[data-row-key="${CSS.escape(r.key)}"] .equip-picker-inspect`);
+      });
       const actions = [inspect];
       if (r.fits && parts?.target) {
         const target = parts.target;
@@ -1550,10 +1555,16 @@ export function mountEquipment(host, {
         actions.push(act);
       }
       const actionsCell = el('td', {}, [el('div', { class: 'equip-picker-actions' }, actions)]);
-      tbody.append(el('tr', {
+      // Buttons are taps, not drag handles: keep the row's pointer capture off them.
+      actionsCell.addEventListener('pointerdown', (event) => event.stopPropagation());
+      const tr = el('tr', {
         class: `equip-picker-row is-${r.status}${open ? ' is-open' : ''}`,
         dataset: { itemId: r.id, rowKey: r.key, status: r.status },
-      }, [itemCell, statusCell, actionsCell]));
+      }, [itemCell, statusCell, actionsCell]);
+      // Mouse and pen users can still drag a row onto any named position.
+      const draggableRow = draggableRows.get(r.key);
+      if (draggableRow) attachInventoryDrag(tr, draggableRow);
+      tbody.append(tr);
       if (open) {
         openShown = true;
         const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
@@ -1831,7 +1842,7 @@ export function mountEquipment(host, {
     });
     if (selectedSlot) {
       inventoryDisclosure = null;
-      collection.append(pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, detail, prompt, box }));
+      collection.append(pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, draggableRows, attachInventoryDrag }));
       detail.remove();            // the table expands inline; no side column
       box.classList.add('is-picker-table');
     } else {
