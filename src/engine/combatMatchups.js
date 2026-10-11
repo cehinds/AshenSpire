@@ -440,6 +440,19 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
   return check('strong') ? cfg.schoolStrongMultiplier : 1;
 }
 
+/** A Smash that breaks the target's last Guard. Reported even when the hit killed the target. */
+export function completeGuardBreak(ctx, source, target, carrier, receipt) {
+  if (!(receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0)) return;
+  const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
+  // The break is reported even with no bonus, and even when this hit killed
+  // the target: Guard broke all the same. A dead target takes no bonus Poise.
+  ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: Math.max(0, number(amount)) });
+  if (amount > 0 && target?.alive) {
+    ctx.enqueue?.({ effect: { op: 'poiseDamage', amount }, source, owner: source, target,
+      card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
+  }
+}
+
 /** Root finalizes only after all direct contacts, pressure, and impact. */
 export function completeTacticalAction(ctx, source, target, carrier, receipt, options = {}) {
   if (!receipt || receipt.completed) return [];
@@ -453,16 +466,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     queue.push(action);
     if (ctx.reactionRulesVersion !== 1) ctx.enqueue?.(action);
   };
-  if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0) {
-    const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
-    // The break is reported even with no bonus, and even when this hit killed
-    // the target: Guard broke all the same. A dead target takes no bonus Poise.
-    ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: Math.max(0, number(amount)) });
-    if (amount > 0 && target?.alive) {
-      ctx.enqueue?.({ effect: { op: 'poiseDamage', amount }, source, owner: source, target,
-        card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
-    }
-  }
+  completeGuardBreak(ctx, source, target, carrier, receipt);
   const counter = receipt.counter;
   const stillPrepared = counter && target?.combatCounter?.serial === counter.serial;
   const blocked = restrictions(ctx, target, options).counterDisabled || receipt.counterDisabledAtStart;
