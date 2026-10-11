@@ -340,8 +340,9 @@ exactly one tag, and no live id is mapped by two tags. Parity and reverse
 differences are listed but do not change the verdict. Tests:
 `node --test docs/tag-model/tools/compile.test.mjs`.
 
-**Current result:** NOT lossless. 250 used live ids unmapped, 0 collisions,
-71 of 448 live ids mapped. This line is copied by hand from
+**Current result:** lossless. 448 of 448 live ids mapped, 0 collisions, 73
+parity differences (listed under *Open: round-trip differences* in
+`DECISIONS.md`). This line is copied by hand from
 `docs/tag-model/compile-report.md` at the commit that last changed it. The
 report is the source of truth; if the two disagree, the report wins and this
 line is stale.

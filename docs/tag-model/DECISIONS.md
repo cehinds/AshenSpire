@@ -249,3 +249,90 @@ Formula, relation and value keys follow the README conventions.
 - **Decision:** Fight speed is being reworked on its own branch to `dev`. This
   folder does not change it.
 - **Tables changed:** none.
+
+## Open: round-trip differences
+
+Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag
+through `liveId`, with no collisions. The compile report still lists 73 field
+differences (section 3 of `compile-report.md`), down from 197: 108 were chip
+fields the model left empty, and they now carry the live glyph and colour. The
+rest are real disagreements between the live tree and the model. The model
+keeps its placement and wording until the owner decides. A tag with both a
+label and a parent difference is counted in both clusters below.
+
+**Labels, casing only (14).** The model shows display case; nodes.csv holds the
+identifier. Owner to say whether the model label should match nodes.csv exactly
+or keep display case.
+- `card.cost.mana`, `card.cost.stamina`, `card.type.curse`, `card.type.power`,
+  `card.type.skill`, `card.upgrade.upgraded`, `card.keyword.ethereal`,
+  `card.keyword.exhaust`, `card.keyword.innate`, `card.keyword.retain`,
+  `card.keyword.unplayable`, `meta.combat.damage`, `meta.combat.damage.magic`,
+  `meta.combat.damage.physical`.
+
+**Labels, different word (10).** Owner to say which name is the game's.
+- `meta.combat.damage.magic.divine` (model Divine, live Holy; `damage:sacred`).
+- `meta.combat.damage.magic.frost` (model Frost, live Cold; `damage:frost`).
+- `meta.combat.damage.physical.pierce` (model Pierce, live Piercing; `damage:piercing`).
+- `meta.combat.skill.spellcraft.necrotic` (model Necrotic, live Decay; `school:decay`).
+- `meta.combat.delivery.casting` (model Casting, live Spell; `maneuver:casting`).
+- `meta.combat.skill.class-stance` (model Class stance, live Stance; `theme:stance`).
+- `meta.combat.skill.spellcraft` (model Spellcraft, live Magic school; `school`).
+- `meta.combat.stance` (model Stance, live Combat maneuver; `maneuver`).
+- `meta.combat.stance.defensive` (model Defensive, live Defend; `maneuver:defend`).
+- `card.type.status` (model Status, live statusCard).
+
+**Placement: damage types (9).** The live tree puts `damage.physical`,
+`damage.magic` and `damage.hybrid` under the `damageType` root. The model puts
+them under Damage. Owner to say which tree holds damage types. Rows:
+`meta.combat.damage.magic.{divine,fire,frost,lightning,necrotic}`,
+`meta.combat.damage.physical.{blunt,pierce,slashing}`,
+`meta.combat.damage.hybrid.force`.
+
+**Placement: card schools (13).** The live tree lists these under the `card`
+root. The model puts each under a technique, spellcraft, weapon-skill or stance
+tag. Owner to say whether a school is a card identity, a technique, or both.
+- Under technique: `meta.combat.skill.technique.{blood,guile,pierce,venom}`.
+- Under spellcraft: `meta.combat.skill.spellcraft.{divine.oath,fire.ash,fire.gorefire,force.starstone,necrotic.blight,psychic.ritual}`.
+- Under weapon-skill: `meta.combat.skill.weapon-skill.{blade,bow}`.
+- Under stance: `meta.combat.stance.defensive.block.guard`.
+
+**Placement: card keyword, type, upgrade and cost (12).** The live tree puts
+these under `lifecycle`, `classification`, `internal` and `costRoot`. The model
+puts them under `card.keyword`, `card.type`, `card.upgrade` and `card.cost`.
+Owner to say which parent each belongs to. Rows: `card.keyword.{ethereal,exhaust,innate,retain,unplayable}`,
+`card.type.{curse,power,skill,status}`, `card.upgrade.upgraded`,
+`card.cost.{mana,stamina}`.
+
+**Placement: delivery, stance and counter (3).** Owner decision 3 puts Ranged
+and Casting under delivery. The live tree puts `maneuver:ranged` and
+`maneuver:casting` under the maneuver root, which maps to the stance tag. Owner
+to confirm decision 3 against the live tree. Rows: `meta.combat.delivery.ranged`,
+`meta.combat.delivery.casting`. The live tree also puts
+`meta.combat.stance.counter.ranged-counter` under `counterMode`, not under the
+counter stance.
+
+**Placement: technique, school, class stance and roots under meta (9).**
+- `meta.combat.skill.technique` sits under Skill in the model. The live
+  `technique` root has no parent.
+- `meta.combat.skill.spellcraft` sits under Skill. The live `school` root has no
+  parent.
+- `meta.combat.skill.class-stance` sits under Skill. Live `theme:stance` is under
+  the `theme` root.
+- `meta.combat.damage`, `meta.combat.delivery` and `meta.combat.stance` sit under
+  Combat, and `meta.character.creature` under Character. Their live roots have no
+  parent. Owner to say whether the model's `meta` grouping stays.
+
+**Placement: item types and armour properties (5).**
+- `meta.character.armor` and `meta.character.weapon.off-hand.shield` sit under
+  Armor or Off-hand in the model. Live `item:armor` and `item:shield` are under
+  `itemType`.
+- `meta.character.armor.defensive-property.insulated` and `.grounded` sit under
+  Defensive property. Live `trait:insulated` and `trait:grounded` are under `trait`.
+- `meta.character.armor.defensive-property.siphon` sits under Defensive property.
+  Live `siphon` is under `property`.
+
+**Not counted here.** Three live roots have a bare name that is also the last
+segment of another id, so no bare id has a unique key. They are new top-level
+tags with the suffix `Root`: `campRoot` (camp), `presentationRoot` (presentation)
+and `costRoot` (cost). Their children sit under them. This keeps every key
+unique without adding a parity difference.
