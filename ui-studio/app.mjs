@@ -519,6 +519,8 @@ function bindChrome() {
   $('#stage-body').addEventListener('pointerdown', onPointerDown);
   $('#stage-body').addEventListener('dblclick', (e) => { const hit = e.target.dataset.hit || ''; if (hit.startsWith('box:')) { state.tab = 'selection'; renderRight(); const i = $('#right-body input[data-box-field="label"]'); if (i) { i.focus(); i.select(); } } });
   document.addEventListener('keydown', onKey);
+  // Framed by the Workbench, Ctrl+K and Ctrl+\ are its palette and preview toggle (workbench/app.mjs, onFrameMessage).
+  if (window.parent !== window) document.addEventListener('keydown', (e) => { const k = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey ? (e.key.toLowerCase() === 'k' ? 'k' : e.key === '\\' ? '\\' : '') : ''; if (k) { e.preventDefault(); window.parent.postMessage({ type: 'ashenspire-workbench-key', key: k }, '*'); } });
   window.addEventListener('beforeunload', persistDrafts);
 }
 

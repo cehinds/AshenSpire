@@ -1,7 +1,7 @@
 // workbench/app.mjs — the Workbench page: rail, tool frames, preview dock,
 // library, engine export, jobs, settings, palette, toasts and shortcuts.
 // Talks to workbench/server.mjs; DOM-free helpers live in ui/logic.mjs.
-import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables } from './ui/logic.mjs';
+import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT } from './ui/logic.mjs';
 import { icon } from './ui/icons.mjs';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -28,7 +28,7 @@ const VIEWS = [
 const KINDS = [['all', 'All'], ['studio', 'Studios'], ['editor', 'Editors'], ['viewer', 'Viewers'], ['exporter', 'Exporters'], ['qa', 'QA']];
 const saved = store.get();
 const state = {
-  session: null, tools: [], git: null, jobs: { defs: [], runs: [] }, library: null, settings: null, manifest: null,
+  session: null, tools: [], git: null, jobs: { defs: [], runs: [] }, library: null, settings: null, manifest: null, exportQ: '',
   view: VIEWS.some((v) => v.id === saved.view) || ['settings'].includes(saved.view) ? saved.view : 'home',
   dockW: Number(saved.dockW) || 460, device: DEVICES.some((d) => d.id === saved.device) ? saved.device : 'fill',
   collapsed: Boolean(saved.collapsed), auto: saved.auto !== false,
@@ -246,13 +246,13 @@ function renderHome() {
     <div class="grid grid-tools">${cards.join('')}</div>
     <div class="two-col section">
       <div><div class="section-head"><h2>Recent jobs</h2><span class="count">${state.jobs.runs.length ? `${state.jobs.runs.length} in history` : ''}</span><div class="actions"><button class="btn btn-sm btn-ghost" type="button" data-go="jobs">All jobs</button></div></div>
-        <div class="card">${runs.length ? `<ul class="rows">${runs.map((r) => `<li class="row"><span class="dot ${r.status}"></span><div class="row-main"><div class="row-title">${esc(r.label)}</div><div class="row-sub">${esc(r.status)} · ${esc(ago(r.startedAt))}${r.durationMs != null ? ` · ${esc(duration(r.durationMs))}` : ''}</div></div><button class="btn btn-sm btn-ghost" type="button" data-run="${esc(r.id)}"${r.status === 'running' ? ' disabled' : ''}>${icon('restart')}Run again</button></li>`).join('')}</ul>` : emptyState({ iconName: 'checks', title: 'No jobs run yet', body: 'Run a build or the tool tests from Build &amp; Checks, or use a quick action.' })}</div></div>
+        <div class="card">${runs.length ? `<ul class="rows">${runs.map((r) => `<li class="row"><span class="dot ${r.status}"></span><div class="row-main"><div class="row-title">${esc(r.label)}</div><div class="row-sub">${esc(r.status)} · ${esc(ago(r.startedAt))}${r.durationMs != null ? ` · ${esc(duration(r.durationMs))}` : ''}</div></div><button class="btn btn-sm btn-ghost" type="button" data-run="${esc(r.id)}"${r.status === 'running' ? ' disabled' : jobOff(r.id)}>${icon('restart')}Run again</button></li>`).join('')}</ul>` : emptyState({ iconName: 'checks', title: 'No jobs run yet', body: 'Run a build or the tool tests from Build &amp; Checks, or use a quick action.' })}</div></div>
       <div><div class="section-head"><h2>Quick actions</h2></div>
         <div class="card" style="padding:16px"><div class="quick">
           <button class="btn" type="button" data-run="tool-tests">${icon('play')}Run tool tests</button>
           <button class="btn" type="button" data-run="content-build">${icon('play')}Content build</button>
           <button class="btn" type="button" data-run="config-build">${icon('play')}Config build</button>
-          <button class="btn" type="button" data-run="engine-export">${icon('cube')}Engine export</button>
+          <button class="btn" type="button" data-run="engine-export"${jobOff('engine-export')}>${icon('cube')}Engine export</button>
           <button class="btn" type="button" data-action="reload-preview">${icon('reload')}Reload preview</button>
           <button class="btn" type="button" data-action="toggle-dock">${icon('dock')}${state.collapsed ? 'Show' : 'Hide'} preview</button>
           <button class="btn" type="button" data-action="help">${icon('keyboard')}Shortcuts</button>
@@ -490,36 +490,54 @@ function initSplitter() {
 // Engine export
 // ---------------------------------------------------------------------------
 async function loadManifest() { try { state.manifest = await api('export/manifest'); } catch (e) { state.manifest = { error: e.message }; } if (state.view === 'export') renderExport(); }
+/** ` disabled title="…"` for a job whose script is not in this checkout (the engine exporter on older branches). */
+function jobOff(id) { const d = state.jobs.defs.find((x) => x.id === id); return d && !d.available ? ` disabled title="${esc(d.note)}"` : ''; }
+function filterExport() {
+  const q = state.exportQ.trim().toLowerCase(); let shown = 0;
+  $$('#view-export tbody tr').forEach((tr) => { const hit = !q || tr.dataset.name.includes(q); tr.hidden = !hit; shown += hit; });
+  const c = $('#export-shown'); if (c) c.textContent = q ? `· ${shown} shown` : '';
+}
 function renderExport() {
   const def = state.jobs.defs.find((d) => d.id === 'engine-export');
   const run = state.jobs.runs.find((r) => r.id === 'engine-export');
   const running = run && run.status === 'running';
   const m = state.manifest;
   const tables = m && m.manifest ? manifestTables(m.manifest) : [];
-  const link = (p) => p ? `<a href="/export/${esc(p.replace(/^\/+/, '').replace(/^build\/engine-export\//, ''))}" target="_blank" rel="noopener">${esc(p.split('/').pop())}</a>` : '<span class="faint">—</span>';
+  const sum = m && m.manifest ? manifestSummary(m.manifest) : null;
+  // Manifest paths are relative to the export folder; /export/ serves that folder read-only.
+  const link = (p, label) => p ? `<a href="/export/${esc(p.replace(/^\/+/, '').replace(/^build\/engine-export\//, '').split('/').map(encodeURIComponent).join('/'))}" target="_blank" rel="noopener">${esc(label || p.split('/').pop())}</a>` : '<span class="faint">—</span>';
   let body;
   if (!m) body = emptyState({ kind: 'is-wait', iconName: 'cube', title: 'Reading the export…' });
   else if (m.error) body = emptyState({ kind: 'is-error', iconName: 'error', title: 'The manifest could not be read', body: esc(m.error) });
   else if (!m.exists) body = emptyState({ iconName: 'cube', title: 'No export yet', body: def && !def.available ? esc(def.note) : 'Run the export to write JSON tables and their schemas to <code>build/engine-export/</code>.', actions: def && def.available ? `<button class="btn btn-primary" type="button" data-run="engine-export"${running ? ' disabled' : ''}>${icon('play')}Run export</button>` : '' });
   else if (!tables.length) body = emptyState({ iconName: 'warn', title: 'The manifest lists no tables', body: 'build/engine-export/manifest.json was found but names no tables.', actions: '<a class="btn" href="/export/manifest.json" target="_blank" rel="noopener">Open manifest.json</a>' });
-  else body = `<div class="table-wrap"><table class="table"><thead><tr><th>Table</th><th class="num">Rows</th><th>Schema</th><th>Data</th></tr></thead><tbody>${tables.map((t) => `<tr><td><b>${esc(t.name)}</b>${t.description ? `<div class="faint">${esc(t.description)}</div>` : ''}</td><td class="num">${t.rows ?? '—'}</td><td>${link(t.schema)}</td><td>${link(t.json)}</td></tr>`).join('')}</tbody></table></div>`;
+  else body = `<div class="table-wrap export-tables"><table class="table"><thead><tr><th>Table</th><th class="num">Rows</th><th>Schema</th><th>Data</th></tr></thead><tbody>${tables.map((t) => `<tr data-name="${esc(t.name.toLowerCase())}"><td><b>${esc(t.name)}</b>${t.description ? `<div class="faint">${esc(t.description)}</div>` : ''}${t.omitted ? ` <span class="faint" title="Functions cannot be exported; the manifest lists their paths in omittedFunctions">· ${t.omitted} function${t.omitted === 1 ? '' : 's'} left out</span>` : ''}</td><td class="num">${t.rows ?? '—'}</td><td>${link(t.schema, 'schema')}</td><td>${link(t.json, 'json')}</td></tr>`).join('')}</tbody></table></div>`;
+  const facts = sum && tables.length ? [
+    sum.version && `v${esc(sum.version)}`, sum.buildOrdinal != null && `build ${esc(sum.buildOrdinal)}`, sum.gitSha && `<code>${esc(sum.gitSha)}</code>`,
+    `${sum.rows.toLocaleString()} rows`, `${sum.config} config`, `${sum.art} art files`,
+  ].filter(Boolean).join(' · ') : '';
   $('#view-export').innerHTML = `<div class="page">
     <div class="page-head"><div><h1>Engine Export</h1><p>Game data as JSON tables with JSON Schemas, for importing into Unity or Unreal. Written to <code>build/engine-export/</code> (not committed).</p></div>
-      <div class="actions"><button class="btn" type="button" data-action="reload-manifest">${icon('reload')}Refresh</button>${running ? `<button class="btn btn-danger" type="button" data-cancel="${esc(run.runId)}">${icon('stop')}Cancel</button>` : `<button class="btn btn-primary" type="button" data-run="engine-export"${def && !def.available ? ' disabled title="The exporter is not in this checkout"' : ''}>${icon('play')}Run export</button>`}</div></div>
+      <div class="actions"><button class="btn" type="button" data-action="reload-manifest">${icon('reload')}Refresh</button>${running ? `<button class="btn btn-danger" type="button" data-cancel="${esc(run.runId)}">${icon('stop')}Cancel</button>` : `<button class="btn btn-primary" type="button" data-run="engine-export"${jobOff('engine-export')}>${icon('play')}Run export</button>`}</div></div>
     ${def && !def.available ? `<p class="note" style="margin-bottom:16px">${icon('warn', 'kind-icon')} ${esc(def.note)}</p>` : ''}
     ${run ? `<p class="muted" style="margin-bottom:12px">Last run: <b class="run-status ${run.status}">${esc(run.status)}</b> ${esc(ago(run.startedAt))}${run.durationMs != null ? ` · ${esc(duration(run.durationMs))}` : ''}${run.message ? ` — ${esc(run.message)}` : ''} · <button class="link-btn" type="button" data-showrun="${esc(run.runId)}">Show log</button></p>` : ''}
-    <div class="section-head"><h2>Tables</h2><span class="count">${tables.length ? `${tables.length} tables${m.modified ? ` · exported ${esc(ago(m.modified))}` : ''}` : ''}</span>${m && m.exists ? '<div class="actions"><a class="btn btn-sm btn-ghost" href="/export/manifest.json" target="_blank" rel="noopener">manifest.json</a></div>' : ''}</div>
+    ${sum && sum.format && !sum.known ? `<p class="note" style="margin-bottom:16px">${icon('warn', 'kind-icon')} manifest.json says format <code>${esc(sum.format)}</code>; this page reads <code>${esc(EXPORT_FORMAT)}</code>, so some columns may be empty.</p>` : ''}
+    <div class="section-head"><h2>Tables</h2><span class="count">${tables.length ? `${tables.length} tables${m.modified ? ` · exported ${esc(ago(m.modified))}` : ''}` : ''}</span><span class="count" id="export-shown"></span>${m && m.exists ? `<div class="actions">${tables.length ? `<div class="search-wrap">${icon('search', 'search-icon')}<input class="input input-search" id="export-q" type="search" placeholder="Filter tables…" aria-label="Filter the exported tables" value="${esc(state.exportQ)}"></div>` : ''}<a class="btn btn-sm btn-ghost" href="/export/manifest.json" target="_blank" rel="noopener">manifest.json</a></div>` : ''}</div>
+    ${facts ? `<p class="faint export-facts">${facts}</p>` : ''}
     <div class="card">${body}</div>
     <div class="section"><div class="section-head"><h2>Importing into an engine</h2><div class="actions"><button class="btn btn-sm" type="button" data-doc="docs/ENGINE-EXPORT.md">${icon('doc')}Read docs/ENGINE-EXPORT.md</button></div></div>
-      <div class="card"><div class="howto"><h3>Unity</h3><ol><li>Copy <code>build/engine-export/</code> into your project under <code>Assets/StreamingAssets/AshenSpire/</code>.</li><li>Read each table with <code>JsonUtility</code> or Newtonsoft.Json into classes shaped by its <code>.schema.json</code>.</li><li>Re-run the export after content changes; the manifest lists every table and row count.</li></ol></div>
-      <div class="howto"><h3>Unreal</h3><ol><li>Create a <code>USTRUCT</code> deriving from <code>FTableRowBase</code> whose fields match the table's schema.</li><li>Import the table's JSON as a Data Table (Content Browser → Import, choose the struct).</li><li>Use <code>Reimport</code> after each export to pick up changes.</li></ol></div></div>
+      <div class="card"><div class="howto"><h3>Unity</h3><ol><li>Copy <code>docs/engine-export/unity/AshenSpireTable.cs</code> into a runtime folder and <code>AshenSpireExportImporter.cs</code> into an <code>Editor/</code> folder.</li><li>Run <b>AshenSpire → Import Export Folder…</b> and pick <code>build/engine-export/</code>: one <code>AshenSpireTable</code> asset per table.</li><li>Or copy the folder to <code>Assets/StreamingAssets/AshenSpire/</code> and read the JSON at runtime. Each row's key is its <code>Name</code>.</li></ol></div>
+      <div class="howto"><h3>Unreal</h3><ol><li>Create a <code>USTRUCT</code> deriving from <code>FTableRowBase</code> whose fields match the table's schema (<code>Name</code> is the row name, not a field).</li><li>Drag <code>tables/&lt;id&gt;.json</code> into the Content Browser and choose the struct, or use the Python importer in the docs.</li><li>Reimport after each export to pick up changes.</li></ol></div></div>
     </div></div>`;
+  const q = $('#export-q'); if (q) { q.oninput = (ev) => { state.exportQ = ev.target.value; filterExport(); }; filterExport(); }
 }
 
 // ---------------------------------------------------------------------------
 // Jobs
 // ---------------------------------------------------------------------------
 async function runJob(id) {
+  const def = state.jobs.defs.find((d) => d.id === id);
+  if (def && !def.available) return toast({ kind: 'warn', title: `${def.label} is not available`, detail: def.note });
   try { const run = await api('jobs', { id }); onJob(run); toast({ title: `${run.label} started`, record: false, timeout: 2000 }); }
   catch (e) { toast({ kind: e.message.includes('already running') ? 'warn' : 'error', title: `Could not start ${id}`, detail: e.message }); }
 }
@@ -567,9 +585,9 @@ function renderJobs() {
   const scroll = $('#view-jobs').scrollTop;
   $('#view-jobs').innerHTML = `<div class="page">
     <div class="page-head"><div><h1>Build &amp; Checks</h1><p>Allowlisted jobs only. One run per job at a time; output streams live; the last 30 runs are kept.</p></div></div>
-    <div class="grid grid-jobs">${defs.map((d) => { const last = lastOf(d.id); const running = last && last.status === 'running'; return `<article class="card job-card"><h3><span class="dot ${last ? last.status : ''}"></span>${esc(d.label)}</h3><p>${esc(d.description)}</p>${d.commands.map((c) => `<code>${esc(c.length > 140 ? `${c.slice(0, 140)}…` : c)}</code>`).join('')}${!d.available ? `<div class="note">${esc(d.note)}</div>` : ''}<div class="foot"><span class="faint">${last ? `${esc(last.status)} ${esc(ago(last.endedAt || last.startedAt))}${last.durationMs != null ? ` · ${esc(duration(last.durationMs))}` : ''}` : 'Never run'}</span><span class="spacer"></span>${running ? `<button class="btn btn-sm btn-danger" type="button" data-cancel="${esc(last.runId)}">${icon('stop')}Cancel</button>` : `<button class="btn btn-sm btn-primary" type="button" data-run="${esc(d.id)}">${icon('play')}Run</button>`}</div></article>`; }).join('')}</div>
+    <div class="grid grid-jobs">${defs.map((d) => { const last = lastOf(d.id); const running = last && last.status === 'running'; return `<article class="card job-card"><h3><span class="dot ${last ? last.status : ''}"></span>${esc(d.label)}</h3><p>${esc(d.description)}</p>${d.commands.map((c) => `<code>${esc(c.length > 140 ? `${c.slice(0, 140)}…` : c)}</code>`).join('')}${!d.available ? `<div class="note">${esc(d.note)}</div>` : ''}<div class="foot"><span class="faint">${last ? `${esc(last.status)} ${esc(ago(last.endedAt || last.startedAt))}${last.durationMs != null ? ` · ${esc(duration(last.durationMs))}` : ''}` : 'Never run'}</span><span class="spacer"></span>${running ? `<button class="btn btn-sm btn-danger" type="button" data-cancel="${esc(last.runId)}">${icon('stop')}Cancel</button>` : `<button class="btn btn-sm btn-primary" type="button" data-run="${esc(d.id)}"${jobOff(d.id)}>${icon('play')}Run</button>`}</div></article>`; }).join('')}</div>
     <div class="section"><div class="section-head"><h2>History</h2><span class="count">${runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'}` : ''}</span></div>
-      <div class="card">${runs.length ? `<ol class="runs">${runs.map((r) => { const open = state.openRuns.has(r.runId); return `<li class="run${open ? ' open' : ''}"><div class="run-head"><button class="run-toggle" type="button" data-toggle-run="${esc(r.runId)}" aria-expanded="${open}">${icon('chevron', 'chev')}<span class="dot ${r.status}"></span><span class="run-status ${r.status}">${esc(r.status)}</span><span class="run-label">${esc(r.label)}</span><span class="run-meta">${esc(new Date(r.startedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}${r.durationMs != null ? ` · ${esc(duration(r.durationMs))}` : ''}${r.message ? ` · ${esc(r.message)}` : ''}</span></button>${r.status === 'running' ? `<button class="btn btn-sm btn-danger" type="button" data-cancel="${esc(r.runId)}">${icon('stop')}Cancel</button>` : `<button class="btn btn-sm btn-ghost" type="button" data-run="${esc(r.id)}">${icon('restart')}Re-run</button>`}</div>${open ? `<pre class="run-log" data-log="${esc(r.runId)}" tabindex="0" aria-label="${esc(r.label)} log">${colorLog(state.logs.get(r.runId) || (r.status === 'running' ? 'Waiting for output…' : '(no output)'))}</pre>` : ''}</li>`; }).join('')}</ol>` : emptyState({ iconName: 'checks', title: 'No runs yet', body: 'Run a job above; its output streams here.' })}</div></div></div>`;
+      <div class="card">${runs.length ? `<ol class="runs">${runs.map((r) => { const open = state.openRuns.has(r.runId); return `<li class="run${open ? ' open' : ''}"><div class="run-head"><button class="run-toggle" type="button" data-toggle-run="${esc(r.runId)}" aria-expanded="${open}">${icon('chevron', 'chev')}<span class="dot ${r.status}"></span><span class="run-status ${r.status}">${esc(r.status)}</span><span class="run-label">${esc(r.label)}</span><span class="run-meta">${esc(new Date(r.startedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}${r.durationMs != null ? ` · ${esc(duration(r.durationMs))}` : ''}${r.message ? ` · ${esc(r.message)}` : ''}</span></button>${r.status === 'running' ? `<button class="btn btn-sm btn-danger" type="button" data-cancel="${esc(r.runId)}">${icon('stop')}Cancel</button>` : `<button class="btn btn-sm btn-ghost" type="button" data-run="${esc(r.id)}"${jobOff(r.id)}>${icon('restart')}Re-run</button>`}</div>${open ? `<pre class="run-log" data-log="${esc(r.runId)}" tabindex="0" aria-label="${esc(r.label)} log">${colorLog(state.logs.get(r.runId) || (r.status === 'running' ? 'Waiting for output…' : '(no output)'))}</pre>` : ''}</li>`; }).join('')}</ol>` : emptyState({ iconName: 'checks', title: 'No runs yet', body: 'Run a job above; its output streams here.' })}</div></div></div>`;
   $('#view-jobs').scrollTop = scroll;
 }
 
@@ -661,14 +679,14 @@ const SHORTCUTS = [
 function openHelp() {
   closeOverlays(); lastFocus = document.activeElement;
   const k = (keys) => keys.map((x) => `<kbd>${esc(x)}</kbd>`).join('');
-  $('#help-body').innerHTML = `<div class="keys">${SHORTCUTS.map(([title, ...rows]) => `<h3>${esc(title)}</h3>${rows.map(([keys, what]) => `<div class="key-row"><span>${esc(what)}</span><span class="key-keys">${k(keys)}</span></div>`).join('')}`).join('')}<p class="keys-note">On macOS use ⌘ for Ctrl. Alt+1…7 also switches tools where the browser keeps Ctrl+1…7 for its tabs. Shortcuts work while focus is in the Workbench chrome; click the rail or header first when you are typing inside a tool.</p></div>`;
+  $('#help-body').innerHTML = `<div class="keys">${SHORTCUTS.map(([title, ...rows]) => `<h3>${esc(title)}</h3>${rows.map(([keys, what]) => `<div class="key-row"><span>${esc(what)}</span><span class="key-keys">${k(keys)}</span></div>`).join('')}`).join('')}<p class="keys-note">On macOS use ⌘ for Ctrl. Alt+1…7 also switches tools where the browser keeps Ctrl+1…7 for its tabs. Ctrl+K and Ctrl+\\ also work inside the three studios; every other key there is the studio's own, so click the rail or header first for the rest.</p></div>`;
   $('#help').hidden = false; $('#help [data-close]').focus();
 }
 async function openDoc(rel) {
   closeOverlays(); lastFocus = document.activeElement;
   $('#docview-title').textContent = rel; $('#docview-text').textContent = 'Loading…'; $('#docview').hidden = false; $('#docview [data-close]').focus();
   try { $('#docview-text').textContent = (await api(`doc?path=${encodeURIComponent(rel)}`)).text; }
-  catch (e) { $('#docview-text').textContent = `${rel} is not available yet (${e.message}).\n\nThe engine exporter and its guide are being added on another branch; the steps on the Engine Export page cover the import.`; }
+  catch (e) { $('#docview-text').textContent = `${rel} could not be read (${e.message}).\n\nThe steps on the Engine Export page cover the import.`; }
 }
 function showGitFiles() {
   const g = state.git; if (!g || !g.repo) return;
@@ -730,6 +748,34 @@ function onKey(ev) {
   if (!typing && !mod && ev.key === '?') { ev.preventDefault(); openHelp(); }
 }
 
+// Shortcuts typed inside a tool's frame. A same-origin frame is hooked
+// directly: Ctrl+K, Ctrl+\ and ? (outside a text field) reach the Workbench.
+// The studios run on their own ports (cross-origin), so they post
+// {type: 'ashenspire-workbench-key', key: 'k' | '\\'} instead; a message is
+// honoured only from a frame of this page, and carries no data back.
+const FRAME_KEY = 'ashenspire-workbench-key';
+function frameShortcut(key) {
+  if (key === 'k') { if ($('#palette').hidden) openPalette(); else closePalette(); }
+  else if (key === '\\') toggleDock();
+  else if (key === '?' && !anyOverlay()) openHelp();
+}
+function hookFrame(f) {
+  let doc = null; try { doc = f.contentDocument; } catch { /* cross-origin */ }
+  if (!doc || doc.__workbenchKeys) return;
+  doc.__workbenchKeys = true;
+  doc.addEventListener('keydown', (ev) => {
+    const mod = ev.ctrlKey || ev.metaKey;
+    const typing = ev.target.closest && ev.target.closest('input, textarea, select, [contenteditable="true"]');
+    const key = mod && !ev.altKey && !ev.shiftKey && ev.key.toLowerCase() === 'k' ? 'k' : mod && ev.key === '\\' ? '\\' : !mod && !typing && ev.key === '?' ? '?' : '';
+    if (key) { ev.preventDefault(); frameShortcut(key); }
+  }, true);
+}
+function onFrameMessage(ev) {
+  if (!ev.data || ev.data.type !== FRAME_KEY || !['k', '\\'].includes(ev.data.key)) return;
+  if (!$$('iframe').some((f) => f.contentWindow === ev.source)) return;
+  frameShortcut(ev.data.key);
+}
+
 let events = null; let banner = null;
 function connectEvents() {
   events = new EventSource(`/api/events?token=${encodeURIComponent(state.session.token)}`);
@@ -775,6 +821,8 @@ async function boot() {
   renderRail(); renderNotes(); renderDock();
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey, true);
+  document.addEventListener('load', (ev) => { if (ev.target.tagName === 'IFRAME') hookFrame(ev.target); }, true);
+  window.addEventListener('message', onFrameMessage);
   $('#open-palette').onclick = openPalette;
   $('#open-help').onclick = openHelp;
   $('#open-notes').onclick = () => ($('#notes').hidden ? openNotes() : closeOverlays());

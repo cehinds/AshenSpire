@@ -11,6 +11,7 @@ import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS } from '../core/jobs.mjs';
 import { buildsFor } from '../core/watch.mjs';
+import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -112,6 +113,46 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
   const saved = JSON.parse(await fs.readFile(path.join(root, '.wb-state/jobs.json'), 'utf8'));
   assert.equal(saved.length, 2);
   assert.match(saved[0].log, /built/);
+});
+
+test('engine export: the real exporter runs as a job, and its manifest and files are served read-only', async (t) => {
+  const root = await project(t);
+  // The job runs tools/engine-export.mjs in the project. Plant a shim that runs
+  // the repository's real exporter, narrowed to two tables so it stays fast.
+  const exporter = path.resolve(HERE, '../../tools/engine-export.mjs');
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/engine-export.mjs'), `import { spawnSync } from 'node:child_process';
+const r = spawnSync(process.execPath, [${JSON.stringify(exporter)}, ...process.argv.slice(2), '--only', 'content.cards,content.enemies'], { stdio: 'inherit' });
+process.exit(r.status ?? 1);\n`);
+  const { app, call } = await boot(t, root);
+  const { defs } = await (await call('/api/jobs')).json();
+  assert.equal(defs.find((d) => d.id === 'engine-export').available, true);
+  const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
+  for (let i = 0; i < 600 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 50));
+  const run = await (await call(`/api/jobs/runs/${started.runId}`)).json();
+  assert.equal(run.status, 'passed', run.log);
+  assert.match(run.log, /engine-export: OK — 2 tables/);
+
+  const body = await (await call('/api/export/manifest')).json();
+  assert.equal(body.exists, true);
+  const m = body.manifest;
+  assert.equal(m.format, EXPORT_FORMAT);
+  const tables = manifestTables(m);
+  assert.deepEqual(tables.map((x) => x.name), ['content.cards', 'content.enemies']);
+  assert.equal(manifestSummary(m).known, true);
+  for (const table of tables) {
+    assert.ok(table.rows > 0, `${table.name} has rows`);
+    const data = await fetch(`${app.url}/export/${table.json}`);
+    assert.equal(data.status, 200, table.json);
+    assert.match(data.headers.get('content-type'), /json/);
+    assert.match(data.headers.get('content-security-policy'), /sandbox/);
+    assert.equal((await data.json()).length, table.rows);
+    const schema = await fetch(`${app.url}/export/${table.schema}`);
+    assert.equal(schema.status, 200, table.schema);
+    assert.equal((await schema.json()).type, 'array');
+  }
+  assert.equal((await fetch(`${app.url}/export/manifest.json`)).status, 200);
+  for (const p of ['../package.json', '%2e%2e/package.json', 'tables/../../x.json']) assert.notEqual((await fetch(`${app.url}/export/${p}`)).status, 200, p);
 });
 
 test('/api/previews lists root preview pages with their titles', async (t) => {

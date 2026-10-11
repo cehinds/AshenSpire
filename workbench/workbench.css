@@ -230,6 +230,11 @@ table.table { width: 100%; border-collapse: collapse; }
 .table th { border-top: 0; color: var(--as-text-faint); font-size: var(--as-text-xs); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; background: var(--as-bg-panel); position: sticky; top: 0; }
 .table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .table tbody tr:hover { background: var(--as-bg-raised); }
+.export-facts { margin: calc(-1 * var(--as-space-2)) 0 var(--as-space-3); font-size: var(--as-text-sm); }
+.export-tables { max-height: min(62vh, 640px); }
+.export-tables td a { margin-right: var(--as-space-2); }
+.section-head .actions .input-search { height: 28px; width: 200px; }
+.section-head .actions .search-wrap .search-icon { top: 7px; }
 .howto { padding: var(--as-space-4) var(--as-space-5); }
 .howto h3 { font-size: var(--as-text-md); margin-bottom: 6px; }
 .howto ol { margin: 0; padding-left: 20px; color: var(--as-text-dim); }
@@ -241,7 +246,7 @@ table.table { width: 100%; border-collapse: collapse; }
 .job-card { padding: var(--as-space-4); display: flex; flex-direction: column; gap: 8px; }
 .job-card h3 { font-size: var(--as-text-md); display: flex; align-items: center; gap: 8px; }
 .job-card p { color: var(--as-text-dim); font-size: var(--as-text-sm); flex: 1; }
-.job-card code { color: var(--as-text-faint); font-size: 10.5px; word-break: break-all; }
+.job-card code { color: var(--as-text-faint); font-size: 10.5px; overflow-wrap: anywhere; }
 .job-card .foot { display: flex; align-items: center; gap: 8px; }
 .note { color: var(--as-warn); font-size: var(--as-text-sm); }
 .runs { list-style: none; margin: 0; padding: 0; }
