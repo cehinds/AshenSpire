@@ -891,8 +891,20 @@ test('DOM: a known attack card shows its stance type on the row and in the inspe
     assert.equal(stance.dataset.stance, 'offensive');
     row.querySelector('.deck-editor-main').click();
     row.querySelector('.deck-editor-inline-inspect').click();
-    const inspected = editor.root.querySelector('.deck-editor-inspector .deck-editor-reading .deck-editor-stance');
-    assert.equal(inspected?.textContent, 'Offensive', 'the inspector names the same stance');
+    const reason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
+    // A refusal shown on the reason line (here the Strike is already in the
+    // deck) takes the line alone; the stance rides it only without one.
+    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck.', 'a refusal is shown alone');
+    assert.equal(editor.root.querySelector('.deck-editor-inspector .deck-editor-reading .deck-editor-stance'), null, 'no stance label over the card face');
+    // A library tile with no refusal names the stance on the reason line.
+    const clean = deckEditorModel({ registries: REG, run, settings: {} }).collection.find(tile => tile.addable && !tile.refusal && tile.equipmentEligible !== false);
+    assert.ok(clean, 'a library card can be added');
+    const cleanTile = editor.root.querySelector(`.deck-editor-tile[data-key="${clean.key}"]`);
+    cleanTile.querySelector('.deck-editor-main').click();
+    cleanTile.querySelector('.deck-editor-inline-inspect').click();
+    const cleanReason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
+    const cleanStance = cleanTile.querySelector('.deck-editor-stance').textContent;
+    assert.ok(cleanReason?.textContent.endsWith(` · ${cleanStance}`), 'the stance follows the count on the reason line');
     editor.close();
   });
 });

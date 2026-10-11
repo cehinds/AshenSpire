@@ -269,7 +269,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }), 'selected-remove');
     removeNode.addEventListener('click', () => { if (removeOn) remove(removeId); });
     const reasons = [!addOn ? (addTile?.refusal || '') : '', !removeOn ? (row.lockSentence || '') : ''].filter(Boolean);
-    const reasonText = reasons.join(' ') || row.countText || (source === 'deck' ? t(`deckEditor.source.${row.source}`) : '');
+    const base = row.countText || (source === 'deck' ? t(`deckEditor.source.${row.source}`) : '');
+    // The stance rides the selected-reason line, not the card's reading block
+    // (where the oversized card face covered it). A shown refusal stays alone.
+    const reasonText = reasons.length ? reasons.join(' ') : [base, stanceName(row)].filter(Boolean).join(' · ');
     animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
     section.append(
@@ -280,7 +283,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           el('small', { text: t('deckEditor.art.basicOnly') }),
         ]),
         animationPreview.root,
-        ...[stanceNode(row)].filter(Boolean),
         ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
           el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
         ])),
@@ -339,9 +341,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
   // The card's stance type (SPEC §14.1): offensive, defensive, casting, counter
   // or sweep. A card with none shows no label.
+  // A card no stance classifies (a Prepare, a Power) is Neutral, not unlabelled.
+  const stanceKey = (row) => stanceForCard(resolveCard(registries, row.ref)) ?? 'neutral';
+  const stanceName = (row) => t(`deckEditor.stance.${stanceKey(row)}`);
   const stanceNode = (row) => {
-    // A card no stance classifies (a Prepare, a Power) is Neutral, not unlabelled.
-    const stance = stanceForCard(resolveCard(registries, row.ref)) ?? 'neutral';
+    const stance = stanceKey(row);
     return stance ? el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) }) : null;
   };
   const cardFace = (row, extra, grouped = false, illustrated = !grouped) => [
