@@ -10,6 +10,7 @@ import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as B from '../modules/layout/battlefield-model.mjs';
 import { combatFormation } from '../../src/ui/models/CombatFormationModel.js';
+import { applyFormationGroups } from '../../src/model/formationGroups.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const realText = readFileSync(join(ROOT, B.PRESETS_FILE), 'utf8');
@@ -81,6 +82,61 @@ test('the geometry equals the game\'s combatFormation slot by slot, with and wit
     eq(c.x, real.x, `grouped ${c.cell} x`);
     eq(c.ground, real.ground, `grouped ${c.cell} ground`);
     eq(c.characterScale, real.characterScale || 1, `grouped ${c.cell} scale`);
+  }
+});
+
+// The matrix the geometry must match: every preset (the slants included), 2 and 3 columns, 1 to 6 rows,
+// the file's own groups and a set that covers every group kind, at full and half size.
+const MIXED_GROUPS = [
+  { id: 'player-column-2', name: 'c3', members: [], x: 3, y: -2, scale: 1.2 },
+  { id: 'enemy-row-1', name: 'r2', members: [], x: -4, y: 1.5, scale: 1 },
+  { id: 'cell-player:0:2', name: 'A3', members: [], x: 2.5, y: 4, scale: 0.8 },
+  { id: 'row-2', name: 'both', members: [], x: 1, y: -1, scale: 1 },
+  { id: 'enemy', name: 'enemy', members: [], x: -2, y: 0.5, scale: 1 },
+  { id: 'all', name: 'all', members: [], x: 0.5, y: 0, scale: 1 },
+];
+const matrix = [];
+for (const preset of B.PRESETS) for (const columns of [2, 3]) for (const rows of [1, 2, 3, 6]) for (const groups of ['file', 'mixed']) for (const scale of [1, 0.5]) matrix.push({ preset, columns, rows, groups, scale });
+
+test('the geometry equals the game\'s combatFormation for every slant preset, 2 and 3 columns and 1 to 6 rows', () => {
+  const parts = B.parsePresets(realText);
+  for (const { preset, columns, rows, groups, scale } of matrix) {
+    const base = presentationOf(parts, '2x2');
+    const list = groups === 'file' ? base.formationGroups : MIXED_GROUPS;
+    const presentation = { ...base, formationPreset: preset, formationColumns: columns, formationRows: rows, formationGroups: list };
+    const width = W * scale, height = H * scale;
+    const plan = combatFormation({ width, height, presentation: { ...presentation, formationGroups: JSON.stringify(list) }, friends: [], enemies: [] });
+    const cells = B.battlefieldGeometry(presentation, { width, height });
+    const tag = `${preset} ${columns}x${rows} ${groups} ${scale}`;
+    assert.equal(cells.length, plan.cells.length, `${tag}: slot count`);
+    for (const c of cells) {
+      const real = plan.cells.find((p) => p.cell === c.cell);
+      assert.ok(real, `${tag}: ${c.cell} exists in the game`);
+      eq(c.x, real.x, `${tag} ${c.cell} x`);
+      eq(c.ground, real.ground, `${tag} ${c.cell} ground`);
+      eq(c.characterScale, real.characterScale || 1, `${tag} ${c.cell} scale`);
+    }
+  }
+});
+
+test('the model\'s group translation equals the game\'s applyFormationGroups on the same ungrouped cells', () => {
+  const parts = B.parsePresets(realText);
+  for (const { preset, columns, rows, groups, scale } of matrix) {
+    const base = presentationOf(parts, '2x2');
+    const list = groups === 'file' ? base.formationGroups : MIXED_GROUPS;
+    const presentation = { ...base, formationPreset: preset, formationColumns: columns, formationRows: rows, formationGroups: list };
+    const width = W * scale, height = H * scale;
+    // The game's cells before any group, then its own applyFormationGroups over them.
+    const ungrouped = combatFormation({ width, height, presentation: { ...presentation, formationGroups: '[]' }, friends: [], enemies: [] }).cells;
+    applyFormationGroups(ungrouped, JSON.stringify(list), width, height);
+    const cells = B.battlefieldGeometry(presentation, { width, height });
+    const tag = `${preset} ${columns}x${rows} ${groups} ${scale}`;
+    for (const c of cells) {
+      const real = ungrouped.find((p) => p.cell === c.cell);
+      eq(c.x, real.x, `${tag} ${c.cell} x`);
+      eq(c.ground, real.ground, `${tag} ${c.cell} ground`);
+      eq(c.characterScale, real.characterScale || 1, `${tag} ${c.cell} scale`);
+    }
   }
 });
 
