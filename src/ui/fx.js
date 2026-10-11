@@ -601,6 +601,7 @@ export function animateEvents(events, ctx, done) {
   pending = events.filter((e) => visualFor(e) !== null);
   const skip = () => {
     flushRequested = true;
+    clearCallouts(ctx.layer);
   };
   addEventListener('pointerdown', skip, { once: true, capture: true });
 
@@ -616,10 +617,14 @@ export function animateEvents(events, ctx, done) {
       if (done) done();
       return;
     }
-    cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
-    const fn = visualFor(pending[i]);
-    if (fn) fn(ctx);
-    i++;
+    // A callout-only event (CRITICAL before its hit, say) plays in the same
+    // tick as its neighbour, so callouts add no step to the fast path.
+    do {
+      cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
+      const fn = visualFor(pending[i]);
+      if (fn) fn(ctx);
+      i++;
+    } while (i < pending.length && (calloutOnly(pending[i - 1]) || calloutOnly(pending[i])));
     setTimeout(step, COMBAT_TIMING.instantStepMs);
   };
   step();
@@ -790,6 +795,7 @@ export function playTimeline(events, ctx, done) {
     removeEventListener('pointerdown', skip, { capture: true });
     flushed = true;
     clearHeldFigures();
+    clearCallouts(ctx.layer);
     // An unheld hit reaction (no hit-stop) is not in heldFigures; a skip ends it too.
     for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
     clearCombatEffects(ctx.layer);
@@ -979,12 +985,20 @@ export function playTimeline(events, ctx, done) {
     };
     schedule(() => {
       // A beat with nothing to draw at impact still reaches its impact frame.
-      if (actorEl && !visuals.length) markContact('impact');
+      if (actorEl && visualEvents.every(calloutOnly)) markContact('impact');
       let vi = 0;
       const stepV = () => {
         if (finished) return;
         if (flushed) {
           nextBeat();
+          return;
+        }
+        // A callout-only event (impact order: COUNTERED on a counter beat)
+        // shows at once and takes no step, so the hit after it is not delayed.
+        if (vi < visuals.length && calloutOnly(visualEvents[vi])) {
+          traceBeat('callout', visualEvents[vi].type);
+          safe(() => visuals[vi++](ctx));
+          stepV();
           return;
         }
         if (vi < visuals.length) {
@@ -1026,7 +1040,7 @@ export function playTimeline(events, ctx, done) {
         // reaction plays, then (reactionMs later) its numbers, in event order;
         // the bars follow the last number.
         const reactions = sequential
-          ? rest.filter((e) => partsOf.get(e)?.reaction || partsOf.get(e)?.numbers)
+          ? rest.filter((e) => partsOf.get(e)?.reaction || partsOf.get(e)?.numbers || partsOf.get(e)?.callout)
           : [];
         const react = () => {
           if (finished) return;
@@ -1062,7 +1076,19 @@ export function playTimeline(events, ctx, done) {
               if (ri >= reactions.length) schedule(applyBeat, 0);
               else schedule(stepR, speed.stepMs);
             };
+            // The callout shows with the reaction and waits for nothing.
+            const said = () => {
+              if (!parts.callout) return;
+              traceBeat('callout', event.type);
+              safe(() => parts.callout(ctx));
+            };
+            if (!parts.reaction && !parts.numbers) {
+              said();
+              stepR();
+              return;
+            }
             if (!parts.reaction) {
+              said();
               numbers();
               return;
             }
@@ -1070,6 +1096,7 @@ export function playTimeline(events, ctx, done) {
             // reaction plays unheld (SPEC §7.4, sequential).
             traceBeat('reaction', event.type);
             safe(() => parts.reaction(ctx));
+            said();
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
               else schedule(stepR, speed.reactionMs);
@@ -1242,8 +1269,10 @@ export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
 // impact frame; `reaction` is the defender's (hurt flash and pose, recoil,
 // shake, stagger wobble); `numbers` are the floats. Every part is optional.
 // visualFor plays all three at once, in that order, for every other path.
+// `callout` is the on-character word (callout above): it plays with the
+// reaction, and adds no wait of its own.
 function visualPartsFor(e, beatKind) {
-  const base = baseVisualParts(e, beatKind), effect = combatEffectForEvent(e);
+  const base = withCallout(baseVisualParts(e, beatKind), e), effect = combatEffectForEvent(e);
   if (!effect) return base;
   const playEffect = (ctx) => {
     const anchor = ctx.anchorFor(effect.targetId);
@@ -1253,12 +1282,45 @@ function visualPartsFor(e, beatKind) {
   return { ...base, contact: contact ? (ctx) => { contact(ctx); playEffect(ctx); } : playEffect };
 }
 
+/**
+ * calloutForEvent(e) → { kind, targetId } | null — the word an event earns
+ * and the fighter it shows over (co-op screens pass seat ids as targetId).
+ */
+export function calloutForEvent(e = {}) {
+  let kind = null;
+  switch (e.type) {
+    case 'enemyStaggered':
+    case 'playerStaggered': kind = 'staggered'; break;
+    case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
+    case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
+    case 'attackEvaded': kind = 'evaded'; break;
+    case 'combatAvoidanceResolved': if (e.avoided && e.evade?.success) kind = 'evaded'; break;
+    case 'critHit': kind = 'critical'; break;
+    case 'combatGuardBroken': kind = 'guardBreak'; break;
+    default: break;
+  }
+  return kind && e.targetId != null ? { kind, targetId: e.targetId } : null;
+}
+
+function withCallout(parts, e) {
+  const said = calloutForEvent(e);
+  if (!said) return parts;
+  return { ...parts, callout: (ctx) => callout(ctx.layer, ctx.anchorFor(said.targetId), said.targetId, said.kind) };
+}
+
+// An event whose only visual is its callout: it never takes a step of its own.
+function calloutOnly(e) {
+  const parts = visualPartsFor(e);
+  return !!parts && Object.keys(parts).every((key) => key === 'callout' || !parts[key]);
+}
+
 function visualFor(e, beatKind) {
   const parts = visualPartsFor(e, beatKind);
   if (!parts) return null;
   return (ctx) => {
     parts.contact?.(ctx);
     parts.reaction?.(ctx);
+    parts.callout?.(ctx);
     parts.numbers?.(ctx);
   };
 }
@@ -1386,8 +1448,8 @@ function baseVisualParts(e, beatKind) {
       return null; // poise fills speak through enemyStaggered below
     case 'ratingImpact':
       if (e.breaks) return {
+        // Its word (STAGGERED / DISRUPTED) is the on-character callout.
         reaction: (ctx) => {
-          banner(ctx.layer, e.label.toUpperCase());
           flash(ctx.anchorFor(e.targetId), 'wobble', 600);
         },
       };
@@ -1403,7 +1465,7 @@ function baseVisualParts(e, beatKind) {
       return {
         reaction: (ctx) => {
           sfx.play('stagger');
-          banner(ctx.layer, 'STAGGERED');
+          // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
           spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
