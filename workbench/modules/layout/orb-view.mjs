@@ -266,11 +266,7 @@ export function createOrbView(root, host) {
   async function load() {
     try {
       const r = await host.api(`files/read?path=${encodeURIComponent(O.FOOTER_FILE)}`);
-      const data = O.parseFooter(r.text);
-      // Saving writes the file back in this form; a file in another form would show a diff that no edit made.
-      if (O.serializeFooter(data) !== r.text) throw Error(`${O.FOOTER_FILE} is not in the form Layout Studio saves; edit it in the file`);
-      const problems = O.footerProblems(data);
-      if (problems.length) throw Error(`${O.FOOTER_FILE}: ${problems[0]}`);
+      const data = O.readFooterText(r.text);
       st.data = data; st.original = r.text; st.hash = r.hash;
       ensureCanvas();
       rebuild({ fit: true });
@@ -316,7 +312,13 @@ export function createOrbView(root, host) {
         paintAll();
         return { missing: true };
       }
-      st.data = O.parseFooter(r.text); st.original = r.text; st.hash = r.hash;
+      // The same checks as load(), before any state changes: a file that fails them leaves the draft, its history and the canvas as they were.
+      let data;
+      try { data = O.readFooterText(r.text); } catch (err) {
+        host.toast({ kind: 'error', title: `Could not reload ${O.FOOTER_FILE}`, detail: err.message });
+        return undefined;
+      }
+      st.data = data; st.original = r.text; st.hash = r.hash;
       host.history.clear();
       rebuild();
       return undefined;
