@@ -719,14 +719,25 @@ const traceBeat = (step, detail) => {
   if (Array.isArray(dbg.trace)) dbg.trace.push([globalThis.performance?.now?.() ?? Date.now(), step, detail]);
 };
 
-// Is this figure out of its stance — mid-action, or showing a pose other than
-// its rest? A figure with no stage, or one that reports neither, is in stance.
-function outOfStance(stage) {
-  if (!stage) return false;
+// Is this figure in its stance? 'out' — mid-action or in a pose other than its
+// rest; 'in'; or 'unknown' for a figure that cannot tell. The stage contracts
+// differ, so each is read through the fields it actually exposes:
+//   alternativeCardStage  presentation.action (an action is playing)
+//   paintedOutfits        presentation.pose / .rest / .transition
+//   enemyPoseStage        stage.pose / stage.rest getters
+//   expansion stages      settle() / play() only → 'unknown'
+export function stanceState(stage) {
+  if (!stage) return 'in';
   const presentation = stage.presentation;
-  if (presentation && typeof presentation === 'object') return !!presentation.action;
-  if (typeof stage.pose !== 'string') return false;
-  return stage.pose !== (typeof stage.rest === 'string' ? stage.rest : 'idle');
+  if (presentation && typeof presentation === 'object') {
+    if (Object.hasOwn(presentation, 'action')) return presentation.action ? 'out' : 'in';
+    if (presentation.transition) return 'out';
+    if (typeof presentation.pose === 'string' && typeof presentation.rest === 'string') {
+      return presentation.pose === presentation.rest ? 'in' : 'out';
+    }
+  }
+  if (typeof stage.pose === 'string') return stage.pose === (typeof stage.rest === 'string' ? stage.rest : 'idle') ? 'in' : 'out';
+  return 'unknown';
 }
 
 export function playTimeline(events, ctx, done) {
@@ -898,10 +909,14 @@ export function playTimeline(events, ctx, done) {
     let stanceLead = false;
     if (sequential && actorEl) {
       const stage = stageFor(actorEl);
-      if (outOfStance(stage)) {
+      const state = stanceState(stage);
+      if (state === 'out') {
         safe(() => stage.settle());
         traceBeat('stance');
         stanceLead = speed.stanceLeadMs > 0;
+      } else if (state === 'unknown' && typeof stage.settle === 'function') {
+        // A stage that cannot report its pose still settles, but nothing waits for it.
+        safe(() => stage.settle());
       }
     }
     const playBeat = () => {
