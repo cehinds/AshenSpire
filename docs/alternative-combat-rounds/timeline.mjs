@@ -778,10 +778,11 @@ export function adaptEnemyQueues(queues, playerQueue, rng, options = {}) {
     if (id === 'player') continue;
     const chance = adaptChance(get(wis, id, 0));
     if (chance <= 0 || q.length <= ADAPT_INDEX) continue;
-    const roll = rollUnit(rng);
-    if (!(roll < chance)) continue;
+    // An enemy the player does not attack draws no rng, so it cannot shift another enemy's roll.
     const attacked = (playerQueue ?? []).some((c) => c && c.kind === 'attack' && c.target === id);
     if (!attacked) continue;
+    const roll = rollUnit(rng);
+    if (!(roll < chance)) continue;
     const old = q[ADAPT_INDEX];
     q[ADAPT_INDEX] = {
       id: `${old.id}:counter`,

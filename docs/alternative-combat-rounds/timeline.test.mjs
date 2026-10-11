@@ -987,3 +987,29 @@ test('only the enemies that changed are listed, and the player queue is never ad
   assert.deepEqual(out.queues.player, queues.player);
   assert.deepEqual(out.queues.wolf, fourCards());
 });
+
+test('an un-attacked WIS enemy draws no rng, so it cannot shift another enemy\'s adapt roll', () => {
+  // Codex review, 2026-10-11. The first draw (0.1) is below both chances, so whichever enemy
+  // draws first decides. Only the goblin is attacked, so the wolf must not take that draw.
+  const wis = { goblin: 2, wolf: 3 };
+  const jabGoblin = [atk('jab', 'goblin', 5)];
+  const alone = adaptEnemyQueues({ goblin: fourCards() }, jabGoblin, rngThen([0.1], 0.99), { wis });
+  const wolfFirst = adaptEnemyQueues(
+    { wolf: fourCards(), goblin: fourCards() },
+    jabGoblin,
+    rngThen([0.1], 0.99),
+    { wis },
+  );
+  const goblinFirst = adaptEnemyQueues(
+    { goblin: fourCards(), wolf: fourCards() },
+    jabGoblin,
+    rngThen([0.1], 0.99),
+    { wis },
+  );
+  assert.deepEqual(alone.changed, ['goblin']);
+  assert.deepEqual(wolfFirst.changed, ['goblin']);
+  assert.deepEqual(goblinFirst.changed, ['goblin']);
+  assert.deepEqual(wolfFirst.queues.goblin, alone.queues.goblin);
+  assert.deepEqual(goblinFirst.queues.goblin, alone.queues.goblin);
+  assert.deepEqual(wolfFirst.queues.wolf, fourCards());
+});
