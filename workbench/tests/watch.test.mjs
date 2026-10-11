@@ -157,7 +157,10 @@ test('on macOS a new folder names the files under it; a folder already there, an
     'a folder already watched names nothing: a save inside it must not reload its siblings, and replayed events must not either');
   assert.deepEqual(recursiveEventPaths(abs, 'config/a.json', 'darwin', fake()), [path.join(abs, 'config/a.json')], 'a file event, even for a file now gone');
   assert.deepEqual(recursiveEventPaths(abs, 'content', 'darwin', fake({ files: [path.join(abs, 'content')] })), [path.join(abs, 'content')], 'a real file named like its folder is kept');
-  assert.deepEqual(recursiveEventPaths(abs, 'config', 'win32', fake({ dirs: [config] })), [config], 'Windows keeps the folder event as it is');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'win32', fake({ dirs: [config], known: [config] })), [], 'Windows also reports a folder when a file in it is saved: a known one names nothing');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'win32', fake({ dirs: [config], under: { [config]: [tokens] } })), [tokens], 'on Windows a folder moved in names its files');
+  assert.deepEqual(recursiveEventPaths(abs, 'content', 'win32', fake({})), [path.join(abs, 'content')], 'only macOS reports the watched folder under its own name');
+  assert.deepEqual(recursiveEventPaths(abs, 'config', 'freebsd', fake({ dirs: [config] })), [config], 'other platforms keep the event as it is');
   assert.deepEqual(recursiveEventPaths(abs, null, 'darwin', fake()), []);
 });
 

@@ -22,7 +22,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 async function project(t) {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-test-')));
-  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  // Windows can hold the folder for a moment after a watcher or child closes: retry the removal.
+  t.after(() => fs.rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
   for (const d of ['content/source', 'content/config/ui', 'src', 'styles']) await fs.mkdir(path.join(root, d), { recursive: true });
   await fs.writeFile(path.join(root, 'styles/main.css'), 'body{}\n');
   await fs.writeFile(path.join(root, 'cards-preview.html'), '<!doctype html><title>Cards &amp; more</title>');
@@ -967,6 +968,7 @@ for (const mode of ['watch', 'poll']) {
 }
 
 test('closing the Workbench waits for a running job to exit, then frees its slot and the lock', async (t) => {
+  if (process.platform === 'win32') return t.skip('POSIX signals: Windows stops a job with taskkill, so there is no SIGTERM to ignore (the win32 test below checks the stop)');
   const root = await project(t);
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });
   // The builder ignores SIGTERM for about 1 s, then exits. It writes 'exited' just before it exits.
@@ -989,6 +991,7 @@ test('closing the Workbench waits for a running job to exit, then frees its slot
 });
 
 test('stopAll escalates to SIGKILL after the grace period for a builder that ignores SIGTERM, and resolves after it is gone', async (t) => {
+  if (process.platform === 'win32') return t.skip('POSIX signals: Windows stops a job with taskkill, so there is no SIGTERM to ignore (the win32 test below checks the stop)');
   const root = await project(t);
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });
   await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `
@@ -1005,5 +1008,26 @@ test('stopAll escalates to SIGKILL after the grace period for a builder that ign
   await runner.stopAll({ graceMs: 200 });
   assert.ok(Date.now() - began >= 150, 'waited for the grace period before escalating');
   assert.equal(runner.active.size, 0, 'resolved only once the job slot was freed');
+  await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'the file lock is free');
+});
+
+test('on Windows, closing the Workbench ends a running job\'s builder before it resolves, and frees the lock', async (t) => {
+  if (process.platform !== 'win32') return t.skip('Windows stop path (taskkill); POSIX is covered by the two tests above');
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `
+    import fs from 'node:fs';
+    fs.writeFileSync('pid', String(process.pid));
+    setInterval(() => {}, 1000);
+  `);
+  const { app } = await boot(t, root);
+  app.jobs.start('config-build');
+  const pidFile = path.join(root, 'pid');
+  for (let i = 0; i < 200 && !(await fs.stat(pidFile).then(() => true, () => false)); i++) await new Promise((r) => setTimeout(r, 20));
+  const pid = Number(await fs.readFile(pidFile, 'utf8'));
+  await app.close();
+  const alive = () => { try { process.kill(pid, 0); return true; } catch { return false; } };
+  assert.equal(alive(), false, 'the builder is gone once close() resolves');
+  assert.equal(app.jobs.active.size, 0, 'the job slot is free');
   await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'the file lock is free');
 });

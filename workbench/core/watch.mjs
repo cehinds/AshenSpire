@@ -70,10 +70,13 @@ export function createOwnWrites() {
   };
 }
 
+/** The platforms whose recursive watch also reports folders: a save inside a folder reports the folder too. */
+const FOLDER_EVENTS = new Set(['darwin', 'win32']);
+
 /**
- * The paths a recursive watch event names. macOS (FSEvents) also reports folders,
+ * The paths a recursive watch event names. macOS (FSEvents) and Windows also report folders,
  * and reports an event on the watched folder itself under that folder's own name
- * (content/content). On darwin the self-named event names nothing. A folder that
+ * (content/content, macOS only). The self-named event names nothing. A folder that
  * was already there (`isNewFolder` false) names nothing either: its files are
  * reported one by one, and a save inside it also reports the folder. A folder new
  * since the watch began names the files under it, since a folder moved in is
@@ -84,8 +87,8 @@ export function recursiveEventPaths(abs, name, platform = process.platform, { ex
   if (!name) return [];
   const base = String(name);
   const target = path.join(abs, base);
-  if (platform !== 'darwin') return [target];
-  if (base === path.basename(abs) && !exists(target)) return []; // the watched folder itself
+  if (!FOLDER_EVENTS.has(platform)) return [target];
+  if (platform === 'darwin' && base === path.basename(abs) && !exists(target)) return []; // the watched folder itself
   if (!isDir(target)) return [target];
   return isNewFolder(target) ? filesUnder(target) : [];
 }
@@ -247,11 +250,11 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     }
   };
   function watchRecursive(abs, d) {
-    if (platform === 'darwin') foldersUnder(abs, knownFolders);
+    if (FOLDER_EVENTS.has(platform)) foldersUnder(abs, knownFolders);
     let w;
     try {
       w = fs.watch(abs, { recursive: true }, (_event, name) => {
-        if (platform === 'darwin' && name) forgetGone(abs, path.join(abs, String(name)));
+        if (FOLDER_EVENTS.has(platform) && name) forgetGone(abs, path.join(abs, String(name)));
         for (const target of recursiveEventPaths(abs, name, platform, { isNewFolder })) note(target);
       });
     } catch { return false; /* recursive watch unsupported here: poll below */ }
