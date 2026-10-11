@@ -56,10 +56,19 @@ export function createBattlefieldView(root, host) {
     layoutKey: null, deviceId: null, orientation: 'auto', freeSize: { width: 1024, height: 768 },
     canvas: null, layers: null, geo: [], size: null, vp: null, autoFit: true, fitPending: false,
     snap: host.settings.grid.snap !== false, grid: host.settings.grid.show === true,
+    /** Preview values at other player settings: drawn and never saved. */
+    preview: {},
   };
   const device = () => host.devices().find((d) => d.id === st.deviceId) || host.devices()[0];
   const viewport = () => host.viewportOf(device(), st.orientation, st.freeSize);
-  const presentation = () => (st.data && st.layoutKey ? st.data[st.layoutKey].presentation : null);
+  /** The layout's presentation as drawn: the file's values with the preview applied. */
+  const presentation = () => (st.data && st.layoutKey ? B.previewPresentation(st.data, st.layoutKey, st.preview) : null);
+  /** True when the preview differs from the file's own values: slots cannot be moved then, since the file's geometry is not the one drawn. */
+  const previewing = () => {
+    if (!st.data || !st.layoutKey) return false;
+    const stored = st.data[st.layoutKey].presentation, shown = presentation();
+    return B.PREVIEW_FIELDS.some((f) => shown[f] !== stored[f]);
+  };
   const cellOfItem = (it) => { const d = slotOf(it); return d ? st.geo.find((c) => c.side === d.side && c.row === d.row && c.column === d.column) || null : null; };
   const selectedCells = () => (st.canvas ? st.canvas.getSelection().map((id) => st.canvas.getDoc().items.find((it) => it.id === id)).map(cellOfItem).filter(Boolean) : []);
   const isDirty = () => Boolean(st.parts && st.data && B.serializePresets(st.parts, st.data) !== st.original);
@@ -119,6 +128,7 @@ export function createBattlefieldView(root, host) {
     if (st.size) parts.push(`${Math.round(st.size.width)}×${Math.round(st.size.height)} battlefield`);
     if (st.layoutKey) parts.push(`layout ${st.layoutKey}, ${st.geo.length} slots`);
     if (st.data) parts.push(isDirty() ? 'unsaved changes' : 'saved');
+    if (previewing()) parts.push('previewing player settings (not saved)');
     $('.bf-status').textContent = parts.join(' · ');
     if (host.changed) host.changed();
   }
@@ -128,14 +138,21 @@ export function createBattlefieldView(root, host) {
     const box = $('.bf-insp');
     if (!st.data || !st.layoutKey) { box.innerHTML = ''; return; }
     const pres = presentation();
-    const fields = B.FIELDS.map((f) => `<div class="lay-row"><code title="${esc(f.key)}">${esc(f.label)}</code><span><input type="number" step="1" data-bf-field="${esc(f.key)}" value="${esc(pres[f.key] ?? f.def)}"> <span class="lay-unit">${esc(f.suffix || '')}</span></span></div>`).join('');
-    const preset = `<div class="lay-row"><code title="formationPreset">Preset</code><span><select data-bf-field="formationPreset">${B.PRESETS.map((p) => `<option value="${esc(p)}"${p === pres.formationPreset ? ' selected' : ''}>${esc(p)}</option>`).join('')}</select></span></div>`;
+    const stored = st.data[st.layoutKey].presentation;
+    const previewFields = B.FIELDS.filter((f) => !B.LAYOUT_KEY_FIELDS.includes(f.key)).map((f) => `<div class="lay-row"><code title="${esc(f.key)}">${esc(f.label)}</code><span><input type="number" step="1" data-bf-preview="${esc(f.key)}" value="${esc(pres[f.key] ?? f.def)}"> <span class="lay-unit">${esc(f.suffix || '')}</span></span></div>`).join('');
+    const preset = `<div class="lay-row"><code title="formationPreset">Preset</code><span><select data-bf-preview="formationPreset">${B.PRESETS.map((p) => `<option value="${esc(p)}"${p === pres.formationPreset ? ' selected' : ''}>${esc(p)}</option>`).join('')}</select></span></div>`;
+    const preview = `<h3>Preview at player settings (not saved)</h3>
+      <p class="lay-note">The game takes these from the player's settings. Changing them shows the layout at those settings; the file is not changed.</p>
+      ${previewFields}${preset}
+      <button type="button" class="btn btn-sm btn-ghost" data-bf-preview-reset${previewing() ? '' : ' disabled'}>Reset preview to the file's values</button>`;
     const cells = selectedCells();
     let slot = '';
-    if (cells.length === 1) {
+    if (previewing()) {
+      slot = '<p class="lay-note">Reset the preview to the file\'s values to move slots.</p>';
+    } else if (cells.length === 1) {
       const c = cells[0];
       const gid = B.slotGroupId(c);
-      const g = (pres.formationGroups || []).find((x) => x && x.id === gid) || { x: 0, y: 0, scale: 1 };
+      const g = (stored.formationGroups || []).find((x) => x && x.id === gid) || { x: 0, y: 0, scale: 1 };
       slot = `<h3>Slot ${esc(c.cell)} · ${esc(c.side)}</h3>
         <div class="lay-row"><code>X (px)</code><span><input type="number" step="0.5" data-bf-slot="x" value="${round1(c.x)}"></span></div>
         <div class="lay-row"><code>Ground (px)</code><span><input type="number" step="0.5" data-bf-slot="ground" value="${round1(c.ground)}"></span></div>
@@ -148,7 +165,7 @@ export function createBattlefieldView(root, host) {
     } else {
       slot = '<p class="lay-note">Select a slot to see its position. Drag a slot, or type its position here.</p>';
     }
-    box.innerHTML = `<h3>Layout values</h3>${fields}${preset}${slot}`;
+    box.innerHTML = `<h3>Layout values</h3>${layoutKeyRowsHtml(stored)}${preview}${slot}`;
   }
 
   // ---- edits ---------------------------------------------------------
@@ -169,6 +186,7 @@ export function createBattlefieldView(root, host) {
   /** A finished canvas gesture (drag, nudge, align, distribute): each slot that moved takes its move through its group. */
   function onCanvasChange(doc, change) {
     if (!st.data) { rebuild(); return; }
+    if (previewing()) { host.toast({ kind: 'warn', title: 'Reset the preview to move slots', detail: 'The preview is not the file\'s geometry, so a move is not taken.', record: false }); rebuild(); return; }
     const moves = [];
     for (const it of doc.items) {
       const cell = cellOfItem(it);
@@ -184,13 +202,16 @@ export function createBattlefieldView(root, host) {
   function onInspectorChange(e) {
     const t = e.target;
     if (!st.data) return;
-    if (t.dataset.bfField) {
-      const value = t.dataset.bfField === 'formationPreset' ? t.value : Number(t.value);
-      try { setData(B.withField(st.data, st.layoutKey, t.dataset.bfField, value), `Set ${t.dataset.bfField}`); } catch (err) { host.toast({ kind: 'warn', title: err.message, record: false }); }
-      paintInspector();
+    if (t.dataset.bfPreview) {
+      // A preview value is drawn, never saved, and never enters the history.
+      const field = t.dataset.bfPreview;
+      try { st.preview = { ...st.preview, [field]: field === 'formationPreset' ? t.value : Number(t.value) }; B.previewPresentation(st.data, st.layoutKey, st.preview); }
+      catch (err) { host.toast({ kind: 'warn', title: err.message, record: false }); delete st.preview[field]; }
+      rebuild();
       return;
     }
     const cells = selectedCells();
+    if (previewing()) { paintInspector(); return; }
     if (t.dataset.bfSlot && cells.length === 1) {
       const c = cells[0], v = Number(t.value);
       if (!Number.isFinite(v)) { paintInspector(); return; }
@@ -213,7 +234,7 @@ export function createBattlefieldView(root, host) {
 
   function onBarChange(e) {
     const act = e.target.dataset.bf;
-    if (act === 'layout') { st.layoutKey = e.target.value; rebuild({ fit: true }); }
+    if (act === 'layout') { st.layoutKey = e.target.value; st.preview = {}; rebuild({ fit: true }); }
     else if (act === 'device') { st.deviceId = e.target.value; st.orientation = 'auto'; rebuild({ fit: true }); }
     else if (act === 'snap') { st.snap = e.target.checked; st.canvas?.setSnap(st.snap); }
     else if (act === 'grid') { st.grid = e.target.checked; st.canvas?.setGrid(st.grid); }
@@ -273,6 +294,11 @@ export function createBattlefieldView(root, host) {
     root.querySelector('.bf-bar').addEventListener('change', onBarChange);
     root.querySelector('.bf-bar').addEventListener('click', onBarClick);
     $('.bf-insp').addEventListener('change', onInspectorChange);
+    $('.bf-insp').addEventListener('click', (e) => {
+      if (!e.target.closest('[data-bf-preview-reset]') || !st.data) return;
+      st.preview = {};
+      rebuild();
+    });
   }
 
   // ---- load and the controller ----------------------------------------
@@ -326,6 +352,7 @@ export function createBattlefieldView(root, host) {
       const r = await host.api(`files/read?path=${encodeURIComponent(B.PRESETS_FILE)}`);
       const parts = B.parsePresets(r.text);
       st.parts = parts; st.data = parts.data; st.original = r.text; st.hash = r.hash;
+      st.preview = {};
       host.history.clear();
       rebuild();
     },
@@ -334,7 +361,7 @@ export function createBattlefieldView(root, host) {
     /** "Keep my version" in the conflict dialog: the draft is saved over the disk copy, so it takes the disk hash. */
     keep(path, hash) { if (path === B.PRESETS_FILE && st.parts) { st.hash = hash; paintStatus(); } },
     layoutKey: () => st.layoutKey,
-    selectLayout(key) { if (st.data && st.data[key]) { st.layoutKey = key; rebuild({ fit: true }); } },
+    selectLayout(key) { if (st.data && st.data[key]) { st.layoutKey = key; st.preview = {}; rebuild({ fit: true }); } },
     commands: () => [
       { title: 'Battlefield: fit to the page', sub: '0', run: () => st.canvas?.fit() },
       { title: 'Battlefield: align selected slots left', sub: 'Layout Studio', run: () => st.canvas?.align('left') },
@@ -346,6 +373,14 @@ export function createBattlefieldView(root, host) {
 function gameBaseOf(tools = []) {
   const game = (Array.isArray(tools) ? tools : []).find((t) => t && t.id === 'game');
   return game && game.status === 'up' && game.url ? String(game.url).replace(/\/?$/, '/') : null;
+}
+
+/** The columns and rows as read-only values: the game picks the layout by its key, so these are not inputs. */
+export function layoutKeyRowsHtml(pres) {
+  return B.LAYOUT_KEY_FIELDS.map((key) => {
+    const spec = B.FIELDS.find((f) => f.key === key);
+    return `<div class="lay-row"><code title="${esc(key)}">${esc(spec.label)}</code><span><output data-bf-field="${esc(key)}" aria-readonly="true">${esc(pres[key] ?? spec.def)}</output> <span class="lay-note">Set by the layout key</span></span></div>`;
+  }).join('');
 }
 
 const round1 = (v) => Math.round(v * 10) / 10;
