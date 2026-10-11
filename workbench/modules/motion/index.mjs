@@ -9,11 +9,12 @@
 // Save goes through the shared file service (/api/files) with a line diff to review.
 
 import { createCanvas } from '../../ui/kit/canvas.mjs';
+import { saveFailure } from '../../ui/logic.mjs';
 import {
   LIBRARY_KINDS, SPEEDS, FACINGS, SIZES, BACKGROUNDS, REF,
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty,
-  setClipFields, setAnchor, canvasDocOf, applyCanvasDoc,
+  setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -51,6 +52,7 @@ export default {
         <div class="mo-head-actions">
           <button type="button" class="btn btn-sm mo-toggle" data-overlay="lib" aria-expanded="false">Library</button>
           <button type="button" class="btn btn-sm mo-toggle" data-overlay="insp" aria-expanded="false">Inspector</button>
+          <button type="button" class="btn btn-sm btn-primary mo-review" disabled>Review and save</button>
         </div>
       </header>
       <div class="mo-body">
@@ -101,6 +103,7 @@ export default {
     const scrub = $('.mo-scrub'), timeEl = $('.mo-time'), playBtn = $('.mo-play'), loopEl = $('.mo-loop');
     const speedEl = $('.mo-speed'), bgEl = $('.mo-bg'), prevEl = $('.mo-onion-prev'), nextEl = $('.mo-onion-next');
     const classEl = $('.mo-class'), qEl = $('.mo-q'), countEl = $('.mo-count'), fileEl = $('.mo-file'), dirtyEl = $('.mo-dirty');
+    const reviewBtn = $('.mo-review');
     const scrim = $('.mo-scrim'), editEl = $('.mo-edit'), snapEl = $('.mo-snap'), gridEl = $('.mo-grid');
     let canvas = null;
 
@@ -467,9 +470,99 @@ export default {
       renderTimeline();
       renderInspector();
       if (st.mode === 'edit') syncCanvas();
+      renderDirty();
       sendView();
-      el.querySelector('.mo-review')?.toggleAttribute('disabled', !st.file || !isDirty(st.file.original, st.file.project));
     }
+
+    // ---------- review and save: the shared file service (/api/files), the same path as Layout Studio ----------
+    const dlg = document.createElement('dialog');
+    dlg.className = 'mo-dlg';
+    dlg.innerHTML = '<div class="mo-dlg-head"><h2>Review changes</h2><button type="button" class="btn btn-sm" data-dlg="close">Close</button></div><div class="mo-dlg-body"></div>';
+    root.append(dlg);
+    const dlgBody = () => dlg.querySelector('.mo-dlg-body');
+    dlg.addEventListener('click', onDlgClick);
+    dlg.addEventListener('close', () => { dlgBody().innerHTML = ''; });
+    reviewBtn.addEventListener('click', () => openReview());
+    let saving = false;
+    /** The open file's change, if its project differs from the bytes read: the same text a save would write. */
+    function dirtyChanges() {
+      const f = st.file;
+      if (!f || !isDirty(f.original, f.project)) return [];
+      return [{ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }];
+    }
+    function renderDirty() {
+      const dirty = dirtyChanges().length > 0;
+      dirtyEl.hidden = !dirty;
+      reviewBtn.disabled = !dirty;
+    }
+    function hunksHtml(d) {
+      if (!d.hunks || !d.hunks.length) return '<p class="mo-note">No line changes.</p>';
+      return d.hunks.map((h) => `<div class="mo-hunk"><div class="mo-hunk-head">@@ -${h.oldStart},${h.oldLines} +${h.newStart},${h.newLines} @@</div>${h.lines.map((l) => `<div class="mo-ln ${l.op === '+' ? 'is-add' : l.op === '-' ? 'is-del' : ''}"><span class="mo-op">${esc(l.op)}</span>${esc(l.text)}</div>`).join('')}</div>`).join('');
+    }
+    async function openReview(notice = '') {
+      const changes = dirtyChanges();
+      if (!changes.length) { ctx.toast({ kind: 'info', title: 'Nothing to save', record: false }); return; }
+      if (!dlg.open) dlg.showModal();
+      dlgBody().innerHTML = `${notice}<p class="mo-note">Building the diff…</p>`;
+      let diffs;
+      try {
+        diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })));
+      } catch (err) {
+        dlgBody().innerHTML = `${notice}<p class="mo-problems">Could not build the diff: ${esc(err.message)}</p>`;
+        return;
+      }
+      dlgBody().innerHTML = notice + diffs.map((d) => `<section class="mo-dfile"><h3>${esc(d.path)} <span class="mo-stat">+${d.added} −${d.removed}</span></h3>${hunksHtml(d)}</section>`).join('')
+        + `<div class="mo-dlg-actions"><button type="button" class="btn btn-sm" data-dlg="close">Cancel</button><button type="button" class="btn btn-sm btn-primary" data-dlg="save"${saving ? ' disabled' : ''}>Save ${changes.length} file(s)</button></div>`;
+    }
+    async function save() {
+      const changes = dirtyChanges();
+      if (!changes.length || saving) return;
+      saving = true;
+      let data;
+      try {
+        data = await ctx.api('files/save', { changes });
+      } catch (err) {
+        saving = false;
+        const failure = saveFailure(err);
+        if (failure.kind === 'problems') {
+          const list = failure.problems.map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
+          await openReview(`<div class="mo-problems"><p><strong>Nothing saved.</strong> The checks found problems:</p><ul>${list}</ul></div>`);
+        } else if (failure.kind === 'conflicts') {
+          await openReview('<div class="mo-problems is-conflict"><p><strong>Changed on disk since it was opened.</strong></p><p class="mo-note">Reload drops your edits to this file. Keep my version overwrites the change made on disk.</p><p><button type="button" class="btn btn-sm" data-dlg="reload">Reload from disk</button> <button type="button" class="btn btn-sm" data-dlg="keep">Keep my version</button></p></div>');
+        } else {
+          await openReview(`<div class="mo-problems"><p><strong>Not saved:</strong> ${esc(failure.message)}. Your edits are still here; try again.</p></div>`);
+        }
+        return;
+      }
+      saving = false;
+      const sent = new Map(changes.map((c) => [c.path, c.text]));
+      for (const saved of data.files || []) {
+        if (st.file && saved.path === st.file.path) { st.file.original = sent.get(saved.path); st.file.hash = saved.hash; }
+      }
+      dlg.close();
+      renderAll();
+      ctx.toast({ kind: 'success', title: `Saved ${(data.files || []).length} file(s)`, detail: data.backup ? `Backup ${data.backup}` : '', record: false });
+    }
+    async function onDlgClick(e) {
+      const btn = e.target.closest('[data-dlg]');
+      if (!btn || !st.file) return;
+      const act = btn.dataset.dlg;
+      if (act === 'close') { dlg.close(); return; }
+      if (act === 'save') { await save(); return; }
+      if (act === 'reload') {
+        const path = st.file.path;
+        dlg.close();
+        await openFile(path);
+        ctx.toast({ kind: 'warn', title: 'Reloaded from disk', detail: 'Your edits to this file were dropped.', record: false });
+        return;
+      }
+      if (act === 'keep') {
+        const disk = await ctx.api(`files/read?path=${encodeURIComponent(st.file.path)}`);
+        st.file.hash = disk.hash;
+        await openReview();
+      }
+    }
+    ctx.shortcuts.register('Mod+S', 'Review and save motion changes', () => { if (!dirtyChanges().length) return false; openReview(); return undefined; }, { inInput: true });
 
     function tick(now) {
       rafId = 0;

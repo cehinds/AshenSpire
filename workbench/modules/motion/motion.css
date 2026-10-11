@@ -84,3 +84,18 @@
 .mo-anchor { border: 1px solid var(--as-border, #d6dcd3); border-radius: 6px; padding: 6px 8px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .mo-anchor legend { font-size: 12px; padding: 0 4px; }
 .mo-fields input[type="number"], .mo-fields select { width: 100%; box-sizing: border-box; }
+
+/* Review and save: the diff dialog (the file service's hunks). */
+.mo-dlg { width: min(860px, 94vw); max-height: 86vh; padding: 0; border: 1px solid var(--as-border, #cfd6cc); border-radius: 10px; }
+.mo-dlg-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--as-border, #d6dcd3); }
+.mo-dlg-head h2 { margin: 0; font-size: 15px; }
+.mo-dlg-body { padding: 12px 14px; overflow: auto; max-height: calc(86vh - 56px); }
+.mo-dfile h3 { font-size: 13px; margin: 10px 0 6px; }
+.mo-stat { font-weight: 400; color: var(--as-fg-muted, #5f6b63); }
+.mo-hunk { margin-bottom: 8px; font: 12px/1.45 ui-monospace, Consolas, monospace; border: 1px solid var(--as-border, #d6dcd3); border-radius: 6px; overflow: hidden; }
+.mo-hunk-head { background: #eef2ec; padding: 2px 8px; color: var(--as-fg-muted, #5f6b63); }
+.mo-ln { white-space: pre-wrap; overflow-wrap: anywhere; padding: 0 8px; }
+.mo-ln.is-add { background: #e3f3e6; }
+.mo-ln.is-del { background: #fbe4df; }
+.mo-op { display: inline-block; width: 1em; color: var(--as-fg-muted, #5f6b63); }
+.mo-dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }

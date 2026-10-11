@@ -34,11 +34,14 @@ test('the render page draws with the game model and the painted art, not a copy'
   }
 });
 
-test('edits go through the canvas kit and one history step per change, and save nothing until reviewed', () => {
+test('edits go through the canvas kit and one history step per change, and save only from the review dialog', () => {
   const src = read('workbench/modules/motion/index.mjs');
   assert.match(src, /import \{ createCanvas \} from '\.\.\/\.\.\/ui\/kit\/canvas\.mjs'/);
   assert.match(src, /ctx\.history\.pushChange\(\{ label, undo, redo \}/);
   assert.match(src, /canvas = createCanvas\(editEl/);
-  assert.doesNotMatch(src, /files\/save/, 'no save happens until the review dialog');
+  const saves = src.match(/ctx\.api\('files\/save'/g) || [];
+  assert.equal(saves.length, 1, 'one save call, inside save()');
+  assert.match(src, /async function save\(\) \{[\s\S]*?ctx\.api\('files\/save', \{ changes \}\)/);
+  assert.match(src, /saveFailure\(err\)/, 'problems and conflicts go through the shared failure reader');
   assert.match(src, /locked: true, label: pose, data: \{ kind: 'figure', src \}/, 'the figure is a locked reference item');
 });
