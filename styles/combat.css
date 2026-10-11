@@ -1336,6 +1336,7 @@
   font: small-caps bold calc(16px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .08em;
   white-space: nowrap; color: #ead294; border-block: 1px solid #ac854b;
   background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
+  text-shadow: var(--hud-text-shadow, none);
 }
 .turn-ribbon::before { content: '‹ ✧ '; } .turn-ribbon::after { content: ' ✧ ›'; }
 /* THE VICTORY BEAT (components/victoryBeat.js): the fight's title over the
@@ -1666,7 +1667,7 @@
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand-overlay,
 :root .combat.coop[data-layout='formation'] > .hand-area > .hand { width: calc(100% - var(--combat-tools-reserve, 0px)); }
 .combat-tools .reaction-switch { display:flex; align-items:center; justify-content:space-between; gap:4px; color:white; }
-.reaction-switch, .reaction-switch-value { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.reaction-switch, .reaction-switch-value { text-shadow: var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000); }
 .reaction-switch-track { position:relative; display:flex; align-items:center; border:1px solid var(--gold); border-radius:20px; width:calc(72px / var(--ui-zoom,1)); height:calc(24px / var(--ui-zoom,1)); background:#397342; color:white; }
 .reaction-switch-value { padding-left:calc(6px / var(--ui-zoom,1)); font-size:calc(11px / var(--ui-zoom,1)); }
 .reaction-switch-thumb { position:absolute; right:calc(2px / var(--ui-zoom,1)); width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); border-radius:50%; background:var(--gold); box-shadow:0 0 0 1px #17120b; }

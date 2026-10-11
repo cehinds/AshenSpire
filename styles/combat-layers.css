@@ -116,11 +116,14 @@
 :root .combat[data-layout='formation'] .enemy .combatant-card > .nm {
   display: block !important; width: calc(104px / var(--ui-zoom,1)); height: calc(18px / var(--ui-zoom,1));
   line-height: calc(18px / var(--ui-zoom,1)); font-size: calc(11px / var(--ui-zoom,1));
-  background: #1c1812ef; border: 1px solid #a48743; border-bottom: 0; border-radius: 4px 4px 0 0;
+  background: var(--hud-panel-bg, #1c1812ef); border: 1px solid #a48743; border-bottom: 0;
+  border-radius: var(--hud-panel-radius, 4px) var(--hud-panel-radius, 4px) 0 0;
+  text-shadow: var(--hud-text-shadow, none);
 }
 :root .combat[data-layout='formation'] .enemy .combatant-card > .meters {
   width: calc(104px / var(--ui-zoom,1)); box-sizing: border-box; padding: calc(3px / var(--ui-zoom,1));
-  background: #1c1812ef; border: 1px solid #a48743; border-top: 0; border-radius: 0 0 4px 4px;
+  background: var(--hud-panel-bg, #1c1812ef); border: 1px solid #a48743; border-top: 0;
+  border-radius: 0 0 var(--hud-panel-radius, 4px) var(--hud-panel-radius, 4px);
   margin-top: calc(-3px / var(--ui-zoom,1));
 }
 :root .combat[data-layout='formation'] .enemy .meters > :not([data-meter-row='hp']) { display: none; }
@@ -162,9 +165,12 @@
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
   display: grid; grid-template-columns: 1fr 1fr; gap: calc(8px / var(--ui-zoom,1));
-  padding: 0; border: 0; background: none; box-shadow: none;
+  padding: 0; border: 0;
+  /* HUD layout tokens: the row's backing (transparent = off). */
+  background: var(--hud-tools-bg); box-shadow: var(--hud-panel-shadow, none);
+  border-radius: var(--hud-panel-radius, 0px);
 }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; text-shadow: var(--hud-text-shadow, none); }
 :root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
@@ -190,7 +196,7 @@
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='resource'],
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='stance'],
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud .statuses { display: none !important; }
-:root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: calc(11px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: var(--hud-details-name-size, calc(11px / var(--ui-zoom,1))); }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { background: none; border: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { min-height: 0; line-height: calc(13px / var(--ui-zoom,1)); margin: 0; padding: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { display: grid; grid-template-columns: 1fr 1fr; gap: calc(2px / var(--ui-zoom,1)); padding: 0; }
@@ -201,6 +207,7 @@
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] :is(.m-well,.engraved-icon) { display: none; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] .m-plate { width: 100%; min-width: 0; gap: 1px; justify-content: space-between; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] :is(.m-label,.m-value) { font-size: calc(9px / var(--ui-zoom,1)); white-space: nowrap; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] .m-value { font-size: var(--hud-details-value-size, calc(9px / var(--ui-zoom,1))); }
 :root .combat[data-compact-combat='true'] .combatant-leading .intent {
   width: calc(74px / var(--ui-zoom,1)); min-width: calc(74px / var(--ui-zoom,1)); min-height: calc(42px / var(--ui-zoom,1));
   padding: calc(3px / var(--ui-zoom,1)); gap: calc(2px / var(--ui-zoom,1));
@@ -212,9 +219,28 @@
 :root .combat[data-compact-combat='true'] .enemy .combatant-card > .nm { height: calc(15px / var(--ui-zoom,1)); line-height: calc(15px / var(--ui-zoom,1)); font-size: calc(10px / var(--ui-zoom,1)); }
 
 :root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud {
-  background: #1c1812f2; border: 1px solid #a48743; border-radius: 4px;
-  padding: 0; box-shadow: 0 2px 6px #0006;
+  background: var(--hud-panel-bg, #1c1812f2); border: 1px solid var(--hud-player-panel-border, #a48743);
+  border-radius: var(--hud-panel-radius, 4px);
+  padding: 0; box-shadow: var(--hud-panel-shadow, 0 2px 6px #0006);
+  min-width: var(--hud-details-min-width, auto);
 }
+/* HUD layout tokens (docs/hud-layout-tokens.md): the details panel's type. Its
+   meter labels set their own family (kit.css), so the font names them too. */
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud :is(.nm,.m-label,.m-value) {
+  font-family: var(--hud-details-font, var(--font-body));
+}
+/* Readable headings swaps every display face for the UI face; the token yields. */
+:root body.readable-ui .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud :is(.nm,.m-label,.m-value) {
+  font-family: var(--font-body);
+}
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud .nm { text-shadow: var(--hud-text-shadow, none); }
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud [data-meter-row='resource'] .m-label {
+  color: var(--hud-details-label-color, var(--muted)); text-shadow: var(--hud-text-shadow, none);
+}
+:root .combat[data-layout='formation']:not(.coop) .player:is(.context-selected,.selected-target) .combatant-mini-hud .meters .as-meter[data-res='hp'] .m-value {
+  font-size: var(--hud-details-value-size, var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))));
+}
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud [data-meter-row='resource'] .m-value { text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
   --inspect-box: calc(22px / var(--ui-zoom,1));
 }
@@ -316,20 +342,30 @@
   background: none; border: 0; box-shadow: none; padding: 0;
   min-height: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1));
   color: #ffe7ab; font-size: calc(16px / var(--ui-zoom,1));
+  text-shadow: var(--hud-text-shadow, none);
 }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact) { display: none; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent .intent-compact { display: inline-flex; }
-:root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--combatant-highlight); }
+:root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--hud-enemy-panel-border, var(--combatant-highlight)); }
+/* HUD layout tokens: the selected intent bubble shares the panel style. */
+:root .combat[data-layout='formation'] .enemy.context-selected .combatant-leading .intent {
+  background-color: var(--hud-panel-bg, #201b15);
+  box-shadow: var(--hud-panel-shadow, inset 0 1px 0 #ffffff36, 0 2px 5px #0009);
+  border-radius: var(--hud-panel-radius, calc(8px / var(--ui-zoom, 1)));
+}
 :root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-card > .nm { display: none !important; }
 :root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-card > .meters {
   background: none; border: 0; padding: 0; margin: 0;
 }
-:root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > :is(.nm,.meters) { border-color: var(--combatant-highlight); }
+:root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > :is(.nm,.meters) { border-color: var(--hud-enemy-panel-border, var(--combatant-highlight)); }
+/* The nameplate is two stacked boxes (name over HP). The panel shadow goes on
+   the lower one only; on the name box it would fall across the seam. */
+:root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > .meters { box-shadow: var(--hud-panel-shadow, none); }
 :root .combat[data-layout='formation'] .enemy:not(.context-selected)::after { display: none; }
 :root .combat[data-compact-combat='true'] .enemy.context-selected .combat-health-row { --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); }
 :root .combat[data-compact-combat='true'] .enemy.context-selected .combatant-card > .meters { padding: calc(2px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud {
-  border-color: var(--combatant-highlight); padding: calc(4px / var(--ui-zoom,1));
+  border-color: var(--hud-player-panel-border, var(--combatant-highlight)); padding: calc(4px / var(--ui-zoom,1));
 }
 :root .combat[data-layout='formation'] .player.context-selected .combatant-leading { width: calc(220px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .player-action-intent {
@@ -339,6 +375,12 @@
 }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); min-height: var(--health-row-h); padding-bottom: calc(12px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
+/* HUD layout tokens: an optional backing plate behind the idle HP value
+   (transparent = off; radius and pad default to 0, the value's own box). */
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter .m-value {
+  background: var(--hud-text-plate-bg); border-radius: var(--hud-text-plate-radius);
+  padding-inline: var(--hud-text-plate-pad);
+}
 
 /* Compact details keep all three rows readable without a 44px empty HP slot. */
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(176px / var(--ui-zoom,1)); }
