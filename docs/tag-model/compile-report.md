@@ -424,3 +424,205 @@ UNMAPPED: 377
 ## 2. Collisions
 
 None: every live id is mapped by at most one tag.
+
+## 3. Field parity
+
+195 differences.
+
+| Model tag | Live id | Field | Model | Live |
+|---|---|---|---|---|
+| meta.character.weapon.off-hand.shield | item:shield | glyph | (empty) | 🛡 |
+| meta.character.weapon.off-hand.shield | item:shield | color | (empty) | 7FA8C9 |
+| meta.character.weapon.off-hand.shield | item:shield | parent | meta.character.weapon.off-hand | itemType (live parent unmapped) |
+| meta.character.armor | item:armor | glyph | (empty) | ▣ |
+| meta.character.armor | item:armor | color | (empty) | B8B0A0 |
+| meta.character.armor | item:armor | parent | meta.character | itemType (live parent unmapped) |
+| meta.character.armor.defensive-property.siphon | siphon | glyph | (empty) | ◈ |
+| meta.character.armor.defensive-property.siphon | siphon | color | (empty) | 7FA8C9 |
+| meta.character.armor.defensive-property.siphon | siphon | parent | meta.character.armor.defensive-property | property (live parent unmapped) |
+| meta.character.armor.defensive-property.insulated | trait:insulated | glyph | (empty) | ◇ |
+| meta.character.armor.defensive-property.insulated | trait:insulated | color | (empty) | 9FC3E8 |
+| meta.character.armor.defensive-property.insulated | trait:insulated | parent | meta.character.armor.defensive-property | trait (live parent unmapped) |
+| meta.character.armor.defensive-property.grounded | trait:grounded | glyph | (empty) | ◇ |
+| meta.character.armor.defensive-property.grounded | trait:grounded | color | (empty) | 9FC3E8 |
+| meta.character.armor.defensive-property.grounded | trait:grounded | parent | meta.character.armor.defensive-property | trait (live parent unmapped) |
+| meta.character.creature.type.beast | beast | glyph | (empty) | 🐾 |
+| meta.character.creature.type.beast | beast | color | (empty) | 7A6F5A |
+| meta.character.creature.type.beast | beast | parent | meta.character.creature.type | creature (live parent unmapped) |
+| meta.character.creature.type.humanoid | humanoid | glyph | (empty) | 👤 |
+| meta.character.creature.type.humanoid | humanoid | color | (empty) | B8B0A0 |
+| meta.character.creature.type.humanoid | humanoid | parent | meta.character.creature.type | creature (live parent unmapped) |
+| meta.character.creature.type.undead | undead | glyph | (empty) | 💀 |
+| meta.character.creature.type.undead | undead | color | (empty) | 647B73 |
+| meta.character.creature.type.undead | undead | parent | meta.character.creature.type | creature (live parent unmapped) |
+| meta.character.creature.type.construct | construct | glyph | (empty) | ⚙ |
+| meta.character.creature.type.construct | construct | color | (empty) | 9FC3E8 |
+| meta.character.creature.type.construct | construct | parent | meta.character.creature.type | creature (live parent unmapped) |
+| meta.character.creature.type.spirit | spirit | glyph | (empty) | 👻 |
+| meta.character.creature.type.spirit | spirit | color | (empty) | 7FA8C9 |
+| meta.character.creature.type.spirit | spirit | parent | meta.character.creature.type | creature (live parent unmapped) |
+| meta.combat.skill.weapon-skill.blade | blade | glyph | (empty) | ⚔ |
+| meta.combat.skill.weapon-skill.blade | blade | color | (empty) | C9502E |
+| meta.combat.skill.weapon-skill.blade | blade | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
+| meta.combat.skill.weapon-skill.bow | bow | glyph | (empty) | ➶ |
+| meta.combat.skill.weapon-skill.bow | bow | color | (empty) | 7FA8C9 |
+| meta.combat.skill.weapon-skill.bow | bow | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
+| meta.combat.skill.technique.heavy | technique:heavy | glyph | (empty) | ◇ |
+| meta.combat.skill.technique.heavy | technique:heavy | color | (empty) | 9FC3E8 |
+| meta.combat.skill.technique.heavy | technique:heavy | parent | meta.combat.skill.technique | technique (live parent unmapped) |
+| meta.combat.skill.technique.precision | technique:precision | glyph | (empty) | ◇ |
+| meta.combat.skill.technique.precision | technique:precision | color | (empty) | 9FC3E8 |
+| meta.combat.skill.technique.precision | technique:precision | parent | meta.combat.skill.technique | technique (live parent unmapped) |
+| meta.combat.skill.technique.pierce | pierce | glyph | (empty) | † |
+| meta.combat.skill.technique.pierce | pierce | color | (empty) | 9FC3E8 |
+| meta.combat.skill.technique.pierce | pierce | parent | meta.combat.skill.technique | card (mapped to card) |
+| meta.combat.skill.technique.cleave | technique:cleave | glyph | (empty) | ◇ |
+| meta.combat.skill.technique.cleave | technique:cleave | color | (empty) | 9FC3E8 |
+| meta.combat.skill.technique.cleave | technique:cleave | parent | meta.combat.skill.technique | technique (live parent unmapped) |
+| meta.combat.skill.technique.flourish | technique:flourish | glyph | (empty) | ◇ |
+| meta.combat.skill.technique.flourish | technique:flourish | color | (empty) | 9FC3E8 |
+| meta.combat.skill.technique.flourish | technique:flourish | parent | meta.combat.skill.technique | technique (live parent unmapped) |
+| meta.combat.skill.technique.guile | guile | glyph | (empty) | ◇ |
+| meta.combat.skill.technique.guile | guile | color | (empty) | 647B73 |
+| meta.combat.skill.technique.guile | guile | parent | meta.combat.skill.technique | card (mapped to card) |
+| meta.combat.skill.technique.blood | blood | glyph | (empty) | 🩸 |
+| meta.combat.skill.technique.blood | blood | color | (empty) | 8A1A1A |
+| meta.combat.skill.technique.blood | blood | parent | meta.combat.skill.technique | card (mapped to card) |
+| meta.combat.skill.technique.venom | venom | glyph | (empty) | ☠ |
+| meta.combat.skill.technique.venom | venom | color | (empty) | 7FAF63 |
+| meta.combat.skill.technique.venom | venom | parent | meta.combat.skill.technique | card (mapped to card) |
+| meta.combat.skill.class-stance | theme:stance | label | Class stance | Stance |
+| meta.combat.skill.class-stance | theme:stance | glyph | (empty) | ◇ |
+| meta.combat.skill.class-stance | theme:stance | color | (empty) | 9FC3E8 |
+| meta.combat.skill.class-stance | theme:stance | parent | meta.combat.skill | theme (live parent unmapped) |
+| meta.combat.skill.spellcraft.fire | school:fire | glyph | (empty) | 🔥 |
+| meta.combat.skill.spellcraft.fire | school:fire | color | (empty) | E47C43 |
+| meta.combat.skill.spellcraft.fire | school:fire | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
+| meta.combat.skill.spellcraft.fire.gorefire | gorefire | glyph | (empty) | 🔥 |
+| meta.combat.skill.spellcraft.fire.gorefire | gorefire | color | (empty) | C9502E |
+| meta.combat.skill.spellcraft.fire.gorefire | gorefire | parent | meta.combat.skill.spellcraft.fire | card (mapped to card) |
+| meta.combat.skill.spellcraft.fire.ash | ash | glyph | (empty) | • |
+| meta.combat.skill.spellcraft.fire.ash | ash | color | (empty) | 7A6F5A |
+| meta.combat.skill.spellcraft.fire.ash | ash | parent | meta.combat.skill.spellcraft.fire | card (mapped to card) |
+| meta.combat.skill.spellcraft.frost | school:frost | glyph | (empty) | ❄ |
+| meta.combat.skill.spellcraft.frost | school:frost | color | (empty) | A6D8EF |
+| meta.combat.skill.spellcraft.frost | school:frost | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
+| meta.combat.skill.spellcraft.lightning | school:lightning | glyph | (empty) | ϟ |
+| meta.combat.skill.spellcraft.lightning | school:lightning | color | (empty) | E8D46A |
+| meta.combat.skill.spellcraft.lightning | school:lightning | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
+| meta.combat.skill.spellcraft.force | school:force | glyph | (empty) | ✦ |
+| meta.combat.skill.spellcraft.force | school:force | color | (empty) | B99DEC |
+| meta.combat.skill.spellcraft.force | school:force | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
+| meta.combat.skill.spellcraft.force.starstone | starstone | glyph | (empty) | ✦ |
+| meta.combat.skill.spellcraft.force.starstone | starstone | color | (empty) | 7FA8C9 |
+| meta.combat.skill.spellcraft.force.starstone | starstone | parent | meta.combat.skill.spellcraft.force | card (mapped to card) |
+| meta.combat.skill.spellcraft.divine | school:divine | glyph | (empty) | ✚ |
+| meta.combat.skill.spellcraft.divine | school:divine | color | (empty) | F0D99A |
+| meta.combat.skill.spellcraft.divine | school:divine | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
+| meta.combat.skill.spellcraft.divine.oath | oath | glyph | (empty) | ✚ |
+| meta.combat.skill.spellcraft.divine.oath | oath | color | (empty) | C9A227 |
+| meta.combat.skill.spellcraft.divine.oath | oath | parent | meta.combat.skill.spellcraft.divine | card (mapped to card) |
+| meta.combat.skill.spellcraft.necrotic | school:decay | label | Necrotic | Decay |
+| meta.combat.skill.spellcraft.necrotic | school:decay | glyph | (empty) | ☣ |
+| meta.combat.skill.spellcraft.necrotic | school:decay | color | (empty) | A4BD72 |
+| meta.combat.skill.spellcraft.necrotic | school:decay | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
+| meta.combat.skill.spellcraft.necrotic.blight | blight | glyph | (empty) | ☣ |
+| meta.combat.skill.spellcraft.necrotic.blight | blight | color | (empty) | B5541C |
+| meta.combat.skill.spellcraft.necrotic.blight | blight | parent | meta.combat.skill.spellcraft.necrotic | card (mapped to card) |
+| meta.combat.skill.spellcraft.psychic.illusion | school:illusion | glyph | (empty) | ◎ |
+| meta.combat.skill.spellcraft.psychic.illusion | school:illusion | color | (empty) | C59BD7 |
+| meta.combat.skill.spellcraft.psychic.illusion | school:illusion | parent | meta.combat.skill.spellcraft.psychic | school (live parent unmapped) |
+| meta.combat.skill.spellcraft.psychic.ritual | ritual | glyph | (empty) | ◈ |
+| meta.combat.skill.spellcraft.psychic.ritual | ritual | color | (empty) | C9A227 |
+| meta.combat.skill.spellcraft.psychic.ritual | ritual | parent | meta.combat.skill.spellcraft.psychic | card (mapped to card) |
+| meta.combat.skill.spellcraft.alteration | school:alteration | glyph | (empty) | ◇ |
+| meta.combat.skill.spellcraft.alteration | school:alteration | color | (empty) | 9BC8BE |
+| meta.combat.skill.spellcraft.alteration | school:alteration | parent | meta.combat.skill.spellcraft | school (live parent unmapped) |
+| meta.combat.damage | damage | label | Damage | damage |
+| meta.combat.damage.physical | damage.physical | label | Physical | physical |
+| meta.combat.damage.physical.slashing | damage:slashing | glyph | (empty) | ◇ |
+| meta.combat.damage.physical.slashing | damage:slashing | color | (empty) | 9FC3E8 |
+| meta.combat.damage.physical.slashing | damage:slashing | parent | meta.combat.damage.physical | damageType (live parent unmapped) |
+| meta.combat.damage.physical.blunt | damage:blunt | glyph | (empty) | ◇ |
+| meta.combat.damage.physical.blunt | damage:blunt | color | (empty) | 9FC3E8 |
+| meta.combat.damage.physical.blunt | damage:blunt | parent | meta.combat.damage.physical | damageType (live parent unmapped) |
+| meta.combat.damage.physical.pierce | damage:piercing | label | Pierce | Piercing |
+| meta.combat.damage.physical.pierce | damage:piercing | glyph | (empty) | ◇ |
+| meta.combat.damage.physical.pierce | damage:piercing | color | (empty) | 9FC3E8 |
+| meta.combat.damage.physical.pierce | damage:piercing | parent | meta.combat.damage.physical | damageType (live parent unmapped) |
+| meta.combat.damage.magic | damage.magic | label | Magic | magic |
+| meta.combat.damage.magic.fire | damage:fire | glyph | (empty) | ◇ |
+| meta.combat.damage.magic.fire | damage:fire | color | (empty) | 9FC3E8 |
+| meta.combat.damage.magic.fire | damage:fire | parent | meta.combat.damage.magic | damageType (live parent unmapped) |
+| meta.combat.damage.magic.frost | damage:frost | label | Frost | Cold |
+| meta.combat.damage.magic.frost | damage:frost | glyph | (empty) | ◇ |
+| meta.combat.damage.magic.frost | damage:frost | color | (empty) | 9FC3E8 |
+| meta.combat.damage.magic.frost | damage:frost | parent | meta.combat.damage.magic | damageType (live parent unmapped) |
+| meta.combat.damage.magic.lightning | damage:lightning | glyph | (empty) | ◇ |
+| meta.combat.damage.magic.lightning | damage:lightning | color | (empty) | 9FC3E8 |
+| meta.combat.damage.magic.lightning | damage:lightning | parent | meta.combat.damage.magic | damageType (live parent unmapped) |
+| meta.combat.damage.magic.divine | damage:sacred | label | Divine | Holy |
+| meta.combat.damage.magic.divine | damage:sacred | glyph | (empty) | ◇ |
+| meta.combat.damage.magic.divine | damage:sacred | color | (empty) | 9FC3E8 |
+| meta.combat.damage.magic.divine | damage:sacred | parent | meta.combat.damage.magic | damageType (live parent unmapped) |
+| meta.combat.damage.magic.necrotic | damage:decay | glyph | (empty) | ◇ |
+| meta.combat.damage.magic.necrotic | damage:decay | color | (empty) | 9FC3E8 |
+| meta.combat.damage.magic.necrotic | damage:decay | parent | meta.combat.damage.magic | damageType (live parent unmapped) |
+| meta.combat.damage.hybrid.force | damage:arcane | glyph | (empty) | ◇ |
+| meta.combat.damage.hybrid.force | damage:arcane | color | (empty) | 9FC3E8 |
+| meta.combat.damage.hybrid.force | damage:arcane | parent | meta.combat.damage.hybrid | damageType (live parent unmapped) |
+| meta.combat.stance.offensive.attack | maneuver:attack | glyph | (empty) | ⚔ |
+| meta.combat.stance.offensive.attack | maneuver:attack | color | (empty) | D7B36B |
+| meta.combat.stance.offensive.attack | maneuver:attack | parent | meta.combat.stance.offensive | maneuver (live parent unmapped) |
+| meta.combat.stance.offensive.smash | maneuver:smash | glyph | (empty) | ⚒ |
+| meta.combat.stance.offensive.smash | maneuver:smash | color | (empty) | DB9871 |
+| meta.combat.stance.offensive.smash | maneuver:smash | parent | meta.combat.stance.offensive | maneuver (live parent unmapped) |
+| meta.combat.stance.offensive.sweep | maneuver:sweep | glyph | (empty) | 🌀 |
+| meta.combat.stance.offensive.sweep | maneuver:sweep | color | (empty) | 93C9BC |
+| meta.combat.stance.offensive.sweep | maneuver:sweep | parent | meta.combat.stance.offensive | maneuver (live parent unmapped) |
+| meta.combat.stance.defensive | maneuver:defend | label | Defensive | Defend |
+| meta.combat.stance.defensive | maneuver:defend | glyph | (empty) | 🛡 |
+| meta.combat.stance.defensive | maneuver:defend | color | (empty) | 9FC3E8 |
+| meta.combat.stance.defensive | maneuver:defend | parent | meta.combat.stance | maneuver (live parent unmapped) |
+| meta.combat.stance.defensive.block.guard | guard | glyph | (empty) | 🛡 |
+| meta.combat.stance.defensive.block.guard | guard | color | (empty) | 7FA8C9 |
+| meta.combat.stance.defensive.block.guard | guard | parent | meta.combat.stance.defensive.block | card (mapped to card) |
+| meta.combat.stance.counter | maneuver:counter | glyph | (empty) | ↩ |
+| meta.combat.stance.counter | maneuver:counter | color | (empty) | C8A3D8 |
+| meta.combat.stance.counter | maneuver:counter | parent | meta.combat.stance | maneuver (live parent unmapped) |
+| meta.combat.stance.counter.ranged-counter | counter:ranged | glyph | (empty) | ◇ |
+| meta.combat.stance.counter.ranged-counter | counter:ranged | color | (empty) | D7B36B |
+| meta.combat.stance.counter.ranged-counter | counter:ranged | parent | meta.combat.stance.counter | counterMode (live parent unmapped) |
+| meta.combat.delivery.ranged | maneuver:ranged | glyph | (empty) | ➶ |
+| meta.combat.delivery.ranged | maneuver:ranged | color | (empty) | AAC88A |
+| meta.combat.delivery.ranged | maneuver:ranged | parent | meta.combat.delivery | maneuver (live parent unmapped) |
+| meta.combat.delivery.casting | maneuver:casting | label | Casting | Spell |
+| meta.combat.delivery.casting | maneuver:casting | glyph | (empty) | ◇ |
+| meta.combat.delivery.casting | maneuver:casting | color | (empty) | 9FC3E8 |
+| meta.combat.delivery.casting | maneuver:casting | parent | meta.combat.delivery | maneuver (live parent unmapped) |
+| meta.combat.delivery.area | delivery:area | glyph | (empty) | ◇ |
+| meta.combat.delivery.area | delivery:area | color | (empty) | 9FC3E8 |
+| card.type.skill | classification.skill | label | Skill | skill |
+| card.type.skill | classification.skill | parent | card.type | classification (live parent unmapped) |
+| card.type.power | classification.power | label | Power | power |
+| card.type.power | classification.power | parent | card.type | classification (live parent unmapped) |
+| card.type.curse | classification.curse | label | Curse | curse |
+| card.type.curse | classification.curse | parent | card.type | classification (live parent unmapped) |
+| card.type.status | classification.statusCard | label | Status | statusCard |
+| card.type.status | classification.statusCard | parent | card.type | classification (live parent unmapped) |
+| card.keyword.exhaust | lifecycle.exhaust | label | Exhaust | exhaust |
+| card.keyword.exhaust | lifecycle.exhaust | parent | card.keyword | lifecycle (live parent unmapped) |
+| card.keyword.retain | lifecycle.retain | label | Retain | retain |
+| card.keyword.retain | lifecycle.retain | parent | card.keyword | lifecycle (live parent unmapped) |
+| card.keyword.innate | lifecycle.innate | label | Innate | innate |
+| card.keyword.innate | lifecycle.innate | parent | card.keyword | lifecycle (live parent unmapped) |
+| card.keyword.ethereal | lifecycle.ethereal | label | Ethereal | ethereal |
+| card.keyword.ethereal | lifecycle.ethereal | parent | card.keyword | lifecycle (live parent unmapped) |
+| card.keyword.unplayable | internal.unplayable | label | Unplayable | unplayable |
+| card.keyword.unplayable | internal.unplayable | parent | card.keyword | internal (live parent unmapped) |
+| card.cost.stamina | cost.stamina | label | Stamina | stamina |
+| card.cost.stamina | cost.stamina | parent | card.cost | cost (live parent unmapped) |
+| card.cost.mana | cost.mana | label | Mana | mana |
+| card.cost.mana | cost.mana | parent | card.cost | cost (live parent unmapped) |
+| card.upgrade.upgraded | internal.upgraded | label | Upgraded | upgraded |
+| card.upgrade.upgraded | internal.upgraded | parent | card.upgrade | internal (live parent unmapped) |

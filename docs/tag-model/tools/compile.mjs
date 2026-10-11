@@ -82,13 +82,52 @@ export function collisions(tags) {
     .sort((a, b) => a.liveId.localeCompare(b.liveId));
 }
 
+// Field parity for each mapped pair (model tag, live node). A difference is a
+// label, glyph or color that differs, or a live parent whose mapped tag is not
+// the model tag's parent or an ancestor of it. Returns [{ tagId, liveId, field,
+// model, live }].
+export function parity(tags, nodes) {
+  const byLive = new Map(nodes.map(n => [n.id, n]));
+  const tagById = new Map(tags.map(t => [t.id, t]));
+  const tagForLive = new Map();
+  for (const t of tags) if (t.liveId && !tagForLive.has(t.liveId)) tagForLive.set(t.liveId, t);
+
+  const isAncestorOrSelf = (ancestorId, t) => {
+    let cur = t;
+    let guard = 0;
+    while (cur && guard++ < 100) {
+      if (cur.id === ancestorId) return true;
+      cur = cur.parent ? tagById.get(cur.parent) : undefined;
+    }
+    return false;
+  };
+
+  const diffs = [];
+  for (const t of tags) {
+    if (!t.liveId || !byLive.has(t.liveId)) continue;
+    const n = byLive.get(t.liveId);
+    const pair = (field, model, live) => diffs.push({ tagId: t.id, liveId: t.liveId, field, model, live });
+    if (t.label !== n.label) pair('label', t.label, n.label);
+    if (t.glyph !== n.glyph) pair('glyph', t.glyph, n.glyph);
+    if (t.color !== n.color) pair('color', t.color, n.color);
+    if (n.parentId) {
+      const livePt = tagForLive.get(n.parentId);
+      if (!livePt) pair('parent', t.parent, `${n.parentId} (live parent unmapped)`);
+      else if (!isAncestorOrSelf(livePt.id, t) || livePt.id === t.id) {
+        pair('parent', t.parent, `${n.parentId} (mapped to ${livePt.id})`);
+      }
+    }
+  }
+  return diffs;
+}
+
 export function analyze({ tags, nodes, tagging }) {
   const usage = usageByNode(tagging);
   const cov = coverage(tags, nodes);
   const unmapped = cov.unmappedIds
     .map(id => ({ id, usage: usage.get(id) || 0 }))
     .sort((a, b) => b.usage - a.usage || a.id.localeCompare(b.id));
-  return { ...cov, unmapped, collisions: collisions(tags) };
+  return { ...cov, unmapped, collisions: collisions(tags), parity: parity(tags, nodes) };
 }
 
 export function render(res) {
@@ -111,6 +150,16 @@ export function render(res) {
   else {
     out.push('| Live id | Tags mapping it |', '|---|---|');
     for (const c of res.collisions) out.push(`| ${c.liveId} | ${c.tagIds.join(', ')} |`);
+    out.push('');
+  }
+  out.push('## 3. Field parity', '');
+  if (res.parity.length === 0) out.push('None: every mapped pair agrees on label, parent, glyph and color.', '');
+  else {
+    out.push(`${res.parity.length} differences.`, '');
+    out.push('| Model tag | Live id | Field | Model | Live |', '|---|---|---|---|---|');
+    for (const d of res.parity) {
+      out.push(`| ${d.tagId} | ${d.liveId} | ${d.field} | ${d.model || '(empty)'} | ${d.live || '(empty)'} |`);
+    }
     out.push('');
   }
   return out.join('\n');
