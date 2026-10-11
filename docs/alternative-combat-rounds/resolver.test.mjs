@@ -649,6 +649,20 @@ test('cardHint: yellow when only the stance is in the card\'s favour', () => {
   assert.equal(hint.border, 'yellow');
 });
 
+test('cardHint: equal speed is not a speed advantage, so smash over block is yellow', () => {
+  // Both total 2. Only the stance (smash beats block) is in the card's favour.
+  const hint = cardHint({ card: 'two', stance: 'smash' }, { card: 'two', stance: 'block' }, hintCtx());
+  assert.equal(hint.border, 'yellow');
+  assert.equal(hint.speedDelta, 0);
+});
+
+test('cardHint: equal speed with no stance advantage is red, not yellow', () => {
+  // Both total 2 and attack>attack is not in the CSV: neither holds.
+  const hint = cardHint({ card: 'two', stance: 'attack' }, { card: 'two', stance: 'attack' }, hintCtx());
+  assert.equal(hint.border, 'red');
+  assert.equal(hint.arrow, null);
+});
+
 test('cardHint: red when neither speed nor stance is in the card\'s favour', () => {
   const hint = cardHint({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'attack' }, hintCtx());
   assert.equal(hint.border, 'red');
