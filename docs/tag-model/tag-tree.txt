@@ -584,3 +584,112 @@ Theme {Build synergies; tags alone grant no effects.}
   Blight {Categorized Blight identity; effects are authored separately.}
   Astral {Categorized Astral identity; effects are authored separately.}
   Oath {Categorized Oath identity; effects are authored separately.}
+Property {What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS.}
+  Overcharge {A focus that pushes harder: each hit builds more Arcane Exposure.}
+  Stagger Break {A focus that breaks harder: breaking a foe's Arcane Exposure batters its Poise. Effects in nodeEffects.json: triggers on arcaneBreak; ops poiseDamage.}
+  Resonance {A focus that rings out: breaking a foe's Arcane Exposure builds it on every other foe. Effects in nodeEffects.json: triggers on arcaneBreak; ops arcaneBuildup.}
+  Forsaken Medallion {What Forsaken Medallion does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops poiseDamage.}
+  Starstone Shard {What Starstone Shard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus, restoreMana.}
+  Cutpurse's Coin {What Cutpurse's Coin does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, damageDealt; ops applyStatus.}
+  Gold Figurine {What Gold Figurine does when the fight gives it its moment. Effects in nodeEffects.json: triggers on healed; ops block.}
+  Golden Sprout {What Golden Sprout does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops heal.}
+  Whetstone Fragment {What Whetstone Fragment does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops damage.}
+  Kindling Charm {What Kindling Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops draw.}
+  Goldleaf Charm {What Goldleaf Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Cracked Lantern {What Cracked Lantern does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops gainEnergy.}
+  Sacrificial Knife {What Sacrificial Knife does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Cured Hide {What Cured Hide does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops block.}
+  Ivory Comb {What Ivory Comb does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops draw.}
+  Fell Warden Brand {What Fell Warden Brand does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops draw.}
+  Bloodied Talisman {What Bloodied Talisman does when the fight gives it its moment. Effects in nodeEffects.json: triggers on meterFilled; ops loseHp.}
+  Twinned Armor {What Twinned Armor does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.}
+  Blight-Touched Idol {What Blight-Touched Idol does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Warhorn {What Warhorn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Vow of Vengeance {What Vow of Vengeance does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops applyStatus.}
+  Pearl of Sagacity {What Pearl of Sagacity does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops gainEnergy.}
+  Blessed Dew {What Blessed Dew does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.}
+  Azure Sigil {What Azure Sigil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops gainEnergy.}
+  Bloodstained Chalice {What Bloodstained Chalice does when the fight gives it its moment. Effects in nodeEffects.json: triggers on meterFilled; ops block.}
+  Goldbough Sapling {What Goldbough Sapling does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Wyrm Heart {What Wyrm Heart does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops gainEnergy.}
+  Titan's Cinder {What Titan's Cinder does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Radiant Aegis {What Radiant Aegis does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Flayer's Censer {What Flayer's Censer does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Vigilant Halo {What Vigilant Halo does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops heal.}
+  Carrion Talon {What Carrion Talon does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops damage.}
+  Ember Idol {What Ember Idol does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops damage.}
+  Crown of Stitches {What Crown of Stitches does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Warden Horn {What Warden Horn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart, combatStart; ops draw, loseHp.}
+  Ash of Remembrance {What Ash of Remembrance does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart, combatStart; ops gainEnergy, applyStatus.}
+  Cinder of the Fallen {What Cinder of the Fallen does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, enemyDied; ops applyStatus, gainEnergy.}
+  Crimson Covenant {What Crimson Covenant does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, damageDealt; ops loseHp, applyStatus.}
+  Traveler's Whetstone {What Traveler's Whetstone does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Moonlit Vial {What Moonlit Vial does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+  Warden's Lantern {What Warden's Lantern does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops draw.}
+  Hollowed Horn {What Hollowed Horn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus.}
+  Gilded Tear {What Gilded Tear does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.}
+  Watchman's Badge {What Watchman's Badge does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Howling Standard {What Howling Standard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus.}
+  Emberwick Charm {What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.}
+  Carrion Morsel {What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Gravetender's Bell {What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.}
+  Sentinel's Oath {What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.}
+  Forsaken Warflag {What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Wrath Coil {What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.}
+  Favored {A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table.}
+  Ashen Grip {What Ashen Grip does when the fight gives it its moment. Effects in nodeEffects.json: triggers on stanceEntered; ops restoreStamina.}
+  Lodestar Shard {What Lodestar Shard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops restoreMana.}
+  Waxen Seal {What Waxen Seal does when the fight gives it its moment. Effects in nodeEffects.json: triggers on healed; ops heal.}
+  Whetstone Pouch {What Whetstone Pouch does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Iron Footing {Every stance you enter braces you. Effects in nodeEffects.json: triggers on stanceEntered; ops block.}
+  Blood Tempo {A change of footing is a breath. Effects in nodeEffects.json: triggers on stanceEntered; ops draw.}
+  Ashen Reserve {The grip gives back a little more. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.}
+  Grim Harvest {What falls feeds you. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Small rest {A rough camp's rest: a small share of your max HP back. Effects in nodeEffects.json: triggers on rested; ops heal.}
+  Partial rest {A shrine's rest: part of your max HP back. Effects in nodeEffects.json: triggers on rested; ops heal.}
+  Full rest {A town's bed: HP to full. Effects in nodeEffects.json: triggers on rested; ops heal.}
+  Mana rest {Mana back by the configured mode (balance.rest.mana.mode) — the door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead.}
+  Flat mana rest {Mana back by a fixed amount. Effects in nodeEffects.json: triggers on rested; ops restoreMana.}
+  Mana rest to a floor {Mana back to a floor of max, or to full when already there. Effects in nodeEffects.json: triggers on rested; ops restoreMana.}
+  Full mana rest {Mana to full. Effects in nodeEffects.json: triggers on rested; ops restoreMana.}
+  Flask refill {Arriving refills your flask charges (the grace refill). Effects in nodeEffects.json: triggers on arrived; ops refillFlasks.}
+  Smith {The place offers a smith: upgrade, extract, install (balance.smithing.services says which).}
+  Level-up {The place is where waiting attribute points are assigned.}
+  Quest board {The place keeps a quest board: the quests offered in this town, and a journal of the run's quests.}
+  Deck editing {Under Rest sites only (Settings → Advanced → Deck), the deck editor opens from this place's Rest screen. A service marker, with no rule.}
+  Warlord {The subclass that opens every fight already swinging. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Bulwark King {The subclass that is never caught open. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Attuned Mind {Mana found is a card found. Effects in nodeEffects.json: triggers on manaRestored; ops draw.}
+  Starlit Focus {The charge is there before the first cast. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Lodestar Cap {The shard opens the fight wider. Effects in nodeEffects.json: triggers on combatStart; ops restoreMana.}
+  Arcane Draw {The first break each combat is a hand. Effects in nodeEffects.json: triggers on arcaneBreak; ops draw.}
+  Conduit {The subclass whose casts cost breath, not blood. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.}
+  Reservoir {The subclass that never runs dry. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreMana.}
+  Warmth {Every heal braces you. Effects in nodeEffects.json: triggers on healed; ops block.}
+  Vigil {The litany never quite stops. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.}
+  Seal of Plenty {The first heal pays for the next cast. Effects in nodeEffects.json: triggers on healed; ops restoreMana.}
+  Waking Rot {Your blows carry the blight. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Martyr {The subclass that turns every wound to a wall. Effects in nodeEffects.json: triggers on hpLost; ops block.}
+  Saint {The subclass that walks in whole. Effects in nodeEffects.json: triggers on combatStart; ops heal.}
+  Quick Hands {Prepared before the first card. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Second Wind {What you burn, you draw. Effects in nodeEffects.json: triggers on cardExhausted; ops draw.}
+  Honed Edge {Every prepared cut opens a vein. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Poisoned Pouch {The whetstone is not the only thing in the pouch. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Assassin {The subclass that reads a stagger as an opening. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus, draw.}
+  Shadow {The subclass nothing quite reaches. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Parting Blow {Every step out of a stance is a cut. Effects in nodeEffects.json: triggers on stanceExited; ops damage.}
+  Iron Rebuke {Brace answers every wound it cannot stop. Effects in nodeEffects.json: triggers on hpLost; ops damage.}
+  Cinder Grip {The grip leaves ash in every wound. Effects in nodeEffects.json: triggers on stanceEntered; ops applyStatus.}
+  Mending Grip {The grip closes the wound it opened. Effects in nodeEffects.json: triggers on stanceEntered; ops heal.}
+  Spent Stars {What burns out, burns once more. Effects in nodeEffects.json: triggers on cardExhausted; ops restoreMana.}
+  Falling Star {The mana comes down somewhere. Effects in nodeEffects.json: triggers on manaRestored; ops damage.}
+  Lodestar Pull {The shard drags the foe off its footing. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Shard Hunger {The shard drinks from a staggering foe. Effects in nodeEffects.json: triggers on enemyStaggered; ops restoreMana.}
+  Burning Grace {The warmth spills over, and scalds. Effects in nodeEffects.json: triggers on healed; ops damage.}
+  Dazzling Light {The litany is hard to look at. Effects in nodeEffects.json: triggers on healed; ops applyStatus.}
+  Anointed Blade {The seal breaks over the edge. Effects in nodeEffects.json: triggers on healed; ops applyStatus.}
+  Unsealed Scroll {Under the wax, the next verse. Effects in nodeEffects.json: triggers on healed; ops draw.}
+  Low Profile {Ready, and hard to find. Effects in nodeEffects.json: triggers on statusApplied; ops block.}
+  Baiting Feint {The first move is never the real one. Effects in nodeEffects.json: triggers on statusApplied; ops poiseDamage.}
+  Spare Whetstone {A second stone, for the second cut. Effects in nodeEffects.json: triggers on damageDealt; ops gainEnergy.}
+  Whetted Guard {The edge that cuts also turns a blade. Effects in nodeEffects.json: triggers on damageDealt; ops block.}
