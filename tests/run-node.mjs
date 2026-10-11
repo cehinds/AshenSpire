@@ -154,7 +154,11 @@ if (DISCOVER) {
   // workers so concurrent local builds do not starve those existing deadlines;
   // discovery, assertions and subprocess timeouts remain unchanged.
   const workerArgs = process.platform === 'win32' ? ['--test-concurrency=4'] : [];
-  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  // A shard that hangs would otherwise be cut by the CI job's timeout with no output at all
+  // (spawnSync buffers it). Stop it first and print what it wrote, so the hung test is named.
+  const SHARD_LIMIT_MS = 15 * 60 * 1000;
+  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, timeout: SHARD_LIMIT_MS });
+  if (result.error?.code === 'ETIMEDOUT') console.log(`run-node: the test run passed ${SHARD_LIMIT_MS / 60000} minutes and was stopped; its output so far follows, and the last test named is where it hung.`);
   const out = `${result.stdout || ''}${result.stderr || ''}`;
   const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
   const ok = result.status === 0 && !stale.length && count('fail') === 0;
