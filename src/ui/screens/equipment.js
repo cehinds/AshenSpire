@@ -76,6 +76,7 @@ import { renderBookArt } from '../components/bookArt.js';
 import { equipClassCard } from '../../model/classLibrary.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
+import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
 import {
   armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
 } from '../models/ArmouryWorkspaceModel.js';
@@ -834,6 +835,8 @@ export function mountEquipment(host, {
   let paneObserver = null;
   let paneFrame = 0;
   let inventoryDisclosure = null;
+  let pickerSort = { column: 'status', direction: 'asc' };
+  let pickerShowAll = false;
   let holdDisarms = [];
   const clearHoldDisarms = () => {
     for (const disarm of holdDisarms.splice(0)) disarm();
