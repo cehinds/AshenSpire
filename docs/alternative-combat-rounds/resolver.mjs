@@ -95,6 +95,25 @@ export function hitRoll({ accuracy = 0, attrs = {}, evasion = 0 } = {}, d20) {
   return { hit, need };
 }
 
+// Attack tags that change accuracy (DESIGN.md, Hit roll). Other tags add nothing.
+export const ATTACK_TAG_ACCURACY = Object.freeze({ quick: 1, telegraphed: -2 });
+
+// Accuracy = floor(STR + DEX + WIS/2 + INT/2) + floor(level / 5) + attack tag
+// (DESIGN.md, Hit roll). `accuracy` is any extra flat bonus, and a plain numeric
+// accuracy works on its own. The attribute term is attributeBonus().
+export function accuracyFor({ attrs = {}, level = 0, tags = [], accuracy = 0 } = {}) {
+  const lvl = Number(level ?? 0);
+  let tagMod = 0;
+  for (const t of Array.isArray(tags) ? tags : []) {
+    if (Object.hasOwn(ATTACK_TAG_ACCURACY, t)) tagMod += ATTACK_TAG_ACCURACY[t];
+  }
+  const flat = Number(accuracy ?? 0);
+  return attributeBonus(attrs)
+    + (Number.isFinite(lvl) ? Math.floor(lvl / 5) : 0)
+    + tagMod
+    + (Number.isFinite(flat) ? flat : 0);
+}
+
 function rollUnit(rng) {
   if (typeof rng !== 'function') throw new TypeError('rng must be a function returning [0, 1)');
   const x = rng();

@@ -23,6 +23,7 @@ import {
   activeEvadeBonuses,
   parseEvadeBonus,
   decayMomentum,
+  accuracyFor,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
@@ -218,6 +219,29 @@ test('hit roll: enemy accuracy 5 misses (2 + evasion) of 20 faces, exhaustively'
     }
     assert.equal(missed, 2 + evasion, `evasion ${evasion}`);
   }
+});
+
+// Accuracy = floor(STR + DEX + WIS/2 + INT/2) + floor(level / 5) + attack tag
+// (DESIGN.md, Hit roll). `accuracy` is an extra flat bonus.
+test('accuracyFor: level 1 Reaver STR3 DEX1 WIS1 INT1 has accuracy 5', () => {
+  assert.equal(accuracyFor({ attrs: REAVER, level: 1, tags: [] }), 5);
+});
+
+test('accuracyFor: level 5 adds one, so the same Reaver has accuracy 6', () => {
+  assert.equal(accuracyFor({ attrs: REAVER, level: 5, tags: [] }), 6);
+  assert.equal(accuracyFor({ attrs: REAVER, level: 4, tags: [] }), 5);
+});
+
+test('accuracyFor: the quick tag adds 1 and the telegraphed tag takes away 2', () => {
+  assert.equal(accuracyFor({ attrs: REAVER, level: 1, tags: ['quick'] }), 6);
+  assert.equal(accuracyFor({ attrs: REAVER, level: 1, tags: ['telegraphed'] }), 3);
+  assert.equal(accuracyFor({ attrs: REAVER, level: 1, tags: ['stun'] }), 5, 'other tags add nothing');
+});
+
+test('accuracyFor: a plain numeric accuracy still works, and an extra bonus adds to the total', () => {
+  assert.equal(accuracyFor({ accuracy: 5 }), 5);
+  assert.equal(accuracyFor({ attrs: REAVER, accuracy: 2 }), 7);
+  assert.equal(accuracyFor({}), 0);
 });
 
 test('hit roll rejects a d20 outside 1..20', () => {
