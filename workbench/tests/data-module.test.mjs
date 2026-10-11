@@ -139,3 +139,33 @@ test('keyColumnOf and tableRules put the key rules on the first id, key or name 
   assert.equal(D.tableRules(cols).filter((r) => r.kind === 'type').length, 3);
   assert.deepEqual(D.tableRules([{ key: 'x', type: 'string' }]).map((r) => r.kind), ['type']);
 });
+
+test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
+  const { lineDiff } = await import('../core/files.mjs');
+  const rel = 'content/source/speakers.csv';
+  const table = D.parseTable(rel, read(rel), { hash: 'h1' });
+  assert.equal(D.isDirty(table, docOf(table)), false);
+  const doc = docOf(table);
+  doc.rows[1] = { ...doc.rows[1], name: 'Renamed Warden' };
+  assert.equal(D.isDirty(table, doc), true);
+  const change = D.changeFor(table, doc);
+  assert.deepEqual(Object.keys(change).sort(), ['baseHash', 'path', 'text']);
+  assert.equal(change.path, rel);
+  assert.equal(change.baseHash, 'h1');
+  const d = lineDiff(read(rel), change.text);
+  assert.equal(d.added, 1);
+  assert.equal(d.removed, 1);
+  const lines = d.hunks.flatMap((h) => h.lines).filter((l) => l.op !== ' ').map((l) => `${l.op}${l.text}`);
+  assert.deepEqual(lines, ['-keeperOfTheNameless,The Keeper of the Nameless,emberStarvedPilgrim', '+keeperOfTheNameless,Renamed Warden,emberStarvedPilgrim']);
+});
+
+test('a row added to a JSON table is saved as the array with the new row last', () => {
+  const rel = 'content/framework/entities.json';
+  const table = D.parseTable(rel, read(rel), { hash: 'h2' });
+  const doc = docOf(table);
+  doc.rows.push({ id: 'framework.newEntity', kind: 'CARD' });
+  const saved = JSON.parse(D.changeFor(table, doc).text);
+  assert.equal(saved.entities.length, table.rows.length + 1);
+  assert.equal(saved.entities.at(-1).id, 'framework.newEntity');
+  assert.equal(saved.comment, table.meta.document.comment);
+});
