@@ -12,6 +12,8 @@ import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS } from '../core/jobs.mjs';
 import { Tool, toolDefs } from '../core/tools.mjs';
 import { buildsFor, isBuildOutput } from '../core/watch.mjs';
+import { resolveExternal } from '../core/settings.mjs';
+import { serve } from '../../tools/serve.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -398,4 +400,47 @@ test('start.sh reuses a running Workbench only for the same project', { skip: pr
   assert.equal(mismatch.code, 1, mismatch.out);
   assert.match(mismatch.out, /another project/);
   assert.ok(mismatch.out.includes(root), 'names the project it is serving');
+});
+
+test('the game server is reused only when it names this project as its root', async (t) => {
+  const root = await project(t);
+  const other = await project(t);
+  await fs.writeFile(path.join(root, 'index.html'), '<!doctype html><title>game</title>');
+  await fs.writeFile(path.join(other, 'index.html'), '<!doctype html><title>other game</title>');
+  const game = toolDefs({ repo: path.resolve(HERE, '../..'), root, origin: 'http://127.0.0.1:1' }).find((d) => d.id === 'game');
+  const probeOn = async (port) => {
+    const tool = new Tool({ ...game, port }, { root, origin: 'http://127.0.0.1:1' });
+    return { ok: await tool.probe(), conflict: tool.conflict };
+  };
+  // tools/serve.mjs says which folder it serves, to loopback clients only.
+  const mine = await serve({ root, port: 0, open: false, quiet: true });
+  const theirs = await serve({ root: other, port: 0, open: false, quiet: true });
+  t.after(() => { mine.server.close(); theirs.server.close(); });
+  assert.deepEqual(await (await fetch(`http://127.0.0.1:${mine.port}/__serve/info`)).json(), { root });
+  const { createServer, get: httpGet } = await import('node:http');
+  const foreignHost = await new Promise((resolve, reject) => httpGet({ host: '127.0.0.1', port: mine.port, path: '/__serve/info', headers: { host: 'evil.example' } }, (r) => { r.resume(); resolve(r.statusCode); }).on('error', reject));
+  assert.equal(foreignHost, 403, 'a rebinding host name is refused');
+  assert.deepEqual(await probeOn(mine.port), { ok: true, conflict: null });
+  const mismatch = await probeOn(theirs.port);
+  assert.equal(mismatch.ok, false);
+  assert.match(mismatch.conflict, /serving another checkout/);
+  assert.ok(mismatch.conflict.includes(other));
+  // A server that answers /index.html but does not identify itself is not reused either.
+  const anon = createServer((req, res) => { res.writeHead(req.url === '/index.html' ? 200 : 404); res.end('ok'); });
+  await new Promise((r) => anon.listen(0, '127.0.0.1', r));
+  t.after(() => anon.close());
+  const unknown = await probeOn(anon.address().port);
+  assert.equal(unknown.ok, false);
+  assert.match(unknown.conflict, /does not say which checkout/);
+});
+
+test('external entries resolve under a checkout given with a trailing separator', async (t) => {
+  const art = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-art-')));
+  t.after(() => fs.rm(art, { recursive: true, force: true }));
+  await fs.mkdir(path.join(art, 'enemy-poses'), { recursive: true });
+  await fs.writeFile(path.join(art, 'enemy-poses/index.html'), '<!doctype html>');
+  const entry = { path: 'art/enemy-poses/index.html', pathPrefixOptional: 'art/' };
+  assert.equal(resolveExternal(entry, art), 'enemy-poses/index.html');
+  assert.equal(resolveExternal(entry, `${art}${path.sep}`), 'enemy-poses/index.html');
+  assert.equal(resolveExternal({ path: '../outside.html' }, `${art}${path.sep}`), null);
 });

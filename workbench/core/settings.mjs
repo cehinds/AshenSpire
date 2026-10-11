@@ -53,9 +53,10 @@ export function resolveExternal(entry, checkout) {
   if (!checkout) return null;
   const tries = [entry.path];
   if (entry.pathPrefixOptional && entry.path.startsWith(entry.pathPrefixOptional)) tries.push(entry.path.slice(entry.pathPrefixOptional.length));
+  const base = path.resolve(checkout); // no trailing separator, so the boundary check below holds
   for (const rel of tries) {
-    const abs = path.resolve(checkout, rel);
-    if ((abs === checkout || abs.startsWith(checkout + path.sep)) && fs.existsSync(abs)) return rel;
+    const abs = path.resolve(base, rel);
+    if ((abs === base || abs.startsWith(base + path.sep)) && fs.existsSync(abs)) return rel;
   }
   return null;
 }
