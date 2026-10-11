@@ -329,7 +329,11 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       const restart = p.match(/^\/api\/tools\/([\w-]+)\/restart$/);
       if (restart) return sendJson(res, 200, await supervisor.restart(restart[1]));
       if (p === '/api/jobs') return sendJson(res, 200, jobs.start(data.id, data.params));
-      if (p === '/api/review/accept') return sendJson(res, 200, await review.accept(data.items));
+      if (p === '/api/review/accept') {
+        // A capture writes its PNGs in place; copying one now could take a half-written frame as the baseline.
+        if (jobs.active.has('review-capture')) throw Object.assign(Error('A capture is running. Accept the baselines when it finishes.'), { status: 409 });
+        return sendJson(res, 200, await review.accept(data.items));
+      }
       const cancel = p.match(/^\/api\/jobs\/runs\/([\w-]+)\/cancel$/);
       if (cancel) return sendJson(res, 200, jobs.cancel(cancel[1]));
       if (p === '/api/settings') { const saved = settings.save(data); hub.send('settings', saved); return sendJson(res, 200, saved); }

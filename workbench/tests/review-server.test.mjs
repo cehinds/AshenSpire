@@ -69,6 +69,26 @@ test('accept copies the chosen captures to baselines and reports the ones with n
   assert.equal(await (await call('/api/review/image?set=baselines&file=desk-map.png')).text(), 'MAP');
 });
 
+test('accept is refused with 409 while a Visual capture runs, so a baseline is never copied from a half-written PNG', async (t) => {
+  const { app, call, captures } = await boot(t);
+  await fs.writeFile(path.join(captures, 'desk-map.png'), 'MAP');
+  const body = JSON.stringify({ items: [{ device: 'desk', screen: 'map' }] });
+  // A stand-in for a live run: the slot is released in finally so a failure cannot leave the app waiting on it.
+  app.jobs.active.set('review-capture', { runId: 'run-1', id: 'review-capture', status: 'running' });
+  try {
+    const busy = await call('/api/review/accept', { method: 'POST', body });
+    assert.equal(busy.status, 409);
+    assert.match((await busy.json()).error, /A capture is running/);
+    const state = await (await call('/api/review/state')).json();
+    assert.deepEqual(state.baselines, []);
+  } finally {
+    app.jobs.active.delete('review-capture');
+  }
+  const done = await call('/api/review/accept', { method: 'POST', body });
+  assert.equal(done.status, 200);
+  assert.deepEqual((await done.json()).accepted, ['desk-map.png']);
+});
+
 test('a Visual capture request with a bad device or screen is refused before any job starts', async (t) => {
   const { app, call } = await boot(t);
   for (const params of [{ device: 'watch' }, { screens: ['../../etc/passwd'] }, { screens: [] }]) {
