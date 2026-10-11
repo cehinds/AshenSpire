@@ -37,6 +37,15 @@ export const DEFENSE_BASE = Object.freeze({ block: 6, evadePct: 20, counterDamag
 
 const SIDES = Object.freeze(['player', 'enemy']);
 
+// Combatant-keyed maps (owner, 2026-10-11). An id may be any string, such as '__proto__' or
+// 'constructor'. A key is created with put() as an own property (an assignment would hit the
+// prototype setter for '__proto__'), and read with get(), which reads own keys only.
+const put = (obj, key, value) => {
+  Object.defineProperty(obj, key, { value, writable: true, enumerable: true, configurable: true });
+  return value;
+};
+const get = (obj, key, fallback = undefined) => (obj && Object.hasOwn(obj, key) ? obj[key] : fallback);
+
 // PLACEHOLDER (owner, 2026-10-11): a card spends its own `sp` (Strike 1, Smash 2). A card
 // with no `sp` costs 1.
 const DEFAULT_CARD_SP = 1;
@@ -143,8 +152,8 @@ function validateQueues(queues, combatants) {
 // A self-target action has no foe, so it carries no momentum term.
 function momentumTerm(side, id, target, momentum) {
   if (target === 'self') return 0;
-  if (side === 'player') return momentumSpeed(momentum[target] ?? 0);
-  return 0 - momentumSpeed(momentum[id] ?? 0);
+  if (side === 'player') return momentumSpeed(get(momentum, target, 0));
+  return 0 - momentumSpeed(get(momentum, id, 0));
 }
 
 // Orders the queued actions for one round (owner, 2026-10-11). Returns
@@ -181,13 +190,14 @@ export function buildTimeline(queues, ctx = {}) {
   const d4 = {};
   const base = {};
   for (const id of laneIds) {
-    base[id] = initiativeBase(combatants[id]);
-    d4[id] = rollD4(ctx.rng);
+    put(base, id, initiativeBase(combatants[id]));
+    put(d4, id, rollD4(ctx.rng));
   }
 
   let seq = 0;
   const lanes = laneIds.map((id) => {
-    const cards = Array.isArray(queues?.[id]) ? queues[id] : [];
+    const queue = get(queues, id, []);
+    const cards = Array.isArray(queue) ? queue : [];
     return cards.map((c, cardIndex) => {
       const preemptive = DEFENSIVE_KINDS.includes(c.kind);
       const buff = preemptive ? REACTION_BUFF.speed : 0;
@@ -220,11 +230,11 @@ export function buildTimeline(queues, ctx = {}) {
   // Lead initiative: the first card's initiative, or base + d4 for an empty queue.
   const lead = {};
   laneIds.forEach((id, i) => {
-    lead[id] = lanes[i][0] ? lanes[i][0].speed.initiative : base[id] + d4[id];
+    put(lead, id, lanes[i][0] ? lanes[i][0].speed.initiative : base[id] + d4[id]);
   });
   const initiative = {};
   laneIds.forEach((id) => {
-    initiative[id] = { base: base[id], d4: d4[id], lead: lead[id] };
+    put(initiative, id, { base: base[id], d4: d4[id], lead: lead[id] });
   });
   // Combatant order: higher lead initiative first, then player first, then lane order.
   const laneOrder = laneIds.map((_, i) => i);
@@ -300,11 +310,11 @@ export function makeFight(specs, tables = {}) {
   for (const spec of specs) {
     const c = makeCombatant(spec, tables);
     if (Object.hasOwn(combatants, c.id)) throw new TypeError(`duplicate combatant "${c.id}"`);
-    combatants[c.id] = c;
+    put(combatants, c.id, c);
   }
   if (!Object.hasOwn(combatants, 'player')) throw new TypeError('a fight needs a "player" combatant');
   const charges = {};
-  for (const c of Object.values(combatants)) charges[c.id] = c.intangibleCharges;
+  for (const c of Object.values(combatants)) put(charges, c.id, c.intangibleCharges);
   return { combatants, momentum: {}, poiseDouble: {}, charges };
 }
 
@@ -420,7 +430,7 @@ function credit(cur, run, { key, winner, winCard, foeCard, events, seq, credited
   const gain = gainOf(winCard);
   const bonus = stanceBonus(run.stanceTable, winCard?.stance ?? null, foeCard?.stance ?? null);
   const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
-  run.pending[key] = (run.pending[key] ?? 0) + delta;
+  put(run.pending, key, get(run.pending, key, 0) + delta);
   events.push({ type: 'momentum', reason: 'success', enemyId: key, by: winner, gain, bonus, delta, seq });
 }
 
@@ -428,7 +438,7 @@ function credit(cur, run, { key, winner, winCard, foeCard, events, seq, credited
 function stagger(run, { key, owner, cur, events, seq }) {
   const sign = cur.combatants[owner].side === 'player' ? 1 : -1;
   const delta = sign * MOMENTUM_MAX;
-  run.pending[key] = (run.pending[key] ?? 0) + delta;
+  put(run.pending, key, get(run.pending, key, 0) + delta);
   events.push({ type: 'momentum', reason: 'counterStagger', enemyId: key, by: cur.combatants[owner].side, delta, seq });
 }
 
@@ -439,8 +449,8 @@ function offerReaction(cur, entry, events, options, run) {
   const defender = cur.combatants[entry.target];
   if (defender.side !== 'player' || typeof options.onReaction !== 'function') return { evade: null, counter: null };
   const id = defender.id;
-  const usedIds = cur.used[id] ?? [];
-  const queued = run.queuedIds[id] ?? new Set();
+  const usedIds = get(cur.used, id, []);
+  const queued = get(run.queuedIds, id, new Set());
   const eligible = defender.hand.filter((c) => DEFENSIVE_KINDS.includes(c.kind)
     && !queued.has(c.id)
     && !usedIds.includes(c.id)
@@ -460,7 +470,7 @@ function offerReaction(cur, entry, events, options, run) {
   const chosen = eligible.find((c) => c.id === pick?.id);
   if (!chosen) throw new TypeError(`onReaction returned a card that is not eligible: ${pick?.id}`);
   cur.spLeft[id] -= cardSp(chosen);
-  cur.used[id] = [...usedIds, chosen.id];
+  put(cur.used, id, [...usedIds, chosen.id]);
   events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, sp: cardSp(chosen) });
   // Base values, no buff (owner, 2026-10-11). A reaction evade or counter is bound to this
   // attack: it is returned to resolveAttack, never left active. A reaction counter fires on
@@ -582,10 +592,10 @@ function applyEntry(cur, entry, events, options, run) {
 function decayAll(cur, combatants, step, events) {
   for (const id of Object.keys(combatants)) {
     if (combatants[id].side !== 'enemy') continue;
-    const from = clampMomentum(cur.momentum[id] ?? 0);
+    const from = clampMomentum(get(cur.momentum, id, 0));
     const to = decayMomentum(from, step);
     if (to !== from) events.push({ type: 'momentum', reason: 'decay', enemyId: id, from, to, delta: to - from, by: null });
-    cur.momentum[id] = to;
+    put(cur.momentum, id, to);
   }
 }
 
@@ -608,12 +618,12 @@ export function createRound(state, options = {}) {
   cur.poiseDouble = { ...(cur.poiseDouble ?? {}) };
   cur.charges = { ...(cur.charges ?? {}) };
   // Every combatant has a poise flag, false unless an overflow set it.
-  for (const id of Object.keys(cur.combatants)) cur.poiseDouble[id] = cur.poiseDouble[id] === true;
+  for (const id of Object.keys(cur.combatants)) put(cur.poiseDouble, id, get(cur.poiseDouble, id) === true);
   // Round-scoped effects (block, evade, counters) start empty each round.
   cur.active = {};
   for (const c of Object.values(cur.combatants)) {
-    if (!Object.hasOwn(cur.charges, c.id)) cur.charges[c.id] = c.intangibleCharges;
-    cur.active[c.id] = { guard: 0, guardCards: [], evade: [], counters: [] };
+    if (!Object.hasOwn(cur.charges, c.id)) put(cur.charges, c.id, c.intangibleCharges);
+    put(cur.active, c.id, { guard: 0, guardCards: [], evade: [], counters: [] });
   }
   const startEvents = [];
   const step = options.decay === undefined ? 1 : Number(options.decay);
@@ -627,16 +637,16 @@ export function createRound(state, options = {}) {
     merge: options.merge ?? 'speed',
   });
   const spent = {};
-  for (const id of Object.keys(cur.combatants)) spent[id] = 0;
+  for (const id of Object.keys(cur.combatants)) put(spent, id, 0);
   for (const e of timeline.entries) spent[e.actor] += e.card.sp;
   cur.spLeft = {};
-  for (const id of Object.keys(cur.combatants)) cur.spLeft[id] = cur.combatants[id].sp - spent[id];
+  for (const id of Object.keys(cur.combatants)) put(cur.spLeft, id, cur.combatants[id].sp - spent[id]);
 
   // Round-scoped: reactions played (by card id) and each combatant's queued card ids.
   cur.used = {};
   const run = { queuedIds: {}, pending: {}, stanceTable: options.stanceAdvantage ?? null };
   for (const e of timeline.entries) {
-    run.queuedIds[e.actor] = run.queuedIds[e.actor] ?? new Set();
+    put(run.queuedIds, e.actor, get(run.queuedIds, e.actor) ?? new Set());
     run.queuedIds[e.actor].add(e.card.id);
   }
 
@@ -652,18 +662,18 @@ export function createRound(state, options = {}) {
     settled = true;
     for (const k of Object.keys(cur.combatants)) {
       if (cur.combatants[k].side !== 'enemy') continue;
-      const from = cur.momentum[k] ?? 0;
-      const raw = from + (run.pending[k] ?? 0);
+      const from = get(cur.momentum, k, 0);
+      const raw = from + get(run.pending, k, 0);
       const to = clampMomentum(raw);
-      cur.momentum[k] = to;
+      put(cur.momentum, k, to);
       if (to !== from) events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to });
       if (raw > MOMENTUM_MAX) {
         events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'player', delta: 0, by: null });
-        cur.poiseDouble.player = true;
+        put(cur.poiseDouble, 'player', true);
       }
       if (raw < MOMENTUM_MIN) {
         events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'enemy', delta: 0, by: null });
-        cur.poiseDouble[k] = true;
+        put(cur.poiseDouble, k, true);
       }
     }
     events.push({ type: 'roundEnd' });
@@ -731,9 +741,9 @@ export function adaptEnemyQueues(queues, playerQueue, rng, options = {}) {
   const changed = [];
   for (const id of Object.keys(queues)) {
     const q = Array.isArray(queues[id]) ? queues[id].map((c) => ({ ...c })) : [];
-    out[id] = q;
+    put(out, id, q);
     if (id === 'player') continue;
-    const chance = adaptChance(wis[id] ?? 0);
+    const chance = adaptChance(get(wis, id, 0));
     if (chance <= 0 || q.length <= ADAPT_INDEX) continue;
     const roll = rollUnit(rng);
     if (!(roll < chance)) continue;

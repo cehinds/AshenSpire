@@ -686,6 +686,28 @@ test('a counter cancels on its effective speed (the capped one), not its raw tot
   assert.equal(out.state.combatants.player.hp, 19);
 });
 
+test("combatant ids '__proto__' and 'constructor' are ordinary keys and resolve", () => {
+  const st = makeFight([
+    { id: 'player', attrs: { DEX: 1 }, hp: 20, sp: 3 },
+    { id: '__proto__', attrs: { DEX: 1 }, hp: 10, sp: 3 },
+    { id: 'constructor', attrs: { DEX: 1 }, hp: 10, sp: 3 },
+  ]);
+  assert.ok(Object.hasOwn(st.combatants, '__proto__'));
+  assert.ok(Object.hasOwn(st.combatants, 'constructor'));
+  assert.equal(Object.getPrototypeOf(st.combatants), Object.prototype);
+  assert.equal(st.combatants['__proto__'].hp, 10);
+  const out = createRound(st, {
+    queues: { player: [atk('jab', '__proto__', 0)], constructor: [atk('stab', 'player', 1)] },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.equal(out.state.combatants['__proto__'].hp, 9);
+  assert.equal(out.state.combatants.constructor.hp, 10);
+  assert.equal(out.state.combatants.player.hp, 19);
+  assert.equal(Object.hasOwn(out.state.momentum, '__proto__'), true);
+  assert.equal(out.state.momentum['__proto__'], 1);
+  assert.equal(out.state.momentum.constructor, -1);
+});
+
 // ---- Momentum: per enemy, summed per exchange, settled once at round end ----
 
 const momentumOf = (out, id) => out.state.momentum[id];
