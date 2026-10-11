@@ -381,3 +381,11 @@ test('a battlefield save takes its base from the sent text, not the live draft',
   assert.match(saved, /C\.savedBase\(files, sent, B\.PRESETS_FILE\)/, 'the base is the submitted text');
   assert.doesNotMatch(saved, /serializePresets/, 'the live draft is never the base');
 });
+
+test('readPresetsText accepts the canonical real file and refuses reformatted or non-module text', () => {
+  const parts = B.readPresetsText(realText);
+  assert.deepEqual(parts.data, B.parsePresets(realText).data, 'the canonical text passes and parses');
+  const reformatted = realText.replace(/\n {2}/, '\n    ');
+  assert.throws(() => B.readPresetsText(reformatted), /not in the form Layout Studio saves/, 'a file in another form is refused');
+  assert.throws(() => B.readPresetsText('const x = 1;\n'), /closing|FORMATION_POSITIONING_PRESETS/, 'a file that is not a presets module is refused');
+});

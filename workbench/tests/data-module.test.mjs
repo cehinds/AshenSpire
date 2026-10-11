@@ -306,6 +306,15 @@ test('a table deleted on disk: a 404 reads as missing, and withoutTable drops it
   assert.equal(D.withoutTable({ parsed, drafts, selected: other }, rel).selected, other, 'another selection stays');
 });
 
+test('Data Studio scopes its undo by table: edits and the reload and forget clears name the table, not the whole history', () => {
+  const src = read('workbench/modules/data/index.mjs');
+  assert.match(src, /ctx\.history\.scoped\(path\)\.pushChange\(ev\.change,/, 'a cell edit is owned by its table');
+  assert.match(src, /for \(const c of moved\) ctx\.history\.scoped\(c\.path\)\.clear\(\);/, 'a conflict reload clears only the reloaded tables');
+  assert.match(src, /ctx\.history\.scoped\(path\)\.clear\(\);/, 'a table deleted on disk clears only its own steps');
+  assert.doesNotMatch(src, /ctx\.history\.clear\(\)/, 'no step clears the whole Data Studio history');
+  assert.match(src, /ctx\.history\.undo\(\)/, 'global undo stays on the shared history');
+});
+
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
   const { lineDiff } = await import('../core/files.mjs');
   const rel = 'content/source/speakers.csv';

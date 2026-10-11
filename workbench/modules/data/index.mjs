@@ -122,7 +122,8 @@ export default {
       const path = state.selected;
       if (!path) return;
       state.drafts.set(path, state.grid.getData());
-      if (ev.change) ctx.history.pushChange(ev.change, (snap) => applyDoc(path, snap));
+      // The step is owned by its table, so reloading one table drops only that table's steps.
+      if (ev.change) ctx.history.scoped(path).pushChange(ev.change, (snap) => applyDoc(path, snap));
       refresh();
     }
     function applyDoc(path, snap) {
@@ -214,8 +215,8 @@ export default {
       status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" class="btn btn-sm" data-reload>Reload from disk</button><button type="button" class="btn btn-sm btn-primary" data-overwrite>Overwrite with my changes</button></div>`;
       status.querySelector('[data-reload]').onclick = async () => {
         for (const c of moved) { state.parsed.delete(c.path); state.drafts.delete(c.path); }
-        // The disk copies replace the drafts: the steps that hold the drafts must go, or undo writes them back.
-        ctx.history.clear();
+        // The disk copies replace the drafts: the steps that hold the drafts must go, or undo writes them back. Only the reloaded tables' steps go.
+        for (const c of moved) ctx.history.scoped(c.path).clear();
         close();
         // A table deleted on disk leaves the list: read the list again, then name each deleted table.
         const shown = state.selected && moved.some((c) => c.path === state.selected) ? state.selected : null;
@@ -281,7 +282,7 @@ export default {
       const was = state.selected;
       const next = withoutTable(state, path);
       state.parsed = next.parsed; state.drafts = next.drafts; state.selected = next.selected;
-      ctx.history.clear();
+      ctx.history.scoped(path).clear();
       if (was === path) {
         state.activeRow = null;
         if (state.grid) { state.grid.setRules([]); state.grid.setData({ columns: [], rows: [] }); }

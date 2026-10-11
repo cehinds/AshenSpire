@@ -115,3 +115,12 @@ test('the browser copy of the badge rule gives the game\'s own badges for every 
     }
   }
 });
+
+test('readDeckText accepts the canonical real file and refuses reformatted, invalid or null-resource text', () => {
+  assert.deepEqual(D.readDeckText(TEXT), data, 'the canonical text passes and parses');
+  assert.throws(() => D.readDeckText(JSON.stringify(data, null, 2)), /not in the form Layout Studio saves/, 'a file in another form is refused');
+  assert.throws(() => D.readDeckText('{not json'), SyntaxError, 'text that is not JSON is refused');
+  const nullResources = structuredClone(data);
+  nullResources.components.resourceGroups[0].resources = null;
+  assert.throws(() => D.readDeckText(D.serializeDeck(nullResources)), /resources must be a non-empty array/, 'a group with null resources is refused, not painted');
+});

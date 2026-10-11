@@ -189,3 +189,35 @@ test('a scoped clear drops only that owner\'s steps, and the shared timeline kee
   config.clear();
   assert.equal(h.canUndo || h.canRedo, false);
 });
+
+test('Data Studio: each table\'s cell edits are its own owner, so reloading one table keeps the other table\'s undo', () => {
+  // The module records each grid change as scoped(path).pushChange(change, apply); a reload clears scoped(path).
+  const h = new History();
+  const tables = { 'content/source/a.csv': { value: 'a0' }, 'content/source/b.csv': { value: 'b0' } };
+  const edit = (path, next) => {
+    const table = tables[path];
+    const before = table.value;
+    h.scoped(path).pushChange({ label: `edit ${path}`, undo: before, redo: next }, (snap) => { table.value = snap; });
+    table.value = next;
+  };
+  edit('content/source/a.csv', 'a1');
+  edit('content/source/b.csv', 'b1');
+  edit('content/source/a.csv', 'a2');
+  // Reload a.csv from disk: its drafts and steps go; b.csv's step stays on the shared timeline.
+  tables['content/source/a.csv'].value = 'a-disk';
+  h.scoped('content/source/a.csv').clear();
+  assert.deepEqual(h.list().map((e) => e.label), ['edit content/source/b.csv']);
+  h.undo();
+  assert.equal(tables['content/source/b.csv'].value, 'b0', 'the other table\'s edit is undone');
+  assert.equal(tables['content/source/a.csv'].value, 'a-disk', 'the reloaded table is not written back by undo');
+  assert.equal(h.canUndo, false);
+});
+
+test('Data Studio: a table edit is undone and redone on the shared timeline until its table is reloaded', () => {
+  const h = new History();
+  const cell = { value: 0 };
+  h.scoped('content/source/a.csv').pushChange({ label: 'a', undo: 0, redo: 1 }, (v) => { cell.value = v; });
+  h.undo();
+  assert.equal(cell.value, 0);
+  assert.equal(h.canRedo, true, 'the global redo still holds the table\'s step');
+});
