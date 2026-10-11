@@ -34,7 +34,8 @@ export function combatSceneryGround(sizes, actors, fallback) {
 // The farthest-back enemy foot line, which the backdrop keeps on its floor.
 export function combatStandingGround(sizes, actors, fallback) {
   const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
-  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.ground)).map(size => size.ground);
+  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.standingGround ?? size.ground))
+    .map(size => size.standingGround ?? size.ground);
   return grounds.length ? Math.min(...grounds) : fallback;
 }
 
@@ -64,6 +65,11 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
 
 // Attach the foreground player's feet to the battlefield edge, above the
 // health strip and card-band tools. Selection never changes this resting fit.
+// Share of the field height a short portrait phone lifts its enemies by, so
+// their figures stand a little further back. Intents and HP plates stay under
+// the turn ribbon (the headroom clamp), so the lift shortens the figure-to-plate gap.
+export const SHORT_PHONE_ENEMY_LIFT = .05;
+
 export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
@@ -88,10 +94,15 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     // (width > 2 x height) keeps the near foot line for its stacked lanes.
     const backRow = spacious || width <= height * 2;
     const nearRow = Math.max(visibleHeight + actor.leading + 6, (size.ground ?? actor.slot.ground) - height * .07);
+    // A short portrait phone lifts its back row a little more (SHORT_PHONE_ENEMY_LIFT,
+    // a share of the field height). Its standing line stays on the unlifted
+    // depth, so the backdrop camera frames the same horizon as before.
+    const backGround = height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25;
+    const lift = !player && backRow && !spacious ? height * SHORT_PHONE_ENEMY_LIFT : 0;
     const ground = player && solo && Number.isFinite(handTop)
       ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
-      : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground)
-        : backRow ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
+      : Math.max(visibleHeight + actor.leading + 6 - lift, player ? (size.ground ?? actor.slot.ground)
+        : backRow ? backGround - lift
           : nearRow);
     // A short portrait field frames its backdrop on the near row, as it did
     // before its enemies moved back, so the horizon and landmark stay in view;
@@ -99,6 +110,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const sceneryGround = !player && backRow && !spacious ? nearRow : undefined;
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
       ...(sceneryGround === undefined ? {} : { sceneryGround }),
+      ...(lift ? { standingGround: backGround } : {}),
       separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };
   });
   // A short landscape strip has no room above the row for spread overheads;
