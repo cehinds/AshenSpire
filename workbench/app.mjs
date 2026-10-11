@@ -679,7 +679,7 @@ const SHORTCUTS = [
 function openHelp() {
   closeOverlays(); lastFocus = document.activeElement;
   const k = (keys) => keys.map((x) => `<kbd>${esc(x)}</kbd>`).join('');
-  $('#help-body').innerHTML = `<div class="keys">${SHORTCUTS.map(([title, ...rows]) => `<h3>${esc(title)}</h3>${rows.map(([keys, what]) => `<div class="key-row"><span>${esc(what)}</span><span class="key-keys">${k(keys)}</span></div>`).join('')}`).join('')}<p class="keys-note">On macOS use ⌘ for Ctrl. Alt+1…7 also switches tools where the browser keeps Ctrl+1…7 for its tabs. Shortcuts work while focus is in the Workbench chrome; click the rail or header first when you are typing inside a tool.</p></div>`;
+  $('#help-body').innerHTML = `<div class="keys">${SHORTCUTS.map(([title, ...rows]) => `<h3>${esc(title)}</h3>${rows.map(([keys, what]) => `<div class="key-row"><span>${esc(what)}</span><span class="key-keys">${k(keys)}</span></div>`).join('')}`).join('')}<p class="keys-note">On macOS use ⌘ for Ctrl. Alt+1…7 also switches tools where the browser keeps Ctrl+1…7 for its tabs. Ctrl+K and Ctrl+\\ also work inside the three studios; every other key there is the studio's own, so click the rail or header first for the rest.</p></div>`;
   $('#help').hidden = false; $('#help [data-close]').focus();
 }
 async function openDoc(rel) {
