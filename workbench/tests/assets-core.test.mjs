@@ -164,6 +164,26 @@ test('listArt reads at most 32 headers at once, so a large art tree does not run
   assert.ok(peak > 1, 'the reads do run concurrently');
 });
 
+test('one unreadable file lists without dimensions; the rest of the listing still comes back', async (t) => {
+  const root = await project(t, { pin: false });
+  clearArtCache();
+  const realOpen = fs.open;
+  // Every header read of one file fails, as an unreadable file would.
+  fs.open = async (file, ...rest) => {
+    if (String(file).endsWith('equipment/sword.png')) throw Object.assign(Error('EACCES: permission denied'), { code: 'EACCES' });
+    return realOpen.call(fs, file, ...rest);
+  };
+  t.after(() => { fs.open = realOpen; });
+  const list = await listArt(root);
+  fs.open = realOpen;
+  const sword = list.files.find((f) => f.path === 'assets-mobile/equipment/sword.png');
+  assert.ok(sword, 'the unreadable file is still listed');
+  assert.equal(sword.w, undefined, 'with no dimensions');
+  assert.equal(sword.h, undefined);
+  assert.equal(list.files.find((f) => f.path === 'assets-mobile/poses/idle.webp').w, 640, 'the other files keep their dimensions');
+  assert.ok(list.files.length >= 5, 'the listing is not rejected');
+});
+
 test('a symlinked pack folder is refused: nothing is listed or served from it', async (t) => {
   const root = await project(t);
   const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'assets-outside-')));

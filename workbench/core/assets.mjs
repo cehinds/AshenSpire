@@ -114,14 +114,16 @@ async function headerOf(file, ext, stat) {
   const key = file;
   const hit = cache.get(key);
   if (hit && hit.mtimeMs === stat.mtimeMs && hit.size === stat.size) return hit.dims;
-  const fh = await fs.open(file, 'r');
+  // A file that cannot be opened or read has no dimensions; it is still listed, and the listing goes on.
   let dims = null;
+  let fh = null;
   try {
+    fh = await fs.open(file, 'r');
     const want = ext === '.svg' ? SVG_BYTES : HEADER_BYTES;
     const buf = Buffer.alloc(Math.min(want, stat.size));
     await fh.read(buf, 0, buf.length, 0);
     dims = dimsOf(buf, ext);
-  } catch { dims = null; } finally { await fh.close(); }
+  } catch { dims = null; } finally { await fh?.close().catch(() => {}); }
   cache.set(key, { mtimeMs: stat.mtimeMs, size: stat.size, dims });
   return dims;
 }
