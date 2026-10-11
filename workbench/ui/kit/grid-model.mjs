@@ -361,10 +361,12 @@ export function pasteRange(doc, at, text, { fill = null } = {}) {
  * @returns {{ rows, columns, change: object | null, errors: object[], overflow: { rows: number, cols: number } }}
  */
 export function pasteVisible(rows, columns, order, anchor, matrixOrText, selection = null) {
-  const matrix = typeof matrixOrText === 'string' ? parseClipboard(matrixOrText) : matrixOrText;
+  const sel = selection ?? { ranges: [] };
+  // An empty string is a blank copied cell; with a selection it is a one-value fill that clears.
+  const blankFill = matrixOrText === '' && sel.ranges.length > 0;
+  const matrix = blankFill ? [['']] : typeof matrixOrText === 'string' ? parseClipboard(matrixOrText) : matrixOrText;
   const overflow = { rows: 0, cols: 0 };
   const writes = [];
-  const sel = selection ?? { ranges: [] };
   const targets = matrix.length === 1 && matrix[0].length === 1 && sel.ranges.length
     ? coverage(sel, order, columns).cells : [];
   if (targets.length) {
@@ -387,7 +389,9 @@ export function pasteVisible(rows, columns, order, anchor, matrixOrText, selecti
   const parsed = [];
   for (const { r, c, raw } of writes) {
     const col = columns[c];
-    try { parsed.push({ r, key: col.key, value: parseValue(raw, col.type) }); }
+    // A blank value (empty after trimming) clears the cell instead of failing the column's parse.
+    const isBlank = typeof raw === 'string' && !raw.trim();
+    try { parsed.push({ r, key: col.key, value: isBlank ? emptyValue(col.type) : parseValue(raw, col.type) }); }
     catch (e) { errors.push({ row: r, key: col.key, value: raw, message: e.message }); }
   }
   if (errors.length) return { rows, columns, change: null, errors, overflow };

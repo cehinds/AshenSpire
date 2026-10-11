@@ -250,6 +250,36 @@ test('pasteVisible: a bad value in a one-value fill commits nothing and lists ea
   assert.deepEqual(snap(out.rows), snap(d.rows));
 });
 
+test('pasteVisible: a blank copied cell pastes as a clear, so copy-then-paste round-trips', () => {
+  const src = { columns: [{ key: 'a', type: 'number', label: 'a' }, { key: 'b', type: 'number', label: 'b' }], rows: [{ a: 1, b: null }, { a: 2, b: 3 }] };
+  const text = M.copyVisible(src.rows, src.columns, [0, 1], selOf(range(0, 0, 1, 1)));
+  assert.equal(text, '1\t\n2\t3');
+  const target = { columns: src.columns, rows: [{ a: 9, b: 9 }, { a: 9, b: 9 }] };
+  const out = M.pasteVisible(target.rows, target.columns, [0, 1], { r: 0, c: 0 }, text);
+  assert.notEqual(out.change, null, 'the paste applies');
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(snap(out.rows), snap(src.rows), 'the blank cell cleared to null');
+  assertRoundTrip(target, out);
+});
+
+test('pasteVisible: a blank one-value fill clears the selected cells of every type', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 1 }, '', selOf(range(0, 1, 2, 2), range(0, 4, 2, 4)));
+  assert.deepEqual(out.rows.map(r => r.n), [null, null, null, 2], 'number cells clear; row 3 is outside the selection and keeps its value');
+  assert.deepEqual(out.rows.map(r => r.on), [null, null, null, true], 'boolean cells clear');
+  assert.deepEqual(out.rows.map(r => r.data), [null, null, null, 'str'], 'json cells clear');
+  assert.deepEqual(out.errors, []);
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a blank value does not excuse a non-blank bad value in the same paste', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, '\t\nx\tnope');
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors, [{ row: 1, key: 'n', value: 'nope', message: 'Enter a valid number' }]);
+  assert.deepEqual(snap(out.rows), snap(d.rows), 'nothing applied');
+});
+
 test('pasteVisible: columns past the last one are counted as overflow', () => {
   const d = fresh();
   const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, [['a', '1', 'true', 'z', '{"q":1}', '6', '7']]);
