@@ -76,6 +76,8 @@ Flagged: at stage 1 and 2 the card hint cannot show a speed advantage.
   hit first". This file reads "the strike" as the player's own strike. This
   reading is noted, not confirmed.)
 - A counter resolves against a slower attack. It does not stop a faster one.
+- One player card per enemy action (owner, 2026-10-11). A second card on an
+  already paired enemy action is rejected ('rejected' event).
 
 ## Ties and tie tags
 
@@ -312,8 +314,6 @@ silent. They are placeholders for testing the shape, not decisions.
 - An attack that would land can be avoided by an `intangible` charge, or by the
   `evadePct` roll. Each emits 'evaded' with a `reason`, and each counts as a
   defensive success. The `evadeRoll` event reports the roll.
-- One player card per enemy slot. A second card on a paired slot is rejected
-  ('rejected' event).
 - An enemy slot with no player card is unpaired ('unpaired' event) and has no
   effect.
 - Perception only tags events as visible. It does not gate targeting.
@@ -326,7 +326,8 @@ a. Resolved (2026-10-11). The example reads dagger +2, heavy armor -3, Strike
    total is 0. The earlier "+4" reading is withdrawn.
 b. Resolved (2026-10-11). Momentum is applied per slot, with a round-end
    total per enemy. Decay is open (k).
-c. One player card per enemy slot, or several?
+c. Resolved (2026-10-11): one player card per enemy action. A second card is
+   rejected.
 d. What happens to an unpaired enemy action?
 e. Resolved (2026-10-11): four perception stages, as in "Perception stages".
    The card hint consequence is flagged there.
