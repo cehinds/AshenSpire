@@ -683,6 +683,33 @@ test('a generated-files lock held by another process (the editor, UI Studio) ref
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
 });
 
+test('close() waits for a save still writing, so its file is on disk when close resolves', async (t) => {
+  const root = await project(t);
+  const styles = path.join(root, 'styles/main.css');
+  const sha = (s) => createHash('sha256').update(s).digest('hex');
+  let app = null; let closing = null; let onDiskAtClose = null; let enter = null;
+  const entered = new Promise((resolve) => { enter = resolve; });
+  // The save holds at its write seam while the Workbench is closed, as a save in flight would.
+  app = await createWorkbench({
+    root, port: 0, children: false, stateDir: path.join(root, '.wb-state'), debounceMs: 120,
+    fileFault: async (rel) => {
+      if (rel !== 'styles/main.css' || closing) return;
+      enter();
+      closing = app.close().then(async () => { onDiskAtClose = await fs.readFile(styles, 'utf8'); });
+      await new Promise((r) => setTimeout(r, 150));
+    },
+  });
+  t.after(() => app.close());
+  const saved = fetch(`${app.url}/api/files/save`, {
+    method: 'POST', headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [{ path: 'styles/main.css', text: 'body{color:red}\n', baseHash: sha('body{}\n') }] }),
+  }).then((r) => r.status, (e) => e.message);
+  await entered;
+  await closing;
+  assert.equal(onDiskAtClose, 'body{color:red}\n', 'the save landed before close resolved');
+  assert.equal(await saved, 200);
+});
+
 test('a started job is persisted at once, so a restart before it finishes lists it as cancelled', async (t) => {
   const root = await project(t);
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });

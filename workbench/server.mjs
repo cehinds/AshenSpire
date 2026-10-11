@@ -196,7 +196,12 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     }).catch(() => { take(); });
   }
 
-  const server = http.createServer(async (req, res) => {
+  // Requests still being answered can still write (a save lands files and a backup set): close() waits for them.
+  const pending = new Set();
+  const track = (promise) => { pending.add(promise); const done = () => pending.delete(promise); promise.then(done, done); return promise; };
+  const server = http.createServer((req, res) => track(answer(req, res)));
+
+  const answer = async (req, res) => {
     try {
       const url = new URL(req.url, `http://${address}`);
       if (url.pathname.startsWith('/api/')) {
@@ -230,7 +235,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       if (!res.headersSent) sendJson(res, status, { error: error.message });
       else res.end();
     }
-  });
+  };
 
   async function serveArt(res, rel) {
     const checkout = settings.read().artCheckout;
@@ -361,6 +366,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       watcher.close();
       // A running job's process must exit, and its slot and file lock be freed, before close() resolves.
       await jobs.stopAll();
+      // A request still answering may still write (a save lands its files and backup set): let it finish first.
+      while (pending.size) await Promise.allSettled([...pending]);
       hub.close();
       await supervisor.stopAll();
       server.closeAllConnections();
