@@ -292,6 +292,24 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
     }
   }
+  // Owner (2026-10-11): each combatant's floor shadow is as wide as its health
+  // bar. The bar is read at rest: a selected player's bar widens into the
+  // reading panel, so its last resting width holds and the shadow stays put.
+  // Sprite and bar are both scaled by any selection transform, so their ratio
+  // is the shadow's width as a share of the figure.
+  function syncFloorShadows() {
+    for (const frame of field.querySelectorAll('.combatant')) {
+      const sprite = frame.querySelector('.sprite'), bar = frame.querySelector('.combat-health-meter');
+      if (!sprite || !bar) continue;
+      if (!frame.classList.contains('context-selected')) {
+        const barWidth = bar.getBoundingClientRect().width;
+        if (barWidth > 0) frame.dataset.healthBarWidth = String(barWidth);
+      }
+      const barWidth = Number(frame.dataset.healthBarWidth), spriteWidth = sprite.getBoundingClientRect().width;
+      if (!(barWidth > 0 && spriteWidth > 0)) continue;
+      sprite.style.setProperty('--floor-shadow-width', `${(barWidth / spriteWidth * 100).toFixed(2)}%`);
+    }
+  }
   // Every living enemy's Inspect hangs above its intent. The default spot is
   // read after the refit; it moves to the intent's left or right only when the
   // 44 px tap area above would sit under the HUD, the turn ribbon, or another
@@ -956,6 +974,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Last layout write of the refit: the HUD, ribbon and intents are settled.
     // The combat box above is unchanged by the Inspect marks.
     placeEnemyInspect();
+    syncFloorShadows();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
     // painting. Continuing behind cards must not move the ground line.

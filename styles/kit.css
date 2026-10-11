@@ -5184,7 +5184,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation'] .combatant .sprite::before {
   content: ''; position: absolute; left: 50%; bottom: 0;
-  width: 70%; height: 8%; border-radius: 50%; transform: translate(-50%,50%);
+  width: var(--floor-shadow-width, 70%); height: 8%; border-radius: 50%; transform: translate(-50%,50%);
   background: #0008; pointer-events: none; z-index: -1;
 }
 .modal-foot-actions[data-action-count] {
