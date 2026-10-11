@@ -46,6 +46,30 @@ test('the manifest is read, and an entry that cannot be served is skipped and na
   assert.match(skipped[1].reason, /not the branch's site path/);
 });
 
+test('two branches that sanitise to one site path are both withheld, and both are named', (t) => {
+  const dir = scratch(t);
+  const plus = stage(dir, 'feature/a+b');
+  const dash = { ...stage(dir, 'feature/a-b'), pr: 8 };
+  const plusPr = { ...plus, pr: 7 };
+  const good = stage(dir, 'feature/good');
+  writeFileSync(join(dir, 'previews.json'), JSON.stringify({ previews: [plusPr, dash, good] }));
+  const skipped = [];
+  const warnings = [];
+  const warn = console.warn;
+  console.warn = (msg) => warnings.push(String(msg));
+  let served;
+  try { served = readBranchPreviews(dir, skipped); } finally { console.warn = warn; }
+  assert.deepEqual(served.map((p) => p.path), ['feature/good']);
+  assert.equal(skipped.length, 2);
+  assert.ok(skipped.some((s) => s.branch === 'feature/a+b' && /PR #7/.test(s.reason)));
+  assert.ok(skipped.some((s) => s.branch === 'feature/a-b' && /PR #8/.test(s.reason)));
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /feature\/a\+b/);
+  assert.match(warnings[0], /feature\/a-b/);
+  assert.match(warnings[0], /PR #7/);
+  assert.match(warnings[0], /PR #8/);
+});
+
 test('no manifest means no previews', (t) => {
   assert.deepEqual(readBranchPreviews(scratch(t), []), []);
 });
