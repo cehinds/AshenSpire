@@ -581,8 +581,8 @@ fail-closed rather than normalized or replaced with Unarmed.
 #### Complete armament kits
 
 Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`:
-`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, implements,
-and staves each lend one Strike, one Guard, and one signature Armament Art while
+`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, and staves (sceptres
+are staves) each lend one Strike, one Guard, and one signature Armament Art while
 equipped. Armour, talismans, and consumables do not acquire this kit.
 
 These three item-owned cards are guaranteed before the starting filler budget
@@ -605,7 +605,8 @@ author the same card; optional non-kit arts retain the existing shared-art rule.
 Reconciliation preserves cards already in discard or exhaust. Unequipping
 removes item-owned contributions and re-equipping restores their stable IDs.
 
-New armed starting decks omit the redundant global technique grant. Fully
+New armed starting decks omit the redundant global technique grant
+(proved in `tests/framework.test.mjs`). Fully
 unarmed Strike/Guard/technique behavior remains unchanged.
 
 **Everyone has the Dodge Roll** (owner's rule, 2026-09-24, widening the
