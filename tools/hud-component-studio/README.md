@@ -42,7 +42,7 @@ The studio writes the HUD's tunable look as the CSS custom properties in [docs/h
 
 1. Pick a form factor and edit it, or edit Mobile.
 2. **Export CSS JSON ▾ → This form factor** downloads `<ff>.json`. **All four (separate files)** downloads `mobile.json`, `tablet.json`, `desktop.json` and `widescreen.json`. The format is `ashenspire-hud-layout/1`, and each file sets only the tokens it overrides.
-3. Copy the files into `content/hud-layout/`, then run `node tools/hud-layout-css.mjs --write` and rebuild, as the contract describes. That generator and the `content/hud-layout/` folder are part of the contract pipeline but are not on this studio branch; the studio only writes the files.
+3. Run `node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …` from the repository root, then rebuild. `--merge` validates every file and merges it into `content/hud-layout/<ff>.json`: exported values win, and tokens the export does not carry keep their tuned values. A refused file writes nothing. The studio only writes the files; it never edits the game's content.
 4. **Import CSS JSON** reads such a file back. Geometry tokens become offsets for the file's form factor, and style tokens become node properties where the mapping is one to one. Undo reverses the import.
 
 `css-bindings.json` maps every contract token to one source: a node and an axis for geometry (`px`), or a node and property path for style. The pure mapping lives in `css-export.js`, which the page loads with a script tag and Node can `require`.
@@ -50,7 +50,7 @@ The studio writes the HUD's tunable look as the CSS custom properties in [docs/h
 - **Geometry** (`--hud-player-details-dx/dy`, `--hud-enemy-nameplate-dy`, `--hud-turn-ribbon-dy`, `--hud-tools-dy`): the node's offset from its seed position, multiplied by 390 / 512 and rounded to whole px.
 - **Style** (shadows, backing, fills, strokes, font, sizes): read from the node's properties and converted from design px by 390 / 512. Colors, fonts and keywords are copied as written.
 - **Export-only settings**, set in the Inspector under *CSS token export*: `minWidth` on Expanded selected player details (`--hud-details-min-width`), `maxWidth` on the header HP track (`--hud-header-hp-max-width`, px or `none`), and `span` on the Combat log row (`--hud-tools-span`, Card band or Whole field). They have no visual effect in the studio.
-- A token is written only when its source was set explicitly (in the seed or in a form factor edit) or differs from the seed. An unset token is omitted, so the game keeps its default.
+- A token is written only when its value differs from the untouched seed (`scene.json`), or when an export-settings value was set in the Inspector. An untouched studio exports `{}` for every form factor, so the game keeps its tuned values.
 
 ## Verification
 

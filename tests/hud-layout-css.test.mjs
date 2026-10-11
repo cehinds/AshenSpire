@@ -3,11 +3,12 @@
 // → styles/hud-layout.generated.css, its consumers, and the form-factor decider.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { FORM_FACTORS, HUD_LAYOUT_FORMAT, HUD_LAYOUT_TOKENS, PER_CONSUMER, hudLayoutToken, checkTokenValue } from '../tools/hud-layout-tokens.mjs';
-import { buildHudLayoutCss, generateHudLayoutCss, readHudLayoutDocs, HUD_LAYOUT_CSS } from '../tools/hud-layout-css.mjs';
+import { buildHudLayoutCss, generateHudLayoutCss, readHudLayoutDocs, mergeHudLayoutExports, HUD_LAYOUT_CSS } from '../tools/hud-layout-css.mjs';
 import { formFactorFor } from '../src/ui/models/FormFactorModel.js';
 import { offsetPlacement, hudGeometry } from '../src/ui/models/HudLayoutOffsetModel.js';
 import { balance } from '../src/content/balance.js';
@@ -186,4 +187,111 @@ test('the tools row keeps its field span unless the token asks for the card band
   assert.match(tools, /span === 'hand' \? cardBand\(hand\) : null/);
   assert.match(tools, /let width = Math\.max\(0, \(handBox\?\.width \|\| innerWidth\) - 12\);/, 'field: the old width');
   assert.match(tools, /let left = \(handBox\?\.right \|\| innerWidth\) - width - 6;/, 'field: the old dock');
+});
+
+// ---- --merge: studio exports into content/hud-layout (temp roots only) ----
+
+/** A temp root with content/hud-layout copied from the real files and an empty styles/ folder. */
+function tempContentRoot() {
+  const root = mkdtempSync(join(tmpdir(), 'hud-merge-'));
+  const dir = join(root, 'content', 'hud-layout');
+  mkdirSync(dir, { recursive: true });
+  mkdirSync(join(root, 'styles'), { recursive: true });
+  const { docs } = readHudLayoutDocs(ROOT);
+  for (const ff of FORM_FACTORS) writeFileSync(join(dir, `${ff}.json`), readFileSync(join(ROOT, 'content', 'hud-layout', `${ff}.json`), 'utf8'));
+  return { root, dir, docs, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+}
+/** Writes an export file the way the studio does (Export CSS JSON) and returns its path. */
+function exportFile(root, name, formFactor, tokens) {
+  const path = join(root, 'downloads', `${name}.json`);
+  mkdirSync(join(root, 'downloads'), { recursive: true });
+  writeFileSync(path, JSON.stringify({ format: HUD_LAYOUT_FORMAT, formFactor, source: 'hud-component-studio', tokens }, null, 2) + '\n');
+  return path;
+}
+/** The bytes of every file a merge may write (null when absent), for "nothing was written" checks. */
+function snapshot(root) {
+  const read = (path) => (existsSync(path) ? readFileSync(path, 'utf8') : null);
+  const out = {};
+  for (const ff of FORM_FACTORS) out[ff] = read(join(root, 'content', 'hud-layout', `${ff}.json`));
+  out.css = read(join(root, 'styles', 'hud-layout.generated.css'));
+  return out;
+}
+
+test('merge keeps the tokens an export does not carry and overrides the ones it does', () => {
+  const t = tempContentRoot();
+  try {
+    const before = JSON.parse(readFileSync(join(t.dir, 'desktop.json'), 'utf8')).tokens;
+    const path = exportFile(t.root, 'desktop', 'desktop', { '--hud-tools-bg': '#101010', '--hud-player-details-dx': '30px' });
+    const result = mergeHudLayoutExports([path], { root: t.root });
+    assert.deepEqual(result.errors, []);
+    assert.deepEqual(result.written.sort(), ['content/hud-layout/desktop.json', 'styles/hud-layout.generated.css']);
+    const after = JSON.parse(readFileSync(join(t.dir, 'desktop.json'), 'utf8'));
+    assert.equal(after.tokens['--hud-tools-bg'], '#101010', 'exported value wins');
+    assert.equal(after.tokens['--hud-player-details-dx'], '30px', 'new token is added');
+    assert.equal(after.tokens['--hud-tools-span'], 'hand', 'desktop keeps its tuned span');
+    assert.equal(after.tokens['--hud-header-hp-max-width'], '48%', 'desktop keeps its tuned HP width');
+    assert.equal(after.tokens['--hud-text-shadow'], before['--hud-text-shadow'], 'desktop keeps its tuned text shadow');
+    assert.equal(Object.keys(after.tokens).length, Object.keys(before).length + 1);
+    assert.deepEqual(Object.keys(after.tokens), HUD_LAYOUT_TOKENS.map((token) => token.name).filter((name) => name in after.tokens), 'keys follow the token table order');
+    assert.equal(after.format, HUD_LAYOUT_FORMAT);
+    assert.equal(after.formFactor, 'desktop');
+    assert.equal(readFileSync(join(t.dir, 'desktop.json'), 'utf8').endsWith('}\n'), true, 'trailing newline');
+    assert.equal(readFileSync(join(t.dir, 'mobile.json'), 'utf8'), readFileSync(join(ROOT, 'content', 'hud-layout', 'mobile.json'), 'utf8'), 'other form factors are untouched');
+    const expected = generateHudLayoutCss({ ...t.docs, desktop: after }, { dir: t.dir });
+    assert.equal(readFileSync(join(t.root, 'styles', 'hud-layout.generated.css'), 'utf8'), expected.css, 'stylesheet regenerated from the merged files');
+  } finally { t.cleanup(); }
+});
+
+test('merge accepts several exports at once and refuses two exports for one form factor', () => {
+  const t = tempContentRoot();
+  try {
+    const tablet = exportFile(t.root, 'tablet', 'tablet', { '--hud-panel-shadow': '0px 5px 6px #000' });
+    const mobile = exportFile(t.root, 'mobile', 'mobile', { '--hud-tools-dy': '-4px' });
+    const result = mergeHudLayoutExports([tablet, mobile], { root: t.root });
+    assert.deepEqual(result.errors, []);
+    assert.equal(JSON.parse(readFileSync(join(t.dir, 'tablet.json'), 'utf8')).tokens['--hud-panel-shadow'], '0px 5px 6px #000');
+    assert.equal(JSON.parse(readFileSync(join(t.dir, 'mobile.json'), 'utf8')).tokens['--hud-tools-dy'], '-4px');
+    const again = exportFile(t.root, 'tablet-again', 'tablet', { '--hud-tools-dy': '2px' });
+    const before = snapshot(t.root);
+    const dup = mergeHudLayoutExports([tablet, again], { root: t.root });
+    assert.equal(dup.errors.length, 1);
+    assert.match(dup.errors[0], /second export for tablet/);
+    assert.deepEqual(snapshot(t.root), before, 'a refused merge writes nothing');
+  } finally { t.cleanup(); }
+});
+
+test('merge rejects a bad token or value by file and name and writes nothing', () => {
+  const t = tempContentRoot();
+  try {
+    const good = exportFile(t.root, 'good', 'desktop', { '--hud-tools-bg': '#202020' });
+    const unknown = exportFile(t.root, 'unknown', 'widescreen', { '--hud-banana': '1px' });
+    const badValue = exportFile(t.root, 'bad-value', 'tablet', { '--hud-panel-shadow': 'red; } body { display: none' });
+    const before = snapshot(t.root);
+
+    const unknownResult = mergeHudLayoutExports([good, unknown], { root: t.root });
+    assert.deepEqual(unknownResult.errors, [`${unknown}: unknown token '--hud-banana'`]);
+    assert.deepEqual(unknownResult.written, []);
+
+    const valueResult = mergeHudLayoutExports([good, badValue], { root: t.root });
+    assert.equal(valueResult.errors.length, 1);
+    assert.match(valueResult.errors[0], /^.*bad-value\.json: --hud-panel-shadow: /);
+    assert.deepEqual(valueResult.written, []);
+
+    assert.deepEqual(snapshot(t.root), before, 'nothing is written when any file is refused');
+  } finally { t.cleanup(); }
+});
+
+test('merge refuses a file that is not JSON in the ashenspire-hud-layout/1 format', () => {
+  const t = tempContentRoot();
+  try {
+    const broken = join(t.root, 'downloads', 'broken.json');
+    mkdirSync(join(t.root, 'downloads'), { recursive: true });
+    writeFileSync(broken, '{ not json');
+    const wrongFormat = join(t.root, 'downloads', 'wrong.json');
+    writeFileSync(wrongFormat, JSON.stringify({ format: 'other/1', formFactor: 'mobile', tokens: {} }));
+    const before = snapshot(t.root);
+    assert.match(mergeHudLayoutExports([broken], { root: t.root }).errors[0], /not valid JSON/);
+    assert.match(mergeHudLayoutExports([wrongFormat], { root: t.root }).errors[0], /format must be 'ashenspire-hud-layout\/1'/);
+    assert.deepEqual(snapshot(t.root), before);
+  } finally { t.cleanup(); }
 });

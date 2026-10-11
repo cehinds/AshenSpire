@@ -820,10 +820,17 @@ the allowlist and validators are `tools/hud-layout-tokens.mjs`.
 ```
 node tools/hud-layout-css.mjs --write   # validate the four files, write styles/hud-layout.generated.css
 node tools/hud-layout-css.mjs --check   # exit 1 when the committed stylesheet is stale (tests/run-node.mjs runs it)
+node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …   # merge studio exports into the content files, then regenerate
 ```
 
+To take a studio change into the game: **Export CSS JSON** in the HUD Component
+Studio, then `node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …` (one
+or more exported files), then rebuild. `--merge` validates every file first and
+writes nothing if any is refused; an exported value wins, and tokens the export
+does not carry are kept.
+
 `tools/launch.mjs` runs `--write` before bundling. Edit the JSON (or export it
-from the HUD Component Studio), never the generated stylesheet. A token left
+from the HUD Component Studio and `--merge` it), never the generated stylesheet. A token left
 out of a file keeps its default, and the defaults reproduce the pre-pipeline
 look; tokens whose consumers used different literals default to `initial`, so
 each consumer's `var(--hud-…, <old literal>)` fallback applies. Length tokens

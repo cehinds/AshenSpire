@@ -299,6 +299,8 @@ try {
   check(JSON.stringify(four.names) === JSON.stringify(['mobile.json', 'tablet.json', 'desktop.json', 'widescreen.json']), 'All four exports four separate downloads');
   check(four.files.every((file, i) => file.format === 'ashenspire-hud-layout/1' && file.formFactor === formFactors[i][0] && file.source === 'hud-component-studio' && file.tokens && typeof file.tokens === 'object'), 'every exported file has the contract format and form factor');
   check(four.files[0].tokens['--hud-player-details-dx'] === undefined && four.files[2].tokens['--hud-player-details-dx'] === undefined, 'Mobile and Desktop files do not inherit the Tablet offset');
+  check(JSON.stringify(Object.keys(four.files[1].tokens).sort()) === JSON.stringify(['--hud-player-details-dx', '--hud-player-details-dy']), 'the Tablet file carries only the player details move (no seed-equal tokens)');
+  check(JSON.stringify(four.files.map(file => Object.keys(file.tokens).length)) === JSON.stringify([0, 2, 0, 0]), 'only the edited Tablet form factor exports tokens; untouched files are empty');
   await page.locator('#importCssFile').setInputFiles(path.join(artifacts, 'tablet.json'));
   await page.waitForFunction(() => /Imported/.test(document.querySelector('#toast')?.textContent || ''), null, { timeout: 10000 });
   check((await savedScene()).nodes.find(n => n.id === 'player-details').formFactors.tablet.x === detailsTablet.formFactors.tablet.x, 'Import CSS JSON restores the exported Tablet position');

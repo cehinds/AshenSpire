@@ -66,24 +66,14 @@ for (const token of contractNames) {
 console.log(`PASS css-bindings.json binds all ${contractNames.length} contract tokens exactly once, with matching types and node IDs`);
 
 const FFS = api.FORM_FACTORS;
-// Seed: only tokens explicitly set in the seed are exported, identically for each form factor, all valid per contract.
-const expectedSeedTokens = Object.entries(bindings.tokens).filter(([, b]) => b.type !== 'px' && (() => {
-  const seedNode = scene.nodes.find(n => n.id === b.node);
-  return api.readPath(seedNode, b.path) !== undefined;
-})()).map(([token]) => token).sort();
+// Untouched seed: a scene equal to the seed exports no tokens for any form factor, so a designer who
+// exports from an unedited studio cannot overwrite the tuned content files.
 for (const ff of FFS) {
-  const file = api.buildFile(ff, api.exportTokens(scene, scene, bindings, ff));
-  assert.equal(file.format, 'ashenspire-hud-layout/1');
-  assert.equal(file.formFactor, ff);
-  assert.equal(file.source, 'hud-component-studio');
-  assert.deepEqual(Object.keys(file.tokens).sort(), expectedSeedTokens, `seed export for ${ff} is exactly the explicitly set seed tokens`);
-  for (const [token, value] of Object.entries(file.tokens)) {
-    assert.equal(api.checkValue(bindings.tokens[token], value), null, `${ff} ${token} = ${value} is valid for its contract type`);
-    assert.ok(!/[;{}<]|url\(|expression\(/i.test(value), `${ff} ${token} has no forbidden characters`);
-  }
-  assert.equal(Object.keys(file.tokens).some(t => t.endsWith('-dx') || t.endsWith('-dy')), false, `seed export for ${ff} has no geometry offsets`);
+  const tokens = api.exportTokens(structuredClone(scene), scene, bindings, ff);
+  assert.deepEqual(tokens, {}, `untouched seed exports no tokens for ${ff}`);
+  assert.deepEqual(api.buildFile(ff, tokens).tokens, {}, `untouched seed file for ${ff} has an empty token map`);
 }
-console.log(`PASS seed export for each of the four form factors yields the ${expectedSeedTokens.length} explicit seed tokens, valid per contract`);
+console.log('PASS untouched seed exports {} for all four form factors');
 
 // Synthetic move: +40 design px on player-details in Desktop only.
 const moved = structuredClone(scene);
@@ -101,3 +91,12 @@ assert.deepEqual(desktopOnly, ['--hud-player-details-dx'], 'the desktop move add
 const imported = api.importTokens(api.buildFile('desktop', desktopTokens), moved, scene, bindings);
 assert.deepEqual(imported.patches.filter(p => p.node === 'player-details' && p.key === 'x').map(p => [p.formFactor, p.value]), [['desktop', seedDetails.x + 39]], 'import maps 30px back to a 39 design px offset (rounding)');
 console.log('PASS synthetic +40 design px desktop move exports --hud-player-details-dx "30px" only in desktop.json and imports back');
+
+// Synthetic shadow change: the Tablet player details frame shadow exports only --hud-panel-shadow, in tablet.
+const shadowed = structuredClone(scene);
+shadowed.nodes.find(n => n.id === 'player-details-frame').formFactors = { tablet: { shadow: { x: 0, y: 5, blur: 6, spread: 0, color: 'rgba(0,0,0,0.55)' } } };
+const tabletShadow = api.exportTokens(shadowed, scene, bindings, 'tablet');
+assert.deepEqual(Object.keys(tabletShadow), ['--hud-panel-shadow'], 'tablet shadow change exports only --hud-panel-shadow');
+assert.equal(api.checkValue(bindings.tokens['--hud-panel-shadow'], tabletShadow['--hud-panel-shadow']), null, 'exported panel shadow is valid per contract');
+for (const ff of ['mobile', 'desktop', 'widescreen']) assert.deepEqual(api.exportTokens(shadowed, scene, bindings, ff), {}, `${ff} is unaffected by a tablet shadow change`);
+console.log('PASS synthetic tablet shadow change exports only --hud-panel-shadow in tablet.json');

@@ -6,14 +6,20 @@
 //   node tools/hud-layout-css.mjs --write    validate and write
 //   node tools/hud-layout-css.mjs --check    validate; exit 1 when the file on
 //                                            disk differs from the output
+//   node tools/hud-layout-css.mjs --merge <file.json> [more.json…]
+//                                            merge studio exports (Export CSS JSON)
+//                                            into content/hud-layout/<ff>.json, then
+//                                            regenerate the stylesheet. Nothing is
+//                                            written unless every file and the result
+//                                            validate.
 //
 // Every error names the file and the token and exits 1. tests/run-node.mjs
 // runs --check; tools/launch.mjs runs --write before bundling.
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { FORM_FACTORS, HUD_LAYOUT_TOKENS, validateHudLayoutFile } from './hud-layout-tokens.mjs';
+import { FORM_FACTORS, HUD_LAYOUT_FORMAT, HUD_LAYOUT_TOKENS, validateHudLayoutFile } from './hud-layout-tokens.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const HUD_LAYOUT_DIR = 'content/hud-layout';
@@ -72,7 +78,91 @@ export function buildHudLayoutCss(root = ROOT) {
   return generateHudLayoutCss(read.docs);
 }
 
+/**
+ * Merges studio exports into the content files. `exportPaths` are JSON files in
+ * the ashenspire-hud-layout/1 format; `root` holds `dir` (content/hud-layout) and
+ * the stylesheet. Every export and every merged result is validated, and the
+ * stylesheet is generated, before anything is written: on any error nothing is
+ * written. An exported value wins over the content file's value, tokens the
+ * export does not carry are kept, and keys are written in token-table order.
+ * Returns { errors, written } with the root-relative paths written.
+ */
+export function mergeHudLayoutExports(exportPaths, { root = ROOT, dir = HUD_LAYOUT_DIR, css = HUD_LAYOUT_CSS } = {}) {
+  const errors = [];
+  const exported = {};
+  for (const path of exportPaths) {
+    let doc;
+    try { doc = JSON.parse(readFileSync(resolve(path), 'utf8')); }
+    catch (error) { errors.push(`${path}: not valid JSON — ${error.message}`); continue; }
+    const problems = validateHudLayoutFile(doc, null);
+    for (const problem of problems) errors.push(`${path}: ${problem}`);
+    if (problems.length) continue;
+    if (exported[doc.formFactor]) { errors.push(`${path}: a second export for ${doc.formFactor} (already given by ${exported[doc.formFactor].path})`); continue; }
+    exported[doc.formFactor] = { path, doc };
+  }
+  if (errors.length) return { errors, written: [] };
+
+  const current = {};
+  for (const formFactor of FORM_FACTORS) {
+    const file = `${dir}/${formFactor}.json`;
+    const abs = resolve(root, file);
+    if (!existsSync(abs)) { errors.push(`${file}: missing (all four form factors are always present)`); continue; }
+    let doc;
+    try { doc = JSON.parse(readFileSync(abs, 'utf8')); }
+    catch (error) { errors.push(`${file}: not valid JSON — ${error.message}`); continue; }
+    for (const problem of validateHudLayoutFile(doc, formFactor)) errors.push(`${file}: ${problem}`);
+    current[formFactor] = { file, doc };
+  }
+  if (errors.length) return { errors, written: [] };
+
+  const docs = {};
+  const changed = [];
+  for (const formFactor of FORM_FACTORS) {
+    const { file, doc } = current[formFactor];
+    if (!exported[formFactor]) { docs[formFactor] = doc; continue; }
+    const tokens = { ...doc.tokens, ...exported[formFactor].doc.tokens };
+    const ordered = {};
+    for (const token of HUD_LAYOUT_TOKENS) if (Object.hasOwn(tokens, token.name)) ordered[token.name] = tokens[token.name];
+    const merged = { format: HUD_LAYOUT_FORMAT, formFactor, source: doc.source ?? exported[formFactor].doc.source, tokens: ordered };
+    for (const problem of validateHudLayoutFile(merged, formFactor)) errors.push(`${file}: ${problem}`);
+    docs[formFactor] = merged;
+    changed.push({ file, merged });
+  }
+  if (errors.length) return { errors, written: [] };
+
+  const generated = generateHudLayoutCss(docs, { dir });
+  if (generated.errors.length) return { errors: generated.errors, written: [] };
+
+  const written = [];
+  for (const { file, merged } of changed) {
+    writeFileSync(resolve(root, file), JSON.stringify(merged, null, 2) + '\n');
+    written.push(file);
+  }
+  const out = resolve(root, css);
+  const before = existsSync(out) ? readFileSync(out, 'utf8') : null;
+  if (before !== generated.css) {
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, generated.css);
+    written.push(css);
+  }
+  return { errors: [], written };
+}
+
 function main(argv) {
+  if (argv[0] === '--merge') {
+    const files = argv.slice(1);
+    if (!files.length || files.some((arg) => arg.startsWith('--'))) {
+      console.error('hud-layout-css: usage: node tools/hud-layout-css.mjs --merge <file.json> [more.json…]');
+      return 2;
+    }
+    const { errors, written } = mergeHudLayoutExports(files, { root: ROOT });
+    if (errors.length) {
+      console.error(`hud-layout-css: REFUSED — nothing written; ${errors.length} problem(s):\n  ${errors.join('\n  ')}`);
+      return 1;
+    }
+    console.log(written.length ? `hud-layout-css: merged; wrote ${written.join(', ')}` : 'hud-layout-css: merged; no changes');
+    return 0;
+  }
   const check = argv.includes('--check');
   const unknown = argv.filter((arg) => !['--check', '--write'].includes(arg));
   if (unknown.length) { console.error(`hud-layout-css: unknown argument(s) ${unknown.join(' ')}`); return 2; }
