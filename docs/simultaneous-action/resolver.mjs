@@ -57,7 +57,11 @@ export function hitRoll({ accuracy = 0, attrs = {}, evasion = 0 } = {}, d20) {
   }
   const bonus = Number(accuracy || 0) + attributeBonus(attrs);
   const target = AC_BASE + Number(evasion || 0);
-  return { hit: d20 + bonus >= target, need: target - bonus };
+  // Natural 1 always misses and natural 20 always hits, whatever the totals.
+  let hit = d20 + bonus >= target;
+  if (d20 === 1) hit = false;
+  if (d20 === 20) hit = true;
+  return { hit, need: target - bonus };
 }
 
 export function rollD20(rng) {

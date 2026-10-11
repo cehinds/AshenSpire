@@ -258,3 +258,15 @@ test('owner example: strike at +4 against an enemy counter at +3 is not countere
   assert.equal(find(events, 'countered'), undefined, 'a slower counter cannot cancel a faster strike');
   assert.equal(hitsOf(events).find((e) => e.by === 'player').hit, true, 'player hit is present');
 });
+
+test('hit roll: natural 1 always misses, even with a huge bonus', () => {
+  const strong = { accuracy: 30, attrs: { STR: 30, DEX: 30 }, evasion: 0 };
+  assert.equal(hitRoll(strong, 1).hit, false);
+  assert.equal(hitRoll(strong, 2).hit, true);
+});
+
+test('hit roll: natural 20 always hits, even against huge evasion', () => {
+  const walled = { accuracy: 0, attrs: {}, evasion: 50 };
+  assert.equal(hitRoll(walled, 20).hit, true);
+  assert.equal(hitRoll(walled, 19).hit, false);
+});

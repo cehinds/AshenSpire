@@ -79,6 +79,7 @@ Hit when:
 
     d20 + accuracy + floor(1·STR + 1·DEX + 0.5·WIS + 0.5·INT) >= 8 + evasion
 
+- Natural 1 always misses. Natural 20 always hits, whatever the totals.
 - AC is 8 at evasion +0.
 - Example: Reaver with STR 3, DEX 1, WIS 1, INT 1 has floor(5) = 5, so with
   accuracy 0 and evasion 0 it needs 3 or more on the d20.
