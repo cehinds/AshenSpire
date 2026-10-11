@@ -712,6 +712,14 @@ test('stepActive: from a visible row it moves through the visible order, skippin
   assert.equal(M.stepActive(at7, order, 0, 1, { columnCount: 2 }).active.c, 1);
 });
 
+test('the grid moves its active cell with stepActive, not by snapping a hidden row to the first visible one', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../ui/kit/grid.mjs', import.meta.url), 'utf8');
+  const body = src.slice(src.indexOf('function moveActive('), src.indexOf('function ensureVisible('));
+  assert.match(body, /M\.stepActive\(/, 'arrow and Tab steps go through the model');
+  assert.doesNotMatch(body, /\?\? 0/, 'no fallback to visible position 0 for a hidden row');
+});
+
 test('20k-row sort on two keys finishes under 200 ms', () => {
   const columns = [{ key: 'name', type: 'string' }, { key: 'n', type: 'number' }];
   const rows = Array.from({ length: 20000 }, (_, i) => ({ name: `item ${(i * 7919) % 20000}`, n: (i * 31) % 997 }));
