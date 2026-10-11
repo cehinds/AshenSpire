@@ -58,34 +58,6 @@ export function combatPlayerInfoRect(node, art, viewport, zoom, floor = Infinity
   return { left, top, right: left + width, bottom: top + height, width, height };
 }
 
-// Owner (2026-10-11): the player's stance stays readable while the player is
-// not selected, above the figure's head. At rest the details panel sits at the
-// feet, so its stance chip is lifted out of that panel (data-rest-above, see
-// styles/combat-layers.css) and centred over the art, below the HUD band.
-// Selected, the chip returns to the panel's flow.
-export function placeRestingStance(leading, { expanded, art, hudBottom, zoom = 1 }) {
-  const chip = leading.querySelector('.combatant-mini-hud > .stance-chip');
-  if (!chip) return null;
-  if (expanded) {
-    if (chip.dataset.restAbove) {
-      delete chip.dataset.restAbove;
-      chip.style.removeProperty('--rest-stance-left');
-      chip.style.removeProperty('--rest-stance-top');
-    }
-    return null;
-  }
-  chip.dataset.restAbove = 'true';
-  const host = chip.offsetParent || leading;
-  const origin = host.getBoundingClientRect();
-  const height = chip.getBoundingClientRect().height;
-  const floorTop = Number.isFinite(hudBottom) ? hudBottom + 2 : -Infinity;
-  const top = Math.max(floorTop, art.top - height - 4);
-  const centre = (art.left + art.right) / 2;
-  chip.style.setProperty('--rest-stance-left', `${(centre - origin.left) / zoom}px`);
-  chip.style.setProperty('--rest-stance-top', `${(top - origin.top) / zoom}px`);
-  return { centre, top, height };
-}
-
 // The selected-card action is independent of the reading panel, like Info.
 export function combatPlayerActionRect(node, infoRect, art, zoom, floor = Infinity) {
   if (!node) return null;
@@ -287,7 +259,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leading.style.top !== top) leading.style.top = top;
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
-      placeRestingStance(leading, { expanded, art, hudBottom, zoom });
       for (const [door, rect] of [[inspect, infoRect], [action, actionRect]]) {
         if (!rect) continue;
         const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
