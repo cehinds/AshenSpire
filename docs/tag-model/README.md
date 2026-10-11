@@ -107,7 +107,7 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 **Proposed named bands** (`tools/bands.mjs`). `band` is derived from the raw
 `breakpoint` or `condition`; the raw text is kept.
 
-- `mobile`: phone, max-width at or below 599px, or pointer:coarse with orientation:portrait
+- `mobile`: phone, max-width at or below 600px, or pointer:coarse with orientation:portrait
 - `tablet`: 600px to 1023px
 - `desktop`: 1024px to 1439px
 - `wide`: 1440px and up (owner decision 2, 2026-10-11; see `DECISIONS.md`)

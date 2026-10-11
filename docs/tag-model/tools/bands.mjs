@@ -1,7 +1,7 @@
 // Breakpoint normalisation: raw CSS condition -> named band.
 //
 // Bands (proposal, see docs/tag-model/README.md, "Presentation layer"):
-//   mobile  = phone: max-width <= 599px, or pointer:coarse with orientation:portrait
+//   mobile  = phone: max-width <= 600px, or pointer:coarse with orientation:portrait
 //   tablet  = 600px to 1023px
 //   desktop = 1024px to 1439px
 //   wide    = >= 1440px (owner decision 2, 2026-10-11; see DECISIONS.md)
@@ -11,7 +11,7 @@
 //             width range must lie inside the band's range)
 
 const BANDS = {
-  mobile: [0, 599],
+  mobile: [0, 600],
   tablet: [600, 1023],
   desktop: [1024, 1439],
   wide: [1440, Infinity],
