@@ -1,8 +1,8 @@
 // Shared presentation pace without effect, audio or DOM initialization.
 export const ANIM_SPEEDS = {
-  slow: { beatMs: 420, stepMs: 84, lungeMs: 255, impactCapMs: 315 },
-  normal: { beatMs: 240, stepMs: 54, lungeMs: 195, impactCapMs: 180 },
-  fast: { beatMs: 108, stepMs: 27, lungeMs: 120, impactCapMs: 105 },
+  slow: { beatMs: 420, stepMs: 84, lungeMs: 255, impactCapMs: 317 },
+  normal: { beatMs: 240, stepMs: 54, lungeMs: 195, impactCapMs: 186 },
+  fast: { beatMs: 108, stepMs: 27, lungeMs: 121, impactCapMs: 106 },
   instant: null,
 };
 
