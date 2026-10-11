@@ -15,6 +15,10 @@ name: art-migrate
 #      the art must leave this pull request, so it never lands on dev.
 #      A fork pull request, or a repository without ART_REPO_WRITE_TOKEN, gets
 #      the same failure with the manual path written out (ground rule 2).
+#      When a later push of the pull request carries no art any more, the
+#      intake pull request left by an earlier push is closed, and its branch
+#      deleted. When the pull request is closed without merging, the same
+#      cleanup runs in the close-intake job. Neither runs any head code.
 #
 #   2. PIN BUMP (schedule every 6 h, workflow_dispatch, repository_dispatch
 #      `art-release`). When the art repository's newest hd-assets-v<N> release
@@ -55,7 +59,7 @@ name: art-migrate
 on:
   pull_request:
     branches: [dev]
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
   schedule:
     - cron: '37 */6 * * *'
   workflow_dispatch:
@@ -70,7 +74,7 @@ env:
 
 jobs:
   intake:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -219,6 +223,32 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Art pull request: $url"
 
+      # Only when this pull request no longer carries art. The intake branch an
+      # earlier push staged is closed and deleted, so it cannot linger open. Same
+      # repository only (a fork never had an intake branch), and only when the
+      # token is set. The step runs no code from any tree: it calls gh alone.
+      - name: Close the stale intake pull request in the art repository
+        if: steps.gate.outputs.state == 'none'
+        env:
+          FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+          HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
+          GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          REASON: "Closing: source PR no longer carries art, so nothing is migrated from this intake branch."
+        run: |
+          set -euo pipefail
+          if [ "$FORK" = true ] || [ "$HAS_ART_TOKEN" != true ]; then
+            echo "No intake pull request to close here (fork, or no ART_REPO_WRITE_TOKEN)."
+            exit 0
+          fi
+          branch="intake/ashenspire-pr-$PR"
+          num="$(gh pr list --repo "$ART_REPO" --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$num" ]; then
+            echo "No open intake pull request on $branch: nothing to close."
+            exit 0
+          fi
+          gh pr close "$num" --repo "$ART_REPO" --comment "$REASON" --delete-branch
+          echo "Closed $ART_REPO#$num and deleted $branch."
+
       - name: Sticky comment on this pull request
         if: always() && steps.gate.outputs.state != ''
         continue-on-error: true
@@ -276,6 +306,40 @@ jobs:
             blocked-token) echo "::error title=ART_REPO_WRITE_TOKEN is not set::The art cannot be moved automatically. Remove the art files from this pull request and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
           esac
           exit 1
+
+  close-intake:
+    # The source pull request was closed without merging: its intake pull request
+    # (if an earlier push staged one) is closed and its branch deleted. A merged
+    # pull request is left alone. Base code only, and no checkout.
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && !github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    concurrency:
+      group: art-intake-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
+      GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+      REASON: "Closing: source PR was closed without merging, so its art is not migrated from this intake branch."
+    steps:
+      - name: Close the intake pull request in the art repository
+        run: |
+          set -euo pipefail
+          if [ "$HAS_ART_TOKEN" != true ]; then
+            echo "ART_REPO_WRITE_TOKEN is not set: no intake pull request to close."
+            exit 0
+          fi
+          branch="intake/ashenspire-pr-$PR"
+          num="$(gh pr list --repo "$ART_REPO" --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$num" ]; then
+            echo "No open intake pull request on $branch: nothing to close."
+            exit 0
+          fi
+          gh pr close "$num" --repo "$ART_REPO" --comment "$REASON" --delete-branch
+          echo "Closed $ART_REPO#$num and deleted $branch."
 
   pin-bump:
     if: github.event_name != 'pull_request'
