@@ -48,8 +48,12 @@ test('a fork run names no art token: the secret is gated on a same-repository he
   const block = jobBlock(art, 'intake');
   const gate = block.slice(block.indexOf('- name: Decide whether to migrate'), block.indexOf('- name: Check out the art repository'));
   assert.match(gate, /HAS_ART_TOKEN: \$\{\{ github\.event\.pull_request\.head\.repo\.full_name == github\.repository && secrets\.ART_REPO_WRITE_TOKEN != '' \}\}/);
-  const close = block.slice(block.indexOf('- name: Close the stale intake'), block.indexOf('- name: Sticky comment'));
-  assert.match(close, /if: steps\.gate\.outputs\.state == 'none' && github\.event\.pull_request\.head\.repo\.full_name == github\.repository/);
+});
+
+test('removing the art (state none) never closes the intake: it must stay open to be merged', () => {
+  const block = jobBlock(art, 'intake');
+  assert.doesNotMatch(block, /gh pr close/, 'the intake job closes nothing');
+  assert.match(jobBlock(art, 'close-intake'), /gh pr close/, 'only close-intake (source PR closed unmerged) closes it');
 });
 
 test('pages: a failed or cancelled feature, fix or chore preview still runs assemble and deploy', () => {

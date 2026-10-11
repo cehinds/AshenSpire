@@ -238,31 +238,11 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Art pull request: $url"
 
-      # Only when this pull request no longer carries art. The intake branch an
-      # earlier push staged is closed and deleted, so it cannot linger open. Same
-      # repository only (a fork never had an intake branch), and only when the
-      # token is set. The step runs no code from any tree: it calls gh alone.
-      - name: Close the stale intake pull request in the art repository
-        if: steps.gate.outputs.state == 'none' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-          HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
-          GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
-          REASON: "Closing: source PR no longer carries art, so nothing is migrated from this intake branch."
-        run: |
-          set -euo pipefail
-          if [ "$FORK" = true ] || [ "$HAS_ART_TOKEN" != true ]; then
-            echo "No intake pull request to close here (fork, or no ART_REPO_WRITE_TOKEN)."
-            exit 0
-          fi
-          branch="intake/ashenspire-pr-$PR"
-          num="$(gh pr list --repo "$ART_REPO" --head "$branch" --state open --json number --jq '.[0].number // empty')"
-          if [ -z "$num" ]; then
-            echo "No open intake pull request on $branch: nothing to close."
-            exit 0
-          fi
-          gh pr close "$num" --repo "$ART_REPO" --comment "$REASON" --delete-branch
-          echo "Closed $ART_REPO#$num and deleted $branch."
+      # NO CLOSE ON state=none. Removing the art from this pull request is the
+      # step the sticky comment asks for once the intake pull request exists, so
+      # `none` is the expected next state and the intake must stay open to be
+      # merged. An intake is closed only when this pull request closes unmerged
+      # (the close-intake job below).
 
       - name: Sticky comment on this pull request
         if: always() && steps.gate.outputs.state != ''
@@ -283,7 +263,7 @@ jobs:
               none)
                 echo "### Art in this pull request: resolved"
                 echo
-                echo "No art files are in this pull request any more. Nothing is migrated." ;;
+                echo "No art files are in this pull request any more. If an intake pull request was opened in [$ART_REPO](https://github.com/$ART_REPO) (branch \`intake/ashenspire-pr-$PR\`), it stays open: merging it is what brings the art into the art repository." ;;
               migrate)
                 echo "### Art in this pull request: moved to the art repository"
                 echo
