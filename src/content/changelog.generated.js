@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-11",
     "group": "2026-10-11",
     "summary": "The new Workbench tests pass on Windows too",
-    "detail": "Development-process change only, nothing in the game changes. Four tests added with the Workbench compared file paths written with forward slashes, so they failed on Windows, where the tools correctly use backslashes; they now build the expected paths the same way the tools do.",
-    "build": "0.7.1.1300",
+    "detail": "Development-process change only, nothing in the game changes. Four tests added with the Workbench compared file paths written with forward slashes, so they failed on Windows, where the tools correctly use backslashes; they now build the expected paths the same way the tools do. The Workbench file-watcher tests for the Linux-only watch mode now run on Linux only, and one macOS watcher test tolerates the folder event macOS also reports.",
+    "build": "0.7.1.1303",
     "pullRequest": 1855,
     "url": "https://github.com/cehinds/AshenSpire/pull/1855"
+  },
+  {
+    "id": "pr-1852",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Choosing equipment is a sortable table now",
+    "detail": "When you press Replace or Choose on a slot, the Armoury lists every item that fits as a row: portrait, name and kind, an Equipped here / Not equipped / held-elsewhere status, and Inspect plus Equip, Move here or Unequip. Sort by Item or Status, show the items that don't fit along with the reason, and Inspect opens the full card in place. A single sceptre held in your main hand now says so and offers Move here for the off hand.",
+    "build": "0.7.1.1302",
+    "pullRequest": 1852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1852"
   },
   {
     "id": "pr-1829",
