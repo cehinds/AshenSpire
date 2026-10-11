@@ -1159,7 +1159,7 @@ function newRun(config) {
     onFailure: error => {
       const message = `Profile could not be saved: ${error.message}`;
       console.error('[run] start refused:', error);
-      if (!showSettingsNotice(message, 'profile')) failureBanner('run:start', 'THIS RUN COULD NOT START', ` · ${message}`);
+      if (!showSettingsNotice(message, 'profile')) failureBanner('run:start', 'THIS RUN COULD NOT START', ` · ${error.message}`);
     },
   });
 }
