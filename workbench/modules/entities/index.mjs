@@ -10,7 +10,7 @@
 import {
   KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
   facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf, escHtml, handChoices, handsFor,
-  RENDER_PROTOCOL,
+  RENDER_PROTOCOL, settleFilters,
 } from './model.mjs';
 
 const RENDER_SOURCE = 'ashen-entities';
@@ -70,7 +70,7 @@ export default {
     const st = { ...parseDeepLink({}), density: prefs.density, layout: prefs.layout, pose: 'idle', tab: 'card', classId: 'reaver', mainHand: null, offHand: null };
     const game = { base: null, origin: null, ready: false };
     let seenParams = null;
-    let counts = {}, index = [], classes = [], armaments = [], files = null;
+    let counts = {}, index = [], indexKind = null, classes = [], armaments = [], files = null;
     let tryFor = undefined; // the entity the Try in fight hands were last set for
 
     // ---------- the game server ----------
@@ -141,7 +141,12 @@ export default {
           renderChips(); renderTry();
           break;
         case 'index':
-          if (fromCenter && d.kind === st.kind) { index = d.entries || []; renderFacets(); renderCount(); }
+          if (fromCenter && d.kind === st.kind) {
+            index = d.entries || []; indexKind = d.kind;
+            // The grid was sent with the pending filters; resend it only when the index dropped one.
+            if (renderFacets()) { sendCenter(); writeHash(); }
+            renderCount();
+          }
           break;
         case 'select':
           if (fromCenter && d.kind === st.kind) select(d.id);
@@ -157,20 +162,25 @@ export default {
       const list = chipCounts(counts);
       chips.innerHTML = list.map((c) => `<button type="button" role="tab" data-kind="${c.id}" aria-selected="${c.id === st.kind}"><span>${esc(c.label)}</span><span class="ent-n">${Object.keys(counts).length ? c.count : '–'}</span></button>`).join('');
     }
+    // Returns true when a filter value was dropped, so the grid must be sent again.
     function renderFacets() {
-      const f = facetsOf(index);
-      const opts = { class: f.classes, type: f.types, tag: f.tags, rarity: f.rarities };
+      const f = indexKind === st.kind ? facetsOf(index) : null;
+      const opts = f ? { class: f.classes, type: f.types, tag: f.tags, rarity: f.rarities } : {};
+      const settled = settleFilters(st, f);
+      let dropped = false;
       for (const name of FILTERS) {
         const sel = el.querySelector(`[data-f="${name}"]`);
-        const values = opts[name];
-        if (!values.some((v) => v.value === st[name])) st[name] = '';
-        sel.innerHTML = `<option value="">${LABELS[name]}</option>` + values.map((v) => `<option value="${esc(v.value)}">${esc(v.value)} (${v.count})</option>`).join('');
+        if (st[name] !== settled[name]) { st[name] = settled[name]; dropped = true; }
+        // While the index is loading, the pending value is the only option; its count is not known yet.
+        const values = f ? opts[name] : (st[name] ? [{ value: st[name], count: null }] : []);
+        sel.innerHTML = `<option value="">${LABELS[name]}</option>` + values.map((v) => `<option value="${esc(v.value)}">${esc(v.value)}${v.count == null ? '' : ` (${v.count})`}</option>`).join('');
         sel.value = st[name];
       }
       el.querySelector('[data-f="sort"]').value = st.sort;
       el.querySelector('[data-f="density"]').value = st.density;
       el.querySelectorAll('[data-layout]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.layout === st.layout)));
       q.value = st.q;
+      return dropped;
     }
     function renderCount() {
       const shown = filterEntries(index, st).length;
@@ -220,7 +230,7 @@ export default {
     function setKind(kind, { keepFilters = false } = {}) {
       const next = kindOf(kind) ? kind : DEFAULT_KIND;
       if (next !== st.kind) {
-        st.kind = next; st.id = null; index = [];
+        st.kind = next; st.id = null; index = []; indexKind = null;
         if (!keepFilters) { st.class = ''; st.type = ''; st.tag = ''; st.rarity = ''; }
         renderChips(); sendCenter(); sendDrawer();
       }
@@ -241,7 +251,8 @@ export default {
       // The kind first: setKind clears the entity when the kind changes, so the link's entity is set after it.
       setKind(next.kind, { keepFilters: true });
       Object.assign(st, { q: next.q, sort: next.sort, class: next.class, type: next.type, tag: next.tag, rarity: next.rarity, id: next.id, tab: next.tab });
-      sendCenter(); sendDrawer(); renderChips(); renderTabs(); renderFacets(); renderCount(); renderTitle(); writeHash();
+      // The facets settle the filters first, so the grid is sent the values the column shows.
+      renderFacets(); sendCenter(); sendDrawer(); renderChips(); renderTabs(); renderCount(); renderTitle(); writeHash();
     }
 
     // ---------- events ----------

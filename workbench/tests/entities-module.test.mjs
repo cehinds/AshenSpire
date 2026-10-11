@@ -8,7 +8,7 @@ import { armamentIconAsset } from '../../src/model/equipmentArt.js';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
-  escHtml, handChoices, handsFor, RENDER_PROTOCOL,
+  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -144,6 +144,15 @@ test('the render page announces the protocol version the module checks', () => {
   assert.match(index, /d\.protocol !== RENDER_PROTOCOL/, 'the module refuses a different version');
   assert.match(index, /"This project's checkout has no Entity Browser render page, or an older one\. Update that checkout to this branch\."/, 'the checkout message names the fix');
   assert.match(index, /clearTimeout\(readyTimer\)/, 'a page that never answers is reported after a wait');
+});
+
+test('a deep link filter stays pending until the kind index loads, then only a value the index has survives', () => {
+  const link = { class: 'reaver', type: 'Armor', tag: 'guard', rarity: 'rare' };
+  assert.deepEqual(settleFilters(link, null), link, 'before the index loads, nothing is dropped');
+  const facets = facetsOf([{ id: 'a', class: 'reaver', itemTypes: ['Armor'], tags: ['guard'], rarity: 'rare' }]);
+  assert.deepEqual(settleFilters(link, facets), link, 'values the index carries are kept');
+  assert.deepEqual(settleFilters({ ...link, class: 'nobody' }, facets), { ...link, class: '' }, 'an unknown value is cleared once the index is in');
+  assert.deepEqual(settleFilters({}, facets), { class: '', type: '', tag: '', rarity: '' }, 'no wanted value is an empty filter');
 });
 
 test('the render page URL carries the parent origin and only set parameters', () => {

@@ -170,6 +170,22 @@ export function facetsOf(entries) {
   };
 }
 
+const FACET_OF = Object.freeze({ class: 'classes', type: 'types', tag: 'tags', rarity: 'rarities' });
+
+/**
+ * The filter values to show for the facets of the kind's loaded index. A value survives only when the
+ * facets carry it. Before the index has loaded (`facets` null) every wanted value stays pending, so a
+ * deep link's filters are not dropped while the index is still arriving.
+ */
+export function settleFilters(wanted = {}, facets = null) {
+  const out = {};
+  for (const [name, facet] of Object.entries(FACET_OF)) {
+    const want = text(wanted[name]);
+    out[name] = !facets || (facets[facet] || []).some((v) => v.value === want) ? want : '';
+  }
+  return out;
+}
+
 /** Counts per kind from a { kind: number } map, in KINDS order, zero when unknown. */
 export function chipCounts(counts = {}) {
   return KINDS.map((k) => ({ id: k.id, label: k.label, count: Number(counts[k.id]) || 0 }));
