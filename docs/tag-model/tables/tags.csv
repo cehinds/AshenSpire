@@ -699,7 +699,7 @@ targeting.ally,ally,ally,targeting,TagNode,,Targets an ally of the acting player
 targeting.single,single,Single,targeting,TagNode,,One direct target.,,,,,,live-tag,◇,9FC3E8,targeting:single
 targeting.area,targeting.area,Area,targeting,TagNode,,An area action; most Counters do not cover it.,,,,,,live-tag,◇,9FC3E8,targeting:area
 equipmentRoot,equipmentRoot,equipment,,TagNode,,Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.,,,,,,live-tag,,,equipment
-equipmentRoot.bound,bound,bound,equipmentRoot,TagNode,,Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).,,,,,,live-tag,,,equipment.bound
+equipmentRoot.bound,equipmentRoot.bound,bound,equipmentRoot,TagNode,,Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).,,,,,,live-tag,,,equipment.bound
 equipmentRoot.mainHand,mainHand,mainHand,equipmentRoot,TagNode,,A weapon held in the main hand. Requires bound (nodeRelations.csv).,,,,,,live-tag,,,equipment.mainHand
 equipmentRoot.offHand,offHand,offHand,equipmentRoot,TagNode,,"An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).",,,,,,live-tag,,,equipment.offHand
 equipmentRoot.twoHanded,twoHanded,twoHanded,equipmentRoot,TagNode,,A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.,,,,,,live-tag,,,equipment.twoHanded
@@ -732,6 +732,8 @@ reach.far,far,Far,reach,TagNode,,Extended ranged reach.,,,,,,live-tag,◇,9FC3E8
 counterMode,counterMode,Counter reach,,TagNode,,Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.,,,,,,live-tag,,,counterMode
 counterMode.melee,counterMode.melee,Melee counter,counterMode,TagNode,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",,,,,,live-tag,◇,D7B36B,counter:melee
 counterMode.spell,counterMode.spell,Spell counter,counterMode,TagNode,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",,,,,,live-tag,◇,D7B36B,counter:spell
+item,item,Item,,TagNode,,"What a piece of gear DOES beyond its numbers, and what a run pickup is.",,,,,,live-tag,,,item
+item.bound,item.bound,Bound,item,TagNode,,Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.,,,,,,live-tag,⛓,C9A227,bound
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

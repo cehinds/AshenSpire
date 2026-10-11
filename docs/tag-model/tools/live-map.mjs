@@ -448,6 +448,9 @@ export const LIVE = {
   'counterMode': 'counterMode',
   'counterMode.melee': 'counter:melee',
   'counterMode.spell': 'counter:spell',
+  // proposed live mapping (domain pass)
+  'item': 'item',
+  'item.bound': 'bound',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,
