@@ -763,10 +763,10 @@ test('the worked example recomputes from the edited values and shows the whole s
   // turn row IS the draw, so the topic shows the one hand example.
   assert.deepEqual(hand.examples.map(entry => entry.kind), ['hand']);
   assert.equal(hand.examples[0].lines[1].label, 'Each turn, at most', 'filling to capacity is a ceiling, not a promise');
-  // Fill's ceiling is the separate flat Hand size row of 15.
-  assert.equal(hand.examples[0].lines[1].total, 15);
+  // Fill's ceiling is the Hand size row: 7 base + INT scaling, cap 20.
+  assert.equal(hand.examples[0].lines[1].total, 7 + Math.floor((9 - 4) * 0.2));
   assert.equal(hand.examples[0].lines[2].label, 'Hand size');
-  assert.match(hand.examples[0].lines[2].expression, /^15 base$/);
+  assert.match(hand.examples[0].lines[2].expression, /^7 base \+ INT \(9 − 4\) × 0\.2 → 1/);
   assert.match(statsTopicPreview({ 'gameConfig.handRules.reshuffle': false }, 'Draw & hand').examples[0].lines[1].expression, /not reshuffled/);
   const fixed = statsTopicPreview({
     'gameConfig.handRules.drawMode': 'fixed',

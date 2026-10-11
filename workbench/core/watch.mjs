@@ -70,6 +70,57 @@ export function createOwnWrites() {
   };
 }
 
+/** The platforms whose recursive watch also reports folders: a save inside a folder reports the folder too. */
+const FOLDER_EVENTS = new Set(['darwin', 'win32']);
+
+/**
+ * The paths a recursive watch event names. macOS (FSEvents) and Windows also report folders,
+ * and reports an event on the watched folder itself under that folder's own name
+ * (content/content, macOS only). The self-named event names nothing. A folder that
+ * was already there (`isNewFolder` false) names nothing either: its files are
+ * reported one by one, and a save inside it also reports the folder. A folder new
+ * since the watch began names the files under it, since a folder moved in is
+ * reported only as the folder (the batch is a Set, so a file reported twice counts
+ * once). Elsewhere the event's path is kept as it is.
+ */
+export function recursiveEventPaths(abs, name, platform = process.platform, { exists = fs.existsSync, isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } }, isNewFolder = () => true, filesUnder = (p) => [...walk(p).keys()], since = 0, presentAtStart = () => false, changedAt = (p) => { try { const st = fs.statSync(p); return Math.max(st.mtimeMs, st.ctimeMs); } catch { return null; } } } = {}) {
+  if (!name) return [];
+  const base = String(name);
+  const target = path.join(abs, base);
+  if (!FOLDER_EVENTS.has(platform)) return [target];
+  // An ignored folder (hidden, node_modules) names nothing: note() would drop its files anyway,
+  // and a large one moved in must not be walked.
+  if (base.split(/[\\/]/).some((p) => p.startsWith('.') || p === 'node_modules')) return [];
+  if (platform === 'darwin' && base === path.basename(abs) && !exists(target)) return []; // the watched folder itself
+  if (!isDir(target)) {
+    // FSEvents also replays events from just before the watch began: a file that was at this
+    // path when the watch began (same inode) and is untouched since (both its modification and
+    // its change time older) is a replay. A file moved in keeps its old times but was not there,
+    // so it is kept; so is a gone file.
+    // HFS+ keeps file times to the whole second: a whole-second time is compared with the
+    // second the watch began, so an edit in that same second is not read as older.
+    const at = platform === 'darwin' && presentAtStart(target) ? changedAt(target) : null;
+    const start = at !== null && at % 1000 === 0 ? Math.floor(since / 1000) * 1000 : since;
+    return at !== null && at < start ? [] : [target];
+  }
+  return isNewFolder(target) ? filesUnder(target) : [];
+}
+
+/**
+ * Every folder under abs (abs included) into `out`, as path -> inode, skipping hidden
+ * ones and node_modules. The inode tells a folder replaced at the same path (deleted,
+ * then another moved in) from the one that was there.
+ */
+function foldersUnder(abs, out = new Map()) {
+  let st;
+  try { st = fs.statSync(abs); } catch { return out; }
+  out.set(abs, st.ino);
+  let entries = [];
+  try { entries = fs.readdirSync(abs, { withFileTypes: true }); } catch { return out; }
+  for (const e of entries) if (e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules') foldersUnder(path.join(abs, e.name), out);
+  return out;
+}
+
 /**
  * isOwnWrite(abs) says a file's events are the echo of a save the Workbench made
  * (see createOwnWrites); those events are dropped when the batch is flushed.
@@ -191,11 +242,39 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   }
 
   // One { recursive: true } watch per source folder where the platform has one.
+  // The folders there when the watch began, and those seen since, with their inodes:
+  // on macOS only a folder not among them is walked for its files (see recursiveEventPaths).
+  const knownFolders = new Map(); // folder -> inode
+  const startedAt = Date.now(); // on macOS, a file not changed since then is a replayed event
+  const startFiles = new Map(); // macOS: file -> inode when the watch began (see presentAtStart)
+  const presentAtStart = (p) => { try { return startFiles.get(p) === fs.statSync(p).ino; } catch { return false; } };
+  const isNewFolder = (p) => {
+    let ino;
+    try { ino = fs.statSync(p).ino; } catch { return false; }
+    if (knownFolders.get(p) === ino) return false;
+    foldersUnder(p, knownFolders); // new, or a different folder now at a known path
+    return true;
+  };
+  // A known folder that is gone (deleted or moved out) is forgotten with all below it, so the
+  // same folder moved back later counts as new and its files are reloaded.
+  // The event's path and each folder above it up to the watched root are checked: macOS may
+  // report a moved-out folder by its files alone.
+  const forgetGone = (root, target) => {
+    for (let p = target; p.length > root.length && p.startsWith(root + path.sep); p = path.dirname(p)) {
+      if (!knownFolders.has(p) || fs.existsSync(p)) continue;
+      for (const k of [...knownFolders.keys()]) if (k === p || k.startsWith(p + path.sep)) knownFolders.delete(k);
+    }
+  };
+  const scans = []; // recursive roots, scanned once every watch is installed (below)
   function watchRecursive(abs, d) {
     let w;
     try {
-      w = fs.watch(abs, { recursive: true }, (_event, name) => { if (name) note(path.join(abs, String(name))); });
+      w = fs.watch(abs, { recursive: true }, (_event, name) => {
+        if (FOLDER_EVENTS.has(platform) && name) forgetGone(abs, path.join(abs, String(name)));
+        for (const target of recursiveEventPaths(abs, name, platform, { isNewFolder, since: startedAt, presentAtStart })) note(target);
+      });
     } catch { return false; /* recursive watch unsupported here: poll below */ }
+    scans.push(abs);
     w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });
     watchers.push(w);
     return true;
@@ -209,6 +288,12 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     const watched = !forcePoll && (mode === 'recursive' ? watchRecursive(abs, d) : watchTree(abs));
     if (watched) modes[d] = 'watch';
     else { poll(abs); modes[d] = 'poll'; }
+  }
+  // The trees are scanned only after every watch is installed, so a change made during any scan
+  // still has its event; the events wait until these synchronous scans are done.
+  for (const abs of scans) {
+    if (FOLDER_EVENTS.has(platform)) foldersUnder(abs, knownFolders);
+    if (platform === 'darwin') for (const f of walk(abs).keys()) { try { startFiles.set(f, fs.statSync(f).ino); } catch { /* raced a delete */ } }
   }
 
   return {

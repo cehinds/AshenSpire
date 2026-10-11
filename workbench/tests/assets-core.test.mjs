@@ -170,7 +170,7 @@ test('one unreadable file lists without dimensions; the rest of the listing stil
   const realOpen = fs.open;
   // Every header read of one file fails, as an unreadable file would.
   fs.open = async (file, ...rest) => {
-    if (String(file).endsWith('equipment/sword.png')) throw Object.assign(Error('EACCES: permission denied'), { code: 'EACCES' });
+    if (String(file).replace(/\\/g, '/').endsWith('equipment/sword.png')) throw Object.assign(Error('EACCES: permission denied'), { code: 'EACCES' });
     return realOpen.call(fs, file, ...rest);
   };
   t.after(() => { fs.open = realOpen; });

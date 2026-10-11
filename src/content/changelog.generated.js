@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1855",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "The Workbench tests pass on Windows and macOS too",
+    "detail": "Development-process change only, nothing in the game changes. Four tests added with the Workbench compared file paths written with forward slashes, so they failed on Windows, where the tools correctly use backslashes; they now build the expected paths the same way the tools do. On macOS the Workbench's file watcher no longer treats folder events, or the watched folder reported under its own name, as changed files, so a Mac no longer triggers stray reloads. The test runner now flushes its report before exiting, so a failing macOS test is named in the CI log.",
+    "build": "0.7.1.1306",
+    "pullRequest": 1855,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1855"
+  },
+  {
+    "id": "pr-1854",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Your discard pile reshuffles back in, and your hand size now grows",
+    "detail": "Holding cards at the end of a turn no longer stops the discard pile from coming back: when your draw pile can't cover the next turn's draw, the whole discard is shuffled in with your unplayed cards. Hand size now starts at 7 and grows with Intelligence (one more for every five points above 4, up to 20) instead of a flat 15. When the cards you keep already fill your hand, the end-of-turn discard lets you throw away as many as you like before you draw.",
+    "build": "0.7.1.1305",
+    "pullRequest": 1854,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1854"
+  },
+  {
     "id": "pr-1857",
     "date": "2026-10-11",
     "group": "2026-10-11",

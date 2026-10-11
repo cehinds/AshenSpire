@@ -133,3 +133,31 @@ jobs:
           path: ${{ runner.temp }}/workbench-screenshots
           if-no-files-found: warn
           retention-days: 14
+
+  # The Workbench runs on Windows and macOS too (its launchers, its watcher modes, its
+  # process-group stops differ there). Each test is limited to 3 minutes, so one that
+  # hangs fails by name instead of the job timing out with no output.
+  workbench-os:
+    name: Workbench tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false # a Windows-only failure is a finding; do not hide it behind macOS
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - name: Workbench, editor, UI Studio, engine-export and build-lock tests
+        shell: bash
+        run: node --test --test-timeout=180000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs

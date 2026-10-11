@@ -41,7 +41,7 @@ test('a new file is created when none was there', (t) => {
 
 test('the temp file keeps the target extension, because Chrome refuses a --screenshot path that is not .png', () => {
   const temp = tempBeside(path.join('/shots', 'desk-map.png'));
-  assert.equal(path.dirname(temp), '/shots');
+  assert.equal(path.dirname(temp), path.dirname(path.join('/shots', 'desk-map.png')));
   assert.equal(path.extname(temp), '.png');
   assert.notEqual(temp, path.join('/shots', 'desk-map.png'));
 });

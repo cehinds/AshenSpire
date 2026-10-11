@@ -39,8 +39,9 @@ test('the capture job runs tools/screenshot.mjs at the device size, into the pro
 test('the job is never given a path inside the repo tree by default', () => {
   const [step] = JOBS['review-capture'].steps('/repo', { stateDir: '/state/p1' });
   const out = step.args[step.args.indexOf('--out') + 1];
-  assert.equal(out.startsWith('/state/p1'), true);
-  assert.equal(out.startsWith('/repo'), false);
+  // Built with path.join, so the prefixes use the platform's separator (a backslash on Windows).
+  assert.equal(out.startsWith(path.join('/state/p1')), true);
+  assert.equal(out.startsWith(path.join('/repo')), false);
 });
 
 test('a bad capture request is refused before the job starts: no run, no slot taken', async (t) => {
@@ -57,7 +58,8 @@ test('the job list still describes the capture job with its default command', ()
   const runner = new JobRunner({ root: '/repo', stateFile: '/state/p1/jobs.json' });
   const def = runner.defs().find((d) => d.id === 'review-capture');
   assert.equal(def.label, 'Visual capture');
-  assert.match(def.commands[0], /^node tools\/screenshot\.mjs --out \/state\/p1\/review\/captures --viewport 1280x800 --prefix desk- --only /);
+  const out = path.join('/state/p1', 'review', 'captures');
+  assert.ok(def.commands[0].startsWith(`node tools/screenshot.mjs --out ${out} --viewport 1280x800 --prefix desk- --only `), def.commands[0]);
 });
 
 test('null params mean the defaults, and a non-object params value is a 400 with a clear message', () => {
