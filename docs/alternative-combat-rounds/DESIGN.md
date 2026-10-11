@@ -105,6 +105,8 @@ at M_e = 0.
   - a counter that fires
   - a full block: Block >= damage and damage > 0. The attack does not land, the blocker wins
     the slot, and the resolver emits `absorbed`
+  - an avoid: an `intangible` charge, or a successful `evadePct` roll (see
+    Evasion). The resolver emits `evaded` with a `reason`
   - a dodge: a miss against an evade action. The resolver emits `evaded`
 - A plain miss with no defensive action moves nothing.
 - A card's `momentumGain` (default 1) is the base amount of the move.
@@ -195,6 +197,57 @@ Hit when:
 - Example: Reaver with STR 3, DEX 1, WIS 1, INT 1 has floor(5) = 5, so with
   accuracy 0 and evasion 0 it needs 3 or more on the d20.
 
+### Evasion
+
+There are two ways to avoid an attack that would land. Both are defensive
+successes for momentum (see Momentum).
+
+- The `intangible` tag. The holder spends one charge to avoid the attack
+  outright. It is guaranteed. Charges live on the side (`intangibleCharges`).
+  At 0 charges the tag does nothing. Emits `evaded` with `reason: 'intangible'`.
+- The evasion percent, `evadePct`. After an attack would land, the defender
+  rolls once. `evadePct` is `evadeBasePct` plus the live bonuses for this
+  exchange, clamped to 0..95. The roll is floor(rng x 100), and a roll under
+  `evadePct` avoids the attack. Emits `evaded` with `reason: 'evasion'`.
+- Order for an attack that would land: a full block first (absorbed, no
+  charge spent). Then `intangible`. Then the percent roll. Only an attack that
+  would land spends a charge or draws the percent roll.
+- `evadePct` is a new field. The hit roll still uses the `evasion` stat as
+  before (8 + evasion), so its meaning does not change.
+
+Owner's answer to open question f: the guaranteed evasion becomes the
+`intangible` tag, and the percent chance is the separate `evadePct` roll.
+
+#### Evade bonus scopes
+
+Each bonus is `{ source, pct, scope, condition? }`. The scope model is meant
+for all tag bonuses, not only evasion. Flagged: no tag bonus other than evasion
+uses it yet.
+
+- `exchange`: live in this one exchange only. It does not carry to the next.
+- `round`: live while a round is set.
+- `combat`: live while a combat id is set.
+- `run`: live for as long as the bonus is present.
+- `condition` (optional): a function of the context. A bonus whose condition
+  fails is dropped, whatever its scope.
+
+`activeEvadeBonuses()` keeps only the live bonuses, and `evadePct` sums them.
+Stance bonuses come from `evade-bonus.csv` as `exchange` bonuses (TBD values).
+Card-tag bonuses are passed on the side as `evadeBonuses`.
+
+#### Flagged
+
+- The cap of 95 is a placeholder (`EVADE_PCT_MAX`). The owner has not
+  confirmed it.
+- Does a dodge (a miss against an evade action) stack with `evadePct`? Today
+  they cannot overlap in one attack. A dodge needs a miss, and the percent
+  roll happens only on a hit. Whether the evade stance's bonus should also
+  apply to a dodge is not decided.
+- Charges are not carried between rounds. The side's `intangibleCharges` is an
+  input, and the resolver does not write it back. The caller reads the
+  `charges` field of the `evaded` event to store what is left.
+- The values in `evade-bonus.csv` are TBD.
+
 ## Resolver placeholder rules (prototype)
 
 These are the rules `resolver.mjs` implements where the owner's design is
@@ -217,6 +270,9 @@ silent. They are placeholders for testing the shape, not decisions.
 - A full block (Block >= damage and damage > 0) turns a landed hit into 'absorbed' for the
   blocker. A miss against an evade action emits 'evaded'. Both are the
   momentum successes described in the Momentum section.
+- An attack that would land can be avoided by an `intangible` charge, or by the
+  `evadePct` roll. Each emits 'evaded' with a `reason`, and each counts as a
+  defensive success. The `evadeRoll` event reports the roll.
 - One player card per enemy slot. A second card on a paired slot is rejected
   ('rejected' event).
 - An enemy slot with no player card is unpaired ('unpaired' event) and has no
@@ -235,7 +291,9 @@ c. One player card per enemy slot, or several?
 d. What happens to an unpaired enemy action?
 e. Resolved (2026-10-11): four perception stages, as in "Perception stages".
    The card hint consequence is flagged there.
-f. Does this replace the current Evade charges?
+f. Resolved (2026-10-11): the guaranteed evasion becomes the `intangible` tag
+   with side charges. The percent chance is a separate `evadePct` roll. Whether
+   this retires today's Evade charges in src/ is not decided in this prototype.
 g. Resolved (2026-10-11). Success is a landed hit, a counter that fires, a
    full block (Block >= damage and damage > 0), or a dodge (a miss against an evade action).
 h. Resolved (2026-10-11). A whiff hands nothing to the other side, unless it
