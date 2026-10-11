@@ -1084,6 +1084,40 @@ test('DOM: the inspector offers Add and Remove side by side, each enabled only w
   });
 });
 
+test('DOM: a window that narrows to phone width leaves the deck pane; the listener is removed on close', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');
+  const previous = globalThis.matchMedia;
+  const listeners = [];
+  const query = { matches: false,
+    addEventListener(type, fn) { if (type === 'change') listeners.push(fn); },
+    removeEventListener(type, fn) { const at = listeners.indexOf(fn); if (at >= 0) listeners.splice(at, 1); } };
+  // Other components ask matchMedia too: only the phone query is recorded.
+  const inert = { matches: false, addEventListener() {}, removeEventListener() {} };
+  globalThis.matchMedia = (q) => (q === '(max-width: 1000px)' ? query : inert);
+  try {
+    withDom(() => {
+      const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
+      assert.equal(listeners.length, 1, 'the editor watches the phone width');
+      editor.dispatch({ family: 'controller', button: 5 });
+      assert.equal(editor.root.querySelector('.deck-editor-panes').dataset.active, 'deck', 'the deck pane stands on desktop');
+      query.matches = true;
+      for (const fn of [...listeners]) fn({ matches: true });
+      assert.equal(editor.root.querySelector('.deck-editor-panes').dataset.active, 'collection');
+      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
+      const focused = document.activeElement;
+      assert.notEqual(focused.tagName, 'INPUT', 'focus never lands in a search box');
+      let inPane = null;
+      for (let at = focused; at && !inPane; at = at.parentNode) if (at.dataset?.pane) inPane = at.dataset.pane;
+      assert.equal(inPane, 'collection', 'focus is in the collection pane');
+      editor.close();
+      assert.equal(listeners.length, 0, 'the listener is removed on close');
+    });
+  } finally {
+    if (had) globalThis.matchMedia = previous; else delete globalThis.matchMedia;
+  }
+});
+
 test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles the deck view', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {

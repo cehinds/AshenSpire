@@ -893,11 +893,32 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     animationPreview = null;
     drop();
     removeEventListener('keydown', onKey);
+    if (phoneQuery) {
+      if (phoneQuery.removeEventListener) phoneQuery.removeEventListener('change', onPhoneChange);
+      else phoneQuery.removeListener?.(onPhoneChange);
+    }
     setTabRing(null);
     for (const sibling of madeInert.splice(0)) sibling.removeAttribute('inert');
     releaseDismiss({ restoreFocus: true });
     root.remove();
     if (liveEditor && liveEditor.root === root) liveEditor = null;
+  }
+
+  // A window that narrows to phone width while the deck pane stands leaves it:
+  // on a phone an unordered deck has no deck pane to stand in.
+  const phoneQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 1000px)') : null;
+  const onPhoneChange = (ev) => {
+    if (!ev?.matches || model.ordered || pane !== 'deck') return;
+    pane = 'collection';
+    mobileView = 'collection';
+    focusKey = null;
+    draw();
+    const node = paneFocusable('collection');
+    if (node) focusNode(node);
+  };
+  if (phoneQuery) {
+    if (phoneQuery.addEventListener) phoneQuery.addEventListener('change', onPhoneChange);
+    else phoneQuery.addListener?.(onPhoneChange);
   }
 
   draw();
