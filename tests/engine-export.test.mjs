@@ -143,6 +143,29 @@ test('--only limits the export and the tool refuses to clear a foreign folder', 
   assert.equal(readFileSync(join(foreign, 'keep.txt'), 'utf8'), 'mine');
 });
 
+test('a failed refresh preserves the complete last good export', async () => {
+  const { writeExport, FORMAT } = await import('../tools/engine-export.mjs');
+  const out = join(scratch, 'atomic-refresh');
+  const good = new Map([
+    ['manifest.json', JSON.stringify({ format: FORMAT })],
+    ['tables/old.json', 'last good'],
+  ]);
+  writeExport(good, out);
+
+  let writes = 0;
+  assert.throws(() => writeExport(new Map([
+    ['manifest.json', JSON.stringify({ format: FORMAT })],
+    ['tables/new.json', 'replacement'],
+  ]), out, { writeFile(full, text) {
+    if (++writes === 2) throw Error('disk full');
+    writeFileSync(full, text);
+  } }), /disk full/);
+
+  assert.equal(readFileSync(join(out, 'tables/old.json'), 'utf8'), 'last good');
+  assert.equal(existsSync(join(out, 'tables/new.json')), false);
+  assert.deepEqual(readdirSync(join(out, '..')).filter((name) => name.startsWith('.atomic-refresh.')), []);
+});
+
 test('staleGenerated runs the builders (or their --check) and names the stale ones; --no-build passes when current', async () => {
   const { staleGenerated, BUILDERS } = await import('../tools/engine-export.mjs');
   assert.deepEqual(BUILDERS, ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs']);

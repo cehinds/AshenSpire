@@ -29,7 +29,7 @@
 // order, 2-space indent, trailing newline. Two runs at one commit are
 // byte-identical. build/engine-export/ is ignored by git; never commit it.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, mkdtempSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, mkdtempSync, statSync, renameSync } from 'node:fs';
 import { join, dirname, relative, sep, resolve, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -416,20 +416,45 @@ export async function buildExport({ only = null } = {}) {
   return { files, manifest, summary: { tables: tables.length, rows, config: configs.length, art: art.length, files: files.size } };
 }
 
-export function writeExport(files, outDir) {
+export function writeExport(files, outDir, { writeFile = writeFileSync } = {}) {
   if (existsSync(outDir)) {
     const entries = readdirSync(outDir);
     if (entries.length) {
       let ours = false;
       try { ours = JSON.parse(readFileSync(join(outDir, 'manifest.json'), 'utf8')).format === FORMAT; } catch { /* not ours */ }
       if (!ours) throw new Error(`${outDir} is not empty and holds no ${FORMAT} manifest; refusing to clear it`);
-      rmSync(outDir, { recursive: true, force: true });
     }
   }
-  for (const [rel, text] of [...files.entries()].sort()) {
-    const full = join(outDir, rel);
-    mkdirSync(dirname(full), { recursive: true });
-    writeFileSync(full, text);
+
+  // Build a complete sibling tree first. If any write fails, the last good
+  // export remains untouched. A sibling also keeps the final renames on the
+  // same filesystem. The backup exists only during the two-rename swap and is
+  // restored if installing the staged tree fails.
+  const parent = dirname(outDir);
+  mkdirSync(parent, { recursive: true });
+  const staged = mkdtempSync(join(parent, `.${basename(outDir)}.tmp-`));
+  let backup = null;
+  try {
+    for (const [rel, text] of [...files.entries()].sort()) {
+      const full = join(staged, rel);
+      mkdirSync(dirname(full), { recursive: true });
+      writeFile(full, text);
+    }
+    if (existsSync(outDir)) {
+      backup = mkdtempSync(join(parent, `.${basename(outDir)}.old-`));
+      rmSync(backup, { recursive: true, force: true });
+      renameSync(outDir, backup);
+    }
+    try {
+      renameSync(staged, outDir);
+    } catch (error) {
+      if (backup) renameSync(backup, outDir);
+      backup = null;
+      throw error;
+    }
+    if (backup) rmSync(backup, { recursive: true, force: true });
+  } finally {
+    rmSync(staged, { recursive: true, force: true });
   }
 }
 

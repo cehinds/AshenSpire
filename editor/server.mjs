@@ -20,6 +20,19 @@ const commands = {
 // src/config/generated) run under the cross-process lock the Workbench and UI
 // Studio share (tools/lib/build-lock.mjs); validate only reads them.
 const WRITES_GENERATED = new Set(['content', 'build']);
+
+// A build action can start builders of its own (notably launch.mjs). Keep each
+// action in a process group on POSIX and stop the complete tree on shutdown so
+// no orphan can keep writing after the Editor's lock holder has exited.
+function killTree(child, { platform = process.platform, run = spawnSync } = {}) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  try {
+    if (platform === 'win32') {
+      const result = run('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+      if (result.error || result.status !== 0) child.kill();
+    } else process.kill(-child.pid, 'SIGTERM');
+  } catch { try { child.kill(); } catch { /* already gone */ } }
+}
 // A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
 // Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
 export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
@@ -68,7 +81,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
     }
     job = { id: randomUUID(), name, status: 'running', output: '' };
     const current = job;
-    workspace.serialize(async () => {
+    current.done = workspace.serialize(async () => {
       try { await runSteps(); } finally { release(); }
     }).catch(e => { current.status = 'failed'; current.output += e.message; });
     return { id: current.id };
@@ -77,7 +90,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         current.output += `> node ${args.join(' ')}\n`;
         const code = await new Promise(resolve => {
           // Builders run under this action's hold on the lock (tools/lib/build-lock.mjs).
-          const child = spawn(process.execPath, args, { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) } });
+          const child = spawn(process.execPath, args, { cwd: root, windowsHide: true, detached: process.platform !== 'win32', env: { ...process.env, ...lockEnv(release) } });
           current.child = child;
           const append = data => { current.output = (current.output + data).slice(-120000); };
           child.stdout.on('data', append); child.stderr.on('data', append);
@@ -105,7 +118,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
           if (url.pathname === '/api/session') return send(res, 200, { token, root });
           if (url.pathname === '/api/inventory') return send(res, 200, await inventory());
           if (url.pathname === '/api/file') return send(res, 200, await workspace.read(url.searchParams.get('path')));
-          if (url.pathname === '/api/job') { const { child, ...publicJob } = job || {}; return send(res, 200, publicJob); }
+          if (url.pathname === '/api/job') { const { child, done, ...publicJob } = job || {}; return send(res, 200, publicJob); }
           if (url.pathname === '/api/codex/events') return send(res, 200, { events: codex.events.filter(e => e.cursor > Number(url.searchParams.get('after') || 0)), active: codex.active });
           if (url.pathname === '/api/backups') {
             const dirs = (await fs.readdir(path.join(stateDir, 'backups')).catch(() => [])).sort().reverse().slice(0, 40);
@@ -188,7 +201,13 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
     } catch (error) { send(res, error.status || (error.code === 'ENOENT' ? 404 : 400), { error: error.message }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
-  return { server, workspace, codex, url: `http://127.0.0.1:${server.address().port}`, close: async () => { codex.close(); job?.child?.kill(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); } };
+  return { server, workspace, codex, url: `http://127.0.0.1:${server.address().port}`, close: async () => {
+    codex.close();
+    killTree(job?.child);
+    await job?.done;
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+  } };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const index = process.argv.indexOf('--project');

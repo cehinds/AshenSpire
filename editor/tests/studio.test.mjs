@@ -141,3 +141,32 @@ test('builds that write the generated trees share the cross-process lock: 409 na
   assert.equal(done.status,'passed'); assert.match(done.output,/built/);
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released after the build');
 });
+
+test('closing the Editor stops a build and every process it started before releasing the lock', async t => {
+  if (process.platform === 'win32') return t.skip('POSIX process-group coverage; Windows uses taskkill /T');
+  const { root } = await fixture(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/launch.mjs'), `
+    import fs from 'node:fs';
+    import { spawn } from 'node:child_process';
+    const nested = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
+    fs.writeFileSync('build-tree.json', JSON.stringify({ parent: process.pid, nested: nested.pid }));
+    setInterval(() => {}, 1000);
+  `);
+  const app = await createStudio({ root, port: 0, stateDir: path.join(root, 'state') });
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const started = await fetch(`${app.url}/api/job`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'build' }) });
+  assert.equal(started.status, 200);
+  let pids;
+  for (let i = 0; i < 200 && !pids; i++) {
+    try { pids = JSON.parse(await fs.readFile(path.join(root, 'build-tree.json'), 'utf8')); } catch { await new Promise((resolve) => setTimeout(resolve, 20)); }
+  }
+  assert.ok(pids?.parent && pids?.nested, 'the build tree started');
+  await app.close();
+
+  const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+  for (let i = 0; i < 100 && (alive(pids.parent) || alive(pids.nested)); i++) await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(alive(pids.parent), false, 'the direct build child exited');
+  assert.equal(alive(pids.nested), false, 'the nested builder exited');
+  await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'the lock was released after the process tree exited');
+});
