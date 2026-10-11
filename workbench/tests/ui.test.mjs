@@ -1,7 +1,7 @@
 // node --test workbench/tests/ui.test.mjs — the page's DOM-free helpers.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fuzzyScore, fuzzyFilter, DEVICES, fitDevice, duration, manifestTables, manifestSummary, EXPORT_FORMAT, apiError } from '../ui/logic.mjs';
+import { fuzzyScore, fuzzyFilter, DEVICES, fitDevice, duration, manifestTables, manifestSummary, EXPORT_FORMAT, apiError, saveFailure } from '../ui/logic.mjs';
 
 test('fuzzy matching keeps letter order and prefers word starts and whole runs', () => {
   assert.equal(fuzzyScore('xyz', 'Content Editor'), null);
@@ -61,4 +61,13 @@ test('an API failure carries its HTTP status and parsed body', () => {
   assert.equal(bare.status, 500);
   assert.equal(bare.body, null);
   assert.equal(apiError(404, { error: 'No such file' }).message, 'No such file');
+});
+
+test('a failed save is read from the api error: 422 problems, 409 conflicts, anything else an error message', () => {
+  const problems = [{ path: 'content/config/ui/scenes/w4.json', message: 'bad band' }];
+  assert.deepEqual(saveFailure(Object.assign(new Error('x'), { status: 422, body: { problems } })), { kind: 'problems', problems });
+  const conflicts = [{ path: 'content/config/ui/tokens.json', hash: 'h2' }];
+  assert.deepEqual(saveFailure(Object.assign(new Error('x'), { status: 409, body: { conflicts } })), { kind: 'conflicts', conflicts });
+  assert.deepEqual(saveFailure(new TypeError('Failed to fetch')), { kind: 'error', message: 'Failed to fetch' });
+  assert.deepEqual(saveFailure(Object.assign(new Error('HTTP 500'), { status: 500, body: null })), { kind: 'error', message: 'HTTP 500' });
 });

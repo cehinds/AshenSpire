@@ -5,6 +5,7 @@
 // disabled until their work lands. Rules and the mapping from a canvas edit to
 // config values are in config-model.mjs; this file is the view and the gestures.
 import { icon } from '../../ui/icons.mjs';
+import { saveFailure } from '../../ui/logic.mjs';
 import { createCanvas, createLayersPanel, createInspector } from '../../ui/kit/canvas.mjs';
 import * as C from './config-model.mjs';
 import * as M from './studio-model.mjs';
@@ -334,7 +335,7 @@ export default {
       } catch (err) {
         saving = false;
         setSaveBusy(false);
-        const failure = C.saveFailureOf(err);
+        const failure = saveFailure(err);
         if (failure.kind === 'problems') {
           const list = failure.problems.map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
           await openReview(`<div class="lay-problems"><p><strong>Nothing saved.</strong> The compiler found problems:</p><ul>${list}</ul></div>`);
