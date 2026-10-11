@@ -270,3 +270,17 @@ test('hit roll: natural 20 always hits, even against huge evasion', () => {
   assert.equal(hitRoll(walled, 20).hit, true);
   assert.equal(hitRoll(walled, 19).hit, false);
 });
+
+test('combos count only played cards: a rejected card cannot start a combo', () => {
+  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 1, kind: 'other' }];
+  const playerCards = [
+    { id: 'quickstep', slot: 0, speed: 1, kind: 'other' },
+    { id: 'shieldBash', slot: 0, speed: 1, kind: 'other' }, // rejected: slot taken
+    { id: 'strike', slot: 1, speed: 1, kind: 'attack' }, // played after the rejected card
+  ];
+  const { events, momentumDelta } = resolveRound(playerCards, queue, 2, d20Face(20), {
+    combos: [['shieldBash', 'strike']],
+  });
+  assert.deepEqual(find(events, 'rejected'), { type: 'rejected', reason: 'slot taken', slot: 0, cardId: 'shieldBash' });
+  assert.equal(momentumDelta, 0, 'strike follows only a rejected card, so no combo');
+});

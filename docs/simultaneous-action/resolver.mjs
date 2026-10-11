@@ -195,6 +195,9 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const events = [];
   let momentumDelta = 0;
   const paired = new Set();
+  // Id of the last card that was accepted (paired). Rejected cards never
+  // become a combo partner.
+  let lastAcceptedId = null;
 
   playerCards.forEach((pc, i) => {
     const slot = pc.slot;
@@ -221,10 +224,11 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       momentumDelta -= 1;
       events.push({ type: 'momentum', delta: -1, reason: 'countered', slot });
     }
-    if (i > 0 && isCombo(playerCards[i - 1].id, pc.id)) {
+    if (lastAcceptedId !== null && isCombo(lastAcceptedId, pc.id)) {
       momentumDelta += 1;
       events.push({ type: 'momentum', delta: 1, reason: 'combo', slot });
     }
+    lastAcceptedId = pc.id;
   });
 
   enemyQueue.forEach((enemy, slot) => {
