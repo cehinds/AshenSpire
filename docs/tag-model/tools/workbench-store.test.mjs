@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readTable } from './csv.mjs';
+import { readTable, parseCsv } from './csv.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PAGE = path.join(HERE, '..', 'workbench.html');
@@ -674,7 +674,29 @@ function loadBlock(name, expose) {
 const evalStub = (e) => (String(e || '').trim() ? { v: 1 } : { err: 'empty expression', soft: false });
 const TT_FORMULAS = (cols) => ({ t: { label: 'Formulas', key: 'key', columns: [...cols], refs: {} } });
 
-test('the real formulas.csv imports, saves, loads and exports with its status column; a proposed placeholder is a note', async () => {
+// The workbench formula engine (findTag to the validation section), over the real tables.
+function workbenchPreviewEval() {
+  const html = readFileSync(PAGE, 'utf8');
+  const start = html.indexOf('function findTag(k)');
+  const end = html.indexOf('/* ---------- validation ---------- */');
+  if (!(start > 0 && end > start)) throw new Error('workbench.html formula engine markers moved');
+  const rowsOf = name => {
+    const [header, ...body] = parseCsv(readFileSync(path.join(HERE, '..', 'tables', name), 'utf8'));
+    return body.filter(r => !(r.length === 1 && r[0] === '')).map(r => Object.fromEntries(header.map((h, i) => [h, r[i]])));
+  };
+  const tags = rowsOf('tags.csv');
+  const IX = {
+    tagByKey: new Map(tags.filter(r => r.key).map(r => [r.key, r])),
+    tagById: new Map(tags.filter(r => r.id).map(r => [r.id, r])),
+    val: new Map(rowsOf('values.csv').filter(r => r.key).map(r => [r.key, r])),
+    frm: new Map(rowsOf('formulas.csv').filter(r => r.key).map(r => [r.key, r])),
+    obj: new Map(), ast: new Map(), cmp: new Map(),
+  };
+  const state = { data: { ranks: { rows: [] } } };
+  return new Function('IX', 'state', html.slice(start, end) + '\nreturn { evalExpr };')(IX, state).evalExpr;
+}
+
+test('the real formulas.csv imports, saves, loads and exports with its status column; a proposed placeholder is a note, and evasion.rating computes at rank 1', async () => {
   const { FORMULA_COLUMNS } = loadBlock('formula-columns', '({ FORMULA_COLUMNS })');
   const { parseCSV, importRows, toCSV } = loadBlock('csv', '({ parseCSV, importRows, toCSV })');
   const { formulaRowIssue } = loadBlock('formula-issues', '({ formulaRowIssue })');
@@ -702,6 +724,13 @@ test('the real formulas.csv imports, saves, loads and exports with its status co
   const row = loaded.rows.find((r) => r.key === 'evasion.rating');
   assert.ok(row, 'evasion.rating loads');
   assert.equal(row.status, 'proposed');
+  // At rank 1 with the preview values: armour base 0 + DEX term min(10 - 1, 0) + shield 0 + card 0 = 0.
+  const evalPreview = workbenchPreviewEval();
+  const computed = evalPreview(row.expr, 1, null, '');
+  assert.ok('v' in computed, 'evasion.rating computes a number at rank 1');
+  assert.equal(typeof computed.v, 'number');
+  assert.equal(computed.v, 0, 'evasion.rating at rank 1 with preview values');
+  assert.equal(formulaRowIssue(row, evalPreview), null, 'a formula with an expression is no issue');
   assert.match(toCSV(loaded.columns, loaded.rows).split('\n')[0], /,status$/, 'export keeps the status column');
 });
 

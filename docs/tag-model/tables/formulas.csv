@@ -6,4 +6,6 @@ dodgeRoll.block,([dodgeRoll.base] + [dr]) * [dodgeBlock.mod],dodgeRoll,"Block ga
 dodgeRoll.poise,[dodgeRoll.block],dodgeRoll,Poise guard gained,
 dodgeRoll.ward,[dodgeRoll.block],dodgeRoll,Ward guard gained,
 burned.tick,[burned] * [burned.tickPerStack],burned,HP lost at turn start,
-evasion.rating,,character,"TBD: evasion formula, placeholder pending a proposal (owner decision 11)",proposed
+evasion.rating,"[armor.evasionBase] + min(max([dexterity] - 1, 0), [armor.dexCap]) + [shield.evasion] + [evasion.cardBonus]",character,"Evasion: armour evasion base plus DEX term capped by the armour DEX cap, plus shield and card bonus (owner decision 11)",proposed
+accuracy.rating,"floor([strength] + [dexterity] + 0.5*[wisdom] + 0.5*[intelligence]) + floor([level] / 5) + [accuracy.tagBonus]",character,"Accuracy: STR and DEX plus half WIS and INT, plus one per 5 levels, plus tag bonus (owner decision 11)",proposed
+hit.missChance,"min(0.75, max(0.05, (8 + [evasion.rating] - [accuracy.rating] - 1) / 20))",character,"Chance an attack misses. Hit when d20 + accuracy >= 8 + evasion, so the miss count is 7 + evasion - accuracy (of 20). Floor 0.05 is the natural 1 always missing, cap 0.75 is the miss cap. A natural 20 always hits, which the cap already implies (owner decision 11)",proposed
