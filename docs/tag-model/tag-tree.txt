@@ -693,3 +693,53 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
   Baiting Feint {The first move is never the real one. Effects in nodeEffects.json: triggers on statusApplied; ops poiseDamage.}
   Spare Whetstone {A second stone, for the second cut. Effects in nodeEffects.json: triggers on damageDealt; ops gainEnergy.}
   Whetted Guard {The edge that cuts also turns a blade. Effects in nodeEffects.json: triggers on damageDealt; ops block.}
+  Coal on Steel {The first Blade hit each turn applies +1 Bleed buildup. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Brace and Bite {The first Blade attack each turn played while you have Block deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Red Footwork {The first Guard card each turn targeting an enemy with Bleed buildup draws 1 card. Effects in nodeEffects.json: triggers on cardPreparing; ops draw.}
+  Anvil Discipline {The first Heavy attack each turn deals +2 Break damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Forge Momentum {Your first Blade attack after a Guard card each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Paid in Blood {The first Blood attack after you have lost HP since your previous turn began deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Last Rampart {At half HP or lower, your first Guard card each turn grants +4 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  War Cadence {After your second Heavy card in a turn, gain 4 Block, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops block.}
+  Broad Sentence {Your first attack that hits all living enemies each turn deals +2 damage to each target. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Ember Sovereign {Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Dread of the Hammer {Your first Heavy attack against a Staggered target each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Scarred Oath {Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Harvest the Wound {Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Orbit Keeper {Your first Starstone spell following another spell each turn deals +3 direct damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Moonward Scholar {The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Comet Reader {The first Comet Mark attack each turn applies +1 Vulnerable after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.}
+  Mirror of Rime {Your first Rime Mirror each turn applies +2 Frost buildup. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Constellation Keeper {Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Patient Wellspring {The first Mana Weave restoration each turn also grants 3 Block. Effects in nodeEffects.json: triggers on manaRestored; ops block.}
+  Weight of the Void {The first Gravity Snare each turn applies +1 Weak after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.}
+  Nightglass Scholar {Once per turn, your Nightglass charge grants +2 additional damage when consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Eclipse Hunter {Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Firmament Keeper {Once per turn, consuming a Warded Casting charge also grants 4 Block. Effects in nodeEffects.json: triggers on cardChargeConsumed; ops block.}
+  Celestial Refrain {The second play of the same Starstone card ID in a turn grants 4 Block, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops block.}
+  Memory of Winter {Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block.}
+  Threefold Sky {Playing your third distinct Starstone card ID in a turn draws 1 card, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops draw.}
+  First Knife {If your first card this turn is a Blade attack, it deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Pocket Method {Your first Guard card after an explicit discard each turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Crooked Measure {Your first Crooked Guard hit each turn applies +1 Weak after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.}
+  Open Flank {Your first Blade attack against an enemy with zero Block each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Hidden Palm {The first Sleight of Hand sequence each turn grants 3 Block after the discard. Effects in nodeEffects.json: triggers on cardResolved; ops block.}
+  Tighten the Wire {Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Smoke Dancer {Once per turn, a Smoke Edge charge adds +2 damage before it is consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Carrion Measure {Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Two Quiet Knives {Your first Paired Strikes attack each turn deals +1 damage on each of its two hits. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Trapdoor Smile {Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Clean Exit {Your first Guard card played before any attack this turn restores 1 Stamina, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops restoreStamina.}
+  Razor Ledger {Your first Blade attack after an explicit discard each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Ashen Mercy {The first Mercy in Ash card each turn heals +2 HP. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Censer Keeper {The first Blood Censer offering each turn grants +3 Block after its HP payment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops block.}
+  Sower of Blight {The first Blight Seed hit each turn applies +2 Crimson Blight buildup. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Funeral Watch {At half HP or lower, your first Guard card each turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Ember Almoner {Your first Ember Tithe each turn grants +1 Regen after the HP payment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops applyStatus.}
+  Choir of Bone {The first Guard card you play while any living enemy has Crimson Blight buildup restores 1 Stamina, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops restoreStamina.}
+  Requiem Reader {The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Pilgrim of Scars {If you began the turn at half HP or lower, your first Guard card that turn heals 3 HP. Effects in nodeEffects.json: triggers on cardPreparing; ops heal.}
+  Crowned Offering {The first Ritual attack after an earlier HP offering this turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Dawn Cantor {The first Dawn Rite removal each turn also grants 3 Block. Effects in nodeEffects.json: triggers on statusRemoved; ops block.}
+  Bearer of Burdens {The first negative status newly applied to you by an enemy each turn restores 1 Mana. Effects in nodeEffects.json: triggers on statusApplied; ops restoreMana.}
+  Sepulchral Promise {Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
