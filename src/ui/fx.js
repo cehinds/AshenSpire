@@ -995,7 +995,7 @@ export function playTimeline(events, ctx, done) {
     // (sequential: only the contact parts here; reactions and numbers follow
     // the recovery).
     const rest = beat.events.filter((e) => !lead.has(e));
-    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind)]));
+    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential })]));
     const visualEvents = sequential
       ? rest.filter((e) => partsOf.get(e)?.contact)
       : rest.filter((e) => partsOf.get(e));
@@ -1055,7 +1055,8 @@ export function playTimeline(events, ctx, done) {
           }
           safe(() => v(ctx));
           markContact(event.type);
-          if (!damageCued.has(beatIndex) && playerLostHp(event)) {
+          // Sequential: the damage buzz waits for the number (below).
+          if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event)) {
             damageCued.add(beatIndex);
             safe(() => haptic.play('damageTaken'));
           }
@@ -1109,6 +1110,10 @@ export function playTimeline(events, ctx, done) {
               }
               traceBeat('numbers', event.type);
               if (parts.numbers) safe(() => parts.numbers(ctx));
+              if (!damageCued.has(beatIndex) && playerLostHp(event)) {
+                damageCued.add(beatIndex);
+                safe(() => haptic.play('damageTaken'));
+              }
               // The bars follow in the next task, so the number is laid out
               // and painted before the beat's re-render, not after it.
               if (ri >= reactions.length) schedule(applyBeat, 0);
@@ -1309,8 +1314,8 @@ export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
 // visualFor plays all three at once, in that order, for every other path.
 // `callout` is the on-character word (callout above): it plays with the
 // reaction, and adds no wait of its own.
-function visualPartsFor(e, beatKind) {
-  const base = withCallout(baseVisualParts(e, beatKind), e), effect = combatEffectForEvent(e);
+function visualPartsFor(e, beatKind, opts) {
+  const base = withCallout(baseVisualParts(e, beatKind, opts), e), effect = combatEffectForEvent(e);
   if (!effect) return base;
   const playEffect = (ctx) => {
     const anchor = ctx.anchorFor(effect.targetId);
@@ -1363,7 +1368,9 @@ function visualFor(e, beatKind) {
   };
 }
 
-function baseVisualParts(e, beatKind) {
+// opts.sequential (SPEC §7.4, beatOrder 'sequential'): a hit's sound plays
+// with its number; only the spark and slash stay at the contact.
+function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
     case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
@@ -1372,15 +1379,16 @@ function baseVisualParts(e, beatKind) {
       const parts = guardHitFloatParts(e);
       const paired = !!(parts.guard && parts.damage);
       const heavy = parts.residual >= 15;
+      const hitSounds = () => {
+        if (parts.guard) sfx.play('block');
+        if (parts.damage) playHitSound(e);
+      };
       return {
         contact: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
-          if (parts.guard) {
-            sfx.play('block');
-            spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          }
+          if (!sequential) hitSounds();
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
-          playHitSound(e);
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         },
@@ -1403,6 +1411,7 @@ function baseVisualParts(e, beatKind) {
           shake(ctx.combatEl, shakePxFor(parts.residual));
         },
         numbers: (ctx) => {
+          if (sequential) hitSounds();
           const anchor = ctx.anchorFor(e.targetId);
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
