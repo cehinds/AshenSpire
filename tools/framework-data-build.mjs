@@ -57,7 +57,7 @@ for (const name of sources) {
       stale += 1;
       console.error(`STALE: ${outPath} does not match ${name} — run node tools/framework-data-build.mjs`);
     }
-  } else if ((existsSync(outPath) ? readFileSync(outPath, 'utf8').replace(/\r\n/g, '\n') : null) !== generated) {
+  } else if ((existsSync(outPath) ? readFileSync(outPath, 'utf8') : null) !== generated) {
     // Only a changed module is rewritten: a test importing it in a sibling
     // process must never read one mid-rewrite (engine-export runs this build).
     writeFileSync(outPath, generated);
