@@ -111,6 +111,26 @@ test('CSV cells the content compiler keeps as strings (1e3, 1.) stay strings and
   assert.equal(out, 'id,code,ratio\nalphaEdited,1e3,-0.5\nbeta,2e4,.5\ngamma,1.,12\n');
 });
 
+test('a save sets the base to the submitted text, so an edit made while it ran stays unsaved', () => {
+  const rel = 'content/source/speakers.csv';
+  const table = D.parseTable(rel, read(rel), { hash: 'h0' });
+  const doc = docOf(table);
+  doc.rows[0] = { ...doc.rows[0], name: 'The Changed Name' };
+  const sent = D.serializeTable(table, doc);
+  // The save is in flight; the user edits another row of the same table before the server answers.
+  const later = docOf(table);
+  later.rows[0] = { ...doc.rows[0] };
+  later.rows[1] = { ...later.rows[1], name: 'Typed After Submit' };
+  const base = D.savedTable(rel, sent, 'h1');
+  assert.equal(base.text, sent, 'the base is the submitted text');
+  assert.equal(base.baseHash, 'h1');
+  assert.equal(D.isDirty(base, doc), false, 'the submitted edit is saved, so its draft reads clean');
+  assert.equal(D.isDirty(base, later), true, 'the edit after submitting is still unsaved');
+  const before = sent.split('\n'), after = D.serializeTable(base, later).split('\n');
+  assert.equal(after.length, before.length);
+  assert.equal(after.filter((l, i) => l !== before[i]).length, 1, 'the diff is only the later edit');
+});
+
 // Leading comments and blank lines belong to the row they sit above, so an
 // edit or a delete never drops them (Data Studio save path).
 test('an edited CSV row keeps the comment and blank lines above it', () => {

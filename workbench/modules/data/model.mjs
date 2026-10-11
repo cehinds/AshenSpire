@@ -360,6 +360,14 @@ export function changeFor(table, doc) {
 }
 
 /**
+ * A save went through: the table's base becomes the text that was sent and the hash the server
+ * wrote. The draft is kept against it, so an edit made while the save was in flight stays unsaved.
+ */
+export function savedTable(path, text, hash) {
+  return parseTable(path, text, { hash });
+}
+
+/**
  * The save entries Review lists, from { path, table, doc } drafts. A draft whose
  * table is not parsed is skipped and its path returned in skipped, not thrown on.
  */
