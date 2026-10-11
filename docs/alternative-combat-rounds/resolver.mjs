@@ -150,24 +150,26 @@ export function parseEvasionCards(text) {
 
 // Evasion (DESIGN.md, Hit roll): armor base + min(DEX - 1, armor DEX cap) + shield
 // + card bonus + `evasion` (any extra flat bonus). `tables` is { armor, cards }
-// from parseEvasionArmor and parseEvasionCards. A missing armor counts as Cloth,
-// and a missing DEX adds nothing. The DEX term is never negative. A buckler adds
+// from parseEvasionArmor and parseEvasionCards. The inputs are evasionArmor,
+// dex, shield and evasionCard. They are not the action's `armor` and `card`,
+// which are speed-table ids. A missing evasionArmor counts as Cloth, and a
+// missing DEX adds nothing. The DEX term is never negative. A buckler adds
 // 1 and any other shield adds 0. A card not in the table adds 0.
-// With none of armor, dex, shield or card given, the result is the plain
-// `evasion` number, so existing callers are unchanged.
+// With none of evasionArmor, dex, shield or evasionCard given, the result is the
+// plain `evasion` number, so existing callers are unchanged.
 export const SHIELD_EVASION = Object.freeze({ buckler: 1 });
 
-export function evasionFor({ armor, dex, shield, card, evasion = 0 } = {}, tables = {}) {
+export function evasionFor({ evasionArmor, dex, shield, evasionCard, evasion = 0 } = {}, tables = {}) {
   const flat = Number(evasion ?? 0);
   const extra = Number.isFinite(flat) ? flat : 0;
-  if (armor == null && dex == null && shield == null && card == null) return extra;
-  const armorName = armor ?? 'Cloth';
+  if (evasionArmor == null && dex == null && shield == null && evasionCard == null) return extra;
+  const armorName = evasionArmor ?? 'Cloth';
   const row = tables?.armor?.get(armorName);
   if (!row) throw new RangeError(`unknown armor "${armorName}"`);
   const dexNum = Number(dex ?? 1);
   const dexTerm = Math.max(0, Math.min(dexNum - 1, row.dexCap)) || 0;
   const shieldBonus = shield != null && Object.hasOwn(SHIELD_EVASION, shield) ? SHIELD_EVASION[shield] : 0;
-  const cardBonus = card == null ? 0 : (tables?.cards?.get(card) ?? 0);
+  const cardBonus = evasionCard == null ? 0 : (tables?.cards?.get(evasionCard) ?? 0);
   return row.base + dexTerm + shieldBonus + cardBonus + extra;
 }
 
@@ -233,7 +235,7 @@ function normalizeEvadeBonuses(list) {
 }
 
 // `tables` is { armor, cards } from parseEvasionArmor and parseEvasionCards, used
-// by evasionFor() when the side gives armor, dex, shield or card.
+// by evasionFor() when the side gives evasionArmor, dex, shield or evasionCard.
 // accuracy is the full total from accuracyFor() (attributes, level, attack tag and
 // any flat bonus). A plain numeric accuracy or evasion still gives the same number.
 function normalizeSide(name, s, tables) {
@@ -249,7 +251,7 @@ function normalizeSide(name, s, tables) {
     tags: Array.isArray(s.tags) ? [...s.tags] : [],
     accuracy: accuracyFor({ attrs: s.attrs, level: s.level, tags: s.tags, accuracy: s.accuracy }),
     attrs: s.attrs ?? {},
-    evasion: evasionFor({ armor: s.armor, dex: s.dex, shield: s.shield, card: s.card, evasion: s.evasion }, tables),
+    evasion: evasionFor({ evasionArmor: s.evasionArmor, dex: s.dex, shield: s.shield, evasionCard: s.evasionCard, evasion: s.evasion }, tables),
     stance: s.stance ?? null,
     damage: Number(s.damage ?? 0),
     block: Number(s.block ?? 0),
@@ -653,12 +655,12 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // options.decay: momentum decay step per round (default 1, 0 turns it off).
 // options.evadeBonuses: scoped evade bonuses, filtered here by scope, round,
 //   combatId and appliesTo (see inputBonuses below). Default none.
-// options.playerDefense: { evasion, evadePct, tags, armor, dex, shield, card } for the
+// options.playerDefense: { evasion, evadePct, tags, evasionArmor, dex, shield, evasionCard } for the
 //   player against an unpaired enemy attack. Default evasion 0, evadePct 0, no tags.
-//   With armor, dex, shield or card, evasion comes from evasionFor() (options.evasionTables).
+//   With evasionArmor, dex, shield or evasionCard, evasion comes from evasionFor() (options.evasionTables).
 //   The 'intangible' tag draws on the player's pool in options.charges.
 // options.evasionTables: { armor, cards } from parseEvasionArmor and parseEvasionCards.
-//   Needed only by a side that gives armor, dex, shield or card.
+//   Needed only by a side that gives evasionArmor, dex, shield or evasionCard.
 // options.poiseDouble: { player?, [enemyId]: bool } flags from an earlier round. A
 //   flagged side's first landed hit this round carries poiseMultiplier 2 and clears
 //   the flag. Poise damage itself is not modelled.
@@ -779,10 +781,10 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const playerDefender = normalizeSide('player', {
     speed: 0,
     kind: 'other',
-    armor: defence.armor,
+    evasionArmor: defence.evasionArmor,
     dex: defence.dex,
     shield: defence.shield,
-    card: defence.card,
+    evasionCard: defence.evasionCard,
     evasion: defence.evasion,
     evadeBasePct: defence.evadePct,
     tags: defence.tags,

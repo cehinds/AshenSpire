@@ -257,36 +257,36 @@ const evasionTables = () => ({
 });
 
 test('evasionFor: Cloth at DEX 1 gives 0', () => {
-  assert.equal(evasionFor({ armor: 'Cloth', dex: 1 }, evasionTables()), 0);
+  assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1 }, evasionTables()), 0);
 });
 
 test('evasionFor: Leather at DEX 3 gives 1 + min(2, 6) = 3 (rogue-like)', () => {
-  assert.equal(evasionFor({ armor: 'Leather', dex: 3 }, evasionTables()), 3);
+  assert.equal(evasionFor({ evasionArmor: 'Leather', dex: 3 }, evasionTables()), 3);
 });
 
 test('evasionFor: Plated at DEX 5 gives 1, because its DEX cap is 0', () => {
-  assert.equal(evasionFor({ armor: 'Plated', dex: 5 }, evasionTables()), 1);
+  assert.equal(evasionFor({ evasionArmor: 'Plated', dex: 5 }, evasionTables()), 1);
 });
 
 test('evasionFor: the DEX term is capped by the armor and is never negative', () => {
-  assert.equal(evasionFor({ armor: 'Chain', dex: 9 }, evasionTables()), 1 + 2, 'Chain caps DEX at 2');
-  assert.equal(evasionFor({ armor: 'Leather', dex: 0 }, evasionTables()), 1, 'DEX 0 adds nothing');
+  assert.equal(evasionFor({ evasionArmor: 'Chain', dex: 9 }, evasionTables()), 1 + 2, 'Chain caps DEX at 2');
+  assert.equal(evasionFor({ evasionArmor: 'Leather', dex: 0 }, evasionTables()), 1, 'DEX 0 adds nothing');
 });
 
 test('evasionFor: a buckler adds 1, and another shield adds 0', () => {
-  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, shield: 'buckler' }, evasionTables()), 1);
-  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, shield: 'kite' }, evasionTables()), 0);
+  assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, shield: 'buckler' }, evasionTables()), 1);
+  assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, shield: 'kite' }, evasionTables()), 0);
 });
 
 test('evasionFor: Backstep adds 5, and an unlisted card adds 0', () => {
-  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, card: 'Backstep' }, evasionTables()), 5);
-  assert.equal(evasionFor({ armor: 'Cloth', dex: 1, card: 'Strike' }, evasionTables()), 0);
+  assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, evasionCard: 'Backstep' }, evasionTables()), 5);
+  assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, evasionCard: 'Strike' }, evasionTables()), 0);
 });
 
 test('evasionFor: a plain numeric evasion still works, and an unknown armor name throws', () => {
   assert.equal(evasionFor({ evasion: 4 }), 4);
   assert.equal(evasionFor({}), 0);
-  assert.throws(() => evasionFor({ armor: 'Tinsel', dex: 1 }, evasionTables()), RangeError);
+  assert.throws(() => evasionFor({ evasionArmor: 'Tinsel', dex: 1 }, evasionTables()), RangeError);
 });
 
 // Wiring (DESIGN.md, Hit roll): a side's accuracy comes from accuracyFor() and its
@@ -330,9 +330,27 @@ test('wiring: an unpaired attack uses playerDefense armor and DEX (Plated DEX 5 
     [{ id: 'foe', speed: 1, kind: 'attack' }],
     1,
     d20Face(8),
-    { decay: 0, evasionTables: evasionTables(), playerDefense: { armor: 'Plated', dex: 5 } },
+    { decay: 0, evasionTables: evasionTables(), playerDefense: { evasionArmor: 'Plated', dex: 5 } },
   );
   assert.equal(events.find((e) => e.type === 'hit').hit, false, 'evasion 1 needs 9, so d20 8 misses');
+});
+
+// Speed-table ids: an action's `card` (e.g. 'strike') and `armor` (e.g. 'heavy') are
+// speed-table keys, not evasion inputs. They must not add evasion or throw.
+test('speed ids: a card or armor on an action is not an evasion input (no throw, same hit as evasion 0)', () => {
+  const foe = { id: 'foe', speed: 1, kind: 'attack' };
+  for (const speedId of [{ card: 'strike' }, { armor: 'heavy' }]) {
+    const target = { ...PLAIN_TARGET, ...speedId };
+    assert.equal(find(resolvePair(target, foe, d20Face(8), {}), 'hit').hit, true, `${Object.keys(speedId)} d20 8 hits evasion 0`);
+    assert.equal(find(resolvePair(target, foe, d20Face(7), {}), 'hit').hit, false, `${Object.keys(speedId)} d20 7 misses`);
+  }
+});
+
+test('evasionArmor, evasionCard and shield are the evasion inputs', () => {
+  const foe = { id: 'foe', speed: 1, kind: 'attack' };
+  const target = { ...PLAIN_TARGET, card: 'strike', evasionArmor: 'Leather', dex: 3 };
+  assert.equal(find(resolvePair(target, foe, d20Face(10), { evasionTables: evasionTables() }), 'hit').hit, false, 'Leather DEX 3 is evasion 3, needs 11, so d20 10 misses');
+  assert.equal(find(resolvePair(target, foe, d20Face(11), { evasionTables: evasionTables() }), 'hit').hit, true);
 });
 
 test('hit roll rejects a d20 outside 1..20', () => {

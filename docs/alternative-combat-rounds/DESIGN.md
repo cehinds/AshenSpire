@@ -269,6 +269,8 @@ Accuracy = floor(STR + DEX + ½·WIS + ½·INT) + floor(level / 5) + attack tag.
   takes 2 (3 at level 1).
 
 Evasion = armor base + min(DEX − 1, armor DEX cap) + shield + card bonus.
+Its inputs are `evasionArmor`, `dex`, `shield` and `evasionCard`. These are not
+the action's `armor` and `card`, which are speed-table ids (`actionSpeed`).
 
 - Armor table, `evasion-armor.csv` (armor, base, DEX cap):
 
@@ -284,7 +286,7 @@ Evasion = armor base + min(DEX − 1, armor DEX cap) + shield + card bonus.
 - Shield: buckler +1. Any other shield 0.
 - Card bonus table, `evasion-cards.csv` (card, bonus): Backstep 5, Shadowstep 4,
   Quickstep 3, Acrobatics 3, Dodge 3, Evasive Guard 2. A card not in the table adds 0.
-- `evasionFor({armor, dex, shield, card, evasion}, tables)` in `resolver.mjs`.
+- `evasionFor({evasionArmor, dex, shield, evasionCard, evasion}, tables)` in `resolver.mjs`.
   `evasion` is any extra flat bonus, and a plain numeric evasion still works.
 - The DEX term is never below 0. A missing armor counts as Cloth, and a missing
   DEX adds 0. These two rules are placeholders the owner has not confirmed.
