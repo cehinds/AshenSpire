@@ -137,3 +137,85 @@ test('packsOf and pinOf read the pin and report an unfetched pack as not fetched
   assert.equal(packs.find((p) => p.id === 'common').fetched, false);
   assert.equal(await pinOf(path.join(root, 'nowhere')), null);
 });
+
+test('listArt reads at most 32 headers at once, so a large art tree does not run out of file descriptors', async (t) => {
+  const root = await project(t, { pin: false });
+  clearArtCache();
+  const dir = path.join(root, 'assets-mobile/many');
+  await fs.mkdir(dir, { recursive: true });
+  const N = 2000;
+  await Promise.all(Array.from({ length: N }, (_, i) => fs.writeFile(path.join(dir, `tile-${i}.png`), png(16, 16))));
+  // Count the handles open at once: a header read holds one from fs.open until its close.
+  const realOpen = fs.open;
+  let open = 0, peak = 0;
+  fs.open = async (...args) => {
+    const fh = await realOpen.apply(fs, args);
+    open += 1; peak = Math.max(peak, open);
+    const close = fh.close.bind(fh);
+    fh.close = async () => { open -= 1; return close(); };
+    return fh;
+  };
+  t.after(() => { fs.open = realOpen; });
+  const list = await listArt(root, { limit: N + 100 });
+  fs.open = realOpen;
+  assert.equal(list.files.filter((f) => f.path.startsWith('assets-mobile/many/')).length, N);
+  assert.equal(list.files.find((f) => f.path === 'assets-mobile/many/tile-7.png').w, 16, 'the header is still read');
+  assert.ok(peak <= 32, `at most 32 handles open at once, saw ${peak}`);
+  assert.ok(peak > 1, 'the reads do run concurrently');
+});
+
+test('one unreadable file lists without dimensions; the rest of the listing still comes back', async (t) => {
+  const root = await project(t, { pin: false });
+  clearArtCache();
+  const realOpen = fs.open;
+  // Every header read of one file fails, as an unreadable file would.
+  fs.open = async (file, ...rest) => {
+    if (String(file).endsWith('equipment/sword.png')) throw Object.assign(Error('EACCES: permission denied'), { code: 'EACCES' });
+    return realOpen.call(fs, file, ...rest);
+  };
+  t.after(() => { fs.open = realOpen; });
+  const list = await listArt(root);
+  fs.open = realOpen;
+  const sword = list.files.find((f) => f.path === 'assets-mobile/equipment/sword.png');
+  assert.ok(sword, 'the unreadable file is still listed');
+  assert.equal(sword.w, undefined, 'with no dimensions');
+  assert.equal(sword.h, undefined);
+  assert.equal(list.files.find((f) => f.path === 'assets-mobile/poses/idle.webp').w, 640, 'the other files keep their dimensions');
+  assert.ok(list.files.length >= 5, 'the listing is not rejected');
+});
+
+test('a symlinked pack folder is refused: nothing is listed or served from it', async (t) => {
+  const root = await project(t);
+  const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'assets-outside-')));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.mkdir(path.join(outside, 'assets/sprites'), { recursive: true });
+  await fs.writeFile(path.join(outside, 'assets/sprites/linked.webp'), webpVp8x(7, 7));
+  // The common pack folder is a link to a folder outside the project.
+  await fs.mkdir(path.join(root, '.art-cache/hd-assets-v19'), { recursive: true });
+  await fs.symlink(outside, path.join(root, '.art-cache/hd-assets-v19/common'), 'dir');
+  clearArtCache();
+  const packs = await packsOf(root, await pinOf(root));
+  assert.equal(packs.find((p) => p.id === 'common').fetched, false, 'a linked pack is not fetched');
+  assert.equal(packs.find((p) => p.id === 'common').dir, null, 'and has no folder to read');
+  const list = await listArt(root);
+  assert.ok(!list.files.some((f) => f.path.includes('linked')), 'its files are not listed');
+  assert.equal(await resolveArt(root, 'assets/sprites/linked.webp'), null, 'nor served');
+  // The cache folder itself linked: every pack under it is refused.
+  await fs.rm(path.join(root, '.art-cache'), { recursive: true, force: true });
+  await fs.mkdir(path.join(outside, 'hd-assets-v19/high/assets/sprites'), { recursive: true });
+  await fs.writeFile(path.join(outside, 'hd-assets-v19/high/assets/sprites/linked.webp'), webpVp8x(7, 7));
+  await fs.symlink(outside, path.join(root, '.art-cache'), 'dir');
+  clearArtCache();
+  assert.equal(await resolveArt(root, 'assets/sprites/linked.webp'), null, 'a linked cache folder serves nothing');
+  assert.ok(!(await listArt(root)).files.some((f) => f.path.includes('linked')), 'nor lists anything');
+});
+
+test('a pin tag of . or .. is rejected, so the pack folder cannot leave the cache', async (t) => {
+  const root = await project(t, { pin: false });
+  for (const tag of ['..', '.', '../x']) {
+    await fs.writeFile(path.join(root, 'art-release.json'), JSON.stringify({ schema: 2, tag, packs: {} }));
+    assert.equal(await pinOf(root), null, `tag ${JSON.stringify(tag)} is refused`);
+  }
+  await fs.writeFile(path.join(root, 'art-release.json'), JSON.stringify({ schema: 2, tag: 'hd-assets-v19..x', packs: {} }));
+  assert.equal((await pinOf(root)).tag, 'hd-assets-v19..x', 'a tag that merely contains dots is fine');
+});

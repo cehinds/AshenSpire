@@ -257,7 +257,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   async function serveAsset(req, res, gamePath) {
     const file = await resolveArt(root, gamePath);
     if (!file) return sendJson(res, 404, { error: 'Not found' });
-    res.writeHead(200, { 'Content-Type': ASSET_MIME[path.extname(file).toLowerCase()], 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
+    res.writeHead(200, { 'Content-Type': ASSET_MIME[path.extname(file).toLowerCase()], 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox" });
     res.end(req.method === 'HEAD' ? undefined : await fs.readFile(file));
   }
 

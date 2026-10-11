@@ -24,19 +24,51 @@ const HEADER_BYTES = 512;
 const SVG_BYTES = 4096;
 
 const cache = new Map(); // absolute path -> { mtimeMs, size, dims }: a header is read once per file version
+/** The most header reads in flight at once: each holds a file descriptor, and a tree can hold thousands of files. */
+export const HEADER_CONCURRENCY = 32;
+
+/** `fn` over `items`, at most `limit` calls in flight; the results keep the items' order. */
+export async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next;
+      next += 1;
+      out[i] = await fn(items[i], i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
 
 /** The pinned tag and its packs, from art-release.json. Null when the pin is missing or unreadable. */
 export async function pinOf(root) {
   try {
     const pin = JSON.parse(await fs.readFile(path.join(root, 'art-release.json'), 'utf8'));
-    return typeof pin.tag === 'string' && /^[\w.-]+$/.test(pin.tag) ? { tag: pin.tag, zips: Object.fromEntries(PACKS.map((p) => [p, pin.packs?.[p]?.zip || null])) } : null;
+    return typeof pin.tag === 'string' && /^(?!\.{1,2}$)[\w.-]+$/.test(pin.tag) ? { tag: pin.tag, zips: Object.fromEntries(PACKS.map((p) => [p, pin.packs?.[p]?.zip || null])) } : null;
   } catch { return null; }
+}
+
+/**
+ * The folder one pack is cached in, or null when .art-cache, the tag folder or the pack folder is a link
+ * (a link is never followed). A folder not yet fetched is still named, so its status can be read.
+ */
+export async function packDirOf(root, tag, id) {
+  let probe = root;
+  for (const part of [CACHE_DIR, tag, id]) {
+    probe = path.join(probe, part);
+    try {
+      if ((await fs.lstat(probe)).isSymbolicLink()) return null;
+    } catch { break; }
+  }
+  return path.join(root, CACHE_DIR, tag, id);
 }
 
 /** Where each pack is cached, and whether it holds files: [{ id, dir, fetched }]. */
 export async function packsOf(root, pin) {
   return Promise.all(PACKS.map(async (id) => {
-    const dir = pin ? path.join(root, CACHE_DIR, pin.tag, id) : null;
+    const dir = pin ? await packDirOf(root, pin.tag, id) : null;
     const fetched = dir ? existsSync(dir) && (await fs.readdir(dir).catch(() => [])).length > 0 : false;
     return { id, zip: pin?.zips?.[id] || null, dir, fetched };
   }));
@@ -82,14 +114,16 @@ async function headerOf(file, ext, stat) {
   const key = file;
   const hit = cache.get(key);
   if (hit && hit.mtimeMs === stat.mtimeMs && hit.size === stat.size) return hit.dims;
-  const fh = await fs.open(file, 'r');
+  // A file that cannot be opened or read has no dimensions; it is still listed, and the listing goes on.
   let dims = null;
+  let fh = null;
   try {
+    fh = await fs.open(file, 'r');
     const want = ext === '.svg' ? SVG_BYTES : HEADER_BYTES;
     const buf = Buffer.alloc(Math.min(want, stat.size));
     await fh.read(buf, 0, buf.length, 0);
     dims = dimsOf(buf, ext);
-  } catch { dims = null; } finally { await fh.close(); }
+  } catch { dims = null; } finally { await fh?.close().catch(() => {}); }
   cache.set(key, { mtimeMs: stat.mtimeMs, size: stat.size, dims });
   return dims;
 }
@@ -134,10 +168,10 @@ export async function listArt(root, { limit = MAX_FILES } = {}) {
       seen.set(gamePath, { path: gamePath, bytes: stat.size, from: src.from, file: f.full, ext, stat });
     }
   }
-  const files = await Promise.all([...seen.values()].map(async ({ path: p, bytes, from, file, ext, stat }) => {
+  const files = await mapLimit([...seen.values()], HEADER_CONCURRENCY, async ({ path: p, bytes, from, file, ext, stat }) => {
     const dims = await headerOf(file, ext, stat);
     return { path: p, bytes, from, ...(dims ? { w: dims.w, h: dims.h } : {}) };
-  }));
+  });
   files.sort((a, b) => a.path.localeCompare(b.path));
   // The light tier is also tracked in this repository (assets-mobile/), so it is available without a fetch.
   const tracked = files.some((f) => f.from === 'tree' && f.path.startsWith('assets-mobile/'));

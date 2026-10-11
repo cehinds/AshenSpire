@@ -36,7 +36,7 @@ function rawGet(app, p, host) {
   const port = Number(new URL(app.url).port);
   return new Promise((resolve, reject) => {
     const req = http.request({ host: '127.0.0.1', port, path: p, method: 'GET', headers: { Host: host } }, (res) => {
-      const chunks = []; res.on('data', (c) => chunks.push(c)); res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'], body: Buffer.concat(chunks) }));
+      const chunks = []; res.on('data', (c) => chunks.push(c)); res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'], headers: res.headers, body: Buffer.concat(chunks) }));
     });
     req.on('error', reject);
     req.end();
@@ -121,4 +121,21 @@ test('the art route refuses a method other than GET and HEAD', async (t) => {
   const { app } = await boot(t, root);
   const res = await fetch(`${app.url}/asset-file/assets-mobile/equipment/sword.png`, { method: 'POST', body: 'x' });
   assert.equal(res.status, 405);
+});
+
+test('every art response carries a sandboxing CSP and nosniff, so an SVG cannot run script on the Workbench origin', async (t) => {
+  const root = await project(t);
+  await fs.writeFile(path.join(root, 'assets-mobile/equipment/evil.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><script>1</script></svg>');
+  const { app } = await boot(t, root);
+  const host = app.url.replace('http://', '');
+  for (const [p, type] of [['/asset-file/assets-mobile/equipment/evil.svg', 'image/svg+xml'], ['/asset-file/assets-mobile/equipment/sword.png', 'image/png']]) {
+    const res = await rawGet(app, p, host);
+    assert.equal(res.status, 200, p);
+    assert.equal(res.type, type, p);
+    assert.equal(res.headers['x-content-type-options'], 'nosniff', p);
+    const csp = res.headers['content-security-policy'];
+    assert.ok(csp, `${p} has a CSP`);
+    assert.match(csp, /default-src 'none'/, p);
+    assert.match(csp, /\bsandbox\b/, `${p} CSP sandboxes the document`);
+  }
 });

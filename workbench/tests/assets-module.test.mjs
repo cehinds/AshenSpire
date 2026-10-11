@@ -6,8 +6,31 @@ import assert from 'node:assert/strict';
 import {
   KINDS, kindOfPath, formatOf, folderOf, nameOf, rowsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
   assetUrl, usageNeedles, lineUses, groupUsage, entityLinkOf, frameSetOf, exportOf, clampOpacity, clampZoom, sizeLabel, dimsLabel,
-  missingPacks, gridMetrics, visibleItems,
+  missingPacks, gridMetrics, visibleItems, tileLabelsOf,
 } from '../modules/assets/model.mjs';
+
+test('tileLabelsOf labels each tile with its parent folder and name, growing to the shortest unique suffix', () => {
+  const rows = rowsOf([
+    { path: 'assets-mobile/herald/BOW-01.webp' },
+    { path: 'assets-mobile/reaver/BOW-01.webp' },
+    { path: 'assets-mobile/herald/BOW-02.webp' },
+    { path: 'assets-mobile/herald/sub/BOW-01.webp' },
+    { path: 'music/theme.ogg' },
+    { path: 'idle.png' },
+    { path: 'assets-mobile/x/a.png' },
+    { path: 'assets-mobile/x/a.webp' },
+  ]);
+  const labels = tileLabelsOf(rows);
+  assert.equal(labels[0], 'herald / BOW-01', 'a repeated name gets its parent folder');
+  assert.equal(labels[1], 'reaver / BOW-01');
+  assert.equal(labels[2], 'herald / BOW-02', 'a unique name still shows its parent folder');
+  assert.equal(labels[3], 'sub / BOW-01');
+  assert.equal(labels[4], 'music / theme');
+  assert.equal(labels[5], 'idle', 'a root file has no folder to show');
+  assert.equal(labels[6], 'x / a.png', 'same stem, two extensions: the extension tells them apart');
+  assert.equal(labels[7], 'x / a.webp');
+  assert.deepEqual(tileLabelsOf([]), [], 'no rows, no labels');
+});
 
 const files = [
   { path: 'assets-mobile/poses/idle_01.webp', bytes: 2048, from: 'tree', w: 640, h: 480 },
@@ -218,6 +241,15 @@ test('the grid fits its columns to the width and virtualises the rows on screen'
   assert.deepEqual(visibleItems({ count: 1000, metrics: m, scrollTop: 1360, viewport: 300, overscan: 1 }), { from: 27, to: 42 });
   assert.deepEqual(visibleItems({ count: 5, metrics: gridMetrics({ count: 5, width: 500 }), scrollTop: 9999, viewport: 800 }), { from: 5, to: 5 }, 'past the end shows nothing');
   assert.deepEqual(visibleItems({ count: 0, metrics: gridMetrics({ count: 0, width: 500 }) }), { from: 0, to: 0 });
+});
+
+test('onHide pauses the audio and stops the frame timer, so nothing runs after the user leaves the gallery', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../modules/assets/index.mjs', import.meta.url), 'utf8');
+  const m = src.match(/\n\s*onHide\(\) \{([\s\S]*?)\n\s{6}\},/);
+  assert.ok(m, 'the module has an onHide()');
+  assert.match(m[1], /audio\.pause\(\)/, 'the audio is paused');
+  assert.match(m[1], /stopPlay\(\)/, 'the 125 ms frame timer is stopped');
 });
 
 test('the Asset Gallery is a real module, not the placeholder, and its module loads with a mount()', async () => {

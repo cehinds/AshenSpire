@@ -80,6 +80,38 @@ export function rowsOf(files = []) {
   });
 }
 
+/**
+ * A tile label for each row, in the rows' order: the parent folder and the name ('herald / BOW-01'), growing
+ * to the shortest suffix of the path that tells the rows apart. A name with no folder shows the name alone.
+ * Two rows that would read the same keep their extensions ('x / a.png', 'x / a.webp').
+ */
+export function tileLabelsOf(rows = []) {
+  const parts = list(rows).map((r) => text(r.path).split('/'));
+  const keyOf = (p, k) => p.slice(Math.max(0, p.length - k)).join('/');
+  const labelOf = (p, k, withExt) => {
+    const tail = p.slice(Math.max(0, p.length - k));
+    if (!withExt) tail[tail.length - 1] = tail[tail.length - 1].replace(/\.[^./]+$/, '');
+    return tail.join(' / ');
+  };
+  const out = new Array(parts.length);
+  let pending = parts.map((_, i) => i);
+  for (let k = 2; pending.length; k += 1) {
+    const count = new Map();
+    for (const p of parts) { const key = keyOf(p, k); count.set(key, (count.get(key) || 0) + 1); }
+    const still = [];
+    for (const i of pending) {
+      // Unique at this depth, or the path has no more segments to add.
+      if (count.get(keyOf(parts[i], k)) === 1 || parts[i].length <= k) out[i] = { k, withExt: false };
+      else still.push(i);
+    }
+    pending = still;
+  }
+  const labels = out.map((o, i) => labelOf(parts[i], o.k, o.withExt));
+  const taken = new Map();
+  labels.forEach((l) => taken.set(l, (taken.get(l) || 0) + 1));
+  return labels.map((l, i) => (taken.get(l) > 1 ? labelOf(parts[i], out[i].k, true) : l));
+}
+
 /** Each kind with how many rows carry it, in KINDS order (zero counts kept, so the chips stay put). */
 export function kindCounts(rows = []) {
   const n = Object.fromEntries(KINDS.map((k) => [k.id, 0]));
