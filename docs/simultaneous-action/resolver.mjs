@@ -121,6 +121,7 @@ export function resolvePair(playerIn, enemyIn, rng) {
     const d20 = rollD20(rng);
     const { hit, need } = hitRoll({ accuracy: attacker.accuracy, attrs: attacker.attrs, evasion: target.evasion }, d20);
     events.push({ type: 'hit', by: who, target: other(who), d20, hit, need });
+    return hit;
   };
 
   if (tie) {
@@ -151,12 +152,15 @@ export function resolvePair(playerIn, enemyIn, rng) {
     events.push({ type: 'countered', by: first, target: second });
   }
   if (f.kind === 'attack') {
-    rollHit(first);
-    if (s.tags.includes('hyperArmor')) {
-      events.push({ type: 'hyperArmor', side: second, ignored: 'interrupt' });
-    } else {
-      cancelled[second] = 'interrupted';
-      events.push({ type: 'interrupted', side: second, by: first });
+    const landed = rollHit(first);
+    // Only a landed hit interrupts. A miss leaves the slower action intact.
+    if (landed) {
+      if (s.tags.includes('hyperArmor')) {
+        events.push({ type: 'hyperArmor', side: second, ignored: 'interrupt' });
+      } else {
+        cancelled[second] = 'interrupted';
+        events.push({ type: 'interrupted', side: second, by: first });
+      }
     }
   }
   if (!cancelled[second] && s.kind === 'attack') rollHit(second);

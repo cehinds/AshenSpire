@@ -238,3 +238,13 @@ test('same RNG seed gives the same events (no Math.random)', () => {
   };
   assert.deepEqual(run(), run());
 });
+
+test('a faster attack that misses does not interrupt the slower action', () => {
+  const player = { kind: 'attack', speed: 4, accuracy: 0, attrs: {}, evasion: 0 };
+  const enemy = { kind: 'attack', speed: 3, evasion: 0 };
+  const events = resolvePair(player, enemy, d20Face(1));
+
+  assert.equal(find(events, 'interrupted'), undefined, 'a miss must not interrupt');
+  assert.equal(hitsOf(events).find((e) => e.by === 'player').hit, false);
+  assert.equal(hitsOf(events).some((e) => e.by === 'enemy'), true, 'enemy action still resolves');
+});
