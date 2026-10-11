@@ -15,6 +15,8 @@ const ZOOM_STEP = 1.25;
 const NUDGE = 1;
 const NUDGE_SHIFT = 10;
 const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+const ICON_EYE = '<svg class="cl-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z"/><circle cx="8" cy="8" r="2"/></svg>';
+const ICON_LOCK = '<svg class="cl-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>';
 const FIELDS = [['x', 'X'], ['y', 'Y'], ['w', 'Width'], ['h', 'Height'], ['rotation', 'Rotation'], ['opacity', 'Opacity']];
 
 const SHELL = `<div class="mode-bar cl-bar">
@@ -164,8 +166,8 @@ export function createCardLayersView(root, host) {
     const rows = st.data ? CL.layerRows(st.data) : [];
     $('.cl-layers').innerHTML = rows.map((r) => `<li class="cl-row${r.id === st.selected ? ' is-selected' : ''}${r.visible ? '' : ' is-hidden'}">
         <button type="button" class="cl-pick" data-cl-select="${esc(r.id)}" aria-pressed="${r.id === st.selected}"><code>${esc(r.id)}</code> <span class="lay-note">${esc(r.type)}</span></button>
-        <label class="lay-check"><input type="checkbox" data-cl-flag="visible" data-cl-id="${esc(r.id)}"${r.visible ? ' checked' : ''}> Show</label>
-        <label class="lay-check"><input type="checkbox" data-cl-flag="locked" data-cl-id="${esc(r.id)}"${r.locked ? ' checked' : ''}> Lock</label>
+        <label class="cl-tog" title="Show ${esc(r.id)}"><input type="checkbox" data-cl-flag="visible" data-cl-id="${esc(r.id)}" aria-label="Show ${esc(r.id)}"${r.visible ? ' checked' : ''}>${ICON_EYE}</label>
+        <label class="cl-tog" title="Lock ${esc(r.id)}"><input type="checkbox" data-cl-flag="locked" data-cl-id="${esc(r.id)}" aria-label="Lock ${esc(r.id)}"${r.locked ? ' checked' : ''}>${ICON_LOCK}</label>
       </li>`).join('') || '<li class="lay-note">No layers in the file.</li>';
   }
 

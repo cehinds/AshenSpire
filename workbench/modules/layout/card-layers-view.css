@@ -20,12 +20,16 @@
   background: #4ab0ff; border: 1px solid #0c0d10; cursor: nwse-resize;
 }
 .cl-layers { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.cl-row { display: grid; gap: 4px; padding: 6px; border-radius: 6px; border: 1px solid transparent; }
+.cl-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 6px; border: 1px solid transparent; min-width: 0; }
+.cl-tog { position: relative; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 4px; cursor: pointer; color: var(--as-text-dim, inherit); opacity: 0.5; flex: none; }
+.cl-tog:has(input:checked) { opacity: 1; }
+.cl-tog:has(input:focus-visible) { outline: 2px solid #4ab0ff; }
+.cl-tog input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.cl-ico { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .cl-row.is-selected { border-color: #4ab0ff; }
 .cl-row.is-hidden .cl-pick { opacity: 0.55; }
-.cl-pick { text-align: left; background: none; border: 0; padding: 2px 0; color: inherit; cursor: pointer; font: inherit; }
+.cl-pick { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; background: none; border: 0; padding: 2px 0; color: inherit; cursor: pointer; font: inherit; }
 .cl-pick[aria-pressed="true"] code { font-weight: 700; }
-.cl-row .lay-check { display: inline-flex; gap: 4px; margin-right: 8px; }
 .cl-order { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
 .cl-insp { padding: 0 12px 12px; box-sizing: border-box; }
 .cl-insp .lay-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
