@@ -401,9 +401,15 @@ export function importRows(doc, text, { format = 'auto', mode = 'merge', key = n
   }
   // Object.fromEntries defines each key as an own property, so an imported "__proto__" key
   // stays data and cannot set the row's prototype.
-  const typed = incoming.map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => {
+  // JSON values are checked against the existing column types (as CSV cells are parsed), and a
+  // bad value throws before anything changes. A column the import adds takes its type from the data.
+  const typed = incoming.map((r, i) => Object.fromEntries(Object.entries(r).map(([k, v]) => {
     const col = columns.find(c => c.key === k);
-    return [k, format === 'json' ? v : parseValue(v, col.type)];
+    if (format !== 'json') return [k, parseValue(v, col.type)];
+    const existing = doc.columns.find(c => c.key === k);
+    const problem = existing ? checkValue(v, existing.type) : null;
+    if (problem) throw Error(`Row ${i + 1}, ${k}: ${problem}`);
+    return [k, v];
   })));
   const fill = row => Object.fromEntries(columns.map(c => [c.key, c.key in row ? row[c.key] : emptyValue(c.type)]));
   let rows;

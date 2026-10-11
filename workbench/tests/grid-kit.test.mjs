@@ -232,6 +232,18 @@ test('shift row selection in a filtered view widens every run to whole rows', ()
   assert.equal(M.selectedCells(sel, 6, 5).length, 3 * 5, 'every cell of each selected row, and no hidden row');
 });
 
+test('JSON import checks values against the column types and changes nothing on a bad value', () => {
+  const d = fresh();
+  const before = snap(d);
+  assert.throws(() => M.importRows(d, '[{"id":"a","n":"oops"}]', { mode: 'merge', key: 'id' }), /Row 1, n: Not a number/);
+  assert.throws(() => M.importRows(d, '[{"id":"a","n":1},{"id":"b","on":"yes"}]', { mode: 'merge', key: 'id' }), /Row 2, on: Not true or false/, 'all-or-nothing');
+  assert.deepEqual(snap(d), before, 'the document is untouched');
+  const ok = M.importRows(d, '[{"id":"a","n":7,"on":null}]', { mode: 'merge', key: 'id' });
+  assert.equal(ok.rows[0].n, 7);
+  assert.equal(ok.rows[0].on, null, 'null fits any type');
+  assertRoundTrip(d, ok);
+});
+
 test('export to CSV, TSV and JSON', () => {
   const d = fresh();
   assert.equal(M.toCSV(d).split('\n')[0], 'id,n,on,tag,data');
