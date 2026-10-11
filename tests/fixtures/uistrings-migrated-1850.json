@@ -1,6 +1,7 @@
 {
   "ids": [
     "deckEditor.stance.offensive", "deckEditor.stance.defensive", "deckEditor.stance.casting",
-    "deckEditor.stance.counter", "deckEditor.stance.sweep", "deckEditor.stance.neutral", "deckEditor.drawOrder"
+    "deckEditor.stance.counter", "deckEditor.stance.sweep", "deckEditor.stance.neutral", "deckEditor.drawOrder",
+    "deckEditor.stepperCount", "deckEditor.stepperCount.unlimited"
   ]
 }

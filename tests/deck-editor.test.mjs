@@ -1239,8 +1239,26 @@ test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the
     const limited = editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-stepper-count`);
     assert.equal(limited.textContent, '1/2', 'one in the deck of two owned');
     const tile = model.collection.find(t => t.key === `card:${variant}`);
-    assert.equal(limited.getAttribute('aria-label'), tile.countText, 'the label is the tile sentence');
-    assert.equal(limited.getAttribute('title'), tile.countText);
+    assert.equal(limited.getAttribute('aria-label'), '1 in deck of 2 owned.', 'the label speaks the same numbers');
+    assert.equal(limited.getAttribute('title'), '1 in deck of 2 owned.');
+    assert.equal(basic.getAttribute('aria-label'), `${model.collection.find(t => t.key === 'basic:attack').inDeck} in deck; unlimited copies.`);
+    editor.close();
+  });
+});
+
+test('DOM: a set-aside variant with no sideboard copy reads 1/1 aloud as 1 in deck of 1 owned', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = {
+      class: 'reaver', editMintCounter: 0, sideboard: [],
+      deck: [{ instanceId: 'u1', cardId: 'strike', upgraded: true }],
+    };
+    const key = `kept:${deckVariantKey(run.deck[0])}`;
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const stepper = editor.root.querySelector(`.deck-editor-tile[data-key="${key}"] .deck-editor-stepper-count`);
+    assert.ok(stepper, 'the set-aside copy has its tile');
+    assert.equal(stepper.textContent, '1/1');
+    assert.equal(stepper.getAttribute('aria-label'), '1 in deck of 1 owned.', 'the spoken count matches the visible one');
     editor.close();
   });
 });

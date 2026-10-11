@@ -370,13 +370,19 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
 
 
-  // The stepper reads in-deck / owned: ∞ for a basic, and a kept set-aside
-  // tile's owned is its deck copies plus its sideboard copies.
+  // The stepper's copy count, computed once: in deck, and owned (a basic is
+  // unlimited; a kept set-aside tile owns its deck copies plus its sideboard copies).
+  // The visible text and the spoken label both read these same numbers.
   function stepperCount(tile) {
     const kept = tile.key.startsWith('kept:');
-    const owned = tile.unlimited ? '∞' : kept ? tile.inDeck + tile.owned : tile.owned;
-    return `${tile.inDeck}/${owned}`;
+    const inDeck = tile.inDeck;
+    const owned = kept ? tile.inDeck + tile.owned : tile.owned;
+    return { inDeck, owned, unlimited: !!tile.unlimited };
   }
+  const stepperText = (count) => (count.unlimited ? t('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
+    : t('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
+  const stepperSpoken = (count) => (count.unlimited ? tFull('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
+    : tFull('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
 
   function collectionPane() {
     const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search');
@@ -419,7 +425,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
         dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
       }, [main, inlineInspect(tile, 'collection'), el('div', { class: 'deck-editor-actions' }, [
-        minus, el('span', { class: 'deck-editor-stepper-count', text: stepperCount(tile), title: tile.countText, 'aria-label': tile.countText }), plus,
+        minus, (() => {
+          const count = stepperCount(tile);
+          return el('span', { class: 'deck-editor-stepper-count', text: stepperText(count), title: stepperSpoken(count), 'aria-label': stepperSpoken(count) });
+        })(), plus,
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));

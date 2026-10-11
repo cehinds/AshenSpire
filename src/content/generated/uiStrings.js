@@ -5225,6 +5225,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.stepperCount",
+    "extends": "",
+    "short": "{inDeck}/{owned}",
+    "full": "{inDeck} in deck of {owned} owned.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stepperCount.unlimited",
+    "extends": "",
+    "short": "{inDeck}/∞",
+    "full": "{inDeck} in deck; unlimited copies.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.count",
     "extends": "",
     "short": "×{count}",
