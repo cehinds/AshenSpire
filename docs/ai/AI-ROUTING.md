@@ -49,6 +49,12 @@ files, runs a suite, or repeats an edit goes to a worker.
 Steps 5–7 are never delegated. A worker's "tests pass" is a claim until the
 orchestrator has seen the diff and the test output.
 
+**Small commits, reviewed as they land** (owner, 2026-10-11). The orchestrator briefs
+each worker with a numbered step list, one commit per step, and the worker pushes each
+commit as soon as it is made. As commits land, the orchestrator starts reviewers on the
+pushed SHAs while the worker continues, so steps 4–6 overlap instead of waiting for
+the whole task.
+
 ## 3. Writing a worker brief
 
 Haiku does well when it is told exactly where to look and what "done" means, and it
