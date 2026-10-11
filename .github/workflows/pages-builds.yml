@@ -126,7 +126,7 @@ on:
     # Successful alternative previews republish through the default dev ref,
     # which is already admitted by the github-pages environment.
     workflows: [dev preview]
-    branches: ['alternative/**/dev', 'alternative/**/test', 'feature/**', 'fix/**', 'chore/**', 'Feature/**', 'Fix/**', 'Chore/**']
+    branches: ['alternative/**/dev', 'alternative/**/test', '[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/**', '[Ff][Ii][Xx]/**', '[Cc][Hh][Oo][Rr][Ee]/**']
     types: [completed]
   # A closed PR (merged or not) republishes the site without its branch build. A
   # merge also pushes to dev, which republishes too; the close is what removes a
