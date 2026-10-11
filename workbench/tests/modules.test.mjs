@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MODULES } from '../modules/index.mjs';
-import { createModulePrefs, parseHash, hashFor, withPreviewOverrides } from '../modules/host.mjs';
+import { createModulePrefs, parseHash, hashFor, withPreviewOverrides, createReloadWaiter, buildAction } from '../modules/host.mjs';
 import { icon } from '../ui/icons.mjs';
 
 test('every module id loads and default-exports a mount()', async () => {
@@ -69,4 +69,50 @@ test('preview overrides add wb.<key> query values and drop null ones', () => {
   assert.equal(withPreviewOverrides('http://127.0.0.1:4320/', {}), 'http://127.0.0.1:4320/');
   assert.equal(withPreviewOverrides('http://127.0.0.1:4320/', { ui: 'compact' }), 'http://127.0.0.1:4320/?wb.ui=compact');
   assert.equal(withPreviewOverrides('/library/a.html', { ui: 'compact', x: null }), '/library/a.html?wb.ui=compact');
+});
+
+test('a save reloads the preview when its build reload arrives, and a non-matching reload does not', () => {
+  const w = createReloadWaiter();
+  w.add(['content/source/weapons.csv']);
+  assert.equal(w.event('reload', { files: ['content/other.json'] }), null, 'a reload for other files does not settle the save');
+  assert.equal(w.pending, 1);
+  const hit = w.event('reload', { files: ['content/source/weapons.csv', 'x.css'] });
+  assert.equal(hit.type, 'reload');
+  assert.equal(w.pending, 0);
+  assert.deepEqual(buildAction('reload', Boolean(hit), { auto: false }), { reload: true, failed: false });
+  assert.deepEqual(buildAction('reload', false, { auto: false }), { reload: false, failed: false }, 'an unrelated reload with auto off leaves the preview alone');
+});
+
+test('a failed build of a saved file toasts instead of reloading, and clears the save', () => {
+  const w = createReloadWaiter();
+  w.add(['content/source/weapons.csv']);
+  const hit = w.event('reload-failed', { files: ['content/source/weapons.csv'], step: 'tools/content-build.mjs', output: 'boom' });
+  assert.equal(hit.type, 'reload-failed');
+  assert.equal(w.pending, 0);
+  assert.deepEqual(buildAction('reload-failed', true), { reload: false, failed: true });
+  assert.deepEqual(buildAction('reload-failed', false), { reload: false, failed: false }, 'an unrelated failure does not toast the save message');
+});
+
+test('with auto-reload on, a saved file reloads the preview once', () => {
+  const w = createReloadWaiter();
+  w.add(['content/source/weapons.csv']);
+  let reloads = 0;
+  const hit = w.event('reload', { files: ['content/source/weapons.csv'] });
+  if (buildAction('reload', Boolean(hit), { auto: true }).reload) reloads += 1;
+  assert.equal(reloads, 1);
+  assert.equal(buildAction('reload', false, { auto: true }).reload, true, 'auto-reload still reloads for an unrelated build');
+});
+
+test('a build event that beats the save response still settles it, within the window only', () => {
+  let t = 1000;
+  const w = createReloadWaiter({ now: () => t, windowMs: 1500 });
+  assert.equal(w.event('reload', { files: ['content/source/a.json'] }), null);
+  t = 2000;
+  assert.equal(w.add(['content/source/a.json']).type, 'reload');
+  assert.equal(w.pending, 0);
+  t = 5000;
+  w.event('reload', { files: ['content/source/b.json'] });
+  t = 9000;
+  assert.equal(w.add(['content/source/b.json']), null, 'an event older than the window does not settle a later save');
+  assert.equal(w.pending, 1);
 });

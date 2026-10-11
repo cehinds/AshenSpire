@@ -48,3 +48,56 @@ export function withPreviewOverrides(url, overrides = {}) {
   for (const [k, v] of entries) u.searchParams.set(`wb.${k}`, String(v));
   return /^https?:\/\//.test(url) ? u.toString() : `${u.pathname}${u.search}${u.hash}`;
 }
+
+/**
+ * Matches a save to the server's build of it. A save queues a build; the hub then sends
+ * 'reload' (or 'reload-failed') naming the files it built. add(paths) records a save and
+ * returns { type, data } when the build event already arrived (the event can beat the save's
+ * response); event(type, data) returns { type, data } when it settles a waiting save, else null.
+ * Events that match nothing are kept for windowMs, for that race; waiting saves expire after expireMs.
+ */
+export function createReloadWaiter({ now = () => Date.now(), windowMs = 1500, expireMs = 120000 } = {}) {
+  const waiting = [];
+  const recent = [];
+  const touches = (paths, files) => Array.isArray(files) && files.some((f) => paths.has(f));
+  const prune = (t) => {
+    for (let i = waiting.length - 1; i >= 0; i--) if (t - waiting[i].at > expireMs) waiting.splice(i, 1);
+    for (let i = recent.length - 1; i >= 0; i--) if (t - recent[i].at > windowMs) recent.splice(i, 1);
+  };
+  return {
+    add(paths) {
+      const set = new Set((Array.isArray(paths) ? paths : []).map(String));
+      if (!set.size) return null;
+      const t = now();
+      prune(t);
+      const i = recent.findIndex((e) => touches(set, e.files));
+      if (i >= 0) { const [hit] = recent.splice(i, 1); return { type: hit.type, data: hit.data }; }
+      waiting.push({ paths: set, at: t });
+      return null;
+    },
+    event(type, data) {
+      const t = now();
+      prune(t);
+      const files = Array.isArray(data?.files) ? data.files : [];
+      const settled = waiting.filter((w) => touches(w.paths, files));
+      if (settled.length) {
+        for (const w of settled) waiting.splice(waiting.indexOf(w), 1);
+        return { type, data };
+      }
+      recent.push({ type, files, at: t, data });
+      return null;
+    },
+    get pending() { return waiting.length; },
+  };
+}
+
+/**
+ * What the preview does for one build event. saved is true when the event settled a save.
+ * A reload happens at most once per event: for a saved file's build, or for any build with auto-reload on.
+ */
+export function buildAction(type, saved, { auto = false } = {}) {
+  return {
+    reload: type === 'reload' && Boolean(saved || auto),
+    failed: type === 'reload-failed' && Boolean(saved),
+  };
+}
