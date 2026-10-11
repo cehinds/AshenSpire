@@ -25,6 +25,7 @@ export function storageSource() {
 // Evaluates the storage block in a context built from `ctx`. `expose` is a JS
 // expression evaluated after the block that returns the functions a test needs.
 export function loadStorage(ctx, expose) {
+  if (!('TextEncoder' in ctx)) ctx.TextEncoder = TextEncoder;
   const context = vm.createContext(ctx);
   return vm.runInContext(storageSource() + '\n;(' + expose + ')', context);
 }
@@ -342,6 +343,37 @@ test('the first save after a load reuses the blobs the reader already holds', as
   await W.api.flush('t');
   const blobWrites = db.log.sets.slice(mark).filter((p) => p.includes('/blobs/'));
   assert.ok(blobWrites.length <= 2, 'blob writes after load: ' + blobWrites.length);
+});
+
+test('chunk size counts UTF-8 bytes, not characters', () => {
+  const { chunkRows } = loadStorage({}, '({ chunkRows })');
+  const rows = Array.from({ length: 12 }, (_, i) => ['é'.repeat(30000), i]); // ~60 KB each in UTF-8
+  const chunks = chunkRows(rows);
+  assert.equal(JSON.stringify(chunks.flat()), JSON.stringify(rows));
+  const enc = new TextEncoder();
+  for (const c of chunks) {
+    if (c.length > 1) assert.ok(enc.encode(JSON.stringify({ rows: c })).length <= 170000 + 20, 'multi-row chunk over the cap');
+  }
+});
+
+test('a single row between the cap and 250 KB saves as its own blob', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  const big = { id: 'big', name: 'x'.repeat(200000), qty: 1 };
+  editTable(page, [big]);
+  await api.flush('t');
+  assert.equal(page.dirty.has('t'), false);
+  assert.equal(await storedRows(db), JSON.stringify([big]));
+});
+
+test('a row over 250 KB refuses the save, names the row, and writes nothing', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  editTable(page, [{ id: 'huge', name: 'x'.repeat(260000), qty: 1 }]);
+  await api.flush('t');
+  assert.equal(db.log.sets.length, 0, 'nothing written');
+  assert.equal(page.dirty.has('t'), true, 'edit kept');
+  assert.ok(page.statuses.some((s) => s.level === 'bad' && /huge.*over 250 KB/.test(s.msg)));
 });
 
 // Writer helper: a tab holding `objs` as its unsaved table.

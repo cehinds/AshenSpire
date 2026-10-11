@@ -162,7 +162,9 @@ let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={};
 /* storage:begin */
 /* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
-const BLOB_MAX=170000, BLOB_CUT=64, BLOB_FALLBACK=8, GC_AGE_MS=120000;
+const BLOB_MAX=170000, BLOB_ROW_MAX=250000, BLOB_CUT=64, BLOB_FALLBACK=8, GC_AGE_MS=120000;
+const TEXT_ENC=new TextEncoder();
+function byteLen(s){ return TEXT_ENC.encode(s).length; }
 function hash32(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return h>>>0; }
 /* FNV-1a 64-bit over UTF-16 code units, split into two 32-bit words; returns 16 hex digits */
 function hashText(s){
@@ -181,7 +183,7 @@ function chunkRows(rows){
   const out=[]; let cur=[], sizes=[], hs=[], total=12;
   const cut=(n)=>{ out.push(cur.slice(0,n)); cur=cur.slice(n); sizes=sizes.slice(n); hs=hs.slice(n); total=12+sizes.reduce((a,b)=>a+b,0); };
   for(const r of rows){
-    const js=JSON.stringify(r), n=js.length+1;
+    const js=JSON.stringify(r), n=byteLen(js)+1;
     cur.push(r); sizes.push(n); hs.push(hash32(js)); total+=n;
     while(total>BLOB_MAX && cur.length>1){
       let c=-1;
@@ -289,6 +291,9 @@ async function flush(t, opts){
   if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),500); return; }
   if(!dirty.has(t)) return;
   if(ts.conflict&&!opts.overwrite) return;
+  const cols0=[...state.data[t].columns], keyCol=TABLES[t].key;
+  const tooBig=state.data[t].rows.findIndex(r=>byteLen(JSON.stringify(cols0.map(c=>r[c]??'')))>BLOB_ROW_MAX);
+  if(tooBig>=0){ const k=keyCol&&state.data[t].rows[tooBig][keyCol]; setStatus('bad','Row '+(tooBig+1)+(k?' ('+k+')':'')+' is over 250 KB, so this table cannot be saved yet. Shorten that row.'); return; }
   dirty.delete(t); saving.add(t); setStatus();
   const cols=[...state.data[t].columns];
   const now=Date.now();
