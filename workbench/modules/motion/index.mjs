@@ -15,7 +15,7 @@ import {
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
-  rebaseOnConflicts, viewOf,
+  rebaseOnConflicts, viewOf, selectionGate,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -251,12 +251,16 @@ export default {
         renderLibrary();
       }
     }
+    // Each pick takes a generation; a read that a newer pick overtook is dropped, so it cannot install over that pick.
+    const selection = selectionGate();
     async function openFile(path) {
+      const gen = selection.begin();
       let r;
       try { r = await ctx.api(`files/read?path=${encodeURIComponent(path)}`); } catch (err) {
-        ctx.toast({ kind: 'error', title: `Could not open ${path}`, detail: err.message, record: false });
+        if (selection.current(gen)) ctx.toast({ kind: 'error', title: `Could not open ${path}`, detail: err.message, record: false });
         return;
       }
+      if (!selection.current(gen)) return;
       const parsed = parsePoseFile(r.text);
       st.file = { path, kind: r.kind, hash: r.hash, original: r.text, project: parsed.project, problems: parsed.problems };
       keepConflicts = null;

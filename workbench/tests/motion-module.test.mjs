@@ -81,6 +81,12 @@ test('the drawing code reads the display view of a project, so a null collection
   assert.match(src, /renderAll\(\) \{[\s\S]*?renderBanner\(\);/);
 });
 
+test('a file read that a newer selection overtakes is dropped, not installed', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /async function openFile\(path\) \{\s*const gen = selection\.begin\(\);[\s\S]*?if \(!selection\.current\(gen\)\) return;/, 'openFile takes a generation and checks it after the read');
+  assert.match(src, /const selection = selectionGate\(\);/);
+});
+
 test('the position editor locks every handle of a generated file', () => {
   const src = read('workbench/modules/motion/index.mjs');
   assert.match(src, /if \(isGenerated\(st\.file\.path\)\) for \(const item of doc\.items\) item\.locked = true;/);
