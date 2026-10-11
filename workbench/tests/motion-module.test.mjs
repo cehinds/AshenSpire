@@ -60,3 +60,8 @@ test('the inspector shows the generated note and disables every control for a ge
   const controls = src.match(/\$\{lockAttr\(\)\}/g) || [];
   assert.equal(controls.length, 9, `inspector inputs, selects, toggles, anchors and remove take lockAttr (${controls.length})`);
 });
+
+test('the position editor locks every handle of a generated file', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /if \(isGenerated\(st\.file\.path\)\) for \(const item of doc\.items\) item\.locked = true;/);
+});

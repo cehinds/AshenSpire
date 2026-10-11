@@ -450,6 +450,8 @@ export default {
     function editDoc() {
       const p = st.file.project;
       const doc = canvasDocOf(p);
+      // A generated file's handles show where the anchors and effects sit but cannot be dragged.
+      if (isGenerated(st.file.path)) for (const item of doc.items) item.locked = true;
       const pose = p.poses[poseIndexAt(p.poses.length, p.duration, st.time)];
       const side = Math.round(REF.height * FIGURE_SCALE);
       const feet = (p.anchors.feet?.[1] ?? 0.85) * REF.height;
