@@ -1,13 +1,13 @@
 # SPEC.md audit against `dev`
 
-Audited 2026-10-11 at `dev` `f42a38e2`. Read-only audit: every rule in SPEC.md checked against the code that implements it (`src/`, `content/`). Sections are grouped by status (stale first), then in SPEC order. Each item: the SPEC lines, the code `file:line` showing real behaviour, and the proposed fix.
+Audited 2026-10-11 at `dev` `f42a38e2`. Read-only audit: each SPEC.md section checked against the code that implements it (`src/`, `content/`). Coverage is not exhaustive: §12's per-item verdicts live in `docs/SPEC-RECONCILE.md` and were not re-checked, browser-only claims were not run, and a "Matches" section means no drift was found in the rules checked, not that every sentence was traced. Sections are grouped by status (stale first), then in SPEC order. Each item: the SPEC lines, the code `file:line` showing real behaviour, and the proposed fix.
 
 Owner decisions (2026-10-11): SPEC follows the code. Actions and Stamina are one pool (`energy` is the retired alias). Code defaults that disagree with SPEC are written into SPEC. Never-built sections are removed from SPEC.
 
 ## Headline: Actions and Stamina are one resource
 
 - `energy`/`energyMax` are getter aliases of `stamina`/`maxStamina` (`src/model/turnStamina.js:3-12`).
-- Card cost is deducted from that one pool, only at `src/engine/combat.js:1387`.
+- Card cost is deducted from that one pool: solo plays at `src/engine/combat.js:1387`, the terminal Ashen Blight path at `src/engine/combat.js:1367`, co-op plays at `src/engine/coopCombat.js:817`. All three write `energy`, which is `stamina`.
 - The `energy` stat row is "Retired save row; combat reads Stamina" (`src/content/derivedStats.js:74`).
 - `balance.mana.minStaminaCost` is 0 (`src/content/balance.js:389`); Mana is the second cost line.
 - SPEC text affected: L300-335, L627-628, L800-801, L1245/L1270, L1735, §13.4k L2281-2288.
@@ -47,8 +47,8 @@ Owner decisions (2026-10-11): SPEC follows the code. Actions and Stamina are one
   - Code: `src/model/schemas.js:317-349` `PASSIVE_TYPES` has 19 keys, including `arBonus, drBonus, prBonus, poiseBonus, wardBonus, poiseThresholdAdd, magicalImpactAdd, skillXpMult, retainBlockUpTo` (`schemas.js:318` onward)
   - Fix: replace the nine-key list with "the keys of `PASSIVE_TYPES` in `src/model/schemas.js`", as the Relic row already says it has one home.
 - [ ] **unclear** SPEC L219 ("Player intents are a closed set": `playCard`, `endTurn`, `useFlask`, `discardFlask`, `chooseMapNode`, `chooseReward`, `restAction`, `shopAction`, `eventChoice`, `abandonRun`)
-  - Code: the combat dispatch switch at `src/engine/combat.js:850-866` handles `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`; `playCard`/`endTurn`/`useFlask` are in the same dispatch (`src/engine/coopCombat.js:674`, `:889`, `:937`). No symbol named `discardFlask`, `chooseMapNode`, `chooseReward`, `restAction`, `shopAction` or `abandonRun` exists in `src/engine` or `src/model`. Run-level actions are per-screen functions (for example `src/engine/locations.js:121` `restAt`)
-  - Fix: say the closed set is the combat dispatch at `combat.js:850` and list those names, and describe run-level actions as screen functions.
+  - Code: the solo combat dispatch switch at `src/engine/combat.js:850-915` handles `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard`, `endTurn`, `useFlask`, `swapArmament`, `changeEquipment` (co-op mirrors `playCard`/`endTurn`/`useFlask` at `src/engine/coopCombat.js:674`, `:889`, `:937`). No symbol named `discardFlask`, `chooseMapNode`, `chooseReward`, `restAction`, `shopAction` or `abandonRun` exists in `src/engine` or `src/model`. Run-level actions are per-screen functions (for example `src/engine/locations.js:121` `restAt`)
+  - Fix: say the closed set is the combat dispatch at `combat.js:850-915` and list all twelve names, and describe run-level actions as screen functions.
 
 ### 3.4 Effect DSL (opcodes) (SPEC L221-278)
 
@@ -124,9 +124,9 @@ Owner decisions (2026-10-11): SPEC follows the code. Actions and Stamina are one
 
 - [ ] **stale** SPEC L643 ("the authoritative set is `EVENTS`") and L655 (`equipmentChanged(...)`):
   - Code: `equipmentChanged` is emitted at src/engine/combat.js:1183 and `equipmentRearmed` at src/engine/combat.js:1184 (the spec names `equipmentRearmed` at SPEC L448), but neither string appears in `EVENTS` (src/model/schemas.js:114-193); only `armamentSwapped` is listed (src/model/schemas.js:139)
-  - Fix: add `equipmentChanged` and `equipmentRearmed` to `EVENTS` in src/model/schemas.js.
-- [ ] **unclear** SPEC L653 "energyGained, energySpent" (engine id `energy`): the spec never gives the player-facing label; the game shows "Actions" (src/content/balance.js:341 note; combat.js:1383 message), and Stamina is a separate pool (src/engine/combat.js:84-87)
-  - Fix: write "(engine id `energy`, shown to the player as Actions; Stamina is a separate pool)".
+  - Fix: SPEC follows code: say `EVENTS` lists the catalogued events and that `equipmentChanged` and `equipmentRearmed` are emitted outside it.
+- [ ] **unclear** SPEC L653 "energyGained, energySpent" (engine id `energy`): the spec never says what `energy` is; it is the retired alias of `stamina` (src/model/turnStamina.js:3-12), shown to the player as Actions/Stamina (combat.js:1383 "Not enough Actions (Stamina)")
+  - Fix: write "(legacy event names: `energy` is the retired alias of Stamina, the one cost pool)".
 - [ ] **aspirational** (both marked † in SPEC L657-658): `combatReactionUnavailable` and `combatGuardBroken` appear nowhere in src/ or tests/ (grep). Consistent with the spec's own † rule.
 
 ### §3.11 Seeded RNG (SPEC L661-667)
@@ -569,8 +569,6 @@ Owner decisions (2026-10-11): SPEC follows the code. Actions and Stamina are one
 
 ### 3.6 Trigger DSL and predicates (SPEC L371-392)
 
-- [ ] **unclear** SPEC L387-389 (level gates "are false until that ledger exists"): `src/engine/triggers.js:456-461` `skillLevelAtLeast` and `:463-469` `classLevelAtLeast` return `0 >= pred.level` when no ledger row exists, so a `level: 0` gate is true with no ledger
-  - Fix: return false when the ledger row is absent, or restate as "false unless the gate level is 0".
 - [ ] **unclear** SPEC L391-392 (`staggerBreak` and `resonance` "are §13.4k's (plan phase 8)"): the rules are mounted now: `content/source/tagging.csv:267-269` mounts `staggerBreak` on `ashStaff`, `starstoneStaff`, `wyrmhornStaff`; `:272` mounts `resonance` on `goldboughBranch`; defined in `content/source/nodeEffects.json` (`staggerBreak` and `resonance` keys)
   - Fix: state whether they are live, and whether §13.4k gates them.
 
