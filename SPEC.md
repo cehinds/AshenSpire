@@ -392,13 +392,13 @@ Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStat
 
 ### 3.7 Status model — statuses are content, not code
 
-`content/statuses.js` defines every status over a generic model interpreted by `engine/statuses.js`. **Adding a status requires no engine change.** Schema:
+`src/content/statuses.js` defines every status over a generic model interpreted by `src/engine/statuses.js`. **Adding a status requires no engine change.** Schema:
 
 ```
 { id, name, icon,
   stackMode: 'add' | 'refresh' | 'unique',
   decay: 'none' | 'perTurnEnd' | { duration: n } | 'onConsume',
-  meter?: { max: n, growthMult: x, onFill: [effects] },   // build-up statuses
+  proc?: { threshold, burstPercent, burstMin, burstMax, poiseDamage?, effects?, stagger?, resistance? },   // build-up statuses: at threshold, burst, then reset to zero
   modifiers?: { damageDealtMult?, damageTakenMult?, blockGainedMult?,
                 attackDamageAdd?, blockAdd? },             // consulted by §4.2 math
   hooks?: [triggers §3.6] }                                // ownerTurnStart etc.
@@ -409,24 +409,25 @@ The Elden Ring layer, fully as data — no engine special cases:
 ```js
 bleed: {
   stackMode: 'add', decay: 'none',
-  meter: { max: 12, growthMult: 1.5,
-    onFill: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 } }] },
+  proc: { threshold: 7, burstPercent: 15, burstMin: 8, burstMax: 35, poiseDamage: 3,
+    resistance: { status: 'bleedResist', tags: ['beast', 'humanoid'] } },
 },
-scarletRot: {
+crimsonBlight: {
   stackMode: 'add', decay: { duration: 3 },   // re-apply adds stacks + refreshes
   hooks: [{ on: 'ownerTurnStart',
     do: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'stacks', status: 'scarletRot', of: 'owner' } }] }],
+      amount: { f: 'stacks', status: 'crimsonBlight', of: 'owner' } }] }],
 },
 weak:       { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageDealtMult: 0.75 } },
 vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.5 } },
-frostbite:  { stackMode: 'unique', decay: 'onConsume', /* +30% on next big hit: hook on damaged ≥10 */ },
+frost:      { stackMode: 'add', decay: 'none',
+  proc: { threshold: 10, burstPercent: 8, burstMin: 4, burstMax: 20,
+    effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
 ```
 
-Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, `onFill` applies a `staggered` status whose modifiers/hooks implement the skipped turn and +50% window; `growthMult: 1.25`). Stances (`content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
+Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, `onFill` applies a `staggered` status whose modifiers/hooks implement the skipped turn and +50% window; `growthMult: 1.25`). Stances (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
 
-**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `content/keywords.js` supplies only their display names and tooltip text.
+**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `src/content/keywords.js` supplies only their display names and tooltip text.
 
 ### 3.8 Procedural systems — kept procedural, parameterized by data
 
