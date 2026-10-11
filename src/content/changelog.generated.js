@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-11",
     "group": "2026-10-11",
     "summary": "Fights move faster at every pace",
-    "detail": "Between actions, turn banners, the wait after the last hit and the stagger between hits are about 40% shorter, and attack lunges and impacts are up to 25% shorter, so Normal fights no longer drag. Normal is the new baseline; Slow and Fast scale from it, and Instant is unchanged. Hit timing stays readable: the wind-up and impact frames never lose more than a quarter of their time.",
-    "build": "0.7.1.1283",
+    "detail": "Between actions, turn banners and the wait after the last hit are about 40% shorter, and the stagger between hits, attack lunges and impacts are up to 25% shorter, so Normal fights no longer drag. Normal is the new baseline; Slow and Fast scale from it, and Instant is unchanged. Hit timing stays readable: the wind-up and impact frames never lose more than a quarter of their time.",
+    "build": "0.7.1.1285",
     "pullRequest": 1835,
     "url": "https://github.com/cehinds/AshenSpire/pull/1835"
   },

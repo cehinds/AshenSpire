@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-11
 
-- **Fights move faster at every pace** ([#1835](https://github.com/cehinds/AshenSpire/pull/1835), `0.7.1.1283`). Between actions, turn banners, the wait after the last hit and the stagger between hits are about 40% shorter, and attack lunges and impacts are up to 25% shorter, so Normal fights no longer drag. Normal is the new baseline; Slow and Fast scale from it, and Instant is unchanged. Hit timing stays readable: the wind-up and impact frames never lose more than a quarter of their time.
+- **Fights move faster at every pace** ([#1835](https://github.com/cehinds/AshenSpire/pull/1835), `0.7.1.1285`). Between actions, turn banners and the wait after the last hit are about 40% shorter, and the stagger between hits, attack lunges and impacts are up to 25% shorter, so Normal fights no longer drag. Normal is the new baseline; Slow and Fast scale from it, and Instant is unchanged. Hit timing stays readable: the wind-up and impact frames never lose more than a quarter of their time.
 
 - **AI sessions: work lands in small commits, reviewed as they land** ([#1831](https://github.com/cehinds/AshenSpire/pull/1831), `0.7.1.1281`). Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.
 
