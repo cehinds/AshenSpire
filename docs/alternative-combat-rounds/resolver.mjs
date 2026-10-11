@@ -580,9 +580,22 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   // Every side in options.charges is kept, even one with no queued action this
   // round, so its charges carry over. Sides not given take the queue defaults.
   const largestCharges = (entries) => Math.max(0, ...entries.map((e) => chargeCount(e.intangibleCharges)));
+  // Only cards that will be accepted fund the default player pool: a valid slot,
+  // and the first card on that slot. A rejected duplicate adds no charges.
+  const acceptedPlayer = [];
+  const claimedSlots = new Set();
+  playerCards.forEach((pc, i) => {
+    const slot = pc.slot;
+    if (!Number.isInteger(slot) || slot < 0 || slot >= enemyQueue.length) {
+      throw new RangeError(`playerCards[${i}].slot must be an integer in 0..${enemyQueue.length - 1}`);
+    }
+    if (claimedSlots.has(slot)) return;
+    claimedSlots.add(slot);
+    acceptedPlayer.push(pc);
+  });
   const charges = Object.create(null);
   for (const [key, v] of Object.entries(chargeIn)) charges[key] = chargeCount(v);
-  if (!Object.hasOwn(charges, 'player')) charges.player = largestCharges(playerCards);
+  if (!Object.hasOwn(charges, 'player')) charges.player = largestCharges(acceptedPlayer);
   for (const enemy of enemyQueue) {
     const k = enemyKey(enemy);
     if (k === 'player') throw new TypeError('an enemy id cannot be "player"');

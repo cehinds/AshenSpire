@@ -999,6 +999,20 @@ test('intangible pool: an enemy takes the largest intangibleCharges of its queue
   assert.equal(charges.G, 1);
 });
 
+test('intangible pool: a rejected duplicate-slot card adds no charges to the player pool', () => {
+  // Two player cards on slot 0. The first is accepted with 0 charges. The second
+  // is rejected as a duplicate, so its 3 charges must not fund the accepted card's evade.
+  const cards = [
+    { id: 'shield', slot: 0, speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 0 },
+    { id: 'dup', slot: 0, speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 3 },
+  ];
+  const enemies = [{ id: 'e0', speed: 4, kind: 'attack' }];
+  const { events, charges } = resolveRound(cards, enemies, 1, () => 0.99);
+  assert.equal(events.some((e) => e.type === 'evaded'), false, 'the rejected card funds no evade');
+  assert.equal(find(events, 'hit').avoided, false, 'the attack lands');
+  assert.equal(charges.player, 0);
+});
+
 // Evasion, part 2a: evade bonus scopes (owner addendum, 2026-10-11). A bonus is
 // { source, pct, scope, condition? }. Only bonuses whose scope is live, and
 // whose condition passes, count.
