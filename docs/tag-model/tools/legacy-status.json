@@ -705,5 +705,11 @@
  "equipmentRoot.twoHanded": "new",
  "equipmentRoot.shield": "new",
  "equipmentRoot.parryTool": "new",
- "equipmentRoot.dualWield": "new"
+ "equipmentRoot.dualWield": "new",
+ "scaling": "new",
+ "scaling.strength": "new",
+ "scaling.dexterity": "new",
+ "scaling.constitution": "new",
+ "scaling.intelligence": "new",
+ "scaling.wisdom": "new"
 }

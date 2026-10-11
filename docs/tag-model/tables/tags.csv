@@ -7,11 +7,11 @@ meta.character.class.scoundrel,scoundrel,Scoundrel,meta.character.class,Class,,R
 meta.character.class.monk,monk,Monk,meta.character.class,Class,,Herald,,,,,,game-concept,,,
 meta.character.class.mage,mage,Mage,meta.character.class,Class,,Starseer,,,,,,game-concept,,,
 meta.character.attribute,attribute,Attribute,meta.character,Character,,,,,,,,game-concept,,,
-meta.character.attribute.strength,strength,Strength,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.attribute.strength,attribute.strength,Strength,meta.character.attribute,Character,,,,,,,,game-concept,,,
 meta.character.attribute.dexterity,attribute.dexterity,Dexterity,meta.character.attribute,Character,,,,,whole combat,intensity,,game-concept,,,
-meta.character.attribute.constitution,constitution,Constitution,meta.character.attribute,Character,,,,,,,,game-concept,,,
-meta.character.attribute.intelligence,intelligence,Intelligence,meta.character.attribute,Character,,,,,,,,game-concept,,,
-meta.character.attribute.wisdom,wisdom,Wisdom,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.attribute.constitution,attribute.constitution,Constitution,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.attribute.intelligence,attribute.intelligence,Intelligence,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.attribute.wisdom,attribute.wisdom,Wisdom,meta.character.attribute,Character,,,,,,,,game-concept,,,
 meta.character.resource,character.resource,Resource,meta.character,Character,,,,,,,,game-concept,,,
 meta.character.resource.hp,hp,HP,meta.character.resource,Character,,,,,,,,game-concept,,,
 meta.character.resource.sp,sp,SP,meta.character.resource,Character,,Stamina,,,,,,game-concept,,,
@@ -706,6 +706,12 @@ equipmentRoot.twoHanded,twoHanded,twoHanded,equipmentRoot,TagNode,,A weapon held
 equipmentRoot.shield,equipmentRoot.shield,shield,equipmentRoot,TagNode,,A shield held in the off hand.,,,,,,live-tag,,,equipment.shield
 equipmentRoot.parryTool,parryTool,parryTool,equipmentRoot,TagNode,,An off-hand tool held to parry.,,,,,,live-tag,,,equipment.parryTool
 equipmentRoot.dualWield,dualWield,dualWield,equipmentRoot,TagNode,,One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.,,,,,,live-tag,,,equipment.dualWield
+scaling,scaling,scaling,,TagNode,,Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.,,,,,,live-tag,,,scaling
+scaling.strength,scaling.strength,strength,scaling,TagNode,,This card scales with Strength.,,,,,,live-tag,,,scaling.strength
+scaling.dexterity,scaling.dexterity,dexterity,scaling,TagNode,,This card scales with Dexterity.,,,,,,live-tag,,,scaling.dexterity
+scaling.constitution,scaling.constitution,constitution,scaling,TagNode,,This card scales with Constitution.,,,,,,live-tag,,,scaling.constitution
+scaling.intelligence,scaling.intelligence,intelligence,scaling,TagNode,,This card scales with Intelligence.,,,,,,live-tag,,,scaling.intelligence
+scaling.wisdom,scaling.wisdom,wisdom,scaling,TagNode,,This card scales with Wisdom.,,,,,,live-tag,,,scaling.wisdom
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

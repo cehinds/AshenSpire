@@ -416,6 +416,13 @@ export const LIVE = {
   'equipmentRoot.shield': 'equipment.shield',
   'equipmentRoot.parryTool': 'equipment.parryTool',
   'equipmentRoot.dualWield': 'equipment.dualWield',
+  // proposed live mapping (domain pass)
+  'scaling': 'scaling',
+  'scaling.strength': 'scaling.strength',
+  'scaling.dexterity': 'scaling.dexterity',
+  'scaling.constitution': 'scaling.constitution',
+  'scaling.intelligence': 'scaling.intelligence',
+  'scaling.wisdom': 'scaling.wisdom',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

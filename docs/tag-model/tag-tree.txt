@@ -831,3 +831,9 @@ equipment {Grip and hand slots: which hands a weapon or shield occupies. Groupin
   shield {A shield held in the off hand.}
   parryTool {An off-hand tool held to parry.}
   dualWield {One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.}
+scaling {Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.}
+  strength {This card scales with Strength.}
+  dexterity {This card scales with Dexterity.}
+  constitution {This card scales with Constitution.}
+  intelligence {This card scales with Intelligence.}
+  wisdom {This card scales with Wisdom.}
