@@ -8,7 +8,7 @@ import {
   FRAME_MS, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks,
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
-  canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated,
+  canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -221,4 +221,13 @@ test('generated files are the stance projects the build writes; renewal and othe
   assert.equal(isGenerated('pose-studio/renewal/base-attack.pose.json'), false);
   assert.equal(isGenerated('pose-studio/stancesX/file.pose.json'), false, 'a prefix match needs the folder separator');
   assert.equal(isGenerated(undefined), false);
+});
+
+test('a pose file layout is its indent (none, two spaces, four spaces or a tab) and its trailing whitespace', () => {
+  const { project } = parsePoseFile(readFixture('pose-studio/renewal/attack.pose.json'));
+  assert.deepEqual(layoutOf(JSON.stringify(project)), { indent: '', tail: '' });
+  assert.deepEqual(layoutOf(`${JSON.stringify(project, null, 2)}\n`), { indent: '  ', tail: '\n' });
+  assert.deepEqual(layoutOf(JSON.stringify(project, null, 4)), { indent: '    ', tail: '' });
+  assert.deepEqual(layoutOf(`${JSON.stringify(project, null, '\t')}\n\n`), { indent: '\t', tail: '\n\n' });
+  assert.deepEqual(layoutOf(undefined), { indent: '', tail: '' });
 });

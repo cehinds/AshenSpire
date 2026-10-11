@@ -206,6 +206,16 @@ export function checkProject(p) {
 }
 
 /**
+ * A pose file's layout: the indent of its first key ('' when the file is compact) and its
+ * trailing whitespace, which a save keeps. Non-strings have no layout.
+ */
+export function layoutOf(text) {
+  if (typeof text !== 'string') return { indent: '', tail: '' };
+  const m = text.match(/^\{\r?\n([ \t]+)\S/);
+  return { indent: m ? m[1] : '', tail: text.slice(text.trimEnd().length) };
+}
+
+/**
  * The file text for a project. Unchanged projects return the original bytes exactly. A changed
  * project is written as JSON with non-ASCII escaped as \uXXXX (the style of the shipped pose files),
  * keeping the original's trailing whitespace.
