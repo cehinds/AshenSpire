@@ -175,7 +175,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     reduced=true;stage.play('attack');assert.equal(stage.pose,'ready');assert.equal(stage.play('hit'),false);
     stage.setStance('defensive');stage.play('defend');assert.equal(stage.pose,'stance-defensive','reduced motion retains the readable selected pose');
     stage.setStance(null);
-    reduced=false;setAnimSpeed('instant');assert.equal(stage.play('hit'),false);
+    reduced=false;setAnimSpeed('instant');assert.equal(stage.play('hit'),true,'Instant keeps the fixed-duration hurt clip');stage.settle({reaction:true});step(16);
     stage.play('attack',0);assert.equal(raf.size,0);
     setAnimSpeed('normal');stage.play('attack');assert.equal(raf.size,1);
     stage.dispose();assert.equal(raf.size,0);assert.equal(stage.play('attack'),false);

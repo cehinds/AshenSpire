@@ -11,6 +11,7 @@ import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
 import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
+import { builtInFor } from './highResArt.js';
 import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 
@@ -95,7 +96,10 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   // The hurt clip draws its own registered outfit art; until it loads the clip keeps the current pose.
   let hurt = null;
   const hurtPlacement = playerHurtFrames[classId] || null;
-  if (hurtPlacement) load(assetUrl(hurtPlacement.file)).ready.then(image => { if (!disposed) { hurt=image; paint(); } }).catch(()=>{});
+  // A detached loader must retry the built-in copy itself when a high-res file fails (highResArt.js).
+  const hurtUrl = hurtPlacement ? assetUrl(hurtPlacement.file) : null;
+  if (hurtUrl) load(hurtUrl).ready.catch(error => { const fallback=builtInFor(hurtUrl); if (!fallback) throw error; return load(fallback).ready; })
+    .then(image => { if (!disposed) { hurt=image; paint(); } }).catch(()=>{});
   if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { if (!disposed) { down=image; paint(); } }).catch(()=>{});
   // A hit reaction (red tint + knock-back) has its own clock: flashElapsed ms of
   // flashMs, advanced only outside hold-stop. flashAt is non-null while it runs.
@@ -170,7 +174,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   // keeps its own clock. A click-skip passes { reaction:true } to end it too.
   function endReaction() { if(flashAt===null)return false;flashAt=null;flashElapsed=0;holdUntil=0;paint();return true; }
   function settleStage({reaction=false}={}) { if(reaction){flashAt=null;flashElapsed=0;holdUntil=0;} settle(); }
-  function hit(ms=220) { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
+  // Instant drops pacing and hit-stop but keeps fixed-duration effects, so the hurt clip still plays.
+  function hit(ms=220) { if (reducedMotionRequested() || still) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],
