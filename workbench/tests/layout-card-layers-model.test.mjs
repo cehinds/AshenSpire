@@ -16,6 +16,15 @@ test('the layout file path is the one the game compiler reads', () => {
   assert.ok(fs.existsSync(path.join(ROOT, CL.LAYOUT_FILE)));
 });
 
+test('layoutFromDisk takes a readable layout and refuses one the view cannot draw', () => {
+  assert.ok(CL.layoutFromDisk(real).data.layers.length > 0);
+  assert.throws(() => CL.layoutFromDisk('{"schemaVersion":1,"width":360,"height":540}'), /layers must be a non-empty list/);
+  assert.throws(() => CL.layoutFromDisk('{"schemaVersion":1,"width":360,"height":540,"layers":null}'), /layers must be a non-empty list/);
+  assert.throws(() => CL.layoutFromDisk('{"version":1,"width":360,"height":540,"layers":null}'), /schemaVersion must be 1/);
+  assert.throws(() => CL.layoutFromDisk('null'), /must be a JSON object/);
+  assert.throws(() => CL.layoutFromDisk('{"layers":'), /Invalid JSON/);
+});
+
 test('the real layout loads with no problems and writes back byte for byte', () => {
   const { data, format, problems } = CL.parseLayout(real);
   assert.deepEqual(problems, []);

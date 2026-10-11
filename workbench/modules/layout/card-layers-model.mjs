@@ -48,6 +48,18 @@ export function serialize(data, format = { indent: '  ', bom: false, newline: '\
   return (format.bom ? '﻿' : '') + body + (format.eol || '');
 }
 
+/**
+ * The disk text as a layout the view may take. Throws the first reason the game could not read it
+ * (with a count of the rest), so a bad file never reaches the draft.
+ */
+export function layoutFromDisk(text) {
+  const parsed = parseLayout(text);
+  const problems = [...parsed.problems];
+  if (!Array.isArray(parsed.data?.layers) && !problems.length) problems.push('layers must be a non-empty list');
+  if (problems.length) throw Error(problems.length > 1 ? `${problems[0]} (and ${problems.length - 1} more)` : problems[0]);
+  return parsed;
+}
+
 /** Problems with a layout document, as messages a person can act on. An empty list means the game can read it. */
 export function layoutProblems(data) {
   if (!isObj(data)) return ['The layout must be a JSON object'];
