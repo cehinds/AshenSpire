@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as D from '../modules/data/model.mjs';
+import * as M from '../ui/kit/grid-model.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (rel) => fs.readFileSync(path.join(REPO, rel), 'utf8');
@@ -177,6 +178,14 @@ test('tableRules uses the compound unique key when the key repeats within a scop
   const outfits = D.parseTable('content/source/outfits.csv', read('content/source/outfits.csv'));
   const rules = D.tableRules(outfits.columns, outfits.rows);
   assert.deepEqual(rules[1], { kind: 'unique', keys: ['classId', 'id'] });
+  // The grid's Check panel finds no duplicate in the real file, and still flags a true (classId, id) duplicate.
+  const doc = { columns: outfits.columns, rows: outfits.rows };
+  assert.deepEqual(M.validate(doc, rules).filter((i) => /^Duplicate/.test(i.message)), []);
+  const firstReaver = outfits.rows.find((r) => r.classId === 'reaver' && r.id === 'default');
+  const dupeRows = [...outfits.rows, { ...firstReaver }];
+  // The rules come from the table as read from disk, so an edit in the grid does not change the scope.
+  const dupe = M.validate({ columns: outfits.columns, rows: dupeRows }, rules);
+  assert.deepEqual(dupe.filter((i) => /^Duplicate/.test(i.message)).map((i) => [i.row, i.key]), [[dupeRows.length - 1, 'id']]);
 });
 
 test('keyScopeOf finds the *Id scope only when the key repeats and (scope, key) is unique', () => {
