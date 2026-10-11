@@ -323,6 +323,8 @@ function resolveAttack(cur, entry, events, rng, options) {
   const target = cur.combatants[entry.target];
   const card = entry.card;
   const dmg = Math.max(0, Number(card.damage ?? 0) || 0);
+  // An evade card is spent on the next attack, whether or not that attack hits.
+  const evadeUse = cur.active[target.id].evade.shift() ?? null;
   const d20 = rollD20(rng);
   const accuracy = accuracyFor({ attrs: attacker.attrs, level: attacker.level, tags: card.tags, accuracy: card.accuracy })
     + attacker.accuracyExtra;
@@ -340,10 +342,10 @@ function resolveAttack(cur, entry, events, rng, options) {
       cur.charges[target.id] -= 1;
     } else {
       const stancePct = target.stance && options.evadeTable ? (options.evadeTable.get(target.stance) ?? 0) : 0;
-      const evadePct = evadePctFor({
-        evadeBasePct: target.evadeBasePct,
-        evadeBonuses: stancePct ? [{ source: `stance:${target.stance}`, pct: stancePct, scope: 'exchange' }] : [],
-      }, { inExchange: true });
+      const bonuses = [];
+      if (stancePct) bonuses.push({ source: `stance:${target.stance}`, pct: stancePct, scope: 'exchange' });
+      if (evadeUse) bonuses.push({ source: `card:${evadeUse.cardId}`, pct: evadeUse.pct, scope: 'exchange' });
+      const evadePct = evadePctFor({ evadeBasePct: target.evadeBasePct, evadeBonuses: bonuses }, { inExchange: true });
       if (evadePct > 0) {
         const roll = Math.floor(rollUnit(rng) * 100);
         const success = roll < evadePct;
@@ -380,8 +382,82 @@ function resolveAttack(cur, entry, events, rng, options) {
   }
 }
 
+// Offers the player's reaction window (owner, 2026-10-11): when an attack targets a
+// player, the player may play an unplayed defensive card from hand, if SP is left.
+// Enemies never react. The card uses base values and spends its cost.
+function offerReaction(cur, entry, events, options, run) {
+  const defender = cur.combatants[entry.target];
+  if (defender.side !== 'player' || typeof options.onReaction !== 'function') return;
+  const id = defender.id;
+  const usedIds = cur.used[id] ?? [];
+  const queued = run.queuedIds[id] ?? new Set();
+  const eligible = defender.hand.filter((c) => DEFENSIVE_KINDS.includes(c.kind)
+    && !queued.has(c.id)
+    && !usedIds.includes(c.id)
+    && cardCost(c) <= cur.spLeft[id]
+    && (c.kind !== 'counter' || c.target === 'self' || c.target === entry.actor));
+  if (eligible.length === 0) return;
+  const attack = {
+    seq: entry.seq,
+    attacker: entry.actor,
+    target: id,
+    cardId: entry.cardId,
+    damage: Math.max(0, Number(entry.card.damage ?? 0) || 0),
+    speed: entry.speed.total,
+  };
+  const pick = options.onReaction(attack, eligible.map((c) => ({ ...c })));
+  if (pick === null || pick === undefined) return;
+  const chosen = eligible.find((c) => c.id === pick?.id);
+  if (!chosen) throw new TypeError(`onReaction returned a card that is not eligible: ${pick?.id}`);
+  cur.spLeft[id] -= cardCost(chosen);
+  cur.used[id] = [...usedIds, chosen.id];
+  events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, cost: cardCost(chosen) });
+  // Base values, no buff (owner, 2026-10-11). A reaction counter fires on this attack,
+  // after it resolves, and never cancels it (placeholder).
+  placeDefence(cur, id, chosen, { preemptive: false, foe: entry.actor, events, reaction: true });
+}
+
+// Makes a defensive card active for its owner (owner, 2026-10-11). A preemptive card
+// gets REACTION_BUFF on top of its base values. A reaction uses base values only.
+function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, speed = null }) {
+  const buff = (key) => (preemptive ? REACTION_BUFF[key] : 0);
+  const act = cur.active[owner];
+  if (card.kind === 'guard') {
+    const block = (card.block ?? DEFENSE_BASE.block) + buff('block');
+    act.guard += block;
+    events.push({ type: 'guardUp', by: owner, cardId: card.id, block, buffed: preemptive });
+  } else if (card.kind === 'evade') {
+    const pct = (card.evadePct ?? DEFENSE_BASE.evadePct) + buff('evadePct');
+    act.evade.push({ cardId: card.id, pct, gain: card.momentumGain, stance: card.stance ?? null });
+    events.push({ type: 'evadeUp', by: owner, cardId: card.id, pct, buffed: preemptive });
+  } else if (card.kind === 'counter') {
+    const damage = (card.counterDamage ?? DEFENSE_BASE.counterDamage) + buff('counterDamage');
+    const target = card.target === 'self' ? null : (foe ?? card.target);
+    act.counters.push({
+      cardId: card.id,
+      owner,
+      foe: target,
+      speed,
+      damage,
+      stagger: Array.isArray(card.tags) && card.tags.includes('stagger'),
+      gain: card.momentumGain,
+      stance: card.stance ?? null,
+      reaction,
+    });
+    events.push({ type: 'counterUp', by: owner, cardId: card.id, foe: target, damage, buffed: preemptive });
+  }
+}
+
+// Takes the first active counter that fires on this attack, or null (owner, 2026-10-11):
+// a counter fires on the next attack from its chosen foe, or any foe when it is 'self'.
+function takeCounter(cur, defenderId, attackerId) {
+  const list = cur.active[defenderId].counters;
+  const i = list.findIndex((c) => c.foe === null || c.foe === attackerId);
+  return i < 0 ? null : list.splice(i, 1)[0];
+}
+
 // Resolves one timeline entry into `events`, updating `cur` in place.
-function applyEntry(cur, entry, events, options) {
+function applyEntry(cur, entry, events, options, run) {
   const actor = cur.combatants[entry.actor];
   const base = { seq: entry.seq, actor: entry.actor, cardId: entry.cardId };
   if (actor.hp <= 0) {
@@ -393,7 +469,31 @@ function applyEntry(cur, entry, events, options) {
     return;
   }
   events.push({ type: 'action', ...base, kind: entry.card.kind, target: entry.target, speed: entry.speed.total });
-  if (entry.card.kind === 'attack') resolveAttack(cur, entry, events, options.rng, options);
+  const kind = entry.card.kind;
+  if (kind === 'attack') {
+    offerReaction(cur, entry, events, options, run);
+    const counter = takeCounter(cur, entry.target, entry.actor);
+    if (counter && !counter.reaction && counter.speed > entry.speed.total) {
+      // A faster counter cancels the attack. A tie or a slower counter does not.
+      events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
+      applyDamage(cur, entry.actor, counter.damage, events);
+      return;
+    }
+    resolveAttack(cur, entry, events, options.rng, options);
+    if (counter) {
+      events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
+      applyDamage(cur, entry.actor, counter.damage, events);
+    }
+  } else if (kind === 'guard' || kind === 'evade' || kind === 'counter') {
+    // A queued defensive card is preemptive: it becomes active for its owner now.
+    placeDefence(cur, entry.actor, entry.card, {
+      preemptive: true,
+      foe: null,
+      events,
+      reaction: false,
+      speed: entry.speed.total,
+    });
+  }
 }
 
 // Enemy momentum decay at round start (owner, 2026-10-11): each enemy's M moves
@@ -449,6 +549,14 @@ export function createRound(state, options = {}) {
   cur.spLeft = {};
   for (const id of Object.keys(cur.combatants)) cur.spLeft[id] = cur.combatants[id].sp - spent[id];
 
+  // Round-scoped: reactions played (by card id) and each combatant's queued card ids.
+  cur.used = {};
+  const run = { queuedIds: {} };
+  for (const e of timeline.entries) {
+    run.queuedIds[e.actor] = run.queuedIds[e.actor] ?? new Set();
+    run.queuedIds[e.actor].add(e.card.id);
+  }
+
   let idx = 0;
   let settled = false;
   let pending = startEvents;
@@ -469,7 +577,7 @@ export function createRound(state, options = {}) {
     if (idx < entries.length) {
       entry = entries[idx];
       idx += 1;
-      applyEntry(cur, entry, events, options);
+      applyEntry(cur, entry, events, options, run);
     }
     if (idx >= entries.length) settle(events);
     return { entry: entry ? structuredClone(entry) : null, events, state: snapshot(), done: settled };

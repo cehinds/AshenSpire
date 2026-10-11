@@ -353,3 +353,166 @@ test('an evadePct roll at or above the percent lets the hit land', () => {
   assert.equal(out.events.find((e) => e.type === 'evadeRoll').success, false);
   assert.equal(out.state.combatants.goblin.hp, 5);
 });
+
+// ---- Defensive cards: preemptive (queued) and reaction (in hand) ----
+
+// Draws `values` in order, then `fallback` forever.
+function rngThen(values, fallback) {
+  let i = 0;
+  return () => (i < values.length ? values[i++] : fallback);
+}
+const guardCard = (id = 'guard', extra = {}) => card(id, 'guard', 'self', 5, extra);
+const stab = (speed, damage) => atk('stab', 'player', speed, { damage });
+
+test('a preemptive guard gets +1 speed and +2 block; a reaction guard uses base 6', () => {
+  // d4 2 each. Guard: 5 + 1 + 2 = 8. Stab: 1 + 2 = 3. The guard resolves first.
+  const st = duo({}, { hp: 20 });
+  const round = createRound(st, {
+    queues: { player: [guardCard()], goblin: [stab(1, 10)] },
+    rng: HIT_RNG,
+  });
+  const out = round.resolveAll();
+  assert.deepEqual(out.timeline.entries.map((e) => e.cardId), ['guard', 'stab']);
+  assert.equal(out.timeline.entries[0].speed.buff, 1);
+  assert.equal(out.events.find((e) => e.type === 'guardUp').block, 8);
+  // Block 8 absorbs 8 of the 10 damage.
+  assert.equal(out.state.combatants.player.hp, 18);
+
+  const reaction = createRound(duo({}, { hp: 20, hand: [guardCard()] }), {
+    queues: { goblin: [stab(1, 10)] },
+    rng: HIT_RNG,
+    onReaction: () => ({ id: 'guard' }),
+  }).resolveAll();
+  assert.equal(reaction.events.find((e) => e.type === 'reaction').cardId, 'guard');
+  // Reaction block is the base 6, so 4 of the 10 damage lands.
+  assert.equal(reaction.state.combatants.player.hp, 16);
+});
+
+test('a guard block that covers the whole hit absorbs it and keeps the rest', () => {
+  // A trailing 'other' card (total 2) keeps the round open after the stab (total 3).
+  const round = createRound(duo({}, { hp: 20 }), {
+    queues: { player: [guardCard(), card('x', 'other', 'self', 0)], goblin: [stab(1, 6)] },
+    rng: HIT_RNG,
+  });
+  round.next(); // guard: block 8
+  assert.equal(round.state.active.player.guard, 8);
+  const hit = round.next(); // stab 6: fully absorbed, 2 left
+  assert.ok(hit.events.some((e) => e.type === 'absorbed' && e.amount === 6));
+  assert.equal(hit.state.active.player.guard, 2);
+  assert.equal(hit.state.combatants.player.hp, 20);
+  assert.equal(round.resolveAll().state.active.player.guard, 0); // the round ends and clears it
+});
+
+test('onReaction is offered only to the player, and only when SP is left for the card', () => {
+  const calls = [];
+  const onReaction = (attack, eligible) => {
+    calls.push({ attack, eligible: eligible.map((c) => c.id) });
+    return null;
+  };
+  // Two queued 3-SP cards use all 6 SP, so no reaction is offered.
+  const spent = createRound(duo({}, { hand: [guardCard()] }), {
+    queues: { player: [card('x', 'other', 'self', 1), card('y', 'other', 'self', 1)], goblin: [stab(1, 4)] },
+    rng: HIT_RNG,
+    onReaction,
+  }).resolveAll();
+  assert.equal(calls.length, 0);
+  assert.equal(spent.state.combatants.player.hp, 16);
+
+  // One queued card leaves 3 SP: the guard (cost 3) is eligible and offered.
+  createRound(duo({}, { hand: [guardCard()] }), {
+    queues: { player: [card('x', 'other', 'self', 1)], goblin: [stab(1, 4)] },
+    rng: HIT_RNG,
+    onReaction,
+  }).resolveAll();
+  assert.deepEqual(calls.map((c) => c.eligible), [['guard']]);
+  assert.deepEqual(
+    [calls[0].attack.attacker, calls[0].attack.target, calls[0].attack.damage],
+    ['goblin', 'player', 4],
+  );
+
+  // Enemies never react: the goblin is hit, but the player's hand is not offered.
+  const enemyHand = createRound(duo({ hand: [guardCard()] }), {
+    queues: { player: [atk('jab', 'goblin', 6, { damage: 1 })] },
+    rng: HIT_RNG,
+    onReaction,
+  }).resolveAll();
+  assert.equal(enemyHand.events.some((e) => e.type === 'reaction'), false);
+  assert.equal(calls.length, 1);
+});
+
+test('a reaction spends the card cost, and a returned card must be eligible', () => {
+  const st = duo({}, { hand: [guardCard()] });
+  const round = createRound(st, {
+    queues: { goblin: [stab(1, 4)] },
+    rng: HIT_RNG,
+    onReaction: () => ({ id: 'guard' }),
+  });
+  const out = round.resolveAll();
+  assert.equal(out.state.spLeft.player, 3);
+  assert.throws(
+    () => createRound(duo({}, { hand: [guardCard()] }), {
+      queues: { goblin: [stab(1, 4)] },
+      rng: HIT_RNG,
+      onReaction: () => ({ id: 'not-in-hand' }),
+    }).resolveAll(),
+    TypeError,
+  );
+});
+
+test('a preemptive counter cancels the next attack when it is faster', () => {
+  // Counter 6 + 1 + 2 = 9. Stab 1 + 2 = 3. The counter resolves first and cancels the stab.
+  const out = createRound(duo({ hp: 20 }, { hp: 20 }), {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 6)],
+      goblin: [stab(1, 10)],
+    },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.ok(out.events.some((e) => e.type === 'countered' && e.by === 'player' && e.target === 'goblin'));
+  assert.equal(out.events.some((e) => e.type === 'hit' && e.by === 'goblin'), false);
+  // Counter damage is the base 2 plus the buff 1.
+  const dmg = out.events.find((e) => e.type === 'damage');
+  assert.deepEqual([dmg.target, dmg.amount], ['goblin', 3]);
+  assert.equal(out.state.combatants.goblin.hp, 17);
+  assert.equal(out.state.combatants.player.hp, 20);
+});
+
+test('a counter that is slower than the attack lets the attack land, then fires', () => {
+  // wholeQueue: the player's queue goes first (lead init 4 vs 2). Counter total is
+  // 0 + 1 + 4 = 5. Stab total is 9 + 2 = 11, which is higher, so the attack lands first.
+  const out = createRound(duo({}, { hp: 20 }), {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 0)],
+      goblin: [stab(9, 10)],
+    },
+    rng: rngThen([0.75, 0.3], 0.45), // d4 4 for the player, d4 2 for the goblin
+    merge: 'wholeQueue',
+  }).resolveAll();
+  const hitIdx = out.events.findIndex((e) => e.type === 'hit' && e.by === 'goblin');
+  const fireIdx = out.events.findIndex((e) => e.type === 'counterFired');
+  assert.ok(hitIdx >= 0 && fireIdx > hitIdx);
+  assert.equal(out.state.combatants.player.hp, 10);
+  assert.equal(out.state.combatants.goblin.hp, 7);
+});
+
+test('a preemptive evade adds +10 to its evade roll, so a roll of 25 is evaded', () => {
+  // Evade 20 + 10 = 30. Draws: d4 (player), d4 (goblin), d20 10 (hit), evade roll 25.
+  const out = createRound(duo({}, { hp: 20 }), {
+    queues: { player: [card('evade', 'evade', 'self', 5, { evadePct: 20 })], goblin: [stab(1, 5)] },
+    rng: seqRng([0.45, 0.45, 0.45, 0.25]),
+  }).resolveAll();
+  const roll = out.events.find((e) => e.type === 'evadeRoll');
+  assert.deepEqual([roll.evadePct, roll.roll, roll.success], [30, 25, true]);
+  assert.equal(out.state.combatants.player.hp, 20);
+});
+
+test('a reaction evade uses its base 20, so the same roll of 25 is not evaded', () => {
+  const out = createRound(duo({}, { hp: 20, hand: [card('evade', 'evade', 'self', 5, { evadePct: 20 })] }), {
+    queues: { goblin: [stab(1, 5)] },
+    rng: seqRng([0.45, 0.45, 0.45, 0.25]),
+    onReaction: () => ({ id: 'evade' }),
+  }).resolveAll();
+  const roll = out.events.find((e) => e.type === 'evadeRoll');
+  assert.deepEqual([roll.evadePct, roll.success], [20, false]);
+  assert.equal(out.state.combatants.player.hp, 15);
+});
