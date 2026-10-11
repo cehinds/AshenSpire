@@ -259,3 +259,13 @@ export function isDirty(file) {
 export function changesFor(files) {
   return [...files.values()].filter(isDirty).map((f) => ({ path: f.path, text: proposedText(f), baseHash: f.hash }));
 }
+
+/**
+ * The base a file has once a save of it went through: the text that was sent and the hash the
+ * server wrote. Edits made after the submit stay dirty against it. Null when the path was not sent.
+ */
+export function savedBase(saved, sent, path) {
+  const file = saved.find((x) => x.path === path);
+  if (!file || !sent.has(path)) return null;
+  return { original: sent.get(path), hash: file.hash };
+}

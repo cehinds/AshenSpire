@@ -337,13 +337,10 @@ export function createBattlefieldView(root, host) {
       const text = B.serializePresets(st.parts, st.data);
       return text === st.original ? [] : [{ path: B.PRESETS_FILE, text, baseHash: st.hash }];
     },
-    /** A save went through: the new hash and text become the file the draft is compared with. */
-    saved(files) {
-      for (const f of files) {
-        if (f.path !== B.PRESETS_FILE || !st.parts) continue;
-        st.original = B.serializePresets(st.parts, st.data);
-        st.hash = f.hash;
-      }
+    /** A save went through: the text that was sent and the new hash become the file the draft is compared with. */
+    saved(files, sent) {
+      const base = st.parts ? C.savedBase(files, sent, B.PRESETS_FILE) : null;
+      if (base) { st.original = base.original; st.hash = base.hash; }
       paintStatus();
     },
     /**
