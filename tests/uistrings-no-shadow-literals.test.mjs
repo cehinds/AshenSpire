@@ -114,7 +114,6 @@ const ALLOWED = [
   ['src/ui/screens/equipment.js', 'Hand', 'the Armoury Resources table\'s hand-size line, not the Stats preview "Hand" topic title'],
   ['src/ui/components/formationMovement.js', 'Move to', 'formation cell movement confirmation and action cost, not the Armoury action that moves an item to an equipment slot'],
   ['src/ui/screens/equipment.js', 'Poise', '"Poise <n>" is an item\'s poise threshold, not the Stats preview line'],
-  ['src/ui/screens/equipment.js', 'Equip', 'the drag-and-drop success notice "Equip <item> to <slot>", not the picker row\'s short Equip button'],
   ['src/ui/screens/customRun.js', 'Deck', 'Custom Climb\'s Deck section, not the Settings Deck topic'],
   ['src/ui/input.js', 'Deck', 'control-bar short for Open Armoury (Deck); no migrated row names this action (the Armoury tab is "Cards")'],
   ['src/ui/models/SmithSelectionModel.js', 'Discard', 'a card upgrade\'s discard value ("Discard +1"), not the combat Discard pile'],
