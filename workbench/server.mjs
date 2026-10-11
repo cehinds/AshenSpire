@@ -102,6 +102,24 @@ export function projectStateDir(root, stateDir) {
   return path.join(stateDir, 'projects', createHash('sha1').update(real).digest('hex').slice(0, 12));
 }
 
+/**
+ * Before per-project state, jobs.json and backups/ sat directly in stateDir and
+ * were shared by every project. When this project's state dir does not exist
+ * yet, those legacy items move into it, once. Returns the names moved.
+ */
+export async function migrateLegacyState(stateDir, projectDir) {
+  if (existsSync(projectDir)) return [];
+  const moved = [];
+  for (const name of ['jobs.json', 'backups']) {
+    const from = path.join(stateDir, name);
+    if (!existsSync(from)) continue;
+    await fs.mkdir(projectDir, { recursive: true });
+    await fs.rename(from, path.join(projectDir, name));
+    moved.push(name);
+  }
+  return moved;
+}
+
 export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, children = true, stateDir = path.join(HERE, '.state'), debounceMs = 300, ports, forcePoll = false, env = process.env, lockWaitMs = 10 * 60 * 1000, fileFault = null } = {}) {
   root = await fs.realpath(root);
   const token = newToken();
@@ -109,7 +127,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   let address = '';
   const gate = createGate({ token, hosts: () => [address], origins: () => [`http://${address}`], open: ['/api/session'], queryTokenPaths: ['/api/events'] });
   const projectDir = projectStateDir(root, stateDir);
-  const jobs = new JobRunner({ root, stateFile: path.join(projectDir, 'jobs.json'), onEvent: (e, d) => hub.send(e, d) });
+  await migrateLegacyState(stateDir, projectDir);
+  const jobs =new JobRunner({ root, stateFile: path.join(projectDir, 'jobs.json'), onEvent: (e, d) => hub.send(e, d) });
   const settings = new Settings(path.join(stateDir, 'settings.json'), env);
   // The one save path for repo files (core/files.mjs). A save reloads the preview through onBatch.
   const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), lockWaitMs, fileFault });
