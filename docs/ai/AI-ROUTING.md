@@ -104,7 +104,12 @@ Haiku brief written this way landed first time.
    failures so they are not "fixed" or blamed (for example "the final UNKNOWN line
    predates this change; ignore it"). Name the files another worker owns.
 7. **Give an acceptance that Haiku can run.** Name the test commands and the
-   new test's assertions. When the fake DOM in `tests/helpers/` cannot mount the
+   new test's assertions, and always add the repository-wide guards:
+   `node tests/run-node.mjs --no-selftests --no-discovered` (core) and the
+   discovered shard that holds the touched files. Named tests alone missed four
+   guards in the FixModal run (zoom units, module URL paths, a component
+   contract that pins a renamed line, and the page-listener registry), so they
+   surfaced only at the orchestrator's full run. When the fake DOM in `tests/helpers/` cannot mount the
    screen, ask for a source test plus the existing real-browser tool.
 8. **Local branches, orchestrator merges.** Workers commit on
    `<feature>/<task>` in their worktree, and neither push nor open a PR. Worktrees
