@@ -125,6 +125,50 @@ test('bulk edit parses per column and rejects bad values with no change', () => 
   assert.deepEqual(snap(d), snapBefore(d));
 });
 
+test('fill down over a sorted view copies from the visible-first row, not the smallest index', () => {
+  const d = base();
+  // Sorted by n descending, empties last: b(10), a(2), d(2), c(null).
+  const visible = M.sortIndices(d.rows, d.columns, [{ key: 'n', dir: 'desc' }]);
+  assert.deepEqual(visible, [1, 0, 3, 2]);
+  // a, b and d are selected. The view shows b first, though a (index 0) is the smallest index.
+  const selected = visible.filter(r => [0, 1, 3].includes(r));
+  assert.deepEqual(selected, [1, 0, 3]);
+  const out = M.fillDownVisible(d.rows, d.columns, selected, ['tag']);
+  assert.deepEqual(out.rows.map(r => r.tag), ['y', 'y', '', 'y'], 'b.tag (y) fills a and d, not a.tag (x)');
+  assert.equal(out.change.label, 'Fill down');
+  assertRoundTrip(d, out);
+  // The document-order op, from the smallest index, copies x: the visible-order op is the one to use.
+  assert.equal(M.fillDown(d, { r0: 0, c0: 3, r1: 3, c1: 3 }).rows[3].tag, 'x');
+});
+
+test('fill down over a selection a filter split into two runs copies to every selected row in view order', () => {
+  const rows = [
+    { id: 'r0', n: 1, on: true, tag: 'x', data: null },
+    { id: 'r1', n: 2, on: true, tag: 'x', data: null },
+    { id: 'r2', n: 3, on: true, tag: 'z', data: null },
+    { id: 'r3', n: 4, on: true, tag: 'z', data: null },
+    { id: 'r4', n: 5, on: true, tag: 'x', data: null },
+    { id: 'r5', n: 6, on: true, tag: 'x', data: null },
+  ];
+  const d = { columns: cols.map(c => ({ ...c, label: c.key })), rows };
+  // The filter shows tag x only: the visible selection is two document runs with hidden rows between.
+  const visible = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } });
+  assert.deepEqual(visible, [0, 1, 4, 5]);
+  assert.deepEqual(M.rowRuns(visible), [{ r0: 0, r1: 1 }, { r0: 4, r1: 5 }]);
+  const out = M.fillDownVisible(d.rows, d.columns, visible, ['n']);
+  // Row 4 takes r0's value, not the start of its own run; r2 and r3 are hidden and untouched.
+  assert.deepEqual(out.rows.map(r => r.n), [1, 1, 3, 4, 1, 1]);
+  assert.deepEqual(out.rows.map(r => r.tag), rows.map(r => r.tag));
+  assertRoundTrip(d, out);
+});
+
+test('fill down over fewer than two rows, or over no column, changes nothing and records no step', () => {
+  const d = base();
+  assert.equal(M.fillDownVisible(d.rows, d.columns, [2], ['n']).change, null);
+  assert.equal(M.fillDownVisible(d.rows, d.columns, [0, 1], ['nope']).change, null);
+  assert.deepEqual(M.fillDownVisible(d.rows, d.columns, [0, 0, 9], ['n']).rows, d.rows, 'a repeated or out-of-range row is ignored');
+});
+
 test('clear, fill down, add, delete, duplicate rows: exact undo/redo', () => {
   const d = fresh();
   assertRoundTrip(d, M.clearCells(d, [{ r: 0, c: 0 }, { r: 0, c: 1 }]));

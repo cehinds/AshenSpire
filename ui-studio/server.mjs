@@ -122,38 +122,48 @@ export class Workspace {
     return { errors: result.errors, files: tree.length };
   }
 
-  /** Write config files after the whole tree validates and every expected hash matches. */
-  async save(changes) {
+  /**
+   * Write config files after the whole tree validates and every expected hash matches.
+   * `lock` (optional) takes the shared build lock and resolves to its release. It is
+   * taken before validation and held across the source writes, so a running engine
+   * export or build never reads a half-saved config tree.
+   */
+  async save(changes, { lock = null } = {}) {
     if (!Array.isArray(changes) || !changes.length) throw Error('Nothing to save');
     return this.serialize(async () => {
-      // Validated INSIDE the queue, against the tree as every earlier write
-      // left it: two tabs saving disjoint files could each pass against the
-      // old tree (one dropping a token, one adding a reference to it) and
-      // leave a combined tree the compiler refuses.
-      const { errors } = await this.validate(changes);
-      if (errors.length) throw Error(`The compiler refuses this tree:\n${errors.join('\n')}`);
-      const targets = [];
-      for (const c of changes) {
-        const abs = await safePath(this.root, `${CONFIG_DIR}/${c.rel}`, { creating: true });
-        let current = null;
-        try { current = await fs.readFile(abs, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') throw e; }
-        if (current !== null && hash(current) !== c.hash) throw Error(`${c.rel} changed on disk since it was opened; reload it before saving`);
-        if (current === null && c.hash) throw Error(`${c.rel} no longer exists on disk; reload before saving`);
-        targets.push({ abs, rel: c.rel, current, text: c.text });
-      }
-      const id = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-      const dir = path.join(this.stateDir, 'backups', id);
-      await fs.mkdir(dir, { recursive: true });
-      const manifest = [];
-      for (const [i, t] of targets.entries()) {
-        if (t.current !== null) await fs.writeFile(path.join(dir, `${i}.bak`), t.current);
-        manifest.push({ index: i, path: `${CONFIG_DIR}/${t.rel}`, oldHash: t.current === null ? null : hash(t.current), savedHash: hash(t.text) });
-      }
-      await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
-      for (const t of targets) { await fs.mkdir(path.dirname(t.abs), { recursive: true }); await fs.writeFile(t.abs, t.text); }
-      await this.pruneBackups((await this.settings()).save.keepBackups);
-      return { backup: id, files: targets.map((t) => ({ rel: t.rel, hash: hash(t.text) })) };
+      const release = lock ? await lock() : null;
+      try { return await this.writeConfig(changes); } finally { if (release) release(); }
     });
+  }
+
+  async writeConfig(changes) {
+    // Validated INSIDE the queue, against the tree as every earlier write
+    // left it: two tabs saving disjoint files could each pass against the
+    // old tree (one dropping a token, one adding a reference to it) and
+    // leave a combined tree the compiler refuses.
+    const { errors } = await this.validate(changes);
+    if (errors.length) throw Error(`The compiler refuses this tree:\n${errors.join('\n')}`);
+    const targets = [];
+    for (const c of changes) {
+      const abs = await safePath(this.root, `${CONFIG_DIR}/${c.rel}`, { creating: true });
+      let current = null;
+      try { current = await fs.readFile(abs, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+      if (current !== null && hash(current) !== c.hash) throw Error(`${c.rel} changed on disk since it was opened; reload it before saving`);
+      if (current === null && c.hash) throw Error(`${c.rel} no longer exists on disk; reload before saving`);
+      targets.push({ abs, rel: c.rel, current, text: c.text });
+    }
+    const id = `${Date.now()}-${randomBytes(4).toString('hex')}`;
+    const dir = path.join(this.stateDir, 'backups', id);
+    await fs.mkdir(dir, { recursive: true });
+    const manifest = [];
+    for (const [i, t] of targets.entries()) {
+      if (t.current !== null) await fs.writeFile(path.join(dir, `${i}.bak`), t.current);
+      manifest.push({ index: i, path: `${CONFIG_DIR}/${t.rel}`, oldHash: t.current === null ? null : hash(t.current), savedHash: hash(t.text) });
+    }
+    await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+    for (const t of targets) { await fs.mkdir(path.dirname(t.abs), { recursive: true }); await fs.writeFile(t.abs, t.text); }
+    await this.pruneBackups((await this.settings()).save.keepBackups);
+    return { backup: id, files: targets.map((t) => ({ rel: t.rel, hash: hash(t.text) })) };
   }
 
   async pruneBackups(keep = 40) {
@@ -256,6 +266,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
   // (tools/lib/build-lock.mjs). "Compile now" is refused with 409 while another
   // build holds it; a compile after a save (`wait`) waits up to waitMs for it.
   const HOLDER = 'UI Studio config compile';
+  const SAVE_HOLDER = 'UI Studio config save';
   function startCompile({ wait = false } = {}) {
     if (job && (job.status === 'running' || job.status === 'waiting')) throw Error('The compiler is already running');
     let release = null;
@@ -314,7 +325,10 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
           const data = await body(req);
           if (url.pathname === '/api/settings') return send(res, 200, await workspace.saveSettings(data));
           if (url.pathname === '/api/validate') return send(res, 200, await workspace.validate(data.changes));
-          if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes));
+          // The save holds the shared build lock across validation and the source writes, so an engine
+          // export or build never reads a half-saved tree. It waits like a compile after a save does, and
+          // is refused with 409 naming the holder when that wait runs out.
+          if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes, { lock: () => acquire(root, SAVE_HOLDER, { timeoutMs: compileWaitMs, pollMs: Math.min(250, compileWaitMs) }) }));
           if (url.pathname === '/api/sketch') return send(res, 200, await workspace.saveSketch(data.name, data.sketch, data.hash || null));
           if (url.pathname === '/api/backup') return send(res, 200, await workspace.backup(data.id));
           if (url.pathname === '/api/compile') return send(res, 200, startCompile({ wait: data.wait === true }));

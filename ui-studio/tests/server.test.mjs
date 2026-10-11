@@ -247,3 +247,48 @@ test('close() stops a running compile, its process tree, and releases the build 
   assert.throws(() => process.kill(pid, 0), /ESRCH/, 'the compiler is gone once close() resolves');
   await assert.rejects(fs.stat(path.join(real, '.build-lock')), /ENOENT/, 'the build lock is released once close() resolves');
 });
+
+test('save holds the lock it is given, and releases it on success and on refusal', async (t) => {
+  const { root, workspace } = await fixture(t);
+  const [w4a] = await workspace.config();
+  const edited = W4A.replace('"hud": 10, "scene": 55', '"hud": 12, "scene": 53');
+  const file = path.join(root, 'content/config', w4a.rel);
+  // A lock that refuses: nothing is written.
+  await assert.rejects(workspace.save([{ rel: w4a.rel, text: edited, hash: w4a.hash }], { lock: async () => { throw Object.assign(Error('Busy holder is running'), { status: 409 }); } }), /Busy holder/);
+  assert.equal(await fs.readFile(file, 'utf8'), W4A, 'a refused lock writes nothing');
+  // A taken lock is released after a successful save, and after a refused one.
+  let released = 0;
+  const lock = async () => () => { released += 1; };
+  await workspace.save([{ rel: w4a.rel, text: edited, hash: w4a.hash }], { lock });
+  assert.equal(released, 1, 'released after a successful save');
+  await assert.rejects(workspace.save([{ rel: w4a.rel, text: edited, hash: 'stale' }], { lock }), /changed on disk/);
+  assert.equal(released, 2, 'released after a refused save too');
+  assert.equal(await fs.readFile(file, 'utf8'), edited);
+});
+
+test('save over HTTP holds the build lock: a foreign holder gets 409 naming it and the file is unchanged', async (t) => {
+  const { root, stateDir } = await fixture(t);
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 300 });
+  t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const real = await fs.realpath(root);
+  const [w4a] = await app.workspace.config();
+  const file = path.join(real, 'content/config', w4a.rel);
+  const edited = W4A.replace('"hud": 10, "scene": 55', '"hud": 12, "scene": 53');
+  const save = () => fetch(`${app.url}/api/save`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ rel: w4a.rel, text: edited, hash: w4a.hash }] }) });
+  // Another process (a Workbench build) holds the lock.
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(real, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Content build (Workbench)', startedAt: Date.now(), token: 'x' }));
+  const refused = await save();
+  assert.equal(refused.status, 409);
+  assert.equal((await refused.json()).error, 'Content build (Workbench) is running; try again when it finishes');
+  assert.equal(await fs.readFile(file, 'utf8'), W4A, 'a save refused by the lock writes nothing');
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'x', 'the other holder keeps its lock');
+  // Once the holder is gone the same save lands and the lock is released.
+  await fs.rm(lock);
+  assert.equal((await save()).status, 200);
+  assert.equal(await fs.readFile(file, 'utf8'), edited);
+  await assert.rejects(fs.stat(lock), /ENOENT/, 'the save released the lock');
+});
