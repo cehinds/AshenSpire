@@ -182,6 +182,18 @@ test('skipping the offer on one action with hits:2 reports alreadyAnswered exact
   assert.deepEqual(unavailable(coopHits.eventLog).map(row => [row.ownerId, row.reason]), [['a', 'alreadyAnswered']]);
 });
 
+test('a reaction that kills the attacker reports no alreadyAnswered for the cancelled rest', () => {
+  const combat = solo({ cardIds: ['whirlingGuard', 'whirlingGuard'], move: { hits: 2, cardTags: SWEEP } });
+  soloEnd(combat);
+  assert.ok(combat.pendingReaction, 'the Sweep is offered');
+  const [option] = combat.pendingReaction.options;
+  assert.ok(option, 'Whirling Guard is offered');
+  combat.enemies[0].hp = 1;
+  const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: option.id }).events;
+  assert.ok(events.some(event => event.type === 'enemyDied'), 'the reaction killed the attacker');
+  assert.deepEqual(unavailable(events), [], 'nothing claims the rest of a cancelled attack');
+});
+
 test('a single-hit root that was skipped reports nothing more', () => {
   const combat = solo({ move: { hits: 1 } });
   soloEnd(combat);

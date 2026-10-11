@@ -220,9 +220,13 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
 
 // The one offer covers the whole root: when it has further hits (in this action or
 // later ones), the answering seat hears once that the rest can't be answered.
+// A reaction that killed, staggered or locked the attacker cancels the rest, so
+// there is nothing left to explain (Codex on #1849).
 function reportRestOfRoot(ctx, group, ownerId) {
   const row = rowFor(ctx, group, ownerId);
   if (!row || row.contacts.filter(positive).length < 2 || !seatPresent(ctx, ownerId)) return;
+  const source = (ctx.enemies || []).find(enemy => enemy.id === group.sourceId);
+  if (source && (!source.alive || source.skipNextTurn || controlRestrictions(ctx, source).locked)) return;
   reportUnavailable(ctx, group, ownerId, row, 'alreadyAnswered');
 }
 
