@@ -94,3 +94,25 @@ Formula, relation and value keys follow the README conventions.
   - The Prepare card object. `assets/cards/extended/card-prepare-512.webp`
     exists in `assets.csv`, but no `objects.csv` row was added because its cost
     and type are not in the decision.
+
+## 5. Evade cards sit under Defensive › Evade, with their own stance sprite
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Evade cards are under Defensive › Evade. They need their own
+  stance sprites, recorded as `placeholder`. Until those exist they use the
+  Defend stance sprite, recorded as an asset fallback.
+- **Tables changed:**
+  - Placement: no change. The tree already has Evade under Defensive
+    (`meta.combat.stance.defensive.evade`, key `evade`), and Dodge Roll's
+    `stance` is `evade`, which resolves there. Its children are Dodge, Vanish
+    and Obscure.
+  - `tables/presentation/combat-symbols.csv`, row `evade`: status `placeholder`.
+    The suggestion moves from the dodge outline icon to the Defend sprite,
+    written as `inline SVG ACTION_SIGILS.defend`. The build resolves it to
+    `svg:combatSigils.ACTION_SIGILS.defend`, the asset fallback. The dodge icon
+    stays the card's default art in `objects.csv` (`artDefault`).
+- **Couldn't place:**
+  - The Evade's own sprite has no asset id yet. The row is the placeholder
+    entry. Add an `assets.csv` id when the art exists.
+  - The other Evade cards (about 15 in the tree) are not in `objects.csv`. Only
+    Dodge Roll is modelled, so only its stance is set.
