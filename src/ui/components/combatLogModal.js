@@ -42,6 +42,9 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     titleId: 'combat-log-modal-title', body: list, secondary: [closeButton], opener, onClose,
   });
   markUiComponent(modal.panel, UI.combatLogModal);
+  // Reading the log must not skip the attack that is playing: fx.js's
+  // click-to-skip ignores anything under [data-combat-read-only].
+  modal.veil.setAttribute('data-combat-read-only', '');
   closeButton.addEventListener('click', () => modal.close());
   modal.body.scrollTop = modal.body.scrollHeight;
   return Object.freeze({

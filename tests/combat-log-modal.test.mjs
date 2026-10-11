@@ -98,3 +98,13 @@ test('the Full log button is in the drawer header, outside the scrolling entries
   assert.match(source, /panel\.append\(head, list\)/);
   assert.doesNotMatch(source, /list\.append\([^)]*fullLog/);
 });
+
+test('touching the full log never skips the attack playing underneath it', () => {
+  withModalDom((dom) => {
+    resetModalState();
+    const log = openCombatLogModal({ entries, opener: openerButton(dom) });
+    // fx.js playTimeline ignores pointer presses under [data-combat-read-only].
+    assert.ok(log.panel.closest('[data-combat-read-only]'), 'the modal is inside a combat-read-only subtree');
+    log.close();
+  });
+});
