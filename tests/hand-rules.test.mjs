@@ -358,3 +358,41 @@ test('the hand receipt carries the terms the chips print', () => {
   assert.equal(receipt.bonus, 0);
   assert.equal(receipt.terms.intelligence, 0);
 });
+
+// Turn-end refresh with a dry draw pile: the discard joins the returned hand
+// in the same shuffle, so the next turn draws from a recycled deck.
+const REFRESH_RULES = { drawMode: 'fixed', overflow: 'keep', retain: false, shuffleHand: true };
+const refreshFight = (base = {}) => fight({}, { intelligence: 10 }, { ...REFRESH_RULES, ...base }, rowsWith({ draw: { base: 4 } }));
+const handOf = (prefix, n) => Array.from({ length: n }, (_, i) => ({ instanceId: `${prefix}${i}`, cardId: 'strike', upgraded: false }));
+const ids = cards => cards.map(c => c.instanceId);
+
+test('a dry draw pile recycles the discard at turn end: the next hand is the turn draw, the discard is empty', () => {
+  const c = refreshFight();
+  c.piles.draw = [];
+  c.piles.hand = handOf('h', 4);
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.hand.length, 4, 'the next turn draws its 4');
+  assert.equal(c.piles.discard.length, 0, 'the discard was reshuffled into the draw pile');
+  assert.equal(c.piles.draw.length + c.piles.hand.length, 13);
+  assert.deepEqual(ids([...c.piles.hand, ...c.piles.draw]).sort(), [...ids(handOf('h', 4)), ...ids(handOf('d', 9))].sort());
+});
+
+test('a draw pile that already covers the next draw leaves the discard alone', () => {
+  const c = refreshFight();
+  c.piles.draw = handOf('x', 5);
+  c.piles.hand = handOf('h', 4);
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.discard.length, 9, 'the discard waits for its normal reshuffle');
+});
+
+test('reshuffle: false keeps the discard out of the turn-end refresh', () => {
+  const c = refreshFight({ reshuffle: false });
+  c.piles.draw = [];
+  c.piles.hand = handOf('h', 4);
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.discard.length, 9);
+  assert.equal(c.piles.hand.length + c.piles.draw.length, 4);
+});

@@ -156,3 +156,17 @@ test('each co-op seat refreshes its own cards and respects the 15-card cap', () 
     assert(ids(Object.values(p.piles).flat()).every(cid => cid.startsWith(id)), 'no cross-seat cards');
   }
 });
+
+test('a co-op seat with a dry draw pile recycles its own discard at turn end', () => {
+  const run = createRunState({ seed: 5, classId: 'reaver', registries });
+  const c = createCoopCombat({ registries, rng: createRng(5), players: [{ ...run, id: 'p0', classId: 'reaver', hp: 10000, maxHp: 10000,
+    deck: Array.from({ length: 25 }, (_, n) => card(`p0c${n}`)), relicIds: [], flasks: [] }], enemyIds: ['wanderingSoldier'] });
+  const p = c.players.get('p0');
+  p.piles.draw = [];
+  p.piles.hand = Array.from({ length: 4 }, (_, i) => card(`p0h${i}`));
+  p.piles.discard = Array.from({ length: 9 }, (_, i) => card(`p0d${i}`));
+  endTurn(c, 'p0');
+  assert.equal(p.piles.discard.length, 0, 'the seat discard joined the refresh');
+  assert.equal(p.piles.draw.length + p.piles.hand.length, 13);
+  assert(ids(Object.values(p.piles).flat()).every(cid => cid.startsWith('p0')), 'no cross-seat cards');
+});
