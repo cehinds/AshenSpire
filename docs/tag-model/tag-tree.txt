@@ -872,3 +872,4 @@ Grant source {Where a starting card came from. The composed deck deals bound car
   Armor {Bound to the outfit the run begins wearing.}
   Weapon {Bound to an armament in hand at creation.}
   Class {The class signature card.}
+Damage type {Identity of a typed HP damage component.}
