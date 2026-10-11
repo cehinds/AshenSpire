@@ -376,3 +376,11 @@ test('every mutating op restores the exact doc on undo and redo', () => {
   ];
   for (const r of ops) assertRestores(base, r);
 });
+
+// The DOM view loads headless: nothing touches `document` until a canvas is created.
+test('canvas view and panels import without a DOM', async () => {
+  const kit = await import('../ui/kit/canvas.mjs');
+  assert.equal(typeof kit.createCanvas, 'function');
+  assert.equal(typeof kit.createLayersPanel, 'function');
+  assert.equal(typeof kit.createInspector, 'function');
+});
