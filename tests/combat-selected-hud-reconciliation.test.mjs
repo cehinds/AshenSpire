@@ -31,7 +31,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
       field,uiZoom:()=>zoom,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,playerInfoRects:[],
       readRestingHand:()=>({clearanceTop:340}),currentSpriteArtBounds:s=>({left:40+s.index*160,right:100+s.index*160,top:190,bottom:300}),
-      combatPlayerInfoRect,combatPlayerActionRect,combatTargetHudFootprints,
+      combatPlayerInfoRect,combatPlayerActionRect,placeRestingStance:()=>null,combatTargetHudFootprints,
       playerDetailsPlacement:input=>{options.push(input);return {left:110,top:230};},
       anchorLocalBox:(host,rect)=>({left:rect.left-host.left,top:rect.top-host.top}),
     });
