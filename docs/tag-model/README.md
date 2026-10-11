@@ -122,18 +122,26 @@ and 4,424 tuning rows: almost every settings row reads from the advanced-config
 module, so the split is mostly a list of tuning knobs. Confirm the precedence
 before the split is used.
 
-**Icons.** `combat-symbols.csv` has one `status` per concept, and
-`assignedAssetRef` is an `assets.id` or blank:
+**Icons.** `combat-symbols.csv` has one `status` per concept. `assignedAssetRef`
+is an `assets.id`, an inline SVG reference, or blank:
 
-- `has symbol` (24): the concept's current icon is an asset file.
-- `placeholder` (54): no icon yet; `assignedAssetRef` is the suggested asset,
-  which exists in `assets.csv`. The artwork is not drawn yet, so every
-  `placeholder` still needs art.
-- `missing` (16): no asset file, so `assignedAssetRef` is blank. Fourteen are
-  `has symbol` rows whose icon is an inline SVG in code (`currentSymbol` names
-  it, so these drop from `has symbol`); two are `placeholder` rows whose
-  suggestion is an inline SVG (`earth`, `psychic`). `check.mjs` fails any row
-  where `missing` and a blank `assignedAssetRef` disagree.
+- `has symbol` (38): the concept's current icon is an asset file or an inline
+  SVG in code.
+- `placeholder` (56): no icon yet; `assignedAssetRef` is the suggested icon. A
+  suggested asset exists in `assets.csv`; `earth` and `psychic` suggest an
+  inline SVG. The artwork is not drawn yet, so every `placeholder` still needs
+  art.
+- `missing` (0): no icon, so `assignedAssetRef` is blank. `check.mjs` fails any
+  row where `missing` and a blank `assignedAssetRef` disagree.
+
+An inline SVG is written `svg:<Module>.<NAME>.<key>`, for example
+`svg:combatSigils.ACTION_SIGILS.attack` or `svg:cardTagSymbols.SHAPES.slashing`.
+`<Module>` is a key of `SVG_MODULES` in `tools/svg-source.mjs` (its source file),
+`<NAME>` is a `const` declared in that file, and `<key>` is an object key inside
+it. `check.mjs` reads the source and fails the reference unless all three
+resolve. `build.mjs` writes these references from the inline SVG text in the
+inventory. Earth and psychic have no symbol of their own, so they reuse the
+school sigils `SCHOOL_SIGILS.alteration` and `SCHOOL_SIGILS.illusion`.
 
 The suggested text that is not an `assets.id` (for example `card-icon:banner`)
 is mapped to the outline icon of that name under

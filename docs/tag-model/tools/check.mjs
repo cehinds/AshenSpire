@@ -22,9 +22,11 @@
 //     key (values key); relations source and target (keys); formulas [key]
 //     references; components parent (components id); layouts and styles
 //     componentId (components id); presentation tag (a presentation node key)
-//   - assets: components assetRefs tokens and combat-symbols assignedAssetRef are
-//     blank, an assets id, or a "*" pattern that matches at least one assets id;
-//     a combat-symbols row is status missing exactly when assignedAssetRef is blank
+//   - assets: components assetRefs tokens are blank, an assets id, or a "*"
+//     pattern that matches at least one assets id; combat-symbols assignedAssetRef
+//     is blank, an assets id, or an svg:<Module>.<NAME>.<key> reference whose
+//     module, NAME and key all appear in its source file (svg-source.mjs); a
+//     combat-symbols row is status missing exactly when assignedAssetRef is blank
 //   - vocabularies: tags status; layouts and styles band; settings scope;
 //     combat-symbols status
 //   - tag status: liveId only on a live-tag, resolves to a nodes.csv id, and a
@@ -36,6 +38,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv } from './csv.mjs';
 import { SHARED_LIVE } from './live-map.mjs';
+import { svgRefProblem } from './svg-source.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TM = join(HERE, '..');
@@ -309,7 +312,12 @@ if (presOk['combat-symbols'] && presOk.assets) {
   cs.rows.forEach((r, i) => {
     const tok = at(cs, r, 'assignedAssetRef');
     const status = at(cs, r, 'status');
-    if (!assetTokenOk(tok)) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) assignedAssetRef "${tok}" is not an assets id, a pattern with a match, or blank`);
+    if (tok.startsWith('svg:')) {
+      const problem = svgRefProblem(tok);
+      if (problem) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) ${problem}`);
+    } else if (!assetTokenOk(tok)) {
+      fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) assignedAssetRef "${tok}" is not an assets id, an svg: reference, a pattern with a match, or blank`);
+    }
     if (!COMBAT_STATUS.has(status)) fail(`presentation/combat-symbols: row ${i + 2} status "${status}" not in vocabulary`);
     if ((status === 'missing') !== (tok === '')) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) status "${status}" does not match assignedAssetRef "${tok}"`);
   });

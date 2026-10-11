@@ -13,7 +13,8 @@
 //      a "*" pattern (kept only if it matches an asset), anything else is blank;
 //   1. writes tables/presentation/<name>.csv with tag, liveRef and the
 //      per-table derived columns (band, scope, assignedAssetRef). combat-symbols
-//      assignedAssetRef resolves to an assets.id or is blank, and status is
+//      assignedAssetRef resolves to an assets.id, an svg:<Module>.<NAME>.<key>
+//      inline SVG (checked against its source file), or is blank, and status is
 //      placeholder / has symbol / missing accordingly;
 //   2. rebuilds the meta.presentation nodes in tables/tags.csv;
 //   3. sets status (live-tag / game-concept / new) and liveId on every tag. The
@@ -28,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv, toCsv } from './csv.mjs';
 import { bandOf } from './bands.mjs';
 import { LIVE, GAME, SHARED_LIVE } from './live-map.mjs';
+import { svgRefFromText, svgRefProblem } from './svg-source.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TM = join(HERE, '..');
@@ -315,14 +317,26 @@ liveRefs['combat-symbols'] = rowMap('combat-symbols', r => {
   const m = get(inv['combat-symbols'], r, 'currentAssetRef').match(/src\/[^\s;]+/);
   return m ? m[0] : '';
 });
-// assignedAssetRef is an assets.id or blank. A row with a suggested asset (a
-// placeholder) takes that suggestion; a has-symbol row keeps its current file.
-// Text that is not an assets.id (inline SVG, a text glyph) is blank, and the row
-// is status "missing"; its code symbol stays in currentSymbol.
+// assignedAssetRef is an assets.id, an svg:<Module>.<NAME>.<key> reference to an
+// inline SVG in code, or blank. A row with a suggested icon (a placeholder) takes
+// that suggestion; a has-symbol row keeps its current icon. An inline SVG is a
+// symbol (svg-source.mjs resolves it against the source file). Text that is none
+// of these (a bare text glyph) is blank, and the row is status "missing".
 const ICON_DIRS = {
   'card-icon': ['assets/cards/default-outline/icons/', 'assets/player-polish/ui/icons/'],
   'ui-icon': ['assets/player-polish/ui/icons/', 'assets/cards/default-outline/icons/'],
 };
+function iconRef(text) {
+  const t = String(text).trim();
+  if (!t) return '';
+  const svg = svgRefFromText(t);
+  if (svg) {
+    const problem = svgRefProblem(svg);
+    if (problem) throw new Error('combat-symbols: ' + problem);
+    return svg;
+  }
+  return mapIcon(t);
+}
 function mapIcon(text) {
   const t = String(text).trim();
   if (!t) return '';
@@ -343,7 +357,7 @@ const assignedAssetRef = combatRows.rows.map((r) => {
   const suggested = String(get(combatRows, r, 'suggestedAssetRef')).trim();
   const current = String(get(combatRows, r, 'currentAssetRef')).trim();
   const placeholder = suggested !== '';
-  const mapped = mapIcon(placeholder ? suggested : current);
+  const mapped = iconRef(placeholder ? suggested : current);
   combatStatus.push(mapped === '' ? 'missing' : placeholder ? 'placeholder' : 'has symbol');
   return mapped;
 });
