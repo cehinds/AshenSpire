@@ -4,6 +4,29 @@ Audited 2026-10-11 at `dev` `f42a38e2`. Read-only audit: each SPEC.md section ch
 
 Owner decisions (2026-10-11): SPEC follows the code. Actions and Stamina are one pool (`energy` is the retired alias). Code defaults that disagree with SPEC are written into SPEC. Never-built sections are removed from SPEC.
 
+## Outcome (PR #1863)
+
+SPEC.md was corrected in this PR, one section range per commit wave, following the owner's decisions above. These items were left unchanged because each needs an owner decision:
+
+- §3.2 L192-194: "content imports nothing", but `src/content/prototypes/combatBuilds.js` imports engine modules, and content imports `framework/` and `config/`.
+- §3.8 L536-538: `extractionRefusal` also honours a stored `run.poolDeck` flag; SPEC says it never reads a stored field.
+- §4 L810-813: the `"carry"` Stamina rule has no effect on turn 1 (`src/engine/combat.js:503-504` refills).
+- §5.1: is `classDef.maxHp` a live HP input or a dead seed?
+- §5.1: four Rogue outfits in SPEC, eight rows in `outfits.csv`.
+- §5.2: Guard Counter is a direct hit in SPEC, a prepared counter in its card text.
+- §6: bosses drop a boss-relic choice of 3 in SPEC, one relic in `src/main.js`.
+- §7.2: enemy cap, 5 (UI `maxRows`) or 6 (formation rows)?
+- §7.2: which gate checks the five named viewports, and the settings door geometry?
+- §7.2.1: Export configuration shows only on debug pages; expose it on release pages?
+- §8: release-shots has no CI runner; name one or mark it manual.
+- §11: is LAN co-op in the current release set?
+- §12.5: the resting-stance animation rules need a browser check.
+- §13.4p: new runs stamp `breakMeterVersion` 2, so the one-break-meter rule is not live.
+- §13.4r: cards still pay `upcastSurcharge` (`src/engine/combat.js:1213`).
+- Scope table L29: "195 cards (40 per class)" against a 36-card pool; card totals were not counted.
+- §3.4 L242: `addRunes` is `addCinders` in code (left per the preamble's vocabulary rule).
+- §3.6 L391-392: are `staggerBreak` and `resonance` live, and does §13.4k gate them?
+
 ## Headline: Actions and Stamina are one resource
 
 - `energy`/`energyMax` are getter aliases of `stamina`/`maxStamina` (`src/model/turnStamina.js:3-12`).
