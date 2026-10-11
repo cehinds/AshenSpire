@@ -74,7 +74,7 @@ import { resourceAura } from '../combatAura.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import { resolveCoopPlayedCombatCard } from '../models/PlayedCombatCard.js';
-import { combatToolsModel } from '../models/CombatToolsModel.js';
+import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
 import { mountCombatTools } from '../components/combatTools.js';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
@@ -349,7 +349,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let combatLayout = null; // the layout adapter (components/combatLayout.js) for the mounted board
   let combatTools = null;
-  const combatToolsState = { open: false, size: 'Small', followLatest: true };
+  const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
   // The beat is the same on pointer, keyboard and pad since S7 went wide
   // (2026-08-17); the dial is the only switch. This line said "pointer-only;

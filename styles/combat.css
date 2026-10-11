@@ -1677,6 +1677,18 @@
 .combat-log-panel { position:absolute; right:0; bottom:calc(100% + 6px / var(--ui-zoom,1)); width:min(calc(300px / var(--ui-zoom,1)),calc(100vw / var(--ui-zoom,1) - 24px / var(--ui-zoom,1))); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; border:1px solid var(--gold); border-radius:4px; background:rgba(19,16,12,.82); color:#fff7e4; box-shadow:0 4px 18px #0008; }
 .combat-log-panel[hidden] { display:none; }
 .combat-log-heading { color:var(--gold); padding:4px 8px; font-family:var(--font-heading,serif); font-weight:bold; }
+.combat-log-head { display:flex; align-items:center; justify-content:space-between; gap:6px; padding-right:4px; }
+.combat-log-head > .combat-log-heading { flex:1; min-width:0; padding-right:0; }
+.combat-log-full { flex:none; min-height:max(44px, calc(44px / var(--ui-zoom,1))); padding:0 10px; font-size:calc(12px / var(--ui-zoom,1)); }
+/* The full log door fills the viewport, safe areas included: the panel's own
+   background runs under the notch and home bar, and its padding keeps the
+   head and the entries clear of them. Specificity beats the rung's width. */
+.modal-veil:has(> .combat-log-modal) { padding: 0 !important; }
+.modal.combat-log-modal[data-size] { --modal-rung-width: calc(100vw / var(--ui-zoom,1)); width: calc(100vw / var(--ui-zoom,1)); max-width: none; height: calc(100dvh / var(--ui-zoom,1)); max-height: none; border: 0; border-radius: 0; box-sizing: border-box; padding: calc(env(safe-area-inset-top,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-right,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-bottom,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-left,0px) / var(--ui-zoom,1)); }
+.combat-log-modal-entries { padding: 0.6rem 1.4rem 2rem; font-size: calc(15px / var(--ui-zoom,1)); line-height: 1.45; }
+.combat-log-modal-entries h3 { font-size: inherit; color: var(--gold); margin: 1rem 0 0.3rem; }
+.combat-log-modal-entries ol { list-style: none; padding: 0; margin: 0; }
+.combat-log-modal-entries li { border-bottom: 1px solid #b4925438; padding: 0.35rem 0; }
 .combat-log-sizes { display:flex; gap:3px; padding:0 4px 4px; }
 .combat-log-sizes > button { flex:1; min-width:0; min-height:calc(44px / var(--ui-zoom,1)); padding:2px; font-size:inherit; }
 .combat-log-sizes > button[aria-pressed='true'] { border-color:var(--gold); color:var(--gold); background:#3d3021; }
