@@ -177,11 +177,28 @@ function csvLine(row, columns, types) {
   return columns.map((c) => csvCell(cellText(row[c.key], types[c.key]))).join(',');
 }
 
-function parseCsv(text) {
+/** The raw records of a CSV body, split at line breaks outside quotes (RFC 4180): a multiline quoted cell stays in one record. */
+function rawRecords(body) {
+  const out = [];
+  let start = 0, quoted = false;
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === '"') quoted = !quoted; // a doubled quote toggles twice, so the state holds inside a quoted cell
+    else if (ch === '\n' && !quoted) {
+      out.push(body.slice(start, body[i - 1] === '\r' ? i - 1 : i));
+      start = i + 1;
+    }
+  }
+  out.push(body.slice(start));
+  return out;
+}
+
+/** The CSV reader. `rfc` reads a docs/tag-model table: quoted cells may hold line breaks (workbench/lib/tag-model-csv.mjs). */
+function parseCsv(text, { rfc = false } = {}) {
   const bom = text.startsWith('﻿');
   const body = bom ? text.slice(1) : text;
   const eol = body.includes('\r\n') ? '\r\n' : '\n';
-  const lines = body.split(/\r?\n/);
+  const lines = rfc ? rawRecords(body) : body.split(/\r?\n/);
   const trailingNewline = lines.length > 1 && lines.at(-1) === '';
   if (trailingNewline) lines.pop();
   const headerAt = lines.findIndex((l) => !isCommentOrBlank(l));
@@ -312,7 +329,7 @@ function serializeJson(meta, { rows }) {
  */
 export function parseTable(path, text, { hash = null } = {}) {
   const format = /\.csv$/.test(path) ? 'csv' : 'json';
-  const parsed = format === 'csv' ? parseCsv(text) : parseJson(text);
+  const parsed = format === 'csv' ? parseCsv(text, { rfc: /^docs\/tag-model\/tables\//.test(path) }) : parseJson(text);
   return { path, format, columns: parsed.columns, rows: parsed.rows, baseHash: hash, text, meta: parsed.meta };
 }
 
