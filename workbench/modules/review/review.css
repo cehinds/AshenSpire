@@ -48,11 +48,12 @@
 .rv-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
 .rv-table th, .rv-table td { padding: 6px 8px; border-bottom: 1px solid var(--as-line, #3a2f20); text-align: left; vertical-align: middle; }
 .rv-table thead th { position: sticky; top: 0; z-index: 1; background: var(--as-bg-panel, #1a1815); font-weight: 600; }
-.rv-table tbody th { font-weight: 500; white-space: nowrap; }
+.rv-table tbody th { font-weight: 500; white-space: nowrap; position: sticky; left: 0; z-index: 1; background: var(--as-bg, #131210); }
+.rv-table thead th:first-child { left: 0; z-index: 2; }
 .rv-dim { opacity: 0.6; font-size: 12px; white-space: nowrap; }
-.rv-thumb { width: 170px; }
+.rv-thumb { width: 146px; }
 .rv-ph { display: inline-block; min-width: 120px; padding: 18px 6px; font-size: 12px; opacity: 0.6; text-align: center; border: 1px dashed var(--as-line-strong, #453e35); border-radius: 4px; }
-.rv-img { display: block; width: 160px; height: auto; border-radius: 4px; border: 1px solid var(--as-line, #3a2f20); background: #0d0c0a; }
+.rv-img { display: block; width: 136px; height: auto; border-radius: 4px; border: 1px solid var(--as-line, #3a2f20); background: #0d0c0a; }
 .rv-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rv-none { padding: 24px; text-align: center; opacity: 0.75; }
 
