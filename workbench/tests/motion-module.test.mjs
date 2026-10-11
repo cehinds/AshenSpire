@@ -50,7 +50,7 @@ test('the module gates every edit and every save on isGenerated, so build-writte
   const src = read('workbench/modules/motion/index.mjs');
   assert.match(src, /isGenerated,/, 'the module imports the generated-file rule from the model');
   assert.match(src, /function commitProject\(next, label\) \{[\s\S]*?isGenerated\(st\.file\.path\)[\s\S]*?return;/, 'commitProject refuses a generated file');
-  assert.match(src, /function dirtyChanges\(\) \{[\s\S]*?isGenerated\(f\.path\)[\s\S]*?return \[\];/, 'no change reaches the save call for a generated file');
+  assert.match(src, /function dirtyChanges\(\) \{[\s\S]*?saveChangesOf\([\s\S]*?isGenerated\(f\.path\)/, 'no change reaches the save call for a generated file');
 });
 
 test('the inspector shows the generated note and disables every control for a generated file', () => {
@@ -66,7 +66,7 @@ test('Keep my version saves on the hashes the 409 reported, and never reads the 
   const keep = src.match(/if \(act === 'keep'\) \{[\s\S]*?\n      \}/);
   assert.ok(keep, 'the keep branch exists');
   assert.doesNotMatch(keep[0], /files\/read/, 'keep does not re-read the file');
-  assert.match(src, /rebaseOnConflicts\(/, 'the save changes are rebased on the reported hashes');
+  assert.match(src, /saveChangesOf\([\s\S]*?keepConflicts \|\| \[\]\)/, 'the save changes are rebased on the reported hashes');
 });
 
 test('the drawing code reads the display view of a project, so a null collection cannot throw before the problems show', () => {
@@ -85,6 +85,21 @@ test('a file read that a newer selection overtakes is dropped, not installed', (
   const src = read('workbench/modules/motion/index.mjs');
   assert.match(src, /async function openFile\(path\) \{\s*const gen = selection\.begin\(\);[\s\S]*?if \(!selection\.current\(gen\)\) return;/, 'openFile takes a generation and checks it after the read');
   assert.match(src, /const selection = selectionGate\(\);/);
+});
+
+test('switching files keeps each open file as a draft: a dirty one comes back as edited, without a disk read', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  assert.match(src, /async function openFile\(path\) \{[\s\S]*?const held = st\.drafts\.get\(path\);[\s\S]*?if \(isDirtyFile\(held\)\) \{ showFile\(held, false\); return; \}/, 'a dirty draft is restored, not read again');
+  assert.match(src, /function showFile\(rec, fresh\) \{\s*st\.drafts = keepDrafts\(st\.drafts, rec\.path\);/, 'a switch keeps the dirty drafts');
+  assert.match(src, /ctx\.history\.clear\(\);/, 'undo steps do not cross files');
+  assert.match(src, /dirtyChanges\(\) \{\s*return saveChangesOf\(/, 'the review and Mod+S cover every dirty draft');
+});
+
+test('Reload from disk drops the drafts of the conflicting files, so the reopen reads the disk copy', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  const reload = src.match(/if \(act === 'reload'\) \{[\s\S]*?\n      \}/);
+  assert.ok(reload, 'the reload branch exists');
+  assert.match(reload[0], /st\.drafts\.delete\(/, 'the draft goes before the reopen');
 });
 
 test('the position editor locks every handle of a generated file', () => {

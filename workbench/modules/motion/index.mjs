@@ -15,7 +15,7 @@ import {
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
-  rebaseOnConflicts, viewOf, selectionGate,
+  rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -117,7 +117,8 @@ export default {
       setsListed: false,
       filter: { q: '', kind: 'all', classId: '' },
       outfit: null,
-      file: null, // { path, kind, hash, original, project, problems }
+      file: null, // the open draft: { path, kind, hash, original, project, problems }
+      drafts: new Map(), // path -> draft, for each open file that is dirty (and the one open)
       time: 0, playing: false, speed: 1, loop: true, facing: 'right', size: 'medium', background: 'checker',
       onion: { prev: false, next: false },
       selected: null, // { kind: 'clip', id } | { kind: 'anchor', name }
@@ -255,6 +256,9 @@ export default {
     const selection = selectionGate();
     async function openFile(path) {
       const gen = selection.begin();
+      // A file with unsaved edits comes back as it was left: its draft, not a second read of the disk.
+      const held = st.drafts.get(path);
+      if (isDirtyFile(held)) { showFile(held, false); return; }
       let r;
       try { r = await ctx.api(`files/read?path=${encodeURIComponent(path)}`); } catch (err) {
         if (selection.current(gen)) ctx.toast({ kind: 'error', title: `Could not open ${path}`, detail: err.message, record: false });
@@ -262,15 +266,24 @@ export default {
       }
       if (!selection.current(gen)) return;
       const parsed = parsePoseFile(r.text);
-      st.file = { path, kind: r.kind, hash: r.hash, original: r.text, project: parsed.project, problems: parsed.problems };
+      showFile({ path, kind: r.kind, hash: r.hash, original: r.text, project: parsed.project, problems: parsed.problems }, true);
+    }
+    /**
+     * Makes a draft the open file. Dirty drafts of the other files stay; clean ones go. Undo steps
+     * belong to one file, so they are cleared on a switch.
+     */
+    function showFile(rec, fresh) {
+      st.drafts = keepDrafts(st.drafts, rec.path);
+      st.drafts.set(rec.path, rec);
+      st.file = rec;
       keepConflicts = null;
       conflictList = [];
       st.time = 0;
       st.selected = null;
       st.playing = false;
       ctx.history.clear();
-      if (parsed.project?.actor && st.index.outfits.includes(parsed.project.actor) && !st.outfit) st.outfit = parsed.project.actor;
-      fileEl.textContent = path;
+      if (fresh && rec.project?.actor && st.index.outfits.includes(rec.project.actor) && !st.outfit) st.outfit = rec.project.actor;
+      fileEl.textContent = rec.path;
       sendLoad();
       renderAll();
       if (pendingLink?.frame != null) { applyFrame(pendingLink.frame); }
@@ -549,11 +562,9 @@ export default {
     let saving = false;
     // The 409 files of the last save, and the disk hashes "Keep my version" saves them against.
     let conflictList = [], keepConflicts = null;
-    /** The open file's change, if its project differs from the bytes read: the same text a save would write. */
+    /** Every draft whose project differs from the bytes read: the same text a save would write, for each file. */
     function dirtyChanges() {
-      const f = st.file;
-      if (!f || isGenerated(f.path) || !isDirty(f.original, f.project)) return [];
-      return rebaseOnConflicts([{ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }], keepConflicts || []);
+      return saveChangesOf([...st.drafts.values()].filter((f) => !isGenerated(f.path)), keepConflicts || []);
     }
     function renderDirty() {
       const dirty = dirtyChanges().length > 0;
@@ -604,8 +615,10 @@ export default {
       keepConflicts = null;
       conflictList = [];
       const sent = new Map(changes.map((c) => [c.path, c.text]));
+      // Each saved draft now matches its file on disk: its bytes and hash become the new base.
       for (const saved of data.files || []) {
-        if (st.file && saved.path === st.file.path) { st.file.original = sent.get(saved.path); st.file.hash = saved.hash; }
+        const draft = st.drafts.get(saved.path);
+        if (draft) { draft.original = sent.get(saved.path); draft.hash = saved.hash; }
       }
       dlg.close();
       renderAll();
@@ -618,10 +631,15 @@ export default {
       if (act === 'close') { dlg.close(); return; }
       if (act === 'save') { await save(); return; }
       if (act === 'reload') {
+        // The conflicting files' drafts go, so each reads the disk copy; the open file is read again if it conflicted.
         const path = st.file.path;
+        const changed = conflictList.map((c) => c.path);
         dlg.close();
-        await openFile(path);
-        ctx.toast({ kind: 'warn', title: 'Reloaded from disk', detail: 'Your edits to this file were dropped.', record: false });
+        for (const p of changed) st.drafts.delete(p);
+        keepConflicts = null;
+        conflictList = [];
+        if (changed.includes(path)) await openFile(path); else renderAll();
+        ctx.toast({ kind: 'warn', title: 'Reloaded from disk', detail: 'Your edits to the changed files were dropped.', record: false });
         return;
       }
       if (act === 'keep') {
