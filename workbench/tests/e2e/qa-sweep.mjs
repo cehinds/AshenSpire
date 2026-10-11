@@ -304,46 +304,46 @@ async function dataStudio() {
 
 async function layoutStudio() {
   await goModule('Layout Studio');
-  await waitVisible('.ck-item');
+  await waitVisible('.view.active .ck-item');
   await check('Layout: Fit the wireframe', async () => {
     await page.click('.view.active button[data-act="fit"]');
     await sleep(300);
-    return await textOf('.ck-zoom');
+    return await textOf('.view.active .ck-zoom');
   });
   await check('Layout: select a region opens the inspector', async () => {
-    await page.click('.ck-item >> nth=0', { force: true });
+    await page.click('.view.active .ck-item >> nth=0', { force: true });
     await sleep(300);
-    expect(await page.locator('.lay-insp input[data-key]').count() > 0, 'inspector has no fields after selecting a region');
+    expect(await page.locator('.view.active .lay-insp input[data-key]').count() > 0, 'inspector has no fields after selecting a region');
   });
   await check('Layout: drag a region and see it move', async () => {
-    const box = await page.locator('.ck-item >> nth=1').boundingBox();
+    const box = await page.locator('.view.active .ck-item >> nth=1').boundingBox();
     const x0 = box.x + box.width / 2, y0 = box.y + box.height / 2;
-    const before = await page.locator('.ck-item >> nth=1').evaluate((n) => n.style.left);
+    const before = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
     await page.mouse.move(x0, y0); await page.mouse.down();
     for (let i = 1; i <= 8; i++) await page.mouse.move(x0 + i * 6, y0);
     await page.mouse.up();
     await sleep(300);
-    const after = await page.locator('.ck-item >> nth=1').evaluate((n) => n.style.left);
+    const after = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
     expect(before !== after, `region did not move (${before} -> ${after})`);
     return `${before} -> ${after}`;
   });
   await check('Layout: undo reverts the drag', async () => {
-    const before = await page.locator('.ck-item >> nth=1').evaluate((n) => n.style.left);
+    const before = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
     await page.click(VUNDO);
     await sleep(300);
-    const after = await page.locator('.ck-item >> nth=1').evaluate((n) => n.style.left);
+    const after = await page.locator('.view.active .ck-item >> nth=1').evaluate((n) => n.style.left);
     expect(before !== after, 'undo did not change the region position');
   });
   await check('Layout: More menu opens and lists the coming modes', async () => {
-    await page.click('.lay-more > summary');
+    await page.click('.view.active .lay-more > summary');
     await sleep(200);
-    expect(await page.locator('.lay-more[open] .lay-more-list').count() === 1, 'More menu did not open');
-    await page.click('.lay-more > summary');
+    expect(await page.locator('.view.active .lay-more[open] .lay-more-list').count() === 1, 'More menu did not open');
+    await page.click('.view.active .lay-more > summary');
   });
   await check('Layout: Review changes opens and Close cancels', async () => {
-    await page.click('.ck-item >> nth=1', { force: true });
+    await page.click('.view.active .ck-item >> nth=1', { force: true });
     await page.mouse.move(0, 0);
-    const box = await page.locator('.ck-item >> nth=1').boundingBox();
+    const box = await page.locator('.view.active .ck-item >> nth=1').boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
     for (let i = 1; i <= 4; i++) await page.mouse.move(box.x + box.width / 2 + i * 8, box.y + box.height / 2);
     await page.mouse.up();
