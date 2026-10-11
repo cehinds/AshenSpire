@@ -56,3 +56,32 @@ test('the two Tag model jobs share one lock group', () => {
   assert.equal(JOBS['tag-model-check'].lock, TAG_MODEL);
   assert.notEqual(TAG_MODEL, 'generated-sources');
 });
+
+/** A root with the tag model tools, and a game .build-lock held by this live process (a game build running). */
+function rootWithHeldBuildLock(t) {
+  const root = tmpRoot(t);
+  fs.mkdirSync(path.join(root, 'docs/tag-model/tools'), { recursive: true });
+  for (const f of ['build.mjs', 'check.mjs', 'compile.mjs']) fs.writeFileSync(path.join(root, 'docs/tag-model/tools', f), 'process.exitCode = 0;');
+  fs.writeFileSync(path.join(root, '.build-lock'), JSON.stringify({ pid: process.pid, holder: 'Game build', startedAt: Date.now() }));
+  return root;
+}
+
+test('a held game .build-lock does not block the tag-model check job', async (t) => {
+  const root = rootWithHeldBuildLock(t);
+  const runner = new JobRunner({ root, stateFile: path.join(root, 'state', 'jobs.json') });
+  const started = runner.start('tag-model-check');
+  for (let i = 0; i < 300 && runner.active.has('tag-model-check'); i += 1) await new Promise((r) => setTimeout(r, 10));
+  assert.equal(runner.get(started.runId).status, 'passed');
+});
+
+test('the tag-model job takes no cross-process lock: the .build-lock file is not created or changed by it', async (t) => {
+  const root = tmpRoot(t);
+  fs.mkdirSync(path.join(root, 'docs/tag-model/tools'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'docs/tag-model/tools/check.mjs'), 'process.exitCode = 0;');
+  const runner = new JobRunner({ root, stateFile: path.join(root, 'state', 'jobs.json') });
+  const started = runner.start('tag-model-check');
+  assert.equal(fs.existsSync(path.join(root, '.build-lock')), false, 'no lock file while it runs');
+  for (let i = 0; i < 300 && runner.active.has('tag-model-check'); i += 1) await new Promise((r) => setTimeout(r, 10));
+  assert.equal(runner.get(started.runId).status, 'passed');
+  assert.equal(fs.existsSync(path.join(root, '.build-lock')), false, 'and none after it');
+});

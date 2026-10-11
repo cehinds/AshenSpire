@@ -30,6 +30,10 @@ const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests
 export const GENERATED = 'generated-sources';
 /** The tag model jobs share one group: they regenerate and check the same docs/tag-model tables. */
 export const TAG_MODEL = 'tag-model';
+/** Groups held in this process only. The tag model writes docs/tag-model, which no game build reads, so it
+ *  never takes the cross-process .build-lock (tools/lib/build-lock.mjs) that the game's builds hold. Its
+ *  saves and jobs still exclude each other through the in-process group. */
+export const PROCESS_ONLY_GROUPS = new Set([TAG_MODEL]);
 export const TAG_MODEL_MISSING = 'docs/tag-model is not on this branch yet. It lands with feature/TagRefactor.';
 
 /** A job's params: absent or null means the defaults ({}); any other non-object is a 400. */
@@ -144,11 +148,16 @@ export class JobRunner {
     if (!job) throw Object.assign(Error(`Unknown job: ${String(id).slice(0, 60)}`), { status: 400 });
     if (this.active.has(id)) throw Object.assign(Error(`${job.label} is already running`), { status: 409 });
     const steps = job.steps(this.root, { params: jobParams(params), stateDir: path.dirname(this.stateFile) });
-    if (job.lock && this.locks.has(job.lock)) throw Object.assign(Error(`${this.locks.get(job.lock)} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
+    if (job.lock && this.locks.has(job.lock)) throw Object.assign(Error(PROCESS_ONLY_GROUPS.has(job.lock) ? `${this.locks.get(job.lock)} is running; ${job.label} can start when it finishes` : `${this.locks.get(job.lock)} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
     if (job.lock) {
-      const got = tryFileLock(this.root, `${job.label} (Workbench)`);
-      if (typeof got !== 'function') throw Object.assign(Error(`${busyMessage(got.heldBy)} (it writes the same generated files as ${job.label})`), { status: 409, heldBy: got.heldBy });
-      this.locks.set(job.lock, job.label); this.fileLocks.set(job.lock, got);
+      // A process-only group (the tag model) takes no cross-process lock: the game's .build-lock never blocks it.
+      let got = null;
+      if (!PROCESS_ONLY_GROUPS.has(job.lock)) {
+        got = tryFileLock(this.root, `${job.label} (Workbench)`);
+        if (typeof got !== 'function') throw Object.assign(Error(`${busyMessage(got.heldBy)} (it writes the same generated files as ${job.label})`), { status: 409, heldBy: got.heldBy });
+        this.fileLocks.set(job.lock, got);
+      }
+      this.locks.set(job.lock, job.label);
     }
     const run = { runId: `${Date.now().toString(36)}-${randomBytes(3).toString('hex')}`, id, label: job.label, status: 'running', startedAt: Date.now(), endedAt: null, durationMs: null, exitCode: null, message: '', log: '' };
     this.runs.unshift(run); this.runs.length = Math.min(this.runs.length, HISTORY);
@@ -228,17 +237,22 @@ export class JobRunner {
    *  it as `label`; pair with release(). Rejects if another process keeps the
    *  cross-process lock past `timeoutMs`. */
   async acquire(lock, label, { timeoutMs, pollMs, signal } = {}) {
+    // The in-process wait honours timeoutMs too: past it the wait rejects with a 409 that names the holder.
+    const deadline = Number.isFinite(timeoutMs) ? Date.now() + timeoutMs : null;
     // An aborted signal ends either wait at once, and the lock is then never taken.
     for (;;) {
       if (signal?.aborted) throw signal.reason instanceof Error ? signal.reason : new Error('Aborted');
       if (!this.locks.has(lock)) break;
+      if (deadline !== null && Date.now() >= deadline) throw Object.assign(Error(`${this.locks.get(lock)} is running; try again when it finishes`), { status: 409 });
       await new Promise((resolve) => {
-        const wake = () => { signal?.removeEventListener('abort', wake); resolve(); };
+        const wake = () => { clearTimeout(timer); signal?.removeEventListener('abort', wake); resolve(); };
+        const timer = deadline === null ? null : setTimeout(wake, Math.max(1, deadline - Date.now()));
         this.lockWaiters.push(wake);
         signal?.addEventListener('abort', wake, { once: true });
       });
     }
     this.locks.set(lock, label);
+    if (PROCESS_ONLY_GROUPS.has(lock)) return;
     try { this.fileLocks.set(lock, await waitFileLock(this.root, `${label} (Workbench)`, { timeoutMs, pollMs, signal })); } catch (e) { this.release(lock); throw e; }
   }
 
