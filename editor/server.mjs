@@ -3,12 +3,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { spawn, spawnSync, execFileSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
 import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
 import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
-import { stopGroup, waitGroupEmpty } from '../tools/lib/process-tree.mjs';
+import { spawnGroup } from '../tools/lib/process-tree.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -25,18 +25,9 @@ const WRITES_GENERATED = new Set(['content', 'build']);
 // under them holds the shared lock from validation through the last write.
 const BUILD_INPUT = /^(?:content|src|styles)\//;
 
-// A build action can start builders of its own (notably launch.mjs). Keep each
-// action in a process group on POSIX and stop the complete tree on shutdown so
-// no orphan can keep writing after the Editor's lock holder has exited.
-function killTree(child, { platform = process.platform, run = spawnSync } = {}) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
-  try {
-    if (platform === 'win32') {
-      const result = run('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
-      if (result.error || result.status !== 0) child.kill();
-    } else process.kill(-child.pid, 'SIGTERM');
-  } catch { try { child.kill(); } catch { /* already gone */ } }
-}
+// A build action can start builders of its own (notably launch.mjs). Each action runs in its own
+// process group (spawnGroup), and close() stops the complete group, so no orphan keeps writing after
+// the Editor's lock holder has exited.
 // A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
 // Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
 export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
@@ -93,21 +84,17 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
       for (const args of commands[name]) {
         if (current.stopping) return; // the Editor is closing: no further step starts
         current.output += `> node ${args.join(' ')}\n`;
-        const code = await new Promise(resolve => {
-          // Builders run under this action's hold on the lock (tools/lib/build-lock.mjs).
-          const child = spawn(process.execPath, args, { cwd: root, windowsHide: true, detached: process.platform !== 'win32', env: { ...process.env, ...lockEnv(release) } });
-          current.child = child;
-          const append = data => { current.output = (current.output + data).slice(-120000); };
-          child.stdout.on('data', append); child.stderr.on('data', append);
-          child.on('error', error => { append(error.message); resolve(-1); });
-          // A stopping step frees the lock only once its whole group is gone (tools/lib/process-tree.mjs).
-          child.on('close', async code => {
-            if (current.stopping && process.platform !== 'win32') await waitGroupEmpty(child.pid);
-            resolve(code);
-          });
-        });
-        delete current.child;
-        if (code !== 0) { current.status = 'failed'; current.exitCode = code; return; }
+        // Builders run under this action's hold on the lock (tools/lib/build-lock.mjs). The step runs in its own
+        // group, and the lock is released only once that group is empty (spawnGroup's done).
+        const group = spawnGroup(process.execPath, args, { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) } });
+        current.group = group;
+        const append = data => { current.output = (current.output + data).slice(-120000); };
+        group.child.stdout.on('data', append); group.child.stderr.on('data', append);
+        const { code, error } = await group.done;
+        if (error) append(error.message);
+        delete current.group;
+        const status = error ? -1 : code;
+        if (status !== 0) { current.status = 'failed'; current.exitCode = status; return; }
       }
       current.status = 'passed';
     }
@@ -218,9 +205,8 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
   return { server, workspace, codex, url: `http://127.0.0.1:${server.address().port}`, close: async () => {
     codex.close();
     if (job) job.stopping = true;
-    killTree(job?.child);
-    // POSIX: SIGKILL the group after the grace period, and wait until it is empty before the lock goes.
-    if (job?.child && process.platform !== 'win32') await stopGroup(job.child.pid);
+    // SIGTERM the step's group, SIGKILL it after the grace period, and wait until it is empty before the lock goes.
+    await job?.group?.stop();
     await job?.done;
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));

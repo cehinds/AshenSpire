@@ -819,6 +819,28 @@ test('closing the Workbench stops a live-reload build it started, so the build w
   assert.equal(await exists('src/config/late.js'), false, 'the build was stopped before it could write');
 });
 
+test('close() stops a live-reload build whose grandchild ignores SIGTERM: it is dead, and writes nothing, once close resolves', { skip: process.platform === 'win32' }, async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // The build starts a grandchild that ignores SIGTERM and writes late.txt 700 ms in; the build itself dies on SIGTERM.
+  const grandchild = "process.on('SIGTERM', () => {}); require('node:fs').writeFileSync('grandchild.pid', String(process.pid)); setTimeout(() => require('node:fs').writeFileSync('late.txt', 'late'), 700); setInterval(() => {}, 1000);";
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `import { spawn } from 'node:child_process';\nspawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'ignore' });\nsetInterval(() => {}, 1000);\n`);
+  const { app } = await boot(t, root);
+  await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n');
+  const exists = (rel) => fs.stat(path.join(root, rel)).then(() => true, () => false);
+  for (let i = 0; i < 200 && !(await exists('grandchild.pid')); i++) await new Promise((r) => setTimeout(r, 20));
+  const pid = Number(await fs.readFile(path.join(root, 'grandchild.pid'), 'utf8'));
+  assert.ok(pid > 0, 'the live-reload build started its grandchild');
+  await app.close();
+  // Dead, or an unreaped zombie that can no longer run or write.
+  const state = await fs.readFile(`/proc/${pid}/stat`, 'utf8').then((s) => (/\) Z /.test(s) ? 'zombie' : 'running'), () => 'gone');
+  assert.notEqual(state, 'running', 'the grandchild is dead once close() resolves');
+  const atClose = await exists('late.txt');
+  await new Promise((r) => setTimeout(r, 1200));
+  assert.equal(await exists('late.txt'), atClose, 'nothing was written after close() resolved');
+  assert.equal(await exists('.build-lock'), false, 'the build lock is released once close() resolves');
+});
+
 test('a started job is persisted at once, so a restart before it finishes lists it as cancelled', async (t) => {
   const root = await project(t);
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });

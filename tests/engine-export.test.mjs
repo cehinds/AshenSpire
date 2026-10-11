@@ -190,13 +190,34 @@ test('staleGenerated runs the builders (or their --check) and names the stale on
   writeFileSync(join(fixture, 'tools', 'current.mjs'), "process.exit(0);\n");
   writeFileSync(join(fixture, 'tools', 'stale.mjs'), "if (process.argv.includes('--check')) { console.error('STALE: out of date'); process.exit(1); }\n");
   const builders = ['tools/current.mjs', 'tools/stale.mjs', 'tools/absent.mjs'];
-  const checked = staleGenerated({ root: fixture, build: false, builders });
+  const checked = await staleGenerated({ root: fixture, build: false, builders });
   assert.deepEqual(checked.map((f) => f.script), ['tools/stale.mjs']);
   assert.match(checked[0].output, /STALE: out of date/);
-  assert.deepEqual(staleGenerated({ root: fixture, build: true, builders }), [], 'build mode does not pass --check');
+  assert.deepEqual(await staleGenerated({ root: fixture, build: true, builders }), [], 'build mode does not pass --check');
 
   const r = run('--no-build', '--only', 'content.cards', '--out', join(scratch, 'no-build'));
   assert.equal(r.status, 0, `the checkout's generated modules are current:\n${r.stdout}${r.stderr}`);
+});
+
+test('staleGenerated does not return while a builder grandchild that ignores SIGTERM is alive; nothing is written after', { skip: process.platform === 'win32' }, async () => {
+  const { staleGenerated } = await import('../tools/engine-export.mjs');
+  const { createStepRunner } = await import('../tools/lib/build-steps.mjs');
+  const fixture = join(scratch, 'leaky-fixture');
+  mkdirSync(join(fixture, 'tools'), { recursive: true });
+  const late = join(fixture, 'late.txt');
+  const pidFile = join(fixture, 'grandchild.pid');
+  // The builder starts a grandchild that ignores SIGTERM and writes late.txt 700 ms in, then exits once the grandchild has its pid.
+  const grandchild = `process.on('SIGTERM', () => {}); require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid)); setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(late)}, 'late'), 700); setInterval(() => {}, 1000);`;
+  writeFileSync(join(fixture, 'tools', 'leaky.mjs'), `import { spawn } from 'node:child_process';\nimport fs from 'node:fs';\nspawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'ignore' });\nconst w = setInterval(() => { if (fs.existsSync(${JSON.stringify(pidFile)})) { clearInterval(w); process.exit(0); } }, 10);\n`);
+  const failed = await staleGenerated({ root: fixture, build: true, builders: ['tools/leaky.mjs'], steps: createStepRunner({ graceMs: 300 }) });
+  assert.deepEqual(failed, [], 'the builder passed');
+  const pid = Number(readFileSync(pidFile, 'utf8'));
+  let state = 'gone';
+  try { process.kill(pid, 0); state = /\) Z /.test(readFileSync(`/proc/${pid}/stat`, 'utf8')) ? 'zombie' : 'running'; } catch { /* gone */ }
+  assert.notEqual(state, 'running', 'the grandchild is dead when staleGenerated returns');
+  const atReturn = existsSync(late);
+  await new Promise((r) => setTimeout(r, 1200));
+  assert.equal(existsSync(late), atReturn, 'nothing was written after staleGenerated returned');
 });
 
 test('--no-build holds the generated tree before checking or importing it', () => {

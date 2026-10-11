@@ -248,6 +248,30 @@ test('close() stops a running compile, its process tree, and releases the build 
   await assert.rejects(fs.stat(path.join(real, '.build-lock')), /ENOENT/, 'the build lock is released once close() resolves');
 });
 
+test('close() does not return while a compile grandchild that ignores SIGTERM is alive; nothing is written after it', { skip: process.platform === 'win32' }, async (t) => {
+  const { root, stateDir } = await fixture(t);
+  const real = await fs.realpath(root);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // The compiler exits on SIGTERM, but the grandchild it started ignores SIGTERM and writes late.txt 700 ms in.
+  const grandchild = "process.on('SIGTERM', () => {}); require('node:fs').writeFileSync('grandchild.pid', String(process.pid)); setTimeout(() => require('node:fs').writeFileSync('late.txt', 'late'), 700); setInterval(() => {}, 1000);";
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `import { spawn } from 'node:child_process';\nspawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'ignore' });\nsetInterval(() => {}, 1000);\n`);
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 2000, stopGraceMs: 300 });
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const started = await fetch(`${app.url}/api/compile`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(started.status, 200);
+  const pidFile = path.join(root, 'grandchild.pid');
+  for (let i = 0; i < 100; i++) { try { await fs.access(pidFile); break; } catch { await new Promise((r) => setTimeout(r, 30)); } }
+  const pid = Number(await fs.readFile(pidFile, 'utf8'));
+  assert.ok(pid > 0, 'the grandchild is running');
+  await app.close();
+  // Dead, or an unreaped zombie that can no longer run or write.
+  const state = await fs.readFile(`/proc/${pid}/stat`, 'utf8').then((s) => (/\) Z /.test(s) ? 'zombie' : 'running'), () => 'gone');
+  assert.notEqual(state, 'running', 'the grandchild is dead once close() resolves');
+  await new Promise((r) => setTimeout(r, 1200));
+  await assert.rejects(fs.stat(path.join(real, 'late.txt')), /ENOENT/, 'nothing was written after close() resolved');
+  await assert.rejects(fs.stat(path.join(real, '.build-lock')), /ENOENT/, 'the build lock is released once close() resolves');
+});
+
 test('save holds the lock it is given, and releases it on success and on refusal', async (t) => {
   const { root, workspace } = await fixture(t);
   const [w4a] = await workspace.config();

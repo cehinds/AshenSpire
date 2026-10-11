@@ -18,10 +18,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
-import { spawn, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import { spawnGroup, STOP_GRACE_MS } from '../tools/lib/process-tree.mjs';
 import { compileEntries, readConfigTree, CONFIG_DIR } from '../tools/config-build.mjs';
 import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
-import { killTree } from '../workbench/core/jobs.mjs';
 import { artPath, packTreeOf } from '../tools/art-source.mjs';
 import { DEFAULT_SETTINGS, mergeSettings, settingsProblems, sketchProblems } from './model.mjs';
 
@@ -245,7 +245,7 @@ async function settle(promise, ms) {
   clearTimeout(timer);
 }
 
-export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir, frameAncestors = [], compileWaitMs = 2 * 60 * 1000 } = {}) {
+export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir, frameAncestors = [], compileWaitMs = 2 * 60 * 1000, stopGraceMs = STOP_GRACE_MS } = {}) {
   for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
   const ancestors = frameAncestors.join(' ');
   root = await fs.realpath(root);
@@ -288,13 +288,18 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
         if (closing) { current.status = 'failed'; current.output += 'The studio closed before the compile ran.\n'; return; }
         await new Promise((resolve) => {
           // config-build runs under this compile's hold on the lock (tools/lib/build-lock.mjs).
-          // Its own process group on POSIX, so close() can stop what it started too.
-          const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true, detached: process.platform !== 'win32', env: { ...process.env, ...lockEnv(release) } });
-          current.child = child;
+          // Its own process group on POSIX, so close() can stop what it started too. The hold is released
+          // only once that group is empty (spawnGroup's done), so no orphan writes under a free lock.
+          const group = spawnGroup(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) }, graceMs: stopGraceMs });
+          current.group = group;
           const append = (d) => { current.output = (current.output + d).slice(-60000); };
-          child.stdout.on('data', append); child.stderr.on('data', append);
-          child.on('error', (e) => { append(e.message); current.status = 'failed'; resolve(); });
-          child.on('close', (code) => { current.status = code === 0 ? 'passed' : 'failed'; resolve(); });
+          group.child.stdout.on('data', append); group.child.stderr.on('data', append);
+          group.done.then(({ code, error }) => {
+            if (error) append(error.message);
+            current.status = !error && code === 0 ? 'passed' : 'failed';
+            delete current.group;
+            resolve();
+          });
         });
       } finally { release(); }
     }).catch((e) => { current.status = 'failed'; current.output += e.message; });
@@ -319,7 +324,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
           if (url.pathname === '/api/sketches') return send(res, 200, await workspace.sketches());
           if (url.pathname === '/api/sketch') return send(res, 200, await workspace.sketch(url.searchParams.get('name')));
           if (url.pathname === '/api/backups') return send(res, 200, await workspace.backups());
-          if (url.pathname === '/api/compile') { const { child, ...publicJob } = job || { status: 'idle', output: '' }; return send(res, 200, publicJob); }
+          if (url.pathname === '/api/compile') { const { group, ...publicJob } = job ||{ status: 'idle', output: '' }; return send(res, 200, publicJob); }
         }
         if (req.method === 'POST') {
           const data = await body(req);
@@ -368,9 +373,10 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => {
-    // Stop the compiler and its tree, then wait (at most 5 s) for its run to end and the lock to be released.
+    // Stop the compiler and its whole group (SIGTERM, then SIGKILL after the grace), and wait until the group
+    // is empty. Then wait (at most 5 s, for a compile still queued for the lock) for its run to release the lock.
     closing = true;
-    killTree(job?.child);
+    await job?.group?.stop();
     await settle(job?.done, 5000);
     server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));

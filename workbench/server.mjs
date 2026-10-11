@@ -17,6 +17,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
+import { spawnGroup } from '../tools/lib/process-tree.mjs';
 import { safePath, createGate, newToken, createSseHub, readJson, sendJson, MIME } from './lib/index.mjs';
 import { ToolSupervisor, TOOL_STOP_MS } from './core/tools.mjs';
 import { JobRunner, GENERATED } from './core/jobs.mjs';
@@ -153,14 +154,18 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
 
   // Live reload: one batch at a time; builds first when authored sources changed.
   let watcher = null; let chain = Promise.resolve();
+  // The build runs in its own process group (tools/lib/process-tree.mjs): close() stops what it started too,
+  // and the run resolves, so the GENERATED lock is released, only once that group is empty.
   const runBuild = (script) => track(new Promise((resolve) => {
     let out = '';
-    const child = spawn(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0', ...jobs.lockEnv(GENERATED) }, windowsHide: true });
-    liveBuilds.add(child);
-    child.stdout.on('data', (d) => { out = (out + d).slice(-20000); });
-    child.stderr.on('data', (d) => { out = (out + d).slice(-20000); });
-    child.on('error', (e) => { liveBuilds.delete(child); resolve({ code: -1, out: e.message }); });
-    child.on('close', (code) => { liveBuilds.delete(child); resolve({ code, out }); });
+    const group = spawnGroup(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0', ...jobs.lockEnv(GENERATED) }, windowsHide: true });
+    liveBuilds.add(group);
+    group.child.stdout.on('data', (d) => { out = (out + d).slice(-20000); });
+    group.child.stderr.on('data', (d) => { out = (out + d).slice(-20000); });
+    group.done.then(({ code, error }) => {
+      liveBuilds.delete(group);
+      resolve(error ? { code: -1, out: error.message } : { code, out });
+    });
   }));
   // Batches not yet taken by the chain; one arriving meanwhile joins them, so a
   // writer's files that land while the reload waits for it reload once.
@@ -383,7 +388,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       closeAbort.abort(new Error('The Workbench is closing'));
       watcher.close();
       closed = true;
-      for (const child of liveBuilds) child.kill();
+      // Each live build's whole group is stopped, and close() waits until every group is empty.
+      await Promise.all([...liveBuilds].map((group) => group.stop()));
       // A running job's process must exit, and its slot and file lock be freed, before close() resolves.
       await jobs.stopAll();
       // A request still answering, or a killed live-reload build, may still write: let each finish first.

@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
-import { groupAlive, procGroupMembers, stopGroup } from '../../tools/lib/process-tree.mjs';
+import { groupAlive, procGroupMembers, stopGroup, spawnGroup, runGroup } from '../../tools/lib/process-tree.mjs';
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -90,4 +90,60 @@ test('procGroupMembers reads pgrp and state from /proc, even when comm holds spa
   const readFile = (file) => { if (!(file in files)) throw Object.assign(Error('gone'), { code: 'ENOENT' }); return files[file]; };
   assert.deepEqual(procGroupMembers(7, { readdir, readFile }), [{ pid: 10, state: 'S' }, { pid: 11, state: 'Z' }]);
   assert.equal(procGroupMembers(7, { readdir: () => { throw Object.assign(Error('no proc'), { code: 'ENOENT' }); } }), null, 'no /proc: unknown');
+});
+
+// A grandchild that ignores SIGTERM, writes `file` 700 ms after it starts, and exits at 1.5 s.
+// Its pid goes to `pidFile`, so a test can see it.
+function lateWriter(file, pidFile) {
+  return `process.on('SIGTERM', () => {}); require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid)); setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(file)}, 'late'), 700); setTimeout(() => process.exit(0), 1500); setInterval(() => {}, 1000);`;
+}
+
+/** A leader script that starts the late writer, then runs `rest` (statements) in its body. */
+function leaderStarting(grandchild, rest) {
+  return `require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'ignore' }); ${rest}`;
+}
+
+test('spawnGroup.stop resolves only after a SIGTERM-ignoring grandchild is dead, and nothing is written after', async (t) => {
+  if (process.platform === 'win32') return t.skip('POSIX process groups');
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ashenspire-group-'));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'late.txt');
+  const pidFile = path.join(dir, 'grandchild.pid');
+  const group = spawnGroup(process.execPath, ['-e', leaderStarting(lateWriter(file, pidFile), 'setInterval(() => {}, 1000);')], { stdio: 'ignore', graceMs: 300 });
+  let grandchildPid = 0;
+  for (let i = 0; i < 200 && !grandchildPid; i++) { try { grandchildPid = Number(await fs.readFile(pidFile, 'utf8')); } catch { await delay(10); } }
+  assert.ok(grandchildPid > 0, 'the grandchild started');
+  await group.stop();
+  assert.equal(exitedOrZombie(grandchildPid), true, 'the grandchild is dead when stop resolves');
+  assert.equal(groupAlive(group.child.pid), false, 'the group is empty');
+  const writtenAtStop = await fs.access(file).then(() => true, () => false);
+  await delay(1000);
+  assert.equal(await fs.access(file).then(() => true, () => false), writtenAtStop, 'nothing was written after stop resolved');
+  assert.equal((await group.done).error, null);
+});
+
+test('spawnGroup.done resolves only after a leftover SIGTERM-ignoring grandchild is gone', async (t) => {
+  if (process.platform === 'win32') return t.skip('POSIX process groups');
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ashenspire-group-'));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'late.txt');
+  const pidFile = path.join(dir, 'grandchild.pid');
+  // The leader exits on its own once the grandchild has written its pid, leaving the grandchild behind.
+  const exitWhenStarted = `const w = setInterval(() => { if (require('node:fs').existsSync(${JSON.stringify(pidFile)})) { clearInterval(w); process.exit(0); } }, 10);`;
+  const group = spawnGroup(process.execPath, ['-e', leaderStarting(lateWriter(file, pidFile), exitWhenStarted)], { stdio: 'ignore', graceMs: 300 });
+  const result = await group.done;
+  assert.equal(result.code, 0, 'the leader exited with 0');
+  const grandchildPid = Number(await fs.readFile(pidFile, 'utf8'));
+  assert.equal(exitedOrZombie(grandchildPid), true, 'the grandchild was stopped before done resolved');
+  assert.equal(groupAlive(group.child.pid), false, 'the group is empty');
+  const writtenAtDone = await fs.access(file).then(() => true, () => false);
+  await delay(1000);
+  assert.equal(await fs.access(file).then(() => true, () => false), writtenAtDone, 'nothing was written after done resolved');
+});
+
+test('runGroup resolves with the exit code of a step that runs to completion', async (t) => {
+  if (process.platform === 'win32') return t.skip('POSIX process groups');
+  const result = await runGroup(process.execPath, ['-e', 'process.exit(3)'], { stdio: 'ignore' });
+  assert.equal(result.code, 3);
+  assert.equal(result.error, null);
 });
