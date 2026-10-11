@@ -1474,6 +1474,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-keyword strong { color: #99bfdd; font-size: 1.7rem; }
 .deck-editor-keyword p { margin: .3rem 0 0; color: var(--muted); }
 .deck-editor-selected-actions { flex: none; padding: 0 1rem 1rem; }
+.deck-editor-selected-buttons { display: flex; flex-wrap: wrap; gap: .6rem; }
+.deck-editor-selected-buttons > button { flex: 1 1 10rem; }
+.deck-editor-stepper-count { flex: none; min-width: 2.6rem; text-align: center; align-self: center; font-weight: 700; color: var(--parchment, #f0ddba); }
 .deck-editor-selected-reason { color: var(--muted); line-height: 1.4; margin: .4rem 0 1rem; }
 .deck-editor-primary { width: 100%; min-height: var(--deck-editor-target); font: 700 1.9rem Georgia, serif; }
 .deck-editor .deck-editor-primary { background: #c9a227; color: #181006; border-color: #f1cf71; font: 700 1.9rem Georgia, serif; }
@@ -1510,11 +1513,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-mobile-tabs > button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
   .deck-editor-tools > summary { min-height: var(--deck-editor-target); }
   .deck-editor-tools[open] { max-height: 24vh; overflow-y: auto; }
-  .deck-editor-panes { display: block; min-height: 0; overflow: hidden; }
+  .deck-editor-panes { display: block; min-height: 0; overflow: hidden; position: relative; }
   .deck-editor-panes > * { display: none; height: 100%; box-sizing: border-box; }
   .deck-editor[data-mobile-view="collection"] [data-pane="collection"],
   .deck-editor[data-mobile-view="deck"] [data-pane="deck"],
-  .deck-editor[data-mobile-view="inspect"] .deck-editor-inspector { display: flex; }
+  .deck-editor[data-mobile-view="inspect"] [data-pane="collection"] { display: flex; }
+  /* Inspection is a full-height overlay above the list it was opened from. */
+  .deck-editor[data-mobile-view="inspect"] .deck-editor-inspector { display: flex; position: absolute; inset: 0; z-index: 5; background: #221b13; overflow-y: auto; }
   .deck-editor-pane-title { font-size: 2.1rem; padding-bottom: .6rem; }
   .deck-editor-tile .deck-editor-main { grid-template-columns: 6.5rem minmax(0, 1fr) auto; }
   .deck-editor-inspector { border: 0; padding: 0; }

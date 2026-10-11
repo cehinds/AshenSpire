@@ -29,7 +29,7 @@ import { el, button } from '../kit/index.js';
 import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShell.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
-import { DECK_PANES, deckEditorModel, deckEditorView, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
+import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
@@ -211,7 +211,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (open && inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
-    updateMobileTabs();
+    syncPanes();
     if (open && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) {
       focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
     }
@@ -221,10 +221,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
+    // Back returns to the list the card was opened from: the library, or the
+    // deck under Play in deck order.
     const back = chip(t('deckEditor.back'), false, () => {
-      mobileView = inspectOrigin;
+      mobileView = inspectOrigin === 'deck' && model.ordered ? 'deck' : 'collection';
       pane = mobileView;
-      focusKey = `mobile:${mobileView}`;
+      focusKey = selected ? `inspect:${inspectOrigin}:${selected.key}` : null;
       draw();
     }, 'inspect-back');
     back.classList.add('deck-editor-inspect-back');
@@ -244,15 +246,27 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // their band instead of stretching the whole card; keyboard users can
     // reach that reading without needing to open a second inspection door.
     face.querySelector('.cd-body')?.setAttribute('tabindex', '0');
-    const addAction = source === 'collection';
-    const allowed = addAction ? row.addable : row.removable;
-    const reason = addAction ? row.refusal : row.lockSentence;
-    const action = focusable(button({
-      label: t(addAction ? 'deckEditor.addSelected' : 'deckEditor.removeSelected'),
-      weight: 'primary', className: 'deck-editor-primary', disabled: !allowed,
+    // Both doors for one card (SPEC §14.1 UX). Add names the library tile
+    // that takes a copy: this row itself, or for a deck card the tile of its
+    // variant. Remove takes one copy: the tile's last deck copy, or this row.
+    const deckCard = source === 'deck' ? run.deck.find(card => card.instanceId === row.instanceId) : null;
+    const addTile = source === 'collection' ? row
+      : (deckCard ? model.collection.find(tile => tile.key === `card:${deckVariantKey(deckCard)}`) : null) || null;
+    const addOn = !!addTile?.addable;
+    const removeOn = !!row.removable;
+    const removeId = source === 'collection' ? row.removeInstanceId : row.instanceId;
+    const addNode = focusable(button({
+      label: t('deckEditor.addSelected'), weight: 'primary', className: 'deck-editor-primary', disabled: !addOn,
       attrs: { 'aria-describedby': 'deck-editor-selected-reason' },
-    }), 'selected-action');
-    action.addEventListener('click', () => addAction ? add(row.key) : remove(row.instanceId));
+    }), 'selected-add');
+    addNode.addEventListener('click', () => { if (addOn) add(addTile.key); });
+    const removeNode = focusable(button({
+      label: t('deckEditor.removeSelected'), className: 'deck-editor-secondary', disabled: !removeOn,
+      attrs: { 'aria-describedby': 'deck-editor-selected-reason' },
+    }), 'selected-remove');
+    removeNode.addEventListener('click', () => { if (removeOn) remove(removeId); });
+    const reasons = [!addOn ? (addTile?.refusal || '') : '', !removeOn ? (row.lockSentence || '') : ''].filter(Boolean);
+    const reasonText = reasons.join(' ') || row.countText || (source === 'deck' ? t(`deckEditor.source.${row.source}`) : '');
     animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
     section.append(
@@ -269,44 +283,31 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         ])),
       ]),
       el('div', { class: 'deck-editor-selected-actions' }, [
-        el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reason || (addAction ? row.countText : row.countText || t(`deckEditor.source.${row.source}`)) }),
-        action,
+        el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reasonText }),
+        el('div', { class: 'deck-editor-selected-buttons' }, [addNode, removeNode]),
       ]),
     );
     return section;
   }
 
-  function updateMobileTabs() {
-    for (const node of panel.querySelectorAll('[data-mobile-tab]')) {
-      const on = node.dataset.mobileTab === mobileView;
-      node.setAttribute('aria-pressed', String(on));
-      node.classList.toggle('on', on);
-    }
+  function syncPanes() {
     const panes = panel.querySelector('.deck-editor-panes');
     if (panes) panes.dataset.active = pane;
   }
 
+  // A phone shows one list, the collection. The deck pane is reachable there
+  // only under Play in deck order, through one "Draw order" chip, so an
+  // ordered deck can still be reworked on a phone.
   function navigation() {
-    return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') },
-      ['collection', 'inspect', 'deck'].map((id) => {
-        const node = chip(t(id === 'inspect' ? 'deckEditor.inspect' : `deckEditor.pane.${id}`), mobileView === id, () => {
-          if (id === 'inspect' && selected) {
-            const origin = pane;
-            select(selected.row, selected.source, true);
-            inspectOrigin = origin;
-            focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
-            return;
-          }
-          if (id === 'inspect') inspectOrigin = pane;
-          mobileView = id;
-          if (id !== 'inspect') pane = id;
-          panel.dataset.mobileView = id;
-          updateMobileTabs();
-          if (id === 'inspect') focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
-        }, `mobile:${id}`);
-        node.dataset.mobileTab = id;
-        return node;
-      }));
+    if (!model.ordered) return null;
+    const onDeck = mobileView === 'deck';
+    const node = chip(t('deckEditor.drawOrder'), onDeck, () => {
+      mobileView = onDeck ? 'collection' : 'deck';
+      pane = mobileView;
+      focusKey = 'mobile:draw-order';
+      draw();
+    }, 'mobile:draw-order');
+    return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') }, [node]);
   }
 
   // `grouped` is a deck row standing for several copies; a collection tile's
@@ -383,11 +384,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         'aria-label': tFull('deckEditor.add', { name: tile.name }), 'aria-disabled': tile.addable ? 'false' : 'true',
         text: t('deckEditor.add', { name: tile.name }),
       }), `tile-add:${tile.key}`);
-      plus.addEventListener('click', () => add(tile.key));
+      plus.addEventListener('click', () => { focusKey = plus.dataset.focusKey; add(tile.key); });
+      // The attribute stepper: － takes the tile's last deck copy, the count is
+      // how many copies the deck holds, ＋ adds one.
+      const minus = focusable(el('button', {
+        type: 'button', class: 'deck-editor-step', disabled: !tile.removable, dataset: { action: 'remove', key: tile.key },
+        'aria-label': tFull('deckEditor.remove', { name: tile.name }), 'aria-disabled': tile.removable ? 'false' : 'true',
+        text: t('deckEditor.remove', { name: tile.name }),
+      }), `tile-remove:${tile.key}`);
+      minus.addEventListener('click', () => { if (tile.removable) { focusKey = minus.dataset.focusKey; remove(tile.removeInstanceId); } });
       list.appendChild(el('div', {
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
         dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
-      }, [main, inlineInspect(tile, 'collection'), el('div', { class: 'deck-editor-actions' }, [plus])]));
+      }, [main, inlineInspect(tile, 'collection'), el('div', { class: 'deck-editor-actions' }, [
+        minus, el('span', { class: 'deck-editor-stepper-count', text: String(tile.inDeck) }), plus,
+      ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
     const section = paneSection('collection', t('deckEditor.pane.collection'), list);
@@ -612,6 +623,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function draw() {
     model = deckEditorModel({ registries, run, settings, view });
+    if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
     if (current) selected = { ...selected, row: current };
@@ -641,7 +653,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         tab.dataset.modalTab === 'deck' ? 'Edit your deck' : `Save deck and open ${tab.textContent}`);
       panel.append(head);
     }
-    panel.append(header(), el('div', { class: 'deck-editor-toolbar' }, [navigation(), tools()]), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
+    panel.append(header(), el('div', { class: 'deck-editor-toolbar' }, [navigation(), tools()].filter(Boolean)), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
     restoreFocus();
   }
 
@@ -657,9 +669,22 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function restoreFocus() {
     if (!focusKey) return;
     const previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
-    const node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous : paneFocusable(pane);
+    let node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous : paneFocusable(pane);
+    // A pressed ＋ or － whose copy ran out is disabled now: focus moves to its
+    // sibling in the same row, never to the search box.
+    if (isDisabled(node)) {
+      const sibling = siblingOf(node.dataset.focusKey);
+      node = sibling && !isDisabled(sibling) ? sibling : paneFocusable(pane);
+    }
     if (!node) return;
     focusNode(node);
+  }
+
+  const isDisabled = (node) => !!node && (node.disabled === true || node.hasAttribute?.('disabled') === true);
+  function siblingOf(key) {
+    const other = key?.startsWith('tile-remove:') ? `tile-add:${key.slice('tile-remove:'.length)}`
+      : key?.startsWith('tile-add:') ? `tile-remove:${key.slice('tile-add:'.length)}` : null;
+    return other ? panel.querySelector(`[data-focus-key="${cssEscape(other)}"]`) : null;
   }
 
   function focusNode(node) {
@@ -808,6 +833,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (key === '-' || key === '_' || key === 'Delete' || key === 'Backspace') {
       const row = focusedRow();
       if (row) { remove(row); return true; }
+      const stepper = focused();
+      const tile = stepper?.dataset.focusKey?.startsWith('tile-remove:') ? model.collection.find(candidate => candidate.key === stepper.dataset.key) : null;
+      if (tile?.removable) { focusKey = stepper.dataset.focusKey; remove(tile.removeInstanceId); return true; }
       return false;
     }
     if (key === 'Enter' || key === ' ') {

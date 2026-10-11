@@ -7556,6 +7556,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.drawOrder",
+    "extends": "",
+    "short": "Draw order",
+    "full": "Reorder the deck in the order it is drawn.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.equipmentNotFound",
     "extends": "",
     "short": "Equipment not found",
