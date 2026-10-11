@@ -363,14 +363,15 @@ function applyDamage(cur, targetId, raw, events) {
 
 // One attack (owner, 2026-10-11): hit roll, then full block, then intangible or the
 // evadePct roll, then damage. Returns nothing; pushes events and updates cur.
-function resolveAttack(cur, entry, events, rng, options, reactionEvade = null) {
+function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, reactionPlayed = false) {
   const attacker = cur.combatants[entry.actor];
   const target = cur.combatants[entry.target];
   const card = entry.card;
   const dmg = Math.max(0, Number(card.damage ?? 0) || 0);
   // An evade card is spent on the next attack, whether or not that attack hits. A reaction
-  // evade belongs to this attack and is used first; queued evades wait for later attacks.
-  const evadeUse = reactionEvade ?? cur.active[target.id].evade.shift() ?? null;
+  // evade belongs to this attack and is used first; queued evades wait for later attacks. When any
+  // reaction answers this attack, a queued evade is not spent on it (Codex review on PR #1838).
+  const evadeUse = reactionPlayed ? reactionEvade : (cur.active[target.id].evade.shift() ?? null);
   const d20 = rollD20(rng);
   const accuracy = accuracyFor({ attrs: attacker.attrs, level: attacker.level, tags: card.tags, accuracy: card.accuracy })
     + attacker.accuracyExtra;
@@ -585,7 +586,7 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
     if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
     return;
   }
-  const out = resolveAttack(cur, entry, events, options.rng, options, reacted.evade);
+  const out = resolveAttack(cur, entry, events, options.rng, options, reacted.evade, reactionPlayed);
   if (out.landed) {
     credit(cur, run, { key, winner: entry.side, winCard: attackCard, foeCard: out.defenseCard ?? {}, events, seq: entry.seq, credited });
   } else {

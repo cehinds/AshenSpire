@@ -747,6 +747,26 @@ test('a reaction evade answers the attack it was played against; a queued evade 
   assert.equal(out.state.combatants.player.hp, 19);
 });
 
+test('a reaction guard on an attack keeps a queued evade for the next attack', () => {
+  // The queued evade (20 + 10 preemptive = 30) must not be spent on s1, which the reaction guard
+  // (block 6) answers. It is used on s2: s2 rolls evade at 30 (roll 45 fails), so s2 lands for 4.
+  const out = createRound(duo({}, { hp: 20, hand: [guardCard('guard')] }), {
+    queues: {
+      player: [card('qe', 'evade', 'self', 0, { evadePct: 20 })],
+      goblin: [atk('s1', 'player', 1, { damage: 4 }), atk('s2', 'player', 0, { damage: 4 })],
+    },
+    rng: HIT_RNG,
+    merge: 'wholeQueue',
+    onReaction: (attack) => (attack.cardId === 's1' ? { id: 'guard' } : null),
+  }).resolveAll();
+  const rolls = out.events.filter((e) => e.type === 'evadeRoll' && e.by === 'player');
+  assert.equal(rolls.length, 1);
+  assert.equal(rolls[0].evadePct, 30);
+  assert.ok(out.events.indexOf(rolls[0]) > out.events.findIndex((e) => e.type === 'action' && e.cardId === 's2'));
+  assert.equal(out.state.active.player.evade.length, 0);
+  assert.equal(out.state.combatants.player.hp, 16);
+});
+
 test('a reaction guard on an attack keeps a queued counter for the next attack from its foe', () => {
   // d4 2 each (u 0.45). The player lane leads, so the queued counter (speed 6, total 9) is placed
   // first. s1 (total 3) is answered by a reaction guard of block 6 that absorbs its 4 damage.
