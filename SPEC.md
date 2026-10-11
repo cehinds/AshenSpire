@@ -26,6 +26,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
+| 4.11 | Combat Rounds Preview | **planned** | Contract only: [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md) phases P1–P6 (engine port, rules and setting, solo, saves, UI, co-op/LAN). Owner decisions are open at the four Open items of §4.11. |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
@@ -885,6 +886,8 @@ baseline; saved stat rows and hand options override its draw and cleanup default
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
 7. **End:** all enemies dead → victory (rewards); player HP ≤ 0 → death screen.
 
+When the Combat Rounds Preview is on, see §4.11.
+
 ### 4.2 Damage math (order is contractual)
 
 For an attack dealing `base` damage:
@@ -1009,6 +1012,8 @@ Enemy definition shape (content file):
 }
 ```
 
+When the Combat Rounds Preview is on, see §4.11.
+
 ### 4.7 Tagged combat cards and readable enemy stances
 
 **Future expansion proposal:** [Combat expansion notes](docs/combat-cards-expansion-proposal.md) describe later candidate rules for persistent stances, Evade, Counter coverage, Ward/Poise resistance, recovery cards, Sleep/Prone, tag interactions, upcasting, and three Ashen Blight feat stages. This documentation reference does not change the existing §4.7 rules below; each runtime revision requires a separate accepted contract and implementation.
@@ -1072,6 +1077,8 @@ All tactical numbers remain authored/configurable; their defaults above establis
 
 **Out of scope for this contract:** new automatic school matchup loops, new feats/relics, school-specific deck-manipulation primitives and persistent Ashen Blight corruption. [Ashen Blight proposal](docs/ashen-blight-proposal.md) remains proposed until its own state/save/preview contract and implementation land. Ordinary Exhaust and Crimson Blight must not acquire persistent corruption as a side effect of tagging existing cards.
 
+When the Combat Rounds Preview is on, see §4.11.
+
 ---
 
 ### 4.8 Martial and Spell expansion (version 2)
@@ -1132,6 +1139,62 @@ refresh at player-turn start. The player mini HUD sits above visible artwork
 with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
 This specification precedes the runtime implementation and does not claim that
 the new reaction system has shipped.
+
+When the Combat Rounds Preview is on, see §4.11.
+
+### 4.11 Combat Rounds Preview
+
+**Contract status: planned.** An opt-in preview that runs real fights on the speed-ordered rounds specified in [docs/alternative-combat-rounds/DESIGN.md](docs/alternative-combat-rounds/DESIGN.md), with the owner's decisions in [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md). Formulas stay in DESIGN.md and are not restated here. Until its phases ship, combat follows §4.1 to §4.10 unchanged.
+
+**Setting**
+
+- Advanced → Combat holds one opt-in row, *Combat rounds preview*. It is shown on dev and test builds only and is hidden on release builds.
+- The row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
+- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step.
+- With the row off, fights, saves and RNG rolls are unchanged, and no preview field is written.
+
+**Live rules that stay**
+
+- The hand is the live hand: draw, hand size, Retain, Ethereal, reshuffle and the `handRules` settings of §4.1 apply unchanged.
+- Resources are live. Stamina is SP and Mana is MP.
+- A landed card or enemy move runs its live effects: damage (§4.2), statuses (§4.4), draws, relics and triggers. The timeline decides order and whether an action lands; it does not compute effects.
+- Counter and Evade keep their live rules (§4.7, §4.8). Each has a speed value and takes its place in the order. The timeline's own Counter-cancel and evade-percent rules are not used.
+- A reaction from hand uses the reaction choice of §4.10 (Back, Play).
+
+**Queue and Commit**
+
+- Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
+- Enemies queue cards and moves from their own SP pool, stat-driven with a base of 3. A move costs 1 SP unless the move says otherwise.
+- End Turn becomes Commit. Commit adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
+
+**Order and hits**
+
+- Initiative is base, plus momentum, plus a d4 rolled once per round; card speed breaks ties in merge mode, as DESIGN.md states. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls.
+- Hit or miss uses the hit roll of DESIGN.md. A missed action applies no effects.
+- A reaction pause keeps the round's cursor. A save taken during a pause resumes at that cursor (§3.12).
+
+**Momentum**
+
+- Momentum is kept per enemy, between −3 and +3, and decays as DESIGN.md states.
+- A success at the cap sets an overflow flag. The side's next landed hit carries doubled poise damage, and the flag clears when that hit spends it.
+
+**Perception**
+
+- The player sees the first 1 + Perception actions of the round's order, where Perception is the §4.9 stat. Other actions are not shown.
+- A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
+- A `?` action is not placed on the initiative track. A stage 3 action is placed.
+
+**Co-op and LAN**
+
+- Each seat keeps its own queue, momentum and perception reads. Each living observer records its own read (§4.9).
+- A LAN peer receives a concealed action only as the projection that §4.7 and §4.9 allow. The host never sends a concealed action's full queue entry.
+
+**Open (owner decision needed)**
+
+- How live Actions (energy) price a queued card. DESIGN.md merges Actions and Stamina into SP; the live rules (§4.1, §13.4) keep them apart.
+- Whether an enemy action beyond the visible count is placed on the initiative track.
+- Whether the Counter grant and expiry timing of §4.7 maps onto queue position.
+- Co-op momentum: one per seat against each enemy (as written above), or one per enemy shared by the party.
 
 ## 5. Content specification
 

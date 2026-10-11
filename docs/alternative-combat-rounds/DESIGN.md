@@ -4,6 +4,10 @@ Status: exploration only. Captures the owner's design of 2026-10-11. Nothing
 here is engine code, and no game content changes. The numbers in this file
 are the owner's unless marked TBD.
 
+The player-facing preview built on these notes is specified in
+[SPEC §4.11](../../SPEC.md) (Combat Rounds Preview); its owner decisions and
+phases are in [PREVIEW-PLAN.md](PREVIEW-PLAN.md).
+
 ## Goal
 
 Replace turn-by-turn exchange with a speed-ordered pairing. Each card the
