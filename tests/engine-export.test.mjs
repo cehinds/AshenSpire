@@ -133,6 +133,8 @@ test('--only limits the export and the tool refuses to clear a foreign folder', 
   const r = run('--only', 'content.cards', '--out', out);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(readJson(out, 'manifest.json').tables.map((t) => t.id), ['content.cards']);
+  assert.equal(readJson(out, 'manifest.json').partial, true, 'an --only manifest is marked partial');
+  assert.equal('partial' in manifest, false, 'a full export is not marked partial');
 
   const foreign = join(scratch, 'foreign');
   mkdirSync(foreign, { recursive: true });
