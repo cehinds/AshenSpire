@@ -21,7 +21,7 @@ reporting.
 
 | Role | Model | Owns | Never does |
 |---|---|---|---|
-| **Orchestrator** (the main session) | Opus 5.5 (`claude-opus-5-5`) | Understanding the request; reading SPEC and the contracts; splitting the work; writing worker briefs; choosing models and isolation; verifying every result; deciding review findings; CHANGELOG receipts and `buildordinal.json`; opening, merging and promoting PRs (CONTRIBUTING rule 6); talking to the owner | Bulk reading, broad searches, mechanical edits or long test runs that a worker could do from a brief |
+| **Orchestrator** (the main session) | Opus 5.5 (`claude-opus-5-5`) | Understanding the request; reading SPEC and the contracts; splitting the work; writing worker briefs; choosing models and isolation; verifying every result; deciding review findings; CHANGELOG receipts and `buildordinal.json`; opening PRs, then merging and promoting them once the owner says to merge (CONTRIBUTING rule 6); talking to the owner | Bulk reading, broad searches, mechanical edits or long test runs that a worker could do from a brief |
 | **Worker** | Haiku 5.5 (`claude-haiku-5-5`), the `ashen-worker` agent | One scoped task in its own worktree and branch: find, edit, test, commit, push, report | Merging, opening or merging PRs, promoting, editing CHANGELOG / `buildordinal.json` / `src/content/changelog.generated.js`, changing SPEC unless the brief says so, widening scope |
 | **Reviewer** | Opus 5.5 subagent (`ashen-reviewer`) for risky diffs; Haiku 5.5 for mechanical ones | The independent review CONTRIBUTING requires (*A pull request is not done…*, item 2), from the diff and a list of risks | Re-implementing; reading the whole repo |
 | **Escalation worker** | Opus 5.5 subagent | A task that a Haiku worker failed, or one that needs judgement the orchestrator cannot put into a brief | Becoming the default |
@@ -42,7 +42,7 @@ files, runs a suite, or repeats an edit goes to a worker.
 4. Execute      workers (Haiku): in parallel, isolation "worktree", in the background
 5. Verify       orchestrator: read the diff (not the transcript), re-run the key test, check the acceptance line
 6. Review       reviewer (§5); the orchestrator decides each finding against the diff
-7. Land         orchestrator: receipt and rebuild, PR, merge into dev, then one promotion to test after the wave
+7. Land         orchestrator: receipt and rebuild, PR, preview and screenshots to the owner; merge into dev only when the owner says so (CONTRIBUTING rule 6), then one promotion to test
 8. Report       orchestrator: to the owner, in CLAUDE.md's question shape when a decision is needed
 ```
 

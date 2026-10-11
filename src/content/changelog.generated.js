@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "The design spec matches the game again",
     "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
-    "build": "0.7.1.1314",
+    "build": "0.7.1.1317",
     "pullRequest": 1863,
     "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1861",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Every feature, chore and fix now waits for the owner's review before it reaches dev",
+    "detail": "Development-process change only, nothing in the game changes. Sessions open the pull request with a preview and screenshots, then wait; they merge into dev and promote to test only when the owner names that pull request.",
+    "build": "0.7.1.1315",
+    "pullRequest": 1861,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1861"
   },
   {
     "id": "pr-1864",
