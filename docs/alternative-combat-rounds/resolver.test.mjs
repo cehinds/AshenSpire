@@ -1,4 +1,4 @@
-// Tests for the simultaneous-action resolver prototype (node:test).
+// alternative-combat-rounds: tests for the resolver prototype (node:test).
 // Run: node --test docs/alternative-combat-rounds/*.test.mjs
 
 import { test } from 'node:test';

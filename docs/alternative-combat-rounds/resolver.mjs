@@ -1,4 +1,4 @@
-// Simultaneous action: pure resolver prototype.
+// alternative-combat-rounds: simultaneous action, pure resolver prototype.
 //
 // Exploration only. Not wired into src/. No DOM, no Math.random.
 // Randomness is injected: `rng` is a function returning a float in [0, 1).
@@ -113,7 +113,7 @@ function normalizeSide(name, s) {
 //   holder has 'hyperArmor' ('hyperArmor' event instead).
 // - On a tie, 'counterDamage' adds counter damage to the opponent. 'stagger'
 //   and 'stun' apply to the opponent, unless it has 'hyperArmor' ('resisted').
-//   These tags do nothing outside a tie.
+//   Outside a tie, a counter that fires also applies its stagger and stun.
 // - Each attack that is not cancelled rolls a hit with hitRoll(). The d20
 //   is drawn from `rng`, in resolution order (first actor, then second; on a
 //   tie, player then enemy).
