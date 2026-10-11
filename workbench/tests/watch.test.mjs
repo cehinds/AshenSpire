@@ -178,9 +178,10 @@ test('on macOS a new folder names the files under it; a folder already there, an
 test('on macOS a file event for a file untouched since the watch began is a replay and names nothing', () => {
   const abs = path.join('/p', 'styles');
   const css = path.join(abs, 'main.css');
-  const at = (t) => ({ since: 1000, isDir: () => false, exists: () => true, changedAt: () => t });
+  const at = (t, presentAtStart = () => true) => ({ since: 1000, isDir: () => false, exists: () => true, changedAt: () => t, presentAtStart });
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(500)), [], 'written before the watch: a replayed event');
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(1500)), [css], 'written after the watch began');
+  assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', at(500, () => false)), [css], 'moved in after the watch began: old times, but not there at the start');
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'darwin', { since: 1000, isDir: () => false, exists: () => false, changedAt: () => null }), [css], 'a deleted file is always kept');
   assert.deepEqual(recursiveEventPaths(abs, 'main.css', 'win32', at(500)), [css], 'only macOS replays events');
 });
@@ -201,6 +202,24 @@ test('on macOS a folder moved into the watched tree after the watch began batche
   await fs.rename(path.join(outside, 'ui'), path.join(root, 'content/ui'));
   await waitFor(() => batches.flat().includes('content/ui/tokens.json'));
   assert.ok(batches.flat().includes('content/ui/tokens.json'), `the moved-in folder's file is batched: ${batches.flat()}`);
+});
+
+test('on macOS a file written before the watch and moved in after it began is batched, not taken for a replay', async (t) => {
+  if (process.platform !== 'darwin') return t.skip('needs FSEvents (macOS)');
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-out-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content'), { recursive: true });
+  await fs.writeFile(path.join(outside, 'a.json'), '{}');
+  await sleep(50);
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'darwin', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  await sleep(500);
+  await fs.rename(path.join(outside, 'a.json'), path.join(root, 'content/a.json'));
+  await waitFor(() => batches.flat().includes('content/a.json'));
+  assert.ok(batches.flat().includes('content/a.json'), `the moved-in file is batched: ${batches.flat()}`);
 });
 
 test('on macOS a folder replaced at a known path batches the new folder\'s files', async (t) => {
