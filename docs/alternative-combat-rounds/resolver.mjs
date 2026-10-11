@@ -235,6 +235,44 @@ export function stanceBonus(table, stance, opposing) {
   return table.get(`${stance}>${opposing}`) ?? 0;
 }
 
+// Stance groups shown at perception stage 1 (DESIGN.md, Round flow and
+// perception). Only the shape is decided; every group name is TBD until the
+// owner names them. Stances come from stance-advantage.csv and the stance tree.
+export const STANCE_GROUPS = Object.freeze({
+  attack: 'offense', // TBD
+  smash: 'offense', // TBD
+  sweep: 'offense', // TBD
+  block: 'defense', // TBD
+  counter: 'defense', // TBD
+  evade: 'evade', // TBD
+});
+
+export const PERCEPTION_MAX = 3;
+
+// Perception stage 0..3, clamped. Anything not a finite number counts as 0.
+export function clampStage(stage) {
+  const n = Math.trunc(Number(stage));
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(PERCEPTION_MAX, Math.max(0, n));
+}
+
+// The fields of one enemy action the player can see at a perception stage
+// (DESIGN.md, Round flow and perception):
+// - 0: { hidden: true }. Only that an action exists.
+// - 1: { stanceGroup }.
+// - 2: { stanceGroup, stance, damage }.
+// - 3: the whole action, including speed and tags.
+export function revealAction(action, stage) {
+  const s = clampStage(stage);
+  if (s === 0) return { hidden: true };
+  if (!action || typeof action !== 'object') throw new TypeError('action must be an object');
+  const stance = action.stance ?? null;
+  const stanceGroup = stance !== null && Object.hasOwn(STANCE_GROUPS, stance) ? STANCE_GROUPS[stance] : null;
+  if (s === 1) return { stanceGroup };
+  if (s === 2) return { stanceGroup, stance, damage: Number(action.damage ?? 0) };
+  return { ...action, tags: Array.isArray(action.tags) ? [...action.tags] : [] };
+}
+
 // Card hint thresholds on the speed difference (placeholder, TBD: DESIGN.md
 // open question s). delta >= strong: '>>'. delta >= slight: '>'. Mirror for '<'.
 export const SPEED_TIERS = { strong: 2, slight: 1 };

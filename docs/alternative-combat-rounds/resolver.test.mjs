@@ -17,6 +17,9 @@ import {
   parseStanceAdvantage,
   cardHint,
   SPEED_TIERS,
+  revealAction,
+  clampStage,
+  STANCE_GROUPS,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
@@ -741,4 +744,45 @@ test('cardHint: momentum moves the speed delta the same way as resolveRound (pla
   const hint = cardHint(card, enemy, hintCtx({ momentum: 2 }));
   assert.equal(hint.speedDelta, 2);
   assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
+});
+
+// Perception stages (DESIGN.md, Round flow and perception). One enemy action,
+// revealed at each stage.
+const FOE_ACTION = { id: 'foe', speed: 2, kind: 'attack', tags: ['stun'], stance: 'smash', damage: 3, block: 1 };
+
+test('perception stage 0 reveals only that an action exists', () => {
+  assert.deepEqual(revealAction(FOE_ACTION, 0), { hidden: true });
+});
+
+test('perception stage 1 reveals only the stance group', () => {
+  assert.deepEqual(revealAction(FOE_ACTION, 1), { stanceGroup: 'offense' });
+  assert.deepEqual(revealAction({ stance: 'block' }, 1), { stanceGroup: 'defense' });
+});
+
+test('perception stage 2 reveals the stance and damage, but not speed or tags', () => {
+  assert.deepEqual(revealAction(FOE_ACTION, 2), { stanceGroup: 'offense', stance: 'smash', damage: 3 });
+});
+
+test('perception stage 3 reveals everything, including speed and tags', () => {
+  assert.deepEqual(revealAction(FOE_ACTION, 3), FOE_ACTION);
+});
+
+test('perception stage clamps: below 0 acts as 0, above 3 acts as 3', () => {
+  assert.equal(clampStage(-1), 0);
+  assert.equal(clampStage(-99), 0);
+  assert.equal(clampStage(7), 3);
+  assert.equal(clampStage(2.9), 2);
+  assert.equal(clampStage(NaN), 0);
+  assert.deepEqual(revealAction(FOE_ACTION, -1), { hidden: true });
+  assert.deepEqual(revealAction(FOE_ACTION, 9), revealAction(FOE_ACTION, 3));
+});
+
+test('STANCE_GROUPS covers every stance in stance-advantage.csv', () => {
+  const stances = new Set();
+  for (const line of readFileSync(STANCE_CSV, 'utf8').split('\n').slice(1)) {
+    const [attacker, defender] = line.split(',');
+    if (attacker) stances.add(attacker);
+    if (defender) stances.add(defender);
+  }
+  for (const stance of stances) assert.ok(Object.hasOwn(STANCE_GROUPS, stance), `no group for ${stance}`);
 });
