@@ -1,5 +1,5 @@
 # .github/workflows/tutorial-reach.yml — the first-run tutorial's exits, in a
-# real browser, on every pull request into dev.
+# real browser, on a push to test and on workflow_dispatch.
 #
 # WHY THIS FILE EXISTS (docs/FINISH.md §6, "The tutorial reachability probe runs
 # in CI"). The coach marks (src/ui/components/tutorial.js) are the only thing
@@ -12,12 +12,14 @@
 # boundary block has said "NO job here runs it" since 2026-07-28; nothing did,
 # and on 2026-10-02 it was red at every viewport with nobody watching.
 #
-# WHERE IT RUNS. A pull request into dev is gated by fast checks (DEVELOPER.md,
-# *Which checks gate a pull request*). The full sweep is ~10 minutes of browser
-# time in one process, so it is SHARDED with the tool's own `--only` list into
-# three parallel jobs of a few minutes each; together they cover every case the
-# bare `node tools/tutorial-reach.mjs` runs, and a shard that names an unknown
-# case exits 2 instead of running nothing.
+# WHERE IT RUNS (owner, 2026-10-11, the stage rules). A pull request into dev
+# and a push to dev run only the base smoke (about five minutes), and this file
+# is not part of it. It runs on a push to `test` (and `alternative/**/test`) and
+# on workflow_dispatch, where the higher-level testing lives. The full sweep is
+# ~10 minutes of browser time in one process, so it is SHARDED with the tool's
+# own `--only` list into three parallel jobs of a few minutes each; together
+# they cover every case the bare `node tools/tutorial-reach.mjs` runs, and a
+# shard that names an unknown case exits 2 instead of running nothing.
 #
 # A JOB OF ITS OWN, like map-camera.yml and coop-hud.yml: `core` is a no-browser
 # lane. It serves the SOURCE tree, so it needs no build and no LFS. With no
@@ -27,15 +29,13 @@
 name: tutorial reach
 
 on:
-  pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev']
   push:
-    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
+    branches: [test, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
-  group: tutorial-reach-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: tutorial-reach-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
 
 permissions:
   contents: read

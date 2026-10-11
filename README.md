@@ -22,8 +22,8 @@ build number and link to its history. Play and HTML follow that channel's latest
 | Alternative Dev | [![Alternative Dev build](https://cehinds.github.io/AshenSpire/alternative/dev/latest/build.svg)](https://cehinds.github.io/AshenSpire/alternative/dev/) | [Play Alternative Dev](https://cehinds.github.io/AshenSpire/alternative/dev/latest/) | [HTML](https://cehinds.github.io/AshenSpire/alternative/dev/latest/download/AshenSpire.html) |
 | Alternative Test | [![Alternative Test build](https://cehinds.github.io/AshenSpire/alternative/test/latest/build.svg)](https://cehinds.github.io/AshenSpire/alternative/test/) | [Play Alternative Test](https://cehinds.github.io/AshenSpire/alternative/test/latest/) | [HTML](https://cehinds.github.io/AshenSpire/alternative/test/latest/download/AshenSpire.html) |
 
-**Windows:** [Test installer / build chooser](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe)
-· [Installer build number](https://github.com/cehinds/AshenSpire/releases/tag/installer-test)
+**Windows:** [Release installer / build chooser](https://github.com/cehinds/AshenSpire/releases/download/installer-release/AshenSpire-Setup.exe)
+· [Installer build number](https://github.com/cehinds/AshenSpire/releases/tag/installer-release)
 · [Installation guide](desktop/windows/README.md).
 The chooser identifies the selected game build; its installer can be newer than the hosted Test badge.
 
