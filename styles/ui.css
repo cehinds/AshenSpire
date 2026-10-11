@@ -1658,6 +1658,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card > .deck-editor-costs { position: absolute; top: .5rem; right: .5rem; z-index: 3; }
 .deck-editor .deck-editor-reading .card:has(.deck-editor-costs) > .cname { padding-inline: 1rem calc(var(--deck-row-costs) + 1rem); }
 .deck-editor .deck-editor-count { grid-column: -2; grid-row: 2; align-self: center; justify-self: end; font-size: max(1.2rem, var(--deck-min-text)); }
+/* A library tile's count lives in its － count ＋ stepper, so the badge goes. */
+.deck-editor .deck-editor-tile .deck-editor-count { display: none; }
 .deck-editor .deck-editor-meta { grid-column: 3; grid-row: 2; align-self: end; font-size: max(1.1rem, var(--deck-min-text)); white-space: normal; line-height: 1.25; max-height: 2.5em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .deck-editor .deck-editor-meta:empty { display: none; }
 .deck-editor .deck-editor-main:has(.deck-editor-meta:not(:empty)) .deck-editor-row-rules { display: none; }
@@ -1728,6 +1730,16 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor .deck-editor-heading { gap: .2rem .4rem; font-size: max(1.3rem, var(--deck-min-text)); }
   .deck-editor .deck-editor-inline-inspect { right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .35rem); padding-inline: .1rem; }
   .deck-editor-animation { display: none; }
+}
+/* Phones: a library row's card face takes the full row, the stepper sits on its
+   own line beneath it, and the name keeps line 1 (type and stance may wrap). */
+@media (max-width: 1000px) {
+  .deck-editor-tile.deck-editor-item { flex-wrap: wrap; }
+  .deck-editor-tile > .deck-editor-main { flex: 1 1 100%; min-width: 0; }
+  .deck-editor-tile > .deck-editor-actions { flex: 1 1 100%; justify-content: flex-end; align-self: auto; }
+  .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { height: max(3rem, var(--deck-editor-target)); min-width: max(3rem, var(--deck-editor-target)); }
+  .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 2; grid-row: 1; flex-wrap: wrap; max-height: none; overflow: visible; row-gap: .1rem; }
+  .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-name { flex: 1 1 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .deck-editor .deck-editor-main { transition: none; }
