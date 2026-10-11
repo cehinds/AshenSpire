@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1833",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fighters visibly flinch when hit",
+    "detail": "Your hero now flashes red and is knocked back a step when they take damage, instead of a brief rainbow flicker. Enemies recoil further and their red flash starts at the moment of impact. With Reduce flashes on, the red tint is skipped and only the knock-back plays.",
+    "build": "0.7.1.1283",
+    "pullRequest": 1833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1833"
+  },
+  {
     "id": "pr-1831",
     "date": "2026-10-11",
     "group": "2026-10-11",
