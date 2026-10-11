@@ -269,7 +269,10 @@ jobs:
             echo "Files:"
             # Everything the intake branch carries against the art repository's main,
             # including files staged by earlier runs and since removed from the source.
-            git -C "$GITHUB_WORKSPACE/art-repo" diff --name-only origin/main HEAD | sed 's/^/- `/; s/$/`/' | head -200
+            # To a file first, then one sed that prints the first 200: no early-closing
+            # pipe, so a long list cannot SIGPIPE the step under pipefail.
+            git -C "$GITHUB_WORKSPACE/art-repo" diff --name-only origin/main HEAD > "$RUNNER_TEMP/intake-files.txt"
+            sed -n '1,200{s/^/- `/; s/$/`/; p}' "$RUNNER_TEMP/intake-files.txt"
           } > art-pr-body.md
           existing="$(gh pr list --repo "$ART_REPO" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
@@ -324,7 +327,7 @@ jobs:
             esac
           } > comment.md
           if [ "$STATE" != none ] && [ "$STATE" != skip ]; then
-            { echo; echo "Files:"; sed 's/^/- `/; s/$/`/' "$GITHUB_WORKSPACE/art-files.txt" | head -200; } >> comment.md
+            { echo; echo "Files:"; sed -n '1,200{s/^/- `/; s/$/`/; p}' "$GITHUB_WORKSPACE/art-files.txt"; } >> comment.md
           fi
           id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | sed -n '1p')"
           if [ -n "$id" ]; then

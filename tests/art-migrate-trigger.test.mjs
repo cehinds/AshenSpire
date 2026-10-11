@@ -116,3 +116,7 @@ test('the art PR body lists every file on the intake branch, not only this run\'
   const block = jobBlock(art, 'intake');
   assert.match(block, /git -C "\$GITHUB_WORKSPACE\/art-repo" diff --name-only origin\/main HEAD/);
 });
+
+test('no list in art-migrate is cut by an early-closing pipe (SIGPIPE under pipefail)', () => {
+  assert.doesNotMatch(art, /\|\s*head\b/);
+});
