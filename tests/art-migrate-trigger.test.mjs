@@ -100,3 +100,14 @@ test('art intake: the push is a plain fast-forward, never a force', () => {
   assert.doesNotMatch(block, /--force/, 'no force push of the intake branch');
   assert.match(block, /git push origin "HEAD:refs\/heads\/\$BRANCH"/);
 });
+
+test('intake runs are never cancelled mid-run', () => {
+  const block = jobBlock(art, 'intake');
+  assert.match(block, /group: art-intake-pr-\$\{\{ github\.event\.pull_request\.number \}\}\n\s+cancel-in-progress: false/);
+});
+
+test('pages: a malformed artifact is skipped before it can become a comment target', () => {
+  const step = pages.slice(pages.indexOf('- name: Fetch each open pull request'), pages.indexOf('- name: Assemble the site'));
+  const check = step.indexOf("-name '*.html' -size +0c");
+  assert.ok(check > 0 && check < step.indexOf('>> "$entries"'), 'the one-html check precedes the manifest entry');
+});

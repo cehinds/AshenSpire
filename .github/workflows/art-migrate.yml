@@ -94,9 +94,12 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    # Never cancelled mid-run: a run cancelled after it pushed the intake branch but
+    # before it opened the art pull request would leave an unlinked branch, and the
+    # next run (art removed, state none) does no art-repository work. Runs queue.
     concurrency:
       group: art-intake-pr-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
+      cancel-in-progress: false
     env:
       PR: ${{ github.event.pull_request.number }}
       BASE: ${{ github.event.pull_request.base.sha }}
