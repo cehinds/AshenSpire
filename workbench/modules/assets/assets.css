@@ -85,6 +85,23 @@
 .ast-facts code { font-family: var(--as-mono, monospace); font-size: 12px; }
 .ast-copy { margin-left: 6px; }
 
+.ast-frames, .ast-uses { display: flex; flex-direction: column; gap: 6px; }
+.ast-frames h3, .ast-uses h3 { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: var(--as-text-dim, #b0a593); }
+.ast-frame-bar { display: flex; align-items: center; gap: 6px; }
+.ast-frame-bar button { font: inherit; font-size: 13px; padding: 4px 9px; border-radius: 6px; cursor: pointer; border: 1px solid var(--as-line, #2e2a25); background: transparent; color: inherit; }
+.ast-frame-bar button[aria-pressed="true"] { border-color: var(--as-accent, #e0a64a); background: var(--as-accent-soft, rgba(224, 166, 74, 0.14)); }
+.ast-frame-range { flex: 1; min-width: 0; accent-color: var(--as-accent, #e0a64a); }
+.ast-frame-label { margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--as-text-dim, #b0a593); overflow-wrap: anywhere; }
+.ast-uses-body { font-size: 13px; }
+.ast-uses-body p { margin: 2px 0; }
+.ast-use { border-top: 1px solid var(--as-line, #2e2a25); padding: 4px 0; }
+.ast-use summary { cursor: pointer; overflow-wrap: anywhere; }
+.ast-use ol { margin: 4px 0 2px 0; padding: 0 0 0 0; list-style: none; }
+.ast-use li { display: flex; gap: 8px; align-items: baseline; padding: 1px 0; }
+.ast-use code, .ast-uses-body code { font-family: var(--as-mono, monospace); font-size: 12px; overflow-wrap: anywhere; min-width: 0; }
+.ast-ln { min-width: 3.5em; text-align: right; color: var(--as-text-faint, #7a705f); font-variant-numeric: tabular-nums; font-size: 12px; }
+.ast-warn { color: var(--as-bad, #e0645c); }
+
 @media (prefers-reduced-motion: reduce) {
   .ast * { transition: none !important; }
 }

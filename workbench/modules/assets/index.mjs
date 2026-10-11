@@ -8,7 +8,7 @@
 
 import {
   KINDS, SORTS, DEFAULT_SORT, rowsOf, kindCounts, facetsOf, filterRows, sortRows, parseDeepLink, deepLinkOf,
-  assetUrl, missingPacks, gridMetrics, visibleItems, formatOf, sizeLabel, dimsLabel, clampZoom,
+  assetUrl, missingPacks, gridMetrics, visibleItems, sizeLabel, dimsLabel, clampZoom, frameSetOf, groupUsage,
 } from './model.mjs';
 
 const TILE_MIN = 64;
@@ -66,6 +66,20 @@ export default {
             <dt>From</dt><dd class="ast-f-from"></dd>
             <dt>Path</dt><dd class="ast-f-path"><code></code> <button type="button" class="ast-copy">Copy path</button></dd>
           </dl>
+          <section class="ast-frames" aria-label="Frames" hidden>
+            <h3>Frames</h3>
+            <div class="ast-frame-bar">
+              <button type="button" class="ast-frame-prev" aria-label="Previous frame">‹</button>
+              <button type="button" class="ast-frame-play" aria-pressed="false">Play</button>
+              <button type="button" class="ast-frame-next" aria-label="Next frame">›</button>
+              <input type="range" class="ast-frame-range" min="0" value="0" aria-label="Frame">
+            </div>
+            <p class="ast-frame-label"></p>
+          </section>
+          <section class="ast-uses" aria-label="Where it is used">
+            <h3>Used in</h3>
+            <div class="ast-uses-body"><p class="faint">Select a file to search content/ and src/.</p></div>
+          </section>
         </aside>
       </div></div>`;
     const $ = (s) => el.querySelector(s);
@@ -170,7 +184,10 @@ export default {
       const row = byPath.get(st.path);
       root.classList.toggle('has-sel', Boolean(row));
       drawer.hidden = !row;
+      stopPlay();
       if (!row) { img.removeAttribute('src'); audio.removeAttribute('src'); return; }
+      renderUses(row.path);
+      renderFrames(row);
       $('.ast-title').textContent = row.name;
       $('.ast-f-format').textContent = row.format ? row.format.toUpperCase() : '—';
       $('.ast-f-size').textContent = sizeLabel(row.bytes);
@@ -258,6 +275,63 @@ export default {
       }
     });
     $('.ast-drawer-close').addEventListener('click', () => select(''));
+
+    // ---------- frames: a run of numbered files in one folder (an animation strip), stepped and played ----------
+    const framesBox = $('.ast-frames'), frameRange = $('.ast-frame-range'), frameLabel = $('.ast-frame-label'), playBtn = $('.ast-frame-play');
+    let frames = [], frameAt = 0, playTimer = 0;
+    function renderFrames(row) {
+      frames = row.audio ? [] : frameSetOf(row.path, all);
+      framesBox.hidden = frames.length < 2;
+      if (framesBox.hidden) return;
+      frameAt = Math.max(0, frames.findIndex((f) => f.path === row.path));
+      frameRange.max = String(frames.length - 1);
+      showFrame(frameAt);
+    }
+    function showFrame(i) {
+      frameAt = Math.min(frames.length - 1, Math.max(0, i));
+      frameRange.value = String(frameAt);
+      const f = frames[frameAt];
+      frameLabel.textContent = `${frameAt + 1} of ${frames.length} · ${f.name}`;
+      img.src = assetUrl(f.path);
+    }
+    function stopPlay() {
+      clearInterval(playTimer); playTimer = 0;
+      playBtn.textContent = 'Play'; playBtn.setAttribute('aria-pressed', 'false');
+    }
+    // Eight frames a second: an animation strip reads as motion at a pace a reader can follow and stop.
+    function togglePlay() {
+      if (playTimer) { stopPlay(); return; }
+      playBtn.textContent = 'Pause'; playBtn.setAttribute('aria-pressed', 'true');
+      playTimer = setInterval(() => showFrame((frameAt + 1) % frames.length), 125);
+    }
+    framesBox.addEventListener('click', (ev) => {
+      if (ev.target.closest('.ast-frame-play')) togglePlay();
+      else if (ev.target.closest('.ast-frame-prev')) { stopPlay(); showFrame(frameAt - 1); }
+      else if (ev.target.closest('.ast-frame-next')) { stopPlay(); showFrame(frameAt + 1); }
+    });
+    frameRange.addEventListener('input', () => { stopPlay(); showFrame(Number(frameRange.value)); });
+
+    // ---------- used in: where the file's path or name is named in content/ and src/ ----------
+    const usesBody = $('.ast-uses-body');
+    const usesCache = new Map();
+    let usesSeq = 0;
+    async function renderUses(p) {
+      const seq = ++usesSeq;
+      usesBody.innerHTML = '<p class="faint">Searching content/ and src/…</p>';
+      let res = usesCache.get(p);
+      if (!res) {
+        try { res = await ctx.api(`assets/usage?path=${encodeURIComponent(p)}`); usesCache.set(p, res); }
+        catch (err) { if (seq === usesSeq) usesBody.innerHTML = `<p class="ast-warn">The search failed: ${esc(err.message)}</p>`; return; }
+      }
+      if (seq !== usesSeq) return; // a newer selection has taken over
+      const groups = groupUsage(res.hits);
+      if (!groups.length) { usesBody.innerHTML = '<p class="faint">Not named in content/ or src/.</p>'; return; }
+      const lines = groups.reduce((n, g) => n + g.hits.length, 0);
+      usesBody.innerHTML = `<p class="faint">${lines} line${lines === 1 ? '' : 's'} in ${groups.length} file${groups.length === 1 ? '' : 's'}${res.truncated ? ' (first 200 shown)' : ''}.</p>` + groups.map((g) => `
+        <details class="ast-use"><summary><code>${esc(g.file)}</code> <span class="faint">${g.hits.length}</span></summary>
+          <ol>${g.hits.map((h) => `<li><span class="ast-ln">${h.line}</span> <code>${esc(h.text)}</code></li>`).join('')}</ol>
+        </details>`).join('');
+    }
 
     // ---------- events ----------
     kinds.addEventListener('click', (ev) => {
