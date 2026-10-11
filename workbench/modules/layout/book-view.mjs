@@ -106,6 +106,11 @@ export function createBookView(root, host) {
       sendSet();
       return;
     }
+    if (d.type === 'size') {
+      const h = Number(d.height);
+      if (Number.isFinite(h) && h > 0) frame.style.height = `${Math.min(Math.ceil(h) + 4, 4000)}px`;
+      return;
+    }
     if (d.type === 'pick') { selectBook(d.id); return; }
     if (d.type === 'choose') edit(d.field, d.value);
   }

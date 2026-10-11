@@ -85,6 +85,8 @@ function draw() {
   }
   wrap.append(big, sizes, group('Covers', 'cover', catalog.cover, recipe, book, (v) => v), group('Symbols', 'symbol', catalog.symbol, recipe, book, (v) => v), group('Treatment', 'treatment', catalog.treatment, recipe, book, (v) => `${v} · ${TREATMENT_LABELS[v] || v}`), group('Trim', 'trim', catalog.trim, recipe, book, (v) => v), shelfBlock(shelf));
   stage.replaceChildren(wrap);
+  // The parent sizes the frame to the page, so every row shows without a scrollbar inside it.
+  post({ type: 'size', height: Math.ceil(stage.getBoundingClientRect().height) });
 }
 
 function shelfBlock(shelf) {

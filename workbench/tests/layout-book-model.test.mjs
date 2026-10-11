@@ -93,3 +93,18 @@ test('a file without the recipe header is refused, not parsed', () => {
   assert.throws(() => B.parseRecipes('export const OTHER = {};\n'), /BOOK_ART_PRESETS was not found/);
   assert.deepEqual(B.fileProblems('export const OTHER = {};\n').length, 1);
 });
+
+test('the render page is found on the game server, and only a running server counts', () => {
+  assert.equal(B.gameBaseOf([{ id: 'game', status: 'up', url: 'http://127.0.0.1:4320' }]), 'http://127.0.0.1:4320/');
+  assert.equal(B.gameBaseOf([{ id: 'game', status: 'starting', url: 'http://127.0.0.1:4320' }]), null);
+  assert.equal(B.gameBaseOf([]), null);
+  assert.equal(B.renderUrl('http://127.0.0.1:4320/', { parentOrigin: 'http://127.0.0.1:4300' }),
+    'http://127.0.0.1:4320/workbench/modules/layout/book-render.html?po=http%3A%2F%2F127.0.0.1%3A4300');
+});
+
+test('the catalog keeps only the lists the game sent, and editing needs all four choices', () => {
+  const partial = B.catalogOf({ cover: ['classic'], books: [{ id: 'x' }] });
+  assert.equal(B.catalogReady(partial), false);
+  assert.deepEqual(partial.books, [{ id: 'x', name: 'x' }]);
+  assert.equal(B.catalogReady(CATALOG), true);
+});
