@@ -1169,7 +1169,7 @@ When the Combat Rounds Preview is on, see §4.11.
 
 **Order and hits**
 
-- Initiative is base, plus momentum, plus a d4 rolled once per round; card speed breaks ties in merge mode, as DESIGN.md states. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls.
+- Initiative is base, plus momentum, plus a d4 rolled once per round. The preview uses the `speed` merge of DESIGN.md: each action's speed is card speed plus the preemptive buff plus initiative, actions act highest speed first, a later card in a queue never acts before an earlier one, and ties go to higher initiative, then the player. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls.
 - Hit or miss uses the hit roll of DESIGN.md. A missed action applies no effects.
 - A reaction pause keeps the round's cursor. A save taken during a pause resumes at that cursor (§3.12).
 

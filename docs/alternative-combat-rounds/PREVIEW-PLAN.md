@@ -9,7 +9,8 @@ An opt-in setting that runs real fights on the alternative combat rounds
 - Reached through a Settings toggle in real runs: Advanced → Combat, on dev/test
   builds only (hidden on release), chosen at New Run and fixed for that run.
 - Solo **and co-op/LAN** (co-op parity is built, not deferred).
-- The fight uses the live hand rules: draw 4 + INT, hand cap 15, unplayed cards
+- The fight uses the live hand rules: the configured `draw` row
+  (base 4, +0.2 per INT above 4, so +1 per 5 INT), hand cap 15, unplayed cards
   shuffle back into the draw pile, Retain and Ethereal, the `handRules` settings.
   Resources are live: stamina is SP, mana is MP.
 - The timeline decides order (initiative = base + momentum + d4, merge mode),
