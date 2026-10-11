@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-11
+
+- **Menus and pop-ups no longer reset the screen, and map taps answer faster on phones** ([#1830](https://github.com/cehinds/AshenSpire/pull/1830), `0.7.1.1282`). Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, so a double tap travels, and selecting a node takes about half as long.
+
 ## 2026-10-10
 
 - **Clicking a target no longer shuffles enemy labels** ([#1825](https://github.com/cehinds/AshenSpire/pull/1825), `0.7.1.1280`). Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Clicking any target after keyboard navigation clears the old cursor first, while keyboard focus still moves the cursor to the target.
