@@ -1,7 +1,7 @@
 // node --test workbench/tests/ui.test.mjs — the page's DOM-free helpers.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fuzzyScore, fuzzyFilter, DEVICES, fitDevice, duration, manifestTables, manifestSummary, EXPORT_FORMAT, apiError, saveFailure } from '../ui/logic.mjs';
+import { fuzzyScore, fuzzyFilter, DEVICES, deviceById, dockDevice, fitDevice, duration, manifestTables, manifestSummary, EXPORT_FORMAT, apiError, saveFailure } from '../ui/logic.mjs';
 
 test('fuzzy matching keeps letter order and prefers word starts and whole runs', () => {
   assert.equal(fuzzyScore('xyz', 'Content Editor'), null);
@@ -21,6 +21,12 @@ test('device presets fit the stage without upscaling and stay centred', () => {
   assert.equal(fit.width, 390);
   assert.ok(Math.abs(fit.left - (460 - 390 * fit.scale) / 2) <= 1);
   assert.equal(fitDevice(phone, { width: 4000, height: 4000 }).scale, 1, 'never upscaled');
+  // Visual Review's device ids are not preview devices: the dock falls back to Fill and never throws.
+  assert.equal(deviceById('desk'), null);
+  assert.equal(deviceById('phone').id, 'phone');
+  assert.equal(dockDevice('desk').id, 'fill');
+  assert.equal(dockDevice(undefined).id, 'fill');
+  assert.equal(dockDevice('tablet').id, 'tablet');
   const fill = fitDevice(DEVICES[0], { width: 500, height: 300 });
   assert.deepEqual([fill.width, fill.height, fill.scale], [500, 300, 1]);
 });

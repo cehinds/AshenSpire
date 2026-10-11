@@ -40,6 +40,16 @@ export const DEVICES = [
   { id: 'phone', label: 'Phone', width: 390, height: 844 },
 ];
 
+/** The preview device with this id, or null: Visual Review's own device ids (desk, tablet, phone) are not preview devices. */
+export function deviceById(id) {
+  return DEVICES.find((d) => d.id === id) ?? null;
+}
+
+/** The device the preview dock draws: the one named, else Fill, so an unknown id never reaches the layout. */
+export function dockDevice(id) {
+  return deviceById(id) ?? DEVICES[0];
+}
+
 /** Scale and offset that fit a device viewport inside a stage box (never upscaled). */
 export function fitDevice(device, stage, pad = 16) {
   if (!device || !device.width) return { scale: 1, width: stage.width, height: stage.height, left: 0, top: 0 };
