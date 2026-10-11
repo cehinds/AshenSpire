@@ -10,10 +10,10 @@ import { spawnGroup } from './process-tree.mjs';
  * step's group is empty; output is inherited, or collected when opts.capture is set. stop() stops the
  * step that is running, if any, and resolves once its group is empty.
  */
-export function createStepRunner() {
+export function createStepRunner({ graceMs: defaultGraceMs } = {}) {
   let active = null;
   return {
-    async run(script, args = [], { capture = false, cwd, env, graceMs } = {}) {
+    async run(script, args = [], { capture = false, cwd, env, graceMs = defaultGraceMs } = {}) {
       const group = spawnGroup(process.execPath, [script, ...args], {
         stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
         ...(cwd ? { cwd } : {}),

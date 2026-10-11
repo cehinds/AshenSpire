@@ -33,9 +33,10 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync
 import { join, dirname, relative, sep, resolve, basename, extname, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { holdForCli } from './lib/build-lock.mjs';
+import { createStepRunner, stopStepsOnSignal } from './lib/build-steps.mjs';
 
 export const FORMAT = 'ashenspire.engine-export/1';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -237,17 +238,22 @@ function walkJson(dir) {
 /** The builders whose output collect() imports. content-build last: it refuses a framework or config JSON whose generated mirror is not current yet. */
 export const BUILDERS = ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs'];
 
+// The runner for the builders this CLI starts: main stops it on a signal, so a builder never outlives the lock.
+const STEPS = createStepRunner();
+
 /**
  * Run each builder under `root` (write mode, or `--check` when `build` is
- * false). Returns the ones that failed — when checking, the ones whose
- * generated output is stale — with their output; an empty list means current.
+ * false), each in its own process group under the lock main holds. Returns the
+ * ones that failed — when checking, the ones whose generated output is stale —
+ * with their output; an empty list means current. A builder is not reported
+ * done while anything it started is still alive (tools/lib/build-steps.mjs).
  */
-export function staleGenerated({ root = ROOT, build = true, builders = BUILDERS } = {}) {
+export async function staleGenerated({ root = ROOT, build = true, builders = BUILDERS, steps = STEPS } = {}) {
   const failed = [];
   for (const script of builders) {
     if (!existsSync(join(root, script))) continue;
-    const r = spawnSync(process.execPath, [join(root, script), ...(build ? [] : ['--check'])], { cwd: root, encoding: 'utf8', env: { ...process.env, FORCE_COLOR: '0' } });
-    if (r.status !== 0) failed.push({ script, status: r.status, output: `${r.stdout || ''}${r.stderr || ''}${r.error ? r.error.message : ''}`.trim() });
+    const r = await steps.run(join(root, script), build ? [] : ['--check'], { capture: true, cwd: root, env: { ...process.env, FORCE_COLOR: '0' } });
+    if (r.code !== 0) failed.push({ script, status: r.code, output: `${r.output}${r.error ? r.error.message : ''}`.trim() });
   }
   return failed;
 }
@@ -529,8 +535,9 @@ async function main() {
   // the generated modules, and a --no-build run must not read them mid-write.
   // The builders it spawns run under it.
   await holdForCli(ROOT, 'engine-export');
+  stopStepsOnSignal(STEPS);
   const started = Date.now();
-  const failed = staleGenerated({ build: opts.build });
+  const failed = await staleGenerated({ build: opts.build });
   if (failed.length) {
     const names = failed.map((f) => f.script).join(', ');
     console.error(opts.build
