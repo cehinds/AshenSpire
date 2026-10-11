@@ -53,3 +53,38 @@ test('renderModal() draws and wires only the modal layer', () => {
   assert.doesNotMatch(body, /app\.querySelector\('\.title-screen'\)|artNotice/, 'renderModal does not touch the whole screen or the art notice');
   assert.doesNotMatch(body, /\bapp\.innerHTML\b/);
 });
+
+// W6: the New Game door is a registered modal, and a delete from the Title
+// updates it in place instead of remounting the whole Title.
+const MAIN_SOURCE = readFileSync(
+  fileURLToPath(new URL('../src/main.js', import.meta.url)),
+  'utf8',
+);
+
+test('title.js registers the open New Game door with modalState.js', () => {
+  assert.match(SOURCE, /import \{ registerModal \} from '\.\.\/modalState\.js';/);
+  assert.match(SOURCE, /registerModal\('title-new', layer\)/);
+  assert.match(SOURCE, /releaseTitleModal\?\.\(\);\n\s*releaseTitleModal = null;/, 'screen teardown releases the entry');
+});
+
+test('a delete from the Title redraws in place through deleteSlot, not showTitle', () => {
+  assert.match(SOURCE, /const deleteSlot = \(slot, from\) => \{/);
+  assert.match(SOURCE, /onConfirm: \(\) => deleteSlot\(slot, 'new'\)/);
+  assert.match(SOURCE, /onDelete: \(slot\) => deleteSlot\(slot, 'load'\)/);
+  assert.match(SOURCE, /if \(!Array\.isArray\(fresh\)\) return;\n\s*currentSlots = fresh;/);
+});
+
+test('the intro scene replays automatically only on the first render of a mount', () => {
+  assert.match(SOURCE, /if \(!introPlayed\) \{\n\s*introPlayed = true;\n\s*replayScene\(\);\n\s*\}/);
+  assert.doesNotMatch(SOURCE, /\n    replayScene\(\);\n/, 'render() no longer calls replayScene() unconditionally');
+});
+
+test('main.js onDelete no longer remounts the Title and returns the fresh slot records', () => {
+  const match = MAIN_SOURCE.match(/onDelete: \(slot, from = null\) => \{([\s\S]*?)\n    \},/);
+  assert.ok(match, 'onDelete handler is declared in showTitle');
+  const body = match[1];
+  assert.match(body, /saves\.clearRun\(slot\);/);
+  assert.doesNotMatch(body, /showTitle\(/, 'onDelete does not call showTitle');
+  assert.match(body, /const fresh = saveSlotRecords\(\);/);
+  assert.match(body, /return fresh;/);
+});
