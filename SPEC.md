@@ -1153,15 +1153,6 @@ with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
 This specification precedes the runtime implementation and does not claim that
 the new reaction system has shipped.
 
-When a seat holds a Counter or defensive Sweep but no reaction is offered for
-an incoming root, the engine emits `combatReactionUnavailable` once per root and
-seat, naming the first failing check (`switchOff`, `attackerStaggered`,
-`attackerControlled`, `notCovered`, `cost`, `controlled`, `unplayable`,
-`alreadyAnswered` or `other`); a seat with no such card, a dead seat and a
-disconnected seat get none. A Smash that breaks physical Guard emits
-`combatGuardBroken` once per break. Both are informational receipts and change
-no rule.
-
 ## 5. Content specification
 
 ### 5.1 Classes, creation presets, and levels
