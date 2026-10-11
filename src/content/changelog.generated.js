@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1855",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "The new Workbench tests pass on Windows too",
+    "detail": "Development-process change only, nothing in the game changes. Four tests added with the Workbench compared file paths written with forward slashes, so they failed on Windows, where the tools correctly use backslashes; they now build the expected paths the same way the tools do.",
+    "build": "0.7.1.1300",
+    "pullRequest": 1855,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1855"
+  },
+  {
     "id": "pr-1829",
     "date": "2026-10-11",
     "group": "2026-10-11",
