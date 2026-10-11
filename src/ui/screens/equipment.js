@@ -1470,6 +1470,106 @@ export function mountEquipment(host, {
     return section;
   }
 
+  /** While a position is picked: the candidates as an Item / Status / Actions table. */
+  function pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, detail, prompt, box }) {
+    const all = sortEquipPickerRows(equipPickerTableRows(allRows, selectedSlot, { setIndex: picking.setIndex, loadout: run.loadout }), pickerSort);
+    const shown = pickerShowAll ? all : all.filter((r) => r.fits);
+    const slotLabel = (id) => (eq.slots || []).find((s) => s.id === id)?.label || id;
+    const root = el('div', { class: 'equip-picker', dataset: { component: 'armoury.equipPickerTable' } });
+    const filter = button({
+      label: pickerShowAll ? t('armoury.picker.fitsOnly') : t('armoury.picker.showAll'),
+      className: 'equip-picker-filter',
+      attrs: { 'aria-pressed': String(pickerShowAll) },
+    });
+    filter.addEventListener('click', () => { pickerShowAll = !pickerShowAll; draw(); });
+    root.append(filter);
+    if (!shown.length) {
+      root.append(flavour(`Nothing in Inventory fits ${selectedSlot.label}.`, { class: 'ep-hint' }));
+      setFooterPrimary(null);
+      return root;
+    }
+    const sortHead = (key, label) => {
+      const active = pickerSort.column === key;
+      const sortButton = el('button', { type: 'button', class: 'equip-picker-sort', dataset: { sort: key } }, [label]);
+      sortButton.addEventListener('click', () => {
+        pickerSort = pickerSort.column === key
+          ? { column: key, direction: pickerSort.direction === 'asc' ? 'desc' : 'asc' }
+          : { column: key, direction: 'asc' };
+        draw();
+      });
+      return el('th', { 'aria-sort': active ? (pickerSort.direction === 'asc' ? 'ascending' : 'descending') : 'none' }, [sortButton]);
+    };
+    const thead = el('thead', {}, [el('tr', {}, [
+      sortHead('name', t('armoury.picker.col.item')),
+      sortHead('status', t('armoury.picker.col.status')),
+      el('th', {}, [el('span', { class: 'sr-only' }, [t('armoury.picker.col.actions')])]),
+    ])]);
+    const tbody = el('tbody', {});
+    let openShown = false;
+    for (const r of shown) {
+      const open = selectedInventoryKey === r.key;
+      const parts = pickerParts.get(r.key);
+      const first = r.elsewhere[0];
+      const metaBits = [r.category];
+      if (r.status === 'nofit') metaBits.push(t(r.reason === 'kind' ? 'armoury.picker.reason.kind' : 'armoury.picker.reason.hand', { slot: selectedSlot.label }));
+      if (r.status === 'elsewhere' && r.row.count === 1) metaBits.push(t('armoury.picker.onlyCopy', { slot: slotLabel(first.slotId), n: first.setIndex + 1 }));
+      const statusLabel = r.status === 'elsewhere'
+        ? t('armoury.picker.status.elsewhere', { slot: slotLabel(first.slotId), n: first.setIndex + 1 })
+        : t(`armoury.picker.status.${r.status}`, {});
+      const img = el('img', { class: 'equip-picker-thumb', src: thumbSrc(r.row.item), alt: '', loading: 'lazy', decoding: 'async' });
+      const itemCell = el('td', { class: 'equip-picker-item' }, [img, el('div', {}, [
+        el('strong', { class: 'equip-picker-name' }, [r.name]),
+        el('span', { class: 'equip-picker-meta' }, [metaBits.join(' · ')]),
+      ])]);
+      const statusCell = el('td', { class: 'equip-picker-status' }, [
+        pill({ label: statusLabel, attrs: { class: `equip-picker-pill is-${r.status}` } }),
+      ]);
+      const inspect = button({
+        label: open ? t('armoury.picker.hide') : t('armoury.action.inspect'),
+        className: 'equip-picker-inspect',
+        attrs: { 'aria-expanded': String(open) },
+      });
+      inspect.addEventListener('click', () => { selectedInventoryKey = open ? null : r.key; draw(); });
+      const actions = [inspect];
+      if (r.fits && parts?.target) {
+        const target = parts.target;
+        const act = button({
+          label: parts.actionLabel,
+          weight: target.kind === 'unequip' ? 'danger' : 'primary',
+          className: 'equip-picker-act',
+        });
+        act.dataset.act = target.kind;
+        if (!parts.seal.ok) { act.disabled = true; refuses(act, () => parts.seal.reason); }
+        else if (!parts.transition.ok) { act.disabled = true; refuses(act, () => parts.transition.reason); }
+        else act.addEventListener('click', () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
+        actions.push(act);
+      }
+      const actionsCell = el('td', { class: 'equip-picker-actions' }, actions);
+      tbody.append(el('tr', {
+        class: `equip-picker-row is-${r.status}${open ? ' is-open' : ''}`,
+        dataset: { itemId: r.id, rowKey: r.key, status: r.status },
+      }, [itemCell, statusCell, actionsCell]));
+      if (open) {
+        openShown = true;
+        const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+        const body = r.fits
+          ? parts.revealed
+          : inventoryReveal(registries, r.row, { holdDuration, registerHold, classModel: layout.cardClasses.armamentItem });
+        const cell = el('td', {}, [body]);
+        cell.colSpan = 3;
+        tbody.append(el('tr', { class: 'equip-picker-detail', dataset: { detailFor: r.key } }, [cell]));
+        setFooterPrimary(footerAction(footerPlans.get(r.key)) || null);
+      }
+    }
+    if (!openShown) setFooterPrimary(null);
+    root.append(el('table', { class: 'equip-picker-table' }, [
+      el('caption', { class: 'sr-only' }, [t('armoury.picker.caption', { slot: `${selectedSlot.label} · ${picking.setIndex + 1}` })]),
+      thead,
+      tbody,
+    ]));
+    return root;
+  }
+
   /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
   function inventoryBlock() {
     const box = document.createElement('div');
