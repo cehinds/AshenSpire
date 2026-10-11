@@ -436,12 +436,25 @@ test('DOM: Start confirms inside the bounds, and the Escape key cancels', async 
   });
 });
 
+test('Reading Desk: text search is off by default (owner, 2026-10-11)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    assert.equal(editor.root.querySelector('.deck-editor-search'), null, 'no collection search by default');
+    assert.equal(editor.root.querySelector('[data-focus-key="deck-search"]'), null, 'no deck search by default');
+    assert.equal(editor.root.querySelector('input[type="search"]'), null, 'no search input at all by default');
+    assert.ok(editor.root.querySelector('[data-focus-key="scope:all"]'), 'the All / In Deck chips stay');
+    editor.close();
+  });
+});
+
 test('Reading Desk: search accepts hotkey characters without mutating or closing the editor', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom((dom) => {
     const run = freshRun();
     const before = editState(run);
-    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const editor = mountDeckEditor(document.body, { registries: REG, run, search: true });
     const search = editor.root.querySelector('.deck-editor-search');
     search.focus();
     for (const key of ['+', '-', 'Delete', 'Backspace', 'Enter', ' ']) {
@@ -499,7 +512,7 @@ test('Reading Desk: deck search and Cards mode preserve the run and Back returns
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(dom => {
     const run = freshRun(), before = editState(run);
-    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const editor = mountDeckEditor(document.body, { registries: REG, run, search: true });
     const search = editor.root.querySelector('[data-focus-key="deck-search"]');
     search.value = 'Gorefire';
     search.dispatchEvent(new dom.Event('input'));

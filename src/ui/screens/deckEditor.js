@@ -64,7 +64,10 @@ const DRAG_HOLD_MS = 250;
 // its snapshot mid-edit, and cancelling the stale one would undo a confirm.
 let liveEditor = null;
 
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, dragHoldMs = DRAG_HOLD_MS }) {
+// Text search is off for now (owner, 2026-10-11): the search inputs are not
+// rendered unless a mount passes `search: true`. The filter code stays so the
+// search comes back by flipping that one option.
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
@@ -385,8 +388,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     : tFull('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
 
   function collectionPane() {
-    const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search');
-    search.addEventListener('input', () => {
+    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search') : null;
+    search?.addEventListener('input', () => {
       query = search.value;
       const caret = search.selectionStart;
       draw();
@@ -501,8 +504,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.deck') }));
     const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list);
-    const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search');
-    search.addEventListener('input', () => {
+    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
+    search?.addEventListener('input', () => {
       deckQuery = search.value;
       const caret = search.selectionStart;
       draw();
