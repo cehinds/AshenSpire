@@ -257,3 +257,25 @@ test('a pose file layout is its indent (none, two spaces, four spaces or a tab) 
   assert.deepEqual(layoutOf(`${JSON.stringify(project, null, '\t')}\n\n`), { indent: '\t', tail: '\n\n' });
   assert.deepEqual(layoutOf(undefined), { indent: '', tail: '' });
 });
+
+/** Every *.pose.json under a repo folder, found without a build step. */
+function poseFilesUnder(rel, out = []) {
+  for (const entry of fs.readdirSync(new URL(`../../${rel}`, import.meta.url), { withFileTypes: true })) {
+    const child = `${rel}/${entry.name}`;
+    if (entry.isDirectory()) poseFilesUnder(child, out);
+    else if (entry.name.endsWith('.pose.json')) out.push(child);
+  }
+  return out;
+}
+
+test('every shipped pose file (renewal, stances and the rest) round-trips byte-identically with no edits', () => {
+  const files = poseFilesUnder('pose-studio');
+  assert.ok(files.length >= 68, `found ${files.length} pose files`);
+  for (const rel of files) {
+    const text = readFixture(rel);
+    const { project } = parsePoseFile(text);
+    assert.ok(project, `${rel} parses`);
+    assert.equal(serializePoseFile(project, text), text, `${rel} is byte-exact`);
+    assert.equal(isDirty(text, project), false, `${rel} is not dirty`);
+  }
+});
