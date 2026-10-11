@@ -14,11 +14,19 @@ export function paintFooterOrb(orb, resource, urls) {
   canvas.innerHTML = footerStaminaLayers(footerLayout, resource).map(n => `<image data-orb-part="${esc(n.asset)}" href="${esc(urls[n.asset])}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="none"/>`).join('');
   return true;
 }
-function svg(nodes, b) {
+// Piles and potions are artwork, not a stretched plate: each image keeps its
+// natural shape and letterboxes inside its authored box ('contain'). Their face
+// also takes the box's own aspect, so on a compact host, where the face is sized
+// by height, the root's stretch is a no-op and the art is not flattened.
+const FIT = { draw: 'contain', discard: 'contain', potions: 'contain' };
+function svg(nodes, b, fit = 'stretch') {
   // Stretch to the control box, as the box's percentage sizing does; meet would
   // letterbox the art inside a box that is itself stretched, so they drift apart.
-  return `<svg class="footer-art-face" viewBox="${b.x} ${b.y} ${b.w} ${b.h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${nodes.map(n => {
-    if (n.asset !== 'text') return footerAssets[n.asset] ? `<image data-footer-asset="${esc(n.asset)}" href="${esc(assetUrl(footerAssets[n.asset]))}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="none"/>` : '';
+  const contain = fit === 'contain';
+  const image = contain ? 'xMidYMid meet' : 'none';
+  const style = contain ? ` style="aspect-ratio:${b.w} / ${b.h}"` : '';
+  return `<svg class="footer-art-face" data-art-fit="${fit}"${style} viewBox="${b.x} ${b.y} ${b.w} ${b.h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${nodes.map(n => {
+    if (n.asset !== 'text') return footerAssets[n.asset] ? `<image data-footer-asset="${esc(n.asset)}" href="${esc(assetUrl(footerAssets[n.asset]))}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="${image}"/>` : '';
     const align = n.textAlign || 'center', x = n.x + (align === 'right' ? n.w : align === 'center' ? n.w / 2 : 0);
     return `<text data-footer-text="${esc(n.id)}" data-footer-binding="${esc(n.binding || 'static')}" x="${x}" y="${n.y + n.h / 2}" text-anchor="${align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle'}" dominant-baseline="central" font-family="${esc(footerFonts[n.fontFamily] || footerFonts.serif)}" font-size="${n.fontSize}" font-weight="${n.fontWeight || 400}" font-style="${esc(n.fontStyle || 'normal')}" fill="${esc(n.color)}" opacity="${n.opacity}" lengthAdjust="spacingAndGlyphs"></text>`;
   }).join('')}</svg>`;
@@ -42,7 +50,7 @@ export function installFooterArt(row) {
       control.insertAdjacentHTML('beforeend', `<span class="footer-sp-text">${svg(group.items.filter(n => n.asset === 'text'), box)}</span>`);
       continue;
     }
-    control.innerHTML = svg(group.items, box) + '<span class="footer-compact-label" aria-hidden="true"></span>';
+    control.innerHTML = svg(group.items, box, FIT[role]) + '<span class="footer-compact-label" aria-hidden="true"></span>';
     if (role === 'draw') control.insertAdjacentHTML('beforeend', '<span class="sp-v n sr-only"></span>');
   }
   row.insertAdjacentHTML('afterbegin', `<div class="footer-art-rails">${svg(plan.rails, b)}</div>`);
