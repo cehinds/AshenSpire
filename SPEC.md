@@ -185,7 +185,7 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `src/net/` | LAN co-op client (§11). Absent behind the launcher → the feature hides itself. |
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
-| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). The core suite (`engine.test.js`) asserts against model + engine and needs no DOM; other `*.test.mjs` files may mount screens on a stub DOM (for example `card-rank.test.mjs`). |
+| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). The core suite (`engine.test.js`) is headless and needs no DOM (it also asserts some UI presentation models and helpers); other `*.test.mjs` files may mount screens on a stub DOM (for example `card-rank.test.mjs`). |
 | `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
@@ -238,7 +238,7 @@ effects: [
 
 **Opcode list** (closed set; extending it is an engine PR):
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`).
+- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`). Internal (not content-authorable): `completeCombatAction`, which `executeAction` runs to close a combat action (`src/engine/actions.js`).
 - Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
@@ -1247,7 +1247,7 @@ extension with validation and engine tests—not imperative per-card code.
 
 ### 5.2 Reaver card pool — M1 set (24 cards + upgrades)
 
-The reward pool is 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); this table is the M1 set.
+The base reward pool is 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); `composeProgressionContent` adds 10 class-mastery cards as they unlock (53 in all). This table is the M1 set.
 
 Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine id `energy` is an alias). `+` column = upgrade delta.
 
