@@ -58,3 +58,11 @@ test('compact contain faces size by height, so their width follows the art aspec
   const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
   assert.match(css, /^\.combat-action-row\[data-footer-compact='true'\] \.footer-art-face\[data-art-fit='contain'\] \{ width: auto; \}$/m);
 });
+
+test('phone piles and potions take a 60px art face in a 92px column, not the 28px face', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  assert.match(css, /\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-art-face\[data-art-fit='contain'\] \{ height: calc\(60px \/ var\(--ui-zoom, 1\)\); \}/);
+  assert.match(css, /\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.combat-potions \.footer-art-face\[data-art-fit='contain'\] \{ height: calc\(60px \/ var\(--ui-zoom, 1\)\); \}/);
+  assert.match(css, /height: calc\(92px \/ var\(--ui-zoom, 1\)\); min-height: calc\(92px \/ var\(--ui-zoom, 1\)\);/);
+});

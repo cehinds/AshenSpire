@@ -5006,6 +5006,18 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    44px piles, which cannot hold this stack. */
 .combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: calc(28px / var(--ui-zoom, 1)); flex: 0 0 auto; }
 .combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(13px / var(--ui-zoom, 1)); }
+/* Phone portrait (compact-combat): the art gets the height the row has. The
+   layout's pile is 60 px (pileHeightPx), which leaves a 28 px face too small
+   to read. The row keeps its 92 px height; each pile column takes all of it, a
+   60 px face over its label (the art is about 31-33 px tall at its natural
+   aspect), and Potions takes a 60 px face, so its art is 64 px wide at its
+   natural aspect. The selectors outrank the packed-footer rules they replace. */
+:root .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile,
+:root .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .combat-potions {
+  height: calc(92px / var(--ui-zoom, 1)); min-height: calc(92px / var(--ui-zoom, 1));
+}
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face[data-art-fit='contain'] { height: calc(60px / var(--ui-zoom, 1)); }
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .combat-potions .footer-art-face[data-art-fit='contain'] { height: calc(60px / var(--ui-zoom, 1)); }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
