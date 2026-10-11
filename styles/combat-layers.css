@@ -288,7 +288,7 @@
    armed-target silhouettes now own that cue; idle artwork stays unoutlined. */
 :root .combat[data-layout='formation'] .combatant .alternative-silhouette { filter: none; }
 :root .combat[data-layout='formation'] .combatant { --combatant-highlight: #ef4949; }
-:root .combat[data-layout='formation'] .combatant.player { --combatant-highlight: #65df68; }
+:root .combat[data-layout='formation'] .combatant.player { --combatant-highlight: #66b8ff; }
 :root .combat[data-layout='formation'] .combatant.context-selected .sprite {
   filter: drop-shadow(1px 0 0 var(--combatant-highlight)) drop-shadow(-1px 0 0 var(--combatant-highlight)) drop-shadow(0 1px 2px var(--combatant-highlight));
 }
