@@ -51,8 +51,9 @@ export default {
         </div>
       </section>
       <div class="ast-packs" hidden></div>
+      <div class="ast-narrowbar"><button type="button" class="ast-filter-toggle" aria-expanded="false" aria-controls="ast-filters-pane">Filters</button></div>
       <div class="ast-body">
-        <aside class="ast-filters" aria-label="Filters">
+        <aside class="ast-filters" id="ast-filters-pane" aria-label="Filters">
           <label class="ast-field">Folder<select data-f="folder"></select></label>
           <label class="ast-field">Format<select data-f="format"></select></label>
           <label class="ast-field">Sort<select data-f="sort">${SORTS.map((s) => `<option value="${s.id}">${esc(s.label)}</option>`).join('')}</select></label>
@@ -180,8 +181,11 @@ export default {
       const win = visibleItems({ count: view.length, metrics, scrollTop: Math.max(0, grid.scrollTop - PAD), viewport: grid.clientHeight, overscan: 2 });
       let html = '';
       for (let i = win.from; i < win.to; i += 1) html += tileOf(view[i], i);
+      // A redraw (a scroll, a resize) replaces the tiles; a focused tile keeps the focus it had.
+      const held = document.activeElement?.closest?.('.ast-tile') ? Number(document.activeElement.dataset.i) : null;
       tiles.innerHTML = html;
       tiles.style.transform = `translate(${PAD}px, ${PAD}px)`;
+      if (held !== null) tiles.querySelector(`[data-i="${held}"]`)?.focus({ preventScroll: true });
     }
     function tileOf(row, i) {
       const col = i % metrics.cols, rowIdx = Math.floor(i / metrics.cols);
@@ -206,9 +210,14 @@ export default {
       renderGrid();
       writeHash();
     }
+    // Below 1100px (assets.css) the filters and the drawer are overlays: the drawer slides in on a selection.
+    const filterToggle = $('.ast-filter-toggle');
+    const setFilters = (open) => { root.classList.toggle('filters-open', open); filterToggle.setAttribute('aria-expanded', String(open)); };
+    filterToggle.addEventListener('click', () => setFilters(!root.classList.contains('filters-open')));
     function renderDrawer() {
       const row = byPath.get(st.path);
       root.classList.toggle('has-sel', Boolean(row));
+      root.classList.toggle('drawer-open', Boolean(row));
       drawer.hidden = !row;
       stopPlay();
       if (!row) { img.removeAttribute('src'); audio.removeAttribute('src'); return; }
@@ -387,10 +396,11 @@ export default {
     });
     grid.addEventListener('click', (ev) => {
       const box = ev.target.closest('input[data-pick]');
-      if (box) { togglePick(box.dataset.pick, box.checked); return; }
+      if (box) { togglePick(box.dataset.pick, box.checked); grid.focus({ preventScroll: true }); return; }
       if (ev.target.closest('.ast-pick')) return;
       const t = ev.target.closest('.ast-tile');
-      if (t) select(view[Number(t.dataset.i)]?.path || '');
+      // The tiles are redrawn on a selection, so focus goes to the grid, where the arrow keys and Escape are heard.
+      if (t) { select(view[Number(t.dataset.i)]?.path || ''); grid.focus({ preventScroll: true }); }
     });
 
     // ---------- compare: two picked images, side by side or one over the other ----------
@@ -422,6 +432,16 @@ export default {
       ctx.toast({ title: `Exported ${rows.length} file${rows.length === 1 ? '' : 's'}`, record: false, timeout: 1800 });
     }
     exportBtn.addEventListener('click', exportPicks);
+    // Scrolls the grid until the tile at view index `at` is on screen, draws it, and focuses it.
+    function focusIndex(at) {
+      if (!metrics || at < 0 || at >= view.length) return;
+      const top = PAD + Math.floor(at / metrics.cols) * metrics.rowHeight;
+      const bottom = top + metrics.cell;
+      if (top < grid.scrollTop) grid.scrollTop = top - PAD;
+      else if (bottom > grid.scrollTop + grid.clientHeight) grid.scrollTop = bottom - grid.clientHeight + PAD;
+      renderGrid();
+      tiles.querySelector(`[data-i="${at}"]`)?.focus({ preventScroll: true });
+    }
     // Reveal path: the file's folder becomes the folder filter, the grid scrolls to its tile and focuses it.
     function reveal(p) {
       const row = byPath.get(p);
@@ -429,16 +449,31 @@ export default {
       if (!filterRows([row], st).length) { st.kind = ''; st.q = ''; st.format = ''; q.value = ''; }
       st.folder = row.folder;
       renderKinds(); renderFacets(); refresh();
-      const at = view.findIndex((r) => r.path === p);
-      if (at < 0) return;
-      const top = PAD + Math.floor(at / metrics.cols) * metrics.rowHeight;
-      const bottom = top + metrics.cell;
-      if (top < grid.scrollTop) grid.scrollTop = top - PAD;
-      else if (bottom > grid.scrollTop + grid.clientHeight) grid.scrollTop = bottom - grid.clientHeight + PAD;
-      renderGrid();
-      tiles.querySelector(`[data-i="${at}"]`)?.focus({ preventScroll: true });
+      focusIndex(view.findIndex((r) => r.path === p));
       writeHash();
     }
+    // Arrow keys move the focus through the grid a tile at a time (a row at a time up and down); Enter selects it.
+    grid.addEventListener('keydown', (ev) => {
+      const cur = document.activeElement?.closest?.('.ast-tile') ? Number(document.activeElement.dataset.i) : -1;
+      if ((ev.key === 'Enter' || ev.key === ' ') && cur >= 0) {
+        ev.preventDefault();
+        select(view[cur].path);
+        grid.focus({ preventScroll: true }); // the tile is redrawn by the selection; focus stays in the grid
+        return;
+      }
+      const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: metrics?.cols || 1, ArrowUp: -(metrics?.cols || 1) }[ev.key];
+      if (!step || !view.length) return;
+      ev.preventDefault();
+      // From the grid itself (no tile focused yet), the first arrow lands on the selected tile, or the first one.
+      const from = cur >= 0 ? cur + step : Math.max(0, view.findIndex((r) => r.path === st.path));
+      focusIndex(Math.min(view.length - 1, Math.max(0, from)));
+    });
+    // Escape closes the open overlay: the compare view, then the filters, then the drawer.
+    root.addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Escape' || !compareBox.hidden) return;
+      if (root.classList.contains('filters-open')) { setFilters(false); filterToggle.focus(); }
+      else if (root.classList.contains('drawer-open')) select('');
+    });
     el.querySelector('.ast-reveal').addEventListener('click', () => reveal(st.path));
     // Equipment art maps to its entity: the Entity Browser opens on it (its own deep link: kind and id).
     el.querySelector('.ast-open-entity').addEventListener('click', () => {
@@ -471,7 +506,8 @@ export default {
     const setOnion = () => { compareBox.querySelector('.ast-cmp-b img').style.opacity = String(clampOpacity(onionOp.value)); };
     onionOp.addEventListener('input', setOnion);
     setOnion();
-    compareBox.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeCompare(); });
+    // Escape closes the compare view alone: the event stops here, so the drawer and the filters keep their state.
+    compareBox.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { ev.stopPropagation(); closeCompare(); } });
     // An image that fails to load is counted once (the banner says what to fetch); the tile keeps its place.
     tiles.addEventListener('error', (ev) => {
       if (ev.target.tagName !== 'IMG') return;

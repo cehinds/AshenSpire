@@ -54,6 +54,24 @@
 .ast-tile.is-missing .ast-thumb::before { content: "404"; font-size: 12px; color: var(--as-bad, #e0645c); }
 .ast-empty { padding: 24px; font-size: 14px; color: var(--as-text-dim, #b0a593); }
 
+/* Below 1100px the module has the width: the filters and the drawer are overlays on the body (they slide with a
+   transform, so nothing reflows under the grid), and a Filters button opens the filters. */
+.ast-narrowbar { display: none; padding: 6px 10px; border-bottom: 1px solid var(--as-line, #2e2a25); }
+.ast-filter-toggle { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--as-line, #2e2a25); background: transparent; color: inherit; cursor: pointer; }
+.ast-filter-toggle[aria-expanded="true"] { border-color: var(--as-accent, #e0a64a); background: var(--as-accent-soft, rgba(224, 166, 74, 0.14)); }
+@container ast (max-width: 1100px) {
+  .ast-narrowbar { display: flex; }
+  .ast-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .ast-filters, .ast-drawer {
+    position: absolute; top: 0; bottom: 0; z-index: 4; width: min(340px, 88%); box-shadow: var(--as-shadow-lg, 0 12px 40px rgba(0, 0, 0, 0.55));
+    transition: transform 180ms ease; background: var(--as-bg-panel, #1a1815);
+  }
+  .ast-filters { left: 0; transform: translateX(-100%); border-right: 1px solid var(--as-line, #2e2a25); }
+  .ast-drawer { right: 0; border-left: 1px solid var(--as-line, #2e2a25); transform: translateX(100%); }
+  .ast.filters-open .ast-filters { transform: none; }
+  .ast.drawer-open .ast-drawer { transform: none; }
+}
+
 /* The drawer: a preview, its zoom bar, and the facts. It is a third column only while a file is selected. */
 .ast.has-sel .ast-body { grid-template-columns: 220px minmax(0, 1fr) 340px; }
 .ast-drawer { display: flex; flex-direction: column; gap: 10px; padding: 12px; min-height: 0; overflow: auto; border-left: 1px solid var(--as-line, #2e2a25); background: var(--as-bg-panel, #1a1815); }
