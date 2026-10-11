@@ -416,7 +416,7 @@ function spawnFx(layer, anchor, cls, ms, text) {
 
 // lifeMs, when given, is how long the banner shows and fades (the turn banner
 // passes its pace's hold, so it is gone before the next beat starts).
-function banner(layer, text, cls = '', lifeMs = null) {
+export function banner(layer, text, cls = '', lifeMs = null) {
   if (!layer) return;
   const el = document.createElement('div');
   el.className = `fx-banner ${cls}`;
