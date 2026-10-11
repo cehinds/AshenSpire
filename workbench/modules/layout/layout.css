@@ -35,12 +35,12 @@
 .lay-left { border-right: 1px solid var(--as-line); }
 .lay-right { border-left: 1px solid var(--as-line); }
 .lay-center { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-.lay-canvas, .bf-canvas, .sk-canvas { flex: 1; min-height: 0; position: relative; }
-.lay-status, .bf-status, .sk-status { flex: none; padding: 4px 10px; border-top: 1px solid var(--as-line); color: var(--as-text-dim); font-size: var(--as-text-xs); font-family: var(--as-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lay-canvas, .bf-canvas, .sk-canvas, .orb-canvas, .dk-canvas { flex: 1; min-height: 0; position: relative; }
+.lay-status, .bf-status, .sk-status, .orb-status, .dk-status { flex: none; padding: 4px 10px; border-top: 1px solid var(--as-line); color: var(--as-text-dim); font-size: var(--as-text-xs); font-family: var(--as-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lay-hint { padding: 24px; color: var(--as-text-dim); }
 .lay-hint.is-error { color: var(--as-bad); }
 
-.lay-fields, .bf-insp, .sk-insp { padding: 10px; font-size: var(--as-text-sm); }
+.lay-fields, .bf-insp, .sk-insp, .orb-insp, .dk-insp { padding: 10px; font-size: var(--as-text-sm); }
 .bf-insp .lay-row textarea, .sk-insp .lay-row textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font: inherit; font-size: var(--as-text-sm); resize: vertical; }
 .bf-insp .lay-row input[type="checkbox"], .sk-insp .lay-row input[type="checkbox"] { width: auto; height: auto; }
 .lay-fields h3 { font-size: var(--as-text-sm); font-weight: 600; margin: 10px 0 6px; }
@@ -91,3 +91,12 @@
 .lay-problems ul { margin: 6px 0; padding-left: 18px; }
 .lay-problems li { margin: 4px 0; }
 .lay-dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+/* Deck row: the cost badges (saved) and the card row reference (preview only). */
+.dk-num { width: 72px; height: 26px; box-sizing: border-box; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font: inherit; font-size: var(--as-text-sm); padding: 0 6px; }
+.dk-note { padding: 6px 10px 0; }
+.dk-actions { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.dk-actions select { height: 24px; max-width: 150px; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font: inherit; font-size: var(--as-text-xs); }
+.dk-insp textarea { width: 100%; box-sizing: border-box; margin-top: 4px; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font-family: var(--as-mono); font-size: var(--as-text-xs); }
+.dk-group { padding: 4px 0 8px; border-bottom: 1px solid var(--as-line); }
+.dk-group .lay-row { border-bottom: 0; }

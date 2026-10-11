@@ -16,8 +16,9 @@ test('the deep link opens battlefield and sketch, and unknown modes open UI conf
 });
 
 test('a mode not built yet opens UI config rather than an empty page', () => {
-  assert.equal(L.modeFor('deck-row'), 'config');
-  assert.deepEqual(L.comingNext().map((m) => m.id), ['deck-row', 'sp-orb', 'card-layers']);
+  assert.equal(L.modeFor('deck'), 'deck', 'the built deck mode opens from the link');
+  assert.equal(L.modeFor('card-layers'), 'config', 'a mode not built yet opens UI config');
+  assert.deepEqual(L.comingNext().map((m) => m.id), ['card-layers']);
 });
 
 test('the book recipes link opens that mode', () => {
@@ -29,4 +30,8 @@ test('the link for a mode round-trips through the host\'s hash helpers', () => {
   assert.equal(hashFor('layout', L.paramsFor('battlefield')), '#mod=layout&mode=battlefield');
   assert.equal(hashFor('layout', L.paramsFor('config')), '#mod=layout');
   assert.equal(L.modeFor(parseHash(hashFor('layout', L.paramsFor('sketch'))).params.mode), 'sketch');
+  assert.equal(hashFor('layout', L.paramsFor('orb')), '#mod=layout&mode=orb');
+  assert.equal(hashFor('layout', L.paramsFor('deck')), '#mod=layout&mode=deck');
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=deck').params.mode), 'deck');
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=orb').params.mode), 'orb');
 });
