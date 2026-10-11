@@ -43,7 +43,10 @@ export function createLayersPanel(el, canvas) {
         + `<button type="button" class="ck-tog" data-act="lock" aria-pressed="${it.locked}">${it.locked ? 'Locked' : 'Free'}</button>`
         + '<span class="ck-name"></span>'
         + (it.group ? `<span class="ck-badge">${esc(it.group)}</span>` : '');
-      li.querySelector('.ck-name').textContent = it.label;
+      // The full name is in the tooltip; the row ellipsises only when the name is wider than the panel.
+      const name = li.querySelector('.ck-name');
+      name.textContent = it.label;
+      name.title = it.label;
       list.append(li);
     }
   }
