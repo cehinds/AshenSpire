@@ -85,7 +85,7 @@ at M_e = 0.
 - Success means one of:
   - a landed hit
   - a counter that fires
-  - a full block: Block >= damage. The attack does not land, the blocker wins
+  - a full block: Block >= damage and damage > 0. The attack does not land, the blocker wins
     the slot, and the resolver emits `absorbed`
   - a dodge: a miss against an evade action. The resolver emits `evaded`
 - A plain miss with no defensive action moves nothing.
@@ -196,7 +196,7 @@ silent. They are placeholders for testing the shape, not decisions.
   emit 'status', or 'resisted' when the opponent has `hyperArmor`.
 - Each attack that is not cancelled rolls the hit roll. The d20 comes from an
   injected RNG.
-- A full block (Block >= damage) turns a landed hit into 'absorbed' for the
+- A full block (Block >= damage and damage > 0) turns a landed hit into 'absorbed' for the
   blocker. A miss against an evade action emits 'evaded'. Both are the
   momentum successes described in the Momentum section.
 - One player card per enemy slot. A second card on a paired slot is rejected
@@ -218,7 +218,7 @@ d. What happens to an unpaired enemy action?
 e. What do perception thresholds reveal?
 f. Does this replace the current Evade charges?
 g. Resolved (2026-10-11). Success is a landed hit, a counter that fires, a
-   full block (Block >= damage), or a dodge (a miss against an evade action).
+   full block (Block >= damage and damage > 0), or a dodge (a miss against an evade action).
 h. Resolved (2026-10-11). A whiff hands nothing to the other side, unless it
    is a dodge against an evade action.
 i. Resolved (2026-10-11). Momentum updates at round end, once per enemy.
