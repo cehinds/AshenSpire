@@ -353,7 +353,9 @@ async function layoutStudio() {
 
 async function entityBrowser() {
   await goModule('Entity Browser', 2000);
-  await waitVisible('.ent-count');
+  // The count and the tile frame are attached in the DOM; the frame is not always laid out yet.
+  await page.waitForSelector('.ent-count', { state: 'attached' });
+  await page.waitForSelector('.ent-center iframe', { state: 'attached' });
   await check('Entity: switch through every kind', async () => {
     const tabs = await page.locator('button[role="tab"]:has-text("Armaments"), button[role="tab"]:has-text("Armor"), button[role="tab"]:has-text("Potions"), button[role="tab"]:has-text("Relics"), button[role="tab"]:has-text("Cards"), button[role="tab"]:has-text("Statuses"), button[role="tab"]:has-text("Stances"), button[role="tab"]:has-text("Keywords"), button[role="tab"]:has-text("Enemies"), button[role="tab"]:has-text("Classes")').count();
     const seen = [];
