@@ -629,13 +629,19 @@ jobs:
 
   # THE STICKY "PLAYABLE BUILD" COMMENT. Its own job, so the Pages deploy job keeps
   # its environment and permissions exactly as they were: pull-requests: write is
-  # granted here alone, and only after the deploy has succeeded. It runs for every PR
-  # whose build is in the site from this run (assemble's comment_targets), so a
-  # coalesced run that published several previews comments on each of them.
+  # granted here alone, and only after the deploy has succeeded. It runs whenever
+  # assemble ran and the deploy succeeded, even when no preview was published this
+  # run, because a PR whose current preview was withdrawn still has a comment that
+  # now points at a removed path. For each PR:
+  #   - published this run (assemble's comment_targets) → upsert the link comment;
+  #   - open, same-repo feature/fix/chore into dev, NOT published, with a sticky
+  #     comment already → edit that comment to say the preview is withdrawn;
+  #   - not published and no sticky comment → nothing. A withdrawn note is never a
+  #     new comment.
   # One comment per PR, found by its marker and updated in place on every push.
   comment:
     needs: [assemble, deploy]
-    if: needs.deploy.result == 'success' && needs.assemble.outputs.comment_targets != '[]' && needs.assemble.outputs.comment_targets != ''
+    if: needs.assemble.result == 'success' && needs.deploy.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -664,13 +670,38 @@ jobs:
               echo "posted the playable-build comment on PR #$pr"
             fi
           }
+          # A PR whose preview is withdrawn (not published this run) keeps its sticky
+          # comment, which would point at a removed path. That comment is edited to say
+          # so. Only an existing comment is edited: no comment is created to say it.
+          withdraw() {
+            local pr="$1" id body
+            body=$(printf '%s\n' '<!-- ashen-playable-build -->' "Preview withdrawn: the current commit's build did not succeed; it returns when a build passes.")
+            id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
+              --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->")) | .id' | sed -n '1p') || return 1
+            if [ -z "$id" ]; then return 0; fi
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
+            echo "marked the playable-build comment on PR #$pr as withdrawn"
+          }
           failed=0
-          rows=$(printf '%s' "$TARGETS" | jq -r '.[] | [(.pr | tostring), .dir] | @tsv') || { echo "::error::could not read the comment targets"; exit 1; }
+          declare -A published=()
+          rows=$(printf '%s' "${TARGETS:-[]}" | jq -r '.[] | [(.pr | tostring), .dir] | @tsv') || { echo "::error::could not read the comment targets"; exit 1; }
           while IFS=$'\t' read -r pr dir; do
             [ -n "$pr" ] || continue
+            published[$pr]=1
             if ! upsert "$pr" "$dir"; then
               echo "::error title=Playable-build comment failed::PR #$pr"
               failed=1
             fi
           done <<< "$rows"
+          open=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
+            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/")) | .number') \
+            || { echo "::error::could not list the open pull requests into dev"; exit 1; }
+          while read -r pr; do
+            [ -n "$pr" ] || continue
+            [ -n "${published[$pr]:-}" ] && continue
+            if ! withdraw "$pr"; then
+              echo "::error title=Withdrawn-preview comment failed::PR #$pr"
+              failed=1
+            fi
+          done <<< "$open"
           exit "$failed"
