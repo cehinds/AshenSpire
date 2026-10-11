@@ -8,7 +8,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { createWorkbench } from '../server.mjs';
+import { createWorkbench, projectStateDir } from '../server.mjs';
 import { allowedKind, lineDiff } from '../core/files.mjs';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
@@ -123,7 +123,7 @@ test('save writes atomically, returns new hashes, creates a backup set, and hold
   assert.equal(body.files[0].hash, sha('{"rows":[{"id":"b"}]}\n'));
   assert.equal(heldDuringWrite?.pid, process.pid, 'the lock was held by this process during the write');
   assert.equal(heldDuringWrite?.holder, 'Workbench file save');
-  const dir = path.join(stateDir, 'backups', body.backup);
+  const dir = path.join(projectStateDir(root, stateDir), 'backups', body.backup);
   const manifest = JSON.parse(await fs.readFile(path.join(dir, 'manifest.json'), 'utf8'));
   assert.equal(manifest.files[0].oldHash, sha('{"rows":[{"id":"a"}]}\n'));
   assert.equal(await fs.readFile(path.join(dir, '0.bak'), 'utf8'), '{"rows":[{"id":"a"}]}\n');

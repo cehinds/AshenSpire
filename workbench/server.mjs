@@ -13,6 +13,7 @@
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import { existsSync, realpathSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
@@ -91,16 +92,27 @@ export async function library(root, { settings = {}, extBase = '' } = {}) {
   return { areas: registry.areas, entries };
 }
 
+/**
+ * The state directory of one project: its job history and backups live under
+ * <stateDir>/projects/<first 12 hex of sha1(realpath(root))>, so two projects that
+ * share a stateDir never see each other's runs or backups. settings.json stays in stateDir.
+ */
+export function projectStateDir(root, stateDir) {
+  const real = realpathSync(root);
+  return path.join(stateDir, 'projects', createHash('sha1').update(real).digest('hex').slice(0, 12));
+}
+
 export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, children = true, stateDir = path.join(HERE, '.state'), debounceMs = 300, ports, forcePoll = false, env = process.env, lockWaitMs = 10 * 60 * 1000, fileFault = null } = {}) {
   root = await fs.realpath(root);
   const token = newToken();
   const hub = createSseHub();
   let address = '';
   const gate = createGate({ token, hosts: () => [address], origins: () => [`http://${address}`], open: ['/api/session'], queryTokenPaths: ['/api/events'] });
-  const jobs = new JobRunner({ root, stateFile: path.join(stateDir, 'jobs.json'), onEvent: (e, d) => hub.send(e, d) });
+  const projectDir = projectStateDir(root, stateDir);
+  const jobs = new JobRunner({ root, stateFile: path.join(projectDir, 'jobs.json'), onEvent: (e, d) => hub.send(e, d) });
   const settings = new Settings(path.join(stateDir, 'settings.json'), env);
   // The one save path for repo files (core/files.mjs). A save reloads the preview through onBatch.
-  const files = createFileService({ root, stateDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), lockWaitMs, fileFault });
+  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), lockWaitMs, fileFault });
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';

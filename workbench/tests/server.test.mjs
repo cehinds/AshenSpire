@@ -7,7 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createWorkbench, listPreviews } from '../server.mjs';
+import { createWorkbench, listPreviews, projectStateDir } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS, JobRunner, GENERATED, killTree } from '../core/jobs.mjs';
 import { Settings } from '../core/settings.mjs';
@@ -115,7 +115,7 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
   const { runs } = await (await call('/api/jobs')).json();
   assert.equal(runs[0].status, 'passed');
   assert.equal(runs[0].log, undefined, 'the list carries summaries, not logs');
-  const saved = JSON.parse(await fs.readFile(path.join(root, '.wb-state/jobs.json'), 'utf8'));
+  const saved = JSON.parse(await fs.readFile(path.join(projectStateDir(root, path.join(root, '.wb-state')), 'jobs.json'), 'utf8'));
   assert.equal(saved.length, 2);
   assert.match(saved[0].log, /built/);
 });
