@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1861",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Every feature, chore and fix now waits for the owner's review before it reaches dev",
+    "detail": "Development-process change only, nothing in the game changes. Sessions open the pull request with a preview and screenshots, then wait; they merge into dev and promote to test only when the owner names that pull request.",
+    "build": "0.7.1.1315",
+    "pullRequest": 1861,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1861"
+  },
+  {
     "id": "pr-1864",
     "date": "2026-10-11",
     "group": "2026-10-11",
