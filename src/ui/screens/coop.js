@@ -351,13 +351,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let effectEvents = [];
   function prepareCombatAnimations(scene) {
     poseReactions = new Map();
-    pendingAnimations = collectCombatAnimations(scene);
+    pendingAnimations = collectCombatAnimations({ ...snap, scene });
   }
   // A scene's new receipts → each seat's card animation plan (sprite effect,
   // resource aura), updating the stance, rest and readiness ledgers once per
   // receiptSeq. The direct render plays the plans at once; a paced timeline
   // plays a seat's plan when that seat swings (paceReactionReceipts).
-  function collectCombatAnimations(scene, party = snap.party) {
+  // `source` is the snapshot that carries these receipts: a paced timeline
+  // passes its `next`, never the working copy whose hands the beats have
+  // already emptied.
+  function collectCombatAnimations(source) {
+    const { scene, party } = source;
     const plans = new Map();
     const seq = Number(scene.receiptSeq) || 0;
     if (seq <= animationReceiptSeq) return plans;
@@ -376,7 +380,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const member = party.find(member => member.id === ownerId);
       let plan;
       if (event.type === 'cardPlayed' && member) {
-        const definition = resolveCoopPlayedCombatCard(registries, snap, event);
+        const definition = resolveCoopPlayedCombatCard(registries, source, event);
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
         heldStances.accept(event, { ...definition, cardTags: tags });
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
@@ -2075,7 +2079,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // receipts, collected once: when the card's owner swings, or at the end
     // when no swing played them (a skip, Instant, reduced motion).
     let plans = null;
-    const seatPlans = () => plans || (plans = collectCombatAnimations(next.scene, next.party));
+    const seatPlans = () => plans || (plans = collectCombatAnimations(next));
     const hasCardPlay = (next.scene.events || []).some(event => event.type === 'cardPlayed');
     const playedPlans = new Set(); // seats whose plan played on their swing
     const working = structuredClone(snap);

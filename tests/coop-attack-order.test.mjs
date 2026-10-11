@@ -11,6 +11,7 @@ import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { createSession } from '../tools/session.mjs';
 import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays } from '../src/ui/screens/coop.js';
 import { decorateCombatEffects, combatEffectReceipt } from '../src/model/combatEffectEvents.js';
+import { resolveCoopPlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -161,4 +162,31 @@ test('a duplicated or resynced frame never replays its timeline, enemy or player
   assert.equal(coopPacedRoute(attack, 7), 'player');
   assert.equal(coopPacedRoute(attack, 8), null, 'the attack frame already played');
   assert.equal(coopPacedRoute({ ...enemy, kind: 'reward' }, 0), null);
+});
+
+test("a paced card plan resolves the played card from the frame that carries it, not the working copy", () => {
+  const host = createSession({ registries, seedString: 'ATTACKORDER' });
+  host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
+  host.addMember({ id: 'p2', name: 'Two', classId: 'rogue' });
+  host.start();
+  for (const member of host.session.members.values()) {
+    while (member.run.classMasteryState?.initialTreeTiers.length) {
+      const choices = initialClassTreeChoices(registriesForClassMastery(registries, member.run), member.run);
+      assert.equal(host.chooseMasteryNode(member.id, choices[0]).ok, true);
+    }
+  }
+  for (const id of ['p1', 'p2']) assert.equal(host.chooseNode(id, host.session.mapGraph.startIds[0]).ok, true);
+  const before = host.snapshot();
+  const attack = before.scene.players.find(player => player.id === 'p1').hand.find(card => registries.cards.get(card.cardId)?.type === 'attack');
+  const target = before.scene.enemies.find(enemy => enemy.alive !== false && enemy.hp > 0);
+  assert.equal(host.combatPlay('p1', attack.instanceId, target.id).ok, true);
+  const next = host.snapshot();
+  const played = next.scene.events.find(event => event.type === 'cardPlayed');
+  // The played card has left every post-play hand; the frame's receipt still names it.
+  assert.ok(!next.scene.players.find(player => player.id === 'p1').hand.some(card => card.instanceId === played.cardInstanceId));
+  assert.equal(resolveCoopPlayedCombatCard(registries, next, played).id ?? played.cardId, played.cardId);
+  const collect = body('collectCombatAnimations');
+  assert.match(collect, /resolveCoopPlayedCombatCard\(registries, source, event\)/, 'the plan reads the frame it was given');
+  assert.doesNotMatch(collect, /resolveCoopPlayedCombatCard\(registries, snap,/, 'never the working copy');
+  assert.match(body('playPacedReceipts'), /collectCombatAnimations\(next\)/);
 });
