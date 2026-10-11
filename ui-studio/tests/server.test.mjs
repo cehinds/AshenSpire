@@ -247,3 +247,21 @@ test('close() stops a running compile, its process tree, and releases the build 
   assert.throws(() => process.kill(pid, 0), /ESRCH/, 'the compiler is gone once close() resolves');
   await assert.rejects(fs.stat(path.join(real, '.build-lock')), /ENOENT/, 'the build lock is released once close() resolves');
 });
+
+test('save holds the lock it is given, and releases it on success and on refusal', async (t) => {
+  const { root, workspace } = await fixture(t);
+  const [w4a] = await workspace.config();
+  const edited = W4A.replace('"hud": 10, "scene": 55', '"hud": 12, "scene": 53');
+  const file = path.join(root, 'content/config', w4a.rel);
+  // A lock that refuses: nothing is written.
+  await assert.rejects(workspace.save([{ rel: w4a.rel, text: edited, hash: w4a.hash }], { lock: async () => { throw Object.assign(Error('Busy holder is running'), { status: 409 }); } }), /Busy holder/);
+  assert.equal(await fs.readFile(file, 'utf8'), W4A, 'a refused lock writes nothing');
+  // A taken lock is released after a successful save, and after a refused one.
+  let released = 0;
+  const lock = async () => () => { released += 1; };
+  await workspace.save([{ rel: w4a.rel, text: edited, hash: w4a.hash }], { lock });
+  assert.equal(released, 1, 'released after a successful save');
+  await assert.rejects(workspace.save([{ rel: w4a.rel, text: edited, hash: 'stale' }], { lock }), /changed on disk/);
+  assert.equal(released, 2, 'released after a refused save too');
+  assert.equal(await fs.readFile(file, 'utf8'), edited);
+});
