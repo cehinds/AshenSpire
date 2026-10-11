@@ -409,6 +409,8 @@ function entryProblem(e) {
   return { title: 'Game server is not running', body: 'The Library pages are served by the game server.', restart: 'game' };
 }
 const kindLabel = { studio: 'Studio', editor: 'Editor', viewer: 'Viewer', exporter: 'Exporter', qa: 'QA' };
+const moduleLabel = (id) => moduleDef(id)?.label || id;
+const movedNote = (e) => (e.moved.coverage === 'partial' ? `Mostly moved. Still only here: ${e.moved.missing.join(', ')}` : 'Moved in full');
 
 function libCard(e) {
   const url = entryUrl(e);
@@ -418,6 +420,7 @@ function libCard(e) {
     ...(e.external ? ['<span class="tag tag-ext">External</span>'] : []),
     ...(e.unregistered ? ['<span class="tag tag-new" title="Add it to workbench/tools.json">Unregistered</span>'] : []),
     ...(e.status === 'legacy' ? ['<span class="tag tag-legacy">Legacy</span>'] : []),
+    ...(e.moved ? [`<span class="tag tag-moved" title="${esc(movedNote(e))}">Moved to ${esc(moduleLabel(e.moved.module))}</span>`] : []),
     ...(e.outputs || []).map((o) => `<span class="tag tag-out" title="Output">${esc(o)}</span>`)];
   const ph = problem
     ? `<div class="thumb-ph"><div>${icon(e.external ? 'plug' : 'warn')}<span>${esc(problem.title)}</span>${problem.settings ? '<button class="btn btn-sm" type="button" data-go="settings">Set path in Settings</button>' : ''}${problem.restart && state.session.children ? `<button class="btn btn-sm" type="button" data-restart="${problem.restart}">Restart</button>` : ''}</div></div>`
@@ -426,7 +429,7 @@ function libCard(e) {
   return `<article class="card lib-card" data-entry="${esc(e.id)}" data-kind="${esc(e.kind)}" data-search="${esc(`${e.title} ${e.path} ${e.area} ${e.kind} ${(e.outputs || []).join(' ')} ${e.notes || ''}`.toLowerCase())}">
     <div class="thumb"${thumbable && state.lib.live ? ` data-thumb="${esc(url)}"` : ''}>${ph}${url ? `<button class="thumb-open" type="button" data-open="${esc(e.id)}" aria-label="Open ${esc(e.title)}"></button>` : ''}</div>
     <div class="lib-body"><div class="lib-title">${esc(e.title)}</div><div class="lib-path" title="${esc(e.path)}">${esc(e.source === 'editor-repo' ? `editor app · ${e.url || 'URL not set'}` : e.source ? `art checkout · ${e.path}` : e.path)}</div><div class="tags">${tags.join('')}</div>${e.notes ? `<div class="lib-notes">${esc(e.notes)}</div>` : ''}
-    <div class="lib-actions"><button class="btn btn-sm" type="button" data-open="${esc(e.id)}"${dis} title="Open in the Workbench">${icon('open')}Open</button><button class="btn btn-sm" type="button" data-pane="${esc(e.id)}"${dis} title="Open in the preview pane">${icon('pane')}Pane</button><button class="btn btn-sm" type="button" data-newwin="${esc(e.id)}"${dis} title="Open in a new window">${icon('external')}Window</button></div></div></article>`;
+    <div class="lib-actions">${e.moved ? `<a class="btn btn-sm btn-primary" href="${esc(e.moved.hash)}" title="${esc(movedNote(e))}">${icon('open')}Open in ${esc(moduleLabel(e.moved.module))}</a>` : ''}<button class="btn btn-sm" type="button" data-open="${esc(e.id)}"${dis} title="Open in the Workbench">${icon('open')}Open</button><button class="btn btn-sm" type="button" data-pane="${esc(e.id)}"${dis} title="Open in the preview pane">${icon('pane')}Pane</button><button class="btn btn-sm" type="button" data-newwin="${esc(e.id)}"${dis} title="Open in a new window">${icon('external')}Window</button></div></div></article>`;
 }
 
 function renderLibrary() {
@@ -440,10 +443,13 @@ function renderLibrary() {
     const groups = areas.map((area) => {
       const list = entries.filter((e) => e.area === area);
       if (!list.length) return '';
-      const current = list.filter((e) => e.status !== 'legacy'); const legacy = list.filter((e) => e.status === 'legacy');
+      // Moved pages sit last: live tools, then legacy pages, then the pages whose work the Workbench modules hold.
+      const moved = list.filter((e) => e.moved); const rest = list.filter((e) => !e.moved);
+      const current = rest.filter((e) => e.status !== 'legacy'); const legacy = rest.filter((e) => e.status === 'legacy');
       return `<details class="lib-area" data-area="${esc(area)}" open><summary>${icon('chevron', 'chev')}<h2>${esc(area)}</h2><span class="count faint" data-count></span></summary>
         <div class="grid grid-lib">${current.map(libCard).join('')}</div>
         ${legacy.length ? `<details class="lib-area lib-legacy" style="margin:12px 0 0"><summary>${icon('chevron', 'chev')}<span class="muted">Legacy</span><span class="count faint" data-count></span></summary><div class="grid grid-lib">${legacy.map(libCard).join('')}</div></details>` : ''}
+        ${moved.length ? `<details class="lib-area lib-moved" style="margin:12px 0 0"><summary>${icon('chevron', 'chev')}<span class="muted">Moved to a Workbench module</span><span class="count faint" data-count></span></summary><div class="grid grid-lib">${moved.map(libCard).join('')}</div></details>` : ''}
       </details>`;
     }).join('');
     const total = entries.length; const ext = entries.filter((e) => e.external).length;
@@ -482,8 +488,9 @@ function filterLibrary() {
     const nested = $$('.lib-card:not([hidden])', area).length;
     area.hidden = nested === 0;
     const count = $(':scope > summary [data-count]', area);
-    if (count) count.textContent = area.classList.contains('lib-legacy') ? `${n}` : `${nested}`;
-    if (q.length && area.classList.contains('lib-legacy') && n) area.open = true;
+    const flat = area.classList.contains('lib-legacy') || area.classList.contains('lib-moved');
+    if (count) count.textContent = flat ? `${n}` : `${nested}`;
+    if (q.length && flat && n) area.open = true;
   }
   const none = $('#lib-none'); if (none) none.hidden = shown > 0;
   layoutThumbs();

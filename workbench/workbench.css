@@ -219,6 +219,7 @@ button.chip:hover { border-color: var(--as-line-strong); color: var(--as-text); 
 .tag-out { background: var(--as-accent-soft); color: var(--as-accent); }
 .tag-ext { background: rgba(111,168,220,0.14); color: var(--as-info); }
 .tag-legacy { background: transparent; border: 1px solid var(--as-line-strong); color: var(--as-text-faint); }
+.tag-moved { background: transparent; border: 1px solid var(--as-line-strong); color: var(--as-text-dim); }
 .tag-new { background: rgba(227,179,65,0.14); color: var(--as-warn); }
 .lib-actions { display: flex; gap: 4px; margin-top: auto; padding-top: 6px; }
 .lib-actions .btn { flex: 1; justify-content: center; padding: 0 6px; }
