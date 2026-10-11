@@ -1,0 +1,138 @@
+// node --test workbench/tests/assets-core.test.mjs — the Asset Gallery's listing core: the tracked
+// trees and the fetched packs, header dimensions, the pack status, and the path checks.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { listArt, resolveArt, dimsOf, packsOf, pinOf, clearArtCache } from '../core/assets.mjs';
+
+function png(w, h) {
+  const b = Buffer.alloc(33);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b, 0);
+  b.writeUInt32BE(13, 8); b.write('IHDR', 12, 'ascii'); b.writeUInt32BE(w, 16); b.writeUInt32BE(h, 20);
+  return b;
+}
+function webpVp8x(w, h) {
+  const b = Buffer.alloc(30);
+  b.write('RIFF', 0, 'ascii'); b.writeUInt32LE(22, 4); b.write('WEBP', 8, 'ascii'); b.write('VP8X', 12, 'ascii'); b.writeUInt32LE(10, 16);
+  b.writeUIntLE(w - 1, 24, 3); b.writeUIntLE(h - 1, 27, 3);
+  return b;
+}
+function webpVp8(w, h) {
+  const b = Buffer.alloc(30);
+  b.write('RIFF', 0, 'ascii'); b.writeUInt32LE(22, 4); b.write('WEBP', 8, 'ascii'); b.write('VP8 ', 12, 'ascii');
+  b[23] = 0x9d; b[24] = 0x01; b[25] = 0x2a; b.writeUInt16LE(w, 26); b.writeUInt16LE(h, 28);
+  return b;
+}
+function webpVp8l(w, h) {
+  const b = Buffer.alloc(30);
+  b.write('RIFF', 0, 'ascii'); b.writeUInt32LE(22, 4); b.write('WEBP', 8, 'ascii'); b.write('VP8L', 12, 'ascii');
+  const bits = (w - 1) | ((h - 1) << 14);
+  b[21] = bits & 0xff; b[22] = (bits >> 8) & 0xff; b[23] = (bits >> 16) & 0xff; b[24] = (bits >> 24) & 0xff;
+  return b;
+}
+
+async function project(t, { pin = true } = {}) {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'assets-core-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  clearArtCache();
+  const put = async (rel, bytes) => { await fs.mkdir(path.dirname(path.join(root, rel)), { recursive: true }); await fs.writeFile(path.join(root, rel), bytes); };
+  await put('assets-mobile/poses/idle.webp', webpVp8x(640, 480));
+  await put('assets-mobile/equipment/sword.png', png(128, 64));
+  await put('assets-mobile/bg/hall.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="200px" height="100"></svg>');
+  await put('assets-mobile/notes.txt', 'not art');
+  await put('assets-display/classic/a.webp', webpVp8(320, 200));
+  await put('music/theme.ogg', Buffer.from('OggS0000'));
+  // The high pack is fetched; it holds one file the tree also has (listed once, from the tree) and one it alone has.
+  await put('.art-cache/hd-assets-v19/high/assets/sprites/hero.webp', webpVp8l(300, 150));
+  await put('.art-cache/hd-assets-v19/high/assets-mobile/poses/idle.webp', webpVp8x(1, 1));
+  if (pin) await put('art-release.json', JSON.stringify({ schema: 2, tag: 'hd-assets-v19', packs: { high: { zip: 'hd-assets-v19.zip', sha256: 'a' }, light: { zip: 'light-assets-v19.zip', sha256: 'b' }, common: { zip: 'common-assets-v19.zip', sha256: 'c' } } }));
+  return root;
+}
+
+test('dimsOf reads PNG, WebP (VP8X, VP8, VP8L), GIF and SVG headers and says null otherwise', () => {
+  assert.deepEqual(dimsOf(png(128, 64), '.png'), { w: 128, h: 64 });
+  assert.deepEqual(dimsOf(webpVp8x(640, 480), '.webp'), { w: 640, h: 480 });
+  assert.deepEqual(dimsOf(webpVp8(320, 200), '.webp'), { w: 320, h: 200 });
+  assert.deepEqual(dimsOf(webpVp8l(300, 150), '.webp'), { w: 300, h: 150 });
+  assert.deepEqual(dimsOf(Buffer.from('GIF89a\x10\x00\x20\x00', 'binary'), '.gif'), { w: 16, h: 32 });
+  assert.deepEqual(dimsOf(Buffer.from('<svg width="200px" height="100"></svg>'), '.svg'), { w: 200, h: 100 });
+  assert.deepEqual(dimsOf(Buffer.from('<svg viewBox="0 0 48 24"></svg>'), '.svg'), { w: 48, h: 24 });
+  assert.equal(dimsOf(Buffer.from('<svg width="50%"></svg>'), '.svg'), null, 'a percentage size names no pixels');
+  assert.equal(dimsOf(Buffer.from('not a png at all, just bytes here.....'), '.png'), null);
+  assert.equal(dimsOf(Buffer.alloc(40), '.jpg'), null, 'JPEG is not read: no dimensions');
+});
+
+test('listArt lists tracked trees and fetched packs at their game paths, each path once, with sizes and dims', async (t) => {
+  const root = await project(t);
+  const list = await listArt(root);
+  const byPath = Object.fromEntries(list.files.map((f) => [f.path, f]));
+  assert.deepEqual(Object.keys(byPath).sort(), [
+    'assets-display/classic/a.webp', 'assets-mobile/bg/hall.svg', 'assets-mobile/equipment/sword.png', 'assets-mobile/poses/idle.webp',
+    'assets/sprites/hero.webp', 'music/theme.ogg',
+  ]);
+  assert.equal(byPath['assets-mobile/poses/idle.webp'].from, 'tree', 'a path both places hold comes from the tree');
+  assert.equal(byPath['assets-mobile/poses/idle.webp'].w, 640);
+  assert.equal(byPath['assets/sprites/hero.webp'].from, 'high');
+  assert.equal(byPath['assets/sprites/hero.webp'].w, 300);
+  assert.equal(byPath['assets-mobile/equipment/sword.png'].h, 64);
+  assert.equal(byPath['assets-mobile/bg/hall.svg'].w, 200);
+  assert.equal(byPath['music/theme.ogg'].w, undefined, 'audio has no dimensions');
+  assert.equal(byPath['music/theme.ogg'].bytes, 8);
+  assert.equal(list.tag, 'hd-assets-v19');
+  assert.equal(list.truncated, false);
+  assert.ok(!list.files.some((f) => f.path.endsWith('.txt')), 'files that are not shippable art are not listed');
+});
+
+test('packs say which are fetched, and a project with no pin lists trees only', async (t) => {
+  const root = await project(t);
+  const list = await listArt(root);
+  assert.deepEqual(list.packs.map((p) => [p.id, p.fetched]), [['high', true], ['light', false], ['common', false]]);
+  assert.equal(list.packs[0].zip, 'hd-assets-v19.zip');
+  const bare = await project(t, { pin: false });
+  const none = await listArt(bare);
+  assert.equal(none.tag, null);
+  assert.ok(none.packs.every((p) => !p.fetched));
+  assert.ok(!none.files.some((f) => f.path.startsWith('assets/')), 'no pin, no pack: the high paths are absent');
+});
+
+test('listArt stops at its limit and says so', async (t) => {
+  const root = await project(t);
+  const list = await listArt(root, { limit: 2 });
+  assert.equal(list.truncated, true);
+  assert.ok(list.files.length <= 3);
+});
+
+test('resolveArt finds a game path in its tree or a fetched pack, and refuses anything else', async (t) => {
+  const root = await project(t);
+  const tree = await resolveArt(root, 'assets-mobile/poses/idle.webp');
+  assert.equal(tree, path.join(root, 'assets-mobile/poses/idle.webp'));
+  assert.equal(await resolveArt(root, 'assets/sprites/hero.webp'), path.join(root, '.art-cache/hd-assets-v19/high/assets/sprites/hero.webp'));
+  assert.equal(await resolveArt(root, 'assets/sprites/missing.webp'), null, 'a missing file is null, not an error');
+  assert.equal(await resolveArt(root, 'assets/fonts/x.woff2'), null, 'an unpacked tier is null');
+  for (const bad of ['../secret.webp', 'assets-mobile/../../art-release.json', '.art-cache/hd-assets-v19/high/assets/sprites/hero.webp', 'assets-mobile/notes.txt', '/etc/passwd.png', 'assets-mobile/a\\b.webp']) {
+    assert.equal(await resolveArt(root, bad), null, bad);
+  }
+});
+
+test('resolveArt refuses a linked file or folder inside an art root', async (t) => {
+  const root = await project(t);
+  const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'assets-outside-'));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.writeFile(path.join(outside, 'secret.webp'), webpVp8x(1, 1));
+  await fs.symlink(outside, path.join(root, 'assets-mobile', 'linked'), 'dir');
+  assert.equal(await resolveArt(root, 'assets-mobile/linked/secret.webp'), null);
+  const list = await listArt(root);
+  assert.ok(!list.files.some((f) => f.path.includes('linked')), 'links are not listed');
+});
+
+test('packsOf and pinOf read the pin and report an unfetched pack as not fetched', async (t) => {
+  const root = await project(t);
+  const pin = await pinOf(root);
+  assert.equal(pin.tag, 'hd-assets-v19');
+  const packs = await packsOf(root, pin);
+  assert.equal(packs.find((p) => p.id === 'high').fetched, true);
+  assert.equal(packs.find((p) => p.id === 'common').fetched, false);
+  assert.equal(await pinOf(path.join(root, 'nowhere')), null);
+});
