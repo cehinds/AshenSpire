@@ -65,7 +65,8 @@ export default {
     const dsBtn = $('.ent-ds'), q = $('.ent-q');
 
     const prefs = { density: ctx.settings.get('density', 'comfortable'), layout: ctx.settings.get('layout', 'grid') };
-    const st = { ...parseDeepLink({}), density: prefs.density, layout: prefs.layout, pose: 'idle', tab: 'card', classId: 'reaver', mainHand: '', offHand: '' };
+    // mainHand and offHand start null (not chosen yet); '' is a chosen empty hand.
+    const st = { ...parseDeepLink({}), density: prefs.density, layout: prefs.layout, pose: 'idle', tab: 'card', classId: 'reaver', mainHand: null, offHand: null };
     const game = { base: null, origin: null };
     let seenParams = null;
     let counts = {}, index = [], classes = [], armaments = [], files = null;
@@ -173,7 +174,7 @@ export default {
       if (!cls.options.length) cls.innerHTML = classes.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
       const hands = [['', 'Empty hand'], ...armaments.map((a) => [a.id, a.name])];
       if (!main.options.length) { main.innerHTML = hands.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join(''); off.innerHTML = main.innerHTML; }
-      const pick = (v, fallback) => (hands.some(([id]) => id === v) ? v : fallback);
+      const pick = (v, fallback) => (v !== null && hands.some(([id]) => id === v) ? v : fallback);
       st.classId = cls.value || st.classId;
       if (st.kind === 'armaments' && st.id) st.mainHand = st.id;
       st.mainHand = pick(st.mainHand, 'straightSword');
@@ -228,6 +229,10 @@ export default {
     $('.ent-reset').addEventListener('click', () => { Object.assign(st, { q: '', class: '', type: '', tag: '', rarity: '', sort: 'name' }); renderFacets(); sendCenter(); renderCount(); writeHash(); });
     el.querySelector('.ent-tabs').addEventListener('click', (ev) => { const b = ev.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); });
     el.querySelector('.ent-pose-sel').addEventListener('change', (ev) => { st.pose = ev.target.value; sendDrawer(); });
+    tryForm.addEventListener('change', () => {
+      const f = tryForm.elements;
+      Object.assign(st, { classId: f.class.value, mainHand: f.mainHand.value, offHand: f.offHand.value });
+    });
     tryForm.addEventListener('submit', (ev) => {
       ev.preventDefault();
       const f = tryForm.elements;
