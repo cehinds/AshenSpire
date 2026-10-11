@@ -4,6 +4,7 @@
 import test from 'node:test';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import { armamentIconAsset } from '../../src/model/equipmentArt.js';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
@@ -124,6 +125,15 @@ test('the render page sets the game root as its base, and loads its own files by
   assert.match(html, /<base href="\/">/, 'game asset paths resolve from the game root, not the module folder');
   assert.match(html, /<script type="module" src="\/workbench\/modules\/entities\/render\.mjs">/);
   assert.match(html, /<link rel="stylesheet" href="\/workbench\/modules\/entities\/render\.css">/);
+});
+
+test('the inventory icon uses the game art key, as the game does', () => {
+  // The game's own rule (src/model/equipmentArt.js): inventoryArtKey first, then the id.
+  assert.equal(armamentIconAsset({ id: 'straightSword', inventoryArtKey: 'straightSwordInventory2026' }), 'assets/equipment/icon_straightSwordInventory2026.webp');
+  assert.equal(armamentIconAsset({ id: 'dagger', inventoryArtKey: '' }), 'assets/equipment/icon_dagger.webp');
+  const render = fs.readFileSync(new URL('../modules/entities/render.mjs', import.meta.url), 'utf8');
+  assert.match(render, /armamentIconAsset\(def\)/, 'the render page asks the game for the icon path');
+  assert.doesNotMatch(render, /icon_\$\{def\.id\}/, 'and no longer builds it from the id alone');
 });
 
 test('the render page URL carries the parent origin and only set parameters', () => {

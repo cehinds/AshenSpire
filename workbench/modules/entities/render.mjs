@@ -19,6 +19,7 @@ import { createPaintedStage } from '../../../src/ui/paintedOutfits.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../../../src/ui/models/ArmouryModels.js';
 import { renderInventoryItemCard, renderInventoryDetailCard } from '../../../src/ui/components/armouryComponents.js';
 import { cardLevelCssProperties, cardShapeCssProperties } from '../../../src/ui/models/CardSizeModel.js';
+import { armamentIconAsset } from '../../../src/model/equipmentArt.js';
 import { KINDS, entryOf, filterEntries, sortEntries, parseDeepLink } from './model.mjs';
 
 const SOURCE = 'ashen-entities';
@@ -111,7 +112,7 @@ function inventoryFor(kind, def) {
   wrap.className = 'ent-inventory';
   const face = renderInventoryItemCard(inventoryItemCardModel(row, { selected: true }));
   const detail = renderInventoryDetailCard(inventoryDetailCardModel({
-    row, art: { kind: 'image', value: `assets/equipment/icon_${def.id}.webp` }, description: def.blurb || '', mods,
+    row, art: { kind: 'image', value: armamentIconAsset(def) }, description: def.blurb || '', mods,
   }));
   wrap.append(face, detail);
   return wrap;
