@@ -187,6 +187,7 @@ test('a click during hit-stop clears the held attacker and flushes once without 
     fire('pointerdown');
     assert.ok(!actor.classList.contains('hit-stop'));
     assert.ok(!target.classList.contains('hit-stop'));
+    assert.equal(stats().settled, 0, "sequential: the target was never held at impact, so the skip has no recoil to release");
     fire('pointerup'); tick(1);
     assert.equal(stats().flushes, 1);
     assert.equal(stats().completed, 1);

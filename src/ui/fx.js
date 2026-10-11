@@ -645,12 +645,16 @@ export function animateEvents(events, ctx, done) {
     }
     // A callout-only event (CRITICAL before its hit, say) plays in the same
     // tick as its neighbour, so callouts add no step to the fast path.
+    // At most ONE ordinary event per tick: a callout between two hits must not
+    // pull the next hit into this tick (a crit multi-hit still steps per hit).
+    let hadRegular = false;
     do {
+      if (!calloutOnly(pending[i])) hadRegular = true;
       cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
       const fn = visualFor(pending[i]);
       if (fn) fn(ctx);
       i++;
-    } while (i < pending.length && (calloutOnly(pending[i - 1]) || calloutOnly(pending[i])));
+    } while (i < pending.length && (calloutOnly(pending[i]) || (!hadRegular && calloutOnly(pending[i - 1]))));
     setTimeout(step, COMBAT_TIMING.instantStepMs);
   };
   step();
