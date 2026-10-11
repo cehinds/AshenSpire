@@ -532,10 +532,11 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // Returns { events, momentum }, where `momentum` is { [enemyId]: M_e } after the
 // round. Momentum updates at round end (DESIGN.md, Momentum):
 // - Every pairing in the round uses the round's starting M_e.
-// - Each success moves M_e toward the winner by the card's momentumGain
-//   (default 1). The deltas are summed per enemy, then clamped once to -3..3.
+// - Each slot win moves M_e toward the winner by the card's momentumGain
+//   (default 1). A side wins a slot at most once per pairing. The deltas are
+//   summed per enemy, then clamped once to -3..3.
 // - Pair events carry `momentum`: that enemy's starting M_e. A 'momentum'
-//   event marks each success. 'momentumApplied' marks each round-end change.
+//   event marks each slot win. 'momentumApplied' marks each round-end change.
 // - A second player card on an already paired slot is rejected ('rejected').
 // - An enemy slot with no player card is 'unpaired' and has no effect.
 export function resolveRound(playerCards, enemyQueue, perception, rng, options = {}) {
@@ -620,10 +621,14 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     );
     charges.player = pool.player;
     charges[k] = pool.enemy;
+    // Sides that already won this slot. A side wins a slot at most once per
+    // pairing, however many of its successes the pair produces (DESIGN.md, Momentum).
+    const credited = new Set();
     for (const e of pairEvents) {
       push({ ...e, slot, visible }, k);
       const winner = successSide(e);
-      if (winner) {
+      if (winner && !credited.has(winner)) {
+        credited.add(winner);
         const card = winner === 'player' ? pc : enemy;
         const foe = winner === 'player' ? enemy : pc;
         const gain = gainOf(card);

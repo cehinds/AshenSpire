@@ -112,6 +112,8 @@ at M_e = 0.
   - an avoid: an `intangible` charge, or a successful `evadePct` roll (see
     Evasion). The resolver emits `evaded` with a `reason`
   - a dodge: a miss against an evade action. The resolver emits `evaded`
+- A side wins a slot at most once per pairing, however many of its successes
+  the pair produces (for example, a full block followed by a landed hit).
 - A plain miss with no defensive action moves nothing.
 - A card's `momentumGain` (default 1) is the base amount of the move.
 - Flagged: a miss from the evasion stat alone is not a dodge. Only an evade

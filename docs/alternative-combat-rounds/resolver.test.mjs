@@ -463,6 +463,24 @@ test('partial block: Block below damage still lands, and the attacker wins the s
   assert.equal(momentum.guard, 1);
 });
 
+// A side wins a slot at most once per pairing (DESIGN.md, Momentum). Here the
+// faster enemy attack is fully blocked ('absorbed', a player success), and the
+// slower player attack then lands ('hit', a second player success). The player
+// wins the slot once: M_boss moves +1, not +2.
+test('a side that absorbs and then lands in one pairing wins the slot once', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'guard', slot: 0, speed: 4, kind: 'attack', damage: 2, block: 2 }],
+    [{ id: 'swing', enemyId: 'boss', speed: 5, kind: 'attack', damage: 2 }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(find(events, 'absorbed').by, 'player', 'the block absorbs the enemy hit');
+  assert.equal(hitsOf(events).filter((e) => e.by === 'player' && e.hit && !e.blocked).length, 1, 'the player attack also lands');
+  assert.equal(events.filter((e) => e.type === 'momentum' && e.enemyId === 'boss').length, 1, 'one momentum event for the slot win');
+  assert.equal(find(events, 'momentumApplied').delta, 1);
+  assert.equal(momentum.boss, 1, 'the slot is won once, so M moves +1 toward the player');
+});
+
 test('evade: a miss against an evade action wins the slot for the defender', () => {
   const { events, momentum } = resolveRound(
     [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
