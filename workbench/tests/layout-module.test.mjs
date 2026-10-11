@@ -1,0 +1,154 @@
+// node --test workbench/tests/layout-module.test.mjs — Layout Studio's pure
+// config model: regions match UI Studio's own model for a real wireframe and
+// device, a canvas edit maps back to the expected config change, and nothing
+// changes the bytes of a file that was not edited.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as C from '../modules/layout/config-model.mjs';
+import * as M from '../../ui-studio/model.mjs';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const CONFIG = join(ROOT, 'content/config');
+const readRel = (rel) => readFileSync(join(CONFIG, rel), 'utf8');
+
+function loadedFiles(rels) {
+  const files = new Map();
+  for (const rel of rels) files.set(rel, C.fileState(rel, readRel(rel), `hash-${rel}`));
+  return files;
+}
+
+const W4A_FILES = ['ui/scenes/w4.json', 'ui/scenes/w4a-combat.json', 'ui/tokens.json', 'ui/components/card.json', 'ui/components/categoryNav.json'];
+const settings = C.defaultSettings();
+const wireframe = C.wireframeById(settings, 'w4a');
+const device = settings.devices.find((d) => d.id === 'desk-1280');
+
+test('regions for w4a at desk 1280 match UI Studio\'s regionsFor, field for field', () => {
+  const files = loadedFiles(W4A_FILES);
+  const vp = C.viewportOf(device);
+  const got = C.regionsFor({ wireframe, files, viewport: vp, settings });
+  // The same inputs UI Studio's regions() passes, with the same loaded configs.
+  const configs = Object.fromEntries([...files].map(([rel, f]) => [rel, f.data]));
+  const layout = M.gameLayoutFor(vp, settings.gameLayout);
+  const want = M.regionsFor(wireframe, configs['ui/scenes/w4a-combat.json'], vp, {
+    parent: configs['ui/scenes/w4.json'], tokens: configs['ui/tokens.json'].vars, layoutMode: layout.mode,
+    screens: settings.screens, zoom: layout.zoom, rootFontPx: settings.gameLayout.rootFontPx, configs,
+  });
+  assert.deepEqual(got.regions, want);
+  assert.equal(got.layout.mode, layout.mode);
+  assert.equal(got.breakpoint.id, M.breakpointFor(settings.breakpoints, vp).id);
+  assert.deepEqual(got.regions.map((r) => r.id), ['band.hud', 'band.scene', 'band.context', 'band.footer', 'floor', 'hand']);
+});
+
+test('the canvas document locks regions that have no config edit', () => {
+  const files = loadedFiles(W4A_FILES);
+  const vp = C.viewportOf(device);
+  const { regions } = C.regionsFor({ wireframe, files, viewport: vp, settings });
+  const doc = C.canvasDocFor(vp, regions);
+  const locked = Object.fromEntries(doc.items.map((it) => [it.id, it.locked]));
+  assert.equal(locked['band.footer'], true, 'the last band is the remainder, not editable');
+  assert.equal(locked.hand, true);
+  assert.equal(locked['band.scene'], false);
+  assert.equal(doc.width, 1280);
+  assert.equal(doc.height, 800);
+});
+
+test('dragging a band\'s bottom edge maps back to the band percents', () => {
+  const files = loadedFiles(W4A_FILES);
+  const f = files.get('ui/scenes/w4a-combat.json');
+  const vp = C.viewportOf(device);
+  const v = C.regionsFor({ wireframe, files, viewport: vp, settings });
+  const doc = C.canvasDocFor(vp, v.regions);
+  // Shrink the battlefield by 10 px from its bottom: the scene's bottom edge moves up.
+  const items = doc.items.map((it) => (it.id === 'band.scene' ? { ...it, h: it.h - 10 } : it));
+  const next = C.applyCanvasEdits({ data: f.data, regions: v.regions, items, viewport: vp, grid: settings.grid });
+  // 10 px of 800 is 1.25%; the scene goes 55 → 54 on the 1% step, the context takes the rest.
+  assert.equal(M.getPath(next, 'sizing.bands.scene'), 54);
+  assert.equal(M.getPath(next, 'sizing.bands.context'), 31);
+  assert.equal(M.getPath(next, 'sizing.bands.hud'), 10, 'other bands are unchanged');
+  const sum = Object.values(M.getPath(next, 'sizing.bands')).reduce((a, b) => a + b, 0);
+  assert.equal(sum, 100, 'the percents still sum to 100');
+  assert.deepEqual(f.data, JSON.parse(f.original), 'the input file data is not mutated');
+});
+
+test('a move that changes no edge changes nothing, and so does a locked region', () => {
+  const files = loadedFiles(W4A_FILES);
+  const f = files.get('ui/scenes/w4a-combat.json');
+  const vp = C.viewportOf(device);
+  const v = C.regionsFor({ wireframe, files, viewport: vp, settings });
+  const doc = C.canvasDocFor(vp, v.regions);
+  const shifted = doc.items.map((it) => (it.id === 'hand' || it.id === 'band.footer' ? { ...it, y: it.y + 30 } : it));
+  const next = C.applyCanvasEdits({ data: f.data, regions: v.regions, items: shifted, viewport: vp, grid: settings.grid });
+  assert.equal(next, f.data, 'nothing moved: the same object comes back');
+});
+
+test('a centred region edits its width on both sides (half the edge each)', () => {
+  const edit = { kind: 'path', path: 'sizing.frameWidthVw', unit: 'vw', axis: 'w', centered: true };
+  const before = { x: 100, y: 0, w: 200, h: 100 };
+  const after = { x: 90, y: 0, w: 220, h: 100 };
+  assert.equal(C.movementFor(edit, before, after), 10, 'a 20 px wider frame moves each edge 10 px');
+  assert.equal(C.movementFor({ kind: 'path', axis: 'h', anchor: 'bottom' }, { x: 0, y: 500, w: 1, h: 100 }, { x: 0, y: 480, w: 1, h: 120 }), -20, 'a bottom-anchored edit follows the top edge');
+});
+
+test('serialization is unchanged when nothing was edited, for every loaded UI file', () => {
+  const uiRels = [];
+  const walk = (dir, prefix) => {
+    for (const e of readdirSync(join(CONFIG, dir), { withFileTypes: true })) {
+      if (e.isDirectory()) walk(`${dir}/${e.name}`, `${prefix}${e.name}/`);
+      else if (e.name.endsWith('.json')) uiRels.push(`${prefix}${e.name}`);
+    }
+  };
+  walk('ui', 'ui/');
+  assert.ok(uiRels.length > 5, 'the UI tree is found');
+  const files = loadedFiles(uiRels.map((r) => r));
+  for (const f of files.values()) {
+    assert.equal(C.isDirty(f), false, `${f.rel} is not dirty when unedited`);
+    assert.equal(C.proposedText(f), f.original, `${f.rel} round-trips byte for byte`);
+  }
+  assert.deepEqual(C.changesFor(files), []);
+});
+
+test('an edited file is dirty and its save carries the base hash it was read with', () => {
+  const files = loadedFiles(['ui/scenes/w4a-combat.json']);
+  const f = files.get('ui/scenes/w4a-combat.json');
+  files.set(f.rel, { ...f, data: C.setConfigValue(f.data, 'sizing.bands.hud', 11) });
+  const [change] = C.changesFor(files);
+  assert.equal(change.path, 'content/config/ui/scenes/w4a-combat.json');
+  assert.equal(change.baseHash, 'hash-ui/scenes/w4a-combat.json');
+  assert.notEqual(change.text, f.original);
+  assert.equal(JSON.parse(change.text).sizing.bands.hud, 11);
+});
+
+test('a $token reads as a chip with its resolved value, and an unknown name is flagged', () => {
+  const tokens = { gap: 12 };
+  const data = { vars: { local: 4 } };
+  assert.deepEqual(C.refInfo('$gap', data, tokens), { ref: '$gap', value: 12, from: 'tokens' });
+  assert.deepEqual(C.refInfo('$local', data, tokens), { ref: '$local', value: 4, from: 'file' });
+  assert.equal(C.refInfo('$nope', data, tokens).from, 'missing');
+  assert.equal(C.refInfo(42, data, tokens), null);
+});
+
+test('loadWorkspace reads every UI file through the injected api, and keeps invalid JSON as an error', async () => {
+  const calls = [];
+  const api = async (path) => {
+    calls.push(path);
+    if (path.startsWith('files/list')) return { files: ['content/config/ui/a.json', 'content/config/ui/b.json'], truncated: false };
+    if (path.includes('a.json')) return { text: '{"x":1}\n', hash: 'ha' };
+    return { text: '{nope', hash: 'hb' };
+  };
+  const { files } = await C.loadWorkspace(api);
+  assert.deepEqual([...files.keys()], ['ui/a.json', 'ui/b.json']);
+  assert.deepEqual(files.get('ui/a.json').data, { x: 1 });
+  assert.match(files.get('ui/b.json').error, /Invalid JSON/);
+  assert.equal(calls[0], 'files/list?dir=content%2Fconfig%2Fui&ext=json');
+});
+
+test('the viewport of a rotated device swaps its sides', () => {
+  const phone = settings.devices.find((d) => d.id === 'iphone-14');
+  assert.equal(C.viewportOf(phone, { orientation: 'portrait' }).width, 390);
+  assert.equal(C.viewportOf(phone, { orientation: 'landscape' }).width, 844);
+  const free = settings.devices.find((d) => d.resizable);
+  assert.equal(C.viewportOf(free, { freeSize: { width: 500, height: 300 } }).width, 500);
+});
