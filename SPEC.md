@@ -1032,7 +1032,7 @@ Enemy definition shape (content file):
 
 **Future expansion proposal:** [Combat expansion notes](docs/combat-cards-expansion-proposal.md) describe later candidate rules for persistent stances, Evade, Counter coverage, Ward/Poise resistance, recovery cards, Sleep/Prone, tag interactions, upcasting, and three Ashen Blight feat stages. This documentation reference does not change the existing §4.7 rules below; each runtime revision requires a separate accepted contract and implementation.
 
-**Contract status: planned.** This section must land in its own specification PR before the implementation PR. It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
+**Contract status: implemented** (version-1 table; §4.8 carries version 2). It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
 
 **Identity and authoring**
 
@@ -1078,13 +1078,14 @@ Riders resolve once per committed root action (player card or enemy move) and ta
 | Force | Strip up to 2 Ward; bypass melee Counter. Ward drain never spills into HP or ordinary Guard |
 | Holy | After HP loss, cleanse one stack from the attacker's first eligible hostile status in configured priority order |
 | Necrotic | Apply 1 Crimson Blight after HP loss. This is combat status buildup, not persistent run corruption |
+| Poison | Apply 1 Venom after HP loss |
 
 All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
 
 **Intent visibility and persistence**
 
 - Design assumption resolving the incomplete user sentence “base 70% chance to be”: **70% chance to conceal the exact selected action**, not 70% hit chance. Attacks retain existing accuracy/evade rules. For profiled moves, `hiddenChance = clamp(0.70 − Wisdom × 0.02 − Intelligence × 0.01, 0, 0.95)`. Reductions are percentage points. Configuration may override coefficients; Wisdom 10/Intelligence 5 gives 45% hidden.
-- Always show a stance: Attacking, Defending, Countering, Sweeping, Ranged, Smashing, Casting, Preparing or Staggered. Physical support actions use Preparing where no actual attack/defense maneuver exists. Hidden previews expose camp/maneuver and stance only; selected move ID, exact damage/hits, Block, delay payload and school/type details are omitted through an allowlist.
+- Always show a stance: Attack, Defend, Counter, Sweep, Ranged, Smash, Casting, Spell, Preparing or Staggered. Physical support actions use Preparing where no actual attack/defense maneuver exists. Hidden previews expose camp/maneuver and stance only; selected move ID, exact damage/hits, Block, delay payload and school/type details are omitted through an allowlist.
 - Visibility rolls once per newly selected intent on independent deterministic stream `enemyIntentVisibility`; inspecting or previewing never rerolls. Co-op records one read per living observer. Existing delayed intent retains its committed read until a new selection occurs.
 - Persist the committed Counter charge/carrier/lifetime and enemy visibility/read state with combat entities, plus the random-stream counters. Reload restores decisions; it does not grant another reaction or reveal roll.
 - The enemy move catalog may list its authored move set and base values even when the current selection is hidden, but it must not highlight which catalog entry is selected or show its live preview. A catalog is reference information, not a back door into concealed intent.
