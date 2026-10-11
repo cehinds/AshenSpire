@@ -313,8 +313,8 @@ async function gcBlobs(t, keep){
   catch(e){ /* best effort */ }
 }
 /* a short lease on the head doc, held only across its get and set. Every attempt uses a fresh holder id, so no
-   attempt can renew a lease another attempt holds: a waiting writer waits at most one ttl (1.5 s), not forever.
-   Busy retries run for up to 10 s, then false. Leases have no release verb, so they lapse on their own. */
+   attempt can renew a lease another attempt holds. Each lease lapses within one ttl (1.5 s); a waiter gets a turn
+   within the 10 s budget or reports a conflict. Leases have no release verb, so they lapse on their own. */
 async function acquireHead(t){
   const end=Date.now()+10000;
   for(;;){
