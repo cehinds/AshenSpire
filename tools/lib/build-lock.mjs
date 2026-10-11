@@ -24,12 +24,29 @@ export const LOCK_NAME = '.build-lock';
 // A lock file another process has created but not written yet reads as empty;
 // it is only treated as abandoned once it is this old.
 const UNWRITTEN_MS = 10 * 1000;
+// A lock whose owner's identity cannot be verified (no procStart: not on Linux,
+// or written without one) is abandoned once it is this old. A verified live
+// owner never expires.
+const UNVERIFIED_CEILING_MS = 6 * 60 * 60 * 1000;
 
 export const lockPath = (root) => path.join(path.resolve(root), LOCK_NAME);
 
 export function pidAlive(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+}
+
+/** The start time of `pid` (field 22 of /proc/<pid>/stat), or null where it cannot be read.
+ *  A pid reused by another process starts at a different time, so this tells the owners apart. */
+export function procStartOf(pid) {
+  if (process.platform !== 'linux' || !Number.isInteger(pid) || pid <= 0) return null;
+  try {
+    const text = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
+    // The command name is in parentheses and may hold spaces: fields resume after the last ')'.
+    const fields = text.slice(text.lastIndexOf(')') + 2).split(' ');
+    const start = fields[19];
+    return start && /^\d+$/.test(start) ? start : null;
+  } catch { return null; }
 }
 
 function readLock(file) {
@@ -42,7 +59,14 @@ function readLock(file) {
 
 function isStale(lock, now) {
   if (!lock.info || typeof lock.info !== 'object') return now - lock.mtimeMs > UNWRITTEN_MS;
-  return !pidAlive(lock.info.pid);
+  const { pid, startedAt, procStart } = lock.info;
+  if (!pidAlive(pid)) return true;
+  const current = procStart != null ? procStartOf(pid) : null;
+  // Identity verified: the pid is still the same process (stale only if the pid was reused).
+  if (procStart != null && current != null) return String(procStart) !== current;
+  // Identity unverified: only the age ceiling applies.
+  const started = Number.isFinite(startedAt) ? startedAt : lock.mtimeMs;
+  return now - started > UNVERIFIED_CEILING_MS;
 }
 
 /** Remove a stale lock without removing a fresh one another process just took:
@@ -65,7 +89,7 @@ function breakStale(file, seen) {
 export function tryAcquire(root, holder) {
   const file = lockPath(root);
   const token = randomBytes(8).toString('hex');
-  const info = { pid: process.pid, holder: String(holder || 'A build'), startedAt: Date.now(), token };
+  const info = { pid: process.pid, holder: String(holder || 'A build'), startedAt: Date.now(), token, procStart: procStartOf(process.pid) };
   for (let attempt = 0; attempt < 5; attempt++) {
     let fd;
     try { fd = fs.openSync(file, 'wx'); } catch (e) {
