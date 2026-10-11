@@ -45,7 +45,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
 });
 
 test('the actual footer pack keeps an unselected armed player and every enemy physical44 target',()=>{
-  const begin=source.indexOf('    const footerSize ='),end=source.indexOf('    settledTargets = targets;',begin);
+  const begin=source.indexOf('    const footerSize ='),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   const fieldRect={left:0,top:90,width:1440,height:417.28125};
   const boxes=[{hostRect:{left:484.54684,width:100,bottom:779.2808},frameRect:{},footerWidth:0,footerHeight:7,controls:[]},
     {hostRect:{left:600,width:100,bottom:400},frameRect:{},footerWidth:104,footerHeight:24,controls:[]}];

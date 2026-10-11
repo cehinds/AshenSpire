@@ -100,3 +100,55 @@ assert.deepEqual(Object.keys(tabletShadow), ['--hud-panel-shadow'], 'tablet shad
 assert.equal(api.checkValue(bindings.tokens['--hud-panel-shadow'], tabletShadow['--hud-panel-shadow']), null, 'exported panel shadow is valid per contract');
 for (const ff of ['mobile', 'desktop', 'widescreen']) assert.deepEqual(api.exportTokens(shadowed, scene, bindings, ff), {}, `${ff} is unaffected by a tablet shadow change`);
 console.log('PASS synthetic tablet shadow change exports only --hud-panel-shadow in tablet.json');
+
+// Import CSS JSON accepts every committed content file (multi-layer shadows, unitless 0, 48%), and
+// re-exporting an untouched import yields exactly the tokens it imported. (A token whose value equals
+// the studio seed would be the documented exception: it is not re-exported, and --merge keeps it.)
+const contentDir = path.join(root, '..', '..', 'content', 'hud-layout');
+for (const ff of FFS) {
+  const file = JSON.parse(await readFile(path.join(contentDir, `${ff}.json`), 'utf8'));
+  const studio = structuredClone(scene);
+  api.importFile(file, studio, scene, bindings);
+  const tokens = api.exportTokens(studio, scene, bindings, ff);
+  for (const [token, value] of Object.entries(tokens)) assert.equal(value, file.tokens[token], `${ff}: ${token} re-exports as imported`);
+  for (const token of Object.keys(file.tokens).filter(t => !(t in tokens))) {
+    const alone = structuredClone(scene);
+    api.importFile(api.buildFile(ff, { [token]: file.tokens[token] }), alone, scene, bindings);
+    assert.deepEqual(api.exportTokens({ ...alone, cssBaseline: undefined }, scene, bindings, ff), {}, `${ff}: ${token} is omitted only because it equals the seed`);
+  }
+  assert.deepEqual(Object.keys(tokens).sort(), Object.keys(file.tokens).sort(), `${ff}: untouched import re-exports every committed token`);
+}
+assert.equal(api.checkValue(bindings.tokens['--hud-text-plate-radius'], '0'), null, 'unitless 0 is a length');
+assert.throws(() => api.importTokens(api.buildFile('mobile', { '--hud-text-plate-radius': '1rem' }), scene, scene, bindings), /import needs px units or 0/);
+console.log('PASS Import CSS JSON accepts all four content/hud-layout files and re-exports each untouched import unchanged');
+
+// Each binding reads its component in the view where it is shown. An enemy nameplate move made in
+// Enemy selected (Mobile, Edit all views off) exports; the same move made only in Idle does not.
+const plateSeed = scene.nodes.find(n => n.id === 'enemy-nameplate');
+const inView = (state) => {
+  const s = structuredClone(scene);
+  const n = s.nodes.find(node => node.id === 'enemy-nameplate');
+  n.states = { ...(n.states || {}), [state]: { ...(n.states?.[state] || {}), y: plateSeed.y - 40 } };
+  return s;
+};
+assert.equal(api.exportTokens(inView('enemy-selected'), scene, bindings, 'mobile')['--hud-enemy-nameplate-dy'], '-30px', 'a move in Enemy selected exports');
+assert.deepEqual(api.exportTokens(inView('idle'), scene, bindings, 'mobile'), {}, 'the same move made only in Idle exports nothing');
+const note = (stateId, extra = {}) => api.exportViewNote({ scene, bindings, nodeId: 'enemy-nameplate', stateId, formFactor: 'mobile', allViews: false, ...extra });
+assert.equal(note('idle'), 'Exports from Enemy selected', 'the Inspector says which view exports');
+assert.equal(note('enemy-selected'), null);
+assert.equal(note('idle', { allViews: true }), null, 'an all-views edit reaches the export view');
+assert.equal(note('idle', { formFactor: 'desktop' }), null, 'form factor overrides apply to every view');
+assert.equal(api.exportViewNote({ scene, bindings, nodeId: 'player-details', stateId: 'idle', formFactor: 'mobile', allViews: false }), 'Exports from Player selected');
+console.log('PASS bindings export from their own view; an edit in another view is named by the Inspector note');
+
+// Reverting a committed override: import desktop.json, reset the tools span to the seed, export → null.
+const desktopFile = JSON.parse(await readFile(path.join(contentDir, 'desktop.json'), 'utf8'));
+const reverted = structuredClone(scene);
+api.importFile(desktopFile, reverted, scene, bindings);
+delete reverted.nodes.find(n => n.id === 'hand-toolbar').formFactors.desktop.span;
+const revertedTokens = api.exportTokens(reverted, scene, bindings, 'desktop');
+assert.equal(revertedTokens['--hud-tools-span'], null, 'a reset baseline token exports null');
+assert.equal(Object.values(revertedTokens).filter(v => v === null).length, 1, 'only the reset token is null');
+assert.equal(revertedTokens['--hud-header-hp-max-width'], '48%', 'other committed tokens re-export as imported');
+for (const ff of ['mobile', 'tablet', 'widescreen']) assert.ok(!Object.values(api.exportTokens(reverted, scene, bindings, ff)).includes(null), `no null for ${ff} without an import there`);
+console.log('PASS import, reset to seed and export writes null for that token only');

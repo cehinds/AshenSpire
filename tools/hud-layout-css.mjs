@@ -83,7 +83,8 @@ export function buildHudLayoutCss(root = ROOT) {
  * the ashenspire-hud-layout/1 format; `root` holds `dir` (content/hud-layout) and
  * the stylesheet. Every export and every merged result is validated, and the
  * stylesheet is generated, before anything is written: on any error nothing is
- * written. An exported value wins over the content file's value, tokens the
+ * written. An exported value wins over the content file's value, an exported
+ * null removes the override (the token returns to its default), tokens the
  * export does not carry are kept, and keys are written in token-table order.
  * Returns { errors, written } with the root-relative paths written.
  */
@@ -94,7 +95,7 @@ export function mergeHudLayoutExports(exportPaths, { root = ROOT, dir = HUD_LAYO
     let doc;
     try { doc = JSON.parse(readFileSync(resolve(path), 'utf8')); }
     catch (error) { errors.push(`${path}: not valid JSON — ${error.message}`); continue; }
-    const problems = validateHudLayoutFile(doc, null);
+    const problems = validateHudLayoutFile(doc, null, { allowRemove: true });
     for (const problem of problems) errors.push(`${path}: ${problem}`);
     if (problems.length) continue;
     if (exported[doc.formFactor]) { errors.push(`${path}: a second export for ${doc.formFactor} (already given by ${exported[doc.formFactor].path})`); continue; }
@@ -120,7 +121,13 @@ export function mergeHudLayoutExports(exportPaths, { root = ROOT, dir = HUD_LAYO
   for (const formFactor of FORM_FACTORS) {
     const { file, doc } = current[formFactor];
     if (!exported[formFactor]) { docs[formFactor] = doc; continue; }
-    const tokens = { ...doc.tokens, ...exported[formFactor].doc.tokens };
+    // An exported value wins; an exported null removes the override, so the
+    // token falls back to its default; an omitted token keeps its value.
+    const tokens = { ...doc.tokens };
+    for (const [name, value] of Object.entries(exported[formFactor].doc.tokens)) {
+      if (value === null) delete tokens[name];
+      else tokens[name] = value;
+    }
     const ordered = {};
     for (const token of HUD_LAYOUT_TOKENS) if (Object.hasOwn(tokens, token.name)) ordered[token.name] = tokens[token.name];
     const merged = { format: HUD_LAYOUT_FORMAT, formFactor, source: doc.source ?? exported[formFactor].doc.source, tokens: ordered };

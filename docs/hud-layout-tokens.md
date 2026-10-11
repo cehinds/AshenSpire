@@ -42,7 +42,11 @@ single layout decider (no new media queries). Thresholds live in
 }
 ```
 
-A file sets only the tokens it overrides. Unknown token names, a wrong
+A file sets only the tokens it overrides. A studio export passed to `--merge`
+may also give a token the value `null`, meaning *remove this override*: the
+merge deletes it from the content file and the token returns to its default.
+A committed content file never holds `null` (`--check` and `--write` refuse it).
+Unknown token names, a wrong
 `formFactor`, or a value that fails its type check are errors (the generator
 exits 1 and names the file and token). Values are plain CSS text, never `;`,
 `{`, `}`, `<`, `url(` or `expression(`.
@@ -97,7 +101,17 @@ The `px` geometry tokens are read once per layout pass with
 `getComputedStyle(combat).getPropertyValue(...)` by the JS that already places
 those elements, added after placement, and then clamped by the same
 reachability/clearance rules (an offset can never push a control off-screen or
-under another control).
+under another control). An offset that would land on another control is
+dropped whole: the element keeps its placed position.
+
+Each geometry token moves its element only in the directions it has room in:
+
+| Element (token) | Moves | Why |
+|---|---|---|
+| Player details (`--hud-player-details-dx`, `-dy`) | either way | clamped between the HUD band, the field sides and the hand; refused onto another reserved panel, control or target footprint |
+| Selected enemy nameplate (`--hud-enemy-nameplate-dy`) | up or down | the visible name/HP footer and its tap target move together; clamped to the field; refused onto the HUD, ribbon, tools, hand, the player's panel, another fighter's controls or another packed target |
+| Turn ribbon (`--hud-turn-ribbon-dy`) | down only | it hangs from the HUD band's bottom edge, so a negative value is ignored (it would go under the band); clamped to the field floor |
+| Combat log / Reaction row (`--hud-tools-dy`) | up only | it docks on the hand's top edge, so a positive value is ignored (it would cover the cards); clamped to the combat screen top; refused onto the header, ribbon, intents, HP plates, Inspect buttons or fighter targets |
 
 ## Studio mapping
 
@@ -115,11 +129,30 @@ studio exports `"tokens": {}` for every form factor, so exporting without edits
 changes nothing in the game. Export-settings values (`minWidth`, `maxWidth`,
 `span`) count as set once the designer sets them in the Inspector.
 
+Each binding names the view (`state`) where its component is shown, and the
+export reads the node in that view: the enemy nameplate and enemy panel border
+in *Enemy selected*, the idle HP plates (`--hud-text-plate-*`) in *Idle*,
+everything else in *Player selected*. On Mobile with **Edit all views** off, an
+edit to a token-bound component made in another view is not exported; the
+Inspector says so ("Exports from <view>").
+
+**Import CSS JSON** accepts every committed `content/hud-layout/*.json`.
+A shadow the canvas cannot draw as one design-px layer (several layers,
+`inset`, `rem`/`em`) keeps its CSS text and exports verbatim until its first
+layer is edited; then the edit replaces that layer and the others are kept.
+A unitless `0` is a length; `--hud-header-hp-max-width` may be a `%`, `rem` or
+`em` length, kept as text. Re-exporting an untouched import yields the same
+tokens, except one whose value equals the studio seed (not exported; `--merge`
+keeps it). The imported tokens become that form factor's baseline: a baseline
+token whose value is later reset to the seed exports as `null`, so `--merge`
+removes the committed override. Without an import, an export never holds `null`.
+
 Workflow:
 
 1. **Export CSS JSON** in the studio (this form factor, or all four) downloads the files.
 2. `node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …` validates each
    file and merges it into `content/hud-layout/<ff>.json`: an exported value
    wins, and tokens the export does not carry keep their tuned value. Any refused
-   file writes nothing and exits 1. The stylesheet is regenerated in the same run.
+   file writes nothing and exits 1. An exported `null` deletes that token's
+   override. The stylesheet is regenerated in the same run.
 3. Rebuild.

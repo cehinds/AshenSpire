@@ -10,7 +10,8 @@ import { tmpdir } from 'node:os';
 import { FORM_FACTORS, HUD_LAYOUT_FORMAT, HUD_LAYOUT_TOKENS, PER_CONSUMER, hudLayoutToken, checkTokenValue } from '../tools/hud-layout-tokens.mjs';
 import { buildHudLayoutCss, generateHudLayoutCss, readHudLayoutDocs, mergeHudLayoutExports, HUD_LAYOUT_CSS } from '../tools/hud-layout-css.mjs';
 import { formFactorFor } from '../src/ui/models/FormFactorModel.js';
-import { offsetPlacement, hudGeometry } from '../src/ui/models/HudLayoutOffsetModel.js';
+import { offsetPlacement, hudGeometry, offsetTargetPlate, targetPlateBox, toolsRowTop } from '../src/ui/models/HudLayoutOffsetModel.js';
+import { runInNewContext } from 'node:vm';
 import { balance } from '../src/content/balance.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -157,6 +158,26 @@ test('applyUiScale writes data-form-factor beside data-layout from the balance t
   assert.match(body.slice(formFactor, formFactor + 200), /formFactorFor\(window\.innerWidth, window\.innerHeight, UI\.uiScale\.formFactor\)/);
 });
 
+test('a form-factor change re-measures the tools row at once and refits the stage', () => {
+  const stage = read('src/ui/components/battlefieldStage.js');
+  assert.match(stage, /attributeFilter: \['style', 'data-layout', 'data-short', 'data-composition', 'data-form-factor',/, 'the stage refits on data-form-factor');
+  const tools = read('src/ui/components/combatTools.js');
+  const begin = tools.indexOf('  const formFactorObserver = new MutationObserver(');
+  const end = tools.indexOf('  function update(model)', begin);
+  assert.ok(begin > 0 && end > begin);
+  let callback, options, flushes = 0, current = 'tablet';
+  runInNewContext(tools.slice(begin, end), {
+    MutationObserver: class { constructor(fn) { callback = fn; } observe(_node, opts) { options = opts; } },
+    document: { documentElement: { getAttribute: () => current } }, flushGeometry: () => { flushes += 1; } });
+  assert.deepEqual(JSON.parse(JSON.stringify(options)), { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
+  callback([{ oldValue: 'tablet' }]);
+  assert.equal(flushes, 0, 'a rewrite of the same form factor measures nothing');
+  current = 'desktop';
+  callback([{ oldValue: 'tablet' }]);
+  assert.equal(flushes, 1, 'a real change flushes the tools geometry synchronously');
+  assert.match(tools, /release\(\) \{ released = true; observer\.disconnect\(\); formFactorObserver\.disconnect\(\);/);
+});
+
 test('index.html loads the generated sheet after the stylesheets it styles', () => {
   const html = read('index.html');
   const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]);
@@ -180,6 +201,78 @@ test('every geometry offset is applied by the code that places its element', () 
   const stage = read('src/ui/components/battlefieldStage.js');
   for (const key of ['playerDetailsDx', 'playerDetailsDy', 'enemyNameplateDy', 'turnRibbonDy']) assert.match(stage, new RegExp(`hudOffsets\\.${key}`));
   assert.match(read('src/ui/components/combatTools.js'), /hudGeometry\(style\)\.toolsDy/);
+  assert.match(read('src/ui/components/combatTools.js'), /toolsRowTop\(\{ dockTop, dy: dy \* zoom/);
+});
+
+test('the nameplate offset moves the tap target with the plate, and a colliding offset is dropped', () => {
+  const plate = targetPlateBox({ x: 100, y: 200, footerWidth: 104, footerHeight: 24, footerSize: 44, hitPx: 44, fieldLeft: 10, fieldTop: 50 });
+  assert.deepEqual(plate, { left: 58, top: 228, width: 104, height: 44 }, 'footer and 44px square united, in screen px');
+  const target = { id: 'e1', x: 100, y: 200 };
+  const bounds = { left: -Infinity, right: Infinity, top: 50, bottom: 450 };
+  assert.equal(offsetTargetPlate({ target, plate, dy: 0, bounds }), target, 'dy 0: the packed target itself');
+  assert.deepEqual(offsetTargetPlate({ target, plate, dy: -30, bounds }), { id: 'e1', x: 100, y: 170 }, 'the target moves by the plate offset');
+  assert.deepEqual(offsetTargetPlate({ target, plate, dy: -500, bounds }), { id: 'e1', x: 100, y: 22 }, 'clamped to the field top');
+  const neighbour = { left: 60, right: 160, top: 190, bottom: 210 };
+  assert.equal(offsetTargetPlate({ target, plate, dy: -30, bounds, obstacles: [neighbour] }), target, 'an offset onto another target is refused');
+});
+
+test('the stage applies the nameplate offset to the packed target the hit area and footer both read', () => {
+  const stage = read('src/ui/components/battlefieldStage.js');
+  const begin = stage.indexOf('    const plateOf = (target) =>');
+  const end = stage.indexOf('    settledTargets = platedTargets;', begin);
+  assert.ok(begin > 0 && end > begin);
+  const frame = (eid, roles) => ({ dataset: { eid }, classList: { contains: (role) => roles.includes(role) } });
+  const placed = [{ frame: frame('player', ['player']) }, { frame: frame('e1', ['enemy', 'context-selected']) }, { frame: frame('e2', ['enemy']) }];
+  const inspectE2 = { left: 380, right: 420, top: 100, bottom: 140 };
+  const boxes = [{ footerWidth: 0, footerHeight: 0, controls: [] }, { footerWidth: 104, footerHeight: 24, controls: [] },
+    { footerWidth: 104, footerHeight: 24, controls: [inspectE2] }];
+  const run = (dy, targets) => runInNewContext(`${stage.slice(begin, end)}\nplatedTargets`, {
+    targets, placed, boxes, footerSize: 44, COMBAT_TARGET_HIT_PX: 44, fieldRect: { left: 0, top: 0, width: 600, height: 400 }, zoom: 1,
+    hudOffsets: { enemyNameplateDy: dy }, readFooterObstacles: () => [], targetPlateBox, offsetTargetPlate });
+  const apart = [{ id: 'e1', x: 100, y: 300 }, { id: 'e2', x: 400, y: 300 }];
+  assert.equal(run(0, apart), apart, 'token 0: exactly as packed');
+  assert.deepEqual(run(-40, apart).map((t) => t.y), [260, 300], 'only the selected enemy target moves, by the plate offset');
+  const underInspect = [{ id: 'e1', x: 400, y: 300 }, { id: 'e2', x: 100, y: 300 }];
+  assert.deepEqual(run(-170, underInspect).map((t) => t.y), [300, 300], "an offset onto another enemy's Inspect is dropped");
+  const stacked = [{ id: 'e1', x: 100, y: 300 }, { id: 'e2', x: 100, y: 240 }];
+  assert.deepEqual(run(-40, stacked).map((t) => t.y), [300, 240], 'an offset onto another packed target is dropped');
+  assert.match(stage, /const target = platedTargets\.find\(target => target\.id === frame\.dataset\.eid\)/,
+    'the hit area (--enemy-hit-x/y) and the footer translate read the offset target');
+});
+
+test('the tools offset only raises the row, stays on screen and is dropped over a control', () => {
+  const row = { left: 6, width: 378, height: 40 };
+  assert.equal(toolsRowTop({ dockTop: 500, dy: 0, row }), 500, 'dy 0: docked');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: 30, row }), 500, 'a positive dy is ignored: the cards are below the dock');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -30, row, screenTop: 0 }), 470, 'a negative dy raises the row');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -900, row, screenTop: 20 }), 20, 'clamped to the combat screen top');
+  const intent = { left: 150, right: 200, top: 440, bottom: 480 };
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -30, row, screenTop: 0, obstacles: [intent] }), 500, 'an offset that would cover an enemy intent is dropped');
+  assert.equal(toolsRowTop({ dockTop: 500, dy: -10, row, screenTop: 0, obstacles: [intent] }), 490, 'a raise that stops short of it is kept');
+});
+
+test('the tools pass reads its row height and obstacles only for a raise', () => {
+  const tools = read('src/ui/components/combatTools.js');
+  const begin = tools.indexOf('  let frame = 0, entryKey');
+  const end = tools.indexOf('  const observer =', begin);
+  const run = (dy) => {
+    let rowReads = 0, obstacleReads = 0;
+    const hand = { getBoundingClientRect: () => ({ width: 390, right: 390, left: 0, top: 500 }) };
+    const root = { isConnected: true, style: {}, dataset: {}, getBoundingClientRect: () => { rowReads += 1; return { height: 40, top: 500 }; } };
+    const combatEl = { clientWidth: 390, getBoundingClientRect: () => ({ width: 390, top: 0, bottom: 844 }), style: { setProperty() {} },
+      querySelector: (selector) => (selector === '.hand' ? hand : null) };
+    const api = runInNewContext(`${tools.slice(begin, end)}\n({ flushGeometry })`, {
+      combatToolsTokens: () => ({ span: 'field', dy }), cardBand: () => null, TOOLS_MIN_WIDTH: 240, toolsRowTop,
+      toolsObstacles: () => { obstacleReads += 1; return [{ left: 100, right: 200, top: 450, bottom: 480 }]; },
+      root, combatEl, state: { size: 'Small' }, panel: { style: {} }, innerWidth: 390, drag: null, snapHeights: () => ({ Small: 125 }),
+      VIEWPORT_ORIGIN: {}, anchorLocalBox: (_host, rect) => ({ ...rect }), requestAnimationFrame: () => 1, cancelAnimationFrame() {} });
+    api.flushGeometry();
+    return { rowReads, obstacleReads, top: parseFloat(root.style.top) };
+  };
+  assert.deepEqual(run(0), { rowReads: 0, obstacleReads: 0, top: 500 }, 'dy 0 forces no layout read');
+  assert.deepEqual(run(12), { rowReads: 0, obstacleReads: 0, top: 500 }, 'a positive dy is ignored without a read');
+  assert.deepEqual(run(-10), { rowReads: 1, obstacleReads: 1, top: 490 });
+  assert.deepEqual(run(-40), { rowReads: 1, obstacleReads: 1, top: 500 }, 'a raise onto a control is dropped');
 });
 
 test('the tools row keeps its field span unless the token asks for the card band', () => {
@@ -279,6 +372,25 @@ test('merge rejects a bad token or value by file and name and writes nothing', (
 
     assert.deepEqual(snapshot(t.root), before, 'nothing is written when any file is refused');
   } finally { t.cleanup(); }
+});
+
+test('an exported null removes the override; a content file may never hold null', () => {
+  const t = tempContentRoot();
+  try {
+    const path = exportFile(t.root, 'desktop', 'desktop', { '--hud-tools-span': null, '--hud-tools-bg': '#101010' });
+    const result = mergeHudLayoutExports([path], { root: t.root });
+    assert.deepEqual(result.errors, []);
+    const after = JSON.parse(readFileSync(join(t.dir, 'desktop.json'), 'utf8')).tokens;
+    assert.equal(Object.hasOwn(after, '--hud-tools-span'), false, 'null deletes the committed override');
+    assert.equal(after['--hud-tools-bg'], '#101010');
+    assert.equal(after['--hud-header-hp-max-width'], '48%', 'omitted tokens are kept');
+    assert.doesNotMatch(readFileSync(join(t.root, 'styles', 'hud-layout.generated.css'), 'utf8').split("[data-form-factor='desktop']")[1].split('}')[0],
+      /--hud-tools-span/, 'the desktop block falls back to the default span');
+  } finally { t.cleanup(); }
+  const { css, errors } = generateHudLayoutCss(withTokens('desktop', { '--hud-tools-span': null }));
+  assert.equal(css, null, '--check / --write refuse a content file holding null');
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /^content\/hud-layout\/desktop\.json: --hud-tools-span: null .*only in an export passed to --merge/);
 });
 
 test('merge refuses a file that is not JSON in the ashenspire-hud-layout/1 format', () => {
