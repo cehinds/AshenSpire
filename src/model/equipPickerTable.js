@@ -49,3 +49,25 @@ export function equipPickerTableRows(rows, slot, { setIndex, loadout } = {}) {
   }
   return Object.freeze(out);
 }
+
+/**
+ * sortEquipPickerRows(tableRows, { column, direction }) → new frozen array.
+ * Never mutates the input. `status` sorts by EQUIP_PICKER_STATUS_ORDER with the
+ * name as tie-break; `name` sorts by name with status as tie-break. `desc`
+ * negates the whole comparator. Array sort is stable, so ties keep input order.
+ */
+export function sortEquipPickerRows(tableRows, { column = 'status', direction = 'asc' } = {}) {
+  if (column !== 'status' && column !== 'name') {
+    throw new Error(`sortEquipPickerRows: unknown column '${column}'`);
+  }
+  if (direction !== 'asc' && direction !== 'desc') {
+    throw new Error(`sortEquipPickerRows: unknown direction '${direction}'`);
+  }
+  const byStatus = (a, b) => EQUIP_PICKER_STATUS_ORDER[a.status] - EQUIP_PICKER_STATUS_ORDER[b.status];
+  const byName = (a, b) => String(a.name).localeCompare(String(b.name));
+  const primary = column === 'status'
+    ? (a, b) => byStatus(a, b) || byName(a, b)
+    : (a, b) => byName(a, b) || byStatus(a, b);
+  const sign = direction === 'desc' ? -1 : 1;
+  return Object.freeze([...(tableRows || [])].sort((a, b) => sign * primary(a, b)));
+}
