@@ -434,12 +434,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    const section = paneSection('collection', t('deckEditor.pane.collection'), list);
-    section.insertBefore(el('div', { class: 'deck-editor-searchbar' }, [search,
+    return paneSection('collection', t('deckEditor.pane.collection'), list, [
       chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
       chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
-    ]), list);
-    return section;
+      search,
+    ]);
   }
 
   function deckPane() {
@@ -502,7 +501,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       list.appendChild(details);
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.deck') }));
-    const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list);
     const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
     search?.addEventListener('input', () => {
       deckQuery = search.value;
@@ -512,17 +510,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       next.focus();
       try { next.setSelectionRange(caret, caret); } catch { /* browser search input */ }
     });
-    section.insertBefore(el('div', { class: 'deck-editor-searchbar' }, [search,
+    const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list, [
       ...['list', 'cards'].map(id => chip(t(`deckEditor.display.${id}`), deckDisplay === id, () => { deckDisplay = id; draw(); }, `display:${id}`)),
-    ]), list);
+      search,
+    ]);
     section.appendChild(el('div', { class: 'deck-editor-dropwell', text: t('deckEditor.dropHere') }));
     return section;
   }
 
-  function paneSection(id, title, list) {
+  // The pane's title and its controls share one row (the bar): the title on
+  // the left, the chips after it. A search box, when text search is on, wraps
+  // onto the bar's own line.
+  function paneSection(id, title, list, controls = []) {
     const section = el('section', {
       class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title,
-    }, [el('h3', { class: 'deck-editor-pane-title', text: title }), list]);
+    }, [el('div', { class: 'deck-editor-pane-bar' }, [el('h3', { class: 'deck-editor-pane-title', text: title }), ...controls]), list]);
     return section;
   }
 
