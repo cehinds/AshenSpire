@@ -1493,6 +1493,7 @@ export function mountEquipment(host, {
     const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
+    const pickerParts = new Map();
     const draggableRows = new Map();
     // An action can still be unavailable because its destination is locked,
     // its requirements fail, or a combat mount omitted the engine callback.
@@ -1605,6 +1606,7 @@ export function mountEquipment(host, {
 
     }
     const entries = rows.map((row) => {
+      let lastSeal = null, lastTransition = null;
       const target = inventoryTarget(row);
       const armament = row.item && ['Armour', 'Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category);
       const cardClass = armament ? layout.cardClasses.armamentItem : inventoryItemClass;
@@ -1637,7 +1639,8 @@ export function mountEquipment(host, {
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
-        const wholeCardHold = cardClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
+        lastSeal = seal; lastTransition = transition;
+        const wholeCardHold = !selectedSlot && cardClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
         // The act is a kit Button — danger for an unequip, primary for an equip.
         // When the whole card is the hold target the act is a lit StatePill that
         // names it, not a second control.
@@ -1703,6 +1706,7 @@ export function mountEquipment(host, {
         onClassAction: armament ? null : (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
       });
       if (armament) revealed.prepend(destinationChoices(row));
+      pickerParts.set(row.key, { revealed, target, actionLabel, seal: target ? lastSeal : null, transition: target ? lastTransition : null });
       return {
         key: row.key,
         kind: 'item',
