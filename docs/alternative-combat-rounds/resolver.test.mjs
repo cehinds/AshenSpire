@@ -1032,10 +1032,18 @@ test('stance evade bonus applies to that exchange only', () => {
   assert.equal(find(next, 'evadeRoll').success, false);
 });
 
-test('stance evade bonus is not applied without the table, and a 0 bonus adds nothing', () => {
+test('stance evade bonus is not applied without the table', () => {
+  // The evade stance would add 20 with the table. Without it, evadePct stays at the base.
+  const evading = DEFENDER({ evadeBasePct: 40, stance: 'evade' });
+  const events = resolvePair(ATTACKER, evading, seqRng([D20_HIT, pctRng(0)]));
+  assert.equal(find(events, 'evadeRoll').evadePct, 40, 'no table, so no stance bonus');
+});
+
+test('a stance row with a 0 bonus adds nothing', () => {
+  // evade-bonus.csv has an attack row at 0, so the table is used and the bonus is 0.
   const attacking = DEFENDER({ evadeBasePct: 40, stance: 'attack' });
   const events = resolvePair(ATTACKER, attacking, seqRng([D20_HIT, pctRng(0)]), { evadeTable: evadeTable() });
-  assert.equal(find(events, 'evadeRoll').evadePct, 40, 'attack has no row, so no bonus');
+  assert.equal(find(events, 'evadeRoll').evadePct, 40, 'attack row is 0, so no bonus');
 });
 
 test('resolveRound passes the evade table through: a stance bonus raises evadePct in that pairing', () => {
