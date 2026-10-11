@@ -298,11 +298,7 @@ if (presOk.strings) {
   for (const [key, texts] of keyTexts) {
     const row = uiById.get(key);
     const [text] = [...texts];
-    if (row) {
-      if (!['short', 'full', 'tip'].some(c => uiCell(row, c) === text)) fail(`presentation/strings: proposedKey "${key}" is a uiStrings id but its cells do not hold "${text.slice(0, 60)}"`);
-    } else if (uiById.has(key)) {
-      fail(`presentation/strings: proposedKey "${key}" names a uiStrings id`);
-    }
+    if (row && !['short', 'full', 'tip'].some(c => uiCell(row, c) === text)) fail(`presentation/strings: proposedKey "${key}" is a uiStrings id but its cells do not hold "${text.slice(0, 60)}"`);
   }
   for (const [key, texts] of keyTexts) {
     if (texts.size > 1) fail(`presentation/strings: proposedKey "${key}" names ${texts.size} different texts`);
