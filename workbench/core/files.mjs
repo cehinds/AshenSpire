@@ -27,7 +27,7 @@ import { editable, validateText, hash } from '../../editor/core.mjs';
 import { tableData } from '../../editor/tables.mjs';
 import { compileEntries, readConfigTree } from '../../tools/config-build.mjs';
 import { acquire } from '../../tools/lib/build-lock.mjs';
-import { tagModelTable, tagModelSavable, checkTagModelSave } from './tag-model.mjs';
+import { tagModelTable, tagModelSavable, tagModelSummary, checkTagModelSave } from './tag-model.mjs';
 import { LAYOUT_FILE, layoutProblems } from '../modules/layout/card-layers-model.mjs';
 
 export const MAX_TEXT = 4 * 1024 * 1024;
@@ -206,7 +206,8 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     const kind = requireKind(rel);
     const buf = await readOrNull(await absFor(rel));
     if (buf === null) throw fail(404, `Not found: ${rel}`, { code: 'ENOENT' });
-    return { path: rel, text: buf.toString('utf8'), hash: hash(buf), kind };
+    const tagModel = tagModelTable(rel);
+    return { path: rel, text: buf.toString('utf8'), hash: hash(buf), kind, ...(tagModel ? { tagModel: tagModelSummary(tagModel) } : {}) };
   }
 
   async function list(dir = '', exts = '') {
