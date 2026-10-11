@@ -31,7 +31,7 @@ test('the capture job runs tools/screenshot.mjs at the device size, into the pro
   const [step] = JOBS['review-capture'].steps('/repo', { params: { screens: ['title', 'map'], device: 'phone' }, stateDir: '/state/p1' });
   assert.deepEqual(step.args, [
     'tools/screenshot.mjs', '--out', path.join('/state/p1', 'review', 'captures'),
-    '--viewport', '390x844', '--prefix', 'phone-', '--only', 'title,map',
+    '--viewport', '390x844', '--prefix', 'phone-', '--only', 'title,map', '--exact',
   ]);
 });
 

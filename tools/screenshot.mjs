@@ -6,6 +6,8 @@
 //
 //   node tools/screenshot.mjs            → docs/preview/{startup,title,map,combat,...}.png
 //   node tools/screenshot.mjs --out DIR  → capture into DIR instead
+//   node tools/screenshot.mjs --only a,b → only shots whose name starts with a or b
+//   node tools/screenshot.mjs --only a,b --exact → only shots named exactly a or b
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
@@ -14,6 +16,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+import { keepShot } from './lib/shot-match.mjs';
 import { devtoolsClient, readyExpression, settledFrame } from './shotReady.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -131,12 +134,15 @@ const pi = args.indexOf('--prefix');
 const PREFIX = pi >= 0 && args[pi + 1] && !args[pi + 1].startsWith('--') ? args[pi + 1] : '';
 
 // --only a,b — keep the shots whose name starts with one of these.
+// --exact — with --only, keep only the shots whose whole name is one of these
+// (so `class-rogue` does not also take `class-rogue-ember`).
 // Lets a run write exactly one evidence set rather than every screen the tool
 // knows, so the documented command's output IS the committed folder.
 const yi = args.indexOf('--only');
 const ONLY = yi >= 0 && args[yi + 1] && !args[yi + 1].startsWith('--')
   ? args[yi + 1].split(',').map((s) => s.trim()).filter(Boolean)
   : null;
+const EXACT = args.includes('--exact');
 
 // --class-matrix — one capture per SHIPPED class sprite, read from the sprite
 // manifest rather than listed here.
@@ -424,7 +430,7 @@ const SAMPLE_CLASS_SHOTS = new Set([
 const ALL = CLASS_MATRIX
   ? [...SHOTS.filter((s) => !SAMPLE_CLASS_SHOTS.has(s.name)), ...classMatrixShots()]
   : SHOTS;
-const RUN = ONLY ? ALL.filter((s) => ONLY.some((p) => s.name.startsWith(p))) : ALL;
+const RUN = ONLY ? ALL.filter((s) => keepShot(s.name, ONLY, { exact: EXACT })) : ALL;
 if (ONLY && !RUN.length) {
   console.error(`screenshot: --only ${ONLY.join(',')} matched no shots.`);
   process.exit(1);

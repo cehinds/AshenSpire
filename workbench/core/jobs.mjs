@@ -80,7 +80,7 @@ export const JOBS = {
     steps: (root, { params = {}, stateDir = path.join(root, 'workbench', '.state') } = {}) => {
       const { device, screens } = reviewCaptureParams(params);
       const { width, height } = deviceById(device);
-      return [{ args: ['tools/screenshot.mjs', '--out', path.join(stateDir, 'review', 'captures'), '--viewport', `${width}x${height}`, '--prefix', `${device}-`, '--only', screens.join(',')] }];
+      return [{ args: ['tools/screenshot.mjs', '--out', path.join(stateDir, 'review', 'captures'), '--viewport', `${width}x${height}`, '--prefix', `${device}-`, '--only', screens.join(','), '--exact'] }];
     },
   },
 };
