@@ -303,7 +303,13 @@ if (shotState === 'crisis') {
   bootStorage.setItem(META_KEY, String(bootStorage.getItem(META_KEY)).slice(0, 24));
   bootStorage.removeItem(META_BACKUP_KEY);
 }
-const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: navigator.locks });
+// The cross-tab profile lock guards a storage other tabs share. Memory storage
+// (blocked browser storage, e.g. the sandboxed branch preview, whose frame
+// also refuses the Web Locks API) belongs to this tab alone, so it needs none:
+// asking would make every run start fail.
+let persistentStorage = false;
+try { persistentStorage = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: persistentStorage ? navigator.locks : null });
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
 // EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
