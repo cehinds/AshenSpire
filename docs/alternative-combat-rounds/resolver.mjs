@@ -522,14 +522,16 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   }
   const visibleCount = Math.max(0, Math.min(enemyQueue.length, Math.trunc(Number(perception) || 0)));
   const inputM = options.momentum ?? {};
-  // Scoped evade bonuses from the caller (DESIGN.md, Evade bonus scopes). An
-  // exchange bonus attaches to the card or action named by appliesTo, and only
-  // that defender sees it. Other scopes apply to every defender when appliesTo
-  // is unset, or only to the named one when it is set.
+  // Scoped evade bonuses from the caller (DESIGN.md, Evade bonus scopes). Each
+  // bonus has an owner, `side`: 'player' (the default) or an enemy id. It only
+  // helps defences by that owner. An exchange bonus attaches to the card or
+  // action named by appliesTo. Other scopes apply to every defence of the owner
+  // when appliesTo is unset, or only to the named one when it is set.
   const inputBonuses = normalizeEvadeBonuses(options.evadeBonuses);
-  const attaches = (b, id) => (b.appliesTo == null ? b.scope !== 'exchange' : b.appliesTo === id);
-  const bonusesFor = (id) => activeEvadeBonuses(
-    inputBonuses.filter((b) => attaches(b, id)),
+  const attaches = (b, id, who) => (b.side ?? 'player') === who
+    && (b.appliesTo == null ? b.scope !== 'exchange' : b.appliesTo === id);
+  const bonusesFor = (id, who) => activeEvadeBonuses(
+    inputBonuses.filter((b) => attaches(b, id, who)),
     { inExchange: true, round: options.round, combatId: options.combatId },
   );
   const stanceTable = options.stanceAdvantage ?? null; // Map from parseStanceAdvantage()
@@ -582,8 +584,8 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     const visible = slot < visibleCount;
     const pool = { player: charges.player, enemy: charges[k] };
     const pairEvents = resolvePair(
-      { ...pc, speed: pc.speed + momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(pc.evadeBonuses), ...bonusesFor(pc.id)] },
-      { ...enemy, speed: enemy.speed - momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(enemy.evadeBonuses), ...bonusesFor(enemy.id)] },
+      { ...pc, speed: pc.speed + momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(pc.evadeBonuses), ...bonusesFor(pc.id, 'player')] },
+      { ...enemy, speed: enemy.speed - momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(enemy.evadeBonuses), ...bonusesFor(enemy.id, k)] },
       rng,
       { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, charges: pool },
     );

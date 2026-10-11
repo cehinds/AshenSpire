@@ -235,7 +235,11 @@ Owner's answer to open question f: the guaranteed evasion becomes the
 
 #### Evade bonus scopes
 
-Each bonus is `{ source, pct, scope, condition? }`. The scope model is meant
+Each bonus is `{ source, pct, scope, side?, appliesTo?, condition? }`.
+`side` is the owner: `'player'` (the default when missing) or an enemy id. A
+bonus helps only the defences of its owner, so an unowned run bonus never
+helps an enemy. `appliesTo` still narrows an exchange bonus to one card or
+action. The scope model is meant
 for all tag bonuses, not only evasion. Flagged: no tag bonus other than evasion
 uses it yet.
 

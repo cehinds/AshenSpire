@@ -1140,6 +1140,30 @@ test('scope run: a run bonus applies with no round or combat set', () => {
   assert.equal(rollAt(events, 0).evadePct, 50);
 });
 
+test('scope run: an unscoped-side bonus defaults to the player, so an enemy defender gets no evadePct', () => {
+  // The player attacks enemy eA. The run bonus is owned by the player, so eA gets no roll and no evaded.
+  const bonus = { source: 'ring', pct: 90, scope: 'run' };
+  const attack = [{ id: 'A', slot: 0, speed: 4, kind: 'attack' }];
+  const foe = [{ id: 'eA', speed: 1, kind: 'other' }];
+  const { events } = resolveRound(attack, foe, 1, seqRng([D20_HIT, pctRng(10)]), { evadeBonuses: [bonus] });
+  assert.equal(rollAt(events, 0), undefined, 'no evade roll for the enemy');
+  assert.equal(events.some((e) => e.type === 'evaded'), false, 'no evaded event');
+});
+
+test('scope run: a bonus with side eA applies to eA only, and not to the player', () => {
+  const bonus = { source: 'ring', pct: 90, scope: 'run', side: 'eA' };
+  const attack = [{ id: 'A', slot: 0, speed: 4, kind: 'attack' }];
+  const foe = [{ id: 'eA', speed: 1, kind: 'other' }];
+  const hitEnemy = resolveRound(attack, foe, 1, seqRng([D20_HIT, pctRng(10)]), { evadeBonuses: [bonus] });
+  assert.equal(rollAt(hitEnemy.events, 0).evadePct, 90, 'eA gets the bonus');
+  assert.equal(find(hitEnemy.events, 'evaded').by, 'enemy');
+
+  const defend = [{ id: 'P', slot: 0, speed: 1, kind: 'other' }];
+  const attacker = [{ id: 'eA', speed: 4, kind: 'attack' }];
+  const hitPlayer = resolveRound(defend, attacker, 1, () => 0.99, { evadeBonuses: [bonus] });
+  assert.equal(rollAt(hitPlayer.events, 0), undefined, 'the player does not get eA\'s bonus');
+});
+
 test('clampStage: Infinity clamps to 3, -Infinity and NaN clamp to 0', () => {
   assert.equal(clampStage(Infinity), 3);
   assert.equal(clampStage(-Infinity), 0);
