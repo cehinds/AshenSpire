@@ -1,7 +1,7 @@
 // workbench/app.mjs — the Workbench page: rail, tool frames, preview dock,
 // library, engine export, jobs, settings, palette, toasts and shortcuts.
 // Talks to workbench/server.mjs; DOM-free helpers live in ui/logic.mjs.
-import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT } from './ui/logic.mjs';
+import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT, apiError } from './ui/logic.mjs';
 import { icon } from './ui/icons.mjs';
 import { MODULES } from './modules/index.mjs';
 import { createModulePrefs, parseHash, hashFor, withPreviewOverrides } from './modules/host.mjs';
@@ -58,8 +58,8 @@ const gameBase = () => { const g = tool('game'); return g && g.status === 'up' ?
 // ---------------------------------------------------------------------------
 async function api(path, body) {
   const res = await fetch(`/api/${path}`, { method: body ? 'POST' : 'GET', headers: { 'x-studio-token': state.session?.token || '', ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
-  const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-  if (!res.ok) throw Error(data.error || `HTTP ${res.status}`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw apiError(res.status, data);
   return data;
 }
 const refreshGit = async () => { try { state.git = await api('git'); } catch { state.git = null; } renderChips(); if (state.view === 'home') renderHome(); };

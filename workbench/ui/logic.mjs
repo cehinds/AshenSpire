@@ -108,3 +108,15 @@ export function manifestSummary(manifest) {
     art: Array.isArray(manifest.art) ? manifest.art.length : 0,
   };
 }
+
+/**
+ * The error `api()` throws for a non-OK response. `status` is the HTTP status;
+ * `body` is the parsed JSON body, or null when the reply had none. The message
+ * is the body's `error`, or `HTTP <status>` when there is none.
+ */
+export function apiError(status, body) {
+  const err = new Error((body && body.error) || `HTTP ${status}`);
+  err.status = status;
+  err.body = body ?? null;
+  return err;
+}

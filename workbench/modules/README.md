@@ -42,7 +42,7 @@ from `workbench/modules/placeholder.mjs`.
 | Member | What it does |
 |---|---|
 | `id` | The module id. |
-| `api(path, body?)` | The Workbench's JSON API (`GET` without a body, `POST` with one). |
+| `api(path, body?)` | The Workbench's JSON API (`GET` without a body, `POST` with one). A non-OK reply throws an `Error` whose message is the body's `error` (or `HTTP <status>`), with `err.status` (the HTTP status) and `err.body` (the parsed JSON body, or `null`). A 409 carries `body.conflicts`; a 422 carries `body.problems`. |
 | `toast({ kind, title, detail, actions, timeout, record })` | A toast; errors stay until dismissed. |
 | `history` | This module's `History` (`workbench/ui/kit/history.mjs`): `push({label, undo, redo, before?, after?})`, `pushChange({label, undo: snapshot, redo: snapshot}, apply)` for snapshot changes such as the grid model's, `undo()`, `redo()`, `canUndo`, `canRedo`, `list()`, `clear()`, `group(label, fn)`, `onChange(fn)`. The header's Undo and Redo buttons and Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y use it while the module is showing. Call `push` after the change has been applied. |
 | `shortcuts.register(combo, label, handler, { inInput })` | A shortcut in this module's scope (combos like `'Mod+D'`, `'Alt+1'`, `'?'`; `Mod` is Ctrl or ⌘). It fires only while the module shows. A handler that returns `false` passes the key on. Users can remap it in Settings → Shortcuts. |
