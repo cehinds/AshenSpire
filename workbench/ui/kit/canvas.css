@@ -92,15 +92,22 @@
 .ck-item.in-group { outline: 1px dotted var(--ck-text-dim); outline-offset: -3px; }
 .ck-item.dim { opacity: 0.35; }
 .ck-item.selected { box-shadow: 0 0 0 1px var(--ck-accent), 0 0 0 3px var(--ck-accent-soft); }
+/* The label sits at the region's top-left and is clipped to the region (.ck-item is overflow: hidden). */
 .ck-label {
   position: absolute;
   left: 4px;
   top: 2px;
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 11px;
   color: var(--ck-text);
   white-space: nowrap;
   pointer-events: none;
 }
+/* A small region shows its label on hover or selection only. */
+.ck-item.tiny .ck-label { display: none; }
+.ck-item.tiny.hover .ck-label, .ck-item.tiny.selected .ck-label { display: block; }
 
 .ck-handle {
   position: absolute;
