@@ -59,16 +59,30 @@ test('a failing check is reported as failed with its message', async (t) => {
   assert.equal(report.message, 'docs/tag-model/tools/check.mjs exited with 1');
 });
 
-test('a save while the same job runs is reported busy, not run twice', async (t) => {
-  const slow = "await new Promise((r) => setTimeout(r, 400));";
+test('two saves during a run cause exactly one follow-up run, and neither is dropped', async (t) => {
+  const slow = 'await new Promise((r) => setTimeout(r, 300));';
   const { root, runner } = fixture(t, { build: slow });
   const first = runAfterTagModelSave({ root, jobs: runner, paths: [LAYOUTS] });
   const sent = [];
-  const second = await runAfterTagModelSave({ root, jobs: runner, paths: [LAYOUTS], send: (r) => sent.push(r) });
-  assert.equal(second.status, 'busy');
-  assert.match(second.message, /already running/);
-  assert.equal((await first).status, 'passed');
-  assert.equal(sent.length, 1);
+  const second = runAfterTagModelSave({ root, jobs: runner, paths: [LAYOUTS], send: (r) => sent.push(r) });
+  const third = runAfterTagModelSave({ root, jobs: runner, paths: [LAYOUTS], send: (r) => sent.push(r) });
+  const [a, b, c] = await Promise.all([first, second, third]);
+  assert.equal(a.status, 'passed');
+  assert.equal(b.status, 'passed');
+  assert.equal(b.runId !== a.runId, true, 'the follow-up is a new run');
+  assert.equal(c, b, 'both saves share the one follow-up');
+  assert.equal(runner.runs.filter((r) => r.id === 'tag-model').length, 2, 'the first run and exactly one follow-up');
+  assert.equal(sent.filter((r) => r.status === 'queued').length, 2, 'each save that arrived during the run is said to be queued');
+  assert.equal(sent.filter((r) => r.status !== 'queued').length, 1, 'the follow-up reports once');
+});
+
+test('a save while a run from the Jobs panel holds the job waits for it, then runs', async (t) => {
+  const slow = 'await new Promise((r) => setTimeout(r, 200));';
+  const { root, runner } = fixture(t, { build: slow });
+  runner.start('tag-model');
+  const report = await runAfterTagModelSave({ root, jobs: runner, paths: [LAYOUTS] });
+  assert.equal(report.status, 'passed');
+  assert.equal(runner.runs.filter((r) => r.id === 'tag-model').length, 2, 'the panel run, then the save run, never together');
 });
 
 test('a save with no tag-model table starts no job', async (t) => {

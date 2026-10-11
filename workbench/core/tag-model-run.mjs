@@ -7,6 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { TAG_MODEL_DIR, tagModelJobFor } from './tag-model.mjs';
+import { TAG_MODEL } from './jobs.mjs';
 
 /** sha256 of every CSV under the tag-model tables folder, keyed by repo-relative path. */
 export async function tableHashes(root) {
@@ -30,21 +31,59 @@ export function changedTables(before, after) {
   return [...names].filter((n) => before.get(n) !== after.get(n)).sort();
 }
 
+// Per runner and job: the run in progress (`run`) and the one follow-up run queued behind it (`next`).
+const slots = new WeakMap();
+const slotOf = (jobs, job) => {
+  if (!slots.has(jobs)) slots.set(jobs, new Map());
+  const byJob = slots.get(jobs);
+  if (!byJob.has(job)) byJob.set(job, { run: null, next: null });
+  return byJob.get(job);
+};
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
- * Runs the job the saved paths need, waits for it to free its slot, and reports
- * { job, runId, label, status, message, updated, files } through send(). When the
- * job is busy, reports status 'busy' instead. Resolves with the report, or null when
- * no tag-model table is in the save.
+ * Runs the job the saved paths need and reports { job, runId, label, status, message, updated, files }
+ * through send(). Resolves with the report, or null when no tag-model table is in the save.
+ *
+ * A save that arrives while a run of its job is in progress is never dropped, and never run alongside
+ * it: it is COALESCED. The first such save queues exactly one follow-up run, which starts when the
+ * current run ends and covers every save that arrived meanwhile. The follow-up waits for a save that
+ * holds the tag-model lock, and for a run started from the Jobs panel, so the two never overlap.
  */
-export async function runAfterTagModelSave({ root, jobs, paths, send = () => {} }) {
+export function runAfterTagModelSave({ root, jobs, paths, send = () => {} }) {
   const job = tagModelJobFor(paths);
-  if (!job) return null;
+  if (!job) return Promise.resolve(null);
+  const slot = slotOf(jobs, job);
+  if (!slot.run) return startRun({ root, jobs, job, send, slot });
+  if (!slot.next) {
+    slot.next = slot.run.then(() => {}, () => {}).then(() => { slot.next = null; return startRun({ root, jobs, job, send, slot }); });
+  }
+  send({ job, status: 'queued', message: 'The tag model job is running. Your save runs it once more when it ends.', updated: 0, files: [] });
+  return slot.next;
+}
+
+function startRun({ root, jobs, job, send, slot }) {
+  const run = execute({ root, jobs, job, send });
+  slot.run = run;
+  const clear = () => { if (slot.run === run) slot.run = null; };
+  run.then(clear, clear);
+  return run;
+}
+
+async function execute({ root, jobs, job, send }) {
+  // Wait for a run of this job, or the tag-model group, held by something else (a save, or a run from the Jobs panel).
+  for (;;) {
+    const active = jobs.active.get(job);
+    if (active) { await jobs.slotFreed(active); continue; }
+    if (jobs.locks.has(TAG_MODEL)) { await sleep(20); continue; }
+    break;
+  }
   const before = await tableHashes(root);
   let started;
   try { started = jobs.start(job); } catch (error) {
-    const report = { job, status: 'busy', message: error.message, updated: 0, files: [] };
-    send(report);
-    return report;
+    // The group was taken between the check and the start: wait and try again rather than drop the run.
+    if (error.status === 409) { await sleep(20); return execute({ root, jobs, job, send }); }
+    throw error;
   }
   const run = jobs.runs.find((r) => r.runId === started.runId);
   if (run) await jobs.slotFreed(run);

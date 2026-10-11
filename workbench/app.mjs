@@ -715,6 +715,7 @@ function onJob(run) {
 // A tag-model save's job: a busy job is said so; a build that changed table files tells the Data Studio page to read them again.
 function onTagModel(report) {
   if (report.status === 'busy') { toast({ kind: 'warn', title: 'Tag model job is busy', detail: report.message }); return; }
+  if (report.status === 'queued') { toast({ kind: 'info', title: 'Tag model job is running', detail: report.message }); return; }
   if (report.updated > 0) toast({ kind: 'success', title: `Build updated ${report.updated} file${report.updated === 1 ? '' : 's'}`, detail: report.files.join(', ') });
   document.dispatchEvent(new CustomEvent('workbench:tag-model', { detail: report }));
 }
