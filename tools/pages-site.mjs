@@ -830,17 +830,83 @@ export function readBranchPreviews(dir, skipped = []) {
   return out.filter((p, i) => paths.indexOf(p.path) === i);
 }
 
-// Writes each preview to branches/<path>/latest/: index.html is the playable game,
-// download/<file> the same bytes under the name a player saves.
+// THE PREVIEW IS NEVER AN HTML DOCUMENT ON THIS ORIGIN. A same-repo pull request's
+// build is code the pull request wrote; served as a page on cehinds.github.io it
+// could read a player's same-origin localStorage (saves, the sync token) and Cache
+// Storage. So the build is written as build.txt (GitHub Pages serves .txt as
+// text/plain, which a browser shows and never runs), and latest/index.html is a
+// wrapper THIS FILE generates. The wrapper fetches build.txt, puts the dev channel
+// flag into it and hands it to an <iframe sandbox> as srcdoc, WITHOUT
+// allow-same-origin: the game then runs in an opaque origin and cannot reach this
+// site's storage. Progress is not kept between visits.
+export const PREVIEW_BUILD_FILE = 'build.txt';
+export const PREVIEW_SCRIPT_FILE = 'preview.js';
+export const PREVIEW_SANDBOX = 'allow-scripts allow-pointer-lock allow-popups';
+// A srcdoc frame takes its parent's policy, so the game's own inline script and
+// style must stay allowed here; what it cannot do is reach the network beyond
+// 'self', or frame anything. Defence in depth: the sandbox is the boundary. Not
+// tested live against every build.
+export const PREVIEW_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; base-uri 'none'; form-action 'none'";
+
+// The wrapper's JavaScript: a constant, never built from the branch name or the PR.
+export const PREVIEW_SCRIPT = `(function () {
+  var status = document.getElementById('preview-status');
+  var frame = document.getElementById('preview');
+  var channel = "<script>window.__ASHEN_PREVIEW_CHANNEL__ = 'dev';</script>";
+  fetch('${PREVIEW_BUILD_FILE}', { cache: 'no-cache', credentials: 'omit' })
+    .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
+    .then(function (text) {
+      var head = /<head(?:\\s[^>]*)?>/i.exec(text);
+      var at = head ? head.index + head[0].length : 0;
+      frame.srcdoc = text.slice(0, at) + channel + text.slice(at);
+      status.textContent = '';
+    })
+    .catch(function (error) {
+      status.textContent = 'This preview could not be loaded (' + error.message + ').';
+    });
+})();
+`;
+
+export function previewWrapperHtml(branch) {
+  const name = esc(branch);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="${esc(PREVIEW_CSP)}">
+<meta name="referrer" content="no-referrer">
+<title>${name} · branch preview</title>
+<style>
+html, body { margin: 0; height: 100%; background: #111; color: #eee; font: 14px/1.4 system-ui, sans-serif; }
+body { display: flex; flex-direction: column; }
+.banner { padding: 6px 12px; background: #222; border-bottom: 1px solid #444; }
+.banner code { color: #ccc; }
+#preview-status { color: #bbb; }
+iframe { flex: 1; width: 100%; min-height: 0; border: 0; }
+</style>
+</head>
+<body>
+<div class="banner">Branch preview — runs sandboxed; progress is not saved. <code>${name}</code> <span id="preview-status">Loading the preview…</span></div>
+<iframe id="preview" title="Branch preview of ${name}" sandbox="${PREVIEW_SANDBOX}"></iframe>
+<script src="${PREVIEW_SCRIPT_FILE}"></script>
+</body>
+</html>
+`;
+}
+
+// Writes each preview to branches/<path>/latest/: build.txt is the build as text
+// (never an HTML document on this origin), index.html the trusted sandboxed wrapper
+// that plays it, preview.js the wrapper's fixed script.
 export function publishBranchPreviews(outDir, previews) {
   for (const p of previews) {
     const latest = join(outDir, 'branches', p.path, 'latest');
-    mkdirSync(join(latest, 'download'), { recursive: true });
-    cpSync(p.from, join(latest, 'index.html'));
-    cpSync(p.from, join(latest, 'download', p.file));
+    mkdirSync(latest, { recursive: true });
+    cpSync(p.from, join(latest, PREVIEW_BUILD_FILE));
+    writeFileSync(join(latest, 'index.html'), previewWrapperHtml(p.branch));
+    writeFileSync(join(latest, PREVIEW_SCRIPT_FILE), PREVIEW_SCRIPT);
     const bytes = readFileSync(p.from);
-    if (Buffer.compare(readFileSync(join(latest, 'index.html')), bytes) !== 0) throw new Error(`${p.branch}: written preview differs from its source`);
-    if (Buffer.compare(readFileSync(join(latest, 'download', p.file)), bytes) !== 0) throw new Error(`${p.branch}: written download differs from its source`);
+    if (Buffer.compare(readFileSync(join(latest, PREVIEW_BUILD_FILE)), bytes) !== 0) throw new Error(`${p.branch}: written preview differs from its source`);
   }
   return previews;
 }
@@ -848,8 +914,8 @@ export function publishBranchPreviews(outDir, previews) {
 export function branchPreviewSection(previews) {
   const head = '<h2 id="branch-builds">Feature branch builds</h2>';
   if (!previews.length) return `${head}\n<p>No open pull request into <code>dev</code> has a playable build right now.</p>`;
-  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">open pull request${p.pr ? ` #${p.pr}` : ''} into dev</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Play ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/download/${esc(p.file)}">Download</a></section>`).join('\n');
-  return `${head}\n<p>Each open pull request into <code>dev</code> has its newest playable build here. A build leaves this page when its pull request merges or closes.</p>\n<div class="grid">${cards}</div>`;
+  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">open pull request${p.pr ? ` #${p.pr}` : ''} into dev</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
+  return `${head}\n<p>Each open pull request into <code>dev</code> has its newest build here, played in a sandbox that does not keep progress. A build leaves this page when its pull request merges or closes.</p>\n<div class="grid">${cards}</div>`;
 }
 
 export function rootIndex(branchData, generatedAt, otherPages, previews = null) {
