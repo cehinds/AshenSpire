@@ -661,7 +661,7 @@ export function flattenInline(text, where, labels = new Set()) {
 // is what this projector enforces; the triple is the release the build wore.
 // Ordinals are receipts of real builds, so: date groups run newest-first; a
 // build cited by an older group is never newer than one a newer group cites
-// (ties allowed — docs/evidence merges share an ordinal); nothing cites a build
+// (ties allowed — evidence merges share an ordinal); nothing cites a build
 // that does not exist yet (`currentOrdinal`, from buildordinal.json).
 // The pre-release tag is exactly `-<word>.<n>` (docs/versioning.md: `rc.<n>`),
 // so the ordinal is always the segment AFTER it: `0.5.0-rc.1.1905` parses as
@@ -1578,7 +1578,7 @@ async function selftest() {
     try { validateChangelog(entries); console.error(`MISS ${name}`); }
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
-  // Build numbers are deliberately not identities: docs/evidence batches may
+  // Build numbers are deliberately not identities: evidence batches may
   // share one, while their PR-derived stable entry IDs remain distinct.
   try { validateChangelog([good[0], { ...good[1], build: good[0].build }]); console.log('PASS duplicate build accepted with distinct stable IDs'); }
   catch (error) { console.error(`FAIL duplicate build rejected: ${error.message}`); process.exitCode = 1; }

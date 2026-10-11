@@ -194,8 +194,8 @@ rewritten). A QA folder commits its README, the screenshots the README shows
 and a small curated summary. `.gitignore` ignores those raw patterns under
 `docs/qa/` (`git add -f` a small curated one), and
 `tests/qa-evidence-size.test.mjs` (a discovered test, so it gates a PR into
-`dev`) fails any tracked JSON over 256 KiB under `docs/qa/`, `docs/evidence/`,
-`docs/art-evidence/`, `docs/preview/`, `docs/screenshots/` or a `receipts/` or
+`dev`) fails any tracked JSON over 256 KiB under `docs/qa/`,
+`docs/art-evidence/`, `docs/preview/` or a `receipts/` or
 `evidence/` folder, unless its `ALLOWED` list names the file and the tool or
 test that reads it. The oversized #1781 files were removed from the tree on
 2026-10-10; `git log --diff-filter=D -- <path>` finds the removing commit and
