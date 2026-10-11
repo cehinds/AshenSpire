@@ -63,7 +63,12 @@ export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerA
     // battlefield instead of an empty strip under the cards.
     const nominalHand = Math.max(compactConfig.handMinimumPx,
       Math.min(compactConfig.handMaximumPx, physicalHeight * compactConfig.handHeightFraction)) / zoom;
-    const hand = Math.min(nominalHand, Math.max(compactConfig.handMinimumPx / zoom, compactHandBandHeight({ width, zoom, rem })));
+    // Only a tall phone (bandFitMinViewportPx, physical) trades band for
+    // battlefield; a shorter one keeps its nominal band and card size.
+    const fitBand = physicalHeight >= compactConfig.bandFitMinViewportPx;
+    const hand = fitBand
+      ? Math.min(nominalHand, Math.max(compactConfig.handMinimumPx / zoom, compactHandBandHeight({ width, zoom, rem })))
+      : nominalHand;
     const footer = compactConfig.footerPx / zoom;
     const battlefield = Math.max(0, height - hud - hand - footer);
     const minimumBattlefield = compactConfig.minimumBattlefieldPx / zoom;

@@ -25,7 +25,8 @@
       "cardMaxWidthPx": 112,
       "cardVisibleFraction": 0.9,
       "cardSideGutterPx": 6,
-      "upcastReservePx": 52
+      "upcastReservePx": 52,
+      "bandFitMinViewportPx": 700
     },
     "hand": {
       "minimumHeightPx": 208,

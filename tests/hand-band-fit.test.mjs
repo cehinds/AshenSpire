@@ -7,8 +7,10 @@ import { uiConfig } from '../src/config/generated/ui.js';
 // Owner (2026-10-11): on taller phones a width-bound fan (4-5 cards) left a
 // 49-81px empty strip under the cards because the band kept a full-size
 // card's height. The band now holds the readable fan and no more.
-const phones = [[360, 620, .79], [360, 780, .83], [390, 844, .9]];
-const { upcastReservePx, handMinimumPx } = uiConfig.scenes.w4a.sizing.compactCombat;
+const { upcastReservePx, handMinimumPx, bandFitMinViewportPx } = uiConfig.scenes.w4a.sizing.compactCombat;
+// The band fit applies from bandFitMinViewportPx up (option C); shorter
+// phones keep the nominal band (last test).
+const phones = [[360, 620, .79], [360, 780, .83], [390, 844, .9]].filter(([, vh]) => vh >= bandFitMinViewportPx);
 
 test('a phone band leaves no empty strip under a full readable fan', () => {
   for (const [vw, vh, zoom] of phones) {
@@ -49,4 +51,18 @@ test('the taller phone gives the reclaimed height to the battlefield', () => {
   assert.ok(bands.hand * zoom >= handMinimumPx - 1e-6);
   assert.ok(Math.abs(bands.hud + bands.battlefield + bands.hand + bands.footer - input.height) < 1e-6);
   assert.ok(Math.abs(bands.hand - Math.max(handMinimumPx / zoom, compactHandBandHeight(input))) < 1e-6);
+});
+
+// Option C (owner comparison, 2026-10-11): a short phone, under
+// bandFitMinViewportPx, keeps its nominal band and card size.
+test('a phone shorter than bandFitMinViewportPx keeps the nominal hand band', () => {
+  const { bandFitMinViewportPx, handHeightFraction, handMaximumPx } = uiConfig.scenes.w4a.sizing.compactCombat;
+  const zoom = .79, vh = 620;
+  assert.ok(vh < bandFitMinViewportPx);
+  const bands = allocateCombatBands({ width: 360 / zoom, height: vh / zoom, zoom, rem: 16 / zoom, compact: true });
+  const nominal = Math.max(handMinimumPx, Math.min(handMaximumPx, vh * handHeightFraction)) / zoom;
+  assert.ok(Math.abs(bands.hand - nominal) < 1e-9, `hand ${bands.hand * zoom}px, nominal ${nominal * zoom}px`);
+  // At and above the threshold the band fits the fan.
+  const tall = allocateCombatBands({ width: 360 / .83, height: 780 / .83, zoom: .83, rem: 16 / .83, compact: true });
+  assert.ok(tall.hand * .83 < 780 * handHeightFraction - 40);
 });
