@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { safePath, createGate, newToken, createSseHub, readJson, sendJson, MIME } from './lib/index.mjs';
 import { ToolSupervisor } from './core/tools.mjs';
-import { JobRunner, GENERATED } from './core/jobs.mjs';
+import { JobRunner, GENERATED, STOP_GRACE_MS } from './core/jobs.mjs';
 import { createWatcher, createOwnWrites, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 import { createFileService } from './core/files.mjs';
@@ -326,7 +326,10 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     get reloads() { return reloads; },
     killChildrenSync: () => { supervisor.killAllSync(); jobs.stopAll(); },
     close: () => closing ||= (async () => {
-      watcher.close(); jobs.stopAll(); hub.close();
+      watcher.close();
+      // A running job's process must exit, and its slot and file lock be freed, before close() resolves.
+      await jobs.stopAll();
+      hub.close();
       await supervisor.stopAll();
       server.closeAllConnections();
       await new Promise((resolve) => server.close(resolve));
@@ -358,6 +361,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   console.log(`AshenSpire Workbench: ${app.url}`);
   if (!args.includes('--no-open')) openWindow(app.url);
   process.on('exit', () => app.killChildrenSync());
-  const close = async () => { const t = setTimeout(() => process.exit(0), 5000); await app.close().catch(() => {}); clearTimeout(t); process.exit(0); };
+  // Allow the job's grace period (STOP_GRACE_MS) to end before the process exits anyway.
+  const close = async () => { const t = setTimeout(() => process.exit(0), STOP_GRACE_MS + 2000); await app.close().catch(() => {}); clearTimeout(t); process.exit(0); };
   process.on('SIGINT', close); process.on('SIGTERM', close); process.on('SIGHUP', close);
 }
