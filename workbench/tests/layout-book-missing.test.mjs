@@ -15,6 +15,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const real = readFileSync(join(ROOT, B.RECIPES_FILE), 'utf8');
 const CATALOG = B.catalogOf({ books: consumables.filter((r) => r.kind === 'skillBook'), cover: BOOK_COVERS, symbol: BOOK_SYMBOLS, treatment: BOOK_TREATMENTS, trim: BOOK_TRIMS, palette: BOOK_PALETTE });
 const lines = (t) => t.split('\n');
+const withoutColor = () => { const r = { ...BOOK_ART_PRESETS.spellbook }; delete r.color; return r; };
 
 /** The file with one book's fields dropped from its line, as the file would read if the field were absent. */
 function without(text, id, fields) {
@@ -87,6 +88,18 @@ test('a value is checked on its own, with the same words as the recipe check', (
   assert.deepEqual(B.fieldProblems('ink', '#12345', CATALOG), ['ink must be a six-digit hex color.']);
   assert.deepEqual(B.fieldProblems('ink', '#12345G', CATALOG), B.recipeProblems({ ...BOOK_ART_PRESETS.spellbook, ink: '#12345G' }, CATALOG).filter((p) => p.startsWith('ink')));
   assert.deepEqual(B.fieldProblems('trim', 'frame', CATALOG), []);
+});
+
+test('the render page draws only complete recipes, and lists the rest instead of throwing', () => {
+  // book-render.mjs needs the page DOM, so this suite checks its source: every drawing call is behind the guard.
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/book-render.mjs'), 'utf8');
+  assert.match(src, /const drawable = \(recipe\) => Boolean\(recipe\) && recipeProblems\(recipe, catalog\)\.length === 0;/);
+  assert.match(src, /const complete = drawable\(recipe\);/);
+  assert.match(src, /if \(complete\) wrap\.append\(group\('Covers'/);
+  assert.match(src, /drawable\(r\) \? renderBookArt\(b, \{ recipe: r \}\)/);
+  assert.doesNotMatch(src, /\.toLowerCase\(\)/);
+  // The same recipe the page would refuse is the one the inspector lists.
+  assert.deepEqual(B.recipeProblems(withoutColor(), CATALOG), ['color must be a six-digit hex color.']);
 });
 
 test('a field added and then reverted leaves the saved file byte for byte', () => {
