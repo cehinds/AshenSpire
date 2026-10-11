@@ -308,7 +308,7 @@ async function flush(t, opts){
   const ts=TS(t);
   if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),500); return; }
   if(!dirty.has(t)) return;
-  if(ts.conflict&&!opts.overwrite) return;
+  if((ts.conflict||ts.pinned)&&!opts.overwrite) return;
   const cols0=[...state.data[t].columns], keyCol=TABLES[t].key;
   const tooBig=state.data[t].rows.findIndex(r=>byteLen(JSON.stringify(cols0.map(c=>r[c]??'')))>BLOB_ROW_MAX);
   if(tooBig>=0){ const k=keyCol&&state.data[t].rows[tooBig][keyCol]; setStatus('bad','Row '+(tooBig+1)+(k?' ('+k+')':'')+' is over 250 KB, so this table cannot be saved yet. Shorten that row.'); return; }
@@ -325,12 +325,12 @@ async function flush(t, opts){
       written.add(b.hash);
     }
     /* the head's get and set run under a short lease, so a peer cannot slip a head in between them */
-    if(!(await acquireHead(t))){ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Another tab kept saving this table. Choose which version to keep.'); return; }
+    if(!(await acquireHead(t))){ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Another tab kept saving this table. Choose which version to keep.'); render(); return; }
     const s=await db.doc(headPath(t)).get();
     const curHead=s.exists? s.data() : null, curRev=revOf(curHead);
     if(!opts.overwrite && curRev!==ts.base){
       ts.conflict={theirRev:curRev}; dirty.add(t);
-      setStatus('warn','Someone else saved this table while you were editing.');
+      setStatus('warn','Someone else saved this table while you were editing.'); render();
       return;
     }
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -344,7 +344,8 @@ async function flush(t, opts){
     if(L!==undefined&&revOf(L)!==rev&&revOf(L)!==prevBase) newer=(L&&L.base||'')===rev? L : 'conflict';
   }
   catch(e){
-    if(e&&e.code==='invalid_argument'){ dirty.delete(t); canWrite=false; setStatus('warn','This view can read but not save. Edits stay in this browser; export them as CSV.'); saveLocal(); }
+    /* rejected: the edits stay on screen, pinned and unsaved; no peer head replaces them until the user chooses */
+    if(e&&e.code==='invalid_argument'){ dirty.add(t); ts.pinned=true; canWrite=false; setStatus('warn','This view can read but not save. Your edits are shown here, not saved; export them as CSV.'); saveLocal(); render(); }
     else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
   }
   finally{ saving.delete(t); setStatus(); }
@@ -355,11 +356,11 @@ async function flush(t, opts){
 async function loadTheirs(t){
   const ts=TS(t);
   const s=await db.doc(headPath(t)).get();
-  ts.conflict=null; dirty.delete(t);
+  ts.conflict=null; ts.pinned=false; dirty.delete(t);
   await applyHead(t, s.exists? s.data() : null);
   render();
 }
-function keepMine(t){ return flush(t,{overwrite:true}); }
+function keepMine(t){ return flush(t,{overwrite:true}).then(()=>render()); }
 /* storage:end */
 
 /* ---------- indexes ---------- */

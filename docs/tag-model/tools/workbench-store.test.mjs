@@ -406,20 +406,25 @@ test('a peer head that did not start from our save shows the conflict banner, an
   assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(mine));
 });
 
-test('invalid_argument on save makes the table read-only: not dirty, and incoming heads still apply', async () => {
+test('invalid_argument on save pins the rejected edits: a peer head never replaces them until Load theirs', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);
   A.api.subscribeTable('t');
   await settle(10);
-  editTable(A.page, sample(5, 'x'));
+  const mine = sample(5, 'x');
+  editTable(A.page, mine);
   db.failSet = (p) => (p === 'tables/t' ? { code: 'invalid_argument' } : null);
   await A.api.flush('t');
-  assert.equal(A.page.dirty.has('t'), false, 'not dirty forever');
   assert.equal(A.page.canWrite, false);
+  assert.equal(A.api.tstate.t.pinned, true);
+  assert.equal(A.page.dirty.has('t'), true, 'the rejected edits stay pending');
   db.failSet = null;
   const theirs = sample(7, 'p');
   await putBlobTable(db, A.api, 't', theirs);
-  await waitFor(() => JSON.stringify(A.page.state.data.t.rows) === JSON.stringify(theirs));
+  await settle(40);
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(mine), 'the rejected edits stay on screen');
+  await A.api.loadTheirs('t');
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(theirs), 'Load theirs adopts theirs');
 });
 
 test('the first save after a load reuses the blobs the reader already holds', async () => {
@@ -506,6 +511,22 @@ test('(a) sequential writers: the second one gets a conflict and the store keeps
   assert.ok(B.page.dirty.has('t'), 'local edits kept');
   assert.equal(B.api.tstate.t.conflict.theirRev, A.api.tstate.t.base);
   assert.equal(JSON.stringify(B.page.state.data.t.rows), JSON.stringify(ys));
+});
+
+test('a conflict re-renders the panel, and Keep mine re-renders after it saves on their rev', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  editTable(A.page, sample(3, 'x'));
+  await A.api.flush('t');
+  const theirRev = db.read('tables/t').rev;
+  editTable(B.page, sample(3, 'y'));
+  const before = B.page.renders;
+  await B.api.flush('t');
+  assert.ok(B.page.renders > before, 'the conflict re-renders the banner');
+  const beforeKeep = B.page.renders;
+  await B.api.keepMine('t');
+  assert.ok(B.page.renders > beforeKeep, 'Keep mine re-renders after the save');
+  assert.equal(db.read('tables/t').base, theirRev, 'the overwrite is based on their rev');
 });
 
 test('(a) conflict choices: Load theirs drops local edits; Keep mine overwrites on their rev', async () => {
