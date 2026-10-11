@@ -16,9 +16,12 @@ keys and targets are derived there, so this page explains them and the order.
   (`title.slots.door.load`), `New game` (`title.slots.door.new`), `Your climb`
   (`title.save.eyebrow`) and `Load` (`title.slots.primary.load`). Their rows
   reuse the existing id rather than a new key.
-- **5** of the 570 are in `src/ui/strings.js` itself. They are the lookup's own
-  developer error messages (`uiStrings: unknown id ...`), not player copy. Decide
-  before migrating whether they stay in code (recommended) or move.
+- **5** of the 570 are in `src/ui/strings.js` itself: the lookup's own developer
+  error messages (`uiStrings: unknown id ...`). The owner decided they migrate too
+  (step 9 below).
+- **31** of the 570 are the debug and combat-test screens (`screens/combatTest.js`,
+  `components/debugChrome.js`), not counting the 3 shared rows they hold. The owner
+  decided they migrate, last (step 10).
 
 ## Where the strings go
 
@@ -99,13 +102,14 @@ already in the table, so screens reuse them.
 | --- | --- | ---: | ---: | ---: |
 | 1 | Shared copy (the 27 `common.*` keys) | 58 | 27 | 31 |
 | 2 | Combat screen and HUD (`screens/combat.js`, `combatActionRow`, `combatantFrame`, `combatantInspector`, `combatantOverhead`, `ashenBlight`, `arcaneExposure`, `runHud`, `flask`, `battlefieldStage`, `optionDecision`, and the combat models) | 44 | 44 | 22 |
-| 3 | Title, menus and startup (`title`, `about`, `controls`, `settings`, `settingsSync`, `profileArchive`, `profileNotice`, `saveSlotSelector`, `offlinePlay`, `menuComponents`, `startupGate`, `offlineInstall`, `MenuModels`) | 161 | 161 | 21 |
+| 3 | Title, menus and startup (`title`, `about`, `controls`, `settings`, `settingsSync`, `profileArchive`, `profileNotice`, `saveSlotSelector`, `offlinePlay`, `menuComponents`, `startupGate`, `offlineInstall`, `MenuModels`) | 156 | 156 | 20 |
 | 4 | Map, rewards, rest, shop and events (`map`, `worldAtlas`, `rest`, `reward`, `shop`, `event`, `draft`, `gameover`, `history`, `prologue`, `actRouteStrip`, `Tooltip` and `Stats` models) | 59 | 59 | 17 |
 | 5 | Character, equipment and smithing (`equipment`, `customize`, `smithUpgradeModal`, `mountServiceModal`, `formation*`, `creationCards`, `upcastChoice`, `card`, `tutorial`, and the armoury, smith, mount and creation models) | 124 | 124 | 26 |
 | 6 | Lobby and custom runs (`lobby`, `coop`, `customRun`) | 54 | 54 | 3 |
 | 7 | Input, art status and surfaces (`input`, `artTier`, `assetPacks`, `assets`, `surfaces`, `alternative*`, `kit`, `previews`) | 28 | 28 | 9 |
 | 8 | Other shared components and models (`disclosure`, `modalShell`, `stature`, `uiComponents`, `LocalServiceModel`, `WorkspaceModel`) | 11 | 11 | 6 |
-| 9 | Debug and combat test (`screens/combatTest.js`, `debugChrome.js`) | 31 | 31 | 2 |
+| 9 | Developer error strings (`src/ui/strings.js`: the lookup’s own throw messages) | 5 | 5 | 1 |
+| 10 | Debug and combat test (`screens/combatTest.js`, `debugChrome.js`; the 3 shared rows sit in group 1) | 31 | 31 | 2 |
 | | **Total** | **570** | **539** | **109** |
 
 Group 1 counts rows, not keys: its 58 rows share 27 keys with the files they
@@ -119,14 +123,15 @@ Order rules:
    reword is visible in play.
 3. **Menus and settings next.** Largest group; mostly labels.
 4. **Models after the screens they serve**, so the component moves with its model.
-5. **Debug last, and only if the owner wants it player-tested.** `combatTest.js`
-   is a developer harness (31 rows); `debugChrome.js` is the debug overlay.
-   Owner decision: migrate, or leave in code as developer-only.
+5. **Developer and debug strings last, as their own steps (9 and 10).** Owner
+   decision: both migrate. Step 9 is the lookup's error messages; step 10 is the
+   debug overlay and the combat-test harness.
 
-## Owner decisions needed
+## Owner decisions (made)
 
-- Keep the 5 developer error strings in `src/ui/strings.js` in code? (recommended: yes)
-- Debug and combat-test screen (group 9): migrate, or leave in code?
+- The 5 developer error strings in `src/ui/strings.js` migrate (step 9).
+- The debug and combat-test screens' strings migrate (step 10).
+- Evade uses one shared stance sprite for all Evade cards (see ART-LIST.md).
 
 ## Regenerating
 
