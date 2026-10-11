@@ -80,6 +80,15 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
     try {
       if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      // Which folder this server serves, so the Workbench reuses it only for
+      // its own project. Loopback only: the path is not for LAN clients.
+      if (urlPath === '/__serve/info') {
+        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '');
+        const ok = local && /^(localhost|127\.0\.0\.1):\d+$/.test(req.headers.host || '');
+        res.writeHead(ok ? 200 : 403, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+        res.end(JSON.stringify(ok ? { root: rootResolved } : { error: 'Local requests only.' }));
+        return;
+      }
       // Direct edits to the master JSON become native card data on refresh.
       if(editorWrite&&urlPath==='/src/content/cardComponents.generated.js'){
         const {refreshCardLayout}=await import('./card-layout-save.mjs');

@@ -18,7 +18,9 @@ it. Local only (127.0.0.1), no npm dependencies, no build step. Node 22+.
 - **Any terminal:** `node workbench/server.mjs [--port 4300] [--no-open] [--project DIR] [--no-children]`
 
 The Workbench starts its tools as child servers and stops them when it exits
-(Ctrl+C). A tool already answering on its port is reused, and never killed.
+(Ctrl+C). A tool already answering on its port is reused, and never killed — the UI
+Studio and game server only when they serve this project (`/api/session`,
+`/__serve/info`); otherwise the tool shows as down and says why.
 
 | Tool | Port | Started as |
 |---|---|---|

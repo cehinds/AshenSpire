@@ -42,7 +42,7 @@ export function toolDefs({ repo, root, origin, ports = {} }) {
       id: 'game', name: 'Game server', port: p.game, host: 'localhost', path: '/', health: '/index.html',
       blurb: 'Serves the game from source for the preview dock and the preview pages.',
       command: (port) => [path.join(repo, 'tools/serve.mjs'), '--port', String(port), '--no-open', '--no-lan', '--root', root],
-      portFrom: /live at http:\/\/localhost:(\d+)/, internal: true,
+      portFrom: /live at http:\/\/localhost:(\d+)/, internal: true, serveRoot: '/__serve/info',
     },
   ];
 }
@@ -84,6 +84,14 @@ export class Tool {
         const session = await res.json().catch(() => ({}));
         if (session.root && fs.realpathSync(session.root) !== this.root) { this.conflict = `Port ${this.port} is serving another checkout (${session.root})`; return false; }
       } else await res.arrayBuffer().catch(() => {});
+      if (this.def.serveRoot) {
+        // A server answering on the port is reused only when it names this project as its root.
+        const info = await get(`${this.base}${this.def.serveRoot}`).then((r) => (r.status === 200 ? r.json() : null)).catch(() => null);
+        if (!info || typeof info.root !== 'string') { this.conflict = `Port ${this.port} is answered by a server that does not say which checkout it serves. Stop it, then press Restart.`; return false; }
+        let served = info.root;
+        try { served = fs.realpathSync(info.root); } catch { /* not on this disk: compared as given */ }
+        if (served !== this.root) { this.conflict = `Port ${this.port} is serving another checkout (${info.root})`; return false; }
+      }
       this.conflict = null;
       if (this.def.framing) {
         const page = await get(`${this.base}/`);
