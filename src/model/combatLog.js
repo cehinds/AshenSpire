@@ -1,5 +1,26 @@
 // Public, executed receipts only. Never project predictions or unstarted intents.
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
+const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
+  statusOnly: 'a status effect', attack: 'this attack' };
+const RESOURCE_WORDS = { stamina: 'SP', mana: 'MP' };
+// Why an in-hand Counter or defensive Sweep was not offered (SPEC §4.10).
+function reactionUnavailableText(event, { registries, source, owner }) {
+  const card = registries?.cards.get(event.cardIds?.[0]);
+  const tags = card?.cardTags || card?.tags || [];
+  const verb = tags.includes('maneuver:sweep') ? 'Sweep' : 'Counter';
+  switch (event.reason) {
+    case 'notCovered': return `No reaction: Counter can't answer ${ATTACK_KIND_WORDS[event.attackKind] || 'this attack'}.`;
+    case 'cost': return `Not enough ${RESOURCE_WORDS[event.resource] || 'SP'} to ${verb} (need ${event.need}, have ${event.have}).`;
+    case 'switchOff': return 'No reaction: Reactions are off.';
+    case 'attackerStaggered': return `No reaction: ${source} is staggered.`;
+    case 'attackerControlled': return `No reaction: ${source} can't act.`;
+    case 'controlled': return `No reaction: ${owner} must recover from control first.`;
+    case 'unplayable': return `No reaction: ${card?.name || 'that card'} can't be played.`;
+    case 'alreadyAnswered': return 'No reaction: this attack was already answered.';
+    default: return 'No reaction available.';
+  }
+}
+
 export function combatLogEntries(events, { registries, players = [], enemies = [] } = {}) {
   const names = new Map(players.map(player => [player.id, player.name || 'Forsaken']));
   for (const enemy of enemies) names.set(enemy.id, registries?.enemies.get(enemy.enemyId)?.name || 'Enemy');
@@ -35,6 +56,12 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'enemyDied': text = `${target} was defeated.`; break;
       case 'playerDowned': text = `${name(event.playerId || 'player')} was downed.`; break;
       case 'combatReactionChosen': if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
+      case 'combatReactionUnavailable': {
+        const why = reactionUnavailableText(event, { registries, source: name(event.sourceId), owner: name(event.ownerId) });
+        text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
+        break;
+      }
+      case 'combatGuardBroken': text = `Guard broken! ${target} took ${event.poise} Poise damage.`; break;
       case 'impactDealt': if (event.poiseDamage || event.wardDamage) text = `${source} dealt ${event.poiseDamage || 0} Poise and ${event.wardDamage || 0} Ward pressure to ${target}.`; break;
       default: break;
     }

@@ -25,6 +25,27 @@ test('log contains executed public receipts by round, never predictions or unsta
   assert.deepEqual(combatLogEntries(JSON.parse(JSON.stringify(events)), { registries, players: [{ id: 'p1', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] }), rows);
 });
 
+test('log says why no reaction was offered and when a Smash breaks Guard', () => {
+  const registries = { cards: new Map([['guardCounter', { name: 'Guard Counter', cardTags: ['maneuver:counter'] }]]),
+    enemies: new Map([['soldier', { name: 'Soldier' }]]), statuses: new Map() };
+  const why = (reason, extra = {}) => ({ type: 'combatReactionUnavailable', ownerId: 'player', sourceId: 'e1', reason,
+    cardIds: ['guardCounter'], attackKind: 'attack', ...extra });
+  const events = [why('notCovered', { attackKind: 'sweep' }), why('cost', { resource: 'stamina', need: 1, have: 0 }),
+    why('switchOff'), why('attackerStaggered'), why('alreadyAnswered'),
+    { type: 'combatGuardBroken', targetId: 'e1', sourceId: 'player', poise: 3 }];
+  const rows = combatLogEntries(events, { registries, players: [{ id: 'player', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] });
+  assert.deepEqual(rows.map(row => row.text), [
+    "No reaction: Counter can't answer a Sweep.",
+    'Not enough SP to Counter (need 1, have 0).',
+    'No reaction: Reactions are off.',
+    'No reaction: Soldier is staggered.',
+    'No reaction: this attack was already answered.',
+    'Guard broken! Soldier took 3 Poise damage.']);
+  const coopRows = combatLogEntries([{ ...why('switchOff'), ownerId: 'p1' }],
+    { registries, players: [{ id: 'p1', name: 'Reaver' }, { id: 'p2', name: 'Herald' }] });
+  assert.equal(coopRows[0].text, 'Reaver: No reaction: Reactions are off.');
+});
+
 test('three log heights use physical card, visible viewport and actual menu clearance', () => {
   const space = { cardHeight: 250, viewportHeight: 900, dockTop: 700, menuBottom: 60, gap: 8 };
   assert.equal(combatLogHeight({ ...space, size: 'Small' }), 125);
