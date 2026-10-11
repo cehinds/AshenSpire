@@ -712,6 +712,12 @@ function onJob(run) {
   if (state.view === 'home') renderHome();
   if (state.view === 'export') renderExport();
 }
+// A tag-model save's job: a busy job is said so; a build that changed table files tells the Data Studio page to read them again.
+function onTagModel(report) {
+  if (report.status === 'busy') { toast({ kind: 'warn', title: 'Tag model job is busy', detail: report.message }); return; }
+  if (report.updated > 0) toast({ kind: 'success', title: `Build updated ${report.updated} file${report.updated === 1 ? '' : 's'}`, detail: report.files.join(', ') });
+  document.dispatchEvent(new CustomEvent('workbench:tag-model', { detail: report }));
+}
 function onJobLog({ runId, text }) {
   if (!state.logs.has(runId)) return;
   state.logs.set(runId, (state.logs.get(runId) + text).slice(-400000));
@@ -1012,6 +1018,7 @@ function connectEvents() {
   on('tools', onTools);
   on('job', onJob);
   on('job-log', onJobLog);
+  on('tag-model', onTagModel);
   on('settings', (s) => { state.settings = { ...state.settings, ...s }; refreshLibrary(); });
   let building = null;
   on('building', (b) => { building = toast({ title: 'Rebuilding…', detail: `${b.steps.map((s) => s.replace(/^tools\//, '')).join(', ')} for ${b.files.length} changed file${b.files.length === 1 ? '' : 's'}`, record: false, timeout: 15000 }); });
