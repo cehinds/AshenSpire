@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Deck editor: one card list with − and ＋, and every card shows its stance",
     "detail": "Removing a card no longer jumps to the search box (on phones it opened the keyboard). Search is off for now and each list has one compact title row. Every row in the card library now has − count ＋ buttons, and the inspected card offers both Add to deck and Remove from deck. Phones drop the Library / Inspect / Deck tabs for one list; inspecting opens over it and Back returns to it, and a Draw order view appears only when Play in deck order is on. Each card names its stance: Offensive, Defensive, Casting, Counter, Sweep or Neutral.",
-    "build": "0.7.1.1331",
+    "build": "0.7.1.1333",
     "pullRequest": 1850,
     "url": "https://github.com/cehinds/AshenSpire/pull/1850"
   },
