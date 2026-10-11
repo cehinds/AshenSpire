@@ -1,7 +1,7 @@
 // node --test workbench/tests/ui.test.mjs — the page's DOM-free helpers.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fuzzyScore, fuzzyFilter, DEVICES, fitDevice, duration, manifestTables } from '../ui/logic.mjs';
+import { fuzzyScore, fuzzyFilter, DEVICES, fitDevice, duration, manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 test('fuzzy matching keeps letter order and prefers word starts and whole runs', () => {
   assert.equal(fuzzyScore('xyz', 'Content Editor'), null);
@@ -29,7 +29,23 @@ test('formatting and a tolerant manifest reader', () => {
   assert.equal(duration(420), '420 ms');
   assert.equal(duration(5400), '5.4 s');
   assert.equal(duration(125000), '2 m 5 s');
-  assert.deepEqual(manifestTables({ tables: [{ name: 'cards', rows: 3, schema: 'cards.schema.json', json: 'cards.json' }] }), [{ name: 'cards', rows: 3, schema: 'cards.schema.json', json: 'cards.json', description: '' }]);
-  assert.deepEqual(manifestTables({ tables: { enemies: { rowCount: 2, dataFile: 'enemies.json' } } })[0], { name: 'enemies', rows: 2, schema: '', json: 'enemies.json', description: '' });
+  assert.deepEqual(manifestTables({ tables: [{ name: 'cards', rows: 3, schema: 'cards.schema.json', json: 'cards.json' }] }), [{ name: 'cards', rows: 3, schema: 'cards.schema.json', json: 'cards.json', description: '', omitted: 0 }]);
+  assert.deepEqual(manifestTables({ tables: { enemies: { rowCount: 2, dataFile: 'enemies.json' } } })[0], { name: 'enemies', rows: 2, schema: '', json: 'enemies.json', description: '', omitted: 0 });
   assert.deepEqual(manifestTables(null), []);
+});
+
+test('the engine exporter manifest (ashenspire.engine-export/1) reads as id, file, schema and rows', () => {
+  const manifest = {
+    format: EXPORT_FORMAT, version: '0.7.1', release: '0.7.1', buildOrdinal: 1280, gitSha: '0123456789abcdef', rowKey: 'Name',
+    tables: [
+      { id: 'content.cards', file: 'tables/content.cards.json', schema: 'schemas/content.cards.schema.json', rows: 292, sha256: 'x', omittedFunctions: ['0.effect'] },
+      { id: 'framework.races', file: 'tables/framework.races.json', schema: 'schemas/framework.races.schema.json', rows: 8, sha256: 'y', omittedFunctions: [] },
+    ],
+    config: [{ id: 'content.balance', file: 'config/content.balance.json', sha256: 'z', omittedFunctions: [] }],
+    art: [{ source: 'art-manifest.json', file: 'art/art-manifest.json', sha256: 'w' }],
+  };
+  assert.deepEqual(manifestTables(manifest)[0], { name: 'content.cards', rows: 292, schema: 'schemas/content.cards.schema.json', json: 'tables/content.cards.json', description: '', omitted: 1 });
+  assert.deepEqual(manifestSummary(manifest), { format: EXPORT_FORMAT, known: true, version: '0.7.1', buildOrdinal: 1280, gitSha: '012345678', tables: 2, rows: 300, config: 1, art: 1 });
+  assert.equal(manifestSummary({ format: 'other/2', tables: [] }).known, false);
+  assert.equal(manifestSummary(null), null);
 });

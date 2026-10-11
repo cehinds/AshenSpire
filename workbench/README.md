@@ -68,10 +68,12 @@ then explain how to start each tool.
   the Workbench's token. Until a path is set, those cards say so and link to
   Settings.
 - **Engine Export** — runs `node tools/engine-export.mjs --out build/engine-export`
-  and lists the tables from its `manifest.json` (rows, schema and data links,
-  served read-only from `/export/…`), with Unity and Unreal import steps and
-  `docs/ENGINE-EXPORT.md`. If the exporter is not in the checkout yet the job
-  fails with that message.
+  and lists the tables from its `manifest.json` (format
+  `ashenspire.engine-export/1`: id, rows, schema and data links served
+  read-only from `/export/…`, with a filter), the version, build ordinal,
+  commit and config/art counts, Unity and Unreal import steps and
+  `docs/ENGINE-EXPORT.md`. On a checkout without `tools/engine-export.mjs`
+  every *Run export* button is disabled and says why.
 - **Build & Checks** — allowlisted jobs only: `content-build`, `config-build`,
   `build-only` (`tools/launch.mjs --build-only`), `engine-export` and
   `tool-tests` (`node --test` over editor/, ui-studio/ and workbench/ tests).
@@ -95,8 +97,13 @@ then explain how to start each tool.
 | ? | Shortcut list |
 | Esc | Close the palette, a dialog or the drawer |
 
-Shortcuts reach the Workbench while focus is in its chrome; inside a studio's
-frame the studio's own shortcuts apply (click the rail or header first).
+Inside a frame, **Ctrl+K** and **Ctrl+\\** still reach the Workbench: the
+Content Editor, UI Studio and Pose & FX run on their own ports (another
+origin), so each posts `{type: 'ashenspire-workbench-key', key}` to its parent
+when framed, and the Workbench accepts it only from one of its own frames. A
+same-origin frame is hooked directly, which adds **?**. Every other key in a
+frame is the frame's own; Library pages and the game preview do not forward
+keys, so click the rail or header first there.
 
 ## Screens
 

@@ -69,16 +69,42 @@ export function ago(t, now = Date.now()) {
   return new Date(t).toLocaleDateString();
 }
 
-/** A tolerant reading of build/engine-export/manifest.json: tables with name, rows, schema and data paths. */
+/** The manifest format tools/engine-export.mjs writes (docs/ENGINE-EXPORT.md). */
+export const EXPORT_FORMAT = 'ashenspire.engine-export/1';
+
+/**
+ * The tables of build/engine-export/manifest.json. The exporter's format is
+ * `tables: [{ id, file, schema, rows, sha256, omittedFunctions }]`; older or
+ * hand-written shapes (name/json/rowCount, or an object keyed by name) are
+ * still read so the page never goes blank on them.
+ */
 export function manifestTables(manifest) {
   if (!manifest) return [];
   const raw = Array.isArray(manifest) ? manifest : manifest.tables || manifest.files || manifest.entries || [];
   const list = Array.isArray(raw) ? raw : Object.entries(raw).map(([name, v]) => ({ name, ...(typeof v === 'object' ? v : { rows: v }) }));
   return list.map((t) => ({
-    name: t.name || t.id || t.table || '(unnamed)',
+    name: t.id || t.name || t.table || '(unnamed)',
     rows: t.rows ?? t.rowCount ?? t.count ?? (Array.isArray(t.data) ? t.data.length : null),
     schema: t.schema || t.schemaPath || t.schemaFile || '',
-    json: t.json || t.data || t.path || t.file || t.dataFile || '',
+    json: t.file || t.json || t.data || t.path || t.dataFile || '',
     description: t.description || '',
+    omitted: Array.isArray(t.omittedFunctions) ? t.omittedFunctions.length : 0,
   })).map((t) => ({ ...t, json: typeof t.json === 'string' ? t.json : '' }));
+}
+
+/** The header facts of an export manifest: format, version, build, commit and counts. */
+export function manifestSummary(manifest) {
+  if (!manifest || Array.isArray(manifest)) return null;
+  const tables = manifestTables(manifest);
+  return {
+    format: manifest.format || '',
+    known: manifest.format === EXPORT_FORMAT,
+    version: manifest.version || '',
+    buildOrdinal: manifest.buildOrdinal ?? null,
+    gitSha: typeof manifest.gitSha === 'string' ? manifest.gitSha.slice(0, 9) : '',
+    tables: tables.length,
+    rows: tables.reduce((n, t) => n + (Number(t.rows) || 0), 0),
+    config: Array.isArray(manifest.config) ? manifest.config.length : 0,
+    art: Array.isArray(manifest.art) ? manifest.art.length : 0,
+  };
 }
