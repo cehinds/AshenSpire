@@ -342,3 +342,16 @@ test('a reverse sort keeps each comment above its own row', () => {
 test('moving the last row to the top keeps each comment with its row', () => {
   assert.equal(reordered(COMMENTED, [2, 0, 1]), 'id,name\n# cc\nc,3\n# ca\na,1\n# cb\nb,2\n');
 });
+
+test('an edited row that moves keeps its own comment, and the others keep theirs', () => {
+  assert.equal(reordered(COMMENTED, [1, 2, 0], { 0: { name: 10 } }), 'id,name\n# cb\nb,2\n# cc\nc,3\n# ca\na,10\n');
+});
+
+test('an untouched non-canonical row (a, 1) that moves keeps its bytes', () => {
+  assert.equal(reordered('id,name\n# ca\na, 1\n# cb\nb,2\n', [1, 0]), 'id,name\n# cb\nb,2\n# ca\na, 1\n');
+});
+
+test('duplicate identical rows reordered keep every comment and no row is duplicated', () => {
+  const text = 'id,name\n# first\nx,1\n# second\nx,1\n# third\ny,2\n';
+  assert.equal(reordered(text, [1, 2, 0]), 'id,name\n# first\nx,1\n# third\ny,2\n# second\nx,1\n');
+});
