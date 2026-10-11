@@ -7,7 +7,7 @@ import {
   SCREENS, DEVICES, deviceById, screenById, rowsFor, filterRows, summarizeRows, acceptPlan, judge, percentLabel,
   diffPixels, diffImage, parseDeepLink, deepLinkOf, DEFAULT_TOLERANCE, DEFAULT_THRESHOLD,
 } from './model.mjs';
-import { rgbaOf, pngUrlOf } from './pixels.mjs';
+import { rgbaOf, dataUrlOf, pngDataUrlOf } from './pixels.mjs';
 import { hashFor } from '../host.mjs';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -389,12 +389,12 @@ export default {
       io?.unobserve(el.querySelector(`tr[data-key="${r.key}"]`));
       try {
         const t = {};
-        t.cur = URL.createObjectURL(await ctx.apiBlob(`review/image?set=captures&file=${encodeURIComponent(r.file)}`));
+        t.cur = await dataUrlOf(await ctx.apiBlob(`review/image?set=captures&file=${encodeURIComponent(r.file)}`));
         if (r.hasBaseline) {
-          t.base = URL.createObjectURL(await ctx.apiBlob(`review/image?set=baselines&file=${encodeURIComponent(r.file)}`));
+          t.base = await dataUrlOf(await ctx.apiBlob(`review/image?set=baselines&file=${encodeURIComponent(r.file)}`));
           const [a, b] = await Promise.all([fetchRgba('baselines', r.file), fetchRgba('captures', r.file)]);
           const pic = diffImage(a, b, { tolerance: st.tolerance });
-          if (pic) t.diff = await pngUrlOf(pic);
+          if (pic) t.diff = pngDataUrlOf(pic);
         }
         rememberThumbs(key, t);
         paintThumbs(el.querySelector(`tr[data-key="${r.key}"]`), t);
@@ -406,11 +406,7 @@ export default {
 
     function rememberThumbs(key, t) {
       thumbs.set(key, t);
-      while (thumbs.size > THUMB_CAP) {
-        const [oldKey, old] = thumbs.entries().next().value;
-        thumbs.delete(oldKey);
-        for (const url of Object.values(old)) URL.revokeObjectURL(url);
-      }
+      while (thumbs.size > THUMB_CAP) thumbs.delete(thumbs.keys().next().value);
     }
 
     function paintThumbs(tr, t) {
@@ -518,14 +514,14 @@ export default {
       stage().innerHTML = msg('Loading…');
       try {
         const u = {};
-        if (row.hasBaseline) u.base = URL.createObjectURL(await ctx.apiBlob(`review/image?set=baselines&file=${encodeURIComponent(row.file)}`));
-        if (row.hasCapture) u.cur = URL.createObjectURL(await ctx.apiBlob(`review/image?set=captures&file=${encodeURIComponent(row.file)}`));
+        if (row.hasBaseline) u.base = await dataUrlOf(await ctx.apiBlob(`review/image?set=baselines&file=${encodeURIComponent(row.file)}`));
+        if (row.hasCapture) u.cur = await dataUrlOf(await ctx.apiBlob(`review/image?set=captures&file=${encodeURIComponent(row.file)}`));
         if (row.hasBaseline && row.hasCapture) {
           const [a, b] = await Promise.all([fetchRgba('baselines', row.file), fetchRgba('captures', row.file)]);
           const pic = diffImage(a, b, { tolerance: st.tolerance });
-          if (pic) u.diff = await pngUrlOf(pic);
+          if (pic) u.diff = pngDataUrlOf(pic);
         }
-        if (token !== dstate.token) { for (const url of Object.values(u)) URL.revokeObjectURL(url); return; }
+        if (token !== dstate.token) return;
         dstate.urls = u;
         paintStage();
       } catch (err) {
@@ -544,7 +540,6 @@ export default {
     }
 
     function revokeDetail() {
-      for (const url of Object.values(dstate.urls)) URL.revokeObjectURL(url);
       dstate.urls = {};
     }
 

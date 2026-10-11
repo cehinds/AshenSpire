@@ -1,6 +1,8 @@
 // workbench/modules/review/pixels.mjs — the browser side of the pixel diff: a PNG
-// blob decoded to RGBA (the pure diff in model.mjs reads that), and an RGBA picture
-// encoded back to a PNG object URL for the grid and the detail view.
+// blob decoded to RGBA (the pure diff in model.mjs reads that), and pictures
+// encoded back to PNG data: URLs for the grid and the detail view. The Workbench's
+// Content-Security-Policy allows data: images but not blob: ones, so pictures are
+// data URLs, which need no revoking.
 
 /** A PNG (or any image) blob as { width, height, data } with four bytes a pixel. */
 export async function rgbaOf(blob) {
@@ -18,12 +20,21 @@ export async function rgbaOf(blob) {
   }
 }
 
-/** An RGBA picture as a PNG object URL; the caller revokes it when it is no longer shown. */
-export async function pngUrlOf(rgba) {
+/** A blob as a data: URL, which the page can show as an image. */
+export function dataUrlOf(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('The image could not be read'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** An RGBA picture as a PNG data: URL. */
+export function pngDataUrlOf(rgba) {
   const canvas = document.createElement('canvas');
   canvas.width = rgba.width;
   canvas.height = rgba.height;
   canvas.getContext('2d').putImageData(new ImageData(rgba.data, rgba.width, rgba.height), 0, 0);
-  const blob = await new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('The picture could not be encoded'))), 'image/png'));
-  return URL.createObjectURL(blob);
+  return canvas.toDataURL('image/png');
 }
