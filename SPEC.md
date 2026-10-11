@@ -1154,8 +1154,9 @@ no rule.
 
 ### 5.1 Classes, creation presets, and levels
 
-**New default creation mode.** Add a new stable mode id, `tuned`, and make it the default for
-new runs. Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
+**New creation mode.** Add a new stable mode id, `tuned`. It is not offered at creation and
+is not the default: new runs default to `lean`, labelled Standard (`src/content/attributes.js:190`;
+`content/source/characterCreation.json:3`). Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
 owns its total and allocation bounds. This is a new mode, not a mutation or rename of
 `standard` or `pointbuy`, because saved runs persist the mode id and both older modes must
 continue to validate exactly as authored.
