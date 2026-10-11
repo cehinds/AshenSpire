@@ -601,6 +601,39 @@ test('(f) GC never deletes a blob referenced by the current or the previous head
   assert.ok(gone.every((x) => !db.has(W.api.blobPath('t', x))), 'blobs of two heads back are collected');
 });
 
+// One tab's view of the db: its first head get is slow, and every head set records how old its lease was.
+function slowFirstGetTracedDb(db, getMs, sets) {
+  let lastAcq = 0, firstGet = true;
+  return {
+    doc(p) {
+      const d = db.doc(p);
+      if (p !== 'tables/t') return d;
+      return {
+        id: d.id, path: p,
+        get: async () => { if (firstGet) { firstGet = false; await settle(getMs); } return d.get(); },
+        set: async (x) => { sets.push(Date.now() - lastAcq); return d.set(x); },
+        acquire: async (o) => { const r = await d.acquire(o); if (r.acquired) lastAcq = Date.now(); return r; },
+        onSnapshot: (...a) => d.onSnapshot(...a),
+      };
+    },
+    collection: (p) => db.collection(p),
+  };
+}
+
+test('fencing: a head set is never issued under a lease near expiry; a slow get makes the save retry', async () => {
+  const db = makeFakeDb();
+  const sets = [];
+  const A = makePage(slowFirstGetTracedDb(db, 1400, sets), T);
+  const rows = sample(5, 'x');
+  editTable(A.page, rows);
+  await A.api.flush('t');
+  await waitFor(() => db.has('tables/t') && !A.page.saving.has('t') && !A.page.dirty.has('t'), 8000);
+  assert.ok(sets.length >= 1, 'a head set happened');
+  for (const age of sets) assert.ok(age <= 1250, 'head set issued ' + age + ' ms into its lease');
+  assert.equal(await storedRows(db), JSON.stringify(rows));
+  assert.equal(A.api.tstate.t.conflict, null);
+});
+
 // Writer helper: a tab holding `objs` as its unsaved table.
 function editTable(page, objs) {
   page.state.data.t.rows = objs;
@@ -717,7 +750,7 @@ function barrierOnHeadGets(db) {
     });
   };
 }
-const NO_LEASE = ['if(!(await acquireHead(t)))', 'if(false)'];
+const NO_LEASE = ['const lease=await acquireHead(t);', 'const lease={acquiredAt:Date.now(),ttlMs:1500};'];
 
 test('(a) interleaved writers under the head lease: exactly one wins, the other sees a conflict', async () => {
   const db = makeFakeDb();

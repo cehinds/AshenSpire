@@ -313,8 +313,9 @@ async function acquireHead(t){
   const end=Date.now()+10000;
   for(;;){
     const holder='save-'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+    const sent=Date.now(); /* taken before the request, so it is never later than the grant */
     const r=await db.doc(headPath(t)).acquire({holder, ttlMs:1500}).catch(()=>null);
-    if(r&&r.acquired) return true;
+    if(r&&r.acquired) return {acquiredAt:sent, ttlMs:1500};
     if(Date.now()>end) return false;
     await sleepMs(50+Math.random()*350);
   }
@@ -342,7 +343,8 @@ async function flush(t, opts){
       written.add(b.hash);
     }
     /* the head's get and set run under a short lease, so a peer cannot slip a head in between them */
-    if(!(await acquireHead(t))){ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Another tab kept saving this table. Choose which version to keep.'); render(); return; }
+    const lease=await acquireHead(t);
+    if(!lease){ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Another tab kept saving this table. Choose which version to keep.'); render(); return; }
     const s=await db.doc(headPath(t)).get();
     const curHead=s.exists? s.data() : null, curRev=revOf(curHead);
     if(!opts.overwrite && curRev!==ts.base){
@@ -350,6 +352,8 @@ async function flush(t, opts){
       setStatus('warn','Someone else saved this table while you were editing.'); render();
       return;
     }
+    /* fencing: if the get took most of the lease, another tab may hold it by now. Do not write under it; try again */
+    if(Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),50); return; }
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
     const base=opts.overwrite? curRev : ts.base, prevBase=ts.base;
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
