@@ -13,9 +13,13 @@
 .lay-modes button { height: 30px; padding: 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--as-radius) var(--as-radius) 0 0; background: transparent; color: var(--as-text-dim); font: inherit; font-size: var(--as-text-sm); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .lay-modes button[aria-selected="true"] { background: var(--as-bg); color: var(--as-text); border-color: var(--as-line); font-weight: 600; }
 .lay-modes button:disabled { opacity: 0.5; cursor: default; }
+.lay-modes-end { margin-left: auto; align-self: center; padding-bottom: 4px; }
+/* Each mode is one pane; only the shown one takes the height. */
+.lay-view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.lay-view[hidden] { display: none !important; }
 .lay-soon { font-size: 10px; color: var(--as-text-faint); border: 1px solid var(--as-line); border-radius: 8px; padding: 0 5px; }
 
-.lay-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--as-line); background: var(--as-bg-panel); flex: none; }
+.lay-bar, .mode-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--as-line); background: var(--as-bg-panel); flex: none; }
 .lay-bar .spacer { flex: 1; }
 .lay-field { display: inline-flex; align-items: center; gap: 6px; font-size: var(--as-text-sm); color: var(--as-text-dim); }
 .lay-field select { height: 26px; max-width: 240px; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font: inherit; font-size: var(--as-text-sm); }
@@ -23,7 +27,7 @@
 .lay-sep { width: 1px; height: 20px; background: var(--as-line); margin: 0 2px; }
 .lay-align { display: inline-flex; gap: 2px; flex-wrap: wrap; }
 
-.lay-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; position: relative; }
+.lay-body, .mode-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; position: relative; }
 .lay-right .ck-grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .lay-right .ck-field { min-width: 0; }
 .lay-right .ck-grid2 input, .lay-right .ck-field input, .lay-right .ck-field select { width: 100%; min-width: 0; box-sizing: border-box; }
@@ -31,12 +35,14 @@
 .lay-left { border-right: 1px solid var(--as-line); }
 .lay-right { border-left: 1px solid var(--as-line); }
 .lay-center { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-.lay-canvas { flex: 1; min-height: 0; position: relative; }
-.lay-status { flex: none; padding: 4px 10px; border-top: 1px solid var(--as-line); color: var(--as-text-dim); font-size: var(--as-text-xs); font-family: var(--as-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lay-canvas, .bf-canvas, .sk-canvas { flex: 1; min-height: 0; position: relative; }
+.lay-status, .bf-status, .sk-status { flex: none; padding: 4px 10px; border-top: 1px solid var(--as-line); color: var(--as-text-dim); font-size: var(--as-text-xs); font-family: var(--as-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lay-hint { padding: 24px; color: var(--as-text-dim); }
 .lay-hint.is-error { color: var(--as-bad); }
 
-.lay-fields { padding: 10px; font-size: var(--as-text-sm); }
+.lay-fields, .bf-insp, .sk-insp { padding: 10px; font-size: var(--as-text-sm); }
+.bf-insp .lay-row textarea, .sk-insp .lay-row textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font: inherit; font-size: var(--as-text-sm); resize: vertical; }
+.bf-insp .lay-row input[type="checkbox"], .sk-insp .lay-row input[type="checkbox"] { width: auto; height: auto; }
 .lay-fields h3 { font-size: var(--as-text-sm); font-weight: 600; margin: 10px 0 6px; }
 .lay-fields h3:first-child { margin-top: 0; }
 .lay-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--as-line); }
@@ -52,7 +58,7 @@
    They slide with a transform, so the canvas never reflows under them. */
 .lay .lay-toggle, .lay .lay-panel-head { display: none; }
 @container lay (max-width: 1100px) {
-  .lay-body { grid-template-columns: minmax(0, 1fr); }
+  .lay-body, .mode-body { grid-template-columns: minmax(0, 1fr); }
   .lay .lay-toggle { display: inline-flex; }
   .lay .lay-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid var(--as-line); font-size: var(--as-text-sm); font-weight: 600; }
   .lay-left, .lay-right { position: absolute; top: 0; bottom: 0; z-index: 6; width: min(300px, 88%); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); transition: transform 180ms ease; }
