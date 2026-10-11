@@ -384,6 +384,10 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null) {
   }
 
   const landed = hit && !blocked && avoid === null;
+  // A landed hit through a partial block (owner, Codex review on PR #1838): the first guard card
+  // that still holds block is the defending card. Captured here, before applyDamage spends it.
+  const partialGuard = landed && dmg > 0 && cur.active[target.id].guard > 0
+    ? (cur.active[target.id].guardCards.find((g) => g.left > 0) ?? null) : null;
   const armed = landed && cur.poiseDouble[attacker.id] === true;
   events.push({
     type: 'hit',
@@ -408,9 +412,12 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null) {
   } else if (landed) {
     applyDamage(cur, target.id, dmg, events);
   }
-  // The defender's card that was spent on this attack, for momentum gain and stance.
+  // The defender's card that was spent on this attack, for momentum gain and stance. Precedence:
+  // a full block's guard card, then an evade card spent on this attack, then the first guard card
+  // that absorbed part of a landed hit.
   const defenseCard = blocker ? { momentumGain: blocker.momentumGain, stance: blocker.stance }
-    : evadeUse ? { momentumGain: evadeUse.gain, stance: evadeUse.stance } : null;
+    : evadeUse ? { momentumGain: evadeUse.gain, stance: evadeUse.stance }
+    : partialGuard ? { momentumGain: partialGuard.momentumGain, stance: partialGuard.stance } : null;
   return { landed, defenseCard };
 }
 

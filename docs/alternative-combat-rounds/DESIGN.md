@@ -607,6 +607,7 @@ enemy has one M, and each attack is one exchange:
   A full block, an avoid (intangible or evadePct), or a miss wins for the defender.
   A full block's winning card is the guard card that holds the block (its `momentumGain` and
   `stance`; guard cards spend their block first-in, first-out). A block with no guard card uses the gain 1.
+  A landed hit through a partial block scores its stance against the first guard card that absorbed part of it, unless an evade card was spent on that attack.
   A fired or cancelling counter wins for its owner. The gain is the winner's card
   `momentumGain` (default 1) plus the stance bonus against the other side's card.
 - A counter with the `stagger` tag adds +-3 to its side's summed delta, on top of
