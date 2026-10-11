@@ -486,6 +486,10 @@ export default {
           node.append(img);
         },
       });
+      // Fit the page to the editor (and again when the module resizes), so the whole figure shows.
+      const fit = () => { if (canvas && editEl.clientWidth) canvas.fit(); };
+      new ResizeObserver(fit).observe(editEl);
+      requestAnimationFrame(fit);
       return canvas;
     }
     function syncCanvas() {
