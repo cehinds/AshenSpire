@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Faster checks on every change; release builds the Windows installer",
     "detail": "Development-process change only, nothing in the game changes. Pull requests now run a quick smoke check of about five minutes, the full test suites run when a build is promoted to Test, and Release runs the final polish checks and builds the Windows installer, whose download now follows the Release channel. Each open feature branch gets its own playable build, the README refreshes itself, and new high-resolution art moves to the art repository automatically.",
-    "build": "0.7.1.1286",
+    "build": "0.7.1.1288",
     "pullRequest": 1834,
     "url": "https://github.com/cehinds/AshenSpire/pull/1834"
   },
