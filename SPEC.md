@@ -297,8 +297,8 @@ adding a second formula in UI or engine code. The run snapshots the resolved for
 birth, so later tuning applies to new runs and never silently re-stats an in-progress save.
 
 **One row, one formula, one editor (derived-stat ruleset 7, owner 2026-09-24).** Every stat a
-character has — HP, Mana, Stamina, Actions, the opening hand, the per-turn draw, the hand size,
-AR, DR, PR, Ward and Poise — is ONE row of `content/derivedStats.js`, in one shape:
+character has — HP, Mana, Stamina, the opening hand, the per-turn draw, the hand size,
+AR, DR, PR, Ward and Poise — is ONE row of `src/content/derivedStats.js`, in one shape:
 
 `{ base, strength, dexterity, constitution, wisdom, intelligence, perLevel, min?, max? }`
 
@@ -327,22 +327,22 @@ keep their snapshotted rules.
 |---|---|---|---|---|---|---|---|---|---|
 | HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Owner's +1 main-bonus defaults (2026-10-06); stock pools including starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. The run clamps max HP to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
-| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | Pays card and combat costs; refills each turn. |
-| Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
+| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget: pays card and combat costs and refills each turn. The HUD calls it Actions. |
+| Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Not a second pool: `energy` is an alias of `stamina` (`src/model/turnStamina.js`), and combat reads Stamina (`src/content/derivedStats.js`). Historical: DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27), the first extra Action at DEX 4. |
 | Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
 | Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
-| Hand size (`handSize`) | 15 | — | — | — | — | — | — | 1–15 | Flat absolute capacity by default, independently configurable. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | INT scales it like Draw: only points above 4 count (`attributeBaseline`), so +1 per five INT above 4. Independently configurable. |
 | AR (`ar`) | 0 | 1 | — | — | — | — | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | — | 1 | — | — | — | — | — | 〃 |
 | PR (`pr`) | 0 | — | — | — | — | 1 | — | — | 〃 |
 | Ward (`ward`) | 1 | — | — | — | 1 | — | — | — | 〃 |
 | Poise (`poise`) | 1 | — | — | 1 | — | — | — | — | ONE Poise: the rating with ratings on, the vessel with them off; armour and relics add. |
 
-| Output | Default formula | Meaning |
+| Output | Source | Meaning |
 |---|---|---|
-| Defense | `-6 + DEX` | The data-owned base value used by the basic guard/defense profile. |
-| Strike | `-6 + STR` | The data-owned base value used by the basic physical strike profile. |
-| Magic | `-6 + WIS` | The data-owned base value used by the basic magic profile. |
+| Defense | `baseValue` of the guard profiles, e.g. `unarmedGuard` = 1 (`ratingId` `dr`) | The data-owned base value used by the basic guard/defense profile. |
+| Strike | `baseValue` of the attack profiles, e.g. `unarmedAttack` = 3 (`ratingId` `ar`) | The data-owned base value used by the basic physical strike profile. |
+| Magic | `baseValue` of the magic profiles (`content/source/basicCardProfiles.csv`) | The data-owned base value used by the basic magic profile. |
 
 **Retired homes.** Ruleset 7 removed three second homes: the rating formula (`ratings.<id>` plus
 one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabled, stat,
