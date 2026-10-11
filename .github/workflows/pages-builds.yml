@@ -639,6 +639,9 @@ jobs:
   #   - not published and no sticky comment → nothing. A withdrawn note is never a
   #     new comment.
   # One comment per PR, found by its marker and updated in place on every push.
+  # Closed pull requests into dev (the last 14 days) are swept independently of the
+  # event: a run that coalesced pushes can miss the close, so the list, not the
+  # trigger, decides which closed PR's link is removed.
   comment:
     needs: [assemble, deploy]
     if: needs.assemble.result == 'success' && needs.deploy.result == 'success'
@@ -685,6 +688,18 @@ jobs:
             gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
             echo "marked the playable-build comment on PR #$pr as withdrawn"
           }
+          # Edits the sticky comment only when it still links a preview. A comment already
+          # marked removed has no link and is left alone, so this pass is idempotent. Never
+          # creates a comment.
+          remove_link() {
+            local pr="$1" text="$2" id body
+            id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
+              --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->") and contains("Playable build: https://")) | .id' | sed -n '1p') || return 1
+            if [ -z "$id" ]; then return 0; fi
+            body=$(printf '%s\n' '<!-- ashen-playable-build -->' "$text")
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
+            echo "removed the preview link from the playable-build comment on closed PR #$pr"
+          }
           failed=0
           declare -A published=()
           rows=$(printf '%s' "${TARGETS:-[]}" | jq -r '.[] | [(.pr | tostring), .dir] | @tsv') || { echo "::error::could not read the comment targets"; exit 1; }
@@ -715,4 +730,18 @@ jobs:
               failed=1
             fi
           done <<< "$open"
+          # Closed pull requests into dev, closed in the last 14 days, same repository,
+          # feature/fix/chore heads. Paginated, 100 per page.
+          since="$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+          closed=$(gh api --paginate "repos/$REPO/pulls?state=closed&base=dev&sort=updated&direction=desc&per_page=100" \
+            | jq -r --arg repo "$REPO" --arg since "$since" '.[] | select(.closed_at != null and .closed_at >= $since and .head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/")) | .number') \
+            || { echo "::error::could not list the closed pull requests into dev"; exit 1; }
+          while read -r pr; do
+            [ -n "$pr" ] || continue
+            [ -n "${published[$pr]:-}" ] && continue
+            if ! remove_link "$pr" "Preview removed: this pull request is closed."; then
+              echo "::error title=Closed-PR link removal failed::PR #$pr"
+              failed=1
+            fi
+          done <<< "$closed"
           exit "$failed"
