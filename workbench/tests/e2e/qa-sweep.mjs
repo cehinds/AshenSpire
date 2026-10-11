@@ -690,13 +690,25 @@ for (const size of sizes) {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await sleep(4000);
   await setDock(size.dock);
-  if (want('data')) { await resetDoc('data'); await dataStudio(); }
-  if (want('layout')) { await resetDoc('layout'); await layoutStudio(); }
-  if (want('entities')) { await resetDoc('entities'); await entityBrowser(); }
-  if (want('assets')) { await resetDoc('assets'); await assetGallery(); }
-  if (want('review')) { await resetDoc('review'); await visualReview(); }
-  if (want('motion')) { await resetDoc('motion'); await motionStudio(); }
-  if (want('global')) await globalPaths();
+  // A module whose setup fails (its view never shows) is recorded as a FAIL and the sweep goes on.
+  const runModule = async (id, label, fn) => {
+    if (!want(id)) return;
+    try { await resetDoc(id); await fn(); } catch (err) {
+      results.push({ size: sizeName, path: `${label}: module setup`, status: 'FAIL', note: String(err.message || err).split('\n')[0].slice(0, 900) });
+      try { await page.screenshot({ path: path.join(SCRATCH, `setup-${sizeName}-${id}.jpg`), type: 'jpeg', quality: 70 }); } catch { /* page gone */ }
+    }
+  };
+  await runModule('data', 'Data Studio', dataStudio);
+  await runModule('layout', 'Layout Studio', layoutStudio);
+  await runModule('entities', 'Entity Browser', entityBrowser);
+  await runModule('assets', 'Asset Gallery', assetGallery);
+  await runModule('review', 'Visual Review', visualReview);
+  await runModule('motion', 'Motion Studio', motionStudio);
+  if (want('global')) {
+    try { await globalPaths(); } catch (err) {
+      results.push({ size: sizeName, path: 'Global: setup', status: 'FAIL', note: String(err.message || err).split('\n')[0].slice(0, 900) });
+    }
+  }
   await made.context.close();
 }
 
