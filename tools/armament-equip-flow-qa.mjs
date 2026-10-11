@@ -108,12 +108,11 @@ try {
     await click('[data-slot-position="leftHand:0"] .armament-activate');
     await click('[data-slot-position="rightHand:1"] .armament-replace');
     check(await ev('JSON.stringify(qaRun.loadout)') === original, name + ' choosing an empty reserve does not activate or change it');
-    await click('[data-face="armament:dagger"]');
-    check(await ev('JSON.stringify(qaRun.loadout)') === original && await ev(`document.querySelector('[data-face="armament:dagger"]').getAttribute('aria-expanded') === 'true'`), name + ' first item tap opens inspection without equipping');
-    await click('[data-face="armament:dagger"]', 700);
+    await click('.equip-picker-row[data-item-id="dagger"] .equip-picker-inspect');
+    check(await ev('JSON.stringify(qaRun.loadout)') === original && await ev(`document.querySelector('.equip-picker-row[data-item-id="dagger"] .equip-picker-inspect').getAttribute('aria-expanded') === 'true'`), name + ' first item tap opens inspection without equipping');
+    await click('.equip-picker-row[data-item-id="dagger"] .equip-picker-name', 700);
     check(await ev('JSON.stringify(qaRun.loadout)') === original, name + ' holding an item does not equip it');
-    if (await ev(`!document.querySelector('.armoury-foot-action')`)) await click('[data-face="armament:dagger"]');
-    check(await ev(`document.querySelector('.armoury-foot-action').textContent.includes('Main Hand · 2')`), name + ' explicit action names reserve destination');
+    check(await ev(`!!document.querySelector('.armoury-foot-action') && document.querySelector('.armoury-foot-action').textContent.includes('Main Hand · 2')`), name + ' explicit action names reserve destination');
     await shot('replace');
     await click('.armoury-foot-action');
     check(await ev(`qaRun.loadout.sets.rightHand[1] === 'dagger' && qaRun.loadout.active.rightHand === 0`), name + ' equipping reserve leaves active sword unchanged');
