@@ -64,7 +64,61 @@ let liveMapKeys = null;
 let liveMapBoard = null;
 let liveMapViewportRelease = null;
 
+// THE COMMIT SAVE, OFF THE TAP (W5a). A settled-board commit used to run the
+// whole run save synchronously inside the camera's own callback, so a tap paid
+// for a JSON write of the run. Now a commit is queued for idle time: one save
+// pending at a time, and it reads the live run when it fires, so a commit that
+// arrives while one is queued is simply covered by it. A save is never dropped:
+// every path that hands control away (a pick to enter, a remount, the HUD's
+// menu, load, save and quit) flushes it first, and a page that is hidden or
+// closed flushes it too. A save is dropped only when its map is no longer on
+// screen, which is what the camera's own commit already did.
+let pendingSave = null; // { save, root, cancel }
+function whenIdle(fn) {
+  if (typeof requestIdleCallback === 'function') {
+    const id = requestIdleCallback(fn, { timeout: 500 });
+    return () => { if (typeof cancelIdleCallback === 'function') cancelIdleCallback(id); };
+  }
+  const id = setTimeout(fn, 0);
+  return () => clearTimeout(id);
+}
+const mapIsOnScreen = (root) => !!root?.querySelector('.mapscreen');
+function scheduleSave(save, root) {
+  if (pendingSave) return;
+  const entry = { save, root, cancel: () => {} };
+  pendingSave = entry;
+  entry.cancel = whenIdle(() => {
+    if (pendingSave !== entry) return;
+    pendingSave = null;
+    if (mapIsOnScreen(root)) save();
+  });
+}
+export function flushPendingSave() {
+  const entry = pendingSave;
+  if (!entry) return;
+  pendingSave = null;
+  entry.cancel();
+  if (mapIsOnScreen(entry.root)) entry.save();
+}
+// Before a page goes away, a queued save must not die with it.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', flushPendingSave);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingSave(); });
+}
+// A callback that hands control away: flush the queued save first, then run it.
+const leaving = (fn) => (typeof fn === 'function' ? (...args) => { flushPendingSave(); return fn(...args); } : fn);
+// The explicit Save writes the same run the queued commit would: drop the
+// queued one instead of flushing it, so one Save is one write (PR #1830 review).
+function dropPendingSave() {
+  const entry = pendingSave;
+  if (!entry) return;
+  pendingSave = null;
+  entry.cancel();
+}
+const saving = (fn) => (typeof fn === 'function' ? (...args) => { dropPendingSave(); return fn(...args); } : fn);
+
 export function releaseMapScreen() {
+  flushPendingSave();
   if (liveMapKeys) removeEventListener('keydown', liveMapKeys);
   liveMapKeys = null;
   liveMapBoard?.teardown();
@@ -73,12 +127,12 @@ export function releaseMapScreen() {
   liveMapViewportRelease = null;
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, selectedId = null }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, selectedId = null, selectedPointerType = 'mouse' }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   releaseMapScreen();
   // A redraw keeps the destination the player selected (#1474 review).
-  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, selectedId: selection.selectedId });
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, selectedId: selection.selectedId, selectedPointerType: lastPickPointerType });
   const map = mapAdapter?.graph || run.mapGraph;
   const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
@@ -119,7 +173,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // every room, so the map cannot drift from the merchant or the Shrine any
   // more than it could from combat (E9 / #254).
   wireRunHud(app, {
-    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange, remount,
+    registries, run, meta, onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: saving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange, remount,
   });
   // ---- THE BOARD -------------------------------------------------------
   //
@@ -166,6 +220,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // map frame as separate, unboxed controls and therefore add no footer height.
   const screen = app.querySelector('.mapscreen');
   let selection = { selectedId: null };
+  let lastPickPointerType = selectedPointerType;
   const readings = new Map();
   const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
   const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back', attrs: { 'data-back': '' } });
@@ -179,7 +234,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const trayRow = el('div', { class: 'map-tray-row' });
   trayRow.insertAdjacentHTML('beforeend', hintBarHtml('map'));
   const tray = el('div', { class: 'map-tray', dataset: { open: 'false', shown: 'false' } }, [trayReveal, trayRow]);
-  mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { onSave?.(); remount(); } });
+  mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { dropPendingSave(); onSave?.(); remount(); } });
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
@@ -192,10 +247,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       viewState: mapAdapter ? mapAdapter.viewState : run.mapView,
       onViewStateChange: (viewState, { commit } = {}) => {
         if (mapAdapter) mapAdapter.onViewStateChange(viewState); else run.mapView = viewState;
-        if (commit && onSave) onSave();
+        if (commit && onSave) scheduleSave(onSave, app);
       },
       // W4b: a pick selects; Enter, or picking the selected node again, travels.
-      onPick: (id, reading) => selectNode(id, reading),
+      onPick: (id, reading, { pointerType } = {}) => selectNode(id, reading, pointerType),
       tooltip: (n, { shownType, revealed }) => mapAdapter ? `<div class="tt-title">${esc(n.name)}</div>${esc(n.lore)}` : nodeTooltip(shownType, n, revealed),
     },
   });
@@ -222,13 +277,43 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     trayTimer = setTimeout(fn, ms);
   };
   const glideMs = () => (instantTray() ? 0 : trayTiming.cameraMs);
+  // W9: the camera is moved only when the tray would cover the selected node.
+  // A node whose whole rect sits inside the map's visible part, with a 24 px
+  // margin on every side, stays where the finger put it, so a second tap on it
+  // lands on the node and travels. The visible part's bottom is the top of the
+  // reveal panel (the tray's top less the reveal's height: the reveal grows
+  // upward from the tray's top edge, and the tray element is only its row).
+  // `trayCentred` remembers whether the camera was moved, so closing the tray
+  // resets the framing only when the tray moved it.
+  const COMFORT_MARGIN_PX = 24;
+  let trayCentred = false;
+  function nodeComfortablyVisible(revealHeight) {
+    // Touch only: a finger that just tapped the node is about to tap it again.
+    // Use that activation's pointer, not the device's primary-pointer media
+    // query: hybrids can be touched while their primary pointer is a mouse,
+    // and tablets can be clicked with a connected mouse.
+    if (lastPickPointerType !== 'touch') return false;
+    const nodeEl = app.querySelector(`.map-node[data-node="${selection.selectedId}"]`);
+    if (!nodeEl) return false;
+    const nodeBox = nodeEl.getBoundingClientRect();
+    const portBox = board.scroll.getBoundingClientRect();
+    const coveredTop = tray.getBoundingClientRect().top - revealHeight;
+    const visibleBottom = Math.min(portBox.bottom, coveredTop);
+    const margin = COMFORT_MARGIN_PX;
+    return nodeBox.left >= portBox.left + margin && nodeBox.right <= portBox.right - margin
+      && nodeBox.top >= portBox.top + margin && nodeBox.bottom <= visibleBottom - margin;
+  }
   function openTray() {
     if (tray.dataset.open === 'true') {
-      // Already open (or closing): stay open, and recentre on the new pick.
+      // Already open (or closing): stay open, and recentre on the new pick
+      // unless the pick is already comfortably visible above the tray.
       clearTimeout(trayTimer);
       tray.dataset.shown = 'true';
       trayReveal.inert = false;
-      board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
+      if (!nodeComfortablyVisible(trayReveal.scrollHeight)) {
+        trayCentred = true;
+        board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayReveal.scrollHeight });
       return;
     }
     wait(trayTiming.openDelayMs, () => {
@@ -236,7 +321,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       tray.dataset.open = 'true';
       trayReveal.inert = false;
       trayReveal.style.height = `${height}px`;
-      board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
+      if (!nodeComfortablyVisible(height)) {
+        trayCentred = true;
+        board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: height });
       wait(trayTiming.slideMs, () => {
         tray.dataset.shown = 'true';
         if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
@@ -251,12 +339,17 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     wait(trayTiming.fadeMs, () => {
       tray.dataset.open = 'false';
       trayReveal.style.height = '0px';
-      board.resetFraming({ glideMs: glideMs() });
+      // Only a camera the tray moved is put back; a tray that left it alone
+      // must not jump the player's view.
+      if (trayCentred) {
+        trayCentred = false;
+        board.resetFraming({ glideMs: glideMs() });
+      } else board.releaseLook();
     });
   }
   backButton.addEventListener('click', () => clearSelection());
   enterButton.addEventListener('click', () => {
-    if (selection.selectedId && reachable.has(selection.selectedId)) onPick(selection.selectedId);
+    if (selection.selectedId && reachable.has(selection.selectedId)) leaving(onPick)(selection.selectedId);
   });
   // A tap on the map away from the lit nodes closes the tray; a mouse drag
   // that pans the board is not a tap.
@@ -268,10 +361,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (moved > 6 || ev.target.closest('.map-node.reachable')) return;
     clearSelection();
   });
-  function selectNode(id, reading) {
+  function selectNode(id, reading, pointerType = 'mouse') {
+    lastPickPointerType = pointerType;
     if (reading) readings.set(id, reading);
     const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
-    if (next.enter) { onPick(id); return; }
+    if (next.enter) { leaving(onPick)(id); return; }
     selection = next;
     renderSelection();
     if (selection.selectedId) openTray();
@@ -377,9 +471,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     }
     const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
-      if (onMenu) onMenu('settings');
+      if (onMenu) leaving(onMenu)('settings');
     } else if (armouryAction) {
-      if (onArmoury) onArmoury(armouryAction);
+      if (onArmoury) leaving(onArmoury)(armouryAction);
     } else if (ev.key === '+' || ev.key === '=') {
       board.stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {
