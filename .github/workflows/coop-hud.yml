@@ -14,8 +14,9 @@
 # WHERE IT RUNS (owner, 2026-10-02: "that test should be in the dev to test";
 # owner, 2026-10-11, the stage rules): on a push to `test` (and
 # `alternative/**/test`), the higher-level testing stage. Not on a pull request
-# into `dev` or a push to `dev`, which run only the base smoke. Not on `release`:
-# the test stage already ran it on the same code. Dispatch it by hand to read it
+# into `dev` or a push to `dev`, which run only the base smoke. On a push to `release`
+# only when its tree differs from origin/test (the `stage` job decides); otherwise the
+# test stage already ran it on the same code. Dispatch it by hand to read it
 # on a branch before promotion.
 #
 # A JOB OF ITS OWN, like map-camera.yml: `core` is a no-browser lane. It serves
@@ -26,7 +27,7 @@ name: coop hud
 
 on:
   push:
-    branches: [test, 'alternative/**/test']
+    branches: [test, release, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
@@ -50,10 +51,53 @@ env:
   ART_PACKS: all
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # THE STAGE DECISION. The job below runs unless this is a push to `release`
+  # whose tree equals origin/test: a release that carries only the SHA the test
+  # stage already ran is not run again. A fix that landed on release directly
+  # differs from test and runs. A failed fetch or diff counts as a difference.
+  # Pure git, no tool runs here. The same decision as ci.yml's `stage` job.
+  # ---------------------------------------------------------------------------
+  stage:
+    name: stage decision
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      # Trees only: a sparse checkout of .github and blobless history, so the
+      # 2 GB art tree is never fetched for a comparison of tree ids.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+
+      - name: Decide whether this workflow runs
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          run=1
+          if [ "$EVENT_NAME" = "push" ] && [ "$REF_NAME" = "release" ]; then
+            if ! git fetch --no-tags --filter=blob:none origin test:refs/remotes/origin/test; then
+              echo "could not fetch origin/test; running"
+            elif git diff --quiet origin/test HEAD; then
+              run=0
+            fi
+          fi
+          echo "run=$([ "$run" = 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "stage decision: run=$run (event=$EVENT_NAME ref=$REF_NAME)"
+
   hudtop:
     name: co-op HUD top layout (real browser)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: stage
+    if: needs.stage.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v5
         with:

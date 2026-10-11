@@ -465,6 +465,16 @@ jobs:
           git checkout -B "$branch"
           git add art-release.json art-manifest.json
           git commit -q -m "Pin art release $TAG" -m "Written by .github/workflows/art-migrate.yml from the release's own .sha256 files; art-manifest.json regenerated with node tools/art-manifest.mjs --write."
-          git push -u origin "$branch"
+          # A branch left by a partial run (pushed, no pull request opened) is this job's own
+          # stale work. The push replaces it under a lease on the sha seen now: a remote
+          # branch that moved since is refused, and an absent branch leases against empty.
+          remote_sha="$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')"
+          git push -u --force-with-lease="refs/heads/$branch:$remote_sha" origin "$branch"
           printf '%s\n' "Bumps the art pin to [$TAG](https://github.com/$ART_REPO/releases/tag/$TAG): art-release.json, and art-manifest.json regenerated from the pinned release." "" "Opened by the art-migrate pin-bump job." > pin-body.md
-          gh pr create --repo "$GITHUB_REPOSITORY" --base dev --head "$branch" --title "Pin art release $TAG" --body-file pin-body.md
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file pin-body.md >/dev/null
+            echo "updated the open pin pull request #$existing"
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base dev --head "$branch" --title "Pin art release $TAG" --body-file pin-body.md
+          fi

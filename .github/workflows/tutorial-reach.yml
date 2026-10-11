@@ -21,6 +21,9 @@
 # they cover every case the bare `node tools/tutorial-reach.mjs` runs, and a
 # shard that names an unknown case exits 2 instead of running nothing.
 #
+# On a push to `release` it runs only when that tree differs from origin/test (the
+# `stage` job decides); the test stage already ran the same code.
+#
 # A JOB OF ITS OWN, like map-camera.yml and coop-hud.yml: `core` is a no-browser
 # lane. It serves the SOURCE tree, so it needs no build and no LFS. With no
 # browser the tool throws and the door reads it as HARNESS (exit 2), never as a
@@ -30,7 +33,7 @@ name: tutorial reach
 
 on:
   push:
-    branches: [test, 'alternative/**/test']
+    branches: [test, release, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
@@ -54,6 +57,47 @@ env:
   ART_PACKS: all
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # THE STAGE DECISION. The job below runs unless this is a push to `release`
+  # whose tree equals origin/test: a release that carries only the SHA the test
+  # stage already ran is not run again. A fix that landed on release directly
+  # differs from test and runs. A failed fetch or diff counts as a difference.
+  # Pure git, no tool runs here. The same decision as ci.yml's `stage` job.
+  # ---------------------------------------------------------------------------
+  stage:
+    name: stage decision
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      # Trees only: a sparse checkout of .github and blobless history, so the
+      # 2 GB art tree is never fetched for a comparison of tree ids.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+
+      - name: Decide whether this workflow runs
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          run=1
+          if [ "$EVENT_NAME" = "push" ] && [ "$REF_NAME" = "release" ]; then
+            if ! git fetch --no-tags --filter=blob:none origin test:refs/remotes/origin/test; then
+              echo "could not fetch origin/test; running"
+            elif git diff --quiet origin/test HEAD; then
+              run=0
+            fi
+          fi
+          echo "run=$([ "$run" = 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "stage decision: run=$run (event=$EVENT_NAME ref=$REF_NAME)"
+
   reach:
     name: tutorial reach ${{ matrix.shard.name }} (real browser)
     runs-on: ubuntu-latest
@@ -70,6 +114,8 @@ jobs:
             only: 1280x800,1366x768,1440x900
           - name: large + first run
             only: 1920x1080,2560x1440,resize,first-run
+    needs: stage
+    if: needs.stage.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v5
         with:
