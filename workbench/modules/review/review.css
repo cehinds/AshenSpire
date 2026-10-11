@@ -33,6 +33,17 @@
 .rv-summary { margin: 0; font-size: 12px; opacity: 0.8; font-variant-numeric: tabular-nums; }
 .rv-accept-bar { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
 
+/* Below 1100px the filters open as an overlay over the table, from the Filters button. */
+.rv-filter-toggle { display: none; }
+.rv-main { position: relative; }
+@container rv (max-width: 1100px) {
+  .rv-filter-toggle { display: inline-block; }
+  .rv-filters { display: none; position: absolute; z-index: 6; top: 10px; left: 10px; right: 10px; padding: 12px; border-radius: 8px; border: 1px solid var(--as-line-strong, #453e35); background: var(--as-bg-panel, #1a1815); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+  .rv.filters-open .rv-filters { display: flex; }
+  .rv-filter-toggle[aria-expanded="true"] { border-color: var(--as-accent, #e0a64a); background: var(--as-accent-soft, rgba(224, 166, 74, 0.14)); }
+  .rv-accept-bar { margin-left: 0; }
+}
+
 .rv-table-wrap { flex: 1; min-height: 240px; overflow: auto; border: 1px solid var(--as-line, #3a2f20); border-radius: 8px; }
 .rv-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
 .rv-table th, .rv-table td { padding: 6px 8px; border-bottom: 1px solid var(--as-line, #3a2f20); text-align: left; vertical-align: middle; }

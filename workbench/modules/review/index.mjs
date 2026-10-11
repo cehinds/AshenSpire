@@ -5,9 +5,10 @@
 
 import {
   SCREENS, DEVICES, deviceById, screenById, rowsFor, filterRows, summarizeRows, acceptPlan, judge, percentLabel,
-  diffPixels, diffImage, DEFAULT_TOLERANCE, DEFAULT_THRESHOLD,
+  diffPixels, diffImage, parseDeepLink, deepLinkOf, DEFAULT_TOLERANCE, DEFAULT_THRESHOLD,
 } from './model.mjs';
 import { rgbaOf, pngUrlOf } from './pixels.mjs';
+import { hashFor } from '../host.mjs';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const POLL_MS = 1200;
@@ -28,6 +29,7 @@ export default {
         <div class="rv-seg" role="group" aria-label="Device">${DEVICES.map((d) => `<button type="button" data-device="${d.id}" aria-pressed="false">${esc(d.label)} ${d.width}×${d.height}</button>`).join('')}</div>
         <button type="button" class="rv-run primary">Capture</button>
         <span class="rv-job" role="status"></span>
+        <button type="button" class="rv-filter-toggle" aria-expanded="false" aria-controls="rv-filters">Filters</button>
       </div>
       <div class="rv-main"><p class="rv-empty">Loading the captures…</p></div>
       <section class="rv-detail" aria-label="Screen detail" hidden>
@@ -156,6 +158,7 @@ export default {
       }
       buildGrid();
       compareAll(st.gen);
+      if (st.pendingOpen) { const key = st.pendingOpen; st.pendingOpen = null; openDetail(key); }
     }
 
     const compareKey = (r) => `${r.file}|${r.cap.mtime}|${r.cap.size}|${r.base.mtime}|${r.base.size}|${st.tolerance}`;
@@ -215,7 +218,7 @@ export default {
     function buildGrid() {
       const screenOpts = SCREENS.map((s) => `<option value="${s.id}">${esc(s.label)}</option>`).join('');
       const deviceOpts = DEVICES.map((d) => `<option value="${d.id}">${esc(d.label)}</option>`).join('');
-      main().innerHTML = `<div class="rv-filters" role="group" aria-label="Filters">
+      main().innerHTML = `<div class="rv-filters" id="rv-filters" role="group" aria-label="Filters">
           <label class="rv-check"><input type="checkbox" data-f="changedOnly"> Changed only</label>
           <label>Screen <select data-f="screen"><option value="">All screens</option>${screenOpts}</select></label>
           <label>Device <select data-f="device"><option value="">All devices</option>${deviceOpts}</select></label>
@@ -256,7 +259,7 @@ export default {
       const t = ev.target;
       const key = t.dataset.f;
       if (key === 'changedOnly') { st.filter.changedOnly = t.checked; ctx.settings.set('changedOnly', t.checked); paintRows(); paintSummary(); return; }
-      if (key === 'screen' || key === 'device') { st.filter[key] = t.value; paintRows(); paintSummary(); return; }
+      if (key === 'screen' || key === 'device') { st.filter[key] = t.value; paintRows(); paintSummary(); writeHash(); return; }
       if (key === 'tolerance') {
         st.tolerance = clampInt(t.value, 0, 255, DEFAULT_TOLERANCE);
         t.value = String(st.tolerance);
@@ -510,6 +513,7 @@ export default {
       main().hidden = true;
       detail.hidden = false;
       paintDetailHead();
+      writeHash();
       dstate.needFit = true;
       stage().innerHTML = msg('Loading…');
       try {
@@ -536,6 +540,7 @@ export default {
       detail.hidden = true;
       main().hidden = false;
       refreshCells();
+      writeHash();
     }
 
     function revokeDetail() {
@@ -610,6 +615,10 @@ export default {
     detail.addEventListener('click', (ev) => {
       const t = ev.target;
       if (t.closest('.rv-back')) return closeDetail();
+      if (t.closest('.rv-layout') && dstate.row) {
+        // Layout Studio does not select a screen from this link yet; it opens the studio.
+        return ctx.openModule('layout', { screen: dstate.row.screen });
+      }
       if (t.closest('.rv-accept') && dstate.row) {
         const r = dstate.row;
         return acceptItems([{ device: r.device, screen: r.screen }], `${screenById(r.screen).label}, ${deviceById(r.device).label}`);
@@ -638,16 +647,53 @@ export default {
       if (key) openDetail(key);
     });
 
+    // ---------- deep link: #mod=review&screen=…&device=… ----------
+    // A screen and a device open that row's detail; one of them sets the matching filter.
+    /** The link names the open row, or else the filters, so the hash always says what is on screen. */
+    function writeHash() {
+      const link = dstate.row ? { screen: dstate.row.screen, device: dstate.row.device } : { screen: st.filter.screen, device: st.filter.device };
+      try { history.replaceState(null, '', hashFor('review', deepLinkOf(link))); } catch { /* a sandboxed page keeps the hash as it is */ }
+    }
+    /** Applies one link's params: the filters at once, and the detail once the rows exist. */
+    function applyLink(p) {
+      const { screen, device } = parseDeepLink(p);
+      st.filter.screen = screen || '';
+      st.filter.device = device || '';
+      if (screen && device) st.pendingOpen = `${device}/${screen}`;
+      if (st.rows.length) {
+        const key = st.pendingOpen; st.pendingOpen = null;
+        if (dstate.row) closeDetail();
+        buildGrid();
+        if (key) openDetail(key);
+      }
+      writeHash();
+    }
+    let seenParams = null;
+
+    // ---------- narrow width: the filters become an overlay below 1100px (review.css) ----------
+    const root = el.querySelector('.rv');
+    const filterToggle = el.querySelector('.rv-filter-toggle');
+    const setFilters = (open) => { root.classList.toggle('filters-open', open); filterToggle.setAttribute('aria-expanded', String(open)); };
+    filterToggle.addEventListener('click', () => setFilters(!root.classList.contains('filters-open')));
+    root.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') setFilters(false); });
+
     // ---------- mount ----------
     paintPick();
     loadState();
     return {
-      onShow() { paintPick(); },
+      onShow() {
+        paintPick();
+        // The host gives a fresh params object for each open, so a link applies once and a plain return keeps the state.
+        const p = ctx.params;
+        if (p && p !== seenParams) { seenParams = p; if (Object.keys(p).length) applyLink(p); }
+      },
       onHide() {},
       unmount() { clearTimeout(st.pollTimer); io?.disconnect(); },
       commands: () => [
         { title: 'Capture the chosen screens', sub: 'Visual Review', run: () => startCapture() },
         { title: 'Show only changed screens', sub: 'Visual Review', run: () => { st.filter.changedOnly = true; ctx.settings.set('changedOnly', true); paintRows(); paintSummary(); } },
+        { title: 'Clear the Visual Review filters', sub: 'Visual Review', run: () => { st.filter = { changedOnly: false, screen: '', device: '' }; ctx.settings.set('changedOnly', false); buildGrid(); writeHash(); } },
+        { title: 'Accept all changed captures', sub: 'Visual Review', run: () => acceptAll() },
       ],
     };
   },
