@@ -41,6 +41,26 @@ test('the retired pages stay in the registry (nothing is deleted)', () => {
   }
 });
 
+const decode = (s) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&lt;/g, '<');
+
+test('every moved page carries the notice, and the notice link parses to the module', () => {
+  for (const e of moved) {
+    const html = fs.readFileSync(path.join(ROOT, e.path), 'utf8');
+    const hashes = [...html.matchAll(/data-hash="([^"]*)"/g)].map((m) => decode(m[1]));
+    // The standalone apps (no script) link to their Workbench module instead.
+    for (const m of html.matchAll(/href="http:\/\/127\.0\.0\.1:4300\/(#[^"]*)"/g)) hashes.push(decode(m[1]));
+    assert.ok(hashes.length > 0, `${e.id}: ${e.path} has a notice`);
+    for (const h of hashes) {
+      const link = parseHash(h);
+      assert.ok(link, `${e.id}: notice link ${h} does not parse`);
+      assert.ok(MODULE_IDS.has(link.mod), `${e.id}: notice opens ${link.mod}, which is not a module`);
+      assert.equal(link.mod, e.moved.module, `${e.id}: notice opens ${link.mod}, not ${e.moved.module}`);
+    }
+    if (!html.includes('retired-banner.js')) assert.ok(html.includes('class="wb-retired"'), `${e.id}: standalone notice`);
+    else assert.ok(hashes.includes(e.moved.hash), `${e.id}: notice links to ${e.moved.hash}`);
+  }
+});
+
 test('the banner script is one dependency-free file with no imports', () => {
   const src = fs.readFileSync(path.join(ROOT, 'workbench/retired-banner.js'), 'utf8');
   assert.ok(!/\bimport\s|\brequire\(/.test(src), 'no imports or requires');
