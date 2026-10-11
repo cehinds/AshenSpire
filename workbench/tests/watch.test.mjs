@@ -45,6 +45,25 @@ test('a folder that appears while watching (Linux) batches the files written int
   assert.ok(batches.flat().includes('content/newdir/a.json'), `a write in the new folder reaches a batch: ${JSON.stringify(batches)}`);
 });
 
+test('a folder deleted and recreated while watching (Linux) batches its new files', async (t) => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'content/d'), { recursive: true });
+  const batches = [];
+  const w = createWatcher({ root, dirs: ['content'], debounceMs: 50, platform: 'linux', onBatch: (f) => batches.push(f) });
+  t.after(() => w.close());
+  await fs.writeFile(path.join(root, 'content/d/a.json'), '1');
+  await sleep(300);
+  await fs.rm(path.join(root, 'content/d'), { recursive: true });
+  await sleep(300);
+  await fs.mkdir(path.join(root, 'content/d'));
+  await sleep(300);
+  batches.length = 0;
+  await fs.writeFile(path.join(root, 'content/d/b.json'), '1');
+  await waitFor(() => batches.flat().includes('content/d/b.json'));
+  assert.deepEqual(batches.flat(), ['content/d/b.json'], 'the recreated folder is watched again');
+});
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(ok, ms = 3000) {
   for (let i = 0; i < ms / 20 && !ok(); i++) await sleep(20);

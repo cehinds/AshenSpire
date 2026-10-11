@@ -114,26 +114,39 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
   // One non-recursive fs.watch per folder, not one recursive watch: on Linux a
   // recursive watch goes silent for a file once a write has renamed it into place,
   // and every Workbench save is such a write, so a later edit would never reload.
-  const watchedDirs = new Set();
+  const watchedDirs = new Map(); // folder -> its fs watcher
   const isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } };
+  // Closes the watch on abs and on every folder below it: they went away or were renamed.
+  function unwatchTree(abs) {
+    for (const [dir, w] of [...watchedDirs]) {
+      if (dir !== abs && !dir.startsWith(abs + path.sep)) continue;
+      watchedDirs.delete(dir);
+      try { w.close(); } catch { /* closed */ }
+    }
+  }
   function watchFolder(abs) {
     if (watchedDirs.has(abs)) return true;
     let w;
     try {
       w = fs.watch(abs, (_event, name) => {
+        if (!isDir(abs)) { unwatchTree(abs); return; } // removed or renamed away: its watch is stale
         if (!name) return;
         const base = String(name);
         const child = path.join(abs, base);
-        if (!isDir(child)) { note(child); return; }
+        if (!isDir(child)) {
+          // A watched folder that went away reported its own files as they were removed.
+          if (watchedDirs.has(child)) { unwatchTree(child); return; }
+          note(child); return;
+        }
         // A folder that appeared while watching: its files are new, and it gets watches of its own.
         if (base.startsWith('.') || base === 'node_modules') return;
+        unwatchTree(child); // a watch left under this name by a folder renamed away
         for (const f of walk(child).keys()) note(f);
         if (!watchTree(child)) poll(child);
       });
     } catch { return false; }
-    watchedDirs.add(abs);
-    watchers.push(w);
-    w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); });
+    watchedDirs.set(abs, w);
+    w.on('error', () => { try { w.close(); } catch { /* closed */ } if (watchedDirs.get(abs) === w) watchedDirs.delete(abs); poll(abs); });
     return true;
   }
   // A folder and, below it, every folder: each gets its own watch, or a poll where a watch throws.
@@ -179,7 +192,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     mute() { muted = true; },
     /** Resume after `graceMs`: late events from the build's own writes still land in the muted window. */
     unmute(graceMs = 600) { muted = false; mutedUntil = Date.now() + graceMs; },
-    close() { closed = true; clearTimeout(timer); for (const w of watchers) w.close(); for (const t of polls) clearInterval(t); },
+    close() { closed = true; clearTimeout(timer); for (const w of [...watchers, ...watchedDirs.values()]) w.close(); for (const t of polls) clearInterval(t); },
   };
 }
 
