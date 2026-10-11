@@ -461,7 +461,11 @@ export function cardHint(card, enemyAction, ctx = {}) {
   const shift = momentumSpeed(momentum);
   const playerTotal = Number.isFinite(card.speed) ? card.speed + shift : player.total;
   const enemyTotal = Number.isFinite(enemyAction.speed) ? enemyAction.speed - shift : enemy.total;
-  const breakdown = BREAKDOWN_TERMS.map(([term, key]) => ({ term, value: player.parts[key] }));
+  // The breakdown sums to playerTotal. With a `speed` field the total is that
+  // field plus momentum, so the terms are speed and momentum.
+  const breakdown = Number.isFinite(card.speed)
+    ? [{ term: 'speed', value: card.speed }, { term: 'momentum', value: shift }]
+    : BREAKDOWN_TERMS.map(([term, key]) => ({ term, value: player.parts[key] }));
 
   // Speed is known from stage 3 (a missing stage counts as 3). The stance is known
   // from stage 2 (the key is present, even when null). Stage 1 shows only the group: grey.

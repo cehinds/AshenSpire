@@ -194,6 +194,8 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 - Speed totals match the pairing in `resolveRound`: a `speed` field is used
   (the player adds momentum, the enemy subtracts it), and the component total
   is the fallback when there is no `speed` field.
+- The breakdown always sums to the player total: with a `speed` field it is
+  the speed term plus the momentum term, otherwise the component terms.
 - Left-edge arrow, from the speed difference (player minus enemy):
   - `>>` green, `>` yellow, none at 0, `<` yellow, `<<` red.
   - Thresholds are placeholders in `SPEED_TIERS` (see open question s).

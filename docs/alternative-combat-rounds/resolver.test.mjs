@@ -748,6 +748,39 @@ test('cardHint: momentum moves the speed delta the same way as resolveRound (pla
   assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
 });
 
+test('cardHint: a card with a speed field has a breakdown that sums to the speedDelta total', () => {
+  // Player total 5 + momentumSpeed(2) = 6; enemy 3 - 1 = 2; delta 4.
+  const hint = cardHint(
+    { speed: 5, card: 'slash', target: 'enemy' },
+    { speed: 3, stage: 3 },
+    { mods: { card: { slash: 2 } }, momentum: 2 },
+  );
+  assert.deepEqual(hint.breakdown, [
+    { term: 'speed', value: 5 },
+    { term: 'momentum', value: 1 },
+  ]);
+  assert.equal(hint.breakdown.reduce((n, b) => n + b.value, 0), 6);
+  assert.equal(hint.speedDelta, 4);
+});
+
+test('cardHint: sum(breakdown) equals the player total on both the component and speed paths', () => {
+  const momentum = 2;
+  const shift = momentumSpeed(momentum);
+  const sumOf = (card, enemy, ctx) => cardHint(card, enemy, { ...ctx, momentum }).breakdown
+    .reduce((n, b) => n + b.value, 0);
+
+  // Component path: the total is actionSpeed's total with momentum.
+  const component = { card: 'three', weapon: 'dagger', armor: 'heavy', stance: 'attack' };
+  const componentMods = { ...HINT_MODS, armor: { heavy: -3 } };
+  const componentTotal = actionSpeed({ ...component, momentum }, componentMods, 'player').total;
+  assert.equal(sumOf(component, { card: 'one', stance: 'attack' }, { mods: componentMods }), componentTotal);
+
+  // Speed path: the total is card.speed plus the momentum shift.
+  const speedCard = { speed: 5, card: 'slash', target: 'enemy' };
+  const speedTotal = speedCard.speed + shift;
+  assert.equal(sumOf(speedCard, { speed: 3, stage: 3 }, { mods: { card: { slash: 2 } } }), speedTotal);
+});
+
 // Perception stages (DESIGN.md, Round flow and perception). One enemy action,
 // revealed at each stage.
 const FOE_ACTION = { id: 'foe', speed: 2, kind: 'attack', tags: ['stun'], stance: 'smash', damage: 3, block: 1 };
