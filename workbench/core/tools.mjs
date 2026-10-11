@@ -78,6 +78,8 @@ export class Tool {
 
   /** True when the tool answers; also records whether it may be framed and serves our project. */
   async probe() {
+    // A conflict holds only while the server that caused it still answers.
+    this.conflict = null;
     try {
       const res = await get(`${this.base}${this.def.health}`);
       if (res.status !== 200) return false;

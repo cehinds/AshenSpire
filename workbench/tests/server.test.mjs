@@ -466,3 +466,25 @@ test('external entries resolve under a checkout given with a trailing separator'
   assert.equal(resolveExternal(entry, `${art}${path.sep}`), 'enemy-poses/index.html');
   assert.equal(resolveExternal({ path: '../outside.html' }, `${art}${path.sep}`), null);
 });
+
+test('jobs that write the same generated files never run at the same time', async (t) => {
+  const root = await project(t);
+  const { app, call } = await boot(t, root);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), 'setTimeout(() => {}, 400);\n');
+  await fs.writeFile(path.join(root, 'tools/content-build.mjs'), '\n');
+  assert.equal((await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'config-build' }) })).status, 200);
+  const blocked = await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'content-build' }) });
+  assert.equal(blocked.status, 409);
+  assert.match((await blocked.json()).error, /Config build is running/);
+  for (const id of ['engine-export', 'build-only']) assert.equal((await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id }) })).status, 409, id);
+  for (let i = 0; i < 100 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 30));
+  assert.equal((await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'content-build' }) })).status, 200, 'free once it finishes');
+});
+
+test('a port conflict clears once the foreign server stops, so Restart can recover', async () => {
+  const tool = new Tool({ id: 'x', name: 'X', port: 1, host: '127.0.0.1', path: '/', health: '/' }, { root: '.' });
+  tool.conflict = 'Port 1 is serving another checkout (/elsewhere)';
+  assert.equal(await tool.probe(), false, 'nothing answers on port 1');
+  assert.equal(tool.conflict, null);
+});

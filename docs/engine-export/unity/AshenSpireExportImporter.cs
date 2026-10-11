@@ -18,6 +18,7 @@
 
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -99,6 +100,7 @@ namespace AshenSpire.EngineExport
             EnsureFolder(Root + "/Art");
 
             var tables = manifest.tables ?? new ManifestTable[0];
+            var imported = new HashSet<string>();
             AssetDatabase.StartAssetEditing();
             try
             {
@@ -107,6 +109,7 @@ namespace AshenSpire.EngineExport
                     var t = tables[i];
                     EditorUtility.DisplayProgressBar("Ashen Spire import", t.id, (float)i / Math.Max(1, tables.Length));
                     var assetPath = Root + "/Tables/" + t.id + ".asset";
+                    imported.Add(assetPath);
                     var table = AssetDatabase.LoadAssetAtPath<AshenSpireTable>(assetPath);
                     var created = table == null;
                     if (created) table = ScriptableObject.CreateInstance<AshenSpireTable>();
@@ -120,8 +123,17 @@ namespace AshenSpire.EngineExport
                     else EditorUtility.SetDirty(table);
                 }
                 // Config objects and art manifests stay JSON: copied as TextAssets.
-                CopyAll(folder, manifest.config, Root + "/Config", false);
-                CopyAll(folder, manifest.art, Root + "/Art", true);
+                imported.UnionWith(CopyAll(folder, manifest.config, Root + "/Config", false));
+                imported.UnionWith(CopyAll(folder, manifest.art, Root + "/Art", true));
+                // The imported folders mirror this manifest: anything an earlier
+                // export left behind (a removed or renamed table) is deleted.
+                foreach (var sub in new[] { "/Tables", "/Config", "/Art" })
+                    foreach (var file in Directory.GetFiles(Root + sub, "*", SearchOption.AllDirectories))
+                    {
+                        var rel = file.Replace('\\', '/');
+                        if (rel.EndsWith(".meta") || imported.Contains(rel)) continue;
+                        AssetDatabase.DeleteAsset(rel);
+                    }
             }
             finally
             {
@@ -132,9 +144,10 @@ namespace AshenSpire.EngineExport
             return tables.Length;
         }
 
-        private static void CopyAll(string folder, ManifestFile[] files, string target, bool keepTree)
+        private static HashSet<string> CopyAll(string folder, ManifestFile[] files, string target, bool keepTree)
         {
-            if (files == null) return;
+            var written = new HashSet<string>();
+            if (files == null) return written;
             foreach (var f in files)
             {
                 // art/asset-data/x/manifest.json keeps its tree; config/<id>.json is flat.
@@ -143,7 +156,9 @@ namespace AshenSpire.EngineExport
                 var dir = Path.GetDirectoryName(dest);
                 if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                 File.Copy(Path.Combine(folder, f.file), dest, true);
+                written.Add(dest);
             }
+            return written;
         }
 
         private static void EnsureFolder(string path)

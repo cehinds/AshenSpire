@@ -17,22 +17,26 @@ const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests
   try { return fs.readdirSync(path.join(root, dir)).filter((n) => n.endsWith('.test.mjs')).sort().map((n) => `${dir}/${n}`); } catch { return []; }
 });
 
-/** id → { label, description, steps(root) → [{ args, optional?, missing? }] } */
+/** Jobs in one lock group write the same generated trees (src/content/generated,
+ *  src/framework/data, src/config/generated), so only one of them runs at a time. */
+const GENERATED = 'generated-sources';
+
+/** id → { label, description, lock?, steps(root) → [{ args, optional?, missing? }] } */
 export const JOBS = {
   'content-build': {
-    label: 'Content build', description: 'Compile content/source and content/framework into the generated modules under src/.',
+    lock: GENERATED, label: 'Content build', description: 'Compile content/source and content/framework into the generated modules under src/.',
     steps: () => [{ args: ['tools/content-build.mjs'] }, { args: ['tools/framework-data-build.mjs'], optional: true }],
   },
   'config-build': {
-    label: 'Config build', description: 'Compile content/config (UI tokens, scenes, screens) into src/config/generated/ui.js.',
+    lock: GENERATED, label: 'Config build', description: 'Compile content/config (UI tokens, scenes, screens) into src/config/generated/ui.js.',
     steps: () => [{ args: ['tools/config-build.mjs'] }],
   },
   'build-only': {
-    label: 'Build bundle', description: 'Build the single-file game (tools/launch.mjs --build-only) without opening it.',
+    lock: GENERATED, label: 'Build bundle', description: 'Build the single-file game (tools/launch.mjs --build-only) without opening it.',
     steps: () => [{ args: ['tools/launch.mjs', '--build-only'] }],
   },
   'engine-export': {
-    label: 'Engine export', description: 'Export the game data as JSON tables and schemas for Unity / Unreal into build/engine-export.',
+    lock: GENERATED, label: 'Engine export', description: 'Export the game data as JSON tables and schemas for Unity / Unreal into build/engine-export.',
     steps: () => [{ args: ['tools/engine-export.mjs', '--out', 'build/engine-export'], missing: 'tools/engine-export.mjs is not in this checkout yet. Pull the branch that adds the engine exporter, then run this again.' }],
   },
   'tool-tests': {
@@ -74,6 +78,8 @@ export class JobRunner {
     const job = Object.hasOwn(JOBS, id) ? JOBS[id] : null;
     if (!job) throw Object.assign(Error(`Unknown job: ${String(id).slice(0, 60)}`), { status: 400 });
     if (this.active.has(id)) throw Object.assign(Error(`${job.label} is already running`), { status: 409 });
+    const blocker = job.lock && [...this.active.keys()].find((other) => JOBS[other]?.lock === job.lock);
+    if (blocker) throw Object.assign(Error(`${JOBS[blocker].label} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
     const run = { runId: `${Date.now().toString(36)}-${randomBytes(3).toString('hex')}`, id, label: job.label, status: 'running', startedAt: Date.now(), endedAt: null, durationMs: null, exitCode: null, message: '', log: '' };
     this.runs.unshift(run); this.runs.length = Math.min(this.runs.length, HISTORY);
     this.active.set(id, run);
