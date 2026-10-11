@@ -15,6 +15,7 @@ import {
   reactionOffer,
   resolveAttackEntry,
   settleRound,
+  assertDefenceNumbers,
 } from './timeline.js';
 
 const KIND = 'combatRound';
@@ -122,6 +123,8 @@ export function answerReaction(round, cardId, hooks = {}) {
   const { index, eligible } = round.awaiting;
   const pick = cardId === null || cardId === undefined ? null : { id: cardId };
   const chosen = chooseReaction(eligible, pick);
+  // Validate before the pause is cleared, so a bad card throws and the round still waits.
+  if (chosen) assertDefenceNumbers(chosen);
   const entry = round.timeline.entries[index];
   round.awaiting = null;
   const events = [];

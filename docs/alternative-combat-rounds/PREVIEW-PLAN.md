@@ -88,6 +88,9 @@ The preview screen is the live combat screen with only these additions:
 - Target outline while choosing a target for a card: green when the card has the
   advantage in both speed and stance type, yellow when in only one (even if the
   other is a disadvantage), red when at a disadvantage in both, none otherwise.
+  Only revealed dimensions count: stance from stage 2, speed only at stage 3 (as
+  card hints). An unrevealed dimension counts as neither, so nothing hidden leaks
+  through the colour, and a LAN peer computes it from what it was sent.
 - The live green outline for the player's selection and playable cards becomes
   blue in the preview, so green only means advantage.
 - No queue strip, no initiative track; End Turn stays as it is.

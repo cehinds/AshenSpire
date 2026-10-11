@@ -71,6 +71,12 @@ function defenceNumber(card, field) {
   return v;
 }
 
+// Checks every defence number on a card (TypeError on the first bad one). Used before a paused
+// round commits a reaction, so a bad card throws while the round is still unchanged.
+export function assertDefenceNumbers(card) {
+  for (const field of DEFENCE_FIELDS) defenceNumber(card, field);
+}
+
 // Initiative base (owner, 2026-10-11, placeholder): floor(DEX / 2).
 function initiativeBase(c) {
   const dex = Number(c.attrs?.DEX ?? 0);
