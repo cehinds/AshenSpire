@@ -1,0 +1,174 @@
+{
+  "tool": "tools/map-tap-latency.mjs",
+  "measuredAt": "2026-10-11T01:03:59.308Z",
+  "browser": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3,
+    "mobile": true,
+    "hasTouch": true
+  },
+  "cpuThrottlingRate": 4,
+  "reps": 5,
+  "boundary": "Headless Chromium, CPU throttled 4x, touch via CDP, source tree served by tools/serve.mjs. Not a real device, not frame-accurate; the clock stamps pointerdown and polls rAF.",
+  "metrics": {
+    "A_select": {
+      "name": "A select (tap to tray shown)",
+      "samples": [
+        {
+          "latencyMs": 252,
+          "longtaskMs": 83
+        },
+        {
+          "latencyMs": 120,
+          "longtaskMs": 57
+        },
+        {
+          "latencyMs": 148,
+          "longtaskMs": 62
+        },
+        {
+          "latencyMs": 114,
+          "longtaskMs": 59
+        },
+        {
+          "latencyMs": 149,
+          "longtaskMs": 59
+        }
+      ],
+      "medianMs": 148,
+      "maxMs": 252,
+      "longtaskMedianMs": 59,
+      "longtaskMaxMs": 83,
+      "completed": 5
+    },
+    "B_second_tap_travel": {
+      "name": "B second tap travels",
+      "samples": [
+        {
+          "travelMs": 296,
+          "longtaskMs": 176
+        },
+        {
+          "travelMs": 175,
+          "longtaskMs": 135
+        },
+        {
+          "travelMs": 233,
+          "longtaskMs": 124
+        },
+        {
+          "travelMs": 208,
+          "longtaskMs": 146
+        },
+        {
+          "travelMs": 304,
+          "longtaskMs": 147
+        }
+      ],
+      "medianMs": 233,
+      "maxMs": 304,
+      "longtaskMedianMs": 146,
+      "longtaskMaxMs": 176,
+      "completed": 5
+    },
+    "C_enter_travel": {
+      "name": "C Enter travels",
+      "samples": [
+        {
+          "travelMs": 200,
+          "longtaskMs": 122
+        },
+        {
+          "travelMs": 267,
+          "longtaskMs": 89
+        },
+        {
+          "travelMs": 258,
+          "longtaskMs": 129
+        },
+        {
+          "travelMs": 342,
+          "longtaskMs": 176
+        },
+        {
+          "travelMs": 266,
+          "longtaskMs": 155
+        }
+      ],
+      "medianMs": 266,
+      "maxMs": 342,
+      "longtaskMedianMs": 129,
+      "longtaskMaxMs": 176,
+      "completed": 5
+    },
+    "D_fast_double_tap": {
+      "name": "D fast double tap (150 ms apart)",
+      "samples": [
+        {
+          "gapMs": 194,
+          "travelMs": null,
+          "travelledWithin1500": false,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 220,
+          "travelMs": null,
+          "travelledWithin1500": false,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 184,
+          "travelMs": null,
+          "travelledWithin1500": false,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 182,
+          "travelMs": null,
+          "travelledWithin1500": false,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 183,
+          "travelMs": null,
+          "travelledWithin1500": false,
+          "tooltipSeen": false
+        }
+      ],
+      "travelledWithin1500": 0,
+      "tooltipSeen": 0,
+      "medianMs": null,
+      "maxMs": null
+    }
+  },
+  "failures": [
+    {
+      "metric": "D",
+      "rep": 0,
+      "reason": "no travel within 1500 ms"
+    },
+    {
+      "metric": "D",
+      "rep": 1,
+      "reason": "no travel within 1500 ms"
+    },
+    {
+      "metric": "D",
+      "rep": 2,
+      "reason": "no travel within 1500 ms"
+    },
+    {
+      "metric": "D",
+      "rep": 3,
+      "reason": "no travel within 1500 ms"
+    },
+    {
+      "metric": "D",
+      "rep": 4,
+      "reason": "no travel within 1500 ms"
+    }
+  ],
+  "pageErrors": []
+}
