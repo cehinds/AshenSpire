@@ -234,9 +234,13 @@ export function createGrid(el, options = {}) {
     const cells = M.selectedCells(sel, doc.rows.length, doc.columns.length);
     if (cells.length) commit(M.clearCells(doc, cells));
   }
+  // Every selected row (all runs), in the order the view shows them, and every selected column.
   function fillDownSel() {
     if (readOnly) return;
-    const rect = rectOfSel(); if (rect) commit(M.fillDown(doc, rect));
+    const picked = new Set(selectedRows());
+    const visibleRows = order.filter(r => picked.has(r));
+    const colIdx = [...new Set(M.selectedCells(sel, doc.rows.length, doc.columns.length).map(c => c.c))];
+    commit(M.fillDownVisible(doc.rows, doc.columns, visibleRows, colIdx.map(c => doc.columns[c]?.key)));
   }
   function rowMenu(x, y, rowIdx) {
     closeMenu();
