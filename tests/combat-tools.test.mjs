@@ -195,3 +195,12 @@ test('after the reader closes the full log, Full log opens a new one', () => {
     tools.release();
   });
 });
+
+test('Full log reads as a text link in the log header, keeping its 44px tap target', () => {
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  assert.match(css, /\.combat-log-full \{[^}]*min-height:max\(44px/, 'the tap target stays');
+  const link = css.match(/\.combat-log-head > \.combat-log-full \{([^}]*)\}/)?.[1] || '';
+  for (const rule of [/background:transparent/, /border:0/, /box-shadow:none/, /color:var\(--gold\)/, /font-size:inherit/]) assert.match(link, rule);
+  assert.match(css, /\.combat-log-head > \.combat-log-full:is\(:hover, :focus-visible[^)]*\) \{[^}]*text-decoration:underline/);
+  assert.match(css, /\.combat-log-head > \.combat-log-full:focus-visible \{[^}]*outline:2px solid/);
+});
