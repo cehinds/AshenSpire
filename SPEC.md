@@ -994,12 +994,13 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 
 All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
-### 4.5 Stances (Vagabond mechanic)
+### 4.5 Stances (Reaver mechanic)
 
 At most one stance active. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Stances are combat-scoped.
 
-- **Bloodflame Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
+- **Gorefire Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
 - **Bulwark Stance:** whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.
+- **Brace:** damage taken ×0.75. On entering: gain 4 Block. Leaving it for another stance gives 1 Strength.
 
 Some cards read "If in [stance]: bonus" (predicate `inStance`). Stance icon shows beside the player's status row.
 
