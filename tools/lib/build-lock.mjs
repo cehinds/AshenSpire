@@ -5,7 +5,9 @@
 // src/config/generated. The Workbench, the editor and UI Studio run in separate
 // processes and can each start one, so they share <root>/.build-lock: a file
 // created exclusively ('wx') holding { pid, holder, startedAt, token }. A lock
-// whose pid is gone, or that is older than STALE_MS, is broken and taken over.
+// whose pid is gone is broken and taken over; a lock whose file is empty or
+// unparseable is broken once it is UNWRITTEN_MS old. Age alone never overrides
+// a live owner: a build that runs for hours keeps its lock.
 // Release removes the file only while it still holds our pid and token.
 //
 // THE WRITER CLIs TAKE IT THEMSELVES (holdForCli). Each builder run directly
@@ -19,7 +21,6 @@ import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 
 export const LOCK_NAME = '.build-lock';
-export const STALE_MS = 30 * 60 * 1000;
 // A lock file another process has created but not written yet reads as empty;
 // it is only treated as abandoned once it is this old.
 const UNWRITTEN_MS = 10 * 1000;
@@ -41,8 +42,7 @@ function readLock(file) {
 
 function isStale(lock, now) {
   if (!lock.info || typeof lock.info !== 'object') return now - lock.mtimeMs > UNWRITTEN_MS;
-  const started = Number(lock.info.startedAt) || lock.mtimeMs;
-  return !pidAlive(lock.info.pid) || now - started > STALE_MS;
+  return !pidAlive(lock.info.pid);
 }
 
 /** Remove a stale lock without removing a fresh one another process just took:

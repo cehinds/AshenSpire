@@ -225,3 +225,25 @@ test('compile shares the generated-files lock: Compile now gets 409 naming the h
   assert.equal((await call({})).status, 200, 'Compile now runs when the lock is free');
   assert.equal((await settle()).status, 'passed');
 });
+
+test('close() stops a running compile, its process tree, and releases the build lock before it resolves', { skip: process.platform === 'win32' }, async (t) => {
+  const { root, stateDir } = await fixture(t);
+  const real = await fs.realpath(root);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // A slow compiler that records its pid and never finishes on its own.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import fs from 'node:fs'; fs.writeFileSync('compiler.pid', String(process.pid)); setInterval(() => {}, 1000);\n");
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 2000 });
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const started = await fetch(`${app.url}/api/compile`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(started.status, 200);
+  const pidFile = path.join(root, 'compiler.pid');
+  for (let i = 0; i < 100; i++) { try { await fs.access(pidFile); break; } catch { await new Promise((r) => setTimeout(r, 30)); } }
+  const pid = Number(await fs.readFile(pidFile, 'utf8'));
+  assert.ok(pid > 0, 'the compiler is running');
+  assert.doesNotThrow(() => process.kill(pid, 0), 'alive before close');
+  const lockText = await fs.readFile(path.join(real, '.build-lock'), 'utf8');
+  assert.equal(JSON.parse(lockText).holder, 'UI Studio config compile', 'the compile holds the lock');
+  await app.close();
+  assert.throws(() => process.kill(pid, 0), /ESRCH/, 'the compiler is gone once close() resolves');
+  await assert.rejects(fs.stat(path.join(real, '.build-lock')), /ENOENT/, 'the build lock is released once close() resolves');
+});

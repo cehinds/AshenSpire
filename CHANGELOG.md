@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-11
 
-- **One Workbench for every authoring tool** ([#1829](https://github.com/cehinds/AshenSpire/pull/1829), `0.7.1.1281`). For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.
+- **One Workbench for every authoring tool** ([#1829](https://github.com/cehinds/AshenSpire/pull/1829), `0.7.1.1282`). For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.
+- **AI sessions: work lands in small commits, reviewed as they land** ([#1831](https://github.com/cehinds/AshenSpire/pull/1831), `0.7.1.1281`). Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.
 
 ## 2026-10-10
 

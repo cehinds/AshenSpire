@@ -651,3 +651,22 @@ test('a generated-files lock held by another process (the editor, UI Studio) ref
   for (let i = 0; i < 100 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 30));
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
 });
+
+test('a started job is persisted at once, so a restart before it finishes lists it as cancelled', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), 'setInterval(() => {}, 1000);\n');
+  const stateFile = path.join(root, '.wb-state/jobs.json');
+  const first = new JobRunner({ root, stateFile });
+  t.after(() => first.stopAll());
+  const started = first.start('config-build');
+  // The record is on disk while the job still runs.
+  const onDisk = JSON.parse(await fs.readFile(stateFile, 'utf8'));
+  assert.equal(onDisk[0].runId, started.runId);
+  assert.equal(onDisk[0].status, 'running');
+  // A new runner on the same state file (the Workbench restarted) reads it back as cancelled.
+  const second = new JobRunner({ root, stateFile });
+  const run = second.list().find((r) => r.runId === started.runId);
+  assert.equal(run.status, 'cancelled');
+  assert.equal(run.message, 'The Workbench stopped while this ran');
+});
