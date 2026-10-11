@@ -2046,12 +2046,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const setPacing = on => { if (mode === 'player') playerPacing = on; else pacing = on; };
     // A throw before the timeline takes over (the working clone, a render)
     // must not lock the hand for good: clear the flag, land the snapshot plainly.
-    let started = false;
+    // The run token: once the catch lands `next`, a timeline that had armed
+    // its watchdog before throwing must not later render its stale frames.
+    const run = { started: false, cancelled: false };
     try {
-      playPacedReceipts(next, setPacing, () => { started = true; });
+      playPacedReceipts(next, setPacing, run);
     } catch (error) {
       console.error('[coop] paced receipts failed', error);
-      if (started) return;
+      if (run.started) return;
+      run.cancelled = true;
       setPacing(false);
       snap = next;
       if (!disposed) { try { render(); } catch (renderError) { console.error('[coop] render failed', renderError); } }
@@ -2060,7 +2063,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   }
 
-  function playPacedReceipts(next, setPacing, onStarted) {
+  function playPacedReceipts(next, setPacing, run) {
     setPacing(true);
     // The seats' card plans (sprite effect, aura, held stance) for these
     // receipts, collected once: when the card's owner swings, or at the end
@@ -2078,7 +2081,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       || app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`);
     const entityFor = id => [...working.scene.enemies, ...working.scene.players].find(entity => entity.id === id);
     const apply = beat => {
-      if (disposed) return;
+      if (disposed || run.cancelled) return;
       for (const event of beat.events) {
         if (Number.isSafeInteger(event.eventIndex) && event.eventIndex >= 0)
           working.scene.combatLog = (next.scene.combatLog || []).filter(entry => entry.id <= event.eventIndex);
@@ -2175,7 +2178,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       },
       onBeatApplied: apply,
       onFlush() {
-        if (disposed) return;
+        if (disposed || run.cancelled) return;
         if (hasCardPlay) seatPlans();
         animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
         lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
@@ -2183,6 +2186,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         snap = next; render();
       },
     }, () => {
+      if (run.cancelled) return;
       if (disposed) { setPacing(false); return; }
       if (hasCardPlay) seatPlans();
       animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
@@ -2207,7 +2211,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // moved), so the paced receipts' overlays play here.
       playReceiptOverlays(overlays);
     });
-    onStarted();
+    run.started = true;
   }
 
   function banner(text, small) {

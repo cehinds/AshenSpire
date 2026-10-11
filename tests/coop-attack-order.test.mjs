@@ -140,13 +140,15 @@ test('a card plan no swing played (Instant, reduced motion, a skip) plays on the
   assert.match(body('renderCombat'), /for \(const \[ownerId, plan\] of pendingAnimations\) playSeatPlan\(ownerId, plan\);/);
 });
 
-test('a throw before the timeline starts clears the flag; a torn-down screen renders nothing', () => {
+test('a throw before the timeline starts clears the flag; a cancelled or torn-down run renders nothing', () => {
   const pace = body('paceReactionReceipts');
-  assert.match(pace, /try \{\s*playPacedReceipts\(next, setPacing, \(\) => \{ started = true; \}\);\s*\} catch \(error\) \{/);
-  assert.match(pace, /if \(started\) return;\s*setPacing\(false\);\s*snap = next;/, 'the input lock clears and the snapshot lands');
+  assert.match(pace, /try \{\s*playPacedReceipts\(next, setPacing, run\);\s*\} catch \(error\) \{/);
+  assert.match(pace, /if \(run\.started\) return;\s*run\.cancelled = true;\s*setPacing\(false\);\s*snap = next;/,
+    'the input lock clears, the run is cancelled and the snapshot lands');
   const timeline = body('playPacedReceipts');
-  assert.ok(timeline.lastIndexOf('onStarted();') > timeline.indexOf('playTimeline(events,'), 'started only once playTimeline owns completion');
-  assert.match(timeline, /const apply = beat => \{\s*if \(disposed\) return;/);
-  assert.match(timeline, /onFlush\(\) \{\s*if \(disposed\) return;/);
-  assert.match(timeline, /\}, \(\) => \{\s*if \(disposed\) \{ setPacing\(false\); return; \}/);
+  assert.ok(timeline.lastIndexOf('run.started = true;') > timeline.indexOf('playTimeline(events,'), 'started only once playTimeline owns completion');
+  // A watchdog armed before the throw later calls onFlush/done: they must not land stale frames.
+  assert.match(timeline, /const apply = beat => \{\s*if \(disposed \|\| run\.cancelled\) return;/);
+  assert.match(timeline, /onFlush\(\) \{\s*if \(disposed \|\| run\.cancelled\) return;/);
+  assert.match(timeline, /\}, \(\) => \{\s*if \(run\.cancelled\) return;\s*if \(disposed\) \{ setPacing\(false\); return; \}/);
 });
