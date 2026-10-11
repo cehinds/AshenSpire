@@ -293,11 +293,12 @@ export async function settleGroup(pgid, { signalled = false, graceMs = STOP_GRAC
 /** Stop a step and everything it started: the process group on POSIX, the
  *  process tree on Windows (taskkill /T waits until the tree is gone, so the
  *  step's close event, which frees the lock, comes after its builders exit). */
-export function killTree(child, { platform = process.platform, run = spawnSync, signal = 'SIGTERM' } = {}) {
+export function killTree(child, { platform = process.platform, run = spawnSync, signal = 'SIGTERM', force = true } = {}) {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
   try {
     if (platform === 'win32') {
-      const r = run('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+      // force: false asks the tree to close first (taskkill /T), without /F.
+      const r = run('taskkill', ['/pid', String(child.pid), '/T', ...(force ? ['/F'] : [])], { windowsHide: true, stdio: 'ignore' });
       if (r.error || r.status !== 0) child.kill();
     } else process.kill(-child.pid, signal);
   } catch { try { child.kill(signal); } catch { /* already gone */ } }
