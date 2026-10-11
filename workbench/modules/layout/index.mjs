@@ -223,6 +223,9 @@ export default {
         onChange: onCanvasChange,
         onSelect: () => { paintBar(); paintStatus(); paintFields(); },
       });
+      // Until the user zooms by hand, the page stays fitted as the panels and the dock resize.
+      st.autoFit = true;
+      new ResizeObserver(() => { if (st.autoFit && st.canvas && $('.lay-canvas').clientWidth) st.canvas.fit(); }).observe($('.lay-canvas'));
       st.layers = createLayersPanel($('.lay-layers'), st.canvas);
       st.inspector = createInspector($('.lay-insp'), st.canvas, []);
       $('.lay-fields').addEventListener('change', onFieldChange);
@@ -248,9 +251,9 @@ export default {
       if (btn.dataset.align) { st.canvas.align(btn.dataset.align); return; }
       if (btn.dataset.distribute) { st.canvas.distribute(btn.dataset.distribute); return; }
       const act = btn.dataset.act;
-      if (act === 'zoom-in') st.canvas.zoomTo(st.canvas.getZoom() * ZOOM_STEP);
-      else if (act === 'zoom-out') st.canvas.zoomTo(st.canvas.getZoom() / ZOOM_STEP);
-      else if (act === 'fit') st.canvas.fit();
+      if (act === 'zoom-in') { st.autoFit = false; st.canvas.zoomTo(st.canvas.getZoom() * ZOOM_STEP); }
+      else if (act === 'zoom-out') { st.autoFit = false; st.canvas.zoomTo(st.canvas.getZoom() / ZOOM_STEP); }
+      else if (act === 'fit') { st.autoFit = true; st.canvas.fit(); }
       else if (act === 'rotate') rotate();
     }
 
