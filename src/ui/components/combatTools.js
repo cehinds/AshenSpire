@@ -3,10 +3,11 @@ import { childModel } from '../models/ComponentModel.js';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { t, tFull } from '../strings.js';
+import { t } from '../strings.js';
 import { trackGesture } from '../gesture.js';
 import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
 import { visibleCombatPanelRect } from './battlefieldStage.js';
+import { renderCombatLogEntries } from './combatLogModal.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -201,13 +202,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onFu
     logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
     const key = JSON.stringify(log.entries);
     if (key !== entryKey) {
-      entryKey = key; list.replaceChildren();
-      let round, items;
-      for (const entry of log.entries) {
-        if (entry.round !== round) { round = entry.round; items = el('ol', {}); list.append(el('h3', { text: t('combat.log.round', { round }) }), items); }
-        items.append(el('li', { text: entry.text }));
-      }
-      if (!log.entries.length) list.append(el('p', { text: tFull('combat.log.empty') }));
+      entryKey = key; renderCombatLogEntries(list, log.entries);
       list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
     }
     schedule();
