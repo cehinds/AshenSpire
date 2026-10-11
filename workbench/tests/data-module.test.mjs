@@ -165,6 +165,20 @@ test('keyColumnOf and tableRules put the key rules on the first id, key or name 
   assert.deepEqual(D.tableRules([{ key: 'x', type: 'string' }]).map((r) => r.kind), ['type']);
 });
 
+test('tableRules uses the compound unique key when the key repeats within a scope column', () => {
+  const cols = [{ key: 'classId', type: 'string' }, { key: 'id', type: 'string' }];
+  const shared = [{ classId: 'reaver', id: 'default' }, { classId: 'starseer', id: 'default' }, { classId: 'reaver', id: 'vigil' }];
+  assert.deepEqual(D.tableRules(cols, shared).slice(0, 2), [
+    { kind: 'required', key: 'id' }, { kind: 'unique', keys: ['classId', 'id'] },
+  ]);
+  // Without rows (or with no repeated key) the single key rule stays.
+  assert.deepEqual(D.tableRules(cols).slice(0, 2), [{ kind: 'required', key: 'id' }, { kind: 'unique', key: 'id' }]);
+  // The real outfits.csv gets the compound rule.
+  const outfits = D.parseTable('content/source/outfits.csv', read('content/source/outfits.csv'));
+  const rules = D.tableRules(outfits.columns, outfits.rows);
+  assert.deepEqual(rules[1], { kind: 'unique', keys: ['classId', 'id'] });
+});
+
 test('keyScopeOf finds the *Id scope only when the key repeats and (scope, key) is unique', () => {
   const cols = [{ key: 'classId', type: 'string' }, { key: 'id', type: 'string' }, { key: 'n', type: 'number' }];
   const row = (classId, id) => ({ classId, id, n: 1 });

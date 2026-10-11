@@ -91,10 +91,18 @@ export function findRow(rows, keyCol, row, match = '') {
     && wanted.every((m) => String(r[m.col] ?? '') === m.value));
 }
 
-/** Validation rules for the grid: the key is required and unique; every value fits its column type. */
-export function tableRules(columns) {
+/**
+ * Validation rules for the grid: the key is required and unique; every value fits its column type.
+ * `rows` are the table as read from disk; they decide the key's scope (see keyScopeOf).
+ */
+export function tableRules(columns, rows = []) {
   const key = keyColumnOf(columns);
-  const rules = key ? [{ kind: 'required', key: key.key }, { kind: 'unique', key: key.key }] : [];
+  const rules = [];
+  if (key) {
+    const scope = keyScopeOf(columns, rows);
+    rules.push({ kind: 'required', key: key.key });
+    rules.push(scope ? { kind: 'unique', keys: [scope, key.key] } : { kind: 'unique', key: key.key });
+  }
   for (const c of columns) rules.push({ kind: 'type', key: c.key });
   return rules;
 }
