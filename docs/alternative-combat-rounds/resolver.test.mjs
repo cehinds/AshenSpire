@@ -1553,6 +1553,88 @@ test('unpaired: the event names the enemy by enemyId, the same key momentum uses
   assert.equal(unpaired.momentum, 0, 'and it carries that enemy\'s momentum key');
 });
 
+// Unpaired enemy actions (owner, 2026-10-11; DESIGN.md, Open question d). An enemy
+// attack with no card on its slot rolls its hit against the player's defence. A
+// landed hit wins the slot for that enemy. A non-attack unpaired action does nothing.
+const COVERED = [{ id: 'block', slot: 0, speed: 1, kind: 'other' }];
+const UNPAIRED_QUEUE = () => [
+  { id: 'guard', enemyId: 'G', speed: 1, kind: 'other' },
+  { id: 'strike', enemyId: 'H', speed: 3, kind: 'attack' },
+];
+const unpairedHit = (events) => events.find((e) => e.type === 'hit' && e.slot === 1);
+
+test('unpaired attack: a landed hit on the player wins the slot for that enemy, momentum -1 for the player', () => {
+  const { events, momentum } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(20), { decay: 0 });
+  const hit = unpairedHit(events);
+  assert.equal(hit.by, 'enemy');
+  assert.equal(hit.target, 'player');
+  assert.equal(hit.hit, true);
+  assert.equal(momentum.H, -1, 'the enemy wins the slot: M moves toward the enemy');
+  assert.equal(momentum.G, 0, 'the unpaired guard does nothing');
+  const win = events.find((e) => e.type === 'momentum' && e.reason === 'success' && e.enemyId === 'H');
+  assert.equal(win.by, 'enemy');
+  assert.equal(win.delta, -1);
+});
+
+test('unpaired attack: a miss is the defender\'s success, so the player wins the slot (+1)', () => {
+  const { events, momentum } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(1), { decay: 0 });
+  assert.equal(unpairedHit(events).hit, false);
+  assert.equal(momentum.H, 1);
+});
+
+test('unpaired attack: a player intangible charge avoids the hit, is spent, and the avoid wins the slot for the player', () => {
+  const { events, momentum, charges } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(20), {
+    decay: 0,
+    charges: { player: 1 },
+    playerDefense: { tags: ['intangible'] },
+  });
+  const evaded = events.find((e) => e.type === 'evaded' && e.slot === 1);
+  assert.equal(evaded.reason, 'intangible');
+  assert.equal(evaded.by, 'player');
+  assert.equal(charges.player, 0);
+  assert.equal(momentum.H, 1);
+});
+
+test('unpaired attack: a hit that would land rolls the player\'s evadePct, and a roll under it avoids the hit', () => {
+  const { events, momentum } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, seqRng([D20_HIT, pctRng(10)]), {
+    decay: 0,
+    playerDefense: { evadePct: 50 },
+  });
+  const roll = events.find((e) => e.type === 'evadeRoll' && e.slot === 1);
+  assert.equal(roll.evadePct, 50);
+  assert.equal(roll.success, true);
+  assert.equal(events.find((e) => e.type === 'evaded' && e.slot === 1).reason, 'evasion');
+  assert.equal(momentum.H, 1);
+});
+
+test('unpaired attack: playerDefense.evasion raises the bar; with no playerDefense the evasion is 0', () => {
+  const dflt = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(10), { decay: 0 });
+  assert.equal(unpairedHit(dflt.events).hit, true, 'no playerDefense: d20 10 meets AC 8');
+  const armoured = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(10), { decay: 0, playerDefense: { evasion: 5 } });
+  assert.equal(unpairedHit(armoured.events).hit, false, 'evasion 5 needs 13, so d20 10 misses');
+  assert.equal(armoured.momentum.H, 1);
+});
+
+test('unpaired non-attack actions do nothing: no hit, no evade roll, no momentum, no status', () => {
+  const queue = [
+    { id: 'guard', enemyId: 'G', speed: 1, kind: 'other' },
+    { id: 'counter', enemyId: 'H', speed: 3, kind: 'counter', tags: ['stagger'] },
+  ];
+  const { events, momentum } = resolveRound(COVERED, queue, 2, d20Face(20), { decay: 0 });
+  assert.equal(events.some((e) => e.type === 'hit' || e.type === 'evadeRoll' || e.type === 'status'), false);
+  assert.equal(momentum.H, 0);
+  assert.ok(events.find((e) => e.type === 'unpaired' && e.slot === 1), 'the marker is still there');
+});
+
+test('unpaired marker: every event from an unpaired slot carries unpaired: true, and paired events do not', () => {
+  const { events } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(20), { decay: 0 });
+  const onSlot1 = events.filter((e) => e.slot === 1);
+  assert.ok(onSlot1.some((e) => e.type === 'unpaired'), 'the marker is on slot 1');
+  assert.ok(onSlot1.some((e) => e.type === 'hit'), 'the unanswered hit is on slot 1');
+  for (const e of onSlot1) assert.equal(e.unpaired, true, e.type);
+  for (const e of events.filter((e) => e.slot === 0)) assert.equal(e.unpaired, undefined, e.type);
+});
+
 // A seeded generator, so the rolls are the same on every run.
 const seeded = (seed) => {
   let s = seed >>> 0;

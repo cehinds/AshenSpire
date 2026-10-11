@@ -167,6 +167,70 @@ function normalizeSide(name, s) {
   };
 }
 
+// One attack rolls its hit, then the target's avoids (DESIGN.md, Evasion). Shared
+// by a paired pairing (resolvePair) and an unpaired enemy attack (resolveRound).
+// Pushes its events to `events` and returns true when the attack lands.
+// `options.poise` is { [who]: bool }: an armed side's landed hit carries
+// poiseMultiplier 2 (DESIGN.md, Momentum: double poise). Poise damage is not modelled.
+function rollAttack({ who, attacker, target, pool, rng, options, events }) {
+  const targetKey = other(who);
+  const d20 = rollD20(rng);
+  const { hit, need } = hitRoll({ accuracy: attacker.accuracy, attrs: attacker.attrs, evasion: target.evasion }, d20);
+  // A full block (Block >= damage, damage > 0) absorbs a hit that rolled true.
+  // The blocking side wins the slot, and the attack does not land.
+  const blocked = hit && attacker.damage > 0 && target.block >= attacker.damage;
+  // Avoiding a hit that would land (DESIGN.md, Evasion). A charge of
+  // 'intangible' avoids it outright and is spent only then. Otherwise the
+  // defender rolls its evadePct, and only a hit that would land is rolled.
+  let avoid = null; // 'intangible' | 'evasion'
+  let evade = null; // { evadePct, roll, success } when the percent roll is made
+  const chargesLeft = pool[targetKey];
+  if (hit && !blocked) {
+    if (target.tags.includes('intangible') && chargesLeft > 0) {
+      avoid = 'intangible';
+    } else {
+      const exchangeCtx = { inExchange: true, round: options.round, combatId: options.combatId };
+      const stanceEvade = stanceEvadeBonuses(target.stance, options.evadeTable);
+      const evadePct = evadePctFor(
+        { ...target, evadeBonuses: [...target.evadeBonuses, ...stanceEvade] },
+        exchangeCtx,
+      );
+      if (evadePct > 0) {
+        const roll = Math.floor(rollUnit(rng) * 100);
+        evade = { evadePct, roll, success: roll < evadePct };
+        if (evade.success) avoid = 'evasion';
+      }
+    }
+  }
+  const landed = hit && !blocked && avoid === null;
+  const armed = landed && options.poise?.[who] === true;
+  events.push({
+    type: 'hit',
+    by: who,
+    target: targetKey,
+    d20,
+    hit,
+    need,
+    blocked,
+    avoided: avoid !== null,
+    ...(armed ? { poiseMultiplier: 2 } : {}),
+  });
+  if (evade) events.push({ type: 'evadeRoll', by: targetKey, target: who, ...evade });
+  if (blocked) {
+    events.push({ type: 'absorbed', by: targetKey, target: who });
+  } else if (avoid === 'intangible') {
+    pool[targetKey] -= 1;
+    const remaining = pool[targetKey];
+    events.push({ type: 'evaded', by: targetKey, target: who, reason: 'intangible', charges: remaining });
+  } else if (avoid === 'evasion') {
+    events.push({ type: 'evaded', by: targetKey, target: who, reason: 'evasion' });
+  } else if (!hit && target.stance === 'evade') {
+    // A miss against an evade action is also a dodge. The slot win comes from any miss (successSide).
+    events.push({ type: 'evaded', by: targetKey, target: who });
+  }
+  return landed;
+}
+
 // Resolves one player action against one enemy action. Returns ordered events.
 //
 // Rules (placeholder where DESIGN.md says so):
@@ -186,8 +250,6 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     player: normalizeSide('player', playerIn),
     enemy: normalizeSide('enemy', enemyIn),
   };
-  // What the evade bonus scopes see for this exchange (DESIGN.md, Evasion).
-  const exchangeCtx = { inExchange: true, round: options.round, combatId: options.combatId };
   // Shared charge pool by side, spent in this call (DESIGN.md, Evasion). A side
   // missing from options.charges uses its own intangibleCharges. The caller's
   // object is only written back at the end, for supplied sides whose charges changed.
@@ -206,53 +268,15 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     speeds: { player: side.player.speed, enemy: side.enemy.speed },
   });
 
-  const rollHit = (who) => {
-    const attacker = side[who];
-    const target = side[other(who)];
-    const d20 = rollD20(rng);
-    const { hit, need } = hitRoll({ accuracy: attacker.accuracy, attrs: attacker.attrs, evasion: target.evasion }, d20);
-    // A full block (Block >= damage, damage > 0) absorbs a hit that rolled true.
-    // The blocking side wins the slot, and the attack does not land.
-    const blocked = hit && attacker.damage > 0 && target.block >= attacker.damage;
-    // Avoiding a hit that would land (DESIGN.md, Evasion). A charge of
-    // 'intangible' avoids it outright and is spent only then. Otherwise the
-    // defender rolls its evadePct, and only a hit that would land is rolled.
-    let avoid = null; // 'intangible' | 'evasion'
-    let evade = null; // { evadePct, roll, success } when the percent roll is made
-    const targetKey = other(who);
-    const chargesLeft = pool[targetKey];
-    if (hit && !blocked) {
-      if (target.tags.includes('intangible') && chargesLeft > 0) {
-        avoid = 'intangible';
-      } else {
-        const stanceBonus = stanceEvadeBonuses(target.stance, options.evadeTable);
-        const evadePct = evadePctFor(
-          { ...target, evadeBonuses: [...target.evadeBonuses, ...stanceBonus] },
-          exchangeCtx,
-        );
-        if (evadePct > 0) {
-          const roll = Math.floor(rollUnit(rng) * 100);
-          evade = { evadePct, roll, success: roll < evadePct };
-          if (evade.success) avoid = 'evasion';
-        }
-      }
-    }
-    events.push({ type: 'hit', by: who, target: other(who), d20, hit, need, blocked, avoided: avoid !== null });
-    if (evade) events.push({ type: 'evadeRoll', by: other(who), target: who, ...evade });
-    if (blocked) {
-      events.push({ type: 'absorbed', by: other(who), target: who });
-    } else if (avoid === 'intangible') {
-      pool[targetKey] -= 1;
-      const remaining = pool[targetKey];
-      events.push({ type: 'evaded', by: other(who), target: who, reason: 'intangible', charges: remaining });
-    } else if (avoid === 'evasion') {
-      events.push({ type: 'evaded', by: other(who), target: who, reason: 'evasion' });
-    } else if (!hit && target.stance === 'evade') {
-      // A miss against an evade action is also a dodge. The slot win comes from any miss (successSide).
-      events.push({ type: 'evaded', by: other(who), target: who });
-    }
-    return hit && !blocked && avoid === null;
-  };
+  const rollHit = (who) => rollAttack({
+    who,
+    attacker: side[who],
+    target: side[other(who)],
+    pool,
+    rng,
+    options,
+    events,
+  });
 
   // Write back only the supplied sides whose charges were spent. A frozen
   // caller object with nothing spent is never written to.
@@ -532,8 +556,11 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // options.decay: momentum decay step per round (default 1, 0 turns it off).
 // options.evadeBonuses: scoped evade bonuses, filtered here by scope, round,
 //   combatId and appliesTo (see inputBonuses below). Default none.
+// options.playerDefense: { evasion, evadePct, tags } for the player against an
+//   unpaired enemy attack. Default evasion 0, evadePct 0, no tags. The
+//   'intangible' tag draws on the player's pool in options.charges.
 //
-// Returns { events, momentum }, where `momentum` is { [enemyId]: M_e } after the
+// Returns { events, momentum, charges }, where `momentum` is { [enemyId]: M_e } after the
 // round. Momentum updates at round end (DESIGN.md, Momentum):
 // - Before any pairing, each enemy's M_e moves 1 toward 0 (options.decay, default 1,
 //   0 turns it off). A 'momentum' event with reason 'decay' marks each change.
@@ -547,7 +574,10 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 //   event marks each slot win and each counter stagger (`delta`).
 //   'momentumApplied' marks each round-end change.
 // - A second player card on an already paired slot is rejected ('rejected').
-// - An enemy slot with no player card is 'unpaired' and has no effect.
+// - An enemy slot with no player card is 'unpaired'. Its events carry unpaired: true.
+//   An unpaired enemy attack rolls its hit against options.playerDefense. A landed
+//   hit wins the slot for that enemy, and a miss or an avoid wins it for the player.
+//   An unpaired non-attack action does nothing.
 export function resolveRound(playerCards, enemyQueue, perception, rng, options = {}) {
   if (!Array.isArray(playerCards)) throw new TypeError('playerCards must be an array');
   if (!Array.isArray(enemyQueue)) throw new TypeError('enemyQueue must be an array');
@@ -632,9 +662,55 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     }
   }
 
+  // The player as the target of an unpaired enemy attack (DESIGN.md, Open question d).
+  const defence = options.playerDefense ?? {};
+  if (typeof defence !== 'object' || Array.isArray(defence)) {
+    throw new TypeError('options.playerDefense must be an object');
+  }
+  const playerDefender = normalizeSide('player', {
+    speed: 0,
+    kind: 'other',
+    evasion: defence.evasion,
+    evadeBasePct: defence.evadePct,
+    tags: defence.tags,
+    evadeBonuses: bonusesFor(null, 'player'),
+  });
+
   const pending = Object.create(null); // summed raw deltas per enemy, applied at round end
   const paired = new Set();
   const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
+
+  // Pushes one slot's events and credits its slot wins (DESIGN.md, Momentum). `pc`
+  // is the player's card, or null for an unpaired slot, where the player side
+  // uses the defaults (gain 1, no stance). `extra` marks unpaired slots.
+  const settleSlot = (slotEvents, { pc, enemy, k, slot, visible, extra }) => {
+    const credited = new Set();
+    for (const e of slotEvents) {
+      push({ ...e, slot, visible, ...extra }, k);
+      const winner = successSide(e);
+      // A side wins a slot at most once per pairing, however many of its successes it makes.
+      if (winner && !credited.has(winner)) {
+        credited.add(winner);
+        const card = winner === 'player' ? (pc ?? {}) : enemy;
+        const foe = winner === 'player' ? enemy : (pc ?? {});
+        const gain = gainOf(card);
+        // Stance advantage adds to the success (owner's rule: "adds bonus momentum").
+        const bonus = stanceBonus(stanceTable, card.stance, foe.stance);
+        const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
+        pending[k] = (pending[k] ?? 0) + delta;
+        push({ type: 'momentum', enemyId: k, by: winner, gain, bonus, delta, reason: 'success', slot, ...extra }, k);
+      }
+    }
+    // A counter that staggers its target adds +-3 to its side's summed delta, on
+    // top of the slot win above (owner, 2026-10-11). Clamped once at round end.
+    const counterWin = slotEvents.find((e) => e.type === 'countered');
+    if (counterWin && slotEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(counterWin.by))) {
+      const sign = counterWin.by === 'player' ? 1 : -1;
+      const delta = sign * MOMENTUM_MAX;
+      pending[k] = (pending[k] ?? 0) + delta;
+      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', delta, slot, ...extra }, k);
+    }
+  };
 
   playerCards.forEach((pc, i) => {
     const slot = pc.slot;
@@ -659,39 +735,32 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     );
     charges.player = pool.player;
     charges[k] = pool.enemy;
-    // Sides that already won this slot. A side wins a slot at most once per
-    // pairing, however many of its successes the pair produces (DESIGN.md, Momentum).
-    const credited = new Set();
-    for (const e of pairEvents) {
-      push({ ...e, slot, visible }, k);
-      const winner = successSide(e);
-      if (winner && !credited.has(winner)) {
-        credited.add(winner);
-        const card = winner === 'player' ? pc : enemy;
-        const foe = winner === 'player' ? enemy : pc;
-        const gain = gainOf(card);
-        // Stance advantage adds to the success (owner's rule: "adds bonus momentum").
-        const bonus = stanceBonus(stanceTable, card.stance, foe.stance);
-        const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
-        pending[k] = (pending[k] ?? 0) + delta;
-        push({ type: 'momentum', enemyId: k, by: winner, gain, bonus, delta, reason: 'success', slot }, k);
-      }
-    }
-    // A counter that staggers its target adds +-3 to its side's summed delta, on
-    // top of the slot win above (owner, 2026-10-11). Clamped once at round end.
-    const counterWin = pairEvents.find((e) => e.type === 'countered');
-    if (counterWin && pairEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(counterWin.by))) {
-      const sign = counterWin.by === 'player' ? 1 : -1;
-      const delta = sign * MOMENTUM_MAX;
-      pending[k] = (pending[k] ?? 0) + delta;
-      push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', delta, slot }, k);
-    }
+    settleSlot(pairEvents, { pc, enemy, k, slot, visible, extra: {} });
   });
 
   enemyQueue.forEach((enemy, slot) => {
-    if (!paired.has(slot)) {
-      push({ type: 'unpaired', slot, enemyId: enemyKey(enemy), visible: slot < visibleCount }, enemyKey(enemy));
-    }
+    if (paired.has(slot)) return;
+    const k = enemyKey(enemy);
+    const visible = slot < visibleCount;
+    const extra = { unpaired: true };
+    push({ type: 'unpaired', slot, enemyId: k, visible, kind: enemy.kind ?? 'other', unpaired: true }, k);
+    // Only an attack has an effect on an unpaired slot. It rolls against the player's defence.
+    if ((enemy.kind ?? 'other') !== 'attack') return;
+    const attacker = normalizeSide('enemy', enemy);
+    const pool = { player: charges.player, enemy: charges[k] };
+    const slotEvents = [];
+    rollAttack({
+      who: 'enemy',
+      attacker,
+      target: playerDefender,
+      pool,
+      rng,
+      options: { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable },
+      events: slotEvents,
+    });
+    charges.player = pool.player;
+    charges[k] = pool.enemy;
+    settleSlot(slotEvents, { pc: null, enemy, k, slot, visible, extra });
   });
 
   // Round end: sum each enemy's deltas (slot wins and counter staggers alike),

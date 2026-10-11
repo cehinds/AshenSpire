@@ -333,8 +333,13 @@ silent. They are placeholders for testing the shape, not decisions.
 - An attack that would land can be avoided by an `intangible` charge, or by the
   `evadePct` roll. Each emits 'evaded' with a `reason`, and each counts as a
   defensive success. The `evadeRoll` event reports the roll.
-- An enemy slot with no player card is unpaired ('unpaired' event) and has no
-  effect.
+- An enemy slot with no player card is unpaired ('unpaired' event). Its
+  events carry `unpaired: true`. An unpaired enemy attack rolls its hit against
+  the player's defence (`options.playerDefense`: `evasion`, `evadePct`, `tags`,
+  zero defaults). A landed hit wins the slot for that enemy (momentum -1 for the
+  player, once per pairing). A miss or an avoid (intangible, evadePct) wins the
+  slot for the player, as for any defender. Non-attack unpaired actions (block,
+  evade, other) do nothing (owner, 2026-10-11).
 - Perception only tags events as visible. It does not gate targeting.
 - Momentum: per enemy, settled at round end. See Momentum.
 
