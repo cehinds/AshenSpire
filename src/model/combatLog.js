@@ -10,7 +10,9 @@ function reactionUnavailableText(event, { registries, source, owner }) {
   const verb = tags.includes('maneuver:sweep') ? 'Sweep' : 'Counter';
   switch (event.reason) {
     case 'notCovered': return `No reaction: Counter can't answer ${ATTACK_KIND_WORDS[event.attackKind] || 'this attack'}.`;
-    case 'cost': return `Not enough ${RESOURCE_WORDS[event.resource] || 'SP'} to ${verb} (need ${event.need}, have ${event.have}).`;
+    case 'cost': return event.resource === 'hp'
+      ? `Not enough HP to ${card?.name || 'use that card'} (need ${event.need}, have ${event.have}).`
+      : `Not enough ${RESOURCE_WORDS[event.resource] || 'SP'} to ${verb} (need ${event.need}, have ${event.have}).`;
     case 'switchOff': return 'No reaction: Reactions are off.';
     case 'attackerStaggered': return `No reaction: ${source} is staggered.`;
     case 'attackerControlled': return `No reaction: ${source} can't act.`;
