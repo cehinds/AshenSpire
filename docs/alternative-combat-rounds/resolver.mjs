@@ -235,6 +235,73 @@ export function stanceBonus(table, stance, opposing) {
   return table.get(`${stance}>${opposing}`) ?? 0;
 }
 
+// Card hint thresholds on the speed difference (placeholder, TBD: DESIGN.md
+// open question s). delta >= strong: '>>'. delta >= slight: '>'. Mirror for '<'.
+export const SPEED_TIERS = { strong: 2, slight: 1 };
+
+// Speed terms in display order, as [breakdown term, actionSpeed part key].
+const BREAKDOWN_TERMS = [
+  ['base', 'card'],
+  ['weapon', 'weapon'],
+  ['armor', 'armor'],
+  ['range', 'range'],
+  ['attackType', 'attackType'],
+  ['skill', 'skill'],
+  ['initiative', 'initiative'],
+  ['momentum', 'momentum'],
+];
+
+// Left-edge arrow for a speed difference (player minus enemy), or null at 0.
+function speedArrow(delta) {
+  if (delta >= SPEED_TIERS.strong) return { glyph: '>>', colour: 'green' };
+  if (delta >= SPEED_TIERS.slight) return { glyph: '>', colour: 'yellow' };
+  if (delta <= -SPEED_TIERS.strong) return { glyph: '<<', colour: 'red' };
+  if (delta <= -SPEED_TIERS.slight) return { glyph: '<', colour: 'yellow' };
+  return null;
+}
+
+// UI hint for one player card against one enemy action (DESIGN.md, Card hints).
+//
+// card:        { card, weapon, armor, range, attackType, skill, initiative ids,
+//                stance, target }. target 'self' marks a self-target card (skills).
+// enemyAction: same speed ids, plus stance.
+// ctx:         { mods, stanceAdvantage, momentum }. mods is the speed-mods table,
+//              stanceAdvantage the Map from parseStanceAdvantage(), momentum the
+//              M_e for this enemy (default 0).
+//
+// Returns { border, speedDelta, arrow, breakdown }:
+// - border: self-target -> 'blue'. Otherwise 'green' when the card is faster
+//   and its stance beats the enemy's, 'yellow' when only one holds, 'red' when
+//   neither does.
+// - speedDelta: player total minus enemy total (momentum included).
+// - arrow: { glyph, colour } from SPEED_TIERS, or null when the delta is 0.
+//   Self-target cards always have arrow null.
+// - breakdown: the player's speed terms [{ term, value }], ending with momentum
+//   (trunc(M_e / 2)). The values sum to the player total.
+export function cardHint(card, enemyAction, ctx = {}) {
+  if (!card || typeof card !== 'object') throw new TypeError('card must be an object');
+  if (!enemyAction || typeof enemyAction !== 'object') throw new TypeError('enemyAction must be an object');
+  const mods = ctx.mods ?? {};
+  const momentum = clampMomentum(ctx.momentum ?? 0);
+  const player = actionSpeed({ ...card, momentum }, mods, 'player');
+  const enemy = actionSpeed({ ...enemyAction, momentum }, mods, 'enemy');
+  const speedDelta = player.total - enemy.total;
+  const breakdown = BREAKDOWN_TERMS.map(([term, key]) => ({ term, value: player.parts[key] }));
+
+  if (card.target === 'self') {
+    return { border: 'blue', speedDelta, arrow: null, breakdown };
+  }
+  const speedAdv = player.total > enemy.total;
+  const table = ctx.stanceAdvantage ?? null;
+  const stanceAdv = Boolean(
+    table && card.stance && enemyAction.stance && table.has(`${card.stance}>${enemyAction.stance}`),
+  );
+  let border = 'red';
+  if (speedAdv && stanceAdv) border = 'green';
+  else if (speedAdv || stanceAdv) border = 'yellow';
+  return { border, speedDelta, arrow: speedArrow(speedDelta), breakdown };
+}
+
 // The side that wins the slot with this event, or null. A landed hit or a
 // counter that fires is a success (DESIGN.md, Momentum).
 function successSide(e) {
