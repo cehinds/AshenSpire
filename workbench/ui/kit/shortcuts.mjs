@@ -8,7 +8,9 @@
 
 export const GLOBAL = 'global';
 const STORE_KEY = 'wb.shortcuts';
-const TYPING = 'input, textarea, select, [contenteditable="true"]';
+// Any contenteditable except "false" (so "", "true" and "plaintext-only") counts as typing.
+export const TYPING_SELECTOR = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+const TYPING = TYPING_SELECTOR;
 const MODIFIER_KEYS = ['Control', 'Shift', 'Alt', 'Meta', 'OS', 'AltGraph'];
 const MOD_NAMES = { mod: 'Mod', ctrl: 'Mod', control: 'Mod', cmd: 'Mod', meta: 'Mod', alt: 'Alt', option: 'Alt', shift: 'Shift' };
 
@@ -67,14 +69,15 @@ export class ShortcutRegistry {
 
   /**
    * Register an action. combo is one combo or an array (the first is shown).
-   * inInput: whether it also fires while typing; defaults to true for combos
-   * with Ctrl/Alt and false for bare keys. Returns an unregister function.
+   * inInput: whether it also fires while typing in a field. Defaults to false,
+   * so Mod+Z, Mod+A, Mod+C and the like never take keys from a text field
+   * unless the registration says inInput: true. Returns an unregister function.
    */
   register(scope, combo, label, handler, { inInput } = {}) {
     const defaults = (Array.isArray(combo) ? combo : [combo]).map(normalizeCombo).filter(Boolean);
     const id = `${scope}:${label}`;
-    const withMod = defaults.some((c) => /(^|\+)(Mod|Alt)\+/.test(c));
-    const entry = { id, scope, label, defaults, handler, inInput: inInput ?? withMod };
+    // Off by default: while typing, an action fires only when it asks for it.
+    const entry = { id, scope, label, defaults, handler, inInput: inInput === true };
     this.#entries.set(id, entry);
     this.#emit();
     return () => { if (this.#entries.get(id) === entry) { this.#entries.delete(id); this.#emit(); } };

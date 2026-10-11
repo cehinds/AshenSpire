@@ -1,7 +1,7 @@
 // node --test workbench/tests/shortcuts.test.mjs — the shortcut registry.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ShortcutRegistry, normalizeCombo, comboFromEvent, comboLabel } from '../ui/kit/shortcuts.mjs';
+import { ShortcutRegistry, normalizeCombo, comboFromEvent, comboLabel, TYPING_SELECTOR } from '../ui/kit/shortcuts.mjs';
 
 // A key event as the browser would describe it.
 const key = (k, mods = {}) => ({ key: k, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, ...mods, preventDefault() { this.prevented = true; } });
@@ -63,6 +63,40 @@ test('dispatch takes a key event, prevents the default only when handled, and re
   const undo = key('z', { ctrlKey: true }); undo.target = { closest: () => ({}) };
   r.register('global', 'Mod+Y', 'Redo', () => { hits += 100; }, { inInput: true });
   assert.equal(r.dispatch(undo, 'global'), false, 'Ctrl+Z defers to the text field when inInput is false');
+  assert.equal(hits, 1);
+});
+
+test('while typing, Ctrl combos do not fire unless registered with inInput: true', () => {
+  const r = new ShortcutRegistry();
+  let hits = [];
+  r.register('data', 'Mod+D', 'Duplicate', () => { hits.push('dup'); });
+  r.register('global', 'Mod+K', 'Palette', () => { hits.push('palette'); }, { inInput: true });
+  for (const attrs of [{ closest: () => ({}) }]) {
+    const ev = key('d', { ctrlKey: true }); ev.target = attrs;
+    assert.equal(r.dispatch(ev, 'data'), false, 'Mod+D defaults to inInput false');
+    assert.equal(ev.prevented, undefined);
+  }
+  const k = key('k', { ctrlKey: true }); k.target = { closest: () => ({}) };
+  assert.equal(r.dispatch(k, 'data'), true, 'an explicit inInput: true still fires');
+  assert.deepEqual(hits, ['palette']);
+});
+
+test('every kind of text field counts as typing, including contenteditable variants', () => {
+  // No DOM here, so check the selector text: it names the fields, and any
+  // contenteditable except "false" (covers "", "true" and "plaintext-only").
+  const parts = TYPING_SELECTOR.split(', ');
+  for (const tag of ['input', 'textarea', 'select']) assert.ok(parts.includes(tag), `${tag} is typing`);
+  assert.ok(parts.includes('[contenteditable]:not([contenteditable="false"])'), 'contenteditable other than "false" is typing');
+});
+
+test('an action without inInput does not run while typing in a contenteditable field', () => {
+  const r = new ShortcutRegistry();
+  let hits = 0;
+  r.register('global', 'Mod+A', 'Select all', () => { hits += 1; });
+  const editable = key('a', { ctrlKey: true }); editable.target = { closest: (sel) => (sel === TYPING_SELECTOR ? {} : null) };
+  assert.equal(r.dispatch(editable, 'global'), false);
+  const plain = key('a', { ctrlKey: true }); plain.target = { closest: () => null };
+  assert.equal(r.dispatch(plain, 'global'), true);
   assert.equal(hits, 1);
 });
 
