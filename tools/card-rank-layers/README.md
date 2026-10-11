@@ -35,7 +35,7 @@ rank follows it. Gameplay values, rank resolution, costs and payment are unchang
 local server started with `--editor-write`. Export also downloads the same JSON.
 
 Desktop and phone examples, and the full-corpus browser checks, are not kept in
-the tree (removed 2026-10-11; CI artifacts hold new runs). Reproduce the corpus
+the tree (removed 2026-10-11; see git history). Reproduce the corpus
 checks with `node tools/card-sigils-qa.mjs`, writing to `SIGIL_QA_OUT`.
 
 Regenerate the six illustrations and their desktop/phone checks with

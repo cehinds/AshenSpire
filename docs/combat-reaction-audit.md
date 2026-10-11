@@ -1,6 +1,6 @@
 # Enemy knowledge, reactions and combat controls audit
 
-Reviewed runtime checkpoint: `ebebb6ba`, plus metadata-only dev reconciliation and independently reviewed fitted-hand clearance CSS (`4b10c88b690ae55be58c59a5441990138e5488ce`). Official packaged build: `0.7.1.1172`, source digest `da2a96e4e6`. This checklist distinguishes implemented behavior from validation and delivery. Historical saves retain their previous rules. Viewed packaged captures and reproducible measurements (evidence removed 2026-10-11; CI artifacts hold new runs).
+Reviewed runtime checkpoint: `ebebb6ba`, plus metadata-only dev reconciliation and independently reviewed fitted-hand clearance CSS (`4b10c88b690ae55be58c59a5441990138e5488ce`). Official packaged build: `0.7.1.1172`, source digest `da2a96e4e6`. This checklist distinguishes implemented behavior from validation and delivery. Historical saves retain their previous rules. Viewed packaged captures and reproducible measurements (evidence removed 2026-10-11; see git history).
 
 Already implemented in the inherited enemy-knowledge runtime:
 

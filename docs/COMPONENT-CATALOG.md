@@ -65,7 +65,7 @@ harmless practice surface. `TouchFlickModel.js` resolves distance, recent speed 
 nearest-target ties; `flickPractice.js` shares that recognition with the combat
 hand for touch, mouse, trackpad dragging and pen. Existing saved settings retain
 their values. The selected card and separate Information button remain unchanged.
-See card removal and touch flick validation (evidence removed 2026-10-11; CI artifacts hold new runs).
+See card removal and touch flick validation (evidence removed 2026-10-11; see git history).
 
 `card-shelf` is the one row of resting cards. Up to four stand across it; every
 track is the same width, floored at a legible minimum and capped at the card's
