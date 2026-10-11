@@ -593,7 +593,7 @@ numbers of 0 or more; otherwise the timeline throws a TypeError naming the field
   evade bonus, counter) applies only to the attack it answers and is used before queued
   defences: a reaction guard's block is spent first on that attack, then queued block, and any
   guard remainder is discarded once the attack is over. A reaction evade is used by it first, and
-  a reaction counter fires after it. None of them is left active, and queued defences stay for later attacks. When a reaction answers an attack, a queued counter or queued evade is not used on it; each waits for a later attack (the counter for the next attack from its foe). Queued block still absorbs after the reaction guard's block (PLACEHOLDER: a choice, not owner-approved). A reaction counter never cancels its attack,
+  a reaction counter fires after it. None of them is left active, and queued defences stay for later attacks. When a reaction answers an attack, a queued counter or queued evade is not used on it; each waits for a later attack (the counter for the next attack from its foe) (owner, 2026-10-11). Queued block still absorbs after the reaction guard's block (owner, 2026-10-11). A reaction counter never cancels its attack,
   so a queued counter does not cancel the attack a reaction counter answers (PLACEHOLDER: a choice, not
   owner-approved). Enemies never react.
 - Eligible cards are defensive cards in hand that are not queued this round and not
@@ -613,7 +613,7 @@ enemy has one M, and each attack is one exchange:
   A landed hit through a partial block scores its stance against the first guard card that absorbed part of it, unless an evade card was spent on that attack.
   A fired or cancelling counter wins for its owner. The gain is the winner's card
   `momentumGain` (default 1) plus the stance bonus against the other side's card.
-  When an attack does not land and the defender's counter fires on it, the defender's one credit uses the counter card.
+  When an attack does not land and the defender's counter fires on it, the defender's one credit uses the counter card (owner, 2026-10-11).
 - A counter with the `stagger` tag adds +-3 to its side's summed delta, on top of
   its slot win.
 - Round end: the summed delta is added to each enemy's M once, then clamped to
@@ -706,3 +706,9 @@ t. Open (owner, 2026-10-11): does MP limit how many cards a side plays, as SP
    of 1 and optional card costs. Blocks any caller that enforces MP limits.
 u. Open: how enemy SP pools and hidden decks are built per enemy. For testing,
    SP is fixed at 3 for every side. Blocks real enemy queues with varying length.
+v. Resolved (owner, 2026-10-11). When a reaction answers an attack, a queued
+   counter or queued evade is not used on it. Each waits for a later attack.
+w. Resolved (owner, 2026-10-11). Queued block still absorbs after the reaction
+   guard's block.
+x. Resolved (owner, 2026-10-11). When an attack does not land and the defender's
+   counter fires on it, the defender's one credit uses the counter card.
