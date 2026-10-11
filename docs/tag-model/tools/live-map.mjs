@@ -477,6 +477,8 @@ export const LIVE = {
   'internal': 'internal',
   // proposed live mapping (domain pass)
   'meta.combat.skill.spellcraft': 'school',
+  // proposed live mapping (domain pass)
+  'meta.combat.stance': 'maneuver',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,
