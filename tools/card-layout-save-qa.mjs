@@ -28,7 +28,7 @@ try{
  assert.match(readFileSync(join(root,'src/content/cardComponents.generated.js'),'utf8'),/"groups":/);
  const after=await geometry();for(const id of ids)for(const key of ['x','y','w','h'])assert.ok(Math.abs(after[id][key]-scaled[id][key])<2,`${id} ${key} round trip: ${after[id][key]} vs ${scaled[id][key]}`);
  // A fresh native game gallery reads the saved master, without editor storage.
- await page.goto(base+'docs/qa/card-rank-layers/preview.html',{waitUntil:'networkidle'});
+ await page.goto(base+'tools/card-rank-layers/preview.html',{waitUntil:'networkidle'});
  const checks=await page.locator('.sample .card').evaluateAll(cards=>cards.map(c=>{const rank=c.querySelector('.card-rank'),panel=c.querySelector('[data-component="panel"]'),rules=c.querySelector('[data-card-binding="rules"]'),r=rank?.getBoundingClientRect(),p=panel.getBoundingClientRect(),t=rules.getBoundingClientRect();return {rank:Number(c.dataset.exampleRank),label:rank?.textContent||null,anchor:r?(r.y-p.y)/p.width:null,overlap:r?r.bottom>t.top+1:false,clipped:rules.scrollHeight>rules.parentElement.clientHeight+1};}));
  assert.equal(checks[0].label,null);assert.ok(checks.slice(1).every(c=>c.label==='Rank '+c.rank&&!c.overlap&&!c.clipped),JSON.stringify(checks));assert.ok(Math.max(...checks.slice(1).map(c=>c.anchor))-Math.min(...checks.slice(1).map(c=>c.anchor))<.01,'expanded panels preserve rank top-edge anchor');
  await page.screenshot({path:join(output,'saved-native-cards.png'),fullPage:true});

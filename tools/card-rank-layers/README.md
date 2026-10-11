@@ -1,6 +1,6 @@
 # Native card layers and rank placement
 
-Open `/docs/qa/card-rank-layers/preview.html` on the repository preview server.
+Open `/tools/card-rank-layers/preview.html` on the repository preview server.
 The examples use the native renderer, canonical profiles and pinned artwork:
 Cinder Sigil at Rank 0, 1 and 3; Guard Counter at Rank 2; Ember Hew at Rank 4;
 and Radiant Spray at Rank 5. Rank 0 has no visible label. Positive authored
@@ -34,15 +34,14 @@ rank follows it. Gameplay values, rank resolution, costs and payment are unchang
 **Export JSON** write that source and regenerate native card definitions on the
 local server started with `--editor-write`. Export also downloads the same JSON.
 
-`rank-examples.png` and `rank-phone.png` show desktop and phone examples.
-`corpus/report.json` records the source revision, uncommitted state and browser
-checks for the full card corpus. Reproduce with `node tools/card-sigils-qa.mjs`
-and `SIGIL_QA_OUT=docs/qa/card-rank-layers/corpus`.
+Desktop and phone examples, and the full-corpus browser checks, are not kept in
+the tree (removed 2026-10-11; CI artifacts hold new runs). Reproduce the corpus
+checks with `node tools/card-sigils-qa.mjs`, writing to `SIGIL_QA_OUT`.
 
 Regenerate the six illustrations and their desktop/phone checks with
 `node tools/card-rank-layers-qa.mjs`. Use `ASHEN_ART_SOURCE=cache` with the
 published pin, `PLAYWRIGHT_MODULE` for Playwright and `CHROME` for the browser
 when these are not on the default module/executable paths.
 
-[Continuation status and remaining gates](STATUS.md) records the pushed
-checkpoint, test commands, review status and delivery boundaries.
+The continuation status note (STATUS.md) was removed 2026-10-11; see
+`docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md` for the history.
