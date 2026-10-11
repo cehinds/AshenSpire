@@ -385,6 +385,7 @@
   width: calc(24px / var(--ui-zoom,1)); height: calc(24px / var(--ui-zoom,1));
   min-width: 0; min-height: 0; padding: 0; border: 0; background: none; box-shadow: none; color: var(--gold);
 }
+:root .combat[data-layout='formation'] .player-action-intent:not([data-placed]) { visibility: hidden; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); min-height: var(--health-row-h); padding-bottom: calc(12px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
 /* HUD layout tokens: an optional backing plate behind the idle HP value

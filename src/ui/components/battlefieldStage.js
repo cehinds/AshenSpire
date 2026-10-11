@@ -58,6 +58,25 @@ export function combatPlayerInfoRect(node, art, viewport, zoom, floor = Infinity
   return { left, top, right: left + width, bottom: top + height, width, height };
 }
 
+// Owner (2026-10-11): the player's intent glyph (attack, smash, counter, defend,
+// sweep, spell) stays above the figure's head while the player is not selected,
+// so the stance reads at rest. It takes the same spot selected or not, centred
+// over the art and below the HUD band, so it never jumps on selection.
+export function placePlayerIntentGlyph(leading, { art, hudBottom, zoom = 1 }) {
+  const node = leading.querySelector('.player-action-intent');
+  if (!node) return null;
+  const host = node.offsetParent || leading;
+  const origin = host.getBoundingClientRect();
+  const { width, height } = node.getBoundingClientRect();
+  const floorTop = Number.isFinite(hudBottom) ? hudBottom + 2 : -Infinity;
+  const top = Math.max(floorTop, art.top - height - 4);
+  const centre = (art.left + art.right) / 2;
+  node.style.left = `${(centre - width / 2 - origin.left) / zoom}px`;
+  node.style.top = `${(top - origin.top) / zoom}px`;
+  node.dataset.placed = 'true';
+  return { centre, top, width, height };
+}
+
 // The selected-card action is independent of the reading panel, like Info.
 export function combatPlayerActionRect(node, infoRect, art, zoom, floor = Infinity) {
   if (!node) return null;
@@ -227,7 +246,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // including selectable doors that have not painted yet.
     playerInfoRects = players.flatMap(({ infoRect, actionRect }) => [infoRect, actionRect]).filter(Boolean);
     panels.push(...playerInfoRects);
-    for (const { player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect } of players) {
+    for (const { player, leading, art, stack, viewport, panel, inspect, infoRect } of players) {
       const expanded = player.classList.contains('context-selected');
       const panelGap = expanded && viewport.width <= 320 ? 3 : 4;
       const idleLeft = Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4));
@@ -259,7 +278,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leading.style.top !== top) leading.style.top = top;
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
-      for (const [door, rect] of [[inspect, infoRect], [action, actionRect]]) {
+      placePlayerIntentGlyph(leading, { art, hudBottom, zoom });
+      for (const [door, rect] of [[inspect, infoRect]]) {
         if (!rect) continue;
         const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
         door.style.left = `${local.left}px`;
