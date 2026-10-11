@@ -278,6 +278,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const COMFORT_MARGIN_PX = 24;
   let trayCentred = false;
   function nodeComfortablyVisible(revealHeight) {
+    // Touch only: a finger that just tapped the node is about to tap it again.
+    // A mouse pick keeps the centred look (tools/map-two-axis-pan.mjs, desktop).
+    if (!matchMedia('(pointer: coarse)').matches) return false;
     const nodeEl = app.querySelector(`.map-node[data-node="${selection.selectedId}"]`);
     if (!nodeEl) return false;
     const nodeBox = nodeEl.getBoundingClientRect();
