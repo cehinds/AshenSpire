@@ -2,7 +2,7 @@
 export const ANIM_SPEEDS = {
   slow: { beatMs: 420, stepMs: 105, lungeMs: 255, impactCapMs: 317 },
   normal: { beatMs: 240, stepMs: 68, lungeMs: 195, impactCapMs: 186 },
-  fast: { beatMs: 108, stepMs: 34, lungeMs: 121, impactCapMs: 106 },
+  fast: { beatMs: 108, stepMs: 34, lungeMs: 121, impactCapMs: 108 },
   instant: null,
 };
 
