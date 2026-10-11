@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1841",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Old QA screenshots cleared out of the project",
+    "detail": "Development housekeeping only, nothing in the game changes. About 237 MB of dated QA screenshots and run reports leave the repository; new QA runs go to CI artifacts, and the card layer editor and card preview pages the QA tools use now live under tools/.",
+    "build": "0.7.1.1288",
+    "pullRequest": 1841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1841"
+  },
+  {
     "id": "pr-1833",
     "date": "2026-10-11",
     "group": "2026-10-11",
