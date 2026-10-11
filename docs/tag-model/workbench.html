@@ -261,7 +261,9 @@ async function applyHead(t,h){
     const r=await assembleBlobs(t,h);
     if(seq!==ts.seq||dirty.has(t)||saving.has(t)) return;
     if(r.missing){ blockTable(t,'This table is incomplete on the server (missing part '+r.missing+'). Reload later.'); return; }
-    /* backstop: a head not written on top of our last save, arriving soon after it, means a peer raced us: show the conflict */
+    /* backstop: a head not written on top of our last save, arriving soon after it, means a peer raced us: show the conflict.
+       Known false positive, accepted: a chain ours -> P1 -> P2 whose P1 snapshot never reached this tab reads as a race.
+       The user's choice (Load theirs or Keep mine) resolves it, and it cannot silently lose rows. */
     if(ts.lastSaveAt&&Date.now()-ts.lastSaveAt<10000&&revOf(h)!==ts.base&&(h.base||'')!==ts.base){ ts.conflict={theirRev:revOf(h)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); return; }
     const arrs=[]; for(const x of h.blobs||[]) arrs.push(...r.got.get(x));
     ts.incomplete=null; ts.base=revOf(h); ts.blobs=r.got; ts.legacyDocs=[];
