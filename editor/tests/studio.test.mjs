@@ -224,3 +224,15 @@ test('a Content Editor save of a build input waits for the shared build lock, th
   assert.equal(await fs.readFile(file, 'utf8'), before, 'nothing was written');
   assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'theirs', 'their lock stands');
 });
+
+test('a Content Editor save of a build input takes the lock when it is free and releases it afterwards', async t => {
+  const { root } = await fixture(t);
+  const app = await createStudio({ root, port: 0, stateDir: path.join(root, 'state') }); t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const file = path.join(root, 'content/source/items.csv');
+  const before = await fs.readFile(file, 'utf8');
+  const saved = await fetch(`${app.url}/api/save`, { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ path: 'content/source/items.csv', hash: hash(before), text: before.replace('Steel', 'Bronze') }] }) });
+  assert.equal(saved.status, 200);
+  assert.match(await fs.readFile(file, 'utf8'), /Bronze sword/);
+  await assert.rejects(fs.stat(path.join(root, '.build-lock')), /ENOENT/, 'released after the save');
+});
