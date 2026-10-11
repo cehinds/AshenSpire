@@ -4,7 +4,9 @@
 // (index.mjs) talks to it over postMessage, origin-checked both ways: the parent origin
 // comes from ?po=, and only messages from window.parent at that origin are obeyed.
 //
-// Parent -> page:  { source:'ashen-motion-module', type:'set', state:{ project, outfit, time, facing, background, onion:{prev,next} } }
+// Parent -> page:  { source:'ashen-motion-module', type:'load', project, outfit } sends a project once (it carries
+//                   embedded images), then { type:'set', state:{ time, facing, background, onion:{prev,next} } } as the
+//                   playhead moves.
 // Page -> parent:  { source:'ashen-motion', type:'ready' | 'index' | 'shown' | 'error', ... }
 //
 // The figure is the project's own pose image (assets['pose:<name>']) when it has one, else the
@@ -118,20 +120,29 @@ function draw(state) {
   stage.dataset.poseIndex = String(poseIndex);
 }
 
-let current = null;
-window.addEventListener('message', (ev) => {
-  if (ev.origin !== parentOrigin || ev.source !== window.parent) return;
-  const data = ev.data;
-  if (!data || data.source !== MODULE_SOURCE || data.type !== 'set') return;
-  current = data.state || null;
-  try { draw(current || {}); } catch (err) {
+let loaded = { project: null, outfit: null };
+let view = { time: 0, facing: 'right', background: 'checker', onion: {} };
+function redraw() {
+  try { draw({ ...loaded, ...view }); } catch (err) {
     post('error', { message: String(err && err.message || err) });
     return;
   }
-  post('shown', { time: current?.time ?? 0, pose: stage.dataset.pose || null, poseIndex: Number(stage.dataset.poseIndex) || 0 });
+  post('shown', { time: view.time, pose: stage.dataset.pose || null, poseIndex: Number(stage.dataset.poseIndex) || 0 });
+}
+window.addEventListener('message', (ev) => {
+  if (ev.origin !== parentOrigin || ev.source !== window.parent) return;
+  const data = ev.data;
+  if (!data || data.source !== MODULE_SOURCE) return;
+  if (data.type === 'load') {
+    loaded = { project: data.project || null, outfit: data.outfit || null };
+    redraw();
+  } else if (data.type === 'set' && data.state) {
+    view = { ...view, ...data.state };
+    redraw();
+  }
 });
 
-window.addEventListener('resize', () => { if (current) draw(current); });
+window.addEventListener('resize', () => redraw());
 
 post('index', {
   cues: CUES,
@@ -139,6 +150,7 @@ post('index', {
   effects: Object.keys(effectFrames),
   effectLabels: labels,
   outfits: Object.keys(PRESENTATION_POSES),
+  frames: Object.fromEntries(Object.entries(PRESENTATION_POSES).map(([key, art]) => [key, Object.fromEntries(Object.entries(art.frames || {}).map(([pose, frame]) => [pose, frame.file]))])),
   version: VERSION,
 });
 post('ready');
