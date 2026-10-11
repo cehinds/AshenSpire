@@ -584,9 +584,11 @@ value.
   card's `sp` must be at most the SP left after the queue. With 0 SP left, no
   reaction is offered. The player's `onReaction(attack, eligibleCards)` callback
   returns a card, or null. The card must be eligible. A reaction uses base values,
-  no buff, and spends the card's `sp` from what is left. Its effect applies to that attack. A reaction counter fires after that
-  attack and never cancels it (PLACEHOLDER: a choice, not owner-approved). Enemies
-  never react.
+  no buff, and spends the card's `sp` from what is left. Its effect applies to that attack and
+  only that attack: a reaction evade is used by it first, and a reaction counter fires after it. Neither
+  is left active, and queued defences stay for later attacks. A reaction counter never cancels its attack,
+  so a queued counter does not cancel the attack a reaction counter answers (PLACEHOLDER: a choice, not
+  owner-approved). Enemies never react.
 - Eligible cards are defensive cards in hand that are not queued this round and not
   already played as a reaction this round.
 

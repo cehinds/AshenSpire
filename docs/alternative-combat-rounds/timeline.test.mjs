@@ -597,6 +597,50 @@ test('a reaction evade uses its base 20, so the same roll of 25 is not evaded', 
   assert.equal(out.state.combatants.player.hp, 15);
 });
 
+test('a reaction counter answers the attack it was played against; a queued counter waits', () => {
+  // d4: player 4 (u 0.75), goblin 2 (u 0.3). The player lane leads, so pc is placed first.
+  // pc total 6 + 1 + 4 = 11. s1 total 5 + 2 = 7. s2 total 0 + 2 = 2. rc (held) costs 1 SP.
+  const out = createRound(duo({}, { hp: 20, hand: [card('rc', 'counter', 'self', 0)] }), {
+    queues: {
+      player: [card('pc', 'counter', 'goblin', 6)],
+      goblin: [atk('s1', 'player', 5), atk('s2', 'player', 0)],
+    },
+    rng: rngThen([0.75, 0.3], 0.45),
+    merge: 'wholeQueue',
+    onReaction: (attack) => (attack.cardId === 's1' ? { id: 'rc' } : null),
+  }).resolveAll();
+  const reaction = out.events.find((e) => e.type === 'reaction');
+  assert.deepEqual([reaction.cardId, reaction.against, reaction.seq], ['rc', 'goblin', 1]);
+  const at = (type, cardId) => out.events.findIndex((e) => e.type === type && e.cardId === cardId);
+  // rc fires on s1, after s1 resolves and before s2 starts. It never cancels s1.
+  assert.ok(at('counterFired', 'rc') > at('action', 's1'));
+  assert.ok(at('counterFired', 'rc') < at('action', 's2'));
+  assert.equal(out.events.some((e) => e.type === 'countered' && e.cardId === 'rc'), false);
+  // pc was not taken by s1: it is still active and cancels s2.
+  assert.equal(out.events.some((e) => e.type === 'counterFired' && e.cardId === 'pc'), false);
+  assert.ok(at('countered', 'pc') > at('action', 's2'));
+  assert.equal(out.state.combatants.player.hp, 19);
+});
+
+test('a reaction evade answers the attack it was played against; a queued evade waits', () => {
+  // d4: player 4, goblin 2. Queued pe is buffed to 20 + 10 = 30; reaction re uses base 20.
+  // Draws: d4 player, d4 goblin, then per attack a d20 (hit) and an evade roll of 25.
+  const out = createRound(duo({}, { hp: 20, hand: [card('re', 'evade', 'self', 0, { evadePct: 20 })] }), {
+    queues: {
+      player: [card('pe', 'evade', 'self', 5, { evadePct: 20 })],
+      goblin: [atk('s1', 'player', 5), atk('s2', 'player', 0)],
+    },
+    rng: seqRng([0.75, 0.3, 0.45, 0.25, 0.45, 0.25]),
+    merge: 'wholeQueue',
+    onReaction: (attack) => (attack.cardId === 's1' ? { id: 're' } : null),
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'reaction').cardId, 're');
+  const rolls = out.events.filter((e) => e.type === 'evadeRoll');
+  // s1 uses re at base 20: roll 25 misses the evade. s2 then uses pe at 30: roll 25 evades.
+  assert.deepEqual(rolls.map((r) => [r.evadePct, r.roll, r.success]), [[20, 25, false], [30, 25, true]]);
+  assert.equal(out.state.combatants.player.hp, 19);
+});
+
 // ---- Momentum: per enemy, summed per exchange, settled once at round end ----
 
 const momentumOf = (out, id) => out.state.momentum[id];

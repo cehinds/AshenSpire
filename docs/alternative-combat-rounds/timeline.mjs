@@ -325,13 +325,14 @@ function applyDamage(cur, targetId, raw, events) {
 
 // One attack (owner, 2026-10-11): hit roll, then full block, then intangible or the
 // evadePct roll, then damage. Returns nothing; pushes events and updates cur.
-function resolveAttack(cur, entry, events, rng, options) {
+function resolveAttack(cur, entry, events, rng, options, reactionEvade = null) {
   const attacker = cur.combatants[entry.actor];
   const target = cur.combatants[entry.target];
   const card = entry.card;
   const dmg = Math.max(0, Number(card.damage ?? 0) || 0);
-  // An evade card is spent on the next attack, whether or not that attack hits.
-  const evadeUse = cur.active[target.id].evade.shift() ?? null;
+  // An evade card is spent on the next attack, whether or not that attack hits. A reaction
+  // evade belongs to this attack and is used first; queued evades wait for later attacks.
+  const evadeUse = reactionEvade ?? cur.active[target.id].evade.shift() ?? null;
   const d20 = rollD20(rng);
   const accuracy = accuracyFor({ attrs: attacker.attrs, level: attacker.level, tags: card.tags, accuracy: card.accuracy })
     + attacker.accuracyExtra;
@@ -425,7 +426,7 @@ function stagger(run, { key, owner, cur, events, seq }) {
 // Enemies never react. The card uses base values and spends its sp.
 function offerReaction(cur, entry, events, options, run) {
   const defender = cur.combatants[entry.target];
-  if (defender.side !== 'player' || typeof options.onReaction !== 'function') return;
+  if (defender.side !== 'player' || typeof options.onReaction !== 'function') return { evade: null, counter: null };
   const id = defender.id;
   const usedIds = cur.used[id] ?? [];
   const queued = run.queuedIds[id] ?? new Set();
@@ -434,7 +435,7 @@ function offerReaction(cur, entry, events, options, run) {
     && !usedIds.includes(c.id)
     && cardSp(c) <= cur.spLeft[id]
     && (c.kind !== 'counter' || c.target === 'self' || c.target === entry.actor));
-  if (eligible.length === 0) return;
+  if (eligible.length === 0) return { evade: null, counter: null };
   const attack = {
     seq: entry.seq,
     attacker: entry.actor,
@@ -444,19 +445,26 @@ function offerReaction(cur, entry, events, options, run) {
     speed: entry.speed.total,
   };
   const pick = options.onReaction(attack, eligible.map((c) => ({ ...c })));
-  if (pick === null || pick === undefined) return;
+  if (pick === null || pick === undefined) return { evade: null, counter: null };
   const chosen = eligible.find((c) => c.id === pick?.id);
   if (!chosen) throw new TypeError(`onReaction returned a card that is not eligible: ${pick?.id}`);
   cur.spLeft[id] -= cardSp(chosen);
   cur.used[id] = [...usedIds, chosen.id];
   events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, sp: cardSp(chosen) });
-  // Base values, no buff (owner, 2026-10-11). A reaction counter fires on this attack,
-  // after it resolves, and never cancels it (placeholder).
-  placeDefence(cur, id, chosen, { preemptive: false, foe: entry.actor, events, reaction: true });
+  // Base values, no buff (owner, 2026-10-11). A reaction evade or counter is bound to this
+  // attack: it is returned to resolveAttack, never left active. A reaction counter fires on
+  // this attack after it resolves and never cancels it (placeholder). Queued defences wait.
+  const record = placeDefence(cur, id, chosen, { preemptive: false, foe: entry.actor, events, reaction: true });
+  return {
+    evade: chosen.kind === 'evade' ? record : null,
+    counter: chosen.kind === 'counter' ? record : null,
+  };
 }
 
 // Makes a defensive card active for its owner (owner, 2026-10-11). A preemptive card
 // gets REACTION_BUFF on top of its base values. A reaction uses base values only.
+// Returns the defence record of a reaction evade or counter (not made active: it belongs to
+// one attack). Returns null for a guard or a queued card, which are made active here.
 function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, speed = null }) {
   const buff = (key) => (preemptive ? REACTION_BUFF[key] : 0);
   const act = cur.active[owner];
@@ -466,12 +474,14 @@ function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, spe
     events.push({ type: 'guardUp', by: owner, cardId: card.id, block, buffed: preemptive });
   } else if (card.kind === 'evade') {
     const pct = (card.evadePct ?? DEFENSE_BASE.evadePct) + buff('evadePct');
-    act.evade.push({ cardId: card.id, pct, gain: card.momentumGain, stance: card.stance ?? null });
+    const record = { cardId: card.id, pct, gain: card.momentumGain, stance: card.stance ?? null };
     events.push({ type: 'evadeUp', by: owner, cardId: card.id, pct, buffed: preemptive });
+    if (reaction) return record;
+    act.evade.push(record);
   } else if (card.kind === 'counter') {
     const damage = (card.counterDamage ?? DEFENSE_BASE.counterDamage) + buff('counterDamage');
     const target = card.target === 'self' ? null : (foe ?? card.target);
-    act.counters.push({
+    const record = {
       cardId: card.id,
       owner,
       foe: target,
@@ -481,9 +491,12 @@ function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, spe
       gain: card.momentumGain,
       stance: card.stance ?? null,
       reaction,
-    });
+    };
     events.push({ type: 'counterUp', by: owner, cardId: card.id, foe: target, damage, buffed: preemptive });
+    if (reaction) return record;
+    act.counters.push(record);
   }
+  return null;
 }
 
 // Takes the first active counter that fires on this attack, or null (owner, 2026-10-11):
@@ -509,8 +522,9 @@ function applyEntry(cur, entry, events, options, run) {
   events.push({ type: 'action', ...base, kind: entry.card.kind, target: entry.target, speed: entry.speed.total });
   const kind = entry.card.kind;
   if (kind === 'attack') {
-    offerReaction(cur, entry, events, options, run);
-    const counter = takeCounter(cur, entry.target, entry.actor);
+    const reacted = offerReaction(cur, entry, events, options, run);
+    // A reaction counter answers this attack; otherwise the first queued counter that fires.
+    const counter = reacted.counter ?? takeCounter(cur, entry.target, entry.actor);
     // The enemy in this exchange: the attacker, or the defender when the player attacks.
     const key = entry.side === 'enemy' ? entry.actor : entry.target;
     const attackCard = { momentumGain: entry.card.momentumGain, stance: entry.card.stance ?? null };
@@ -525,7 +539,7 @@ function applyEntry(cur, entry, events, options, run) {
       if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
       return;
     }
-    const out = resolveAttack(cur, entry, events, options.rng, options);
+    const out = resolveAttack(cur, entry, events, options.rng, options, reacted.evade);
     if (out.landed) {
       credit(cur, run, { key, winner: entry.side, winCard: attackCard, foeCard: out.defenseCard ?? {}, events, seq: entry.seq, credited });
     } else {
