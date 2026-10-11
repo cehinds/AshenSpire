@@ -282,9 +282,7 @@ export function createDeckView(root, host) {
   async function load() {
     try {
       const r = await host.api(`files/read?path=${encodeURIComponent(D.DECK_FILE)}`);
-      const data = D.parseDeck(r.text);
-      const problems = D.groupProblems(data);
-      if (problems.length) throw Error(problems[0]);
+      const data = D.readDeckText(r.text);
       st.groups = data.components.resourceGroups; st.original = r.text; st.hash = r.hash;
       ensureCanvas();
       rebuild({ fit: true });
@@ -329,7 +327,13 @@ export function createDeckView(root, host) {
         paintAll();
         return { missing: true };
       }
-      st.groups = D.parseDeck(r.text).components.resourceGroups; st.original = r.text; st.hash = r.hash;
+      // The same checks as load(), before any state changes: a file that fails them leaves the draft, its history and the canvas as they were.
+      let data;
+      try { data = D.readDeckText(r.text); } catch (err) {
+        host.toast({ kind: 'error', title: `Could not reload ${D.DECK_FILE}`, detail: err.message });
+        return undefined;
+      }
+      st.groups = data.components.resourceGroups; st.original = r.text; st.hash = r.hash;
       host.history.clear();
       paintAll();
       return undefined;
