@@ -351,9 +351,10 @@ silent. They are placeholders for testing the shape, not decisions.
   events carry `unpaired: true`. An unpaired enemy attack rolls its hit against
   the player's defence (`options.playerDefense`: `evasion`, `evadePct`, `tags`,
   zero defaults). A landed hit wins the slot for that enemy (moves momentum by the enemy action's gain, default 1, against the
-  player, once per pairing). A miss or an avoid (intangible, evadePct) wins the
-  slot for the player, as for any defender. Non-attack unpaired actions (block,
-  evade, other) do nothing (owner, 2026-10-11).
+  player, once per pairing). A miss or an avoid (intangible, evadePct) gives the
+  player no slot credit: an unanswered attack that does not land moves no momentum,
+  and the events are still emitted (owner, 2026-10-11). Non-attack unpaired actions
+  (block, evade, other) do nothing (owner, 2026-10-11).
 - Perception only tags events as visible. It does not gate targeting.
 - Momentum: per enemy, settled at round end. See Momentum.
 
@@ -368,7 +369,8 @@ c. Resolved (2026-10-11): one player card per enemy action. A second card is
    rejected.
 d. Resolved (owner, 2026-10-11): an unpaired enemy attack rolls its hit against
    the player's defence. A landed hit wins the slot for that enemy (by the enemy action's gain, default 1, against
-   the player). Non-attack unpaired actions do nothing. See "Resolver placeholder
+   the player). An unpaired miss or avoid gives the player no slot credit (owner,
+   2026-10-11). Non-attack unpaired actions do nothing. See "Resolver placeholder
    rules" and item 1.
 e. Resolved (2026-10-11): four perception stages, as in "Perception stages".
    The card hint consequence is flagged there.

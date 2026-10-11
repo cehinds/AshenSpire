@@ -1615,13 +1615,21 @@ test('unpaired attack: a landed hit on the player wins the slot for that enemy, 
   assert.equal(win.delta, -1);
 });
 
-test('unpaired attack: a miss is the defender\'s success, so the player wins the slot (+1)', () => {
+test('unpaired attack: a miss gives the player nothing (owner, 2026-10-11), so M_H stays put', () => {
   const { events, momentum } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(1), { decay: 0 });
   assert.equal(unpairedHit(events).hit, false);
-  assert.equal(momentum.H, 1);
+  assert.equal(momentum.H, 0);
 });
 
-test('unpaired attack: a player intangible charge avoids the hit, is spent, and the avoid wins the slot for the player', () => {
+test('unanswered miss gives the player nothing: no success event, no momentum move', () => {
+  // Owner, 2026-10-11: an unanswered enemy attack that misses gives the player no slot credit.
+  const { events, momentum } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(1), { decay: 0 });
+  assert.equal(unpairedHit(events).hit, false, 'the event is still emitted');
+  assert.equal(momentum.H, 0, 'no momentum moves for the player');
+  assert.equal(events.some((e) => e.type === 'momentum' && e.reason === 'success' && e.enemyId === 'H'), false);
+});
+
+test('unpaired attack: a player intangible charge avoids the hit, is spent, and the avoid gives the player nothing', () => {
   const { events, momentum, charges } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(20), {
     decay: 0,
     charges: { player: 1 },
@@ -1631,7 +1639,7 @@ test('unpaired attack: a player intangible charge avoids the hit, is spent, and 
   assert.equal(evaded.reason, 'intangible');
   assert.equal(evaded.by, 'player');
   assert.equal(charges.player, 0);
-  assert.equal(momentum.H, 1);
+  assert.equal(momentum.H, 0, 'an avoid on an unanswered attack earns no slot credit');
 });
 
 test('unpaired attack: a hit that would land rolls the player\'s evadePct, and a roll under it avoids the hit', () => {
@@ -1643,7 +1651,7 @@ test('unpaired attack: a hit that would land rolls the player\'s evadePct, and a
   assert.equal(roll.evadePct, 50);
   assert.equal(roll.success, true);
   assert.equal(events.find((e) => e.type === 'evaded' && e.slot === 1).reason, 'evasion');
-  assert.equal(momentum.H, 1);
+  assert.equal(momentum.H, 0, 'an evadePct avoid on an unanswered attack earns no slot credit');
 });
 
 test('unpaired attack: playerDefense.evasion raises the bar; with no playerDefense the evasion is 0', () => {
@@ -1651,7 +1659,7 @@ test('unpaired attack: playerDefense.evasion raises the bar; with no playerDefen
   assert.equal(unpairedHit(dflt.events).hit, true, 'no playerDefense: d20 10 meets AC 8');
   const armoured = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(10), { decay: 0, playerDefense: { evasion: 5 } });
   assert.equal(unpairedHit(armoured.events).hit, false, 'evasion 5 needs 13, so d20 10 misses');
-  assert.equal(armoured.momentum.H, 1);
+  assert.equal(armoured.momentum.H, 0, 'a miss on an unanswered attack earns the player no slot credit');
 });
 
 test('unpaired non-attack actions do nothing: no hit, no evade roll, no momentum, no status', () => {

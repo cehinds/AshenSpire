@@ -595,8 +595,8 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // - A second player card on an already paired slot is rejected ('rejected').
 // - An enemy slot with no player card is 'unpaired'. Its events carry unpaired: true.
 //   An unpaired enemy attack rolls its hit against options.playerDefense. A landed
-//   hit wins the slot for that enemy, and a miss or an avoid wins it for the player.
-//   An unpaired non-attack action does nothing.
+//   hit wins the slot for that enemy. A miss or an avoid gives the player no credit
+//   (owner, 2026-10-11). The events are still emitted. An unpaired non-attack action does nothing.
 export function resolveRound(playerCards, enemyQueue, perception, rng, options = {}) {
   if (!Array.isArray(playerCards)) throw new TypeError('playerCards must be an array');
   if (!Array.isArray(enemyQueue)) throw new TypeError('enemyQueue must be an array');
@@ -723,6 +723,9 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     for (const e of slotEvents) {
       push({ ...e, slot, visible, ...extra }, k);
       const winner = successSide(e);
+      // Owner, 2026-10-11: on an unpaired slot the player gets no credit, whether the
+      // enemy's attack misses or is avoided. Only the enemy's landed hit moves momentum.
+      if (pc === null && winner === 'player') continue;
       // A side wins a slot at most once per pairing, however many of its successes it makes.
       if (winner && !credited.has(winner)) {
         credited.add(winner);
