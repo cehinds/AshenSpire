@@ -8,7 +8,7 @@
 import { createGrid, createCheckPanel } from '../../ui/kit/grid.mjs';
 import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -26,6 +26,7 @@ export default {
           <button type="button" data-act="del">Delete</button>
           <button type="button" data-act="import">Import CSV/JSON</button>
           <button type="button" data-act="export">Export</button>
+          <button type="button" data-act="review" class="primary">Review &amp; save (0)</button>
           <input type="file" class="ds-file-in" accept=".csv,.json,.tsv,.txt" hidden>
           <span class="ds-file"></span>
         </div>
@@ -114,7 +115,70 @@ export default {
       if (path === state.selected) { state.grid.setRules(tableRules(doc.columns)); state.grid.setData(doc); }
       refresh();
     }
-    function refresh() { renderList(); showFile(); renderRow(); }
+    function refresh() { renderList(); showFile(); renderRow(); renderReviewCount(); }
+    function renderReviewCount() {
+      el.querySelector('[data-act="review"]').textContent = `Review & save (${changedPaths().length})`;
+    }
+    const changedPaths = () => [...state.drafts.keys()].filter(dirtyOf);
+
+    // ---------- review and save ----------
+    const dlg = document.createElement('dialog');
+    dlg.className = 'ds-review';
+    el.appendChild(dlg);
+    const close = () => { if (dlg.open) dlg.close(); };
+    dlg.addEventListener('click', (ev) => { if (ev.target === dlg) close(); });
+
+    /** Opens the review dialog: one line diff per changed table; Save posts them all with their baseHash. */
+    async function openReview() {
+      const paths = changedPaths();
+      if (!paths.length) { ctx.toast({ kind: 'info', title: 'Nothing to save', detail: 'No table has changes.' }); return; }
+      const changes = paths.map((p) => changeFor(state.parsed.get(p), state.drafts.get(p)));
+      const diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })
+        .catch((e) => ({ path: c.path, error: e.message, hunks: [], added: 0, removed: 0 }))));
+      dlg.innerHTML = `<div class="ds-review-body"><h2>Review changes (${changes.length})</h2>${diffs.map(diffHtml).join('')}<div class="ds-review-status" role="status"></div><div class="ds-review-actions"><button type="button" data-cancel>Cancel</button><button type="button" class="primary" data-save>Save ${changes.length} file${changes.length === 1 ? '' : 's'}</button></div></div>`;
+      dlg.querySelector('[data-cancel]').onclick = close;
+      dlg.querySelector('[data-save]').onclick = () => save(changes);
+      if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    }
+    function diffHtml(d) {
+      if (d.error) return `<section class="ds-diff"><h3>${esc(d.path)}</h3><p class="ds-bad">${esc(d.error)}</p></section>`;
+      const body = d.hunks.map((h) => `<div class="ds-hunk">@@ -${h.oldStart},${h.oldLines} +${h.newStart},${h.newLines} @@</div>${h.lines.map((l) => `<div class="ds-line ds-${l.op === '+' ? 'add' : l.op === '-' ? 'del' : 'ctx'}">${esc(l.op)}${esc(l.text)}</div>`).join('')}`).join('');
+      return `<section class="ds-diff"><h3>${esc(d.path)} <span class="ds-count">+${d.added} −${d.removed}</span></h3><pre class="ds-lines">${body || '<span class="ds-muted">No line changes.</span>'}</pre></section>`;
+    }
+    async function save(changes) {
+      const status = dlg.querySelector('.ds-review-status');
+      try {
+        const res = await ctx.api('files/save', { changes });
+        close();
+        for (const f of res.files) { state.parsed.delete(f.path); state.drafts.delete(f.path); }
+        if (state.selected && res.files.some((f) => f.path === state.selected)) await select(state.selected);
+        refresh();
+        ctx.toast({ kind: 'success', title: `Saved ${res.files.length} file${res.files.length === 1 ? '' : 's'}` });
+        ctx.preview.reload();
+      } catch (e) {
+        if (/changed/i.test(e.message)) return conflicts(changes, status);
+        if (/do not validate/i.test(e.message)) status.innerHTML = `<p class="ds-bad">Nothing saved. ${esc(e.message)}. Fix the rows the Check panel names, then save again.</p>`;
+        else status.innerHTML = `<p class="ds-bad">Not saved: ${esc(e.message)}</p>`;
+      }
+    }
+    /** Files that changed on disk since they were read: Reload takes the disk copy; Overwrite keeps the drafts. */
+    async function conflicts(changes, status) {
+      const now = await Promise.all(changes.map((c) => ctx.api(`files/read?path=${encodeURIComponent(c.path)}`).then((f) => ({ c, hash: f.hash }), () => ({ c, hash: null }))));
+      const moved = now.filter(({ c, hash }) => hash !== c.baseHash);
+      const names = moved.map(({ c }) => esc(c.path)).join(', ') || 'a file';
+      status.innerHTML = `<p class="ds-bad">Changed on disk since it was opened: ${names}.</p><div class="ds-review-actions"><button type="button" data-reload>Reload from disk</button><button type="button" data-overwrite class="primary">Overwrite with my changes</button></div>`;
+      status.querySelector('[data-reload]').onclick = async () => {
+        for (const { c } of moved) { state.parsed.delete(c.path); state.drafts.delete(c.path); }
+        close();
+        if (state.selected && moved.some(({ c }) => c.path === state.selected)) await select(state.selected);
+        refresh();
+      };
+      status.querySelector('[data-overwrite]').onclick = () => save(changes.map((c) => {
+        const found = now.find((n) => n.c.path === c.path);
+        return found && found.hash ? { ...c, baseHash: found.hash } : c;
+      }));
+    }
+
     function showFile() {
       if (!state.selected) return;
       const doc = state.drafts.get(state.selected) ?? { rows: [] };
@@ -193,6 +257,7 @@ export default {
         grid.deleteRows([at]); state.activeRow = null; renderRow();
       } else if (act === 'import') fileIn.click();
       else if (act === 'export') exportTable();
+      else if (act === 'review') openReview();
     });
     fileIn.addEventListener('change', async () => {
       const file = fileIn.files?.[0]; fileIn.value = '';
@@ -225,6 +290,7 @@ export default {
       checkPanel.classList.toggle('ds-hidden', tab !== 'check');
     });
 
+    ctx.shortcuts.register('Mod+S', 'Review & save', () => { openReview(); }, { inInput: true });
     loadList().then(() => {
       const first = state.tables[0];
       if (first) select(first.path);

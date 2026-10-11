@@ -22,3 +22,20 @@
 .ds-note { padding: 24px; color: var(--as-text-dim); }
 .ds-file { color: var(--as-text-faint); font-size: var(--as-text-xs); margin-left: auto; }
 @media (max-width: 900px) { .ds { grid-template-columns: 1fr; } .ds-list, .ds-side { border: 0; max-height: 30vh; } }
+.ds-review { width: min(860px, 94vw); max-height: 86vh; padding: 0; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius-lg); background: var(--as-bg-panel); color: var(--as-text); box-shadow: var(--as-shadow-lg); }
+.ds-review::backdrop { background: var(--as-overlay); }
+.ds-review-body { padding: 18px 20px; overflow: auto; max-height: 86vh; }
+.ds-review h2 { margin: 0 0 12px; font-size: var(--as-text-lg); }
+.ds-diff { margin-bottom: 14px; }
+.ds-diff h3 { font-size: var(--as-text-sm); margin: 0 0 6px; font-family: var(--as-mono); }
+.ds-count { color: var(--as-text-faint); font-weight: 400; margin-left: 8px; }
+.ds-lines { margin: 0; max-height: 260px; overflow: auto; background: var(--as-bg-sunken); border: 1px solid var(--as-line); border-radius: var(--as-radius); font: var(--as-text-xs)/1.5 var(--as-mono); }
+.ds-line { padding: 0 10px; white-space: pre; }
+.ds-line.ds-add { background: rgba(94, 191, 124, 0.14); color: var(--as-good); }
+.ds-line.ds-del { background: rgba(224, 100, 92, 0.14); color: var(--as-bad); }
+.ds-line.ds-ctx { color: var(--as-text-dim); }
+.ds-hunk { padding: 2px 10px; color: var(--as-info); background: var(--as-bg-raised); }
+.ds-review-status { margin: 10px 0; }
+.ds-review-status p { margin: 6px 0; }
+.ds-bad { color: var(--as-bad); }
+.ds-review-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
