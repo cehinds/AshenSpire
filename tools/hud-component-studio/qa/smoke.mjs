@@ -356,7 +356,20 @@ try {
   await page.locator('#dialogConfirm').click();
   current = await savedScene();
   check(!current.nodes.some(n => n.formFactors?.tablet), 'Reset form factor clears every Tablet override');
+  // Reset form factor on Mobile restores the seed's base/view values and keeps other form factors.
+  await ffButton('Desktop').click();
+  await selectTree('player-details-frame');
+  await page.getByLabel('Widget shadow Blur', { exact: true }).fill('5');
+  await page.getByLabel('Widget shadow Blur', { exact: true }).press('Tab');
   await ffButton('Mobile').click();
+  await page.locator('#reset').click();
+  await page.getByRole('button', { name: 'Reset form factor', exact: true }).click();
+  await page.locator('#dialogConfirm').click();
+  current = await savedScene();
+  const seedFrame = (await page.evaluate(() => fetch('scene.json').then(r => r.json()))).nodes.find(n => n.id === 'player-details-frame');
+  const frame = current.nodes.find(n => n.id === 'player-details-frame');
+  check(JSON.stringify(formFactorNode(frame, 'mobile').shadow) === JSON.stringify(seedFrame.shadow), 'Mobile Reset form factor restores the seed widget shadow');
+  check(frame.formFactors?.desktop?.shadow?.blur === 5, 'Mobile Reset form factor keeps the Desktop override');
 
   // Narrow viewport sanity: controls remain inside the viewport bounds and clickable.
   await page.setViewportSize({ width: 390, height: 844 });
