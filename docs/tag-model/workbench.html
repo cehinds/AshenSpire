@@ -332,7 +332,8 @@ async function flush(t, opts){
   const ts=TS(t);
   if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),500); return; }
   if(!dirty.has(t)) return;
-  if((ts.conflict||ts.pinned)&&!opts.overwrite) return;
+  if(ts.pinned) return; /* a rejected table is never saved again from this view, Keep mine included */
+  if(ts.conflict&&!opts.overwrite) return;
   const cols0=[...state.data[t].columns], keyCol=TABLES[t].key;
   const tooBig=state.data[t].rows.findIndex(r=>byteLen(JSON.stringify(cols0.map(c=>r[c]??'')))>BLOB_ROW_MAX);
   if(tooBig>=0){ const k=keyCol&&state.data[t].rows[tooBig][keyCol]; setStatus('bad','Row '+(tooBig+1)+(k?' ('+k+')':'')+' is over 250 KB, so this table cannot be saved yet. Shorten that row.'); return; }
@@ -385,7 +386,7 @@ async function flush(t, opts){
   }
   catch(e){
     /* rejected: the edits stay on screen, pinned and unsaved; no peer head replaces them until the user chooses */
-    if(e&&e.code==='invalid_argument'){ dirty.add(t); ts.pinned=true; canWrite=false; setStatus('warn','This view can read but not save. Your edits are shown here, not saved; export them as CSV.'); saveLocal(); render(); }
+    if(e&&e.code==='invalid_argument'){ dirty.add(t); ts.pinned=true; ts.conflict=null; canWrite=false; setStatus('warn','This view can read but not save. Your edits are shown here, not saved; export them as CSV.'); saveLocal(); render(); }
     else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
   }
   finally{ saving.delete(t); setStatus(); }
@@ -625,16 +626,15 @@ function render(){ renderTabs(); const p=document.getElementById('panel'); p.tex
 function focusStatus(){ const s=document.getElementById('status'); if(s){ s.tabIndex=-1; s.focus(); } }
 function renderTable(p,t){
   const def=TABLES[t], tbl=state.data[t];
-  const ts=TS(t), banners=tableBanners(t);
-  if(!banners.length) ts.announced=false;
+  const ts=TS(t), banners=tableBanners(t), seen=ts.announced||new Set();
   for(const bn of banners){
     const box=document.createElement('div'); box.className='banner '+bn.kind;
-    box.setAttribute('role', ts.announced? 'group' : 'alert'); /* announced once, when the banner first appears */
+    box.setAttribute('role', seen.has(bn.text)? 'group' : 'alert'); /* each banner text is announced once, when it first appears */
     const msg=document.createElement('span'); msg.textContent=bn.text+' '; box.appendChild(msg);
     for(const x of bn.buttons) box.appendChild(btn(x.label,()=>runBanner(t,x.id)));
     p.appendChild(box);
   }
-  ts.announced=banners.length>0;
+  ts.announced=new Set(banners.map(b=>b.text)); /* a banner that goes away and comes back is announced again */
   const tools=document.createElement('div'); tools.className='toolbar';
   tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
   const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');

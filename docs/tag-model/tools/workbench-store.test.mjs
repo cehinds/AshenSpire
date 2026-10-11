@@ -431,6 +431,24 @@ test('a peer head that did not start from our save shows the conflict banner, an
   assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(mine));
 });
 
+test('a rejected Keep mine pins the table: the conflict clears, and Keep mine does not resend the rejected save', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  editTable(A.page, sample(3, 'x'));
+  await A.api.flush('t');
+  editTable(B.page, sample(3, 'y'));
+  await B.api.flush('t'); // B is in conflict
+  assert.ok(B.api.tstate.t.conflict);
+  db.failSet = (p) => (p === 'tables/t' ? { code: 'invalid_argument' } : null);
+  await B.api.keepMine('t'); // rejected
+  assert.equal(B.api.tstate.t.pinned, true);
+  assert.equal(B.api.tstate.t.conflict, null, 'a pinned table shows only the pinned banner');
+  const headSets = db.log.sets.filter((p) => p === 'tables/t').length;
+  db.failSet = null;
+  await B.api.keepMine('t');
+  assert.equal(db.log.sets.filter((p) => p === 'tables/t').length, headSets, 'the rejected save is not resent');
+});
+
 test('Load theirs adopts the server table even when the head has not moved since we loaded it', async () => {
   const db = makeFakeDb();
   const { page, api } = makePage(db, T);
