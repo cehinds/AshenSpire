@@ -6,7 +6,7 @@
 # on every push to dev. This workflow runs `tools/readme-sync.mjs --write`,
 # and commits back only README.md when a region changed.
 #
-# Mirrors architecture-sync.yml: bot commit, concurrency per ref, and a loop
+# Mirrors architecture-sync.yml: bot commit, its own concurrency group, and a loop
 # guard that skips the bot's own commit (its message carries [readme-sync]).
 # Nothing outside the marked regions is rewritten.
 
@@ -17,11 +17,12 @@ on:
     branches: [dev]
   workflow_dispatch:
 
-# One group for every bot push to a development branch. A run that has started is
-# never cancelled (cancel-in-progress: false), so a README and an architecture
-# refresh queue behind each other instead of racing for the same ref.
+# Own group, per workflow. A shared group would let one pending run replace the
+# other (GitHub keeps one pending run per group). A run that has started is never
+# cancelled (cancel-in-progress: false); the rebase-and-retry push loop below
+# handles the race with architecture-sync.yml.
 concurrency:
-  group: dev-bot-push
+  group: readme-sync-dev
   cancel-in-progress: false
 
 # The routine commits only README.md.
@@ -44,9 +45,10 @@ jobs:
         run: node tools/readme-sync.mjs --write
 
       - name: Commit only README.md when a region changed, and push it behind dev
-        # architecture-sync.yml pushes to dev on the same push. Both now share the
-        # dev-bot-push concurrency group, and a GITHUB_TOKEN push does not retrigger
-        # a workflow, so the rebase below stays the guard. Before each push, rebase onto origin/dev. If the
+        # architecture-sync.yml pushes to dev on the same push. The two run in
+        # separate concurrency groups, so the rebase-and-retry loop below handles
+        # the race, and a GITHUB_TOKEN push does not retrigger a workflow. Before
+        # each push, rebase onto origin/dev. If the
         # README rebase conflicts, abort it, reset to origin/dev, regenerate
         # the regions there and recommit. A rejected push retries up to three
         # times, with 2, 4 and 8 seconds of backoff.

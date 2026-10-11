@@ -66,8 +66,16 @@ jobs:
               if [ "$DRY_RUN" = "true" ]; then
                 echo "[dry run] would delete $b"
               else
-                git push origin --delete "$b"
-                echo "deleted $b"
+                # Lease against the tip checked above: if a worker pushed to
+                # the branch since the ancestry check, the push is rejected
+                # and the branch is kept.
+                if git push --force-with-lease="refs/heads/$b:$tip" origin ":refs/heads/$b"; then
+                  echo "deleted $b"
+                else
+                  echo "kept $b (moved since check)"
+                  kept+=("$b")
+                  continue
+                fi
               fi
               deleted+=("$b")
             else
