@@ -603,6 +603,8 @@ enemy has one M, and each attack is one exchange:
   uses this decayed M for its momentum term. M does not change during the round.
 - Each exchange credits each side at most once. A landed hit wins for the attacker.
   A full block, an avoid (intangible or evadePct), or a miss wins for the defender.
+  A full block's winning card is the guard card that holds the block (its `momentumGain` and
+  `stance`; guard cards spend their block first-in, first-out). A block with no guard card uses the gain 1.
   A fired or cancelling counter wins for its owner. The gain is the winner's card
   `momentumGain` (default 1) plus the stance bonus against the other side's card.
 - A counter with the `stagger` tag adds +-3 to its side's summed delta, on top of

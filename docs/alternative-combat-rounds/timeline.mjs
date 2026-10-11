@@ -317,6 +317,14 @@ function applyDamage(cur, targetId, raw, events) {
   const absorbed = Math.min(pool, raw);
   const amount = raw - absorbed;
   cur.active[targetId].guard = pool - absorbed;
+  // The block cards are spent first-in, first-out, so each keeps its own block left.
+  let rest = absorbed;
+  for (const g of cur.active[targetId].guardCards) {
+    const take = Math.min(g.left, rest);
+    g.left -= take;
+    rest -= take;
+    if (rest === 0) break;
+  }
   const wasAlive = t.hp > 0;
   t.hp = Math.max(0, t.hp - amount);
   events.push({ type: 'damage', target: targetId, amount, absorbed, hp: t.hp });
@@ -340,6 +348,8 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null) {
 
   // A full block: the block covers the whole hit (block >= damage, damage > 0).
   const blocked = hit && dmg > 0 && cur.active[target.id].guard >= dmg;
+  // The guard card that holds block is the defending card for a full block (owner, DESIGN.md).
+  const blocker = blocked ? (cur.active[target.id].guardCards.find((g) => g.left > 0) ?? null) : null;
 
   // Avoid (owner, 2026-10-11): an intangible charge avoids a hit outright and is spent
   // only then. Otherwise the target rolls its evadePct. Only a hit that would land is rolled.
@@ -389,7 +399,8 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null) {
     applyDamage(cur, target.id, dmg, events);
   }
   // The defender's card that was spent on this attack, for momentum gain and stance.
-  const defenseCard = evadeUse ? { momentumGain: evadeUse.gain, stance: evadeUse.stance } : null;
+  const defenseCard = blocker ? { momentumGain: blocker.momentumGain, stance: blocker.stance }
+    : evadeUse ? { momentumGain: evadeUse.gain, stance: evadeUse.stance } : null;
   return { landed, defenseCard };
 }
 
@@ -471,6 +482,7 @@ function placeDefence(cur, owner, card, { preemptive, foe, events, reaction, spe
   if (card.kind === 'guard') {
     const block = (card.block ?? DEFENSE_BASE.block) + buff('block');
     act.guard += block;
+    act.guardCards.push({ cardId: card.id, momentumGain: card.momentumGain, stance: card.stance ?? null, left: block });
     events.push({ type: 'guardUp', by: owner, cardId: card.id, block, buffed: preemptive });
   } else if (card.kind === 'evade') {
     const pct = (card.evadePct ?? DEFENSE_BASE.evadePct) + buff('evadePct');
@@ -601,7 +613,7 @@ export function createRound(state, options = {}) {
   cur.active = {};
   for (const c of Object.values(cur.combatants)) {
     if (!Object.hasOwn(cur.charges, c.id)) cur.charges[c.id] = c.intangibleCharges;
-    cur.active[c.id] = { guard: 0, evade: [], counters: [] };
+    cur.active[c.id] = { guard: 0, guardCards: [], evade: [], counters: [] };
   }
   const startEvents = [];
   const step = options.decay === undefined ? 1 : Number(options.decay);
@@ -655,7 +667,7 @@ export function createRound(state, options = {}) {
       }
     }
     events.push({ type: 'roundEnd' });
-    for (const id of Object.keys(cur.active)) cur.active[id] = { guard: 0, evade: [], counters: [] };
+    for (const id of Object.keys(cur.active)) cur.active[id] = { guard: 0, guardCards: [], evade: [], counters: [] };
   };
 
   const next = () => {

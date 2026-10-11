@@ -744,6 +744,25 @@ test('a stance advantage adds its bonus to the success gain', () => {
   assert.equal(momentumOf(out, 'goblin'), 3);
 });
 
+test('a full block by a guard is credited with the guard card gain and stance', () => {
+  // Guard gain 3, stance block: block 8 fully covers stab 4 (stance attack). Gain 3 + bonus 2 = 5.
+  const out = createRound(duo({}, { hp: 20 }), {
+    queues: {
+      player: [guardCard('guard', { momentumGain: 3, stance: 'block' })],
+      goblin: [atk('stab', 'player', 1, { damage: 4, stance: 'attack' })],
+    },
+    rng: HIT_RNG,
+    stanceAdvantage: parseStanceAdvantage('attacker_stance,defender_stance,bonus\nblock,attack,2'),
+  }).resolveAll();
+  assert.equal(out.events.some((e) => e.type === 'absorbed'), true);
+  assert.equal(out.state.combatants.player.hp, 20);
+  const win = out.events.find((e) => e.type === 'momentum' && e.reason === 'success');
+  assert.deepEqual([win.by, win.gain, win.bonus, win.delta], ['player', 3, 2, 5]);
+  // The raw +5 clamps to MOMENTUM_MAX 3 at round end, and that overflow sets the player's flag.
+  assert.equal(momentumOf(out, 'goblin'), 3);
+  assert.equal(out.events.some((e) => e.type === 'momentum' && e.reason === 'overflow' && e.side === 'player'), true);
+});
+
 test('a counter stagger adds 3 on top of its slot win, summed then clamped once', () => {
   // Start -2 decays to -1. A cancelling counter with stagger gives +1 + 3 = +4, so -1 + 4 = 3.
   const cancelWith = (tags) => {
