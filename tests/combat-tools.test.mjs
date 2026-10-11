@@ -101,6 +101,14 @@ test('the combat log opens at Medium, and both screens start from that default',
   }
 });
 
+test('both combat screens close the full log when the fight ends or the screen leaves', () => {
+  const coop = readFileSync('src/ui/screens/coop.js', 'utf8');
+  assert.match(coop, /closeCombatFullLog\(combatToolsState\);\s*if \(combatTools\) \{ combatTools\.release\(\)/, 'coop teardown closes it before release');
+  assert.match(coop, /combatLayoutState = \{\};\s*\/\/[^\n]*\n\s*closeCombatFullLog\(combatToolsState\);/, 'coop closes it when the scene leaves combat');
+  const solo = readFileSync('src/ui/screens/combat.js', 'utf8');
+  assert.match(solo, /closeCombatFullLog\(combatToolsState\);\s*combatTools\.release\(\);/, 'solo leave closes it before release');
+});
+
 // A remount rebuilds the tools row, so the screen's state must carry the open
 // Full log across it. The layout observers are stubbed: no geometry is read.
 function withToolsDom(fn) {
