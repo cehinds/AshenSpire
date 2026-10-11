@@ -264,6 +264,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
       for (const k of [...knownFolders.keys()]) if (k === p || k.startsWith(p + path.sep)) knownFolders.delete(k);
     }
   };
+  const scans = []; // recursive roots, scanned once every watch is installed (below)
   function watchRecursive(abs, d) {
     let w;
     try {
@@ -272,10 +273,7 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
         for (const target of recursiveEventPaths(abs, name, platform, { isNewFolder, since: startedAt, presentAtStart })) note(target);
       });
     } catch { return false; /* recursive watch unsupported here: poll below */ }
-    // The tree is scanned after the watch is installed, so a change made during the scan still
-    // has its event; the events wait until this synchronous scan is done.
-    if (FOLDER_EVENTS.has(platform)) foldersUnder(abs, knownFolders);
-    if (platform === 'darwin') for (const f of walk(abs).keys()) { try { startFiles.set(f, fs.statSync(f).ino); } catch { /* raced a delete */ } }
+    scans.push(abs);
     w.on('error', () => { try { w.close(); } catch { /* closed */ } poll(abs); modes[d] = 'poll'; });
     watchers.push(w);
     return true;
@@ -289,6 +287,12 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     const watched = !forcePoll && (mode === 'recursive' ? watchRecursive(abs, d) : watchTree(abs));
     if (watched) modes[d] = 'watch';
     else { poll(abs); modes[d] = 'poll'; }
+  }
+  // The trees are scanned only after every watch is installed, so a change made during any scan
+  // still has its event; the events wait until these synchronous scans are done.
+  for (const abs of scans) {
+    if (FOLDER_EVENTS.has(platform)) foldersUnder(abs, knownFolders);
+    if (platform === 'darwin') for (const f of walk(abs).keys()) { try { startFiles.set(f, fs.statSync(f).ino); } catch { /* raced a delete */ } }
   }
 
   return {
