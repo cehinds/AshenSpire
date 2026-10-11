@@ -159,6 +159,8 @@ for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={}, saved={}, live={};
 const PART_BYTES=180000;
+const HOLDER='tab-'+Math.random().toString(36).slice(2,10);
+const stuck={};
 function chunk(rows){ const out=[]; let cur=[], size=2; for(const r of rows){ const n=JSON.stringify(r).length+1; if(cur.length&&size+n>PART_BYTES){ out.push(cur); cur=[]; size=2; } cur.push(r); size+=n; } out.push(cur); return out; }
 
 /* ---------- indexes ---------- */
@@ -326,7 +328,7 @@ function parseCSV(text){
   const cols=nonEmpty[0].map(s=>s.trim());
   return {columns:cols, rows:nonEmpty.slice(1).map(r=>{ const o={}; cols.forEach((c,j)=>{ o[c]=coerce(r[j]??''); }); return o; })};
 }
-function coerce(s){ const t=String(s); return (/^-?\d+(\.\d+)?$/.test(t) && String(Number(t))===t)? Number(t) : t; }
+function coerce(s){ const raw=String(s), t=raw.trim(); return (/^-?\d+(\.\d+)?$/.test(t) && String(Number(t))===t)? Number(t) : raw; }
 
 /* ---------- persistence ---------- */
 const LS='ashen-tag-workbench-v1';
@@ -345,7 +347,10 @@ async function flush(t){
   dirty.delete(t); saving.add(t); setStatus();
   const cols=state.data[t].columns;
   const parts=chunk(state.data[t].rows.map(r=>cols.map(c=>r[c]??'')));
+  let lease=null;
   try{
+    lease=await db.doc('tables/'+t).acquire({holder:HOLDER, ttlMs:20000}).catch(()=>null);
+    if(lease && !lease.acquired){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),1500); setStatus('','Another editor is saving '+TABLES[t].label+'; retrying.'); return; }
     const prev=saved[t]||{parts:[],head:'',revs:[]};
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
     const revs=[];
@@ -599,11 +604,15 @@ rebuild(); setStatus(); render();
       const h=live[t].head; if(!h) return;
       let rows;
       if(Array.isArray(h.rows)) rows=h.rows;
-      else { rows=[]; const hc=h.columns||[]; for(let i=0;i<(h.parts||0);i++){ const pp=live[t].partMeta.get(i); const p=live[t].parts.get(i); if(!p) return; if(Array.isArray(h.revs) && (!pp || pp.rev!==h.revs[i])) return; for(const r of p) rows.push(Array.isArray(r)? Object.fromEntries(hc.map((c,j)=>[c,r[j]??''])) : r); } }
+      else { rows=[]; const hc=h.columns||[]; let mismatch=false;
+        for(let i=0;i<(h.parts||0);i++){ const pp=live[t].partMeta.get(i); if(!live[t].parts.get(i)) return; if(Array.isArray(h.revs) && (!pp || pp.rev!==h.revs[i])) mismatch=true; }
+        if(mismatch){ if(!stuck[t]) stuck[t]=setTimeout(()=>{ stuck[t]='late'; apply(); },6000); if(stuck[t]!=='late') return; }
+        clearTimeout(stuck[t]); const late=stuck[t]==='late'; stuck[t]=null;
+        for(let i=0;i<(h.parts||0);i++){ const p=live[t].parts.get(i); for(const r of p) rows.push(Array.isArray(r)? Object.fromEntries(hc.map((c,j)=>[c,r[j]??''])) : r); } }
       const cols=Array.isArray(h.columns)&&h.columns.length? [...h.columns] : [...TABLES[t].columns];
       for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
       loaded.add(t); pending.delete(t);
-      saved[t]= Array.isArray(h.rows)? {parts:[],head:'',revs:[]} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts,format:h.format,revs:h.revs}), revs:Array.isArray(h.revs)? [...h.revs] : []};
+      saved[t]= (Array.isArray(h.rows)||late)? {parts:[],head:'',revs:[]} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts,format:h.format,revs:h.revs}), revs:Array.isArray(h.revs)? [...h.revs] : []};
       if(JSON.stringify(rows)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
       state.data[t]={columns:cols, rows:JSON.parse(JSON.stringify(rows))};
       loaded.add(t); pending.delete(t);
