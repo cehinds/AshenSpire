@@ -264,6 +264,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
         door.style.left = `${local.left}px`;
         door.style.top = `${local.top}px`;
+        // The Info door stays visibility:hidden until its spot is written, so
+        // it never paints at a temporary position and then moves.
+        if (door === inspect) door.dataset.placed = 'true';
       }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
