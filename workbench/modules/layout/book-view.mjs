@@ -49,8 +49,9 @@ export function createBookView(root, host) {
   const frame = $('.bk-frame');
   const st = {
     text: null, original: null, hash: null, parsed: null, bookId: null, error: null, loading: null,
-    catalog: null, game: null, ready: false, connecting: null,
+    catalog: null, game: null, ready: false, connecting: null, serverId: null, framed: false, nonce: 0,
   };
+  let offReload = null;
 
   const recipe = () => (st.parsed && st.bookId ? st.parsed.data[st.bookId] : null);
   const dirtyIds = () => (st.text !== null && st.original !== null ? K.changedBooks(st.text, st.original) : []);
@@ -68,24 +69,46 @@ export function createBookView(root, host) {
     frame.contentWindow.postMessage({ source: K.BOOK_MODULE_SOURCE, type: 'set', bookId: st.bookId, recipes: st.parsed.data }, st.game.origin);
   }
 
-  /** Resolve the game server and point the frame at its render page. A stopped server shows a setup note. */
-  async function connect() {
-    if (st.ready || st.connecting) return;
-    st.connecting = true;
-    let base = null;
-    try { base = K.gameBaseOf(await host.api('tools')); } catch { base = null; }
-    st.connecting = false;
-    if (!base) { showSetup('The game server is not running.'); return; }
+  /**
+   * Resolve the game server and point the frame at its render page, as the connect plan says:
+   * keep a ready frame of this server, load the page again (a first show, a restart, a rebuild),
+   * or show the setup note while no server is up. Concurrent calls share one lookup, and a
+   * forced request that arrives during it is kept for that lookup's plan.
+   */
+  async function connect({ force = false } = {}) {
+    if (st.connecting) { st.connecting.force = st.connecting.force || force; return; }
+    const job = { force };
+    st.connecting = job;
+    let tools = null;
+    try { tools = await host.api('tools'); } catch { tools = null; }
+    st.connecting = null;
+    const base = K.gameBaseOf(tools);
+    const serverId = K.gameStartOf(tools);
+    const plan = K.connectPlan({ base, currentOrigin: st.game?.origin ?? null, ready: st.ready, force: job.force, serverId, currentServerId: st.serverId });
+    if (plan === 'setup') { showSetup('The game server is not running.'); return; }
+    if (plan === 'keep') return;
     st.game = { base, origin: new URL(base).origin };
+    st.serverId = serverId;
     st.ready = false;
     frame.hidden = false;
     $('.bk-setup').hidden = true;
-    frame.src = K.renderUrl(base, { parentOrigin: location.origin });
+    // A frame that already loaded gets a new nonce, so the same page is navigated to again.
+    frame.src = K.renderUrl(base, { parentOrigin: location.origin, nonce: st.framed ? ++st.nonce : 0 });
+    st.framed = true;
     clearTimeout(st.readyTimer);
     st.readyTimer = setTimeout(() => { if (!st.ready) showSetup(SERVER_HINT); }, 12000);
   }
 
+  /** Subscribe to the host's game-start and content-reload notices while the view shows. */
+  function subscribe() {
+    if (offReload || typeof host.onReload !== 'function') return;
+    offReload = host.onReload((ev) => { connect({ force: ev?.kind === 'reload' }); });
+  }
+
+  function unsubscribe() { if (offReload) { offReload(); offReload = null; } }
+
   function showSetup(message) {
+    st.ready = false;
     frame.hidden = true;
     const p = $('.bk-setup');
     p.hidden = false;
@@ -261,10 +284,14 @@ export function createBookView(root, host) {
 
   return {
     show() {
+      subscribe();
+      // Every show re-resolves the server: a frame that is still ready for it is kept.
       if (!st.loading) st.loading = load();
-      else if (st.parsed && !st.ready) connect();
+      else connect();
       if (st.parsed) paintAll();
     },
+    /** The view leaves the screen: its host notices stop, and a show subscribes again. Drafts stay. */
+    hide() { unsubscribe(); },
     /** The one file this view saves: the draft, sent with the hash it was read at. */
     changes() {
       if (st.text === null || st.original === null || st.error || st.text === st.original) return [];
