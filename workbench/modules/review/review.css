@@ -31,6 +31,7 @@
 .rv-filters select, .rv-filters input[type="number"] { font: inherit; font-size: 13px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--as-line, #3a2f20); background: var(--as-bg-raised, #23201c); color: inherit; }
 .rv-filters input[type="number"] { width: 68px; }
 .rv-summary { margin: 0; font-size: 12px; opacity: 0.8; font-variant-numeric: tabular-nums; }
+.rv-accept-bar { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
 
 .rv-table-wrap { flex: 1; min-height: 240px; overflow: auto; border: 1px solid var(--as-line, #3a2f20); border-radius: 8px; }
 .rv-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }

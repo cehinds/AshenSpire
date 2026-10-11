@@ -4,7 +4,7 @@
 // in pixels.mjs; the captures and baselines come through the Workbench API.
 
 import {
-  SCREENS, DEVICES, deviceById, screenById, rowsFor, filterRows, summarizeRows, judge, percentLabel,
+  SCREENS, DEVICES, deviceById, screenById, rowsFor, filterRows, summarizeRows, acceptPlan, judge, percentLabel,
   diffPixels, diffImage, DEFAULT_TOLERANCE, DEFAULT_THRESHOLD,
 } from './model.mjs';
 import { rgbaOf, pngUrlOf } from './pixels.mjs';
@@ -221,6 +221,10 @@ export default {
           <label>Device <select data-f="device"><option value="">All devices</option>${deviceOpts}</select></label>
           <label>Tolerance <input type="number" min="0" max="255" step="1" data-f="tolerance" title="How far a channel may move (0-255) before a pixel counts as changed"></label>
           <label>Threshold % <input type="number" min="0" max="100" step="0.01" data-f="threshold" title="The share of pixels that must change before a screen counts as changed"></label>
+          <span class="rv-accept-bar">
+            <button type="button" class="rv-acc-screen" title="Make the current captures of this screen, on every device, the baselines">Accept this screen</button>
+            <button type="button" class="rv-acc-all" title="Make every changed capture, and every capture with no baseline, the baseline">Accept all changed</button>
+          </span>
         </div>
         <p class="rv-summary" role="status"></p>
         <div class="rv-table-wrap"><table class="rv-table">
@@ -234,6 +238,10 @@ export default {
       f('tolerance').value = String(st.tolerance);
       f('threshold').value = String(st.threshold);
       main().querySelector('.rv-filters').addEventListener('change', onFilter);
+      main().querySelector('.rv-accept-bar').addEventListener('click', (ev) => {
+        if (ev.target.closest('.rv-acc-all')) acceptAll();
+        else if (ev.target.closest('.rv-acc-screen')) acceptScreen();
+      });
       io?.disconnect();
       io = new IntersectionObserver((entries) => {
         for (const e of entries) if (e.isIntersecting) ensureThumbs(e.target.__row);
@@ -330,6 +338,43 @@ export default {
       if (shown !== s.total) parts.push(`showing ${shown}`);
       const line = main().querySelector('.rv-summary');
       if (line) line.textContent = parts.join(' · ');
+      const all = acceptPlan(st.rows, { all: true }).items.length;
+      const allBtn = main().querySelector('.rv-acc-all');
+      if (allBtn) { allBtn.textContent = `Accept all changed (${all})`; allBtn.disabled = all === 0; }
+      const screenBtn = main().querySelector('.rv-acc-screen');
+      if (screenBtn) screenBtn.disabled = !st.filter.screen || acceptPlan(st.rows, { screen: st.filter.screen }).items.length === 0;
+    }
+
+    // ---------- accept as baseline ----------
+    /** Copies the chosen captures over their baselines on the server, then reloads the rows (and the open detail). */
+    async function acceptItems(items, what) {
+      if (!items.length) {
+        ctx.toast({ kind: 'warn', title: 'Nothing to accept', detail: 'Only a capture that exists can become a baseline.', record: false });
+        return;
+      }
+      let res;
+      try { res = await ctx.api('review/accept', { items }); } catch (err) {
+        ctx.toast({ kind: 'error', title: 'The baseline was not accepted', detail: err.message });
+        return;
+      }
+      const n = res.accepted.length;
+      const notes = [what, res.missing.length ? `${res.missing.length} had no capture` : ''].filter(Boolean).join(' · ');
+      ctx.toast({ kind: 'success', title: `Accepted ${n} baseline${n === 1 ? '' : 's'}`, detail: notes, record: false });
+      const reopen = dstate.row?.key;
+      await loadState();
+      if (reopen && st.rows.some((r) => r.key === reopen)) openDetail(reopen);
+    }
+
+    async function acceptAll() {
+      const plan = acceptPlan(st.rows, { all: true });
+      if (plan.items.length > 1 && !window.confirm(`Accept ${plan.items.length} captures as their baselines? The old baselines for them are replaced.`)) return;
+      await acceptItems(plan.items, 'changed and new screens');
+    }
+
+    async function acceptScreen() {
+      const plan = acceptPlan(st.rows, { screen: st.filter.screen });
+      if (plan.items.length > 1 && !window.confirm(`Accept ${plan.items.length} captures of ${screenById(st.filter.screen).label} as their baselines? The old baselines are replaced.`)) return;
+      await acceptItems(plan.items, screenById(st.filter.screen).label);
     }
 
     /** The thumbnails of one row: its baseline, its capture and the diff picture. Fetched once a row scrolls into view. */
@@ -565,6 +610,10 @@ export default {
     detail.addEventListener('click', (ev) => {
       const t = ev.target;
       if (t.closest('.rv-back')) return closeDetail();
+      if (t.closest('.rv-accept') && dstate.row) {
+        const r = dstate.row;
+        return acceptItems([{ device: r.device, screen: r.screen }], `${screenById(r.screen).label}, ${deviceById(r.device).label}`);
+      }
       if (t.closest('.rv-prev')) return stepDetail(-1);
       if (t.closest('.rv-next')) return stepDetail(1);
       const zoom = t.closest('[data-zoom]')?.dataset.zoom;
