@@ -128,7 +128,7 @@ export function createBattlefieldView(root, host) {
     const box = $('.bf-insp');
     if (!st.data || !st.layoutKey) { box.innerHTML = ''; return; }
     const pres = presentation();
-    const fields = B.FIELDS.map((f) => `<div class="lay-row"><code title="${esc(f.key)}">${esc(f.label)}</code><span><input type="number" step="1" data-bf-field="${esc(f.key)}" value="${esc(pres[f.key] ?? f.def)}"> <span class="lay-unit">${esc(f.suffix || '')}</span></span></div>`).join('');
+    const fields = layoutKeyRowsHtml(pres) + B.FIELDS.filter((f) => !B.LAYOUT_KEY_FIELDS.includes(f.key)).map((f) => `<div class="lay-row"><code title="${esc(f.key)}">${esc(f.label)}</code><span><input type="number" step="1" data-bf-field="${esc(f.key)}" value="${esc(pres[f.key] ?? f.def)}"> <span class="lay-unit">${esc(f.suffix || '')}</span></span></div>`).join('');
     const preset = `<div class="lay-row"><code title="formationPreset">Preset</code><span><select data-bf-field="formationPreset">${B.PRESETS.map((p) => `<option value="${esc(p)}"${p === pres.formationPreset ? ' selected' : ''}>${esc(p)}</option>`).join('')}</select></span></div>`;
     const cells = selectedCells();
     let slot = '';
@@ -346,6 +346,14 @@ export function createBattlefieldView(root, host) {
 function gameBaseOf(tools = []) {
   const game = (Array.isArray(tools) ? tools : []).find((t) => t && t.id === 'game');
   return game && game.status === 'up' && game.url ? String(game.url).replace(/\/?$/, '/') : null;
+}
+
+/** The columns and rows as read-only values: the game picks the layout by its key, so these are not inputs. */
+export function layoutKeyRowsHtml(pres) {
+  return B.LAYOUT_KEY_FIELDS.map((key) => {
+    const spec = B.FIELDS.find((f) => f.key === key);
+    return `<div class="lay-row"><code title="${esc(key)}">${esc(spec.label)}</code><span><output data-bf-field="${esc(key)}" aria-readonly="true">${esc(pres[key] ?? spec.def)}</output> <span class="lay-note">Set by the layout key</span></span></div>`;
+  }).join('');
 }
 
 const round1 = (v) => Math.round(v * 10) / 10;

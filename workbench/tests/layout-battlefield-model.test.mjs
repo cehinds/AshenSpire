@@ -92,6 +92,17 @@ test('the geometry constants match the config file the game reads', () => {
 const W = 1641, H = 526;
 const slots = (key, parts) => B.battlefieldGeometry(presentationOf(parts, key), { width: W, height: H });
 
+test('the inspector shows columns and rows read-only, labelled by the layout key', async () => {
+  const { layoutKeyRowsHtml } = await import('../modules/layout/battlefield-view.mjs');
+  const parts = B.parsePresets(realText);
+  const html = layoutKeyRowsHtml(parts.data['2x2'].presentation);
+  assert.match(html, /Set by the layout key/);
+  for (const field of ['formationColumns', 'formationRows']) {
+    assert.doesNotMatch(html, new RegExp(`<input[^>]*data-bf-field="${field}"`), `${field} has no input`);
+    assert.match(html, new RegExp(`<output[^>]*data-bf-field="${field}"[^>]*>2</output>`), `${field} shows its value`);
+  }
+});
+
 test('dragging a slot by px moves exactly that slot, and the others keep their place', () => {
   const parts = B.parsePresets(realText);
   const before = slots('2x2', parts);
