@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatLogEntries } from '../src/model/combatLog.js';
+import { withModalDom } from './helpers/modal-dom.mjs';
+import { resetModalState, modalOpen } from '../src/ui/modalState.js';
+import { mountCombatTools, closeCombatFullLog } from '../src/ui/components/combatTools.js';
 import { readFileSync } from 'node:fs';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, combatToolsModel, COMBAT_LOG_SIZES, COMBAT_LOG_DEFAULT_SIZE } from '../src/ui/models/CombatToolsModel.js';
 import { childModel } from '../src/ui/models/ComponentModel.js';
@@ -96,4 +99,91 @@ test('the combat log opens at Medium, and both screens start from that default',
   for (const file of ['src/ui/screens/combat.js', 'src/ui/screens/coop.js']) {
     assert.match(readFileSync(file, 'utf8'), /combatToolsState = \{ open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true \}/, file);
   }
+});
+
+// A remount rebuilds the tools row, so the screen's state must carry the open
+// Full log across it. The layout observers are stubbed: no geometry is read.
+function withToolsDom(fn) {
+  return withModalDom((dom, win) => {
+    const saved = { ResizeObserver: globalThis.ResizeObserver, MutationObserver: globalThis.MutationObserver, innerHeight: globalThis.innerHeight };
+    globalThis.ResizeObserver = class { observe() {} disconnect() {} };
+    globalThis.MutationObserver = class { observe() {} disconnect() {} };
+    globalThis.innerHeight = 800;
+    try { return fn(dom, win); } finally {
+      for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }
+    }
+  });
+}
+
+const logRows = [{ id: 1, round: 1, text: 'Reaver played Guard Counter.' }];
+const logRowsMore = [...logRows, { id: 2, round: 1, text: 'Soldier used Slash.' }];
+const fullLogButton = (combatEl) => combatEl.querySelector('[data-combat-tool="full-log"]');
+const closeDoor = (door) => [...door.panel.querySelectorAll('button')].find(node => node.textContent === 'Close').click();
+
+test('a remount keeps the open full log, refreshes its entries and Close returns focus to the new button', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    const first = mountCombatTools(combatEl, { state, onViewChange() {}, onToggle() {} });
+    first.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }));
+    fullLogButton(combatEl).click();
+    const door = state.fullLog;
+    assert.ok(door, 'the door opened');
+    assert.equal(modalOpen(), true);
+
+    first.release();
+    assert.equal(door.panel.isConnected, true, 'release() on a remount leaves the door open');
+    assert.equal(state.fullLog, door);
+
+    const second = mountCombatTools(combatEl, { state, onViewChange() {}, onToggle() {} });
+    const newButton = fullLogButton(combatEl);
+    second.update(combatToolsModel({ supported: true, enabled: true, entries: logRowsMore }));
+    assert.equal(state.fullLog, door, 'the same door, not a new one');
+    assert.equal(door.panel.querySelectorAll('li').length, logRowsMore.length, 'entries refreshed');
+
+    closeDoor(door);
+    assert.equal(door.panel.isConnected, false);
+    assert.equal(state.fullLog, null, 'closing clears the handle');
+    assert.equal(dom.document.activeElement, newButton, 'focus returns to the new Full log button');
+    assert.equal(modalOpen(), false);
+    second.release();
+  });
+});
+
+test('leaving combat closes an open full log for good', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    const tools = mountCombatTools(combatEl, { state, onViewChange() {}, onToggle() {} });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }));
+    fullLogButton(combatEl).click();
+    const door = state.fullLog;
+    closeCombatFullLog(state);
+    assert.equal(door.panel.isConnected, false, 'the door is gone');
+    assert.equal(state.fullLog, null);
+    assert.equal(modalOpen(), false);
+    tools.release();
+  });
+});
+
+test('after the reader closes the full log, Full log opens a new one', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    const tools = mountCombatTools(combatEl, { state, onViewChange() {}, onToggle() {} });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }));
+    fullLogButton(combatEl).click();
+    const first = state.fullLog;
+    closeDoor(first);
+    fullLogButton(combatEl).click();
+    assert.ok(state.fullLog && state.fullLog !== first, 'a fresh door opened');
+    closeCombatFullLog(state);
+    tools.release();
+  });
 });
