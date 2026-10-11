@@ -14,6 +14,26 @@ import * as M from './grid-model.mjs';
 const GUTTER = 48, HEAD = 32, OVERSCAN = 8, DENSITY = { compact: 24, comfortable: 34 };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
+/**
+ * What the paste banner says. Errors: a title, the first `limit` errors as lines, and `more` for the rest.
+ * No errors but an overflow: a title and one line per overflow kind. Nothing to say: null.
+ * @returns {{ title: string, lines: string[], more: number } | null}
+ */
+export function pasteSummary(errors = [], overflow = { rows: 0, cols: 0 }, limit = 10) {
+  if (errors.length) {
+    const n = errors.length;
+    return {
+      title: `Paste not applied: ${n} value${n === 1 ? '' : 's'} did not fit the column type`,
+      lines: errors.slice(0, limit).map(e => `Row ${e.row + 1}, ${e.key}: ${e.message} ("${String(e.value ?? '').slice(0, 40)}")`),
+      more: Math.max(0, n - limit),
+    };
+  }
+  const lines = [];
+  if (overflow.rows) lines.push(`${overflow.rows} clipboard row${overflow.rows === 1 ? '' : 's'} did not fit: the view ends at its last visible row.`);
+  if (overflow.cols) lines.push(`${overflow.cols} clipboard column${overflow.cols === 1 ? '' : 's'} did not fit: the grid ends at its last column.`);
+  return lines.length ? { title: 'Paste partly applied', lines, more: 0 } : null;
+}
+
 export function createGrid(el, options = {}) {
   let rules = options.rules ?? [], refs = options.refs ?? {};
   const readOnly = !!options.readOnly, onChange = options.onChange ?? null;
@@ -220,14 +240,35 @@ export function createGrid(el, options = {}) {
     lastCopied = text;
   }
   let lastCopied = '';
-  // Atomic: a bad value anywhere commits nothing; the errors are reported (event) and the grid is unchanged.
+    // Atomic: a bad value anywhere commits nothing; the errors are shown in the banner and dispatched
+  // (gk-paste-errors) and the grid is unchanged. A paste that ran out of visible rows or columns
+  // commits what fit and says what did not.
   function pasteText(text) {
     if (readOnly || !text) return;
     const anchor = sel.active ?? { r: 0, c: 0 };
     const res = M.pasteVisible(doc.rows, doc.columns, order, anchor, text, sel);
-    if (res.errors.length) { el.dispatchEvent(new CustomEvent('gk-paste-errors', { detail: res.errors })); return; }
+    if (res.errors.length) {
+      showBanner(pasteSummary(res.errors, res.overflow));
+      el.dispatchEvent(new CustomEvent('gk-paste-errors', { detail: res.errors }));
+      return;
+    }
+    hideBanner();
     if (res.change) commit(res);
+    const note = pasteSummary([], res.overflow);
+    if (note) showBanner(note);
   }
+  // Inline banner above the grid. Dismissible; a new paste replaces it.
+  let banner = null;
+  function showBanner(summary) {
+    hideBanner();
+    if (!summary) return;
+    banner = document.createElement('div');
+    banner.className = 'gk-banner'; banner.setAttribute('role', 'alert');
+    banner.innerHTML = `<div class="gk-banner-body"><strong>${esc(summary.title)}</strong><ul>${summary.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>${summary.more ? `<p>and ${summary.more} more</p>` : ''}</div><button type="button" class="gk-banner-close" aria-label="Dismiss">×</button>`;
+    banner.querySelector('.gk-banner-close').addEventListener('click', hideBanner);
+    el.insertBefore(banner, scroll);
+  }
+  function hideBanner() { if (banner) { banner.remove(); banner = null; } }
   function clearSelection() {
     if (readOnly) return;
     const cells = selectedTargets();

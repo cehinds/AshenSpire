@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../ui/kit/grid-model.mjs';
+import { pasteSummary } from '../ui/kit/grid.mjs';
 
 const cols = [
   { key: 'id', type: 'string' },
@@ -254,6 +255,22 @@ test('pasteVisible: columns past the last one are counted as overflow', () => {
   const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, [['a', '1', 'true', 'z', '{"q":1}', '6', '7']]);
   assert.deepEqual(out.overflow, { rows: 0, cols: 2 });
   assert.deepEqual(out.rows[0], { id: 'a', n: 1, on: true, tag: 'z', data: { q: 1 } });
+});
+
+test('paste banner text: the first 10 errors, "and N more", and the overflow notes', () => {
+  assert.equal(pasteSummary([], { rows: 0, cols: 0 }), null, 'a clean paste shows no banner');
+  const errs = Array.from({ length: 12 }, (_, i) => ({ row: i, key: 'n', value: 'x', message: 'Enter a valid number' }));
+  const s = pasteSummary(errs);
+  assert.equal(s.lines.length, 10);
+  assert.equal(s.more, 2, 'and 2 more');
+  assert.equal(s.lines[0], 'Row 1, n: Enter a valid number ("x")', 'rows are shown 1-based');
+  assert.match(s.title, /12 values/);
+  assert.deepEqual(pasteSummary([{ row: 0, key: 'n', value: 'x', message: 'm' }]).more, 0);
+  const o = pasteSummary([], { rows: 1, cols: 2 });
+  assert.equal(o.lines.length, 2);
+  assert.match(o.lines[0], /1 clipboard row did not fit/);
+  assert.match(o.lines[1], /2 clipboard columns did not fit/);
+  assert.equal(pasteSummary([{ row: 0, key: 'n', value: 'a'.repeat(80), message: 'm' }]).lines[0].length < 120, true, 'long values are cut');
 });
 
 test('selectedCells: columns are clipped to the column count', () => {
