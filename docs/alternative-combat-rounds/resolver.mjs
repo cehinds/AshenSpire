@@ -609,7 +609,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
 
   enemyQueue.forEach((enemy, slot) => {
     if (!paired.has(slot)) {
-      push({ type: 'unpaired', slot, enemyId: enemy.id, visible: slot < visibleCount }, enemyKey(enemy));
+      push({ type: 'unpaired', slot, enemyId: enemyKey(enemy), visible: slot < visibleCount }, enemyKey(enemy));
     }
   });
 

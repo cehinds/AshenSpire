@@ -1151,3 +1151,17 @@ test('cardHint at perception stage 3: the full action gives speed, the arrow and
   assert.equal(hint.speedDelta, 2);
   assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
 });
+
+test('unpaired: the event names the enemy by enemyId, the same key momentum uses', () => {
+  // The action id differs from its enemy id. One action is paired, the other is not.
+  const cards = [{ id: 'a', slot: 0, speed: 4, kind: 'attack' }];
+  const queue = [
+    { id: 'G-strike', enemyId: 'G', speed: 1, kind: 'other' },
+    { id: 'G-guard', enemyId: 'G', speed: 1, kind: 'other' },
+  ];
+  const { events } = resolveRound(cards, queue, 2, () => 0.99);
+  const unpaired = events.find((e) => e.type === 'unpaired');
+  assert.equal(unpaired.slot, 1);
+  assert.equal(unpaired.enemyId, 'G', 'enemyId is the enemy id, not the action id');
+  assert.equal(unpaired.momentum, 0, 'and it carries that enemy\'s momentum key');
+});
