@@ -386,7 +386,7 @@ jobs:
           entries="$RUNNER_TEMP/branch-preview-entries.jsonl"
           rm -rf "$out"; mkdir -p "$out"; : > "$entries"
           prs=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
-            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo) | select(.head.ref | test("^(feature|fix|chore)/")) | [.number, .head.ref, .head.sha] | @tsv')
+            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo) | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | [.number, .head.ref, .head.sha] | @tsv')
           # THE BRANCH NAME IS THE SITE PATH, unchanged. A name that cannot be one is
           # refused by the same check the generator runs (--branch-dir), named with its
           # PR, and skipped before any download. Nothing is sanitised, so nothing collides.
@@ -744,7 +744,7 @@ jobs:
             fi
           fi
           open=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
-            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/")) | .number') \
+            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | .number') \
             || { echo "::error::could not list the open pull requests into dev"; exit 1; }
           while read -r pr; do
             [ -n "$pr" ] || continue
@@ -758,7 +758,7 @@ jobs:
           # feature/fix/chore heads. Paginated, 100 per page.
           since="$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ)"
           closed=$(gh api --paginate "repos/$REPO/pulls?state=closed&base=dev&sort=updated&direction=desc&per_page=100" \
-            | jq -r --arg repo "$REPO" --arg since "$since" '.[] | select(.closed_at != null and .closed_at >= $since and .head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/")) | .number') \
+            | jq -r --arg repo "$REPO" --arg since "$since" '.[] | select(.closed_at != null and .closed_at >= $since and .head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | .number') \
             || { echo "::error::could not list the closed pull requests into dev"; exit 1; }
           while read -r pr; do
             [ -n "$pr" ] || continue

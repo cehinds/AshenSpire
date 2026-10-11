@@ -130,3 +130,10 @@ test('removal is requested only once the art PR exists', () => {
 test('pages: the newest run for the head SHA must itself be the success', () => {
   assert.ok(pages.includes(`[.workflow_runs[] | select(.head_sha == $sha)][0] | select(.conclusion == "success")`));
 });
+
+test('pages: branch previews match feature, fix and chore prefixes in any case (Chore/X too)', () => {
+  const wf = readFileSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url), 'utf8');
+  const filters = wf.match(/test\("\^\(feature\|fix\|chore\)\/"[^)]*\)/g) || [];
+  assert.ok(filters.length >= 3, `expected the three PR-branch filters, found ${filters.length}`);
+  for (const f of filters) assert.match(f, /; "i"\)$/, `case-sensitive branch filter: ${f}`);
+});
