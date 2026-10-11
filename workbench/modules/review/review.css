@@ -1,7 +1,7 @@
 /* workbench/modules/review/review.css — Visual Review layout. The module is a size
    container, so its breakpoints follow the module's own width, as Entity Browser's do.
    It uses the Workbench tokens (--as-*) like the other native modules. */
-.rv { container: rv / inline-size; display: flex; flex-direction: column; height: 100%; min-height: 0; color: inherit; font-size: var(--as-text-md, 13px); }
+.rv { container: rv / inline-size; display: flex; flex-direction: column; height: 100%; min-height: 620px; color: inherit; font-size: var(--as-text-md, 13px); }
 .rv [hidden] { display: none !important; }
 .rv button { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--as-line, #3a2f20); background: transparent; color: inherit; }
 .rv button:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -66,7 +66,7 @@
 .rv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .rv-acts button { padding: 4px 8px; font-size: 12px; }
 
-.rv-detail { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.rv-detail { flex: 1; min-height: 520px; display: flex; flex-direction: column; gap: 8px; }
 .rv-dhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .rv-dname { flex: 1; min-width: 0; }
 .rv-dtitle { margin: 0; font-size: 17px; font-weight: 600; }
