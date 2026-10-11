@@ -1476,7 +1476,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-selected-actions { flex: none; padding: 0 1rem 1rem; }
 .deck-editor-selected-buttons { display: flex; flex-wrap: wrap; gap: .6rem; }
 .deck-editor-selected-buttons > button { flex: 1 1 10rem; }
-.deck-editor-stepper-count { flex: none; min-width: 2.6rem; text-align: center; align-self: center; font-weight: 700; color: var(--parchment, #f0ddba); }
+.deck-editor-stepper-count { flex: none; min-width: 3.5ch; text-align: center; align-self: center; font: 700 max(1.2rem, var(--deck-min-text)) system-ui, sans-serif; font-variant-numeric: tabular-nums; color: var(--parchment, #f0ddba); }
 .deck-editor-selected-reason { color: var(--muted); line-height: 1.4; margin: .4rem 0 1rem; }
 .deck-editor-primary { width: 100%; min-height: var(--deck-editor-target); font: 700 1.9rem Georgia, serif; }
 .deck-editor .deck-editor-primary { background: #c9a227; color: #181006; border-color: #f1cf71; font: 700 1.9rem Georgia, serif; }

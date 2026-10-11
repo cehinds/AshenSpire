@@ -891,7 +891,7 @@ test('DOM: a library tile － takes one deck copy out and its count falls; － i
     const n = run.deck.length;
     const variant = deckVariantKey(run.deck.find(c => c.cardId === 'gorefireSlash'));
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
-    const count = (key) => Number(editor.root.querySelector(`.deck-editor-tile[data-key="${key}"] .deck-editor-stepper-count`).textContent);
+    const count = (key) => Number(editor.root.querySelector(`.deck-editor-tile[data-key="${key}"] .deck-editor-stepper-count`).textContent.split('/')[0]);
     const strikeBefore = count('basic:attack');
     assert.ok(strikeBefore >= 1, 'the starting deck holds a Strike');
     editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-step[data-action="remove"]').click();
@@ -1220,6 +1220,27 @@ test('DOM: a card no stance classifies shows a Neutral stance, not none (a Rogue
       || [...editor.root.querySelectorAll('.deck-editor-row')].find(node => node.querySelector('.deck-editor-name')?.textContent === prepare.name);
     assert.equal(row.querySelector('.deck-editor-stance').textContent, 'Neutral');
     assert.equal(row.querySelector('.deck-editor-stance').dataset.stance, 'neutral');
+    editor.close();
+  });
+});
+
+test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the tile countText', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const variant = deckVariantKey(run.deck.find(c => c.cardId === 'gorefireSlash'));
+    // Two Gorefire copies owned, one in the deck: one loose in the library.
+    run.sideboard = [...run.sideboard.filter(c => deckVariantKey(c) !== variant),
+      { ...structuredClone(run.deck.find(c => deckVariantKey(c) === variant)), instanceId: 'loose-gorefire' }];
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const model = deckEditorModel({ registries: REG, run, settings: {} });
+    const basic = editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-stepper-count');
+    assert.equal(basic.textContent, `${model.collection.find(t => t.key === 'basic:attack').inDeck}/∞`);
+    const limited = editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-stepper-count`);
+    assert.equal(limited.textContent, '1/2', 'one in the deck of two owned');
+    const tile = model.collection.find(t => t.key === `card:${variant}`);
+    assert.equal(limited.getAttribute('aria-label'), tile.countText, 'the label is the tile sentence');
+    assert.equal(limited.getAttribute('title'), tile.countText);
     editor.close();
   });
 });

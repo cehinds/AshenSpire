@@ -370,6 +370,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
 
 
+  // The stepper reads in-deck / owned: ∞ for a basic, and a kept set-aside
+  // tile's owned is its deck copies plus its sideboard copies.
+  function stepperCount(tile) {
+    const kept = tile.key.startsWith('kept:');
+    const owned = tile.unlimited ? '∞' : kept ? tile.inDeck + tile.owned : tile.owned;
+    return `${tile.inDeck}/${owned}`;
+  }
+
   function collectionPane() {
     const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search');
     search.addEventListener('input', () => {
@@ -411,7 +419,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
         dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
       }, [main, inlineInspect(tile, 'collection'), el('div', { class: 'deck-editor-actions' }, [
-        minus, el('span', { class: 'deck-editor-stepper-count', text: String(tile.inDeck) }), plus,
+        minus, el('span', { class: 'deck-editor-stepper-count', text: stepperCount(tile), title: tile.countText, 'aria-label': tile.countText }), plus,
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
