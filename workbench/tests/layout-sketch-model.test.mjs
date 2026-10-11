@@ -110,3 +110,14 @@ test('a hidden box stays in the canvas document as hidden, so Layers still lists
   assert.equal(doc.items.find((it) => it.id === 'hand').hidden, true, 'the canvas kit keeps the flag');
   assert.equal(S.drawingFor(hidden, phone).rects.length, 3, 'a hidden box is still not drawn in the PNG');
 });
+
+test('showing a hidden box from Layers writes its hidden flag back, and hiding one writes it too', () => {
+  const { data } = S.parseSketch(realText);
+  const hidden = S.updateBox(data, 'hand', { hidden: true });
+  const shown = S.applyCanvasItems(hidden, S.canvasItems(hidden, phone).map((it) => (it.id === 'hand' ? { ...it, hidden: false } : it)), phone);
+  assert.equal(shown.boxes.find((b) => b.id === 'hand').hidden, false, 'the box is shown in the file');
+  assert.equal(S.drawingFor(shown, phone).rects.length, 4);
+  const again = S.applyCanvasItems(data, S.canvasItems(data, phone).map((it) => (it.id === 'hud' ? { ...it, hidden: true } : it)), phone);
+  assert.equal(again.boxes.find((b) => b.id === 'hud').hidden, true, 'the box is hidden in the file');
+  assert.equal(S.drawingFor(again, phone).rects.length, 3);
+});

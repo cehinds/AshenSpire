@@ -98,8 +98,9 @@ export function canvasItems(sketch, viewport) {
 }
 
 /**
- * Apply canvas geometry (after a gesture) to the sketch. Only the items whose rect
- * changed are written; in breakpoint scope the change goes to that breakpoint.
+ * Apply canvas items (after a gesture or a Layers show/hide) to the sketch. Only the
+ * items whose rect or hidden flag changed are written; a rect change in breakpoint
+ * scope goes to that breakpoint, and the hidden flag is a base value.
  */
 export function applyCanvasItems(sketch, items, viewport, { scope = 'base' } = {}) {
   const bp = breakpointOf(sketch, viewport);
@@ -108,6 +109,7 @@ export function applyCanvasItems(sketch, items, viewport, { scope = 'base' } = {
   for (const it of items) {
     const old = before.get(it.id);
     if (!old) continue;
+    if (it.hidden !== undefined && Boolean(it.hidden) !== old.hidden) out = updateBox(out, it.id, { hidden: Boolean(it.hidden) });
     if (old.x === it.x && old.y === it.y && old.w === it.w && old.h === it.h) continue;
     out = M.applyResolvedRect(out, it.id, { x: it.x, y: it.y, w: it.w, h: it.h }, viewport, {
       breakpointId: bp ? bp.id : null, scope: scope === 'breakpoint' && bp ? 'breakpoint' : 'base',
