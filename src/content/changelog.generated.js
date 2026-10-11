@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1849",
+    "id": "pr-1850",
     "date": "2026-10-11",
     "group": "2026-10-11",
-    "summary": "Attacks play in order, Inspect buttons only on the selected fighter, and the game says why a reaction wasn't offered",
-    "detail": "STAGGERED, COUNTERED, EVADED, CRITICAL and GUARD BREAK now rise over the fighter they happen to, and a short note above the Reaction switch says why a Counter or Sweep wasn't offered. The combat log now opens at its middle size, and its Full log button shows every entry of the fight on one full-screen page. An attack now plays the swing and the return to stance first, then the target's reaction, then the damage number, and only then does the health bar change. A fighter's Inspect \"i\" now shows only while that fighter is selected, and it appears already in its place instead of jumping there; a card's Inspect appears once, above the card. Your stance and status icons stay visible when your hero isn't selected. When an enemy attacks and you hold a Counter or Sweep the game can't offer, the combat log says why (for example, a Counter can't answer a Sweep, or you're short on SP), and a Smash that breaks Guard is logged. In co-op, the same callouts and the \"no reaction\" note now show too. On a phone the note sits above your HP bar instead of covering it, and Full log is a small gold text link in the log's header.",
-    "build": "0.7.1.1319",
-    "pullRequest": 1849,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1849"
+    "summary": "Deck editor: one card list with − and ＋, and every card shows its stance",
+    "detail": "Removing a card no longer jumps to the search box (on phones it opened the keyboard). Search is off for now and each list has one compact title row. Every row in the card library now has − count ＋ buttons, and the inspected card offers both Add to deck and Remove from deck. Phones drop the Library / Inspect / Deck tabs for one list; inspecting opens over it and Back returns to it, and a Draw order view appears only when Play in deck order is on. Each card names its stance (Attack, Defend, Counter, Smash, Sweep or Ranged; otherwise Spell, Power, Consumable or Skill) and its range (Melee, Reach or Ranged), with its rank as a badge on the art (Cantrip or Basic at rank 0) and a physical or magical mark beside its costs. A selected card shows an (i) on its art; the (i), or pressing the art again, opens Inspect.",
+    "build": "0.7.1.1345",
+    "pullRequest": 1850,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1850"
   },
   {
     "id": "pr-1861",

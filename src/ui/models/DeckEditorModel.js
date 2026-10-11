@@ -130,30 +130,51 @@ function sorter(sort) {
  * upgraded or modded basic kept in the sideboard), whose tap restores exactly
  * that variant, so a kept Strike+ is shown as itself and chosen on purpose.
  */
+// The instanceId of the LAST card in the deck that `belongs` to a tile, or
+// null: the copy that tile's − takes out.
+function lastInstanceId(deck, belongs) {
+  for (let at = deck.length - 1; at >= 0; at -= 1) {
+    const card = deck[at];
+    if (card && belongs(card)) return card.instanceId ?? null;
+  }
+  return null;
+}
+
 function basicTiles(registries, run) {
   const deck = run.deck || [];
   const sideboard = run.sideboard || [];
   const fresh = (c) => c && !c.grantedBy && !isSetAsideBasic(c);
+  // `belongs` is the one test that counts a basic's copies in the deck: the
+  // tile's inDeck and its − target both read it.
+  // The mint tile counts and removes only PLAIN copies: a set-aside (upgraded
+  // or modded) copy in the deck is its kept tile's to remove, never the mint's.
+  const mintBelongs = (belongs) => (c) => belongs(c) && fresh(c);
   const mints = isEquippedRun(run)
     ? ['attack', 'guard'].map((role) => {
-      const ofRole = (c) => c && c.equipmentRole === role && !c.grantedBy;
-      const sample = deck.find((c) => ofRole(c) && fresh(c)) || sideboard.find((c) => ofRole(c) && fresh(c))
+      const belongs = mintBelongs((c) => c && c.equipmentRole === role && !c.grantedBy);
+      const sample = deck.find((c) => belongs(c)) || sideboard.find((c) => belongs(c))
         || { cardId: role === 'attack' ? deckRules.unlimitedCardIds[0] : deckRules.unlimitedCardIds[1], equipmentRole: role };
-      return { key: `basic:${role}`, card: sample, inDeck: deck.filter(ofRole).length, mint: true };
+      return { key: `basic:${role}`, card: sample, belongs, inDeck: deck.filter(belongs).length, mint: true };
     })
-    : deckRules.unlimitedCardIds.map((cardId) => ({
-      key: `basic:${cardId}`,
-      card: { cardId },
-      inDeck: deck.filter((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === cardId).length,
-      mint: true,
-    }));
+    : deckRules.unlimitedCardIds.map((cardId) => {
+      const belongs = mintBelongs((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === cardId);
+      return { key: `basic:${cardId}`, card: { cardId }, belongs, inDeck: deck.filter(belongs).length, mint: true };
+    });
+  // One kept tile per set-aside VARIANT, in the deck or the sideboard. `count` is
+  // the sideboard copies (what the tile can restore); `inDeck` the deck copies;
+  // its − takes the last set-aside copy of that variant from the deck.
   const kept = new Map();
-  for (const card of sideboard) {
+  for (const card of [...deck, ...sideboard]) {
     if (!isSetAsideBasic(card)) continue;
     const variant = deckVariantKey(card);
-    const entry = kept.get(variant) || { key: `kept:${variant}`, card, count: 0, mint: false };
-    entry.count += 1;
-    kept.set(variant, entry);
+    if (!kept.has(variant)) {
+      const belongs = (c) => isSetAsideBasic(c) && deckVariantKey(c) === variant;
+      kept.set(variant, { key: `kept:${variant}`, card, count: 0, inDeck: deck.filter(belongs).length, belongs, mint: false });
+    }
+  }
+  for (const card of sideboard) {
+    if (!isSetAsideBasic(card)) continue;
+    kept.get(deckVariantKey(card)).count += 1;
   }
   return [...mints, ...kept.values()];
 }
@@ -166,8 +187,9 @@ function basicTiles(registries, run) {
  *     done: { disabled, refusal },
  *     curve: [{ bucket, count, share }],
  *     ordered,                        // playInDeckOrder: rows keep run.deck order
- *     deck: [{ instanceId, name, cost, type, source, upgraded, locked, lockText, removable, canUp, canDown }],
- *     collection: [{ key, name, cost, type, source, unlimited, owned, inDeck, countText, addable, refusal }],
+ *     deck: [{ instanceId, tileKey, name, cost, type, source, upgraded, locked, lockText, removable, canUp, canDown }],
+ *     collection: [{ key, name, cost, type, source, unlimited, owned, inDeck, countText, addable, refusal,
+ *                    removeInstanceId, removable }],   // removeInstanceId: the last deck copy this tile's − takes
  *     filters: { type: [{ id, label, on }], cost: [...], source: [...], upgraded: { label, on } },
  *     sorts: [{ id, label, on }] }
  */
@@ -191,11 +213,17 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     .filter((bucket) => bucket !== 'X' || tally.X > 0)
     .map((bucket) => Object.freeze({ bucket, count: tally[bucket], share: tally[bucket] / peak }));
 
+  // The collection tile a deck card counts toward: the basic whose `belongs`
+  // test counts it (the same test as that basic's inDeck), else its variant tile.
+  const basicMints = basicTiles(registries, run).filter((basic) => basic.mint);
+  const tileKeyFor = (card) => (isSetAsideBasic(card) ? `kept:${deckVariantKey(card)}`
+    : basicMints.find((basic) => basic.belongs(card))?.key || `card:${deckVariantKey(card)}`);
   let deckRows = described.map(({ card, row }, index) => {
     const locked = false;
     return {
       ...row,
       instanceId: card.instanceId,
+      tileKey: tileKeyFor(card),
       index,
       locked,
       lockText: '',
@@ -232,11 +260,16 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   const tiles = [];
   for (const basic of basicTiles(registries, run)) {
     const row = describe(registries, basic.card);
+    const removeInstanceId = lastInstanceId(deck, basic.belongs);
     tiles.push(basic.mint
       ? { ...row, source: 'basic', key: basic.key, unlimited: true, owned: Infinity, inDeck: basic.inDeck,
-        countText: t('deckEditor.tile.basic', { inDeck: basic.inDeck }), addable: true, refusal: '' }
-      : { ...row, source: 'basic', key: basic.key, unlimited: false, owned: basic.count, inDeck: 0,
-        countText: t(basic.card.upgraded ? 'deckEditor.tile.keptUpgraded' : 'deckEditor.tile.kept', { count: basic.count }), addable: true, refusal: '' });
+        countText: t('deckEditor.tile.basic', { inDeck: basic.inDeck }), addable: true, refusal: '',
+        removeInstanceId, removable: removeInstanceId != null }
+      : { ...row, source: 'basic', key: basic.key, unlimited: false, owned: basic.count, inDeck: basic.inDeck,
+        countText: t(basic.card.upgraded ? 'deckEditor.tile.keptUpgraded' : 'deckEditor.tile.kept', { count: basic.count }),
+        // Nothing to restore with no sideboard copy: the tile is shown, not addable.
+        addable: basic.count > 0, refusal: '',
+        removeInstanceId, removable: removeInstanceId != null });
   }
   // One tile per VARIANT (card id + upgraded + mods), so the copy a tile shows
   // is the copy its tap moves: an upgraded card and a plain one are two tiles,
@@ -261,10 +294,12 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
     else if (!entry.loose) tileRefusal = t('deckEditor.refuse.allInDeck', { name: row.name });
     else if ((inDeckById.get(entry.card.cardId) || 0) >= limit) tileRefusal = t('deckEditor.refuse.copyLimit', { name: row.name, limit });
+    const removeInstanceId = lastInstanceId(deck, (c) => deckVariantKey(c) === variant);
     tiles.push({
       ...row, key: `card:${variant}`, unlimited: false, owned: entry.owned, inDeck: entry.inDeck,
       countText: t('deckEditor.tile.owned', { owned: entry.owned, inDeck: entry.inDeck }),
       equipmentEligible, addable: !tileRefusal, refusal: tileRefusal,
+      removeInstanceId, removable: removeInstanceId != null,
     });
   }
   const basics = tiles.filter((tile) => tile.unlimited);
