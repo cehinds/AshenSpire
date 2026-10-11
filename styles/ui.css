@@ -1681,9 +1681,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   position: absolute; z-index: 2; right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .6rem); bottom: .6rem;
   width: 2.4rem; height: 2.4rem; min-width: 0; min-height: 0; padding: 0;
   border: 1px solid #5a7bd6; border-radius: 50%; background: rgba(18, 32, 74, .92); color: #dfe8ff;
-  font: italic 700 1.5rem/1 Georgia, serif; text-decoration: none; box-shadow: 0 1px 4px #000a; cursor: pointer;
+  font: italic 700 1.5rem/1 Georgia, serif; text-decoration: none; box-shadow: 0 1px 4px #000a; cursor: pointer; overflow: visible;
 }
 .deck-editor .deck-editor-inline-inspect:hover { background: #24407f; }
+/* The badge stays small; an invisible ring keeps the full tap target. */
+.deck-editor .deck-editor-inline-inspect::before { content: ''; position: absolute; inset: min(0px, calc((2.4rem - var(--deck-editor-target)) / 2)); }
 .deck-editor .deck-editor-item .deck-editor-inline-inspect.on-art { right: auto; bottom: auto; }
 .deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden]):not(.on-art)) .deck-editor-row-rules { padding-right: 2.8rem; }
 .deck-editor .deck-editor-inline-inspect[hidden] { display: none; }
