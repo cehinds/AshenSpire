@@ -551,6 +551,11 @@ export default {
         seenParams = p;
         if (Object.keys(p).length) applyParams(p);
       },
+      // The host calls onHide when another module opens: the audio stops and the frame timer is cleared.
+      onHide() {
+        audio.pause();
+        stopPlay();
+      },
       commands: () => [
         ...KINDS.map((k) => ({ title: `Show ${k.label}`, sub: 'Asset Gallery', run: () => { ctx.openModule('assets', { kind: k.id }); } })),
         { title: 'Clear asset filters', sub: 'Asset Gallery', run: () => { Object.assign(st, { kind: '', q: '', folder: '', format: '', sort: DEFAULT_SORT }); q.value = ''; renderKinds(); renderFacets(); refresh(); writeHash(); } },

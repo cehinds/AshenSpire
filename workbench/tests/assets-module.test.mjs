@@ -243,6 +243,15 @@ test('the grid fits its columns to the width and virtualises the rows on screen'
   assert.deepEqual(visibleItems({ count: 0, metrics: gridMetrics({ count: 0, width: 500 }) }), { from: 0, to: 0 });
 });
 
+test('onHide pauses the audio and stops the frame timer, so nothing runs after the user leaves the gallery', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../modules/assets/index.mjs', import.meta.url), 'utf8');
+  const m = src.match(/\n\s*onHide\(\) \{([\s\S]*?)\n\s{6}\},/);
+  assert.ok(m, 'the module has an onHide()');
+  assert.match(m[1], /audio\.pause\(\)/, 'the audio is paused');
+  assert.match(m[1], /stopPlay\(\)/, 'the 125 ms frame timer is stopped');
+});
+
 test('the Asset Gallery is a real module, not the placeholder, and its module loads with a mount()', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../modules/assets/index.mjs', import.meta.url), 'utf8');
