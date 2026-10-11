@@ -48,12 +48,16 @@ The table of values lives in `speed-mods.csv`. The total is computed by
 - The slots form one queue for the round, in play order. Each slot names its
   enemy, so slots from different enemies can sit side by side in the queue.
   A slot's index is its position in that queue, from 0 to n-1.
-- Perception decides how many slots are visible to the player. The visible
-  slots are the first ones in play order, so perception is a count (a prefix
-  of the queue), not a set of chosen slots. Perception still hides details:
-  each visible slot is revealed only to the stage described below.
-  In the timeline model (and the preview, SPEC §4.11) the prefix is taken per enemy:
-  the first 1 + Perception actions of each enemy's own queue, in its play order.
+- Perception decides how many actions are visible to the player. The visible
+  ones are a prefix, so perception is a count, not a set of chosen actions. Which
+  queue the prefix is taken from depends on the model:
+  - Slot model (`resolver.mjs` only): the prefix is of the combined cross-enemy
+    queue above, so the visible slots are its first ones in play order.
+  - Timeline model and the preview (SPEC §4.11): the prefix is per enemy. For
+    each enemy, perception reads the first 1 + Perception actions of that enemy's
+    own queue, in its play order.
+  Perception still hides details: each visible slot or action is revealed only
+  to the stage described below.
 - Visible slots show as action icons, in play order.
 - When the player plays a card, it is played against one of the enemy's
   queued slots (one of the visible ones, or any, see Open questions).
