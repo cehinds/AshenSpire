@@ -24,6 +24,7 @@ import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, d
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
+import { formFactorFor } from './ui/models/FormFactorModel.js';
 import { applyWireframeChoices } from './ui/wireframeChoices.js';
 import { restampModalWireframes } from './ui/components/modalShell.js';
 import { restampWorkspaceFrames } from './ui/components/w1Workspace.js';
@@ -674,6 +675,12 @@ function applyUiScale(settings) {
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
   document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');
+  // The HUD form factor (docs/hud-layout-tokens.md) — which
+  // content/hud-layout/<form-factor>.json styles the combat HUD. Written here,
+  // beside data-layout, so styling has no decider of its own; it picks look
+  // only, never the mode or the zoom above. Thresholds: balance.ui.uiScale.formFactor.
+  document.documentElement.setAttribute('data-form-factor',
+    formFactorFor(window.innerWidth, window.innerHeight, UI.uiScale.formFactor));
   // Publish the short/refusal value from that same decider for layout consumers too.
   // This is not another short-screen predicate: CSS reads the answer computed
   // above, just as it reads `data-layout`. In particular, combat may let its

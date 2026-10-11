@@ -17,6 +17,7 @@ import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
+import { hudGeometry, offsetPlacement } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { reducedMotionRequested } from '../motion.js';
 
@@ -186,6 +187,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     };
     const zoom = uiZoom();
     const combat = field.closest('.combat');
+    // HUD layout geometry tokens (docs/hud-layout-tokens.md), read once per pass.
+    const hudOffsets = hudGeometry(getComputedStyle(combat));
     const panels = [...field.querySelectorAll(reserveFirst === true
       ? '.enemy .intent, .enemy .combatant-info, .enemy .sprite, .turn-ribbon'
       : '.enemy .intent, .enemy .combatant-info, .enemy .nm, .enemy .meters, .enemy .sprite, .turn-ribbon')]
@@ -229,12 +232,27 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const panelGap = expanded && viewport.width <= 320 ? 3 : 4;
       const idleLeft = Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4));
       const idleTop = Math.min(art.bottom + 3, Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity) - panel.height - 4);
-      const placement = playerDetailsPlacement({
+      const handFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
+      const hudBottom = combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom;
+      // The panel's previous spot without the token offset applied last pass,
+      // so a kept position never accumulates the offset frame after frame.
+      const applied = player.hudDetailsShift || { x: 0, y: 0 };
+      const placed = playerDetailsPlacement({
         art: expanded ? { ...art, top: art.bottom - panel.height } : { ...art, right: idleLeft - 4, top: idleTop - 16 },
         width: panel.width, height: panel.height, viewport, gap: panelGap,
-        handTop: Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity),
-        previous: reserveFirst === true ? undefined : { left: panel.left, top: panel.top },
-        hudBottom: combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom, obstacles: panels });
+        handTop: handFloor,
+        previous: reserveFirst === true ? undefined : { left: panel.left - applied.x, top: panel.top - applied.y },
+        hudBottom, obstacles: panels });
+      // The details offset tokens, added after placement and clamped to the
+      // same field, header and hand edges; an offset onto another control is
+      // refused (HudLayoutOffsetModel). Both 0: `placed` exactly.
+      const shift = offsetPlacement({ rect: { left: placed.left, top: placed.top, width: panel.width, height: panel.height },
+        dx: hudOffsets.playerDetailsDx * zoom, dy: hudOffsets.playerDetailsDy * zoom,
+        bounds: { left: viewport.left + 4, right: viewport.right - 4, top: Number.isFinite(hudBottom) ? hudBottom : viewport.top,
+          bottom: Number.isFinite(handFloor) ? handFloor - 4 : viewport.bottom },
+        obstacles: panels });
+      const placement = shift.shifted ? { ...placed, left: shift.left, top: shift.top } : placed;
+      player.hudDetailsShift = { x: placement.left - placed.left, y: placement.top - placed.top };
       panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
       const top = `${(placement.top - stack.top) / zoom}px`;
       const left = `${(placement.left - stack.left) / zoom}px`;
@@ -362,8 +380,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // row. Its box, in the same screen px as the plan, is a second ceiling for
     // every figure whose art or overhead stack shares its columns (below).
     const ribbonEl = field.querySelector(':scope > .turn-ribbon');
+    // HUD layout geometry tokens (docs/hud-layout-tokens.md), read once per pass.
+    const hudOffsets = hudGeometry(getComputedStyle(combat));
     if (ribbonEl) {
-      field.style.setProperty('--turn-ribbon-top', `${ceiling}px`);
+      // The ribbon offset token is added below the band's edge and clamped:
+      // never up under the HUD band, never past the field's floor.
+      const ribbonDy = hudOffsets.turnRibbonDy
+        ? Math.max(0, Math.min(hudOffsets.turnRibbonDy, measuredField.height / zoom - ceiling - ribbonEl.offsetHeight)) : 0;
+      field.style.setProperty('--turn-ribbon-top', `${ceiling + ribbonDy}px`);
       // A ribbon that changes size (its text, a short screen's font) refits.
       resizeObserver.observe(ribbonEl);
     }
@@ -789,10 +813,22 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
           top: fieldRect.top + target.y - footerSize / 2 - (Number.isFinite(boxes[i].footerTop) ? boxes[i].footerTop : hostRect.bottom), width: 0, height: 0 }, { zoom });
+        // The selected enemy nameplate's offset token, added after packing and
+        // clamped to the field; an offset onto a footer obstacle (HUD, ribbon,
+        // tools, hand, the player's panel) is refused. 0: exactly as packed.
+        let plateDy = 0;
+        if (hudOffsets.enemyNameplateDy && frame.classList.contains('enemy') && frame.classList.contains('context-selected')) {
+          const plate = { left: fieldRect.left + target.x - boxes[i].footerWidth / 2, top: fieldRect.top + target.y - footerSize / 2,
+            width: boxes[i].footerWidth, height: boxes[i].footerHeight };
+          const moved = offsetPlacement({ rect: plate, dy: hudOffsets.enemyNameplateDy * zoom,
+            bounds: { left: -Infinity, right: Infinity, top: fieldRect.top, bottom: fieldRect.top + fieldRect.height },
+            obstacles: readFooterObstacles() });
+          plateDy = (moved.top - plate.top) / zoom;
+        }
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
-          footer.style.translate = `${settledPx(offset.left)}px ${settledPx(offset.top)}px`;
+          footer.style.translate = `${settledPx(offset.left)}px ${settledPx(offset.top + plateDy)}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = 'var(--combat-layer-selection)';
           // A fallen footer reserves no space, so a living one may pack onto

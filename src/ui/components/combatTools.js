@@ -5,6 +5,29 @@ import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { t, tFull } from '../strings.js';
 import { trackGesture } from '../gesture.js';
+import { hudGeometry } from '../models/HudLayoutOffsetModel.js';
+
+// The narrowest a hand-spanning row may be, in CSS px: Combat log and the
+// Reaction switch side by side with their gap. A two-card hand is narrower.
+const TOOLS_MIN_WIDTH = 240;
+
+/** The tools row's HUD layout tokens, read once per layout pass. */
+export function combatToolsTokens(combatEl) {
+  const style = getComputedStyle(combatEl);
+  const span = style.getPropertyValue('--hud-tools-span').trim() === 'hand' ? 'hand' : 'field';
+  return { span, dy: hudGeometry(style).toolsDy };
+}
+
+/** The horizontal extent of the hand's laid-out cards, or null when it has none. */
+function cardBand(hand) {
+  let left = Infinity, right = -Infinity;
+  for (const card of hand ? hand.querySelectorAll('.card') : []) {
+    const box = card.getBoundingClientRect();
+    if (box.width <= 0 || box.height <= 0) continue;
+    left = Math.min(left, box.left); right = Math.max(right, box.right);
+  }
+  return right > left ? { left, right } : null;
+}
 
 export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
@@ -78,17 +101,37 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   function measure() {
     frame = 0;
     if (!root.isConnected) return;
-    const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
+    const combatBox = combatEl.getBoundingClientRect();
+    const zoom = combatBox.width / combatEl.clientWidth || 1;
     const hand = combatEl.querySelector('.hand');
     const handBox = hand?.getBoundingClientRect();
-    const width = Math.max(0, (handBox?.width || innerWidth) - 12);
+    // HUD layout tokens (docs/hud-layout-tokens.md), read once per pass.
+    const { span, dy } = combatToolsTokens(combatEl);
+    // 'field' (the default) spans the hand's full row, as it always has.
+    // 'hand' spans only the card band: the first card's left edge to the last
+    // card's right edge, never narrower than the two tools need.
+    let width = Math.max(0, (handBox?.width || innerWidth) - 12);
+    let left = (handBox?.right || innerWidth) - width - 6;
+    const band = span === 'hand' ? cardBand(hand) : null;
+    if (band && handBox) {
+      const minWidth = Math.min(handBox.width - 12, TOOLS_MIN_WIDTH * zoom);
+      width = Math.max(band.right - band.left, minWidth);
+      const center = (band.left + band.right) / 2;
+      left = Math.max(handBox.left + 6, Math.min(center - width / 2, handBox.right - 6 - width));
+    }
     const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
     root.style.width = `${localWidth.width}px`;
     // A compact toolbar occupies the top of the card band. It never consumes
     // hand width: doing that collapsed every card onto one slot on phones.
     combatEl.style.setProperty('--combat-tools-reserve', '0px');
-    const localDock = anchorLocalBox(combatEl, { left: (handBox?.right || innerWidth) - width - 6,
-      top: handBox?.top || 0, width: 0, height: 0 }, { zoom });
+    // The vertical offset is added after placement and clamped: the row may
+    // rise into the field but never leaves the combat screen or drops over
+    // the cards below its dock.
+    const dockTop = handBox?.top || 0;
+    const rowHeight = root.getBoundingClientRect().height;
+    const top = dy ? Math.max(combatBox.top, Math.min(dockTop + dy * zoom, dockTop, combatBox.bottom - rowHeight)) : dockTop;
+    const localDock = anchorLocalBox(combatEl, { left,
+      top, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
     root.style.left = `${localDock.left}px`;
     root.style.right = 'auto';
