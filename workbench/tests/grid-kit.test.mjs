@@ -688,6 +688,38 @@ test('ref rule resolves another table through options.refs and multi lists', () 
   assert.deepEqual(issues.map(i => [i.row, i.message]), [[1, 'Unknown: q']]);
 });
 
+test('stepActive: a hidden active row keeps its row, so a paste after an arrow key is refused, not moved', () => {
+  // Row 0 is the active cell; a filter hides it. Rows 8 and 9 are the visible ones.
+  const d = { columns: [{ key: 'id', type: 'string', label: 'id' }, { key: 'n', type: 'number', label: 'n' }, { key: 'x', type: 'string', label: 'x' }], rows: Array.from({ length: 10 }, (_, i) => ({ id: `r${i}`, n: i, x: '' })) };
+  const order = [8, 9];
+  const start = { ranges: [range(0, 1, 0, 1)], anchor: { r: 0, c: 1 }, active: { r: 0, c: 1 } };
+  assert.equal(M.stepActive(start, order, 1, 0, { columnCount: 3 }).active.r, 0, 'Down does not jump to the first visible row');
+  const right = M.stepActive(start, order, 0, 1, { columnCount: 3 });
+  assert.deepEqual(right.active, { r: 0, c: 2 }, 'Right moves the column on the hidden row');
+  assert.equal(M.stepActive(start, order, 0, 5, { columnCount: 3 }).active.c, 2, 'the column stays inside the grid');
+  const out = M.pasteVisible(d.rows, d.columns, order, right.active, 'Should not land', right);
+  assert.equal(out.change, null, 'nothing changes');
+  assert.equal(out.reason, M.HIDDEN_ANCHOR_REASON, 'the banner names the hidden cell');
+  assert.deepEqual(out.rows, d.rows, 'no row changed');
+});
+
+test('stepActive: from a visible row it moves through the visible order, skipping hidden rows', () => {
+  const order = [3, 7, 9];
+  const at7 = { ranges: [range(7, 0, 7, 0)], anchor: { r: 7, c: 0 }, active: { r: 7, c: 0 } };
+  assert.equal(M.stepActive(at7, order, 1, 0, { columnCount: 2 }).active.r, 9);
+  assert.equal(M.stepActive(at7, order, -1, 0, { columnCount: 2 }).active.r, 3);
+  assert.equal(M.stepActive(at7, order, 5, 0, { columnCount: 2 }).active.r, 9, 'clamped to the last visible row');
+  assert.equal(M.stepActive(at7, order, 0, 1, { columnCount: 2 }).active.c, 1);
+});
+
+test('the grid moves its active cell with stepActive, not by snapping a hidden row to the first visible one', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../ui/kit/grid.mjs', import.meta.url), 'utf8');
+  const body = src.slice(src.indexOf('function moveActive('), src.indexOf('function ensureVisible('));
+  assert.match(body, /M\.stepActive\(/, 'arrow and Tab steps go through the model');
+  assert.doesNotMatch(body, /\?\? 0/, 'no fallback to visible position 0 for a hidden row');
+});
+
 test('20k-row sort on two keys finishes under 200 ms', () => {
   const columns = [{ key: 'name', type: 'string' }, { key: 'n', type: 'number' }];
   const rows = Array.from({ length: 20000 }, (_, i) => ({ name: `item ${(i * 7919) % 20000}`, n: (i * 31) % 997 }));

@@ -232,15 +232,11 @@ export function createGrid(el, options = {}) {
     if (!editing) return;
     const input = editing.input; editing = null; input.remove();
   }
+  // A hidden active row stays on its row (stepActive), so the paste that follows is refused, not moved.
   function moveActive(dr, dc, extend = false) {
-    const cur = sel.active ?? { r: 0, c: 0 };
-    const pos = viewPos().get(cur.r);
-    let p = pos ?? 0;
-    if (dr) p = Math.min(Math.max(p + dr, 0), Math.max(order.length - 1, 0));
-    const nr = order.length ? order[p] : 0;
-    const nc = Math.min(Math.max(cur.c + dc, 0), Math.max(doc.columns.length - 1, 0));
-    sel = M.selectCell(sel, { r: nr, c: nc }, { shift: extend, order });
-    ensureVisible(p, nc);
+    sel = M.stepActive(sel, order, dr, dc, { columnCount: doc.columns.length, extend });
+    const p = viewPos().get(sel.active.r);
+    if (p !== undefined) ensureVisible(p, sel.active.c);
     render({ full: false });
   }
   function ensureVisible(p, c) {

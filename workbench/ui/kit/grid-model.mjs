@@ -156,6 +156,19 @@ function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ??
   return { ranges: ctrl ? [...sel.ranges, rect] : [rect], anchor: to, active: to };
 }
 export function selectCell(sel, cell, opts) { return selectTo(sel, cell, opts); }
+/**
+ * The selection after an arrow or Tab step by (dr, dc) from the active cell. Rows move through the VISIBLE
+ * order. A hidden active row has no visible position, so it stays on its row: only the column moves, and a
+ * paste from it is refused (HIDDEN_ANCHOR_REASON) instead of landing on the first visible row.
+ */
+export function stepActive(sel, order, dr, dc, { columnCount, extend = false }) {
+  const cur = sel.active ?? { r: 0, c: 0 };
+  const c = Math.min(Math.max(cur.c + dc, 0), Math.max(columnCount - 1, 0));
+  const p = order.indexOf(cur.r);
+  let r = cur.r;
+  if (p >= 0 && order.length) r = order[Math.min(Math.max(p + dr, 0), order.length - 1)];
+  return selectTo(sel, { r, c }, { shift: extend, order });
+}
 /** Whole-row selection over colCount columns. */
 export function selectRows(sel, r, opts, colCount) {
   return selectTo(sel, { r, c: 0 }, { ...opts, columns: [0, Math.max(0, colCount - 1)] });
