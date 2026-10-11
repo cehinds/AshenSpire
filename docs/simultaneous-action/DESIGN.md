@@ -83,6 +83,25 @@ Hit when:
 - Example: Reaver with STR 3, DEX 1, WIS 1, INT 1 has floor(5) = 5, so with
   accuracy 0 and evasion 0 it needs 3 or more on the d20.
 
+## Resolver placeholder rules (prototype)
+
+These are the rules `resolver.mjs` implements where the owner's design is
+silent. They are placeholders for testing the shape, not decisions.
+
+- Faster counter cancels a slower attack ('countered'). A counter does not
+  cancel a tied attack.
+- A faster attack's hit interrupts a slower action unless the slower action's
+  holder has `hyperArmor`.
+- On a tie, both attacks hit. `counterDamage`, `stagger` and `stun` apply
+  only on a tie; `stagger` and `stun` are resisted by `hyperArmor`.
+- Each non-cancelled attack rolls the hit roll. The d20 comes from an injected
+  RNG.
+- One player card per enemy slot. A second card on a paired slot is rejected.
+- An enemy slot with no player card is unpaired and has no effect.
+- Perception only tags events as visible. It does not gate targeting.
+- Momentum: +1 for a correct counter, +1 for a listed combo pair played back
+  to back, -1 when a player card is countered.
+
 ## Open questions
 
 a. The owner's worked example says dagger +2, heavy -3, strike base 1,
