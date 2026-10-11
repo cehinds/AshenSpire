@@ -108,6 +108,11 @@ test('intake runs are never cancelled mid-run', () => {
 
 test('pages: a malformed artifact is skipped before it can become a comment target', () => {
   const step = pages.slice(pages.indexOf('- name: Fetch each open pull request'), pages.indexOf('- name: Assemble the site'));
-  const check = step.indexOf("-name '*.html' -size +0c");
+  const check = step.indexOf("-name '*.html' | wc -l");
   assert.ok(check > 0 && check < step.indexOf('>> "$entries"'), 'the one-html check precedes the manifest entry');
+});
+
+test('the art PR body lists every file on the intake branch, not only this run\'s', () => {
+  const block = jobBlock(art, 'intake');
+  assert.match(block, /git -C "\$GITHUB_WORKSPACE\/art-repo" diff --name-only origin\/main HEAD/);
 });

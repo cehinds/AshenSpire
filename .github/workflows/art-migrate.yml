@@ -267,7 +267,9 @@ jobs:
             echo "Merge this, and the release workflow publishes the next \`hd-assets-v<N>\`. The AshenSpire pin-bump job (every 6 hours) then opens the \`art-release.json\` bump."
             echo
             echo "Files:"
-            sed 's/^/- `/; s/$/`/' "$GITHUB_WORKSPACE/art-files.txt" | head -200
+            # Everything the intake branch carries against the art repository's main,
+            # including files staged by earlier runs and since removed from the source.
+            git -C "$GITHUB_WORKSPACE/art-repo" diff --name-only origin/main HEAD | sed 's/^/- `/; s/$/`/' | head -200
           } > art-pr-body.md
           existing="$(gh pr list --repo "$ART_REPO" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then

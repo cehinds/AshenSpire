@@ -423,10 +423,13 @@ jobs:
             # The same shape readBranchPreviews() (tools/pages-site.mjs) accepts: exactly
             # one non-empty .html. Anything else is skipped HERE, so comment_targets
             # never names a preview the site will not publish.
-            htmls=$(find "$out/$safe" -maxdepth 1 -type f -name '*.html' -size +0c | wc -l)
-            if [ "$htmls" -ne 1 ]; then
+            # Every .html entry counts (any type), as readBranchPreviews() counts them;
+            # then the one entry must be a non-empty regular file.
+            htmls=$(find "$out/$safe" -mindepth 1 -maxdepth 1 -name '*.html' | wc -l)
+            only=$(find "$out/$safe" -mindepth 1 -maxdepth 1 -name '*.html' -type f -size +0c | wc -l)
+            if [ "$htmls" -ne 1 ] || [ "$only" -ne 1 ]; then
               rm -rf "$out/$safe"
-              echo "::warning title=Preview not published::PR #$pr ($ref): the artifact holds $htmls non-empty .html file(s), expected 1; skipped"
+              echo "::warning title=Preview not published::PR #$pr ($ref): the artifact holds $htmls .html entr(y/ies), expected exactly one non-empty file; skipped"
               continue
             fi
             jq -cn --arg b "$ref" --arg d "$safe" --argjson pr "$pr" --arg sha "$sha" '{branch: $b, dir: $d, pr: $pr, sha: $sha}' >> "$entries"
