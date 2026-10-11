@@ -5,18 +5,20 @@ const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 
 const RESOURCE_WORDS = { stamina: 'SP', mana: 'MP' };
 // Why an in-hand Counter or defensive Sweep was not offered (SPEC §4.10).
 function reactionUnavailableText(event, { registries, source, owner }) {
-  const card = registries?.cards.get(event.cardIds?.[0]);
+  const card = registries?.cards.get(event.cardId ?? event.cardIds?.[0]);
   const tags = card?.cardTags || card?.tags || [];
   const verb = tags.includes('maneuver:sweep') ? 'Sweep' : 'Counter';
   switch (event.reason) {
     case 'notCovered': return `No reaction: Counter can't answer ${ATTACK_KIND_WORDS[event.attackKind] || 'this attack'}.`;
-    case 'cost': return `Not enough ${RESOURCE_WORDS[event.resource] || 'SP'} to ${verb} (need ${event.need}, have ${event.have}).`;
+    case 'cost': return event.resource === 'hp'
+      ? `Not enough HP to ${card?.name || 'use that card'} (need ${event.need}, have ${event.have}).`
+      : `Not enough ${RESOURCE_WORDS[event.resource] || 'SP'} to ${verb} (need ${event.need}, have ${event.have}).`;
     case 'switchOff': return 'No reaction: Reactions are off.';
     case 'attackerStaggered': return `No reaction: ${source} is staggered.`;
     case 'attackerControlled': return `No reaction: ${source} can't act.`;
     case 'controlled': return `No reaction: ${owner} must recover from control first.`;
     case 'unplayable': return `No reaction: ${card?.name || 'that card'} can't be played.`;
-    case 'alreadyAnswered': return 'No reaction: this attack was already answered.';
+    case 'alreadyAnswered': return "One reaction per attack: the rest of this attack can't be answered.";
     default: return 'No reaction available.';
   }
 }
@@ -61,7 +63,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
         break;
       }
-      case 'combatGuardBroken': text = `Guard broken! ${target} took ${event.poise} Poise damage.`; break;
+      // `poise` is the nominal break bonus before Poise Guard absorbs any of it: pressure, not damage taken.
+      case 'combatGuardBroken': text = `Guard broken! (+${event.poise} Poise pressure)`; break;
       case 'impactDealt': if (event.poiseDamage || event.wardDamage) text = `${source} dealt ${event.poiseDamage || 0} Poise and ${event.wardDamage || 0} Ward pressure to ${target}.`; break;
       default: break;
     }

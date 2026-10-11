@@ -1222,7 +1222,8 @@ export function preflightCardHp(ctx, def, source, target, meta) {
     for (const entity of resolveTargets(ctx, action, effect.target)) {
       const amount = Math.max(0, evalNum(ctx, action, effect.amount, 0, entity)) * Math.max(0, evalNum(ctx, action, effect.repeat, 1));
       const hp = remaining.get(entity) ?? entity.hp;
-      if (effect.nonlethal && amount >= hp) throw new Error('Not enough HP for a nonlethal offering');
+      if (effect.nonlethal && amount >= hp) throw Object.assign(new Error('Not enough HP for a nonlethal offering'),
+        { playRefusal: { reason: 'cost', resource: 'hp', need: amount, have: hp } });
       remaining.set(entity, Math.max(0, hp - amount));
     }
   }

@@ -56,13 +56,15 @@ function candidateCardIds(ctx, row) {
 
 function optionsFor(ctx, row, group, hooks, refusal = null) {
   const options = [];
+  let inst;
+  // The refusal also names the card it came from (cardId), so the log can name it.
   const note = (reason, extra = {}) => {
     if (refusal && (!refusal.reason || REASON_RANK[reason] > REASON_RANK[refusal.reason])) {
       for (const key of Object.keys(refusal)) delete refusal[key];
-      Object.assign(refusal, { reason, ...extra });
+      Object.assign(refusal, { reason, ...extra, cardId: inst.cardId });
     }
   };
-  for (const inst of handOf(ctx, row)) {
+  for (inst of handOf(ctx, row)) {
     const base = resolveCombatCard(ctx, inst);
     if (!eligible(ctx, base, row)) { if (candidateByManeuver(base)) note('notCovered'); continue; }
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
@@ -102,8 +104,9 @@ function reportUnavailable(ctx, group, id, row, reason, extra = {}) {
   const cardIds = candidateCardIds(ctx, row);
   if (!cardIds.length) return;
   (group.reactionNoticed ||= []).push(id);
-  ctx.emit('combatReactionUnavailable', { ownerId: id, sourceId: group.sourceId, reason, cardIds,
-    attackKind: attackKind(row), ...extra });
+  const { cardId = cardIds[0], ...rest } = extra;
+  ctx.emit('combatReactionUnavailable', { ownerId: id, sourceId: group.sourceId, reason, cardId, cardIds,
+    attackKind: attackKind(row), ...rest });
 }
 
 const rowFor = (ctx, group, id) => Object.values(group.targets).find(target => ctx.players ? target.playerId === id : target.id === ctx.player.id);
@@ -112,7 +115,7 @@ function seatPresent(ctx, id) {
   return !!(seat?.entity || ctx.player)?.alive && (!seat || seat.connected === true);
 }
 
-// A later action of an already answered root still reaches a seat holding a candidate.
+// Fallback for a later action of an already answered root (reportRestOfRoot usually fires first).
 function reportAlreadyAnswered(ctx, action, group) {
   const contacts = (action.meta?.expansionContacts || []).flat();
   for (const id of group.reactionAnswered || []) {
@@ -195,7 +198,7 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   group.reactionAnswered.push(ownerId);
   delete ctx.pendingReaction;
   ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: option?.play.cardInstanceId || null });
-  if (!option) return;
+  if (!option) { reportRestOfRoot(ctx, group, ownerId); return; }
   ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
     actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
     rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
@@ -212,6 +215,15 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
   }
   restoreReactionQueue(ctx);
+  reportRestOfRoot(ctx, group, ownerId);
+}
+
+// The one offer covers the whole root: when it has further hits (in this action or
+// later ones), the answering seat hears once that the rest can't be answered.
+function reportRestOfRoot(ctx, group, ownerId) {
+  const row = rowFor(ctx, group, ownerId);
+  if (!row || row.contacts.filter(positive).length < 2 || !seatPresent(ctx, ownerId)) return;
+  reportUnavailable(ctx, group, ownerId, row, 'alreadyAnswered');
 }
 
 export function restoreReactionQueue(ctx) {

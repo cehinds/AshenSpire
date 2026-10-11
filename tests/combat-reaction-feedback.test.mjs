@@ -8,6 +8,7 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCoopCombat, endTurn, chooseReaction, setReactions, leaveCombat } from '../src/engine/coopCombat.js';
 import { beforeReactionAction } from '../src/engine/combatReactions.js';
+import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
@@ -15,14 +16,21 @@ import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 const SLASH = { intent: 'attack', damage: 1, hits: 2, weight: 1 };
 const SWEEP = ['camp:physical', 'maneuver:sweep', 'reach:contact', 'targeting:single'];
 
-function registriesWith(move = {}) {
-  return createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
+// An HP offering on the Counter: `offer` is the nonlethal HP payment it asks for.
+const withOffering = (card, amount) => {
+  const payment = { op: 'loseHp', target: 'self', amount, nonlethal: true, offering: true };
+  return { ...card, effects: [payment, ...card.effects], gradeProfiles: card.gradeProfiles?.map(profile => ({ ...profile, effects: [payment, ...profile.effects] })) };
+};
+
+function registriesWith(move = {}, offer = null) {
+  const cards = offer === null ? contentBundle.cards : contentBundle.cards.map(card => card.id === 'guardCounter' ? withOffering(card, offer) : card);
+  return createRegistries({ ...contentBundle, cards, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
     ? { ...enemy, firstMove: 'slash', moves: { slash: { ...SLASH, ...move } } } : enemy) });
 }
 const seatStats = { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20 };
 
-function solo({ cardIds = ['guardCounter'], move } = {}) {
-  const registries = registriesWith(move);
+function solo({ cardIds = ['guardCounter'], move, offer = null } = {}) {
+  const registries = registriesWith(move, offer);
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: 1,
     enemyIds: ['wanderingSoldier'], player: { ...seatStats, drawPerTurn: cardIds.length,
       deck: cardIds.map((cardId, index) => ({ cardId, instanceId: `r${index}`, upgraded: false })) } });
@@ -48,7 +56,7 @@ const soloEnd = combat => dispatch(combat, { type: 'endTurn' }).events;
 test('a melee Counter facing a Sweep reports notCovered with the attack kind', () => {
   const combat = solo({ move: { cardTags: SWEEP } });
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'notCovered',
-    cardIds: ['guardCounter'], attackKind: 'sweep' }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'sweep' }]);
   assert.equal(combat.pendingReaction, undefined);
 });
 
@@ -56,7 +64,33 @@ test('a Counter the seat cannot pay for reports cost with need and have', () => 
   const combat = solo();
   combat.player.energy = 0;
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
-    cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+});
+
+test('a Counter whose HP offering would leave the seat dead reports cost with resource hp', () => {
+  const combat = solo({ offer: seatStats.hp });
+  const events = soloEnd(combat);
+  assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: seatStats.hp, have: seatStats.hp }]);
+  assert.equal(combat.pendingReaction, undefined);
+  const registries = createRegistries(contentBundle);
+  assert.deepEqual(combatLogEntries(events, { registries }).map(row => row.text).filter(text => text.startsWith('Not enough')),
+    [`Not enough HP to Guard Counter (need ${seatStats.hp}, have ${seatStats.hp}).`]);
+});
+
+test('the reported refusal names the card it came from, not the first candidate', () => {
+  // Guard Counter can't cover a Sweep (notCovered); Whirling Guard is covered but unpaid (cost).
+  const combat = solo({ cardIds: ['guardCounter', 'whirlingGuard'], move: { cardTags: SWEEP } });
+  combat.player.energy = 0;
+  const events = soloEnd(combat);
+  const [row] = unavailable(events);
+  assert.equal(unavailable(events).length, 1);
+  assert.equal(row.reason, 'cost');
+  assert.equal(row.cardId, 'whirlingGuard');
+  assert.deepEqual(row.cardIds, ['guardCounter', 'whirlingGuard']);
+  const registries = createRegistries(contentBundle);
+  assert.deepEqual(combatLogEntries(events, { registries }).map(entry => entry.text).filter(text => text.startsWith('Not enough')),
+    [`Not enough SP to Sweep (need ${row.need}, have 0).`]);
 });
 
 test('the Reaction switch off reports switchOff only to a seat holding a candidate', () => {
@@ -93,7 +127,7 @@ test('a staggered or controlled attacker reports the halt once per root', () => 
     assert.equal(beforeReactionAction(combat, action, hooks), false);
     assert.equal(beforeReactionAction(combat, action, hooks), false);
     assert.deepEqual(unavailable(combat.eventLog.slice(start)), [{ ownerId: 'player', sourceId: 'e1', reason,
-      cardIds: ['guardCounter'], attackKind: 'attack' }]);
+      cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack' }]);
   }
 });
 
@@ -118,7 +152,32 @@ test('a later action of an answered root reports alreadyAnswered once', () => {
   assert.ok(combat.pendingReaction);
   const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }).events;
   assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'alreadyAnswered',
-    cardIds: ['guardCounter'], attackKind: 'attack' }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack' }]);
+});
+
+test('skipping the offer on one action with hits:2 reports alreadyAnswered exactly once', () => {
+  const combat = solo({ cardIds: ['guardCounter', 'guardCounter'] });
+  soloEnd(combat);
+  assert.ok(combat.pendingReaction);
+  assert.equal(combat.queue.filter(action => action.effect.op === 'damage').length, 1, 'one damage action carries both hits');
+  const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }).events;
+  assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'alreadyAnswered',
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack' }]);
+  const chosenAt = events.findIndex(event => event.type === 'combatReactionChosen');
+  assert.equal(events.findIndex(event => event.type === 'combatReactionUnavailable'), chosenAt + 1, 'right after the answer');
+  assert.deepEqual(combatLogEntries(events, { registries: createRegistries(contentBundle) }).map(row => row.text)
+    .filter(text => text.startsWith('One reaction')), ["One reaction per attack: the rest of this attack can't be answered."]);
+  const coopHits = coop({ cardIds: ['guardCounter', 'guardCounter'] });
+  endTurn(coopHits, 'a');
+  chooseReaction(coopHits, 'a', { offerId: coopHits.pendingReaction.id });
+  assert.deepEqual(unavailable(coopHits.eventLog).map(row => [row.ownerId, row.reason]), [['a', 'alreadyAnswered']]);
+});
+
+test('a single-hit root that was skipped reports nothing more', () => {
+  const combat = solo({ move: { hits: 1 } });
+  soloEnd(combat);
+  const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }).events;
+  assert.deepEqual(unavailable(events), []);
 });
 
 test('co-op reports the same reasons through the same offer door', () => {
@@ -126,7 +185,7 @@ test('co-op reports the same reasons through the same offer door', () => {
   cost.players.get('a').entity.energy = 0;
   endTurn(cost, 'a');
   assert.deepEqual(unavailable(cost.eventLog), [{ ownerId: 'a', sourceId: 'e1', reason: 'cost',
-    cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
   const sweep = coop({ move: { cardTags: SWEEP } });
   endTurn(sweep, 'a');
   assert.deepEqual(unavailable(sweep.eventLog).map(row => [row.ownerId, row.reason, row.attackKind]), [['a', 'notCovered', 'sweep']]);
@@ -173,6 +232,9 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
   assert.equal(c.combatExpansionVersion === 2, false);
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId, poise }) => ({ targetId, sourceId, poise })),
     [{ targetId: 'e1', sourceId: 'player', poise: 3 }]);
+  // The bonus is nominal (Poise Guard may absorb it), so the log claims pressure, not damage taken.
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
+    ['Guard broken! (+3 Poise pressure)']);
 });
 
 test('v1: a Smash into an armed Counter breaks Guard through the synchronous door once', () => {
