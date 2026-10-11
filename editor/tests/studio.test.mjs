@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
-import { Workspace, safePath, parseCSV, stringifyCSV, hash, editable } from '../core.mjs';
+import { Workspace, safePath, parseCSV, stringifyCSV, hash, editable, validateText } from '../core.mjs';
 import { createStudio } from '../server.mjs';
 
 async function fixture(t) {
@@ -46,6 +46,15 @@ test('batch preflight prevents partial saves when another file conflicts', async
   await assert.rejects(workspace.save([{ ...file, text:file.text.replace('Steel','Iron') }, { path:'editor/workspace/new.json',hash:'stale',text:'[]' }]), /changed on disk/);
   assert.equal((await workspace.read(file.path)).text, file.text);
 });
+test('save validation accepts the real outfits.csv (id repeats across classes) and refuses a true duplicate', async () => {
+  const outfits = await fs.readFile(new URL('../../content/source/outfits.csv', import.meta.url), 'utf8');
+  assert.doesNotThrow(() => validateText('content/source/outfits.csv', outfits));
+  const firstReaver = outfits.split('\n').find((line) => line.startsWith('default,reaver,'));
+  assert.throws(() => validateText('content/source/outfits.csv', `${outfits}${firstReaver}\n`), /duplicate id: default/);
+  // A table with no scope column keeps the single key rule.
+  assert.throws(() => validateText('content/source/x.csv', 'id,name\nx,A\nx,B\n'), /duplicate id: x/);
+});
+
 test('duplicate ids and concurrent stale saves are rejected', async t => {
   const { workspace } = await fixture(t); const file = await workspace.read('content/source/items.csv');
   await assert.rejects(workspace.save([{...file,text:'id,name\nx,A\nx,B\n'}]), /duplicate/);
