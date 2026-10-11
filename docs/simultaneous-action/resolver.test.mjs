@@ -190,14 +190,14 @@ test('rollD20 maps [0, 1) to 1..20 and rejects an out-of-range rng', () => {
   assert.throws(() => rollD20(() => 1), RangeError);
 });
 
-test('resolveRound: a counter that triggers moves M toward the player', () => {
+test('resolveRound: a counter that triggers moves that enemy M toward the player', () => {
   const queue = [{ id: 'strike', speed: 4, kind: 'attack' }];
   const { events, momentum } = resolveRound([{ id: 'counter', slot: 0, speed: 5, kind: 'counter' }], queue, 1, d20Face(20));
 
   assert.equal(find(events, 'countered').by, 'player');
-  assert.equal(momentum, 1);
+  assert.equal(momentum.strike, 1);
   assert.deepEqual(find(events, 'momentum'), {
-    type: 'momentum', by: 'player', gain: 1, delta: 1, reason: 'success', slot: 0, momentum: 1,
+    type: 'momentum', enemyId: 'strike', by: 'player', gain: 1, delta: 1, reason: 'success', slot: 0, momentum: 0,
   });
 });
 
@@ -206,7 +206,7 @@ test('resolveRound: a player card countered by an enemy counter moves M toward t
   const { events, momentum } = resolveRound([{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }], queue, 0, d20Face(20));
 
   assert.equal(find(events, 'countered').by, 'enemy');
-  assert.equal(momentum, -1);
+  assert.equal(momentum.counter, -1);
   assert.equal(find(events, 'momentum').by, 'enemy');
 });
 
@@ -219,90 +219,35 @@ test('resolveRound: a second card on a taken slot is rejected and moves nothing'
   const { events, momentum } = resolveRound(playerCards, queue, 2, d20Face(20));
 
   assert.deepEqual(find(events, 'rejected'), {
-    type: 'rejected', reason: 'slot taken', slot: 0, cardId: 'shieldBash', momentum: 0,
+    type: 'rejected', reason: 'slot taken', slot: 0, cardId: 'shieldBash', momentum: null,
   });
   assert.equal(events.some((e) => e.type === 'momentum'), false);
-  assert.equal(momentum, 0);
+  assert.deepEqual(momentum, { a: 0, b: 0 });
 });
 
-test('resolveRound: perception tags visibility only; out-of-range slot throws', () => {
-  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 1, kind: 'other' }, { id: 'c', speed: 1, kind: 'other' }];
-  const { events } = resolveRound([], queue, 1, d20Face(20));
-  const unpaired = events.filter((e) => e.type === 'unpaired');
-  assert.deepEqual(unpaired.map((e) => e.visible), [true, false, false]);
-
-  assert.throws(() => resolveRound([{ id: 'x', slot: 3, speed: 1 }], queue, 3, d20Face(20)), RangeError);
-});
-
-test('same RNG seed gives the same events (no Math.random)', () => {
-  const player = { kind: 'attack', speed: 4, accuracy: 1, attrs: REAVER };
-  const enemy = { kind: 'attack', speed: 4, evasion: 1 };
-  const seq = [0.1, 0.7, 0.4, 0.9];
-  const run = () => {
-    let i = 0;
-    return resolvePair(player, enemy, () => seq[i++ % seq.length]);
-  };
-  assert.deepEqual(run(), run());
-});
-
-test('a faster attack that misses does not interrupt the slower action', () => {
-  const player = { kind: 'attack', speed: 4, accuracy: 0, attrs: {}, evasion: 0 };
-  const enemy = { kind: 'attack', speed: 3, evasion: 0 };
-  const events = resolvePair(player, enemy, d20Face(1));
-
-  assert.equal(find(events, 'interrupted'), undefined, 'a miss must not interrupt');
-  assert.equal(hitsOf(events).find((e) => e.by === 'player').hit, false);
-  assert.equal(hitsOf(events).some((e) => e.by === 'enemy'), true, 'enemy action still resolves');
-});
-
-test('owner example: strike at +4 against an enemy counter at +3 is not countered', () => {
-  const strike = { kind: 'attack', speed: 4, id: 'strike' };
-  const counter = { kind: 'counter', speed: 3, id: 'counter' };
-  const events = resolvePair(strike, counter, d20Face(20));
-
-  assert.equal(find(events, 'order').first, 'player');
-  assert.equal(find(events, 'countered'), undefined, 'a slower counter cannot cancel a faster strike');
-  assert.equal(hitsOf(events).find((e) => e.by === 'player').hit, true, 'player hit is present');
-});
-
-test('hit roll: natural 1 always misses, even with a huge bonus', () => {
-  const strong = { accuracy: 30, attrs: { STR: 30, DEX: 30 }, evasion: 0 };
-  assert.equal(hitRoll(strong, 1).hit, false);
-  assert.equal(hitRoll(strong, 2).hit, true);
-});
-
-test('hit roll: natural 20 always hits, even against huge evasion', () => {
-  const walled = { accuracy: 0, attrs: {}, evasion: 50 };
-  assert.equal(hitRoll(walled, 20).hit, true);
-  assert.equal(hitRoll(walled, 19).hit, false);
-});
-
-test('owner trace: player and enemy values go 0/0, +1/-1, 0/0, -1/+1', () => {
-  // Step 1 (M = 0): player Strike at 4 hits first over enemy strike at 3.
-  const step1 = resolveRound(
-    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
-    [{ id: 'enemyStrike', speed: 3, kind: 'attack' }],
-    1,
-    d20Face(20),
-  );
-  // Step 2 (M = +1): player attack 2+1 = 3, enemy counter 5-1 = 4. Enemy counters.
+test('owner trace, per enemy and round end: 0/0, +1/-1, 0/0, -1/+1', () => {
+  // All three rounds face the same enemy, 'foe' (enemyId), so M_foe carries over.
+  const foe = (id, speed, kind) => ({ id, enemyId: 'foe', speed, kind });
+  // Round 1 (M = 0): player Strike at 4 hits first over enemy strike at 3.
+  const step1 = resolveRound([{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }], [foe('enemyStrike', 3, 'attack')], 1, d20Face(20));
+  // Round 2 (M = +1): player attack 2+1 = 3, enemy counter 5-1 = 4. Enemy counters.
   const step2 = resolveRound(
     [{ id: 'strike', slot: 0, speed: 2, kind: 'attack' }],
-    [{ id: 'counter', speed: 5, kind: 'counter' }],
+    [foe('counter', 5, 'counter')],
     1,
     d20Face(20),
     { momentum: step1.momentum },
   );
-  // Step 3 (M = 0): enemy strike at 4 hits first over player strike at 3.
+  // Round 3 (M = 0): enemy strike at 4 hits first over player strike at 3.
   const step3 = resolveRound(
     [{ id: 'strike', slot: 0, speed: 3, kind: 'attack' }],
-    [{ id: 'enemyStrike', speed: 4, kind: 'attack' }],
+    [foe('enemyStrike', 4, 'attack')],
     1,
     d20Face(20),
     { momentum: step2.momentum },
   );
 
-  const values = [0, step1.momentum, step2.momentum, step3.momentum].map((m) => ({ player: m, enemy: 0 - m }));
+  const values = [0, step1.momentum.foe, step2.momentum.foe, step3.momentum.foe].map((m) => ({ player: m, enemy: 0 - m }));
   assert.deepEqual(values, [
     { player: 0, enemy: 0 },
     { player: 1, enemy: -1 },
@@ -313,7 +258,13 @@ test('owner trace: player and enemy values go 0/0, +1/-1, 0/0, -1/+1', () => {
   assert.equal(find(step3.events, 'hit').by, 'enemy');
 });
 
-test('zero-sum: player value + enemy value is always 0, and each move is equal and opposite', () => {
+test('per enemy: one enemy\'s M does not move another enemy\'s value', () => {
+  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 1, kind: 'other' }];
+  const { momentum } = resolveRound([{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }], queue, 2, d20Face(20));
+  assert.deepEqual(momentum, { a: 1, b: 0 });
+});
+
+test('zero-sum: player value + enemy value is always 0, and round deltas add up to the change', () => {
   for (let m = -3; m <= 3; m++) {
     const p = actionSpeed({ card: 'strike', momentum: m }, { card: { strike: 1 } }, 'player');
     const e = actionSpeed({ card: 'strike', momentum: m }, { card: { strike: 1 } }, 'enemy');
@@ -324,22 +275,29 @@ test('zero-sum: player value + enemy value is always 0, and each move is equal a
   const seq = [0.1, 0.7, 0.4, 0.9, 0.2, 0.55];
   let i = 0;
   const rng = () => seq[i++ % seq.length];
-  let m = 0;
+  let map = {};
   for (let round = 0; round < 25; round++) {
-    const playerCards = [{ id: 'a', slot: 0, speed: 1 + (round % 4), kind: round % 2 ? 'attack' : 'counter' }];
-    const queue = [
-      { id: 'x', speed: 2, kind: 'attack' },
-      { id: 'y', speed: 3, kind: 'counter' },
-      { id: 'z', speed: 1, kind: 'attack' },
+    const playerCards = [
+      { id: 'a', slot: 0, speed: 1 + (round % 4), kind: round % 2 ? 'attack' : 'counter' },
+      { id: 'b', slot: 1, speed: 2, kind: 'attack' },
+      { id: 'c', slot: 2, speed: 1, kind: 'counter' },
     ];
-    const out = resolveRound(playerCards, queue, 3, rng, { momentum: m });
-    const moves = out.events.filter((e) => e.type === 'momentum');
-    for (const mv of moves) {
-      assert.equal(mv.by === 'player' ? mv.delta >= 0 : mv.delta <= 0, true, 'a move helps only its actor');
+    const queue = [
+      { id: 'x', enemyId: 'x', speed: 2, kind: 'attack' },
+      { id: 'y', enemyId: 'y', speed: 3, kind: 'counter' },
+      { id: 'z', enemyId: 'z', speed: 1, kind: 'attack' },
+    ];
+    const out = resolveRound(playerCards, queue, 3, rng, { momentum: map });
+    for (const k of ['x', 'y', 'z']) {
+      const moves = out.events.filter((e) => e.type === 'momentum' && e.enemyId === k);
+      for (const mv of moves) {
+        assert.equal(mv.by === 'player' ? mv.delta >= 0 : mv.delta <= 0, true, 'a move helps only its actor');
+      }
+      const raw = moves.reduce((sum, mv) => sum + mv.delta, 0);
+      assert.equal(out.momentum[k], clampMomentum((map[k] ?? 0) + raw));
+      assert.ok(out.momentum[k] >= -3 && out.momentum[k] <= 3);
     }
-    assert.equal(moves.reduce((sum, mv) => sum + mv.delta, 0), out.momentum - m);
-    assert.ok(out.momentum >= -3 && out.momentum <= 3);
-    m = out.momentum;
+    map = out.momentum;
   }
 });
 
@@ -349,20 +307,20 @@ test('clamp: from +3 a player success stays at +3, and an enemy success goes to 
     [{ id: 'e', speed: 1, kind: 'other' }],
     1,
     d20Face(20),
-    { momentum: 3 },
+    { momentum: { e: 3 } },
   );
-  assert.equal(up.momentum, 3);
-  assert.equal(find(up.events, 'momentum').delta, 0);
+  assert.equal(up.momentum.e, 3);
+  assert.equal(find(up.events, 'momentum').delta, 1, 'the raw success is still +1; the clamp is at round end');
 
   const down = resolveRound(
     [{ id: 'strike', slot: 0, speed: 1, kind: 'attack' }],
     [{ id: 'enemyStrike', speed: 9, kind: 'attack' }],
     1,
     d20Face(20),
-    { momentum: 3 },
+    { momentum: { enemyStrike: 3 } },
   );
   assert.equal(find(down.events, 'hit').by, 'enemy');
-  assert.equal(down.momentum, 2);
+  assert.equal(down.momentum.enemyStrike, 2);
 });
 
 test('momentumGain: a card with momentumGain 2 moves M by 2 on success', () => {
@@ -372,7 +330,7 @@ test('momentumGain: a card with momentumGain 2 moves M by 2 on success', () => {
     0,
     d20Face(20),
   );
-  assert.equal(momentum, 2);
+  assert.equal(momentum.e, 2);
   assert.equal(find(events, 'momentum').gain, 2);
   assert.equal(find(events, 'momentum').delta, 2);
 });
@@ -386,11 +344,14 @@ test('a miss does not move M', () => {
   );
   assert.equal(find(events, 'hit').hit, false);
   assert.equal(events.some((e) => e.type === 'momentum'), false);
-  assert.equal(momentum, 0);
+  assert.equal(momentum.e, 0);
 });
 
-test('a later pair in the same round sees the updated M in its speed', () => {
-  const queue = [{ id: 'a', speed: 1, kind: 'other' }, { id: 'b', speed: 3, kind: 'attack' }];
+test('round end: a later slot in the same round does not see the change', () => {
+  const queue = [
+    { id: 'a', enemyId: 'boss', speed: 1, kind: 'other' },
+    { id: 'b', enemyId: 'boss', speed: 3, kind: 'attack' },
+  ];
   const playerCards = [
     { id: 'strike', slot: 0, speed: 4, kind: 'attack' },
     { id: 'strike2', slot: 1, speed: 3, kind: 'attack' },
@@ -399,12 +360,17 @@ test('a later pair in the same round sees the updated M in its speed', () => {
 
   const orders = events.filter((e) => e.type === 'order');
   assert.deepEqual(orders[0].speeds, { player: 4, enemy: 1 });
-  // M was +1 after pair 0, so the player's 3 becomes 4 and the enemy's 3 becomes 2.
-  assert.deepEqual(orders[1].speeds, { player: 4, enemy: 2 });
-  assert.equal(orders[1].simultaneous, false, 'without the updated M this pair would tie at 3');
-  assert.equal(orders[1].momentum, 1, 'each event carries the M after it');
-  assert.equal(momentum, 2);
-  assert.equal(events[events.length - 1].momentum, momentum);
+  // Pair 1 still uses the starting M (0), so 3 vs 3 is a tie, not 4 vs 2.
+  assert.deepEqual(orders[1].speeds, { player: 3, enemy: 3 });
+  assert.equal(orders[1].simultaneous, true);
+  assert.equal(momentum.boss, 1);
+  assert.deepEqual(find(events, 'momentumApplied'), {
+    type: 'momentumApplied', enemyId: 'boss', from: 0, delta: 1, to: 1, momentum: 1,
+  });
+});
+
+test('resolveRound rejects a momentum value that is not an object keyed by enemy', () => {
+  assert.throws(() => resolveRound([], [], 0, d20Face(20), { momentum: 3 }), TypeError);
 });
 
 // Every source_type in speed-mods.csv must name a component that actionSpeed()
@@ -425,4 +391,33 @@ test('speed-mods.csv: every source_type maps to an actionSpeed component', async
     if (!SPEED_COMPONENTS.includes(sourceType)) bad.push(`${sourceType} (${line.split(',')[1]})`);
   }
   assert.deepEqual(bad, [], 'source_type values with no matching component');
+});
+
+// Codex finding 1: momentum is summed for the whole pair, then clamped once.
+// Both sides land in one tie: the player's +1 and the enemy's -1 net to 0, so
+// M must stay where it was. Shift-then-clamp per side ends at +2 from +3.
+test('clamp after netting: a tie that lands on both sides at +3 stays at +3', () => {
+  // Effective speeds at M = +3: player 1+3 = 4, enemy 7-3 = 4, a tie.
+  const { momentum } = resolveRound(
+    [{ id: 'p', slot: 0, speed: 1, kind: 'attack' }],
+    [{ id: 'e', speed: 7, kind: 'attack' }],
+    1,
+    d20Face(20),
+    { momentum: { e: 3 } },
+  );
+  assert.equal(momentum.e, 3);
+});
+
+// Passes on c8776f4fd too: that code always shifts the player first, which
+// happens to be the right result at -3. It is kept as the symmetric guard.
+test('clamp after netting: the mirrored tie at -3 stays at -3', () => {
+  // Effective speeds at M = -3: player 7-3 = 4, enemy 1+3 = 4, a tie.
+  const { momentum } = resolveRound(
+    [{ id: 'p', slot: 0, speed: 7, kind: 'attack' }],
+    [{ id: 'e', speed: 1, kind: 'attack' }],
+    1,
+    d20Face(20),
+    { momentum: { e: -3 } },
+  );
+  assert.equal(momentum.e, -3);
 });

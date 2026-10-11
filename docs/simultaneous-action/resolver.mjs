@@ -183,46 +183,57 @@ function gainOf(card) {
   return g;
 }
 
-// A success is a landed hit or a counter that triggers (DESIGN.md, Momentum,
-// placeholder). A miss or an interruption is not a success.
-const isSuccess = (e) => (e.type === 'hit' && e.hit === true) || e.type === 'countered';
+// The side that wins the slot with this event, or null. A landed hit or a
+// counter that fires is a success (DESIGN.md, Momentum).
+function successSide(e) {
+  if (e.type === 'hit' && e.hit === true) return e.by;
+  if (e.type === 'countered') return e.by;
+  return null;
+}
+
+// Each queued action belongs to an enemy. `enemyId` names that enemy; it
+// defaults to the action's `id`. Momentum is kept per enemy.
+const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 
 // Resolves one round: each player card is paired with one enemy slot.
 //
 // playerCards: [{ id, slot, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]
-// enemyQueue:  [{ id, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]   (3 per round)
+// enemyQueue:  [{ id, enemyId?, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]   (3 per round)
 //   `speed` is the card's total without momentum. This function adds the
-//   shared momentum: the player adds M, the enemy adds -M, using the M that
-//   stands when that pair starts.
+//   momentum of that action's enemy: the player adds M_e, the enemy adds -M_e.
 // perception:  number of queued actions visible to the player. It only tags
 //              events with `visible`. Thresholds are open (DESIGN.md, Open q. e).
-// options.momentum: the shared M at the start of the round (default 0).
+// options.momentum: { [enemyId]: M_e } at the start of the round (default 0 each).
 //
-// Returns { events, momentum }. Every event carries `momentum`, the shared M
-// after that event. A 'momentum' event follows each successful action.
-//
-// Placeholder rules (DESIGN.md, Momentum):
-// - After each successful action, M moves toward the actor by the card's
-//   momentumGain (default 1). It is then clamped to -3..+3.
-// - Each pair resolves in order. Later pairs use the updated M.
+// Returns { events, momentum }, where `momentum` is { [enemyId]: M_e } after the
+// round. Momentum updates at round end (DESIGN.md, Momentum):
+// - Every pairing in the round uses the round's starting M_e.
+// - Each success moves M_e toward the winner by the card's momentumGain
+//   (default 1). The deltas are summed per enemy, then clamped once to -3..3.
+// - Pair events carry `momentum`: that enemy's starting M_e. A 'momentum'
+//   event marks each success. 'momentumApplied' marks each round-end change.
 // - A second player card on an already paired slot is rejected ('rejected').
 // - An enemy slot with no player card is 'unpaired' and has no effect.
 export function resolveRound(playerCards, enemyQueue, perception, rng, options = {}) {
   if (!Array.isArray(playerCards)) throw new TypeError('playerCards must be an array');
   if (!Array.isArray(enemyQueue)) throw new TypeError('enemyQueue must be an array');
   const visibleCount = Math.max(0, Math.min(enemyQueue.length, Math.trunc(Number(perception) || 0)));
+  const inputM = options.momentum ?? {};
+  if (typeof inputM !== 'object' || Array.isArray(inputM)) {
+    throw new TypeError('options.momentum must be an object keyed by enemy id');
+  }
 
-  let momentum = clampMomentum(options.momentum ?? 0);
+  // Starting M_e for each enemy in the queue. Every pairing uses these values.
+  const start = {};
+  for (const enemy of enemyQueue) {
+    const k = enemyKey(enemy);
+    if (!(k in start)) start[k] = clampMomentum(inputM[k] ?? 0);
+  }
+
+  const pending = {}; // summed raw deltas per enemy, applied at round end
   const events = [];
-  const push = (e) => events.push({ ...e, momentum });
   const paired = new Set();
-
-  const shift = (who, card, slot) => {
-    const gain = gainOf(card);
-    const before = momentum;
-    momentum = clampMomentum(momentum + (who === 'player' ? gain : -gain));
-    push({ type: 'momentum', by: who, gain, delta: momentum - before, reason: 'success', slot });
-  };
+  const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
 
   playerCards.forEach((pc, i) => {
     const slot = pc.slot;
@@ -236,23 +247,45 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     paired.add(slot);
 
     const enemy = enemyQueue[slot];
+    const k = enemyKey(enemy);
     const visible = slot < visibleCount;
     const pairEvents = resolvePair(
-      { ...pc, speed: pc.speed + momentum },
-      { ...enemy, speed: enemy.speed - momentum },
+      { ...pc, speed: pc.speed + start[k] },
+      { ...enemy, speed: enemy.speed - start[k] },
       rng,
     );
     for (const e of pairEvents) {
-      push({ ...e, slot, visible });
-      if (isSuccess(e)) shift(e.by, e.by === 'player' ? pc : enemy, slot);
+      push({ ...e, slot, visible }, k);
+      const winner = successSide(e);
+      if (winner) {
+        const card = winner === 'player' ? pc : enemy;
+        const gain = gainOf(card);
+        const delta = winner === 'player' ? gain : -gain;
+        pending[k] = (pending[k] ?? 0) + delta;
+        push({ type: 'momentum', enemyId: k, by: winner, gain, delta, reason: 'success', slot }, k);
+      }
     }
   });
 
   enemyQueue.forEach((enemy, slot) => {
     if (!paired.has(slot)) {
-      push({ type: 'unpaired', slot, enemyId: enemy.id, visible: slot < visibleCount });
+      push({ type: 'unpaired', slot, enemyId: enemy.id, visible: slot < visibleCount }, enemyKey(enemy));
     }
   });
+
+  // Round end: sum each enemy's deltas, then clamp once.
+  const momentum = {};
+  for (const k of Object.keys(start)) {
+    const from = start[k];
+    const to = clampMomentum(from + (pending[k] ?? 0));
+    momentum[k] = to;
+    if (to !== from) {
+      events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to, momentum: to });
+    }
+  }
+  for (const k of Object.keys(inputM)) {
+    if (!(k in momentum)) momentum[k] = clampMomentum(inputM[k]);
+  }
 
   return { events, momentum };
 }
