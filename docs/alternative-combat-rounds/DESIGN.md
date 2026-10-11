@@ -125,7 +125,7 @@ at M_e = 0.
 
 - Winning with a stance that beats the opposing stance adds that row's bonus
   from `stance-advantage.csv` (default 1 when blank). The bonus is added to
-  the base gain. Flagged: additive, not a replacement.
+  the base gain, not a replacement (owner, 2026-10-11).
 - Owner examples:
   - smash beats block and breaks it for +2. A smash win over block is worth
     1 + 2 = 3.
@@ -361,8 +361,8 @@ n. Resolved (2026-10-11): no combos. Only slot wins and stance advantage move
 o. Does a miss from the evasion stat alone count as a dodge? Current reading:
    no. Only an evade action counts. Flagged.
 p. Resolved (2026-10-11): truncation toward zero.
-q. Stance bonus: is it added to the base gain (current reading) or does it
-   replace it? Smash over block would be 3 or 2. Flagged.
+q. Resolved (owner, 2026-10-11). The stance bonus is added to the base gain.
+   Smash over block is 1 + 2 = 3.
 r. Resolved (owner, 2026-10-11). Counter stagger adds +-3 to the counter-user's
    side of the summed round delta. It is in addition to the normal slot win.
    Opposing staggers net naturally (+3 and -3), with no cancel rule.
