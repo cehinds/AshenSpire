@@ -16,7 +16,8 @@ Rules:
 - Small commits, pushed as made (owner, 2026-10-11): break the task into very small steps, one commit per step, and push each commit as soon as it is made so it can be reviewed while you continue. Each commit is self-contained (it builds, and the tests it touches pass) and its subject names its one change.
 
 Report only this, within the brief's word cap:
-Branch / SHA:
+Branch:
+Commits: every SHA in order, oldest first, each with its subject
 Files changed:
 What the fix does:
 Tests: <command> → <counts>; failures named and labelled
