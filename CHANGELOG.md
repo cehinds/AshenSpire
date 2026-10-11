@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-11
+
+- **Feature branches get playable builds; worker branch rules documented** ([#1832](https://github.com/cehinds/AshenSpire/pull/1832), `0.7.1.1281`). The README now explains where each open feature, fix or chore branch's playable build lives. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. No gameplay changes.
+
 ## 2026-10-10
 
 - **Clicking a target no longer shuffles enemy labels** ([#1825](https://github.com/cehinds/AshenSpire/pull/1825), `0.7.1.1280`). Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Clicking any target after keyboard navigation clears the old cursor first, while keyboard focus still moves the cursor to the target.
