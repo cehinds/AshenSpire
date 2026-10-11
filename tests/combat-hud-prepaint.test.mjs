@@ -21,7 +21,7 @@ test('current HUD tracking and footer reads reserve the incoming independent Inf
   const field={style:{},parentElement:combat,getBoundingClientRect:fieldRect,closest:()=>combat};
   const leading={style:{},parentElement:field,getBoundingClientRect:()=>({left:parseFloat(leading.style.left)*zoom||134,
     top:parseFloat(leading.style.top)*zoom||246+delta,width:112,height:55}),querySelector:selector=>selector.includes('combatant-info')?info:selector==='.player-action-intent'?null:{}};
-  const info={style:{},parentElement:leading,getBoundingClientRect:()=>visible?{width:44,height:44,
+  const info={style:{},dataset:{},parentElement:leading,getBoundingClientRect:()=>visible?{width:44,height:44,
     left:leading.getBoundingClientRect().left+(parseFloat(info.style.left)||0)*zoom,
     top:leading.getBoundingClientRect().top+(parseFloat(info.style.top)||0)*zoom}:{width:0,height:0}};
   const sprite={},player={classList:{contains:()=>false},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
@@ -70,7 +70,7 @@ test('the first co-op panel reserves every later independently anchored Info bef
   const infos=[{width:44,height:44,left:60,right:104,top:176,bottom:220},
     {width:44,height:44,left:340,right:384,top:176,bottom:220}];
   const players=infos.map((infoRect,index)=>{
-    const sprite={index},inspect={style:{},infoRect};
+    const sprite={index},inspect={style:{},dataset:{},infoRect};
     const leading={style:{},getBoundingClientRect:()=>({left:130+index*280,top:230,width:100,height:55}),
       querySelector:selector=>selector==='.combatant-info'?inspect:selector==='.player-action-intent'?null:{}};
     return {classList:{contains:()=>true},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:

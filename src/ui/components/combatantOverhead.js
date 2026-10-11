@@ -2,28 +2,22 @@ import { attachTooltip, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { intentIcon } from './intentIcon.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
-
-const inspectTimers = new WeakMap();
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
   hideTooltip();
   for (const frame of root.querySelectorAll('.combatant')) {
     const selected = frame.dataset.eid === id;
-    const changed = frame.classList.contains('context-selected') !== selected;
     frame.classList.toggle('context-selected', selected);
     frame.setAttribute('aria-pressed', String(selected));
-    if (changed || !selected) {
-      clearTimeout(inspectTimers.get(frame));
-      delete frame.dataset.inspectReady;
-      if (selected) inspectTimers.set(frame, setTimeout(() => {
-        if (frame.isConnected && frame.classList.contains('context-selected')) frame.dataset.inspectReady = 'true';
-      }, selectionRevealDelayMs()));
-    }
   }
-  root.dispatchEvent(new CustomEvent('combatantselectionchange'));
+  // The battlefield listens on its own `.combat`. A co-op root is that
+  // `.combat`'s parent, so dispatch on the board(s) inside root, not on root.
+  const boards = root.matches?.('.combat') ? [root] : [...root.querySelectorAll('.combat')];
+  for (const board of (boards.length ? boards : [root])) {
+    board.dispatchEvent(new CustomEvent('combatantselectionchange'));
+  }
 }
 
 export function combatantInfo(name, open) {

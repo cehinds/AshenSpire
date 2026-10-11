@@ -16,7 +16,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const viewport={left:0,top:0,right:320,bottom:650,width:320,height:650},options=[],doors=[];
     const players=[true,false].map((selected,index)=>{
       const sprite={index},art={left:40+index*160,right:100+index*160,top:190,bottom:300};
-      const inspect={size:22,style:{},getBoundingClientRect:()=>({width:0,height:0})};
+      const inspect={size:22,style:{},dataset:{},getBoundingClientRect:()=>({width:0,height:0})};
       const action={size:24,style:{},getBoundingClientRect:()=>({width:24,height:24})};
       const infoRect=combatPlayerInfoRect(inspect,art,viewport,zoom);
       doors.push(infoRect,combatPlayerActionRect(action,infoRect,art,zoom));

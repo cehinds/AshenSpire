@@ -264,6 +264,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
         door.style.left = `${local.left}px`;
         door.style.top = `${local.top}px`;
+        // The Info door stays visibility:hidden until its spot is written, so
+        // it never paints at a temporary position and then moves.
+        if (door === inspect) door.dataset.placed = 'true';
       }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
@@ -325,9 +328,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       sides.push(chosen[0]);
     }
     measured.forEach(({ info }, i) => {
-      if (sides[i] == null) return;
+      // Not displayed (unselected): its spot is no longer current, so the
+      // door must be placed again before it can show.
+      if (sides[i] == null) { delete info.dataset.placed; return; }
       if (sides[i]) { if (info.dataset.inspectSide !== sides[i]) info.dataset.inspectSide = sides[i]; }
       else if (info.hasAttribute('data-inspect-side')) info.removeAttribute('data-inspect-side');
+      info.dataset.placed = 'true';
     });
   }
   let inspectTick = 0;
@@ -959,7 +965,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const combatHost = field.closest('.combat');
   let wiredAppearance = displayAppearance();
   let releaseBackdrop = wireAlternativeBackdrop(combatHost);
-  combatHost.addEventListener('combatantselectionchange', schedule);
+  // A selection change places the newly shown Info door in the same task that
+  // shows it, so the first paint already has its spot; the frame refit follows.
+  const selectionChanged = () => { refresh(); schedule(); };
+  combatHost.addEventListener('combatantselectionchange', selectionChanged);
   combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
@@ -1006,7 +1015,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   const release = () => {
     releaseBackdrop();
-    combatHost.removeEventListener('combatantselectionchange', schedule);
+    combatHost.removeEventListener('combatantselectionchange', selectionChanged);
     combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
     cancelAnimationFrame(trackingRequest);

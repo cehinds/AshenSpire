@@ -3847,6 +3847,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 :root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
+/* A hand card's Inspect is the portal above the card (handInspectionOverlay), shown
+   once it is moved there. The in-card copy stays hidden even while the card is
+   selected, so it never paints at a temporary spot and then moves (owner, 2026-10-11).
+   Non-hand card views keep the shared in-card rule above. */
+.hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
 .inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
