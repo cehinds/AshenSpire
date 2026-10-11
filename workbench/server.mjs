@@ -139,7 +139,9 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   // What the file service wrote, so the watcher drops the echo of a save. onSaved still sends the batch itself:
   // with forcePoll or a disabled watcher nothing else would.
   const ownWrites = createOwnWrites();
-  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault });
+  // close() aborts this first: a save waiting for a build lock stops waiting and answers 503 (core/files.mjs).
+  const closeAbort = new AbortController();
+  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => onBatch(paths), onWritten: (abs, stat) => ownWrites.record(abs, stat), lockWaitMs, fileFault, signal: closeAbort.signal });
   let supervisor = null;
   let reloads = 0;
   let previewAddress = '';
@@ -371,6 +373,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     get reloads() { return reloads; },
     killChildrenSync: () => { supervisor.killAllSync(); jobs.stopAll(); },
     close: () => closing ||= (async () => {
+      // Pending lock waits end now (saves answer 503, live-reload builds start nothing), not after lockWaitMs.
+      closeAbort.abort(new Error('The Workbench is closing'));
       watcher.close();
       closed = true;
       for (const child of liveBuilds) child.kill();

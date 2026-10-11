@@ -683,6 +683,26 @@ test('a generated-files lock held by another process (the editor, UI Studio) ref
   await assert.rejects(fs.stat(lock), /ENOENT/, 'released when the job finishes');
 });
 
+test('close() ends a save waiting for a foreign build lock at once: 503, nothing written, no lock of ours', async (t) => {
+  const root = await project(t);
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(root, '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const { app } = await boot(t, root, { lockWaitMs: 60 * 1000 });
+  const saving = fetch(`${app.url}/api/files/save`, {
+    method: 'POST', headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ changes: [{ path: 'styles/x.css', text: 'x{}\n', baseHash: null }] }),
+  });
+  await new Promise((r) => setTimeout(r, 200));
+  const started = Date.now();
+  await app.close();
+  assert.ok(Date.now() - started < 1000, 'close() did not wait out the lock wait');
+  assert.equal((await saving).status, 503);
+  assert.equal(await fs.stat(path.join(root, 'styles/x.css')).then(() => true, () => false), false, 'nothing written');
+  assert.equal(JSON.parse(await fs.readFile(lock, 'utf8')).token, 'theirs', 'their lock stands; ours was never taken');
+});
+
 test('close() waits for a save still writing, so its file is on disk when close resolves', async (t) => {
   const root = await project(t);
   const styles = path.join(root, 'styles/main.css');
