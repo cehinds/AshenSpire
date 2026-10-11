@@ -3,10 +3,38 @@
 // leave descendants behind after the leader exits; they keep the step's work, and any lock
 // the step holds, until they exit too.
 
+import fs from 'node:fs';
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** True while any process is still in group `pgid`. EPERM counts as alive. */
-export function groupAlive(pgid, kill = process.kill) {
+/**
+ * Linux only: the /proc entries whose process group is `pgid`, as { pid, state }. State is the
+ * one-letter /proc state; Z is an unreaped zombie. Null when /proc cannot be read.
+ */
+export function procGroupMembers(pgid, { readdir = fs.readdirSync, readFile = fs.readFileSync } = {}) {
+  let names;
+  try { names = readdir('/proc'); } catch { return null; }
+  const members = [];
+  for (const name of names) {
+    if (!/^\d+$/.test(name)) continue;
+    let stat;
+    try { stat = readFile(`/proc/${name}/stat`, 'utf8'); } catch { continue; } // exited meanwhile
+    // "pid (comm) state ppid pgrp ..." — comm may hold spaces or parentheses, so split after the last ')'.
+    const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+    if (Number(fields[2]) === pgid) members.push({ pid: Number(name), state: fields[0] });
+  }
+  return members;
+}
+
+/**
+ * True while any process that is not a zombie is in group `pgid`. EPERM counts as alive.
+ * On Linux the members come from /proc: an unreaped zombie keeps the group id alive, so
+ * kill(-pgid, 0) would keep succeeding forever under an init that does not reap orphans.
+ * Elsewhere kill(-pgid, 0) decides.
+ */
+export function groupAlive(pgid, kill = process.kill, { platform = process.platform, members = procGroupMembers } = {}) {
+  const listed = platform === 'linux' ? members(pgid) : null;
+  if (listed) return listed.some((m) => m.state !== 'Z' && m.state !== 'X');
   try { kill(-pgid, 0); return true; } catch (error) { return error.code !== 'ESRCH'; }
 }
 
