@@ -20,3 +20,18 @@ dodgeRoll.base,3,points,dodgeRoll,"Base Block, Poise and Ward"
 dodgeRoll.cost,1,SP,dodgeRoll,Stamina cost (Light/Medium); Heavy pays 2
 wayfarerPlate.dr,6,rating,wayfarerPlate,Armor DR
 wayfarerPlate.poise,8,points,wayfarerPlate,Poise threshold
+studded.resist.physical,TBD,TBD,armor,"Resistance of studded to physical damage (TBD placeholder, owner decision 8)"
+studded.resist.magic,TBD,TBD,armor,"Resistance of studded to magic damage (TBD placeholder, owner decision 8)"
+studded.resist.hybrid,TBD,TBD,armor,"Resistance of studded to hybrid damage (TBD placeholder, owner decision 8)"
+leather.resist.physical,TBD,TBD,armor,"Resistance of leather to physical damage (TBD placeholder, owner decision 8)"
+leather.resist.magic,TBD,TBD,armor,"Resistance of leather to magic damage (TBD placeholder, owner decision 8)"
+leather.resist.hybrid,TBD,TBD,armor,"Resistance of leather to hybrid damage (TBD placeholder, owner decision 8)"
+plated.resist.physical,TBD,TBD,armor,"Resistance of plated to physical damage (TBD placeholder, owner decision 8)"
+plated.resist.magic,TBD,TBD,armor,"Resistance of plated to magic damage (TBD placeholder, owner decision 8)"
+plated.resist.hybrid,TBD,TBD,armor,"Resistance of plated to hybrid damage (TBD placeholder, owner decision 8)"
+absorption.resist.physical,TBD,TBD,armor,"Resistance of absorption to physical damage (TBD placeholder, owner decision 8)"
+absorption.resist.magic,TBD,TBD,armor,"Resistance of absorption to magic damage (TBD placeholder, owner decision 8)"
+absorption.resist.hybrid,TBD,TBD,armor,"Resistance of absorption to hybrid damage (TBD placeholder, owner decision 8)"
+siphon.resist.physical,TBD,TBD,armor,"Resistance of siphon to physical damage (TBD placeholder, owner decision 8)"
+siphon.resist.magic,TBD,TBD,armor,"Resistance of siphon to magic damage (TBD placeholder, owner decision 8)"
+siphon.resist.hybrid,TBD,TBD,armor,"Resistance of siphon to hybrid damage (TBD placeholder, owner decision 8)"

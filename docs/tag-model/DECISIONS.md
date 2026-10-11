@@ -150,3 +150,23 @@ Formula, relation and value keys follow the README conventions.
     not in the decision, so the relation points at the Consumable card type.
   - Whether all five consumable item kinds create a card, or only some. The
     relation covers the whole group. Owner to narrow it if needed.
+
+## 8. Armor materials carry damage-type resistances
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Armor materials carry resistances by damage type. The named
+  rows are studded, leather, plated, absorption and siphon. The numbers are
+  TBD.
+- **Tables changed:** `tables/values.csv` gains 15 rows, all `TBD`, scope
+  `armor`. Each is `<material>.resist.<family>` for the families physical,
+  magic and hybrid. The families are the three top-level damage nodes in the
+  tree (`meta.combat.damage.physical`, `.magic`, `.hybrid`). A value is a
+  preview number under the README convention, so each row is a placeholder
+  until a number is set.
+- **Couldn't place:**
+  - Cloth, chain and scale are not in the owner's list, so they have no rows.
+    Owner to say if they should.
+  - The families are coarse. Per-type resistances (slashing, blunt, pierce,
+    fire, frost and so on) are not split out. Owner to say if they should be.
+  - Absorption and siphon are defensive properties, not materials. They are
+    listed because the owner named them, and the rows keep that scope.
