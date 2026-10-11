@@ -144,7 +144,7 @@ Formula, relation and value keys follow the README conventions.
   - `tables/relations.csv`: `character.consumable CREATES_CARD type.consumable`.
     The source is the consumable item tree (`meta.character.consumable`, with
     Flask, Potion, Throwable, Buff item and Key item). The target is the
-    Consumable card type (`meta.card.type.consumable`, key `type.consumable`).
+    Consumable card type (`card.type.consumable`, key `type.consumable`).
 - **Couldn't place:**
   - The one-shot card has no tag or object. Its identity, cost and effect are
     not in the decision, so the relation points at the Consumable card type.
