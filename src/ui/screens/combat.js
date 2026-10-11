@@ -23,7 +23,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
 import { combatLogEntries } from '../../model/combatLog.js';
-import { combatToolsModel } from '../models/CombatToolsModel.js';
+import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
 import { mountCombatTools } from '../components/combatTools.js';
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
@@ -223,7 +223,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
-  const combatToolsState = { open: false, size: 'Small', followLatest: true };
+  const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
     onViewChange: () => renderCombatTools(),
     onToggle: enabled => {

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatLogEntries } from '../src/model/combatLog.js';
-import { combatLogHeight, combatLogSnapSize, combatLogDragScale, combatToolsModel, COMBAT_LOG_SIZES } from '../src/ui/models/CombatToolsModel.js';
+import { readFileSync } from 'node:fs';
+import { combatLogHeight, combatLogSnapSize, combatLogDragScale, combatToolsModel, COMBAT_LOG_SIZES, COMBAT_LOG_DEFAULT_SIZE } from '../src/ui/models/CombatToolsModel.js';
 import { childModel } from '../src/ui/models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../src/ui/models/UiComponentId.js';
 
@@ -87,4 +88,12 @@ test('unsupported historical combat has a disabled switch and immutable public l
   assert.equal(childModel(model, UI.combatLogDrawer).properties.open, true);
   entries[0].text = 'Mutated';
   assert.equal(childModel(model, UI.combatLogDrawer).properties.entries[0].text, 'A public action.');
+});
+
+test('the combat log opens at Medium, and both screens start from that default', () => {
+  assert.equal(COMBAT_LOG_DEFAULT_SIZE, 'Medium');
+  assert.equal(childModel(combatToolsModel({ supported: true, enabled: true }), UI.combatLogDrawer).properties.size, 'Medium');
+  for (const file of ['src/ui/screens/combat.js', 'src/ui/screens/coop.js']) {
+    assert.match(readFileSync(file, 'utf8'), /combatToolsState = \{ open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true \}/, file);
+  }
 });
