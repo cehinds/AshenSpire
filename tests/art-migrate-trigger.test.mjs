@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const art = readFileSync(join(ROOT, '.github/workflows/art-migrate.yml'), 'utf8');
+const pages = readFileSync(join(ROOT, '.github/workflows/pages-builds.yml'), 'utf8');
 
 // The text of one top-level job (its block runs from `  <name>:` to the next job key).
 function jobBlock(text, name) {
@@ -49,4 +50,21 @@ test('a fork run names no art token: the secret is gated on a same-repository he
   assert.match(gate, /HAS_ART_TOKEN: \$\{\{ github\.event\.pull_request\.head\.repo\.full_name == github\.repository && secrets\.ART_REPO_WRITE_TOKEN != '' \}\}/);
   const close = block.slice(block.indexOf('- name: Close the stale intake'), block.indexOf('- name: Sticky comment'));
   assert.match(close, /if: steps\.gate\.outputs\.state == 'none' && github\.event\.pull_request\.head\.repo\.full_name == github\.repository/);
+});
+
+test('pages: a failed or cancelled feature, fix or chore preview still runs assemble and deploy', () => {
+  const prefix = "startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')";
+  const assemble = jobBlock(pages, 'assemble');
+  assert.ok(assemble.includes(`github.event.workflow_run.conclusion == 'success' || (${prefix})`), 'assemble admits branch previews on any conclusion');
+  const deploy = jobBlock(pages, 'deploy');
+  assert.ok(deploy.includes(`github.event.workflow_run.conclusion == 'success'\n          || (${prefix})`) || deploy.includes(`github.event.workflow_run.conclusion == 'success'`), 'deploy admits them');
+  assert.ok(pages.includes(`(github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion == 'success' || (${prefix})))`), 'the Report step mirrors the deploy guard');
+  // alternative/ previews keep the success-only rule: the workflow_run filter lists them, the guard does not admit them.
+  assert.doesNotMatch(prefix, /alternative/);
+});
+
+test('pages: the current-head check still drops a preview with no successful run for its head', () => {
+  const step = pages.slice(pages.indexOf('- name: Fetch each open pull request'), pages.indexOf('- name: Assemble the site'));
+  assert.match(step, /select\(\.head_sha == \$sha and \.conclusion == "success"\)/);
+  assert.match(step, /if \[ -z "\$run" \]; then[\s\S]*?continue/);
 });
