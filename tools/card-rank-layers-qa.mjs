@@ -5,7 +5,7 @@ import {mkdirSync} from 'node:fs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 import {launchBrowser} from './browser.mjs';
 import {serve} from './serve.mjs';
-const output=resolve(process.env.RANK_QA_OUT || 'docs/qa/card-rank-layers');
+const output=resolve(process.env.RANK_QA_OUT || 'scratch/qa/card-rank-layers');
 mkdirSync(output,{recursive:true});
 const server=await serve({root:process.cwd(),port:0,open:false});
 const base='http://localhost:'+server.server.address().port;
