@@ -808,7 +808,8 @@ function connectEvents() {
   });
   on('reload-failed', (r) => {
     if (building) { building(); building = null; }
-    toast({ kind: 'error', title: `${r.step.replace(/^tools\//, '')} failed — preview not reloaded`, detail: r.output.split('\n').filter(Boolean).slice(-8).join('\n'), actions: [{ label: 'Open Build & Checks', run: () => show('jobs') }] });
+    const title = r.step ? `${r.step.replace(/^tools\//, '')} failed — preview not reloaded` : 'Preview not reloaded — another build is still running';
+    toast({ kind: 'error', title, detail: String(r.output || '').split('\n').filter(Boolean).slice(-8).join('\n'), actions: [{ label: 'Open Build & Checks', run: () => show('jobs') }] });
   });
 }
 

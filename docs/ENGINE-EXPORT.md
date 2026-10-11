@@ -165,9 +165,11 @@ Use one of these to import:
   [`struct_map.example.json`](engine-export/unreal/struct_map.example.json)).
   It then creates or refills one DataTable per mapped table. The destination
   folder mirrors the manifest: after an import that ran to the end, was not
-  cancelled and had no failed table, it deletes the `DT_*` DataTables it owns
-  in `--dest` (not subfolders) whose table is no longer in the manifest. Other
-  assets there are left alone. Pass `--no-prune` when importing an export made
+  cancelled and had no failed table, it deletes the `DT_*` DataTables it created
+  in `--dest` (not subfolders) whose table is no longer in the manifest. It marks
+  each table it fills with the `AshenSpireImporter` metadata tag and prunes only
+  tagged tables, so other assets there, including your own `DT_*` tables, are
+  left alone. Pass `--no-prune` when importing an export made
   with `--only`, whose manifest lists only some tables.
 
 Config files and art manifests are plain JSON. Load them with the `Json`

@@ -52,6 +52,9 @@ def asset_name(table_id):
 
 # Every name asset_name() can produce; nothing else in --dest is pruned.
 OWNED_NAME = re.compile(r"^DT_[A-Za-z0-9_]+$")
+# Metadata tag this importer sets on every table it fills. Only tables carrying
+# it are ever pruned, so a project's own DT_* tables in --dest are never touched.
+OWNER_TAG = "AshenSpireImporter"
 
 
 def prune_stale_tables(dest, keep_names):
@@ -66,6 +69,8 @@ def prune_stale_tables(dest, keep_names):
         asset = unreal.EditorAssetLibrary.load_asset(path)
         if not isinstance(asset, unreal.DataTable):
             continue
+        if unreal.EditorAssetLibrary.get_metadata_tag(asset, OWNER_TAG) != "1":
+            continue  # not created by this importer
         if unreal.EditorAssetLibrary.delete_asset(path):
             deleted.append(path)
         else:
@@ -122,6 +127,7 @@ def import_export(export_dir, struct_map, dest, prune=True):
                 unreal.log_error("AshenSpire: %s did not import from %s" % (entry["id"], json_file))
                 failed.append(entry["id"])
                 continue
+            unreal.EditorAssetLibrary.set_metadata_tag(table, OWNER_TAG, "1")
             unreal.EditorAssetLibrary.save_loaded_asset(table)
             imported.append(entry["id"])
 

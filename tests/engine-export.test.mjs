@@ -162,16 +162,20 @@ test('staleGenerated runs the builders (or their --check) and names the stale on
 });
 
 // The Unreal importer runs against a stub `unreal` module (no editor here):
-// after a complete import it deletes only its own DT_* DataTables that the
+// after a complete import it deletes only the DT_* DataTables it tagged as its own that the
 // manifest no longer lists; a cancelled or failed import, or --no-prune, keeps them.
 const STUB_UNREAL = String.raw`
 import sys, types, json
 state = json.loads(sys.argv[1])
 assets = {a["path"]: a for a in state["assets"]}
 deleted, saved = [], []
-class DataTable: pass
+tags = {}
+class DataTable:
+    def __init__(self, path): self.path = path
 class Other: pass
-def obj(a): return DataTable() if a["cls"] == "DataTable" else Other()
+def obj(path):
+    a = assets[path]
+    return DataTable(path) if a["cls"] == "DataTable" else Other()
 class EditorAssetLibrary:
     @staticmethod
     def list_assets(dest, recursive=True, include_folder=False):
@@ -179,7 +183,11 @@ class EditorAssetLibrary:
     @staticmethod
     def does_asset_exist(path): return path.split(".")[0] in assets
     @staticmethod
-    def load_asset(path): return obj(assets[path.split(".")[0]])
+    def load_asset(path): return obj(path.split(".")[0])
+    @staticmethod
+    def get_metadata_tag(t, key): return "1" if (assets[t.path].get("owned") or tags.get(t.path)) else ""
+    @staticmethod
+    def set_metadata_tag(t, key, value): tags[t.path] = value
     @staticmethod
     def delete_asset(path): deleted.append(path.split(".")[0]); return True
     @staticmethod
@@ -222,10 +230,11 @@ test('the Unreal importer mirrors the manifest: it prunes only its own stale DT_
   const assets = [
     { path: '/Game/A/DT_content_cards', cls: 'DataTable' },
     { path: '/Game/A/DT_content_unmapped', cls: 'DataTable' }, // in the manifest, not mapped: kept
-    { path: '/Game/A/DT_content_removed', cls: 'DataTable' }, // gone from the manifest: pruned
+    { path: '/Game/A/DT_content_removed', cls: 'DataTable', owned: true }, // ours, gone from the manifest: pruned
+    { path: '/Game/A/DT_ProjectTable', cls: 'DataTable' }, // a project's own DT_* table, not tagged by us: kept
     { path: '/Game/A/DT_Mine', cls: 'Other' }, // matches the name, not a DataTable: kept
-    { path: '/Game/A/MyTable', cls: 'DataTable' }, // not the importer's naming: kept
-    { path: '/Game/A/Sub/DT_content_old', cls: 'DataTable' }, // a subfolder: kept
+    { path: '/Game/A/MyTable', cls: 'DataTable', owned: true }, // not the importer's naming: kept
+    { path: '/Game/A/Sub/DT_content_old', cls: 'DataTable', owned: true }, // a subfolder: kept
   ];
   const go = (extra) => {
     const r = spawnSync(python, ['-I', '-B', '-c', STUB_UNREAL, JSON.stringify({ dir: join(root, 'docs/engine-export/unreal'), export: exp, structs: { 'content.cards': '/Script/X.Row' }, assets, ...extra })], { encoding: 'utf8' });
