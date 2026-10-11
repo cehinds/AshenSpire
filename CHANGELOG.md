@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-11
+
+- **One Workbench for every authoring tool** ([#1829](https://github.com/cehinds/AshenSpire/pull/1829), `0.7.1.1281`). For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.
+
 ## 2026-10-10
 
 - **Clicking a target no longer shuffles enemy labels** ([#1825](https://github.com/cehinds/AshenSpire/pull/1825), `0.7.1.1280`). Clicking an enemy's target button no longer selects that enemy after your card resolves, so the labels above the enemies stay put, including with reduced motion on. Clicking any target after keyboard navigation clears the old cursor first, while keyboard focus still moves the cursor to the target.
