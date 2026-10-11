@@ -1,7 +1,7 @@
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, playerActionIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
@@ -647,14 +647,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   // An armed card's kind shows while it is armed; otherwise the last confirmed
-  // card's kind stays above the figure, so the player's stance reads at rest.
+  // card's kind stays above the figure, and before any card is confirmed the
+  // neutral resting mark does, so the player's intent glyph is always shown.
   function syncPlayerActionIntent(player, inst, held = null) {
     const leading = player?.querySelector('.combatant-leading');
     if (!leading) return;
     leading.querySelector('.player-action-intent')?.remove();
     const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
     const armed = def ? combatProfileFor(def) : null;
-    const action = playerActionIntent(armed?.maneuver ? armed : held, () => {
+    const action = playerActionIntent(armed?.maneuver ? armed : held ?? RESTING_PLAYER_ACTION, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });

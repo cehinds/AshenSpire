@@ -42,3 +42,27 @@ test('an unarmed player shows the last confirmed kind, an armed card its own', (
   sync({ querySelector: () => leading }, { instanceId: 'x', cardId: 'shieldBash' }, kindForCard({ id: 'defend' }));
   assert.equal(actions.at(-1).profile.maneuver, 'smash', 'the armed card wins over the held kind');
 });
+
+// Owner (2026-10-11): the figure shows its intent glyph with nothing played.
+// Before a card is confirmed, the neutral resting mark is what it shows.
+test('with nothing confirmed or armed, the figure shows the neutral resting mark', () => {
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const begin = source.indexOf('  function syncPlayerActionIntent('), end = source.indexOf('  function armSelf(', begin);
+  const actions = [];
+  const leading = { querySelector: () => null, append: action => actions.push(action) };
+  const context = {
+    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, selfArm: null,
+    RESTING_PLAYER_ACTION: { maneuver: 'ready' },
+    playerActionIntent: profile => ({ profile }), playCard() {}, selectCombatant() {},
+    combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
+  };
+  const sync = runInNewContext(`${source.slice(begin, end)}\nsyncPlayerActionIntent`, context);
+  sync({ querySelector: () => leading }, null, null);
+  assert.equal(actions.length, 1, 'a glyph is appended with nothing played');
+  assert.equal(actions[0].profile.maneuver, 'ready');
+  sync({ querySelector: () => leading }, null);
+  assert.equal(actions.length, 2, 'a turn-start clear (no held kind) still shows the mark');
+  const overhead = readFileSync(new URL('../src/ui/components/combatantOverhead.js', import.meta.url), 'utf8');
+  assert.match(overhead, /ready: 'prepare'/, 'the resting mark draws the neutral prepare sigil');
+  assert.match(overhead, /export const RESTING_PLAYER_ACTION = Object\.freeze\(\{ maneuver: 'ready' \}\);/);
+});

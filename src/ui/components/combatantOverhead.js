@@ -92,10 +92,15 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   return node;
 }
 
+// Owner (2026-10-11): the figure always shows an intent glyph. Before any card
+// is confirmed (fight start, each new player turn) it shows this neutral "ready"
+// mark: nothing is committed yet, so no action is claimed.
+export const RESTING_PLAYER_ACTION = Object.freeze({ maneuver: 'ready' });
+
 // Selected card previews use authored action identity, never card-name guesses.
 export function playerActionIntent(profile, onTarget) {
   if (!profile?.maneuver) return null;
-  const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'attack', ranged: 'attack', casting: 'cast' })[profile.maneuver]
+  const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'attack', ranged: 'attack', casting: 'cast', ready: 'prepare' })[profile.maneuver]
     || (profile.camp === 'spell' ? 'cast' : null);
   if (!icon) return null;
   const node = document.createElement('button');

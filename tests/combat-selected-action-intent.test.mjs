@@ -33,9 +33,12 @@ test('both real selection/render callers pass the instance and clear removes the
   assert.match(source,/syncPlayerActionIntent\(box, activeCard, heldKinds\.get\(\)\);/);
   const calls=[];
   const player={querySelector:()=>({querySelector:()=>({remove:()=>calls.push('removed')}),append:()=>assert.fail('no selected action')})};
+  const shown=[];
   const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
-    combatProfileFor,playerActionIntent:profile=>{assert.equal(profile,null);return null;},
+    combatProfileFor,RESTING_PLAYER_ACTION:{maneuver:'ready'},
+    playerActionIntent:profile=>{shown.push(profile);return null;},
     combatEl:{dispatchEvent:()=>calls.push('refit')},CustomEvent:class{}};
   runInNewContext(source.slice(begin,end)+'\nsyncPlayerActionIntent',context)(player,null);
   assert.deepEqual(calls,['removed','refit']);
+  assert.deepEqual(shown,[{maneuver:'ready'}],'with nothing armed or held, the resting mark is what the figure shows');
 });
