@@ -111,6 +111,11 @@ the affected files and the specific risks. Do not give it the repo. Every findin
 claim the orchestrator verifies. Fix what stands (with a worker or directly), and record
 in the PR who reviewed, what changed, and what was declined and why.
 
+A per-commit review that starts before any PR exists names the branch and the pushed
+SHAs instead of a PR number. It does not replace the PR-level review above: once the PR
+is opened, that review is still required, and the per-commit findings and fixes are
+recorded in the PR with it.
+
 ## 6. Escalation
 
 ```text
