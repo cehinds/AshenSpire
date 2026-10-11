@@ -170,3 +170,25 @@ Formula, relation and value keys follow the README conventions.
     fire, frost and so on) are not split out. Owner to say if they should be.
   - Absorption and siphon are defensive properties, not materials. They are
     listed because the owner named them, and the rows keep that scope.
+
+## 9. Dodge Block is 3 plus DR bonuses, scaled by modifiers
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Dodge Block is `3 + DR bonuses`, scaled by modifiers. It sits
+  in a formula row that relics and stances can modify.
+- **Tables changed:**
+  - `tables/formulas.csv`: `dodgeRoll.dodgeBlock` =
+    `([dodgeRoll.base] + [dodgeBlock.drBonus]) * [dodgeBlock.mod]`, scope
+    `dodgeRoll`. `dodgeRoll.base` is already 3, so the base is unchanged.
+  - `tables/values.csv`: `dodgeBlock.drBonus` = `TBD` (the DR share, a
+    placeholder), and `dodgeBlock.mod` = `1` (the neutral modifier that relics
+    and stances change).
+  - `dodgeRoll.block` is unchanged. See below.
+- **Couldn't place:**
+  - **Conflict to confirm.** The existing `dodgeRoll.block` is
+    `[dodgeRoll.base] + ([rank] - 1) + [dr]`, which has a rank term. The decision
+    does not mention rank. The new row is added beside it, not in place of it.
+    Owner to say whether `dodgeRoll.block` should become Dodge Block, drop the
+    rank term, or stay as the rank-based Block gain.
+  - "DR bonuses" is read as a share of DR, held in `dodgeBlock.drBonus`. The
+    exact share is TBD.

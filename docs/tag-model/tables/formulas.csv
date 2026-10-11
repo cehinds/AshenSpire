@@ -6,3 +6,4 @@ dodgeRoll.block,[dodgeRoll.base] + ([rank] - 1) + [dr],dodgeRoll,Block gained; r
 dodgeRoll.poise,[dodgeRoll.block],dodgeRoll,Poise guard gained
 dodgeRoll.ward,[dodgeRoll.block],dodgeRoll,Ward guard gained
 burned.tick,[burned] * [burned.tickPerStack],burned,HP lost at turn start
+dodgeRoll.dodgeBlock,([dodgeRoll.base] + [dodgeBlock.drBonus]) * [dodgeBlock.mod],dodgeRoll,"Dodge Block: 3 + DR bonuses, scaled by modifiers (owner decision 9). Relics and stances change dodgeBlock.mod"
