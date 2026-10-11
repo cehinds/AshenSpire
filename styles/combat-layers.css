@@ -200,7 +200,13 @@
    placeRestingStance writes its spot), not under the HP plate at the feet. */
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud > .stance-chip[data-rest-above='true'] {
   position: absolute; left: var(--rest-stance-left, 50%); top: var(--rest-stance-top, 0px); translate: -50% 0;
-  width: max-content; max-width: none; white-space: nowrap; margin: 0;
+  width: max-content; max-width: none; white-space: nowrap; margin: 0; padding: 0 .4em;
+}
+/* The stance chip's glyph is a 1em square beside its text. Its masked icon
+   fills the glyph (height:100%), and the glyph had no height of its own, so
+   the shield painted 0px tall and left an empty slot before the name. */
+:root .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] > .as-glyph {
+  flex: 0 0 auto; width: 1em; height: 1em;
 }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: var(--hud-details-name-size, calc(11px / var(--ui-zoom,1))); }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { background: none; border: 0; }
