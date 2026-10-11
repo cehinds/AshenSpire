@@ -31,6 +31,8 @@ const PAD = 24;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 4;
 const TOP_KEYS = ['x', 'y', 'w', 'h', 'rot', 'label', 'locked', 'hidden', 'z'];
+// A region on screen narrower than SMALL_W or shorter than SMALL_H (px) is "small": its label shows on hover or selection.
+const SMALL_W = 120, SMALL_H = 30;
 const RULER_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -124,7 +126,9 @@ export function createCanvas(el, opts = {}) {
       if (it.hidden) continue;
       const n = doc0.createElement('div');
       const dim = scope !== null && it.group !== scope;
-      n.className = `ck-item${sel.has(it.id) ? ' selected' : ''}${it.locked ? ' locked' : ''}${it.group ? ' in-group' : ''}${dim ? ' dim' : ''}`;
+      // A small region cannot hold its label: the label then shows on hover or selection only (CSS).
+      const small = it.w * zoom < SMALL_W || it.h * zoom < SMALL_H;
+      n.className = `ck-item${sel.has(it.id) ? ' selected' : ''}${it.locked ? ' locked' : ''}${it.group ? ' in-group' : ''}${dim ? ' dim' : ''}${small ? ' tiny' : ''}`;
       n.dataset.id = it.id;
       n.style.left = `${r3(it.x * zoom)}px`;
       n.style.top = `${r3(it.y * zoom)}px`;
@@ -458,7 +462,15 @@ export function createCanvas(el, opts = {}) {
 
   // ---- wiring -------------------------------------------------------------
 
+  // The region under the pointer gets .hover, so a small region's label can show.
+  function markHover(e) {
+    const id = M.hitTest(state.doc, pointDoc(e), { scope: state.scope });
+    page.querySelectorAll('.ck-item.hover').forEach((n) => n.classList.remove('hover'));
+    if (id) page.querySelector(`.ck-item[data-id="${CSS.escape(id)}"]`)?.classList.add('hover');
+  }
   view.addEventListener('pointerdown', onDown);
+  view.addEventListener('pointermove', markHover);
+  view.addEventListener('pointerleave', () => page.querySelectorAll('.ck-item.hover').forEach((n) => n.classList.remove('hover')));
   view.addEventListener('scroll', () => {
     if (rulerTop) rulerTop.style.transform = `translateX(${-view.scrollLeft}px)`;
     if (rulerLeft) rulerLeft.style.transform = `translateY(${-view.scrollTop}px)`;

@@ -51,12 +51,21 @@ export function pasteNotice(res) {
   return pasteSummary([], res.overflow);
 }
 
+/**
+ * The grid's columns, normalized. When no column is frozen, the first one is, so its values stay
+ * beside the row-number gutter as the grid scrolls sideways instead of sliding under it.
+ */
+export function gridColumns(columns = []) {
+  const cols = columns.map(c => M.normalizeColumn(c));
+  if (cols.length && !cols.some(c => c.frozen)) cols[0] = { ...cols[0], frozen: true };
+  return cols;
+}
+
 export function createGrid(el, options = {}) {
   let rules = options.rules ?? [], refs = options.refs ?? {};
   const readOnly = !!options.readOnly, onChange = options.onChange ?? null;
   let H = DENSITY[options.density] ?? DENSITY.compact;
-  let doc = { columns: (options.columns ?? []).map(c => M.normalizeColumn(c)), rows: options.rows ?? [] };
-  if (doc.columns.length && !doc.columns.some(c => c.frozen)) doc.columns[0] = { ...doc.columns[0], frozen: true };
+  let doc = { columns: gridColumns(options.columns), rows: options.rows ?? [] };
   let issues = [], issueMap = new Map(), order = [], sortKeys = [], search = '';
   let sel = M.createSelection(), editing = null, menu = null, dragging = false;
   const history = { undo: [], redo: [] }, listeners = new Set();
@@ -427,7 +436,7 @@ export function createGrid(el, options = {}) {
     getIssues: () => issues.slice(),
     subscribe(fn) { listeners.add(fn); fn(api); return () => listeners.delete(fn); },
     setData({ columns, rows }) {
-      doc = { columns: (columns ?? doc.columns).map(c => M.normalizeColumn(c)), rows: rows ?? doc.rows };
+      doc = { columns: gridColumns(columns ?? doc.columns), rows: rows ?? doc.rows };
       history.undo = []; history.redo = []; sel = M.createSelection(); cancelEdit();
       recompute(); render();
     },

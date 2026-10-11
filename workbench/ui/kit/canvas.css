@@ -1,48 +1,22 @@
 /* workbench/ui/kit/canvas.css — styles for canvas.mjs, canvas-panels.mjs.
-   Colours are tokens on :root; dark mode redefines them. */
+   Every colour is a Workbench token (--as-*, shared/tokens.css): the canvas is
+   dark inside the app. The --ck-* names are aliases for the kit's rules, and
+   the fallbacks are the same dark values. Text inks are above 4.5:1 on their
+   surfaces (WCAG AA); the accent, guide and locked lines are above 3:1. */
 :root {
-  --ck-bg: #f6f4ef;
-  --ck-page: #ffffff;
-  --ck-ruler-bg: #ebe7de;
-  --ck-text: #1d1b17;
-  --ck-text-dim: #6b665c;
-  --ck-line: #c9c3b6;
-  --ck-grid-line: rgba(29, 27, 23, 0.10);
-  --ck-accent: #2f6fb0;
-  --ck-accent-soft: rgba(47, 111, 176, 0.14);
-  --ck-item: rgba(47, 111, 176, 0.06);
-  --ck-guide: #d1493f;
-  --ck-locked: #8a7a4f;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ck-bg: #15130f;
-    --ck-page: #1f1c17;
-    --ck-ruler-bg: #26231d;
-    --ck-text: #efeadf;
-    --ck-text-dim: #a59f92;
-    --ck-line: #3c382f;
-    --ck-grid-line: rgba(239, 234, 223, 0.09);
-    --ck-accent: #7fb2e6;
-    --ck-accent-soft: rgba(127, 178, 230, 0.18);
-    --ck-item: rgba(127, 178, 230, 0.08);
-    --ck-guide: #ef7a6e;
-    --ck-locked: #c2ad74;
-  }
-}
-:root[data-theme="dark"] {
-  --ck-bg: #15130f;
-  --ck-page: #1f1c17;
-  --ck-ruler-bg: #26231d;
-  --ck-text: #efeadf;
-  --ck-text-dim: #a59f92;
-  --ck-line: #3c382f;
-  --ck-grid-line: rgba(239, 234, 223, 0.09);
-  --ck-accent: #7fb2e6;
-  --ck-accent-soft: rgba(127, 178, 230, 0.18);
-  --ck-item: rgba(127, 178, 230, 0.08);
-  --ck-guide: #ef7a6e;
-  --ck-locked: #c2ad74;
+  --ck-bg: var(--as-bg, #131210);
+  --ck-page: var(--as-bg-panel, #1a1815);
+  --ck-ruler-bg: var(--as-bg-raised, #23201c);
+  --ck-text: var(--as-text, #ece5d8);
+  --ck-text-dim: var(--as-text-dim, #b0a593);
+  --ck-line: var(--as-line-strong, #453e35);
+  --ck-grid-line: rgba(236, 229, 216, 0.09);
+  --ck-accent: var(--as-accent, #e0a64a);
+  --ck-accent-soft: var(--as-accent-soft, rgba(224, 166, 74, 0.14));
+  --ck-item: rgba(224, 166, 74, 0.08);
+  --ck-guide: var(--as-bad, #e0645c);
+  --ck-locked: var(--as-warn, #e3b341);
+  color-scheme: dark;
 }
 
 /* Host: rulers in the top and left strips, the view fills the rest. */
@@ -118,15 +92,22 @@
 .ck-item.in-group { outline: 1px dotted var(--ck-text-dim); outline-offset: -3px; }
 .ck-item.dim { opacity: 0.35; }
 .ck-item.selected { box-shadow: 0 0 0 1px var(--ck-accent), 0 0 0 3px var(--ck-accent-soft); }
+/* The label sits at the region's top-left and is clipped to the region (.ck-item is overflow: hidden). */
 .ck-label {
   position: absolute;
   left: 4px;
   top: 2px;
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 11px;
   color: var(--ck-text);
   white-space: nowrap;
   pointer-events: none;
 }
+/* A small region shows its label on hover or selection only. */
+.ck-item.tiny .ck-label { display: none; }
+.ck-item.tiny.hover .ck-label, .ck-item.tiny.selected .ck-label { display: block; }
 
 .ck-handle {
   position: absolute;

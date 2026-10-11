@@ -26,8 +26,9 @@ export default {
   mount(el, ctx) {
     el.innerHTML = `<link rel="stylesheet" href="/modules/entities/entities.css"><div class="ent">
       <nav class="ent-chips" aria-label="Kinds"></nav>
+      <div class="ent-narrowbar"><button type="button" class="ent-filter-toggle" aria-expanded="false" aria-controls="ent-filters-pane">Filters</button></div>
       <div class="ent-body">
-        <aside class="ent-filters" aria-label="Filters">
+        <aside class="ent-filters" id="ent-filters-pane" aria-label="Filters">
           <label class="ent-field">Search<input type="search" class="ent-q" placeholder="Name, id, tag or type" autocomplete="off"></label>
           <label class="ent-field">Class<select data-f="class"></select></label>
           <label class="ent-field">Type<select data-f="type"></select></label>
@@ -44,7 +45,7 @@ export default {
           <iframe class="ent-frame" title="Entities rendered by the game"></iframe>
         </section>
         <aside class="ent-drawer" aria-label="Selected entity">
-          <div class="ent-drawer-head"><h2 class="ent-title">Select an entity</h2><p class="ent-sub"></p></div>
+          <div class="ent-drawer-head"><div class="ent-drawer-top"><h2 class="ent-title">Select an entity</h2><button type="button" class="ent-drawer-close" aria-label="Close the detail panel">Close</button></div><p class="ent-sub"></p></div>
           <div class="ent-tabs" role="tablist" aria-label="Detail views">${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="false">${esc(label)}</button>`).join('')}</div>
           <div class="ent-pane">
             <div class="ent-pose" hidden><label>Pose <select class="ent-pose-sel">${POSES.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('')}</select></label></div>
@@ -64,6 +65,13 @@ export default {
     const chips = $('.ent-chips'), center = $('.ent-center iframe'), drawer = $('.ent-drawer-frame');
     const setup = $('.ent-setup'), count = $('.ent-count'), tryForm = $('.ent-try'), poseWrap = $('.ent-pose');
     const dsBtn = $('.ent-ds'), q = $('.ent-q');
+    // Below 1100px the filters and the detail drawer are overlays (entities.css): these classes open them.
+    const root = $('.ent'), filterToggle = $('.ent-filter-toggle');
+    const setFilters = (open) => { root.classList.toggle('filters-open', open); filterToggle.setAttribute('aria-expanded', String(open)); };
+    const setDrawer = (open) => root.classList.toggle('drawer-open', open);
+    filterToggle.addEventListener('click', () => setFilters(!root.classList.contains('filters-open')));
+    $('.ent-drawer-close').addEventListener('click', () => setDrawer(false));
+    root.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { setDrawer(false); setFilters(false); } });
 
     const prefs = { density: ctx.settings.get('density', 'comfortable'), layout: ctx.settings.get('layout', 'grid') };
     // mainHand and offHand start null (not chosen yet); '' is a chosen empty hand.
@@ -257,6 +265,7 @@ export default {
     }
     function select(id) {
       st.id = id || null;
+      setDrawer(Boolean(st.id)); // a selection slides the drawer in (an overlay below 1100px)
       renderTitle(); sendDrawer(); renderTry(); writeHash();
     }
     function setTab(tab) {
