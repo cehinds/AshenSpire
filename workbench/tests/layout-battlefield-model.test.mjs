@@ -146,6 +146,16 @@ test('withField clamps numbers to the game\'s limits and refuses unknown fields'
   assert.throws(() => B.withField(parts.data, '2x2', 'frontLayer', 3), /not a Battlefield field/);
 });
 
+test('the layout key fields are refused, and the file is unchanged', () => {
+  const parts = B.parsePresets(realText);
+  const before = B.serializePresets(parts, parts.data);
+  for (const field of ['formationColumns', 'formationRows']) {
+    assert.throws(() => B.withField(parts.data, '2x2', field, 3), /Set by the layout key/, field);
+  }
+  assert.equal(B.serializePresets(parts, parts.data), before);
+  assert.equal(before, realText);
+});
+
 test('an edit refreshes its layout\'s anchors, so the game still reproduces them at full and half size', () => {
   const parts = B.parsePresets(realText);
   let next = B.moveSlots(parts.data, '2x2', [{ groupId: 'cell-player:1:0', dx: 40, dy: -10, name: 'B1' }], { width: W, height: H });

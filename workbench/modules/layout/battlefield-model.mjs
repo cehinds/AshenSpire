@@ -208,10 +208,14 @@ export function moveSlots(data, key, moves, { width, height }) {
   return next;
 }
 
+/** The columns and rows are the layout key ("2x2"): the game picks a preset by that key, so they are never edited. */
+export const LAYOUT_KEY_FIELDS = Object.freeze(['formationColumns', 'formationRows']);
+
 /** Set one of the layout's numeric fields (clamped to the game's limits) or its preset. */
 export function withField(data, key, field, value) {
   const layout = data[key];
   if (!layout || !layout.presentation) throw Error(`${key} has no presentation`);
+  if (LAYOUT_KEY_FIELDS.includes(field)) throw Error(`Set by the layout key (${key}): ${field} cannot be edited`);
   const spec = FIELDS.find((f) => f.key === field);
   let v = value;
   if (field === 'formationPreset') { if (!PRESETS.includes(value)) throw Error(`unknown preset ${value}`); }
