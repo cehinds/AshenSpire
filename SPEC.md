@@ -185,7 +185,7 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `src/net/` | LAN co-op client (§11). Absent behind the launcher → the feature hides itself. |
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
-| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only — no UI imports. |
+| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only; no test needs a DOM. |
 | `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
