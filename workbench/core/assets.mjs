@@ -50,10 +50,25 @@ export async function pinOf(root) {
   } catch { return null; }
 }
 
+/**
+ * The folder one pack is cached in, or null when .art-cache, the tag folder or the pack folder is a link
+ * (a link is never followed). A folder not yet fetched is still named, so its status can be read.
+ */
+export async function packDirOf(root, tag, id) {
+  let probe = root;
+  for (const part of [CACHE_DIR, tag, id]) {
+    probe = path.join(probe, part);
+    try {
+      if ((await fs.lstat(probe)).isSymbolicLink()) return null;
+    } catch { break; }
+  }
+  return path.join(root, CACHE_DIR, tag, id);
+}
+
 /** Where each pack is cached, and whether it holds files: [{ id, dir, fetched }]. */
 export async function packsOf(root, pin) {
   return Promise.all(PACKS.map(async (id) => {
-    const dir = pin ? path.join(root, CACHE_DIR, pin.tag, id) : null;
+    const dir = pin ? await packDirOf(root, pin.tag, id) : null;
     const fetched = dir ? existsSync(dir) && (await fs.readdir(dir).catch(() => [])).length > 0 : false;
     return { id, zip: pin?.zips?.[id] || null, dir, fetched };
   }));

@@ -163,3 +163,29 @@ test('listArt reads at most 32 headers at once, so a large art tree does not run
   assert.ok(peak <= 32, `at most 32 handles open at once, saw ${peak}`);
   assert.ok(peak > 1, 'the reads do run concurrently');
 });
+
+test('a symlinked pack folder is refused: nothing is listed or served from it', async (t) => {
+  const root = await project(t);
+  const outside = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'assets-outside-')));
+  t.after(() => fs.rm(outside, { recursive: true, force: true }));
+  await fs.mkdir(path.join(outside, 'assets/sprites'), { recursive: true });
+  await fs.writeFile(path.join(outside, 'assets/sprites/linked.webp'), webpVp8x(7, 7));
+  // The common pack folder is a link to a folder outside the project.
+  await fs.mkdir(path.join(root, '.art-cache/hd-assets-v19'), { recursive: true });
+  await fs.symlink(outside, path.join(root, '.art-cache/hd-assets-v19/common'), 'dir');
+  clearArtCache();
+  const packs = await packsOf(root, await pinOf(root));
+  assert.equal(packs.find((p) => p.id === 'common').fetched, false, 'a linked pack is not fetched');
+  assert.equal(packs.find((p) => p.id === 'common').dir, null, 'and has no folder to read');
+  const list = await listArt(root);
+  assert.ok(!list.files.some((f) => f.path.includes('linked')), 'its files are not listed');
+  assert.equal(await resolveArt(root, 'assets/sprites/linked.webp'), null, 'nor served');
+  // The cache folder itself linked: every pack under it is refused.
+  await fs.rm(path.join(root, '.art-cache'), { recursive: true, force: true });
+  await fs.mkdir(path.join(outside, 'hd-assets-v19/high/assets/sprites'), { recursive: true });
+  await fs.writeFile(path.join(outside, 'hd-assets-v19/high/assets/sprites/linked.webp'), webpVp8x(7, 7));
+  await fs.symlink(outside, path.join(root, '.art-cache'), 'dir');
+  clearArtCache();
+  assert.equal(await resolveArt(root, 'assets/sprites/linked.webp'), null, 'a linked cache folder serves nothing');
+  assert.ok(!(await listArt(root)).files.some((f) => f.path.includes('linked')), 'nor lists anything');
+});
