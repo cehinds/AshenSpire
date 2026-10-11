@@ -12,6 +12,7 @@ import { rgbaOf, pngUrlOf } from './pixels.mjs';
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const POLL_MS = 1200;
 const THUMB_CAP = 80; // object URLs kept for thumbnails; the oldest is revoked past this
+const MODES = [['side', 'Side by side'], ['swipe', 'Swipe'], ['onion', 'Onion skin'], ['diff', 'Diff highlight']];
 
 export default {
   mount(el, ctx) {
@@ -29,6 +30,21 @@ export default {
         <span class="rv-job" role="status"></span>
       </div>
       <div class="rv-main"><p class="rv-empty">Loading the captures…</p></div>
+      <section class="rv-detail" aria-label="Screen detail" hidden>
+        <header class="rv-dhead">
+          <button type="button" class="rv-back">Back to the grid</button>
+          <div class="rv-dname"><h2 class="rv-dtitle"></h2><span class="rv-dsub"></span></div>
+          <span class="rv-badge"></span><span class="rv-dpx rv-num"></span>
+          <div class="rv-dnav"><button type="button" class="rv-prev" aria-label="Previous screen">‹ Previous</button><button type="button" class="rv-next" aria-label="Next screen">Next ›</button></div>
+        </header>
+        <div class="rv-dtools">
+          <div class="rv-seg" role="group" aria-label="View mode">${MODES.map(([id, label]) => `<button type="button" data-mode="${id}" aria-pressed="false">${label}</button>`).join('')}</div>
+          <label class="rv-ctl rv-swipe-ctl">Position <input type="range" min="0" max="100" data-ctl="pos"></label>
+          <label class="rv-ctl rv-onion-ctl">Current opacity <input type="range" min="0" max="100" data-ctl="opacity"></label>
+        </div>
+        <div class="rv-view"><div class="rv-stage"></div></div>
+        <footer class="rv-dfoot"><button type="button" class="rv-accept primary">Accept as baseline</button><button type="button" class="rv-layout">Open in Layout Studio</button></footer>
+      </section>
     </div>`;
     const $ = (s) => el.querySelector(s);
     const runBtn = $('.rv-run'), jobLine = $('.rv-job');
@@ -207,7 +223,7 @@ export default {
         </div>
         <p class="rv-summary" role="status"></p>
         <div class="rv-table-wrap"><table class="rv-table">
-          <thead><tr><th scope="col">Screen</th><th scope="col">Device</th><th scope="col">Baseline</th><th scope="col">Current</th><th scope="col">Diff</th><th scope="col">Result</th><th scope="col">Pixels</th></tr></thead>
+          <thead><tr><th scope="col">Screen</th><th scope="col">Device</th><th scope="col">Baseline</th><th scope="col">Current</th><th scope="col">Diff</th><th scope="col">Result</th><th scope="col">Pixels</th><th scope="col"><span class="rv-sr">Open</span></th></tr></thead>
           <tbody></tbody>
         </table></div>`;
       const f = (name) => main().querySelector(`[data-f="${name}"]`);
@@ -272,6 +288,7 @@ export default {
         <td class="rv-thumb">${slot('diff', r.hasBaseline && r.hasCapture ? '…' : '—')}</td>
         <td><span class="rv-badge"></span></td>
         <td class="rv-num"></td>
+        <td class="rv-acts"><button type="button" data-view="${r.key}">View</button></td>
       </tr>`;
     }
 
@@ -291,7 +308,7 @@ export default {
         if (cached) paintThumbs(tr, cached);
         else io?.observe(tr);
       });
-      if (!rows.length) tbody.innerHTML = `<tr><td colspan="7" class="rv-none">${st.rows.length ? 'No rows match these filters.' : 'No captures yet. Pick screens and a device, then Capture.'}</td></tr>`;
+      if (!rows.length) tbody.innerHTML = `<tr><td colspan="8" class="rv-none">${st.rows.length ? 'No rows match these filters.' : 'No captures yet. Pick screens and a device, then Capture.'}</td></tr>`;
     }
 
     function paintRow(r, tr = el.querySelector(`tr[data-key="${r.key}"]`)) {
@@ -365,6 +382,129 @@ export default {
     function compareKeyOrNull(r) {
       return r.hasCapture ? `${r.hasBaseline ? compareKey(r) : `nobase|${r.file}|${r.cap.mtime}|${r.cap.size}|${st.tolerance}`}` : null;
     }
+
+    // ---------- detail view ----------
+    const detail = el.querySelector('.rv-detail');
+    const dstate = { row: null, mode: ctx.settings.get('mode', 'side'), pos: 50, opacity: 50, urls: {}, token: 0 };
+    const stage = () => detail.querySelector('.rv-stage');
+    const msg = (text) => `<p class="rv-empty">${esc(text)}</p>`;
+
+    async function openDetail(key) {
+      const row = st.rows.find((r) => r.key === key);
+      if (!row) return;
+      revokeDetail();
+      dstate.row = row;
+      const token = ++dstate.token;
+      main().hidden = true;
+      detail.hidden = false;
+      paintDetailHead();
+      stage().innerHTML = msg('Loading…');
+      try {
+        const u = {};
+        if (row.hasBaseline) u.base = URL.createObjectURL(await ctx.apiBlob(`review/image?set=baselines&file=${encodeURIComponent(row.file)}`));
+        if (row.hasCapture) u.cur = URL.createObjectURL(await ctx.apiBlob(`review/image?set=captures&file=${encodeURIComponent(row.file)}`));
+        if (row.hasBaseline && row.hasCapture) {
+          const [a, b] = await Promise.all([fetchRgba('baselines', row.file), fetchRgba('captures', row.file)]);
+          const pic = diffImage(a, b, { tolerance: st.tolerance });
+          if (pic) u.diff = await pngUrlOf(pic);
+        }
+        if (token !== dstate.token) { for (const url of Object.values(u)) URL.revokeObjectURL(url); return; }
+        dstate.urls = u;
+        paintStage();
+      } catch (err) {
+        if (token === dstate.token) stage().innerHTML = msg(`The images could not be read: ${err.message}`);
+      }
+    }
+
+    function closeDetail() {
+      revokeDetail();
+      dstate.row = null;
+      dstate.token++;
+      detail.hidden = true;
+      main().hidden = false;
+      refreshCells();
+    }
+
+    function revokeDetail() {
+      for (const url of Object.values(dstate.urls)) URL.revokeObjectURL(url);
+      dstate.urls = {};
+    }
+
+    function stepDetail(dir) {
+      const list = visible();
+      const at = list.findIndex((r) => r.key === dstate.row?.key);
+      const next = list[at + dir];
+      if (next) openDetail(next.key);
+    }
+
+    function paintDetailHead() {
+      const r = dstate.row;
+      if (!r) return;
+      const s = screenById(r.screen);
+      const d = deviceById(r.device);
+      detail.querySelector('.rv-dtitle').textContent = s.label;
+      detail.querySelector('.rv-dsub').textContent = `${d.label} ${d.width}×${d.height}`;
+      const b = badgeOf(r);
+      const badge = detail.querySelector('.rv-dhead .rv-badge');
+      badge.className = `rv-badge rv-b-${b.cls}`;
+      badge.textContent = b.label;
+      detail.querySelector('.rv-dpx').textContent = pixelsOf(r);
+      detail.querySelector('.rv-accept').disabled = !r.hasCapture;
+      const layout = detail.querySelector('.rv-layout');
+      layout.hidden = !s.layout;
+      const list = visible();
+      const at = list.findIndex((x) => x.key === r.key);
+      detail.querySelector('.rv-prev').disabled = at <= 0;
+      detail.querySelector('.rv-next').disabled = at < 0 || at >= list.length - 1;
+    }
+
+    /** The picture for the current mode. Layers are stacked images, so each mode is a different arrangement of the same two. */
+    function paintStage() {
+      const r = dstate.row;
+      if (!r) return;
+      const { mode, pos, opacity, urls: u } = dstate;
+      detail.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+      detail.querySelector('.rv-swipe-ctl').hidden = mode !== 'swipe';
+      detail.querySelector('.rv-onion-ctl').hidden = mode !== 'onion';
+      detail.querySelector('[data-ctl="pos"]').value = String(pos);
+      detail.querySelector('[data-ctl="opacity"]').value = String(opacity);
+      const s = stage();
+      s.dataset.mode = mode;
+      const img = (src, alt) => `<img class="rv-full" alt="${esc(alt)}" draggable="false" src="${src}">`;
+      if (mode === 'side') {
+        s.innerHTML = `<div class="rv-pane"><span class="rv-cap">Baseline</span>${u.base ? img(u.base, 'Baseline') : msg('No baseline yet. Accept this capture to make one.')}</div>`
+          + `<div class="rv-pane"><span class="rv-cap">Current</span>${u.cur ? img(u.cur, 'Current') : msg('No capture for this screen and device.')}</div>`;
+        return;
+      }
+      if (!r.hasBaseline) { s.innerHTML = msg('No baseline yet, so there is nothing to compare. Accept this capture to make one.'); return; }
+      if (mode === 'diff') { s.innerHTML = u.diff ? img(u.diff, 'Diff: changed pixels in red') : msg('The two images differ in size, so no pixel lines up.'); return; }
+      if (mode === 'swipe') {
+        s.innerHTML = `<div class="rv-layer">${img(u.base, 'Baseline')}</div>`
+          + `<div class="rv-layer rv-clip" style="clip-path: inset(0 0 0 ${pos}%)">${img(u.cur, 'Current')}</div>`
+          + `<div class="rv-divider" style="left: ${pos}%"></div>`;
+        return;
+      }
+      s.innerHTML = `<div class="rv-layer">${img(u.base, 'Baseline')}</div><div class="rv-layer" style="opacity: ${opacity / 100}">${img(u.cur, 'Current')}</div>`;
+    }
+
+    detail.addEventListener('click', (ev) => {
+      const t = ev.target;
+      if (t.closest('.rv-back')) return closeDetail();
+      if (t.closest('.rv-prev')) return stepDetail(-1);
+      if (t.closest('.rv-next')) return stepDetail(1);
+      const mode = t.closest('[data-mode]')?.dataset.mode;
+      if (mode) { dstate.mode = mode; ctx.settings.set('mode', mode); paintStage(); }
+    });
+    detail.addEventListener('input', (ev) => {
+      const ctl = ev.target.dataset?.ctl;
+      if (ctl === 'pos') dstate.pos = clampInt(ev.target.value, 0, 100, 50);
+      if (ctl === 'opacity') dstate.opacity = clampInt(ev.target.value, 0, 100, 50);
+      if (ctl) paintStage();
+    });
+    el.querySelector('.rv-main').addEventListener('click', (ev) => {
+      const key = ev.target.closest?.('[data-view]')?.dataset.view;
+      if (key) openDetail(key);
+    });
 
     // ---------- mount ----------
     paintPick();

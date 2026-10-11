@@ -50,3 +50,29 @@
 .rv-badge.rv-b-new, .rv-badge.rv-b-none, .rv-badge.rv-b-wait { color: var(--as-text-dim, #b0a593); }
 .rv-badge.rv-b-bad { border-color: var(--as-bad, #e0645c); color: var(--as-bad, #e0645c); }
 .rv-check { cursor: pointer; }
+.rv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.rv-acts button { padding: 4px 8px; font-size: 12px; }
+
+.rv-detail { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.rv-dhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.rv-dname { flex: 1; min-width: 0; }
+.rv-dtitle { margin: 0; font-size: 17px; font-weight: 600; }
+.rv-dsub { font-size: 12px; opacity: 0.7; }
+.rv-dnav { display: flex; gap: 6px; }
+.rv-dtools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.rv-ctl { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.rv-ctl[hidden] { display: none; }
+.rv-view { flex: 1; min-height: 320px; overflow: auto; border: 1px solid var(--as-line, #3a2f20); border-radius: 8px; background: var(--as-bg-sunken, #0d0c0a); padding: 12px; }
+.rv-stage { display: inline-block; min-width: 100%; }
+.rv-stage[data-mode="side"] { display: flex; gap: 14px; align-items: flex-start; }
+.rv-stage:not([data-mode="side"]) { position: relative; }
+.rv-pane { position: relative; flex: 0 0 auto; }
+.rv-cap { display: block; font-size: 12px; opacity: 0.7; margin-bottom: 4px; }
+.rv-full { display: block; max-width: none; height: auto; image-rendering: pixelated; user-select: none; }
+.rv-layer { position: absolute; left: 0; top: 0; }
+.rv-stage[data-mode="swipe"] > .rv-layer:first-child, .rv-stage[data-mode="onion"] > .rv-layer:first-child { position: relative; }
+.rv-clip { overflow: hidden; }
+.rv-divider { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--as-accent-strong, #f0b95c); pointer-events: none; }
+.rv-stage .rv-empty { margin: 8px; }
+.rv-dfoot { display: flex; flex-wrap: wrap; gap: 8px; }
+.rv-dfoot .rv-accept { border-color: var(--as-accent, #e0a64a); }
