@@ -99,7 +99,7 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 | `animations.csv` | Sprite and motion sequences by group (the id prefix) |
 | `effects.csv` | Visual effects by kind (sprite effect, aura, shadow, glow, float text, screen shake, flash, tint, particle) |
 | `resolutions.csv` | Art tiers (light, high, local high-res) and card sizes, with max width and format |
-| `settings.csv` | Every settings row, with `scope` (player or tuning) |
+| `settings.csv` | Every settings row, with `scope` (player or tuning) and `deviceScope` (device or global) |
 | `symbols.csv` | Icons and sigils by group (the id prefix) |
 | `combat-symbols.csv` | Every combat concept and its icon: `assignedAssetRef` is an `assets.id` or blank. See *Icons* below for the statuses |
 | `strings.csv` | Player-facing strings with their use: label, tooltip, or hardcoded in source |
@@ -122,6 +122,14 @@ Where a row matches both rules, `tuning` wins. Today that gives 44 player rows
 and 4,424 tuning rows: almost every settings row reads from the advanced-config
 module, so the split is mostly a list of tuning knobs. Confirm the precedence
 before the split is used.
+
+**Device or global** (`deviceScope` in `settings.csv`, DECISIONS.md decision 1).
+`device` is a setting that belongs to the screen or device: layout, text size,
+UI scale, reduced motion, touch, haptics, performance or quality, and the other
+display-related rows. `global` is everything else, including every tuning row.
+The rule is in `deviceScopeOf` in `tools/build.mjs`. `scope` is unchanged. Today
+110 rows are `device` and 4,358 are `global`. `tools/check.mjs` fails a row that
+is neither.
 
 **Icons.** `combat-symbols.csv` has one `status` per concept. `assignedAssetRef`
 is an `assets.id`, an inline SVG reference, or blank:
@@ -288,7 +296,7 @@ here, because the extracted inventory is not on this branch.
   presentation `tag` against a presentation node;
 - assets: `assetRefs` and `assignedAssetRef` are blank, an `assets.id`, or a
   `*` pattern with a match;
-- vocabularies: tag `status`, `band` (layouts, styles), `scope` (settings),
+- vocabularies: tag `status`, `band` (layouts, styles), `scope` and `deviceScope` (settings),
   combat-symbols `status`;
 - live tags: `liveId` only on a `live-tag`, and it names a `nodes.csv` id; an id
   claimed by two tags must be listed in `SHARED_LIVE` with a reason (none is

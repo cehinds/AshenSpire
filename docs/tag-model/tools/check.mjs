@@ -29,7 +29,7 @@
 //     is blank, an assets id, or an svg:<Module>.<NAME>.<key> reference whose
 //     module, NAME and key all appear in its source file (svg-source.mjs); a
 //     combat-symbols row is status missing exactly when assignedAssetRef is blank
-//   - vocabularies: tags status; layouts and styles band; settings scope;
+//   - vocabularies: tags status; layouts and styles band; settings scope and deviceScope;
 //     combat-symbols status
 //   - tag status: liveId only on a live-tag, resolves to a nodes.csv id, and a
 //     nodes.csv id claimed by two tags must be listed in SHARED_LIVE; the
@@ -225,6 +225,7 @@ if (need('assets', assetsTop, ['id'])) checkUnique('assets', assetsTop, ['id']);
 // ------------------------------------------------------ presentation tables
 const BAND_OK = new Set(['mobile', 'tablet', 'desktop', 'wide', 'state', 'other', 'all']);
 const SCOPE_OK = new Set(['player', 'tuning']);
+const DEVICE_SCOPE_OK = new Set(['device', 'global']);
 const COMBAT_STATUS = new Set(['has symbol', 'placeholder', 'missing']);
 
 // name -> key columns (unique together) and the columns the checks read.
@@ -238,7 +239,7 @@ const PRES_SPEC = {
   animations: { key: ['id'], cols: ['id', 'tag', 'liveRef'] },
   effects: { key: ['id'], cols: ['id', 'kind', 'tag', 'liveRef'] },
   resolutions: { key: ['tier'], cols: ['tier', 'tag', 'liveRef'] },
-  settings: { key: ['key'], cols: ['key', 'scope', 'tag', 'liveRef'] },
+  settings: { key: ['key'], cols: ['key', 'scope', 'deviceScope', 'tag', 'liveRef'] },
   symbols: { key: ['id'], cols: ['id', 'tag', 'liveRef'] },
   'combat-symbols': { key: ['tagKey'], cols: ['tagKey', 'status', 'assignedAssetRef', 'tag', 'liveRef'] },
   strings: { key: ['key'], cols: ['key', 'tooltip', 'file', 'tag', 'liveRef'] },
@@ -268,6 +269,7 @@ for (const name of ['layouts', 'styles']) {
 }
 if (presOk.settings) P('settings').rows.forEach((r, i) => {
   if (!SCOPE_OK.has(at(P('settings'), r, 'scope'))) fail(`presentation/settings: row ${i + 2} scope "${at(P('settings'), r, 'scope')}" not in vocabulary`);
+  if (!DEVICE_SCOPE_OK.has(at(P('settings'), r, 'deviceScope'))) fail(`presentation/settings: row ${i + 2} deviceScope "${at(P('settings'), r, 'deviceScope')}" is not device or global`);
 });
 
 // components: parent and id; layouts and styles componentId

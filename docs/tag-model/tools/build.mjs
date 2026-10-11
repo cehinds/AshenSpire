@@ -49,7 +49,7 @@ const DERIVED = {
   components: ['tag', 'liveRef', 'cssClasses'], layouts: ['band', 'tag', 'liveRef'], styles: ['band', 'tag', 'liveRef', 'cssComponentId'],
   tokens: ['tag', 'liveRef'], breakpoints: ['tag', 'liveRef'], assets: ['tag', 'liveRef'],
   animations: ['tag', 'liveRef'], effects: ['tag', 'liveRef'], resolutions: ['tag', 'liveRef'],
-  settings: ['scope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
+  settings: ['scope', 'deviceScope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
   'combat-symbols': ['assignedAssetRef', 'tag', 'liveRef'], strings: ['tag', 'liveRef'],
 };
 const DERIVED_ALL = new Set(Object.values(DERIVED).flat());
@@ -175,6 +175,35 @@ function scopeOf(r) {
   if (/Advanced config/i.test(storage)) return 'tuning';
   if (/src\/ui\/screens\/settings\.js/.test(file) || /localStorage/i.test(storage)) return 'player';
   return 'tuning';
+}
+
+// Device or global (DECISIONS.md, decision 1). Device rows are layout, text size,
+// UI scale, reduced motion, touch, haptics, performance or quality, and anything
+// else display-related: whole display, text, accessibility and wireframe groups,
+// the formation and presentation tuning rows, and the listed keys below. Every
+// other row is global, including all tuning rows. Rows that are unclear are
+// global and listed in DECISIONS.md.
+const DEVICE_GROUPS = new Set(['Accessibility', 'Display', 'Text', 'Wireframes']);
+const DEVICE_KEYS = new Set([
+  'haptics', 'useSprites', 'performanceMode', 'screenShake', 'armamentsPresentation',
+  'armamentsPhonePlacement', 'showPlayedCard', 'manaRing', 'walkedFade', 'cardMotif',
+  'cardMotifStrength', 'ambient', 'controlHints', 'mapFreePan', 'mapHeaderDensity',
+  'mapHeaderRelics', 'mapHeaderSeed', 'uprightGate', 'classicAppearance',
+  'sote_lan_tint', 'sote_lan_style',
+]);
+// Global even though their group is a device group: resetAllSettings resets both
+// kinds. Presentation rows that govern input or movement rules are global.
+const GLOBAL_KEYS = new Set([
+  'resetAllSettings', 'movementEnabled', 'movementNeedsSelection', 'movementCostsAction',
+  'tileActivation', 'moveActivation',
+]);
+function deviceScopeOf(r) {
+  const key = get(inv.settings, r, 'key');
+  const group = get(inv.settings, r, 'group');
+  if (GLOBAL_KEYS.has(key)) return 'global';
+  if (DEVICE_GROUPS.has(group) || DEVICE_KEYS.has(key)) return 'device';
+  if (key.startsWith('gameConfig.presentation.')) return 'device';
+  return 'global';
 }
 
 function styleKind(prop) {
@@ -796,6 +825,7 @@ for (const name of INVENTORY) {
       liveRef: liveRefs[name] ? liveRefs[name][i] : undefined,
       band: bandCols[name] ? bandCols[name][i] : undefined,
       scope: scopeCols[name] ? scopeCols[name][i] : undefined,
+      deviceScope: name === 'settings' ? deviceScopeOf(inv.settings.rows[i]) : undefined,
       assignedAssetRef: name === 'combat-symbols' ? assignedAssetRef[i] : undefined,
       cssClasses: name === 'components' ? cssClassesOf[i] : undefined,
       cssComponentId: name === 'styles' ? styleCssIds[i] : undefined,

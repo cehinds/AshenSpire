@@ -16,11 +16,21 @@ Formula, relation and value keys follow the README conventions.
 - **Decision:** Settings are split in two. *Per-device* settings are layout,
   text size and similar. *Global* settings are audio, difficulty, keybinds and
   similar.
-- **Tables changed:** none in this step. `settings.csv` `scope` still derives
-  `player` or `tuning` from the source file (`scopeOf` in `tools/build.mjs`).
-  The device/global split has no column and no classifier rule yet.
-- **Couldn't place:** the rule that maps each settings row to device or global.
-  It needs a classifier rule before it can be a column.
+- **Tables changed:** `settings.csv` gains `deviceScope` (`device` or `global`),
+  next to the existing `scope` column, which is unchanged (`player` or `tuning`,
+  `scopeOf` in `tools/build.mjs`). The rule is `deviceScopeOf` in
+  `tools/build.mjs`: device is the Accessibility, Display, Text and Wireframes
+  groups, the presentation tuning rows (`gameConfig.presentation.*`), and listed
+  keys for layout, UI scale, reduced motion, touch, haptics, performance or
+  quality and other display rows. Everything else is global, including all
+  tuning rows. Result: 110 device, 4,358 global. `tools/check.mjs` fails a row
+  that is neither.
+- **Couldn't place:** these rows are global, because the owner's rule does not
+  settle them: `animSpeed` (Combat pacing), `holdConfirm` (hold-to-confirm
+  timing), `tileActivation` and `moveActivation` (how tiles and moves are
+  activated), `resetAllSettings` (resets both kinds), and the formation movement
+  rules (`movementEnabled`, `movementNeedsSelection`, `movementCostsAction`). The
+  owner can move any of them to device.
 
 ## 2. Device bands gain `wide`
 
