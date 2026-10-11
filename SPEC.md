@@ -840,10 +840,10 @@ discard limit, replacement draws, overflow, reshuffle, shuffleHand and draw mode
 The opening hand is also bounded by the hand size.
 
 **Default (owner, 2026-10-03): draw the full turn amount, retaining tagged cards,
-up to an absolute hand limit of 15.** The opening and turn draw rows start at
+up to an absolute hand limit set by the Hand size row.** The opening and turn draw rows start at
 4 and use the existing Draw scaling: +1 per five Intelligence above 4, capped
-at 10 by default. The Hand size row is a separate flat 15; it does not grow
-with attributes. All three rows remain configurable, including per-class
+at 10 by default. The Hand size row starts at 7 and grows with Intelligence like Draw (+1 per
+five points above 4), capped at 20. All three rows remain configurable, including per-class
 opening overrides. New runs snapshot those rows; existing runs keep theirs.
 
 At turn end, keep cards carrying Retain, resolve Ethereal and other explicit
@@ -856,9 +856,11 @@ hand never starves the discard of its reshuffle. Retain does not change a
 played card's destination. The authored Herald and Starseer pools give Retain to
 selected healing, ward, setup and costly spells, including their upgrades.
 At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:
-two retained cards plus a draw of four produces six cards; twelve retained
-cards draw only three under the default limit of fifteen. A full hand draws
+two retained cards plus a draw of four produces six cards; five retained
+cards draw only two under the default limit of seven. A full hand draws
 nothing and consumes no draw-pile cards. A depleted deck can supply fewer.
+When the cards kept at turn end already fill the hand, the turn-end discard
+prompt offers to discard any number of them before the next draw.
 
 Solo and co-op use the same refresh rule and each seat's own piles and rows.
 The explicit Play in deck order option returns the unplayed cards to the
