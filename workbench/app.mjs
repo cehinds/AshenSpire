@@ -4,7 +4,7 @@
 import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT, apiError } from './ui/logic.mjs';
 import { icon } from './ui/icons.mjs';
 import { MODULES } from './modules/index.mjs';
-import { createModulePrefs, parseHash, hashFor, withPreviewOverrides } from './modules/host.mjs';
+import { createModulePrefs, parseHash, hashFor, withPreviewOverrides, createReloadWaiter, buildAction } from './modules/host.mjs';
 import { History } from './ui/kit/history.mjs';
 import { shortcuts, comboFromEvent, comboLabel } from './ui/kit/shortcuts.mjs';
 
@@ -201,6 +201,8 @@ function moduleContext(rec) {
     shortcuts: { register: (combo, label, handler, opts) => { const off = shortcuts.register(id, combo, label, handler, opts); rec.offs.push(off); return off; } },
     preview: {
       reload: () => reloadPreview(),
+      /** Reloads the preview once the server has built these saved paths (or reports that the build failed). */
+      reloadAfterBuild: (paths) => { const hit = previewWaiter.add(paths); if (hit) settleSave(hit); },
       showUrl: (url) => { previewShow = url || null; if (previewShow) state.dockEntry = null; renderDock(); },
       setOverride: (key, value) => { if (value === undefined || value === null) delete previewOverrides[key]; else previewOverrides[key] = value; renderDock(); },
     },
@@ -570,6 +572,19 @@ function reloadPreview(quiet = false) {
   if (!dockFrame || !dockFrameUrl) { if (!quiet) toast({ kind: 'warn', title: 'Nothing to reload', detail: 'The game server is not running.', record: false }); return false; }
   dockFrame.src = dockFrameUrl;
   return true;
+}
+// A save reloads the preview only after the server has built it: the hub's reload or reload-failed event names the saved files.
+const previewWaiter = createReloadWaiter();
+function buildFailedToast(r, saved) {
+  const step = r.step ? r.step.replace(/^tools\//, '') : '';
+  const title = saved ? 'Save landed, but the build failed — preview not updated' : step ? `${step} failed — preview not reloaded` : 'Preview not reloaded — another build is still running';
+  toast({ kind: 'error', title, detail: String(r.output || '').split('\n').filter(Boolean).slice(-8).join('\n'), actions: [{ label: 'Open Build & Checks', run: () => show('jobs') }] });
+}
+// A save whose build event arrived before the save returned: the event already reloaded the preview under auto-reload, so only one reload runs.
+function settleSave(hit) {
+  if (buildAction(hit.type, true).failed) return buildFailedToast(hit.data, true);
+  if (state.auto) return;
+  if (reloadPreview(true)) toast({ kind: 'success', title: 'Preview reloaded after save', record: false, timeout: 2500 });
 }
 const maxDock = () => Math.max(320, window.innerWidth - 208 - 440);
 function setDockW(w) { state.dockW = Math.round(clamp(w, 300, maxDock())); renderDock(); persist(); }
@@ -979,14 +994,17 @@ function connectEvents() {
     if (building) { building(); building = null; }
     const detail = `${r.files.slice(0, 3).join('\n')}${r.files.length > 3 ? `\n+${r.files.length - 3} more` : ''}${r.built.length ? `\nRebuilt with ${r.built.map((s) => s.replace(/^tools\//, '')).join(', ')}` : ''}`;
     const n = `${r.count} file${r.count === 1 ? '' : 's'}`;
-    if (state.auto && reloadPreview(true)) toast({ kind: 'success', title: `Game reloaded (${n})`, detail, timeout: 3500 });
+    const hit = previewWaiter.event('reload', r);
+    const act = buildAction('reload', Boolean(hit), { auto: state.auto });
+    if (act.reload && reloadPreview(true)) toast({ kind: 'success', title: hit && !state.auto ? `Preview reloaded (${n} saved)` : `Game reloaded (${n})`, detail, timeout: 3500 });
     else toast({ title: `${n} changed`, detail, actions: dockFrame ? [{ label: 'Reload preview', run: () => reloadPreview() }] : [], timeout: 6000 });
     refreshGit();
   });
   on('reload-failed', (r) => {
     if (building) { building(); building = null; }
-    const title = r.step ? `${r.step.replace(/^tools\//, '')} failed — preview not reloaded` : 'Preview not reloaded — another build is still running';
-    toast({ kind: 'error', title, detail: String(r.output || '').split('\n').filter(Boolean).slice(-8).join('\n'), actions: [{ label: 'Open Build & Checks', run: () => show('jobs') }] });
+    const hit = previewWaiter.event('reload-failed', r);
+    if (buildAction('reload-failed', Boolean(hit)).failed) return buildFailedToast(r, true);
+    buildFailedToast(r, false);
   });
 }
 
