@@ -81,6 +81,15 @@
 # below, and each publishes a site without it. The deploy job is unchanged. The
 # sticky "Playable build" comment is posted by its own job after a successful deploy.
 #
+# A FAILED OR CANCELLED PREVIEW MUST NOT LEAVE A STALE BUILD LIVE. A completed
+# dev-preview run on a feature/, fix/ or chore/ branch wakes assemble and deploy
+# whatever its conclusion. The assemble step lists only a preview whose run for the
+# PR's CURRENT head sha concluded success (the `select(.head_sha == $sha and
+# .conclusion == "success")` filter), so a head whose preview failed has no
+# qualifying run and its branch is left out of the site: the stale
+# branches/<branch>/latest/ is removed, not kept. Dev, test, release and main keep
+# their own publishing conditions; alternative/ previews still publish on success only.
+#
 # WHY pull_request_target AND NOT pull_request. A closed pull_request run's ref is
 # refs/pull/N/merge, which the github-pages environment's branch rule refuses (the
 # same gate as test above). pull_request_target runs with the base ref
@@ -193,7 +202,7 @@ permissions:
 
 jobs:
   assemble:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' || (startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))
     runs-on: ubuntu-latest
     # Bounded: about 20 light rebuilds (~20 s each) plus hydrating the committed
     # builds. A run that needs more than this is broken, not slow.
@@ -465,7 +474,7 @@ jobs:
           # 2026-10-11). A run that cannot publish must not claim it will: until the
           # github-pages environment admits `release`, its deploy is refused at the
           # gate — see the header.
-          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && (github.ref_name == 'dev' || github.ref_name == 'release')) || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'pull_request_target') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && (github.ref_name == 'dev' || github.ref_name == 'release')) || (github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion == 'success' || (startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))) || (github.event_name == 'pull_request_target') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
         run: |
           set -u
           {
@@ -585,12 +594,18 @@ jobs:
     # a change to how the site is assembled rather than to who may publish it.
     # Merging to main is already owner-only, so what reaches main is the owner's
     # decision before this job ever runs.
+    # A feature/fix/chore preview that failed or was cancelled also reaches this job
+    # (workflow_run, any conclusion): the current-head check in assemble drops its stale
+    # build, so the site never keeps it. Comments stay out of the folded if: block below.
     if: >-
       (
         github.event_name == 'push'
         && (github.ref_name == 'dev' || github.ref_name == 'release')
       ) || (
-        github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        github.event_name == 'workflow_run' && (
+          github.event.workflow_run.conclusion == 'success'
+          || (startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))
+        )
       ) || (
         github.event_name == 'pull_request_target'
       ) || (

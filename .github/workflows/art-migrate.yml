@@ -5,7 +5,7 @@ name: art-migrate
 # and its release, then a pin here (CONTRIBUTING.md, ground rule 2). This
 # workflow moves the two hand-offs that a person used to make.
 #
-#   1. INTAKE (pull_request into dev). A pull request that adds or modifies an
+#   1. INTAKE (pull_request_target into dev). A pull request that adds or modifies an
 #      art file (tools/art-intake.mjs: the high tier assets/, the fonts, the
 #      score renders, map-detail/, art/; NOT assets-mobile/, the light tier,
 #      which stays tracked here) is moved: its art files are staged in a branch
@@ -31,9 +31,17 @@ name: art-migrate
 # Nothing here merges anything. The art pull request is the owner's to review
 # and merge; the release it triggers is the art repository's own workflow.
 #
-# TRUST BOUNDARY (intake). A pull request's head is untrusted: it can carry any
-# change to any file, this workflow included. So the intake job never checks
-# out or runs the pull request's code:
+# TRUST BOUNDARY (intake). The intake runs on `pull_request_target`, never on
+# `pull_request`, and that choice is the security boundary. GitHub loads the
+# workflow definition of a pull_request_target run from the BASE branch, so a
+# pull request cannot edit this file to run its own copy with
+# ART_REPO_WRITE_TOKEN in scope. Under `pull_request` the definition is the
+# head's, and a same-repository pull request could rewrite a step to print the
+# token. GitHub's guidance on pull_request_target (docs.github.com, "Events that
+# trigger workflows", pull_request_target) warns that such a run must not check
+# out or execute untrusted head code, so the intake job never does. A pull
+# request's head is untrusted: it can carry any change to any file. So the
+# intake job never checks out or runs the pull request's code:
 #   - the checkout is the BASE commit (the event's base.sha, the protected dev
 #     tip), and every `node` run is tools/art-intake.mjs from that tree;
 #   - the head is only fetched as git objects; the tool reads its files as
@@ -43,12 +51,18 @@ name: art-migrate
 #     credentials on disk (persist-credentials: false); git gets the token per
 #     command through GIT_CONFIG_* in the step's env;
 #   - pull request values (numbers, shas, paths, titles) reach a shell only
-#     through env:, never through ${{ }} inside run:.
+#     through env:, never through ${{ }} inside run:;
+#   - the token is reachable only for a same-repository pull request: every
+#     step that names the secret is gated on a head in this repository (or on
+#     the migrate state, which requires one). A fork's run gets the manual-path
+#     failure and no secret in any step's environment.
 #
 # SECRETS. ART_REPO_WRITE_TOKEN (owner adds it): contents and pull-requests
 # write on cehinds/AshenSpire-art, and (owner, 2026-10-11) contents and
 # pull-requests write on this repository too. In the intake job it is read only
 # by the push and gh steps, and only for a pull request from this repository.
+# pull_request_target runs a fork's pull request with the base's secrets in
+# scope, so that gate is what keeps the token from a fork.
 # In the pin-bump job it is read only by the push and the gh pr create step: the
 # bot branch is pushed and its pull request opened with that token, so the pull
 # request into dev triggers CI (a GITHUB_TOKEN push or pull request does not). If
@@ -57,7 +71,7 @@ name: art-migrate
 # public art repository with GITHUB_TOKEN and checks out dev's own tree only.
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [dev]
     types: [opened, synchronize, reopened, closed]
   schedule:
@@ -74,7 +88,7 @@ env:
 
 jobs:
   intake:
-    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -136,7 +150,8 @@ jobs:
         env:
           COUNT: ${{ steps.list.outputs.count }}
           BOOTSTRAP: ${{ steps.list.outputs.bootstrap }}
-          HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
+          # A fork's run names no secret at all: the value is false for it.
+          HAS_ART_TOKEN: ${{ github.event.pull_request.head.repo.full_name == github.repository && secrets.ART_REPO_WRITE_TOKEN != '' }}
         run: |
           set -euo pipefail
           if [ "$BOOTSTRAP" = true ]; then state=skip
@@ -228,7 +243,7 @@ jobs:
       # repository only (a fork never had an intake branch), and only when the
       # token is set. The step runs no code from any tree: it calls gh alone.
       - name: Close the stale intake pull request in the art repository
-        if: steps.gate.outputs.state == 'none'
+        if: steps.gate.outputs.state == 'none' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
           HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
@@ -310,8 +325,9 @@ jobs:
   close-intake:
     # The source pull request was closed without merging: its intake pull request
     # (if an earlier push staged one) is closed and its branch deleted. A merged
-    # pull request is left alone. Base code only, and no checkout.
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && !github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository
+    # pull request is left alone. Base code only, and no checkout. pull_request_target
+    # for the same reason as intake (see the trust boundary above).
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && !github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -342,7 +358,8 @@ jobs:
           echo "Closed $ART_REPO#$num and deleted $branch."
 
   pin-bump:
-    if: github.event_name != 'pull_request'
+    # Positive list: pull_request_target is not a schedule, so it must not reach here.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
