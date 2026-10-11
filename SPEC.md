@@ -1451,7 +1451,7 @@ Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed 
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
-Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **A Shrine, a camp, an inn or a chapel is a location — a property carrier whose tag set says what it restores** (§13.4j): **arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1) because the Shrine carries `restFlasks`; the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
+Screen router in `main.js`; each screen module exports a `mountX(app, opts)` function (`mountMap` in `src/ui/screens/map.js`), and a re-mount releases the previous mount's handlers. No screen exports `unmount()`. **A Shrine, a camp, an inn or a chapel is a location — a property carrier whose tag set says what it restores** (§13.4j): **arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1) because the Shrine carries `restFlasks`; the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
 
 Cold boot mounts the `startup-gate` component before the Title DOM exists. It contains only the
 Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source
@@ -1462,7 +1462,7 @@ and recovery notices outrank the gate. After reveal, focus lands on Title's firs
 slot action, and every later return to Title in that boot bypasses the gate. Reduced-motion mode
 keeps the same state and focus contract without meaningful animation.
 
-### 7.2 Shared run HUD and combat layout (1280×720 reference)
+### 7.2 Shared run HUD and combat layout (1280×800 reference)
 
 - **.NET-inspired application and Component Model contract.** Architecture follows Clean
   Architecture with an MVVM-shaped presentation layer. Domain Models own pure game state and rules;
@@ -1473,8 +1473,7 @@ keeps the same state and focus contract without meaningful animation.
   are reusable renderers; Behaviors bind interactions and lifecycle; and `main.js` trends toward a
   composition root. The existing paths migrate incrementally: `src/model/` is Domain,
   `src/ui/models/` and `src/ui/viewModels/` are Presentation models and projections,
-  `src/ui/screens/` is Views, and `src/ui/components/` plus `src/ui/behaviors/` are reusable
-  presentation implementation. Every reusable UI component receives an immutable Component
+  `src/ui/screens/` is Views, and `src/ui/components/` is reusable presentation implementation. Every reusable UI component receives an immutable Component
   Model that names its semantic component id and variant, owns only serializable presentation
   properties, declares named behaviors, and recursively composes child Component Models. Screen
   ViewModels compose those records; renderers translate them to DOM, and behavior adapters connect
@@ -1706,10 +1705,10 @@ keeps the same state and focus contract without meaningful animation.
   right trail progressively hides Source, then Seed, then Build before it may touch centred Cinders. There is no duplicate Act/Floor
   line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
-  HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
-  then HP/Mana flasks. Its visible tiles are 18 px inside at least 44 px accessible hit areas.
-  The two panels have equal outer height and the flask row aligns with the bottom of SP within
-  one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
+  HP/MP stack; Stamina is the Stamina orb (below). `quick-access-panel` is one outer square
+  holding the Armoury and Menu controls. Its visible tiles are 18 px inside at least 44 px
+  accessible hit areas. The two panels have equal outer height. The HP/Mana flasks are not in
+  this panel; they belong to the Potions projection. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
   Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
   scrolls left. Relic and Potion trays share one vertically centred baseline and one data-owned
   narrow item gap (default 2 px); utility potion tiles remain the same size as relic tiles.
@@ -1729,10 +1728,10 @@ keeps the same state and focus contract without meaningful animation.
   MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red bar, only when >0), status icon row, and **intent icon + number above the head**.
+- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red generic threshold-proc bar, only when >0), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
-- **Hand:** bottom center, fanned, max 10; hover raises card ×1.5 with full text.
-- **Energy orb:** bottom left, `n/3`. **End Turn** button bottom right — pulses if energy remains and any card is playable; confirm-free.
+- **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
+- **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
 - **Piles:** draw (bottom-left corner, count) / discard (bottom-right, count) / exhaust (small, appears once non-empty). Click opens a scrollable modal grid (draw pile view is order-shuffled for display, like StS).
 
 #### 7.2.1 Advanced game configuration
@@ -1744,59 +1743,9 @@ engine is discoverable there. A setting descriptor names the source path, label,
 type, domain, shipped default, reset behavior and application timing. The editor and runtime
 resolver consume that same descriptor; UI code must not retype a default, range, enum or formula.
 Adding an eligible descriptor therefore adds its control without another hand-authored settings
-row. A CI inventory compares eligible authored configuration paths with rendered descriptors and
-fails on an unexplained omission.
+row.
 
-The editor groups the complete inventory into stable nested sections:
-
-- **Progression:** starting level; experience/cinder gain multiplier; first level cost; cost
-  increase per purchase; optional maximum level; attribute points granted per level; and points
-  required for each derived-stat tier. The resolved level-price preview shows representative
-  purchases before a run starts.
-- **Class defaults:** each registered class exposes its starting STR, DEX, CON, WIS and INT,
-  starting resource/flask allocation, and other schema-valid starting values. Class controls are
-  registry-derived, so adding a class cannot create an invisible default. Per-class values must
-  still satisfy the selected creation mode's bounds and total-allocation rules; invalid
-  combinations are explained and cannot be applied silently.
-- **Combat and actors:** up to six rows and three columns per side,
-  with front/back meaning identified per side; formation spacing, player and
-  enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
-  data-owned combat presentation values that do not alter asset identity.
-  Default spawns start on the lowest row in the outermost column of each team,
-  placing player and enemy starts farthest apart. Fill each row from outside toward
-  the centre, then move upward. For two columns and three rows, player rows read
-  `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
-  The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
-  Measurements remain responsive percentages; reference anchors at 1641×526 are checked
-  against the exports. Explicit saved group edits take precedence.
-  Formation settings offer group controls for the entire
-  battlefield, either team, individual columns, and named custom sets of positions. Dragging or
-  nudging translates every anchor in the group together. Offsets are stored as percentages of
-  battlefield width/height. Grid snapping defaults on with a 50 CSS px adjustable step; the group's
-  first anchor snaps to an intersection while all member spacing remains fixed. Snapping can be disabled.
-  Edge distances and nudge steps use CSS pixels. Characters and tiles
-  share the transformed anchors, and group translations stop at the battlefield edges. Custom
-  members retain their side, row and local column when the roster changes. Settings edits
-  require Apply layout. These are presentation edits, not tactical
-  movement, and do not spend actions or change combat range rules.
-  Groups may also target a row or one position and apply character size multipliers with feet
-  fixed to their anchors. Combat has no in-battle positioning control.
-- **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
-  tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
-  geometry. Dependent constraints are enforced together (for example, resting < selected <
-  reading) and the editor identifies the value preventing an invalid change.
-- **World, economy and rewards:** encounter/reward odds, currency and experience multipliers,
-  merchant and service pricing, map-generation tuning, and other global balance values whose
-  schema permits a runtime override.
-- **Rules and accessibility:** eligible boolean flags and closed-set modes used by gameplay or
-  presentation. Existing ordinary Display, Audio and Accessibility controls remain in their
-  approachable homes and appear in Advanced only when needed as part of the complete searchable
-  inventory; both surfaces resolve through one descriptor and one persisted value.
-- **Diagnostics:** development-only instrumentation and logs. Unsafe internals—content ids,
-  schema definitions, save-format versions, cryptographic/integrity values, file paths that are
-  not already an explicit user feature, and values whose mutation can only create invalid
-  state—are listed by the inventory check as excluded with a reason rather than exposed as dead
-  or dangerous controls.
+The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, Battlefield, Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab. A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
 
 Search and section navigation remain available at every supported viewport and text size. Each
 row shows the shipped default, the currently resolved value, whether it affects the current run
@@ -1902,12 +1851,12 @@ together.
 
 ### 7.4 Feedback & animation rules
 
-- Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the HP it cost (after Block) and never over 4 px (owner, 2026-10-05: "Combat latency + juice"; the amplitude steps and their floors are a data row, defaulting to 1 px from 1 HP, 2 px from 6, 3 px from 10 and 4 px from 15, so the old rule, 4 px for hits of 15 or more, is the top step); and a **hit-stop**: on a hit that costs 6 HP or more, the attacker's impact frame and the target's recoil hold for 60 ms (a data row; 0 turns it off) before the swing recovers. Under the sequential beat order below, the hit-stop holds the attacker's impact frame alone; the target stays in its rest pose until its reaction starts. The hit-stop pauses only those two figures' animation, and a click skips it with the rest. **Beat order** (owner, 2026-10-11, presentation `beatOrder`, default `sequential`): an attack beat plays the attacker's stance, its attack clip and its return to stance first; then the target's reaction starts (hurt pose and flash, shake, evade, block or Stagger wobble); `reactionMs` after it starts (a data row, default 180 ms at Normal), the damage/guard/heal numbers fire with their sound and haptic, and then the HP, Poise and Block bars update. The numbers wait only for that `reactionMs`, never for a long fixed effect: the heavy hit flash and the Stagger wobble keep running underneath them. The contact spark and the attacker's hit-stop stay at the impact frame. `beatOrder: impact` keeps the earlier order, where the reaction, number, sound and haptic fire at impact. Counter return beats keep the impact order. The click-to-impact budget is measured to the contact effect (≤400 ms at Normal pacing), and on a plain single hit the first number lands ≤750 ms after the click. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep 60 ms, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
+- Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the HP it cost (after Block) and never over 4 px (owner, 2026-10-05: "Combat latency + juice"; the amplitude steps and their floors are a data row, defaulting to 1 px from 1 HP, 2 px from 6, 3 px from 10 and 4 px from 15, so the old rule, 4 px for hits of 15 or more, is the top step); and a **hit-stop**: on a hit that costs 6 HP or more, the attacker's impact frame and the target's recoil hold for 60 ms (a data row; 0 turns it off) before the swing recovers. The damage number, sound and haptic fire at impact (`src/content/combatFeel.js`). The hit-stop pauses only those two figures' animation, and a click skips it with the rest. The click-to-impact budget is measured to the contact effect (≤400 ms at Normal pacing), and on a plain single hit the first number lands ≤750 ms after the click. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep 60 ms, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
-- "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
+- Defeat screen: dark fade, gold serif text, then stats card. Its title reads "Defeat" and its aria-label "You perished". Victory's title reads "Victory" and its aria-label "Ember restored" (`src/ui/screens/gameover.js:58-65`). (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
 - Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
 
-  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks (listed in a music manifest; each is written as notes in a score module and rendered offline by `tools/score/render.mjs`, so the score's source is code). Today they are `music/*.mp3` with `music/manifest.json`, and the scores are `music/score/<id>.mjs`. From EXTERNAL-ASSETS-PLAN steps 9–13, the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and the scores and their render tool are authored there under `art/music/`. The two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the shipped tracks, read through the common pack's index in the web edition (EXTERNAL-ASSETS-PLAN step 3c) and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
+  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks (listed in a music manifest; each is written as notes in a score module and rendered offline by `tools/score/render.mjs`, so the score's source is code). Today the tracks are build output: `music/*.mp3` and `music/manifest.json` are gitignored (`.gitignore`), and the scores are `music/score/<id>.mjs`. From EXTERNAL-ASSETS-PLAN steps 9–13, the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and the scores and their render tool are authored there under `art/music/`. The two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the shipped tracks, read through the common pack's index in the web edition (EXTERNAL-ASSETS-PLAN step 3c) and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load falls back to the synth for that id (`src/ui/audio.js:152-154`). `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
 
 ### 7.5 Visual style
 
@@ -1935,8 +1884,7 @@ together.
 ## 8. Testing
 
 **Two runners, one suite:** `tests/index.html` in a browser, `node tests/run-node.mjs`
-headless — both load `engine.test.js`. All assertions are against model + engine with **no UI
-imports**, so nothing in this file has seen a screen; the suite says so in its own boundary
+headless — both load `engine.test.js`. All assertions are against model + engine and no test needs a DOM, so nothing in this file has seen a screen; the suite says so in its own boundary
 block when it finishes.
 
 **The required-coverage list that used to live here is gone, and deliberately.** It named 17
@@ -1954,15 +1902,14 @@ grep -n "test('" tests/engine.test.js         # the index, derived
 
 **What this section states instead is the contract a test must meet, which cannot rot:**
 
-1. **Headless and UI-free.** A test that needs a DOM belongs in `tools/`, not here.
+1. **Headless, no DOM.** A test that needs a DOM belongs in `tools/`, not here.
 2. **Both edges** — the empty/zero case and the cap/overflow case (Charter quality gate).
 3. **Content-driven mechanics are asserted through their data**, never against a number
    hard-coded in the test: a status test drives `content/statuses.js` rows, so retuning a knob
    moves the test with it instead of breaking it.
 4. **A check is trusted only after it has been watched to fail.** The observed-red idiom is
    `--selftest` (a known-bad corpus, every case must fail for its named reason) and `--mutate`
-   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments and
-   wired in `.github/workflows/ci.yml`.
+   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments. CI runs `--selftest` for `tools/verify-shipped.mjs` and `tools/fullscreen-control.mjs` (`.github/workflows/ci.yml`); `tools/content-build.mjs` is not wired into CI.
 5. **Every release-gating instrument prints what it did NOT check, in its run output — not
    only in its header.** *(House law, adopted 2026-08-07 out of the instrument audit. It was
    triggered by three greens that lied in one week: a screenshot harness blind to five
@@ -1980,11 +1927,7 @@ spec rather than in tribal memory:
 | `tools/screenshot.mjs` | the **source tree** over a local server | the `?shot=` states that existed when it was written — **structurally blind** to any surface without one |
 | `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | **two denominators, both printed.** (1) **Top-level states**, derived from `main.js`'s `?shot=` states, so a new state cannot be silently missed; five co-op states **excluded by name**. (2) **Navigable sub-surfaces** — the tabs and panels reachable *inside* a state — derived from the three homes that define them (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`), one generated shot per member, each carrying an **assertion** that the surface both selected and painted. Surfaces with no `?shot=` are reached by real clicks and seeded storage; an unaccounted state, a **home that derives zero members**, or a sub-surface shot with no assertion all **fail before the browser starts** |
 
-**There is no single home that defines the tabbed surfaces**, only three homes each defining
-its own members — so denominator 2 enumerates the three sets the harness was told about, and
-prints the sets it knows exist and does not enumerate (co-op's per-player seat tabs). Closing
-that hole is a change to the tree, not to the harness: one declarative surface table, in the
-content layer beside `MENU_TABS`, naming every navigable set and its members.
+**The tabbed surfaces are listed in one table, `src/ui/surfaces.js`, which holds no members.** Each row points at the home that defines its set (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`) and asks it at call time. Denominator 2 enumerates the three sets the harness was told about, and prints the sets it knows exist and does not enumerate (co-op's per-player seat tabs). A fifth set that no row names is still invisible to the table, and a source tree cannot show it.
 
 The artifact is **never modified** to reach a state — crisis states are produced by writing
 storage from outside and reloading, because a shot of a patched bundle is a shot of something
@@ -2021,16 +1964,15 @@ Build: Reaver, Starseer, Herald and the full-parity Rogue slice (§5.1), Acts 2�
 **Accept when:** all 4 classes can complete 3-act runs; every class owns its complete card/equipment/art slice; every card/relic/event is reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes); `scripts.js` budget still < 5%.
 
 ### M4 — Polish
-Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete), performance check (60 fps on a mid-range laptop; no per-frame allocations in fx loops).
+Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete).
 **Accept when:** DEVELOPER.md documents the layer rules, state shape, every opcode/formula op/event/predicate, and "add a card/relic/status/enemy/event in <10 lines" walkthroughs — each verified by actually adding a throwaway example.
 
 ---
 
 ## 10. Forward hooks (build the seam now, not the feature)
 
-- **Ascension-style difficulty:** run state carries `modifiers: []` consulted by `balance.js` lookups (enemy HP ×, gold ×, starting curse). v1 always empty.
+- **Ascension-style difficulty:** ships as `run.custom.ascension` (`src/content/customMods.js`). The `modifiers: []` slot this section first named is unused.
 - **Act 2/3 signature mechanics needing engine support from M1:** enemy phase-change interrupts (Watchful Omen already exercises this), enemy self-heal on dealing damage (final boss — a status hook on `damageDealt`), enemy applying Bleed to the *player* (player-side meters already exist in the status model; player Bleed threshold 15).
-- **Wondrous Physick crafting** (combine two flasks at shrines): flask effects are already composable data; UI only.
 - **Daily seed / run sharing:** seeds are already displayed and enterable; nothing else needed in v1.
 - **Content packs / mods:** the data/model split makes a pack = one folder of content files passing validation; a pack loader is out of scope for v1 but requires no engine redesign.
 - **Second card pools per class ("Remembrance" variants):** class def already takes `cardPool: []`, so alternate pools are content-only.
