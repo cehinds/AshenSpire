@@ -1715,6 +1715,12 @@
 .combat-log-head { display:flex; align-items:center; justify-content:space-between; gap:6px; padding-right:4px; }
 .combat-log-head > .combat-log-heading { flex:1; min-width:0; padding-right:0; }
 .combat-log-full { flex:none; min-height:max(44px, calc(44px / var(--ui-zoom,1))); padding:0 10px; font-size:calc(12px / var(--ui-zoom,1)); }
+/* A text link, not a button (owner, 2026-10-11): kit.css's `button, .as-btn`
+   loads later at the same weight, so the header scope wins it back. The 44px
+   tap target stays; only the visual weight drops. */
+.combat-log-head > .combat-log-full { background:transparent; border:0; box-shadow:none; color:var(--gold); font-family:var(--font-body); font-weight:500; font-size:inherit; line-height:1.2; text-decoration:none; }
+.combat-log-head > .combat-log-full:is(:hover, :focus-visible, .gp-focus) { background:transparent; border:0; text-decoration:underline; text-underline-offset:3px; }
+.combat-log-head > .combat-log-full:focus-visible { outline:2px solid var(--gold); outline-offset:-2px; border-radius:3px; }
 /* The full log door fills the viewport, safe areas included: the panel's own
    background runs under the notch and home bar, and its padding keeps the
    head and the entries clear of them. Specificity beats the rung's width. */
