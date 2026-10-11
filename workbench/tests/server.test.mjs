@@ -441,6 +441,33 @@ test('the game server is reused only when it names this project as its root', as
   assert.match(unknown.conflict, /does not say which checkout/);
 });
 
+test('the game server the Workbench starts listens on loopback only, never on the LAN', async (t) => {
+  const root = await project(t);
+  await fs.writeFile(path.join(root, 'index.html'), '<!doctype html><title>game</title>');
+  const game = toolDefs({ repo: path.resolve(HERE, '../..'), root, origin: 'http://127.0.0.1:1' }).find((d) => d.id === 'game');
+  const args = game.command(0);
+  const at = args.indexOf('--host');
+  assert.ok(at > 0, 'the command line passes --host');
+  assert.equal(args[at + 1], 'localhost');
+  // Run the Workbench's own command line and read the port from its log, as the supervisor does.
+  const child = spawn(process.execPath, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  t.after(() => child.kill());
+  const port = await new Promise((resolve, reject) => {
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; const m = out.match(game.portFrom); if (m) resolve(Number(m[1])); });
+    child.on('exit', (code) => reject(Error(`serve exited ${code}: ${out}`)));
+  });
+  for (const host of ['127.0.0.1', 'localhost']) assert.equal((await fetch(`http://${host}:${port}/index.html`)).status, 200, host);
+  const lan = Object.values(os.networkInterfaces()).flat().find((a) => a && !a.internal && a.family === 'IPv4');
+  if (!lan) { t.diagnostic('no non-loopback IPv4 interface: LAN reachability not checked'); return; }
+  const reached = await fetch(`http://${lan.address}:${port}/index.html`, { signal: AbortSignal.timeout(2000) }).then(() => true, () => false);
+  assert.equal(reached, false, `not reachable on ${lan.address}`);
+  // Without --host serve.mjs still listens everywhere (LAN play and existing callers rely on it).
+  const open = await serve({ root, port: 0, open: false, quiet: true });
+  t.after(() => open.server.close());
+  assert.equal((await fetch(`http://${lan.address}:${open.port}/index.html`)).status, 200, 'the default bind is unchanged');
+});
+
 test('the Content Editor and Pose Studio are reused only when they name this project', async (t) => {
   const root = await project(t);
   const other = await project(t);
