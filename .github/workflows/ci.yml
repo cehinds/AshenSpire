@@ -1352,6 +1352,50 @@ jobs:
     needs: [test, test-discovered, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
+      - name: Stage summary, which jobs ran here and which did not
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          STAGE: ${{ inputs.stage }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          # The same conditions as the job-level `if:` of each stage job (see the
+          # trigger comment above): a dispatch is narrowed by its stage input, a push
+          # to release is the release stage, any other push is the test stage.
+          ran_test=0
+          ran_release=0
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            case "$STAGE" in
+              all) ran_test=1; ran_release=1 ;;
+              test) ran_test=1 ;;
+              release) ran_release=1 ;;
+            esac
+          elif [ "$EVENT_NAME" = "push" ]; then
+            if [ "$REF_NAME" = "release" ]; then ran_release=1; else ran_test=1; fi
+          fi
+          TEST_JOBS="test test-discovered test-selftests parse-gate browser-guard browser-full-run browser-flask-menu browser-flask-menu-plants browser-guard-changelog browser-startup-plants"
+          RELEASE_JOBS="reproducible reproducible-agree display-first browser-guard-stamp browser-layout-guard browser-layout-plants browser-layout-all browser-layout-hintstrip browser-hintstrip-plants browser-motion"
+          {
+            echo "RAN_TEST=$ran_test"
+            echo "RAN_RELEASE=$ran_release"
+            echo "TEST_JOBS=$TEST_JOBS"
+            echo "RELEASE_JOBS=$RELEASE_JOBS"
+          } >> "$GITHUB_ENV"
+          result() { echo "$NEEDS" | jq -r --arg j "$1" '.[$j].result // "missing"'; }
+          if [ "$ran_test" = 1 ]; then
+            echo "TEST-STAGE JOBS THAT RAN IN THIS RUN:"
+            for j in $TEST_JOBS; do echo "  · $j: $(result "$j")"; done
+          else
+            echo "NOT RUN AT THIS STAGE: the test-stage jobs ($TEST_JOBS)"
+          fi
+          if [ "$ran_release" = 1 ]; then
+            echo "RELEASE-STAGE JOBS THAT RAN IN THIS RUN:"
+            for j in $RELEASE_JOBS; do echo "  · $j: $(result "$j")"; done
+          else
+            echo "NOT RUN AT THIS STAGE: the release-stage jobs ($RELEASE_JOBS)"
+          fi
+          echo ""
+
       - name: Named boundary
         run: |
           echo "upstream results: test=${{ needs.test.result }} test-discovered=${{ needs['test-discovered'].result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
@@ -1521,3 +1565,22 @@ jobs:
           echo "    (src/content/index.js:32 is the only home; tools/launch.mjs:17-25"
           echo "    derives it) but NO detector stops a second copy being born"
           echo "  · SOP 2 ref/domain resolution before reading an empty result as clean"
+
+      - name: Fail when a job that ran at this stage failed or was cancelled
+        if: always()
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          failed=0
+          check() {
+            for j in $1; do
+              r=$(echo "$NEEDS" | jq -r --arg j "$j" '.[$j].result // "missing"')
+              case "$r" in
+                failure|cancelled|missing) echo "FAILED AT THIS STAGE: $j ($r)"; failed=1 ;;
+              esac
+            done
+          }
+          if [ "$RAN_TEST" = 1 ]; then check "$TEST_JOBS"; fi
+          if [ "$RAN_RELEASE" = 1 ]; then check "$RELEASE_JOBS"; fi
+          if [ "$failed" = 1 ]; then echo "The boundary is failing because a stage job did not pass."; fi
+          exit "$failed"
