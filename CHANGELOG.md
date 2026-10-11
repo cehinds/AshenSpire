@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-11
 
+- **Choosing equipment is a sortable table now** ([#1852](https://github.com/cehinds/AshenSpire/pull/1852), `0.7.1.1298`). When you press Replace or Choose on a slot, the Armoury lists every item that fits as a row: portrait, name and kind, an Equipped here / Not equipped / held-elsewhere status, and Inspect plus Equip, Move here or Unequip. Sort by Item or Status, show the items that don't fit along with the reason, and Inspect opens the full card in place. A single sceptre held in your main hand now says so and offers Move here for the off hand.
+
 - **A test now passes on Windows too** ([#1846](https://github.com/cehinds/AshenSpire/pull/1846), `0.7.1.1296`). Development-process change only, nothing in the game changes. One source check compared file paths with forward slashes and failed on the Windows test runners at Test; it now reads paths the same way on every system.
 
 - **Combat HUD reads better on every screen size, and its look is tunable from the HUD studio** ([#1843](https://github.com/cehinds/AshenSpire/pull/1843), `0.7.1.1295`). On desktop and widescreen the Combat log and Reaction switch now sit just above your cards instead of at the far screen edges, and the top health bar no longer stretches across the whole screen (it also stops at 60% on tablets). On every screen, health and intent numbers sit on dark plates with a soft shadow, and the selected hero's panel uses the game's serif lettering with gold Poise and Ward labels and a green frame. The game now tells phones, tablets, desktops and ultra-wide screens apart (a sideways phone counts as a tablet), and each gets its own look from a file the HUD Component Studio exports.
