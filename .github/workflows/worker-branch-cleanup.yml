@@ -53,6 +53,7 @@ jobs:
           deleted=()
           kept=()
           fresh=()
+          would=()
           test_tip=$(git rev-parse refs/remotes/origin/test)
           while IFS= read -r b; do
             [ -n "$b" ] || continue
@@ -65,6 +66,8 @@ jobs:
             elif git merge-base --is-ancestor "refs/remotes/origin/$b" refs/remotes/origin/test; then
               if [ "$DRY_RUN" = "true" ]; then
                 echo "[dry run] would delete $b"
+                would+=("$b")
+                continue
               else
                 # Lease against the tip checked above: if a worker pushed to
                 # the branch since the ancestry check, the push is rejected
@@ -87,7 +90,13 @@ jobs:
           {
             echo "## worker-branch-cleanup"
             echo
-            if [ "$DRY_RUN" = "true" ]; then echo "Dry run: nothing was deleted."; echo; fi
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "Dry run: nothing was deleted."
+              echo
+              echo "### Would delete (${#would[@]})"
+              for b in "${would[@]+"${would[@]}"}"; do echo "- \`$b\`"; done
+              echo
+            fi
             echo "### Deleted (${#deleted[@]})"
             for b in "${deleted[@]+"${deleted[@]}"}"; do echo "- \`$b\`"; done
             echo

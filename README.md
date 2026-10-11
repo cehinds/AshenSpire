@@ -27,7 +27,7 @@ build number and link to its history. Play and HTML follow that channel's latest
 · [Installation guide](desktop/windows/README.md).
 The chooser identifies the selected game build; its installer can be newer than the hosted Test badge.
 
-**Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev` has a build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`, which plays in a sandbox and does not keep progress (open ones are listed on [All builds](https://cehinds.github.io/AshenSpire/)); the pull request links it.
+**Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev`, named with ASCII letters, digits, `.`, `_`, `-` and `/` only, has a build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`, which plays in a sandbox and does not keep progress (open ones are listed on [All builds](https://cehinds.github.io/AshenSpire/)); the pull request links it.
 
 [All builds](https://cehinds.github.io/AshenSpire/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
 Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.
