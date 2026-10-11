@@ -8,7 +8,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { tryAcquire, acquire, lockPath, pidAlive, procStartOf, LOCK_NAME } from '../tools/lib/build-lock.mjs';
+import { tryAcquire, acquire, lockPath, pidAlive, procStartOf, LOCK_NAME, testHooks } from '../tools/lib/build-lock.mjs';
 
 const HOUR = 60 * 60 * 1000;
 const LINUX = process.platform === 'linux';
@@ -136,6 +136,19 @@ test('release removes only our own lock', (t) => {
   fs.writeFileSync(lockPath(root), theirs);
   release();
   assert.equal(fs.readFileSync(lockPath(root), 'utf8'), theirs, 'their lock stands');
+});
+
+test('a fresh lock that takes the slot after the stale one is judged is not removed', (t) => {
+  const root = tmpRoot(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: deadPid(), holder: 'Crashed build', startedAt: Date.now(), token: 'x' }));
+  const fresh = JSON.stringify({ pid: foreign(t), holder: 'Live build', startedAt: Date.now(), token: 'live' });
+  // Between the judgement and the break, another writer removes the stale lock and creates its own.
+  testHooks.beforeRecheck = (file) => { testHooks.beforeRecheck = null; fs.unlinkSync(file); fs.writeFileSync(file, fresh); };
+  t.after(() => { testHooks.beforeRecheck = null; });
+  const got = tryAcquire(root, 'me');
+  assert.equal(typeof got, 'object', 'the live holder keeps the lock');
+  assert.equal(got.heldBy.holder, 'Live build');
+  assert.equal(fs.readFileSync(lockPath(root), 'utf8'), fresh, 'the fresh lock is left in place');
 });
 
 test('acquire waits for the holder, and gives up naming it after the timeout', async (t) => {

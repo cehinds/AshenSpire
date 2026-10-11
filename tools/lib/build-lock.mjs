@@ -69,9 +69,13 @@ function isStale(lock, now) {
   return now - started > UNVERIFIED_CEILING_MS;
 }
 
+/** Test seam: `beforeRecheck(file)` runs between the stale judgement and the re-check that guards the unlink. */
+export const testHooks = { beforeRecheck: null };
+
 /** Remove a stale lock without removing a fresh one another process just took:
  *  move it aside, check it is the one judged stale, and put it back if not. */
 function breakStale(file, seen) {
+  testHooks.beforeRecheck?.(file);
   const aside = `${file}.stale-${process.pid}-${randomBytes(4).toString('hex')}`;
   try { fs.renameSync(file, aside); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
   let text = null;
