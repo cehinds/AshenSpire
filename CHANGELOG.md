@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-11
 
-- **Feature branches get playable builds; worker branch rules documented** ([#1832](https://github.com/cehinds/AshenSpire/pull/1832), `0.7.1.1281`). The README now explains where each open feature, fix or chore branch's playable build lives. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. No gameplay changes.
+- **Worker branch rules documented; feature-branch playable builds announced** ([#1832](https://github.com/cehinds/AshenSpire/pull/1832), `0.7.1.1283`). Development-process change only, nothing in the game changes. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. The README names where each open feature, fix or chore branch's playable build will live; publishing those builds is still pending, so the link does not work yet.
+
+- **AI sessions: work lands in small commits, reviewed as they land** ([#1831](https://github.com/cehinds/AshenSpire/pull/1831), `0.7.1.1281`). Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.
 
 ## 2026-10-10
 

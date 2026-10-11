@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1832",
     "date": "2026-10-11",
     "group": "2026-10-11",
-    "summary": "Feature branches get playable builds; worker branch rules documented",
-    "detail": "The README now explains where each open feature, fix or chore branch's playable build lives. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. No gameplay changes.",
-    "build": "0.7.1.1281",
+    "summary": "Worker branch rules documented; feature-branch playable builds announced",
+    "detail": "Development-process change only, nothing in the game changes. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. The README names where each open feature, fix or chore branch's playable build will live; publishing those builds is still pending, so the link does not work yet.",
+    "build": "0.7.1.1283",
     "pullRequest": 1832,
     "url": "https://github.com/cehinds/AshenSpire/pull/1832"
+  },
+  {
+    "id": "pr-1831",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "AI sessions: work lands in small commits, reviewed as they land",
+    "detail": "Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.",
+    "build": "0.7.1.1281",
+    "pullRequest": 1831,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1831"
   },
   {
     "id": "pr-1825",
