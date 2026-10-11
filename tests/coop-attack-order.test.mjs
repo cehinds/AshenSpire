@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { createSession } from '../tools/session.mjs';
-import { coopTimelineRoute, coopReceiptOverlays } from '../src/ui/screens/coop.js';
+import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays } from '../src/ui/screens/coop.js';
 import { decorateCombatEffects, combatEffectReceipt } from '../src/model/combatEffectEvents.js';
 
 const registries = createRegistries(contentBundle);
@@ -78,8 +78,8 @@ const body = (name) => {
 test('co-op routes a new player attack through the paced timeline under the player flag', () => {
   const receive = body('receiveSnapshot');
   assert.match(receive, /if \(busy\(\)\) \{/, 'any running timeline queues the next snapshot');
-  assert.match(receive, /coopTimelineRoute\(sc\.events/);
-  assert.match(receive, /route === 'player' && \(Number\(sc\.receiptSeq\) \|\| 0\) > lastReceiptSeq\) \{\s*paceReactionReceipts\(s, \{ mode: 'player' \}\);/,
+  assert.match(receive, /coopPacedRoute\(sc, lastReceiptSeq\)/);
+  assert.match(receive, /route === 'player'\) \{\s*paceReactionReceipts\(s, \{ mode: 'player' \}\);/,
     'only new receipts replay, through the same timeline');
   const pace = body('paceReactionReceipts') + body('playPacedReceipts');
   assert.match(pace, /mode === 'player'\) playerPacing = on; else pacing = on;/);
@@ -151,4 +151,14 @@ test('a throw before the timeline starts clears the flag; a cancelled or torn-do
   assert.match(timeline, /const apply = beat => \{\s*if \(disposed \|\| run\.cancelled\) return;/);
   assert.match(timeline, /onFlush\(\) \{\s*if \(disposed \|\| run\.cancelled\) return;/);
   assert.match(timeline, /\}, \(\) => \{\s*if \(run\.cancelled\) return;\s*if \(disposed\) \{ setPacing\(false\); return; \}/);
+});
+
+test('a duplicated or resynced frame never replays its timeline, enemy or player', () => {
+  const enemy = { kind: 'combat', receiptSeq: 7, players: [{ id: 'p1' }], events: [{ type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' }] };
+  const attack = { kind: 'combat', receiptSeq: 8, players: [{ id: 'p1' }], events: [{ type: 'damageDealt', sourcePlayerId: 'p1', sourceId: 'player', targetId: 'e1', amount: 4, isAttack: true }] };
+  assert.equal(coopPacedRoute(enemy, 6), 'enemy');
+  assert.equal(coopPacedRoute(enemy, 7), null, 'the enemy frame already played');
+  assert.equal(coopPacedRoute(attack, 7), 'player');
+  assert.equal(coopPacedRoute(attack, 8), null, 'the attack frame already played');
+  assert.equal(coopPacedRoute({ ...enemy, kind: 'reward' }, 0), null);
 });

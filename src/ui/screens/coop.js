@@ -231,6 +231,12 @@ export function coopReceiptOverlays(decorated = []) {
   return (decorated || []).map(event => event && combatEffectForEvent(event)).filter(Boolean);
 }
 
+/** coopTimelineRoute for a combat scene whose receipts are new (receiptSeq past lastSeq), else null. */
+export function coopPacedRoute(scene, lastSeq = 0) {
+  if (scene?.kind !== 'combat' || !((Number(scene.receiptSeq) || 0) > lastSeq)) return null;
+  return coopTimelineRoute(scene.events, (scene.players || []).map(player => player.id));
+}
+
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
@@ -1955,14 +1961,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const sc = s.scene;
     // One route per snapshot: enemy beats (with any player attack riding
     // along) play the enemy timeline; a seat's own new attack plays the player
-    // timeline, in the solo order (SPEC §7.4); anything else renders at once.
-    const route = sc?.kind === 'combat' && prevCombat && app.querySelector('.combat.coop')
-      ? coopTimelineRoute(sc.events, (sc.players || []).map(player => player.id)) : null;
+    // timeline, in the solo order (SPEC §7.4); anything else, and any frame
+    // whose receipts already played (a duplicate, a resync), renders at once.
+    const route = prevCombat && app.querySelector('.combat.coop') ? coopPacedRoute(sc, lastReceiptSeq) : null;
     if (route === 'enemy') {
       paceReactionReceipts(s);
       return;
     }
-    if (route === 'player' && (Number(sc.receiptSeq) || 0) > lastReceiptSeq) {
+    if (route === 'player') {
       paceReactionReceipts(s, { mode: 'player' });
       return;
     }
