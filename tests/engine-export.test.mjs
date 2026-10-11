@@ -168,6 +168,19 @@ test('a failed refresh preserves the complete last good export', async () => {
   assert.deepEqual(readdirSync(join(out, '..')).filter((name) => name.startsWith('.atomic-refresh.')), []);
 });
 
+test('an export entry that would leave the export folder fails before anything is written', async () => {
+  const { writeExport, FORMAT } = await import('../tools/engine-export.mjs');
+  const out = join(scratch, 'escape-guard');
+  const escaped = join(scratch, 'escaped.json');
+  const manifest = JSON.stringify({ format: FORMAT });
+  for (const bad of ['tables/../../escaped.json', '../escaped.json', '/abs-escape.json', 'tables\\..\\..\\escaped.json']) {
+    assert.throws(() => writeExport(new Map([['manifest.json', manifest], [bad, 'x']]), out),
+      /would be written outside the export folder/, `entry ${JSON.stringify(bad)} is refused`);
+  }
+  assert.equal(existsSync(escaped), false, 'nothing was written beside the export folder');
+  assert.equal(existsSync(out), false, 'the export folder was not created');
+});
+
 test('staleGenerated runs the builders (or their --check) and names the stale ones; --no-build passes when current', async () => {
   const { staleGenerated, BUILDERS } = await import('../tools/engine-export.mjs');
   assert.deepEqual(BUILDERS, ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs']);

@@ -30,7 +30,7 @@
 // byte-identical. build/engine-export/ is ignored by git; never commit it.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, mkdtempSync, statSync, renameSync } from 'node:fs';
-import { join, dirname, relative, sep, resolve, basename, extname } from 'node:path';
+import { join, dirname, relative, sep, resolve, basename, extname, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -418,7 +418,21 @@ export async function buildExport({ only = null } = {}) {
   return { files, manifest, summary: { tables: tables.length, rows, config: configs.length, art: art.length, files: files.size } };
 }
 
+// An export entry is a path under the export folder. A table or config id is
+// spliced into that path, so an id with '..' segments, a backslash or an
+// absolute form could write outside it: such an entry fails the whole export.
+export function entryPath(root, rel) {
+  const refuse = () => new Error(`export entry '${rel}' would be written outside the export folder; refusing`);
+  if (typeof rel !== 'string' || rel === '' || isAbsolute(rel) || rel.includes('\\') || rel.split('/').includes('..')) throw refuse();
+  const base = resolve(root);
+  const full = resolve(base, rel);
+  const back = relative(base, full);
+  if (back === '' || isAbsolute(back) || back.split(sep)[0] === '..') throw refuse();
+  return full;
+}
+
 export function writeExport(files, outDir, { writeFile = writeFileSync } = {}) {
+  for (const rel of files.keys()) entryPath(outDir, rel);
   if (existsSync(outDir)) {
     const entries = readdirSync(outDir);
     if (entries.length) {
@@ -438,7 +452,7 @@ export function writeExport(files, outDir, { writeFile = writeFileSync } = {}) {
   let backup = null;
   try {
     for (const [rel, text] of [...files.entries()].sort()) {
-      const full = join(staged, rel);
+      const full = entryPath(staged, rel);
       mkdirSync(dirname(full), { recursive: true });
       writeFile(full, text);
     }
