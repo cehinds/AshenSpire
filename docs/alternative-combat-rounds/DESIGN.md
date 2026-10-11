@@ -274,14 +274,19 @@ uses it yet.
 Stance bonuses come from `evade-bonus.csv` as `exchange` bonuses (TBD values).
 Card-tag bonuses are passed on the side as `evadeBonuses`.
 
+#### Evade action and evade percent (owner, 2026-10-11)
+
+- An evade action adds its `evade-bonus.csv` bonus to `evadePct` in the same
+  exchange. The bonus adds to the percent. It does not replace it.
+- The total is clamped to 0..95 (`EVADE_PCT_MAX`), and the cap of 95 is
+  confirmed by the owner. Example: base 90 + evade 20 = 110, clamped to 95.
+
 #### Flagged
 
-- The cap of 95 is a placeholder (`EVADE_PCT_MAX`). The owner has not
-  confirmed it.
-- Does a dodge (a miss against an evade action) stack with `evadePct`? Today
-  they cannot overlap in one attack. A dodge needs a miss, and the percent
-  roll happens only on a hit. Whether the evade stance's bonus should also
-  apply to a dodge is not decided.
+- A dodge (a miss against an evade action) and `evadePct` never apply to the
+  same attack. A dodge needs a miss, and the percent roll happens only on a
+  hit. Whether the evade stance's bonus should also apply to a dodge is not
+  decided.
 - Charges are not carried between rounds. The pools are an input (from
   `options.charges` or the sides' `intangibleCharges`), and `resolveRound`
   returns what is left in `charges`. The caller stores that for the next
