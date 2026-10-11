@@ -26,12 +26,45 @@ function eligible(ctx, def, row) {
   return tags.includes('maneuver:sweep') && def.defensiveReaction === true;
 }
 
-function optionsFor(ctx, row, group, hooks) {
+// A hand card that could answer some incoming root by its maneuver (SPEC §4.10).
+const candidateByManeuver = def => {
+  const tags = def.cardTags || def.tags || [];
+  return tags.includes('maneuver:counter') || (tags.includes('maneuver:sweep') && def.defensiveReaction === true);
+};
+// The reported reason is the first failing check of the candidate that got furthest.
+const REASON_RANK = { notCovered: 0, other: 1, controlled: 2, unplayable: 3, cost: 4 };
+const handOf = (ctx, row) => (ctx.players ? ctx.players.get(row.playerId)?.piles.hand : ctx.piles.hand) || [];
+const positive = contact => !!contact && (contact.amount > 0 || contact.pressure > 0);
+
+function attackKind(row) {
+  const hit = row.contacts.find(contact => positive(contact) && !contact.effect);
+  if (!hit) return 'statusOnly';
+  if (hit.maneuver === 'sweep') return 'sweep';
+  if (hit.targeting === 'area') return 'area';
+  if (hit.camp === 'spell') return 'spell';
+  if (hit.reach === 'near' || hit.reach === 'far') return 'ranged';
+  return 'attack';
+}
+
+function candidateCardIds(ctx, row) {
+  const ids = [];
+  for (const inst of handOf(ctx, row)) {
+    if (candidateByManeuver(resolveCombatCard(ctx, inst)) && !ids.includes(inst.cardId)) ids.push(inst.cardId);
+  }
+  return ids;
+}
+
+function optionsFor(ctx, row, group, hooks, refusal = null) {
   const options = [];
-  const cards = ctx.players ? ctx.players.get(row.playerId)?.piles.hand : ctx.piles.hand;
-  for (const inst of cards || []) {
+  const note = (reason, extra = {}) => {
+    if (refusal && (!refusal.reason || REASON_RANK[reason] > REASON_RANK[refusal.reason])) {
+      for (const key of Object.keys(refusal)) delete refusal[key];
+      Object.assign(refusal, { reason, ...extra });
+    }
+  };
+  for (const inst of handOf(ctx, row)) {
     const base = resolveCombatCard(ctx, inst);
-    if (!eligible(ctx, base, row)) continue;
+    if (!eligible(ctx, base, row)) { if (candidateByManeuver(base)) note('notCovered'); continue; }
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
     for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
       const candidate = candidateState(ctx);
@@ -49,35 +82,85 @@ function optionsFor(ctx, row, group, hooks) {
         const paymentStart = candidate.eventLog.length;
         hooks.play(candidate, play);
         const paid = candidate.eventLog.slice(paymentStart).find(event => event.type === 'cardPlayed');
-        if (!paid || !candidate.player.alive) continue;
+        if (!paid || !candidate.player.alive) { note('other'); continue; }
         options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}`, name: base.name,
           cardId: inst.cardId, play, staminaCost: paid.staminaSpent ?? paid.energySpent ?? 0,
           manaCost: paid.manaSpent || 0, choiceName: choice?.label || choice?.name || null });
-      } catch { /* Ineligible under the normal card/payment/control rules. */ }
+      } catch (error) {
+        // Ineligible under the normal card/payment/control rules; the refusal names why.
+        const { reason, ...extra } = error?.playRefusal || {};
+        note(REASON_RANK[reason] === undefined ? 'other' : reason, extra);
+      }
     }
   }
   return options;
+}
+
+// At most one receipt per incoming root and seat, and only for a seat holding a candidate.
+function reportUnavailable(ctx, group, id, row, reason, extra = {}) {
+  if (group.reactionNoticed?.includes(id)) return;
+  const cardIds = candidateCardIds(ctx, row);
+  if (!cardIds.length) return;
+  (group.reactionNoticed ||= []).push(id);
+  ctx.emit('combatReactionUnavailable', { ownerId: id, sourceId: group.sourceId, reason, cardIds,
+    attackKind: attackKind(row), ...extra });
+}
+
+const rowFor = (ctx, group, id) => Object.values(group.targets).find(target => ctx.players ? target.playerId === id : target.id === ctx.player.id);
+function seatPresent(ctx, id) {
+  const seat = ctx.players?.get(id);
+  return !!(seat?.entity || ctx.player)?.alive && (!seat || seat.connected === true);
+}
+
+// A later action of an already answered root still reaches a seat holding a candidate.
+function reportAlreadyAnswered(ctx, action, group) {
+  const contacts = (action.meta?.expansionContacts || []).flat();
+  for (const id of group.reactionAnswered || []) {
+    const row = rowFor(ctx, group, id);
+    if (!row || group.reactionNoticed?.includes(id) || !seatPresent(ctx, id)) continue;
+    if (!contacts.some(contact => group.targets[contact.key] === row && positive(row.contacts[contact.index]))) continue;
+    reportUnavailable(ctx, group, id, row, 'alreadyAnswered');
+  }
 }
 
 export function beforeReactionAction(ctx, action, hooks) {
   if (!usesReactions(ctx) || ctx._reactionPlaying) return false;
   if (ctx.pendingReaction) return true;
   const group = action.meta?.expansionGroup;
-  if (!group || group.begun || group.carrier?.reactionDepth || action.source?.kind !== 'enemy') return false;
-  if (!action.source.alive || action.source.skipNextTurn || controlRestrictions(ctx, action.source).locked) return false;
-  group.reactionAnswered ||= [];
+  if (!group || group.carrier?.reactionDepth || action.source?.kind !== 'enemy') return false;
+  if (group.begun) { reportAlreadyAnswered(ctx, action, group); return false; }
+  if (!action.source.alive) return false;
   const ids = ctx.players ? ctx.order : ['player'];
+  const halted = action.source.skipNextTurn ? 'attackerStaggered'
+    : controlRestrictions(ctx, action.source).locked ? 'attackerControlled' : null;
+  if (halted) {
+    for (const id of ids) {
+      const row = rowFor(ctx, group, id);
+      if (!row || !row.contacts.some(positive) || group.reactionAnswered?.includes(id) || !seatPresent(ctx, id)) continue;
+      reportUnavailable(ctx, group, id, row, halted);
+    }
+    return false;
+  }
+  group.reactionAnswered ||= [];
   for (const id of ids) {
-    const row = Object.values(group.targets).find(target => ctx.players ? target.playerId === id : target.id === ctx.player.id);
-    if (!row || !row.contacts.some(contact => contact.amount > 0 || contact.pressure > 0) || group.reactionAnswered.includes(id)) continue;
+    const row = rowFor(ctx, group, id);
+    if (!row || !row.contacts.some(positive) || group.reactionAnswered.includes(id)) continue;
     const seat = ctx.players?.get(id);
     const entity = seat?.entity || ctx.player;
-    if (!entity.alive || entity.reactionsEnabled === false || (seat && !seat.connected)) { group.reactionAnswered.push(id); continue; }
+    if (!entity.alive || entity.reactionsEnabled === false || (seat && !seat.connected)) {
+      if (entity.reactionsEnabled === false && seatPresent(ctx, id)) reportUnavailable(ctx, group, id, row, 'switchOff');
+      group.reactionAnswered.push(id); continue;
+    }
     const previous = ctx.playerKey;
     hooks.setOwner?.(ctx, id);
-    const options = optionsFor(ctx, row, group, hooks);
+    const refusal = {};
+    const options = optionsFor(ctx, row, group, hooks, refusal);
     hooks.setOwner?.(ctx, previous);
-    if (!options.length) { group.reactionAnswered.push(id); continue; }
+    if (!options.length) {
+      const { reason = 'other', ...extra } = refusal;
+      reportUnavailable(ctx, group, id, row, reason, extra);
+      group.reactionAnswered.push(id); continue;
+    }
     ctx.pendingReaction = { id: `${group.key}:${id}`, groupKey: group.key, ownerId: id,
       sourceId: group.sourceId, options };
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId: group.sourceId });
