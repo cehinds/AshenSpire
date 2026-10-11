@@ -1,0 +1,148 @@
+{
+  "tool": "tools/map-tap-latency.mjs",
+  "measuredAt": "2026-10-11T01:53:32.712Z",
+  "browser": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3,
+    "mobile": true,
+    "hasTouch": true
+  },
+  "cpuThrottlingRate": 4,
+  "reps": 5,
+  "boundary": "Headless Chromium, CPU throttled 4x, touch via CDP, source tree served by tools/serve.mjs. Not a real device, not frame-accurate; the clock stamps pointerdown and polls rAF.",
+  "metrics": {
+    "A_select": {
+      "name": "A select (tap to tray shown)",
+      "samples": [
+        {
+          "latencyMs": 135,
+          "longtaskMs": 62
+        },
+        {
+          "latencyMs": 69,
+          "longtaskMs": 0
+        },
+        {
+          "latencyMs": 84,
+          "longtaskMs": 0
+        },
+        {
+          "latencyMs": 85,
+          "longtaskMs": 0
+        },
+        {
+          "latencyMs": 84,
+          "longtaskMs": 0
+        }
+      ],
+      "medianMs": 84,
+      "maxMs": 135,
+      "longtaskMedianMs": 0,
+      "longtaskMaxMs": 62,
+      "completed": 5
+    },
+    "B_second_tap_travel": {
+      "name": "B second tap travels",
+      "samples": [
+        {
+          "travelMs": 269,
+          "longtaskMs": 165
+        },
+        {
+          "travelMs": 210,
+          "longtaskMs": 66
+        },
+        {
+          "travelMs": 208,
+          "longtaskMs": 181
+        },
+        {
+          "travelMs": 165,
+          "longtaskMs": 115
+        },
+        {
+          "travelMs": 151,
+          "longtaskMs": 81
+        }
+      ],
+      "medianMs": 208,
+      "maxMs": 269,
+      "longtaskMedianMs": 115,
+      "longtaskMaxMs": 181,
+      "completed": 5
+    },
+    "C_enter_travel": {
+      "name": "C Enter travels",
+      "samples": [
+        {
+          "travelMs": 219,
+          "longtaskMs": 133
+        },
+        {
+          "travelMs": 217,
+          "longtaskMs": 82
+        },
+        {
+          "travelMs": 276,
+          "longtaskMs": 140
+        },
+        {
+          "travelMs": 288,
+          "longtaskMs": 130
+        },
+        {
+          "travelMs": 291,
+          "longtaskMs": 81
+        }
+      ],
+      "medianMs": 276,
+      "maxMs": 291,
+      "longtaskMedianMs": 130,
+      "longtaskMaxMs": 140,
+      "completed": 5
+    },
+    "D_fast_double_tap": {
+      "name": "D fast double tap (150 ms apart)",
+      "samples": [
+        {
+          "gapMs": 214,
+          "travelMs": 361,
+          "travelledWithin1500": true,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 216,
+          "travelMs": 360,
+          "travelledWithin1500": true,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 218,
+          "travelMs": 371,
+          "travelledWithin1500": true,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 219,
+          "travelMs": 376,
+          "travelledWithin1500": true,
+          "tooltipSeen": false
+        },
+        {
+          "gapMs": 218,
+          "travelMs": 358,
+          "travelledWithin1500": true,
+          "tooltipSeen": false
+        }
+      ],
+      "travelledWithin1500": 5,
+      "tooltipSeen": 0,
+      "medianMs": 361,
+      "maxMs": 376
+    }
+  },
+  "failures": [],
+  "pageErrors": []
+}
