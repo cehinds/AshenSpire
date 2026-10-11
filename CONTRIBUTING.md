@@ -4,6 +4,8 @@
 
 1. **[SPEC.md](SPEC.md) is the source of truth.** Formulas, orderings, and state shapes marked contractual there don't change in a feature PR — change the spec first, in its own PR, then implement.
 2. **No FromSoftware assets or proper nouns.** Every new asset gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only), and enters through its established path. Since docs/EXTERNAL-ASSETS-PLAN.md step 13 every asset file — the art (`assets/…` ids, both tiers), sound effects (`assets/sfx/<id>.ogg`), the score's renders (`music/…`, loaded through `music/manifest.json`), the map tiles and the fonts (`assets/fonts/`, referenced from `styles/kit.css`) — enters through a PR to [`cehinds/AshenSpire-art`](https://github.com/cehinds/AshenSpire-art) and its release, then a PR here that bumps `art-release.json` and rewrites `art-manifest.json` (`node tools/art-manifest.mjs --write`). Game code names an asset by its id and resolves it through `assetUrl()` (`src/ui/assetmap.js`), or `SFX_MANIFEST` in `src/content/sfx.js` for a sound. The score's source, `music/score/*.mjs`, stays here.
+
+   **The automated path** (`.github/workflows/art-migrate.yml`, owner, 2026-10-11). A pull request into `dev` that adds or modifies art (the high tier under `assets/`, fonts, score renders `music/…`, `map-detail/`, `art/`; never the light tier `assets-mobile/`, which stays tracked here for now, owner 2026-10-11) is moved by its **intake** job: `tools/art-intake.mjs` stages those files in a branch of `cehinds/AshenSpire-art` and opens a pull request there, and this pull request's check stays red until the art has left it. When that art pull request merges, the art repository's release publishes `hd-assets-v<N>`, and the **pin-bump** job (every six hours) opens the `art-release.json` bump into `dev`. The pin-bump pull request is pushed and opened with `ART_REPO_WRITE_TOKEN` too (owner, 2026-10-11), so CI runs on it; without the secret it falls back to `GITHUB_TOKEN` and CI does not run. The intake runs on `pull_request_target`, not `pull_request`: the workflow definition that holds the token is the base's, so a pull request cannot edit it to reach the token, and a fork's run names no secret. The manual path above remains the fallback, for a pull request from a fork or a repository without the `ART_REPO_WRITE_TOKEN` secret.
 3. **Engine stays headless.** Nothing under `src/engine/` may reference `document`, `window`, `localStorage`, or timers. If a change can't be tested headlessly (`node tests/run-node.mjs`, or `tests/index.html` in a browser), it doesn't belong in the engine.
 4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
 5. **Tests green before merge.** `node tests/run-node.mjs` exits 0 (DEVELOPER.md, *Run & test*; `tests/index.html` runs the engine suite in a browser). New mechanics ship with new assertions.
@@ -19,18 +21,19 @@ Every session merges its own PRs into `dev` and promotes `dev` to `test`
 ## Branch model
 
 ```
-feature/* ──► dev ──► test ──► release ──► main
-                      (heavy CI runs on every push to test and release)
+worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► test ──► release ──► main
+                      (smoke on PR→dev, heavy suites at test, polish + Windows installer at release)
 ```
 
 | Branch | Rules |
 |---|---|
+| `worker/<parent-topic>/<task>` | One worker's task, cut from its parent branch (`worker/CdCiPipelines/branch-cleanup` for `chore/CdCiPipelines`) and pushed to origin. Only the orchestrator merges it into the parent. The local copy and worktree are removed once the parent merges into `dev`. The origin copy is deleted by `worker-branch-cleanup.yml` once `dev` is promoted to `test`. |
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Promoted from `test` (owner only), through an `rc/<version>` branch pinned at the tested RC SHA (docs/RELEASE-CHECKLIST.md), when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
 | `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
 | `alternative/dev`, `alternative/test` | Frozen historical branches (owner, 2026-10-09). Their approved combat perspective is now the default on regular `dev` and `test`. Bring all new work to `dev`; do not push, merge, sync or dispatch branch-writing jobs to either retired branch. Existing named variants retain their separate rules below. |
 | `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
-| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
+| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. While a PR into `dev` is open, CI publishes the branch's build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is replaced on each push and removed when the PR merges or closes. |
 
 ## Commits & PRs
 
@@ -110,15 +113,23 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
    conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
-   A PR into `dev` is gated by the fast checks only (about five minutes or
-   less); the heavy suites — `tests.yml`'s slow simulation tests, self-tests and
-   parse gate, `ci.yml`'s
-   jobs (3-OS, real-browser and Fullscreen-first), and `dev-preview.yml`'s
-   reachability gates — run
-   on every push to `test` and `release` (owner, 2026-09-26). DEVELOPER.md
-   (*Which checks gate a pull request*) lists each check. To read a heavy suite
-   on your PR before promotion, dispatch that workflow on your branch by hand; a
-   red at `test` or `release` is yours to fix like any other.
+   Stages (owner, 2026-10-11; DEVELOPER.md, *Which checks gate a pull request*
+   lists each check):
+   - **PR into `dev` and push to `dev`: smoke, about five minutes or less.**
+     `tests.yml`'s core suite and discovered shards (`--no-slow`), `receipts.yml`,
+     `dev-preview.yml`'s preview build and fast gates, `quick-start.yml`, and
+     `art-migrate.yml`'s intake. A PR is gated by these alone.
+   - **Push to `test`: the heavy functional suites.** `ci.yml`'s test-stage
+     jobs (3-OS tests, all discovered shards, tool self-tests, the bundler parse
+     gate, the real-browser checks), `dev-preview.yml`'s reachability gates,
+     `map-camera.yml`, `tutorial-reach.yml`, `coop-hud.yml`.
+   - **Push to `release`: polish.** `ci.yml`'s polish jobs (the reproducible
+     build, Fullscreen first, the build stamp and cold boot, layout, hint strip
+     and motion), and `windows-installer.yml`. `release` receives only the
+     SHA already tested at `test`, so the functional suites are not re-run, unless its tree differs from `test` (a fix landed on `release` directly), in which case `ci.yml`'s `stage` job runs them too.
+   To read a heavy suite on your PR before promotion, dispatch that workflow on
+   your branch by hand; a red at `test` or `release` is yours to fix like any
+   other.
 5. **Keep checking after you open it.** Until it is merged or closed, re-check
    it after every merge to the base branch and on a check-in you schedule
    yourself (an hour apart is enough);
@@ -167,6 +178,9 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
      `dev`, which you then promote again.
    - Never merge to `release` or `main` (see
      [Coordination and release boundary](#coordination-and-release-boundary)).
+     A push to `release` publishes the Pages site on its own (owner, 2026-10-11),
+     once the `github-pages` environment admits `release`; `main` still publishes
+     only on the owner's dispatch.
 
 ### Builds are built by CI, not committed
 

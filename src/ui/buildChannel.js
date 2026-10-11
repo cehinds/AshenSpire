@@ -45,6 +45,18 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   try { path = decodeURIComponent(path); } catch { /* a malformed %-escape: read it raw */ }
   const host = String(loc?.hostname || '');
   const protocol = String(loc?.protocol || '');
+  // A feature-branch preview (tools/pages-site.mjs publishes it to
+  // branches/<branch>/latest/): an open pull request's build, played as dev.
+  // Checked before the served match so a branch named main, dev or test is not
+  // read as that channel.
+  if (/\/branches\/.+\/latest(?:\/|$)/.test(path)) return 'dev';
+  // A feature-branch preview is loaded in a sandboxed srcdoc iframe (no
+  // allow-same-origin), so its location is about:srcdoc. The preview wrapper
+  // injects window.__ASHEN_PREVIEW_CHANNEL__ as the first script; only 'dev' is
+  // honoured, and without it an about: page keeps the existing answer.
+  if (String(loc?.href || '') === 'about:srcdoc' || protocol === 'about:') {
+    if (globalThis.__ASHEN_PREVIEW_CHANNEL__ === 'dev') return 'dev';
+  }
   const served = path.match(/\/(dev|test|release|main)\/(?:\d+|latest)(?:\/|$)/);
   if (served) return served[1];
   const saved = path.match(/AshenSpire-(?:mobile-)?(dev|test|release|main)-[^/]*\.html$/i);
