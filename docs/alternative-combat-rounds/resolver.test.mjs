@@ -287,9 +287,11 @@ test('evasionFor: a buckler adds 1, and another shield adds 0', () => {
   assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, shield: 'kite' }, evasionTables()), 0);
 });
 
-test('evasionFor: Backstep adds 5, and an unlisted card adds 0', () => {
+test('evasionFor: Backstep adds 5, and an unknown card throws, like an unknown armor', () => {
   assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, evasionCard: 'Backstep' }, evasionTables()), 5);
-  assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, evasionCard: 'Strike' }, evasionTables()), 0);
+  assert.throws(() => evasionFor({ evasionArmor: 'Cloth', dex: 1, evasionCard: 'Strike' }, evasionTables()), RangeError);
+  assert.throws(() => evasionFor({ evasionArmor: 'Cloth', dex: 1, evasionCard: 'backstep' }, evasionTables()), RangeError, 'lookup is case-sensitive');
+  assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1, evasionCard: null }, evasionTables()), 0, 'no card given adds 0');
 });
 
 test('evasionFor: a plain numeric evasion still works, and an unknown armor name throws', () => {

@@ -160,7 +160,8 @@ export function parseEvasionCards(text) {
 // dex, shield and evasionCard. They are not the action's `armor` and `card`,
 // which are speed-table ids. A missing evasionArmor counts as Cloth. A missing
 // dex takes attrs.DEX, and a missing DEX adds nothing. The DEX term is never negative. A buckler adds
-// 1 and any other shield adds 0. A card not in the table adds 0.
+// 1 and any other shield adds 0. An evasionCard not in the table throws, like an
+// unknown armor.
 // With none of evasionArmor, dex, shield or evasionCard given, the result is the
 // plain `evasion` number, so existing callers are unchanged.
 export const SHIELD_EVASION = Object.freeze({ buckler: 1 });
@@ -176,7 +177,12 @@ export function evasionFor({ evasionArmor, dex, shield, evasionCard, attrs, evas
   const dexNum = Number(dex ?? attrs?.DEX ?? 1);
   const dexTerm = Math.max(0, Math.min(dexNum - 1, row.dexCap)) || 0;
   const shieldBonus = shield != null && Object.hasOwn(SHIELD_EVASION, shield) ? SHIELD_EVASION[shield] : 0;
-  const cardBonus = evasionCard == null ? 0 : (tables?.cards?.get(evasionCard) ?? 0);
+  let cardBonus = 0;
+  if (evasionCard != null) {
+    // Card names are case-sensitive, as in evasion-cards.csv. An unknown card throws.
+    if (!tables?.cards?.has(evasionCard)) throw new RangeError(`unknown evasion card "${evasionCard}"`);
+    cardBonus = tables.cards.get(evasionCard);
+  }
   return row.base + dexTerm + shieldBonus + cardBonus + extra;
 }
 

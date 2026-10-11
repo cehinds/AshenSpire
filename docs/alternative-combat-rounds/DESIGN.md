@@ -285,7 +285,8 @@ the action's `armor` and `card`, which are speed-table ids (`actionSpeed`).
 
 - Shield: buckler +1. Any other shield 0.
 - Card bonus table, `evasion-cards.csv` (card, bonus): Backstep 5, Shadowstep 4,
-  Quickstep 3, Acrobatics 3, Dodge 3, Evasive Guard 2. A card not in the table adds 0.
+  Quickstep 3, Acrobatics 3, Dodge 3, Evasive Guard 2. A card not in the table throws,
+  like an unknown armor. Names are case-sensitive.
 - `evasionFor({evasionArmor, dex, shield, evasionCard, evasion}, tables)` in `resolver.mjs`.
   `evasion` is any extra flat bonus, and a plain numeric evasion still works.
 - The DEX term is never below 0. A missing armor counts as Cloth. A missing `dex`
