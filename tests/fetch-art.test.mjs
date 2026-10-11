@@ -907,6 +907,13 @@ function jobsRunningToolsBeforeFetch(yml) {
   for (const { name, lines } of jobs) {
     if (!lines.some((l) => !/^\s*#/.test(l) && /actions\/checkout@/.test(l))) continue;
     checked += 1;
+    // ONE EXEMPTION: a checkout that is sparse down to .github alone, in a job
+    // that runs no tool (ci.yml's `stage` decision: tree ids and git only). It
+    // has no tools/ or tests/ to run and no art to read. Any other checkout,
+    // tool or not, still needs the fetch.
+    const text = lines.filter((l) => !/^\s*#/.test(l)).join('\n');
+    const sparseGithubOnly = /sparse-checkout:\s*\|\s*\n\s*\/\.github\/\s*(\n|$)/.test(text) && !/sparse-checkout:\s*\|\s*\n\s*\/\.github\/\s*\n\s*\/(?!\.github)/.test(text);
+    if (sparseGithubOnly && !TOOL_CMD.test(text.replace(/\n/g, ' ').replace(/\\\s+/g, ' '))) continue;
     // NO YAML PARSING (#1524 review: seven rounds of Codex findings, each a
     // spelling a narrower parser missed — quoted keys, plain and folded
     // scalars, continuations, node options). Everything the job says before
@@ -952,6 +959,8 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad-block', `      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs\n${fetch}`),
     job('bad-folded', `      - name: x\n        run: >-\n          set -e;\n          node tests/run-node.mjs\n${fetch}`),
     job('bad-no-fetch', '      - run: echo nothing\n'),
+    job('good-sparse-github-no-tool', '        with:\n          sparse-checkout: |\n            /.github/\n      - run: git diff --quiet origin/test HEAD\n'),
+    job('bad-sparse-github-with-tool', '        with:\n          sparse-checkout: |\n            /.github/\n      - run: node tools/a.mjs\n'),
     job('bad-node-flag', `      - run: node --test tests/a.test.mjs\n${fetch}`),
     job('bad-dot-path', `      - run: node ./tools/a.mjs\n${fetch}`),
     job('good-before-underscore', `${fetch}      - run: echo ok\n`),
@@ -970,6 +979,6 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
     + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 23);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
+  assert.equal(checked, 25);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-sparse-github-with-tool', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
 });
