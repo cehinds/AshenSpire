@@ -119,6 +119,9 @@ at M_e = 0.
 - A side wins a slot at most once per pairing, however many of its successes
   the pair produces (for example, a full block followed by a landed hit, or a
   miss against an evade action).
+- In a paired slot, any miss is the defender's success. In an unpaired slot (no
+  player card), an enemy attack that misses or is avoided gives the player
+  nothing (owner, 2026-10-11).
 - A card's `momentumGain` (default 1) is the base amount of the move.
 
 ### Stance advantage bonus
