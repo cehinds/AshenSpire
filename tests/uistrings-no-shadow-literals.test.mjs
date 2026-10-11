@@ -48,7 +48,9 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
-  ['src/ui/previews/itemCards.js', 'Casting', 'a pose-preview option label in a dev preview; not the deck editor stance face'],
+  ['src/ui/components/card.js', 'Spell', 'the card face camp subtype and range-name table; not the deck editor stance label'],
+  ['src/ui/components/collectibleCard.js', 'Consumable', 'a potion usage line on the collectible card; not the deck editor stance label'],
+  ['src/ui/screens/equipment.js', 'Consumable', 'an inventory category id compared against row data; not copy'],
   ['src/ui/screens/deckEditor.js', 'disabled', 'DOM attribute name; not reaction switch copy'],
   ['src/ui/audio.js', 'disabled', 'stored music status value; not the optional reaction switch face'],
   ['src/ui/components/coopProgressionDoor.js', 'disabled', 'DOM property key; not reaction switch copy'],

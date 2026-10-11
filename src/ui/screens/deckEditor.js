@@ -33,7 +33,9 @@ import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilter
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
-import { stanceForCard } from '../../model/alternativeStance.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
+import { sigilHtml } from '../components/combatSigilView.js';
+import { playingCardModel } from '../../model/playingCard.js';
 import { playingCardArt } from '../cardArtwork.js';
 import { assetUrl } from '../assetmap.js';
 import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
@@ -331,32 +333,79 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // `grouped` is a deck row standing for several copies; a collection tile's
   // own counts are its meta line, never a badge.
   const typeName = (row) => model.filters.type.find(entry => entry.id === row.type)?.label || row.type;
-  function rowCosts(row) {
+  function rowCosts(row, lead = []) {
     const pools = registries.framework.costProfile(resolveCard(registries, row.ref));
-    return el('span', { class: 'deck-editor-costs' }, deckEditorCosts(pools).map(({id, label, value, art}) =>
+    return el('span', { class: 'deck-editor-costs' }, [...lead, ...deckEditorCosts(pools).map(({id, label, value, art}) =>
       el('span', { class: `deck-editor-cost resource-${id}${art ? ' illustrated' : ''}`, title: `${label}: ${value}`,
         'aria-label': `${label}: ${value}` }, [
           ...(art ? [el('img', { class: 'deck-editor-resource-icon', src: assetUrl(art), alt: '', draggable: 'false' })] : []),
           el('small', { text: label }), el('span', { class: 'deck-editor-resource-value', text: String(value) }),
-        ])));
+        ]))]);
   }
-  // The card's stance type (SPEC §14.1): offensive, defensive, casting, counter
-  // or sweep. A card with none shows no label.
-  // A card no stance classifies (a Prepare, a Power) is Neutral, not unlabelled.
-  const stanceKey = (row) => stanceForCard(resolveCard(registries, row.ref)) ?? 'neutral';
+  // The card's stance (owner, 2026-10-11): its combat maneuver when it has one
+  // of the six; otherwise what the card is: Spell, Power, Consumable or Skill.
+  // Every card names one.
+  const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
+  const stanceKey = (row) => {
+    const def = resolveCard(registries, row.ref);
+    const profile = combatProfileFor(def);
+    if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
+    if (profile.camp === 'spell') return 'spell';
+    if (def.type === 'power') return 'power';
+    if (def.type === 'consumable' || (def.kindIds || []).some(id => String(id).startsWith('classification.consumable'))) return 'consumable';
+    return 'skill';
+  };
   const stanceName = (row) => t(`deckEditor.stance.${stanceKey(row)}`);
   const stanceNode = (row) => {
     const stance = stanceKey(row);
-    return stance ? el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) }) : null;
+    return el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) });
   };
+  // The rank the card face prints (its ability rank, else its rank badge). Rank 0
+  // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
+  const rankNode = (row) => {
+    const def = resolveCard(registries, row.ref);
+    const card = playingCardModel(registries, row.ref);
+    // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
+    const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
+    const rank = Number.isInteger(ranked) ? ranked
+      : (MANEUVER_STANCES.includes(stanceKey(row)) || stanceKey(row) === 'spell' ? 0 : null);
+    if (!Number.isInteger(rank)) return null;
+    const text = rank > 0 ? t('deckEditor.rank', { rank })
+      : t(combatProfileFor(def).camp === 'spell' ? 'deckEditor.rank.cantrip' : 'deckEditor.rank.basic');
+    return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
+  };
+  // Range (owner, 2026-10-11): Melee / Reach / Ranged from the card's reach
+  // (contact / near / far). An untagged attacking card takes combat's own
+  // default (engine/combatCardTactics.js): ranged maneuvers and spells reach
+  // near, the rest contact. A card that attacks nothing shows no range.
+  const RANGE_BY_REACH = { contact: 'melee', near: 'reach', far: 'ranged' };
+  const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
+  const rangeNode = (row) => {
+    const def = resolveCard(registries, row.ref);
+    const profile = combatProfileFor(def);
+    const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
+    const reach = profile.reach || (attacking ? (profile.maneuver === 'ranged' || profile.camp === 'spell' ? 'near' : 'contact') : null);
+    const range = RANGE_BY_REACH[reach];
+    return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
+  };
+  // Physical or magical, as an icon before the costs. Magical reuses the Spell
+  // sigil; physical borrows the crossed blades until it has its own mark.
+  const campNode = (row) => {
+    const camp = combatProfileFor(resolveCard(registries, row.ref)).camp === 'spell' ? 'magical' : 'physical';
+    const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
+    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'attack', 'action', { tooltip: false });
+    return node;
+  };
+  const tileCosts = (row) => rowCosts(row, [campNode(row)]);
   const cardFace = (row, extra, grouped = false, illustrated = !grouped) => [
     illustrated ? artwork(row) : null,
     el('span', { class: 'deck-editor-grip', 'aria-hidden': 'true', text: '⠿' }),
-    rowCosts(row),
+    tileCosts(row),
+    rankNode(row),
     el('span', { class: 'deck-editor-heading' }, [
       el('span', { class: 'deck-editor-name', text: row.name }),
-      el('span', { class: 'deck-editor-type', dataset: { type: row.type }, text: typeName(row) }),
       stanceNode(row),
+      rangeNode(row),
     ].filter(Boolean)),
     row.equipmentEligible === false ? el('span', { class: 'deck-editor-meta', text: t('deckEditor.equipmentNotFound') }) : null,
     el('span', { class: 'deck-editor-row-rules', text: rulesFor(row) }),

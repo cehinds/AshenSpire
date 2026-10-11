@@ -887,14 +887,14 @@ test('DOM: a known attack card shows its stance type on the row and in the inspe
       || [...editor.root.querySelectorAll('.deck-editor-row')].find(node => node.querySelector('.deck-editor-name')?.textContent === strike.name);
     const stance = row.querySelector('.deck-editor-stance');
     assert.ok(stance, 'the row carries a stance label');
-    assert.equal(stance.textContent, 'Offensive');
-    assert.equal(stance.dataset.stance, 'offensive');
+    assert.equal(stance.textContent, 'Attack');
+    assert.equal(stance.dataset.stance, 'attack');
     row.querySelector('.deck-editor-main').click();
     row.querySelector('.deck-editor-inline-inspect').click();
     const reason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
     // A refusal shown on the reason line (here the Strike is already in the
     // deck) leads the line, and the stance still follows it.
-    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck. · Offensive', 'the refusal leads and the stance follows');
+    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck. · Attack', 'the refusal leads and the stance follows');
     assert.equal(editor.root.querySelector('.deck-editor-inspector .deck-editor-reading .deck-editor-stance'), null, 'no stance label over the card face');
     // A library tile with no refusal names the stance on the reason line.
     const clean = deckEditorModel({ registries: REG, run, settings: {} }).collection.find(tile => tile.addable && !tile.refusal && tile.equipmentEligible !== false);
@@ -1260,19 +1260,26 @@ test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles 
   });
 });
 
-test('DOM: a card no stance classifies shows a Neutral stance, not none (a Rogue Prepare)', async () => {
+test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical cards and Basic for the rest', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  withDom(() => {
-    const run = createRunState({ seed: 0x5eed, classId: 'rogue', registries: REG, combatExpansionVersion: 1 });
-    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
-    const prepare = deckEditorModel({ registries: REG, run, settings: {} }).deck.find(row => row.cardId === 'prepare');
-    assert.ok(prepare, 'the Rogue starts with a Prepare');
-    const row = editor.root.querySelector(`.deck-editor-row[data-instance-id="${prepare.instanceId}"]`)
-      || [...editor.root.querySelectorAll('.deck-editor-row')].find(node => node.querySelector('.deck-editor-name')?.textContent === prepare.name);
-    assert.equal(row.querySelector('.deck-editor-stance').textContent, 'Neutral');
-    assert.equal(row.querySelector('.deck-editor-stance').dataset.stance, 'neutral');
-    editor.close();
-  });
+  const stances = new Set(['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged', 'spell', 'skill', 'power', 'consumable']);
+  for (const classId of ['rogue', 'starseer', 'reaver']) {
+    withDom(() => {
+      const run = createRunState({ seed: 0x5eed, classId, registries: REG, combatExpansionVersion: 1 });
+      const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+      for (const item of editor.root.querySelectorAll('.deck-editor-item')) {
+        const stance = item.querySelector('.deck-editor-stance');
+        assert.ok(stance && stances.has(stance.dataset.stance), `${classId}: every row names a known stance`);
+        const rank = item.querySelector('.deck-editor-rank');
+        if (!rank) continue;
+        const n = Number(rank.dataset.rank);
+        const magical = item.querySelector('.deck-editor-camp')?.dataset.camp === 'magical';
+        const expected = n > 0 ? `Rank ${n}` : magical ? 'Cantrip' : 'Basic';
+        assert.equal(rank.textContent, expected, `${classId}: rank ${n} on a ${stance.dataset.stance} row`);
+      }
+      editor.close();
+    });
+  }
 });
 
 test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the tile countText', async () => {

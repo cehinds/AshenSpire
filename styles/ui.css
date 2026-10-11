@@ -1732,18 +1732,72 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor .deck-editor-inline-inspect { right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .35rem); padding-inline: .1rem; }
   .deck-editor-animation { display: none; }
 }
-/* Phones: a library row's card face takes the full row, the stepper sits on its
-   own line beneath it, and the name keeps line 1 (type and stance may wrap). */
+/* Phones: one compact library card (owner's wireframe, 2026-10-11).
+     grip | art | name / TYPE · stance / description | MP SP (top right)
+                                                   | － n/N ＋ (bottom right)
+   The stepper is a sibling of the card's button (buttons cannot nest), laid
+   over the card's reserved right column; costs and stepper share one right
+   inset so their right edges line up. */
 @media (max-width: 1000px) {
-  .deck-editor-tile.deck-editor-item { flex-wrap: wrap; }
-  .deck-editor-tile > .deck-editor-main { flex: 1 1 100%; min-width: 0; }
-  .deck-editor-tile > .deck-editor-actions { flex: 1 1 100%; justify-content: flex-end; align-self: auto; }
-  .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { height: max(3rem, var(--deck-editor-target)); min-width: max(3rem, var(--deck-editor-target)); }
-  .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 3; grid-row: 1; flex-wrap: wrap; max-height: none; overflow: visible; row-gap: .1rem; }
-  .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-name { flex: 1 1 100%; }
-  /* Inspect sits at the left end of the stepper row, away from the right-aligned － count ＋. */
-  .deck-editor .deck-editor-tile .deck-editor-inline-inspect { left: .7rem; right: auto; min-height: max(48px, var(--deck-editor-target)); }
+  .deck-editor { --deck-tile-pad: .6rem; --deck-step: max(3rem, var(--deck-editor-target)); --deck-stepper-w: calc(2 * var(--deck-step) + 4.2rem + .6rem); }
+  .deck-editor-tile.deck-editor-item { position: relative; display: block; }
+  .deck-editor .deck-editor-tile > .deck-editor-main {
+    display: grid; width: 100%; box-sizing: border-box; height: auto; max-height: none;
+    min-height: calc(var(--deck-row-cost) + var(--deck-step) + .4rem + 2 * var(--deck-tile-pad));
+    grid-template-columns: 1.4rem 4.8rem minmax(0, 1fr) var(--deck-stepper-w);
+    grid-template-rows: auto auto minmax(0, 1fr); column-gap: .6rem; row-gap: .1rem;
+    padding: var(--deck-tile-pad);
+  }
+  .deck-editor .deck-editor-tile .deck-editor-grip { grid-column: 1; grid-row: 1 / 4; align-self: center; justify-self: center; transform: rotate(90deg); }
+  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { grid-column: 2; grid-row: 1 / 4; width: 4.8rem; height: 100%; max-height: 7.2rem; align-self: center; object-fit: cover; }
+  .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 3; grid-row: 1 / 3; display: flex; flex-wrap: wrap; align-items: baseline; align-content: start; gap: .1rem .5rem; max-height: none; overflow: visible; padding: 0; }
+  .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-name { flex: 1 1 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; font-size: max(1.3rem, var(--deck-min-text)); }
+  .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-stance { margin: 0; }
+  .deck-editor .deck-editor-tile .deck-editor-row-rules {
+    grid-column: 3; grid-row: 3; align-self: start; max-height: none; margin-top: .2rem;
+    font-size: var(--deck-rules-size, max(1.2rem, var(--deck-min-text))); line-height: 1.25;
+    -webkit-line-clamp: 3; line-clamp: 3;
+  }
+  .deck-editor .deck-editor-tile .deck-editor-costs { grid-column: 4; grid-row: 1 / 3; justify-self: end; align-self: start; gap: .5rem; }
+  .deck-editor .deck-editor-tile .deck-editor-count { display: none; }
+  .deck-editor .deck-editor-tile .deck-editor-meta { grid-column: 3; grid-row: 3; align-self: start; }
+  .deck-editor .deck-editor-tile > .deck-editor-actions {
+    position: absolute; right: var(--deck-tile-pad); bottom: var(--deck-tile-pad); margin: 0; gap: .3rem; align-items: center;
+  }
+  .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { height: var(--deck-step); min-width: var(--deck-step); }
+  /* Inspect rides under the art, inside the card. */
+  .deck-editor .deck-editor-tile .deck-editor-inline-inspect { left: calc(var(--deck-tile-pad) + 1.4rem + .6rem); right: auto; bottom: .1rem; width: 4.8rem; min-height: 0; text-align: center; }
+  .deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) > .deck-editor-main { padding-bottom: calc(var(--deck-tile-pad) + 1.8rem); }
 }
+/* Narrow phones (320px): the right column would starve the text, so the
+   costs drop to the card's last line beside the stepper and the text takes
+   the full width. */
+@media (max-width: 380px) {
+  .deck-editor .deck-editor-tile > .deck-editor-main {
+    grid-template-columns: 1.4rem 3.6rem minmax(0, 1fr); grid-template-rows: auto auto auto auto;
+    padding-bottom: calc(2 * var(--deck-tile-pad));
+  }
+  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { width: 3.6rem; }
+  .deck-editor .deck-editor-tile .deck-editor-grip { grid-row: 1 / 5; }
+  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { grid-row: 1 / 4; }
+  .deck-editor .deck-editor-tile .deck-editor-costs { grid-column: 2 / 4; grid-row: 4; justify-self: start; align-self: center; min-height: var(--deck-step); }
+  .deck-editor .deck-editor-tile .deck-editor-inline-inspect { width: 3.6rem; }
+  .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-rank { font-size: .78rem; padding: .05rem 0; }
+}
+/* Rank sits on the top of the art as a badge (owner's wireframe, 2026-10-11);
+   a row without art carries it at the end of its name line. Range follows the
+   stance on line 2; the physical or magical mark leads the costs. */
+.deck-editor .deck-editor-main > .deck-editor-rank {
+  grid-column: 2; grid-row: 1; align-self: start; justify-self: stretch; z-index: 2; position: relative;
+  margin: .2rem .1rem 0; padding: .1rem .1rem; border-radius: .3rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
+  background: rgba(18, 32, 74, .9); border: 1px solid #5a7bd6; color: #dfe8ff;
+  font: 700 max(1rem, var(--deck-min-text)) system-ui, sans-serif; letter-spacing: 0; line-height: 1.2;
+}
+.deck-editor .deck-editor-main[data-illustrated="false"] > .deck-editor-rank { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; margin: 0; }
+.deck-editor .deck-editor-heading .deck-editor-range { flex: none; font: 600 max(.9rem, var(--deck-min-text)) system-ui, sans-serif; letter-spacing: .035em; color: #e5c36a; }
+.deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #9fd0ff; }
+.deck-editor .deck-editor-costs .deck-editor-camp[data-camp="physical"] { color: #e3c9a0; }
+.deck-editor .deck-editor-costs .deck-editor-camp .combat-sigil, .deck-editor .deck-editor-costs .deck-editor-camp svg { width: 80%; height: 80%; display: block; }
 /* Desktop: a library tile's name takes line 1 in full, and its type and stance
    wrap onto line 2 (the same shape as on phones), in the text column. */
 @media (min-width: 1001px) {

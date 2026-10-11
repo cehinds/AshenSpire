@@ -5274,24 +5274,17 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "deckEditor.stance.offensive",
+    "id": "deckEditor.stance.attack",
     "extends": "",
-    "short": "Offensive",
-    "full": "Offensive stance card.",
+    "short": "Attack",
+    "full": "Attack stance card.",
     "tip": ""
   },
   {
-    "id": "deckEditor.stance.defensive",
+    "id": "deckEditor.stance.defend",
     "extends": "",
-    "short": "Defensive",
-    "full": "Defensive stance card.",
-    "tip": ""
-  },
-  {
-    "id": "deckEditor.stance.casting",
-    "extends": "",
-    "short": "Casting",
-    "full": "Casting stance card.",
+    "short": "Defend",
+    "full": "Defend stance card.",
     "tip": ""
   },
   {
@@ -5302,6 +5295,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.stance.smash",
+    "extends": "",
+    "short": "Smash",
+    "full": "Smash stance card.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.stance.sweep",
     "extends": "",
     "short": "Sweep",
@@ -5309,10 +5309,94 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "deckEditor.stance.neutral",
+    "id": "deckEditor.stance.ranged",
     "extends": "",
-    "short": "Neutral",
-    "full": "Neutral stance card.",
+    "short": "Ranged",
+    "full": "Ranged stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.spell",
+    "extends": "",
+    "short": "Spell",
+    "full": "Spell card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "Skill card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.power",
+    "extends": "",
+    "short": "Power",
+    "full": "Power card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.consumable",
+    "extends": "",
+    "short": "Consumable",
+    "full": "Consumable card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank",
+    "extends": "",
+    "short": "Rank {rank}",
+    "full": "Card rank {rank}.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.cantrip",
+    "extends": "",
+    "short": "Cantrip",
+    "full": "Rank 0 spell, a cantrip.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.basic",
+    "extends": "",
+    "short": "Basic",
+    "full": "Rank 0 combat maneuver.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.melee",
+    "extends": "",
+    "short": "Melee",
+    "full": "Melee range: reaches the enemy in front.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.reach",
+    "extends": "",
+    "short": "Reach",
+    "full": "Reach range: reaches past the front enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.ranged",
+    "extends": "",
+    "short": "Ranged",
+    "full": "Ranged: reaches any enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.physical",
+    "extends": "",
+    "short": "Physical",
+    "full": "Physical card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.magical",
+    "extends": "",
+    "short": "Magical",
+    "full": "Magical card.",
     "tip": ""
   },
   {

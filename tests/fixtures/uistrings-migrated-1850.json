@@ -1,7 +1,25 @@
 {
   "ids": [
-    "deckEditor.stance.offensive", "deckEditor.stance.defensive", "deckEditor.stance.casting",
-    "deckEditor.stance.counter", "deckEditor.stance.sweep", "deckEditor.stance.neutral", "deckEditor.drawOrder",
-    "deckEditor.stepperCount", "deckEditor.stepperCount.unlimited"
+    "deckEditor.drawOrder",
+    "deckEditor.stepperCount",
+    "deckEditor.stepperCount.unlimited",
+    "deckEditor.stance.attack",
+    "deckEditor.stance.defend",
+    "deckEditor.stance.counter",
+    "deckEditor.stance.smash",
+    "deckEditor.stance.sweep",
+    "deckEditor.stance.ranged",
+    "deckEditor.stance.spell",
+    "deckEditor.stance.skill",
+    "deckEditor.stance.power",
+    "deckEditor.stance.consumable",
+    "deckEditor.rank",
+    "deckEditor.rank.cantrip",
+    "deckEditor.rank.basic",
+    "deckEditor.range.melee",
+    "deckEditor.range.reach",
+    "deckEditor.range.ranged",
+    "deckEditor.camp.physical",
+    "deckEditor.camp.magical"
   ]
 }
