@@ -172,10 +172,9 @@ The player side is at M_e = +1 against this enemy, so the enemy side is at -1.
 Earlier this example gave +1, when momentum added its full value. Under the
 half-value rule it is 0.
 
-### Combos: undecided
+### Combos
 
-Combos are left out of the momentum rules. The resolver does not give
-momentum for them. Open question n lists the examples that need an answer.
+No combos (owner, 2026-10-11). Only slot wins and stance advantage move momentum.
 
 ## Card hints (UI spec)
 
@@ -346,9 +345,9 @@ k. Does momentum decay between rounds? Not answered. Today it has no decay.
 l. At +3 or -3, does a further success do anything extra? Not answered.
 m. Does the speed effect (half of M, truncated, so at most +-1) feel right next
    to base speeds of 1 to 3? Not answered.
-n. Combos: undecided. Examples to decide: a quickstep followed by a shieldBash
-   in the same round, or a listed pair of card ids played back to back. Left
-   out of the momentum rules until the owner answers.
+n. Resolved (2026-10-11): no combos. Only slot wins and stance advantage move
+   momentum. Examples such as a quickstep followed by a shieldBash are not
+   counted.
 o. Does a miss from the evasion stat alone count as a dodge? Current reading:
    no. Only an evade action counts. Flagged.
 p. Resolved (2026-10-11): truncation toward zero.
