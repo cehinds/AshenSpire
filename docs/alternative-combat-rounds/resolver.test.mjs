@@ -586,6 +586,18 @@ test('counter stagger: hyper armor resists the stagger, so no full momentum', ()
   assert.equal(momentum.foe, 1);
 });
 
+test('counter stagger: a counter that only stuns sets no full momentum, so the normal slot win applies', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'counter', slot: 0, speed: 5, kind: 'counter', tags: ['stun'] }],
+    [{ id: 'foe', speed: 4, kind: 'attack' }],
+    1,
+    d20Face(20),
+  );
+  assert.deepEqual(find(events, 'status'), { type: 'status', status: 'stun', target: 'enemy', slot: 0, visible: true, momentum: 0 });
+  assert.equal(events.some((e) => e.reason === 'counterStagger'), false);
+  assert.equal(momentum.foe, 1);
+});
+
 // Momentum adds half its value to speed, truncated toward zero (owner, 2026-10-11).
 // +-1 gives 0, +-2 gives +-1, +-3 gives +-1. (Flagged: "rounded down" read as truncation.)
 test('momentum adds half its value to speed, truncated toward zero', () => {

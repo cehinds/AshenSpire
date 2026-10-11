@@ -391,7 +391,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     }
     // A counter that staggers its target gives its side full momentum (set to +-3).
     const counterWin = pairEvents.find((e) => e.type === 'countered');
-    if (counterWin && pairEvents.some((e) => e.type === 'status' && e.target === other(counterWin.by))) {
+    if (counterWin && pairEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(counterWin.by))) {
       const sign = counterWin.by === 'player' ? 1 : -1;
       fullSet[k] = sign * MOMENTUM_MAX;
       push({ type: 'momentum', enemyId: k, by: counterWin.by, reason: 'counterStagger', set: fullSet[k], slot }, k);
