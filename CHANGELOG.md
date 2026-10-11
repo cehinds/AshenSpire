@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-11
 
-- **Menus and pop-ups no longer reset the screen, and map taps answer faster on phones** ([#1830](https://github.com/cehinds/AshenSpire/pull/1830), `0.7.1.1292`). Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, so a double tap travels, and selecting a node takes about half as long.
+- **Menus and pop-ups no longer reset the screen, and map taps answer faster on phones** ([#1830](https://github.com/cehinds/AshenSpire/pull/1830), `0.7.1.1294`). Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, and pressing a selected node again travels to it, and selecting a node takes about half as long.
 - **AI sessions: work lands in small commits, reviewed as they land** ([#1831](https://github.com/cehinds/AshenSpire/pull/1831), `0.7.1.1281`). Development-process change only, nothing in the game changes. Every agent splits its task into very small steps and pushes one self-contained commit per step, and reviewers check each commit as it arrives instead of waiting for the whole task.
 
 ## 2026-10-10
