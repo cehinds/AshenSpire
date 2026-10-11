@@ -21,8 +21,7 @@ import {
 } from '../src/ui/modalState.js';
 import { whenNoOverlay } from '../src/ui/whenNoOverlay.js';
 
-const root = new URL('../', import.meta.url);
-const read = (path) => readFileSync(fileURLToPath(new URL(path, root)), 'utf8');
+const read = (path) => readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), 'utf8');
 
 test('registerModal pushes an entry and release removes exactly that entry', () => {
   resetModalState();

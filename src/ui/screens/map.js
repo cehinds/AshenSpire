@@ -280,12 +280,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   function nodeComfortablyVisible(revealHeight) {
     const nodeEl = app.querySelector(`.map-node[data-node="${selection.selectedId}"]`);
     if (!nodeEl) return false;
-    const r = nodeEl.getBoundingClientRect();
-    const s = board.scroll.getBoundingClientRect();
+    const nodeBox = nodeEl.getBoundingClientRect();
+    const portBox = board.scroll.getBoundingClientRect();
     const coveredTop = tray.getBoundingClientRect().top - revealHeight;
-    const bottom = Math.min(s.bottom, coveredTop);
-    const m = COMFORT_MARGIN_PX;
-    return r.left >= s.left + m && r.right <= s.right - m && r.top >= s.top + m && r.bottom <= bottom - m;
+    const visibleBottom = Math.min(portBox.bottom, coveredTop);
+    const margin = COMFORT_MARGIN_PX;
+    return nodeBox.left >= portBox.left + margin && nodeBox.right <= portBox.right - margin
+      && nodeBox.top >= portBox.top + margin && nodeBox.bottom <= visibleBottom - margin;
   }
   function openTray() {
     if (tray.dataset.open === 'true') {

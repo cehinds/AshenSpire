@@ -42,11 +42,11 @@ test('openTray calls centerOnNode only when the node is not comfortably visible'
 
 test('nodeComfortablyVisible checks all four sides against the margin', () => {
   const body = fnBody('nodeComfortablyVisible');
-  assert.match(body, /r\.left >= s\.left \+ m/);
-  assert.match(body, /r\.right <= s\.right - m/);
-  assert.match(body, /r\.top >= s\.top \+ m/);
-  assert.match(body, /r\.bottom <= bottom - m/);
-  assert.match(body, /Math\.min\(s\.bottom, coveredTop\)/, 'the visible bottom is clipped to the tray');
+  assert.match(body, /nodeBox\.left >= portBox\.left \+ margin/);
+  assert.match(body, /nodeBox\.right <= portBox\.right - margin/);
+  assert.match(body, /nodeBox\.top >= portBox\.top \+ margin/);
+  assert.match(body, /nodeBox\.bottom <= visibleBottom - margin/);
+  assert.match(body, /Math\.min\(portBox\.bottom, coveredTop\)/, 'the visible bottom is clipped to the tray');
 });
 
 test('closeTray resets the framing only when the tray moved the camera', () => {
