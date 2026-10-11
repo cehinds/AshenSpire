@@ -37,8 +37,8 @@ test('mapboard.js sizeSvg is no longer an unconditional apply(); apply();', () =
   assert.match(body, /scroll\.clientWidth !== cw \|\| scroll\.clientHeight !== ch\) apply\(\);/, 'the second pass runs only when the viewport changed');
 });
 
-test('mapboard.js map nodes turn off explain-on-second-tap', () => {
-  assert.match(boardSrc, /attachTooltip\(el, \(\) => viewer\.tooltip\([^)]*\), \{ secondTap: false \}\)/);
+test('mapboard.js keeps second-tap explanations only for unreachable nodes', () => {
+  assert.match(boardSrc, /attachTooltip\(el, \(\) => viewer\.tooltip\([^)]*\), \{ secondTap: !isReachable \}\)/);
   assert.match(tooltipSrc, /\bsecondTap = true,/);
   assert.match(tooltipSrc, /\} else if \(secondTap && !selectionFirst && !expand\) \{/);
 });

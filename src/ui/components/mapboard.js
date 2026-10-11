@@ -489,10 +489,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const mark = viewer.mark ? viewer.mark(n, { x: px(n), y: py(n), r }) : '';
     el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: px(n), y: py(n), radius: r, reachable: isReachable })}${mark || ''}`);
     if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
-    // secondTap: false — a map node's tap is a SELECTION (the tray answers it),
-    // not an explanation; the explain-on-second-tap layout work ran on every
-    // second tap of a node for nothing. Hover and focus tooltips are unaffected.
-    if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }), { secondTap: false });
+    // A reachable node's tap is a SELECTION (the tray answers it), not an
+    // explanation. Unreachable nodes have no selection handler, so keep their
+    // second-tap explanation available to touch users without hover or focus.
+    if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }), { secondTap: !isReachable });
     g.appendChild(el);
   }
 
