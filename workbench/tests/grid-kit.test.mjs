@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from '../ui/kit/grid-model.mjs';
-import { pasteSummary } from '../ui/kit/grid.mjs';
+import { pasteSummary, pasteNotice } from '../ui/kit/grid.mjs';
 
 const cols = [
   { key: 'id', type: 'string' },
@@ -248,6 +248,50 @@ test('pasteVisible: a bad value in a one-value fill commits nothing and lists ea
   assert.equal(out.change, null);
   assert.deepEqual(out.errors.map(e => e.row), [0, 1, 2]);
   assert.deepEqual(snap(out.rows), snap(d.rows));
+});
+
+test('pasteVisible: a blank copied cell pastes as a clear, so copy-then-paste round-trips', () => {
+  const src = { columns: [{ key: 'a', type: 'number', label: 'a' }, { key: 'b', type: 'number', label: 'b' }], rows: [{ a: 1, b: null }, { a: 2, b: 3 }] };
+  const text = M.copyVisible(src.rows, src.columns, [0, 1], selOf(range(0, 0, 1, 1)));
+  assert.equal(text, '1\t\n2\t3');
+  const target = { columns: src.columns, rows: [{ a: 9, b: 9 }, { a: 9, b: 9 }] };
+  const out = M.pasteVisible(target.rows, target.columns, [0, 1], { r: 0, c: 0 }, text);
+  assert.notEqual(out.change, null, 'the paste applies');
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(snap(out.rows), snap(src.rows), 'the blank cell cleared to null');
+  assertRoundTrip(target, out);
+});
+
+test('pasteVisible: a blank one-value fill clears the selected cells of every type', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 1 }, '', selOf(range(0, 1, 2, 2), range(0, 4, 2, 4)));
+  assert.deepEqual(out.rows.map(r => r.n), [null, null, null, 2], 'number cells clear; row 3 is outside the selection and keeps its value');
+  assert.deepEqual(out.rows.map(r => r.on), [null, null, null, true], 'boolean cells clear');
+  assert.deepEqual(out.rows.map(r => r.data), [null, null, null, 'str'], 'json cells clear');
+  assert.deepEqual(out.errors, []);
+  assertRoundTrip(d, out);
+});
+
+test('pasteVisible: a blank value does not excuse a non-blank bad value in the same paste', () => {
+  const d = fresh();
+  const out = M.pasteVisible(d.rows, d.columns, docOrder(4), { r: 0, c: 0 }, '\t\nx\tnope');
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors, [{ row: 1, key: 'n', value: 'nope', message: 'Enter a valid number' }]);
+  assert.deepEqual(snap(out.rows), snap(d.rows), 'nothing applied');
+});
+
+test('pasteVisible: a hidden active row refuses the paste with a reason instead of landing on row 0', () => {
+  const d = { columns: [{ key: 'a', type: 'number', label: 'a' }], rows: [{ a: 1 }, { a: 2 }, { a: 4 }] };
+  const out = M.pasteVisible(d.rows, d.columns, [1, 2], { r: 0, c: 0 }, '9', selOf(range(0, 0, 0, 0)));
+  assert.equal(out.change, null);
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(out.rows.map(r => r.a), [1, 2, 4], 'a is unchanged');
+  assert.equal(out.reason, 'The active cell is hidden by the filter; select a visible cell and paste again.');
+  assert.equal(out.reason, M.HIDDEN_ANCHOR_REASON);
+  assert.deepEqual(pasteNotice(out), { title: 'Paste not applied', lines: [M.HIDDEN_ANCHOR_REASON], more: 0 }, 'the banner shows the reason');
+  const multi = M.pasteVisible(d.rows, d.columns, [1, 2], { r: 0, c: 0 }, '9\n8');
+  assert.equal(multi.change, null, 'a multi-line paste is refused the same way');
+  assert.equal(multi.reason, M.HIDDEN_ANCHOR_REASON);
 });
 
 test('pasteVisible: columns past the last one are counted as overflow', () => {
