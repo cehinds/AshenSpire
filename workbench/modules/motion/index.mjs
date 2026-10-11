@@ -16,6 +16,7 @@ import {
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
   rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
+  isMissingOnDisk, forgetDeletedFile,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -255,6 +256,7 @@ export default {
     }
     // Each pick takes a generation; a read that a newer pick overtook is dropped, so it cannot install over that pick.
     const selection = selectionGate();
+    /** Resolves 'deleted' when the file is gone from disk (its read was a 404), otherwise nothing. */
     async function openFile(path) {
       const gen = selection.begin();
       // A file with unsaved edits comes back as it was left: its draft, not a second read of the disk.
@@ -262,12 +264,30 @@ export default {
       if (isDirtyFile(held)) { showFile(held, false); return; }
       let r;
       try { r = await ctx.api(`files/read?path=${encodeURIComponent(path)}`); } catch (err) {
+        if (isMissingOnDisk(err)) { forgetDeleted(path); return 'deleted'; }
         if (selection.current(gen)) ctx.toast({ kind: 'error', title: `Could not open ${path}`, detail: err.message, record: false });
         return;
       }
       if (!selection.current(gen)) return;
       const parsed = parsePoseFile(r.text);
       showFile({ path, kind: r.kind, hash: r.hash, original: r.text, project: parsed.project, problems: parsed.problems }, true);
+    }
+    /**
+     * A pose file deleted on disk: its draft, its library entry and, when it was open, the open
+     * file, its history and its stage go (the stage shows nothing). The user is told once.
+     */
+    function forgetDeleted(path) {
+      const next = forgetDeletedFile({ file: st.file, drafts: st.drafts, sets: st.sets, selected: st.selected }, path);
+      st.file = next.file; st.drafts = next.drafts; st.sets = next.sets; st.selected = next.selected;
+      if (next.closed) {
+        st.time = 0;
+        st.playing = false;
+        ctx.history.clear();
+        fileEl.textContent = '';
+        sendLoad();
+      }
+      renderAll();
+      ctx.toast({ kind: 'warn', title: `${path} was deleted on disk`, detail: 'Its edits to that file were dropped.' });
     }
     /**
      * Makes a draft the open file. Dirty drafts of the other files stay; clean ones go. Undo steps
@@ -639,7 +659,9 @@ export default {
         for (const p of changed) st.drafts.delete(p);
         keepConflicts = null;
         conflictList = [];
-        if (changed.includes(path)) await openFile(path); else renderAll();
+        const gone = changed.includes(path) ? await openFile(path) : null;
+        if (gone === 'deleted') return;
+        renderAll();
         ctx.toast({ kind: 'warn', title: 'Reloaded from disk', detail: 'Your edits to the changed files were dropped.', record: false });
         return;
       }
