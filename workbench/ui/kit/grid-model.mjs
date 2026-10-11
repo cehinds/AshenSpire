@@ -347,6 +347,15 @@ export function renameColumn(doc, key, newKey, label = newKey) {
   });
   return result(doc, 'Rename column', { columns, rows });
 }
+/** A column's width in px, at least MIN_COLUMN_WIDTH. A change: undoable like any other. */
+export const MIN_COLUMN_WIDTH = 48;
+export function resizeColumn(doc, key, width) {
+  colByKey(doc, key);
+  if (!Number.isFinite(width)) throw Error('Column width must be a number');
+  const w = Math.max(MIN_COLUMN_WIDTH, Math.round(width));
+  const columns = doc.columns.map(c => (c.key === key ? { ...c, width: w } : c));
+  return result(doc, 'Resize column', { columns, rows: doc.rows });
+}
 export function deleteColumn(doc, key) {
   colByKey(doc, key);
   const columns = doc.columns.filter(c => c.key !== key);
