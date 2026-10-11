@@ -72,8 +72,10 @@ Additional checks: `node --test qa/project.test.mjs` and `node qa/project-smoke.
 
 ## Single-file handoff
 
-Build with `node tools/hud-component-studio/bundle-project.mjs --scene projects/character-creation/scene.json --out /path/to/Character-Creation-Studio.html`. Double-click the output HTML to use this same editor without a server, installation or network. It embeds the scene, PNG assets, scripts, styles and any local CSS font dependencies. Reference overlays are omitted. Export JSON remains the durable editable backup; bundled drafts save only scene changes and reuse the embedded source images to stay within browser storage limits. `--id <name>` sets the stable autosave identity when distributing renamed copies of one project.
+Build with `node tools/hud-component-studio/bundle-project.mjs --scene projects/character-creation/scene.json --out /path/to/Character-Creation-Studio.html`. Double-click the output HTML to use this same editor without a server, installation or network. It embeds the scene, PNG assets, scripts, styles and any local CSS font dependencies. Reference overlays are omitted. Export JSON remains the durable editable backup; bundled drafts save only scene changes and reuse the embedded source images to stay within browser storage limits. The default autosave identity includes a hash of the full project path and scene filename, so caster/noncaster scenes and nested projects remain separate. `--id <name>` sets an explicit stable autosave identity when distributing renamed copies of one project.
 
 Run `node tools/hud-component-studio/qa/bundle-smoke.mjs` to check direct `file://` opening, safe embedded text, mouse editing, persistence, PNG and portable JSON exports with no external requests. Use `HUD_STUDIO_EXECUTABLE` when needed to select a browser that supports local files.
 
 If the test machine blocks local-file browsing, set `HUD_STUDIO_BUNDLE_URL=http://127.0.0.1:8361/standalone.html` to test the same generated HTML through one intercepted HTTP response; the test blocks every external asset/script request.
+
+`node --test tools/hud-component-studio/qa/bundle.test.mjs` checks bundle identity separation and explicit identity stability.
