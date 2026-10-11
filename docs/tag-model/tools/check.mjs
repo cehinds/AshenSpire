@@ -15,6 +15,8 @@
 //     tokens (token, theme, file) unique; presentation components, effects,
 //     animations, symbols, assets id, resolutions tier, breakpoints name,
 //     settings key, strings key and combat-symbols tagKey unique
+//   - css: components cssClasses are selector classes in styles/*.css; a
+//     catalog row lists them exactly when its notes do not say css:unresolved
 //   - duplicates: no presentation table holds two identical rows
 //   - references: tags parent (id), school and related (keys), variables (values
 //     or formulas keys); objects tags, skill, exp, cardType, stance, rarity,
@@ -227,7 +229,7 @@ const COMBAT_STATUS = new Set(['has symbol', 'placeholder', 'missing']);
 
 // name -> key columns (unique together) and the columns the checks read.
 const PRES_SPEC = {
-  components: { key: ['id'], cols: ['id', 'group', 'parent', 'file', 'assetRefs', 'tag', 'liveRef'] },
+  components: { key: ['id'], cols: ['id', 'group', 'parent', 'file', 'assetRefs', 'notes', 'cssClasses', 'tag', 'liveRef'] },
   layouts: { key: null, cols: ['componentId', 'breakpoint', 'band', 'tag', 'liveRef'] },
   styles: { key: null, cols: ['componentId', 'selector', 'property', 'breakpoint', 'band', 'tag', 'liveRef'] },
   tokens: { key: ['token', 'theme', 'file'], cols: ['token', 'theme', 'file', 'tag', 'liveRef'] },
@@ -285,6 +287,30 @@ for (const name of ['layouts', 'styles']) {
   P(name).rows.forEach((r, i) => {
     const c = at(P(name), r, 'componentId');
     if (!compIds.has(c)) fail(`presentation/${name}: row ${i + 2} componentId "${c}" is not a components id`);
+  });
+}
+
+// cssClasses: every listed class is a selector class in styles/*.css; only a
+// catalog row (notes [catalog) lists classes, and it lists none exactly when its
+// notes say css:unresolved.
+const styleClasses = new Set();
+for (const f of readdirSync(join(TM, '..', '..', 'styles')).filter(f => f.endsWith('.css')).sort()) {
+  const css = readFileSync(join(TM, '..', '..', 'styles', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of css.matchAll(/([^{}]+)\{/g)) {
+    const prelude = m[1].trim();
+    if (prelude.startsWith('@')) continue;
+    for (const c of prelude.replace(/\[[^\]]*\]/g, '').matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) styleClasses.add(c[1]);
+  }
+}
+if (presOk.components) {
+  comps.rows.forEach((r, i) => {
+    const id = at(comps, r, 'id');
+    const classes = splitRefs(at(comps, r, 'cssClasses'));
+    for (const c of classes) if (!styleClasses.has(c)) fail(`presentation/components: row ${i + 2} (${id}) cssClasses "${c}" is not a selector class in styles/*.css`);
+    const catalog = /\[catalog\b/.test(at(comps, r, 'notes'));
+    const unresolved = /css:unresolved/.test(at(comps, r, 'notes'));
+    if (!catalog && classes.length) fail(`presentation/components: row ${i + 2} (${id}) lists cssClasses but is not a catalog component`);
+    if (catalog && unresolved !== (classes.length === 0)) fail(`presentation/components: row ${i + 2} (${id}) cssClasses ${classes.length ? 'set' : 'blank'} does not match css:unresolved in notes`);
   });
 }
 
