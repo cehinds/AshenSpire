@@ -131,6 +131,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('hit',380);stage.hold(100);stage.settle({reaction:true});
     assert.equal(stage.currentArt.left,128,'a click-skip ends the knock-back');
     step(16);assert.equal(raf.size,0,'a click-skip ends the hit reaction');
+    stage.play('hit',220);step(30);assert.equal(stage.endReaction(),true,'an unheld reaction can be ended');
+    assert.equal(stage.currentArt.left,128,'ending the reaction returns the body');assert.equal(stage.endReaction(),false);
     stage.seek('sweep',70);assert.equal(stage.pose,'reaver.sweep.contact');assert.equal(raf.size,0);
     assert.equal(stage.el.dataset.effect,'reaver.sweep.effect-1');
     assert.ok(paints.at(-1).args[0].url.endsWith('/effect-1.webp'));

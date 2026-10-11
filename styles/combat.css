@@ -633,9 +633,18 @@
    hit tint and the knock-back itself (alternativeCardStage.js), so its root
    takes no CSS filter, translate, rotation or resize: hurt and stagger
    feedback switch the root's animation off. */
-.player .sprite:is(.hitflash, .wobble) > .alternative-card-stage:first-child,
+.player .sprite.hitflash > .alternative-card-stage:first-child,
 .player .sprite.hitflash.hit-heavy > .alternative-card-stage:first-child {
   animation-name: none;
+}
+/* A stagger (broken Poise/Ward) has no canvas reaction: tint the root in a
+   single step (never interpolating hue-rotate), with no transform. */
+.player .sprite.wobble:not(.hitflash) > .alternative-card-stage:first-child {
+  animation-name: rear-stagger-flash;
+}
+@keyframes rear-stagger-flash {
+  0%, 44.99% { filter: sepia(1) saturate(8) hue-rotate(315deg); }
+  45%, 100% { filter: none; }
 }
 .relic.proc { animation: relicProc 300ms ease-out; }
 @keyframes relicProc {
