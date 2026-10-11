@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1864",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Begin says so when a new run cannot start",
+    "detail": "If the game cannot save your profile when you press Begin or Quick start, a \"This run could not start\" banner now explains why. Before, the press simply did nothing.",
+    "build": "0.7.1.1313",
+    "pullRequest": 1864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1864"
+  },
+  {
     "id": "pr-1860",
     "date": "2026-10-11",
     "group": "2026-10-11",
