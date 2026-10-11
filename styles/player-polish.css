@@ -387,7 +387,13 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 
 :root .combat[data-layout='formation'] > .hand-area { margin:0; padding:0; }
 :root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent calc(var(--scene-paint-bottom, 100%) - 16%),#17130f var(--scene-paint-bottom, 100%)); }
-:root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 2px 2px #100b08a0); }
+/* Figures carry a dark outline (a tight edge plus a wider halo) so they stand
+   off the backdrop; the bottom drop keeps the feet grounded. */
+:root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 0 2px #0a0806) drop-shadow(0 0 6px #0a080699) drop-shadow(0 2px 2px #100b08a0); }
+/* Small widgets only: intent badges, the player glyph and HP plates. The
+   combatant stack itself takes no filter (a large box repaints every frame). */
+:root .combat[data-layout='formation'] .combatant :is(.intent,.combatant-card > .meters,.combatant-mini-hud),
+:root .combat[data-layout='formation'] .player-action-intent { filter:drop-shadow(0 0 2px #0a0806) drop-shadow(0 0 5px #0a080699); }
 /* The turn ribbon sits flush under the HUD band on every layout: the stage
    (components/battlefieldStage.js) sets --turn-ribbon-top to the band's
    overhang into the field, and fits every figure and intent that shares the
