@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { safeBranchDir, readBranchPreviews, publishBranchPreviews, branchPreviewSection, rootIndex, previewWrapperHtml, PREVIEW_SCRIPT, PREVIEW_SANDBOX } from '../tools/pages-site.mjs';
 
 function scratch(t) {
@@ -21,12 +23,31 @@ function stage(dir, branch, body = '<!doctype html><title>preview</title>') {
   return { branch, dir: safe, pr: 7, sha: 'a1b2c3d4e5f6a7b8c9d0a1b2c3d4e5f6a7b8c9d0' };
 }
 
-test('a branch keeps its slash and any other character becomes a dash', () => {
+test('a normal branch name is its own site path', () => {
   assert.equal(safeBranchDir('chore/CdCiPipelines'), 'chore/CdCiPipelines');
-  assert.equal(safeBranchDir('feature/m1 combat+slice'), 'feature/m1-combat-slice');
-  assert.throws(() => safeBranchDir('feature/../etc'), /no safe site path/);
-  assert.throws(() => safeBranchDir('feature//x'), /no safe site path/);
-  assert.throws(() => safeBranchDir('/feature/x'), /no safe site path/);
+  assert.equal(safeBranchDir('feature/m1-combat_slice.2'), 'feature/m1-combat_slice.2');
+});
+
+test('a branch name that is not a plain path is refused, never rewritten', () => {
+  assert.throws(() => safeBranchDir('feature/m1 combat+slice'), /cannot be published/);
+  assert.throws(() => safeBranchDir('fix/🎮emoji'), /cannot be published/);
+  assert.throws(() => safeBranchDir('feature/../etc'), /cannot be published/);
+  assert.throws(() => safeBranchDir('feature/./x'), /cannot be published/);
+  assert.throws(() => safeBranchDir('feature//x'), /cannot be published/);
+  assert.throws(() => safeBranchDir('/feature/x'), /cannot be published/);
+  assert.throws(() => safeBranchDir('feature/x/'), /cannot be published/);
+});
+
+test('the --branch-dir mode prints the name it accepts and refuses the rest, on stdout only', () => {
+  const tool = fileURLToPath(new URL('../tools/pages-site.mjs', import.meta.url));
+  const run = (name) => spawnSync(process.execPath, [tool, '--branch-dir', name], { encoding: 'utf8', input: '' });
+  const ok = run('feature/m1-combat');
+  assert.equal(ok.status, 0);
+  assert.equal(ok.stdout, 'feature/m1-combat\n');
+  const bad = run('fix/🎮emoji');
+  assert.equal(bad.status, 1);
+  assert.equal(bad.stdout, '');
+  assert.match(bad.stderr, /cannot be published/);
 });
 
 test('the manifest is read, and an entry that cannot be served is skipped and named', (t) => {
@@ -46,13 +67,17 @@ test('the manifest is read, and an entry that cannot be served is skipped and na
   assert.match(skipped[1].reason, /not the branch's site path/);
 });
 
-test('two branches that sanitise to one site path are both withheld, and both are named', (t) => {
+test('a branch name that is not a plain path is withheld with its PR named, and no folder is read for it', (t) => {
   const dir = scratch(t);
-  const plus = stage(dir, 'feature/a+b');
-  const dash = { ...stage(dir, 'feature/a-b'), pr: 8 };
-  const plusPr = { ...plus, pr: 7 };
   const good = stage(dir, 'feature/good');
-  writeFileSync(join(dir, 'previews.json'), JSON.stringify({ previews: [plusPr, dash, good] }));
+  // The workflow never downloads for such a branch; a folder under its sanitised name would be ignored.
+  mkdirSync(join(dir, 'feature', 'a-b'), { recursive: true });
+  writeFileSync(join(dir, 'feature', 'a-b', 'AshenSpire-dev-preview.html'), '<!doctype html>');
+  writeFileSync(join(dir, 'previews.json'), JSON.stringify({ previews: [
+    good,
+    { branch: 'feature/a+b', dir: 'feature/a-b', pr: 7, sha: 'a1b2c3d4' },
+    { branch: 'fix/🎮emoji', dir: 'fix/-emoji', pr: 8, sha: 'a1b2c3d4' },
+  ] }));
   const skipped = [];
   const warnings = [];
   const warn = console.warn;
@@ -61,13 +86,11 @@ test('two branches that sanitise to one site path are both withheld, and both ar
   try { served = readBranchPreviews(dir, skipped); } finally { console.warn = warn; }
   assert.deepEqual(served.map((p) => p.path), ['feature/good']);
   assert.equal(skipped.length, 2);
-  assert.ok(skipped.some((s) => s.branch === 'feature/a+b' && /PR #7/.test(s.reason)));
-  assert.ok(skipped.some((s) => s.branch === 'feature/a-b' && /PR #8/.test(s.reason)));
-  assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /feature\/a\+b/);
-  assert.match(warnings[0], /feature\/a-b/);
-  assert.match(warnings[0], /PR #7/);
-  assert.match(warnings[0], /PR #8/);
+  assert.ok(skipped.some((s) => s.branch === 'feature/a+b' && /cannot be published/.test(s.reason)));
+  assert.ok(skipped.some((s) => s.branch === 'fix/🎮emoji' && /cannot be published/.test(s.reason)));
+  assert.equal(warnings.length, 2);
+  assert.match(warnings[0], /PR #7 \(feature\/a\+b\)/);
+  assert.match(warnings[1], /PR #8 \(fix\/🎮emoji\)/);
 });
 
 test('no manifest means no previews', (t) => {

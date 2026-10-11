@@ -387,25 +387,15 @@ jobs:
           rm -rf "$out"; mkdir -p "$out"; : > "$entries"
           prs=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
             | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo) | select(.head.ref | test("^(feature|fix|chore)/")) | [.number, .head.ref, .head.sha] | @tsv')
-          # SANITISING IS NOT INJECTIVE: feature/a+b and feature/a-b both become
-          # feature/a-b, so they would download into one folder. Find every such
-          # collision BEFORE any download; both branches of a collision are withheld.
-          declare -A first_ref=() first_pr=() collided=()
+          # THE BRANCH NAME IS THE SITE PATH, unchanged. A name that cannot be one is
+          # refused by the same check the generator runs (--branch-dir), named with its
+          # PR, and skipped before any download. Nothing is sanitised, so nothing collides.
           while IFS=$'\t' read -r pr ref sha; do
             [ -n "$pr" ] || continue
-            s=$(printf '%s' "$ref" | sed 's#[^A-Za-z0-9._/-]#-#g')
-            if [ -z "${first_ref[$s]:-}" ]; then
-              first_ref[$s]=$ref; first_pr[$s]=$pr
-            elif [ "${first_ref[$s]}" != "$ref" ]; then
-              collided[$s]=1
-              echo "::warning title=Branch path collision::PR #${first_pr[$s]} (${first_ref[$s]}) and PR #$pr ($ref) both sanitise to \`$s\`; neither is published."
+            if ! safe=$(node tools/pages-site.mjs --branch-dir "$ref"); then
+              echo "::warning title=Branch not published::PR #$pr ($ref) is skipped: its branch name cannot be a site path (A-Z a-z 0-9 . _ / - only; no empty, \".\" or \"..\" segment)."
+              continue
             fi
-          done <<< "$prs"
-          while IFS=$'\t' read -r pr ref sha; do
-            [ -n "$pr" ] || continue
-            # The same sanitising as tools/pages-site.mjs safeBranchDir, which re-checks it.
-            safe=$(printf '%s' "$ref" | sed 's#[^A-Za-z0-9._/-]#-#g')
-            if [ -n "${collided[$safe]:-}" ]; then continue; fi
             run=$(gh api -X GET "repos/$REPO/actions/workflows/dev-preview.yml/runs" -f event=pull_request -f branch="$ref" -f per_page=30 \
               | jq -r --arg sha "$sha" '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")][0].id // empty')
             if [ -z "$run" ]; then
