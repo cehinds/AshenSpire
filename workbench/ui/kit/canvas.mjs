@@ -185,9 +185,11 @@ export function createCanvas(el, opts = {}) {
     return { x: (e.clientX - r.left) / state.zoom, y: (e.clientY - r.top) / state.zoom };
   };
 
-  function setSelection(ids) {
+  // `from` is the selection the change starts from (a marquee drag passes its pre-drag snapshot,
+  // since its live selection is already in state.selection); onSelect fires only when it differs.
+  function setSelection(ids, from = state.selection) {
     const next = uniq(ids.filter((id) => M.byId(state.doc, id)));
-    const changed = !sameDoc(next, state.selection);
+    const changed = M.selectionChanged(from, next);
     state.selection = next;
     if (changed) onSelect(next.slice());
     emit();
@@ -282,7 +284,7 @@ export function createCanvas(el, opts = {}) {
     };
     track(onMove, () => {
       state.marquee = null;
-      setSelection(state.selection);
+      setSelection(state.selection, base);
     });
   }
 

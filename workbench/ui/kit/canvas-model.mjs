@@ -238,6 +238,11 @@ export function hitTest(doc, point, { scope = null, includeLocked = true } = {})
  * mode 'intersect' (default) selects any overlap; 'contain' only full containment.
  * Hidden items are skipped; locked items are selected.
  */
+/** True when a selection change from `before` to `after` is a real change (both arrays of ids, in order). */
+export function selectionChanged(before, after) {
+  return JSON.stringify(before ?? []) !== JSON.stringify(after ?? []);
+}
+
 export function marqueeHit(doc, rect, { mode = 'intersect', scope = null } = {}) {
   const x0 = Math.min(rect.x, rect.x + rect.w), x1 = Math.max(rect.x, rect.x + rect.w);
   const y0 = Math.min(rect.y, rect.y + rect.h), y1 = Math.max(rect.y, rect.y + rect.h);

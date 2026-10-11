@@ -244,6 +244,19 @@ test('JSON import checks values against the column types and changes nothing on 
   assertRoundTrip(d, ok);
 });
 
+test('resize a column: one undoable change, clamped to the minimum width', () => {
+  const d = fresh();
+  const out = M.resizeColumn(d, 'n', 200.4);
+  assert.equal(out.columns.find(c => c.key === 'n').width, 200);
+  assert.equal(out.columns.find(c => c.key === 'id').width, undefined, 'other columns are untouched');
+  assert.equal(out.rows, d.rows, 'rows are shared, not copied');
+  assert.equal(out.change.label, 'Resize column');
+  assertRoundTrip(d, out);
+  assert.equal(M.resizeColumn(d, 'n', 3).columns.find(c => c.key === 'n').width, M.MIN_COLUMN_WIDTH, 'clamped');
+  assert.throws(() => M.resizeColumn(d, 'nope', 100), /No column "nope"/);
+  assert.throws(() => M.resizeColumn(d, 'n', NaN), /must be a number/);
+});
+
 test('export to CSV, TSV and JSON', () => {
   const d = fresh();
   assert.equal(M.toCSV(d).split('\n')[0], 'id,n,on,tag,data');
