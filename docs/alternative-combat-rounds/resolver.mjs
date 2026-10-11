@@ -100,6 +100,8 @@ function normalizeSide(name, s) {
     stance: s.stance ?? null,
     damage: Number(s.damage ?? 0),
     block: Number(s.block ?? 0),
+    // Charges for the 'intangible' tag (DESIGN.md, Evasion). Never negative.
+    intangibleCharges: Math.max(0, Math.trunc(Number(s.intangibleCharges ?? 0)) || 0),
   };
 }
 
@@ -142,14 +144,20 @@ export function resolvePair(playerIn, enemyIn, rng) {
     // A full block (Block >= damage, damage > 0) absorbs a hit that rolled true.
     // The blocking side wins the slot, and the attack does not land.
     const blocked = hit && attacker.damage > 0 && target.block >= attacker.damage;
-    events.push({ type: 'hit', by: who, target: other(who), d20, hit, need, blocked });
+    // 'intangible': a holder with a charge left avoids a hit that would land.
+    // Only a hit that would land spends a charge (DESIGN.md, Evasion).
+    const avoided = hit && !blocked && target.tags.includes('intangible') && target.intangibleCharges > 0;
+    events.push({ type: 'hit', by: who, target: other(who), d20, hit, need, blocked, avoided });
     if (blocked) {
       events.push({ type: 'absorbed', by: other(who), target: who });
+    } else if (avoided) {
+      target.intangibleCharges -= 1;
+      events.push({ type: 'evaded', by: other(who), target: who, reason: 'intangible', charges: target.intangibleCharges });
     } else if (!hit && target.stance === 'evade') {
       // A miss against an evade action is a dodge: the defender wins the slot.
       events.push({ type: 'evaded', by: other(who), target: who });
     }
-    return hit && !blocked;
+    return hit && !blocked && !avoided;
   };
 
   if (tie) {
@@ -341,7 +349,7 @@ export function cardHint(card, enemyAction, ctx = {}) {
 // The side that wins the slot with this event, or null. A landed hit or a
 // counter that fires is a success (DESIGN.md, Momentum).
 function successSide(e) {
-  if (e.type === 'hit' && e.hit === true && !e.blocked) return e.by;
+  if (e.type === 'hit' && e.hit === true && !e.blocked && !e.avoided) return e.by;
   if (e.type === 'countered' || e.type === 'absorbed' || e.type === 'evaded') return e.by;
   return null;
 }

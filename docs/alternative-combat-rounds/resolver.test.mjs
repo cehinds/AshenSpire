@@ -786,3 +786,46 @@ test('STANCE_GROUPS covers every stance in stance-advantage.csv', () => {
   }
   for (const stance of stances) assert.ok(Object.hasOwn(STANCE_GROUPS, stance), `no group for ${stance}`);
 });
+
+// Evasion, part 1: the 'intangible' tag (DESIGN.md, Evasion). A holder with a
+// charge left avoids a hit that would land, outright.
+const GHOST = (charges) => ({ id: 'ghost', speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: charges });
+const STRIKE = { id: 'strike', slot: 0, speed: 4, kind: 'attack' };
+
+test('intangible: a charge is spent to avoid a hit that would land, and the attack is avoided', () => {
+  const { events, momentum } = resolveRound([STRIKE], [GHOST(2)], 1, d20Face(20));
+  assert.equal(find(events, 'hit').avoided, true);
+  assert.deepEqual(find(events, 'evaded'), {
+    type: 'evaded', by: 'enemy', target: 'player', reason: 'intangible', charges: 1, slot: 0, visible: true, momentum: 0,
+  });
+  assert.equal(events.some((e) => e.type === 'interrupted'), false, 'an avoided hit does not interrupt');
+  assert.equal(momentum.ghost, -1, 'the avoid is a defensive success, so M moves toward the enemy');
+});
+
+test('intangible: with 0 charges, or without the tag, the hit lands as before', () => {
+  const none = resolveRound([STRIKE], [GHOST(0)], 1, d20Face(20));
+  assert.equal(none.events.some((e) => e.type === 'evaded'), false);
+  assert.equal(find(none.events, 'hit').avoided, false);
+  assert.ok(find(none.events, 'interrupted'), 'the landed hit still interrupts');
+
+  const untagged = resolveRound([STRIKE], [{ id: 'ghost', speed: 1, kind: 'other', intangibleCharges: 2 }], 1, d20Face(20));
+  assert.equal(untagged.events.some((e) => e.type === 'evaded'), false);
+  assert.equal(find(untagged.events, 'hit').avoided, false);
+});
+
+test('intangible: a miss spends no charge', () => {
+  const { events } = resolveRound([STRIKE], [GHOST(2)], 1, d20Face(1));
+  assert.equal(events.some((e) => e.type === 'evaded'), false);
+  assert.equal(find(events, 'hit').avoided, false);
+});
+
+test('intangible: a full block takes precedence, so no charge is spent', () => {
+  const { events } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack', damage: 2 }],
+    [{ id: 'ghost', speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 2, block: 2 }],
+    1,
+    d20Face(20),
+  );
+  assert.ok(find(events, 'absorbed'));
+  assert.equal(events.some((e) => e.type === 'evaded'), false);
+});
