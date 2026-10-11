@@ -240,6 +240,8 @@ test('resolveRound: a second card on a taken slot is rejected and moves nothing'
 });
 
 test('owner trace, per enemy and round end: 0/0, +1/-1, 0/0, -1/+1', () => {
+  // This trace predates momentum decay, so rounds 2 and 3 pass decay: 0. With the
+  // default decay, round 2 would start at 0, not +1 (see the decay tests below).
   // All three rounds face the same enemy, 'foe' (enemyId), so M_foe carries over.
   const foe = (id, speed, kind) => ({ id, enemyId: 'foe', speed, kind });
   // Round 1 (M = 0): player Strike at 4 hits first over enemy strike at 3.
@@ -250,7 +252,7 @@ test('owner trace, per enemy and round end: 0/0, +1/-1, 0/0, -1/+1', () => {
     [foe('counter', 5, 'counter')],
     1,
     d20Face(20),
-    { momentum: step1.momentum },
+    { momentum: step1.momentum, decay: 0 },
   );
   // Round 3 (M = 0): enemy strike at 4 hits first over player strike at 3.
   const step3 = resolveRound(
@@ -258,7 +260,7 @@ test('owner trace, per enemy and round end: 0/0, +1/-1, 0/0, -1/+1', () => {
     [foe('enemyStrike', 4, 'attack')],
     1,
     d20Face(20),
-    { momentum: step2.momentum },
+    { momentum: step2.momentum, decay: 0 },
   );
 
   const values = [0, step1.momentum.foe, step2.momentum.foe, step3.momentum.foe].map((m) => ({ player: m, enemy: 0 - m }));
@@ -301,7 +303,7 @@ test('zero-sum: player value + enemy value is always 0, and round deltas add up 
       { id: 'y', enemyId: 'y', speed: 3, kind: 'counter' },
       { id: 'z', enemyId: 'z', speed: 1, kind: 'attack' },
     ];
-    const out = resolveRound(playerCards, queue, 3, rng, { momentum: map });
+    const out = resolveRound(playerCards, queue, 3, rng, { momentum: map, decay: 0 });
     for (const k of ['x', 'y', 'z']) {
       const moves = out.events.filter((e) => e.type === 'momentum' && e.enemyId === k);
       for (const mv of moves) {
@@ -321,7 +323,7 @@ test('clamp: from +3 a player success stays at +3, and an enemy success goes to 
     [{ id: 'e', speed: 1, kind: 'other' }],
     1,
     d20Face(20),
-    { momentum: { e: 3 } },
+    { momentum: { e: 3 }, decay: 0 },
   );
   assert.equal(up.momentum.e, 3);
   assert.equal(find(up.events, 'momentum').delta, 1, 'the raw success is still +1; the clamp is at round end');
@@ -331,7 +333,7 @@ test('clamp: from +3 a player success stays at +3, and an enemy success goes to 
     [{ id: 'enemyStrike', speed: 9, kind: 'attack' }],
     1,
     d20Face(20),
-    { momentum: { enemyStrike: 3 } },
+    { momentum: { enemyStrike: 3 }, decay: 0 },
   );
   assert.equal(find(down.events, 'hit').by, 'enemy');
   assert.equal(down.momentum.enemyStrike, 2);
@@ -417,7 +419,7 @@ test('clamp after netting: a tie that lands on both sides at +3 stays at +3', ()
     [{ id: 'e', speed: 3, kind: 'attack' }],
     1,
     d20Face(20),
-    { momentum: { e: 3 } },
+    { momentum: { e: 3 }, decay: 0 },
   );
   assert.equal(momentum.e, 3);
 });
@@ -431,7 +433,7 @@ test('clamp after netting: the mirrored tie at -3 stays at -3', () => {
     [{ id: 'e', speed: 1, kind: 'attack' }],
     1,
     d20Face(20),
-    { momentum: { e: -3 } },
+    { momentum: { e: -3 }, decay: 0 },
   );
   assert.equal(momentum.e, -3);
 });
@@ -580,7 +582,7 @@ test('counter stagger: from M_e -2, the player counter adds 3 on top of the slot
     [{ id: 'foe', speed: 3, kind: 'attack', stance: 'attack' }],
     1,
     d20Face(20),
-    { stanceAdvantage: stanceTable(), momentum: { foe: -2 } },
+    { stanceAdvantage: stanceTable(), momentum: { foe: -2 }, decay: 0 },
   );
   assert.equal(find(events, 'countered').by, 'player');
   assert.equal(find(events, 'status').target, 'enemy');
@@ -600,7 +602,7 @@ test('counter stagger adds to M_e rather than setting it: from -3 the player cou
     [{ id: 'foe', speed: 3, kind: 'attack' }],
     1,
     d20Face(20),
-    { momentum: { foe: -3 } },
+    { momentum: { foe: -3 }, decay: 0 },
   );
   assert.equal(momentum.foe, 1);
 });
@@ -613,7 +615,7 @@ test('counter stagger: when the enemy counter staggers the player, it adds -3 on
     [{ id: 'foe', speed: 6, kind: 'counter', stance: 'counter', tags: ['stagger'] }],
     1,
     d20Face(20),
-    { momentum: { foe: 2 } },
+    { momentum: { foe: 2 }, decay: 0 },
   );
   assert.equal(find(events, 'countered').by, 'enemy');
   assert.equal(events.find((e) => e.reason === 'counterStagger').delta, -3);
@@ -697,9 +699,91 @@ test('momentum +2 adds +1 to the player pairing speed in resolveRound', () => {
     [{ id: 'foe', speed: 4, kind: 'other' }],
     1,
     d20Face(1),
-    { momentum: { foe: 2 } },
+    { momentum: { foe: 2 }, decay: 0 },
   );
   assert.deepEqual(find(events, 'order').speeds, { player: 5, enemy: 3 });
+});
+
+// Momentum decay (owner, 2026-10-11; DESIGN.md, Timing). Before any pairing,
+// each enemy's starting M_e moves 1 toward 0. options.decay sets the step (0 off).
+test('decay: from +2 with no successes, M_e moves to +1 at round end, and the change is an event', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'guard', slot: 0, speed: 1, kind: 'other' }],
+    [{ id: 'e', speed: 1, kind: 'other' }],
+    1,
+    d20Face(20),
+    { momentum: { e: 2 } },
+  );
+  assert.equal(momentum.e, 1);
+  assert.equal(events.some((e) => e.type === 'momentum' && e.reason === 'success'), false, 'no successes');
+  assert.deepEqual(events.filter((e) => e.reason === 'decay'), [{ type: 'momentum', reason: 'decay', enemyId: 'e', from: 2, to: 1 }]);
+});
+
+test('decay: from -1 with no successes, M_e moves to 0', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'guard', slot: 0, speed: 1, kind: 'other' }],
+    [{ id: 'e', speed: 1, kind: 'other' }],
+    1,
+    d20Face(20),
+    { momentum: { e: -1 } },
+  );
+  assert.equal(momentum.e, 0);
+  assert.deepEqual(events.filter((e) => e.reason === 'decay'), [{ type: 'momentum', reason: 'decay', enemyId: 'e', from: -1, to: 0 }]);
+});
+
+test('decay: a step larger than |M_e| stops at 0 and does not overshoot', () => {
+  const up = resolveRound([], [{ id: 'e', speed: 1, kind: 'other' }], 0, d20Face(20), { momentum: { e: 1 }, decay: 2 });
+  const down = resolveRound([], [{ id: 'e', speed: 1, kind: 'other' }], 0, d20Face(20), { momentum: { e: -1 }, decay: 2 });
+  assert.equal(up.momentum.e, 0);
+  assert.equal(down.momentum.e, 0);
+});
+
+test('decay: options.decay 0 turns decay off (M_e stays +2), and the default step is 1', () => {
+  const queue = [{ id: 'e', speed: 1, kind: 'other' }];
+  const off = resolveRound([], queue, 0, d20Face(20), { momentum: { e: 2 }, decay: 0 });
+  assert.equal(off.momentum.e, 2);
+  assert.equal(off.events.some((e) => e.reason === 'decay'), false);
+  const on = resolveRound([], queue, 0, d20Face(20), { momentum: { e: 2 } });
+  assert.equal(on.momentum.e, 1);
+});
+
+test('decay: an enemy in options.momentum but not in the queue also decays', () => {
+  const { events, momentum } = resolveRound([], [], 0, d20Face(20), { momentum: { ghost: -2 } });
+  assert.equal(momentum.ghost, -1);
+  assert.deepEqual(events.find((e) => e.reason === 'decay'), { type: 'momentum', reason: 'decay', enemyId: 'ghost', from: -2, to: -1 });
+});
+
+test('decay: pairings use the decayed start, so +2 decays to +1 and gives no speed shift', () => {
+  const { events } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'foe', speed: 4, kind: 'other' }],
+    1,
+    d20Face(20),
+    { momentum: { foe: 2 } },
+  );
+  // Undecayed +2 would give player 5, enemy 3. Decayed +1 gives 4 and 4, a tie.
+  assert.deepEqual(find(events, 'order').speeds, { player: 4, enemy: 4 });
+  assert.equal(find(events, 'order').simultaneous, true);
+  assert.equal(find(events, 'hit').momentum, 1, 'the pair carries the decayed start');
+});
+
+test('decay: the round result is clamp(decayed start + summed deltas)', () => {
+  // +2 decays to +1 before pairing. The player's success adds +1: 1 + 1 = 2.
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'e', speed: 1, kind: 'other' }],
+    1,
+    d20Face(20),
+    { momentum: { e: 2 } },
+  );
+  assert.equal(momentum.e, 2);
+  assert.deepEqual(find(events, 'momentumApplied'), { type: 'momentumApplied', enemyId: 'e', from: 1, delta: 1, to: 2, momentum: 2 });
+});
+
+test('decay: options.decay must be a finite number of 0 or more', () => {
+  for (const bad of [-1, NaN, 'x', Infinity]) {
+    assert.throws(() => resolveRound([], [], 0, d20Face(20), { decay: bad }), TypeError, `decay ${String(bad)}`);
+  }
 });
 
 // Card hints (DESIGN.md, Card hints). Speed ids: one=1, two=2, three=3.
@@ -1414,7 +1498,7 @@ test('cardHint speedDelta sign matches who acts first in resolvePair and resolve
   const card = { id: 'c', speed: 1, kind: 'other' };
   const foe = { id: 'x', speed: 2, kind: 'other', stance: 'attack' };
   const hint = cardHint(card, foe, hintCtx({ momentum: 2 }));
-  const { events } = resolveRound([{ ...card, slot: 0, kind: 'other' }], [foe], 1, rng, { momentum: { x: 2 } });
+  const { events } = resolveRound([{ ...card, slot: 0, kind: 'other' }], [foe], 1, rng, { momentum: { x: 2 }, decay: 0 });
   assert.equal(sign(hint.speedDelta), 1);
   assert.equal(find(events, 'order').first, 'player');
 });

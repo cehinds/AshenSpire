@@ -526,12 +526,16 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // perception:  number of queued actions visible to the player. It only tags
 //              events with `visible`. Thresholds are open (DESIGN.md, Open q. e).
 // options.momentum: { [enemyId]: M_e } at the start of the round (default 0 each).
+//   Decays before pairing (see options.decay below).
+// options.decay: momentum decay step per round (default 1, 0 turns it off).
 // options.evadeBonuses: scoped evade bonuses, filtered here by scope, round,
 //   combatId and appliesTo (see inputBonuses below). Default none.
 //
 // Returns { events, momentum }, where `momentum` is { [enemyId]: M_e } after the
 // round. Momentum updates at round end (DESIGN.md, Momentum):
-// - Every pairing in the round uses the round's starting M_e.
+// - Before any pairing, each enemy's M_e moves 1 toward 0 (options.decay, default 1,
+//   0 turns it off). A 'momentum' event with reason 'decay' marks each change.
+// - Every pairing in the round uses the round's decayed starting M_e.
 // - Each slot win moves M_e toward the winner by the card's momentumGain
 //   (default 1), plus the stance bonus. A side wins a slot at most once per
 //   pairing. A counter that staggers adds +-3 on top of its slot win. The
@@ -568,12 +572,30 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     throw new TypeError('options.momentum must be an object keyed by enemy id');
   }
 
-  // Starting M_e for each enemy in the queue. Every pairing uses these values.
-  // Internal maps are null-prototype, so no enemy id can read an inherited member.
+  // Momentum decay (owner, 2026-10-11; DESIGN.md, Timing): before any pairing,
+  // each enemy's M_e moves `decayStep` toward 0 (never past it). 0 turns it off.
+  const decayStep = options.decay === undefined ? 1 : Number(options.decay);
+  if (!Number.isFinite(decayStep) || decayStep < 0) {
+    throw new TypeError('options.decay must be a finite number of 0 or more');
+  }
+  const events = [];
+  const decayed = (k) => {
+    const from = clampMomentum(Object.hasOwn(inputM, k) ? inputM[k] : 0);
+    const to = from > 0 ? Math.max(0, from - decayStep) : Math.min(0, from + decayStep);
+    if (to !== from) events.push({ type: 'momentum', reason: 'decay', enemyId: k, from, to });
+    return to;
+  };
+
+  // Starting M_e (after decay) for each enemy in the queue, and for each enemy
+  // only in options.momentum. Every pairing uses these values. Internal maps are
+  // null-prototype, so no enemy id can read an inherited member.
   const start = Object.create(null);
   for (const enemy of enemyQueue) {
     const k = enemyKey(enemy);
-    if (!Object.hasOwn(start, k)) start[k] = clampMomentum(Object.hasOwn(inputM, k) ? inputM[k] : 0);
+    if (!Object.hasOwn(start, k)) start[k] = decayed(k);
+  }
+  for (const k of Object.keys(inputM)) {
+    if (!Object.hasOwn(start, k)) start[k] = decayed(k);
   }
 
   // Intangible charge pools for the round (DESIGN.md, Evasion): one for the
@@ -609,7 +631,6 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   }
 
   const pending = Object.create(null); // summed raw deltas per enemy, applied at round end
-  const events = [];
   const paired = new Set();
   const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
 
@@ -681,9 +702,6 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     if (to !== from) {
       events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to, momentum: to });
     }
-  }
-  for (const k of Object.keys(inputM)) {
-    if (!Object.hasOwn(momentum, k)) setOwn(momentum, k, clampMomentum(inputM[k]));
   }
 
   // Returned maps are plain objects, filled by own-property writes only.

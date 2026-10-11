@@ -144,11 +144,18 @@ at M_e = 0.
 - The rest of the table is filled in with bonus 1 where the advantage looks
   obvious. Every such row is marked TBD.
 
-### Timing: round end
+### Timing: round start and round end
 
-- Every pairing in a round uses the round's starting M_e.
-- Each enemy's deltas for the round are summed. The total is applied once at
-  round end, then clamped once to -3..+3.
+- Decay (owner, 2026-10-11): before any pairing, each enemy's M_e moves 1
+  toward 0. Zero stays zero, and a value never moves past 0. The resolver's
+  `options.decay` sets the step (default 1; 0 disables it). Enemies present only
+  in the momentum input also decay. A change emits
+  `{type: 'momentum', reason: 'decay', enemyId, from, to}`.
+  - Example: +2 with no successes gives +1 at round end. -1 gives 0.
+- Every pairing in a round uses the round's decayed starting M_e. Pairing speed
+  uses that value too.
+- Each enemy's deltas for the round are summed. The result is the decayed start
+  plus that sum, clamped once to -3..+3.
   - Example: a tie that lands on both sides at +3 nets +1 - 1 = 0, so M_e
     stays at +3. The per-side shift-then-clamp reading gave +2 and was
     rejected (Codex finding 1).
@@ -166,6 +173,9 @@ attack and the enemy's counter are the actions in each round.
 | 3     | 0            | Enemy succeeds again                        | -1         | -1     | +1    |
 
 In round 2 the half-value rule adds trunc(+1 / 2) = 0 to either side's speed.
+
+The trace above predates decay, so it is shown with decay off (`decay: 0`).
+With the default decay, round 2 would start at 0, not +1.
 
 ### Worked speed example
 
@@ -334,7 +344,7 @@ a. Resolved (2026-10-11). The example reads dagger +2, heavy armor -3, Strike
    1, momentum +1. Under the half-value speed rule, momentum adds 0, so the
    total is 0. The earlier "+4" reading is withdrawn.
 b. Resolved (2026-10-11). Momentum is applied per slot, with a round-end
-   total per enemy. Decay is open (k).
+   total per enemy. Decay is resolved (k).
 c. Resolved (2026-10-11): one player card per enemy action. A second card is
    rejected.
 d. What happens to an unpaired enemy action?
@@ -351,7 +361,8 @@ h. Resolved (2026-10-11). A whiff hands nothing to the other side, unless it
 i. Resolved (2026-10-11). Momentum updates at round end, once per enemy.
 j. Resolved (2026-10-11). Momentum is per enemy: M_e between the player and
    each enemy.
-k. Does momentum decay between rounds? Not answered. Today it has no decay.
+k. Resolved (owner, 2026-10-11). Momentum decays 1 toward 0 each round, before
+   pairings (see Timing). `options.decay` 0 turns it off.
 l. At +3 or -3, does a further success do anything extra? Not answered.
 m. Does the speed effect (half of M, truncated, so at most +-1) feel right next
    to base speeds of 1 to 3? Not answered.
