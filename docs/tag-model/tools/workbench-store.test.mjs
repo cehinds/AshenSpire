@@ -319,6 +319,20 @@ test('invalid_argument on save makes the table read-only: not dirty, and incomin
   await waitFor(() => JSON.stringify(A.page.state.data.t.rows) === JSON.stringify(theirs));
 });
 
+test('the first save after a load reuses the blobs the reader already holds', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  const objs = sample(3000, 'r');
+  await putBlobTable(db, W.api, 't', objs);
+  W.api.subscribeTable('t');
+  await waitFor(() => W.page.loaded.has('t'));
+  const mark = db.log.sets.length;
+  editTable(W.page, [...objs.slice(0, 2999), { id: 'end', name: 'e', qty: 9 }]);
+  await W.api.flush('t');
+  const blobWrites = db.log.sets.slice(mark).filter((p) => p.includes('/blobs/'));
+  assert.ok(blobWrites.length <= 2, 'blob writes after load: ' + blobWrites.length);
+});
+
 // Writer helper: a tab holding `objs` as its unsaved table.
 function editTable(page, objs) {
   page.state.data.t.rows = objs;
