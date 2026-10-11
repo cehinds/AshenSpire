@@ -14,7 +14,9 @@ import { drawCards } from '../src/engine/actions.js';
 const registries = createRegistries(contentBundle);
 const card = (id, cardId = 'strike', upgraded = false) => ({ instanceId: id, cardId, upgraded });
 const ids = cards => cards.map(c => c.instanceId);
-const rules = () => resolveHandRules({}, handStatRows(registries, null));
+// These mechanics fixtures pin the hand size at the old flat 15 so the cap
+// arithmetic stays covered; the shipped 7 + INT row is asserted in stat-rows.
+const rules = () => resolveHandRules({}, { ...handStatRows(registries, null), handSize: { base: 15, min: 1, max: 15 } });
 function fight(options = {}) {
   return createCombat({ registries, rng: createRng(2309), handRules: rules(),
     player: { classId: 'reaver', maxHp: 10000, hp: 10000, maxMana: 10, mana: 10,
@@ -144,15 +146,16 @@ test('each co-op seat refreshes its own cards and respects the 15-card cap', () 
   const c = createCoopCombat({ registries, rng: createRng(5), players, enemyIds: ['wanderingSoldier'] });
   for (const [id, p] of c.players) {
     p.piles.draw.push(...p.piles.hand);
-    const retained = id === 'p0' ? 2 : 16;
+    const retained = id === 'p0' ? 2 : p.handMax + 1;
     p.piles.hand = [...Array.from({ length: retained }, (_, i) => card(`${id}r${i}`, 'urgentHeal')), card(`${id}ordinary`)];
   }
+  const cap = c.players.get('p1').handMax;
   endTurn(c, 'p0');
   endTurn(c, 'p1');
   for (const [id, p] of c.players) {
-    assert.equal(p.piles.hand.length, id === 'p0' ? 6 : 15);
+    assert.equal(p.piles.hand.length, id === 'p0' ? 6 : cap);
     assert.equal(p.piles.discard.length, id === 'p0' ? 0 : 1);
-    if (id === 'p1') assert.deepEqual(ids(p.piles.discard), ['p1r15']);
+    if (id === 'p1') assert.deepEqual(ids(p.piles.discard), [`p1r${cap}`]);
     assert(ids(Object.values(p.piles).flat()).every(cid => cid.startsWith(id)), 'no cross-seat cards');
   }
 });
