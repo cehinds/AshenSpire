@@ -559,9 +559,14 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // options.playerDefense: { evasion, evadePct, tags } for the player against an
 //   unpaired enemy attack. Default evasion 0, evadePct 0, no tags. The
 //   'intangible' tag draws on the player's pool in options.charges.
+// options.poiseDouble: { player?, [enemyId]: bool } flags from an earlier round. A
+//   flagged side's first landed hit this round carries poiseMultiplier 2 and clears
+//   the flag. Poise damage itself is not modelled.
 //
-// Returns { events, momentum, charges }, where `momentum` is { [enemyId]: M_e } after the
-// round. Momentum updates at round end (DESIGN.md, Momentum):
+// Returns { events, momentum, charges, poiseDouble }. `momentum` is { [enemyId]: M_e }
+// after the round. `poiseDouble` is { player, [enemyId]: bool } after the round: a
+// side's flag is set at round end when its success overflows M_e (see below).
+// Momentum updates at round end (DESIGN.md, Momentum):
 // - Before any pairing, each enemy's M_e moves 1 toward 0 (options.decay, default 1,
 //   0 turns it off). A 'momentum' event with reason 'decay' marks each change.
 // - Every pairing in the round uses the round's decayed starting M_e.
@@ -602,6 +607,10 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const stanceTable = options.stanceAdvantage ?? null; // Map from parseStanceAdvantage()
   if (typeof inputM !== 'object' || Array.isArray(inputM)) {
     throw new TypeError('options.momentum must be an object keyed by enemy id');
+  }
+  const inputPoise = options.poiseDouble ?? {};
+  if (typeof inputPoise !== 'object' || Array.isArray(inputPoise)) {
+    throw new TypeError('options.poiseDouble must be an object keyed by side or enemy id');
   }
 
   // Momentum decay (owner, 2026-10-11; DESIGN.md, Timing): before any pairing,
@@ -676,6 +685,18 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     evadeBonuses: bonusesFor(null, 'player'),
   });
 
+  // Poise flags (owner, 2026-10-11; DESIGN.md, Momentum). Null-prototype, keyed by
+  // 'player' or by enemy id. A side's first landed hit this round spends its flag.
+  const poise = Object.create(null);
+  for (const [key, v] of Object.entries(inputPoise)) poise[key] = Boolean(v);
+  const spendPoise = (evs, k) => {
+    for (const e of evs) {
+      if (e.type !== 'hit' || e.poiseMultiplier !== 2) continue;
+      if (e.by === 'player') poise.player = false;
+      else poise[k] = false;
+    }
+  };
+
   const pending = Object.create(null); // summed raw deltas per enemy, applied at round end
   const paired = new Set();
   const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
@@ -727,14 +748,16 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     const k = enemyKey(enemy);
     const visible = slot < visibleCount;
     const pool = { player: charges.player, enemy: charges[k] };
+    const armed = { player: poise.player === true, enemy: poise[k] === true };
     const pairEvents = resolvePair(
       { ...pc, speed: pc.speed + momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(pc.evadeBonuses), ...bonusesFor(pc.id, 'player')] },
       { ...enemy, speed: enemy.speed - momentumSpeed(start[k]), evadeBonuses: [...normalizeEvadeBonuses(enemy.evadeBonuses), ...bonusesFor(enemy.id, k)] },
       rng,
-      { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, charges: pool },
+      { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, charges: pool, poise: armed },
     );
     charges.player = pool.player;
     charges[k] = pool.enemy;
+    spendPoise(pairEvents, k);
     settleSlot(pairEvents, { pc, enemy, k, slot, visible, extra: {} });
   });
 
@@ -755,11 +778,12 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       target: playerDefender,
       pool,
       rng,
-      options: { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable },
+      options: { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable, poise: { enemy: poise[k] === true } },
       events: slotEvents,
     });
     charges.player = pool.player;
     charges[k] = pool.enemy;
+    spendPoise(slotEvents, k);
     settleSlot(slotEvents, { pc: null, enemy, k, slot, visible, extra });
   });
 
@@ -768,16 +792,32 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const momentum = {};
   for (const k of Object.keys(start)) {
     const from = start[k];
-    const to = clampMomentum(from + (pending[k] ?? 0));
+    const raw = from + (pending[k] ?? 0);
+    const to = clampMomentum(raw);
     setOwn(momentum, k, to);
     if (to !== from) {
       events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to, momentum: to });
+    }
+    // Overflow (owner, 2026-10-11): a summed success past the limit gives that side
+    // double poise on its next landed hit. Only a player success can push past +3.
+    if (raw > MOMENTUM_MAX) {
+      events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'player', delta: 0, by: null });
+      poise.player = true;
+    }
+    if (raw < MOMENTUM_MIN) {
+      events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'enemy', delta: 0, by: null });
+      poise[k] = true;
     }
   }
 
   // Returned maps are plain objects, filled by own-property writes only.
   const outCharges = {};
   for (const k of Object.keys(charges)) setOwn(outCharges, k, charges[k]);
+  const poiseDouble = {};
+  setOwn(poiseDouble, 'player', poise.player === true);
+  for (const k of new Set([...Object.keys(start), ...Object.keys(poise)])) {
+    if (k !== 'player') setOwn(poiseDouble, k, poise[k] === true);
+  }
 
-  return { events, momentum, charges: outCharges };
+  return { events, momentum, charges: outCharges, poiseDouble };
 }

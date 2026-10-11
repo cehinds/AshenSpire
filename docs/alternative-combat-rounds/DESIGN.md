@@ -188,6 +188,18 @@ The player side is at M_e = +1 against this enemy, so the enemy side is at -1.
 Earlier this example gave +1, when momentum added its full value. Under the
 half-value rule it is 0.
 
+### Overflow and double poise (owner, 2026-10-11)
+
+- At the cap, a success that would push M_e past +3 (player) or -3 (enemy) sets
+  a flag. The overflow is judged on the summed round delta from the decayed
+  start, so a start of +3 with a player success of +1 overflows.
+- At round end the resolver emits `{type: 'momentum', reason: 'overflow', enemyId, side}`
+  (`side` is 'player' or 'enemy') and returns `poiseDouble: { player, [enemyId]: bool }`.
+- Consuming the flag: a side flagged in `options.poiseDouble` has its first landed
+  hit that round carry `poiseMultiplier: 2`, and the flag is cleared in the
+  returned map. A flag stays set until a landed hit spends it.
+- Flag only: poise damage itself is not modelled in the prototype.
+
 ### Combos
 
 No combos (owner, 2026-10-11). Only slot wins and stance advantage move momentum.
@@ -368,7 +380,9 @@ j. Resolved (2026-10-11). Momentum is per enemy: M_e between the player and
    each enemy.
 k. Resolved (owner, 2026-10-11). Momentum decays 1 toward 0 each round, before
    pairings (see Timing). `options.decay` 0 turns it off.
-l. At +3 or -3, does a further success do anything extra? Not answered.
+l. Resolved (owner, 2026-10-11): a success that overflows the cap sets double
+   poise on that side's next landed hit (see Overflow and double poise). It is a
+   flag only: poise is not yet modelled in the prototype.
 m. Does the speed effect (half of M, truncated, so at most +-1) feel right next
    to base speeds of 1 to 3? Not answered.
 n. Resolved (2026-10-11): no combos. Only slot wins and stance advantage move

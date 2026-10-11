@@ -1635,6 +1635,82 @@ test('unpaired marker: every event from an unpaired slot carries unpaired: true,
   for (const e of events.filter((e) => e.slot === 0)) assert.equal(e.unpaired, undefined, e.type);
 });
 
+// Overflow and poise (owner, 2026-10-11; DESIGN.md, Momentum). When a side's
+// success pushes M_e past its limit, that side gets double poise on its next
+// landed hit. Modelled as a flag only: poise damage is not in the prototype.
+const POISE_CARDS = [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }];
+const POISE_QUEUE = [{ id: 'e', speed: 1, kind: 'other' }];
+
+test('overflow: a player success from +3 emits an overflow event and sets poiseDouble.player', () => {
+  const out = resolveRound(POISE_CARDS, POISE_QUEUE, 1, d20Face(20), { momentum: { e: 3 }, decay: 0 });
+  assert.equal(out.momentum.e, 3, 'the clamp holds M_e at +3');
+  const overflow = out.events.find((e) => e.type === 'momentum' && e.reason === 'overflow');
+  assert.deepEqual({ enemyId: overflow.enemyId, side: overflow.side }, { enemyId: 'e', side: 'player' });
+  assert.equal(out.poiseDouble.player, true);
+  assert.equal(out.poiseDouble.e, false, 'the enemy side has no flag');
+});
+
+test('overflow: no flag when the success stays inside the limit (from +2 to +3)', () => {
+  const out = resolveRound(POISE_CARDS, POISE_QUEUE, 1, d20Face(20), { momentum: { e: 2 }, decay: 0 });
+  assert.equal(out.events.some((e) => e.reason === 'overflow'), false);
+  assert.equal(out.poiseDouble.player, false);
+});
+
+test('poise: the next round, the flag doubles the player first landed hit and is then cleared', () => {
+  const out = resolveRound(POISE_CARDS, POISE_QUEUE, 1, d20Face(20), { momentum: { e: 0 }, decay: 0, poiseDouble: { player: true } });
+  const hit = out.events.find((e) => e.type === 'hit');
+  assert.equal(hit.by, 'player');
+  assert.equal(hit.hit, true);
+  assert.equal(hit.poiseMultiplier, 2);
+  assert.equal(out.poiseDouble.player, false);
+});
+
+test('poise: a landed hit with no flag carries no multiplier', () => {
+  const out = resolveRound(POISE_CARDS, POISE_QUEUE, 1, d20Face(20), { momentum: { e: 0 }, decay: 0 });
+  assert.equal(out.events.find((e) => e.type === 'hit').poiseMultiplier, undefined);
+});
+
+test('poise: only the first landed hit of a flagged side is doubled in a round', () => {
+  const cards = [
+    { id: 'a', slot: 0, speed: 4, kind: 'attack' },
+    { id: 'b', slot: 1, speed: 4, kind: 'attack' },
+  ];
+  const queue = [{ id: 'e0', enemyId: 'e0', speed: 1, kind: 'other' }, { id: 'e1', enemyId: 'e1', speed: 1, kind: 'other' }];
+  const out = resolveRound(cards, queue, 2, d20Face(20), { decay: 0, poiseDouble: { player: true } });
+  const hits = out.events.filter((e) => e.type === 'hit');
+  assert.deepEqual(hits.map((h) => h.poiseMultiplier), [2, undefined]);
+  assert.equal(out.poiseDouble.player, false);
+});
+
+test('poise: a flagged side that does not land keeps its flag for a later round', () => {
+  const out = resolveRound(POISE_CARDS, POISE_QUEUE, 1, d20Face(1), { momentum: { e: 0 }, decay: 0, poiseDouble: { player: true } });
+  assert.equal(out.events.find((e) => e.type === 'hit').hit, false);
+  assert.equal(out.poiseDouble.player, true);
+});
+
+test('overflow: an enemy success from -3 flags that enemy, and the next landed enemy hit is doubled', () => {
+  // The unpaired enemy H attacks and lands: M_H moves -1, from -3 to past the limit.
+  const cover = [{ id: 'block', slot: 0, speed: 1, kind: 'other' }];
+  const queue = [
+    { id: 'guard', enemyId: 'G', speed: 1, kind: 'other' },
+    { id: 'strike', enemyId: 'H', speed: 3, kind: 'attack' },
+  ];
+  const first = resolveRound(cover, queue, 2, d20Face(20), { momentum: { H: -3 }, decay: 0 });
+  assert.equal(first.events.find((e) => e.reason === 'overflow').side, 'enemy');
+  assert.equal(first.poiseDouble.H, true);
+  assert.equal(first.poiseDouble.player, false);
+  const next = resolveRound(cover, queue, 2, d20Face(20), { momentum: { H: 0 }, decay: 0, poiseDouble: first.poiseDouble });
+  const hit = next.events.find((e) => e.type === 'hit' && e.slot === 1);
+  assert.equal(hit.by, 'enemy');
+  assert.equal(hit.poiseMultiplier, 2);
+  assert.equal(next.poiseDouble.H, false);
+});
+
+test('poiseDouble: must be an object keyed by side or enemy id', () => {
+  assert.throws(() => resolveRound([], [], 0, d20Face(20), { poiseDouble: [] }), TypeError);
+  assert.throws(() => resolveRound([], [], 0, d20Face(20), { poiseDouble: true }), TypeError);
+});
+
 // A seeded generator, so the rolls are the same on every run.
 const seeded = (seed) => {
   let s = seed >>> 0;
