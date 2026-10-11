@@ -473,6 +473,8 @@ export const LIVE = {
   'meta.character.creature': 'creature',
   // proposed live mapping (domain pass)
   'run': 'run',
+  // proposed live mapping (domain pass)
+  'internal': 'internal',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

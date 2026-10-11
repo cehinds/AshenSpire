@@ -874,3 +874,4 @@ Grant source {Where a starting card came from. The composed deck deals bound car
   Class {The class signature card.}
 Damage type {Identity of a typed HP damage component.}
 Run {Run structure — what an event, an encounter or an unlock is about.}
+internal {Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.}

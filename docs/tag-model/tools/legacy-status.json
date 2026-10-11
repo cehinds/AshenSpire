@@ -748,5 +748,6 @@
  "meta.combat.damage.blunt": "new",
  "meta.combat.damage.piercing": "new",
  "damageType": "new",
- "run": "new"
+ "run": "new",
+ "internal": "new"
 }
