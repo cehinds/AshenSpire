@@ -6,6 +6,7 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { Workspace, safePath, parseCSV, stringifyCSV, hash, editable, validateText } from '../core.mjs';
 import { createStudio } from '../server.mjs';
+import { processAlive } from '../../tools/lib/process-tree.mjs';
 
 async function fixture(t) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'ashenspire-studio-'));
@@ -200,7 +201,8 @@ test('closing the Editor stops a build and every process it started before relea
   assert.ok(pids?.parent && pids?.nested, 'the build tree started');
   await app.close();
 
-  const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+  // A zombie the container's PID 1 has not reaped yet counts as stopped, as it does in the shutdown code.
+  const alive = (pid) => processAlive(pid);
   for (let i = 0; i < 100 && (alive(pids.parent) || alive(pids.nested)); i++) await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(alive(pids.parent), false, 'the direct build child exited');
   assert.equal(alive(pids.nested), false, 'the nested builder exited');
