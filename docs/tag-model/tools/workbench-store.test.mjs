@@ -562,6 +562,22 @@ test('the pinned banner through its rendered buttons: Export, then Load theirs; 
   assert.equal(after.children.length, 0);
 });
 
+test('a blob GC deletes after this save wrote it, before the head lands, is written again', async () => {
+  const db = makeFakeDb();
+  let once = false;
+  db.afterSet = async (p) => { // one-shot: the first blob this save writes is removed straight away
+    if (!once && p.includes('/blobs/')) { once = true; await db.doc(p).delete(); }
+  };
+  const W = makePage(db, T);
+  const rows = sample(3, 'h');
+  editTable(W.page, rows);
+  await W.api.flush('t');
+  const head = db.read('tables/t');
+  assert.ok(head && head.blobs.length > 0);
+  assert.ok(head.blobs.every((h) => db.has(W.api.blobPath('t', h))), 'every blob the head names exists');
+  assert.equal(await storedRows(db), JSON.stringify(rows));
+});
+
 test('a second banner that appears while another is up is announced as an alert', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);

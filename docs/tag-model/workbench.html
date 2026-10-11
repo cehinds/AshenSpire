@@ -379,6 +379,12 @@ async function flush(t, opts){
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
     const base=opts.overwrite? curRev : ts.base, prevBase=ts.base;
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
+    /* GC may have deleted a blob this save wrote, between its write and the head landing: re-check each one and write any that are gone */
+    const rowsOf=new Map(built.map(b=>[b.hash,b.rows]));
+    for(const h of written){
+      const g=await db.doc(blobPath(t,h)).get();
+      if(!g.exists) await db.doc(blobPath(t,h)).set({rows:rowsOf.get(h), createdAt:Date.now()});
+    }
     ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null;
     ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
     /* a legacy table converts on this first save: delete only the legacy part docs we read, now that the new head is written */
