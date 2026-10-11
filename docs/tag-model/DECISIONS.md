@@ -221,27 +221,33 @@ Formula, relation and value keys follow the README conventions.
 
 ## 11. Defenses are AR, DR, PR, Poise, Ward, Evasion and Accuracy
 
-- **Date:** 2026-10-11 (owner).
+- **Date:** 2026-10-11 (owner). The hit model below was approved by the owner
+  on 2026-10-11 and is recorded as formulas with `status=proposed`.
 - **Decision:** The defenses are AR, DR, PR, Poise, Ward, Evasion and Accuracy.
-  Evasion and Accuracy are the new defense stats. Evasion's formula is pending
-  a proposal.
+  Evasion and Accuracy are the new defense stats. The hit roll is: an attack
+  hits when d20 + Accuracy ≥ 8 + Evasion. A natural 1 always misses and a
+  natural 20 always hits. The chance to be missed is capped at 75%.
+  - **Accuracy:** `accuracy.rating = floor([strength] + [dexterity] + 0.5*[wisdom] + 0.5*[intelligence]) + floor([level] / 5) + [accuracy.tagBonus]`. Tag bonus: quick +1, telegraphed −2. At level 1: Reaver 5, Rogue 5, Starseer 4, Herald 4.
+  - **Evasion:** `evasion.rating = [armor.evasionBase] + min(max([dexterity] - 1, 0), [armor.dexCap]) + [shield.evasion] + [evasion.cardBonus]`.
+    Armour by material (evasion base / DEX cap): cloth 0/4, leather 0/6, studded 1/3, chain 1/2, scale 1/1, plated 1/0. Shields: buckler +1, other shields 0. Card bonuses: Backstep +5, Shadowstep +4, Quickstep +3, Acrobatics +3, Dodge +3, Evasive Guard +2.
+  - **Miss chance:** `hit.missChance = min(0.75, max(0.05, (8 + [evasion.rating] - [accuracy.rating] - 1) / 20))`. Check against the natural rules: a roll misses when d + A < 8 + E (count 7 + E − A of 20), a natural 1 always misses (the 0.05 floor), and a natural 20 always hits (a roll can miss at most 19 of 20, and the 0.75 cap is below that). `evasion.test.mjs` checks this roll by roll for A 1–10 and E 0–20.
+  - **Examples** (enemy accuracy 5, `enemy.accuracy`): Starseer 0 evasion, 10% missed; Herald 0, 10%; Reaver plated 1, 15%; Rogue leather DEX 3 with buckler 3, 25%; Rogue after Backstep 8, 50%. Enemy evasions as values: Wandering Soldier 1, Blight Hound 3, Husk Brute 0, Fell Warden 2.
 - **Tables changed:**
-  - `tables/tags.csv`: `meta.character.defensive-stats.accuracy` (status
-    `new`), beside the existing `evasion`. The offensive `accuracy` tag is
-    unchanged. Its key is now `offensive-stats.accuracy`, because the build
-    qualifies both keys to tell them apart.
+  - `tables/tags.csv`: `meta.character.defensive-stats.accuracy` (status `new`), beside the existing `evasion`. The offensive `accuracy` tag is unchanged. Its key is now `offensive-stats.accuracy`, because the build qualifies both keys to tell them apart.
   - `tools/legacy-status.json`: `defensive-stats.accuracy` added as `new`.
-  - `tables/formulas.csv`: a `status` column is added. Blank means defined.
-    New row `evasion.rating`, expr `TBD`, scope `character`, status `proposed`.
-    The expression has no `[key]` references, so the check passes it as a
-    placeholder.
+  - `tables/values.csv`: the armour, shield, card and tag-bonus rows, the enemy rows, and the level-1 stat inputs (`wisdom`, `intelligence`, `level`; `strength` and `dexterity` already existed).
+  - `tables/formulas.csv`: `evasion.rating`, `accuracy.rating` and `hit.missChance`, all `proposed`.
+  - `tools/evasion.test.mjs` (new): the five examples, the class accuracies, the tag bonuses, and the roll-by-roll natural-roll check.
+- **Assumptions and placeholders (for the owner to confirm):**
+  - Leather evasion base is 0 (not 1). This was the owner's correction so the approved miss rates hold: with base 1, Rogue (leather, DEX 3, buckler) is 4, which is 30%, not 25%.
+  - Starseer and Herald are given cloth (base 0, DEX cap 4). Their evasion is 0 in the decision, and no armour is named. Cloth is my assumption, and with DEX 1 it gives 0.
+  - `wisdom`, `intelligence` and the class STR/DEX/WIS/INT are level-1 stats from content. The table preview values for `wisdom` and `intelligence` are 0 and are placeholders. `level` is 1.
+  - Runtime-input keys, with preview value 0 (no armour, no shield, no card, no tag): `armor.evasionBase` and `armor.dexCap` (resolved from the equipped material's rows), `shield.evasion` (from the equipped shield, buckler or other), `evasion.cardBonus` (from the card in effect), and `accuracy.tagBonus` (from the tag in effect). These keys are my choice, since the formulas need one value each; the per-material and per-card rows are the source.
+  - The Rogue after Backstep and Reaver values depend on the leather correction above.
 - **Couldn't place:**
-  - **Accuracy exists twice.** The offensive tag was already in the tables. The
-    owner's "add Accuracy as a tag" was read as a second, defense-side tag.
-    Owner to say whether there should be one tag or two.
-  - **AR and PR placement.** The owner lists AR, DR and PR as defenses. In the
-    tables, AR and PR are under `offensive-stats`, and DR is under
-    `defensive-stats`. Nothing was moved. Owner to say if AR and PR should move.
+  - **Accuracy exists twice.** The offensive tag was already in the tables. The owner's "add Accuracy as a tag" was read as a second, defense-side tag. Owner to say whether there should be one tag or two. The formulas use the value keys `accuracy.rating` and `accuracy.tagBonus`, not either tag.
+  - **AR and PR placement.** The owner lists AR, DR and PR as defenses. In the tables, AR and PR are under `offensive-stats`, and DR is under `defensive-stats`. Nothing was moved. Owner to say if AR and PR should move.
+  - The `[evasion.cardBonus]` and `[shield.evasion]` inputs are not yet bound to card and shield objects in `objects.csv`. The binding is not in the decision.
 
 ## 12. Fight speed is being reworked on its own branch (note only)
 
