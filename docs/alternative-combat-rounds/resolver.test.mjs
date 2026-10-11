@@ -689,6 +689,17 @@ test('cardHint: arrow tiers >> > 0 < << and thresholds from SPEED_TIERS', () => 
   assert.equal(cardHint({ card: 'two', ...stance }, { card: 'one', ...stance }, hintCtx()).speedDelta, 1);
 });
 
+test('cardHint: a delta beyond +-2 keeps the strong arrow, with its colour', () => {
+  // three + dagger = 5 against one = 1: delta +4 is still '>>' green.
+  const hint = cardHint({ card: 'three', weapon: 'dagger', stance: 'attack' }, { card: 'one', stance: 'attack' }, hintCtx());
+  assert.equal(hint.speedDelta, 4);
+  assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
+  // The mirror: delta -4 is '<<' red.
+  const mirror = cardHint({ card: 'one', stance: 'attack' }, { card: 'three', weapon: 'dagger', stance: 'attack' }, hintCtx());
+  assert.equal(mirror.speedDelta, -4);
+  assert.deepEqual(mirror.arrow, { glyph: '<<', colour: 'red' });
+});
+
 test('cardHint: breakdown lists every speed term and sums to the player total', () => {
   const card = { card: 'three', weapon: 'dagger', armor: 'heavy', stance: 'attack' };
   const enemy = { card: 'one', stance: 'attack' };
