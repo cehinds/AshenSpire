@@ -793,7 +793,9 @@ async function motionStudio() {
   await check('Motion: Open in Asset Gallery from the library', async () => {
     // The link appears in the Inspector for a file with source frames: pick an animation that has them.
     // Walk outfit, animation and stance entries until a selected file shows the link (an outfit shows its painted frames).
-    let btn = page.locator(`${V}.mo-x-assets`).first();
+    // An enabled link only: a disabled one carries its reason in its title (no source frame for that pose).
+    const LINK = `${V}.mo-x-assets:not([disabled])`;
+    let btn = page.locator(LINK).first();
     for (const kind of ['outfit', 'animation', 'stance']) {
       const items = page.locator(`${V}.mo-item[data-kind="${kind}"]`);
       const n = Math.min(await items.count(), 8);
@@ -803,11 +805,14 @@ async function motionStudio() {
         await sleep(700);
         await overlay('lib', false);
         await overlay('insp', true);
-        btn = page.locator(`${V}.mo-x-assets`).first();
+        btn = page.locator(LINK).first();
         if (await btn.count() === 0) await overlay('insp', false);
       }
     }
-    if (await btn.count() === 0) throw Error('no selected animation or stance shows "Open source frames in Asset Gallery"');
+    if (await btn.count() === 0) {
+      const why = await page.locator(`${V}.mo-x-assets[disabled]`).first().getAttribute('title').catch(() => null);
+      throw Error(`no selected animation or stance has an enabled "Open source frames in Asset Gallery"${why ? ` (last reason: ${why})` : ''}`);
+    }
     await btn.click();
     await sleep(1200);
     expect(await activeView() === 'view-mod-assets' || (await hashNow()).includes('mod=assets'), 'did not open Asset Gallery');
