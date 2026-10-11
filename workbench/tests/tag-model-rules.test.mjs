@@ -19,7 +19,8 @@ test('the map names the authored, mixed and presentation tables, and their jobs'
   assert.equal(layouts.tier, 'presentation');
   assert.equal(layouts.job, 'tag-model');
   assert.match(layouts.banner, /A re-extraction \(build\.mjs --inv\) overwrites these columns/);
-  assert.ok(layouts.readOnlyColumns.includes('band') && layouts.readOnlyColumns.includes('priority'));
+  assert.ok(layouts.readOnlyColumns.includes('band'));
+  assert.ok(!layouts.readOnlyColumns.includes('artBrief') && !layouts.readOnlyColumns.includes('priority'), 'artBrief and priority are authored columns of combat-symbols.csv');
 });
 
 test('root assets.csv is authored, presentation/assets.csv is presentation', () => {

@@ -39,7 +39,7 @@ export const TAG_MODEL_EDITABLE = {
     job: TAG_MODEL_JOBS.full,
     dir: 'presentation/',
     banner: 'A re-extraction (build.mjs --inv) overwrites these columns',
-    readOnlyColumns: ['tag', 'liveRef', 'band', 'scope', 'deviceScope', 'assignedAssetRef', 'status', 'cssClasses', 'cssComponentId', 'proposedKey', 'migrateTo', 'artBrief', 'priority'],
+    readOnlyColumns: ['tag', 'liveRef', 'band', 'scope', 'deviceScope', 'assignedAssetRef', 'status', 'cssClasses', 'cssComponentId', 'proposedKey', 'migrateTo'],
   },
 };
 
