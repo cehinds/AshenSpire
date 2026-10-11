@@ -753,20 +753,25 @@ test('cardHint: momentum moves the speed delta the same way as resolveRound (pla
 const FOE_ACTION = { id: 'foe', speed: 2, kind: 'attack', tags: ['stun'], stance: 'smash', damage: 3, block: 1 };
 
 test('perception stage 0 reveals only that an action exists', () => {
-  assert.deepEqual(revealAction(FOE_ACTION, 0), { hidden: true });
+  assert.deepEqual(revealAction(FOE_ACTION, 0), { hidden: true, stage: 0 });
 });
 
 test('perception stage 1 reveals only the stance group', () => {
-  assert.deepEqual(revealAction(FOE_ACTION, 1), { stanceGroup: 'offense' });
-  assert.deepEqual(revealAction({ stance: 'block' }, 1), { stanceGroup: 'defense' });
+  assert.deepEqual(revealAction(FOE_ACTION, 1), { stanceGroup: 'offense', stage: 1 });
+  assert.deepEqual(revealAction({ stance: 'block' }, 1), { stanceGroup: 'defense', stage: 1 });
 });
 
 test('perception stage 2 reveals the stance and damage, but not speed or tags', () => {
-  assert.deepEqual(revealAction(FOE_ACTION, 2), { stanceGroup: 'offense', stance: 'smash', damage: 3 });
+  assert.deepEqual(revealAction(FOE_ACTION, 2), { stanceGroup: 'offense', stance: 'smash', damage: 3, stage: 2 });
 });
 
 test('perception stage 3 reveals everything, including speed and tags', () => {
-  assert.deepEqual(revealAction(FOE_ACTION, 3), FOE_ACTION);
+  assert.deepEqual(revealAction(FOE_ACTION, 3), { ...FOE_ACTION, stage: 3 });
+});
+
+test('revealAction names the stage it was revealed at, so cardHint knows what is shown', () => {
+  assert.equal(revealAction(FOE_ACTION, 9).stage, 3, 'a clamped stage is the stage reported');
+  assert.equal(revealAction(FOE_ACTION, -1).stage, 0);
 });
 
 test('perception stage clamps: below 0 acts as 0, above 3 acts as 3', () => {
@@ -775,7 +780,7 @@ test('perception stage clamps: below 0 acts as 0, above 3 acts as 3', () => {
   assert.equal(clampStage(7), 3);
   assert.equal(clampStage(2.9), 2);
   assert.equal(clampStage(NaN), 0);
-  assert.deepEqual(revealAction(FOE_ACTION, -1), { hidden: true });
+  assert.deepEqual(revealAction(FOE_ACTION, -1), { hidden: true, stage: 0 });
   assert.deepEqual(revealAction(FOE_ACTION, 9), revealAction(FOE_ACTION, 3));
 });
 
@@ -1207,6 +1212,34 @@ test('cardHint at perception stage 2: the stance is known and speed is not, so n
   const none = cardHint({ card: 'three', stance: 'attack' }, revealAction(HINT_FOE, 2), hintCtx());
   assert.equal(none.border, 'red', 'no stance advantage, and speed is not used');
   assert.equal(none.speedDelta, null);
+});
+
+test('cardHint at stage 3: a speed field without speed component ids still gives a speed delta and arrow', () => {
+  // The action carries only `speed`, the field resolveRound pairs with. Speed is known at stage 3.
+  const hint = cardHint(HINT_CARD, revealAction({ id: 'x', speed: 1, kind: 'attack', stance: 'attack' }, 3), hintCtx());
+  assert.equal(hint.speedDelta, 2, 'player 3 minus enemy speed 1');
+  assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
+});
+
+test('cardHint speedDelta sign matches who acts first in resolvePair and resolveRound', () => {
+  const rng = () => 0.99;
+  const sign = (n) => Math.sign(n);
+  const who = { player: 1, enemy: -1 };
+  for (const [p, e] of [[3, 1], [1, 3], [2, 2], [4, 2]]) {
+    const card = { id: 'c', speed: p, kind: 'other' };
+    const foe = { id: 'x', speed: e, kind: 'other', stance: 'attack' };
+    const hint = cardHint(card, foe, hintCtx());
+    const first = find(resolvePair(card, foe, rng), 'order').first;
+    const expected = first === null ? 0 : who[first];
+    assert.equal(sign(hint.speedDelta), expected, `player ${p} vs enemy ${e}`);
+  }
+  // Momentum: M_e = 2 gives the player +1 and the enemy -1, so the foe at 2 is beaten.
+  const card = { id: 'c', speed: 1, kind: 'other' };
+  const foe = { id: 'x', speed: 2, kind: 'other', stance: 'attack' };
+  const hint = cardHint(card, foe, hintCtx({ momentum: 2 }));
+  const { events } = resolveRound([{ ...card, slot: 0, kind: 'other' }], [foe], 1, rng, { momentum: { x: 2 } });
+  assert.equal(sign(hint.speedDelta), 1);
+  assert.equal(find(events, 'order').first, 'player');
 });
 
 test('cardHint at perception stage 3: the full action gives speed, the arrow and green', () => {

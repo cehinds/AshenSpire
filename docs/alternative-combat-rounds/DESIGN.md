@@ -55,6 +55,10 @@ clamped to 0..3.
 - Stage 2: the stance and the damage.
 - Stage 3: everything, including speed and tags.
 
+`revealAction()` names the stage in the result: `stage: 0` to `3`. `cardHint()`
+reads that field, so it does not guess from which keys are present. Speed is
+known at stage 3 only. The stance is known from stage 2.
+
 Flagged: at stage 1 and 2 the card hint cannot show a speed advantage.
 - The border uses stance only from stage 2, because the exact stance is not
   known at stage 1.
@@ -185,6 +189,9 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
   - stage 3: the full border rules above, with speed and the arrow.
 - Selecting a card highlights each enemy in that card's colour. One card can be
   red on one foe and green on two others.
+- Speed totals match the pairing in `resolveRound`: a `speed` field is used
+  (the player adds momentum, the enemy subtracts it), and the component total
+  is the fallback when there is no `speed` field.
 - Left-edge arrow, from the speed difference (player minus enemy):
   - `>>` green, `>` yellow, none at 0, `<` yellow, `<<` red.
   - Thresholds are placeholders in `SPEED_TIERS` (see open question s).
