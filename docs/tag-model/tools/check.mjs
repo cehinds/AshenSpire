@@ -349,6 +349,12 @@ if (presOk.styles && presOk.components) {
   // never picks the owner: the rule belongs to deck-editor-art. Without the generic skip
   // the owner becomes formation-layout-editor, so this guard fails then.
   guard('.deck-editor-art.outline', own => { if (own !== 'deck-editor-art') fail(`presentation/styles: ".deck-editor-art.outline" componentId "${own}" should be "deck-editor-art"`); });
+  // as-option is not a GENERIC_STATE class but nine catalog components add it, so it is
+  // generic by the GENERIC_OWNERS threshold. Its owner must come from equip-chip alone.
+  // Without the threshold, as-option's nine owners make the owner set larger than one and
+  // the row falls back to cssComponentId "as-option", which the guard then rejects.
+  if (catalogOwnersOf('as-option').length < 3) fail('presentation/components: "as-option" must have three or more catalog owners (threshold guard)');
+  guard('.equip-chip.as-option', own => { if (own !== 'equipment-choice-card') fail(`presentation/styles: ".equip-chip.as-option" componentId "${own}" should be "equipment-choice-card" (as-option must stay generic via GENERIC_OWNERS)`); });
 }
 
 // Kit helper matching: a component gets a kit helper's classes only when its file
