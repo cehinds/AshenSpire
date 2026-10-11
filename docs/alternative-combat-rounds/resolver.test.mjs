@@ -371,10 +371,41 @@ test('speed ids: a card or armor on an action is not an evasion input (no throw,
   }
 });
 
-test('evasionFor: a missing dex takes attrs.DEX, an explicit dex wins, and attrs alone add nothing', () => {
+test('evasionFor: a missing dex takes attrs.DEX, and an explicit dex wins', () => {
   assert.equal(evasionFor({ evasionArmor: 'Leather', attrs: { DEX: 4 } }, evasionTables()), 3, '0 + min(3, 6)');
   assert.equal(evasionFor({ evasionArmor: 'Leather', dex: 2, attrs: { DEX: 4 } }, evasionTables()), 1, 'explicit dex 2: 0 + min(1, 6)');
-  assert.equal(evasionFor({ attrs: { DEX: 4 } }), 0, 'no evasion input: the plain evasion, 0');
+});
+
+// Owner (2026-10-11): a side with attrs.DEX and no armor, shield, card or dex counts
+// as Cloth: 0 + min(DEX - 1, 4), never below 0, plus the flat `evasion`. Cloth works
+// with no tables, through the built-in row {base 0, dexCap 4}.
+test('evasionFor: attrs.DEX alone counts as Cloth, with or without tables', () => {
+  assert.equal(evasionFor({ attrs: { DEX: 4 } }, evasionTables()), 3, 'Cloth 0 + min(3, 4)');
+  assert.equal(evasionFor({ attrs: { DEX: 4 } }), 3, 'built-in Cloth row, no tables');
+  assert.equal(evasionFor({ attrs: { DEX: 1 } }), 0, 'DEX 1 adds 0');
+  assert.equal(evasionFor({ attrs: { DEX: 9 } }), 4, 'capped at the Cloth dexCap 4');
+  assert.equal(evasionFor({ attrs: { DEX: 4 }, evasion: 1 }), 4, 'flat evasion adds on top: 3 + 1');
+});
+
+test('evasionFor: no attrs.DEX and no evasion input keeps the plain evasion number', () => {
+  assert.equal(evasionFor({}), 0);
+  assert.equal(evasionFor({ evasion: 2 }), 2);
+  assert.equal(evasionFor({ attrs: { STR: 4 }, evasion: 2 }), 2, 'attrs without DEX add nothing');
+  assert.equal(evasionFor({ attrs: { STR: 4 }, evasion: 2 }, evasionTables()), 2);
+  assert.equal(evasionFor({ attrs: { DEX: 4 } }), 3, 'with attrs.DEX present the Cloth formula runs');
+});
+
+test('evasionFor: an explicitly named unknown armor still throws, and a table without Cloth falls back to built-in Cloth', () => {
+  assert.throws(() => evasionFor({ evasionArmor: 'Leather', dex: 3 }), RangeError, 'Leather with no tables throws');
+  assert.throws(() => evasionFor({ evasionArmor: 'Tinsel', attrs: { DEX: 4 } }, evasionTables()), RangeError);
+  assert.equal(evasionFor({ attrs: { DEX: 4 } }, { armor: new Map(), cards: new Map() }), 3, 'no Cloth row: built-in Cloth');
+});
+
+test('resolvePair: an enemy with attrs DEX 4 and no tables does not throw, and its Cloth evasion is 3', () => {
+  const enemy = { id: 'foe', slot: 0, speed: 4, kind: 'other', attrs: { DEX: 4 } };
+  const player = { id: 'p', speed: 1, kind: 'attack', accuracy: 0 };
+  assert.equal(find(resolvePair(enemy, player, d20Face(10), {}), 'hit').hit, false, 'need 8 + 3 = 11, so d20 10 misses');
+  assert.equal(find(resolvePair(enemy, player, d20Face(11), {}), 'hit').hit, true);
 });
 
 test('evasion from attrs.DEX reaches the hit roll: Leather with DEX 4 is evasion 3, needs 11', () => {
