@@ -724,5 +724,9 @@
  "lifecycle.recall.afterUse": "new",
  "lifecycle.recall.afterTurnDraw": "new",
  "lifecycle.recall.afterCardPlay": "new",
- "lifecycle.seal": "new"
+ "lifecycle.seal": "new",
+ "reach": "new",
+ "reach.contact": "new",
+ "reach.near": "new",
+ "reach.far": "new"
 }

@@ -725,6 +725,10 @@ lifecycle.recall.afterUse,afterUse,afterUse,lifecycle.recall,TagNode,,Returns to
 lifecycle.recall.afterTurnDraw,afterTurnDraw,afterTurnDraw,lifecycle.recall,TagNode,,Returns to your hand after your turn's draw.,,,,,,live-tag,,,lifecycle.recall.afterTurnDraw
 lifecycle.recall.afterCardPlay,afterCardPlay,afterCardPlay,lifecycle.recall,TagNode,,Returns to your hand after you play another card.,,,,,,live-tag,,,lifecycle.recall.afterCardPlay
 lifecycle.seal,seal,seal,lifecycle,TagNode,,Set aside in the Sealed zone when its seal condition is met.,,,,,,live-tag,,,lifecycle.seal
+reach,reach,Reach,,TagNode,,Inspection details for combat techniques.,,,,,,live-tag,,,reach
+reach.contact,contact,Contact,reach,TagNode,,At melee reach.,,,,,,live-tag,◇,9FC3E8,reach:contact
+reach.near,near,Near,reach,TagNode,,Normal ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:near
+reach.far,far,Far,reach,TagNode,,Extended ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:far
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

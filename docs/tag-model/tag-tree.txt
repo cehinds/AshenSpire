@@ -850,3 +850,7 @@ lifecycle {Where a card goes after it is played or resolved: recalled to hand, s
     afterTurnDraw {Returns to your hand after your turn's draw.}
     afterCardPlay {Returns to your hand after you play another card.}
   seal {Set aside in the Sealed zone when its seal condition is met.}
+Reach {Inspection details for combat techniques.}
+  Contact {At melee reach.}
+  Near {Normal ranged reach.}
+  Far {Extended ranged reach.}

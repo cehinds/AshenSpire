@@ -439,6 +439,11 @@ export const LIVE = {
   'lifecycle.recall.afterTurnDraw': 'lifecycle.recall.afterTurnDraw',
   'lifecycle.recall.afterCardPlay': 'lifecycle.recall.afterCardPlay',
   'lifecycle.seal': 'lifecycle.seal',
+  // proposed live mapping (domain pass)
+  'reach': 'reach',
+  'reach.contact': 'reach:contact',
+  'reach.near': 'reach:near',
+  'reach.far': 'reach:far',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,
