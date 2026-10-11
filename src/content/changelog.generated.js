@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Choosing equipment is a sortable table now",
     "detail": "When you press Replace or Choose on a slot, the Armoury lists every item that fits as a row: portrait, name and kind, an Equipped here / Not equipped / held-elsewhere status, and Inspect plus Equip, Move here or Unequip. Sort by Item or Status, show the items that don't fit along with the reason, and Inspect opens the full card in place. A single sceptre held in your main hand now says so and offers Move here for the off hand.",
-    "build": "0.7.1.1300",
+    "build": "0.7.1.1302",
     "pullRequest": 1852,
     "url": "https://github.com/cehinds/AshenSpire/pull/1852"
+  },
+  {
+    "id": "pr-1829",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "One Workbench for every authoring tool",
+    "detail": "For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.",
+    "build": "0.7.1.1299",
+    "pullRequest": 1829,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1829"
+  },
+  {
+    "id": "pr-1851",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Preview builds for every open branch now publish",
+    "detail": "Development-process change only, nothing in the game changes. A branch whose name starts with a capital letter, such as Chore/…, now gets its playable preview page like any other open branch, instead of a broken link.",
+    "build": "0.7.1.1298",
+    "pullRequest": 1851,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1851"
+  },
+  {
+    "id": "pr-1848",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Game rules updated for clearer combat feedback",
+    "detail": "Rules document change only, nothing in the game changes yet. The rules now say an attack plays the swing and the return to stance before the target reacts, and before numbers and health bars update. They also say the game will report why a reaction wasn't offered and when a Smash breaks Guard.",
+    "build": "0.7.1.1297",
+    "pullRequest": 1848,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1848"
   },
   {
     "id": "pr-1846",

@@ -10,6 +10,17 @@ the owner's standing rule for every session: reviewed by another agent or
 session, conflicts resolved by you, fast checks green, then you merge it into
 `dev` yourself and promote `dev` to `test`, where the long suites run.
 
+**Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
+visible (UI, tools, the Workbench, art, layout), finish the report with fresh
+screenshots of the changed screens and a preview the owner can open (a
+published page or the CI artifact link), without being asked.
+
+**Nothing lives only on one machine** (owner, 2026-10-11): the owner switches
+computers and models mid-task, so every commit reaches origin as soon as it exists.
+Workers' branches are pushed to their own `origin/<branch>` as they commit (the
+main session pushes them when a worker cannot), task status lives in the PR body
+or a committed file, and previews are published links, not local servers.
+
 **When you need the owner to decide or do something**, ask in this shape, and
 nothing longer (owner's rule, 2026-09-26):
 
@@ -47,7 +58,8 @@ work in very small steps, one self-contained commit per step, pushed as soon as 
 is made so reviewers review each commit as it lands (owner, 2026-10-11). Review
 agents stay read-only and review each pushed commit as it lands. Models track the newest release of each tier: workers
 run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
-on the newest Opus (Opus 5.5 today). Agent files pin the tier aliases
+on the newest Opus (Opus 5.5 today); the main session at high effort, `ashen-reviewer`
+at medium (owner, 2026-10-11). Agent files pin the tier aliases
 (`model: haiku` / `model: opus`), which resolve to the newest model. When a new
 model ships, update the "today" names here and in docs/ai/AI-ROUTING.md, nothing
 else. Remove old local worktrees to save disk space: at session start and end,
