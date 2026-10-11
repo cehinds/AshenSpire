@@ -362,10 +362,14 @@ try {
   await page.getByLabel('Widget shadow Blur', { exact: true }).fill('5');
   await page.getByLabel('Widget shadow Blur', { exact: true }).press('Tab');
   await ffButton('Mobile').click();
+  await selectTree('player-details-frame');
+  await page.getByLabel('Component name', { exact: true }).fill('Renamed details frame');
+  await page.getByLabel('Component name', { exact: true }).press('Tab');
   await page.locator('#reset').click();
   await page.getByRole('button', { name: 'Reset form factor', exact: true }).click();
   await page.locator('#dialogConfirm').click();
   current = await savedScene();
+  check(current.nodes.find(n => n.id === 'player-details-frame').name === 'Renamed details frame', 'Mobile Reset form factor keeps a renamed component name');
   const seedFrame = (await page.evaluate(() => fetch('scene.json').then(r => r.json()))).nodes.find(n => n.id === 'player-details-frame');
   const frame = current.nodes.find(n => n.id === 'player-details-frame');
   check(JSON.stringify(formFactorNode(frame, 'mobile').shadow) === JSON.stringify(seedFrame.shadow), 'Mobile Reset form factor restores the seed widget shadow');
