@@ -27,7 +27,7 @@ import { createFileService } from './core/files.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..');
 export const DEFAULT_PORT = 4300;
-const STATIC = /^(index\.html|app\.mjs|workbench\.css|shared\/[\w-]+\.css|ui\/(kit\/)?[\w-]+\.mjs|modules\/([\w-]+\/)?[\w-]+\.mjs)$/;
+const STATIC = /^(index\.html|app\.mjs|workbench\.css|shared\/[\w-]+\.css|ui\/(kit\/)?[\w-]+\.(mjs|css)|modules\/([\w-]+\/)?[\w-]+\.(mjs|css))$/;
 const PREVIEW_FILE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
 const WATCH_DIRS = ['content', 'src', 'styles'];
 const EXPORT_DIR = 'build/engine-export';
