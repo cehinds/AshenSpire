@@ -37,7 +37,7 @@ const SHELL = `<div class="mode-bar dk-bar">
     <span class="spacer"></span>
     <button type="button" class="btn btn-sm lay-toggle" data-panel="layers" aria-expanded="false" aria-controls="dk-layers-pane">Layers</button>
     <button type="button" class="btn btn-sm lay-toggle" data-panel="props" aria-expanded="false" aria-controls="dk-props-pane">Inspector</button>
-    <button type="button" class="btn btn-sm" data-dk="preview" title="Open the Rest screen in the game preview, where the deck editor opens">Preview in game</button>
+    <button type="button" class="btn btn-sm" data-dk="preview" title="Open the map in the game preview with deck editing on: Deck, then Edit deck">Preview in game</button>
   </div>
   <div class="mode-body">
     <aside class="lay-left" id="dk-layers-pane"><div class="lay-panel-head"><span>Layers</span><button type="button" class="btn btn-sm" data-panel-close>Close</button></div><div class="dk-layers"></div></aside>
@@ -243,16 +243,16 @@ export function createDeckView(root, host) {
   }
 
   /**
-   * The Rest screen in the dock with deck editing on (a shot boot's settings), where the deck
-   * editor opens. The dock shows the saved file, so save a draft first to see it.
+   * The map in the dock with deck editing on (a shot boot's settings): Deck, then Edit deck,
+   * opens the editor with the cost badges. The dock shows the saved file, so save a draft first.
    */
   async function previewHere() {
     let base = null;
     try { base = gameBaseOf(await host.api('tools')); } catch { base = null; }
     if (!base) { host.toast({ kind: 'warn', title: 'The game server is not up', detail: 'Start the Workbench server; the preview needs the game.', record: false }); return; }
-    const settings = encodeURIComponent(JSON.stringify({ deckEditing: true, deckEditingWhere: 'restOnly' }));
-    host.preview.showUrl(`${base}index.html?shot=rest&shotSettings=${settings}`);
-    host.toast({ kind: 'info', title: 'Previewing the Rest screen', detail: 'Open Deck to see the cost badges. The dock shows the saved file; the row here is not drawn in the game.', record: false });
+    const settings = encodeURIComponent(JSON.stringify({ deckEditing: true, deckEditingWhere: 'free' }));
+    host.preview.showUrl(`${base}index.html?shot=map&shotSettings=${settings}`);
+    host.toast({ kind: 'info', title: 'Previewing the map with deck editing on', detail: 'Tap Deck, then Edit deck, to see the cost badges. The dock shows the saved file; the card row here is not drawn in the game.', record: false });
   }
 
   function ensureCanvas() {
