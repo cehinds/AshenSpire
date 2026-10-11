@@ -72,3 +72,12 @@ test('pages: the current-head check still drops a preview with no successful run
   assert.match(step, /select\(\.head_sha == \$sha and \.conclusion == "success"\)/);
   assert.match(step, /if \[ -z "\$run" \]; then[\s\S]*?continue/);
 });
+
+test('pages: the preview fetch selects only live artifacts and never fails the run for a missing or expired one', () => {
+  const step = pages.slice(pages.indexOf('- name: Fetch each open pull request'), pages.indexOf('- name: Assemble the site'));
+  assert.match(step, /select\(\.expired == false\)/, 'the artifact filter keeps only non-expired artifacts');
+  assert.doesNotMatch(step, /exit 1/, 'no step path exits the run on a missing or failed preview artifact');
+  assert.doesNotMatch(step, /Preview artifact missing/, 'a missing artifact is a warning, not an error');
+  assert.match(step, /preview artifact expired; push to rebuild/, 'an expired artifact is named with its PR and the rebuild hint');
+  assert.match(step, /if \[ -z "\$name" \]; then[\s\S]*?continue/, 'a missing artifact skips that PR');
+});

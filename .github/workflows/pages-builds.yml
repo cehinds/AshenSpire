@@ -402,12 +402,24 @@ jobs:
               echo "::notice title=No build yet::PR #$pr ($ref) has no successful dev preview for $sha yet"
               continue
             fi
+            # Only a live artifact counts: the standalone build is kept 14 days, and an
+            # expired one is skipped (this PR gets no build until it is pushed again).
             name=$(gh api "repos/$REPO/actions/runs/$run/artifacts" \
-              --jq '[.artifacts[] | select(.expired | not) | select(.name | startswith("dev-standalone-"))][0].name // empty')
+              --jq '[.artifacts[] | select(.expired == false) | select(.name | startswith("dev-standalone-"))][0].name // empty')
             if [ -z "$name" ]; then
-              echo "::error title=Preview artifact missing::PR #$pr: run $run has no dev-standalone artifact"; exit 1
+              echo "::warning title=Preview not published::PR #$pr ($ref): preview artifact expired; push to rebuild"
+              continue
             fi
-            gh run download "$run" --repo "$REPO" --name "$name" --dir "$out/$safe"
+            # One PR's download failure skips that PR only; it never fails the whole publish.
+            if ! err=$(gh run download "$run" --repo "$REPO" --name "$name" --dir "$out/$safe" 2>&1); then
+              rm -rf "$out/$safe"
+              if printf '%s' "$err" | grep -q 'HTTP 410'; then
+                echo "::warning title=Preview not published::PR #$pr ($ref): preview artifact expired; push to rebuild"
+              else
+                echo "::warning title=Preview not published::PR #$pr ($ref): download of $name failed, skipped: $(printf '%s' "$err" | head -n 1)"
+              fi
+              continue
+            fi
             jq -cn --arg b "$ref" --arg d "$safe" --argjson pr "$pr" --arg sha "$sha" '{branch: $b, dir: $d, pr: $pr, sha: $sha}' >> "$entries"
             echo "  fetched PR #$pr $ref at $sha"
           done <<< "$prs"
