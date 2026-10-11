@@ -780,9 +780,15 @@ async function motionStudio() {
     await overlay('lib', false);
     const note = await page.locator(`${V}.mo-generated`).count();
     expect(note > 0, 'no generated note on the stance file');
+    // Open the Inspector so the generated note and its fields are in the picture, then measure them.
+    await overlay('insp', true);
+    const totalInputs = await page.locator(`${V}.mo-insp input`).count();
     const enabledInputs = await page.locator(`${V}.mo-insp input:not([disabled])`).count();
     await shot(`motion-stance-${sizeName}`);
-    return `generated note shown; enabled inspector inputs ${enabledInputs}`;
+    await overlay('insp', false);
+    expect(totalInputs > 0, 'the stance Inspector shows no fields');
+    expect(enabledInputs === 0, `${enabledInputs} of ${totalInputs} Inspector fields are editable on a generated stance file`);
+    return `generated note shown; ${totalInputs} Inspector fields, all read-only`;
   });
   await check('Motion: Open in Asset Gallery from the library', async () => {
     // The link appears in the Inspector for a file with source frames: pick an animation that has them.
