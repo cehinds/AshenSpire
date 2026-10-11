@@ -58,3 +58,20 @@ test('the job list still describes the capture job with its default command', ()
   assert.equal(def.label, 'Visual capture');
   assert.match(def.commands[0], /^node tools\/screenshot\.mjs --out \/state\/p1\/review\/captures --viewport 1280x800 --prefix desk- --only /);
 });
+
+test('null params mean the defaults, and a non-object params value is a 400 with a clear message', () => {
+  const stateDir = '/state/p1';
+  const defaults = JOBS['review-capture'].steps('/repo', { params: {}, stateDir });
+  assert.deepEqual(JOBS['review-capture'].steps('/repo', { params: null, stateDir }), defaults);
+  assert.throws(() => JOBS['review-capture'].steps('/repo', { params: 'desk', stateDir }), (e) => e.status === 400 && /must be an object/.test(e.message));
+  assert.throws(() => reviewCaptureParams(['title']), (e) => e.status === 400);
+});
+
+test('the runner refuses a non-object params before a run starts, and accepts null as defaults', async (t) => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'review-capture-null-'));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const runner = new JobRunner({ root: dir, stateFile: path.join(dir, 'state', 'jobs.json') });
+  assert.doesNotThrow(() => JOBS['review-capture'].steps(dir, { params: null, stateDir: dir }));
+  assert.throws(() => runner.start('review-capture', 'desk'), (e) => e.status === 400);
+  assert.equal(runner.runs.length, 0);
+});

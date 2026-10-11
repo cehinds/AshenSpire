@@ -78,3 +78,13 @@ test('a Visual capture request with a bad device or screen is refused before any
   assert.equal(app.jobs.runs.length, 0);
   assert.equal(app.jobs.active.size, 0);
 });
+
+test('a Visual capture request with null params runs on the defaults, and a string params is a 400 (never a 500)', async (t) => {
+  const { app, call } = await boot(t);
+  const nul = await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'review-capture', params: null }) });
+  assert.equal(nul.status, 200);
+  const str = await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'review-capture', params: 'desk' }) });
+  assert.equal(str.status, 400);
+  assert.match((await str.json()).error, /must be an object/);
+  assert.equal(app.jobs.runs.filter((r) => r.id === 'review-capture').length, 1);
+});
