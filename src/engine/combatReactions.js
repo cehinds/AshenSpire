@@ -56,13 +56,15 @@ function candidateCardIds(ctx, row) {
 
 function optionsFor(ctx, row, group, hooks, refusal = null) {
   const options = [];
+  let inst;
+  // The refusal also names the card it came from (cardId), so the log can name it.
   const note = (reason, extra = {}) => {
     if (refusal && (!refusal.reason || REASON_RANK[reason] > REASON_RANK[refusal.reason])) {
       for (const key of Object.keys(refusal)) delete refusal[key];
-      Object.assign(refusal, { reason, ...extra });
+      Object.assign(refusal, { reason, ...extra, cardId: inst.cardId });
     }
   };
-  for (const inst of handOf(ctx, row)) {
+  for (inst of handOf(ctx, row)) {
     const base = resolveCombatCard(ctx, inst);
     if (!eligible(ctx, base, row)) { if (candidateByManeuver(base)) note('notCovered'); continue; }
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
@@ -102,8 +104,9 @@ function reportUnavailable(ctx, group, id, row, reason, extra = {}) {
   const cardIds = candidateCardIds(ctx, row);
   if (!cardIds.length) return;
   (group.reactionNoticed ||= []).push(id);
-  ctx.emit('combatReactionUnavailable', { ownerId: id, sourceId: group.sourceId, reason, cardIds,
-    attackKind: attackKind(row), ...extra });
+  const { cardId = cardIds[0], ...rest } = extra;
+  ctx.emit('combatReactionUnavailable', { ownerId: id, sourceId: group.sourceId, reason, cardId, cardIds,
+    attackKind: attackKind(row), ...rest });
 }
 
 const rowFor = (ctx, group, id) => Object.values(group.targets).find(target => ctx.players ? target.playerId === id : target.id === ctx.player.id);

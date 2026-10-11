@@ -56,7 +56,7 @@ const soloEnd = combat => dispatch(combat, { type: 'endTurn' }).events;
 test('a melee Counter facing a Sweep reports notCovered with the attack kind', () => {
   const combat = solo({ move: { cardTags: SWEEP } });
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'notCovered',
-    cardIds: ['guardCounter'], attackKind: 'sweep' }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'sweep' }]);
   assert.equal(combat.pendingReaction, undefined);
 });
 
@@ -64,18 +64,33 @@ test('a Counter the seat cannot pay for reports cost with need and have', () => 
   const combat = solo();
   combat.player.energy = 0;
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
-    cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
 });
 
 test('a Counter whose HP offering would leave the seat dead reports cost with resource hp', () => {
   const combat = solo({ offer: seatStats.hp });
   const events = soloEnd(combat);
   assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
-    cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: seatStats.hp, have: seatStats.hp }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: seatStats.hp, have: seatStats.hp }]);
   assert.equal(combat.pendingReaction, undefined);
   const registries = createRegistries(contentBundle);
   assert.deepEqual(combatLogEntries(events, { registries }).map(row => row.text).filter(text => text.startsWith('Not enough')),
     [`Not enough HP to Guard Counter (need ${seatStats.hp}, have ${seatStats.hp}).`]);
+});
+
+test('the reported refusal names the card it came from, not the first candidate', () => {
+  // Guard Counter can't cover a Sweep (notCovered); Whirling Guard is covered but unpaid (cost).
+  const combat = solo({ cardIds: ['guardCounter', 'whirlingGuard'], move: { cardTags: SWEEP } });
+  combat.player.energy = 0;
+  const events = soloEnd(combat);
+  const [row] = unavailable(events);
+  assert.equal(unavailable(events).length, 1);
+  assert.equal(row.reason, 'cost');
+  assert.equal(row.cardId, 'whirlingGuard');
+  assert.deepEqual(row.cardIds, ['guardCounter', 'whirlingGuard']);
+  const registries = createRegistries(contentBundle);
+  assert.deepEqual(combatLogEntries(events, { registries }).map(entry => entry.text).filter(text => text.startsWith('Not enough')),
+    [`Not enough SP to Sweep (need ${row.need}, have 0).`]);
 });
 
 test('the Reaction switch off reports switchOff only to a seat holding a candidate', () => {
@@ -112,7 +127,7 @@ test('a staggered or controlled attacker reports the halt once per root', () => 
     assert.equal(beforeReactionAction(combat, action, hooks), false);
     assert.equal(beforeReactionAction(combat, action, hooks), false);
     assert.deepEqual(unavailable(combat.eventLog.slice(start)), [{ ownerId: 'player', sourceId: 'e1', reason,
-      cardIds: ['guardCounter'], attackKind: 'attack' }]);
+      cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack' }]);
   }
 });
 
@@ -137,7 +152,7 @@ test('a later action of an answered root reports alreadyAnswered once', () => {
   assert.ok(combat.pendingReaction);
   const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }).events;
   assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'alreadyAnswered',
-    cardIds: ['guardCounter'], attackKind: 'attack' }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack' }]);
 });
 
 test('co-op reports the same reasons through the same offer door', () => {
@@ -145,7 +160,7 @@ test('co-op reports the same reasons through the same offer door', () => {
   cost.players.get('a').entity.energy = 0;
   endTurn(cost, 'a');
   assert.deepEqual(unavailable(cost.eventLog), [{ ownerId: 'a', sourceId: 'e1', reason: 'cost',
-    cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
   const sweep = coop({ move: { cardTags: SWEEP } });
   endTurn(sweep, 'a');
   assert.deepEqual(unavailable(sweep.eventLog).map(row => [row.ownerId, row.reason, row.attackKind]), [['a', 'notCovered', 'sweep']]);

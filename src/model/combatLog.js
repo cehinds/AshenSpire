@@ -5,7 +5,7 @@ const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 
 const RESOURCE_WORDS = { stamina: 'SP', mana: 'MP' };
 // Why an in-hand Counter or defensive Sweep was not offered (SPEC §4.10).
 function reactionUnavailableText(event, { registries, source, owner }) {
-  const card = registries?.cards.get(event.cardIds?.[0]);
+  const card = registries?.cards.get(event.cardId ?? event.cardIds?.[0]);
   const tags = card?.cardTags || card?.tags || [];
   const verb = tags.includes('maneuver:sweep') ? 'Sweep' : 'Counter';
   switch (event.reason) {
