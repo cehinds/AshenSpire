@@ -150,18 +150,22 @@ export class Tool {
 
   async doStart({ timeoutMs = 30000 } = {}) {
     if (this.child) return;
+    // The default port first: a tool of ours already answering there is reused.
+    this.port = this.def.port;
     if (await this.probe()) {
       this.owned = false;
       this.set('up', this.embeddable ? 'Already running — reused' : 'Already running outside the Workbench, without permission to be embedded. Stop it, then Restart here.');
       return;
     }
-    if (this.conflict) { this.set('down', this.conflict); return; }
+    // Something else holds the port (another checkout's Workbench, or a non-tool): listen on a free one instead.
+    const port = await pickPort(this.def.port);
+    this.port = port;
     this.spawn(timeoutMs);
   }
 
   spawn(timeoutMs) {
     const { def } = this;
-    this.port = def.port; this.owned = true; this.stopping = false; this.embeddable = true; this.startedAt = Date.now();
+    this.owned = true; this.stopping = false; this.embeddable = true; this.startedAt = Date.now();
     this.set('starting', 'Starting…');
     let child;
     try {

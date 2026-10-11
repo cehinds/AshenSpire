@@ -47,6 +47,21 @@ async function waitFor(predicate, ms = 10000) {
   return predicate();
 }
 
+test('a default port held by another checkout: the child starts on a free port and the listing shows it', async (t) => {
+  const base = await freePort();
+  const holder = await holdPort(base);
+  const tool = fakeTool(base);
+  t.after(async () => { await tool.stop(); await new Promise((r) => holder.close(r)); });
+  await tool.start();
+  assert.ok(await waitFor(() => tool.status === 'up'), `tool is up, was ${tool.status}: ${tool.message}`);
+  const listed = tool.toJSON();
+  assert.notEqual(listed.port, base, 'not the port the other checkout holds');
+  assert.equal(listed.url, `http://127.0.0.1:${listed.port}/`, 'the listing carries the real URL');
+  assert.equal(listed.owned, true, 'the Workbench started it');
+  const res = await fetch(listed.url + 'api/session');
+  assert.equal((await res.json()).root, HERE, 'the child serves this checkout');
+});
+
 test('a free default port is kept as before', async (t) => {
   const base = await freePort();
   const tool = fakeTool(base);
