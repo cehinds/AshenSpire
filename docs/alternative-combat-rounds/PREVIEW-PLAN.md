@@ -47,25 +47,27 @@ An opt-in setting that runs real fights on the alternative combat rounds
   `combat.combatRounds`. The field is absent when the toggle is off, so normal
   fights and saves are byte-identical.
 - Player turn: playing a card queues it (cost paid at queue time; an unqueue
-  intent refunds). End Turn becomes Commit: enemy queues adapt, the round steps
+  intent refunds). End Turn keeps its label and commits the round: enemy queues adapt, the round steps
   through the timeline, a player-targeted attack can pause for a reaction through
   the existing `chooseReaction` intent, then the live turn-end hand rules run.
-- Intents: one icon per visible enemy action (reusing the intent presentation),
-  card-hint borders and arrows, a momentum badge per enemy.
+- Screen: see the Screen section below (intent box with follow-ups, card
+  symbols, momentum on the turn banner, target outlines).
 - Saves: the round state (queues, momentum, charges, cursor while paused) is
   snapshotted; a new RNG stream is appended so existing seeds keep their rolls.
 
 ## Phases
 
-- [ ] P0 SPEC change: new §4.11 Combat Rounds Preview, pointers from §4.1, §4.6,
+- [x] P0 SPEC change: new §4.11 Combat Rounds Preview, pointers from §4.1, §4.6,
   §4.7, §4.9, §4.10 (size S)
-- [ ] P1 Port the engine into `src/engine/combatRounds/` with a pausable,
+- [x] P1 Port the engine into `src/engine/combatRounds/` with a pausable,
   serialisable round (size M)
 - [ ] P2 Rules model, Advanced → Combat setting row, RNG stream (size S)
-- [ ] P3 Solo adapter in `combat.js`: queue, commit, reactions, live effects,
+- [ ] P3 Solo adapter in `combat.js`: queue, End Turn commits, reactions, live effects,
   live Counter/Evade with speed (size L)
 - [ ] P4 Save and resume, mid-round included (size M)
-- [ ] P5 UI: queue strip, slot icons, momentum badge, card hints, Commit (size L)
+- [ ] P5 UI per the Screen section: intent box follow-ups, card speed and hint
+  symbols, momentum on the turn banner, target outlines, blue playable outline
+  (size M)
 - [ ] P6 Co-op/LAN parity: per-seat queues and momentum in `coopCombat.js`,
   lobby forwards the setting, LAN intent privacy kept (size L)
 

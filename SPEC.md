@@ -26,7 +26,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
-| 4.11 | Combat Rounds Preview | **planned** | Contract only: [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md) phases P1–P6 (engine port, rules and setting, solo, saves, UI, co-op/LAN). Owner decisions are recorded in §4.11 (Resolved, 2026-10-11). |
+| 4.11 | Combat Rounds Preview | **planned** | Engine port done (P1: `src/engine/combatRounds/`, not wired into combat yet); [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md) phases P2–P6 (engine port, rules and setting, solo, saves, UI, co-op/LAN). Owner decisions are recorded in §4.11 (Resolved, 2026-10-11). |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
@@ -1161,11 +1161,11 @@ When the Combat Rounds Preview is on, see §4.11.
 - Counter and Evade keep their live rules (§4.7, §4.8). Each has a speed value and takes its place in the order. The timeline's own Counter-cancel and evade-percent rules are not used.
 - A reaction from hand uses the reaction choice of §4.10 (Back, Play).
 
-**Queue and Commit**
+**Queue and End Turn**
 
 - Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
 - Enemies queue cards and moves from their own SP pool, stat-driven with a base of 3. A move costs 1 SP unless the move says otherwise.
-- End Turn becomes Commit. Commit adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
+- End Turn keeps its label and look. In the preview it commits the round: it adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
 
 **Order and hits**
 
@@ -1180,9 +1180,9 @@ When the Combat Rounds Preview is on, see §4.11.
 
 **Perception**
 
-- For each enemy, the player reads the first 1 + Perception actions of that enemy's own queue, in its play order (the queue prefix of DESIGN.md), where Perception is the §4.9 stat. Actions beyond that count are placed on the initiative track as `?` at their place in the order (owner, 2026-10-11).
+- For each enemy, the player reads the first 1 + Perception actions of that enemy's own queue, in its play order (the queue prefix of DESIGN.md), where Perception is the §4.9 stat. Actions beyond that count show as `?` symbols in that enemy's intent box, at their place in its play order (owner, 2026-10-11).
 - A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
-- A stage 0 (`?`) action within the read count is not placed on the initiative track. A stage 3 action is placed.
+- The intent box shows the enemy's current action at today's size and its follow-up actions as smaller symbols. There is no separate initiative track or queue strip (owner, 2026-10-11).
 
 **Co-op and LAN**
 
@@ -1192,7 +1192,7 @@ When the Combat Rounds Preview is on, see §4.11.
 **Resolved (owner, 2026-10-11)**
 
 - A queued card pays only its Stamina cost as SP (and Mana as MP). A live Actions cost is not paid in the preview.
-- Enemy actions beyond the read count are placed on the initiative track as `?` (see Perception).
+- Enemy actions beyond the read count show as `?` in the enemy's intent box (see Perception).
 - A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
 - In co-op, momentum is per seat: each seat has its own −3..+3 against each enemy.
 
