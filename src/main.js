@@ -1156,7 +1156,14 @@ function newRun(config) {
     prepare: () => saves.ensureProfile(),
     isCurrent: () => app.firstElementChild === surface && run === previousRun,
     adopt: () => beginPreparedRun({ ...config, seedString: asked }),
-    onFailure: error => showSettingsNotice(`Profile could not be saved: ${error.message}`, 'profile'),
+    onFailure: error => {
+      const message = `Profile could not be saved: ${error.message}`;
+      console.error('[run] start refused:', error);
+      // The command log keeps the reason even when the banner is folded into
+      // its overflow; keying by reason lets a new reason raise its own banner.
+      dlog('ERROR', `run start refused: ${error.message}`);
+      if (!showSettingsNotice(message, 'profile')) failureBanner(`run:start:${error.message}`, 'THIS RUN COULD NOT START', ` · ${error.message}`);
+    },
   });
 }
 

@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "The design spec matches the game again",
     "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
-    "build": "0.7.1.1312",
+    "build": "0.7.1.1314",
     "pullRequest": 1863,
     "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1864",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Begin says so when a new run cannot start",
+    "detail": "If the game cannot save your profile when you press Begin or Quick start, a \"This run could not start\" banner now explains why. Before, the press simply did nothing.",
+    "build": "0.7.1.1313",
+    "pullRequest": 1864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1864"
   },
   {
     "id": "pr-1860",
