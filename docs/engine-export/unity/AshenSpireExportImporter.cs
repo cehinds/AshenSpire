@@ -14,6 +14,13 @@
 // count, its schema JSON and its hash. Config files are copied as .json
 // TextAssets under Assets/AshenSpire/Config/, and the art manifests under
 // Assets/AshenSpire/Art/. Only UnityEngine and UnityEditor are used.
+//
+// Pruning is by ownership, like the Unreal importer. After each successful
+// import the importer writes Assets/AshenSpire/.ashenspire-import.json, listing
+// the assets it created or updated. The next import deletes only the listed
+// assets that the new manifest no longer has. Assets you made by hand in those
+// folders are never listed, so they are kept. With no record (a first import,
+// or an upgrade from an importer that wrote none) nothing is pruned.
 // Reading rows at runtime: AshenSpireTable.ParseRows<T>().
 
 #if UNITY_EDITOR
