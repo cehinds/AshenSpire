@@ -8,7 +8,7 @@
 //   node --test tests/no-page-reload.test.mjs
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -50,7 +50,7 @@ test('location.reload( under src/ui and src/main.js is only the offline panel de
   const hits = [];
   for (const file of files) {
     readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-      if (line.includes('location.reload(')) hits.push({ where: `${relative(root, file)}:${i + 1}`, line: line.trim() });
+      if (line.includes('location.reload(')) hits.push({ where: `${relative(root, file).split(sep).join('/')}:${i + 1}`, line: line.trim() });
     });
   }
   assert.deepEqual(hits.map((hit) => hit.where.split(':')[0]), ['src/ui/components/offlinePlay.js']);
