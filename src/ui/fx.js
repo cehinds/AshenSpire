@@ -450,7 +450,7 @@ function clearHeldFigures() {
   for (const [el, timer] of heldFigures) {
     clearTimeout(timer);
     el.classList.remove('hit-stop');
-    stageFor(el)?.settle?.();
+    stageFor(el)?.settle?.({ reaction: true });
   }
   heldFigures.clear();
 }

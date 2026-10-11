@@ -153,8 +153,10 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     if (playing || flashAt!==null) request=requestAnimationFrame(tick);
   }
   const wake=()=>{ if (request===null && !disposed) {last=performance.now();request=requestAnimationFrame(tick);} };
-  // A click-skip settles to end-state: any hit reaction and its hold end too.
-  function settle() { playing=null;resources=[];elapsed=0;flashAt=null;flashElapsed=0;holdUntil=0;pose=restPose();paint(); }
+  function settle() { playing=null;resources=[];elapsed=0;pose=restPose();paint(); }
+  // Routine renders (setRestPose) settle the action only; a running hit reaction
+  // keeps its own clock. A click-skip passes { reaction:true } to end it too.
+  function settleStage({reaction=false}={}) { if(reaction){flashAt=null;flashElapsed=0;holdUntil=0;} settle(); }
   function hit(ms=220) { if (reducedMotionRequested() || still || getAnimSpeed()==='instant') return false;flashAt=performance.now();flashMs=ms>0?ms:220;flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
@@ -212,7 +214,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       paint(performance.now(),true);last=performance.now();wake();return true;
     },
     hold(ms){if(!(playing||flashAt!==null)||!(ms>0))return false;holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;},
-    react(resource){clearTimeout(reactionTimer);el.dataset.poseReaction=resource;reactionTimer=setTimeout(()=>{el.dataset.poseReaction='';},180);},settle,
+    react(resource){clearTimeout(reactionTimer);el.dataset.poseReaction=resource;reactionTimer=setTimeout(()=>{el.dataset.poseReaction='';},180);},settle:settleStage,
     dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;images.clear();down=null;auraRenderer.dispose();}
   });
 }
