@@ -1,0 +1,70 @@
+/* workbench/modules/layout/layout.css — Layout Studio chrome. Colours are the
+   Workbench tokens (shared/tokens.css); the canvas kit styles its own page. */
+.lay { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--as-bg); color: var(--as-text); }
+
+.lay-modes { display: flex; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--as-line); background: var(--as-bg-panel); overflow-x: auto; flex: none; }
+.lay-modes button { height: 30px; padding: 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--as-radius) var(--as-radius) 0 0; background: transparent; color: var(--as-text-dim); font: inherit; font-size: var(--as-text-sm); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.lay-modes button[aria-selected="true"] { background: var(--as-bg); color: var(--as-text); border-color: var(--as-line); font-weight: 600; }
+.lay-modes button:disabled { opacity: 0.5; cursor: default; }
+.lay-soon { font-size: 10px; color: var(--as-text-faint); border: 1px solid var(--as-line); border-radius: 8px; padding: 0 5px; }
+
+.lay-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--as-line); background: var(--as-bg-panel); flex: none; }
+.lay-bar .spacer { flex: 1; }
+.lay-field { display: inline-flex; align-items: center; gap: 6px; font-size: var(--as-text-sm); color: var(--as-text-dim); }
+.lay-field select { height: 26px; max-width: 240px; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font: inherit; font-size: var(--as-text-sm); }
+.lay-check { display: inline-flex; align-items: center; gap: 4px; font-size: var(--as-text-sm); color: var(--as-text-dim); }
+.lay-sep { width: 1px; height: 20px; background: var(--as-line); margin: 0 2px; }
+.lay-align { display: inline-flex; gap: 2px; flex-wrap: wrap; }
+
+.lay-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 160px minmax(0, 1fr) 240px; }
+.lay-right .ck-grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.lay-right .ck-field { min-width: 0; }
+.lay-right .ck-grid2 input, .lay-right .ck-field input, .lay-right .ck-field select { width: 100%; min-width: 0; box-sizing: border-box; }
+.lay-left, .lay-right { min-height: 0; overflow: auto; background: var(--as-bg-panel); }
+.lay-left { border-right: 1px solid var(--as-line); }
+.lay-right { border-left: 1px solid var(--as-line); }
+.lay-center { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.lay-canvas { flex: 1; min-height: 0; position: relative; }
+.lay-status { flex: none; padding: 4px 10px; border-top: 1px solid var(--as-line); color: var(--as-text-faint); font-size: var(--as-text-xs); font-family: var(--as-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lay-hint { padding: 24px; color: var(--as-text-dim); }
+.lay-hint.is-error { color: var(--as-bad); }
+
+.lay-fields { padding: 10px; font-size: var(--as-text-sm); }
+.lay-fields h3 { font-size: var(--as-text-sm); font-weight: 600; margin: 10px 0 6px; }
+.lay-fields h3:first-child { margin-top: 0; }
+.lay-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--as-line); }
+.lay-row code { font-family: var(--as-mono); font-size: var(--as-text-xs); color: var(--as-text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lay-row input { width: 100%; height: 24px; box-sizing: border-box; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); background: var(--as-bg-raised); color: var(--as-text); font: inherit; font-family: var(--as-mono); font-size: var(--as-text-xs); padding: 0 6px; }
+.lay-row .lay-unit { font-size: var(--as-text-xs); color: var(--as-text-faint); }
+.lay-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 10px; border: 1px solid var(--as-line); background: var(--as-bg-raised); color: var(--as-text-dim); font-family: var(--as-mono); font-size: 11px; white-space: nowrap; }
+.lay-chip.is-missing { color: var(--as-bad); border-color: rgba(224, 100, 92, 0.4); }
+.lay-note { color: var(--as-text-faint); font-size: var(--as-text-xs); margin: 4px 0 0; }
+
+@media (max-width: 760px) {
+  .lay-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
+  .lay-left, .lay-right { border: 0; border-top: 1px solid var(--as-line); max-height: 30vh; }
+}
+
+/* The kit's inspector also lists name, lock, hide and rotation; a region has none of them in the config, so they are not offered. */
+.lay-insp .ck-check, .lay-insp label.ck-field:has(> [data-key="label"]), .lay-insp label.ck-field:has(> [data-key="rot"]) { display: none; }
+
+/* Review and save dialog. */
+.lay-dlg { width: min(900px, 94vw); max-height: 82vh; padding: 0; border: 1px solid var(--as-line-strong); border-radius: var(--as-radius-lg); background: var(--as-bg-panel); color: var(--as-text); box-shadow: var(--as-shadow-lg); }
+.lay-dlg::backdrop { background: rgba(0, 0, 0, 0.35); }
+.lay-dlg[open] { display: flex; flex-direction: column; }
+.lay-dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--as-line); }
+.lay-dlg-head h2 { font-size: var(--as-text-lg); }
+.lay-dlg-body { padding: 14px; overflow: auto; }
+.lay-file { margin-top: 12px; }
+.lay-file h3 { font-family: var(--as-mono); font-size: var(--as-text-sm); font-weight: 600; }
+.lay-stat { color: var(--as-text-faint); font-weight: 400; margin-left: 6px; }
+.lay-hunk { border: 1px solid var(--as-line); border-radius: var(--as-radius); margin: 6px 0; overflow-x: auto; }
+.lay-hunk-head { padding: 2px 8px; background: var(--as-bg-raised); color: var(--as-text-faint); font-family: var(--as-mono); font-size: var(--as-text-xs); }
+.lay-ln { font-family: var(--as-mono); font-size: var(--as-text-xs); white-space: pre; padding: 0 8px; }
+.lay-ln.is-add { background: rgba(80, 180, 110, 0.14); }
+.lay-ln.is-del { background: rgba(224, 100, 92, 0.14); }
+.lay-op { display: inline-block; width: 1.2em; color: var(--as-text-faint); }
+.lay-problems { border: 1px solid rgba(224, 100, 92, 0.45); border-radius: var(--as-radius); padding: 8px 12px; margin-bottom: 10px; background: rgba(224, 100, 92, 0.08); }
+.lay-problems ul { margin: 6px 0; padding-left: 18px; }
+.lay-problems li { margin: 4px 0; }
+.lay-dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
