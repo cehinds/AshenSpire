@@ -942,6 +942,44 @@ test('each side wins at most once per exchange: a landed hit and a fired counter
   assert.equal(momentumOf(out, 'goblin'), 0);
 });
 
+test('a fired counter is the defender winning card when the attack misses: gain 3 once', () => {
+  // The stab (total 11) beats the counter (total 5), so the stab resolves first and misses
+  // (fallback roll 0 is a natural 1). The counter then fires and wins the one credit.
+  const out = createRound(duo({}, { hp: 20 }), {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 0, { momentumGain: 3 })],
+      goblin: [stab(9, 1)],
+    },
+    rng: rngThen([0.75, 0.3], 0),
+    merge: 'wholeQueue',
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'hit').hit, false);
+  assert.equal(out.events.some((e) => e.type === 'counterFired'), true);
+  const wins = out.events.filter((e) => e.type === 'momentum' && e.reason === 'success');
+  assert.equal(wins.length, 1);
+  assert.deepEqual([wins[0].by, wins[0].gain, wins[0].delta], ['player', 3, 3]);
+  assert.equal(momentumOf(out, 'goblin'), 3);
+});
+
+test('a fired counter is the defender winning card when a guard fully blocks: gain 3 once', () => {
+  // The queued guard (gain 2) fully blocks the stab, then the slower counter (gain 3) fires.
+  // The defender is credited once, with the counter card, not the guard card.
+  const out = createRound(duo({}, { hp: 20 }), {
+    queues: {
+      player: [guardCard('guard', { momentumGain: 2 }), card('counter', 'counter', 'goblin', 0, { momentumGain: 3 })],
+      goblin: [stab(9, 4)],
+    },
+    rng: rngThen([0.75, 0.3], 0.45),
+    merge: 'wholeQueue',
+  }).resolveAll();
+  assert.equal(out.events.some((e) => e.type === 'absorbed'), true);
+  assert.equal(out.events.some((e) => e.type === 'counterFired'), true);
+  const wins = out.events.filter((e) => e.type === 'momentum' && e.reason === 'success');
+  assert.equal(wins.length, 1);
+  assert.deepEqual([wins[0].by, wins[0].gain, wins[0].delta], ['player', 3, 3]);
+  assert.equal(momentumOf(out, 'goblin'), 3);
+});
+
 test('an overflow above +3 clamps to 3 and sets the player poiseDouble flag', () => {
   // Start 3 decays to 2. Two landed player hits give +2, so raw 4 clamps to 3.
   const st = duo();

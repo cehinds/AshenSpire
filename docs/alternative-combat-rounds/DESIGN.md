@@ -612,6 +612,7 @@ enemy has one M, and each attack is one exchange:
   A landed hit through a partial block scores its stance against the first guard card that absorbed part of it, unless an evade card was spent on that attack.
   A fired or cancelling counter wins for its owner. The gain is the winner's card
   `momentumGain` (default 1) plus the stance bonus against the other side's card.
+  When an attack does not land and the defender's counter fires on it, the defender's one credit uses the counter card.
 - A counter with the `stagger` tag adds +-3 to its side's summed delta, on top of
   its slot win.
 - Round end: the summed delta is added to each enemy's M once, then clamped to

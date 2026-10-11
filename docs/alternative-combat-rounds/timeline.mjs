@@ -587,7 +587,11 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
   if (out.landed) {
     credit(cur, run, { key, winner: entry.side, winCard: attackCard, foeCard: out.defenseCard ?? {}, events, seq: entry.seq, credited });
   } else {
-    credit(cur, run, { key, winner: sideOf(entry.target), winCard: out.defenseCard ?? {}, foeCard: attackCard, events, seq: entry.seq, credited });
+    // When the attack does not land and the defender's counter fires on it, the defender's one
+    // credit uses the counter card (owner, 2026-10-11). The credit is decided here, before the
+    // counter below, so the side is credited once.
+    const defenderCard = ownerAlive() ? counterCard : (out.defenseCard ?? {});
+    credit(cur, run, { key, winner: sideOf(entry.target), winCard: defenderCard, foeCard: attackCard, events, seq: entry.seq, credited });
   }
   if (ownerAlive()) {
     events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
