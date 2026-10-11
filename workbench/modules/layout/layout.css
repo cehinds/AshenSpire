@@ -25,7 +25,7 @@
 .lay-right { border-left: 1px solid var(--as-line); }
 .lay-center { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .lay-canvas { flex: 1; min-height: 0; position: relative; }
-.lay-status { flex: none; padding: 4px 10px; border-top: 1px solid var(--as-line); color: var(--as-text-faint); font-size: var(--as-text-xs); font-family: var(--as-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lay-status { flex: none; padding: 4px 10px; border-top: 1px solid var(--as-line); color: var(--as-text-dim); font-size: var(--as-text-xs); font-family: var(--as-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lay-hint { padding: 24px; color: var(--as-text-dim); }
 .lay-hint.is-error { color: var(--as-bad); }
 
@@ -38,7 +38,7 @@
 .lay-row .lay-unit { font-size: var(--as-text-xs); color: var(--as-text-faint); }
 .lay-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 10px; border: 1px solid var(--as-line); background: var(--as-bg-raised); color: var(--as-text-dim); font-family: var(--as-mono); font-size: 11px; white-space: nowrap; }
 .lay-chip.is-missing { color: var(--as-bad); border-color: rgba(224, 100, 92, 0.4); }
-.lay-note { color: var(--as-text-faint); font-size: var(--as-text-xs); margin: 4px 0 0; }
+.lay-note { color: var(--as-text-dim); font-size: var(--as-text-xs); margin: 4px 0 0; }
 
 @media (max-width: 760px) {
   .lay-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
