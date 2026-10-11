@@ -5260,6 +5260,41 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.stance.offensive",
+    "extends": "",
+    "short": "Offensive",
+    "full": "Offensive stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.defensive",
+    "extends": "",
+    "short": "Defensive",
+    "full": "Defensive stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.casting",
+    "extends": "",
+    "short": "Casting",
+    "full": "Casting stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.counter",
+    "extends": "",
+    "short": "Counter",
+    "full": "Counter stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.sweep",
+    "extends": "",
+    "short": "Sweep",
+    "full": "Sweep stance card.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.up",
     "extends": "",
     "short": "▲",

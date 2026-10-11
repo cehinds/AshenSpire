@@ -33,6 +33,7 @@ import { DECK_PANES, deckEditorModel, deckEditorView, nextFilterPreset, openDeck
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
+import { stanceForCard } from '../../model/alternativeStance.js';
 import { playingCardArt } from '../cardArtwork.js';
 import { assetUrl } from '../assetmap.js';
 import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
@@ -262,6 +263,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           el('small', { text: t('deckEditor.art.basicOnly') }),
         ]),
         animationPreview.root,
+        ...[stanceNode(row)].filter(Boolean),
         ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
           el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
         ])),
@@ -319,6 +321,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           el('small', { text: label }), el('span', { class: 'deck-editor-resource-value', text: String(value) }),
         ])));
   }
+  // The card's stance type (SPEC §14.1): offensive, defensive, casting, counter
+  // or sweep. A card with none shows no label.
+  const stanceNode = (row) => {
+    const stance = stanceForCard(resolveCard(registries, row.ref));
+    return stance ? el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) }) : null;
+  };
   const cardFace = (row, extra, grouped = false, illustrated = !grouped) => [
     illustrated ? artwork(row) : null,
     el('span', { class: 'deck-editor-grip', 'aria-hidden': 'true', text: '⠿' }),
@@ -326,7 +334,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     el('span', { class: 'deck-editor-heading' }, [
       el('span', { class: 'deck-editor-name', text: row.name }),
       el('span', { class: 'deck-editor-type', dataset: { type: row.type }, text: typeName(row) }),
-    ]),
+      stanceNode(row),
+    ].filter(Boolean)),
     row.equipmentEligible === false ? el('span', { class: 'deck-editor-meta', text: t('deckEditor.equipmentNotFound') }) : null,
     el('span', { class: 'deck-editor-row-rules', text: rulesFor(row) }),
     // Unordered, a deck row stands for every copy of its variant (SPEC §14.7).

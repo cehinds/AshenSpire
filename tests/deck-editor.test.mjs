@@ -862,6 +862,27 @@ test('DOM: removing a deck card by its － keeps focus off the search box (no ph
   });
 });
 
+test('DOM: a known attack card shows its stance type on the row and in the inspector', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const strike = deckEditorModel({ registries: REG, run, settings: {} }).deck.find(row => row.cardId === 'strike');
+    assert.ok(strike, 'the starting deck holds a Strike');
+    const row = editor.root.querySelector(`.deck-editor-row[data-instance-id="${strike.instanceId}"]`)
+      || [...editor.root.querySelectorAll('.deck-editor-row')].find(node => node.querySelector('.deck-editor-name')?.textContent === strike.name);
+    const stance = row.querySelector('.deck-editor-stance');
+    assert.ok(stance, 'the row carries a stance label');
+    assert.equal(stance.textContent, 'Offensive');
+    assert.equal(stance.dataset.stance, 'offensive');
+    row.querySelector('.deck-editor-main').click();
+    row.querySelector('.deck-editor-inline-inspect').click();
+    const inspected = editor.root.querySelector('.deck-editor-inspector .deck-editor-reading .deck-editor-stance');
+    assert.equal(inspected?.textContent, 'Offensive', 'the inspector names the same stance');
+    editor.close();
+  });
+});
+
 test('DOM: every collection tile displays its current deck count beneath resource costs', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
