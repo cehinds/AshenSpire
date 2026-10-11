@@ -277,7 +277,7 @@ the action's `armor` and `card`, which are speed-table ids (`actionSpeed`).
   | Armor   | Base | DEX cap |
   |---------|------|---------|
   | Cloth   | 0    | 4       |
-  | Leather | 1    | 6       |
+  | Leather | 0    | 6       |
   | Studded | 1    | 3       |
   | Chain   | 1    | 2       |
   | Scale   | 1    | 1       |
@@ -291,8 +291,9 @@ the action's `armor` and `card`, which are speed-table ids (`actionSpeed`).
   `evasion` is any extra flat bonus, and a plain numeric evasion still works.
 - The DEX term is never below 0. A missing armor counts as Cloth. A missing `dex`
   takes `attrs.DEX`, and a missing DEX adds 0. These two rules are placeholders the owner has not confirmed.
-- Examples: Cloth at DEX 1 is 0. Leather at DEX 3 (rogue-like) is 1 + 2 = 3.
-  Plated at DEX 5 is 1 (cap 0). A buckler adds 1, and Backstep adds 5.
+- Examples: Cloth at DEX 1 is 0. Leather at DEX 3 is 0 + 2 = 2, and with a buckler
+  it is 3 (the rogue check: enemy accuracy 5 misses 25% of faces). Plated at DEX 5
+  is 1 (cap 0). A buckler adds 1, and Backstep adds 5.
 
 The tables match the tag tables on feature/TagRefactor (owner, 2026-10-11).
 
