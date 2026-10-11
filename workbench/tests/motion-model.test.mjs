@@ -9,6 +9,7 @@ import {
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
   canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
+  rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -278,4 +279,150 @@ test('every shipped pose file (renewal, stances and the rest) round-trips byte-i
     assert.equal(serializePoseFile(project, text), text, `${rel} is byte-exact`);
     assert.equal(isDirty(text, project), false, `${rel} is not dirty`);
   }
+});
+
+test('an anchor-only drag leaves the offsets of the effects bound to it, so they follow the anchor', () => {
+  const project = {
+    anchors: { hand: [0.5, 0.5], torso: [0.3, 0.4] },
+    clips: [
+      { id: 'bound', effect: 'burst', anchor: 'hand', x: 10, y: -20 },
+      { id: 'other', effect: 'spark', anchor: 'torso', x: 0, y: 0 },
+    ],
+  };
+  const doc = canvasDocOf(project);
+  const moved = applyCanvasDoc(project, {
+    ...doc,
+    items: doc.items.map((i) => (i.id === 'anchor:hand' ? { ...i, x: i.x + 30, y: i.y - 15 } : i)),
+  });
+  assert.ok(Math.abs(moved.anchors.hand[0] - (0.5 + 30 / 1000)) < 1e-9, 'the anchor moved');
+  assert.equal(moved.clips[0].x, 10, 'the bound effect keeps its x offset');
+  assert.equal(moved.clips[0].y, -20, 'the bound effect keeps its y offset');
+  assert.deepEqual(moved.clips[1], project.clips[1], 'an unbound effect is untouched');
+});
+
+test('a dragged effect is recomputed against its anchor, and only that effect changes', () => {
+  const project = {
+    anchors: { hand: [0.5, 0.5] },
+    clips: [{ id: 'a', effect: 'burst', anchor: 'hand', x: 10, y: 0 }],
+  };
+  const doc = canvasDocOf(project);
+  const next = applyCanvasDoc(project, {
+    ...doc,
+    items: doc.items.map((i) => (i.id === 'clip:a' ? { ...i, x: i.x + 7 } : i)),
+  });
+  assert.equal(next.clips[0].x, 17, 'the offset follows the dragged handle');
+  assert.equal(next.clips[0].y, 0);
+  assert.deepEqual(next.anchors, project.anchors);
+});
+
+test('keep my version rebases each change on the hash a 409 reported, and a deleted file recreates with null', () => {
+  const changes = [
+    { path: 'pose-studio/renewal/a.pose.json', text: '{}', baseHash: 'old-a' },
+    { path: 'pose-studio/renewal/b.pose.json', text: '{}', baseHash: 'old-b' },
+    { path: 'pose-studio/renewal/c.pose.json', text: '{}', baseHash: 'old-c' },
+  ];
+  const conflicts = [
+    { path: 'pose-studio/renewal/a.pose.json', hash: null },
+    { path: 'pose-studio/renewal/b.pose.json', hash: 'disk-b' },
+  ];
+  const out = rebaseOnConflicts(changes, conflicts);
+  assert.equal(out[0].baseHash, null, 'a pose deleted on disk is saved as a new file');
+  assert.equal(out[1].baseHash, 'disk-b', 'a changed file keeps the hash now on disk');
+  assert.equal(out[2].baseHash, 'old-c', 'a file that did not conflict keeps its own hash');
+  assert.equal(changes[0].baseHash, 'old-a', 'the input is not changed');
+  assert.equal(out[0].text, '{}');
+});
+
+test('a pose file with clips or bindings null shows as empty lists, the file is not changed, and an added effect is written', () => {
+  const text = JSON.stringify({
+    schemaVersion: 1, id: 'broken', name: 'Broken', actor: 'warrior', duration: 1000,
+    poses: ['a', 'b', 'c', 'd', 'e'], anchors: { hand: [0.5, 0.5], torso: [0.3, 0.4] }, clips: null, bindings: null,
+  });
+  const { project, problems } = parsePoseFile(text);
+  assert.ok(problems.includes('Clips missing'), 'the validation message names the missing clips');
+  assert.ok(problems.includes('Bindings missing'));
+  const view = viewOf(project);
+  assert.deepEqual(view.clips, []);
+  assert.deepEqual(view.bindings, []);
+  assert.doesNotThrow(() => canvasDocOf(view));
+  assert.doesNotThrow(() => bindingRows(view));
+  assert.equal(project.clips, null, 'the raw project keeps the null');
+  assert.equal(isDirty(text, project), false, 'showing the normalised lists is not a change');
+  assert.equal(serializePoseFile(project, text), text);
+  const made = addClip(project, 'burst');
+  assert.equal(made.project.clips.length, 1, 'an edit writes the list back');
+  assert.equal(made.project.bindings, null, 'only the edited field changes');
+});
+
+test('viewOf leaves a well-formed project as it is and fills missing poses and anchors for display', () => {
+  const { project } = parsePoseFile(readFixture('pose-studio/renewal/attack.pose.json'));
+  assert.deepEqual(viewOf(project), project);
+  const bare = viewOf({ id: 'x', name: 'x', actor: 'x', duration: 1000, poses: null, anchors: null, clips: undefined });
+  assert.deepEqual(bare.poses, []);
+  assert.deepEqual(bare.anchors, {});
+  assert.deepEqual(bare.clips, []);
+  assert.equal(viewOf(null), null);
+});
+
+test('a selection gate drops a file read that a newer selection has overtaken', () => {
+  const gate = selectionGate();
+  const first = gate.begin();
+  const second = gate.begin();
+  assert.equal(gate.current(first), false, 'the first pick is stale once the second begins');
+  assert.equal(gate.current(second), true);
+  assert.equal(gate.latest(), second, 'reading the latest does not start a new selection');
+  assert.equal(gate.current(second), true);
+});
+
+/** A loaded file record as the module holds it: the bytes read, the project drafted from them. */
+function recordOf(path, text, edit = null) {
+  const { project } = parsePoseFile(text);
+  return { path, kind: 'project', hash: `h-${path}`, original: text, project: edit ? edit(project) : project, problems: [] };
+}
+
+test('a draft is dirty only when its project differs from the bytes read, and generated files are never dirty', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const clean = recordOf('pose-studio/renewal/attack.pose.json', text);
+  const edited = recordOf('pose-studio/renewal/attack.pose.json', text, (p) => renamePose(p, 0, 'draft-pose'));
+  assert.equal(isDirtyFile(clean), false);
+  assert.equal(isDirtyFile(edited), true);
+  const generated = recordOf('pose-studio/stances/x.pose.json', text, (p) => renamePose(p, 0, 'draft-pose'));
+  assert.equal(isDirtyFile(generated), false, 'a build-written file takes no edits');
+  assert.equal(isDirtyFile(null), false);
+});
+
+test('dirtyPathsOf lists the drafts with unsaved edits, in the order they were opened', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const a = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
+  const b = recordOf('pose-studio/renewal/b.pose.json', text);
+  const c = recordOf('pose-studio/renewal/c.pose.json', text, (p) => renamePose(p, 1, 'two'));
+  const drafts = new Map([[a.path, a], [b.path, b], [c.path, c]]);
+  assert.deepEqual(dirtyPathsOf(drafts), ['pose-studio/renewal/a.pose.json', 'pose-studio/renewal/c.pose.json']);
+  assert.deepEqual(dirtyPathsOf(new Map()), []);
+});
+
+test('switching files keeps every dirty draft, and drops clean ones except the file now open', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const dirty = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
+  const clean = recordOf('pose-studio/renewal/b.pose.json', text);
+  const openNow = recordOf('pose-studio/renewal/c.pose.json', text);
+  const kept = keepDrafts(new Map([[dirty.path, dirty], [clean.path, clean]]), openNow.path);
+  assert.deepEqual([...kept.keys()], [dirty.path], 'the clean draft goes, the dirty one stays');
+  assert.equal(kept.get(dirty.path), dirty, 'the draft is the same record, so the edits come back');
+  const withOpen = keepDrafts(new Map([[clean.path, clean]]), clean.path);
+  assert.deepEqual([...withOpen.keys()], [clean.path], 'the open file stays even when clean');
+});
+
+test('the save changes are the dirty drafts only, each on its own base hash, rebased on any conflict', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const a = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
+  const b = recordOf('pose-studio/renewal/b.pose.json', text, (p) => renamePose(p, 1, 'two'));
+  const clean = recordOf('pose-studio/renewal/c.pose.json', text);
+  const changes = saveChangesOf([a, b, clean], []);
+  assert.deepEqual(changes.map((c) => c.path), ['pose-studio/renewal/a.pose.json', 'pose-studio/renewal/b.pose.json']);
+  assert.equal(changes[0].baseHash, 'h-pose-studio/renewal/a.pose.json');
+  assert.equal(changes[0].text, serializePoseFile(a.project, text));
+  const rebased = saveChangesOf([a, b], [{ path: b.path, hash: null }]);
+  assert.equal(rebased[1].baseHash, null, 'a conflicted draft is saved against the hash the 409 reported');
+  assert.equal(rebased[0].baseHash, 'h-pose-studio/renewal/a.pose.json');
 });

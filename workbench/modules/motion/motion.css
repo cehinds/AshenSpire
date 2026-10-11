@@ -24,6 +24,7 @@
 .mo-item[aria-current="true"] { border-color: var(--as-accent, #3d7a4f); box-shadow: inset 3px 0 0 var(--as-accent, #3d7a4f); }
 .mo-item-label { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mo-item-sub { font-size: 11px; color: var(--as-text-dim, #9aa59c); }
+.mo-item-dirty { justify-self: start; font-size: 10px; padding: 0 6px; border-radius: 9px; background: rgba(230, 180, 60, 0.25); color: #f3d68a; }
 .mo-empty { font-size: 12px; color: var(--as-text-dim, #9aa59c); padding: 8px 0; }
 .mo-stagebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mo-seg { display: inline-flex; gap: 0; }

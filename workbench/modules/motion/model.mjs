@@ -185,6 +185,19 @@ export function parsePoseFile(text) {
   return { project, original: text, problems: checkProject(project) };
 }
 
+/**
+ * Orders file selections. begin() starts one and returns its generation; current(g) is true only
+ * for the newest one, so a read that finishes after a newer pick is dropped instead of installed.
+ */
+export function selectionGate() {
+  let latest = 0;
+  return {
+    begin() { latest += 1; return latest; },
+    current(generation) { return generation === latest; },
+    latest() { return latest; },
+  };
+}
+
 /** The problems that would stop the game reading a project (a subset of the game's validate()). */
 export function checkProject(p) {
   const problems = [];
@@ -203,6 +216,22 @@ export function checkProject(p) {
   if (!Array.isArray(p.bindings)) problems.push('Bindings missing');
   if (!isObj(p.assets) && p.assets !== undefined) problems.push('Assets must be an object');
   return problems;
+}
+
+/**
+ * The project as the module shows it: a collection the file leaves out, or holds as a non-list,
+ * reads as empty, so rendering never throws on a malformed file. Display only; never saved.
+ */
+export function viewOf(project) {
+  if (!isObj(project)) return null;
+  const list = (v) => (Array.isArray(v) ? v : []);
+  return {
+    ...project,
+    poses: list(project.poses),
+    clips: list(project.clips),
+    bindings: list(project.bindings),
+    anchors: isObj(project.anchors) ? project.anchors : {},
+  };
 }
 
 /**
@@ -228,6 +257,49 @@ export function serializePoseFile(project, original) {
   const { indent, tail } = layoutOf(original);
   const body = JSON.stringify(project, null, indent || undefined).replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
   return body + tail;
+}
+
+/**
+ * The save changes rebased on the disk hashes a 409 reported ("Keep my version"). A file deleted
+ * on disk reports hash null, so its save carries baseHash null and recreates it; a file that
+ * changed keeps the hash now on disk. Changes without a conflict keep their own hash.
+ */
+export function rebaseOnConflicts(changes, conflicts) {
+  const disk = new Map((conflicts || []).map((c) => [c.path, c.hash ?? null]));
+  return changes.map((c) => (disk.has(c.path) ? { ...c, baseHash: disk.get(c.path) } : c));
+}
+
+// ---------------------------------------------------------------------------
+// Drafts: each file the module has open keeps its own edited project, so switching
+// files keeps the unsaved work (as Data Studio keeps its tables' drafts).
+
+/** A draft record (path, original, project, hash) is dirty when its edits would change the file. */
+export function isDirtyFile(f) {
+  return !!f && !isGenerated(f.path) && isDirty(f.original, f.project);
+}
+
+/** The paths of the drafts with unsaved edits, in the order they were kept. */
+export function dirtyPathsOf(drafts) {
+  return [...drafts.values()].filter(isDirtyFile).map((f) => f.path);
+}
+
+/**
+ * The drafts still held after a switch to openPath: every dirty draft, and the file now open
+ * (kept even when clean). Clean drafts are dropped, so a later open reads the disk copy again.
+ */
+export function keepDrafts(drafts, openPath) {
+  const kept = new Map();
+  for (const [path, f] of drafts) if (path === openPath || isDirtyFile(f)) kept.set(path, f);
+  return kept;
+}
+
+/**
+ * The save changes for every dirty draft ({ path, text, baseHash }), rebased on the disk
+ * hashes of any conflicts the user chose to keep.
+ */
+export function saveChangesOf(records, conflicts = []) {
+  const changes = records.filter(isDirtyFile).map((f) => ({ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }));
+  return rebaseOnConflicts(changes, conflicts);
 }
 
 /** True when the project differs from the file it was read from. */
@@ -285,12 +357,14 @@ export function addClip(project, effect, { cue = 'contact', anchor = ANCHOR_FOR_
   if (typeof effect !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/.test(effect)) throw new Error('Effect IDs are letters, digits and . _ : -');
   if (!CUE_NAMES.includes(cue)) throw new Error(`Unknown cue ${cue}`);
   if (!isObj(project.anchors) || !Array.isArray(project.anchors[anchor])) throw new Error(`No anchor ${anchor}`);
-  if (project.clips.length >= LIMITS.clips) throw new Error(`A project holds at most ${LIMITS.clips} effects`);
+  const clips = viewOf(project).clips;
+  if (clips.length >= LIMITS.clips) throw new Error(`A project holds at most ${LIMITS.clips} effects`);
+  // Only the clips list is written: a file with other fields missing keeps them missing.
   const next = copy(project);
-  const taken = new Set(next.clips.map((c) => c.id));
-  let n = next.clips.length + 1, id = `effect-${effect}-${n}`;
+  const taken = new Set(clips.map((c) => c.id));
+  let n = clips.length + 1, id = `effect-${effect}-${n}`;
   while (taken.has(id)) { n += 1; id = `effect-${effect}-${n}`; }
-  next.clips.push({ id, effect, cue, offset: 0, duration: 200, anchor, x: 0, y: 0, size: 160, opacity: 1, rotation: 0, layer: 'front', travel: false, muted: false });
+  next.clips = [...clips.map((c) => copy(c)), { id, effect, cue, offset: 0, duration: 200, anchor, x: 0, y: 0, size: 160, opacity: 1, rotation: 0, layer: 'front', travel: false, muted: false }];
   return { project: next, id };
 }
 
@@ -342,8 +416,13 @@ export function canvasDocOf(project) {
   return { width: REF.width, height: REF.height, items };
 }
 
-/** Applies the canvas document's item positions back to the project (anchors and clip offsets). */
+/**
+ * Applies the canvas document's item positions back to the project (anchors and clip offsets).
+ * A clip's offset is recomputed only when its own handle moved: an anchor-only drag keeps the
+ * stored offsets of the effects bound to that anchor, so they follow it.
+ */
 export function applyCanvasDoc(project, doc) {
+  const before = new Map(canvasDocOf(project).items.map((i) => [i.id, i]));
   let next = copy(project);
   for (const item of doc.items || []) {
     const cx = item.x + item.w / 2, cy = item.y + item.h / 2;
@@ -353,6 +432,8 @@ export function applyCanvasDoc(project, doc) {
     } else if (item.id.startsWith('clip:')) {
       const clip = next.clips.find((c) => `clip:${c.id}` === item.id);
       if (!clip) continue;
+      const prev = before.get(item.id);
+      if (prev && prev.x === item.x && prev.y === item.y) continue;
       const [ax, ay] = next.anchors?.[clip.anchor] || [0.5, 0.5];
       next = moveClip(next, clip.id, Math.round(cx - ax * REF.width), Math.round(cy - ay * REF.height));
     }

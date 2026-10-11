@@ -15,6 +15,7 @@ import {
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
+  rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -75,6 +76,7 @@ export default {
             <label class="mo-check mo-edit-only" hidden><input type="checkbox" class="mo-grid"> Grid</label>
           </div>
           <div class="mo-stagewrap">
+            <div class="mo-problems mo-banner" role="alert" hidden></div>
             <div class="mo-frame-box"><iframe class="mo-frame" title="Figure rendered by the game"></iframe><p class="mo-setup" hidden></p></div>
             <div class="mo-edit" hidden aria-label="Position editor. Drag anchors and effects; arrow keys nudge."></div>
           </div>
@@ -103,7 +105,7 @@ export default {
     const scrub = $('.mo-scrub'), timeEl = $('.mo-time'), playBtn = $('.mo-play'), loopEl = $('.mo-loop');
     const speedEl = $('.mo-speed'), bgEl = $('.mo-bg'), prevEl = $('.mo-onion-prev'), nextEl = $('.mo-onion-next');
     const classEl = $('.mo-class'), qEl = $('.mo-q'), countEl = $('.mo-count'), fileEl = $('.mo-file'), dirtyEl = $('.mo-dirty');
-    const reviewBtn = $('.mo-review');
+    const reviewBtn = $('.mo-review'), banner = $('.mo-banner');
     const scrim = $('.mo-scrim'), editEl = $('.mo-edit'), snapEl = $('.mo-snap'), gridEl = $('.mo-grid');
     let canvas = null;
 
@@ -115,7 +117,8 @@ export default {
       setsListed: false,
       filter: { q: '', kind: 'all', classId: '' },
       outfit: null,
-      file: null, // { path, kind, hash, original, project, problems }
+      file: null, // the open draft: { path, kind, hash, original, project, problems }
+      drafts: new Map(), // path -> draft, for each open file that is dirty (and the one open)
       time: 0, playing: false, speed: 1, loop: true, facing: 'right', size: 'medium', background: 'checker',
       onion: { prev: false, next: false },
       selected: null, // { kind: 'clip', id } | { kind: 'anchor', name }
@@ -154,7 +157,7 @@ export default {
       sendToStage('set', { state: { time: st.time, facing: st.facing, background: st.background, onion: { prev, next } } });
     }
     function onionIndexes() {
-      const p = st.file?.project;
+      const p = viewProject();
       if (!p) return { prev: null, next: null };
       const n = onionNeighbours(p.poses.length, p.duration, st.time);
       return { prev: st.onion.prev ? n.prev : null, next: st.onion.next ? n.next : null };
@@ -204,9 +207,10 @@ export default {
       const all = entries();
       const shown = filterLibrary(all, st.filter);
       countEl.textContent = `${shown.length} of ${all.length}${st.setsListed ? '' : ' (animation sets still loading)'}`;
+      const dirty = new Set(dirtyPathsOf(st.drafts));
       list.innerHTML = shown.map((e) => {
         const current = (e.kind === 'outfit' && st.outfit === e.id) || ((e.kind === 'animation' || e.kind === 'stance') && st.file?.path === e.id);
-        return `<li><button type="button" class="mo-item" data-kind="${e.kind}" data-id="${esc(e.id)}" aria-current="${current ? 'true' : 'false'}"><span class="mo-item-label">${esc(e.label)}</span><span class="mo-item-sub">${esc(e.sub)}</span></button></li>`;
+        return `<li><button type="button" class="mo-item" data-kind="${e.kind}" data-id="${esc(e.id)}" aria-current="${current ? 'true' : 'false'}"><span class="mo-item-label">${esc(e.label)}</span>${dirty.has(e.id) ? '<span class="mo-item-dirty">Unsaved</span>' : ''}<span class="mo-item-sub">${esc(e.sub)}</span></button></li>`;
       }).join('') || '<li class="mo-empty">Nothing matches. Clear the search or the filters.</li>';
       el.querySelectorAll('.mo-kinds [data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === st.filter.kind)));
     }
@@ -249,26 +253,44 @@ export default {
         renderLibrary();
       }
     }
+    // Each pick takes a generation; a read that a newer pick overtook is dropped, so it cannot install over that pick.
+    const selection = selectionGate();
     async function openFile(path) {
+      const gen = selection.begin();
+      // A file with unsaved edits comes back as it was left: its draft, not a second read of the disk.
+      const held = st.drafts.get(path);
+      if (isDirtyFile(held)) { showFile(held, false); return; }
       let r;
       try { r = await ctx.api(`files/read?path=${encodeURIComponent(path)}`); } catch (err) {
-        ctx.toast({ kind: 'error', title: `Could not open ${path}`, detail: err.message, record: false });
+        if (selection.current(gen)) ctx.toast({ kind: 'error', title: `Could not open ${path}`, detail: err.message, record: false });
         return;
       }
+      if (!selection.current(gen)) return;
       const parsed = parsePoseFile(r.text);
-      st.file = { path, kind: r.kind, hash: r.hash, original: r.text, project: parsed.project, problems: parsed.problems };
+      showFile({ path, kind: r.kind, hash: r.hash, original: r.text, project: parsed.project, problems: parsed.problems }, true);
+    }
+    /**
+     * Makes a draft the open file. Dirty drafts of the other files stay; clean ones go. Undo steps
+     * belong to one file, so they are cleared on a switch.
+     */
+    function showFile(rec, fresh) {
+      st.drafts = keepDrafts(st.drafts, rec.path);
+      st.drafts.set(rec.path, rec);
+      st.file = rec;
+      keepConflicts = null;
+      conflictList = [];
       st.time = 0;
       st.selected = null;
       st.playing = false;
       ctx.history.clear();
-      if (parsed.project?.actor && st.index.outfits.includes(parsed.project.actor) && !st.outfit) st.outfit = parsed.project.actor;
-      fileEl.textContent = path;
+      if (fresh && rec.project?.actor && st.index.outfits.includes(rec.project.actor) && !st.outfit) st.outfit = rec.project.actor;
+      fileEl.textContent = rec.path;
       sendLoad();
       renderAll();
       if (pendingLink?.frame != null) { applyFrame(pendingLink.frame); }
     }
     function applyFrame(index) {
-      const p = st.file?.project;
+      const p = viewProject();
       if (!p) return;
       st.time = poseStart(p.poses.length, p.duration, index);
       pendingLink = pendingLink && { ...pendingLink, frame: null };
@@ -277,13 +299,21 @@ export default {
 
     // ---------- transport and timeline ----------
     function duration() { return st.file?.project?.duration || 0; }
+    /** What the stage and inspector draw: the open project with its lists filled in. Never saved. */
+    function viewProject() { return st.file ? viewOf(st.file.project) : null; }
+    /** The problems parsePoseFile found, always on the stage (the inspector may be closed). */
+    function renderBanner() {
+      const problems = st.file?.problems || [];
+      banner.hidden = !problems.length;
+      banner.innerHTML = problems.length ? `<p>This file does not match the game format:</p><ul>${problems.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+    }
     function seek(t) {
       st.time = clampTime(t, duration());
       renderTransport();
       sendView();
     }
     function renderTransport() {
-      const p = st.file?.project;
+      const p = viewProject();
       const d = duration();
       scrub.max = String(d || 1000);
       scrub.value = String(Math.round(st.time));
@@ -307,7 +337,7 @@ export default {
       editEl.hidden = st.mode !== 'edit';
     }
     function renderTimeline() {
-      const p = st.file?.project;
+      const p = viewProject();
       const d = duration();
       if (!p) { ticks.innerHTML = ''; clipsEl.innerHTML = ''; return; }
       ticks.innerHTML = poseTicks(p.poses.length, d).map((t) => `<button type="button" class="mo-tick" style="left:${t.at * 100}%" data-pose="${t.index}" title="Pose ${t.index + 1}: ${esc(p.poses[t.index])}" aria-label="Pose ${t.index + 1}, ${esc(p.poses[t.index])}"><span>${esc(p.poses[t.index])}</span></button>`).join('');
@@ -318,7 +348,7 @@ export default {
       }).join('') || '';
     }
     function renderInspector() {
-      const p = st.file?.project;
+      const p = viewProject();
       const cls = st.filter.classId || p?.actor || '';
       const outfitKey = st.outfit || cls;
       const frames = st.index.frames[outfitKey] || st.index.frames[cls] || {};
@@ -448,7 +478,7 @@ export default {
     // ---------- the position editor (canvas kit) ----------
     /** The figure as the stage draws it, so the handles sit over it. Locked: it is the reference, not an edit. */
     function editDoc() {
-      const p = st.file.project;
+      const p = viewProject();
       const doc = canvasDocOf(p);
       // A generated file's handles show where the anchors and effects sit but cannot be dragged.
       if (isGenerated(st.file.path)) for (const item of doc.items) item.locked = true;
@@ -512,6 +542,7 @@ export default {
 
     function renderAll() {
       renderLibrary();
+      renderBanner();
       renderTransport();
       renderTimeline();
       renderInspector();
@@ -530,11 +561,11 @@ export default {
     dlg.addEventListener('close', () => { dlgBody().innerHTML = ''; });
     reviewBtn.addEventListener('click', () => openReview());
     let saving = false;
-    /** The open file's change, if its project differs from the bytes read: the same text a save would write. */
+    // The 409 files of the last save, and the disk hashes "Keep my version" saves them against.
+    let conflictList = [], keepConflicts = null;
+    /** Every draft whose project differs from the bytes read: the same text a save would write, for each file. */
     function dirtyChanges() {
-      const f = st.file;
-      if (!f || isGenerated(f.path) || !isDirty(f.original, f.project)) return [];
-      return [{ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }];
+      return saveChangesOf([...st.drafts.values()].filter((f) => !isGenerated(f.path)), keepConflicts || []);
     }
     function renderDirty() {
       const dirty = dirtyChanges().length > 0;
@@ -574,6 +605,7 @@ export default {
           const list = failure.problems.map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
           await openReview(`<div class="mo-problems"><p><strong>Nothing saved.</strong> The checks found problems:</p><ul>${list}</ul></div>`);
         } else if (failure.kind === 'conflicts') {
+          conflictList = failure.conflicts;
           await openReview('<div class="mo-problems is-conflict"><p><strong>Changed on disk since it was opened.</strong></p><p class="mo-note">Reload drops your edits to this file. Keep my version overwrites the change made on disk.</p><p><button type="button" class="btn btn-sm" data-dlg="reload">Reload from disk</button> <button type="button" class="btn btn-sm" data-dlg="keep">Keep my version</button></p></div>');
         } else {
           await openReview(`<div class="mo-problems"><p><strong>Not saved:</strong> ${esc(failure.message)}. Your edits are still here; try again.</p></div>`);
@@ -581,9 +613,13 @@ export default {
         return;
       }
       saving = false;
+      keepConflicts = null;
+      conflictList = [];
       const sent = new Map(changes.map((c) => [c.path, c.text]));
+      // Each saved draft now matches its file on disk: its bytes and hash become the new base.
       for (const saved of data.files || []) {
-        if (st.file && saved.path === st.file.path) { st.file.original = sent.get(saved.path); st.file.hash = saved.hash; }
+        const draft = st.drafts.get(saved.path);
+        if (draft) { draft.original = sent.get(saved.path); draft.hash = saved.hash; }
       }
       dlg.close();
       renderAll();
@@ -596,15 +632,20 @@ export default {
       if (act === 'close') { dlg.close(); return; }
       if (act === 'save') { await save(); return; }
       if (act === 'reload') {
+        // The conflicting files' drafts go, so each reads the disk copy; the open file is read again if it conflicted.
         const path = st.file.path;
+        const changed = conflictList.map((c) => c.path);
         dlg.close();
-        await openFile(path);
-        ctx.toast({ kind: 'warn', title: 'Reloaded from disk', detail: 'Your edits to this file were dropped.', record: false });
+        for (const p of changed) st.drafts.delete(p);
+        keepConflicts = null;
+        conflictList = [];
+        if (changed.includes(path)) await openFile(path); else renderAll();
+        ctx.toast({ kind: 'warn', title: 'Reloaded from disk', detail: 'Your edits to the changed files were dropped.', record: false });
         return;
       }
       if (act === 'keep') {
-        const disk = await ctx.api(`files/read?path=${encodeURIComponent(st.file.path)}`);
-        st.file.hash = disk.hash;
+        // The 409 already reports each file's hash on disk (null when deleted): save against those.
+        keepConflicts = conflictList;
         await openReview();
       }
     }
@@ -663,7 +704,7 @@ export default {
     loopEl.addEventListener('change', () => { st.loop = loopEl.checked; });
     playBtn.addEventListener('click', () => setPlaying(!st.playing));
     scrub.addEventListener('input', () => { setPlaying(false); seek(Number(scrub.value)); });
-    const poseCount = () => st.file?.project?.poses.length || 0;
+    const poseCount = () => viewProject()?.poses.length || 0;
     $('.mo-pprev').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, -1)); });
     $('.mo-pnext').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, 1)); });
     $('.mo-fprev').addEventListener('click', () => { setPlaying(false); seek(stepFrame(st.time, -1, duration())); });
