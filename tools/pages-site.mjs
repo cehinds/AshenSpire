@@ -29,6 +29,7 @@
 //
 // USAGE
 //   node tools/pages-site.mjs --out _site [--keep 12] [--branches dev,test,release,main] [--remote origin]
+//                             [--branch-previews <dir>]   open-PR feature branch builds (branches/<branch>/latest/)
 //                             [--main-build <dir>] [--build-missing <workdir>]
 //   node tools/pages-site.mjs --check _site        re-verify an assembled site against git
 //   node tools/pages-site.mjs --selftest           generate into a temp dir with --keep 1 and verify
@@ -70,6 +71,10 @@ const KEEP = Math.min(KEEP_MAX, Math.max(1, Number(flag('--keep', '10')) || 10))
 // main's source. Needed once main no longer commits its build (the Git LFS budget
 // ran out, 2026-09-26): without it the stable Play links at the site root 404.
 const MAIN_BUILD = flag('--main-build', null);
+// A directory the workflow filled with open-PR builds: previews.json plus one folder per
+// branch (readBranchPreviews). Absent, the site has no branches/ section content.
+const previewsDir = flag('--branch-previews', null) ? resolve(ROOT, flag('--branch-previews', null)) : null;
+const previewSkips = [];
 // THE SERVICE WORKER'S KILL-SWITCH (tools/pages-sw.mjs SW_KILL, committed).
 // `--sw-kill` writes it for one run, for a local test; the published switch is
 // the committed constant, because every push to dev republishes the site.
@@ -765,7 +770,70 @@ function titleOf(file) {
   } catch { return null; }
 }
 
-export function rootIndex(branchData, generatedAt, otherPages) {
+// FEATURE-BRANCH BUILDS. Every open pull request into dev whose head is a branch of
+// this repository (feature/*, fix/*, chore/*) has its newest playable build at
+// branches/<branch>/latest/. The workflow fetches the builds and writes
+// previews.json; this file validates them, publishes them and lists them. The
+// site is rebuilt from scratch every run, so a build whose PR has merged or closed
+// is simply not written, and it leaves the site on the next publication.
+export function safeBranchDir(branch) {
+  const dir = String(branch).replace(/[^A-Za-z0-9._/-]/g, '-');
+  if (!dir || dir.startsWith('/') || dir.endsWith('/') || dir.split('/').some((seg) => seg === '' || seg === '.' || seg === '..')) {
+    throw new Error(`branch "${branch}" has no safe site path`);
+  }
+  return dir;
+}
+
+// Reads <dir>/previews.json. Each entry names its branch, the folder the workflow
+// put that branch's build in (which must be safeBranchDir of the branch), the PR
+// number and the head commit. An entry that cannot be served is skipped and named.
+export function readBranchPreviews(dir, skipped = []) {
+  const file = join(dir, 'previews.json');
+  if (!existsSync(file)) return [];
+  const list = JSON.parse(readFileSync(file, 'utf8')).previews;
+  if (!Array.isArray(list)) throw new Error(`${file}: no previews array`);
+  const out = [];
+  for (const entry of list) {
+    try {
+      const path = safeBranchDir(entry.branch);
+      if (entry.dir !== path) throw new Error(`folder "${entry.dir}" is not the branch's site path "${path}"`);
+      const from = join(dir, path);
+      const htmls = existsSync(from) ? readdirSync(from).filter((f) => f.endsWith('.html')) : [];
+      if (htmls.length !== 1) throw new Error(`expected one build .html in ${path}, found ${htmls.length}`);
+      if (statSync(join(from, htmls[0])).size === 0) throw new Error('the build file is empty');
+      const sha = /^[0-9a-f]{7,40}$/.test(String(entry.sha || '')) ? String(entry.sha) : '';
+      out.push({ branch: entry.branch, path, pr: Number(entry.pr) || 0, sha, file: htmls[0], from: join(from, htmls[0]) });
+    } catch (error) {
+      skipped.push({ branch: entry.branch, reason: error.message });
+    }
+  }
+  const paths = out.map((p) => p.path);
+  return out.filter((p, i) => paths.indexOf(p.path) === i);
+}
+
+// Writes each preview to branches/<path>/latest/: index.html is the playable game,
+// download/<file> the same bytes under the name a player saves.
+export function publishBranchPreviews(outDir, previews) {
+  for (const p of previews) {
+    const latest = join(outDir, 'branches', p.path, 'latest');
+    mkdirSync(join(latest, 'download'), { recursive: true });
+    cpSync(p.from, join(latest, 'index.html'));
+    cpSync(p.from, join(latest, 'download', p.file));
+    const bytes = readFileSync(p.from);
+    if (Buffer.compare(readFileSync(join(latest, 'index.html')), bytes) !== 0) throw new Error(`${p.branch}: written preview differs from its source`);
+    if (Buffer.compare(readFileSync(join(latest, 'download', p.file)), bytes) !== 0) throw new Error(`${p.branch}: written download differs from its source`);
+  }
+  return previews;
+}
+
+export function branchPreviewSection(previews) {
+  const head = '<h2 id="branch-builds">Feature branch builds</h2>';
+  if (!previews.length) return `${head}\n<p>No open pull request into <code>dev</code> has a playable build right now.</p>`;
+  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">open pull request${p.pr ? ` #${p.pr}` : ''} into dev</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Play ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/download/${esc(p.file)}">Download</a></section>`).join('\n');
+  return `${head}\n<p>Each open pull request into <code>dev</code> has its newest playable build here. A build leaves this page when its pull request merges or closes.</p>\n<div class="grid">${cards}</div>`;
+}
+
+export function rootIndex(branchData, generatedAt, otherPages, previews = null) {
   const cards = (data) => data.map((d) => {
     const { branch, builds } = d;
     const b = builds[0];
@@ -782,6 +850,7 @@ export function rootIndex(branchData, generatedAt, otherPages) {
 <h2 id="alternative-previews">Alternative branch previews</h2>
 <p>Shared updates with each alternative's own changes preserved. Versions and commits identify the published builds.</p>
 <div class="grid">${cards(branchData.filter((d) => d.branch.startsWith('alternative/')))}</div>
+${previews ? branchPreviewSection(previews) : ''}
 <div class="note"><strong>Web edition builds</strong> play here with their art fetched as needed; in the game, <em>Download &amp; saves</em> → <em>Make available offline</em> keeps one in this browser for offline play. Their <em>Download</em> saves the light-art single file: one self-contained <code>.html</code> that plays by double-click.</div>
 <div class="note"><strong>Light builds</strong> (dev and test) are one file whose art is already phone-sized, so they have no separate mobile download. <strong>Two downloads, one game</strong> for the others: <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
@@ -1189,9 +1258,13 @@ function assemble(outDir, keep) {
   }
   // Discovered AFTER the branch directories exist, so this tool's own output is
   // excluded by name-of-thing-we-just-wrote rather than by a hardcoded list.
-  const generatedNames = new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json', 'objects', 'packs', SW_FILE]);
+  // Feature-branch builds (open PRs into dev) under branches/. Written before the
+  // discovery below, so they are named by this tool and not listed as other pages.
+  const previews = previewsDir ? publishBranchPreviews(outDir, readBranchPreviews(previewsDir, previewSkips)) : [];
+  for (const s of previewSkips) console.log(`  SKIPPED preview ${s.branch}: ${s.reason}`);
+  const generatedNames = new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json', 'objects', 'packs', 'branches', SW_FILE]);
   const otherPages = discoverPages(outDir, generatedNames);
-  const root = rootIndex(branchData, generatedAt, otherPages);
+  const root = rootIndex(branchData, generatedAt, otherPages, previews);
   writeFileSync(join(outDir, 'index.html'), root);
   for (const d of branchData) for (const b of d.builds) if (!root.includes(`href="${d.branch}/${b.ordinal}/"`)) throw new Error(`root index does not link ${d.branch}/${b.ordinal}`);
   checks++;
