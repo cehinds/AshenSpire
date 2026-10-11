@@ -1373,7 +1373,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .deck-editor-pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 .deck-editor-pane.active { border-color: var(--gold); }
-.deck-editor-pane-title { margin: 0; padding: 0.4rem 0.8rem; font-size: var(--deck-editor-text); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.deck-editor-pane-bar { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; flex-wrap: wrap; min-width: 0; }
+.deck-editor-pane-title { flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; font: max(1.3rem, var(--deck-min-text)) Georgia, serif; color: #f0ddba; letter-spacing: 0; text-transform: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .deck-editor-list { display: grid; align-content: start; gap: 0.3rem; padding: 0 0.4rem 0.4rem; overflow-y: auto; overscroll-behavior: contain; min-height: 0; flex: 1; }
 .deck-editor-item { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem; align-items: stretch; min-width: 0; }
 .deck-editor-main {
@@ -1423,19 +1424,22 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .deck-editor-head { padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
 .deck-editor-title { font: 2.8rem Georgia, serif; letter-spacing: .04em; color: #e5c992; }
-.deck-editor-subtitle { margin: .5rem 0 0; color: var(--muted); }
 .deck-editor-counter { margin-left: auto; font-size: 1.8rem; }
 .deck-editor-curve { margin-left: 1.5rem; }
 .deck-editor-toolbar { display: flex; align-items: start; gap: 1rem; }
-.deck-editor-tools { width: 100%; }
-.deck-editor-tools > summary { cursor: pointer; min-height: var(--deck-editor-target); display: list-item; align-content: center; color: var(--muted); }
-.deck-editor-tools[open] { padding-bottom: .8rem; }
-.deck-editor-tools .deck-editor-chips { flex-wrap: wrap; overflow: visible; margin-top: .6rem; }
+.deck-editor-pane-bar .deck-editor-tools { display: block; width: auto; min-width: 0; }
+.deck-editor-tools > summary { cursor: pointer; flex: none; box-sizing: border-box; display: inline-flex; align-items: center; min-height: var(--deck-editor-target); min-width: var(--deck-editor-target); padding: 0 1rem; list-style: none; border: 1px solid var(--line-soft); border-radius: 999px; color: var(--parchment); }
+.deck-editor-tools > summary::-webkit-details-marker { display: none; }
+.deck-editor-tools[open] > summary { border-color: var(--gold); color: var(--gold); }
+/* The open filter panel spans the bar: its chip groups wrap onto full rows
+   below the title and chips (display: contents keeps them in the bar's flow). */
+.deck-editor-pane-bar > .deck-editor-tools[open] { display: contents; }
+.deck-editor-pane-bar .deck-editor-tools[open] > .deck-editor-chips { flex: 0 0 100%; flex-wrap: wrap; overflow: visible; }
 .deck-editor-chip { border-radius: .5rem; }
 .deck-editor-panes { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.15fr) minmax(0, .85fr); gap: 2.2rem; grid-template-rows: minmax(0, 1fr); }
 .deck-editor-pane { background: transparent; border: 0; border-radius: 0; }
-.deck-editor-pane-title { font: 2.6rem Georgia, serif; color: #f0ddba; letter-spacing: 0; text-transform: none; padding: .4rem 0 1.2rem; }
 .deck-editor-search { flex: none; box-sizing: border-box; width: 100%; min-height: var(--deck-editor-target); background: #12100d; border: 1px solid var(--line-soft); border-radius: .6rem; color: var(--parchment); font: inherit; padding: .7rem 1rem; margin-bottom: 1.2rem; }
+.deck-editor-pane-bar .deck-editor-search { flex: 1 1 100%; width: 100%; margin: 0; }
 .deck-editor-list { padding: 0 .3rem .5rem 0; gap: .7rem; scrollbar-width: thin; }
 .deck-editor-item { flex-wrap: nowrap; gap: .3rem; }
 .deck-editor-main { background: #18140f; border-color: var(--line); border-radius: .6rem; padding: .7rem; row-gap: .4rem; }
@@ -1505,14 +1509,12 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 @media (max-width: 1000px) {
   .deck-editor { gap: .5rem; }
   .deck-editor-title { font-size: 2.3rem; }
-  .deck-editor-subtitle, .deck-editor-curve, .deck-editor-keys { display: none; }
+  .deck-editor-curve, .deck-editor-keys { display: none; }
   .deck-editor-counter { font-size: max(1.4rem, var(--deck-min-text)); }
   .deck-editor-toolbar { flex-direction: column; gap: 0; }
   .deck-editor-mobile-tabs { display: flex; gap: .5rem; width: 100%; }
   .deck-editor-mobile-tabs > button { flex: 1; padding: 0 .4rem; }
   .deck-editor-mobile-tabs > button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
-  .deck-editor-tools > summary { min-height: var(--deck-editor-target); }
-  .deck-editor-tools[open] { max-height: 24vh; overflow-y: auto; }
   .deck-editor-panes { display: block; min-height: 0; overflow: hidden; position: relative; }
   .deck-editor-panes > * { display: none; height: 100%; box-sizing: border-box; }
   .deck-editor[data-mobile-view="collection"] [data-pane="collection"],
@@ -1520,7 +1522,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor[data-mobile-view="inspect"] [data-pane="collection"] { display: flex; }
   /* Inspection is a full-height overlay above the list it was opened from. */
   .deck-editor[data-mobile-view="inspect"] .deck-editor-inspector { display: flex; position: absolute; inset: 0; z-index: 5; background: #221b13; overflow-y: auto; }
-  .deck-editor-pane-title { font-size: 2.1rem; padding-bottom: .6rem; }
   .deck-editor-tile .deck-editor-main { grid-template-columns: 6.5rem minmax(0, 1fr) auto; }
   .deck-editor-inspector { border: 0; padding: 0; }
   .deck-editor .deck-editor-reading > .card { max-width: 29rem; }
@@ -1530,9 +1531,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor { background-color: #221b13; scrollbar-color: #75613c #19150f; }
 .deck-editor-class { color: #e5c992; margin-left: auto; }
 .deck-editor-counter { margin-left: 0; }
-.deck-editor-searchbar { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; flex: none; }
-.deck-editor-searchbar .deck-editor-search { flex: 1 1 12rem; width: 0; min-width: 8rem; margin: 0; }
-.deck-editor-searchbar .deck-editor-chip { padding-inline: .8rem; }
 .deck-editor-tile .deck-editor-main { grid-template-columns: 9.5rem minmax(0, 1fr) auto; grid-template-rows: auto auto auto auto; }
 .deck-editor-tile .deck-editor-art { grid-row: 1 / 5; min-height: 9rem; max-height: 11rem; }
 .deck-editor-tile .deck-editor-meta { grid-row: 4; grid-column: 2 / 4; }
@@ -1700,13 +1698,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor { padding: 1.2rem 1.6rem .8rem; gap: .5rem; --deck-editor-text: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
   .deck-editor-head { padding-bottom: .6rem; }
   .deck-editor-title { font-size: 2.2rem; }
-  .deck-editor-subtitle { margin-top: .25rem; font-size: 1.2rem; }
   .deck-editor-counter { font-size: 1.5rem; }
   .deck-editor-curve { height: 3.8rem; }
   .deck-editor-curve-fill { height: calc(var(--share, 0) * 2.2rem); }
   .deck-editor-panes { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.05fr) minmax(0, 1fr); gap: 1.4rem; }
-  .deck-editor-pane-title { font-size: 2.1rem; padding-bottom: .7rem; }
-  .deck-editor-searchbar { margin-bottom: .7rem; }
   .deck-editor-list { gap: .4rem; padding-top: .25rem; }
   .deck-editor .deck-editor-inline-inspect { min-height: 2.4rem; height: 2.4rem; }
   .deck-editor-inspector { padding-inline: 1.4rem; gap: .5rem; }
