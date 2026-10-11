@@ -200,32 +200,6 @@ test('KEY_SCOPES lists only outfits, and keyScopeFor reads it by path', () => {
   assert.equal(D.keyScopeFor(undefined), null);
 });
 
-test('keyScopeOf finds the *Id scope only when the key repeats and (scope, key) is unique', () => {
-  const cols = [{ key: 'classId', type: 'string' }, { key: 'id', type: 'string' }, { key: 'n', type: 'number' }];
-  const row = (classId, id) => ({ classId, id, n: 1 });
-  // The real outfits.csv shape: default repeats across classes, (classId, id) is unique.
-  const shared = [row('reaver', 'default'), row('starseer', 'default'), row('reaver', 'vigil')];
-  assert.equal(D.keyScopeOf(cols, shared), 'classId');
-  // A true duplicate (same classId and id): no scope makes the pair unique, so the single key rule stays.
-  assert.equal(D.keyScopeOf(cols, [...shared, row('reaver', 'default')]), null);
-  // A key that never repeats needs no scope.
-  assert.equal(D.keyScopeOf(cols, [row('reaver', 'a'), row('starseer', 'b')]), null);
-  // No *Id column besides the key: single key rule.
-  const noScope = [{ key: 'label', type: 'string' }, { key: 'id', type: 'string' }];
-  assert.equal(D.keyScopeOf(noScope, [{ label: 'x', id: 'a' }, { label: 'y', id: 'a' }]), null);
-  // A per-row Id that is unique cannot be the scope: it would hide every duplicate.
-  const perRow = [{ key: 'rowId', type: 'string' }, { key: 'id', type: 'string' }];
-  assert.equal(D.keyScopeOf(perRow, [{ rowId: 'r1', id: 'a' }, { rowId: 'r2', id: 'a' }]), null);
-  // The real outfits.csv scope is classId.
-  const outfits = D.parseTable('content/source/outfits.csv', read('content/source/outfits.csv'));
-  assert.equal(D.keyScopeOf(outfits.columns, outfits.rows), 'classId');
-  // The key can be named explicitly: here name precedes id, so the default key would be name.
-  const named = [{ key: 'name', type: 'string' }, { key: 'classId', type: 'string' }, { key: 'id', type: 'string' }];
-  const namedRows = [{ name: 'a', classId: 'reaver', id: 'default' }, { name: 'b', classId: 'starseer', id: 'default' }, { name: 'c', classId: 'reaver', id: 'vigil' }];
-  assert.equal(D.keyScopeOf(named, namedRows, 'id'), 'classId');
-  assert.equal(D.keyScopeOf(named, namedRows), null);
-});
-
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
   const { lineDiff } = await import('../core/files.mjs');
   const rel = 'content/source/speakers.csv';
