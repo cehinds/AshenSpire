@@ -9,7 +9,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
-import { JOBS, JobRunner, GENERATED } from '../core/jobs.mjs';
+import { JOBS, JobRunner, GENERATED, killTree } from '../core/jobs.mjs';
 import { Settings } from '../core/settings.mjs';
 import { Tool, toolDefs } from '../core/tools.mjs';
 import { buildsFor, isBuildOutput } from '../core/watch.mjs';
@@ -522,4 +522,14 @@ test('a setting saved empty stays empty instead of falling back to its default',
   const again = new Settings(path.join(root, '.wb-state/settings.json'), { ASHEN_ART_CHECKOUT: root }).read();
   assert.equal(again.artCheckout, '');
   assert.equal(again.editorUrl, '');
+});
+
+test('on Windows a cancel kills the whole process tree with taskkill /T', () => {
+  const calls = []; let killed = false;
+  const child = { pid: 4242, exitCode: null, signalCode: null, kill() { killed = true; } };
+  killTree(child, { platform: 'win32', run: (cmd, args) => { calls.push([cmd, ...args]); return { status: 0 }; } });
+  assert.deepEqual(calls, [['taskkill', '/pid', '4242', '/T', '/F']]);
+  assert.equal(killed, false);
+  killTree(child, { platform: 'win32', run: () => ({ status: 128 }) });
+  assert.equal(killed, true, 'falls back to killing the step itself');
 });

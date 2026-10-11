@@ -4,7 +4,7 @@
 // id runs at most once at a time. A run streams its output line by line to
 // `onEvent`, and the last HISTORY runs are kept in memory and in
 // workbench/.state/jobs.json (logs trimmed) so a restart keeps the history.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -160,11 +160,15 @@ export class JobRunner {
   stopAll() { for (const run of this.active.values()) killTree(run.child); }
 }
 
-/** Stop a step and everything it started: the whole process group on POSIX. */
-function killTree(child) {
+/** Stop a step and everything it started: the process group on POSIX, the
+ *  process tree on Windows (taskkill /T waits until the tree is gone, so the
+ *  step's close event, which frees the lock, comes after its builders exit). */
+export function killTree(child, { platform = process.platform, run = spawnSync } = {}) {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
   try {
-    if (process.platform !== 'win32') process.kill(-child.pid, 'SIGTERM');
-    else child.kill();
+    if (platform === 'win32') {
+      const r = run('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+      if (r.error || r.status !== 0) child.kill();
+    } else process.kill(-child.pid, 'SIGTERM');
   } catch { try { child.kill(); } catch { /* already gone */ } }
 }
