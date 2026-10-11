@@ -1612,6 +1612,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   box-sizing: border-box; padding: .4rem .6rem; border-radius: .5rem;
   transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
 }
+/* A library tile's costs lead with the physical or magical mark: one more slot. */
+.deck-editor .deck-editor-main:has(> .deck-editor-costs > .deck-editor-camp) { --deck-row-costs: calc(var(--deck-row-cost) * (var(--deck-cost-count) + 1) + .4rem * var(--deck-cost-count)); }
 .deck-editor .deck-editor-main[data-illustrated="false"] { grid-template-columns: 1rem minmax(0, 1fr) var(--deck-row-costs); }
 .deck-editor .deck-editor-grip { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: start; font-size: 1.6rem; }
 .deck-editor .deck-editor-main > .deck-editor-art {

@@ -375,16 +375,16 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
   };
   // Range (owner, 2026-10-11): Melee / Reach / Ranged from the card's reach
-  // (contact / near / far). An untagged attacking card takes combat's own
-  // default (engine/combatCardTactics.js): ranged maneuvers and spells reach
-  // near, the rest contact. A card that attacks nothing shows no range.
+  // (contact / near / far). An untagged attacking card takes the player
+  // card's combat default (engine/combatMatchups.js normalizedProfile):
+  // projectiles and ranged maneuvers reach near, the rest contact. A card that attacks nothing shows no range.
   const RANGE_BY_REACH = { contact: 'melee', near: 'reach', far: 'ranged' };
   const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
   const rangeNode = (row) => {
     const def = resolveCard(registries, row.ref);
     const profile = combatProfileFor(def);
     const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
-    const reach = profile.reach || (attacking ? (profile.maneuver === 'ranged' || profile.camp === 'spell' ? 'near' : 'contact') : null);
+    const reach = profile.reach || (attacking ? (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact') : null);
     const range = RANGE_BY_REACH[reach];
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };

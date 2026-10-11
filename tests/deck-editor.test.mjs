@@ -1271,6 +1271,9 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
         const stance = item.querySelector('.deck-editor-stance');
         assert.ok(stance && stances.has(stance.dataset.stance), `${classId}: every row names a known stance`);
         const rank = item.querySelector('.deck-editor-rank');
+        const ranksAlways = !['skill', 'power', 'consumable'].includes(stance.dataset.stance);
+        assert.ok(!ranksAlways || rank, `${classId}: a ${stance.dataset.stance} row always shows its rank`);
+        assert.ok(['physical', 'magical'].includes(item.querySelector('.deck-editor-camp')?.dataset.camp), `${classId}: every row marks physical or magical`);
         if (!rank) continue;
         const n = Number(rank.dataset.rank);
         const magical = item.querySelector('.deck-editor-camp')?.dataset.camp === 'magical';
@@ -1280,6 +1283,23 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
       editor.close();
     });
   }
+});
+
+test('DOM: range follows the player card combat default; the mark follows the camp', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 1 });
+  for (const cardId of ['cometFragment', 'ricochet', 'strike']) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
+    const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
+    // An untagged spell resolves at contact in combat (combatMatchups.js), so it reads Melee.
+    assert.deepEqual(read('cometFragment'), ['melee', 'magical']);
+    assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged maneuver reaches near');
+    editor.close();
+  });
 });
 
 test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the tile countText', async () => {
