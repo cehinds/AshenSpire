@@ -242,6 +242,7 @@ meta.combat.stance.counter.school-counter,school-counter,School counter,meta.com
 meta.combat.stance.counter.ranged-counter,ranged-counter,Ranged counter,meta.combat.stance.counter,Stance,,"Nock and Wait, Barrage Counter",,,,,,live-tag,,,counter:ranged
 meta.combat.stance.counter.ward-counter,ward-counter,Ward counter,meta.combat.stance.counter,Stance,,"Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal",,,,,,game-concept,,,
 meta.combat.delivery,delivery,Delivery,meta.combat,TagNode,,,,,,,,live-tag,,,delivery
+meta.combat.delivery.melee,melee,Melee,meta.combat.delivery,TagNode,,"Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)",,,,,,new,,,
 meta.combat.delivery.ranged,ranged,Ranged,meta.combat.delivery,TagNode,,"9 cards, was a stance",,,,,,live-tag,,,maneuver:ranged
 meta.combat.delivery.ranged.shot,shot,Shot,meta.combat.delivery.ranged,TagNode,,"Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot",,,,,,game-concept,,,
 meta.combat.delivery.ranged.volley,volley,Volley,meta.combat.delivery.ranged,TagNode,,"Arrow Volley, Toxic Volley, Fan of Knives, Ricochet",,,,,,game-concept,,,

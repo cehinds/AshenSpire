@@ -390,5 +390,6 @@
  "card.upgrade": "existing",
  "card.upgrade.base": "existing",
  "card.upgrade.upgraded": "existing",
- "card.character-card": "existing"
+ "card.character-card": "existing",
+ "meta.combat.delivery.melee": "new"
 }

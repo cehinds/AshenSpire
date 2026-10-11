@@ -15,3 +15,10 @@ magic.fire,CLEARS,frozen,,thaws
 physical.blunt,CLEARS,frozen,,shatters
 type.stance,REFERENCES,combat.stance,,
 gorefire,REQUIRES,blood,,
+attack,DEFAULT_DELIVERY,melee,,Default delivery of the Attack stance (owner decision 3)
+smash,DEFAULT_DELIVERY,melee,,Default delivery of the Smash stance
+sweep,DEFAULT_DELIVERY,melee,,Default delivery of the Sweep stance
+parry,DEFAULT_DELIVERY,melee,,Parry counter is a melee delivery
+school-counter,DEFAULT_DELIVERY,casting,,One per spell school; cast delivery (to confirm)
+ward-counter,DEFAULT_DELIVERY,casting,,Ward counter cast delivery (to confirm)
+ranged-counter,DEFAULT_DELIVERY,ranged,,Ranged counter is a ranged delivery

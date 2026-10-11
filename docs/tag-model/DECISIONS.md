@@ -44,3 +44,33 @@ Formula, relation and value keys follow the README conventions.
 - **Couldn't place:** a `(max-width: 600px)` condition is now `other`, not
   `mobile`. If the owner wants 600px to count as phone, the rule is a one-line
   change in `bands.mjs`. The pointer:coarse portrait rule is unchanged.
+
+## 3. Delivery is a type of its own (melee, ranged, cast)
+
+- **Date:** 2026-10-11 (owner).
+- **Decision:** Ranged and Casting are a delivery type, separate from stance.
+  Delivery is melee, ranged or cast. Each stance has a delivery reference that
+  by default points to the stance's default delivery, so delivery and stance
+  resolve the same today. A tag may later override the delivery.
+- **Tables changed:**
+  - `tables/tags.csv`: new `meta.combat.delivery.melee` (key `melee`, status
+    `new`). The existing `ranged` and `casting` nodes stay. `casting` is the
+    owner's "cast" and keeps its id. `multi-hit` and `area` stay as delivery
+    modifiers.
+  - `tools/legacy-status.json`: `melee` added as `new`, so the build accepts it.
+  - `tables/relations.csv`: relation `DEFAULT_DELIVERY` (stance key to delivery
+    key), seven rows:
+    - `attack`, `smash` and `sweep` to `melee`. Their children inherit it.
+    - `parry` to `melee`.
+    - `school-counter` and `ward-counter` to `casting`.
+    - `ranged-counter` to `ranged`.
+  - The override is not a row yet. It would be a relation such as
+    `OVERRIDES_DELIVERY` from a tag to a delivery, and is added with the first
+    tag that needs it.
+- **Couldn't place:**
+  - `school-counter` and `ward-counter` as `casting` are my reading of the tree
+    ("Umbral Ward", "Warding Star" are cast-like). Owner to confirm.
+  - Defensive stances (`block`, `evade`) and the `counter` group have no
+    default delivery row. Defensive stances are not attacks, and counter
+    children differ. Owner to say whether they should have a delivery.
+  - `elemental-strike` is under Attack and inherits `melee`. Owner to confirm.
