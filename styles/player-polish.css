@@ -570,6 +570,12 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
  filter:drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000);
 }
 :root .shared-hud .resbar { box-shadow:0 0 0 1px #000; }
+/* HUD layout tokens (docs/hud-layout-tokens.md): the combat header's HP value
+   shadow and the HP bar's cap. The fallback is the shadow it inherits above. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-value {
+ text-shadow:var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000);
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }
 :root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
 
 

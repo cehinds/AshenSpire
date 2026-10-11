@@ -1390,6 +1390,19 @@ export const balance = {
       // --predicates` is the standing check that every wall has a gate on it, and
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
+      // THE HUD FORM FACTOR (docs/hud-layout-tokens.md). applyUiScale writes
+      // <html data-form-factor> from these, in the window's CSS px, so the
+      // combat HUD picks content/hud-layout/<form-factor>.json. First match
+      // wins: widescreen (w / h >= widescreenMinAspect, or w >=
+      // widescreenMinWidth), mobile (w <= mobileMaxWidth), tablet (w <=
+      // tabletMaxWidth), else desktop. It chooses styling only — never the
+      // layout mode, the zoom or the gate above.
+      formFactor: {
+        widescreenMinAspect: 2.0,
+        widescreenMinWidth: 2400,
+        mobileMaxWidth: 600,
+        tabletMaxWidth: 1100,
+      },
     },
     // Text size → root font-size %. Auto owns the browser stylesheet baseline;
     // M remains a legacy data alias for old saves and geometry tools. It scales
