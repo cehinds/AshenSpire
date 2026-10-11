@@ -173,8 +173,9 @@ Use one of these to import:
   in `--dest` (not subfolders) whose table is no longer in the manifest. It marks
   each table it fills with the `AshenSpireImporter` metadata tag and prunes only
   tagged tables, so other assets there, including your own `DT_*` tables, are
-  left alone. Pass `--no-prune` when importing an export made
-  with `--only`, whose manifest lists only some tables.
+  left alone. An export made with `--only` is marked `partial` in its manifest,
+  and the importer then skips pruning on its own; `--no-prune` skips it for any
+  export.
 
 Config files and art manifests are plain JSON. Load them with the `Json`
 module or import them as you need.
