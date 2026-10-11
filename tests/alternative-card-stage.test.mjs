@@ -5,6 +5,7 @@ import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { setAnimSpeed } from '../src/ui/fx.js';
 import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
+import { playerHurtFrames } from '../src/content/playerHurtFrames.js';
 
 test('Classic appearance leaves its upstream stage in charge without allocating an alternative canvas', () => {
   try {
@@ -106,27 +107,42 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.ok(paints.some(p=>p.fill==='#ff2424'&&p.mode==='source-in'),'red mask follows sprite alpha on strobe frame 2');
     step(200);assert.equal(raf.size,1,'the default reaction (280 ms minimum) is still running');
     step(31);assert.equal(raf.size,0,'hit reaction terminates after its duration');
-    // Knock-back: the painted body moves left mid-reaction and rests afterwards.
+    // Knock-back: the painted hurt body moves left mid-reaction from its registered origin and rests afterwards.
+    const hurtX=128+playerHurtFrames.reaver.dx;
     stage.play('hit',220);step(66);
-    assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<128-10,'the body is knocked left at the 30% peak');
-    assert.ok(stage.currentArt.left<128-10,'HUD ink source follows the knock-back');
+    assert.match(stage.currentArt.image.url,/greatsword-outfits\/reaver\/HURT\.webp$/,'the clip paints the registered hurt pose');
+    assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<hurtX-10,'the body is knocked left at the 30% peak');
+    assert.ok(stage.currentArt.left<hurtX-10,'HUD ink source follows the knock-back');
     step(220);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],128,'the knock-back returns to rest');
     assert.equal(stage.currentArt.left,128);
     // Hit-stop: a held reaction freezes at impact with its tint showing.
     stage.play('hit',380);assert.equal(stage.hold(100),true,'a running reaction accepts a hold');
-    paints.length=0;step(50);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],128,'a held hit freezes the knock-back at impact');
+    paints.length=0;step(50);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],hurtX,'a held hit freezes the knock-back at impact');
     assert.ok(!paints.some(p=>p.fill==='#ff2424'),'hit-stop freezes on untinted frame 1');
-    step(50);step(100);assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<128,'the knock-back resumes once the hold ends');
+    step(50);step(100);assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<hurtX,'the knock-back resumes once the hold ends');
     step(280);assert.equal(raf.size,0,'the held reaction ends after its own 380 ms of motion');
+    // Hurt clip: seven 40 ms frames of the hurt pose, red on frames 2, 4 and 6 only.
+    const clipFrames=(label,tinted=true)=>{
+      for(let i=0;i<7;i++){
+        stage.play('hit');paints.length=0;step(20+40*i);
+        assert.match(stage.currentArt.image.url,/HURT\.webp$/,label+' frame '+(i+1)+' paints the hurt pose');
+        assert.equal(paints.some(p=>p.fill==='#ff2424'),tinted&&[1,3,5].includes(i),label+' frame '+(i+1)+' red mask');
+        step(300-(20+40*i));
+      }
+    };
+    clipFrames('strobe');
+    stage.play('hit');step(300);assert.doesNotMatch(stage.currentArt.image.url,/HURT/,'the clip returns to the rest pose');
+    assert.equal(stage.currentArt.left,128);
+    document.body.classList.add('reduce-flashes');clipFrames('reduce-flashes',false);document.body.classList.remove('reduce-flashes');
     // Reduce flashes drops the red tint but keeps the knock-back (SPEC §7.4).
     document.body.classList.add('reduce-flashes');paints.length=0;
     stage.play('hit',220);step(66);
     assert.ok(!paints.some(p=>p.fill==='#ff2424'),'reduce-flashes paints no red mask');
-    assert.ok(stage.currentArt.left<128-10,'reduce-flashes keeps the knock-back');
+    assert.ok(stage.currentArt.left<hurtX-10,'reduce-flashes keeps the knock-back');
     document.body.classList.remove('reduce-flashes');
     // A click-skip settles the reaction and its hold at once.
     stage.play('hit',220);step(30);stage.setRestPose('idle');step(36);
-    assert.ok(stage.currentArt.left<128-10,'a routine re-render keeps the running hit reaction');
+    assert.ok(stage.currentArt.left<hurtX-10,'a routine re-render keeps the running hit reaction');
     step(200);
     stage.play('hit',380);stage.hold(100);stage.settle({reaction:true});
     assert.equal(stage.currentArt.left,128,'a click-skip ends the knock-back');
