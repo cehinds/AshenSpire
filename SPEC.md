@@ -476,8 +476,8 @@ nowhere else**. The order is fixed:
 
 If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
 with only its equipment cards. That is a **balance question for whoever authors the gear**,
-not a validation failure — `validateEquipment` says so as a warning, naming the class and
-the loadout, and refuses nothing.
+not a validation failure — `startingDeckWarnings()` reports it as a warning, naming the class and
+the loadout, and refuses nothing. `validateEquipment` returns problems only and does not show that warning.
 
 **After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
 smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
