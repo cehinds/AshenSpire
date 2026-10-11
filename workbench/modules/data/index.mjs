@@ -20,9 +20,10 @@ const basename = (p) => p.split('/').pop();
 export default {
   mount(el, ctx) {
     el.innerHTML = `<link rel="stylesheet" href="/modules/data/data.css"><div class="ds">
-      <aside class="ds-list" aria-label="Tables"><input type="search" class="ds-find" placeholder="Find a table…" aria-label="Find a table"><div class="ds-groups"></div></aside>
+      <aside class="ds-list" id="ds-list" aria-label="Tables"><div class="ds-list-head"><input type="search" class="ds-find" placeholder="Find a table…" aria-label="Find a table"><button type="button" class="btn btn-sm ds-list-close">Close</button></div><div class="ds-groups"></div></aside>
       <section class="ds-main">
         <div class="ds-toolbar">
+          <button type="button" class="btn btn-sm ds-tables-toggle" aria-controls="ds-list" aria-expanded="false">Tables</button>
           <button type="button" class="btn btn-sm" data-act="add">Add row</button>
           <button type="button" class="btn btn-sm" data-act="dup">Duplicate</button>
           <button type="button" class="btn btn-sm" data-act="del">Delete</button>
@@ -314,9 +315,18 @@ export default {
 
     // ---------- lists and tabs ----------
     el.querySelector('.ds-find').addEventListener('input', (ev) => { state.filter = ev.target.value; renderList(); });
+    // Below 1100px the table list is an overlay behind the Tables toggle; picking a table closes it.
+    const root = $('.ds');
+    const setList = (open) => {
+      root.classList.toggle('list-open', open);
+      $('.ds-tables-toggle').setAttribute('aria-expanded', String(open));
+    };
+    $('.ds-tables-toggle').addEventListener('click', () => setList(!root.classList.contains('list-open')));
+    $('.ds-list-close').addEventListener('click', () => setList(false));
     groupsEl.addEventListener('click', (ev) => {
-      const b = ev.target.closest('[data-path]'); if (b) select(b.dataset.path);
+      const b = ev.target.closest('[data-path]'); if (b) { setList(false); select(b.dataset.path); }
     });
+    el.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && root.classList.contains('list-open')) setList(false); });
     el.querySelector('.ds-tabs').addEventListener('click', (ev) => {
       const tab = ev.target.closest('[data-tab]')?.dataset.tab; if (!tab) return;
       state.tab = tab;
