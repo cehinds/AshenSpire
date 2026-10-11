@@ -41,6 +41,7 @@ import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv } from './csv.mjs';
 import { SHARED_LIVE } from './live-map.mjs';
 import { svgRefProblem } from './svg-source.mjs';
+import { renderTree, TREE_PATH } from './tree.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TM = join(HERE, '..');
@@ -438,6 +439,16 @@ if (presOk['combat-symbols'] && presOk.assets) {
     if (!COMBAT_STATUS.has(status)) fail(`presentation/combat-symbols: row ${i + 2} status "${status}" not in vocabulary`);
     if ((status === 'missing') !== (tok === '')) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) status "${status}" does not match assignedAssetRef "${tok}"`);
   });
+}
+
+// ------------------------------------------------------------------ tag tree
+// tag-tree.txt is generated from tags.csv by tree.mjs (build.mjs writes it).
+// A stale file means the outline no longer matches the tags.
+{
+  const want = renderTree(T('tags'));
+  let have = null;
+  try { have = readFileSync(TREE_PATH, 'utf8'); } catch { /* missing */ }
+  if (have !== want) fail('tag-tree.txt does not match the tree generated from tables/tags.csv; run tools/build.mjs');
 }
 
 // ----------------------------------------------------------------- report

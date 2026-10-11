@@ -28,6 +28,7 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv, toCsv } from './csv.mjs';
 import { bandOf } from './bands.mjs';
+import { renderTree, TREE_PATH } from './tree.mjs';
 import { LIVE, GAME, SHARED_LIVE } from './live-map.mjs';
 import { svgRefFromText, svgRefProblem } from './svg-source.mjs';
 
@@ -779,6 +780,8 @@ const rewriteKeys = value => String(value).split(/\s+/).filter(Boolean)
 
 const tagOut = [...legacyOut, ...presRows].map(({ id, row }) => ({ ...row, key: keyOf[id], school: rewriteKeys(row.school), related: rewriteKeys(row.related) }));
 writeFileSync(tagsPath, toCsv([...TAG_HEAD, 'liveId'], tagOut.map(r => [...TAG_HEAD, 'liveId'].map(h => r[h]))));
+// The tag tree is derived from tags.csv, so it is written here and cannot go stale.
+writeFileSync(TREE_PATH, renderTree(readTable(tagsPath)));
 
 // Every table is LF with a final newline (CONTRIBUTING: CSVs are LF). Only the
 // line endings of the existing tables change; their cells are untouched.

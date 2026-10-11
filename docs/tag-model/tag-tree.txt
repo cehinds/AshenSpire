@@ -25,35 +25,36 @@ Meta
         Skill EXP
       Currency
         Cinders
-        Gold [n] {later}
+        Gold {later}
     Offensive stats [n]
-      AR [n] {attack rating, scales physical}
+      AR {attack rating, scales physical}
       PR {potency rating, scales magic}
       Crit chance
       Crit damage [n]
       Accuracy [n]
     Defensive stats
       DR {defense rating}
-      Evasion [n] {dodge chance}
+      Evasion {dodge chance}
+      Accuracy [n] {Defense-side Accuracy (owner decision 11, 2026-10-11). The offensive Accuracy tag under offensive-stats is unchanged}
       Block {stops physical}
-      Barrier [n] {stops magic}
+      Barrier {stops magic}
       Poise {physical impact → Staggered}
       Ward {magic impact → Disrupted}
     Perception {intent reveal}
     Weapon
       One-handed
         Sword
-        Katana [n]
+        Katana
         Dagger
-        Axe [n]
-        Hammer [n]
+        Axe
+        Hammer
         Spear
         Scepter
         Tome
       Two-handed
         Great sword
         Halberd
-        Twinblade [n]
+        Twinblade
         Staff
         Bow
       Off-hand
@@ -68,19 +69,19 @@ Meta
         Light
         Medium
         Heavy
-      Material [n]
-        Cloth [n] {light, no resistances}
-        Leather [n] {light, + evasion}
+      Material
+        Cloth {light, no resistances}
+        Leather {light, + evasion}
         Studded [n] {leather + physical Block}
-        Chain [n] {medium, resists slashing}
-        Scale [n] {medium, resists piercing}
-        Plated [n] {heavy, high DR, resists blunt less}
+        Chain {medium, resists slashing}
+        Scale {medium, resists piercing}
+        Plated {heavy, high DR, resists blunt less}
       Defensive property [n]
         Absorption [n] {converts part of damage taken to Block or Ward}
         Siphon [m] {drains HP or MP when hit or when breaking}
-        Thorns [n] {returns damage to melee attackers}
+        Thorns {returns damage to melee attackers}
         Padded [n] {+ Poise, resists Stagger}
-        Warded [n] {+ Ward, resists magic impact}
+        Warded {+ Ward, resists magic impact}
         Insulated [m] {resists lightning, no conduction}
         Grounded [m] {clears Paralysis pressure}
         Fireproof [n] {resists Burn}
@@ -89,34 +90,34 @@ Meta
         Mindguard [n] {resists Insanity and Confused}
         Lightweight [n] {−SP cost, + Evade}
         Reinforced [n] {Block not lost on Stagger}
-      Slot [n]
-        Head [n]
-        Body [n]
-        Hands [n]
-        Feet [n]
-        Talisman [n]
+      Slot
+        Head
+        Body
+        Hands
+        Feet
+        Talisman
     Relic
-      Rarity [n]
-        Starter [n]
-        Common [n]
-        Uncommon [n]
-        Rare [n]
-        Boss [n]
-        Event [n]
-      Trigger [n]
-        Combat start [n]
-        Turn start [n]
-        On play [n]
+      Rarity
+        Starter
+        Common
+        Uncommon
+        Rare
+        Boss
+        Event
+      Trigger
+        Combat start
+        Turn start
+        On play
         On hit [n]
         On kill [n]
-        Passive [n]
+        Passive
     Feat
-      Class feat [n]
-      Skill feat [n]
-      Ability [n]
+      Class feat
+      Skill feat
+      Ability
     Consumable
-      Flask [n] {HP, MP}
-      Potion [n]
+      Flask {HP, MP}
+      Potion
       Throwable [n]
       Buff item [n]
       Key item [n]
@@ -127,22 +128,22 @@ Meta
         Undead
         Construct
         Spirit
-        Dragon [n]
+        Dragon
         Demon [n]
-        Elemental [n]
-        Plant [n]
-      Rank [n]
+        Elemental
+        Plant
+      Rank
         Minion [n]
-        Elite [n]
-        Boss [n]
+        Elite
+        Boss
     Other
-      Location [n]
-        Shrine [n]
-        Camp [n]
-        Inn [n]
-        Chapel [n]
-        Event [n]
-        Encounter [n]
+      Location
+        Shrine
+        Camp
+        Inn
+        Chapel
+        Event
+        Encounter
   Combat
     Skill
       Weapon skill {deals physical damage}
@@ -151,15 +152,15 @@ Meta
         Twinblades
         Blade
         Blunt
-        Axe [n]
+        Axe
         Polearm [n]
         Staff
         Marksman
         Bow
         Shield
-        Unarmed [n]
+        Unarmed
         Two-handed
-        Dual-wield [n]
+        Dual-wield
       Armor skill
         Light
         Medium
@@ -177,13 +178,14 @@ Meta
         Gorefire Stance
         Bulwark Stance
         Brace
+      Prepare [n] {Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared}
       Spellcraft {each school deals its damage type}
         Fire
           Gorefire [m] {fire fed by blood}
           Ash [m]
         Frost
         Lightning
-        Earth [n]
+        Earth
         Force
           Starstone [m] {astral force}
         Divine
@@ -203,11 +205,11 @@ Meta
         Fire {→ Burned}
         Frost {→ Frostbitten}
         Lightning {→ Paralyzed}
-        Earth [n]
+        Earth
         Divine {cleanses}
         Necrotic {→ Blighted}
         Psychic [n] {→ Confused}
-      Hybrid [n]
+      Hybrid
         Force {Block or Barrier stops it}
     Stance
       Offensive
@@ -231,7 +233,7 @@ Meta
           Shield {Shieldwall, Shield Guard, Shield Bastion, Set the Shield}
           Ward {Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier}
           Endure {Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance}
-        Evade [n] {about 15 cards, tagged Defend today}
+        Evade {about 15 cards, tagged Defend today}
           Dodge {Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics}
           Vanish {Shadowstep, Vanish, Nightstep, Misdirect}
           Obscure {Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand}
@@ -241,6 +243,7 @@ Meta
         Ranged counter {Nock and Wait, Barrage Counter}
         Ward counter {Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal}
     Delivery
+      Melee [n] {Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)}
       Ranged {9 cards, was a stance}
         Shot {Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot}
         Volley {Arrow Volley, Toxic Volley, Fan of Knives, Ricochet}
@@ -248,13 +251,13 @@ Meta
         Bolt {Ember Dart, Rime Needle, Static Needle, Holy Spark, Force Nudge}
         Mote {Drowsing Mote, Rot Mote}
       Multi-hit [n]
-      Area [n]
+      Area
     Magic
       Offensive magic
       Defensive magic
-    Recovery [n]
-      Heal [n]
-      Cleanse [n]
+    Recovery
+      Heal
+      Cleanse
       Restore SP [n]
       Restore MP [n]
     Status effect
@@ -276,7 +279,7 @@ Meta
           Frost-Exposed {+ vs Starstone}
           Unraveled {+ vs Ritual, Blight}
           Chilled {next Blunt hit +25%}
-          Aged [n]
+          Aged
           Slowed [n]
           Silenced [n]
           Disarmed [n]
@@ -347,32 +350,150 @@ Meta
         Weathered {vs Frost}
         Resolute {vs Insanity}
     Deck manipulation
-      Draw [n]
-      Discard [n]
-      Create [n]
-      Upgrade [n]
+      Draw
+      Discard
+      Create
+      Upgrade
       Cost change [n]
     Rule manipulation
       Extra action [n]
       Turn skip [n]
       Stance change [n]
       Intent reveal / conceal [n]
+  Presentation [n] {Presentation layer: how the game looks and reads. Carries no gameplay identity.}
+    Scene [n] {Scene art and frame.}
+    Battlefield [n] {Enemy and player stage.}
+    Card structure [n] {Card frame parts.}
+    HUD header [n] {Top bar HUD.}
+    Footer [n] {Bottom bar.}
+    Button [n] {Buttons and icon buttons.}
+    Modal [n] {Dialogs and sheets.}
+    Menu [n] {Menus and navigation.}
+    Background art [n] {Backdrops and environment art.}
+    Map [n] {Run map.}
+    Overlay [n] {Full-screen overlays.}
+    Wireframe [n] {Wireframe (grey-box) layouts.}
+    Other (component) [n] {Components whose inventory group is other.}
+    Layout [n] {Positions and sizes of components.}
+      Breakpoint [n] {Layout condition, normalised to a band.}
+        Mobile [n] {Band mobile.}
+        Tablet [n] {Band tablet.}
+        Desktop [n] {Band desktop.}
+        Wide [n] {Band wide.}
+        State [n] {Band state.}
+        All [n] {Band all.}
+        Other [n] {Band other.}
+      Anchor [n] {Anchor and transform rules.}
+      Z-layer [n] {Stacking layers.}
+    Resolution [n] {Art tiers and card sizes.}
+      light [n] {Tier light.}
+      high [n] {Tier high.}
+      common [n] {Tier common.}
+      placeholder [n] {Tier placeholder.}
+      local-high-res [n] {Tier local-high-res.}
+      setting [n] {Tier setting.}
+      auto-thresholds [n] {Tier auto-thresholds.}
+      card-512 [n] {Tier card-512.}
+      card-1024 [n] {Tier card-1024.}
+      map-levels [n] {Tier map-levels.}
+      environment-atlas [n] {Tier environment-atlas.}
+      mobile-variants [n] {Tier mobile-variants.}
+      pose-canvas [n] {Tier pose-canvas.}
+      enemy-canvas [n] {Tier enemy-canvas.}
+      svg-vector [n] {Tier svg-vector.}
+    Animation [n] {Sprite and motion sequences.}
+      pas [n] {Animation group pas.}
+      pcs [n] {Animation group pcs.}
+      aca [n] {Animation group aca.}
+      reaver [n] {Animation group reaver.}
+      eq [n] {Animation group eq.}
+      pose [n] {Animation group pose.}
+      painted [n] {Animation group painted.}
+      readiness [n] {Animation group readiness.}
+      defeated [n] {Animation group defeated.}
+      enemypose [n] {Animation group enemypose.}
+      enemystate [n] {Animation group enemystate.}
+      combatfx [n] {Animation group combatfx.}
+      poseeffect [n] {Animation group poseeffect.}
+      action [n] {Animation group action.}
+      presseq [n] {Animation group presseq.}
+      posepl [n] {Animation group posepl.}
+      waapi [n] {Animation group waapi.}
+      css [n] {Animation group css.}
+    Effect [n] {Visual effects by kind.}
+      sprite-effect [n] {Effect kind sprite-effect.}
+      aura [n] {Effect kind aura.}
+      glow [n] {Effect kind glow.}
+      tint [n] {Effect kind tint.}
+      screen-shake [n] {Effect kind screen-shake.}
+      flash [n] {Effect kind flash.}
+      float-text [n] {Effect kind float-text.}
+      shadow [n] {Effect kind shadow.}
+      particle [n] {Effect kind particle.}
+    Text [n] {Player-facing strings by use.}
+      label [n] {String kind label.}
+      tooltip [n] {String kind tooltip.}
+      hardcoded [n] {String kind hardcoded.}
+    Symbol [n] {Icons and sigils.}
+      cardtag [n] {Symbol group cardtag.}
+      cardtag-alias [n] {Symbol group cardtag-alias.}
+      action [n] {Symbol group action.}
+      school [n] {Symbol group school.}
+      intent [n] {Symbol group intent.}
+      card-icon [n] {Symbol group card-icon.}
+      ui-icon [n] {Symbol group ui-icon.}
+      glyph [n] {Symbol group glyph.}
+      ui-alias [n] {Symbol group ui-alias.}
+      status [n] {Symbol group status.}
+      resource [n] {Symbol group resource.}
+      stance [n] {Symbol group stance.}
+      tag [n] {Symbol group tag.}
+      keyword [n] {Symbol group keyword.}
+      uistring-glyph [n] {Symbol group uistring-glyph.}
+    Setting [n] {Settings rows by scope.}
+      Player [n] {Settings scope player.}
+        Combat [n] {player settings group Combat.}
+        Accessibility [n] {player settings group Accessibility.}
+        Display [n] {player settings group Display.}
+        Audio [n] {player settings group Audio.}
+        Lobby [n] {player settings group Lobby.}
+        Debug [n] {player settings group Debug.}
+        Pose studio [n] {player settings group Pose studio.}
+      Tuning [n] {Settings scope tuning.}
+        Accessibility [n] {tuning settings group Accessibility.}
+        World [n] {tuning settings group World.}
+        Progression [n] {tuning settings group Progression.}
+        Rewards [n] {tuning settings group Rewards.}
+        Interface [n] {tuning settings group Interface.}
+        Display [n] {tuning settings group Display.}
+        Text [n] {tuning settings group Text.}
+        Export [n] {tuning settings group Export.}
+        Equipment [n] {tuning settings group Equipment.}
+        Wireframes [n] {tuning settings group Wireframes.}
+        Deck [n] {tuning settings group Deck.}
+        Recovery [n] {tuning settings group Recovery.}
+        Stats [n] {tuning settings group Stats.}
+        Opening [n] {tuning settings group Opening.}
+        Shops [n] {tuning settings group Shops.}
+        Combat [n] {tuning settings group Combat.}
+    Style [n] {CSS properties and tokens.}
+      token [n] {Style kind token.}
+      color [n] {Style kind color.}
+      typography [n] {Style kind typography.}
+      spacing [n] {Style kind spacing.}
+      radius [n] {Style kind radius.}
+      shadow [n] {Style kind shadow.}
+      motion [n] {Style kind motion.}
+      z-index [n] {Style kind z-index.}
+      other [n] {Style kind other.}
 Card
   Type
-    Stance {matches Combat › Stance}
-      Offensive
-        Attack
-        Smash
-        Sweep
-      Defensive
-        Block
-        Evade
-      Counter
+    Stance {A card whose type is a stance; the stance itself lives under Combat › Stance}
     Skill
     Power
     Curse
     Status
-    Consumable [n]
+    Consumable
   Rarity
     Starter
     Common
@@ -387,7 +508,7 @@ Card
   Cost
     Stamina {physical cards}
     Mana {spells}
-    Free [n]
+    Free
   Source
     Class
     Weapon
