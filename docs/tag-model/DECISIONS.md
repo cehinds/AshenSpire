@@ -331,8 +331,9 @@ counter stance.
 - `meta.character.armor.defensive-property.siphon` sits under Defensive property.
   Live `siphon` is under `property`.
 
-**Not counted here.** Three live roots have a bare name that is also the last
+**Not counted here.** Five live roots have a bare name that is also the last
 segment of another id, so no bare id has a unique key. They are new top-level
-tags with the suffix `Root`: `campRoot` (camp), `presentationRoot` (presentation)
-and `costRoot` (cost). Their children sit under them. This keeps every key
-unique without adding a parity difference.
+tags with the suffix `Root`: `campRoot` (camp), `presentationRoot` (presentation),
+`costRoot` (cost), `equipmentRoot` (equipment) and `utilityRoot` (utility). Their
+children sit under them. This keeps every key unique without adding a parity
+difference.
