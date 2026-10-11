@@ -20,8 +20,23 @@ import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
+// t.after hooks run in the order they were added, and a hook that throws skips the rest. A process
+// or watcher that holds a project folder (on Windows, a child whose cwd is in it) is stopped with
+// beforeRemove, so it is gone before project() removes the folder, and a failed removal cannot
+// skip the stop and leave it running (the test file would then never exit).
+const stopsFor = new WeakMap();
+function beforeRemove(t, stop) {
+  const stops = stopsFor.get(t);
+  if (stops) stops.push(stop); else t.after(stop);
+}
+
 async function project(t) {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-test-')));
+  if (!stopsFor.has(t)) {
+    const stops = [];
+    stopsFor.set(t, stops);
+    t.after(async () => { for (const stop of stops.splice(0).reverse()) await stop(); });
+  }
   // Windows can hold the folder for a moment after a watcher or child closes: retry the removal.
   t.after(() => fs.rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
   for (const d of ['content/source', 'content/config/ui', 'src', 'styles']) await fs.mkdir(path.join(root, d), { recursive: true });
@@ -34,7 +49,7 @@ async function project(t) {
 
 async function boot(t, root, extra = {}) {
   const app = await createWorkbench({ root, port: 0, children: false, stateDir: path.join(root, '.wb-state'), debounceMs: 120, ...extra });
-  t.after(() => app.close());
+  beforeRemove(t, () => app.close());
   const call = (p, init = {}) => fetch(`${app.url}${p}`, { ...init, headers: { 'x-studio-token': app.token, ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...(init.headers || {}) } });
   return { app, call };
 }
@@ -559,7 +574,12 @@ test('the game server the Workbench starts listens on loopback only, never on th
   assert.equal(args[at + 1], 'localhost');
   // Run the Workbench's own command line and read the port from its log, as the supervisor does.
   const child = spawn(process.execPath, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
-  t.after(() => child.kill());
+  beforeRemove(t, async () => {
+    if (child.exitCode !== null || child.signalCode !== null) return;
+    const gone = new Promise((resolve) => child.once('exit', resolve));
+    child.kill();
+    await gone;
+  });
   const port = await new Promise((resolve, reject) => {
     let out = '';
     child.stdout.on('data', (d) => { out += d; const m = out.match(game.portFrom); if (m) resolve(Number(m[1])); });
@@ -800,7 +820,7 @@ test('close() waits for a save still writing, so its file is on disk when close 
       await new Promise((r) => setTimeout(r, 150));
     },
   });
-  t.after(() => app.close());
+  beforeRemove(t, () => app.close());
   const saved = fetch(`${app.url}/api/files/save`, {
     method: 'POST', headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
     body: JSON.stringify({ changes: [{ path: 'styles/main.css', text: 'body{color:red}\n', baseHash: sha('body{}\n') }] }),
@@ -859,7 +879,7 @@ test('a started job is persisted at once, so a restart before it finishes lists 
   await fs.writeFile(path.join(root, 'tools/config-build.mjs'), 'setInterval(() => {}, 1000);\n');
   const stateFile = path.join(root, '.wb-state/jobs.json');
   const first = new JobRunner({ root, stateFile });
-  t.after(() => first.stopAll());
+  beforeRemove(t, () => first.stopAll());
   const started = first.start('config-build');
   // The record is on disk while the job still runs.
   const onDisk = JSON.parse(await fs.readFile(stateFile, 'utf8'));
@@ -884,8 +904,8 @@ test('two projects that share a state dir keep separate backups and job history'
   }
   const appA = await createWorkbench({ root: rootA, port: 0, children: false, stateDir, debounceMs: 120 });
   const appB = await createWorkbench({ root: rootB, port: 0, children: false, stateDir, debounceMs: 120 });
-  t.after(() => appA.close());
-  t.after(() => appB.close());
+  beforeRemove(t, () => appA.close());
+  beforeRemove(t, () => appB.close());
   const get = (app, p) => fetch(`${app.url}${p}`, { headers: { 'x-studio-token': app.token } }).then((r) => r.json());
   const post = (app, p, body) => fetch(`${app.url}${p}`, { method: 'POST', headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
@@ -1001,7 +1021,7 @@ test('stopAll escalates to SIGKILL after the grace period for a builder that ign
     setInterval(() => {}, 1000);
   `);
   const runner = new JobRunner({ root, stateFile: path.join(root, '.wb-state/jobs.json') });
-  t.after(() => runner.stopAll({ graceMs: 0 }));
+  beforeRemove(t, () => runner.stopAll({ graceMs: 0 }));
   runner.start('config-build');
   for (let i = 0; i < 200 && !(await fs.stat(path.join(root, 'started')).then(() => true, () => false)); i++) await new Promise((r) => setTimeout(r, 20));
   const began = Date.now();
