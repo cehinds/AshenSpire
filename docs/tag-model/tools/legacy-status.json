@@ -697,5 +697,13 @@
  "targeting.randomEnemy": "new",
  "targeting.ally": "new",
  "targeting.single": "new",
- "targeting.area": "new"
+ "targeting.area": "new",
+ "equipmentRoot": "new",
+ "equipmentRoot.bound": "new",
+ "equipmentRoot.mainHand": "new",
+ "equipmentRoot.offHand": "new",
+ "equipmentRoot.twoHanded": "new",
+ "equipmentRoot.shield": "new",
+ "equipmentRoot.parryTool": "new",
+ "equipmentRoot.dualWield": "new"
 }

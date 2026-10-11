@@ -823,3 +823,11 @@ targeting {Target selection: the rules an action uses to choose the creature it 
   ally {Targets an ally of the acting player.}
   Single {One direct target.}
   Area {An area action; most Counters do not cover it.}
+equipment {Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.}
+  bound {Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).}
+  mainHand {A weapon held in the main hand. Requires bound (nodeRelations.csv).}
+  offHand {An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).}
+  twoHanded {A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.}
+  shield {A shield held in the off hand.}
+  parryTool {An off-hand tool held to parry.}
+  dualWield {One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.}

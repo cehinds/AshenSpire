@@ -407,6 +407,15 @@ export const LIVE = {
   'targeting.ally': 'targeting.ally',
   'targeting.single': 'targeting:single',
   'targeting.area': 'targeting:area',
+  // proposed live mapping (domain pass)
+  'equipmentRoot': 'equipment',
+  'equipmentRoot.bound': 'equipment.bound',
+  'equipmentRoot.mainHand': 'equipment.mainHand',
+  'equipmentRoot.offHand': 'equipment.offHand',
+  'equipmentRoot.twoHanded': 'equipment.twoHanded',
+  'equipmentRoot.shield': 'equipment.shield',
+  'equipmentRoot.parryTool': 'equipment.parryTool',
+  'equipmentRoot.dualWield': 'equipment.dualWield',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

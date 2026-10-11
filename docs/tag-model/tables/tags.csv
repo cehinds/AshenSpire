@@ -698,6 +698,14 @@ targeting.randomEnemy,randomEnemy,randomEnemy,targeting,TagNode,,Targets one ene
 targeting.ally,ally,ally,targeting,TagNode,,Targets an ally of the acting player.,,,,,,live-tag,,,targeting.ally
 targeting.single,single,Single,targeting,TagNode,,One direct target.,,,,,,live-tag,◇,9FC3E8,targeting:single
 targeting.area,targeting.area,Area,targeting,TagNode,,An area action; most Counters do not cover it.,,,,,,live-tag,◇,9FC3E8,targeting:area
+equipmentRoot,equipmentRoot,equipment,,TagNode,,Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.,,,,,,live-tag,,,equipment
+equipmentRoot.bound,bound,bound,equipmentRoot,TagNode,,Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).,,,,,,live-tag,,,equipment.bound
+equipmentRoot.mainHand,mainHand,mainHand,equipmentRoot,TagNode,,A weapon held in the main hand. Requires bound (nodeRelations.csv).,,,,,,live-tag,,,equipment.mainHand
+equipmentRoot.offHand,offHand,offHand,equipmentRoot,TagNode,,"An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).",,,,,,live-tag,,,equipment.offHand
+equipmentRoot.twoHanded,twoHanded,twoHanded,equipmentRoot,TagNode,,A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.,,,,,,live-tag,,,equipment.twoHanded
+equipmentRoot.shield,equipmentRoot.shield,shield,equipmentRoot,TagNode,,A shield held in the off hand.,,,,,,live-tag,,,equipment.shield
+equipmentRoot.parryTool,parryTool,parryTool,equipmentRoot,TagNode,,An off-hand tool held to parry.,,,,,,live-tag,,,equipment.parryTool
+equipmentRoot.dualWield,dualWield,dualWield,equipmentRoot,TagNode,,One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.,,,,,,live-tag,,,equipment.dualWield
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,
