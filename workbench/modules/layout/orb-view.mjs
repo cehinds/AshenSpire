@@ -197,7 +197,7 @@ export function createOrbView(root, host) {
     canvas.width = Math.ceil(b.w * scale); canvas.height = Math.ceil(b.h * scale);
     const g = canvas.getContext('2d');
     g.scale(scale, scale);
-    const images = await loadImages(base, items.filter((n) => n.asset !== 'text').map((n) => n.asset));
+    const { images, missing } = await loadImages(base, items.filter((n) => n.asset !== 'text').map((n) => n.asset));
     for (const n of items) {
       g.save();
       g.globalAlpha = n.opacity ?? 1;
@@ -214,6 +214,9 @@ export function createOrbView(root, host) {
       }
       g.restore();
     }
+    if (missing.length) {
+      host.toast({ kind: 'warn', title: 'Some SP art did not load, so the PNG leaves it out', detail: `${[...new Set(missing)].join(', ')}. Fetch the art packs (node tools/fetch-art.mjs --pack light,common) and export again.`, record: false });
+    }
     canvas.toBlob((blob) => {
       if (!blob) { host.toast({ kind: 'error', title: 'The PNG could not be made', record: false }); return; }
       const url = URL.createObjectURL(blob);
@@ -226,15 +229,15 @@ export function createOrbView(root, host) {
 
   /** The SP art, from the game server at its own repo path (the SP Atelier's convention). */
   async function loadImages(base, assets) {
-    const out = {};
+    const out = {}, missing = [];
     await Promise.all([...new Set(assets)].map(async (asset) => {
       const path = O.ORB_ASSETS[asset];
       if (!path) return;
       const img = new Image();
       img.src = `${base}${path}`;
-      try { await img.decode(); out[asset] = img; } catch { /* a missing art is drawn as nothing */ }
+      try { await img.decode(); out[asset] = img; } catch { missing.push(asset); }
     }));
-    return out;
+    return { images: out, missing };
   }
 
   function ensureCanvas() {
