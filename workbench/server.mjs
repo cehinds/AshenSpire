@@ -23,6 +23,7 @@ import { JobRunner, GENERATED, STOP_GRACE_MS } from './core/jobs.mjs';
 import { createWatcher, createOwnWrites, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 import { createFileService } from './core/files.mjs';
+import { createReviewStore } from './core/review.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..');
@@ -130,6 +131,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   await migrateLegacyState(stateDir, projectDir);
   const jobs =new JobRunner({ root, stateFile: path.join(projectDir, 'jobs.json'), onEvent: (e, d) => hub.send(e, d) });
   const settings = new Settings(path.join(stateDir, 'settings.json'), env);
+  // Visual Review: the captures the Visual capture job writes, and the baselines accepted from them (core/review.mjs).
+  const review = createReviewStore({ stateDir: projectDir });
   // The one save path for repo files (core/files.mjs). A save reloads the preview through onBatch.
   // What the file service wrote, so the watcher drops the echo of a save. onSaved still sends the batch itself:
   // with forcePoll or a disabled watcher nothing else would.
@@ -281,6 +284,12 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
         return run ? sendJson(res, 200, run) : sendJson(res, 404, { error: 'Unknown run' });
       }
       if (p === '/api/previews') return sendJson(res, 200, await listPreviews(root));
+      if (p === '/api/review/state') return sendJson(res, 200, await review.list());
+      if (p === '/api/review/image') {
+        const bytes = await review.image(url.searchParams.get('set') || '', url.searchParams.get('file') || '');
+        res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+        return res.end(bytes);
+      }
       if (p === '/api/library') return sendJson(res, 200, await library(root, { settings: settings.read(), extBase: `http://${previewAddress}` }));
       if (p === '/api/settings') return sendJson(res, 200, { ...settings.read(), env: { ASHEN_ART_CHECKOUT: env.ASHEN_ART_CHECKOUT || '', ASHEN_EDITOR_CHECKOUT: env.ASHEN_EDITOR_CHECKOUT || '' } });
       if (p === '/api/export/manifest') {
@@ -301,6 +310,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       const restart = p.match(/^\/api\/tools\/([\w-]+)\/restart$/);
       if (restart) return sendJson(res, 200, await supervisor.restart(restart[1]));
       if (p === '/api/jobs') return sendJson(res, 200, jobs.start(data.id, data.params));
+      if (p === '/api/review/accept') return sendJson(res, 200, await review.accept(data.items));
       const cancel = p.match(/^\/api\/jobs\/runs\/([\w-]+)\/cancel$/);
       if (cancel) return sendJson(res, 200, jobs.cancel(cancel[1]));
       if (p === '/api/settings') { const saved = settings.save(data); hub.send('settings', saved); return sendJson(res, 200, saved); }
