@@ -515,6 +515,9 @@ current dispatch's `events`.
 | `energyGained` / `energySpent` | `{ amount }` |
 | `staminaSpent` / `staminaRecovered` | `{ amount }` on a spend; `{ amount, reason: 'idle' }` (co-op adds `playerId`) when the framework Mana & Stamina rule recovers an idle turn's stamina at the player's turn end |
 | `dodgeRolled` | `{ sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }` — the `dodgeRoll` opcode's receipt |
+| `combatReactionOffered` | `{ offerId, ownerId, sourceId }` — an optional reaction prompt opened for seat `ownerId` against enemy `sourceId` (SPEC §4.10); the choice follows as `combatReactionChosen { offerId, ownerId, cardInstanceId\|null }` |
+| `combatReactionUnavailable` | `{ ownerId, sourceId, reason, cardIds, attackKind, need?, have?, resource? }` — once per incoming root and seat that holds a Counter or defensive Sweep (`cardIds`) but is offered none. `reason`: `'switchOff'\|'attackerStaggered'\|'attackerControlled'\|'notCovered'\|'cost'\|'controlled'\|'unplayable'\|'alreadyAnswered'\|'other'`, the first failing check of the candidate that got furthest; `attackKind`: `'sweep'\|'ranged'\|'spell'\|'area'\|'statusOnly'\|'attack'`; `cost` adds `resource` (`'stamina'\|'mana'`), `need` and `have`. No event for a seat with no candidate, a dead seat or a disconnected seat |
+| `combatGuardBroken` | `{ targetId, sourceId, poise }` — a Smash broke the target's physical Guard; `poise` is the break's bonus Poise damage. Once per break, both combat rule versions |
 | `meterGuardGained` | `{ targetId, meter: 'poise'\|'ward', amount, total }` — the `gainPoise` / `gainWard` opcodes' receipt |
 | `flaskUsed` | `{ flaskId, slot, targetId }` |
 | `relicTriggered` | `{ relicId }` |
