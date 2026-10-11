@@ -59,10 +59,20 @@ namespace AshenSpire.EngineExport
         public ManifestFile[] art;
     }
 
+    // Written after every successful import: the asset paths that import created
+    // or updated. The next import prunes only the paths listed here.
+    [Serializable]
+    internal class ImportRecord
+    {
+        public string[] paths;
+    }
+
     public static class AshenSpireExportImporter
     {
         public const string Format = "ashenspire.engine-export/1";
         private const string Root = "Assets/AshenSpire";
+        // A dot-prefixed name is hidden from Unity's asset database, so the record is not an asset.
+        private const string RecordPath = Root + "/.ashenspire-import.json";
 
         [MenuItem("AshenSpire/Import Export Folder…")]
         public static void ImportFromMenu()
@@ -139,9 +149,18 @@ namespace AshenSpire.EngineExport
             {
                 AssetDatabase.StopAssetEditing();
             }
+            WriteRecord(imported);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return tables.Length;
+        }
+
+        private static void WriteRecord(HashSet<string> imported)
+        {
+            var paths = new List<string>(imported);
+            paths.Sort(StringComparer.Ordinal);
+            var record = new ImportRecord { paths = paths.ToArray() };
+            File.WriteAllText(RecordPath, JsonUtility.ToJson(record, true));
         }
 
         private static HashSet<string> CopyAll(string folder, ManifestFile[] files, string target, bool keepTree)
