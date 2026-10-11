@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS, JobRunner, GENERATED, killTree } from '../core/jobs.mjs';
@@ -539,6 +539,20 @@ test('a live-reload build waits for a job holding the generated-files lock, and 
   runner.release(GENERATED);
   await fs.writeFile(path.join(root, 'tools/content-build.mjs'), '\n');
   assert.equal(runner.start('content-build').status, 'running');
+});
+
+test('a job\'s builder that takes the lock itself runs under the job\'s hold, not into a deadlock', async (t) => {
+  const root = await project(t);
+  const runner = new JobRunner({ root, stateFile: path.join(root, '.wb-state/jobs.json') });
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  const lib = pathToFileURL(path.resolve(HERE, '../../tools/lib/build-lock.mjs')).href;
+  // A writer CLI as the real ones are: it holds the lock while it writes, waiting at most 1 s.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), `import { holdForCli } from ${JSON.stringify(lib)};\nprocess.env.ASHEN_BUILD_LOCK_WAIT_MS = '1000';\nawait holdForCli(process.cwd(), 'config-build');\nconsole.log('built');\n`);
+  const run = runner.start('config-build');
+  for (let i = 0; i < 200 && runner.active.size; i++) await new Promise((r) => setTimeout(r, 20));
+  const done = runner.get(run.runId);
+  assert.equal(done.status, 'passed', done.log);
+  assert.doesNotMatch(done.log, /waiting for/);
 });
 
 test('a setting saved empty stays empty instead of falling back to its default', async (t) => {

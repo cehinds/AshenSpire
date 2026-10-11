@@ -104,7 +104,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   let watcher = null; let chain = Promise.resolve();
   const runBuild = (script) => new Promise((resolve) => {
     let out = '';
-    const child = spawn(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0' }, windowsHide: true });
+    const child = spawn(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0', ...jobs.lockEnv(GENERATED) }, windowsHide: true });
     child.stdout.on('data', (d) => { out = (out + d).slice(-20000); });
     child.stderr.on('data', (d) => { out = (out + d).slice(-20000); });
     child.on('error', (e) => resolve({ code: -1, out: e.message }));

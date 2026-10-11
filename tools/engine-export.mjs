@@ -35,6 +35,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
+import { holdForCli } from './lib/build-lock.mjs';
 
 export const FORMAT = 'ashenspire.engine-export/1';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -483,6 +484,9 @@ async function main() {
     console.log('usage: node tools/engine-export.mjs [--out <dir>] [--check] [--only <table,...>] [--no-build]');
     return;
   }
+  // Rebuilding the generated modules (any run without --no-build, --check too)
+  // holds the shared lock; the builders it spawns run under it (tools/lib/build-lock.mjs).
+  if (opts.build) await holdForCli(ROOT, 'engine-export');
   const started = Date.now();
   const failed = staleGenerated({ build: opts.build });
   if (failed.length) {

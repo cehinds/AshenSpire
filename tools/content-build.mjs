@@ -62,6 +62,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { configSourceErrors } from './config-build.mjs';
 import { manifestIds } from './art-source.mjs';
+import { holdForCli } from './lib/build-lock.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -1104,6 +1105,8 @@ if (SELFTEST) {
 } else if (MUTATE) {
   await mutate();
 } else {
+  // Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
+  if (!CHECK) await holdForCli(ROOT, 'content-build');
   const { checkAtlasBuild } = await import('./world-atlas-data.mjs');
   await checkAtlasBuild();
   let r;

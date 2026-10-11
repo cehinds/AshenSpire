@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { tryAcquire, acquire, lockPath, pidAlive, STALE_MS, LOCK_NAME } from '../tools/lib/build-lock.mjs';
 
 function tmpRoot(t) {
@@ -83,6 +84,85 @@ test('acquire waits for the holder, and gives up naming it after the timeout', a
   const release = await acquire(root, 'me', { timeoutMs: 2000, pollMs: 20 });
   assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'me');
   release();
+});
+
+// A planted checkout whose tools/ holds the real lock helper and framework-data-build
+// (the smallest writer CLI), so the CLI's own lock is exercised end to end.
+function plantBuilder(t) {
+  const root = tmpRoot(t);
+  const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  fs.mkdirSync(path.join(root, 'tools/lib'), { recursive: true });
+  fs.copyFileSync(path.join(repo, 'tools/lib/build-lock.mjs'), path.join(root, 'tools/lib/build-lock.mjs'));
+  fs.copyFileSync(path.join(repo, 'tools/framework-data-build.mjs'), path.join(root, 'tools/framework-data-build.mjs'));
+  fs.mkdirSync(path.join(root, 'content/framework'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'content/framework/probe.json'), '{"a": 1}\n');
+  return root;
+}
+
+function runCli(root, args, env = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [path.join(root, 'tools/framework-data-build.mjs'), ...args], { cwd: root, env: { ...process.env, ASHEN_BUILD_LOCK_TOKEN: '', ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; }); child.stderr.on('data', (d) => { out += d; });
+    child.on('close', (code) => resolve({ code, out }));
+  });
+}
+
+const generated = (root) => path.join(root, 'src/framework/data/probe.js');
+
+test('a writer CLI run directly takes the lock and frees it when it exits', async (t) => {
+  const root = plantBuilder(t);
+  const r = await runCli(root, []);
+  assert.equal(r.code, 0, r.out);
+  assert.ok(fs.existsSync(generated(root)));
+  assert.equal(fs.existsSync(lockPath(root)), false, 'released on exit');
+});
+
+test('a writer CLI waits for a foreign holder, then gives up naming it', async (t) => {
+  const root = plantBuilder(t);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: foreign(t), holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const r = await runCli(root, [], { ASHEN_BUILD_LOCK_WAIT_MS: '300' });
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /waiting for UI Studio config compile/);
+  assert.match(r.out, /gave up after/);
+  assert.equal(fs.existsSync(generated(root)), false, 'wrote nothing');
+  // Released meanwhile: the waiting CLI goes ahead.
+  const waiting = runCli(root, [], { ASHEN_BUILD_LOCK_WAIT_MS: '10000' });
+  setTimeout(() => fs.rmSync(lockPath(root)), 400);
+  const ok = await waiting;
+  assert.equal(ok.code, 0, ok.out);
+  assert.match(ok.out, /waiting for UI Studio config compile/);
+  assert.ok(fs.existsSync(generated(root)));
+});
+
+test('a nested writer CLI runs under its parent\'s hold when given the lock token', async (t) => {
+  const root = plantBuilder(t);
+  const release = tryAcquire(root, 'Engine export (Workbench)');
+  t.after(release);
+  const started = Date.now();
+  const r = await runCli(root, [], { ASHEN_BUILD_LOCK_TOKEN: release.token, ASHEN_BUILD_LOCK_WAIT_MS: '5000' });
+  assert.equal(r.code, 0, r.out);
+  assert.ok(Date.now() - started < 4000, 'did not wait');
+  assert.doesNotMatch(r.out, /waiting for/);
+  assert.equal(JSON.parse(fs.readFileSync(lockPath(root), 'utf8')).holder, 'Engine export (Workbench)', 'the parent still holds it');
+  // A wrong token is no pass.
+  const wrong = await runCli(root, [], { ASHEN_BUILD_LOCK_TOKEN: 'not-it', ASHEN_BUILD_LOCK_WAIT_MS: '200' });
+  assert.equal(wrong.code, 1, wrong.out);
+});
+
+test('a --check run only reads and takes no lock', async (t) => {
+  const root = plantBuilder(t);
+  assert.equal((await runCli(root, [])).code, 0);
+  fs.writeFileSync(lockPath(root), JSON.stringify({ pid: foreign(t), holder: 'Someone', startedAt: Date.now(), token: 'x' }));
+  const r = await runCli(root, ['--check'], { ASHEN_BUILD_LOCK_WAIT_MS: '200' });
+  assert.equal(r.code, 0, r.out);
+  assert.doesNotMatch(r.out, /waiting for/);
+});
+
+test('every writer CLI takes the lock, and every server wrapper passes its token on', () => {
+  const read = (p) => fs.readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  for (const p of ['tools/content-build.mjs', 'tools/config-build.mjs', 'tools/framework-data-build.mjs', 'tools/engine-export.mjs', 'tools/launch.mjs']) assert.match(read(p), /await holdForCli\(/, p);
+  for (const p of ['workbench/core/jobs.mjs', 'workbench/server.mjs', 'editor/server.mjs', 'ui-studio/server.mjs']) assert.match(read(p), /lockEnv\(/, p);
 });
 
 test('the workbench workflow runs this suite and triggers on the lock and its tests', () => {

@@ -7,7 +7,7 @@ import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
 import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
-import { tryAcquire, busyMessage } from '../tools/lib/build-lock.mjs';
+import { tryAcquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -76,7 +76,8 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
       for (const args of commands[name]) {
         current.output += `> node ${args.join(' ')}\n`;
         const code = await new Promise(resolve => {
-          const child = spawn(process.execPath, args, { cwd: root, windowsHide: true });
+          // Builders run under this action's hold on the lock (tools/lib/build-lock.mjs).
+          const child = spawn(process.execPath, args, { cwd: root, windowsHide: true, env: { ...process.env, ...lockEnv(release) } });
           current.child = child;
           const append = data => { current.output = (current.output + data).slice(-120000); };
           child.stdout.on('data', append); child.stderr.on('data', append);
