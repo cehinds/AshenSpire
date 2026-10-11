@@ -88,6 +88,9 @@ export function recursiveEventPaths(abs, name, platform = process.platform, { ex
   const base = String(name);
   const target = path.join(abs, base);
   if (!FOLDER_EVENTS.has(platform)) return [target];
+  // An ignored folder (hidden, node_modules) names nothing: note() would drop its files anyway,
+  // and a large one moved in must not be walked.
+  if (base.split(/[\\/]/).some((p) => p.startsWith('.') || p === 'node_modules')) return [];
   if (platform === 'darwin' && base === path.basename(abs) && !exists(target)) return []; // the watched folder itself
   if (!isDir(target)) {
     // FSEvents also replays events from just before the watch began: a file untouched since then

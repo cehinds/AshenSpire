@@ -143,6 +143,17 @@ async function waitFor(ok, ms = 3000) {
   for (let i = 0; i < ms / 20 && !ok(); i++) await sleep(20);
 }
 
+test('on macOS and Windows an ignored folder moved in is never walked', () => {
+  const abs = path.join('/p', 'src');
+  const walked = [];
+  const opts = { isDir: () => true, exists: () => true, isNewFolder: (p) => { walked.push(p); return true; }, filesUnder: (p) => { walked.push(p); return [path.join(p, 'x.js')]; } };
+  for (const platform of ['darwin', 'win32']) {
+    assert.deepEqual(recursiveEventPaths(abs, 'node_modules', platform, opts), [], platform);
+    assert.deepEqual(recursiveEventPaths(abs, path.join('lib', '.cache'), platform, opts), [], platform);
+  }
+  assert.deepEqual(walked, [], 'neither folder was walked');
+});
+
 test('on macOS a new folder names the files under it; a folder already there, and the watched folder\'s self-named event, name nothing', () => {
   const abs = path.join('/p', 'content');
   const config = path.join(abs, 'config');
