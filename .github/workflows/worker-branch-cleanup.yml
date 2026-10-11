@@ -47,20 +47,31 @@ jobs:
           set -euo pipefail
           git fetch --prune origin '+refs/heads/worker/*:refs/remotes/origin/worker/*' '+refs/heads/test:refs/remotes/origin/test'
 
+          # %(refname:strip=3) drops refs/remotes/origin/, so $b is already the
+          # branch name `worker/<parent-topic>/<task>`. It is used as-is for the
+          # log, the summary and the push --delete target, never prefixed again.
           deleted=()
           kept=()
+          fresh=()
+          test_tip=$(git rev-parse refs/remotes/origin/test)
           while IFS= read -r b; do
             [ -n "$b" ] || continue
-            if git merge-base --is-ancestor "refs/remotes/origin/$b" refs/remotes/origin/test; then
+            tip=$(git rev-parse "refs/remotes/origin/$b")
+            if [ "$tip" = "$test_tip" ]; then
+              # Just created, no commits beyond test yet: keep it, so a branch
+              # cut for work that has not started is not deleted as "merged".
+              echo "kept $b (tip equals origin/test; no work beyond test yet)"
+              fresh+=("$b")
+            elif git merge-base --is-ancestor "refs/remotes/origin/$b" refs/remotes/origin/test; then
               if [ "$DRY_RUN" = "true" ]; then
-                echo "[dry run] would delete worker/$b"
+                echo "[dry run] would delete $b"
               else
                 git push origin --delete "$b"
-                echo "deleted worker/$b"
+                echo "deleted $b"
               fi
               deleted+=("$b")
             else
-              echo "kept worker/$b (not merged into test)"
+              echo "kept $b (not merged into test)"
               kept+=("$b")
             fi
           done < <(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin/worker/)
@@ -70,8 +81,11 @@ jobs:
             echo
             if [ "$DRY_RUN" = "true" ]; then echo "Dry run: nothing was deleted."; echo; fi
             echo "### Deleted (${#deleted[@]})"
-            for b in "${deleted[@]+"${deleted[@]}"}"; do echo "- \`worker/$b\`"; done
+            for b in "${deleted[@]+"${deleted[@]}"}"; do echo "- \`$b\`"; done
             echo
             echo "### Kept, not merged into test (${#kept[@]})"
-            for b in "${kept[@]+"${kept[@]}"}"; do echo "- \`worker/$b\`"; done
+            for b in "${kept[@]+"${kept[@]}"}"; do echo "- \`$b\`"; done
+            echo
+            echo "### Kept, tip equals test, no work yet (${#fresh[@]})"
+            for b in "${fresh[@]+"${fresh[@]}"}"; do echo "- \`$b\`"; done
           } >> "$GITHUB_STEP_SUMMARY"
