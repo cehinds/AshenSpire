@@ -256,6 +256,15 @@ const evasionTables = () => ({
   cards: parseEvasionCards(readFileSync(EVASION_CARDS_CSV, 'utf8')),
 });
 
+test('evasion CSV parsers: an empty base, dexCap or bonus cell throws, and the shipped tables still parse', () => {
+  assert.throws(() => parseEvasionArmor('armor,base,dexCap\nLeather,,6'), TypeError, 'empty base');
+  assert.throws(() => parseEvasionArmor('armor,base,dexCap\nLeather,1,'), TypeError, 'empty dexCap');
+  assert.throws(() => parseEvasionArmor('armor,base,dexCap\nLeather,1'), TypeError, 'missing dexCap cell');
+  assert.throws(() => parseEvasionCards('card,bonus\nBackstep,'), TypeError, 'empty bonus');
+  assert.equal(parseEvasionArmor('armor,base,dexCap\nCloth,0,0').get('Cloth').base, 0, 'a real 0 is still valid');
+  assert.equal(parseEvasionCards('card,bonus\nBackstep,0').get('Backstep'), 0, 'a real 0 bonus is still valid');
+});
+
 test('evasionFor: Cloth at DEX 1 gives 0', () => {
   assert.equal(evasionFor({ evasionArmor: 'Cloth', dex: 1 }, evasionTables()), 0);
 });

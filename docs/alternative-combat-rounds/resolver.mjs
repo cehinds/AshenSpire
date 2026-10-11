@@ -114,8 +114,13 @@ export function accuracyFor({ attrs = {}, level = 0, tags = [], accuracy = 0 } =
     + (Number.isFinite(flat) ? flat : 0);
 }
 
+// A numeric CSV cell. A blank or missing cell is NaN, not 0, so it is rejected.
+function evasionCell(cell) {
+  return cell == null || cell.trim() === '' ? NaN : Number(cell);
+}
+
 // Parses evasion-armor.csv (armor,base,dexCap) into a Map from armor name to
-// { base, dexCap } (DESIGN.md, Hit roll).
+// { base, dexCap } (DESIGN.md, Hit roll). A blank base or dexCap cell throws.
 export function parseEvasionArmor(text) {
   const lines = String(text).split('\n').map((l) => l.trim()).filter(Boolean);
   const header = (lines.shift() ?? '').split(',').slice(0, 3).join(',');
@@ -123,8 +128,8 @@ export function parseEvasionArmor(text) {
   const table = new Map();
   for (const line of lines) {
     const [armor, baseCell, capCell] = line.split(',');
-    const base = Number(baseCell);
-    const dexCap = Number(capCell);
+    const base = evasionCell(baseCell);
+    const dexCap = evasionCell(capCell);
     if (!Number.isFinite(base) || !Number.isFinite(dexCap)) {
       throw new TypeError(`evasion-armor.csv: bad row "${line}"`);
     }
@@ -133,7 +138,8 @@ export function parseEvasionArmor(text) {
   return table;
 }
 
-// Parses evasion-cards.csv (card,bonus) into a Map from card name to bonus.
+// Parses evasion-cards.csv (card,bonus) into a Map from card name to bonus. A
+// blank bonus cell throws.
 export function parseEvasionCards(text) {
   const lines = String(text).split('\n').map((l) => l.trim()).filter(Boolean);
   const header = (lines.shift() ?? '').split(',').slice(0, 2).join(',');
@@ -141,7 +147,7 @@ export function parseEvasionCards(text) {
   const table = new Map();
   for (const line of lines) {
     const [card, bonusCell] = line.split(',');
-    const bonus = Number(bonusCell);
+    const bonus = evasionCell(bonusCell);
     if (!Number.isFinite(bonus)) throw new TypeError(`evasion-cards.csv: bad bonus in "${line}"`);
     table.set(card, bonus);
   }
