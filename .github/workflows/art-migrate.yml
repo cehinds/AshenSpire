@@ -106,6 +106,22 @@ jobs:
         id: list
         run: |
           set -euo pipefail
+          : > art-files.txt
+          # BOOTSTRAP. The tool is read from the BASE checkout. A base that predates
+          # tools/art-intake.mjs (this workflow's own first pull request) has no
+          # copy, and the head's copy must never run in its place: the intake is
+          # skipped, named in the step summary, and the job succeeds.
+          if [ ! -f tools/art-intake.mjs ]; then
+            echo "bootstrap=true" >> "$GITHUB_OUTPUT"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Art intake: skipped (bootstrap)"
+              echo
+              echo "The base commit \`$BASE\` has no \`tools/art-intake.mjs\`, so the intake cannot run from it. The head's copy is not run in its place. This check passes without moving art; once this change is on \`dev\`, the intake applies to later pull requests."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "art intake skipped: the base has no tools/art-intake.mjs"
+            exit 0
+          fi
           node tools/art-intake.mjs --list --base "$BASE" --head "$HEAD" > art-files.txt
           n="$(wc -l < art-files.txt | tr -d ' ')"
           echo "count=$n" >> "$GITHUB_OUTPUT"
@@ -115,10 +131,12 @@ jobs:
         id: gate
         env:
           COUNT: ${{ steps.list.outputs.count }}
+          BOOTSTRAP: ${{ steps.list.outputs.bootstrap }}
           HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
         run: |
           set -euo pipefail
-          if [ "$COUNT" = 0 ]; then state=none
+          if [ "$BOOTSTRAP" = true ]; then state=skip
+          elif [ "$COUNT" = 0 ]; then state=none
           elif [ "$FORK" = true ]; then state=blocked-fork
           elif [ "$HAS_ART_TOKEN" != true ]; then state=blocked-token
           else state=migrate; fi
@@ -213,6 +231,10 @@ jobs:
           {
             echo "$marker"
             case "$STATE" in
+              skip)
+                echo "### Art in this pull request: intake skipped (bootstrap)"
+                echo
+                echo "The base commit has no art intake tool yet, so nothing was checked or moved. The check passes." ;;
               none)
                 echo "### Art in this pull request: resolved"
                 echo
@@ -233,7 +255,7 @@ jobs:
                 echo "The repository secret ART_REPO_WRITE_TOKEN is not set, so this workflow cannot open the art pull request. Remove the art files from this pull request, and open a pull request in [$ART_REPO](https://github.com/$ART_REPO) that carries them at the paths it keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`). The owner can add the secret to enable this automatically." ;;
             esac
           } > comment.md
-          if [ "$STATE" != none ]; then
+          if [ "$STATE" != none ] && [ "$STATE" != skip ]; then
             { echo; echo "Files:"; sed 's/^/- `/; s/$/`/' "$GITHUB_WORKSPACE/art-files.txt" | head -200; } >> comment.md
           fi
           id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | sed -n '1p')"
@@ -244,7 +266,7 @@ jobs:
           fi
 
       - name: Fail while the art is still in this pull request
-        if: steps.gate.outputs.state != 'none'
+        if: steps.gate.outputs.state != 'none' && steps.gate.outputs.state != 'skip'
         env:
           STATE: ${{ steps.gate.outputs.state }}
         run: |
