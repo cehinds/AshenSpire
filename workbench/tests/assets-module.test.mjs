@@ -219,3 +219,14 @@ test('the grid fits its columns to the width and virtualises the rows on screen'
   assert.deepEqual(visibleItems({ count: 5, metrics: gridMetrics({ count: 5, width: 500 }), scrollTop: 9999, viewport: 800 }), { from: 5, to: 5 }, 'past the end shows nothing');
   assert.deepEqual(visibleItems({ count: 0, metrics: gridMetrics({ count: 0, width: 500 }) }), { from: 0, to: 0 });
 });
+
+test('the Asset Gallery is a real module, not the placeholder, and its module loads with a mount()', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../modules/assets/index.mjs', import.meta.url), 'utf8');
+  assert.ok(!/placeholder\.mjs/.test(src), 'the gallery does not import the placeholder');
+  assert.match(src, /\/asset-file\//, 'images come from the Workbench art route');
+  assert.match(src, /assets\/list/, 'the listing is the Workbench API');
+  const { MODULES } = await import('../modules/index.mjs');
+  const mod = await MODULES.find((m) => m.id === 'assets').load();
+  assert.equal(typeof mod.default.mount, 'function');
+});
