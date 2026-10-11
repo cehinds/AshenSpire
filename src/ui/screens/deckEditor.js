@@ -212,6 +212,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (open && inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
+    syncInert();
     if (open && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) {
       focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
     }
@@ -288,6 +289,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ]),
     );
     return section;
+  }
+
+  // Under the phone inspector the list stays rendered but is not reachable:
+  // inert (out of the tab order and the focus cursor) and hidden from assistive
+  // tech. The inspector itself is never inert.
+  function syncInert() {
+    const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches;
+    const hide = mobileView === 'inspect' && phone;
+    for (const node of panel.querySelectorAll('[data-pane], .deck-editor-toolbar')) {
+      if (hide) { node.setAttribute('inert', ''); node.inert = true; node.setAttribute('aria-hidden', 'true'); }
+      else { node.removeAttribute('inert'); node.inert = false; node.removeAttribute('aria-hidden'); }
+    }
   }
 
   function syncPanes() {
@@ -654,6 +667,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       panel.append(head);
     }
     panel.append(header(), el('div', { class: 'deck-editor-toolbar' }, [navigation(), tools()].filter(Boolean)), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
+    syncInert();
     restoreFocus();
   }
 
@@ -663,13 +677,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // handlers re-focus it while typing.
   function paneFocusable(name) {
     return [...panel.querySelectorAll(`[data-pane="${name}"] [data-focus-key]`)]
-      .find(candidate => !['INPUT', 'TEXTAREA'].includes(candidate.tagName)) || null;
+      .find(candidate => !['INPUT', 'TEXTAREA'].includes(candidate.tagName) && !candidate.closest?.('[inert]')) || null;
   }
 
   function restoreFocus() {
     if (!focusKey) return;
     const previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
     let node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous : paneFocusable(pane);
+    if (node?.closest?.('[inert]')) node = panel.querySelector('[data-focus-key="inspect-back"]') || paneFocusable(pane);
     // A pressed ＋ or － whose copy ran out is disabled now: focus moves to its
     // sibling in the same row, never to the search box.
     if (isDisabled(node)) {
@@ -908,16 +923,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // on a phone an unordered deck has no deck pane to stand in.
   const phoneQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 1000px)') : null;
   const onPhoneChange = (ev) => {
-    if (!ev?.matches || model.ordered) return;
-    // An open inspection stays open; its Back goes to the library list.
-    if (mobileView === 'inspect') { pane = 'collection'; inspectOrigin = 'collection'; draw(); return; }
-    if (pane !== 'deck') return;
-    pane = 'collection';
-    mobileView = 'collection';
-    focusKey = null;
-    draw();
-    const node = paneFocusable('collection');
-    if (node) focusNode(node);
+    if (ev?.matches && !model.ordered) {
+      // An open inspection stays open; its Back goes to the library list.
+      if (mobileView === 'inspect') { pane = 'collection'; inspectOrigin = 'collection'; draw(); return; }
+      if (pane === 'deck') {
+        pane = 'collection';
+        mobileView = 'collection';
+        focusKey = null;
+        draw();
+        const node = paneFocusable('collection');
+        if (node) focusNode(node);
+        return;
+      }
+    }
+    // Widening back to desktop releases the panes too.
+    syncInert();
   };
   if (phoneQuery) {
     if (phoneQuery.addEventListener) phoneQuery.addEventListener('change', onPhoneChange);

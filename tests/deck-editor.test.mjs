@@ -1148,6 +1148,49 @@ test('DOM: a phone-width change keeps an open deck-row inspection; Back then lan
   }
 });
 
+test('DOM: under the phone inspector the list is inert and hidden from assistive tech; Back releases it; desktop never sets it', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');
+  const previous = globalThis.matchMedia;
+  const phone = { matches: true, addEventListener() {}, removeEventListener() {} };
+  const desktop = { matches: false, addEventListener() {}, removeEventListener() {} };
+  const panes = (editor) => [...editor.root.querySelectorAll('[data-pane]')];
+  try {
+    withDom(() => {
+      globalThis.matchMedia = (q) => (q === '(max-width: 1000px)' ? phone : desktop);
+      const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
+      const tile = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
+      tile.querySelector('.deck-editor-main').click();
+      tile.querySelector('.deck-editor-inline-inspect').click();
+      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
+      assert.ok(panes(editor).length >= 2);
+      for (const node of panes(editor)) {
+        assert.equal(node.hasAttribute('inert'), true, `${node.dataset.pane} is inert under the inspector`);
+        assert.equal(node.getAttribute('aria-hidden'), 'true');
+      }
+      assert.equal(editor.root.querySelector('.deck-editor-inspector').hasAttribute('inert'), false, 'the inspector is never inert');
+      editor.root.querySelector('[data-focus-key="inspect-back"]').click();
+      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
+      for (const node of panes(editor)) {
+        assert.equal(node.hasAttribute('inert'), false, `${node.dataset.pane} is released on Back`);
+        assert.equal(node.hasAttribute('aria-hidden'), false);
+      }
+      editor.close();
+
+      globalThis.matchMedia = () => desktop;
+      const wide = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
+      const wideTile = wide.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
+      wideTile.querySelector('.deck-editor-main').click();
+      wideTile.querySelector('.deck-editor-inline-inspect').click();
+      assert.equal(wide.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
+      for (const node of panes(wide)) assert.equal(node.hasAttribute('inert'), false, 'desktop never sets inert');
+      wide.close();
+    });
+  } finally {
+    if (had) globalThis.matchMedia = previous; else delete globalThis.matchMedia;
+  }
+});
+
 test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles the deck view', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
