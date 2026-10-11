@@ -17,8 +17,14 @@ test('the deep link opens battlefield and sketch, and unknown modes open UI conf
 
 test('a mode not built yet opens UI config rather than an empty page', () => {
   assert.equal(L.modeFor('deck'), 'deck', 'the built deck mode opens from the link');
-  assert.equal(L.modeFor('card-layers'), 'config', 'a mode not built yet opens UI config');
-  assert.deepEqual(L.comingNext().map((m) => m.id), ['card-layers']);
+  assert.equal(L.modeFor('zz-not-a-mode'), 'config', 'an unknown mode opens UI config');
+  assert.deepEqual(L.comingNext(), [], 'every Layout Studio mode is built, so nothing is left under More');
+});
+
+test('the card layers link opens that mode', () => {
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=card-layers').params.mode), 'card-layers');
+  assert.equal(hashFor('layout', L.paramsFor('card-layers')), '#mod=layout&mode=card-layers');
+  assert.equal(L.MODES.find((m) => m.id === 'card-layers').built, true);
 });
 
 test('the book recipes link opens that mode', () => {
