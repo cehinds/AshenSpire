@@ -444,6 +444,10 @@ export const LIVE = {
   'reach.contact': 'reach:contact',
   'reach.near': 'reach:near',
   'reach.far': 'reach:far',
+  // proposed live mapping (domain pass)
+  'counterMode': 'counterMode',
+  'counterMode.melee': 'counter:melee',
+  'counterMode.spell': 'counter:spell',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

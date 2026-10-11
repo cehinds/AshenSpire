@@ -854,3 +854,6 @@ Reach {Inspection details for combat techniques.}
   Contact {At melee reach.}
   Near {Normal ranged reach.}
   Far {Extended ranged reach.}
+Counter reach {Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.}
+  Melee counter {Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.}
+  Spell counter {Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.}

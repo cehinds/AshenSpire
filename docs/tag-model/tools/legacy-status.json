@@ -728,5 +728,8 @@
  "reach": "new",
  "reach.contact": "new",
  "reach.near": "new",
- "reach.far": "new"
+ "reach.far": "new",
+ "counterMode": "new",
+ "counterMode.melee": "new",
+ "counterMode.spell": "new"
 }
