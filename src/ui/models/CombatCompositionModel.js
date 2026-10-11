@@ -21,7 +21,18 @@ export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
 }
 
+// The line the backdrop camera frames its ground anchor on. A fit may carry
+// its own `sceneryGround` (a short portrait phone keeps the near-row framing,
+// with its horizon and landmark in view, while its enemies stand further back).
 export function combatSceneryGround(sizes, actors, fallback) {
+  const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
+  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.sceneryGround ?? size.ground))
+    .map(size => size.sceneryGround ?? size.ground);
+  return grounds.length ? Math.min(...grounds) : fallback;
+}
+
+// The farthest-back enemy foot line, which the backdrop keeps on its floor.
+export function combatStandingGround(sizes, actors, fallback) {
   const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
   const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.ground)).map(size => size.ground);
   return grounds.length ? Math.min(...grounds) : fallback;
@@ -76,12 +87,18 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     // their intent and HP clear under the ribbon. Only a short landscape strip
     // (width > 2 x height) keeps the near foot line for its stacked lanes.
     const backRow = spacious || width <= height * 2;
+    const nearRow = Math.max(visibleHeight + actor.leading + 6, (size.ground ?? actor.slot.ground) - height * .07);
     const ground = player && solo && Number.isFinite(handTop)
       ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
       : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground)
         : backRow ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
-          : (size.ground ?? actor.slot.ground) - height * .07);
+          : nearRow);
+    // A short portrait field frames its backdrop on the near row, as it did
+    // before its enemies moved back, so the horizon and landmark stay in view;
+    // the backdrop then keeps the back-row feet on its floor.
+    const sceneryGround = !player && backRow && !spacious ? nearRow : undefined;
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
+      ...(sceneryGround === undefined ? {} : { sceneryGround }),
       separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };
   });
   // A short landscape strip has no room above the row for spread overheads;

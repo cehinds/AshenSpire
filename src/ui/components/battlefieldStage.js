@@ -14,7 +14,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
@@ -971,7 +971,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // where the hand consumes much of the viewport. Keep the same horizon.
     const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
-      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom, narrow, coverFloor: true });
+      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
+      standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow, coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
