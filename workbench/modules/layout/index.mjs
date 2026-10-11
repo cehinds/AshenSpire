@@ -361,7 +361,7 @@ export default {
       dlg.close();
       rebuild();
       ctx.toast({ kind: 'success', title: `Saved ${data.files.length} file(s)`, detail: `Backup ${data.backup}`, record: false });
-      ctx.preview.reload();
+      ctx.preview.reloadAfterBuild(data.files.map((f) => f.path));
     }
 
     /** Disable the dialog's Save button while a save is in flight (openReview redraws it enabled). */
