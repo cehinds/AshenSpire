@@ -424,6 +424,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       process.exit(1);
     }
     console.log(`config-build: ${GENERATED} is current with ${entries.length} source file(s)`);
+  } else if ((existsSync(outPath) ? lf(readFileSync(outPath, 'utf8')) : null) === text) {
+    // Unchanged output is left alone, so a test importing it in a sibling
+    // process never reads it mid-rewrite (engine-export runs this build).
+    console.log(`config-build: ${GENERATED} is current with ${entries.length} source file(s)`);
   } else {
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, text);
