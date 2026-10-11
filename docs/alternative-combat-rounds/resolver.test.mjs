@@ -1338,3 +1338,32 @@ test('unpaired: the event names the enemy by enemyId, the same key momentum uses
   assert.equal(unpaired.enemyId, 'G', 'enemyId is the enemy id, not the action id');
   assert.equal(unpaired.momentum, 0, 'and it carries that enemy\'s momentum key');
 });
+
+// A seeded generator, so the rolls are the same on every run.
+const seeded = (seed) => {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+};
+
+test('per-enemy keys: enemy ids that name Object.prototype members keep their own momentum and charges', () => {
+  // 'toString' and 'constructor' are inherited from Object.prototype. Each
+  // enemy gets its own entry in the returned maps, not the inherited function.
+  const cards = [
+    { id: 'strikeA', slot: 0, speed: 4, kind: 'attack' },
+    { id: 'strikeB', slot: 1, speed: 4, kind: 'attack' },
+  ];
+  const queue = [
+    { id: 'toString-hit', enemyId: 'toString', speed: 1, kind: 'attack', tags: ['intangible'], intangibleCharges: 2 },
+    { id: 'constructor-hit', enemyId: 'constructor', speed: 1, kind: 'attack', tags: ['intangible'], intangibleCharges: 2 },
+  ];
+  const out = resolveRound(cards, queue, 2, seeded(7));
+  for (const k of ['toString', 'constructor']) {
+    assert.equal(Object.hasOwn(out.momentum, k), true, `${k} has its own momentum entry`);
+    assert.equal(typeof out.momentum[k], 'number', `${k} momentum is a number`);
+    assert.equal(Object.hasOwn(out.charges, k), true, `${k} has its own charges entry`);
+    assert.equal(typeof out.charges[k], 'number', `${k} charges is a number`);
+  }
+});

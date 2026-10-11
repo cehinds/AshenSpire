@@ -15,6 +15,11 @@ const SIDES = ['player', 'enemy'];
 
 const other = (who) => (who === 'player' ? 'enemy' : 'player');
 
+// Writes an own property, so a key such as 'toString' or '__proto__' is stored
+// as data, not read as an inherited member. Maps keyed by enemy id use this for
+// returned objects, and Object.hasOwn for every membership check.
+const setOwn = (obj, k, v) => Object.defineProperty(obj, k, { value: v, enumerable: true, writable: true, configurable: true });
+
 // Momentum adds half its value to speed, truncated toward zero, so the
 // shift is symmetric: +-1 gives 0, +-2 and +-3 give +-1 (DESIGN.md, Momentum).
 // `|| 0` turns a truncated -0 into +0.
@@ -188,7 +193,7 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   // object is only written back at the end, for supplied sides whose charges changed.
   const supplied = options.charges ?? {};
   const pool = {};
-  for (const who of SIDES) pool[who] = who in supplied ? supplied[who] : side[who].intangibleCharges;
+  for (const who of SIDES) pool[who] = Object.hasOwn(supplied, who) ? supplied[who] : side[who].intangibleCharges;
   const events = [];
   const cancelled = { player: null, enemy: null };
   const tie = side.player.speed === side.enemy.speed;
@@ -253,7 +258,7 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   // caller object with nothing spent is never written to.
   const settle = () => {
     for (const who of SIDES) {
-      if (who in supplied && pool[who] !== supplied[who]) supplied[who] = pool[who];
+      if (Object.hasOwn(supplied, who) && pool[who] !== supplied[who]) supplied[who] = pool[who];
     }
   };
 
@@ -560,10 +565,11 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   }
 
   // Starting M_e for each enemy in the queue. Every pairing uses these values.
-  const start = {};
+  // Internal maps are null-prototype, so no enemy id can read an inherited member.
+  const start = Object.create(null);
   for (const enemy of enemyQueue) {
     const k = enemyKey(enemy);
-    if (!(k in start)) start[k] = clampMomentum(inputM[k] ?? 0);
+    if (!Object.hasOwn(start, k)) start[k] = clampMomentum(Object.hasOwn(inputM, k) ? inputM[k] : 0);
   }
 
   // Intangible charge pools for the round (DESIGN.md, Evasion): one for the
@@ -573,20 +579,20 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   // Every side in options.charges is kept, even one with no queued action this
   // round, so its charges carry over. Sides not given take the queue defaults.
   const largestCharges = (entries) => Math.max(0, ...entries.map((e) => chargeCount(e.intangibleCharges)));
-  const charges = {};
+  const charges = Object.create(null);
   for (const [key, v] of Object.entries(chargeIn)) charges[key] = chargeCount(v);
-  if (!('player' in charges)) charges.player = largestCharges(playerCards);
+  if (!Object.hasOwn(charges, 'player')) charges.player = largestCharges(playerCards);
   for (const enemy of enemyQueue) {
     const k = enemyKey(enemy);
     if (k === 'player') throw new TypeError('an enemy id cannot be "player"');
-    if (!(k in charges)) {
+    if (!Object.hasOwn(charges, k)) {
       const own = enemyQueue.filter((e) => enemyKey(e) === k);
       charges[k] = largestCharges(own);
     }
   }
 
-  const pending = {}; // summed raw deltas per enemy, applied at round end
-  const fullSet = {}; // enemy -> +-3, set by a counter that staggers (round end)
+  const pending = Object.create(null); // summed raw deltas per enemy, applied at round end
+  const fullSet = Object.create(null); // enemy -> +-3, set by a counter that staggers (round end)
   const events = [];
   const paired = new Set();
   const push = (e, k = null) => events.push({ ...e, momentum: k === null ? null : start[k] });
@@ -647,15 +653,19 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const momentum = {};
   for (const k of Object.keys(start)) {
     const from = start[k];
-    const to = k in fullSet ? clampMomentum(fullSet[k]) : clampMomentum(from + (pending[k] ?? 0));
-    momentum[k] = to;
+    const to = Object.hasOwn(fullSet, k) ? clampMomentum(fullSet[k]) : clampMomentum(from + (pending[k] ?? 0));
+    setOwn(momentum, k, to);
     if (to !== from) {
       events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to, momentum: to });
     }
   }
   for (const k of Object.keys(inputM)) {
-    if (!(k in momentum)) momentum[k] = clampMomentum(inputM[k]);
+    if (!Object.hasOwn(momentum, k)) setOwn(momentum, k, clampMomentum(inputM[k]));
   }
 
-  return { events, momentum, charges };
+  // Returned maps are plain objects, filled by own-property writes only.
+  const outCharges = {};
+  for (const k of Object.keys(charges)) setOwn(outCharges, k, charges[k]);
+
+  return { events, momentum, charges: outCharges };
 }
