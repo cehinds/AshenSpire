@@ -8,6 +8,7 @@
 import { createGrid, createCheckPanel } from '../../ui/kit/grid.mjs';
 import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
+import { hashFor } from '../host.mjs';
 import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, changeFor } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -205,6 +206,7 @@ export default {
       const grid = ensureGrid();
       if (state.selected && state.selected !== path) state.drafts.set(state.selected, grid.getData());
       state.selected = path;
+      try { history.replaceState(null, '', hashFor('data', { table: path })); } catch { /* the hash is a convenience */ }
       const doc = state.drafts.get(path) ?? { columns: table.columns, rows: table.rows };
       state.activeRow = null;
       grid.setRules(tableRules(doc.columns));
@@ -239,15 +241,21 @@ export default {
       if (!state.selected) { ctx.toast({ kind: 'info', title: 'Open a table first' }); return false; }
       return true;
     }
+    /** Adds a row under the active row, or at the end. */
+    function addRow() {
+      if (!needTable()) return;
+      const data = state.grid.getData(), at = activeIndex();
+      const index = at == null ? data.rows.length : at + 1;
+      state.grid.addRow(index);
+      state.activeRow = index;
+      renderRow();
+    }
     el.querySelector('.ds-toolbar').addEventListener('click', (ev) => {
       const act = ev.target.closest('[data-act]')?.dataset.act;
       if (!act || !needTable()) return;
       const grid = state.grid, data = grid.getData();
-      if (act === 'add') {
-        const at = activeIndex();
-        grid.addRow(at == null ? data.rows.length : at + 1);
-        state.activeRow = at == null ? data.rows.length : at + 1;
-      } else if (act === 'dup') {
+      if (act === 'add') addRow();
+      else if (act === 'dup') {
         const at = activeIndex();
         if (at == null) return ctx.toast({ kind: 'info', title: 'Click a row to duplicate it' });
         grid.apply(G.duplicateRows(data, [at]));
@@ -291,14 +299,28 @@ export default {
     });
 
     ctx.shortcuts.register('Mod+S', 'Review & save', () => { openReview(); }, { inInput: true });
-    loadList().then(() => {
+    // Deep link: #mod=data&table=<path> selects that table; otherwise the first table opens.
+    const pick = () => {
+      const want = ctx.params?.table;
+      const hit = state.tables.find((t) => t.path === want);
+      if (hit) return select(hit.path);
       const first = state.tables[0];
-      if (first) select(first.path);
-      else gridEl.innerHTML = '<div class="ds-note">No tables found.</div>';
+      if (first) return select(first.path);
+      return null;
+    };
+    loadList().then(() => {
+      if (pick() === null) gridEl.innerHTML = '<div class="ds-note">No tables found.</div>';
     }).catch((e) => { gridEl.innerHTML = `<div class="ds-note">${esc(e.message)}</div>`; });
-
     return {
-      commands: () => [],
+      onShow() {
+        const want = ctx.params?.table;
+        if (want && want !== state.selected && state.tables.some((t) => t.path === want)) select(want);
+      },
+      commands: () => [
+        ...state.tables.map((t) => ({ title: `Open table… ${t.name}`, sub: t.group, run: () => select(t.path) })),
+        { title: 'Review & save', sub: 'Ctrl+S', run: () => openReview() },
+        { title: 'Add row', sub: state.selected || '', run: () => addRow() },
+      ],
     };
   },
 };
