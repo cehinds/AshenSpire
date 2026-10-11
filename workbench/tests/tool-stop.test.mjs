@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { Tool, TOOL_STOP_MS } from '../core/tools.mjs';
-import { STOP_GRACE_MS, KILL_WAIT_MS } from '../../tools/lib/process-tree.mjs';
+import { STOP_GRACE_MS, KILL_WAIT_MS, processAlive } from '../../tools/lib/process-tree.mjs';
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -67,4 +67,32 @@ test('past the deadline the wrapper SIGKILLs the whole tree and waits for it', a
   let state = 'gone';
   try { state = /\) Z /.test(fs.readFileSync(`/proc/${grandchildPid}/stat`, 'utf8')) ? 'zombie' : 'running'; } catch { state = 'gone'; }
   assert.notEqual(state, 'running', 'the grandchild was killed with the tree');
+});
+
+test('stop waits for a descendant that outlives a leader which exits on the first SIGTERM', async (t) => {
+  if (process.platform === 'win32') return t.skip('POSIX process groups');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-tool-stop-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const out = path.join(dir, 'out');
+  const readyFile = path.join(dir, 'ready');
+  const pidFile = path.join(dir, 'grandchild.pid');
+  const grandReady = path.join(dir, 'grandchild.ready');
+  // The grandchild ignores SIGTERM and writes to `out` from 700 ms on, every 200 ms.
+  const grandchild = `const fs = require('node:fs'); process.on('SIGTERM', () => {}); fs.writeFileSync(${JSON.stringify(grandReady)}, 'ready'); setTimeout(() => { fs.appendFileSync(${JSON.stringify(out)}, 'w'); setInterval(() => fs.appendFileSync(${JSON.stringify(out)}, 'w'), 200); }, 700); setInterval(() => {}, 1000);`;
+  // The leader exits 0 at once on SIGTERM and leaves the grandchild running in its group.
+  const leader = `const fs = require('node:fs'); const cp = require('node:child_process'); process.on('SIGTERM', () => process.exit(0)); const g = cp.spawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'ignore' }); fs.writeFileSync(${JSON.stringify(pidFile)}, String(g.pid)); fs.writeFileSync(${JSON.stringify(readyFile)}, 'ready'); setInterval(() => {}, 1000);`;
+  const child = spawn(process.execPath, ['-e', leader], { stdio: 'ignore', detached: true });
+  for (let i = 0; i < 200 && !fs.existsSync(readyFile); i++) await delay(20);
+  for (let i = 0; i < 200 && !fs.existsSync(grandReady); i++) await delay(20);
+  assert.ok(fs.existsSync(grandReady), 'the grandchild is ready, with its SIGTERM handler installed');
+  const grandchildPid = Number(fs.readFileSync(pidFile, 'utf8'));
+  const tool = toolWithChild(child);
+  const started = Date.now();
+  await tool.stop({ deadlineMs: 1500 });
+  assert.ok(Date.now() - started >= 1400, 'stop did not resolve before the group was killed at the deadline');
+  assert.equal(processAlive(grandchildPid), false, 'the grandchild is dead when stop resolves');
+  const atResolve = fs.existsSync(out) ? fs.readFileSync(out, 'utf8').length : 0;
+  await delay(700);
+  const later = fs.existsSync(out) ? fs.readFileSync(out, 'utf8').length : 0;
+  assert.equal(later, atResolve, 'no write lands after stop resolves');
 });

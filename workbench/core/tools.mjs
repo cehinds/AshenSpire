@@ -12,7 +12,6 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { STOP_GRACE_MS, KILL_WAIT_MS, stopGroup } from '../../tools/lib/process-tree.mjs';
-import { killTree } from './jobs.mjs';
 
 const LOG_LINES = 60;
 
@@ -207,18 +206,21 @@ export class Tool {
     if (!child) return;
     this.stopping = true;
     const exited = () => child.exitCode !== null || child.signalCode !== null;
-    // Windows has no process groups: killTree there is taskkill /T /F, so keep the plain signal.
-    const signalTree = (signal) => (process.platform === 'win32' ? (() => { try { child.kill(signal); } catch { /* gone */ } })() : killTree(child, { signal }));
-    const exitedSoon = new Promise((resolve) => {
+    const exitedWithin = (ms) => new Promise((resolve) => {
       if (exited()) return resolve(true);
-      const timer = setTimeout(() => resolve(false), deadlineMs);
+      const timer = setTimeout(() => resolve(false), ms);
       child.once('exit', () => { clearTimeout(timer); resolve(true); });
     });
-    signalTree('SIGTERM');
-    if (!(await exitedSoon)) {
-      signalTree('SIGKILL');
-      if (!exited()) await new Promise((resolve) => child.once('exit', resolve));
-      if (process.platform !== 'win32') await stopGroup(child.pid, { graceMs: 0 });
+    if (process.platform === 'win32') {
+      // Windows has no process groups: killTree there is taskkill /T /F, so keep the plain signal.
+      const signalTree = (signal) => { try { child.kill(signal); } catch { /* gone */ } };
+      signalTree('SIGTERM');
+      if (!(await exitedWithin(deadlineMs))) { signalTree('SIGKILL'); await exitedWithin(KILL_WAIT_MS); }
+    } else {
+      // The leader may exit at once while a descendant lives on, so the group is always stopped,
+      // whatever the leader did: SIGTERM now, SIGKILL after deadlineMs, and a bounded wait until it is empty.
+      await stopGroup(child.pid, { graceMs: deadlineMs });
+      await exitedWithin(KILL_WAIT_MS);
     }
     this.child = null;
     this.set('down', 'Stopped');
