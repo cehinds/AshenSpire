@@ -8,7 +8,7 @@ import {
   FRAME_MS, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks,
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
-  canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows,
+  canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -211,4 +211,14 @@ test('bindings read as rows with their tags, enabled state and priority', () => 
 test('snap rounds to the grid step and leaves the value alone without one', () => {
   assert.equal(snap(13, 5), 15);
   assert.equal(snap(13, 0), 13);
+});
+
+test('generated files are the stance projects the build writes; renewal and other sets are editable', () => {
+  assert.equal(isGenerated('pose-studio/stances/projects/reaver-default/offensive.pose.json'), true);
+  assert.equal(isGenerated('pose-studio/stances/projects/herald-default/casting.pose.json'), true);
+  assert.equal(isGenerated('pose-studio/stances/registry.json'), true);
+  assert.equal(isGenerated('pose-studio/renewal/attack.pose.json'), false);
+  assert.equal(isGenerated('pose-studio/renewal/base-attack.pose.json'), false);
+  assert.equal(isGenerated('pose-studio/stancesX/file.pose.json'), false, 'a prefix match needs the folder separator');
+  assert.equal(isGenerated(undefined), false);
 });
