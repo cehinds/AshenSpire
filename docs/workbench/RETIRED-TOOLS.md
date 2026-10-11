@@ -52,14 +52,14 @@ old page.
 | Starting equipment review (screenshots) | `docs/preview/starting-equipment/index.html` | Visual Review | `#mod=review` | partial | zip download; verdicts export; screens not in the capture job list |
 | World Journey screenshot review | `docs/preview/world-atlas/index.html` | Visual Review | `#mod=review` | partial | zip download; verdicts export; screens not in the capture job list |
 | HUD comparison (approved vs built) | `docs/qa/mobile-combat-20261009/hud-comparison.html` | Visual Review | `#mod=review` | partial | zip download; verdicts export; screens not in the capture job list |
+| Deck row layout editor | `docs/design/deck-row-editor/index.html` | Layout Studio, Deck row | `#mod=layout&mode=deck` | partial | wireframe view; reset layout; JSON file download and file import (the mode pastes and copies JSON) |
+| SP Atelier | `docs/design/sp-orb-editor/index.html` | Layout Studio, SP orb | `#mod=layout&mode=orb` | partial | assembled and selected-only views; reset; import and export layout JSON; SP scaling and resources stats |
+| Book Atelier | `docs/preview/book-library/layers/atelier.html` | Layout Studio, Book recipes | `#mod=layout&mode=book-recipes` | partial | cover variations (four); JSON export and import of a cover |
 
 ## Not moved (the module is not built, so the old tool stays live with no notice)
 
 | Old tool | Path | Planned module | Why it stays |
 |---|---|---|---|
-| Deck row layout editor | `docs/design/deck-row-editor/index.html` | Layout Studio, Deck row | Mode not built (`workbench/modules/layout/modes.mjs`) |
-| SP Atelier | `docs/design/sp-orb-editor/index.html` | Layout Studio, SP orb | Mode not built |
-| Book Atelier | `docs/preview/book-library/layers/atelier.html` | Layout Studio, Book recipes | Mode not built |
 | Card layer explorer | `docs/qa/card-layers/index.html` | Layout Studio, Card layers | Mode not built |
 | Pose Studio Sequence (prologue studio) | `art/prologue-2026-09-19/index.html` (art checkout) | Motion Studio, Sequence | Not built; art repo |
 | Scenes & Fixtures (world atlas, reading desk, equipment selection, tooltip scenes, live QA fixtures, tray gallery, wireframe gallery) | see `workbench/tools.json` | none | Stays as it is, by plan (CONSOLIDATION §G) |
