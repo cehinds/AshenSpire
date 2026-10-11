@@ -269,6 +269,39 @@ export function rebaseOnConflicts(changes, conflicts) {
   return changes.map((c) => (disk.has(c.path) ? { ...c, baseHash: disk.get(c.path) } : c));
 }
 
+// ---------------------------------------------------------------------------
+// Drafts: each file the module has open keeps its own edited project, so switching
+// files keeps the unsaved work (as Data Studio keeps its tables' drafts).
+
+/** A draft record (path, original, project, hash) is dirty when its edits would change the file. */
+export function isDirtyFile(f) {
+  return !!f && !isGenerated(f.path) && isDirty(f.original, f.project);
+}
+
+/** The paths of the drafts with unsaved edits, in the order they were kept. */
+export function dirtyPathsOf(drafts) {
+  return [...drafts.values()].filter(isDirtyFile).map((f) => f.path);
+}
+
+/**
+ * The drafts still held after a switch to openPath: every dirty draft, and the file now open
+ * (kept even when clean). Clean drafts are dropped, so a later open reads the disk copy again.
+ */
+export function keepDrafts(drafts, openPath) {
+  const kept = new Map();
+  for (const [path, f] of drafts) if (path === openPath || isDirtyFile(f)) kept.set(path, f);
+  return kept;
+}
+
+/**
+ * The save changes for every dirty draft ({ path, text, baseHash }), rebased on the disk
+ * hashes of any conflicts the user chose to keep.
+ */
+export function saveChangesOf(records, conflicts = []) {
+  const changes = records.filter(isDirtyFile).map((f) => ({ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }));
+  return rebaseOnConflicts(changes, conflicts);
+}
+
 /** True when the project differs from the file it was read from. */
 export function isDirty(original, project) {
   if (typeof original !== 'string' || !original.length) return false;

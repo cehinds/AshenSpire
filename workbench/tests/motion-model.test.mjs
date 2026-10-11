@@ -9,7 +9,7 @@ import {
   clipStart, clipBar, parseMotionLink, motionLinkOf, libraryEntries, filterLibrary,
   parsePoseFile, checkProject, serializePoseFile, isDirty, setAnchor, setClipFields, moveClip, renamePose,
   canvasDocOf, applyCanvasDoc, snap, addClip, removeClip, bindingRows, isGenerated, layoutOf,
-  rebaseOnConflicts, viewOf, selectionGate,
+  rebaseOnConflicts, viewOf, selectionGate, isDirtyFile, dirtyPathsOf, keepDrafts, saveChangesOf,
 } from '../modules/motion/model.mjs';
 
 const readFixture = (rel) => fs.readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
@@ -372,4 +372,57 @@ test('a selection gate drops a file read that a newer selection has overtaken', 
   assert.equal(gate.current(second), true);
   assert.equal(gate.latest(), second, 'reading the latest does not start a new selection');
   assert.equal(gate.current(second), true);
+});
+
+/** A loaded file record as the module holds it: the bytes read, the project drafted from them. */
+function recordOf(path, text, edit = null) {
+  const { project } = parsePoseFile(text);
+  return { path, kind: 'project', hash: `h-${path}`, original: text, project: edit ? edit(project) : project, problems: [] };
+}
+
+test('a draft is dirty only when its project differs from the bytes read, and generated files are never dirty', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const clean = recordOf('pose-studio/renewal/attack.pose.json', text);
+  const edited = recordOf('pose-studio/renewal/attack.pose.json', text, (p) => renamePose(p, 0, 'draft-pose'));
+  assert.equal(isDirtyFile(clean), false);
+  assert.equal(isDirtyFile(edited), true);
+  const generated = recordOf('pose-studio/stances/x.pose.json', text, (p) => renamePose(p, 0, 'draft-pose'));
+  assert.equal(isDirtyFile(generated), false, 'a build-written file takes no edits');
+  assert.equal(isDirtyFile(null), false);
+});
+
+test('dirtyPathsOf lists the drafts with unsaved edits, in the order they were opened', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const a = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
+  const b = recordOf('pose-studio/renewal/b.pose.json', text);
+  const c = recordOf('pose-studio/renewal/c.pose.json', text, (p) => renamePose(p, 1, 'two'));
+  const drafts = new Map([[a.path, a], [b.path, b], [c.path, c]]);
+  assert.deepEqual(dirtyPathsOf(drafts), ['pose-studio/renewal/a.pose.json', 'pose-studio/renewal/c.pose.json']);
+  assert.deepEqual(dirtyPathsOf(new Map()), []);
+});
+
+test('switching files keeps every dirty draft, and drops clean ones except the file now open', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const dirty = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
+  const clean = recordOf('pose-studio/renewal/b.pose.json', text);
+  const openNow = recordOf('pose-studio/renewal/c.pose.json', text);
+  const kept = keepDrafts(new Map([[dirty.path, dirty], [clean.path, clean]]), openNow.path);
+  assert.deepEqual([...kept.keys()], [dirty.path], 'the clean draft goes, the dirty one stays');
+  assert.equal(kept.get(dirty.path), dirty, 'the draft is the same record, so the edits come back');
+  const withOpen = keepDrafts(new Map([[clean.path, clean]]), clean.path);
+  assert.deepEqual([...withOpen.keys()], [clean.path], 'the open file stays even when clean');
+});
+
+test('the save changes are the dirty drafts only, each on its own base hash, rebased on any conflict', () => {
+  const text = readFixture('pose-studio/renewal/attack.pose.json');
+  const a = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
+  const b = recordOf('pose-studio/renewal/b.pose.json', text, (p) => renamePose(p, 1, 'two'));
+  const clean = recordOf('pose-studio/renewal/c.pose.json', text);
+  const changes = saveChangesOf([a, b, clean], []);
+  assert.deepEqual(changes.map((c) => c.path), ['pose-studio/renewal/a.pose.json', 'pose-studio/renewal/b.pose.json']);
+  assert.equal(changes[0].baseHash, 'h-pose-studio/renewal/a.pose.json');
+  assert.equal(changes[0].text, serializePoseFile(a.project, text));
+  const rebased = saveChangesOf([a, b], [{ path: b.path, hash: null }]);
+  assert.equal(rebased[1].baseHash, null, 'a conflicted draft is saved against the hash the 409 reported');
+  assert.equal(rebased[0].baseHash, 'h-pose-studio/renewal/a.pose.json');
 });
