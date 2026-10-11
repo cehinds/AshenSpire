@@ -328,9 +328,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       sides.push(chosen[0]);
     }
     measured.forEach(({ info }, i) => {
-      if (sides[i] == null) return;
+      // Not displayed (unselected): its spot is no longer current, so the
+      // door must be placed again before it can show.
+      if (sides[i] == null) { delete info.dataset.placed; return; }
       if (sides[i]) { if (info.dataset.inspectSide !== sides[i]) info.dataset.inspectSide = sides[i]; }
       else if (info.hasAttribute('data-inspect-side')) info.removeAttribute('data-inspect-side');
+      info.dataset.placed = 'true';
     });
   }
   let inspectTick = 0;
