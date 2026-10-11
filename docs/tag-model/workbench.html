@@ -287,6 +287,7 @@ async function flush(t, opts){
   const now=Date.now();
   const built=chunkRows(state.data[t].rows.map(r=>cols.map(c=>r[c]??''))).map(rows=>({hash:hashText(JSON.stringify({rows})), rows}));
   const hashes=built.map(b=>b.hash), written=new Set();
+  let newer=null;
   try{
     for(const b of built){
       if(ts.blobs.has(b.hash)||written.has(b.hash)) continue;   /* blobs are immutable: a known hash is never rewritten */
@@ -305,13 +306,15 @@ async function flush(t, opts){
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
     ts.base=rev; ts.conflict=null; ts.incomplete=null; ts.legacy=null;
     ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
+    /* a head a peer wrote after ours, seen while we were saving, was not applied: apply it now */
+    if(ts.latest&&(ts.latest.savedAt||0)>now&&revOf(ts.latest)!==rev) newer=ts.latest;
   }
   catch(e){
-    dirty.add(t);
-    if(e&&e.code==='invalid_argument'){ canWrite=false; setStatus('warn','This view can read but not save. Edits stay in this browser; export them as CSV.'); saveLocal(); }
-    else { setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
+    if(e&&e.code==='invalid_argument'){ dirty.delete(t); canWrite=false; setStatus('warn','This view can read but not save. Edits stay in this browser; export them as CSV.'); saveLocal(); }
+    else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
   }
   finally{ saving.delete(t); setStatus(); }
+  if(newer&&!dirty.has(t)) applyHead(t,newer);
 }
 /* conflict choices: drop local edits and show theirs, or write ours on top of their rev */
 async function loadTheirs(t){

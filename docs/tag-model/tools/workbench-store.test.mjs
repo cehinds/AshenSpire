@@ -110,6 +110,8 @@ export function makeFakeDb() {
   const fake = {
     docs, log,
     delay: async () => {}, // tests replace this: async (op, path) => {}
+    afterSet: async () => {}, // runs after a set is applied and its snapshots queued: async (path) => {}
+    failSet: null, // (path) => ({code}) to reject a set with that code
     has: (p) => docs.has(p),
     read: (p) => (docs.has(p) ? JSON.parse(docs.get(p)) : undefined),
     put: (p, body) => { docs.set(p, JSON.stringify(body)); }, // silent seed, no snapshot
@@ -117,7 +119,13 @@ export function makeFakeDb() {
       return {
         id: idOf(p), path: p,
         async get() { log.gets.push(p); await fake.delay('get', p); return snapOf(p); },
-        async set(data) { log.sets.push(p); await fake.delay('set', p); docs.set(p, JSON.stringify(data)); emit(p); },
+        async set(data) {
+          log.sets.push(p); await fake.delay('set', p);
+          const bad = fake.failSet && fake.failSet(p);
+          if (bad) throw Object.assign(new Error('rejected'), bad);
+          docs.set(p, JSON.stringify(data)); emit(p);
+          await fake.afterSet(p);
+        },
         async delete() { log.deletes.push(p); await fake.delay('delete', p); docs.delete(p); emit(p); },
         onSnapshot(next) { return subscribe({ kind: 'doc', path: p, fn: next, live: true }); },
       };
@@ -146,6 +154,7 @@ export function makePage(db, tables) {
     render() { page.renders++; },
     setStatus(level, msg) { page.statuses.push({ level, msg }); },
     rebuild() {},
+    saveLocal() {},
   };
   for (const t of Object.keys(tables)) page.state.data[t] = { columns: [...tables[t].columns], rows: [] };
   const api = loadStorage(page, EXPOSE);
@@ -166,7 +175,7 @@ const COLS = ['id', 'name', 'qty'];
 const sample = (n, tag = 'a') => Array.from({ length: n }, (_, i) => ({ id: tag + i, name: 'name ' + i, qty: i }));
 
 // Writes a blob-format table through the db (what a writer leaves behind).
-async function putBlobTable(db, api, t, objs, cols = COLS) {
+async function putBlobTable(db, api, t, objs, cols = COLS, savedAt = 1) {
   const rows = objs.map((o) => cols.map((c) => o[c] ?? ''));
   const blobs = [];
   for (const rs of api.chunkRows(rows)) {
@@ -174,7 +183,7 @@ async function putBlobTable(db, api, t, objs, cols = COLS) {
     await db.doc(api.blobPath(t, h)).set({ rows: rs, createdAt: 1 });
     blobs.push(h);
   }
-  const head = { format: 'blobs', columns: cols, blobs, rev: 'r' + blobs.join('').slice(0, 12), base: '', savedAt: 1 };
+  const head = { format: 'blobs', columns: cols, blobs, rev: 'r' + blobs.join('').slice(0, 12) + savedAt, base: '', savedAt };
   await db.doc(api.headPath(t)).set(head);
   return head;
 }
@@ -273,6 +282,41 @@ test('a head with no recognised format blocks the table; it never loads as empty
   await waitFor(() => page.statuses.some((s) => /does not recognise/.test(s.msg)));
   assert.equal(page.loaded.has('t'), false);
   assert.equal(page.state.data.t.rows.length, 0);
+});
+
+test('a newer head that arrives while we save is applied once the save ends', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  A.api.subscribeTable('t');
+  await settle(10);
+  const xs = sample(20, 'x'), ys = sample(20, 'y');
+  editTable(A.page, xs);
+  let injected = false;
+  db.afterSet = async (p) => {
+    if (p !== 'tables/t' || injected) return;
+    injected = true;
+    await putBlobTable(db, B.api, 't', ys, COLS, Date.now() + 60000); // a peer's head lands after ours
+    await settle(20); // its snapshot arrives while our save is still in progress
+  };
+  await A.api.flush('t');
+  await settle(30);
+  assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(ys));
+});
+
+test('invalid_argument on save makes the table read-only: not dirty, and incoming heads still apply', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T);
+  A.api.subscribeTable('t');
+  await settle(10);
+  editTable(A.page, sample(5, 'x'));
+  db.failSet = (p) => (p === 'tables/t' ? { code: 'invalid_argument' } : null);
+  await A.api.flush('t');
+  assert.equal(A.page.dirty.has('t'), false, 'not dirty forever');
+  assert.equal(A.page.canWrite, false);
+  db.failSet = null;
+  const theirs = sample(7, 'p');
+  await putBlobTable(db, A.api, 't', theirs);
+  await waitFor(() => JSON.stringify(A.page.state.data.t.rows) === JSON.stringify(theirs));
 });
 
 // Writer helper: a tab holding `objs` as its unsaved table.
