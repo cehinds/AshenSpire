@@ -43,6 +43,17 @@ export const DEFAULT_SORT = 'name';
 export const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'epic', 'legendary', 'boss', 'unique']);
 
 /**
+ * The key value of an entity's row in its Data Studio table (the table's `id` column). An armour entity
+ * is `classId:id` in the browser, but its table row is keyed by the outfit id alone; every other kind is
+ * keyed by its entity id as it is.
+ */
+export function tableRowOf(kind, entityId) {
+  const id = text(entityId);
+  if (kind === 'armor' && id.includes(':')) return id.slice(id.indexOf(':') + 1);
+  return id;
+}
+
+/**
  * The Data Studio table each kind is authored in (content/source), where one
  * exists. A kind without an entry opens no table; the module disables the button.
  */

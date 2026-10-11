@@ -8,7 +8,7 @@ import { armamentIconAsset } from '../../src/model/equipmentArt.js';
 import {
   KINDS, SORTS, SOURCE_TABLES, entryOf, filterEntries, sortEntries, facetsOf, chipCounts,
   parseDeepLink, deepLinkOf, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
-  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters,
+  escHtml, handChoices, handsFor, RENDER_PROTOCOL, settleFilters, tableRowOf,
 } from '../modules/entities/model.mjs';
 
 const ROWS = [
@@ -153,6 +153,18 @@ test('a deep link filter stays pending until the kind index loads, then only a v
   assert.deepEqual(settleFilters(link, facets), link, 'values the index carries are kept');
   assert.deepEqual(settleFilters({ ...link, class: 'nobody' }, facets), { ...link, class: '' }, 'an unknown value is cleared once the index is in');
   assert.deepEqual(settleFilters({}, facets), { class: '', type: '', tag: '', rarity: '' }, 'no wanted value is an empty filter');
+});
+
+test('an entity maps to its Data Studio row key: armour by the raw outfit id, others as they are', () => {
+  assert.equal(tableRowOf('armor', 'reaver:default'), 'default');
+  assert.equal(tableRowOf('armor', 'starseer:vigil'), 'vigil');
+  assert.equal(tableRowOf('armaments', 'straightSword'), 'straightSword');
+  assert.equal(tableRowOf('relics', 'medallion'), 'medallion');
+  assert.equal(tableRowOf('armor', ''), '');
+  const csv = fs.readFileSync(new URL('../../content/source/outfits.csv', import.meta.url), 'utf8').split('\n').filter((l) => l && !l.startsWith('#'));
+  const keys = csv.slice(1).map((l) => l.split(',')[0]);
+  assert.equal(csv[0].split(',')[0], 'id', 'the outfit table is keyed by its id column');
+  assert.ok(keys.includes(tableRowOf('armor', 'reaver:default')), 'the mapped key is a row of the table');
 });
 
 test('the render page URL carries the parent origin and only set parameters', () => {
