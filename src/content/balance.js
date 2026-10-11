@@ -1399,6 +1399,7 @@ export const balance = {
       // layout mode, the zoom or the gate above.
       formFactor: {
         widescreenMinAspect: 2.0,
+        widescreenAspectMinWidth: 1600,
         widescreenMinWidth: 2400,
         mobileMaxWidth: 600,
         tabletMaxWidth: 1100,

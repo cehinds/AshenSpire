@@ -21,7 +21,7 @@ single layout decider (no new media queries). Thresholds live in
 
 | Form factor | Rule (first match wins) | Reference viewport |
 |---|---|---|
-| `widescreen` | aspect (w / h) ≥ 2.0, or w ≥ 2400 | 2560 × 1080 |
+| `widescreen` | aspect (w / h) ≥ 2.0 with w ≥ 1600 (landscape phones are not widescreen), or w ≥ 2400 | 2560 × 1080 |
 | `mobile` | w ≤ 600 | 390 × 844 |
 | `tablet` | w ≤ 1100 | 820 × 1180 |
 | `desktop` | otherwise | 1440 × 900 |

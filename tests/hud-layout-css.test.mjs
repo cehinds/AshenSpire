@@ -139,9 +139,10 @@ test('the replaced literals are gone from their old declarations', () => {
 
 test('form factors follow the contract rule order at the reference viewports', () => {
   const t = balance.ui.uiScale.formFactor;
-  assert.deepEqual(t, { widescreenMinAspect: 2.0, widescreenMinWidth: 2400, mobileMaxWidth: 600, tabletMaxWidth: 1100 });
+  assert.deepEqual(t, { widescreenMinAspect: 2.0, widescreenAspectMinWidth: 1600, widescreenMinWidth: 2400, mobileMaxWidth: 600, tabletMaxWidth: 1100 });
   const cases = [[390, 844, 'mobile'], [820, 1180, 'tablet'], [1440, 900, 'desktop'], [1920, 1080, 'desktop'], [2560, 1080, 'widescreen'],
-    [2400, 1600, 'widescreen'], [600, 900, 'mobile'], [601, 900, 'tablet'], [1100, 900, 'tablet'], [1101, 900, 'desktop'], [2000, 1000, 'widescreen']];
+    [2400, 1600, 'widescreen'], [600, 900, 'mobile'], [601, 900, 'tablet'], [1100, 900, 'tablet'], [1101, 900, 'desktop'], [2000, 1000, 'widescreen'],
+    [844, 390, 'tablet'], [932, 430, 'tablet'], [1599, 700, 'desktop'], [1600, 800, 'widescreen']];
   for (const [w, h, expected] of cases) assert.equal(formFactorFor(w, h, t), expected, `${w}x${h}`);
   assert.equal(formFactorFor(0, 0, t), 'desktop');
 });
