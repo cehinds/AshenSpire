@@ -37,7 +37,7 @@ function ensureCss() {
 }
 
 const SHELL = `<div class="lay">
-  <div class="lay-modes" role="tablist" aria-label="Layout Studio modes">${MODES.map((m) => `<button type="button" role="tab" data-mode="${m.id}" aria-selected="${m.id === 'config'}"${m.id === 'config' ? '' : ' disabled title="Coming next"'}>${esc(m.label)}${m.id === 'config' ? '' : '<span class="lay-soon">coming next</span>'}</button>`).join('')}</div>
+  <div class="lay-modes">${MODES.filter((m) => m.id === 'config').map((m) => `<button type="button" role="tab" data-mode="${m.id}" aria-selected="true">${esc(m.label)}</button>`).join('')}<details class="lay-more"><summary>More <span class="lay-soon">${MODES.length - 1} coming next</span></summary><div class="lay-more-list" role="list" aria-label="Modes coming next">${MODES.filter((m) => m.id !== 'config').map((m) => `<span role="listitem" class="lay-more-item">${esc(m.label)}<span class="lay-soon">coming next</span></span>`).join('')}</div></details></div>
   <div class="lay-bar">
     <button type="button" class="btn btn-sm lay-toggle" data-panel="layers" aria-expanded="false" aria-controls="lay-layers-pane">Layers</button>
     <button type="button" class="btn btn-sm lay-toggle" data-panel="props" aria-expanded="false" aria-controls="lay-props-pane">Inspector</button>

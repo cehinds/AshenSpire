@@ -2,7 +2,14 @@
    Workbench tokens (shared/tokens.css); the canvas kit styles its own page. */
 .lay { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--as-bg); color: var(--as-text); container: lay / inline-size; }
 
-.lay-modes { display: flex; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--as-line); background: var(--as-bg-panel); overflow-x: auto; flex: none; }
+/* The modes that are not built yet sit in a More menu, so the strip keeps room for the working tab. */
+.lay-modes { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--as-line); background: var(--as-bg-panel); flex: none; }
+.lay-more { position: relative; align-self: center; margin-left: 4px; }
+.lay-more summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--as-line); border-radius: var(--as-radius); color: var(--as-text-dim); font-size: var(--as-text-sm); cursor: pointer; white-space: nowrap; }
+.lay-more summary::-webkit-details-marker { display: none; }
+.lay-more[open] summary { background: var(--as-bg-raised); color: var(--as-text); }
+.lay-more-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 8; display: grid; min-width: 220px; padding: 4px; background: var(--as-bg-raised); border: 1px solid var(--as-line-strong); border-radius: var(--as-radius); box-shadow: var(--as-shadow-lg); }
+.lay-more-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--as-text-dim); font-size: var(--as-text-sm); white-space: nowrap; }
 .lay-modes button { height: 30px; padding: 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--as-radius) var(--as-radius) 0 0; background: transparent; color: var(--as-text-dim); font: inherit; font-size: var(--as-text-sm); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .lay-modes button[aria-selected="true"] { background: var(--as-bg); color: var(--as-text); border-color: var(--as-line); font-weight: 600; }
 .lay-modes button:disabled { opacity: 0.5; cursor: default; }
