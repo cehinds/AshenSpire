@@ -396,6 +396,27 @@ const CALLOUT_MAX = 2;
 // One slot's height, in layer px: a slot-1 callout sits this far above slot 0.
 const CALLOUT_SLOT_PX = 34;
 
+// How far the rise animation (combat.css callout-rise) lifts the word.
+const CALLOUT_RISE_PX = 26;
+// The fighter's overhead HUD pieces drawn over the top of its figure.
+const OVERHEAD_SELECTOR = '.combatant-leading, .overhead-control, .as-meters';
+
+/** The lowest bottom edge (layer space) of the HUD sitting over the figure's top, or null. */
+function overheadFloor(layer, anchor, b) {
+  const root = anchor.closest?.('.combatant');
+  if (!root?.querySelectorAll) return null;
+  let floor = null;
+  for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
+    if (anchor.contains?.(node)) continue;
+    const box = anchorLocalBox(layer, node);
+    if (!(box.width > 0 && box.height > 0)) continue;
+    const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+    const overHead = box.top + box.height >= b.top - 16 && box.top < b.top + b.height / 2;
+    if (overlapsX && overHead) floor = Math.max(floor ?? -Infinity, box.top + box.height);
+  }
+  return floor;
+}
+
 const liveCallouts = (layer, forId) => [...(layer.children || [])]
   .filter((node) => node.dataset?.calloutFor === String(forId));
 
@@ -423,18 +444,20 @@ export function callout(layer, anchor, forId, kind) {
   const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
   // `left` is the centre (translate -50% in CSS); `top` is the callout's
-  // bottom edge (translate -100%), just above the head, one slot higher each.
+  // bottom edge (translate -100%). It sits just above the head, one slot
+  // higher each. A fighter whose overhead HUD (intent, HP plate) sits on its
+  // head — that HUD paints above the effects layer — gets the word just under
+  // the HUD instead, risen end and all, and its stack grows downward.
   const centre = b.left + b.width / 2;
-  const bottom = b.top + 4 - slot * CALLOUT_SLOT_PX;
-  el.style.left = `${centre}px`;
-  el.style.top = `${bottom}px`;
   layer.appendChild(el);
-  const width = el.offsetWidth || 0, height = el.offsetHeight || 0;
-  if (width && height) {
-    const at = clampBox({ left: centre - width / 2, top: bottom - height, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
-    el.style.left = `${at.left + width / 2}px`;
-    el.style.top = `${at.top + height}px`;
-  }
+  const width = el.offsetWidth || 0, height = el.offsetHeight || 30;
+  const floor = overheadFloor(layer, anchor, b);
+  const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + height + CALLOUT_RISE_PX);
+  const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
+  let at = { left: centre - width / 2, top: bottom - height };
+  if (width) at = clampBox({ left: at.left, top: at.top, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
+  el.style.left = `${at.left + width / 2}px`;
+  el.style.top = `${at.top + height}px`;
   setTimeout(() => el.remove(), ms);
   return el;
 }
