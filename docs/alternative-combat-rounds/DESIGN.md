@@ -147,6 +147,25 @@ half-value rule it is 0. Flagged for confirmation.
 Combos are left out of the momentum rules. The resolver does not give
 momentum for them. Open question n lists the examples that need an answer.
 
+## Card hints (UI spec)
+
+Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
+
+- Border, per enemy:
+  - green: the card is faster and its stance beats the enemy's (both advantages).
+  - yellow: one of the two.
+  - red: neither.
+  - blue: self-target card (skills). It highlights only the player.
+- Selecting a card highlights each enemy in that card's colour. One card can be
+  red on one foe and green on two others.
+- Left-edge arrow, from the speed difference (player minus enemy):
+  - `>>` green, `>` yellow, none at 0, `<` yellow, `<<` red.
+  - Thresholds are placeholders in `SPEED_TIERS` (see open question s).
+- If speed values are shown, the value is green when the card is faster and red
+  when slower.
+- Tapping a speed value shows the breakdown: base, weapon, armor, range, attack
+  type, skill, initiative, and momentum (trunc(M_e / 2)).
+
 ## Hit roll
 
 Hit when:
@@ -220,3 +239,4 @@ q. Stance bonus: is it added to the base gain (current reading) or does it
    replace it? Smash over block would be 3 or 2. Flagged.
 r. Counter stagger: does it set M_e to +-3 (current reading) or add to it?
    Flagged.
+s. Card hint speed tiers: thresholds (placeholder >=2 strong, >=1 slight)?
