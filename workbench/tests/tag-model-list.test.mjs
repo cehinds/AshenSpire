@@ -2,7 +2,17 @@
 // proposal's CSVs under their own group, only when the folder is there.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { listTables, TAG_MODEL_GROUP } from '../modules/data/model.mjs';
+import { listTables, TAG_MODEL_GROUP, TAG_MODEL_LABELS } from '../modules/data/model.mjs';
+
+test('the root assets.csv is labelled Art sizes; presentation/assets.csv keeps its name', () => {
+  assert.equal(TAG_MODEL_LABELS.assets, 'Art sizes');
+  const tables = listTables(['docs/tag-model/tables/assets.csv', 'docs/tag-model/tables/presentation/assets.csv']);
+  const root = tables.find((t) => t.path === 'docs/tag-model/tables/assets.csv');
+  const sub = tables.find((t) => t.path === 'docs/tag-model/tables/presentation/assets.csv');
+  assert.equal(root.label, 'Art sizes');
+  assert.equal(root.name, 'assets', 'the name stays for search; the path stays visible');
+  assert.equal(sub.label, undefined);
+});
 
 test('without the tag model folder, nothing from it is listed', () => {
   const names = listTables(['content/source/nodes.csv', 'content/framework/x.json']).map((t) => t.path);

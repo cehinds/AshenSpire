@@ -96,7 +96,7 @@ export default {
         const items = shown.filter((t) => t.group === group);
         if (!items.length) continue;
         html += `<div class="ds-group">${group}</div>`;
-        html += items.map((t) => `<button type="button" class="ds-table" data-path="${esc(t.path)}" aria-current="${t.path === state.selected}" title="${esc(t.path)}"><span class="ds-name">${esc(t.name)}</span><span class="ds-dot${dirtyOf(t.path) ? ' on' : ''}" aria-label="${dirtyOf(t.path) ? 'Unsaved changes' : ''}"></span></button>`).join('');
+        html += items.map((t) => `<button type="button" class="ds-table" data-path="${esc(t.path)}" aria-current="${t.path === state.selected}" title="${esc(t.path)}"><span class="ds-name">${esc(t.label ?? t.name)}${t.label ? `<span class="ds-path">${esc(t.path)}</span>` : ''}</span><span class="ds-dot${dirtyOf(t.path) ? ' on' : ''}" aria-label="${dirtyOf(t.path) ? 'Unsaved changes' : ''}"></span></button>`).join('');
       }
       groupsEl.innerHTML = html || '<p class="ds-muted">No tables match.</p>';
     }

@@ -38,13 +38,20 @@ const isEmpty = (v) => v === undefined || v === null || v === '';
 /** The group the tag model proposal's tables are listed under in Data Studio. */
 export const TAG_MODEL_GROUP = 'Tag model (proposal)';
 
+/** Friendlier names for root-level tag-model tables (the path stays visible beside the label). Subfolder tables keep their names. */
+export const TAG_MODEL_LABELS = { assets: 'Art sizes' };
+
 /** The table files among repo paths: Source (csv and json), Framework (json) and the tag model proposal (csv), each sorted by name. */
 export function listTables(paths = []) {
   const out = [];
   for (const path of paths) {
     // The tag model proposal (docs/tag-model/tables, see workbench/core/tag-model.mjs): listed only when its folder exists.
     const t = /^docs\/tag-model\/tables\/((?:[\w-]+\/)*[\w-]+)\.csv$/.exec(String(path));
-    if (t) { out.push({ path, name: t[1], group: TAG_MODEL_GROUP, format: 'csv' }); continue; }
+    if (t) {
+      const label = t[1].includes('/') ? undefined : TAG_MODEL_LABELS[t[1]];
+      out.push({ path, name: t[1], group: TAG_MODEL_GROUP, format: 'csv', ...(label ? { label } : {}) });
+      continue;
+    }
     const m = /^(content\/(source|framework))\/([^/]+)\.(csv|json)$/.exec(String(path));
     if (!m) continue;
     const group = m[2] === 'source' ? 'Source' : 'Framework';

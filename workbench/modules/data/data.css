@@ -16,6 +16,7 @@
 .ds-table { display: flex; width: 100%; align-items: center; gap: 6px; border: 0; background: transparent; color: inherit; text-align: left; padding: 5px 6px; border-radius: 6px; cursor: pointer; font: inherit; }
 .ds-table[aria-current="true"] { background: var(--as-bg-raised); }
 .ds-table .ds-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-table .ds-path { display: block; font-size: 11px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; }
 .ds-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--as-warn); visibility: hidden; }
 .ds-dot.on { visibility: visible; }
 .ds-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
