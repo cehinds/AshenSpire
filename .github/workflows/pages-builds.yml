@@ -209,8 +209,8 @@ jobs:
       actions: read
       pull-requests: read
     outputs:
-      comment_pr: ${{ steps.previews.outputs.comment_pr }}
-      comment_dir: ${{ steps.previews.outputs.comment_dir }}
+      # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
+      comment_targets: ${{ steps.previews.outputs.comment_targets }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -371,7 +371,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          TRIGGER_PR: ${{ github.event.workflow_run.pull_requests[0].number }}
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/branch-previews"
@@ -414,15 +413,11 @@ jobs:
             echo "  fetched PR #$pr $ref at $sha"
           done <<< "$prs"
           jq -s '{previews: .}' "$entries" > "$out/previews.json"
-          # The sticky comment is for the PR this run was triggered by, and only if its
-          # build is in the site now (a dev push or a PR whose build was not fetched has none).
-          comment_pr=""; comment_dir=""
-          if [ -n "${TRIGGER_PR:-}" ]; then
-            hit=$(jq -r --arg pr "$TRIGGER_PR" 'select((.pr | tostring) == $pr) | .dir' "$entries" | sed -n '1p')
-            if [ -n "$hit" ]; then comment_pr="$TRIGGER_PR"; comment_dir="$hit"; fi
-          fi
-          echo "comment_pr=$comment_pr" >> "$GITHUB_OUTPUT"
-          echo "comment_dir=$comment_dir" >> "$GITHUB_OUTPUT"
+          # A run that coalesces several pushes publishes several previews, so the sticky
+          # comment goes to every PR whose preview is in the site from this run, not only
+          # the PR that triggered it. Compact JSON on one line, so it is safe as an output.
+          targets=$(jq -sc '[.[] | {pr: (.pr | tostring), dir: .dir}]' "$entries")
+          echo "comment_targets=$targets" >> "$GITHUB_OUTPUT"
           {
             echo "### Feature-branch builds"
             echo
@@ -629,32 +624,48 @@ jobs:
 
   # THE STICKY "PLAYABLE BUILD" COMMENT. Its own job, so the Pages deploy job keeps
   # its environment and permissions exactly as they were: pull-requests: write is
-  # granted here alone, and only after the deploy has succeeded. It runs only for
-  # the PR that triggered this run, and only when that PR's build is in the site.
+  # granted here alone, and only after the deploy has succeeded. It runs for every PR
+  # whose build is in the site from this run (assemble's comment_targets), so a
+  # coalesced run that published several previews comments on each of them.
   # One comment per PR, found by its marker and updated in place on every push.
   comment:
     needs: [assemble, deploy]
-    if: needs.deploy.result == 'success' && needs.assemble.outputs.comment_pr != ''
+    if: needs.deploy.result == 'success' && needs.assemble.outputs.comment_targets != '[]' && needs.assemble.outputs.comment_targets != ''
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - name: Post or update the playable-build comment
+      - name: Post or update the playable-build comment on each published PR
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ needs.assemble.outputs.comment_pr }}
-          DIR: ${{ needs.assemble.outputs.comment_dir }}
+          # Branch-derived values reach the shell only through env, never ${{ }} in run.
+          TARGETS: ${{ needs.assemble.outputs.comment_targets }}
         run: |
-          set -euo pipefail
-          url="https://cehinds.github.io/AshenSpire/branches/$DIR/latest/"
-          body=$(printf '<!-- ashen-playable-build -->\nPlayable build: %s\n' "$url")
-          id=$(gh api --paginate "repos/$REPO/issues/$PR/comments" \
-            --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->")) | .id' | sed -n '1p')
-          if [ -n "$id" ]; then
-            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null
-            echo "updated the playable-build comment on PR #$PR"
-          else
-            gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$body" > /dev/null
-            echo "posted the playable-build comment on PR #$PR"
-          fi
+          set -uo pipefail
+          # One upsert per PR. A failure on one PR is named and the rest still run; the
+          # step fails at the end so no failed comment goes unreported.
+          upsert() {
+            local pr="$1" dir="$2" url body id
+            url="https://cehinds.github.io/AshenSpire/branches/$dir/latest/"
+            body=$(printf '<!-- ashen-playable-build -->\nPlayable build: %s\n' "$url")
+            id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
+              --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->")) | .id' | sed -n '1p') || return 1
+            if [ -n "$id" ]; then
+              gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
+              echo "updated the playable-build comment on PR #$pr"
+            else
+              gh api -X POST "repos/$REPO/issues/$pr/comments" -f body="$body" > /dev/null || return 1
+              echo "posted the playable-build comment on PR #$pr"
+            fi
+          }
+          failed=0
+          rows=$(printf '%s' "$TARGETS" | jq -r '.[] | [(.pr | tostring), .dir] | @tsv') || { echo "::error::could not read the comment targets"; exit 1; }
+          while IFS=$'\t' read -r pr dir; do
+            [ -n "$pr" ] || continue
+            if ! upsert "$pr" "$dir"; then
+              echo "::error title=Playable-build comment failed::PR #$pr"
+              failed=1
+            fi
+          done <<< "$rows"
+          exit "$failed"
