@@ -7,6 +7,19 @@ How to run, test, and add content. The architecture contract lives in
 For how work is branched, reviewed, and merged, see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Workbench — every authoring tool in one window
+
+`node workbench/server.mjs` (or **workbench/Start Workbench.cmd** on Windows,
+`workbench/start.sh` elsewhere) opens <http://127.0.0.1:4300>: the Content
+Editor, UI Studio and Pose & FX side by side with a live game preview that
+reloads (rebuilding content or config first) when content/, src/ or styles/
+change; a Library of every editor, viewer, exporter and QA page
+(`workbench/tools.json`); Engine Export; and Build & Checks (allowlisted
+builds and the tool tests, with logs and history). Ctrl+K searches everything.
+See [workbench/README.md](workbench/README.md). A new HTML tool page must be
+added to `workbench/tools.json`; `workbench/tests/registry.test.mjs` fails
+otherwise.
+
 ## Run & test
 
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).

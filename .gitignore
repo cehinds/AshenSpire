@@ -599,3 +599,6 @@ build/windows-installer/
 /docs/qa/**/*-results.json
 /docs/qa/**/*-geometry.json
 /docs/qa/**/browser-health.json
+
+# AshenSpire Workbench: per-machine job history and settings
+workbench/.state/

@@ -1,0 +1,135 @@
+// workbench/core/jobs.mjs — the allowlisted build and check jobs.
+//
+// Only the ids in JOBS can run; a request names an id, never a command. Each
+// id runs at most once at a time. A run streams its output line by line to
+// `onEvent`, and the last HISTORY runs are kept in memory and in
+// workbench/.state/jobs.json (logs trimmed) so a restart keeps the history.
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { randomBytes } from 'node:crypto';
+
+export const HISTORY = 30;
+const LOG_CAP = 400 * 1024;
+const DISK_LOG_CAP = 48 * 1024;
+
+const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests'].flatMap((dir) => {
+  try { return fs.readdirSync(path.join(root, dir)).filter((n) => n.endsWith('.test.mjs')).sort().map((n) => `${dir}/${n}`); } catch { return []; }
+});
+
+/** id → { label, description, steps(root) → [{ args, optional?, missing? }] } */
+export const JOBS = {
+  'content-build': {
+    label: 'Content build', description: 'Compile content/source and content/framework into the generated modules under src/.',
+    steps: () => [{ args: ['tools/content-build.mjs'] }, { args: ['tools/framework-data-build.mjs'], optional: true }],
+  },
+  'config-build': {
+    label: 'Config build', description: 'Compile content/config (UI tokens, scenes, screens) into src/config/generated/ui.js.',
+    steps: () => [{ args: ['tools/config-build.mjs'] }],
+  },
+  'build-only': {
+    label: 'Build bundle', description: 'Build the single-file game (tools/launch.mjs --build-only) without opening it.',
+    steps: () => [{ args: ['tools/launch.mjs', '--build-only'] }],
+  },
+  'engine-export': {
+    label: 'Engine export', description: 'Export the game data as JSON tables and schemas for Unity / Unreal into build/engine-export.',
+    steps: () => [{ args: ['tools/engine-export.mjs', '--out', 'build/engine-export'], missing: 'tools/engine-export.mjs is not in this checkout yet. Pull the branch that adds the engine exporter, then run this again.' }],
+  },
+  'tool-tests': {
+    label: 'Tool tests', description: 'Run the editor, UI Studio and Workbench test suites (node --test).',
+    steps: (root) => [{ args: ['--test', ...testFiles(root)] }],
+  },
+};
+
+export const commandLine = (step) => `node ${step.args.join(' ')}`;
+
+export class JobRunner {
+  constructor({ root, stateFile, onEvent = () => {} }) {
+    Object.assign(this, { root, stateFile, onEvent });
+    this.runs = []; this.active = new Map(); // id → run
+    try { this.runs = JSON.parse(fs.readFileSync(stateFile, 'utf8')).slice(0, HISTORY).map((r) => (r.status === 'running' ? { ...r, status: 'cancelled', message: 'The Workbench stopped while this ran' } : r)); } catch { /* no history yet */ }
+  }
+
+  defs() {
+    return Object.entries(JOBS).map(([id, job]) => {
+      const steps = job.steps(this.root);
+      const missing = steps.find((s) => s.missing && !fs.existsSync(path.join(this.root, s.args[0])));
+      return { id, label: job.label, description: job.description, commands: steps.map(commandLine), available: !missing, note: missing ? missing.missing : '', running: this.active.has(id) };
+    });
+  }
+
+  summary(run) { const { log, child, ...rest } = run; return { ...rest, logBytes: log.length }; }
+  list() { return this.runs.map((r) => this.summary(r)); }
+  get(runId) { const run = this.runs.find((r) => r.runId === runId); if (!run) return null; const { child, ...rest } = run; return rest; }
+
+  persist() {
+    try {
+      fs.mkdirSync(path.dirname(this.stateFile), { recursive: true });
+      const slim = this.runs.map(({ child, log, ...r }) => ({ ...r, log: log.length > DISK_LOG_CAP ? `… (earlier output trimmed)\n${log.slice(-DISK_LOG_CAP)}` : log }));
+      fs.writeFileSync(this.stateFile, `${JSON.stringify(slim, null, 1)}\n`);
+    } catch { /* history is a convenience; a read-only state dir must not fail a job */ }
+  }
+
+  start(id) {
+    const job = Object.hasOwn(JOBS, id) ? JOBS[id] : null;
+    if (!job) throw Object.assign(Error(`Unknown job: ${String(id).slice(0, 60)}`), { status: 400 });
+    if (this.active.has(id)) throw Object.assign(Error(`${job.label} is already running`), { status: 409 });
+    const run = { runId: `${Date.now().toString(36)}-${randomBytes(3).toString('hex')}`, id, label: job.label, status: 'running', startedAt: Date.now(), endedAt: null, durationMs: null, exitCode: null, message: '', log: '' };
+    this.runs.unshift(run); this.runs.length = Math.min(this.runs.length, HISTORY);
+    this.active.set(id, run);
+    this.onEvent('job', this.summary(run));
+    this.execute(run, job.steps(this.root)).catch((e) => this.finish(run, 'failed', e.message));
+    return this.summary(run);
+  }
+
+  append(run, text) {
+    run.log = (run.log + text).slice(-LOG_CAP);
+    this.onEvent('job-log', { runId: run.runId, text });
+  }
+
+  async execute(run, steps) {
+    for (const step of steps) {
+      if (run.status !== 'running') return;
+      const script = step.args[0].startsWith('--') ? null : path.join(this.root, step.args[0]);
+      if (script && !fs.existsSync(script)) {
+        if (step.optional) { this.append(run, `· skipped ${step.args[0]} (not in this checkout)\n`); continue; }
+        this.append(run, `${step.missing || `${step.args[0]} is not in this checkout.`}\n`);
+        return this.finish(run, 'failed', step.missing || `${step.args[0]} is missing`);
+      }
+      this.append(run, `> ${commandLine(step)}\n`);
+      const code = await new Promise((resolve) => {
+        const child = spawn(process.execPath, step.args, { cwd: this.root, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' }, windowsHide: true });
+        run.child = child;
+        child.stdout.on('data', (d) => this.append(run, d.toString()));
+        child.stderr.on('data', (d) => this.append(run, d.toString()));
+        child.on('error', (e) => { this.append(run, `${e.message}\n`); resolve(-1); });
+        child.on('close', (c, signal) => resolve(signal ? signal : c));
+      });
+      delete run.child;
+      if (run.status !== 'running') return;
+      if (code !== 0) { run.exitCode = code; return this.finish(run, 'failed', `${step.args[0]} exited with ${code}`); }
+    }
+    this.finish(run, 'passed', '');
+  }
+
+  finish(run, status, message) {
+    if (run.status !== 'running') return;
+    Object.assign(run, { status, message, endedAt: Date.now(), durationMs: Date.now() - run.startedAt });
+    if (status === 'passed') run.exitCode = 0;
+    this.active.delete(run.id);
+    this.persist();
+    this.onEvent('job', this.summary(run));
+  }
+
+  cancel(runId) {
+    const run = this.runs.find((r) => r.runId === runId);
+    if (!run) throw Object.assign(Error('Unknown run'), { status: 404 });
+    if (run.status !== 'running') throw Object.assign(Error('That run has already finished'), { status: 409 });
+    try { run.child?.kill(); } catch { /* already gone */ }
+    this.append(run, '\n· cancelled\n');
+    this.finish(run, 'cancelled', 'Cancelled');
+    return this.summary(run);
+  }
+
+  stopAll() { for (const run of this.active.values()) { try { run.child?.kill(); } catch { /* gone */ } } }
+}

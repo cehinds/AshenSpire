@@ -222,7 +222,13 @@ export class Workspace {
   }
 }
 
-export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir } = {}) {
+// A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
+// Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
+export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
+
+export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir, frameAncestors = [] } = {}) {
+  for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
+  const ancestors = frameAncestors.join(' ');
   root = await fs.realpath(root);
   stateDir ||= path.join(HERE, '.state', hash(root).slice(0, 16));
   const workspace = new Workspace(root, stateDir);
@@ -306,8 +312,8 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
       const bytes = await fs.readFile(file);
       const headers = { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
       headers['Content-Security-Policy'] = url.pathname.startsWith('/game/')
-        ? `sandbox allow-scripts allow-same-origin allow-forms allow-modals; frame-ancestors 'self' http://${address}`
-        : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`;
+        ? `sandbox allow-scripts allow-same-origin allow-forms allow-modals; frame-ancestors 'self' http://${address}${ancestors ? ` ${ancestors}` : ''}`
+        : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors ${ancestors || "'none'"}`;
       res.writeHead(200, headers);
       res.end(bytes);
     } catch (error) { send(res, error.code === 'ENOENT' ? 404 : 400, { error: error.message }); }
@@ -318,7 +324,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const at = (flag) => { const i = process.argv.indexOf(flag); return i < 0 ? null : process.argv[i + 1]; };
-  const app = await createUiStudio({ ...(at('--project') ? { root: path.resolve(at('--project')) } : {}), port: Number(at('--port') || process.env.UI_STUDIO_PORT || 4319) });
+  const app = await createUiStudio({ ...(at('--project') ? { root: path.resolve(at('--project')) } : {}), port: Number(at('--port') || process.env.UI_STUDIO_PORT || 4319), frameAncestors: at('--frame-ancestor') ? [at('--frame-ancestor')] : [] });
   console.log(`AshenSpire UI Studio: ${app.url}`);
   const close = async () => { await app.close(); process.exit(0); };
   process.on('SIGINT', close); process.on('SIGTERM', close);

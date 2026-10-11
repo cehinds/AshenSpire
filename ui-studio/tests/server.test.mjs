@@ -156,6 +156,21 @@ test('HTTP: token, origin and host checks; the preview origin cannot reach the A
   assert.equal((await fetch(`${app.url}/api/config`, { method: 'DELETE', headers: { 'x-studio-token': token } })).status, 404);
 });
 
+test('framing is refused by default and allowed only for a named loopback ancestor (the Workbench)', async (t) => {
+  const { root, stateDir } = await fixture(t);
+  await assert.rejects(createUiStudio({ root, port: 0, stateDir, frameAncestors: ['https://evil.example'] }), /Refused frame ancestor/);
+  await assert.rejects(createUiStudio({ root, port: 0, stateDir, frameAncestors: ["http://127.0.0.1:4300 'unsafe-inline'"] }), /Refused frame ancestor/);
+  const plain = await createUiStudio({ root, port: 0, stateDir });
+  t.after(() => plain.close());
+  assert.match((await fetch(`${plain.url}/`)).headers.get('content-security-policy'), /frame-ancestors 'none'$/);
+  const framed = await createUiStudio({ root, port: 0, stateDir, frameAncestors: ['http://127.0.0.1:4300'] });
+  t.after(() => framed.close());
+  assert.match((await fetch(`${framed.url}/`)).headers.get('content-security-policy'), /frame-ancestors http:\/\/127\.0\.0\.1:4300$/);
+  const game = await fetch(`${framed.url.replace('127.0.0.1', 'localhost')}/game/content/config/ui/tokens.json`);
+  assert.equal(game.status, 200);
+  assert.match(game.headers.get('content-security-policy'), /frame-ancestors 'self' http:\/\/127\.0\.0\.1:\d+ http:\/\/127\.0\.0\.1:4300$/);
+});
+
 test('two saves of disjoint files validate in turn: the second sees the first on disk', async (t) => {
   const { root, workspace } = await fixture(t);
   const [w4a, tokens] = await workspace.config();
