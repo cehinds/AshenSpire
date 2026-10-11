@@ -17,6 +17,17 @@
 export const SOURCE_DIR = 'content/source';
 export const FRAMEWORK_DIR = 'content/framework';
 const KEY_NAMES = ['id', 'key', 'name'];
+/**
+ * Tables whose id is unique only within a scope column (file path -> scope column). Every other table's id is
+ * unique on its own. Listed explicitly, not inferred: a duplicate id under another *Id column is still an error.
+ * content/source/outfits.csv: a refs of the form armor/<classId>/<id>, so (classId, id) is the identity.
+ */
+export const KEY_SCOPES = Object.freeze({ 'content/source/outfits.csv': 'classId' });
+
+/** The scope column for a table path from KEY_SCOPES, or null. */
+export function keyScopeFor(path) {
+  return Object.hasOwn(KEY_SCOPES, path) ? KEY_SCOPES[path] : null;
+}
 // The content compiler's number grammar (tools/content-build.mjs coerce): integers and plain decimals.
 // Exponents ('1e3') and trailing dots ('1.') stay strings, so a round trip never rewrites them.
 const NUMBER = /^-?(\d+|\d*\.\d+)$/;
@@ -41,28 +52,6 @@ export function listTables(paths = []) {
 /** The key column: the first column named id, key or name. None means no key rules. */
 export function keyColumnOf(columns) {
   return columns.find((c) => KEY_NAMES.includes(c.key)) ?? null;
-}
-
-/**
- * The scope column that makes the key unique, or null. It looks only when the key column repeats in `rows`
- * (as read from disk): then the first other column named *Id (e.g. classId) whose (scope, key) pairs are
- * unique across all rows is the scope. A scope must itself repeat, so a per-row id cannot hide a duplicate.
- * No repeated key, or no such column, gives null: the key stays unique on its own.
- */
-export function keyScopeOf(columns, rows = [], keyName = keyColumnOf(columns)?.key) {
-  const key = columns.find((c) => c.key === keyName);
-  if (!key) return null;
-  const textOf = (row, c) => cellText(row[c.key], c.type).trim();
-  const keyed = rows.filter((r) => textOf(r, key) !== '');
-  const repeats = (cells) => new Set(cells).size !== cells.length;
-  if (!repeats(keyed.map((r) => textOf(r, key)))) return null;
-  for (const scope of columns) {
-    if (scope.key === key.key || !/Id$/.test(scope.key)) continue;
-    const scopes = keyed.map((r) => textOf(r, scope));
-    const pairs = keyed.map((r) => JSON.stringify([textOf(r, scope), textOf(r, key)]));
-    if (repeats(scopes) && !repeats(pairs)) return scope.key;
-  }
-  return null;
 }
 
 /**
@@ -93,13 +82,13 @@ export function findRow(rows, keyCol, row, match = '') {
 
 /**
  * Validation rules for the grid: the key is required and unique; every value fits its column type.
- * `rows` are the table as read from disk; they decide the key's scope (see keyScopeOf).
+ * `path` is the table's repo path; KEY_SCOPES decides whether its key is unique within a scope column.
  */
-export function tableRules(columns, rows = []) {
+export function tableRules(columns, path = null) {
   const key = keyColumnOf(columns);
   const rules = [];
   if (key) {
-    const scope = keyScopeOf(columns, rows);
+    const scope = keyScopeFor(path);
     rules.push({ kind: 'required', key: key.key });
     rules.push(scope ? { kind: 'unique', keys: [scope, key.key] } : { kind: 'unique', key: key.key });
   }

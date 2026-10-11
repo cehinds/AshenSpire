@@ -55,6 +55,33 @@ test('save validation accepts the real outfits.csv (id repeats across classes) a
   assert.throws(() => validateText('content/source/x.csv', 'id,name\nx,A\nx,B\n'), /duplicate id: x/);
 });
 
+test('save validation rejects a repeated id under another *Id column unless the table lists it in KEY_SCOPES', async () => {
+  const read = rel => fs.readFile(new URL(`../../${rel}`, import.meta.url), 'utf8');
+  // Append a copy of the table's first data row with one *Id value changed: the id repeats, the scope differs.
+  const withDuplicate = (text, field, value) => {
+    const lines = text.split('\n');
+    const headerAt = lines.findIndex(l => l.trim() && !l.startsWith('#'));
+    const names = lines[headerAt].split(',');
+    const row = lines.slice(headerAt + 1).find(l => l.trim() && !l.startsWith('#')).split(',');
+    row[names.indexOf(field)] = value;
+    return `${text.replace(/\n*$/, '\n')}${row.join(',')}\n`;
+  };
+  const cases = [
+    ['content/source/startingKits.csv', 'classId', 'starseer'],
+    ['content/source/nodes.csv', 'parentId', 'root'],
+    ['content/source/basicCardProfiles.csv', 'baseCardId', 'otherBase'],
+  ];
+  for (const [rel, field, value] of cases) {
+    const text = await read(rel);
+    assert.doesNotThrow(() => validateText(rel, text), rel);
+    assert.throws(() => validateText(rel, withDuplicate(text, field, value)), /duplicate id/, rel);
+  }
+  // The one listed table, outfits.csv, accepts that repeat as its scope.
+  const outfits = await read('content/source/outfits.csv');
+  const firstLine = outfits.split('\n').find(l => l.startsWith('default,reaver,'));
+  assert.doesNotThrow(() => validateText('content/source/outfits.csv', `${outfits}${firstLine.replace('default,reaver,', 'default,zzzUnlisted,')}\n`));
+});
+
 test('duplicate ids and concurrent stale saves are rejected', async t => {
   const { workspace } = await fixture(t); const file = await workspace.read('content/source/items.csv');
   await assert.rejects(workspace.save([{...file,text:'id,name\nx,A\nx,B\n'}]), /duplicate/);

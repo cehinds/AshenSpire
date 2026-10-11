@@ -166,52 +166,38 @@ test('keyColumnOf and tableRules put the key rules on the first id, key or name 
   assert.deepEqual(D.tableRules([{ key: 'x', type: 'string' }]).map((r) => r.kind), ['type']);
 });
 
-test('tableRules uses the compound unique key when the key repeats within a scope column', () => {
+test('tableRules uses the compound unique key only for a table listed in KEY_SCOPES', () => {
   const cols = [{ key: 'classId', type: 'string' }, { key: 'id', type: 'string' }];
-  const shared = [{ classId: 'reaver', id: 'default' }, { classId: 'starseer', id: 'default' }, { classId: 'reaver', id: 'vigil' }];
-  assert.deepEqual(D.tableRules(cols, shared).slice(0, 2), [
+  // The real outfits.csv path gets the compound rule, whatever rows the table holds.
+  assert.deepEqual(D.tableRules(cols, 'content/source/outfits.csv').slice(0, 2), [
     { kind: 'required', key: 'id' }, { kind: 'unique', keys: ['classId', 'id'] },
   ]);
-  // Without rows (or with no repeated key) the single key rule stays.
+  // Every other table keeps the single key rule, even when a *Id column could tell its rows apart.
+  assert.deepEqual(D.tableRules(cols, 'content/source/startingKits.csv').slice(0, 2), [{ kind: 'required', key: 'id' }, { kind: 'unique', key: 'id' }]);
   assert.deepEqual(D.tableRules(cols).slice(0, 2), [{ kind: 'required', key: 'id' }, { kind: 'unique', key: 'id' }]);
-  // The real outfits.csv gets the compound rule.
+  // The grid's Check panel finds no duplicate in the real outfits.csv, and still flags a true (classId, id) duplicate.
   const outfits = D.parseTable('content/source/outfits.csv', read('content/source/outfits.csv'));
-  const rules = D.tableRules(outfits.columns, outfits.rows);
+  const rules = D.tableRules(outfits.columns, 'content/source/outfits.csv');
   assert.deepEqual(rules[1], { kind: 'unique', keys: ['classId', 'id'] });
-  // The grid's Check panel finds no duplicate in the real file, and still flags a true (classId, id) duplicate.
   const doc = { columns: outfits.columns, rows: outfits.rows };
   assert.deepEqual(M.validate(doc, rules).filter((i) => /^Duplicate/.test(i.message)), []);
   const firstReaver = outfits.rows.find((r) => r.classId === 'reaver' && r.id === 'default');
   const dupeRows = [...outfits.rows, { ...firstReaver }];
-  // The rules come from the table as read from disk, so an edit in the grid does not change the scope.
   const dupe = M.validate({ columns: outfits.columns, rows: dupeRows }, rules);
   assert.deepEqual(dupe.filter((i) => /^Duplicate/.test(i.message)).map((i) => [i.row, i.key]), [[dupeRows.length - 1, 'id']]);
+  // startingKits.csv gets the single key, so the grid rule is { kind: 'unique', key: 'id' } there.
+  const kits = D.parseTable('content/source/startingKits.csv', read('content/source/startingKits.csv'));
+  assert.deepEqual(D.tableRules(kits.columns, 'content/source/startingKits.csv').filter((r) => r.kind === 'unique'), [{ kind: 'unique', key: 'id' }]);
 });
 
-test('keyScopeOf finds the *Id scope only when the key repeats and (scope, key) is unique', () => {
-  const cols = [{ key: 'classId', type: 'string' }, { key: 'id', type: 'string' }, { key: 'n', type: 'number' }];
-  const row = (classId, id) => ({ classId, id, n: 1 });
-  // The real outfits.csv shape: default repeats across classes, (classId, id) is unique.
-  const shared = [row('reaver', 'default'), row('starseer', 'default'), row('reaver', 'vigil')];
-  assert.equal(D.keyScopeOf(cols, shared), 'classId');
-  // A true duplicate (same classId and id): no scope makes the pair unique, so the single key rule stays.
-  assert.equal(D.keyScopeOf(cols, [...shared, row('reaver', 'default')]), null);
-  // A key that never repeats needs no scope.
-  assert.equal(D.keyScopeOf(cols, [row('reaver', 'a'), row('starseer', 'b')]), null);
-  // No *Id column besides the key: single key rule.
-  const noScope = [{ key: 'label', type: 'string' }, { key: 'id', type: 'string' }];
-  assert.equal(D.keyScopeOf(noScope, [{ label: 'x', id: 'a' }, { label: 'y', id: 'a' }]), null);
-  // A per-row Id that is unique cannot be the scope: it would hide every duplicate.
-  const perRow = [{ key: 'rowId', type: 'string' }, { key: 'id', type: 'string' }];
-  assert.equal(D.keyScopeOf(perRow, [{ rowId: 'r1', id: 'a' }, { rowId: 'r2', id: 'a' }]), null);
-  // The real outfits.csv scope is classId.
-  const outfits = D.parseTable('content/source/outfits.csv', read('content/source/outfits.csv'));
-  assert.equal(D.keyScopeOf(outfits.columns, outfits.rows), 'classId');
-  // The key can be named explicitly: here name precedes id, so the default key would be name.
-  const named = [{ key: 'name', type: 'string' }, { key: 'classId', type: 'string' }, { key: 'id', type: 'string' }];
-  const namedRows = [{ name: 'a', classId: 'reaver', id: 'default' }, { name: 'b', classId: 'starseer', id: 'default' }, { name: 'c', classId: 'reaver', id: 'vigil' }];
-  assert.equal(D.keyScopeOf(named, namedRows, 'id'), 'classId');
-  assert.equal(D.keyScopeOf(named, namedRows), null);
+test('KEY_SCOPES lists only outfits, and keyScopeFor reads it by path', () => {
+  assert.deepEqual(D.KEY_SCOPES, { 'content/source/outfits.csv': 'classId' });
+  assert.equal(D.keyScopeFor('content/source/outfits.csv'), 'classId');
+  // Every other table keeps the single key, even one with a *Id column that would tell its rows apart.
+  assert.equal(D.keyScopeFor('content/source/startingKits.csv'), null);
+  assert.equal(D.keyScopeFor('content/source/nodes.csv'), null);
+  assert.equal(D.keyScopeFor('constructor'), null);
+  assert.equal(D.keyScopeFor(undefined), null);
 });
 
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {

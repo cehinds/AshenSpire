@@ -122,7 +122,7 @@ export default {
     function showDoc(doc) {
       state.grid.setRules([]);
       state.grid.setData({ columns: doc.columns, rows: doc.rows });
-      state.grid.setRules(tableRules(doc.columns, state.parsed.get(state.selected)?.rows ?? doc.rows));
+      state.grid.setRules(tableRules(doc.columns, state.selected));
     }
     function refresh() { renderList(); showFile(); renderRow(); renderReviewCount(); }
     function renderReviewCount() {
