@@ -173,6 +173,31 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      # The token is given per command and never stored (no credential in art-repo/.git/config).
+      # This step only fetches the intake branch's ref, so the stage step can build on it.
+      - name: Fetch the existing intake branch from the art repository, if any
+        id: fetch-intake
+        if: steps.gate.outputs.state == 'migrate'
+        env:
+          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          BRANCH: intake/ashenspire-pr-${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          auth="$(printf 'x-access-token:%s' "$ART_REPO_WRITE_TOKEN" | base64 -w0)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+          cd art-repo
+          # ls-remote exits 2 when the branch is absent; any other failure stops the job.
+          if git ls-remote --exit-code --heads origin "refs/heads/$BRANCH" >/dev/null 2>&1; then
+            git fetch -q origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+            echo "An earlier run staged $BRANCH: this run builds on it."
+          else
+            status=$?
+            if [ "$status" -ne 2 ]; then echo "::error title=Art repository unreachable::could not list $BRANCH in the art repository"; exit 1; fi
+            echo "No intake branch $BRANCH yet: this run starts from main."
+          fi
+
       # No token in this step: it runs the base tool and local git only.
       - name: Stage the files and commit them in the art repository (no token)
         id: stage
@@ -180,11 +205,21 @@ jobs:
         run: |
           set -euo pipefail
           branch="intake/ashenspire-pr-$PR"
-          node tools/art-intake.mjs --stage art-repo --base "$BASE" --head "$HEAD"
           cd art-repo
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -B "$branch"
+          # Build on the intake branch when an earlier run staged it (the fetch step
+          # before this one put it at refs/remotes/origin/$branch), so files staged
+          # earlier and since removed from this pull request stay on it. Only a branch
+          # that does not exist yet starts from main.
+          if git rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null; then
+            git checkout -B "$branch" "origin/$branch"
+          else
+            git checkout -B "$branch"
+          fi
+          cd "$GITHUB_WORKSPACE"
+          node tools/art-intake.mjs --stage art-repo --base "$BASE" --head "$HEAD"
+          cd art-repo
           git add -A
           if git diff --cached --quiet; then
             echo "The art repository already holds these files on $branch."
@@ -208,9 +243,12 @@ jobs:
           export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
           export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
           cd art-repo
-          # The bot's own branch: each run rebuilds it from main and replaces it.
-          git fetch -q origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null || true
-          git push --force-with-lease origin "HEAD:refs/heads/$BRANCH"
+          # A plain push: the intake branch only moves forward. If someone else moved it
+          # since this run fetched it, the push is refused and nothing is overwritten.
+          if ! git push origin "HEAD:refs/heads/$BRANCH"; then
+            echo "::error title=Intake branch moved::$BRANCH in the art repository changed after this run read it, so the push was refused. Nothing was overwritten. Re-run this check to stage again on the new tip."
+            exit 1
+          fi
 
       - name: Open or update the pull request in the art repository
         id: artpr

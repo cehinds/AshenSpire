@@ -81,3 +81,22 @@ test('pages: the preview fetch selects only live artifacts and never fails the r
   assert.match(step, /preview artifact expired; push to rebuild/, 'an expired artifact is named with its PR and the rebuild hint');
   assert.match(step, /if \[ -z "\$name" \]; then[\s\S]*?continue/, 'a missing artifact skips that PR');
 });
+
+test('art intake: the stage step builds on the existing intake branch when it is present', () => {
+  const block = jobBlock(art, 'intake');
+  const stage = block.slice(block.indexOf('- name: Stage the files'), block.indexOf('- name: Push the intake branch'));
+  assert.match(stage, /git rev-parse --verify -q "refs\/remotes\/origin\/\$branch"/, 'stage checks for the fetched intake branch');
+  assert.match(stage, /git checkout -B "\$branch" "origin\/\$branch"/, 'stage checks out the existing intake branch when present');
+  assert.match(stage, /else\s*\n\s*git checkout -B "\$branch"\n/, 'only a missing branch starts from main');
+  assert.doesNotMatch(stage, /ART_REPO_WRITE_TOKEN/, 'the stage step holds no token');
+  const fetch = block.slice(block.indexOf('- name: Fetch the existing intake branch'), block.indexOf('- name: Stage the files'));
+  assert.match(fetch, /ART_REPO_WRITE_TOKEN: \$\{\{ secrets\.ART_REPO_WRITE_TOKEN \}\}/, 'the fetch step is the token-bearing one');
+  assert.match(fetch, /git fetch -q origin "\+refs\/heads\/\$BRANCH:refs\/remotes\/origin\/\$BRANCH"/);
+});
+
+test('art intake: the push is a plain fast-forward, never a force', () => {
+  const intake = jobBlock(art, 'intake');
+  const block = intake.slice(intake.indexOf('- name: Push the intake branch'), intake.indexOf('- name: Open or update the pull request'));
+  assert.doesNotMatch(block, /--force/, 'no force push of the intake branch');
+  assert.match(block, /git push origin "HEAD:refs\/heads\/\$BRANCH"/);
+});
