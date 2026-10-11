@@ -17,7 +17,9 @@
 export const SOURCE_DIR = 'content/source';
 export const FRAMEWORK_DIR = 'content/framework';
 const KEY_NAMES = ['id', 'key', 'name'];
-const NUMBER = /^-?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+// The content compiler's number grammar (tools/content-build.mjs coerce): integers and plain decimals.
+// Exponents ('1e3') and trailing dots ('1.') stay strings, so a round trip never rewrites them.
+const NUMBER = /^-?(\d+|\d*\.\d+)$/;
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isEmpty = (v) => v === undefined || v === null || v === '';
