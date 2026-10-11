@@ -296,10 +296,16 @@ function subscribeTable(t){
    Blobs without createdAt are never deleted. Failures are ignored: garbage can wait for the next save. */
 async function gcBlobs(t, keep){
   try{
+    /* the listing can be stale: read the live head after it, keep its blobs, and re-get each candidate before deleting */
     const q=await db.collection('tables/'+t+'/blobs').get();
+    const live=await db.doc(headPath(t)).get();
+    const lh=live.exists? live.data() : null;
+    const kept=new Set([...keep, ...(lh&&lh.format==='blobs'&&Array.isArray(lh.blobs)? lh.blobs : [])]);
     for(const d of q.docs){
-      if(keep.has(d.id)) continue;
-      const b=d.data()||{};
+      if(kept.has(d.id)) continue;
+      const cur=await db.doc(blobPath(t,d.id)).get();
+      if(!cur.exists) continue;
+      const b=cur.data()||{};
       if(typeof b.createdAt!=='number'||Date.now()-b.createdAt<=GC_AGE_MS) continue;
       await db.doc(blobPath(t,d.id)).delete().catch(()=>{});
     }

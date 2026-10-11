@@ -631,6 +631,47 @@ test('Keep mine rewrites the blobs its base shared with the server head when GC 
   assert.equal(await storedRows(db), JSON.stringify(changed));
 });
 
+// A db view whose blob listing can be stale or can change the db between the listing and the deletes.
+function gcView(db, onList) {
+  return {
+    doc: (p) => db.doc(p),
+    collection: (p) => ({
+      path: p,
+      onSnapshot: (...a) => db.collection(p).onSnapshot(...a),
+      get: async () => { const q = await db.collection(p).get(); return onList ? onList(p, q, db) : q; },
+    }),
+  };
+}
+
+test('GC re-gets each candidate: a blob the listing shows as old, but which was just rewritten, is kept', async () => {
+  const db = makeFakeDb();
+  const W = makePage(gcView(db, (p, q) => (p.endsWith('/blobs')
+    ? { docs: q.docs.map((d) => (d.id === 'orphan' ? { id: d.id, data: () => ({ rows: [], createdAt: 1 }) } : d)) }
+    : q)), T);
+  editTable(W.page, sample(20, 'x'));
+  await W.api.flush('t');
+  db.put(W.api.blobPath('t', 'orphan'), { rows: [], createdAt: Date.now() }); // a peer just rewrote it
+  editTable(W.page, sample(20, 'y'));
+  await W.api.flush('t');
+  assert.equal(db.has(W.api.blobPath('t', 'orphan')), true, 'a fresh blob survives the stale listing');
+});
+
+test('GC keeps the blobs of a live head that lands while it is listing', async () => {
+  const db = makeFakeDb();
+  let injected = false;
+  const W = makePage(gcView(db, (p, q, real) => {
+    if (p.endsWith('/blobs') && !injected) {
+      injected = true;
+      real.put('tables/t', { format: 'blobs', columns: COLS, blobs: ['peerblob'], rev: 'peer', base: '', savedAt: 1 });
+    }
+    return q;
+  }), T);
+  db.put(W.api.blobPath('t', 'peerblob'), { rows: [], createdAt: 1 }); // old, and referenced only by the peer's head
+  editTable(W.page, sample(20, 'x'));
+  await W.api.flush('t');
+  assert.equal(db.has(W.api.blobPath('t', 'peerblob')), true, 'the live head\'s blob is kept');
+});
+
 // One tab's view of the db: its first head get is slow, and every head set records how old its lease was.
 function slowFirstGetTracedDb(db, getMs, sets) {
   let lastAcq = 0, firstGet = true;
