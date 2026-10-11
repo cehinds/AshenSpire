@@ -9,6 +9,9 @@ export const MOMENTUM_MAX = 3;
 export const AC_BASE = 8;
 
 const COMPONENTS = ['card', 'weapon', 'armor', 'range', 'attackType', 'skill', 'initiative'];
+// The fields a full (stage 3) enemy action carries for its speed. Any one of
+// them present means the action's speed is known.
+const SPEED_COMPONENTS = COMPONENTS;
 const KINDS = ['attack', 'counter', 'other'];
 const STATUS_TAGS = ['stagger', 'stun'];
 const SIDES = ['player', 'enemy'];
@@ -444,6 +447,9 @@ function speedArrow(delta) {
 //   Self-target cards always have arrow null.
 // - breakdown: the player's speed terms [{ term, value }], ending with momentum
 //   (trunc(M_e / 2)). The values sum to the player total.
+// Speed unknown (a revealAction() result below stage 3, no speed components):
+// speedDelta and arrow are null, and the border uses stance only. A known stance
+// gives yellow (stance advantage) or red. An unknown stance gives 'grey'.
 export function cardHint(card, enemyAction, ctx = {}) {
   if (!card || typeof card !== 'object') throw new TypeError('card must be an object');
   if (!enemyAction || typeof enemyAction !== 'object') throw new TypeError('enemyAction must be an object');
@@ -451,15 +457,23 @@ export function cardHint(card, enemyAction, ctx = {}) {
   const momentum = clampMomentum(ctx.momentum ?? 0);
   const player = actionSpeed({ ...card, momentum }, mods, 'player');
   const enemy = actionSpeed({ ...enemyAction, momentum }, mods, 'enemy');
-  const speedDelta = player.total - enemy.total;
   const breakdown = BREAKDOWN_TERMS.map(([term, key]) => ({ term, value: player.parts[key] }));
 
   if (card.target === 'self') {
-    return { border: 'blue', speedDelta, arrow: null, breakdown };
+    return { border: 'blue', speedDelta: player.total - enemy.total, arrow: null, breakdown };
   }
-  const speedAdv = player.total > enemy.total;
+  // A revealed action below stage 3 has no speed components, so its speed is
+  // unknown and no speed delta is shown. The stance is known from stage 2 (the
+  // key is present, even when null). Stage 1 shows only the group: grey.
+  const speedKnown = SPEED_COMPONENTS.some((k) => enemyAction[k] !== undefined);
+  const stanceKnown = Object.hasOwn(enemyAction, 'stance');
   // Same rule as momentum: an advantage is a stance bonus above 0.
-  const stanceAdv = stanceBonus(ctx.stanceAdvantage ?? null, card.stance, enemyAction.stance) > 0;
+  const stanceAdv = stanceKnown && stanceBonus(ctx.stanceAdvantage ?? null, card.stance, enemyAction.stance) > 0;
+  if (!speedKnown) {
+    return { border: stanceKnown ? (stanceAdv ? 'yellow' : 'red') : 'grey', speedDelta: null, arrow: null, breakdown };
+  }
+  const speedDelta = player.total - enemy.total;
+  const speedAdv = player.total > enemy.total;
   let border = 'red';
   if (speedAdv && stanceAdv) border = 'green';
   else if (speedAdv || stanceAdv) border = 'yellow';

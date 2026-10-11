@@ -1114,3 +1114,40 @@ test('clampStage: Infinity clamps to 3, -Infinity and NaN clamp to 0', () => {
   assert.equal(clampStage(-Infinity), 0);
   assert.equal(clampStage(NaN), 0);
 });
+
+// Card hints from a perception stage (DESIGN.md, Card hints). The enemy action is
+// passed through revealAction(), so only the fields visible at that stage exist.
+const HINT_FOE = { id: 'foe', card: 'one', speed: 1, kind: 'attack', stance: 'attack', damage: 2, tags: [] };
+const HINT_CARD = { card: 'three', stance: 'counter' }; // faster, and counter beats attack in the CSV
+
+test('cardHint at perception stage 0: hidden, so no speed, no arrow, and a grey border', () => {
+  const hint = cardHint(HINT_CARD, revealAction(HINT_FOE, 0), hintCtx());
+  assert.equal(hint.border, 'grey');
+  assert.equal(hint.speedDelta, null);
+  assert.equal(hint.arrow, null);
+});
+
+test('cardHint at perception stage 1: stance group only, so the stance is not judged and the border is grey', () => {
+  const hint = cardHint(HINT_CARD, revealAction(HINT_FOE, 1), hintCtx());
+  assert.equal(hint.border, 'grey');
+  assert.equal(hint.speedDelta, null);
+  assert.equal(hint.arrow, null);
+});
+
+test('cardHint at perception stage 2: the stance is known and speed is not, so no green and no arrow', () => {
+  const advantage = cardHint(HINT_CARD, revealAction(HINT_FOE, 2), hintCtx());
+  assert.equal(advantage.border, 'yellow', 'stance advantage only, speed unknown');
+  assert.equal(advantage.speedDelta, null);
+  assert.equal(advantage.arrow, null);
+
+  const none = cardHint({ card: 'three', stance: 'attack' }, revealAction(HINT_FOE, 2), hintCtx());
+  assert.equal(none.border, 'red', 'no stance advantage, and speed is not used');
+  assert.equal(none.speedDelta, null);
+});
+
+test('cardHint at perception stage 3: the full action gives speed, the arrow and green', () => {
+  const hint = cardHint(HINT_CARD, revealAction(HINT_FOE, 3), hintCtx());
+  assert.equal(hint.border, 'green');
+  assert.equal(hint.speedDelta, 2);
+  assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
+});

@@ -176,6 +176,13 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
   - yellow: one of the two.
   - red: neither.
   - blue: self-target card (skills). It highlights only the player.
+- Perception limits the hint (see Perception stages):
+  - stage 0 and stage 1: speed and stance are not shown. The border is `grey`
+    (unknown), and the speed delta and arrow are null.
+  - stage 2: the stance is known, but speed is not. The border is yellow when
+    the card's stance has an advantage, otherwise red. Green is not possible,
+    and the speed delta and arrow are null.
+  - stage 3: the full border rules above, with speed and the arrow.
 - Selecting a card highlights each enemy in that card's colour. One card can be
   red on one foe and green on two others.
 - Left-edge arrow, from the speed difference (player minus enemy):
