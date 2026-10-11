@@ -1,18 +1,15 @@
-// workbench/modules/layout/book-view.mjs — Layout Studio's "Book recipes" mode. The
-// ten skill books are drawn by the game's own book renderer (src/ui/components/bookArt.js),
-// so the preview is the game's art at the sizes the book is shown. The recipe fields
-// (cover, leather colour, symbol, treatment, metal ink, trim) are edited in the inspector and
-// written through book-model.mjs, which changes only the values edited. Edits are a draft
-// until the shared review saves them to src/content/bookArtPresets.js. index.mjs mounts this
-// view and supplies the host, the same way it mounts the sketch view.
-import { renderBookArt } from '../../../src/ui/components/bookArt.js';
-import { consumables } from '../../../src/content/consumables.js';
+// workbench/modules/layout/book-view.mjs — Layout Studio's "Book recipes" mode. The skill books
+// are drawn by the game's own book renderer on the game server (book-render.html, an iframe
+// that talks over postMessage, origin-checked both ways), because this page cannot import
+// /src/*. The recipe fields are edited in the inspector and written through book-model.mjs,
+// which changes only the values edited. Edits are a draft until the shared review saves them
+// to src/content/bookArtPresets.js. index.mjs mounts this view and supplies the host.
 import * as K from './book-model.mjs';
 import * as C from './config-model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const CSS = '/modules/layout/book-view.css';
-const SIZES = [64, 120, 200];
+const SERVER_HINT = 'The books are drawn by the game server. Start it from the Library or Home, then reopen this mode.';
 
 const SHELL = `<div class="mode-bar bk-bar">
     <label class="lay-field">Book <select data-bk="pick" title="The skill books the game shows"></select></label>
@@ -21,12 +18,11 @@ const SHELL = `<div class="mode-bar bk-bar">
     <span class="bk-file" data-bk="file"></span>
   </div>
   <div class="mode-body bk-body">
-    <aside class="lay-left" aria-label="Books"><div class="lay-panel-head"><span>Books</span></div><div class="bk-library"></div></aside>
     <main class="lay-center bk-main">
-      <div class="bk-stage" data-bk="stage"></div>
-      <div class="bk-sizes" data-bk="sizes" aria-label="Preview sizes"></div>
-      <h3 class="bk-h">Covers</h3><div class="bk-row" data-bk="covers"></div>
-      <h3 class="bk-h">Symbols</h3><div class="bk-grid" data-bk="symbols"></div>
+      <div class="bk-frame-wrap">
+        <iframe class="bk-frame" title="Skill books rendered by the game" hidden></iframe>
+        <p class="lay-hint bk-setup" hidden></p>
+      </div>
       <h3 class="bk-h">Leather colour</h3><div class="bk-row" data-bk="palette"></div>
       <div class="lay-status bk-status" aria-live="polite"></div>
     </main>
@@ -42,104 +38,100 @@ function ensureCss() {
   document.head.append(link);
 }
 
-const books = () => consumables.filter((row) => row.kind === 'skillBook');
-
 /**
- * The Book recipes view. host: { api(path), history, toast(opts), changed() }.
+ * The Book recipes view. host: { api(path), history, toast(opts), changed(), tools() }.
  * Returns the view's controller (show, changes, saved, reload, keep, hashOf, commands).
  */
 export function createBookView(root, host) {
   ensureCss();
   root.innerHTML = SHELL;
-  root.addEventListener('change', (e) => onRootChange(e));
-  root.addEventListener('click', (e) => onRootClick(e));
   const $ = (sel) => root.querySelector(sel);
-  const st = { text: null, original: null, hash: null, parsed: null, bookId: null, error: null, loading: null };
+  const frame = $('.bk-frame');
+  const st = {
+    text: null, original: null, hash: null, parsed: null, bookId: null, error: null, loading: null,
+    catalog: null, game: null, ready: false, connecting: null,
+  };
 
-  const book = () => books().find((b) => b.id === st.bookId) || null;
   const recipe = () => (st.parsed && st.bookId ? st.parsed.data[st.bookId] : null);
   const dirtyIds = () => (st.text !== null && st.original !== null ? K.changedBooks(st.text, st.original) : []);
+  const editable = () => K.catalogReady(st.catalog) && Boolean(st.parsed) && !st.error;
 
   function parse(text) {
     try { return K.parseRecipes(text); } catch (err) { st.error = err.message; return null; }
   }
 
+  // ---- the game render page ---------------------------------------------
+
+  /** Send the book, its recipes and the page's current state to the render page. */
+  function sendSet() {
+    if (!st.ready || !st.game || !frame.contentWindow || !st.parsed) return;
+    frame.contentWindow.postMessage({ source: K.BOOK_MODULE_SOURCE, type: 'set', bookId: st.bookId, recipes: st.parsed.data }, st.game.origin);
+  }
+
+  /** Resolve the game server and point the frame at its render page. A stopped server shows a setup note. */
+  async function connect() {
+    if (st.ready || st.connecting) return;
+    st.connecting = true;
+    let base = null;
+    try { base = K.gameBaseOf(await host.api('tools')); } catch { base = null; }
+    st.connecting = false;
+    if (!base) { showSetup('The game server is not running.'); return; }
+    st.game = { base, origin: new URL(base).origin };
+    st.ready = false;
+    frame.hidden = false;
+    $('.bk-setup').hidden = true;
+    frame.src = K.renderUrl(base, { parentOrigin: location.origin });
+    clearTimeout(st.readyTimer);
+    st.readyTimer = setTimeout(() => { if (!st.ready) showSetup(SERVER_HINT); }, 12000);
+  }
+
+  function showSetup(message) {
+    frame.hidden = true;
+    const p = $('.bk-setup');
+    p.hidden = false;
+    p.textContent = message;
+    paintAll();
+  }
+
+  function onMessage(ev) {
+    if (!st.game || ev.origin !== st.game.origin || ev.source !== frame.contentWindow) return;
+    const d = ev.data;
+    if (!d || d.source !== K.BOOK_RENDER_SOURCE) return;
+    if (d.type === 'ready') {
+      if (d.protocol !== K.BOOK_RENDER_PROTOCOL) { clearTimeout(st.readyTimer); showSetup('This checkout\'s book render page is a different version. Update the checkout to this branch.'); return; }
+      st.catalog = K.catalogOf(d.catalog);
+      st.ready = true;
+      clearTimeout(st.readyTimer);
+      paintAll();
+      sendSet();
+      return;
+    }
+    if (d.type === 'pick') { selectBook(d.id); return; }
+    if (d.type === 'choose') edit(d.field, d.value);
+  }
+
   // ---- drawing -------------------------------------------------------
 
   function paintAll() {
-    paintBar(); paintLibrary(); paintStage(); paintInspector(); paintStatus();
+    paintBar(); paintPalette(); paintInspector(); paintStatus();
+    sendSet();
     if (host.changed) host.changed();
   }
 
   function paintBar() {
-    const list = st.parsed ? books().filter((b) => st.parsed.data[b.id]) : [];
+    const list = st.parsed ? (st.catalog?.books || []).filter((b) => st.parsed.data[b.id]) : [];
     const pick = $('[data-bk="pick"]');
     pick.innerHTML = list.map((b) => `<option value="${esc(b.id)}"${b.id === st.bookId ? ' selected' : ''}>${esc(b.name)}${dirtyIds().includes(b.id) ? ' •' : ''}</option>`).join('');
     pick.disabled = !list.length;
-    const r = recipe();
-    $('[data-bk="revert"]').disabled = !r || !dirtyIds().includes(st.bookId);
+    $('[data-bk="revert"]').disabled = !recipe() || !dirtyIds().includes(st.bookId);
     $('[data-bk="file"]').textContent = K.RECIPES_FILE;
   }
 
-  function paintLibrary() {
-    const lib = $('.bk-library');
-    if (!st.parsed) { lib.innerHTML = ''; return; }
-    lib.innerHTML = books().map((b) => {
-      const has = Boolean(st.parsed.data[b.id]);
-      const dirty = dirtyIds().includes(b.id);
-      return `<button type="button" class="bk-book" data-book="${esc(b.id)}" aria-pressed="${b.id === st.bookId}"${has ? '' : ' disabled'}>`
-        + `<span class="bk-thumb" data-thumb="${esc(b.id)}"></span><span class="bk-name">${esc(b.name)}${dirty ? ' <span class="bk-dirty" title="Unsaved change">•</span>' : ''}${has ? '' : ' <span class="lay-note">no recipe</span>'}</span></button>`;
-    }).join('');
-    for (const b of books()) {
-      const r = st.parsed.data[b.id];
-      if (!r) continue;
-      lib.querySelector(`[data-thumb="${b.id}"]`).append(renderBookArt(b, { recipe: r }));
-    }
-  }
-
-  function paintStage() {
-    const stage = $('[data-bk="stage"]'), sizes = $('[data-bk="sizes"]');
-    const b = book(), r = recipe();
-    if (!b || !r) { stage.innerHTML = ''; sizes.innerHTML = ''; $('[data-bk="covers"]').innerHTML = ''; $('[data-bk="symbols"]').innerHTML = ''; $('[data-bk="palette"]').innerHTML = ''; return; }
-    stage.replaceChildren(renderBookArt(b, { recipe: r }));
-    sizes.replaceChildren(...SIZES.map((px) => {
-      const cell = document.createElement('span');
-      cell.className = 'bk-size';
-      cell.style.width = `${px}px`;
-      cell.append(renderBookArt(b, { recipe: r }));
-      const label = document.createElement('small');
-      label.textContent = `${px}px`;
-      const wrap = document.createElement('span');
-      wrap.className = 'bk-size-wrap';
-      wrap.append(cell, label);
-      return wrap;
-    }));
-    // Each choice is a button drawn with the game's art, so a click is a visible preview.
-    const covers = $('[data-bk="covers"]');
-    covers.replaceChildren(...K.CHOICES.cover.map((cover) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'bk-choice';
-      btn.dataset.bkSet = 'cover';
-      btn.dataset.value = cover;
-      btn.setAttribute('aria-pressed', String(r.cover === cover));
-      btn.append(renderBookArt(b, { recipe: { ...r, cover } }), document.createElement('br'), document.createTextNode(cover));
-      return btn;
-    }));
-    const symbols = $('[data-bk="symbols"]');
-    symbols.replaceChildren(...K.CHOICES.symbol.map((symbol) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'bk-choice';
-      btn.dataset.bkSet = 'symbol';
-      btn.dataset.value = symbol;
-      btn.setAttribute('aria-pressed', String(r.symbol === symbol));
-      btn.setAttribute('aria-label', `Use the ${symbol} symbol`);
-      btn.append(renderBookArt(b, { recipe: { ...r, symbol } }), document.createTextNode(symbol));
-      return btn;
-    }));
-    const palette = $('[data-bk="palette"]');
-    palette.replaceChildren(...K.CHOICES.color.map((color) => {
+  function paintPalette() {
+    const row = $('[data-bk="palette"]');
+    const r = recipe();
+    const colour = r ? r.color.toLowerCase() : null;
+    row.replaceChildren(...((st.catalog?.palette) || []).map((color) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'bk-swatch';
@@ -147,7 +139,8 @@ export function createBookView(root, host) {
       btn.dataset.value = color;
       btn.style.setProperty('--swatch', color);
       btn.setAttribute('aria-label', `Use leather colour ${color}`);
-      btn.setAttribute('aria-pressed', String(r.color.toLowerCase() === color.toLowerCase()));
+      btn.setAttribute('aria-pressed', String(colour === color.toLowerCase()));
+      btn.disabled = !editable();
       return btn;
     }));
   }
@@ -155,19 +148,22 @@ export function createBookView(root, host) {
   /** The inspector: each recipe field of the book, as the control that matches its kind. */
   function paintInspector() {
     const box = $('.bk-insp');
-    const b = book(), r = recipe();
-    if (!b || !r) { box.innerHTML = st.error ? `<p class="lay-hint is-error">${esc(st.error)}</p>` : '<p class="lay-note">Pick a book to edit its recipe.</p>'; return; }
-    const selectOf = (field, options, label = (v) => v) => `<div class="lay-row"><code>${esc(field)}</code><span><select data-bk-field="${field}">${options.map((o) => `<option value="${esc(o)}"${o === r[field] ? ' selected' : ''}>${esc(label(o))}</option>`).join('')}</select></span></div>`;
-    const colourOf = (field) => `<div class="lay-row"><code>${esc(field)}</code><span><input type="color" data-bk-colour="${field}" value="${esc(r[field].toLowerCase())}" aria-label="${esc(field)} colour"> <input type="text" data-bk-field="${field}" value="${esc(r[field])}" size="8" maxlength="7" pattern="#[0-9a-fA-F]{6}"></span></div>`;
-    box.innerHTML = `<h3>${esc(b.name)}</h3>
-      <p class="lay-note">${esc(K.RECIPES_FILE)} · ${esc(b.id)}</p>
-      ${selectOf('cover', K.CHOICES.cover)}
+    const r = recipe();
+    const book = st.catalog?.books.find((b) => b.id === st.bookId);
+    if (!r) { box.innerHTML = st.error ? `<p class="lay-hint is-error">${esc(st.error)}</p>` : '<p class="lay-note">Pick a book to edit its recipe.</p>'; return; }
+    const dis = editable() ? '' : ' disabled';
+    const selectOf = (field, options, label = (v) => v) => `<div class="lay-row"><code>${esc(field)}</code><span><select data-bk-field="${field}"${dis}>${options.map((o) => `<option value="${esc(o)}"${o === r[field] ? ' selected' : ''}>${esc(label(o))}</option>`).join('')}</select></span></div>`;
+    const colourOf = (field) => `<div class="lay-row"><code>${esc(field)}</code><span><input type="color" data-bk-colour="${field}" value="${esc(r[field].toLowerCase())}" aria-label="${esc(field)} colour"${dis}> <input type="text" data-bk-field="${field}" value="${esc(r[field])}" size="8" maxlength="7"${dis}></span></div>`;
+    const cat = st.catalog || K.catalogOf({});
+    box.innerHTML = `<h3>${esc(book?.name || st.bookId)}</h3>
+      <p class="lay-note">${esc(st.bookId)} in ${esc(K.RECIPES_FILE)}</p>
+      ${selectOf('cover', cat.cover)}
       ${colourOf('color')}
-      ${selectOf('symbol', K.CHOICES.symbol)}
-      ${selectOf('treatment', K.CHOICES.treatment, (v) => `${v} (${K.TREATMENT_LABELS[v] || v})`)}
+      ${selectOf('symbol', cat.symbol)}
+      ${selectOf('treatment', cat.treatment, (v) => `${v} (${K.TREATMENT_LABELS[v] || v})`)}
       ${colourOf('ink')}
-      ${selectOf('trim', K.CHOICES.trim)}
-      <p class="lay-note">Only the values you change are written. Save with Review changes.</p>`;
+      ${selectOf('trim', cat.trim)}
+      <p class="lay-note">${editable() ? 'Only the values you change are written. Save with Review changes.' : 'Edits are off until the game server answers.'}</p>`;
   }
 
   function paintStatus() {
@@ -175,7 +171,7 @@ export function createBookView(root, host) {
     if (st.error) parts.push(st.error);
     if (st.parsed) {
       const n = dirtyIds().length;
-      parts.push(`${books().filter((b) => st.parsed.data[b.id]).length} books`, n ? `${n} unsaved` : 'saved');
+      parts.push(`${Object.keys(st.parsed.data).length} books`, n ? `${n} unsaved` : 'saved');
     }
     $('.bk-status').textContent = parts.join(' · ');
   }
@@ -193,10 +189,10 @@ export function createBookView(root, host) {
 
   /** One field of the selected book. An invalid value is refused with a reason and nothing changes. */
   function edit(field, value) {
-    if (!st.bookId || !st.parsed) return;
+    if (!st.bookId || !editable()) return;
     let next;
-    try { next = K.setRecipeField(st.text, st.bookId, field, value); } catch (err) {
-      host.toast({ kind: 'warn', title: `${book()?.name || st.bookId}: ${field} not changed`, detail: err.message, record: false });
+    try { next = K.setRecipeField(st.text, st.bookId, field, value, st.catalog); } catch (err) {
+      host.toast({ kind: 'warn', title: `${st.bookId}: ${field} not changed`, detail: err.message, record: false });
       paintInspector();
       return;
     }
@@ -219,10 +215,8 @@ export function createBookView(root, host) {
   }
 
   function onRootClick(e) {
-    const bookBtn = e.target.closest('[data-book]');
-    if (bookBtn && !bookBtn.disabled) { selectBook(bookBtn.dataset.book); return; }
-    const choice = e.target.closest('[data-bk-set]');
-    if (choice) { edit(choice.dataset.bkSet, choice.dataset.value); return; }
+    const swatch = e.target.closest('[data-bk-set]');
+    if (swatch && !swatch.disabled) { edit(swatch.dataset.bkSet, swatch.dataset.value); return; }
     const revert = e.target.closest('[data-bk="revert"]');
     if (revert && !revert.disabled && st.bookId && st.original !== null) {
       setText(K.revertRecipe(st.text, st.original, st.bookId), `Revert ${st.bookId}`);
@@ -231,20 +225,18 @@ export function createBookView(root, host) {
 
   // ---- files ---------------------------------------------------------
 
-  /** Read the recipe file: its text, its disk hash. A fresh load clears the draft and its history. */
-  async function fetchRecipes() {
-    const r = await host.api(`files/read?path=${encodeURIComponent(K.RECIPES_FILE)}`);
-    return r;
-  }
-
   function install(text, hash) {
     st.original = text;
     st.text = text;
     st.hash = hash;
     st.parsed = parse(text);
-    st.error = st.parsed ? null : st.error;
+    if (st.parsed) st.error = null;
     if (st.parsed && (!st.bookId || !st.parsed.data[st.bookId])) st.bookId = Object.keys(st.parsed.data)[0] || null;
     host.history.clear();
+  }
+
+  async function fetchRecipes() {
+    return host.api(`files/read?path=${encodeURIComponent(K.RECIPES_FILE)}`);
   }
 
   async function load() {
@@ -255,11 +247,17 @@ export function createBookView(root, host) {
       st.error = `Could not load ${K.RECIPES_FILE}: ${err.message}`;
     }
     paintAll();
+    await connect();
   }
+
+  window.addEventListener('message', onMessage);
+  root.addEventListener('change', onRootChange);
+  root.addEventListener('click', onRootClick);
 
   return {
     show() {
       if (!st.loading) st.loading = load();
+      else if (st.parsed && !st.ready) connect();
       if (st.parsed) paintAll();
     },
     /** The one file this view saves: the draft, sent with the hash it was read at. */

@@ -45,6 +45,12 @@ export function catalogOf(raw = {}) {
 /** Whether a catalog holds what editing needs: the four choice lists are present. */
 export const catalogReady = (catalog) => Boolean(catalog) && CHOICE_FIELDS.every((f) => catalog[f].length > 0);
 
+/** The game server's base URL from the Workbench tool list, or null while it is not up. */
+export function gameBaseOf(tools = []) {
+  const game = (Array.isArray(tools) ? tools : []).find((t) => t && t.id === 'game');
+  return game && game.status === 'up' && game.url ? String(game.url).replace(/\/?$/, '/') : null;
+}
+
 /** The URL of the render page on the game server (the page imports the game's own renderer). */
 export function renderUrl(gameBase, { parentOrigin = '' } = {}) {
   const base = String(gameBase || '').replace(/\/?$/, '/');
