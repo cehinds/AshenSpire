@@ -42,13 +42,19 @@ export function createWatcher({ root, dirs, debounceMs = 250, onBatch, forcePoll
     onBatch(files);
   }
 
+  // One interval scans every polled folder in the same tick, so files written
+  // together land in one batch rather than splitting across folders' ticks.
+  const polled = new Map();
   function poll(dir) {
-    let known = walk(dir);
+    polled.set(dir, walk(dir));
+    if (polls.length) return;
     const t = setInterval(() => {
-      const now = walk(dir);
-      for (const [f, m] of now) if (known.get(f) !== m) note(f);
-      for (const f of known.keys()) if (!now.has(f)) note(f);
-      known = now;
+      for (const [d, known] of polled) {
+        const now = walk(d);
+        for (const [f, m] of now) if (known.get(f) !== m) note(f);
+        for (const f of known.keys()) if (!now.has(f)) note(f);
+        polled.set(d, now);
+      }
     }, 1000);
     t.unref?.();
     polls.push(t);

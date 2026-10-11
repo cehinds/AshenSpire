@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
 import { JOBS } from '../core/jobs.mjs';
+import { Tool } from '../core/tools.mjs';
 import { buildsFor } from '../core/watch.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
@@ -255,6 +256,28 @@ test('settings: checkouts are validated; the art checkout is served read-only on
   assert.match(page.headers.get('content-security-policy'), /sandbox/);
   assert.equal((await fetch(`${entry.url.replace(/ext\/art\/.*/, '')}ext/art/..%2Fsecret.txt`)).status, 403);
   assert.equal((await fetch(`${entry.url.replace(/ext\/art\/.*/, '')}api/session`)).status, 403, 'the preview origin cannot reach the API');
+  assert.equal((await fetch(entry.url, { headers: { 'sec-fetch-site': 'cross-site' } })).status, 403, 'another website cannot load art files');
+});
+
+test('a cancelled job keeps its slot until its process, and what it started, has exited', async (t) => {
+  const root = await project(t);
+  const { app, call } = await boot(t, root);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  // The step ignores SIGTERM for a moment and starts a grandchild, as launch.mjs does.
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "import { spawn } from 'node:child_process'; import fs from 'node:fs'; const g = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' }); fs.writeFileSync('grandchild.pid', String(g.pid)); process.on('SIGTERM', () => setTimeout(() => process.exit(0), 300)); setInterval(() => {}, 1000);\n");
+  const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'config-build' }) })).json();
+  for (let i = 0; i < 100; i++) { try { await fs.access(path.join(root, 'grandchild.pid')); break; } catch { await new Promise((r) => setTimeout(r, 30)); } }
+  const pid = Number(await fs.readFile(path.join(root, 'grandchild.pid'), 'utf8'));
+  const cancelled = app.jobs.cancel(started.runId);
+  assert.equal(cancelled.status, 'cancelled');
+  assert.equal(app.jobs.active.has('config-build'), true, 'the slot is held while the step is still exiting');
+  for (let i = 0; i < 100 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 30));
+  assert.equal(app.jobs.active.size, 0, 'freed once the step exited');
+  if (process.platform !== 'win32') {
+    let alive = true;
+    for (let i = 0; i < 50 && alive; i++) { try { process.kill(pid, 0); await new Promise((r) => setTimeout(r, 30)); } catch { alive = false; } }
+    assert.equal(alive, false, 'the grandchild was stopped with its group');
+  }
 });
 
 test('the CLI starts with --no-children and --no-open on a free port and exits on SIGTERM', async (t) => {
@@ -270,4 +293,13 @@ test('the CLI starts with --no-children and --no-open on a free port and exits o
   const exited = new Promise((r) => child.on('exit', r));
   child.kill('SIGTERM');
   await exited;
+});
+
+test('two Restart presses at once spawn one child, not an orphaned second', async () => {
+  const tool = new Tool({ id: 'x', name: 'X', port: 1, host: '127.0.0.1', path: '/' }, { root: '.' });
+  let spawned = 0;
+  tool.probe = async () => { await new Promise((r) => setTimeout(r, 20)); return false; };
+  tool.spawn = () => { spawned++; tool.child = { kill() {}, once() {} }; };
+  await Promise.all([tool.restart(), tool.restart(), tool.start()]);
+  assert.equal(spawned, 1);
 });

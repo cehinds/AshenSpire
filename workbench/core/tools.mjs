@@ -96,7 +96,12 @@ export class Tool {
     } catch { return false; }
   }
 
-  async start({ timeoutMs = 30000 } = {}) {
+  start(opts) {
+    this.starting ||= this.doStart(opts).finally(() => { this.starting = null; });
+    return this.starting;
+  }
+
+  async doStart({ timeoutMs = 30000 } = {}) {
     if (this.child) return;
     if (await this.probe()) {
       this.owned = false;
@@ -148,7 +153,13 @@ export class Tool {
     this.set('down', 'Stopped');
   }
 
-  async restart() {
+  /** Concurrent Restart presses share one restart, so no second child is spawned and orphaned. */
+  restart() {
+    this.restarting ||= this.doRestart().finally(() => { this.restarting = null; });
+    return this.restarting;
+  }
+
+  async doRestart() {
     if (!this.owned && this.status === 'up') {
       // Not ours to kill; check whether it went away meanwhile.
       if (await this.probe()) throw Error(`${this.def.name} is running outside the Workbench on port ${this.port}. Stop that process, then press Restart.`);

@@ -144,6 +144,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       if (url.pathname.startsWith('/ext/art/')) {
         if (req.headers.host === address) { res.writeHead(302, { Location: `http://${previewAddress}${url.pathname}${url.search}` }); return res.end(); }
         if (req.headers.host !== previewAddress) return sendJson(res, 403, { error: 'Use the local Workbench address' });
+        if (req.headers['sec-fetch-site'] === 'cross-site') return sendJson(res, 403, { error: 'Cross-site request refused' });
         return await serveArt(res, decodeURIComponent(url.pathname.slice('/ext/art/'.length)));
       }
       if (req.headers.host !== address) return sendJson(res, 403, { error: 'Use the local Workbench address' });

@@ -98,7 +98,8 @@ export class JobRunner {
       }
       this.append(run, `> ${commandLine(step)}\n`);
       const code = await new Promise((resolve) => {
-        const child = spawn(process.execPath, step.args, { cwd: this.root, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' }, windowsHide: true });
+        // Its own process group on POSIX, so a cancel also stops what the step started.
+        const child = spawn(process.execPath, step.args, { cwd: this.root, env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' }, windowsHide: true, detached: process.platform !== 'win32' });
         run.child = child;
         child.stdout.on('data', (d) => this.append(run, d.toString()));
         child.stderr.on('data', (d) => this.append(run, d.toString()));
@@ -116,7 +117,11 @@ export class JobRunner {
     if (run.status !== 'running') return;
     Object.assign(run, { status, message, endedAt: Date.now(), durationMs: Date.now() - run.startedAt });
     if (status === 'passed') run.exitCode = 0;
-    this.active.delete(run.id);
+    // A cancelled step keeps the job's slot until its process has really exited,
+    // so a re-run cannot write the same output alongside it.
+    const child = run.child;
+    if (child && child.exitCode === null && child.signalCode === null) child.once('close', () => { if (this.active.get(run.id) === run) this.active.delete(run.id); });
+    else this.active.delete(run.id);
     this.persist();
     this.onEvent('job', this.summary(run));
   }
@@ -125,11 +130,20 @@ export class JobRunner {
     const run = this.runs.find((r) => r.runId === runId);
     if (!run) throw Object.assign(Error('Unknown run'), { status: 404 });
     if (run.status !== 'running') throw Object.assign(Error('That run has already finished'), { status: 409 });
-    try { run.child?.kill(); } catch { /* already gone */ }
+    killTree(run.child);
     this.append(run, '\n· cancelled\n');
     this.finish(run, 'cancelled', 'Cancelled');
     return this.summary(run);
   }
 
-  stopAll() { for (const run of this.active.values()) { try { run.child?.kill(); } catch { /* gone */ } } }
+  stopAll() { for (const run of this.active.values()) killTree(run.child); }
+}
+
+/** Stop a step and everything it started: the whole process group on POSIX. */
+function killTree(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  try {
+    if (process.platform !== 'win32') process.kill(-child.pid, 'SIGTERM');
+    else child.kill();
+  } catch { try { child.kill(); } catch { /* already gone */ } }
 }
