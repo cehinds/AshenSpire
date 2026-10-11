@@ -254,6 +254,21 @@ test('Review skips a draft with no parsed table and names it, instead of throwin
   assert.equal(out.changes[0].baseHash, 'disk-1');
 });
 
+test('a table deleted on disk: a 404 reads as missing, and withoutTable drops its copy and draft only', () => {
+  assert.equal(D.isMissingFile({ status: 404 }), true);
+  assert.equal(D.isMissingFile({ status: 500 }), false);
+  assert.equal(D.isMissingFile(new Error('network')), false);
+  const rel = 'content/source/speakers.csv', other = 'content/source/weapons.csv';
+  const parsed = new Map([[rel, { path: rel }], [other, { path: other }]]);
+  const drafts = new Map([[rel, { rows: [] }], [other, { rows: [] }]]);
+  const out = D.withoutTable({ parsed, drafts, selected: rel }, rel);
+  assert.deepEqual([...out.parsed.keys()], [other]);
+  assert.deepEqual([...out.drafts.keys()], [other]);
+  assert.equal(out.selected, null, 'the deleted table was shown, so nothing is selected now');
+  assert.equal(parsed.size, 2, 'the maps given are not changed');
+  assert.equal(D.withoutTable({ parsed, drafts, selected: other }, rel).selected, other, 'another selection stays');
+});
+
 test('a changed table makes a save entry with its base hash and a one-line diff', async () => {
   const { lineDiff } = await import('../core/files.mjs');
   const rel = 'content/source/speakers.csv';

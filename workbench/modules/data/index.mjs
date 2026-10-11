@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -215,7 +215,12 @@ export default {
         // The disk copies replace the drafts: the steps that hold the drafts must go, or undo writes them back.
         ctx.history.clear();
         close();
-        if (state.selected && moved.some((c) => c.path === state.selected)) await select(state.selected);
+        // A table deleted on disk leaves the list: read the list again, then name each deleted table.
+        const shown = state.selected && moved.some((c) => c.path === state.selected) ? state.selected : null;
+        await loadList();
+        const deleted = moved.map((c) => c.path).filter((p) => !state.tables.some((t) => t.path === p));
+        if (shown) await select(shown);
+        for (const p of deleted) if (p !== shown) ctx.toast({ kind: 'warn', title: `${p} was deleted on disk`, detail: 'Its edits to that table were dropped.' });
         refresh();
       };
       status.querySelector('[data-overwrite]').onclick = () => save(rebaseChanges(changes, found));
@@ -248,7 +253,9 @@ export default {
       const generation = gate.begin();
       let table;
       try { table = await parsedOf(path); } catch (e) {
-        if (gate.current(generation)) ctx.toast({ kind: 'error', title: `Cannot open ${basename(path)}`, detail: e.message });
+        if (!gate.current(generation)) return;
+        if (isMissingFile(e)) return forgetDeleted(path);
+        ctx.toast({ kind: 'error', title: `Cannot open ${basename(path)}`, detail: e.message });
         return;
       }
       if (!gate.current(generation)) return;
@@ -260,6 +267,25 @@ export default {
       state.drafts.set(path, doc);
       state.activeRow = null;
       showDoc(doc);
+      refresh();
+    }
+
+    /**
+     * A table deleted on disk: its copy and draft go, the grid clears if it was shown,
+     * the history steps go (undo would write the drafts back), and the list is read again.
+     */
+    async function forgetDeleted(path) {
+      const was = state.selected;
+      const next = withoutTable(state, path);
+      state.parsed = next.parsed; state.drafts = next.drafts; state.selected = next.selected;
+      ctx.history.clear();
+      if (was === path) {
+        state.activeRow = null;
+        if (state.grid) { state.grid.setRules([]); state.grid.setData({ columns: [], rows: [] }); }
+        renderRow();
+      }
+      ctx.toast({ kind: 'warn', title: `${path} was deleted on disk`, detail: 'Its edits to that table were dropped.' });
+      await loadList();
       refresh();
     }
 

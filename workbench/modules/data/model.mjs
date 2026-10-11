@@ -325,6 +325,21 @@ export function selectionGate() {
   };
 }
 
+/** True when a files/read failure says the file is not on disk (a table deleted on disk). */
+export function isMissingFile(error) {
+  return error?.status === 404;
+}
+
+/**
+ * A table deleted on disk: its parsed copy and its draft go, and the selection
+ * clears when it was the shown table. New Maps are returned; the ones given are not changed.
+ */
+export function withoutTable({ parsed, drafts, selected }, path) {
+  const nextParsed = new Map(parsed), nextDrafts = new Map(drafts);
+  nextParsed.delete(path); nextDrafts.delete(path);
+  return { parsed: nextParsed, drafts: nextDrafts, selected: selected === path ? null : selected };
+}
+
 /**
  * A save entry for the Workbench files API: { path, text, baseHash }, or null when
  * there is no parsed table to serialize the draft against.
