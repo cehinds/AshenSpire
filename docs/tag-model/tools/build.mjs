@@ -352,12 +352,31 @@ const viewNamesOf = notes => {
   const m = /view=([^;]*)/.exec(notes);
   return m ? [...new Set([...m[1].matchAll(/[A-Za-z_$][\w$]*/g)].map(x => x[0]))] : [];
 };
+// The kit (src/ui/kit/index.js) helpers build their elements with fixed classes
+// (cls('tm-entry', ...) in titleMenu). A helper's text runs from its export to the
+// next export. A component's code gets those classes when its body calls the
+// helper, so the classes are attributed at the call site.
+const KIT_FILE = 'src/ui/kit/index.js';
+const kitClassesOf = new Map();
+{
+  const src = sourceOfOwner(KIT_FILE);
+  for (const m of src.matchAll(/^export (?:const|function) ([A-Za-z_$][\w$]*)/gm)) {
+    const next = src.indexOf('\nexport ', m.index + 1);
+    kitClassesOf.set(m[1], classWordsOf(src.slice(m.index, next < 0 ? src.length : next)));
+  }
+}
 const wordsOfComponent = (file, notes) => {
   const src = sourceOfOwner(file);
   const out = new Set();
+  const addBody = body => {
+    for (const w of classWordsOf(body)) out.add(w);
+    for (const [name, words] of kitClassesOf) {
+      if (new RegExp(`\\b${name}\\s*\\(`).test(body)) for (const w of words) out.add(w);
+    }
+  };
   for (const name of viewNamesOf(notes)) {
     const body = functionBody(src, name);
-    if (body) for (const w of classWordsOf(body)) out.add(w);
+    if (body) addBody(body);
   }
   return out;
 };
