@@ -326,14 +326,15 @@ function parseCSV(text){
   const cols=nonEmpty[0].map(s=>s.trim());
   return {columns:cols, rows:nonEmpty.slice(1).map(r=>{ const o={}; cols.forEach((c,j)=>{ o[c]=coerce(r[j]??''); }); return o; })};
 }
-function coerce(s){ const t=String(s); return /^-?\d+(\.\d+)?$/.test(t.trim())? Number(t) : t; }
+function coerce(s){ const t=String(s); return (/^-?\d+(\.\d+)?$/.test(t) && String(Number(t))===t)? Number(t) : t; }
 
 /* ---------- persistence ---------- */
 const LS='ashen-tag-workbench-v1';
-function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){} }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
 function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)) state.data[t]=d[t]; } }catch(e){} }
+function editable(t){ return localMode || (!!db && canWrite && loaded.has(t)); }
 function markDirty(t){
-  loaded.add(t);
+  if(!localMode && !loaded.has(t)){ setStatus('warn','Still loading '+t+'; that edit was not saved.'); return; }
   dirty.add(t); rebuild(); setStatus();
   if(localMode||!db||!canWrite){ saveLocal(); return; }
   clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
@@ -345,12 +346,14 @@ async function flush(t){
   const cols=state.data[t].columns;
   const parts=chunk(state.data[t].rows.map(r=>cols.map(c=>r[c]??'')));
   try{
-    const prev=saved[t]||{parts:[],head:''};
-    for(let i=0;i<parts.length;i++){ const js=JSON.stringify(parts[i]); if(prev.parts[i]!==js){ await db.doc('tables/'+t+'/parts/p'+i).set({index:i,rows:parts[i]}); } }
-    const head={columns:cols, parts:parts.length, format:'arrays'};
+    const prev=saved[t]||{parts:[],head:'',revs:[]};
+    const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    const revs=[];
+    for(let i=0;i<parts.length;i++){ const js=JSON.stringify(parts[i]); if(prev.parts[i]!==js||!prev.revs[i]){ await db.doc('tables/'+t+'/parts/p'+i).set({index:i,rev,rows:parts[i]}); revs.push(rev); } else revs.push(prev.revs[i]); }
+    const head={columns:cols, parts:parts.length, format:'arrays', revs};
     const hj=JSON.stringify(head); if(prev.head!==hj) await db.doc('tables/'+t).set(head);
     for(let i=parts.length;i<prev.parts.length;i++) await db.doc('tables/'+t+'/parts/p'+i).delete();
-    saved[t]={parts:parts.map(x=>JSON.stringify(x)), head:hj};
+    saved[t]={parts:parts.map(x=>JSON.stringify(x)), head:hj, revs};
   }
   catch(e){
     dirty.add(t);
@@ -393,7 +396,7 @@ function renderTable(p,t){
   const col=btn('Add column',()=>openText('Add a column to '+def.label,'Type the new column name.','',[['Add',v=>{ v=v.trim(); if(v&&!tbl.columns.includes(v)){ tbl.columns.push(v); markDirty(t); render(); } }]],true));
   const exp=btn('Export CSV',()=>exportCSV(t));
   const imp=btn('Import CSV',()=>importDialog(t));
-  tools.append(add,col,imp,exp); if((!canWrite && !localMode) || pending.has(t)){ add.disabled=col.disabled=imp.disabled=true; }
+  tools.append(add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
   p.appendChild(tools);
   const help=document.createElement('p'); help.className='help'; help.style.margin='8px 0'; help.innerHTML=def.help; p.appendChild(help);
   if(t==='formulas'||t==='objects'||t==='tags'){ const lg=document.createElement('div'); lg.className='legend'; lg.innerHTML='<span><i style="background:var(--bad)"></i>unknown reference</span><span><i style="background:var(--warn)"></i>tag has no preview value</span>'; p.appendChild(lg); }
@@ -403,7 +406,7 @@ function renderTable(p,t){
     grid.textContent='';
     const f=(state.filter[t]||'').toLowerCase();
     const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r])=>!f||tbl.columns.some(c=>String(r[c]??'').toLowerCase().includes(f)));
-    if(!tbl.rows.length && pending.has(t)){ grid.innerHTML='<div class="empty">Loading '+escapeHtml(def.label)+'…</div>'; return; }
+    if(!tbl.rows.length && !localMode && !loaded.has(t)){ grid.innerHTML='<div class="empty">Loading '+escapeHtml(def.label)+'…</div>'; return; }
     if(!tbl.rows.length){ grid.innerHTML='<div class="empty">No rows yet. Add a row, or import a CSV whose first line names the columns:<br><code class="mono">'+escapeHtml(tbl.columns.join(','))+'</code></div>'; return; }
     const table=document.createElement('table');
     const head=document.createElement('tr'); head.appendChild(document.createElement('th'));
@@ -415,13 +418,13 @@ function renderTable(p,t){
       const tr=document.createElement('tr');
       const act=document.createElement('td'); act.className='act';
       const del=document.createElement('button'); del.className='x'; del.type='button'; del.title='Delete row'; del.setAttribute('aria-label','Delete row'); del.textContent='×';
-      del.onclick=()=>{ tbl.rows.splice(i,1); markDirty(t); render(); }; if(!canWrite&&!localMode) del.disabled=true;
+      del.onclick=()=>{ tbl.rows.splice(i,1); markDirty(t); render(); }; if(!editable(t)) del.disabled=true;
       if(t==='assets'&&assetsCap&&canWrite){ const up=document.createElement('button'); up.className='x'; up.type='button'; up.title='Upload preview image'; up.textContent='⤒'; up.onclick=()=>uploadPreview(r); act.appendChild(up); }
       if(t==='objects'){ const go=document.createElement('button'); go.className='x'; go.type='button'; go.title='Open sheet'; go.textContent='↗'; go.onclick=()=>{ state.sheet=String(r.id); state.view='sheet'; render(); }; act.appendChild(go); }
       act.appendChild(del); tr.appendChild(act);
       for(const c of tbl.columns){
         const td=document.createElement('td'); td.className='c-'+c;
-        const inp=document.createElement('input'); inp.value=r[c]??''; inp.setAttribute('aria-label',c); inp.readOnly=!canWrite&&!localMode;
+        const inp=document.createElement('input'); inp.value=r[c]??''; inp.setAttribute('aria-label',c); inp.readOnly=!editable(t);
         const issue=cellIssue(t,c,r[c]); if(issue){ td.classList.add('bad'); inp.title=issue; } else if(r[c]!=null&&String(r[c]).length>30) inp.title=String(r[c]);
         inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; if(t==='formulas') draw(); renderTabs(); });
         td.appendChild(inp); tr.appendChild(td);
@@ -528,6 +531,8 @@ function placeholder(o){
   return s;
 }
 function renderCheck(p){
+  const notLoaded=ORDER.filter(t=>!localMode&&!loaded.has(t));
+  if(notLoaded.length){ const w=document.createElement('div'); w.className='toolbar'; const m=document.createElement('p'); m.className='help'; m.textContent='Not checked yet, because these tables are not loaded: '+notLoaded.map(t=>TABLES[t].label).join(', ')+'.'; w.append(m, btn('Load all tables',()=>{ notLoaded.forEach(ensure); render(); })); p.appendChild(w); }
   const iss=allIssues();
   const h=document.createElement('p'); h.className='help'; h.textContent= iss.length? iss.length+' problems across all tables. Click one to jump to its table.' : 'No problems: every reference resolves and every formula computes.';
   p.appendChild(h);
@@ -537,7 +542,7 @@ function renderCheck(p){
     b.onclick=()=>{ state.view=it.t; state.filter[it.t]=String(kc? it.row[kc] : it.row[it.c]||''); render(); }; li.appendChild(b); ul.appendChild(li); }
   p.appendChild(ul);
   const ex=document.createElement('div'); ex.className='toolbar'; ex.style.marginTop='12px';
-  ex.append(btn('Export every table as one JSON file',()=>{ const all={}; for(const t of ORDER) all[t]=state.data[t]; offer('ashen-tag-workbench.json', JSON.stringify(all,null,1)); }));
+  ex.append(btn('Export every table as one JSON file',()=>{ if(notLoaded.length){ notLoaded.forEach(ensure); setStatus('warn','Loading every table first; export again when the counts on the tabs fill in.'); render(); return; } const all={}; for(const t of ORDER) all[t]=state.data[t]; offer('ashen-tag-workbench.json', JSON.stringify(all,null,1)); }));
   p.appendChild(ex);
 }
 
@@ -554,6 +559,7 @@ function importDialog(t){
     ['Merge',v=>applyImport(t,v,'merge')],['Replace',v=>applyImport(t,v,'replace')]],false);
 }
 function applyImport(t,text,mode){
+  if(!editable(t)){ setStatus('warn','This table is not loaded or not editable yet.'); return; }
   const parsed=parseCSV(text); if(!parsed.columns.length){ setStatus('bad','That CSV has no header row.'); return; }
   const tbl=state.data[t], key=TABLES[t].key;
   for(const c of parsed.columns) if(!tbl.columns.includes(c)) tbl.columns.push(c);
@@ -587,24 +593,24 @@ rebuild(); setStatus(); render();
   const unsub={};
   const onErr=t=>e=>setStatus('bad','Lost the live connection to "'+t+'" ('+e.code+'). Reload to reconnect.');
   window.__subscribe=t=>{
-    live[t]={head:null, parts:new Map()};
+    live[t]={head:null, parts:new Map(), partMeta:new Map()};
     const apply=()=>{
       if(dirty.has(t)||saving.has(t)) return;
       const h=live[t].head; if(!h) return;
       let rows;
       if(Array.isArray(h.rows)) rows=h.rows;
-      else { rows=[]; const hc=h.columns||[]; for(let i=0;i<(h.parts||0);i++){ const p=live[t].parts.get(i); if(!p) return; for(const r of p) rows.push(Array.isArray(r)? Object.fromEntries(hc.map((c,j)=>[c,r[j]??''])) : r); } }
+      else { rows=[]; const hc=h.columns||[]; for(let i=0;i<(h.parts||0);i++){ const pp=live[t].partMeta.get(i); const p=live[t].parts.get(i); if(!p) return; if(Array.isArray(h.revs) && (!pp || pp.rev!==h.revs[i])) return; for(const r of p) rows.push(Array.isArray(r)? Object.fromEntries(hc.map((c,j)=>[c,r[j]??''])) : r); } }
       const cols=Array.isArray(h.columns)&&h.columns.length? [...h.columns] : [...TABLES[t].columns];
       for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
       loaded.add(t); pending.delete(t);
-      saved[t]= Array.isArray(h.rows)? {parts:[],head:''} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts,format:h.format})};
+      saved[t]= Array.isArray(h.rows)? {parts:[],head:'',revs:[]} : {parts:[...Array(h.parts||0).keys()].map(i=>JSON.stringify(live[t].parts.get(i))), head:JSON.stringify({columns:h.columns,parts:h.parts,format:h.format,revs:h.revs}), revs:Array.isArray(h.revs)? [...h.revs] : []};
       if(JSON.stringify(rows)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
       state.data[t]={columns:cols, rows:JSON.parse(JSON.stringify(rows))};
       loaded.add(t); pending.delete(t);
       rebuild(); setStatus(); render();
     };
     unsub[t]=[db.doc('tables/'+t).onSnapshot(s=>{ live[t].head=s.exists? s.data() : null; if(!s.exists){ pending.delete(t); loaded.add(t); render(); } apply(); }, onErr(t)),
-      db.collection('tables/'+t+'/parts').onSnapshot(q=>{ live[t].parts=new Map(q.docs.map(d=>{ const b=d.data(); return [Number(b.index), b.rows||[]]; })); apply(); }, onErr(t))];
+      db.collection('tables/'+t+'/parts').onSnapshot(q=>{ live[t].parts=new Map(q.docs.map(d=>{ const b=d.data(); return [Number(b.index), b.rows||[]]; })); live[t].partMeta=new Map(q.docs.map(d=>{ const b=d.data(); return [Number(b.index), {rev:b.rev}]; })); apply(); }, onErr(t))];
   };
   for(const t of ORDER) if(CORE.has(t)) ensure(t);
   if(TABLES[state.view]) ensure(state.view);
