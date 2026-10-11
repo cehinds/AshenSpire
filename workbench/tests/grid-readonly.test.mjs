@@ -112,3 +112,8 @@ test('the grid source: a locked cell is drawn greyed with the derived tooltip, a
   assert.match(src, /if \(M\.isLockedCell\(lockedMap, r, doc\.columns\[c\]\.key\)\) return;/);
   assert.equal(M.LOCKED_NOTE, 'Derived by build.mjs');
 });
+
+test('the grid source: setLock with the lock already set does nothing, so a subscriber that sets it does not loop', () => {
+  const src = readFileSync(new URL('../ui/kit/grid.mjs', import.meta.url), 'utf8');
+  assert.match(src, /setLock\(next\) \{\s*const value = next \?\? \{\};\s*if \(JSON\.stringify\(value\) === JSON\.stringify\(lock\)\) return;/);
+});

@@ -462,7 +462,12 @@ export function createGrid(el, options = {}) {
       cancelEdit(); el.querySelector('.gk-scroll')?.setAttribute('aria-readonly', String(readOnly)); render();
     },
     /** Which parts are derived (see grid-model.mjs lockedCellMap). Greyed, and never changed by any gesture. */
-    setLock(next) { lock = next ?? {}; recompute(); render(); },
+    // An unchanged lock is a no-op: the grid's subscribers run on every render, and a subscriber may set the same lock again.
+    setLock(next) {
+      const value = next ?? {};
+      if (JSON.stringify(value) === JSON.stringify(lock)) return;
+      lock = value; recompute(); render();
+    },
     setRules(next, nextRefs = refs) { rules = next; refs = nextRefs; recompute(); render(); },
     setSearch(text) { searchEl.value = search = text; recompute(); render(); },
     setSort(keys) { sortKeys = keys.slice(); recompute(); render(); },
