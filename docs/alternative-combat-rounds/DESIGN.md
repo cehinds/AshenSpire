@@ -616,6 +616,14 @@ enemy has one M, and each attack is one exchange:
   When an attack does not land and the defender's counter fires on it, the defender's one credit uses the counter card (owner, 2026-10-11).
 - A counter with the `stagger` tag adds +-3 to its side's summed delta, on top of
   its slot win.
+- Hyper armor (timeline, as in resolver.mjs): a staggered target whose combatant
+  tags include `hyperArmor` resists. No +-3 is added, and the event is
+  `{type: 'resisted', status: 'stagger', target, seq}` instead. The slot win is
+  unchanged. The target is the attacker the counter answers. A counter with
+  `stagger` against a target without `hyperArmor` is unchanged.
+  - The timeline has no interrupt, so `hyperArmor` has no effect on a landed hit
+    (see Open in the timeline model). It has no effect on `stun` either, because
+    the timeline has no stun status yet.
 - Round end: the summed delta is added to each enemy's M once, then clamped to
   -3..3. A raw total past the cap sets that side's `poiseDouble` flag. The flag
   gives the side's next landed hit `poiseMultiplier: 2`. Poise damage is not
@@ -651,8 +659,10 @@ enemy has one M, and each attack is one exchange:
   best card, or base + d4 only (PLACEHOLDER choice).
 - Reaction counters (fire after, never cancel) and the replacement counter used by
   adaptation are placeholders.
-- Interrupts (a landed faster hit interrupting a slower action, and hyperArmor)
-  are not in the timeline model. Poise damage is not modelled.
+- Interrupts (a landed faster hit interrupting a slower action) are not in the
+  timeline model, so `hyperArmor` only resists the counter stagger above. A landed
+  hit does not change the target's later queued actions. Stun is not modelled.
+  Poise damage is not modelled.
 
 ## Open questions
 

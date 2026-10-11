@@ -463,7 +463,13 @@ function credit(cur, run, { key, winner, winCard, foeCard, events, seq, credited
 }
 
 // A counter with the 'stagger' tag adds +-3 to its side's summed delta (owner, 2026-10-11).
-function stagger(run, { key, owner, cur, events, seq }) {
+// A staggered target with 'hyperArmor' resists (as in resolver.mjs): no +-3, and a 'resisted'
+// event instead. The target is the attacker the counter answers.
+function stagger(run, { key, owner, target, cur, events, seq }) {
+  if (cur.combatants[target].tags.includes('hyperArmor')) {
+    events.push({ type: 'resisted', status: 'stagger', target, seq });
+    return;
+  }
   const sign = cur.combatants[owner].side === 'player' ? 1 : -1;
   const delta = sign * MOMENTUM_MAX;
   put(run.pending, key, get(run.pending, key, 0) + delta);
@@ -583,7 +589,7 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
     events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
     applyDamage(cur, entry.actor, counter.damage, events);
     credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
-    if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
+    if (counter.stagger) stagger(run, { key, owner: counter.owner, target: entry.actor, cur, events, seq: entry.seq });
     return;
   }
   const out = resolveAttack(cur, entry, events, options.rng, options, reacted.evade, reactionPlayed);
@@ -600,7 +606,7 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
     events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
     applyDamage(cur, entry.actor, counter.damage, events);
     credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
-    if (counter.stagger) stagger(run, { key, owner: counter.owner, cur, events, seq: entry.seq });
+    if (counter.stagger) stagger(run, { key, owner: counter.owner, target: entry.actor, cur, events, seq: entry.seq });
   }
 }
 

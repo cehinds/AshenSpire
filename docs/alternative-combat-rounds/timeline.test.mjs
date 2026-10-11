@@ -1018,6 +1018,43 @@ test('a counter stagger adds 3 on top of its slot win, summed then clamped once'
   assert.equal(momentumOf(cancelWith([]), 'goblin'), 0);
 });
 
+test('hyperArmor resists a counter stagger: no +-3, and a resisted event instead', () => {
+  // Start -2 decays to -1. The cancelling counter still wins its slot (+1), so -1 + 1 = 0.
+  // The stagger is resisted by the goblin's hyperArmor, so it adds no 3.
+  const st = duo({ hp: 20, tags: ['hyperArmor'] }, { hp: 20 });
+  st.momentum = { goblin: -2 };
+  const out = createRound(st, {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 6, { tags: ['stagger'] })],
+      goblin: [atk('stab', 'player', 1, { damage: 10 })],
+    },
+    rng: HIT_RNG,
+  }).resolveAll();
+  assert.equal(out.events.some((e) => e.reason === 'counterStagger'), false);
+  const resisted = out.events.filter((e) => e.type === 'resisted');
+  assert.deepEqual(resisted.map((e) => [e.status, e.target]), [['stagger', 'goblin']]);
+  assert.equal(out.events.some((e) => e.type === 'status'), false);
+  assert.equal(momentumOf(out, 'goblin'), 0);
+  // The queued counter deals DEFENSE_BASE 2 plus REACTION_BUFF 1 = 3 damage, so 20 - 3 = 17.
+  assert.equal(out.state.combatants.goblin.hp, 17);
+});
+
+test('hyperArmor resists a stagger from a counter that fires after the attack', () => {
+  // The goblin's attack is faster, so the counter fires after it. The stagger is still resisted.
+  const st = duo({ hp: 20, tags: ['hyperArmor'] }, { hp: 20 });
+  const out = createRound(st, {
+    queues: {
+      player: [card('counter', 'counter', 'goblin', 0, { tags: ['stagger'] })],
+      goblin: [atk('stab', 'player', 9, { damage: 1 })],
+    },
+    rng: HIT_RNG,
+    merge: 'wholeQueue',
+  }).resolveAll();
+  assert.equal(out.events.find((e) => e.type === 'counterFired').by, 'player');
+  assert.equal(out.events.some((e) => e.reason === 'counterStagger'), false);
+  assert.deepEqual(out.events.filter((e) => e.type === 'resisted').map((e) => [e.status, e.target]), [['stagger', 'goblin']]);
+});
+
 test('each side wins at most once per exchange: a landed hit and a fired counter net to 0', () => {
   // wholeQueue, as in the counter test: the stab lands (goblin +, wins), then the counter
   // fires (player +). Each side is credited once, so the momentum is unchanged.
