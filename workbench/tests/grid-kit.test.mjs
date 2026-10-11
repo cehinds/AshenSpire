@@ -224,6 +224,14 @@ test('shift selection in a filtered, sorted view selects only the visible rows',
   assert.deepEqual([...new Set(M.selectedCells(ctrl, 6, 5).map(c => c.r))].sort(), [0, 3, 4]);
 });
 
+test('shift row selection in a filtered view widens every run to whole rows', () => {
+  const order = [5, 4, 3, 1, 0]; // row 2 is hidden
+  let sel = M.selectRows(M.createSelection(), 4, {}, 5);
+  sel = M.selectRows(sel, 1, { shift: true, order }, 5);
+  assert.deepEqual([...new Set(M.selectedCells(sel, 6, 5).map(c => c.r))].sort(), [1, 3, 4]);
+  assert.equal(M.selectedCells(sel, 6, 5).length, 3 * 5, 'every cell of each selected row, and no hidden row');
+});
+
 test('export to CSV, TSV and JSON', () => {
   const d = fresh();
   assert.equal(M.toCSV(d).split('\n')[0], 'id,n,on,tag,data');

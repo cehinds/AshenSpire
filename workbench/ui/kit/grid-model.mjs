@@ -143,24 +143,22 @@ const rectOf = (a, b) => ({ r0: Math.min(a.r, b.r), c0: Math.min(a.c, b.c), r1: 
 
 // `order` (the visible row indices) makes a shift range follow the view: it covers the visible rows
 // between the anchor and `to`, split into document runs, so rows a filter hides are never selected.
-function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ?? to, order = null } = {}) {
+// `columns` ([c0, c1]) overrides the columns of every range the call makes (whole rows).
+function selectTo(sel, to, { shift = false, ctrl = false, anchor = sel.anchor ?? to, order = null, columns = null } = {}) {
+  const cols = columns ? { c0: columns[0], c1: columns[1] } : {};
   if (shift && sel.anchor) {
-    const rect = rectOf(sel.anchor, to);
+    const rect = { ...rectOf(sel.anchor, to), ...cols };
     const runs = order ? rowRuns(visibleSpan(order, sel.anchor.r, to.r)).map(({ r0, r1 }) => ({ ...rect, r0, r1 })) : [rect];
     const ranges = ctrl && sel.ranges.length ? [...sel.ranges.slice(0, -1), ...runs] : runs;
     return { ranges, anchor: sel.anchor, active: to };
   }
-  const rect = rectOf(to, to);
+  const rect = { ...rectOf(to, to), ...cols };
   return { ranges: ctrl ? [...sel.ranges, rect] : [rect], anchor: to, active: to };
 }
 export function selectCell(sel, cell, opts) { return selectTo(sel, cell, opts); }
 /** Whole-row selection over colCount columns. */
 export function selectRows(sel, r, opts, colCount) {
-  const last = Math.max(0, colCount - 1);
-  const to = { r, c: 0 };
-  const base = selectTo(sel, to, opts);
-  const widen = rect => ({ ...rect, c0: 0, c1: last });
-  return { ...base, ranges: base.ranges.map((rect, i) => (i === base.ranges.length - 1 ? widen(rect) : rect)) };
+  return selectTo(sel, { r, c: 0 }, { ...opts, columns: [0, Math.max(0, colCount - 1)] });
 }
 /** Move the active cell by (dr, dc), clamped to bounds; extend keeps the anchor. */
 export function moveSelection(sel, dr, dc, { rowCount, colCount, extend = false }) {
