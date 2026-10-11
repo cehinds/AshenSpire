@@ -53,7 +53,7 @@ const DERIVED = {
   tokens: ['tag', 'liveRef'], breakpoints: ['tag', 'liveRef'], assets: ['tag', 'liveRef'],
   animations: ['tag', 'liveRef'], effects: ['tag', 'liveRef'], resolutions: ['tag', 'liveRef'],
   settings: ['scope', 'deviceScope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
-  'combat-symbols': ['assignedAssetRef', 'tag', 'liveRef', 'artBrief', 'priority'], strings: ['tag', 'liveRef', 'proposedKey', 'migrateTo'],
+  'combat-symbols': ['assignedAssetRef', 'tag', 'liveRef'], strings: ['tag', 'liveRef', 'proposedKey', 'migrateTo'],
 };
 const DERIVED_ALL = new Set(Object.values(DERIVED).flat());
 
@@ -692,82 +692,6 @@ const assignedAssetRef = combatRows.rows.map((r) => {
   return mapped;
 });
 
-// Art brief and priority for every placeholder combat symbol (ART-LIST.md).
-// priority: P1 combat-critical (read on the battlefield every fight), P2 build or
-// card specific, P3 card-facing keyword marker. Each brief: silhouette, motif and
-// ink. Every placeholder row must have an entry; an entry on any other row fails.
-const ART_BRIEFS = {
-  "evade": ["P1", "Stance sprite for Evade: a body stepping sideways out of a diagonal sweep, open and asymmetric, not a closed shield. Solid sigil in one ink at the Defend sigil visual weight, so the pair sits together in the action row."],
-  "resource:ward": ["P1", "Ward is a magical reserve: a round solid disc with a three-point crest cut out of its centre. Round, not kite-shaped, so it never reads as Block. One ink."],
-  "fx:barrier": ["P1", "Barrier is a battlefield effect: a half-ring of three curved bars standing on a ground line, line weight, open at the bottom. One ink. Distinct from the Ward disc."],
-  "rating:ar": ["P1", "Attack rating: a short blade tip pointing up-right with one crossguard notch, solid. Reads as a blade at 24 px. Not the Attack sigil, which has several blades."],
-  "rating:dr": ["P1", "Defence rating: an outlined kite shield with one bar across its middle, line weight. Outlined and barred so it differs from the solid Block shield."],
-  "rating:pr": ["P1", "Power rating: three rising bars with an up-arrow over the tallest, solid. One ink. Distinct from the Strength arrow glyph."],
-  "status:invulnerability": ["P1", "A closed bubble with a hairline inner ring and a centre dot, line weight. The bubble absorbs one hit. One ink at sigil scale."],
-  "status:decoy": ["P1", "Two overlapping figure outlines, the back one dashed and fainter, line weight. Reads as a double. One ink."],
-  "status:concealed": ["P1", "A hood outline over a half-closed eye, the edge dashed to read as blurred. Line weight. One ink."],
-  "status:prepared": ["P1", "A wound coil spring with one notch at the top, solid. Reads as readiness held in reserve. One ink."],
-  "status:unbreakable": ["P1", "A solid hexagonal bulwark plate with one horizontal bar inside it, solid. One ink. Unbreakable+ adds a second bar."],
-  "status:unbreakableUp": ["P1", "The Unbreakable plate with a second inner bar, same silhouette so the pair reads as one family at 24 px. One ink."],
-  "status:paralysis": ["P1", "A bolt with a broken centre set inside a ring, solid. The ring and the gap say locked, which separates it from plain Lightning."],
-  "status:sleep": ["P1", "A crescent moon with three small dashed Z marks beside it, line weight. One ink."],
-  "status:dazed": ["P1", "Three small stars spiralling round a centre dot, line weight. Reads as disorientation. One ink."],
-  "status:offBalance": ["P1", "A figure with one foot forward and both arms out, tipping, line weight. Reads as lost footing. One ink."],
-  "status:prone": ["P1", "A short down-arrow above a flat ground line with a figure lying on it, solid. One ink."],
-  "status:grounded": ["P1", "An earthing symbol: a T-stem dropping into a short ground line, line weight. Use the same ground line as the Alteration sigil."],
-  "status:chilled": ["P1", "A three-spoke snowflake with a notch on each arm, line weight. Smaller and simpler than the six-spoke Frost school sigil."],
-  "status:frostExposed": ["P1", "The six-spoke Frost snowflake with one spoke broken by a jagged gap, line weight. Derives from the Frost school sigil so the family reads."],
-  "status:insanityExposed": ["P1", "A spiral with a dark centre ring broken on one side, line weight. Derives from the Madness and Insanity family of marks."],
-  "status:magicVulnerable": ["P1", "A split circle with a crack running down the middle, line weight. Reads as magic broken open. One ink."],
-  "status:frostResist": ["P2", "A scarf loop wrapped over a snowflake, solid silhouette. Reads as warded against cold. One ink."],
-  "status:rallyingStandard": ["P2", "A banner on a pole with a swallowtail flag, solid. Uses the card-icon banner silhouette so the card and the status match."],
-  "status:rallyingStandardUp": ["P2", "The Rallying Standard banner with a second pennant on the pole, solid. Same family as the Standard."],
-  "status:venom": ["P2", "A single drop with a fang notch cut into its side, solid. Distinct from the Bleed blood drop."],
-  "status:envenom": ["P2", "A curved fang on a short hilt bar, solid. Marks attacks that carry venom."],
-  "status:goreblood": ["P2", "A chalice with one drop falling from its rim, solid. A blood pact without a crown, distinct from the crown glyph."],
-  "status:bloodUnction": ["P2", "A small oil flask with a drop leaving its neck, solid. Marks extra bleed on hits."],
-  "status:stargazer": ["P2", "A telescope on a tripod pointed up at one star, line weight. One ink."],
-  "status:astromancer": ["P2", "An open book with a star above it, line weight. One ink."],
-  "status:starstoneCharge": ["P2", "A faceted four-sided gem with a small spark at its centre, solid. The Starstone family mark."],
-  "status:constellation": ["P2", "Three dots joined into a triangle by thin lines, line weight. One ink."],
-  "status:moonlitShield": ["P2", "A shield outline with a crescent cut out of its face, solid. One ink."],
-  "status:azureCoil": ["P2", "A spiral of two loops ending in a small wave, line weight. One ink."],
-  "status:waxingMoon": ["P2", "A gibbous moon with its lit side solid and the dark side in outline, line weight. One ink."],
-  "status:astralArmor": ["P2", "A four-point star inside a ring of dots, solid. Distinct from the Invulnerability bubble."],
-  "status:thornHalo": ["P2", "A ring of six thorns around a circle, line weight. One ink."],
-  "status:communion": ["P2", "A dove with one wing raised above a cup, line weight. One ink."],
-  "status:lifeTithe": ["P2", "A small urn with a cross on its face, solid. One ink."],
-  "status:zealotry": ["P2", "A flame with a lightning notch in its tip, solid. One ink."],
-  "status:emberTide": ["P2", "Three wavy lines rising from an ember dot, line weight. One ink."],
-  "status:harbingerOfBlight": ["P2", "A dark bloom with one drop falling from its centre, solid. Distinct from the Regen leaf."],
-  "status:ironVow": ["P2", "Two chain links crossed with a short bar, solid. One ink."],
-  "status:bulwarkEcho": ["P2", "Two overlapping shield outlines, the back one dashed, line weight. Echoes the Unbreakable plate."],
-  "status:glassCannon": ["P2", "A cracked diamond with a small burst at its top, solid. One ink."],
-  "status:opportunist": ["P2", "A dagger with a small arrow beside its point, solid. One ink."],
-  "status:deadlyTempo": ["P2", "An hourglass with a music note beside it, line weight. One ink."],
-  "status:afterimage": ["P2", "A figure outline with two faint ghost outlines behind it, line weight. One ink."],
-  "earth": ["P2", "Earth is an alteration note: two stacked boulders standing on a ground line, solid. Shares the Alteration ground line so the school reads as one family."],
-  "psychic": ["P2", "An open eye with a spiral around its pupil, line weight. An eye, not the Illusion lens, so psychic stays distinct from illusion."],
-  "keyword:exhaust": ["P3", "A small hourglass with its lower bulb empty, solid. Card-facing marker for Exhaust."],
-  "keyword:ethereal": ["P3", "A ghost wisp outline with its tail split in two and a dashed edge, line weight. One ink."],
-  "keyword:innate": ["P3", "A half sun over a horizon with three rays, line weight. One ink."],
-  "keyword:retain": ["P3", "A cupped hand holding a small card, line weight. One ink."],
-  "keyword:unplayable": ["P3", "A padlock, solid. Card-facing marker for Unplayable."],
-};
-const artBriefOf = combatRows.rows.map(() => '');
-const priorityOf = combatRows.rows.map(() => '');
-const briefKeys = new Set();
-combatRows.rows.forEach((r, i) => {
-  if (combatStatus[i] !== 'placeholder') return;
-  const key = get(combatRows, r, 'tagKey');
-  if (!ART_BRIEFS[key]) throw new Error('combat-symbols: placeholder ' + key + ' has no artBrief');
-  briefKeys.add(key);
-  [priorityOf[i], artBriefOf[i]] = ART_BRIEFS[key];
-});
-for (const key of Object.keys(ART_BRIEFS)) {
-  if (!briefKeys.has(key)) throw new Error('combat-symbols: artBrief for ' + key + ', which is not a placeholder');
-}
-
 tagIds.strings = rowMap('strings', r => presId('text', textKind(r)));
 liveRefs.strings = rowMap('strings', r => get(inv.strings, r, 'file'));
 
@@ -979,8 +903,6 @@ for (const name of INVENTORY) {
       assignedAssetRef: name === 'combat-symbols' ? assignedAssetRef[i] : undefined,
       cssClasses: name === 'components' ? cssClassesOf[i] : undefined,
       cssComponentId: name === 'styles' ? styleCssIds[i] : undefined,
-      artBrief: name === 'combat-symbols' ? artBriefOf[i] : undefined,
-      priority: name === 'combat-symbols' ? priorityOf[i] : undefined,
       proposedKey: name === 'strings' ? proposedKeyOf[i] : undefined,
       migrateTo: name === 'strings' ? migrateToOf[i] : undefined,
     };
