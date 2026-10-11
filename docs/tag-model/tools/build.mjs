@@ -365,18 +365,30 @@ const kitClassesOf = new Map();
     kitClassesOf.set(m[1], classWordsOf(src.slice(m.index, next < 0 ? src.length : next)));
   }
 }
+const CALL_DEPTH = 2;
 const wordsOfComponent = (file, notes) => {
   const src = sourceOfOwner(file);
   const out = new Set();
-  const addBody = body => {
+  // A renderer's classes include those set by the same-file functions it calls
+  // (renderArmouryOverlay -> renderArmouryPanel), followed to CALL_DEPTH levels.
+  const seen = new Set();
+  const addBody = (name, body, depth) => {
+    seen.add(name);
     for (const w of classWordsOf(body)) out.add(w);
-    for (const [name, words] of kitClassesOf) {
-      if (new RegExp(`\\b${name}\\s*\\(`).test(body)) for (const w of words) out.add(w);
+    for (const [kit, words] of kitClassesOf) {
+      if (new RegExp(`\\b${kit}\\s*\\(`).test(body)) for (const w of words) out.add(w);
+    }
+    if (depth >= CALL_DEPTH) return;
+    for (const callee of new Set([...body.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)].map(m => m[1]))) {
+      if (seen.has(callee)) continue;
+      const calleeBody = functionBody(src, callee);
+      if (calleeBody) addBody(callee, calleeBody, depth + 1);
     }
   };
   for (const name of viewNamesOf(notes)) {
+    if (seen.has(name)) continue;
     const body = functionBody(src, name);
-    if (body) addBody(body);
+    if (body) addBody(name, body, 0);
   }
   return out;
 };
