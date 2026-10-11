@@ -1789,8 +1789,8 @@ hold-hint,:not(.coop)) .combat-action-row :is(.hold-hint,font-size,"max(0.85rem,
 hold-hint,:not(.coop)) .combat-action-row :is(.hold-hint,line-height,1,,styles/combat.css:1135,all,typography,styles/combat.css:1135,hold-hint
 et-key,.et-key),font-size,"max(0.85rem, calc(10px / var(--ui-zoom, 1)))",,styles/combat.css:1135,all,typography,styles/combat.css:1135,et-key
 et-key,.et-key),line-height,1,,styles/combat.css:1135,all,typography,styles/combat.css:1135,et-key
-act-move,".sprite.act-move[data-action-motion=""cast""]:has(.painted-stage)",animation-name,none,,styles/combat.css:1139,all,motion,styles/combat.css:1139,act-move
-act-move,".sprite.act-move[data-action-motion=""brace""]:has(.painted-stage)",animation-name,none,,styles/combat.css:1139,all,motion,styles/combat.css:1139,act-move
+equipment-animation-reference,".sprite.act-move[data-action-motion=""cast""]:has(.painted-stage)",animation-name,none,,styles/combat.css:1139,all,motion,styles/combat.css:1139,act-move
+equipment-animation-reference,".sprite.act-move[data-action-motion=""brace""]:has(.painted-stage)",animation-name,none,,styles/combat.css:1139,all,motion,styles/combat.css:1139,act-move
 selected,:root .combat:not(.coop) .hand .card.selected,transform,var(--card-fan-transform) !important,,styles/combat.css:1143,all,motion,styles/combat.css:1143,selected
 selected,:root .combat:not(.coop) .hand .card.selected,z-index,100 !important,,styles/combat.css:1143,all,z-index,styles/combat.css:1143,selected
 card,:root .combat:not(.coop) .hand:has(.selected) .card:not(.selected):hover,transform,var(--card-fan-transform) !important,,styles/combat.css:1144,all,motion,styles/combat.css:1144,card
@@ -5101,7 +5101,7 @@ class-pick,".class-pick[aria-pressed=""true""]",border-color,var(--gold),,styles
 class-pick,".class-pick[aria-pressed=""true""]",box-shadow,"0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18)",,styles/kit.css:1144,all,style.shadow,styles/kit.css:1144,class-pick
 locked,.class-pick.locked,opacity,0.55,,styles/kit.css:1145,all,style.other,styles/kit.css:1145,locked
 locked,.class-pick.locked,cursor,default,,styles/kit.css:1145,all,style.other,styles/kit.css:1145,locked
-quiet,.class-pick.quiet,opacity,0.7,,styles/kit.css:1148,all,style.other,styles/kit.css:1148,quiet
+kit.band,.class-pick.quiet,opacity,0.7,,styles/kit.css:1148,all,style.other,styles/kit.css:1148,quiet
 cp-body,.class-pick.quiet > .cp-body > h3,color,var(--muted),,styles/kit.css:1149,all,color,styles/kit.css:1149,cp-body
 locked,.class-pick.locked:hover,border-color,var(--line),,styles/kit.css:1150,all,color,styles/kit.css:1150,locked
 glyph,.class-pick > .glyph,flex,0 0 3rem,,styles/kit.css:1151,all,style.other,styles/kit.css:1151,glyph
@@ -5229,28 +5229,28 @@ skill-book-offer,.shop-book-actions,display,grid,,styles/kit.css:1257,all,style.
 skill-book-offer,.shop-book-actions,gap,0.65rem,,styles/kit.css:1257,all,spacing,styles/kit.css:1257,shop-book-actions
 skill-book-offer,.shop-book-actions,min-width,0,,styles/kit.css:1257,all,spacing,styles/kit.css:1257,shop-book-actions
 skill-book-offer,.shop-book-actions,text-align,center,,styles/kit.css:1257,all,typography,styles/kit.css:1257,shop-book-actions
-shop-book-buy,.shop-book-buy.as-btn,width,100%,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,min-width,0,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,min-height,4.4rem,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,padding,0.8rem 0.5rem,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,color,#f8dfa4,,styles/kit.css:1258,all,color,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,border,0,,styles/kit.css:1258,all,style.other,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,border-radius,0.5rem,,styles/kit.css:1258,all,radius,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,background,var(--book-buy-art) center / 100% 100% no-repeat,,styles/kit.css:1258,all,color,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,font-family,"var(--font-display, Georgia, serif)",,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,font-size,1.7rem,,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,text-transform,none,,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,letter-spacing,0.02em,,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,text-shadow,0 1px 2px #211407,,styles/kit.css:1258,all,style.shadow,styles/kit.css:1258,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,box-shadow,none,,styles/kit.css:1258,all,style.shadow,styles/kit.css:1258,shop-book-buy
-beat-hold,.shop-book-buy.as-btn.beat-hold,background-image,"repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art)",,styles/kit.css:1266,all,color,styles/kit.css:1266,beat-hold
-beat-hold,.shop-book-buy.as-btn.beat-hold,background-size,"calc(var(--hold, 0) * 100%) 100%, 100% 100%",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
-beat-hold,.shop-book-buy.as-btn.beat-hold,background-position,"left center, center",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
-beat-hold,.shop-book-buy.as-btn.beat-hold,background-repeat,no-repeat,,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
-beat-hold,.shop-book-buy.as-btn.beat-hold:is(:hover,background-image,"repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art)",,styles/kit.css:1266,all,color,styles/kit.css:1266,beat-hold
-beat-hold,.shop-book-buy.as-btn.beat-hold:is(:hover,background-size,"calc(var(--hold, 0) * 100%) 100%, 100% 100%",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
-beat-hold,.shop-book-buy.as-btn.beat-hold:is(:hover,background-position,"left center, center",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
-beat-hold,.shop-book-buy.as-btn.beat-hold:is(:hover,background-repeat,no-repeat,,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn,width,100%,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,min-width,0,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,min-height,4.4rem,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,padding,0.8rem 0.5rem,,styles/kit.css:1258,all,spacing,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,color,#f8dfa4,,styles/kit.css:1258,all,color,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,border,0,,styles/kit.css:1258,all,style.other,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,border-radius,0.5rem,,styles/kit.css:1258,all,radius,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,background,var(--book-buy-art) center / 100% 100% no-repeat,,styles/kit.css:1258,all,color,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,font-family,"var(--font-display, Georgia, serif)",,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,font-size,1.7rem,,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,text-transform,none,,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,letter-spacing,0.02em,,styles/kit.css:1258,all,typography,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,text-shadow,0 1px 2px #211407,,styles/kit.css:1258,all,style.shadow,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,box-shadow,none,,styles/kit.css:1258,all,style.shadow,styles/kit.css:1258,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn.beat-hold,background-image,"repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art)",,styles/kit.css:1266,all,color,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn.beat-hold,background-size,"calc(var(--hold, 0) * 100%) 100%, 100% 100%",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn.beat-hold,background-position,"left center, center",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn.beat-hold,background-repeat,no-repeat,,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn.beat-hold:is(:hover,background-image,"repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art)",,styles/kit.css:1266,all,color,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn.beat-hold:is(:hover,background-size,"calc(var(--hold, 0) * 100%) 100%, 100% 100%",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn.beat-hold:is(:hover,background-position,"left center, center",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
+skill-book-offer,.shop-book-buy.as-btn.beat-hold:is(:hover,background-repeat,no-repeat,,styles/kit.css:1266,all,style.other,styles/kit.css:1266,beat-hold
 global,:focus,background-image,"repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art)",,styles/kit.css:1266,all,color,styles/kit.css:1266,global
 global,:focus,background-size,"calc(var(--hold, 0) * 100%) 100%, 100% 100%",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,global
 global,:focus,background-position,"left center, center",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,global
@@ -5259,10 +5259,10 @@ global,:active),background-image,"repeating-linear-gradient(135deg, rgb(255 255 
 global,:active),background-size,"calc(var(--hold, 0) * 100%) 100%, 100% 100%",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,global
 global,:active),background-position,"left center, center",,styles/kit.css:1266,all,style.other,styles/kit.css:1266,global
 global,:active),background-repeat,no-repeat,,styles/kit.css:1266,all,style.other,styles/kit.css:1266,global
-shop-book-buy,.shop-book-buy.as-btn:hover:not(:disabled),filter,brightness(1.18),,styles/kit.css:1273,all,style.other,styles/kit.css:1273,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn:disabled,opacity,0.5,,styles/kit.css:1274,all,style.other,styles/kit.css:1274,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn:disabled,filter,grayscale(0.65),,styles/kit.css:1274,all,style.other,styles/kit.css:1274,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn:disabled,cursor,not-allowed,,styles/kit.css:1274,all,style.other,styles/kit.css:1274,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn:hover:not(:disabled),filter,brightness(1.18),,styles/kit.css:1273,all,style.other,styles/kit.css:1273,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn:disabled,opacity,0.5,,styles/kit.css:1274,all,style.other,styles/kit.css:1274,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn:disabled,filter,grayscale(0.65),,styles/kit.css:1274,all,style.other,styles/kit.css:1274,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn:disabled,cursor,not-allowed,,styles/kit.css:1274,all,style.other,styles/kit.css:1274,shop-book-buy
 skill-book-offer,.shop-book-price,color,var(--gold),,styles/kit.css:1275,all,color,styles/kit.css:1275,shop-book-price
 skill-book-offer,.shop-book-price,font-size,1.1rem,,styles/kit.css:1275,all,typography,styles/kit.css:1275,shop-book-price
 skill-book-offer,.shop-book-price,line-height,1.4,,styles/kit.css:1275,all,typography,styles/kit.css:1275,shop-book-price
@@ -5280,8 +5280,8 @@ shop-book-offer,#shop-skillBooks > .shop-book-offer,grid-template-columns,"max(v
 skill-book-offer,.shop-book-details > .shop-book-name,font-size,"max(1.5rem, calc(1.5rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1295,mobile,typography,styles/kit.css:1295,shop-book-name
 shop-book-details,.shop-book-details > p,font-size,"max(1.2rem, calc(1.2rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1296,mobile,typography,styles/kit.css:1296,shop-book-details
 skill-book-offer,.shop-book-price,font-size,"max(1.1rem, calc(1.1rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1297,mobile,typography,styles/kit.css:1297,shop-book-price
-shop-book-buy,.shop-book-buy.as-btn,min-height,"max(4.4rem, calc(44px / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,mobile,spacing,styles/kit.css:1298,shop-book-buy
-shop-book-buy,.shop-book-buy.as-btn,font-size,"max(1.7rem, calc(1.7rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,mobile,typography,styles/kit.css:1298,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,min-height,"max(4.4rem, calc(44px / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,mobile,spacing,styles/kit.css:1298,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,font-size,"max(1.7rem, calc(1.7rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,mobile,typography,styles/kit.css:1298,shop-book-buy
 card-shelf,.card-shelf .card,--card-w,100%,,styles/kit.css:1309,all,token,styles/kit.css:1309,card-shelf
 card-shelf,.card-shelf .card,width,100%,,styles/kit.css:1309,all,spacing,styles/kit.css:1309,card-shelf
 card-shelf,.card-shelf .card,flex-shrink,1,,styles/kit.css:1309,all,style.other,styles/kit.css:1309,card-shelf
@@ -5430,9 +5430,9 @@ armoury-inventory,".armoury[data-pane=""inventory""] .armoury-inventory",border-
 armoury.paneSplitter,".armoury[data-pane=""inventory""] .armoury-pane-splitter",display,block,,styles/kit.css:1419,all,style.other,styles/kit.css:1419,armoury.paneSplitter
 armoury.paneSplitter,".armoury[data-pane=""inventory""] .armoury-pane-splitter",grid-column,2,,styles/kit.css:1419,all,style.other,styles/kit.css:1419,armoury.paneSplitter
 armoury.paneSplitter,".armoury[data-pane=""inventory""] .armoury-pane-splitter",grid-row,1,,styles/kit.css:1419,all,style.other,styles/kit.css:1419,armoury.paneSplitter
-as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",align-self,stretch,,styles/kit.css:1420,all,style.other,styles/kit.css:1420,as-tray
-as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",height,auto,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
-as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",max-height,none,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
+inventory-belt,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",align-self,stretch,,styles/kit.css:1420,all,style.other,styles/kit.css:1420,as-tray
+inventory-belt,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",height,auto,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
+inventory-belt,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",max-height,none,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
 as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""] > .as-pane",flex,1 1 auto,,styles/kit.css:1421,all,style.other,styles/kit.css:1421,as-tray
 armoury-body,".armoury[data-responsive=""phone""] .armoury-body",gap,0.7rem,,styles/kit.css:1423,all,spacing,styles/kit.css:1423,armoury-body
 armoury-body,".armoury[data-responsive=""phone""] .armoury-body",padding,0.7rem,,styles/kit.css:1423,all,spacing,styles/kit.css:1423,armoury-body
@@ -5533,8 +5533,8 @@ armoury-position-grid-groups,.armoury-position-grid-groups,gap,1.2rem,,styles/ki
 armoury-position-grid-group,.armoury-position-grid-group,display,grid,,styles/kit.css:1471,all,style.other,styles/kit.css:1471,armoury-position-grid-group
 armoury-position-grid-group,.armoury-position-grid-group,gap,0.6rem,,styles/kit.css:1471,all,spacing,styles/kit.css:1471,armoury-position-grid-group
 armoury-position-grid-group,.armoury-position-grid-group,min-width,0,,styles/kit.css:1471,all,spacing,styles/kit.css:1471,armoury-position-grid-group
-as-options,.armoury-position-grid-tiles > .as-options.grid,--opt-min,9rem,,styles/kit.css:1472,all,token,styles/kit.css:1472,as-options
-as-options,.armoury-position-grid-tiles > .as-options.grid,gap,0.6rem,,styles/kit.css:1472,all,spacing,styles/kit.css:1472,as-options
+formation-layout-editor,.armoury-position-grid-tiles > .as-options.grid,--opt-min,9rem,,styles/kit.css:1472,all,token,styles/kit.css:1472,as-options
+formation-layout-editor,.armoury-position-grid-tiles > .as-options.grid,gap,0.6rem,,styles/kit.css:1472,all,spacing,styles/kit.css:1472,as-options
 armoury.positionGridCard,.armoury-position-grid-card,flex-direction,column,,styles/kit.css:1473,all,style.other,styles/kit.css:1473,armoury.positionGridCard
 armoury.positionGridCard,.armoury-position-grid-card,text-align,center,,styles/kit.css:1473,all,typography,styles/kit.css:1473,armoury.positionGridCard
 armoury.positionGridCard,.armoury-position-grid-card,padding,0.9rem 0.6rem,,styles/kit.css:1473,all,spacing,styles/kit.css:1473,armoury.positionGridCard
@@ -5662,7 +5662,7 @@ armoury-equipment-receipts,.armoury-equipment-receipts,gap,0.6rem,,styles/kit.cs
 armoury-equipment-receipts,.armoury-equipment-receipts,min-width,0,,styles/kit.css:1527,all,spacing,styles/kit.css:1527,armoury-equipment-receipts
 rarity-uncommon,.as-option.rarity-uncommon,border-left,3px solid var(--frost),,styles/kit.css:1530,all,style.other,styles/kit.css:1530,rarity-uncommon
 rarity-rare,.as-option.rarity-rare,border-left,3px solid var(--gold),,styles/kit.css:1531,all,style.other,styles/kit.css:1531,rarity-rare
-as-option,.equip-chip.as-option,min-height,var(--tap-floor),,styles/kit.css:1532,all,spacing,styles/kit.css:1532,as-option
+equipment-choice-card,.equip-chip.as-option,min-height,var(--tap-floor),,styles/kit.css:1532,all,spacing,styles/kit.css:1532,as-option
 ec-tags,.equip-chip .ec-tags,display,flex,,styles/kit.css:1533,all,style.other,styles/kit.css:1533,ec-tags
 ec-tags,.equip-chip .ec-tags,flex-wrap,wrap,,styles/kit.css:1533,all,style.other,styles/kit.css:1533,ec-tags
 ec-tags,.equip-chip .ec-tags,gap,0.3rem,,styles/kit.css:1533,all,spacing,styles/kit.css:1533,ec-tags
@@ -6054,8 +6054,8 @@ as-pagedoor,.as-pagedoor.full > .modal-body,padding,var(--modal-inset),,styles/k
 as-pagedoor,.as-pagedoor.full > .modal-body,scrollbar-width,thin,,styles/kit.css:1718,all,style.other,styles/kit.css:1718,as-pagedoor
 as-pagedoor,.as-pagedoor.full > .modal-body,scrollbar-color,var(--line) transparent,,styles/kit.css:1718,all,style.other,styles/kit.css:1718,as-pagedoor
 modal-foot,.as-pagedoor.full > .modal-foot,background,var(--panel),,styles/kit.css:1723,all,color,styles/kit.css:1723,modal-foot
-flush,.as-pane.flush,padding,0,,styles/kit.css:1725,all,spacing,styles/kit.css:1725,flush
-flush,.as-pane.flush,overflow,visible,,styles/kit.css:1725,all,style.other,styles/kit.css:1725,flush
+stat-allocation-row,.as-pane.flush,padding,0,,styles/kit.css:1725,all,spacing,styles/kit.css:1725,flush
+stat-allocation-row,.as-pane.flush,overflow,visible,,styles/kit.css:1725,all,style.other,styles/kit.css:1725,flush
 as-pane,.as-pane > *,flex-shrink,0,,styles/kit.css:1727,all,style.other,styles/kit.css:1727,as-pane
 as-hairline,.as-pane.flush > .as-hairline,margin,1rem 0,,styles/kit.css:1728,all,spacing,styles/kit.css:1728,as-hairline
 as-split,.as-split,--split-share,30%,,styles/kit.css:1734,all,token,styles/kit.css:1734,as-split
@@ -6127,11 +6127,11 @@ as-option,".as-options[data-view=""grid""] > .as-option",padding-right,1.5rem,,s
 as-option,".as-options[data-view=""grid""] > .as-option::after",content,none,,styles/kit.css:1774,all,style.other,styles/kit.css:1774,as-option
 as-option,".as-options[data-view=""grid""] > .as-option .on",justify-content,center,,styles/kit.css:1775,all,style.other,styles/kit.css:1775,as-option
 as-pill,.as-options > .as-option .on > .as-pill,margin-left,0.3rem,,styles/kit.css:1776,all,spacing,styles/kit.css:1776,as-pill
-as-artwell,.as-artwell.figure,width,16rem,,styles/kit.css:1782,all,spacing,styles/kit.css:1782,as-artwell
-as-artwell,.as-artwell.figure,height,20rem,,styles/kit.css:1782,all,spacing,styles/kit.css:1782,as-artwell
-as-artwell,.as-artwell.figure,font-size,6.4rem,,styles/kit.css:1782,all,typography,styles/kit.css:1782,as-artwell
-as-artwell,.as-artwell.figure,border-width,2px,,styles/kit.css:1782,all,style.other,styles/kit.css:1782,as-artwell
-as-artwell,.as-artwell.figure,transition,"border-color 200ms, box-shadow 300ms",,styles/kit.css:1782,all,motion,styles/kit.css:1782,as-artwell
+class-preview-pane,.as-artwell.figure,width,16rem,,styles/kit.css:1782,all,spacing,styles/kit.css:1782,as-artwell
+class-preview-pane,.as-artwell.figure,height,20rem,,styles/kit.css:1782,all,spacing,styles/kit.css:1782,as-artwell
+class-preview-pane,.as-artwell.figure,font-size,6.4rem,,styles/kit.css:1782,all,typography,styles/kit.css:1782,as-artwell
+class-preview-pane,.as-artwell.figure,border-width,2px,,styles/kit.css:1782,all,style.other,styles/kit.css:1782,as-artwell
+class-preview-pane,.as-artwell.figure,transition,"border-color 200ms, box-shadow 300ms",,styles/kit.css:1782,all,motion,styles/kit.css:1782,as-artwell
 class-sprite,.as-artwell.figure .class-sprite > .facing,transform,none,,styles/kit.css:1785,all,motion,styles/kit.css:1785,class-sprite
 stepper,.as-seg.stepper button,min-width,var(--tap-floor),,styles/kit.css:1788,all,spacing,styles/kit.css:1788,stepper
 stepper,.as-seg.stepper button,min-height,calc(var(--tap-floor) - 2px),,styles/kit.css:1788,all,spacing,styles/kit.css:1788,stepper
@@ -6160,9 +6160,9 @@ character-disclosure,.as-row-fold > .disc-faces > .disc-face,flex,1 1 100%,,styl
 character-disclosure,.as-row-fold > .disc-fold-row > .disc-face,width,100%,,styles/kit.css:1805,all,spacing,styles/kit.css:1805,disc-face
 character-disclosure,.as-row.setting > .as-row-fold .disc-reveal,order,2,,styles/kit.css:1807,all,style.other,styles/kit.css:1807,disc-reveal
 primary-stat-card,.as-row.setting:has(> .as-row-fold),align-items,flex-start,,styles/kit.css:1808,all,style.other,styles/kit.css:1808,as-row
-se-row,.as-row.setting.se-row,display,block,,styles/kit.css:1812,all,style.other,styles/kit.css:1812,se-row
-se-row,.as-row.setting.se-row,padding,0,,styles/kit.css:1812,all,spacing,styles/kit.css:1812,se-row
-se-row,.as-row.setting.se-row,border,0,,styles/kit.css:1812,all,style.other,styles/kit.css:1812,se-row
+stat-allocation-row,.as-row.setting.se-row,display,block,,styles/kit.css:1812,all,style.other,styles/kit.css:1812,se-row
+stat-allocation-row,.as-row.setting.se-row,padding,0,,styles/kit.css:1812,all,spacing,styles/kit.css:1812,se-row
+stat-allocation-row,.as-row.setting.se-row,border,0,,styles/kit.css:1812,all,style.other,styles/kit.css:1812,se-row
 primary-stat-card,.as-row.setting.se-row > .as-row-fold,display,block,,styles/kit.css:1813,all,style.other,styles/kit.css:1813,as-row-fold
 primary-stat-card,.as-row.setting.se-row > .as-row-fold,width,100%,,styles/kit.css:1813,all,spacing,styles/kit.css:1813,as-row-fold
 character-disclosure,.as-row.setting.se-row > .as-row-fold > .disc-fold-row,display,block,,styles/kit.css:1813,all,style.other,styles/kit.css:1813,disc-fold-row
@@ -6255,9 +6255,9 @@ as-pane-head,.as-pane-head > .r-trail,align-items,center,,styles/kit.css:1853,al
 as-pane-head,.as-pane-head > .r-trail,gap,1rem,,styles/kit.css:1853,all,spacing,styles/kit.css:1853,as-pane-head
 as-pane-head,.as-pane-head > .r-trail,flex-wrap,wrap,,styles/kit.css:1853,all,style.other,styles/kit.css:1853,as-pane-head
 as-pane-head,.as-pane-head > .r-trail,justify-content,flex-end,,styles/kit.css:1853,all,style.other,styles/kit.css:1853,as-pane-head
-as-options,.as-options.grid,display,grid,,styles/kit.css:1858,all,style.other,styles/kit.css:1858,as-options
-as-options,.as-options.grid,grid-template-columns,"repeat(auto-fill, minmax(min(100%, var(--opt-min, 22rem)), 1fr))",,styles/kit.css:1858,all,style.other,styles/kit.css:1858,as-options
-as-options,.as-options.grid,gap,1.05rem,,styles/kit.css:1858,all,spacing,styles/kit.css:1858,as-options
+formation-layout-editor,.as-options.grid,display,grid,,styles/kit.css:1858,all,style.other,styles/kit.css:1858,as-options
+formation-layout-editor,.as-options.grid,grid-template-columns,"repeat(auto-fill, minmax(min(100%, var(--opt-min, 22rem)), 1fr))",,styles/kit.css:1858,all,style.other,styles/kit.css:1858,as-options
+formation-layout-editor,.as-options.grid,gap,1.05rem,,styles/kit.css:1858,all,spacing,styles/kit.css:1858,as-options
 as-option,.as-options.grid > .as-option,width,auto,,styles/kit.css:1859,all,spacing,styles/kit.css:1859,as-option
 as-options,.as-options.flow,flex-direction,row,,styles/kit.css:1860,all,style.other,styles/kit.css:1860,as-options
 as-options,.as-options.flow,flex-wrap,wrap,,styles/kit.css:1860,all,style.other,styles/kit.css:1860,as-options
@@ -6354,7 +6354,7 @@ as-pill,.as-statrow .sr-name > .as-pill,margin-left,0.5rem,,styles/kit.css:1906,
 as-pill,.as-statrow .sr-name > .as-pill,vertical-align,middle,,styles/kit.css:1906,all,style.other,styles/kit.css:1906,as-pill
 as-tag,.as-statrow .sr-name > .as-tag,margin-left,0.5rem,,styles/kit.css:1906,all,spacing,styles/kit.css:1906,as-tag
 as-tag,.as-statrow .sr-name > .as-tag,vertical-align,middle,,styles/kit.css:1906,all,style.other,styles/kit.css:1906,as-tag
-as-statrow,.as-statrow.muted,opacity,0.55,,styles/kit.css:1907,all,style.other,styles/kit.css:1907,as-statrow
+kit.statRow,.as-statrow.muted,opacity,0.55,,styles/kit.css:1907,all,style.other,styles/kit.css:1907,as-statrow
 as-detailcard,.as-detailcard > .as-prose,margin-top,0.3rem,,styles/kit.css:1909,all,spacing,styles/kit.css:1909,as-detailcard
 as-kitline,.as-detailcard > .as-kitline,margin-top,0.4rem,,styles/kit.css:1910,all,spacing,styles/kit.css:1910,as-kitline
 as-statstrip,.as-detailcard > .as-statstrip,margin-top,0.4rem,,styles/kit.css:1910,all,spacing,styles/kit.css:1910,as-statstrip
@@ -6970,9 +6970,9 @@ as-labelstack,.flask-increment > .as-row.setting > .as-labelstack,flex,1 1 12rem
 flask-identity,.flask-increment-id .flask-identity,display,inline-flex,,styles/kit.css:2194,all,style.other,styles/kit.css:2194,flask-identity
 flask-identity,.flask-increment-id .flask-identity,align-items,center,,styles/kit.css:2194,all,style.other,styles/kit.css:2194,flask-identity
 flask-identity,.flask-increment-id .flask-identity,gap,0.6rem,,styles/kit.css:2194,all,spacing,styles/kit.css:2194,flask-identity
-flask-increment-total,.flask-increment > .as-status.flask-increment-total,display,block,,styles/kit.css:2195,all,style.other,styles/kit.css:2195,flask-increment-total
-flask-increment-total,.flask-increment > .as-status.flask-increment-total,margin-top,0.6rem,,styles/kit.css:2195,all,spacing,styles/kit.css:2195,flask-increment-total
-flask-increment-total,.flask-increment > .as-status.flask-increment-total,text-align,center,,styles/kit.css:2195,all,typography,styles/kit.css:2195,flask-increment-total
+shrine-option-card,.flask-increment > .as-status.flask-increment-total,display,block,,styles/kit.css:2195,all,style.other,styles/kit.css:2195,flask-increment-total
+shrine-option-card,.flask-increment > .as-status.flask-increment-total,margin-top,0.6rem,,styles/kit.css:2195,all,spacing,styles/kit.css:2195,flask-increment-total
+shrine-option-card,.flask-increment > .as-status.flask-increment-total,text-align,center,,styles/kit.css:2195,all,typography,styles/kit.css:2195,flask-increment-total
 shrine-option-card,.level-xp-preview,margin,0,,styles/kit.css:2196,all,spacing,styles/kit.css:2196,level-xp-preview
 shrine-option-card,.level-xp-preview > .level-points-waiting,color,var(--ember),,styles/kit.css:2197,all,color,styles/kit.css:2197,level-points-waiting
 shrine-option-card,.level-xp-preview > .level-points-waiting,font-weight,600,,styles/kit.css:2197,all,typography,styles/kit.css:2197,level-points-waiting
@@ -7278,12 +7278,12 @@ with-status,.as-railitem.with-status > :not(.as-status),overflow,hidden,,styles/
 with-status,.as-railitem.with-status > :not(.as-status),text-overflow,ellipsis,,styles/kit.css:2411,all,typography,styles/kit.css:2411,with-status
 with-status,.as-railitem.with-status > :not(.as-status),white-space,nowrap,,styles/kit.css:2411,all,typography,styles/kit.css:2411,with-status
 as-pane,.screen > .as-railed > .as-pane,overflow,hidden,,styles/kit.css:2413,all,style.other,styles/kit.css:2413,as-pane
-as-options,.as-pane > .as-options.grid,flex,1 1 auto,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
-as-options,.as-pane > .as-options.grid,min-height,0,,styles/kit.css:2414,all,spacing,styles/kit.css:2414,as-options
-as-options,.as-pane > .as-options.grid,overflow,auto,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
-as-options,.as-pane > .as-options.grid,padding,2px,,styles/kit.css:2414,all,spacing,styles/kit.css:2414,as-options
-as-options,.as-pane > .as-options.grid,scrollbar-width,thin,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
-as-options,.as-pane > .as-options.grid,scrollbar-color,var(--line-soft) transparent,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
+formation-layout-editor,.as-pane > .as-options.grid,flex,1 1 auto,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
+formation-layout-editor,.as-pane > .as-options.grid,min-height,0,,styles/kit.css:2414,all,spacing,styles/kit.css:2414,as-options
+formation-layout-editor,.as-pane > .as-options.grid,overflow,auto,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
+formation-layout-editor,.as-pane > .as-options.grid,padding,2px,,styles/kit.css:2414,all,spacing,styles/kit.css:2414,as-options
+formation-layout-editor,.as-pane > .as-options.grid,scrollbar-width,thin,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
+formation-layout-editor,.as-pane > .as-options.grid,scrollbar-color,var(--line-soft) transparent,,styles/kit.css:2414,all,style.other,styles/kit.css:2414,as-options
 as-pane,.screen > .as-pane,--modal-inset,1.4rem,,styles/kit.css:2415,all,token,styles/kit.css:2415,as-pane
 as-pane,.screen > .as-pane,width,"min(100%, 76rem)",,styles/kit.css:2415,all,spacing,styles/kit.css:2415,as-pane
 as-pane,.screen > .as-pane,flex,0 1 auto,,styles/kit.css:2415,all,style.other,styles/kit.css:2415,as-pane
@@ -7321,7 +7321,7 @@ as-option,.as-option.is-ghost .on,color,var(--muted),,styles/kit.css:2432,all,co
 as-option,.as-option.is-ghost .on,font-style,italic,,styles/kit.css:2432,all,typography,styles/kit.css:2432,as-option
 as-option,".as-option[data-rarity=""rare""]:not(.is-selected)",border-left,3px solid var(--gold),,styles/kit.css:2433,all,style.other,styles/kit.css:2433,as-option
 as-option,".as-option[data-rarity=""uncommon""]:not(.is-selected)",border-left,3px solid var(--frost),,styles/kit.css:2434,all,style.other,styles/kit.css:2434,as-option
-as-options,.as-options.grid,align-content,start,,styles/kit.css:2436,all,style.other,styles/kit.css:2436,as-options
+formation-layout-editor,.as-options.grid,align-content,start,,styles/kit.css:2436,all,style.other,styles/kit.css:2436,as-options
 as-option,.as-options.grid > .as-option,width,auto,,styles/kit.css:2437,all,spacing,styles/kit.css:2437,as-option
 global,:root,--danger,#d4622e,,styles/kit.css:2440,all,token,styles/kit.css:2440,global
 global,:root,--focus-ring,2px solid var(--gold),,styles/kit.css:2447,all,token,styles/kit.css:2447,global
@@ -7424,7 +7424,7 @@ resource-meter,.as-meters,flex-direction,column,,styles/kit.css:2519,all,style.o
 resource-meter,.as-meters,gap,0.3rem,,styles/kit.css:2519,all,spacing,styles/kit.css:2519,as-meters
 resource-meter,.as-meters,width,100%,,styles/kit.css:2519,all,spacing,styles/kit.css:2519,as-meters
 resource-meter,.as-meters,min-width,0,,styles/kit.css:2519,all,spacing,styles/kit.css:2519,as-meters
-as-meters,.as-meters.tight,gap,2px,,styles/kit.css:2520,all,spacing,styles/kit.css:2520,as-meters
+resource-meter,.as-meters.tight,gap,2px,,styles/kit.css:2520,all,spacing,styles/kit.css:2520,as-meters
 resource-meter,".resbars[data-surface=""main""]",gap,"calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1))",,styles/kit.css:2524,all,spacing,styles/kit.css:2524,resbars
 as-slot,.as-slot,position,relative,,styles/kit.css:2530,all,style.other,styles/kit.css:2530,as-slot
 as-slot,.as-slot,display,inline-grid,,styles/kit.css:2530,all,style.other,styles/kit.css:2530,as-slot
@@ -7653,7 +7653,7 @@ cv,.as-statstrip.trail > .as-chip > .cv > *,display,none,(max-width: 640px),styl
 hud-identity,.hud-identity > .as-eyebrow,white-space,nowrap,(max-width: 640px),styles/kit.css:2712,other,typography,styles/kit.css:2712,hud-identity
 hud-identity,.hud-identity > .as-eyebrow,overflow,hidden,(max-width: 640px),styles/kit.css:2712,other,style.other,styles/kit.css:2712,hud-identity
 hud-identity,.hud-identity > .as-eyebrow,text-overflow,ellipsis,(max-width: 640px),styles/kit.css:2712,other,typography,styles/kit.css:2712,hud-identity
-as-statstrip,.as-statstrip.trail,gap,0.75rem 0.5rem,(max-width: 640px),styles/kit.css:2721,other,spacing,styles/kit.css:2721,as-statstrip
+build-metadata-trail,.as-statstrip.trail,gap,0.75rem 0.5rem,(max-width: 640px),styles/kit.css:2721,other,spacing,styles/kit.css:2721,as-statstrip
 as-cluster,.as-cluster,display,flex,,styles/kit.css:2724,all,style.other,styles/kit.css:2724,as-cluster
 as-cluster,.as-cluster,align-items,center,,styles/kit.css:2724,all,style.other,styles/kit.css:2724,as-cluster
 as-cluster,.as-cluster,gap,0.6rem,,styles/kit.css:2724,all,spacing,styles/kit.css:2724,as-cluster
@@ -7868,18 +7868,18 @@ as-keycap,.as-keycap.float,font-size,1.05rem,,styles/kit.css:2853,all,typography
 as-keycap,.as-keycap.float,box-shadow,"0 2px 6px rgba(0, 0, 0, 0.55)",,styles/kit.css:2853,all,style.shadow,styles/kit.css:2853,as-keycap
 as-keycap,.as-keycap.float,pointer-events,none,,styles/kit.css:2853,all,style.other,styles/kit.css:2853,as-keycap
 as-keycap,body.pad-mode .as-keycap.float,display,none,,styles/kit.css:2854,all,style.other,styles/kit.css:2854,as-keycap
-as-pill,.as-pill.foot,position,absolute,,styles/kit.css:2856,all,style.other,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,left,0.3rem,,styles/kit.css:2856,all,spacing,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,right,0.3rem,,styles/kit.css:2856,all,spacing,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,bottom,0.3rem,,styles/kit.css:2856,all,spacing,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,z-index,3,,styles/kit.css:2856,all,z-index,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,text-align,center,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,white-space,normal,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,background,var(--bg),,styles/kit.css:2856,all,color,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,text-transform,none,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,letter-spacing,0,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,font-size,0.85rem,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
-as-pill,.as-pill.foot,line-height,1.2,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,position,absolute,,styles/kit.css:2856,all,style.other,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,left,0.3rem,,styles/kit.css:2856,all,spacing,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,right,0.3rem,,styles/kit.css:2856,all,spacing,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,bottom,0.3rem,,styles/kit.css:2856,all,spacing,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,z-index,3,,styles/kit.css:2856,all,z-index,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,text-align,center,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,white-space,normal,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,background,var(--bg),,styles/kit.css:2856,all,color,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,text-transform,none,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,letter-spacing,0,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,font-size,0.85rem,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
+kit.band,.as-pill.foot,line-height,1.2,,styles/kit.css:2856,all,typography,styles/kit.css:2856,as-pill
 as-keycap,.as-btn > .as-keycap:first-child,margin-right,0.5rem,,styles/kit.css:2858,all,spacing,styles/kit.css:2858,as-keycap
 as-btnrow,.as-btnrow > .wide,grid-column,span 2,,styles/kit.css:2860,all,style.other,styles/kit.css:2860,as-btnrow
 modal-btnrow,.modal-btnrow > .wide,grid-column,span 2,,styles/kit.css:2860,all,style.other,styles/kit.css:2860,modal-btnrow
@@ -9643,7 +9643,7 @@ equipment-choice-card,".cc-card-selectors[data-view=""list""] .poker-equipment-c
 equipment-choice-card,".cc-card-selectors[data-view=""list""] .poker-equipment-choice",padding,8px,,styles/kit.css:3997,all,spacing,styles/kit.css:3997,poker-equipment-choice
 equipment-choice-card,".cc-card-selectors[data-view=""list""] .poker-equipment-choice",border,"1px solid var(--line-soft, #5e4c32)",,styles/kit.css:3997,all,style.other,styles/kit.css:3997,poker-equipment-choice
 equipment-choice-card,".cc-card-selectors[data-view=""list""] .poker-equipment-choice",border-radius,10px,,styles/kit.css:3997,all,radius,styles/kit.css:3997,poker-equipment-choice
-poker-equipment-choice,".cc-card-selectors[data-view=""list""] .poker-equipment-choice.on",border-color,"var(--gold, #c9a227)",,styles/kit.css:4002,all,color,styles/kit.css:4002,poker-equipment-choice
+equipment-choice-card,".cc-card-selectors[data-view=""list""] .poker-equipment-choice.on",border-color,"var(--gold, #c9a227)",,styles/kit.css:4002,all,color,styles/kit.css:4002,poker-equipment-choice
 equipment-poker-card,".cc-card-selectors[data-view=""list""] .equipment-poker-card",width,100%,,styles/kit.css:4019,all,spacing,styles/kit.css:4019,equipment-poker-card
 equipment-poker-card,".cc-card-selectors[data-view=""list""] .equipment-poker-card",transform-origin,center left,,styles/kit.css:4019,all,motion,styles/kit.css:4019,equipment-poker-card
 equipment-poker-card,".cc-card-selectors[data-view=""list""] .equipment-poker-card",max-width,"var(--card-w-glance-compact, 108px)",,styles/kit.css:4019,all,spacing,styles/kit.css:4019,equipment-poker-card
@@ -11004,8 +11004,8 @@ hand-hit-lane,.inspection-selected) > .hand-hit-lane,transform,translateY(calc(v
 w1-workspace,:root .modal.w1-workspace[data-size],width,"min(calc(100vw / var(--ui-zoom, 1) * var(--w1-frame-w)), 100%)",,styles/kit.css:5243,all,spacing,styles/kit.css:5243,w1-workspace
 w1-workspace,:root .modal.w1-workspace[data-size],height,"min(calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-frame-h)), 100%)",,styles/kit.css:5243,all,spacing,styles/kit.css:5243,w1-workspace
 w1-workspace,:root .modal.w1-workspace[data-size],max-width,100%,,styles/kit.css:5243,all,spacing,styles/kit.css:5243,w1-workspace
-compendium,.screen.compendium,padding,0,,styles/kit.css:5248,all,spacing,styles/kit.css:5248,compendium
-compendium,.screen.compendium,overflow,hidden,,styles/kit.css:5248,all,style.other,styles/kit.css:5248,compendium
+bestiary-workspace,.screen.compendium,padding,0,,styles/kit.css:5248,all,spacing,styles/kit.css:5248,compendium
+bestiary-workspace,.screen.compendium,overflow,hidden,,styles/kit.css:5248,all,style.other,styles/kit.css:5248,compendium
 w1-workspace,.w1-workspace > .modal-body,display,flex,,styles/kit.css:5249,all,style.other,styles/kit.css:5249,w1-workspace
 w1-workspace,.w1-workspace > .modal-body,min-height,0,,styles/kit.css:5249,all,spacing,styles/kit.css:5249,w1-workspace
 w1-workspace,.w1-workspace > .modal-body,padding,0,,styles/kit.css:5249,all,spacing,styles/kit.css:5249,w1-workspace
@@ -11987,10 +11987,10 @@ book-learning,.book-lesson-list,align-content,start,,styles/kit.css:5802,all,sty
 book-learning,.book-lesson-list,gap,.6rem,,styles/kit.css:5802,all,spacing,styles/kit.css:5802,book-lesson-list
 book-learning,.book-lesson-list,max-height,42dvh,,styles/kit.css:5802,all,spacing,styles/kit.css:5802,book-lesson-list
 book-learning,.book-lesson-list,overflow,auto,,styles/kit.css:5802,all,style.other,styles/kit.css:5802,book-lesson-list
-book-lesson-option,.book-lesson-option.as-btn,min-height,44px,,styles/kit.css:5803,all,spacing,styles/kit.css:5803,book-lesson-option
-book-lesson-option,.book-lesson-option.as-btn,width,100%,,styles/kit.css:5803,all,spacing,styles/kit.css:5803,book-lesson-option
-book-lesson-option,.book-lesson-option.as-btn,text-align,left,,styles/kit.css:5803,all,typography,styles/kit.css:5803,book-lesson-option
-book-lesson-option,.book-lesson-option.as-btn,white-space,normal,,styles/kit.css:5803,all,typography,styles/kit.css:5803,book-lesson-option
+book-learning,.book-lesson-option.as-btn,min-height,44px,,styles/kit.css:5803,all,spacing,styles/kit.css:5803,book-lesson-option
+book-learning,.book-lesson-option.as-btn,width,100%,,styles/kit.css:5803,all,spacing,styles/kit.css:5803,book-lesson-option
+book-learning,.book-lesson-option.as-btn,text-align,left,,styles/kit.css:5803,all,typography,styles/kit.css:5803,book-lesson-option
+book-learning,.book-lesson-option.as-btn,white-space,normal,,styles/kit.css:5803,all,typography,styles/kit.css:5803,book-lesson-option
 book-learning,.book-lesson-option[aria-pressed='true'],outline,2px solid var(--gold),,styles/kit.css:5804,all,style.other,styles/kit.css:5804,book-lesson-option
 book-learning,.book-lesson-option[aria-pressed='true'],outline-offset,-2px,,styles/kit.css:5804,all,style.other,styles/kit.css:5804,book-lesson-option
 book-learning,.book-lesson-detail,display,grid,,styles/kit.css:5805,all,style.other,styles/kit.css:5805,book-lesson-detail
@@ -16550,9 +16550,9 @@ class-pick,:root[data-layout='narrow'] .class-pick,display,flex,,styles/ui.css:7
 class-pick,:root[data-layout='narrow'] .class-pick,align-items,center,,styles/ui.css:794,all,style.other,styles/ui.css:794,class-pick
 class-pick,:root[data-layout='narrow'] .class-pick,gap,1.6rem,,styles/ui.css:794,all,spacing,styles/ui.css:794,class-pick
 class-pick,:root[data-layout='narrow'] .class-pick,text-align,left,,styles/ui.css:794,all,typography,styles/ui.css:794,class-pick
-shrine-fold,:root[data-layout='narrow'] .class-pick.shrine-fold,display,block,,styles/ui.css:798,all,style.other,styles/ui.css:798,shrine-fold
-shrine-fold,:root[data-layout='narrow'] .class-pick.shrine-fold,padding,0,,styles/ui.css:798,all,spacing,styles/ui.css:798,shrine-fold
-shrine-fold,:root[data-layout='narrow'] .class-pick.shrine-fold,text-align,left,,styles/ui.css:798,all,typography,styles/ui.css:798,shrine-fold
+shrine-option-card,:root[data-layout='narrow'] .class-pick.shrine-fold,display,block,,styles/ui.css:798,all,style.other,styles/ui.css:798,shrine-fold
+shrine-option-card,:root[data-layout='narrow'] .class-pick.shrine-fold,padding,0,,styles/ui.css:798,all,spacing,styles/ui.css:798,shrine-fold
+shrine-option-card,:root[data-layout='narrow'] .class-pick.shrine-fold,text-align,left,,styles/ui.css:798,all,typography,styles/ui.css:798,shrine-fold
 glyph,:root[data-layout='narrow'] .class-pick .glyph,margin-bottom,0,,styles/ui.css:801,all,spacing,styles/ui.css:801,glyph
 glyph,:root[data-layout='narrow'] .class-pick .glyph,flex-shrink,0,,styles/ui.css:801,all,style.other,styles/ui.css:801,glyph
 cp-body,:root[data-layout='narrow'] .cp-body,flex,1,,styles/ui.css:805,all,style.other,styles/ui.css:805,cp-body
@@ -17737,10 +17737,10 @@ deck-editor-art,.deck-editor-tile .deck-editor-art,grid-column,1,,styles/ui.css:
 deck-editor-art,.deck-editor-tile .deck-editor-art,grid-row,1 / 4,,styles/ui.css:1445,all,style.other,styles/ui.css:1445,deck-editor-art
 deck-editor-art,.deck-editor-tile .deck-editor-art,min-height,8rem,,styles/ui.css:1445,all,spacing,styles/ui.css:1445,deck-editor-art
 deck-editor-art,.deck-editor-tile .deck-editor-art,max-height,10rem,,styles/ui.css:1445,all,spacing,styles/ui.css:1445,deck-editor-art
-formation-layout-editor,.deck-editor-art.outline,object-fit,contain,,styles/ui.css:1446,all,style.other,styles/ui.css:1446,deck-editor-art
-formation-layout-editor,.deck-editor-art.outline,padding,.8rem,,styles/ui.css:1446,all,spacing,styles/ui.css:1446,deck-editor-art
-formation-layout-editor,.deck-editor-art.outline,box-sizing,border-box,,styles/ui.css:1446,all,style.other,styles/ui.css:1446,deck-editor-art
-formation-layout-editor,.deck-editor-art.outline,background,#211b13,,styles/ui.css:1446,all,color,styles/ui.css:1446,deck-editor-art
+deck-editor-art,.deck-editor-art.outline,object-fit,contain,,styles/ui.css:1446,all,style.other,styles/ui.css:1446,deck-editor-art
+deck-editor-art,.deck-editor-art.outline,padding,.8rem,,styles/ui.css:1446,all,spacing,styles/ui.css:1446,deck-editor-art
+deck-editor-art,.deck-editor-art.outline,box-sizing,border-box,,styles/ui.css:1446,all,style.other,styles/ui.css:1446,deck-editor-art
+deck-editor-art,.deck-editor-art.outline,background,#211b13,,styles/ui.css:1446,all,color,styles/ui.css:1446,deck-editor-art
 deck-editor-name,.deck-editor-tile .deck-editor-name,grid-column,2,,styles/ui.css:1447,all,style.other,styles/ui.css:1447,deck-editor-name
 deck-editor-name,.deck-editor-tile .deck-editor-name,grid-row,1,,styles/ui.css:1447,all,style.other,styles/ui.css:1447,deck-editor-name
 deck-editor-name,.deck-editor-tile .deck-editor-name,font-weight,700,,styles/ui.css:1447,all,typography,styles/ui.css:1447,deck-editor-name
@@ -18096,7 +18096,7 @@ deck-editor-art,.deck-editor .deck-editor-main > .deck-editor-art,align-self,cen
 deck-editor-art,.deck-editor .deck-editor-main > .deck-editor-art,object-fit,contain,,styles/ui.css:1608,all,style.other,styles/ui.css:1608,deck-editor-art
 deck-editor-art,.deck-editor .deck-editor-main > .deck-editor-art,padding,0,,styles/ui.css:1608,all,spacing,styles/ui.css:1608,deck-editor-art
 deck-editor-art,.deck-editor .deck-editor-main > .deck-editor-art,background,#17130e,,styles/ui.css:1608,all,color,styles/ui.css:1608,deck-editor-art
-formation-layout-editor,.deck-editor .deck-editor-main > .deck-editor-art.outline,padding,.4rem,,styles/ui.css:1612,all,spacing,styles/ui.css:1612,deck-editor-art
+deck-editor-art,.deck-editor .deck-editor-main > .deck-editor-art.outline,padding,.4rem,,styles/ui.css:1612,all,spacing,styles/ui.css:1612,deck-editor-art
 deck-editor-heading,.deck-editor .deck-editor-heading,grid-column,3,,styles/ui.css:1613,all,style.other,styles/ui.css:1613,deck-editor-heading
 deck-editor-heading,.deck-editor .deck-editor-heading,grid-row,1,,styles/ui.css:1613,all,style.other,styles/ui.css:1613,deck-editor-heading
 deck-editor-heading,.deck-editor .deck-editor-heading,min-width,0,,styles/ui.css:1613,all,spacing,styles/ui.css:1613,deck-editor-heading

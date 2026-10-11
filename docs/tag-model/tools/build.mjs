@@ -459,6 +459,14 @@ function lastCompoundClasses(selector) {
   }
   return out;
 }
+// State and variant classes that many components add (spent, outline, active,
+// is-*) say nothing about which component owns a rule, so they never pick an
+// owner: .deck-editor-tile.spent .deck-editor-name belongs to the deck editor.
+const GENERIC_STATE = new Set(['spent', 'outline', 'active', 'selected', 'disabled', 'hidden', 'on', 'off', 'open', 'closed',
+  'focus', 'focused', 'hover', 'pressed', 'current', 'locked', 'dim', 'show', 'visible', 'collapsed', 'expanded', 'invalid',
+  'error', 'highlighted', 'primary', 'danger', 'reduced-motion']);
+const GENERIC_OWNERS = 3; // a class that more than this many components add is generic
+const isGenericClass = c => GENERIC_STATE.has(c) || /^(is|has)-/.test(c) || (catalogOfClass.get(c)?.size ?? 0) >= GENERIC_OWNERS;
 const styleCssIds = [];
 const styleRepointed = { rows: 0, distinctTargets: 0 };
 {
@@ -469,7 +477,10 @@ const styleRepointed = { rows: 0, distinctTargets: 0 };
   s.rows = s.rows.map((r) => {
     styleCssIds.push(r[cidI]);
     const owners = new Set();
-    for (const c of lastCompoundClasses(String(r[selI]))) for (const id of catalogOfClass.get(c) || []) owners.add(id);
+    for (const c of lastCompoundClasses(String(r[selI]))) {
+      if (isGenericClass(c)) continue;
+      for (const id of catalogOfClass.get(c) || []) owners.add(id);
+    }
     const nr = r.slice();
     if (owners.size === 1) {
       nr[cidI] = [...owners][0];
