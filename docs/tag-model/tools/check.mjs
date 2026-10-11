@@ -334,6 +334,12 @@ if (presOk.components) {
     if (!catalog && classes.length) fail(`presentation/components: row ${i + 2} (${id}) lists cssClasses but is not a catalog component`);
     if (catalog && unresolved !== (classes.length === 0)) fail(`presentation/components: row ${i + 2} (${id}) cssClasses ${classes.length ? 'set' : 'blank'} does not match css:unresolved in notes`);
   });
+  // Regression: title-menu-item is built by the kit's titleMenu (cls('tm-entry')),
+  // called from title.js mountTitle. Per-component scoping must keep tm-entry.
+  const tmItem = comps.rows.find(r => at(comps, r, 'id') === 'title-menu-item');
+  if (tmItem && !splitRefs(at(comps, tmItem, 'cssClasses')).includes('tm-entry')) {
+    fail('presentation/components: title-menu-item cssClasses must include tm-entry');
+  }
 }
 
 // assets: components assetRefs, combat-symbols assignedAssetRef
