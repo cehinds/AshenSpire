@@ -410,3 +410,35 @@ test('a kept hand that fills capacity leaves the discard alone at turn end, even
   assert.equal(c.piles.hand.length, c.handMax);
   assert(!seen.some(e => e.type === 'deckShuffled' && e.payload?.reshuffledDiscard), 'no discard reshuffle was emitted');
 });
+
+// A full kept hand (Retain fills capacity) gets the turn-end prompt with a free
+// discard of any number; the freed room is refilled by the next draw.
+const fullHandFight = () => fight({ retain: true }, { intelligence: 10 }, { ...REFRESH_RULES, retain: true }, rowsWith({ draw: { base: 4 } }));
+const retainedHand = (n) => Array.from({ length: n }, (_, i) => ({ instanceId: `k${i}`, cardId: 'urgentHeal', upgraded: false }));
+
+test('a kept hand at capacity offers a free discard of any number at turn end', () => {
+  const c = fullHandFight();
+  c.piles.hand = retainedHand(c.handMax);
+  const plan = discardChoicePlan(c);
+  assert.equal(plan.prompt, true);
+  assert.equal(plan.minimum, 0);
+  assert.equal(plan.maximum, c.handMax);
+});
+
+test('a kept hand below capacity with no Retain prompt keeps the old no-prompt behaviour', () => {
+  const c = fullHandFight();
+  c.piles.hand = retainedHand(c.handMax - 1);
+  const plan = discardChoicePlan(c);
+  assert.equal(plan.prompt, false);
+  assert.equal(plan.minimum, 0);
+});
+
+test('a free turn-end discard lets the next draw refill the freed room', () => {
+  const c = fullHandFight();
+  c.piles.hand = retainedHand(c.handMax);
+  c.piles.draw = handOf('x', 20);
+  const plan = discardChoicePlan(c);
+  dispatch(c, { type: 'endTurn', discardIds: plan.cards.slice(0, 3).map(card => card.instanceId) });
+  assert.equal(c.piles.hand.length, c.handMax, 'the next draw refills the three freed slots');
+  assert.equal(c.piles.discard.length, 3);
+});

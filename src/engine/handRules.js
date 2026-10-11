@@ -56,8 +56,11 @@ export function discardChoicePlan(ctx) {
   const capacity = scaledCards(handRow(ctx.handRules, 'handSize'), ctx.attributes, ctx.characterLevel);
   const minimum = ctx.handRules.overflow === 'discard' ? Math.max(0, cards.length - capacity) : 0;
   const optional = ctx.handRules.retain && ctx.handRules.promptDiscard;
-  const maximum = Math.min(cards.length, Math.max(minimum, optional ? ctx.handRules.discardLimit : 0));
-  return { cards, minimum, maximum, prompt: minimum > 0 || (optional && maximum > 0) };
+  // A kept hand that already fills capacity draws nothing next turn, so the
+  // prompt offers a free discard of any number; the next draw refills the room.
+  const full = cards.length > 0 && cards.length >= capacity;
+  const maximum = full ? cards.length : Math.min(cards.length, Math.max(minimum, optional ? ctx.handRules.discardLimit : 0));
+  return { cards, minimum, maximum, prompt: minimum > 0 || full || (optional && maximum > 0) };
 }
 
 export function validateDiscardChoice(ctx, ids = []) {
