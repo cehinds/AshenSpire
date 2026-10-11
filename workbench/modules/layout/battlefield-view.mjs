@@ -118,6 +118,7 @@ export function createBattlefieldView(root, host) {
     if (st.layoutKey) parts.push(`layout ${st.layoutKey}, ${st.geo.length} slots`);
     if (st.data) parts.push(isDirty() ? 'unsaved changes' : 'saved');
     $('.bf-status').textContent = parts.join(' · ');
+    if (host.changed) host.changed();
   }
 
   /** The numeric inspector: the layout's values always, and the selected slot's position and group. */
@@ -318,6 +319,8 @@ export function createBattlefieldView(root, host) {
     },
     /** The hash the page last read or saved, for the conflict dialog. */
     hashOf(path) { return path === B.PRESETS_FILE ? st.hash : undefined; },
+    /** "Keep my version" in the conflict dialog: the draft is saved over the disk copy, so it takes the disk hash. */
+    keep(path, hash) { if (path === B.PRESETS_FILE && st.parts) { st.hash = hash; paintStatus(); } },
     layoutKey: () => st.layoutKey,
     selectLayout(key) { if (st.data && st.data[key]) { st.layoutKey = key; rebuild({ fit: true }); } },
     commands: () => [

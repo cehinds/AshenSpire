@@ -106,6 +106,7 @@ export function createSketchView(root, host) {
       parts.push(isNew() ? 'new, not saved' : isDirty() ? 'unsaved changes' : 'saved');
     }
     $('.sk-status').textContent = parts.join(' · ');
+    if (host.changed) host.changed();
   }
 
   /** The inspector: the sketch's name and notes, and the selected box's label, layer, flags and geometry. */
@@ -393,6 +394,8 @@ export function createSketchView(root, host) {
       rebuild();
     },
     hashOf(path) { return path === pathOf(st.name) ? st.hash : undefined; },
+    /** "Keep my version" in the conflict dialog: the draft is saved over the disk copy, so it takes the disk hash. */
+    keep(path, hash) { if (path === pathOf(st.name) && st.sketch) { st.hash = hash; paintStatus(); } },
     commands: () => [
       { title: 'Sketch: add a box', sub: 'Layout Studio', run: () => addBox() },
       { title: 'Sketch: export as PNG', sub: 'Layout Studio', run: () => exportPng() },

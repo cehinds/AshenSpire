@@ -1,29 +1,26 @@
-// workbench/modules/layout/index.mjs — Layout Studio. The first mode is "UI
-// config": the wireframes of content/config/ui drawn as regions on the shared
-// canvas kit, at a chosen device and orientation. The other modes (Sketch,
-// Battlefield, Deck row, SP orb, Book recipes, Card layers) are listed and
-// disabled until their work lands. Rules and the mapping from a canvas edit to
-// config values are in config-model.mjs; this file is the view and the gestures.
+// workbench/modules/layout/index.mjs — Layout Studio, the shell. Three modes are
+// built: "UI config" (the wireframes of content/config/ui drawn as regions on the
+// canvas kit, config-model.mjs), "Battlefield" (the combat formation slots,
+// battlefield-view.mjs) and "Sketch" (free wireframe boxes, sketch-view.mjs). The
+// other modes sit in More until their work lands. This file owns the mode tabs,
+// the one review-and-save for every mode, and the #mod=layout&mode=… deep link.
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { createCanvas, createLayersPanel, createInspector } from '../../ui/kit/canvas.mjs';
 import * as C from './config-model.mjs';
 import * as M from './studio-model.mjs';
+import * as L from './modes.mjs';
+import * as B from './battlefield-model.mjs';
+import * as S from './sketch-model.mjs';
+import { createBattlefieldView } from './battlefield-view.mjs';
+import { createSketchView } from './sketch-view.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // The kit stylesheet is linked by index.html; only the module's own sheet is injected here.
 const CSS = ['/modules/layout/layout.css'];
 const ZOOM_STEP = 1.25;
 const ALIGN = [['left', 'Align left'], ['center', 'Align centre'], ['right', 'Align right'], ['top', 'Align top'], ['middle', 'Align middle'], ['bottom', 'Align bottom']];
-const MODES = [
-  { id: 'config', label: 'UI config' },
-  { id: 'sketch', label: 'Sketch' },
-  { id: 'battlefield', label: 'Battlefield' },
-  { id: 'deck-row', label: 'Deck row' },
-  { id: 'sp-orb', label: 'SP orb' },
-  { id: 'book-recipes', label: 'Book recipes' },
-  { id: 'card-layers', label: 'Card layers' },
-];
+const VIEWS = { battlefield: createBattlefieldView, sketch: createSketchView };
 
 function ensureCss() {
   for (const href of CSS) {
@@ -37,7 +34,9 @@ function ensureCss() {
 }
 
 const SHELL = `<div class="lay">
-  <div class="lay-modes">${MODES.filter((m) => m.id === 'config').map((m) => `<button type="button" role="tab" data-mode="${m.id}" aria-selected="true">${esc(m.label)}</button>`).join('')}<details class="lay-more"><summary>More <span class="lay-soon">${MODES.length - 1} coming next</span></summary><div class="lay-more-list" role="list" aria-label="Modes coming next">${MODES.filter((m) => m.id !== 'config').map((m) => `<span role="listitem" class="lay-more-item">${esc(m.label)}<span class="lay-soon">coming next</span></span>`).join('')}</div></details></div>
+  <div class="lay-modes">${L.MODES.filter((m) => m.built).map((m) => `<button type="button" role="tab" data-mode="${m.id}" aria-selected="${m.id === 'config'}">${esc(m.label)}</button>`).join('')}<details class="lay-more"><summary>More <span class="lay-soon">${L.comingNext().length} coming next</span></summary><div class="lay-more-list" role="list" aria-label="Modes coming next">${L.comingNext().map((m) => `<span role="listitem" class="lay-more-item">${esc(m.label)}<span class="lay-soon">coming next</span></span>`).join('')}</div></details>
+    <span class="lay-modes-end"><button type="button" class="btn btn-sm btn-primary" data-review disabled>Review changes</button></span></div>
+  <div class="lay-view" data-view="config">
   <div class="lay-bar">
     <button type="button" class="btn btn-sm lay-toggle" data-panel="layers" aria-expanded="false" aria-controls="lay-layers-pane">Layers</button>
     <button type="button" class="btn btn-sm lay-toggle" data-panel="props" aria-expanded="false" aria-controls="lay-props-pane">Inspector</button>
@@ -56,13 +55,15 @@ const SHELL = `<div class="lay">
       <button type="button" class="btn btn-sm btn-ghost" data-distribute="vertical" title="Distribute vertically" disabled>Dist V</button></span>
     <span class="spacer"></span>
     <button type="button" class="btn btn-sm" data-act="preview" title="Show the game's preview at this wireframe">Preview at this device</button>
-    <button type="button" class="btn btn-sm btn-primary" data-act="review" disabled>Review changes</button>
   </div>
   <div class="lay-body">
     <aside class="lay-left" id="lay-layers-pane"><div class="lay-panel-head"><span>Layers</span><button type="button" class="btn btn-sm" data-panel-close>Close</button></div><div class="lay-layers"></div></aside>
     <main class="lay-center"><div class="lay-canvas"><p class="lay-hint">Loading the UI config files…</p></div><div class="lay-status" aria-live="polite"></div></main>
     <aside class="lay-right" id="lay-props-pane"><div class="lay-panel-head"><span>Inspector</span><button type="button" class="btn btn-sm" data-panel-close>Close</button></div><div class="lay-insp"></div><div class="lay-fields"></div></aside>
   </div>
+  </div>
+  <div class="lay-view" data-view="battlefield" hidden></div>
+  <div class="lay-view" data-view="sketch" hidden></div>
 </div>`;
 
 export default {
@@ -88,7 +89,35 @@ export default {
     const device = () => st.settings.devices.find((d) => d.id === st.deviceId) || st.settings.devices[0];
     const viewport = () => C.viewportOf(device(), { orientation: st.orientation, freeSize: st.freeSize });
     const activeFile = () => (st.files ? st.files.get(wireframe().file) || null : null);
-    const dirtyCount = () => (st.files ? C.changesFor(st.files).length : 0);
+    // The review and save cover every mode: UI config's drafts, the presets and the sketch.
+    const views = { battlefield: null, sketch: null };
+    let mode = 'config';
+    const allChanges = () => [
+      ...(st.files ? C.changesFor(st.files) : []),
+      ...(views.battlefield ? views.battlefield.changes() : []),
+      ...(views.sketch ? views.sketch.changes() : []),
+    ];
+    const dirtyCount = () => allChanges().length;
+    /** The mode view that owns a saved path, or null for a UI config file. */
+    const viewFor = (path) => (path === B.PRESETS_FILE ? 'battlefield' : path.startsWith(`${S.SKETCH_DIR}/`) ? 'sketch' : null);
+    const viewHost = {
+      api: ctx.api,
+      history: ctx.history,
+      preview: ctx.preview,
+      toast: ctx.toast,
+      settings: st.settings,
+      devices: () => st.settings.devices,
+      viewportOf: (device, orientation, freeSize) => C.viewportOf(device, { orientation, freeSize }),
+      /** The battlefield is the combat wireframe's scene band at the device; without the config it is a fallback. */
+      sceneSize(vp) {
+        if (st.files) {
+          const { regions } = C.regionsFor({ wireframe: C.wireframeById(st.settings, 'w4a'), files: st.files, viewport: vp, settings: st.settings });
+          const band = regions.find((r) => r.id === 'band.scene');
+          if (band) return { width: band.w, height: band.h };
+        }
+        return { width: vp.width, height: Math.round(vp.height * 0.55) };
+      },
+    };
 
     // ---- drawing -------------------------------------------------------
 
@@ -127,11 +156,11 @@ export default {
       const snap = $('[data-act="snap"]'), grid = $('[data-act="grid"]');
       if (st.canvas) { snap.checked = st.settings.grid.snap; grid.checked = st.settings.grid.show; }
       const n = dirtyCount();
-      const review = $('[data-act="review"]');
+      const review = el.querySelector('[data-review]');
       review.disabled = n === 0;
       review.textContent = `Review changes (${n})`;
       // UI config: the layout places regions, so align and distribute are off (they would move regions).
-      for (const b of el.querySelectorAll('[data-align], [data-distribute]')) b.disabled = true;
+      for (const b of el.querySelectorAll('[data-view="config"] [data-align], [data-view="config"] [data-distribute]')) b.disabled = true;
     }
 
     /** The config values the selected region owns, each editable in place; a $name shows its value as a chip. */
@@ -308,7 +337,7 @@ export default {
     }
 
     async function openReview(notice = '') {
-      const changes = C.changesFor(st.files);
+      const changes = allChanges();
       if (!changes.length) { ctx.toast({ kind: 'info', title: 'Nothing to save', record: false }); return; }
       ensureDialog();
       body().innerHTML = '<p class="lay-note">Building the diff…</p>';
@@ -321,7 +350,7 @@ export default {
         return;
       }
       const files = diffs.map((d) => `<section class="lay-file"><h3>${esc(d.path)} <span class="lay-stat">+${d.added} −${d.removed}</span></h3>${hunksHtml(d)}</section>`).join('');
-      body().innerHTML = `${notice}<p class="lay-note">${changes.length} file(s) under content/config. Saved through the same validation as the other studios: the content compiler checks the whole tree first.</p>${files}`
+      body().innerHTML = `${notice}<p class="lay-note">${changes.length} file(s). Saved through the same validation as the other studios: the content compiler checks the config tree first, the presets and sketches go through their own checks.</p>${files}`
         + `<div class="lay-dlg-actions"><button type="button" class="btn btn-sm btn-ghost" data-dlg="close">Cancel</button><button type="button" class="btn btn-sm btn-primary" data-dlg="save" data-label="Save ${changes.length} file(s)"${saving ? ' disabled' : ''}>${saving ? 'Saving…' : `Save ${changes.length} file(s)`}</button></div>`;
     }
 
@@ -331,7 +360,7 @@ export default {
      * and any other failure (a network error included) is shown in the dialog.
      */
     async function save() {
-      const changes = C.changesFor(st.files);
+      const changes = allChanges();
       if (!changes.length || saving) return;
       const sent = new Map(changes.map((c) => [c.path, c]));
       saving = true;
@@ -357,10 +386,12 @@ export default {
       }
       saving = false;
       for (const saved of data.files) {
-        const f = [...st.files.values()].find((x) => x.path === saved.path);
+        const f = st.files ? [...st.files.values()].find((x) => x.path === saved.path) : null;
         const c = sent.get(saved.path);
         if (f && c) { f.original = c.text; f.hash = saved.hash; }
       }
+      if (views.battlefield) views.battlefield.saved(data.files);
+      if (views.sketch) await views.sketch.saved(data.files);
       dlg.close();
       rebuild();
       ctx.toast({ kind: 'success', title: `Saved ${data.files.length} file(s)`, detail: `Backup ${data.backup}`, record: false });
@@ -379,7 +410,14 @@ export default {
       const act = btn.dataset.dlg;
       if (act === 'close') { dlg.close(); return; }
       if (act === 'save') { await save(); return; }
-      const f = [...st.files.values()].find((x) => x.path === btn.dataset.path);
+      const f = st.files ? [...st.files.values()].find((x) => x.path === btn.dataset.path) : null;
+      const owner = views[viewFor(btn.dataset.path) || ''];
+      if (!f && owner) {
+        // The presets or a sketch: its own view takes the reload, or keeps the draft against the disk hash.
+        if (act === 'keep') { owner.keep(btn.dataset.path, btn.dataset.hash || null); await openReview(); return; }
+        if (act === 'reload') { await owner.reload(btn.dataset.path); await openReview(); }
+        return;
+      }
       if (!f) return;
       if (act === 'keep') { f.hash = btn.dataset.hash || null; await openReview(); return; }
       if (act === 'reload') {
@@ -416,6 +454,50 @@ export default {
     el.addEventListener('keydown', (e) => { if (e.key === 'Escape') setPanel(null); });
     el.querySelector('.lay-bar').addEventListener('change', onBarChange);
     el.querySelector('.lay-bar').addEventListener('click', onBarClick);
+    el.querySelector('.lay-modes').addEventListener('click', (e) => {
+      const review = e.target.closest('[data-review]');
+      if (review) { if (!review.disabled) openReview(); return; }
+      const tab = e.target.closest('[data-mode]');
+      if (tab) selectMode(tab.dataset.mode, { link: true });
+    });
+
+    // ---- modes ---------------------------------------------------------
+    // A mode's view is mounted the first time it shows; the tabs and the deep link (#mod=layout&mode=…) stay in step.
+
+    function selectMode(next, { link = false } = {}) {
+      const want = L.modeFor(next);
+      if (want !== mode) {
+        mode = want;
+        for (const m of L.MODES.filter((x) => x.built)) {
+          const tab = el.querySelector(`.lay-modes [data-mode="${m.id}"]`);
+          if (tab) tab.setAttribute('aria-selected', String(m.id === mode));
+          const pane = el.querySelector(`[data-view="${m.id}"]`);
+          if (pane) pane.hidden = m.id !== mode;
+        }
+      }
+      if (link && ctx.openModule) ctx.openModule('layout', L.paramsFor(mode));
+      showMode();
+    }
+
+    function showMode() {
+      if (mode === 'config') {
+        if (!st.canvas) return;
+        if (st.fitPending) { st.fitPending = false; st.canvas.fit(); }
+        paintBar(); paintStatus();
+        return;
+      }
+      if (!views[mode]) views[mode] = VIEWS[mode](el.querySelector(`[data-view="${mode}"]`), viewHost);
+      views[mode].show();
+    }
+
+    /** The review button counts every mode's changes; a mode view calls host.changed() after each edit. */
+    function paintReview() {
+      const n = dirtyCount();
+      const review = el.querySelector('[data-review]');
+      review.disabled = n === 0;
+      review.textContent = `Review changes (${n})`;
+    }
+    viewHost.changed = () => paintReview();
     // UI config: arrow keys would nudge a region, which the layout places. The capture listener
     // stops them before the canvas kit sees them, and says why when something is selected.
     const ARROW_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
@@ -450,13 +532,16 @@ export default {
 
     return {
       onShow() {
-        if (!st.canvas) return;
-        if (st.fitPending) { st.fitPending = false; st.canvas.fit(); }
-        paintBar(); paintStatus();
+        // The deep link names the mode; without one, the mode the page was on stays.
+        const requested = ctx.params && ctx.params.mode;
+        selectMode(requested ? requested : mode);
+        paintReview();
       },
       commands: () => [
         { title: 'Fit the wireframe to the page', sub: '0', run: () => st.canvas?.fit() },
         { title: 'Rotate the device', sub: 'Layout Studio', run: () => rotate() },
+        ...(views.battlefield ? views.battlefield.commands() : []),
+        ...(views.sketch ? views.sketch.commands() : []),
       ],
     };
   },
