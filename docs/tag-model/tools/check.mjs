@@ -37,6 +37,9 @@
 //   - tag status: liveId only on a live-tag, resolves to a nodes.csv id, and a
 //     nodes.csv id claimed by two tags must be listed in SHARED_LIVE; the
 //     "Moved: re-homed" note appears at most once per description
+//   - release: the tables still compile into the release constants (release.mjs):
+//     every [key] resolves, no formula loops, every argument count is right. The
+//     generated module is not committed (RELEASE.md, Size and commit decision).
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -45,6 +48,7 @@ import { readTable, parseCsv } from './csv.mjs';
 import { SHARED_LIVE } from './live-map.mjs';
 import { svgRefProblem } from './svg-source.mjs';
 import { renderTree, TREE_PATH } from './tree.mjs';
+import { compileRelease } from './release.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TM = join(HERE, '..');
@@ -482,6 +486,13 @@ if (presOk['combat-symbols'] && presOk.assets) {
   let have = null;
   try { have = readFileSync(TREE_PATH, 'utf8'); } catch { /* missing */ }
   if (have !== want) fail('tag-tree.txt does not match the tree generated from tables/tags.csv; run tools/build.mjs');
+}
+
+// ------------------------------------------------------------- release build
+// The release compile must still succeed on the tables. It is not committed,
+// so the guard is the compile itself; a failure lists each problem.
+{
+  try { compileRelease(); } catch (e) { fail(`release build: ${e.message}`); }
 }
 
 // ----------------------------------------------------------------- report
