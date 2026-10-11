@@ -5,10 +5,10 @@ import {durationFor,sampleSequence,hitFlashOpacity} from '../renewal/model.mjs';
 import {ANIM_SPEEDS} from '../../src/ui/fx.js';
 import {validate} from '../model.mjs';
 const manifest=JSON.parse(readFileSync(new URL('../renewal/manifest.json',import.meta.url)));
-test('a hit flashes red immediately, fades before recovery, and respects reduced motion',()=>{
- assert.ok(hitFlashOpacity('hurt',0)>.5);
- assert.ok(hitFlashOpacity('hurt',.2)<hitFlashOpacity('hurt',0));
- assert.equal(hitFlashOpacity('hurt',.55),0);
+test('a hit strobes red on frames 2, 4 and 6 of its seven and respects reduced motion',()=>{
+ assert.equal(hitFlashOpacity('hurt',.5/7),0);
+ for (const frame of [1.5,3.5,5.5]) assert.ok(hitFlashOpacity('hurt',frame/7)>.5);
+ for (const frame of [2.5,4.5,6.5]) assert.equal(hitFlashOpacity('hurt',frame/7),0);
  assert.equal(hitFlashOpacity('hurt',0,{reduced:true}),0);
  assert.equal(hitFlashOpacity('attack',0),0);
 });

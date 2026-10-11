@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-11",
     "group": "2026-10-11",
     "summary": "Menus and pop-ups no longer reset the screen, and map taps answer faster on phones",
-    "detail": "Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, and pressing a selected node again travels to it, and selecting a node takes about half as long.",
-    "build": "0.7.1.1294",
+    "detail": "Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, pressing a selected node again travels to it, and selecting a node takes about half as long.",
+    "build": "0.7.1.1289",
     "pullRequest": 1830,
     "url": "https://github.com/cehinds/AshenSpire/pull/1830"
+  },
+  {
+    "id": "pr-1833",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fighters visibly flinch when hit",
+    "detail": "When your hero takes damage they now play a short seven-frame hurt pose, flashing red on frames 2, 4 and 6 while they are knocked back a step. This replaces the brief rainbow flicker. Enemies recoil further and their red flash starts at the moment of impact. With Reduce flashes on, the hurt pose plays without the red.",
+    "build": "0.7.1.1287",
+    "pullRequest": 1833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1833"
   },
   {
     "id": "pr-1831",
