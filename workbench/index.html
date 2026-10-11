@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshenSpire Workbench</title>
+<link rel="stylesheet" href="/shared/tokens.css">
+<link rel="stylesheet" href="/workbench.css">
+<script type="module" src="/app.mjs"></script>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">AshenSpire <b>Workbench</b></span></div>
+    <div class="chips">
+      <span class="chip" id="chip-branch" title="Current branch"><span class="chip-icon" aria-hidden="true">⎇</span><span class="chip-text">…</span></span>
+      <button class="chip" id="chip-dirty" type="button" title="Uncommitted changes in the project"><span class="chip-text">…</span></button>
+      <button class="chip" id="chip-job" type="button" title="Last job — open Build &amp; Checks"><span class="dot" aria-hidden="true"></span><span class="chip-text">No jobs yet</span></button>
+      <span class="chip chip-warn" id="chip-conn" hidden><span class="dot" aria-hidden="true"></span><span class="chip-text">Reconnecting…</span></span>
+    </div>
+    <div class="topbar-actions">
+      <button class="search-trigger" id="open-palette" type="button" aria-label="Search tools, pages and actions (Ctrl+K)"><span class="search-icon" aria-hidden="true"></span><span>Search or run a command…</span><kbd>Ctrl K</kbd></button>
+      <button class="icon-btn" id="open-notes" type="button" aria-label="Notifications"><span class="i-bell" aria-hidden="true"></span><span class="badge" id="notes-badge" hidden>0</span></button>
+      <button class="icon-btn" id="open-help" type="button" aria-label="Keyboard shortcuts (?)"><span aria-hidden="true">?</span></button>
+      <button class="icon-btn" id="toggle-dock" type="button" aria-label="Show or hide the game preview (Ctrl+\)" aria-pressed="true"><span class="i-dock" aria-hidden="true"></span></button>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Workbench sections">
+    <ul id="rail-list"></ul>
+    <div class="rail-foot">
+      <button class="rail-item" id="rail-settings" type="button" data-view="settings"><span class="rail-icon i-gear" aria-hidden="true"></span><span class="rail-label">Settings</span></button>
+    </div>
+  </nav>
+
+  <main class="main" id="main" tabindex="-1">
+    <section class="view" data-view="home" id="view-home" aria-labelledby="h-home"></section>
+    <section class="view view-tool" data-view="editor" id="view-editor"></section>
+    <section class="view view-tool" data-view="ui-studio" id="view-ui-studio"></section>
+    <section class="view view-tool" data-view="pose" id="view-pose"></section>
+    <section class="view" data-view="library" id="view-library"></section>
+    <section class="view" data-view="export" id="view-export"></section>
+    <section class="view" data-view="jobs" id="view-jobs"></section>
+    <section class="view view-tool" data-view="page" id="view-page"></section>
+    <section class="view" data-view="settings" id="view-settings"></section>
+  </main>
+
+  <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="Resize the game preview" aria-controls="dock" tabindex="0"></div>
+
+  <aside class="dock" id="dock" aria-label="Game preview">
+    <div class="dock-head">
+      <div class="dock-title"><span class="dot" id="dock-dot" aria-hidden="true"></span><span id="dock-label">Game preview</span><button class="link-btn" id="dock-back" type="button" hidden>Back to game</button></div>
+      <div class="dock-tools">
+        <div class="segmented" role="group" aria-label="Device size" id="devices"></div>
+      </div>
+    </div>
+    <div class="dock-bar">
+      <button class="btn btn-sm" id="dock-reload" type="button" title="Reload preview (Ctrl+R)"><span class="i-reload" aria-hidden="true"></span>Reload</button>
+      <label class="toggle" title="Reload the preview when content, src or styles change"><input type="checkbox" id="dock-auto"><span class="toggle-track" aria-hidden="true"></span><span>Auto-reload</span></label>
+      <span class="dock-size" id="dock-size"></span>
+      <span class="spacer"></span>
+      <button class="icon-btn icon-btn-sm" id="dock-pop" type="button" aria-label="Open the preview in a new window" title="Pop out"><span class="i-pop" aria-hidden="true"></span></button>
+      <button class="icon-btn icon-btn-sm" id="dock-collapse" type="button" aria-label="Collapse the preview (Ctrl+\)" title="Collapse (Ctrl+\)"><span class="i-collapse" aria-hidden="true"></span></button>
+    </div>
+    <div class="dock-stage" id="dock-stage"></div>
+  </aside>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+<div class="toasts-alert" id="toasts-alert" role="alert" aria-live="assertive"></div>
+
+<div class="overlay" id="palette" hidden>
+  <div class="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="palette-input"><span class="search-icon" aria-hidden="true"></span><input id="palette-input" type="text" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" placeholder="Go to a tool, open a page, run a job…" autocomplete="off" spellcheck="false"></div>
+    <ul class="palette-list" id="palette-list" role="listbox" aria-label="Results"></ul>
+    <div class="palette-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> run</span><span><kbd>Esc</kbd> close</span></div>
+  </div>
+</div>
+
+<div class="overlay" id="help" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="dialog-head"><h2 id="help-title">Keyboard shortcuts</h2><button class="icon-btn" type="button" data-close aria-label="Close">✕</button></div>
+    <div class="dialog-body" id="help-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="docview" hidden>
+  <div class="dialog dialog-wide" role="dialog" aria-modal="true" aria-labelledby="docview-title">
+    <div class="dialog-head"><h2 id="docview-title">Document</h2><button class="icon-btn" type="button" data-close aria-label="Close">✕</button></div>
+    <div class="dialog-body"><pre class="doc-text" id="docview-text"></pre></div>
+  </div>
+</div>
+
+<aside class="drawer" id="notes" aria-label="Notifications" hidden>
+  <div class="drawer-head"><h2>Notifications</h2><div><button class="btn btn-sm btn-ghost" id="notes-clear" type="button">Clear all</button><button class="icon-btn" type="button" data-close aria-label="Close notifications">✕</button></div></div>
+  <ol class="notes-list" id="notes-list"></ol>
+</aside>
+</body>
+</html>
