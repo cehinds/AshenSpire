@@ -50,7 +50,7 @@ function cardBand(hand) {
   return right > left ? { left, right } : null;
 }
 
-export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
+export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onFullLog = null }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
   logButton.style.touchAction = 'none';
@@ -65,9 +65,15 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   track.append(value, thumb); reaction.replaceChildren(label, track);
   const panel = markUiComponent(el('section', { id: 'combat-log', class: 'combat-log-panel', 'aria-label': t('combat.log.title'), hidden: true }), UI.combatLogDrawer);
   const title = el('div', { class: 'combat-log-heading', text: t('combat.log.title') });
+  // Opens the full-screen log. It sits in the header, outside the scrolling list,
+  // and is a plain text button: it is not one of the three drag sizes.
+  const fullLog = button({ label: t('combat.log.full'), attrs: { 'data-combat-tool': 'full-log', 'aria-haspopup': 'dialog' } });
+  fullLog.classList.add('combat-log-full');
+  const head = el('div', { class: 'combat-log-head' });
+  head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(title, list); root.append(panel, logButton, reaction); combatEl.append(root);
+  panel.append(head, list); root.append(panel, logButton, reaction); combatEl.append(root);
   let drag = null, suppressClick = false, released = false;
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
@@ -117,6 +123,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
       : COMBAT_LOG_SIZES[Math.max(0, Math.min(2, index + (event.key === 'ArrowUp' ? 1 : -1)))];
     state.open = true; onViewChange();
   });
+  fullLog.addEventListener('click', () => onFullLog?.(fullLog));
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   let frame = 0, entryKey = '';
   function measure() {
