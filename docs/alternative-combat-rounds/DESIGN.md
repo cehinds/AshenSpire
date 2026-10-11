@@ -164,18 +164,28 @@ These are the rules `resolver.mjs` implements where the owner's design is
 silent. They are placeholders for testing the shape, not decisions.
 
 - Faster counter cancels a slower attack ('countered'). A counter does not
-  cancel a tied attack.
-- A faster attack's hit interrupts a slower action unless the slower action's
-  holder has `hyperArmor`.
-- On a tie, both attacks hit. `counterDamage`, `stagger` and `stun` apply
-  only on a tie; `stagger` and `stun` are resisted by `hyperArmor`.
-- Each non-cancelled attack rolls the hit roll. The d20 comes from an injected
-  RNG.
-- One player card per enemy slot. A second card on a paired slot is rejected.
-- An enemy slot with no player card is unpaired and has no effect.
+  cancel a tied attack. A counter that fires also applies its `stagger` and
+  `stun` tags to the attacker it cancelled ('status', or 'resisted' if that
+  attacker has `hyperArmor`).
+- A faster attack interrupts a slower action only if its hit lands. A missed
+  faster attack does not interrupt. If the slower action's holder has
+  `hyperArmor`, a landed hit emits 'hyperArmor' (ignored: 'interrupt') instead
+  of 'interrupted'.
+- On a tie, both attacks roll their hit roll (player first, then enemy). Neither
+  is cancelled. The tie tags then apply: `counterDamage` emits a
+  'counterDamage' event (no damage is computed here). `stagger` and `stun`
+  emit 'status', or 'resisted' when the opponent has `hyperArmor`.
+- Each attack that is not cancelled rolls the hit roll. The d20 comes from an
+  injected RNG.
+- A full block (Block >= damage) turns a landed hit into 'absorbed' for the
+  blocker. A miss against an evade action emits 'evaded'. Both are the
+  momentum successes described in the Momentum section.
+- One player card per enemy slot. A second card on a paired slot is rejected
+  ('rejected' event).
+- An enemy slot with no player card is unpaired ('unpaired' event) and has no
+  effect.
 - Perception only tags events as visible. It does not gate targeting.
-- Momentum: one shared value, updated per pair. See the Momentum section for
-  the placeholder rules.
+- Momentum: per enemy, settled at round end. See Momentum.
 
 ## Open questions
 
