@@ -104,6 +104,29 @@ export function evadePctFor(side, ctx = {}) {
   return clampEvadePct(Number(side.evadeBasePct ?? 0) + bonus);
 }
 
+// Parses evade-bonus.csv text into a Map from stance to bonus percent. A blank
+// bonus cell is 0 (no bonus). Values are TBD (DESIGN.md, Evasion).
+export function parseEvadeBonus(text) {
+  const lines = String(text).split('\n').map((l) => l.trim()).filter(Boolean);
+  const header = (lines.shift() ?? '').split(',').slice(0, 2).join(',');
+  if (header !== 'stance,bonusPct') throw new TypeError('evade-bonus.csv: unexpected header');
+  const table = new Map();
+  for (const line of lines) {
+    const [stance, pctCell] = line.split(',');
+    const pct = pctCell === undefined || pctCell.trim() === '' ? 0 : Number(pctCell);
+    if (!Number.isFinite(pct)) throw new TypeError(`evade-bonus.csv: bad bonus in "${line}"`);
+    table.set(stance, pct);
+  }
+  return table;
+}
+
+// The defender's stance bonus to evade, as one exchange-scoped bonus (or none).
+function stanceEvadeBonuses(stance, table) {
+  if (!table || !stance) return [];
+  const pct = table.get(stance) ?? 0;
+  return pct === 0 ? [] : [{ source: `stance:${stance}`, pct, scope: 'exchange' }];
+}
+
 function normalizeEvadeBonuses(list) {
   if (list === undefined || list === null) return [];
   if (!Array.isArray(list)) throw new TypeError('evadeBonuses must be an array');
@@ -189,7 +212,11 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
       if (target.tags.includes('intangible') && target.intangibleCharges > 0) {
         avoid = 'intangible';
       } else {
-        const evadePct = evadePctFor(target, exchangeCtx);
+        const stanceBonus = stanceEvadeBonuses(target.stance, options.evadeTable);
+        const evadePct = evadePctFor(
+          { ...target, evadeBonuses: [...target.evadeBonuses, ...stanceBonus] },
+          exchangeCtx,
+        );
         if (evadePct > 0) {
           const roll = Math.floor(rollUnit(rng) * 100);
           evade = { evadePct, roll, success: roll < evadePct };
@@ -498,7 +525,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       { ...pc, speed: pc.speed + momentumSpeed(start[k]) },
       { ...enemy, speed: enemy.speed - momentumSpeed(start[k]) },
       rng,
-      { round: options.round, combatId: options.combatId },
+      { round: options.round, combatId: options.combatId, evadeTable: options.evadeTable },
     );
     for (const e of pairEvents) {
       push({ ...e, slot, visible }, k);

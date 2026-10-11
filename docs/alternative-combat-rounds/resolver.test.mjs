@@ -21,6 +21,7 @@ import {
   clampStage,
   STANCE_GROUPS,
   activeEvadeBonuses,
+  parseEvadeBonus,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
@@ -963,4 +964,48 @@ test('evadePct: an evasion avoid credits momentum the same way as a dodge', () =
 
 test('evadePct: a card-tag bonus that is not a number is rejected', () => {
   assert.throws(() => resolvePair(ATTACKER, DEFENDER({ evadeBonuses: [{ source: 'x', pct: 'many', scope: 'run' }] }), d20Face(1)), TypeError);
+});
+
+// Evasion, part 3: stance bonuses from evade-bonus.csv. A stance bonus is an
+// exchange-scoped bonus for the defender's stance in that one exchange.
+const EVADE_CSV = resolve(here, 'evade-bonus.csv');
+const evadeTable = () => parseEvadeBonus(readFileSync(EVADE_CSV, 'utf8'));
+
+test('evade-bonus.csv: parses stance rows, a blank bonus is 0, and a bad header throws', () => {
+  const table = evadeTable();
+  assert.equal(table.get('evade'), 20);
+  assert.equal(table.get('block'), 5);
+  assert.throws(() => parseEvadeBonus('stance,pct\nevade,20'), TypeError);
+  assert.equal(parseEvadeBonus('stance,bonusPct\nevade,').get('evade'), 0);
+});
+
+test('stance evade bonus applies to that exchange only', () => {
+  const evading = DEFENDER({ evadeBasePct: 40, stance: 'evade' });
+  // 40 + 20 = 60: a roll of 55 is avoided.
+  const inside = resolvePair(ATTACKER, evading, seqRng([D20_HIT, pctRng(55)]), { evadeTable: evadeTable() });
+  assert.equal(find(inside, 'evadeRoll').evadePct, 60);
+  assert.equal(find(inside, 'evaded').reason, 'evasion');
+
+  // The next exchange does not carry the bonus: the same roll of 55 lands.
+  const next = resolvePair(ATTACKER, evading, seqRng([D20_HIT, pctRng(55)]));
+  assert.equal(find(next, 'evadeRoll').evadePct, 40);
+  assert.equal(find(next, 'evadeRoll').success, false);
+});
+
+test('stance evade bonus is not applied without the table, and a 0 bonus adds nothing', () => {
+  const attacking = DEFENDER({ evadeBasePct: 40, stance: 'attack' });
+  const events = resolvePair(ATTACKER, attacking, seqRng([D20_HIT, pctRng(0)]), { evadeTable: evadeTable() });
+  assert.equal(find(events, 'evadeRoll').evadePct, 40, 'attack has no row, so no bonus');
+});
+
+test('resolveRound passes the evade table through: a stance bonus raises evadePct in that pairing', () => {
+  const events = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'dodger', speed: 1, kind: 'other', evadeBasePct: 40, stance: 'evade' }],
+    1,
+    seqRng([D20_HIT, pctRng(55)]),
+    { evadeTable: evadeTable() },
+  ).events;
+  assert.equal(find(events, 'evadeRoll').evadePct, 60);
+  assert.equal(find(events, 'momentum').by, 'enemy');
 });
