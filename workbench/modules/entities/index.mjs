@@ -208,8 +208,9 @@ export default {
     /** A deep link (#mod=entities&…) or a Browse command: the state it names, drawn. */
     function applyParams(p) {
       const next = parseDeepLink(p);
-      Object.assign(st, { q: next.q, sort: next.sort, class: next.class, type: next.type, tag: next.tag, rarity: next.rarity, id: next.id, tab: next.tab });
+      // The kind first: setKind clears the entity when the kind changes, so the link's entity is set after it.
       setKind(next.kind, { keepFilters: true });
+      Object.assign(st, { q: next.q, sort: next.sort, class: next.class, type: next.type, tag: next.tag, rarity: next.rarity, id: next.id, tab: next.tab });
       sendCenter(); sendDrawer(); renderChips(); renderTabs(); renderFacets(); renderCount(); renderTitle(); writeHash();
     }
 
