@@ -292,6 +292,28 @@ test('a reaction card with an invalid defence value throws and leaves the paused
   assert.equal(round.awaiting, null);
 });
 
+test('a reaction card with invalid momentum gain throws and leaves the paused round unchanged', () => {
+  let paused = null;
+  for (let seed = 1; seed <= 60 && paused === null; seed += 1) {
+    const fight = FIGHTS[0];
+    const combatRng = rng(seed);
+    const queueRng = rng(seed + 1000);
+    const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, queueRng), rng: combatRng, merge: fight.merge });
+    let res = stepRound(round, hooks(combatRng));
+    while (!res.awaitingReaction && !res.done) res = stepRound(round, hooks(combatRng));
+    if (res.awaitingReaction) paused = { round, combatRng };
+  }
+  assert.ok(paused, 'some seed must pause for a reaction');
+  const { round, combatRng } = paused;
+  const card = round.awaiting.eligible[0];
+  card.momentumGain = 'Infinity';
+  const before = structuredClone(round);
+  assert.throws(() => answerReaction(round, card.id, hooks(combatRng)), /momentumGain must be a finite number/);
+  assert.deepStrictEqual(round, before, 'nothing changed: still paused, no SP spent, card not used');
+  answerReaction(round, null, hooks(combatRng));
+  assert.equal(round.awaiting, null);
+});
+
 test('the rng is passed per call and never stored in the round', () => {
   const fight = FIGHTS[0];
   const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, rng(3)), rng: rng(4), merge: 'speed' });

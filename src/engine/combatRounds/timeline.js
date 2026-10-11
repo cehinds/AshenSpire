@@ -77,6 +77,15 @@ export function assertDefenceNumbers(card) {
   for (const field of DEFENCE_FIELDS) defenceNumber(card, field);
 }
 
+// Momentum gain is read after a reaction has been applied, so a paused round must
+// validate it before committing the answer. Keep the validation in one place so
+// the preflight and the resolver accept exactly the same values.
+export function assertMomentumGain(card) {
+  const g = Number(card?.momentumGain ?? 1);
+  if (!Number.isFinite(g)) throw new TypeError('momentumGain must be a finite number');
+  return g;
+}
+
 // Initiative base (owner, 2026-10-11, placeholder): floor(DEX / 2).
 function initiativeBase(c) {
   const dex = Number(c.attrs?.DEX ?? 0);
@@ -470,9 +479,7 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
 
 // Momentum gain of a card: its momentumGain, default 1 (as in resolver.mjs).
 function gainOf(card) {
-  const g = Number(card?.momentumGain ?? 1);
-  if (!Number.isFinite(g)) throw new TypeError('momentumGain must be a finite number');
-  return g;
+  return assertMomentumGain(card);
 }
 
 // Credits one side's success in an exchange (owner, 2026-10-11; DESIGN.md, Momentum).
