@@ -20,6 +20,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { compileEntries, readConfigTree, CONFIG_DIR } from '../tools/config-build.mjs';
+import { tryAcquire, acquire, busyMessage } from '../tools/lib/build-lock.mjs';
 import { artPath, packTreeOf } from '../tools/art-source.mjs';
 import { DEFAULT_SETTINGS, mergeSettings, settingsProblems, sketchProblems } from './model.mjs';
 
@@ -226,7 +227,7 @@ export class Workspace {
 // Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
 export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
 
-export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir, frameAncestors = [] } = {}) {
+export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4319, stateDir, frameAncestors = [], compileWaitMs = 2 * 60 * 1000 } = {}) {
   for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
   const ancestors = frameAncestors.join(' ');
   root = await fs.realpath(root);
@@ -241,19 +242,40 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
     return JSON.parse(Buffer.concat(chunks).toString() || '{}');
   }
   function branch() { try { return execFileSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return 'unknown'; } }
-  function startCompile() {
-    if (job && job.status === 'running') throw Error('The compiler is already running');
-    job = { status: 'running', output: '' };
+  // The compiler writes src/config/generated, which Workbench jobs and the
+  // editor's builds also write: it runs under the shared lock
+  // (tools/lib/build-lock.mjs). "Compile now" is refused with 409 while another
+  // build holds it; a compile after a save (`wait`) waits up to waitMs for it.
+  const HOLDER = 'UI Studio config compile';
+  function startCompile({ wait = false } = {}) {
+    if (job && (job.status === 'running' || job.status === 'waiting')) throw Error('The compiler is already running');
+    let release = null;
+    if (!wait) {
+      const got = tryAcquire(root, HOLDER);
+      if (typeof got !== 'function') throw Object.assign(Error(busyMessage(got.heldBy)), { status: 409 });
+      release = got;
+    }
+    job = { status: release ? 'running' : 'waiting', output: '' };
     const current = job;
-    workspace.serialize(() => new Promise((resolve) => {
-      const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true });
-      current.child = child;
-      const append = (d) => { current.output = (current.output + d).slice(-60000); };
-      child.stdout.on('data', append); child.stderr.on('data', append);
-      child.on('error', (e) => { append(e.message); current.status = 'failed'; resolve(); });
-      child.on('close', (code) => { current.status = code === 0 ? 'passed' : 'failed'; resolve(); });
-    }));
-    return { ok: true };
+    workspace.serialize(async () => {
+      if (!release) {
+        try { release = await acquire(root, HOLDER, { timeoutMs: compileWaitMs, pollMs: Math.min(250, compileWaitMs) }); } catch (e) {
+          current.status = 'failed'; current.output = `${e.message}. The save stands; compile again when it finishes.\n`; return;
+        }
+        current.status = 'running';
+      }
+      try {
+        await new Promise((resolve) => {
+          const child = spawn(process.execPath, ['tools/config-build.mjs'], { cwd: root, windowsHide: true });
+          current.child = child;
+          const append = (d) => { current.output = (current.output + d).slice(-60000); };
+          child.stdout.on('data', append); child.stderr.on('data', append);
+          child.on('error', (e) => { append(e.message); current.status = 'failed'; resolve(); });
+          child.on('close', (code) => { current.status = code === 0 ? 'passed' : 'failed'; resolve(); });
+        });
+      } finally { release(); }
+    }).catch((e) => { current.status = 'failed'; current.output += e.message; });
+    return { ok: true, status: current.status };
   }
 
   const server = http.createServer(async (req, res) => {
@@ -283,7 +305,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
           if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes));
           if (url.pathname === '/api/sketch') return send(res, 200, await workspace.saveSketch(data.name, data.sketch, data.hash || null));
           if (url.pathname === '/api/backup') return send(res, 200, await workspace.backup(data.id));
-          if (url.pathname === '/api/compile') return send(res, 200, startCompile());
+          if (url.pathname === '/api/compile') return send(res, 200, startCompile({ wait: data.wait === true }));
         }
         return send(res, 404, { error: 'Unknown studio action' });
       }
@@ -316,7 +338,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
         : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors ${ancestors || "'none'"}`;
       res.writeHead(200, headers);
       res.end(bytes);
-    } catch (error) { send(res, error.code === 'ENOENT' ? 404 : 400, { error: error.message }); }
+    } catch (error) { send(res, error.status || (error.code === 'ENOENT' ? 404 : 400), { error: error.message }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   return { server, workspace, url: `http://127.0.0.1:${server.address().port}`, close: async () => { if (job && job.child) job.child.kill(); server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); } };

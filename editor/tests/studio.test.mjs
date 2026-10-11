@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn } from 'node:child_process';
 import { Workspace, safePath, parseCSV, stringifyCSV, hash, editable } from '../core.mjs';
 import { createStudio } from '../server.mjs';
 
@@ -114,4 +115,29 @@ test('framing is refused by default and allowed only for a named loopback ancest
   const game = await fetch(`${framed.url.replace('127.0.0.1','localhost')}/game/sample.html`);
   assert.equal(game.status,200);
   assert.match(game.headers.get('content-security-policy'), /frame-ancestors 'self' http:\/\/127\.0\.0\.1:\d+ http:\/\/127\.0\.0\.1:4300$/);
+});
+test('builds that write the generated trees share the cross-process lock: 409 naming the holder; validate is not blocked', async t => {
+  const { root } = await fixture(t);
+  await fs.mkdir(path.join(root,'tools'),{recursive:true});
+  await fs.writeFile(path.join(root,'tools/content-build.mjs'),'console.log("built");\n');
+  await fs.writeFile(path.join(root,'tools/framework-data-build.mjs'),'\n');
+  const app = await createStudio({root,port:0,stateDir:path.join(root,'state')}); t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const call = body => fetch(`${app.url}/api/job`, body ? {method:'POST',headers:{'x-studio-token':token,'Content-Type':'application/json'},body:JSON.stringify(body)} : {headers:{'x-studio-token':token}});
+  const settle = async () => { let job; for (let i = 0; i < 200; i++) { job = await (await call()).json(); if (job.status !== 'running') break; await new Promise(r => setTimeout(r, 30)); } return job; };
+  const other = spawn(process.execPath, ['-e','setTimeout(() => {}, 60000)'], {stdio:'ignore'}); t.after(() => other.kill());
+  const lock = path.join(await fs.realpath(root), '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({pid:other.pid,holder:'Config build (Workbench)',startedAt:Date.now(),token:'x'}));
+  for (const name of ['content','build']) {
+    const refused = await call({name});
+    assert.equal(refused.status,409,name);
+    assert.equal((await refused.json()).error,'Config build (Workbench) is running; try again when it finishes');
+  }
+  assert.equal((await call({name:'validate'})).status,200,'validate only reads the generated trees');
+  await settle();
+  await fs.rm(lock);
+  assert.equal((await call({name:'content'})).status,200);
+  const done = await settle();
+  assert.equal(done.status,'passed'); assert.match(done.output,/built/);
+  await assert.rejects(fs.stat(lock), /ENOENT/, 'released after the build');
 });

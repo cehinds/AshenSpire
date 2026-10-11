@@ -7,6 +7,7 @@ import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
 import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
+import { tryAcquire, busyMessage } from '../tools/lib/build-lock.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -15,6 +16,10 @@ const commands = {
   build: [['tools/launch.mjs', '--build-only']],
   validate: [['tests/run-node.mjs'], ['tools/buildversion.mjs', '--check'], ['tools/verify-shipped.mjs']],
 };
+// Actions that write the generated trees (src/content/generated, src/framework/data,
+// src/config/generated) run under the cross-process lock the Workbench and UI
+// Studio share (tools/lib/build-lock.mjs); validate only reads them.
+const WRITES_GENERATED = new Set(['content', 'build']);
 // A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
 // Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
 export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
@@ -55,9 +60,19 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
   function startJob(name) {
     if (!commands[name]) throw Error('Unknown build action');
     if (job?.status === 'running') throw Error('Another check is already running');
+    let release = () => {};
+    if (WRITES_GENERATED.has(name)) {
+      const got = tryAcquire(root, `Editor ${name} build`);
+      if (typeof got !== 'function') throw Object.assign(Error(busyMessage(got.heldBy)), { status: 409 });
+      release = got;
+    }
     job = { id: randomUUID(), name, status: 'running', output: '' };
     const current = job;
     workspace.serialize(async () => {
+      try { await runSteps(); } finally { release(); }
+    }).catch(e => { current.status = 'failed'; current.output += e.message; });
+    return { id: current.id };
+    async function runSteps() {
       for (const args of commands[name]) {
         current.output += `> node ${args.join(' ')}\n`;
         const code = await new Promise(resolve => {
@@ -72,8 +87,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         if (code !== 0) { current.status = 'failed'; current.exitCode = code; return; }
       }
       current.status = 'passed';
-    }).catch(e => { current.status = 'failed'; current.output += e.message; });
-    return { id: current.id };
+    }
   }
   const server = http.createServer(async (req, res) => {
     try {
@@ -170,7 +184,7 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
       const bytes = await fs.readFile(file);
       res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', ...(url.pathname.startsWith('/game/') ? { 'Content-Security-Policy': `sandbox allow-scripts allow-same-origin allow-forms allow-modals allow-downloads; frame-ancestors 'self' http://${address}${ancestors ? ` ${ancestors}` : ''}` } : { 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http://${previewAddress} data: blob:; frame-src http://${previewAddress}; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors ${ancestors || "'none'"}` }) });
       res.end(bytes);
-    } catch (error) { send(res, error.code === 'ENOENT' ? 404 : 400, { error: error.message }); }
+    } catch (error) { send(res, error.status || (error.code === 'ENOENT' ? 404 : 400), { error: error.message }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   return { server, workspace, codex, url: `http://127.0.0.1:${server.address().port}`, close: async () => { codex.close(); job?.child?.kill(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); } };

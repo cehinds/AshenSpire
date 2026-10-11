@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createUiStudio, Workspace, safePath, hash } from '../server.mjs';
 import { SKETCH_SCHEMA } from '../model.mjs';
@@ -188,4 +189,39 @@ test('two saves of disjoint files validate in turn: the second sees the first on
   const onDisk = await fs.readFile(path.join(root, 'content/config', w4a.rel), 'utf8');
   assert.equal(onDisk, w4aWithoutRef, 'the first write stands and the tree still compiles');
   assert.deepEqual((await workspace.validate([])).errors, []);
+});
+
+test('compile shares the generated-files lock: Compile now gets 409 naming the holder; a compile after save waits, then reports', async (t) => {
+  const { root, stateDir } = await fixture(t);
+  await fs.mkdir(path.join(root, 'tools'), { recursive: true });
+  await fs.writeFile(path.join(root, 'tools/config-build.mjs'), 'console.log("compiled");\n');
+  const app = await createUiStudio({ root, port: 0, stateDir, compileWaitMs: 300 });
+  t.after(() => app.close());
+  const { token } = await (await fetch(`${app.url}/api/session`)).json();
+  const call = (body) => fetch(`${app.url}/api/compile`, body ? { method: 'POST', headers: { 'x-studio-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { headers: { 'x-studio-token': token } });
+  const settle = async () => { let job; for (let i = 0; i < 100; i++) { job = await (await call()).json(); if (!['running', 'waiting'].includes(job.status)) break; await new Promise((r) => setTimeout(r, 30)); } return job; };
+  // Another process (a Workbench job) holds the lock.
+  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => other.kill());
+  const lock = path.join(await fs.realpath(root), '.build-lock');
+  await fs.writeFile(lock, JSON.stringify({ pid: other.pid, holder: 'Content build (Workbench)', startedAt: Date.now(), token: 'x' }));
+  const refused = await call({});
+  assert.equal(refused.status, 409);
+  assert.equal((await refused.json()).error, 'Content build (Workbench) is running; try again when it finishes');
+  const waiting = await call({ wait: true });
+  assert.equal(waiting.status, 200);
+  assert.equal((await waiting.json()).status, 'waiting');
+  const gaveUp = await settle();
+  assert.equal(gaveUp.status, 'failed');
+  assert.match(gaveUp.output, /Content build \(Workbench\) is running; try again when it finishes\. The save stands/);
+  // It waits for the holder and then compiles.
+  assert.equal((await call({ wait: true })).status, 200);
+  await new Promise((r) => setTimeout(r, 60));
+  await fs.rm(lock);
+  const done = await settle();
+  assert.equal(done.status, 'passed');
+  assert.match(done.output, /compiled/);
+  await assert.rejects(fs.stat(lock), /ENOENT/, 'released after the compile');
+  assert.equal((await call({})).status, 200, 'Compile now runs when the lock is free');
+  assert.equal((await settle()).status, 'passed');
 });
