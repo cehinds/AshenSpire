@@ -452,7 +452,7 @@ function clearHeldFigures() {
   for (const [el, timer] of heldFigures) {
     clearTimeout(timer);
     el.classList.remove('hit-stop');
-    stageFor(el)?.settle?.();
+    stageFor(el)?.settle?.({ reaction: true });
   }
   heldFigures.clear();
 }
@@ -690,6 +690,8 @@ export function playTimeline(events, ctx, done) {
     removeEventListener('pointerdown', skip, { capture: true });
     flushed = true;
     clearHeldFigures();
+    // An unheld hit reaction (no hit-stop) is not in heldFigures; a skip ends it too.
+    for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
     clearCombatEffects(ctx.layer);
     cancelActorAnimation();
     clearTimeout(pendingTimer);
