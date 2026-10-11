@@ -124,3 +124,13 @@ test('a paced player attack still earns its receipt overlays, played after the f
   assert.ok(pace.indexOf('playReceiptOverlays(') > final, 'the overlays play on the final board, not a board the next render replaces');
   assert.match(body('spawnCombatFx'), /if\(hasNewReceipts\)playReceiptOverlays\(effectEvents\);/);
 });
+
+test('a card plan no swing played (Instant, reduced motion, a skip) plays on the final board', () => {
+  const pace = body('paceReactionReceipts');
+  assert.match(pace, /if \(ownerPlan\) \{ playCardEffects\(effectOwner, ownerPlan, duration\); playedPlans\.add\(effectOwner\); \}/);
+  const unplayed = pace.indexOf('for (const [ownerId, plan] of plans || []) if (!playedPlans.has(ownerId)) playSeatPlan(ownerId, plan);');
+  assert.ok(unplayed > pace.lastIndexOf('render();'), 'after the final render');
+  assert.match(body('playSeatPlan'), /playCardEffects\(ownerId, plan, duration\);\s*stage\?\.play\(pose, duration, plan\.aura\);/,
+    'the effect and the resource aura both play');
+  assert.match(body('renderCombat'), /for \(const \[ownerId, plan\] of pendingAnimations\) playSeatPlan\(ownerId, plan\);/);
+});

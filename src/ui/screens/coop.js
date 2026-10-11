@@ -397,6 +397,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (anchor) playCombatEffect(layer, anchorLocalBox(layer, anchor), effect.kind, { size: 190 });
     }
   }
+  // A seat's whole card plan on the current board: pose, aura and sprite effect.
+  function playSeatPlan(ownerId, plan) {
+    const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
+    const pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
+    const duration = stage?.actionTiming?.(pose, ANIM_SPEEDS[getAnimSpeed()])?.totalMs ?? 420;
+    playCardEffects(ownerId, plan, duration);
+    stage?.play(pose, duration, plan.aura);
+  }
   // A seat's card sprite effect, played from its figure toward its targets.
   function playCardEffects(ownerId, plan, duration) {
     const layer=app.querySelector('.fx-layer'),anchor=app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`),target=plan.targetId&&app.querySelector(`[data-eid="${CSS.escape(String(plan.targetId))}"]`);
@@ -1454,13 +1462,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     // Fit only after the replacement hand/footer establish the final field size.
     wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
-    for (const [ownerId, plan] of pendingAnimations) {
-      const stage = stageFor(app.querySelector(`[data-seat="${CSS.escape(String(ownerId))}"] .sprite`));
-      const pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
-      const duration = stage?.actionTiming?.(pose, ANIM_SPEEDS[getAnimSpeed()])?.totalMs ?? 420;
-      playCardEffects(ownerId, plan, duration);
-      stage?.play(pose, duration, plan.aura);
-    }
+    for (const [ownerId, plan] of pendingAnimations) playSeatPlan(ownerId, plan);
     lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq, seats);
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
@@ -2049,6 +2051,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     let plans = null;
     const seatPlans = () => plans || (plans = collectCombatAnimations(next.scene, next.party));
     const hasCardPlay = (next.scene.events || []).some(event => event.type === 'cardPlayed');
+    const playedPlans = new Set(); // seats whose plan played on their swing
     const working = structuredClone(snap);
     working.scene.events = [];
     const events = (next.scene.events || []).map(event => ({ ...event,
@@ -2148,7 +2151,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         const timing = stage?.actionTiming?.(pose, speed);
         const duration = timing?.totalMs ?? speed.lungeMs;
         stage?.play(pose, duration, ownerPlan?.aura);
-        if (ownerPlan) playCardEffects(effectOwner, ownerPlan, duration);
+        if (ownerPlan) { playCardEffects(effectOwner, ownerPlan, duration); playedPlans.add(effectOwner); }
         return { impactMs: timing?.impactMs ?? Math.min(speed.impactCapMs, duration / 2), totalMs: duration,
           cancel: () => stage?.settle?.() };
       },
@@ -2171,6 +2174,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       render();
       // The final render is not a new-receipt render (lastReceiptSeq already
       // moved), so the paced receipts' overlays play here, on the final board.
+      // A plan no swing played (Instant, reduced motion, a skip before that
+      // seat swung) plays now, as the direct render would have.
+      for (const [ownerId, plan] of plans || []) if (!playedPlans.has(ownerId)) playSeatPlan(ownerId, plan);
       playReceiptOverlays(hasCardPlay ? effectEvents
         : decorateCombatEffects((next.scene.events || []).map(combatEffectReceipt), registries, barrierVisuals));
       const queued = pendingSnaps; pendingSnaps = [];
