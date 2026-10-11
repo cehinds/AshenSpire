@@ -204,17 +204,19 @@ export function render(res) {
   return out.join('\n');
 }
 
-export function main() {
+// outPath defaults to docs/tag-model/compile-report.md; the CLI takes --out <path>.
+export function main(outPath = REPORT_PATH) {
   const tags = readRows(readFileSync(TAGS_PATH, 'utf8'));
   const nodes = readRows(readFileSync(NODES_PATH, 'utf8'));
   const tagging = readRows(readFileSync(TAGGING_PATH, 'utf8'));
   const res = analyze({ tags, nodes, tagging });
   const text = render(res);
-  writeFileSync(REPORT_PATH, text);
+  writeFileSync(outPath, text);
   process.stdout.write(text);
   return res;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  main();
+  const at = process.argv.indexOf('--out');
+  main(at > -1 ? process.argv[at + 1] : REPORT_PATH);
 }

@@ -1,12 +1,13 @@
 // Tests for compile.mjs. Run: node --test docs/tag-model/tools/compile.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  readRows, analyze, render, TAGS_PATH, NODES_PATH, TAGGING_PATH, REPORT_PATH,
+  readRows, analyze, render, TAGS_PATH, NODES_PATH, TAGGING_PATH,
 } from './compile.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -18,12 +19,15 @@ const real = () => ({
   tagging: readRows(readFileSync(TAGGING_PATH, 'utf8')),
 });
 
-test('CLI runs on the real files, exits 0 and writes the report', () => {
-  const out = execFileSync(process.execPath, [CLI], { encoding: 'utf8' });
+test('CLI runs on the real files, exits 0 and writes the report to --out', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'compile-test-'));
+  const outPath = join(dir, 'report.md');
+  const out = execFileSync(process.execPath, [CLI, '--out', outPath], { encoding: 'utf8' });
   assert.match(out, /^# Tag model round-trip report/);
   assert.match(out, /\*\*Verdict: (lossless|NOT lossless)/);
-  assert.ok(existsSync(REPORT_PATH) && statSync(REPORT_PATH).size > 0, 'report file written');
-  assert.equal(readFileSync(REPORT_PATH, 'utf8'), out);
+  assert.ok(existsSync(outPath) && statSync(outPath).size > 0, 'report file written');
+  assert.equal(readFileSync(outPath, 'utf8'), out);
+  rmSync(dir, { recursive: true, force: true });
 });
 
 test('real files: mapped + unmapped equals the live total', () => {
