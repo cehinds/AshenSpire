@@ -21,8 +21,8 @@ body.entity-render { overflow-x: hidden; }
 .ent-detail > * { max-width: 100%; }
 
 .ent-worn { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-.ent-worn figure { margin: 0; text-align: center; }
-.ent-worn figcaption { font: 13px system-ui, sans-serif; color: #d9bc72; margin-top: 4px; }
+.ent-worn figure { margin: 0; text-align: center; min-width: 0; position: relative; }
+.ent-worn figcaption { position: relative; z-index: 2; font: 13px system-ui, sans-serif; color: #d9bc72; margin-top: 4px; }
 
 .ent-inventory { display: grid; gap: 12px; max-width: 520px; }
 .ent-inventory .inventory-item-art { width: 5rem !important; height: 5rem !important; }
