@@ -355,3 +355,16 @@ test('duplicate identical rows reordered keep every comment and no row is duplic
   const text = 'id,name\n# first\nx,1\n# second\nx,1\n# third\ny,2\n';
   assert.equal(reordered(text, [1, 2, 0]), 'id,name\n# first\nx,1\n# third\ny,2\n# second\nx,1\n');
 });
+
+test('deleting the first, a middle or the last row moves its comment to the next kept row, or the end', () => {
+  assert.equal(reordered(COMMENTED, [1, 2]), 'id,name\n# ca\n# cb\nb,2\n# cc\nc,3\n');
+  assert.equal(reordered(COMMENTED, [0, 2]), 'id,name\n# ca\na,1\n# cb\n# cc\nc,3\n');
+  assert.equal(reordered(COMMENTED, [0, 1]), 'id,name\n# ca\na,1\n# cb\nb,2\n# cc\n');
+});
+
+test('inserted rows sit where they are placed and carry no comments of their own', () => {
+  const table = D.parseTable('content/source/x.csv', COMMENTED);
+  const doc = docOf(table);
+  doc.rows = [{ id: 'n0', name: 0 }, table.rows[0], { id: 'n1', name: 5 }, table.rows[1], table.rows[2], { id: 'n2', name: 7 }];
+  assert.equal(D.serializeTable(table, doc), 'id,name\nn0,0\n# ca\na,1\nn1,5\n# cb\nb,2\n# cc\nc,3\nn2,7\n');
+});
