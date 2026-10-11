@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Inspect buttons only on the selected fighter; the game says why a reaction wasn't offered",
     "detail": "A fighter's Inspect \"i\" now shows only while that fighter is selected, and it appears already in its place instead of jumping there; a card's Inspect appears once, above the card. Your stance and status icons stay visible when your hero isn't selected. When an enemy attacks and you hold a Counter or Sweep the game can't offer, the combat log says why (for example, a Counter can't answer a Sweep, or you're short on SP), and a Smash that breaks Guard is logged.",
-    "build": "0.7.1.1300",
+    "build": "0.7.1.1299",
     "pullRequest": 1849,
     "url": "https://github.com/cehinds/AshenSpire/pull/1849"
+  },
+  {
+    "id": "pr-1848",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Game rules updated for clearer combat feedback",
+    "detail": "Rules document change only, nothing in the game changes yet. The rules now say an attack plays the swing and the return to stance before the target reacts, and before numbers and health bars update. They also say the game will report why a reaction wasn't offered and when a Smash breaks Guard.",
+    "build": "0.7.1.1297",
+    "pullRequest": 1848,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1848"
   },
   {
     "id": "pr-1846",
