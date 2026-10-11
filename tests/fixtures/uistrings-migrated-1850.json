@@ -20,6 +20,7 @@
     "deckEditor.range.reach",
     "deckEditor.range.ranged",
     "deckEditor.camp.physical",
-    "deckEditor.camp.magical"
+    "deckEditor.camp.magical",
+    "deckEditor.inspectIcon"
   ]
 }

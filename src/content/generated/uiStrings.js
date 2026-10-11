@@ -7661,6 +7661,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.inspectIcon",
+    "extends": "",
+    "short": "i",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.drawOrder",
     "extends": "",
     "short": "Draw order",

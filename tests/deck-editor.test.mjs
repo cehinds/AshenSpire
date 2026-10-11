@@ -562,6 +562,27 @@ test('Reading Desk: an unordered phone has no mobile tabs; Inspect opens over th
   });
 });
 
+test('Reading Desk: the first press on a card selects it; pressing its art again opens Inspect', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom((dom) => {
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const view = () => editor.root.querySelector('.deck-editor').dataset.mobileView;
+    const tile = () => editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
+    const pressArt = () => {
+      const main = tile().querySelector('.deck-editor-main');
+      main.dispatchEvent(new dom.Event('pointerdown', { target: main.querySelector('.deck-editor-art') }));
+      main.click();
+    };
+    pressArt();
+    assert.equal(view(), 'collection', 'the first press only selects');
+    assert.equal(tile().querySelector('.deck-editor-inline-inspect').textContent, 'i', 'the selected card shows its (i)');
+    pressArt();
+    assert.equal(view(), 'inspect', 'pressing the selected card art opens Inspect');
+    editor.close();
+  });
+});
+
 test('Reading Desk: removing the inspected final copy returns Back to the list', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {

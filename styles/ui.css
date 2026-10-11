@@ -1602,7 +1602,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   --deck-row-cost: max(3.4rem, calc(30px / var(--ui-zoom, 1)));
   --deck-cost-count: 2;
   --deck-row-costs: calc(var(--deck-row-cost) * var(--deck-cost-count) + .4rem * (var(--deck-cost-count) - 1));
-  --deck-inline-inspect: max(5.4rem, var(--deck-editor-target));
 }
 .deck-editor .deck-editor-item { position: relative; gap: .3rem; margin-top: .25rem; }
 .deck-editor .deck-editor-main {
@@ -1675,14 +1674,18 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-main[aria-pressed="true"] {
   transform: translateY(-2px); box-shadow: 0 5px 10px #0008, inset 0 0 0 1px #806020; background: #2c2315;
 }
-.deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) .deck-editor-row-rules { padding-right: var(--deck-inline-inspect); }
+/* The (i): a round badge (owner, 2026-10-11). On a card with art,
+   deckEditor.js lays it on the art's bottom-right corner (.on-art), so it takes
+   no room in the row; a row without art keeps it beside the costs. */
 .deck-editor .deck-editor-inline-inspect {
-  position: absolute; z-index: 2; right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .6rem);
-  bottom: .6rem; min-width: var(--deck-inline-inspect); min-height: var(--deck-editor-target); padding: .2rem .35rem;
-  border: 0; border-radius: .4rem; background: transparent; color: #efd18c;
-  font: 700 max(1.1rem, var(--deck-min-text)) Georgia, serif; text-decoration: underline; text-underline-offset: .2em; cursor: pointer;
+  position: absolute; z-index: 2; right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .6rem); bottom: .6rem;
+  width: 2.4rem; height: 2.4rem; min-width: 0; min-height: 0; padding: 0;
+  border: 1px solid #5a7bd6; border-radius: 50%; background: rgba(18, 32, 74, .92); color: #dfe8ff;
+  font: italic 700 1.5rem/1 Georgia, serif; text-decoration: none; box-shadow: 0 1px 4px #000a; cursor: pointer;
 }
-.deck-editor .deck-editor-inline-inspect:hover { background: #4b3b2080; }
+.deck-editor .deck-editor-inline-inspect:hover { background: #24407f; }
+.deck-editor .deck-editor-item .deck-editor-inline-inspect.on-art { right: auto; bottom: auto; }
+.deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden]):not(.on-art)) .deck-editor-row-rules { padding-right: 2.8rem; }
 .deck-editor .deck-editor-inline-inspect[hidden] { display: none; }
 .deck-editor .deck-editor-item:is(.ineligible, .equipment-missing) .deck-editor-main { opacity: .45; cursor: not-allowed; }
 .deck-editor .deck-editor-art-toggle { display: flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; min-height: var(--deck-editor-target); margin-top: .6rem; font-size: max(1.2rem, var(--deck-min-text)); color: var(--muted); }
@@ -1711,7 +1714,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-curve-fill { height: calc(var(--share, 0) * 2.2rem); }
   .deck-editor-panes { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.05fr) minmax(0, 1fr); gap: 1.4rem; }
   .deck-editor-list { gap: .4rem; padding-top: .25rem; }
-  .deck-editor .deck-editor-inline-inspect { min-height: 2.4rem; height: 2.4rem; }
   .deck-editor-inspector { padding-inline: 1.4rem; gap: .5rem; }
   .deck-editor-reading { padding: 1.8rem 1rem .6rem; }
   .deck-editor .deck-editor-reading .card > .cname { font-size: 1.8rem; }
@@ -1728,10 +1730,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor .deck-editor-foot .as-btn { width: auto; min-width: 0; max-width: 100%; }
 }
 @media (max-width: 1000px) {
-  .deck-editor { --deck-row-art: 4.4rem; --deck-row-cost: max(3.2rem, calc(28px / var(--ui-zoom, 1))); --deck-inline-inspect: max(4.8rem, var(--deck-editor-target)); }
+  .deck-editor { --deck-row-art: 4.4rem; --deck-row-cost: max(3.2rem, calc(28px / var(--ui-zoom, 1))); }
   .deck-editor .deck-editor-main { column-gap: .35rem; padding-inline: .35rem; }
   .deck-editor .deck-editor-heading { gap: .2rem .4rem; font-size: max(1.3rem, var(--deck-min-text)); }
-  .deck-editor .deck-editor-inline-inspect { right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .35rem); padding-inline: .1rem; }
+  .deck-editor .deck-editor-inline-inspect { right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .35rem); }
   .deck-editor-animation { display: none; }
 }
 /* Phones: one compact library card (owner's wireframe, 2026-10-11).
@@ -1768,8 +1770,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   }
   .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { height: var(--deck-step); min-width: var(--deck-step); }
   /* Inspect rides under the art, inside the card. */
-  .deck-editor .deck-editor-tile .deck-editor-inline-inspect { left: calc(var(--deck-tile-pad) + 1.4rem + .6rem); right: auto; bottom: .1rem; width: 4.8rem; min-height: 0; text-align: center; }
-  .deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) > .deck-editor-main { padding-bottom: calc(var(--deck-tile-pad) + 1.8rem); }
 }
 /* Small phones keep the same card at every width (owner, 2026-10-11, "make it
    exactly the same even if it means I miss out on px for tapping"): costs top
@@ -1778,7 +1778,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor { --deck-tile-pad: .45rem; --deck-step: 3.3rem; --deck-row-cost: 2.6rem; --deck-stepper-w: calc(2 * var(--deck-step) + 3rem + .4rem); }
   .deck-editor .deck-editor-tile > .deck-editor-main { grid-template-columns: 1rem 4.4rem minmax(0, 1fr) var(--deck-stepper-w); column-gap: .45rem; min-height: calc(var(--deck-row-cost) + var(--deck-step) + .6rem + 2 * var(--deck-tile-pad)); }
   .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { width: 4.4rem; }
-  .deck-editor .deck-editor-tile .deck-editor-inline-inspect { left: calc(var(--deck-tile-pad) + 1rem + .45rem); width: 4.4rem; }
   .deck-editor .deck-editor-tile .deck-editor-costs { gap: .25rem; }
   .deck-editor .deck-editor-tile > .deck-editor-actions { gap: .2rem; }
   .deck-editor .deck-editor-tile > .deck-editor-actions > .deck-editor-step { width: var(--deck-step); min-width: 0; min-height: 0; padding: 0; }

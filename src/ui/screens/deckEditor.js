@@ -213,6 +213,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const inspect = node.closest('.deck-editor-item')?.querySelector('.deck-editor-inline-inspect');
       if (inspect) inspect.hidden = !on;
     }
+    trackInspect();
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (open && inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
@@ -415,9 +416,45 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     el('span', { class: 'deck-editor-count', title: extra, text: t('deckEditor.count', { count: grouped ? row.count : row.inDeck || 0 }) }),
   ].filter(Boolean);
 
+  // A selected card's art opens the inspector, as its (i) does (owner,
+  // 2026-10-11). The first press only selects: pointerdown records whether the
+  // card was already selected before focus selects it.
+  function artOpens(main, row, source) {
+    let armed = false;
+    main.addEventListener('pointerdown', (event) => {
+      armed = !!event.target?.closest?.('.deck-editor-art') && selected?.source === source && selected.key === selectionKey(row, source);
+    });
+    main.addEventListener('click', () => { const open = armed; armed = false; select(row, source, open); });
+  }
+
+  // The (i) sits on the art's bottom-right corner, measured from the art's own
+  // box so it needs no reserved space in any layout. Rows without art keep the
+  // stylesheet's position.
+  let inspectObserver = null;
+  function placeInspect(node) {
+    const item = node?.closest?.('.deck-editor-item');
+    const main = item?.querySelector('.deck-editor-main');
+    const art = main?.querySelector('.deck-editor-art');
+    if (!art || !Number.isFinite(art.offsetWidth) || !art.offsetWidth) return;
+    const inset = 3;
+    node.classList.add('on-art');
+    node.style.left = `${main.offsetLeft + art.offsetLeft + art.offsetWidth - node.offsetWidth - inset}px`;
+    node.style.top = `${main.offsetTop + art.offsetTop + art.offsetHeight - node.offsetHeight - inset}px`;
+  }
+  function trackInspect() {
+    inspectObserver?.disconnect();
+    const node = [...panel.querySelectorAll('.deck-editor-inline-inspect')].find(n => !n.hidden);
+    if (!node) return;
+    placeInspect(node);
+    if (typeof ResizeObserver === 'function') {
+      inspectObserver = new ResizeObserver(() => placeInspect(node));
+      inspectObserver.observe(node.closest('.deck-editor-item'));
+    }
+  }
+
   function inlineInspect(row, source) {
     const active = selected?.source === source && selected.key === selectionKey(row, source);
-    const node = focusable(button({ label: t('deckEditor.inspectAction'), className: 'deck-editor-inline-inspect deck-editor-inspect',
+    const node = focusable(button({ label: t('deckEditor.inspectIcon'), className: 'deck-editor-inline-inspect deck-editor-inspect',
       attrs: { 'aria-label': t('deckEditor.inspectNamed', { name: row.name }) } }), `inspect:${source}:${selectionKey(row, source)}`);
     node.hidden = !active;
     node.addEventListener('click', () => select(row, source, true));
@@ -464,7 +501,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       main.dataset.selectionSource = 'collection';
       main.addEventListener('focus', () => select(tile, 'collection'));
       main.addEventListener('gpfocus', () => select(tile, 'collection'));
-      main.addEventListener('click', () => select(tile, 'collection'));
+      artOpens(main, tile, 'collection');
       const plus = focusable(el('button', {
         type: 'button', class: 'deck-editor-step', disabled: tile.equipmentEligible === false, dataset: { action: 'add', key: tile.key },
         'aria-label': tFull('deckEditor.add', { name: tile.name }), 'aria-disabled': tile.addable ? 'false' : 'true',
@@ -512,7 +549,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       main.dataset.selectionSource = 'deck';
       main.addEventListener('focus', () => select(row, 'deck'));
       main.addEventListener('gpfocus', () => select(row, 'deck'));
-      main.addEventListener('click', () => select(row, 'deck'));
+      artOpens(main, row, 'deck');
       const item = el('div', {
         class: `deck-editor-item deck-editor-row${row.locked ? ' locked' : ''}${held === row.instanceId ? ' held' : ''}`, role: 'listitem',
         dataset: { instanceId: row.instanceId, source: row.source },
@@ -751,6 +788,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
     syncInert();
     restoreFocus();
+    trackInspect();
   }
 
   // The first focus key in a pane that is not a text box. Focus never moves
@@ -986,6 +1024,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const releaseDismiss = bindModalDismiss({ veil: root, panel, close: () => doCancel() });
 
   function close() {
+    inspectObserver?.disconnect();
     animationPreview?.dispose();
     animationPreview = null;
     drop();
