@@ -69,6 +69,23 @@ test('past the deadline the wrapper SIGKILLs the whole tree and waits for it', a
   assert.notEqual(state, 'running', 'the grandchild was killed with the tree');
 });
 
+test('on win32 stop asks the tree to close with taskkill /T, and escalates to /T /F past the deadline', async (t) => {
+  // A fake taskkill: the first call (no /F) does not end the process, so the escalation has to.
+  const child = spawn(process.execPath, ['-e', `setInterval(() => {}, 1000);`], { stdio: 'ignore' });
+  t.after(() => { if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL'); });
+  const calls = [];
+  const run = (cmd, args) => { calls.push({ cmd, args }); if (args.includes('/F')) child.kill('SIGKILL'); return { status: 0 }; };
+  const tool = toolWithChild(child);
+  await tool.stop({ deadlineMs: 200, platform: 'win32', run });
+  const pid = String(child.pid);
+  assert.deepEqual(calls, [
+    { cmd: 'taskkill', args: ['/pid', pid, '/T'] },
+    { cmd: 'taskkill', args: ['/pid', pid, '/T', '/F'] },
+  ]);
+  assert.equal(child.signalCode, 'SIGKILL', 'the escalation ended the process');
+  assert.equal(tool.child, null);
+});
+
 test('stop waits for a descendant that outlives a leader which exits on the first SIGTERM', async (t) => {
   if (process.platform === 'win32') return t.skip('POSIX process groups');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ashenspire-tool-stop-'));

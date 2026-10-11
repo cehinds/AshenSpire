@@ -7,11 +7,12 @@
 //   down      — not answering (exited, crashed, or never started)
 // A tool somebody else started is reused when it answers on its port; the
 // Workbench never kills a process it did not start.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { STOP_GRACE_MS, KILL_WAIT_MS, stopGroup } from '../../tools/lib/process-tree.mjs';
+import { killTree } from './jobs.mjs';
 
 const LOG_LINES = 60;
 
@@ -201,7 +202,7 @@ export class Tool {
 
   /** SIGTERM the tool's group, then wait up to deadlineMs for it to exit on its own. Past the
    *  deadline the whole tree is SIGKILLed and the group stop is awaited (bounded). */
-  async stop({ deadlineMs = TOOL_STOP_MS } = {}) {
+  async stop({ deadlineMs = TOOL_STOP_MS, platform = process.platform, run = spawnSync } = {}) {
     const child = this.child;
     if (!child) return;
     this.stopping = true;
@@ -211,11 +212,11 @@ export class Tool {
       const timer = setTimeout(() => resolve(false), ms);
       child.once('exit', () => { clearTimeout(timer); resolve(true); });
     });
-    if (process.platform === 'win32') {
-      // Windows has no process groups: killTree there is taskkill /T /F, so keep the plain signal.
-      const signalTree = (signal) => { try { child.kill(signal); } catch { /* gone */ } };
-      signalTree('SIGTERM');
-      if (!(await exitedWithin(deadlineMs))) { signalTree('SIGKILL'); await exitedWithin(KILL_WAIT_MS); }
+    if (platform === 'win32') {
+      // Windows has no process groups: taskkill /T takes the whole tree from the first signal (no /F),
+      // and /T /F on escalation past the deadline.
+      killTree(child, { platform, run, force: false });
+      if (!(await exitedWithin(deadlineMs))) { killTree(child, { platform, run, signal: 'SIGKILL' }); await exitedWithin(KILL_WAIT_MS); }
     } else {
       // The leader may exit at once while a descendant lives on, so the group is always stopped,
       // whatever the leader did: SIGTERM now, SIGKILL after deadlineMs, and a bounded wait until it is empty.
