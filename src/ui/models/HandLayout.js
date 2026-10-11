@@ -36,22 +36,34 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const controlsReserve = Math.max(0, controlsHeight - Math.max(lift, headroom));
   const arc = config.arcRem * rem;
   const available = Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
-  const cardWidth = compact
-    // Phone cards fill the band between a readable floor and a cap, both in
-    // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
-    ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, available * wireframeUi.card.ratio))
-    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
-  const cardHeight = cardWidth / wireframeUi.card.ratio;
-  inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
   const progress = Math.max(0, Math.min(1,
     (width / rem - config.narrowWidthRem) / (config.wideWidthRem - config.narrowWidthRem)));
   const requested = Math.round(config.minCapacity + progress * (config.maxCapacity - config.minCapacity));
+  // A phone fan keeps every card's description and type line readable: each
+  // card shows at least cardVisibleFraction of its width past its neighbour,
+  // and the outer rotated corners keep cardSideGutterPx from the hand's edges.
+  // `spread` is the rotated face's extra half-width per unit of card width.
+  const fanAngle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
+  const spread = (Math.sin(fanAngle) / wireframeUi.card.ratio + Math.cos(fanAngle) - 1) / 2;
+  const gutter = compact ? compactCard.cardSideGutterPx / zoom : 0;
+  const fanCount = Math.max(1, Math.min(count, requested));
+  const readableWidth = (width - gutter * 2) / (1 + (fanCount - 1) * compactCard.cardVisibleFraction + spread * 2);
+  const cardWidth = compact
+    // Phone cards fill the band between a readable floor and a cap, both in
+    // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
+    ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, available * wireframeUi.card.ratio))
+    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
+  const cardHeight = cardWidth / wireframeUi.card.ratio;
+  inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
+  // Horizontal margin: the vertical inset everywhere but a phone, which keeps
+  // its gutter clear of the outer cards' rotated corners.
+  const side = compact ? Math.max(inset, gutter + spread * cardWidth) : inset;
   const touch = config.exposedTargetPx / zoom;
   const capacity = Math.max(1, Math.min(requested, Math.floor(Math.max(0, width - cardWidth) / touch) + 1));
   const visible = Math.max(1, Math.min(count, capacity));
-  const step = visible > 1 ? Math.max(touch, Math.min(cardWidth, (width - cardWidth - inset * 2) / (visible - 1))) : count > 1 ? touch : 0;
+  const step = visible > 1 ? Math.max(touch, Math.min(cardWidth, (width - cardWidth - side * 2) / (visible - 1))) : count > 1 ? touch : 0;
   const span = count ? cardWidth + Math.max(0, count - 1) * step : 0;
-  const start = Math.max(inset, (width - span) / 2);
+  const start = Math.max(side, (width - span) / 2);
   const middle = (count - 1) / 2;
   // The rotated outside corners, not just the unrotated face, must clear
   // the footer. Keep one physical pixel between the fan and that next band.
@@ -69,7 +81,10 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
     return card.x + cardWidth / 2 - (Math.abs(Math.cos(radians)) * cardWidth
       + Math.abs(Math.sin(radians)) * cardHeight) / 2;
   })) : 0;
-  const top = Math.max(0, Math.min(bottomLimit, Math.max(inset + liftReserve, (height - controlsReserve - cardHeight - arc) / 2)));
+  // A phone docks the fan right under its tool row; a width-bound fan leaves
+  // its spare height below the cards, not in a gap under the row.
+  const centred = compact ? 0 : (height - controlsReserve - cardHeight - arc) / 2;
+  const top = Math.max(0, Math.min(bottomLimit, Math.max(inset + liftReserve, centred)));
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
     return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
