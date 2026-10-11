@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createWorkbench, listPreviews } from '../server.mjs';
 import { safePath, refusedPath, createGate } from '../lib/index.mjs';
@@ -378,4 +378,24 @@ test('Pose & FX is started on the Workbench project, and serves that project', a
     child.on('exit', (c) => reject(Error(`exited ${c}`)));
   });
   assert.match(await (await fetch(url)).text(), /project copy/);
+});
+
+test('start.sh reuses a running Workbench only for the same project', { skip: process.platform === 'win32' || spawnSync('curl', ['--version']).status !== 0 }, async (t) => {
+  const root = await project(t);
+  const other = await project(t);
+  const { app } = await boot(t, root);
+  const port = String(new URL(app.url).port);
+  const start = (...args) => new Promise((resolve) => {
+    const child = spawn('sh', [path.join(HERE, '../start.sh'), '--port', port, '--no-open', ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; }); child.stderr.on('data', (d) => { out += d; });
+    child.on('exit', (code) => resolve({ code, out }));
+  });
+  const same = await start('--project', root);
+  assert.equal(same.code, 0, same.out);
+  assert.match(same.out, /already running/);
+  const mismatch = await start('--project', other);
+  assert.equal(mismatch.code, 1, mismatch.out);
+  assert.match(mismatch.out, /another project/);
+  assert.ok(mismatch.out.includes(root), 'names the project it is serving');
 });
