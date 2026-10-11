@@ -2197,14 +2197,16 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       },
     }, () => {
       if (run.cancelled) return;
-      if (disposed) { setPacing(false); return; }
-      if (hasCardPlay) seatPlans();
+      // The flag clears first: nothing below may leave the hand locked.
+      setPacing(false);
+      if (disposed) return;
+      // A plan that cannot resolve costs its effect, not the frame.
+      if (hasCardPlay) { try { seatPlans(); } catch (error) { console.error('[coop] card plans failed', error); } }
       animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
       lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
       lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
       prevCombat = next.scene;
       snap = next;
-      setPacing(false);
       render();
       // Capture these receipts' overlays before a queued frame's render can
       // replace effectEvents, then drain the queue, so the plans and overlays

@@ -151,7 +151,9 @@ test('a throw before the timeline starts clears the flag; a cancelled or torn-do
   // A watchdog armed before the throw later calls onFlush/done: they must not land stale frames.
   assert.match(timeline, /const apply = beat => \{\s*if \(disposed \|\| run\.cancelled\) return;/);
   assert.match(timeline, /onFlush\(\) \{\s*if \(disposed \|\| run\.cancelled\) return;/);
-  assert.match(timeline, /\}, \(\) => \{\s*if \(run\.cancelled\) return;\s*if \(disposed\) \{ setPacing\(false\); return; \}/);
+  assert.match(timeline, /\}, \(\) => \{\s*if \(run\.cancelled\) return;\s*\/\/[^\n]*\n\s*setPacing\(false\);\s*if \(disposed\) return;/,
+    'done clears the flag before anything that can throw');
+  assert.match(timeline, /if \(hasCardPlay\) \{ try \{ seatPlans\(\); \} catch \(error\) \{/, 'a plan that throws cannot strand the frame');
 });
 
 test('a duplicated or resynced frame never replays its timeline, enemy or player', () => {
