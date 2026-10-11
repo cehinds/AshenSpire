@@ -10,7 +10,8 @@ import * as C from './config-model.mjs';
 import * as M from '../../../ui-studio/model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const CSS = ['/ui/kit/canvas.css', '/modules/layout/layout.css'];
+// The kit stylesheet is linked by index.html; only the module's own sheet is injected here.
+const CSS = ['/modules/layout/layout.css'];
 const ZOOM_STEP = 1.25;
 const ALIGN = [['left', 'Align left'], ['center', 'Align centre'], ['right', 'Align right'], ['top', 'Align top'], ['middle', 'Align middle'], ['bottom', 'Align bottom']];
 const MODES = [

@@ -42,6 +42,15 @@ test('module prefs persist per module under wb.mod.<id> and survive a broken sto
   assert.doesNotThrow(() => broken.set('zoom', 2));
 });
 
+test('Layout Studio is a real module, not the placeholder', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../modules/layout/index.mjs', import.meta.url), 'utf8');
+  assert.ok(!/placeholder\.mjs/.test(src), 'layout does not import the placeholder');
+  assert.match(src, /UI config/);
+  const mod = await MODULES.find((m) => m.id === 'layout').load();
+  assert.equal(typeof mod.default.mount, 'function');
+});
+
 test('deep links round-trip: #mod=<id>&params', () => {
   assert.deepEqual(parseHash('#mod=data&table=cards&row=3'), { mod: 'data', params: { table: 'cards', row: '3' } });
   assert.equal(parseHash('#page=library'), null);
