@@ -1,0 +1,55 @@
+# readme-sync — refresh the generated parts of README.md after every push to dev.
+#
+# Owner, 2026-10-11: README is verified on every PR into dev (the fast gate is
+# tests/readme-sync.test.mjs, discovered by the PR → dev test run) and its
+# generated regions (<!-- readme-sync:<name> -->) are refreshed automatically
+# on every push to dev. This workflow runs `tools/readme-sync.mjs --write`,
+# and commits back only README.md when a region changed.
+#
+# Mirrors architecture-sync.yml: bot commit, concurrency per ref, and a loop
+# guard that skips the bot's own commit (its message carries [readme-sync]).
+# Nothing outside the marked regions is rewritten.
+
+name: readme-sync
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: readme-sync-${{ github.ref_name }}
+  cancel-in-progress: true
+
+# The routine commits only README.md.
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.ref_name == 'dev' && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[readme-sync]'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the merged dev tree
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: ./.github/actions/setup-node
+
+      - name: Refresh the generated README regions
+        run: node tools/readme-sync.mjs --write
+
+      - name: Commit only README.md when a region changed
+        shell: bash
+        run: |
+          if git diff --quiet -- README.md; then
+            echo "README generated regions already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- README.md
+          git diff --cached --name-only
+          git commit -m "docs: refresh README [readme-sync]"
+          git push origin "HEAD:$GITHUB_REF_NAME"
