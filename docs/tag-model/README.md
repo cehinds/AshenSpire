@@ -198,12 +198,15 @@ record the mapping. They approximate it; they are not exact:
     smithUpgradeModal`) gets none of that function's own classes. Those classes
     belong to the shared renderer, which has no catalog row. The row gets the note
     `owner:shared-renderer`. `smith-upgrade-preview` is the case: `ctext`, `tt-kw`
-    and `tt-title` come from `card.js`, so they stay unowned.
+    come from `card.js` and have no catalog owner, so they stay unowned. `tt-title`
+    is listed by 8 catalog rows, so it is not unowned in the tables.
   - **Titles.** `title-menu-item` resolves to `tm-entry` through the imported
-    `titleMenu`. The 18 title components that name `title.mountTitle` each list
-    `tm-entry`, and no per-component rule can tell them apart, so `tm-entry` has 18
-    owners and counts as generic (below). The 62 rows whose selector contains
-    `.tm-entry` therefore do not re-point. That is a stated gap, not a resolved case.
+    `titleMenu`. 20 components name `title.mountTitle`, and 18 of them list
+    `tm-entry`. No per-component rule can tell those 18 apart, so `tm-entry` has 18
+    owners and counts as generic (below). Of the 62 rows whose selector contains
+    `.tm-entry`, one re-points: `.title-screen .title-menu .tm-entry .engraved-icon`
+    goes to `player.engravedIcon`. The other 61 keep their CSS-derived componentId,
+    which is a stated gap, not a resolved case.
 
   At this commit 161 of the 270 catalog components resolve and 109 do not.
 - `styles.componentId` names the catalog component that owns the row's selector,
