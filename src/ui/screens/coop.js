@@ -232,9 +232,14 @@ export function coopReceiptOverlays(decorated = []) {
 }
 
 /** coopTimelineRoute for a combat scene whose receipts are new (receiptSeq past lastSeq), else null. */
-export function coopPacedRoute(scene, lastSeq = 0) {
-  if (scene?.kind !== 'combat' || !((Number(scene.receiptSeq) || 0) > lastSeq)) return null;
-  return coopTimelineRoute(scene.events, (scene.players || []).map(player => player.id));
+// A FIGHT'S LAST RECEIPTS ride the scene that replaced it (tools/session.mjs
+// settleCombat: `combatReceipts` { receiptSeq, events } on the reward or
+// complete scene), so the blow that ended it routes like any other frame;
+// `seatIds` names the seats such a scene no longer lists.
+export function coopPacedRoute(scene, lastSeq = 0, seatIds = []) {
+  const receipts = scene?.kind === 'combat' ? scene : scene?.combatReceipts;
+  if (!receipts || !((Number(receipts.receiptSeq) || 0) > lastSeq)) return null;
+  return coopTimelineRoute(receipts.events, scene.kind === 'combat' ? (scene.players || []).map(player => player.id) : seatIds);
 }
 
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
@@ -1967,7 +1972,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // along) play the enemy timeline; a seat's own new attack plays the player
     // timeline, in the solo order (SPEC §7.4); anything else, and any frame
     // whose receipts already played (a duplicate, a resync), renders at once.
-    const route = prevCombat && app.querySelector('.combat.coop') ? coopPacedRoute(sc, lastReceiptSeq) : null;
+    const route = prevCombat && app.querySelector('.combat.coop') && snap?.scene?.kind === 'combat'
+      ? coopPacedRoute(sc, lastReceiptSeq, (prevCombat.players || []).map(player => player.id)) : null;
+    if (route && sc.kind !== 'combat') {
+      // The killing blow plays on the board still mounted, then its scene lands.
+      const final = { ...s, scene: { ...snap.scene, events: sc.combatReceipts.events, receiptSeq: sc.combatReceipts.receiptSeq } };
+      paceReactionReceipts(final, { mode: route, land: s });
+      return;
+    }
     if (route === 'enemy') {
       paceReactionReceipts(s);
       return;
@@ -2050,7 +2062,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   }
 
-  function paceReactionReceipts(next, { mode = 'enemy' } = {}) {
+  // `land` is the frame that lands when the timeline ends: `next` itself, or
+  // the reward/complete scene that carried a fight's last receipts.
+  function paceReactionReceipts(next, { mode = 'enemy', land = next } = {}) {
     // The enemy timeline shows the Enemy Turn ribbon; a player's own attack
     // holds only the hand and controls (busy()).
     const setPacing = on => { if (mode === 'player') playerPacing = on; else pacing = on; };
@@ -2060,20 +2074,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // its watchdog before throwing must not later render its stale frames.
     const run = { started: false, cancelled: false };
     try {
-      playPacedReceipts(next, setPacing, run);
+      playPacedReceipts(next, setPacing, run, land);
     } catch (error) {
       console.error('[coop] paced receipts failed', error);
       if (run.started) return;
       run.cancelled = true;
       setPacing(false);
-      snap = next;
+      snap = land;
       if (!disposed) { try { render(); } catch (renderError) { console.error('[coop] render failed', renderError); } }
       const queued = pendingSnaps; pendingSnaps = [];
       for (const pending of queued) receiveSnapshot(pending);
     }
   }
 
-  function playPacedReceipts(next, setPacing, run) {
+  function playPacedReceipts(next, setPacing, run, land = next) {
     setPacing(true);
     // The seats' card plans (sprite effect, aura, held stance) for these
     // receipts, collected once: when the card's owner swings, or at the end
@@ -2193,7 +2207,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
         lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
         lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
-        snap = next; render();
+        // A final frame's board holds no end state of its own: done lands its scene.
+        if (land === next) { snap = next; render(); }
       },
     }, () => {
       if (run.cancelled) return;
@@ -2205,8 +2220,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       animationReceiptSeq = Math.max(animationReceiptSeq, next.scene.receiptSeq || 0);
       lastSoundSeq = Math.max(lastSoundSeq, next.scene.receiptSeq || 0);
       lastReceiptSeq = Math.max(lastReceiptSeq, next.scene.receiptSeq || 0);
-      prevCombat = next.scene;
-      snap = next;
+      prevCombat = land.scene.kind === 'combat' ? land.scene : prevCombat;
+      snap = land;
       render();
       // Capture these receipts' overlays before a queued frame's render can
       // replace effectEvents, then drain the queue, so the plans and overlays

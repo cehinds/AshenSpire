@@ -79,7 +79,7 @@ const body = (name) => {
 test('co-op routes a new player attack through the paced timeline under the player flag', () => {
   const receive = body('receiveSnapshot');
   assert.match(receive, /if \(busy\(\)\) \{/, 'any running timeline queues the next snapshot');
-  assert.match(receive, /coopPacedRoute\(sc, lastReceiptSeq\)/);
+  assert.match(receive, /coopPacedRoute\(sc, lastReceiptSeq, /);
   assert.match(receive, /route === 'player'\) \{\s*paceReactionReceipts\(s, \{ mode: 'player' \}\);/,
     'only new receipts replay, through the same timeline');
   const pace = body('paceReactionReceipts') + body('playPacedReceipts');
@@ -143,8 +143,8 @@ test('a card plan no swing played (Instant, reduced motion, a skip) plays on the
 
 test('a throw before the timeline starts clears the flag; a cancelled or torn-down run renders nothing', () => {
   const pace = body('paceReactionReceipts');
-  assert.match(pace, /try \{\s*playPacedReceipts\(next, setPacing, run\);\s*\} catch \(error\) \{/);
-  assert.match(pace, /if \(run\.started\) return;\s*run\.cancelled = true;\s*setPacing\(false\);\s*snap = next;/,
+  assert.match(pace, /try \{\s*playPacedReceipts\(next, setPacing, run, land\);\s*\} catch \(error\) \{/);
+  assert.match(pace, /if \(run\.started\) return;\s*run\.cancelled = true;\s*setPacing\(false\);\s*snap = land;/,
     'the input lock clears, the run is cancelled and the snapshot lands');
   const timeline = body('playPacedReceipts');
   assert.ok(timeline.lastIndexOf('run.started = true;') > timeline.indexOf('playTimeline(events,'), 'started only once playTimeline owns completion');
@@ -191,4 +191,40 @@ test("a paced card plan resolves the played card from the frame that carries it,
   assert.match(collect, /resolveCoopPlayedCombatCard\(registries, source, event\)/, 'the plan reads the frame it was given');
   assert.doesNotMatch(collect, /resolveCoopPlayedCombatCard\(registries, snap,/, 'never the working copy');
   assert.match(body('playPacedReceipts'), /collectCombatAnimations\(next\)/);
+});
+
+test('the blow that ends a fight is paced once, on the board, before its reward scene lands', () => {
+  const host = createSession({ registries, seedString: 'ATTACKORDER' });
+  host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
+  host.addMember({ id: 'p2', name: 'Two', classId: 'rogue' });
+  host.start();
+  for (const member of host.session.members.values()) {
+    while (member.run.classMasteryState?.initialTreeTiers.length) {
+      const choices = initialClassTreeChoices(registriesForClassMastery(registries, member.run), member.run);
+      assert.equal(host.chooseMasteryNode(member.id, choices[0]).ok, true);
+    }
+  }
+  for (const id of ['p1', 'p2']) assert.equal(host.chooseNode(id, host.session.mapGraph.startIds[0]).ok, true);
+  const board = host.snapshot().scene;
+  const lastSeq = board.receiptSeq;
+  // Leave one enemy standing on 1 HP, so the next attack ends the fight.
+  const [last, ...rest] = host.live.combat.enemies.filter(enemy => enemy.alive);
+  for (const enemy of rest) { enemy.hp = 0; enemy.alive = false; }
+  last.hp = 1;
+  const attack = board.players.find(player => player.id === 'p1').hand.find(card => registries.cards.get(card.cardId)?.type === 'attack');
+  assert.equal(host.combatPlay('p1', attack.instanceId, last.id).ok, true);
+  const scene = host.snapshot().scene;
+  assert.notEqual(scene.kind, 'combat', 'the fight ended');
+  // settleCombat: the final receipts ride the replacing scene, one seq past the board's.
+  assert.ok(scene.combatReceipts && scene.combatReceipts.receiptSeq > lastSeq, JSON.stringify(scene.combatReceipts?.receiptSeq));
+  assert.ok(scene.combatReceipts.events.some(event => event.type === 'damageDealt' && event.isAttack));
+  assert.equal(coopPacedRoute(scene, lastSeq, ['p1', 'p2']), 'player', 'the killing blow plays through the player timeline');
+  assert.equal(coopPacedRoute(scene, scene.combatReceipts.receiptSeq, ['p1', 'p2']), null, 'and never replays');
+  // Wiring: only with the combat board still mounted; the replacing scene lands at the end.
+  const receive = body('receiveSnapshot');
+  assert.match(receive, /app\.querySelector\('\.combat\.coop'\) && snap\?\.scene\?\.kind === 'combat'/);
+  assert.match(receive, /paceReactionReceipts\(final, \{ mode: route, land: s \}\);/);
+  const timeline = body('playPacedReceipts');
+  assert.match(timeline, /snap = land;\s*render\(\);/);
+  assert.match(timeline, /if \(land === next\) \{ snap = next; render\(\); \}/, 'a skip does not redraw the ended fight');
 });
