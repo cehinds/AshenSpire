@@ -1,0 +1,59 @@
+/* workbench/modules/entities/entities.css — Entity Browser layout. The chips sit
+   on top; the filters, the game-drawn grid and the detail drawer share the rest.
+   The page uses the Workbench tokens (--as-*) like the other native modules. */
+.ent { display: flex; flex-direction: column; height: 100%; min-height: 0; color: inherit; }
+.ent [hidden] { display: none !important; }
+
+.ent-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--as-line, #3a2f20); }
+.ent-chips button {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+  border: 1px solid var(--as-line, #3a2f20); background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer;
+}
+.ent-chips button[aria-selected="true"] { border-color: #c9a227; background: rgba(201, 162, 39, 0.14); }
+.ent-chips button:focus-visible { outline: 2px solid #f7e6a6; outline-offset: 2px; }
+.ent-n { font-variant-numeric: tabular-nums; opacity: 0.75; font-size: 12px; }
+
+.ent-body { display: grid; grid-template-columns: 240px minmax(0, 1fr) 340px; flex: 1; min-height: 0; }
+
+.ent-filters, .ent-drawer { min-height: 0; overflow: auto; padding: 12px; }
+.ent-filters { border-right: 1px solid var(--as-line, #3a2f20); display: flex; flex-direction: column; gap: 10px; }
+.ent-drawer { border-left: 1px solid var(--as-line, #3a2f20); display: flex; flex-direction: column; gap: 10px; }
+
+.ent-field { display: grid; gap: 4px; font-size: 12px; opacity: 0.95; }
+.ent-field input, .ent-field select, .ent-try select {
+  font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 6px; min-width: 0; width: 100%;
+  border: 1px solid var(--as-line, #3a2f20); background: var(--as-surface, #1d1711); color: inherit;
+}
+.ent-seg { display: inline-flex; border: 1px solid var(--as-line, #3a2f20); border-radius: 6px; overflow: hidden; }
+.ent-seg button { border: 0; background: transparent; color: inherit; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.ent-seg button[aria-pressed="true"] { background: rgba(201, 162, 39, 0.2); }
+.ent-count { margin: 0; font-size: 13px; opacity: 0.8; }
+.ent-reset, .ent-ds, .ent-try button, .ent-setup button { font: inherit; font-size: 13px; padding: 7px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--as-line, #3a2f20); background: transparent; color: inherit; }
+.ent-ds:disabled { opacity: 0.45; cursor: not-allowed; }
+.ent-try button.primary { border-color: #c9a227; }
+.ent-reset, .ent-ds:focus-visible, .ent-try button:focus-visible, .ent-tabs button:focus-visible, .ent-chips button:focus-visible { outline: 2px solid #f7e6a6; outline-offset: 2px; }
+
+.ent-center { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.ent-frame { flex: 1; width: 100%; min-height: 0; border: 0; background: #17130e; }
+.ent-setup { padding: 16px; font-size: 14px; line-height: 1.5; }
+
+.ent-drawer-head h2 { margin: 0; font-size: 18px; }
+.ent-sub { margin: 2px 0 0; font-size: 12px; opacity: 0.75; }
+.ent-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.ent-tabs button { border: 1px solid var(--as-line, #3a2f20); background: transparent; color: inherit; border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+.ent-tabs button[aria-selected="true"] { border-color: #c9a227; background: rgba(201, 162, 39, 0.16); }
+.ent-pane { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 360px; }
+.ent-drawer-frame { flex: 1; width: 100%; min-height: 360px; border: 1px solid var(--as-line, #3a2f20); border-radius: 8px; background: #17130e; }
+.ent-drawer-frame[hidden] { display: none; }
+.ent-pose label { font-size: 13px; display: flex; gap: 8px; align-items: center; }
+.ent-try { display: grid; gap: 10px; }
+.ent-drawer-foot { margin-top: auto; }
+.ent-ds { width: 100%; }
+
+@media (max-width: 1100px) {
+  .ent-body { grid-template-columns: 200px minmax(0, 1fr) 300px; }
+}
+@media (max-width: 900px) {
+  .ent-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(320px, 1fr) auto; }
+  .ent-filters, .ent-drawer { border: 0; max-height: 40vh; }
+}

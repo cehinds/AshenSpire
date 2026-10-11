@@ -257,7 +257,11 @@ window.addEventListener('message', (event) => {
 if (!parentOrigin) {
   stage.replaceChildren(messageBox('Open this page from the Entity Browser (it passes its origin in ?po=).'));
 } else {
-  post('counts', { counts: Object.fromEntries(KINDS.map((k) => [k.id, defsOf(k.id).length])) });
+  post('counts', {
+    counts: Object.fromEntries(KINDS.map((k) => [k.id, defsOf(k.id).length])),
+    classes: defsOf('classes').map((c) => ({ id: c.id, name: c.name })),
+    armaments: defsOf('armaments').map((a) => ({ id: a.id, name: a.name })),
+  });
   post('ready', {});
   apply(parseDeepLink(params));
 }
