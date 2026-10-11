@@ -18,14 +18,22 @@ export function moveHandInstance(order, id, slot) {
   return next;
 }
 
-export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0 }, config = wireframeUi.hand) {
+// `headroom` is band above `height` (the phone's compact tool row) that a
+// selected card may rise into. Its lift, and its chooser's rise, are reserved
+// only where they exceed that headroom, so the resting fan sits right under
+// the row instead of under an empty band, and the reclaimed height goes to
+// the cards.
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, headroom = 0 }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
-  // The selected face already rises by lift. Reserve only the additional
-  // space its below-card controls need, before selection or a touch begins.
-  const controlsReserve = Math.max(0, controlsHeight - lift);
+  const liftReserve = Math.max(0, lift - headroom);
+  // The selected face already rises by lift, and the chooser's correction
+  // (handInspectionOverlay) may raise it on through the headroom. Reserve only
+  // the additional space its below-card controls need, before selection or a
+  // touch begins.
+  const controlsReserve = Math.max(0, controlsHeight - Math.max(lift, headroom));
   const arc = config.arcRem * rem;
-  const available = Math.max(0, height - inset * 2 - lift - arc - controlsReserve);
+  const available = Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
   const cardWidth = compact
     ? Math.max(72 / zoom, Math.min(100 / zoom, available * wireframeUi.card.ratio))
     : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
@@ -57,7 +65,7 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
     return card.x + cardWidth / 2 - (Math.abs(Math.cos(radians)) * cardWidth
       + Math.abs(Math.sin(radians)) * cardHeight) / 2;
   })) : 0;
-  const top = Math.max(0, Math.min(bottomLimit, Math.max(inset + lift, (height - controlsReserve - cardHeight - arc) / 2)));
+  const top = Math.max(0, Math.min(bottomLimit, Math.max(inset + liftReserve, (height - controlsReserve - cardHeight - arc) / 2)));
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
     return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
@@ -65,7 +73,7 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   })) : 0;
   // The chooser's bounded vertical correction may lift its owner to the hand
   // clipping edge. Reserve that possible face before selection, not afterwards.
-  const clearanceTop = controlsHeight > 0 ? 0 : Math.min(restTop, Math.max(0, top - lift));
+  const clearanceTop = controlsHeight > 0 ? 0 - headroom : Math.min(restTop, Math.max(0 - Math.min(headroom, lift), top - lift));
   return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift, restLeft, restTop, clearanceTop, controlsReserve,
     top,
     cards,
