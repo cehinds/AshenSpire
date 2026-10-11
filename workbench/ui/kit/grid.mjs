@@ -159,11 +159,6 @@ export function createGrid(el, options = {}) {
     if (onChange) onChange({ rows: doc.rows, columns: doc.columns, change, direction, errors: [] });
   }
   const selectedRows = () => M.selectedCells(sel, order, doc.columns).rows;
-  // The selected cells as {r, c} indices, in view order (for the model's cell-level ops).
-  const selectedTargets = () => {
-    const colIdx = new Map(doc.columns.map((c, i) => [c.key, i]));
-    return M.selectedCells(sel, order, doc.columns).cells.map(([r, key]) => ({ r, c: colIdx.get(key) }));
-  };
   function setActive(r, c, opts = {}) {
     sel = M.selectCell(sel, { r, c }, opts);
   }
@@ -271,8 +266,8 @@ export function createGrid(el, options = {}) {
   function hideBanner() { if (banner) { banner.remove(); banner = null; } }
   function clearSelection() {
     if (readOnly) return;
-    const cells = selectedTargets();
-    if (cells.length) commit(M.clearCells(doc, cells));
+    const res = M.clearVisible(doc, sel, order);
+    if (res.change) commit(res);
   }
   // Every selected row (all runs), in the order the view shows them, and every selected column.
   function fillDownSel() {

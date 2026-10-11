@@ -273,6 +273,37 @@ test('paste banner text: the first 10 errors, "and N more", and the overflow not
   assert.equal(pasteSummary([{ row: 0, key: 'n', value: 'a'.repeat(80), message: 'm' }]).lines[0].length < 120, true, 'long values are cut');
 });
 
+test('clear under a filter: hidden rows inside the selection keep their values', () => {
+  const d = fresh();
+  const order = M.filterIndices(d.rows, d.columns, { byColumn: { tag: 'x' } }); // a and d
+  const out = M.clearVisible(d, selOf(range(0, 0, 3, 1)), order); // rows 0..3, columns id and n
+  assert.deepEqual(out.rows.map(r => r.id), ['', 'b', 'c', '']);
+  assert.deepEqual(out.rows.map(r => r.n), [null, 10, null, null]);
+  assert.equal(out.rows[1], d.rows[1], 'hidden row b is the same object');
+  assert.equal(out.rows[2], d.rows[2], 'hidden row c is the same object');
+  assert.equal(out.change.label, 'Clear cells');
+  assertRoundTrip(d, out);
+});
+
+test('clear over a sorted view with a hidden row inside the span: only visible selected cells clear', () => {
+  // c (row 2) is hidden by a filter but sits inside the selected span and holds a value.
+  const columns = base().columns;
+  const rows = base().rows.map((r, i) => (i === 2 ? { ...r, tag: 'keep' } : r));
+  const d = { columns, rows };
+  const viewOrder = [3, 1, 0]; // d, b, a: sorted id desc, c hidden
+  const out = M.clearVisible(d, selOf(range(0, 3, 3, 3), range(3, 4, 3, 4)), viewOrder);
+  assert.deepEqual(out.rows.map(r => r.tag), ['', '', 'keep', ''], 'the hidden c keeps its tag');
+  assert.deepEqual(out.rows.map(r => r.data), [{ k: 1 }, [1], null, null], 'd.data cleared, the rest of the data column untouched');
+  assert.deepEqual(out.rows.map(r => r.id), ['a', 'b', 'c', 'd'], 'columns outside the selection are untouched');
+  assertRoundTrip(d, out);
+});
+
+test('clear with no selected cell changes nothing and records no step', () => {
+  const d = fresh();
+  assert.equal(M.clearVisible(d, M.createSelection(), docOrder(4)).change, null);
+  assert.equal(M.clearVisible(d, selOf(range(1, 0, 1, 0)), [0, 3]).change, null, 'only a hidden row is selected');
+});
+
 test('selectedCells: columns are clipped to the column count', () => {
   const sc = M.selectedCells(selOf(range(0, 0, 0, 99)), [0], cols);
   assert.deepEqual(sc.cols, cols.map(c => c.key));

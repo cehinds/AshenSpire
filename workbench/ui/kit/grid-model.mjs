@@ -300,6 +300,15 @@ export function clearCells(doc, cells) {
   return setCells(doc, cells, (old, col) => emptyValue(col.type), 'Clear cells');
 }
 /**
+ * Clear every selected cell, all ranges, visible rows only (rows a filter hides are untouched).
+ * With no selected cell there is nothing to do: change is null.
+ */
+export function clearVisible(doc, selection, order) {
+  const { cells } = coverage(selection, order, doc.columns);
+  if (!cells.length) return { rows: doc.rows, columns: doc.columns, change: null };
+  return clearCells(doc, cells);
+}
+/**
  * Paste a clipboard matrix (text or parsed matrix) with its top-left at `at`.
  * Expands rows past the end. Cells that do not parse are skipped and listed in
  * errors; the rest still apply. fill: when the clipboard is one value, it fills
