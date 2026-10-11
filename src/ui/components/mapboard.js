@@ -489,7 +489,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const mark = viewer.mark ? viewer.mark(n, { x: px(n), y: py(n), r }) : '';
     el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: px(n), y: py(n), radius: r, reachable: isReachable })}${mark || ''}`);
     if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
-    if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
+    // secondTap: false — a map node's tap is a SELECTION (the tray answers it),
+    // not an explanation; the explain-on-second-tap layout work ran on every
+    // second tap of a node for nothing. Hover and focus tooltips are unaffected.
+    if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }), { secondTap: false });
     g.appendChild(el);
   }
 
@@ -650,15 +653,33 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     if (!scroll.isConnected) return; // the player left the map while a commit was pending
     if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
-  // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
-  // Applying a content box can add or remove a CLASSIC scrollbar (this
-  // scrollport asks for `scrollbar-width: thin`, not overlay), and a scrollbar
-  // takes layout width — which is the very number the pads were computed from.
-  // One pass would centre against a viewport that no longer exists by the time
-  // it lands, off by the scrollbar, on desktop only, silently. The second pass
-  // reads the settled viewport; a third has nothing left to change, because the
-  // pad is linear in the viewport and a scrollbar is a two-state thing.
-  function sizeSvg() { apply(); apply(); }
+  // TWICE WHEN THE FIRST PASS MOVED THE VIEWPORT, and this is the one
+  // non-obvious line in the change. Applying a content box can add or remove a
+  // CLASSIC scrollbar (this scrollport asks for `scrollbar-width: thin`, not
+  // overlay), and a scrollbar takes layout width — which is the very number the
+  // pads were computed from. One pass would centre against a viewport that no
+  // longer exists by the time it lands, off by the scrollbar, on desktop only,
+  // silently. So the viewport is read before and after the first pass, and only
+  // a changed viewport earns the second. Without a change the second pass would
+  // write exactly what the first wrote: the inputs are the same, and the writes
+  // do not move the scroller. (W5a: the unconditional second pass cost a forced
+  // layout per tap, four per map tap across centring and the glide's land.)
+  //
+  // `sizedThisFrame` / `sizedAim` let a glide's landing skip a second solve that
+  // centerOnNode has just made in the same tick; see `land` in glideTo.
+  let sizedThisFrame = false;
+  let sizedAim = NaN;
+  function sizeSvg() {
+    const cw = scroll.clientWidth;
+    const ch = scroll.clientHeight;
+    apply();
+    if (scroll.clientWidth !== cw || scroll.clientHeight !== ch) apply();
+    sizedAim = aimX;
+    if (!sizedThisFrame && typeof requestAnimationFrame === 'function') {
+      sizedThisFrame = true;
+      requestAnimationFrame(() => { sizedThisFrame = false; });
+    }
+  }
   function apply() {
     // Before the first layout the viewport is 0 and there is no half-viewport to
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
@@ -1145,7 +1166,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const toLeft = Number.isFinite(target.left) ? target.left : 0;
     const land = () => {
       aimX = target.aimX;
-      sizeSvg();
+      // centerOnNode has just solved the viewBox in this same tick. The solve
+      // reads the aim only when the horizontal axis is not free (in two-axis
+      // mode the viewBox is the ink plus pad, whatever the aim), so only a moved
+      // aim on the fixed axis needs solving again.
+      if (!sizedThisFrame || (!freePan && sizedAim !== aimX)) sizeSvg();
       if (titleEl) titleEl.setAttribute('x', String(aimX));
       scroll.scrollLeft = toLeft;
       scroll.scrollTop = target.top;

@@ -64,7 +64,52 @@ let liveMapKeys = null;
 let liveMapBoard = null;
 let liveMapViewportRelease = null;
 
+// THE COMMIT SAVE, OFF THE TAP (W5a). A settled-board commit used to run the
+// whole run save synchronously inside the camera's own callback, so a tap paid
+// for a JSON write of the run. Now a commit is queued for idle time: one save
+// pending at a time, and it reads the live run when it fires, so a commit that
+// arrives while one is queued is simply covered by it. A save is never dropped:
+// every path that hands control away (a pick to enter, a remount, the HUD's
+// menu, load, save and quit) flushes it first, and a page that is hidden or
+// closed flushes it too. A save is dropped only when its map is no longer on
+// screen, which is what the camera's own commit already did.
+let pendingSave = null; // { save, root, cancel }
+function whenIdle(fn) {
+  if (typeof requestIdleCallback === 'function') {
+    const id = requestIdleCallback(fn, { timeout: 500 });
+    return () => { if (typeof cancelIdleCallback === 'function') cancelIdleCallback(id); };
+  }
+  const id = setTimeout(fn, 0);
+  return () => clearTimeout(id);
+}
+const mapIsOnScreen = (root) => !!root?.querySelector('.mapscreen');
+function scheduleSave(save, root) {
+  if (pendingSave) return;
+  const entry = { save, root, cancel: () => {} };
+  pendingSave = entry;
+  entry.cancel = whenIdle(() => {
+    if (pendingSave !== entry) return;
+    pendingSave = null;
+    if (mapIsOnScreen(root)) save();
+  });
+}
+export function flushPendingSave() {
+  const entry = pendingSave;
+  if (!entry) return;
+  pendingSave = null;
+  entry.cancel();
+  if (mapIsOnScreen(entry.root)) entry.save();
+}
+// Before a page goes away, a queued save must not die with it.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', flushPendingSave);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingSave(); });
+}
+// A callback that hands control away: flush the queued save first, then run it.
+const leaving = (fn) => (typeof fn === 'function' ? (...args) => { flushPendingSave(); return fn(...args); } : fn);
+
 export function releaseMapScreen() {
+  flushPendingSave();
   if (liveMapKeys) removeEventListener('keydown', liveMapKeys);
   liveMapKeys = null;
   liveMapBoard?.teardown();
@@ -119,7 +164,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // every room, so the map cannot drift from the merchant or the Shrine any
   // more than it could from combat (E9 / #254).
   wireRunHud(app, {
-    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange, remount,
+    registries, run, meta, onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: leaving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange, remount,
   });
   // ---- THE BOARD -------------------------------------------------------
   //
@@ -192,7 +237,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       viewState: mapAdapter ? mapAdapter.viewState : run.mapView,
       onViewStateChange: (viewState, { commit } = {}) => {
         if (mapAdapter) mapAdapter.onViewStateChange(viewState); else run.mapView = viewState;
-        if (commit && onSave) onSave();
+        if (commit && onSave) scheduleSave(onSave, app);
       },
       // W4b: a pick selects; Enter, or picking the selected node again, travels.
       onPick: (id, reading) => selectNode(id, reading),
@@ -256,7 +301,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   backButton.addEventListener('click', () => clearSelection());
   enterButton.addEventListener('click', () => {
-    if (selection.selectedId && reachable.has(selection.selectedId)) onPick(selection.selectedId);
+    if (selection.selectedId && reachable.has(selection.selectedId)) leaving(onPick)(selection.selectedId);
   });
   // A tap on the map away from the lit nodes closes the tray; a mouse drag
   // that pans the board is not a tap.
@@ -271,7 +316,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   function selectNode(id, reading) {
     if (reading) readings.set(id, reading);
     const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
-    if (next.enter) { onPick(id); return; }
+    if (next.enter) { leaving(onPick)(id); return; }
     selection = next;
     renderSelection();
     if (selection.selectedId) openTray();
@@ -377,9 +422,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     }
     const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
-      if (onMenu) onMenu('settings');
+      if (onMenu) leaving(onMenu)('settings');
     } else if (armouryAction) {
-      if (onArmoury) onArmoury(armouryAction);
+      if (onArmoury) leaving(onArmoury)(armouryAction);
     } else if (ev.key === '+' || ev.key === '=') {
       board.stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {
