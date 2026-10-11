@@ -52,6 +52,9 @@ test('a callout names its fighter, stacks a second, keeps at most two, and skips
 test('callout CSS: larger than a float, HUD text shadow, reduced motion and Reduce flashes', () => {
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   assert.match(css, /\.fx-callout \{[^}]*text-shadow: var\(--hud-text-shadow/s);
+  const rem = (sel) => Number(css.match(new RegExp(`(?:^|\\n)${sel} \\{[^}]*?font-size: ([0-9.]+)rem`))?.[1]);
+  const callout = rem('\\.fx-callout'), float = rem('\\.float-num');
+  assert.ok(callout > float, `callout ${callout}rem must be larger than a damage float ${float}rem`);
   assert.match(css, /\.reduced-motion \.fx-callout \{ animation: callout-fade/, 'reduced motion: in place, no rise');
   assert.match(css, /\.reduce-flashes \.fx-callout \{ animation: callout-rise var\(--fx-callout-ms, 900ms\) ease-out forwards; \}/, 'reduce flashes: no glow pulse');
 });
