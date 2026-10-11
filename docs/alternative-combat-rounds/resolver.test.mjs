@@ -1904,6 +1904,18 @@ test('unpaired attack: a hit that would land rolls the player\'s evadePct, and a
   assert.equal(momentum.H, 0, 'an evadePct avoid on an unanswered attack earns no slot credit');
 });
 
+test('unpaired attack: playerDefense.evadeBasePct is passed through, and a roll under it avoids the hit', () => {
+  const { events, momentum } = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, seqRng([D20_HIT, pctRng(10)]), {
+    decay: 0,
+    playerDefense: { evadeBasePct: 50 },
+  });
+  const roll = events.find((e) => e.type === 'evadeRoll' && e.slot === 1);
+  assert.equal(roll.evadePct, 50, 'the documented evadeBasePct field reaches normalizeSide');
+  assert.equal(roll.success, true);
+  assert.equal(events.find((e) => e.type === 'evaded' && e.slot === 1).reason, 'evasion');
+  assert.equal(momentum.H, 0, 'an evadePct avoid on an unanswered attack earns no slot credit');
+});
+
 test('unpaired attack: playerDefense.evasion raises the bar; with no playerDefense the evasion is 0', () => {
   const dflt = resolveRound(COVERED, UNPAIRED_QUEUE(), 2, d20Face(10), { decay: 0 });
   assert.equal(unpairedHit(dflt.events).hit, true, 'no playerDefense: d20 10 meets AC 8');

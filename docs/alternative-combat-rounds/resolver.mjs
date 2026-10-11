@@ -820,7 +820,9 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     evasionCard: defence.evasionCard,
     attrs: defence.attrs,
     evasion: defence.evasion,
-    evadeBasePct: defence.evadePct,
+    // Both fields pass through; normalizeSide makes evadeBasePct win over evadePct.
+    evadeBasePct: defence.evadeBasePct,
+    evadePct: defence.evadePct,
     tags: defence.tags,
     evadeBonuses: bonusesFor(null, 'player'),
   }, options.evasionTables);
