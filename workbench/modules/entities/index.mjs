@@ -8,7 +8,7 @@
 // tabs Card | Inventory | Worn by class | Tooltip | Data | Try in fight.
 
 import {
-  KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, filterEntries,
+  KINDS, SORTS, DENSITIES, LAYOUTS, DEFAULT_KIND, parseDeepLink, deepLinkOf, filterEntries,
   facetsOf, chipCounts, renderUrl, tryFightUrl, gameBaseOf, sourceTableFor, kindOf,
 } from './model.mjs';
 
@@ -67,6 +67,7 @@ export default {
     const prefs = { density: ctx.settings.get('density', 'comfortable'), layout: ctx.settings.get('layout', 'grid') };
     const st = { ...parseDeepLink({}), density: prefs.density, layout: prefs.layout, pose: 'idle', tab: 'card', classId: 'reaver', mainHand: '', offHand: '' };
     const game = { base: null, origin: null };
+    let seenParams = null;
     let counts = {}, index = [], classes = [], armaments = [], files = null;
 
     // ---------- the game server ----------
@@ -182,6 +183,10 @@ export default {
     }
 
     // ---------- state changes ----------
+    // The hash names the state a reader needs to come back to it: kind, entity, filters and tab.
+    function writeHash() {
+      try { history.replaceState(null, '', deepLinkOf(st)); } catch { /* the hash is a convenience */ }
+    }
     function setKind(kind, { keepFilters = false } = {}) {
       const next = kindOf(kind) ? kind : DEFAULT_KIND;
       if (next !== st.kind) {
@@ -189,15 +194,23 @@ export default {
         if (!keepFilters) { st.class = ''; st.type = ''; st.tag = ''; st.rarity = ''; }
         renderChips(); sendCenter(); sendDrawer();
       }
-      renderFacets(); renderCount(); renderTitle();
+      renderFacets(); renderCount(); renderTitle(); writeHash();
     }
     function select(id) {
       st.id = id || null;
-      renderTitle(); sendDrawer(); renderTry();
+      renderTitle(); sendDrawer(); renderTry(); writeHash();
     }
     function setTab(tab) {
       st.tab = tab; renderTabs(); renderTitle();
       if (tab !== 'try') sendDrawer();
+      writeHash();
+    }
+    /** A deep link (#mod=entities&…) or a Browse command: the state it names, drawn. */
+    function applyParams(p) {
+      const next = parseDeepLink(p);
+      Object.assign(st, { q: next.q, sort: next.sort, class: next.class, type: next.type, tag: next.tag, rarity: next.rarity, id: next.id, tab: next.tab });
+      setKind(next.kind, { keepFilters: true });
+      sendCenter(); sendDrawer(); renderChips(); renderTabs(); renderFacets(); renderCount(); renderTitle(); writeHash();
     }
 
     // ---------- events ----------
@@ -205,13 +218,13 @@ export default {
     el.querySelectorAll('[data-f]').forEach((sel) => sel.addEventListener('change', () => {
       const name = sel.dataset.f;
       if (name === 'density') { st.density = sel.value; ctx.settings.set('density', st.density); sendCenter(); return; }
-      if (name === 'sort') { st.sort = sel.value; sendCenter(); renderCount(); return; }
-      st[name] = sel.value; sendCenter(); renderCount();
+      if (name === 'sort') { st.sort = sel.value; sendCenter(); renderCount(); writeHash(); return; }
+      st[name] = sel.value; sendCenter(); renderCount(); writeHash();
     }));
     let qTimer = 0;
-    q.addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => { st.q = q.value.trim(); sendCenter(); renderCount(); }, 120); });
+    q.addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => { st.q = q.value.trim(); sendCenter(); renderCount(); writeHash(); }, 120); });
     el.querySelectorAll('[data-layout]').forEach((b) => b.addEventListener('click', () => { st.layout = b.dataset.layout; ctx.settings.set('layout', st.layout); renderFacets(); sendCenter(); }));
-    $('.ent-reset').addEventListener('click', () => { Object.assign(st, { q: '', class: '', type: '', tag: '', rarity: '', sort: 'name' }); renderFacets(); sendCenter(); renderCount(); });
+    $('.ent-reset').addEventListener('click', () => { Object.assign(st, { q: '', class: '', type: '', tag: '', rarity: '', sort: 'name' }); renderFacets(); sendCenter(); renderCount(); writeHash(); });
     el.querySelector('.ent-tabs').addEventListener('click', (ev) => { const b = ev.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); });
     el.querySelector('.ent-pose-sel').addEventListener('change', (ev) => { st.pose = ev.target.value; sendDrawer(); });
     tryForm.addEventListener('submit', (ev) => {
@@ -233,6 +246,19 @@ export default {
     }).catch(() => { files = null; });
     renderChips(); renderTabs(); renderTitle(); renderFacets(); renderCount();
     connect();
-    return {};
+    return {
+      // The host calls onShow after mount, and again each time the module is opened. It keeps a
+      // fresh params object per open, so a link or command applies once and a plain return keeps the state.
+      onShow() {
+        const p = ctx.params;
+        if (!p || p === seenParams) return;
+        seenParams = p;
+        if (Object.keys(p).length) applyParams(p);
+      },
+      commands: () => [
+        ...KINDS.map((k) => ({ title: `Browse ${k.label}`, sub: 'Entity Browser', run: () => { ctx.openModule('entities', { kind: k.id }); } })),
+        { title: 'Clear entity filters', sub: 'Entity Browser', run: () => { Object.assign(st, { q: '', class: '', type: '', tag: '', rarity: '', sort: 'name' }); renderFacets(); sendCenter(); renderCount(); writeHash(); } },
+      ],
+    };
   },
 };
