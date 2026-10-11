@@ -338,3 +338,10 @@ dl.facts dd { margin: 0; font-family: var(--as-mono); font-size: var(--as-text-s
 .banner { position: fixed; left: 50%; top: 56px; transform: translateX(-50%); z-index: 70; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: var(--as-bg-raised); border: 1px solid var(--as-bad); border-radius: var(--as-radius-lg); box-shadow: var(--as-shadow-lg); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Native modules: one section each (the toolbar is shared, the body is the module) */
+.view-mod .mod-body { flex: 1; min-height: 0; overflow: auto; background: var(--as-bg); }
+.view-mod .toolbar .url { max-width: 480px; }
+.key-scope { padding: 0 var(--as-space-4) var(--as-space-2); }
+.key-scope h3 { font-size: var(--as-text-xs); color: var(--as-text-faint); text-transform: uppercase; letter-spacing: 0.08em; margin: var(--as-space-3) 0 var(--as-space-1); }
+.key-edit .btn + .btn { margin-left: 4px; }

@@ -3,6 +3,10 @@
 // Talks to workbench/server.mjs; DOM-free helpers live in ui/logic.mjs.
 import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT } from './ui/logic.mjs';
 import { icon } from './ui/icons.mjs';
+import { MODULES } from './modules/index.mjs';
+import { createModulePrefs, parseHash, hashFor, withPreviewOverrides } from './modules/host.mjs';
+import { History } from './ui/kit/history.mjs';
+import { shortcuts, comboFromEvent, comboLabel } from './ui/kit/shortcuts.mjs';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -16,20 +20,29 @@ const store = {
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
+const MODULE_VIEW = (id) => `mod:${id}`;
 const VIEWS = [
   { id: 'home', label: 'Home', icon: 'home', group: null },
-  { id: 'editor', label: 'Content Editor', icon: 'table', tool: 'editor', group: 'Studios' },
-  { id: 'ui-studio', label: 'UI Studio', icon: 'layout', tool: 'ui-studio', group: 'Studios' },
-  { id: 'pose', label: 'Pose & FX', icon: 'figure', tool: 'pose', group: 'Studios' },
+  ...MODULES.map((m) => ({ id: MODULE_VIEW(m.id), label: m.label, icon: m.icon, group: m.group, module: m.id })),
   { id: 'library', label: 'Library', icon: 'library', group: 'Project' },
   { id: 'export', label: 'Engine Export', icon: 'cube', group: 'Project' },
   { id: 'jobs', label: 'Build & Checks', icon: 'checks', group: 'Project' },
 ];
+// The old tool studios: off the rail, reachable from the Library's Legacy group.
+const LEGACY_VIEWS = [
+  { id: 'editor', label: 'Content Editor', icon: 'table', tool: 'editor', group: null },
+  { id: 'ui-studio', label: 'UI Studio', icon: 'layout', tool: 'ui-studio', group: null },
+  { id: 'pose', label: 'Pose & FX', icon: 'figure', tool: 'pose', group: null },
+];
+const ALL_VIEWS = [...VIEWS, ...LEGACY_VIEWS];
+const moduleOf = (view) => (typeof view === 'string' && view.startsWith('mod:') ? view.slice(4) : null);
+const moduleDef = (id) => MODULES.find((m) => m.id === id);
 const KINDS = [['all', 'All'], ['studio', 'Studios'], ['editor', 'Editors'], ['viewer', 'Viewers'], ['exporter', 'Exporters'], ['qa', 'QA']];
 const saved = store.get();
+const validView = (v) => v === 'settings' || VIEWS.some((x) => x.id === v);
 const state = {
   session: null, tools: [], git: null, jobs: { defs: [], runs: [] }, library: null, settings: null, manifest: null, exportQ: '',
-  view: VIEWS.some((v) => v.id === saved.view) || ['settings'].includes(saved.view) ? saved.view : 'home',
+  view: validView(saved.view) ? saved.view : 'home',
   dockW: Number(saved.dockW) || 460, device: DEVICES.some((d) => d.id === saved.device) ? saved.device : 'fill',
   collapsed: Boolean(saved.collapsed), auto: saved.auto !== false,
   lib: { q: '', kind: 'all', live: saved.liveThumbs !== false, external: saved.showExternal !== false },
@@ -123,7 +136,8 @@ function renderRail() {
     const running = v.id === 'jobs' && state.jobs.runs.some((r) => r.status === 'running');
     const dot = t ? `<span class="dot ${t.status}" title="${esc(t.status)}"></span>` : running ? '<span class="dot running" title="A job is running"></span>' : '';
     const label = t ? `${v.label}, ${t.status}` : v.label;
-    items.push(`<li><button class="rail-item" type="button" data-view="${v.id}" aria-label="${esc(label)}"${state.view === v.id ? ' aria-current="page"' : ''}><span class="rail-icon">${icon(v.icon)}</span><span class="rail-label">${esc(v.label)}</span>${dot}<span class="rail-key" aria-hidden="true">^${i + 1}</span></button></li>`);
+    const key = i < 9 ? String(i + 1) : i === 9 ? '0' : '';
+    items.push(`<li><button class="rail-item" type="button" data-view="${v.id}" aria-label="${esc(label)}"${state.view === v.id ? ' aria-current="page"' : ''}><span class="rail-icon">${icon(v.icon)}</span><span class="rail-label">${esc(v.label)}</span>${dot}<span class="rail-key" aria-hidden="true">${key}</span></button></li>`);
   });
   $('#rail-list').innerHTML = items.join('');
   $('#rail-settings').toggleAttribute('aria-current', state.view === 'settings');
@@ -131,12 +145,16 @@ function renderRail() {
 }
 
 function show(view, { focus = false } = {}) {
+  const next = moduleOf(view);
+  if (activeModule && activeModule !== next) modules.get(activeModule)?.instance?.onHide?.();
+  activeModule = next;
   state.view = view; persist();
-  $$('.view').forEach((v) => v.classList.toggle('active', v.dataset.view === view));
+  if (!next && location.hash.startsWith('#mod=')) history.replaceState(null, '', `${location.pathname}${location.search}`);  $$('.view').forEach((v) => v.classList.toggle('active', v.dataset.view === view));
   renderRail();
-  const def = VIEWS.find((v) => v.id === view);
+  const def = ALL_VIEWS.find((v) => v.id === view);
   document.title = `${def ? def.label : view === 'page' ? (state.pageEntry?.title || 'Page') : 'Settings'} · AshenSpire Workbench`;
-  if (def && def.tool) renderTool(def.tool, true);
+  if (next) openModuleView(next);
+  else if (def && def.tool) renderTool(def.tool, true);
   else if (view === 'home') renderHome();
   else if (view === 'library') { renderLibrary(); if (!state.library) refreshLibrary(); }
   else if (view === 'export') { renderExport(); loadManifest(); }
@@ -144,6 +162,96 @@ function show(view, { focus = false } = {}) {
   else if (view === 'settings') renderSettings();
   else if (view === 'page') renderPage();
   if (focus) $('#main').focus({ preventScroll: true });
+}
+
+// ---------------------------------------------------------------------------
+// Native modules — one section each; mounted on first visit, kept alive after
+// ---------------------------------------------------------------------------
+const modules = new Map(); // id -> { def, section, body, history, params, instance, mounting, offs, ctx }
+let activeModule = null;
+let previewShow = null; // a module's preview.showUrl(); null shows the game or a Library page
+const previewOverrides = {};
+const prefsStore = () => { try { return localStorage; } catch { return null; } };
+
+function modRecord(id) {
+  if (modules.has(id)) return modules.get(id);
+  const def = moduleDef(id);
+  const section = document.createElement('section');
+  section.className = 'view view-tool view-mod';
+  section.dataset.view = MODULE_VIEW(id); section.id = `view-mod-${id}`;
+  section.innerHTML = `<div class="toolbar"><h1>${esc(def.label)}</h1><span class="url" title="${esc(def.blurb)}">${esc(def.blurb)}</span><div class="actions"><button class="btn btn-sm btn-ghost" type="button" data-mod-undo>${icon('undo')}Undo</button><button class="btn btn-sm btn-ghost" type="button" data-mod-redo>${icon('redo')}Redo</button></div></div><div class="mod-body"></div>`;
+  $('#main').append(section);
+  const rec = { def, section, body: $('.mod-body', section), history: new History(), params: {}, instance: null, mounting: false, offs: [] };
+  rec.history.onChange(() => historyButtons(rec));
+  $('[data-mod-undo]', section).onclick = () => stepHistory(rec, 'undo');
+  $('[data-mod-redo]', section).onclick = () => stepHistory(rec, 'redo');
+  rec.ctx = moduleContext(rec);
+  historyButtons(rec);
+  modules.set(id, rec);
+  return rec;
+}
+
+function moduleContext(rec) {
+  const id = rec.def.id;
+  return {
+    id,
+    api,
+    toast,
+    history: rec.history,
+    shortcuts: { register: (combo, label, handler, opts) => { const off = shortcuts.register(id, combo, label, handler, opts); rec.offs.push(off); return off; } },
+    preview: {
+      reload: () => reloadPreview(),
+      showUrl: (url) => { previewShow = url || null; if (previewShow) state.dockEntry = null; renderDock(); },
+      setOverride: (key, value) => { if (value === undefined || value === null) delete previewOverrides[key]; else previewOverrides[key] = value; renderDock(); },
+    },
+    settings: createModulePrefs(id, prefsStore()),
+    openModule: (mid, params) => openModuleById(mid, params),
+    get params() { return rec.params; },
+  };
+}
+
+function historyButtons(rec) {
+  const undo = $('[data-mod-undo]', rec.section); const redo = $('[data-mod-redo]', rec.section);
+  const items = rec.history.list(); const done = items.filter((e) => e.done); const undone = items.filter((e) => !e.done);
+  undo.disabled = !rec.history.canUndo; redo.disabled = !rec.history.canRedo;
+  undo.title = done.length ? `Undo ${done[done.length - 1].label}` : 'Nothing to undo';
+  redo.title = undone.length ? `Redo ${undone[0].label}` : 'Nothing to redo';
+}
+
+/** Undo or redo in a module's own history; false when there is nothing to step (the key then goes to the page). */
+function stepHistory(rec, dir) {
+  const entry = dir === 'undo' ? rec.history.undo() : rec.history.redo();
+  if (entry) toast({ title: `${dir === 'undo' ? 'Undid' : 'Redid'} ${entry.label}`, record: false, timeout: 1600 });
+  return Boolean(entry);
+}
+
+function openModuleView(id) {
+  const rec = modRecord(id);
+  if (rec.instance) { rec.instance.onShow?.(); return; }
+  mountModule(rec);
+}
+
+async function mountModule(rec) {
+  if (rec.mounting) return;
+  rec.mounting = true;
+  try {
+    const mod = await rec.def.load();
+    const impl = mod && mod.default;
+    if (!impl || typeof impl.mount !== 'function') throw Error('the module exports no mount()');
+    rec.instance = impl.mount(rec.body, rec.ctx) || {};
+    if (activeModule === rec.def.id) rec.instance.onShow?.();
+  } catch (e) {
+    rec.body.innerHTML = emptyState({ kind: 'is-error', iconName: 'error', title: `${rec.def.label} could not load`, body: esc(e.message) });
+    toast({ kind: 'error', title: `${rec.def.label} could not load`, detail: e.message });
+  } finally { rec.mounting = false; }
+}
+
+/** Opens a module with deep-link params (#mod=<id>&…); the hash is kept in step with the view. */
+function openModuleById(id, params = {}) {
+  if (!moduleDef(id)) { toast({ kind: 'warn', title: `No module called “${id}”`, record: false }); return; }
+  modRecord(id).params = { ...params };
+  show(MODULE_VIEW(id), { focus: true });
+  history.replaceState(null, '', hashFor(id, params));
 }
 
 // ---------------------------------------------------------------------------
@@ -157,7 +265,7 @@ const windowBtn = (url) => `<button class="btn" type="button" data-window="${esc
 
 function renderTool(id, visiting = false) {
   const section = $(`#view-${id}`);
-  const t = tool(id); const def = VIEWS.find((v) => v.tool === id);
+  const t = tool(id); const def = ALL_VIEWS.find((v) => v.tool === id);
   if (!section.dataset.built) {
     section.dataset.built = '1';
     section.innerHTML = `<div class="toolbar"><span class="dot" data-dot></span><h1>${esc(def.label)}</h1><span class="url" data-url></span><div class="actions"><button class="btn btn-sm btn-ghost" type="button" data-reload-frame>${icon('reload')}Reload</button><button class="btn btn-sm btn-ghost" type="button" data-window-tool>${icon('external')}Open in window</button><button class="btn btn-sm btn-ghost" type="button" data-restart="${id}">${icon('restart')}Restart server</button></div></div><div class="frame-host" data-host></div>`;
@@ -214,7 +322,7 @@ function onTools(list) {
     }
   }
   renderRail();
-  for (const v of VIEWS) if (v.tool) renderTool(v.tool);
+  for (const v of LEGACY_VIEWS) renderTool(v.tool);
   renderDock();
   if (before.get('game') !== tool('game')?.status) { libraryBuilt = false; if (state.view === 'library') renderLibrary(); }
   if (state.view === 'home') renderHome();
@@ -228,9 +336,10 @@ function statusText(t) { return t ? ({ up: 'Running', starting: 'Starting…', d
 function renderHome() {
   const s = state.session || {};
   const cards = [
-    ...['editor', 'ui-studio', 'pose', 'game'].map((id) => {
-      const t = tool(id); const v = VIEWS.find((x) => x.tool === id);
-      const ic = { editor: 'table', 'ui-studio': 'layout', pose: 'figure', game: 'sparkle' }[id];
+    ...MODULES.map((m) => `<article class="card tool-card"><div class="tool-card-head"><span class="tool-card-icon">${icon(m.icon)}</span><h3>${esc(m.label)}</h3></div><p>${esc(m.blurb)}</p><div class="tool-card-foot"><span class="spacer"></span><button class="btn btn-sm btn-primary" type="button" data-go="${MODULE_VIEW(m.id)}">Open</button></div></article>`),
+    ...['game'].map((id) => {
+      const t = tool(id); const v = ALL_VIEWS.find((x) => x.tool === id);
+      const ic = { game: 'sparkle' }[id];
       const open = id === 'game' ? `<button class="btn btn-sm" type="button" data-window="${esc(t ? t.url : '')}"${t && t.status === 'up' ? '' : ' disabled'}>${icon('external')}Play in window</button>` : `<button class="btn btn-sm btn-primary" type="button" data-go="${v.id}">Open</button>`;
       return `<article class="card tool-card"><div class="tool-card-head"><span class="tool-card-icon">${icon(ic)}</span><h3>${esc(t ? t.name : (v ? v.label : id))}</h3></div><p>${esc(t ? t.blurb : '')}</p><div class="tool-card-foot"><span class="status"><span class="dot ${t ? t.status : ''}"></span><span class="status-text">${esc(statusText(t))}</span></span><span class="spacer"></span>${t && t.status === 'down' && s.children ? restartBtn(id, false).replace('class="btn"', 'class="btn btn-sm"') : ''}${open}</div></article>`;
     }),
@@ -383,7 +492,7 @@ function observeThumbs() {
 function findEntry(id) { return state.library?.entries.find((e) => e.id === id); }
 function openEntry(e, where = 'here') {
   if (!e) return;
-  if (where === 'here' && e.servedBy === 'workbench-child') return show(VIEWS.find((v) => v.tool === e.toolId).id, { focus: true });
+  if (where === 'here' && e.servedBy === 'workbench-child') return show(ALL_VIEWS.find((v) => v.tool === e.toolId).id, { focus: true });
   const url = entryUrl(e);
   if (where === 'window') { if (url) window.open(url, '_blank', 'noopener'); return; }
   if (where === 'pane') { if (state.collapsed) toggleDock(); state.dockEntry = url ? e : null; renderDock(); return; }
@@ -411,7 +520,10 @@ function renderPage() {
 // Preview dock
 // ---------------------------------------------------------------------------
 let dockFrame = null; let dockFrameUrl = '';
-function dockUrl() { if (state.dockEntry) return entryUrl(state.dockEntry); const b = gameBase(); return b; }
+function dockUrl() {
+  const base = state.dockEntry ? entryUrl(state.dockEntry) : previewShow || gameBase();
+  return base ? withPreviewOverrides(base, previewOverrides) : base;
+}
 function renderDevices() {
   $('#devices').innerHTML = DEVICES.map((d) => `<button type="button" data-device="${d.id}" aria-pressed="${state.device === d.id}" title="${d.width ? `${d.label} ${d.width}×${d.height}` : 'Fill the pane'}">${d.label}</button>`).join('');
 }
@@ -426,8 +538,8 @@ function renderDock() {
   splitter.setAttribute('aria-valuenow', String(state.dockW)); splitter.setAttribute('aria-valuemin', '300'); splitter.setAttribute('aria-valuemax', String(maxDock()));
   const g = tool('game');
   $('#dock-dot').className = `dot ${state.dockEntry ? 'up' : g ? g.status : ''}`;
-  $('#dock-label').textContent = state.dockEntry ? state.dockEntry.title : 'Game preview';
-  $('#dock-back').hidden = !state.dockEntry;
+  $('#dock-label').textContent = state.dockEntry ? state.dockEntry.title : previewShow ? 'Module preview' : 'Game preview';
+  $('#dock-back').hidden = !state.dockEntry && !previewShow;
   const url = dockUrl(); const stage = $('#dock-stage');
   $('#dock-pop').disabled = !url; $('#dock-reload').disabled = !url;
   if (state.collapsed) return;
@@ -607,12 +719,15 @@ async function renderSettings() {
       <div class="field"><label for="set-url">Editor app URL</label><div class="control"><input class="input" id="set-url" name="editorUrl" placeholder="http://127.0.0.1:5173" value="${esc(s.editorUrl)}"><button class="btn" type="button" data-window="${esc(s.editorUrl)}">${icon('external')}Open URL</button></div><div class="hint">Where its dev server answers. The Workbench embeds it when it is reachable (local addresses only).</div></div>
       <div class="form-foot"><button class="btn btn-primary" type="submit">Save settings</button></div>
     </form>
+    <div class="section" id="shortcut-settings" aria-labelledby="shortcut-title"></div>
     <div class="section"><div class="section-head"><h2>This Workbench</h2></div><div class="card"><dl class="facts">
       <dt>Project</dt><dd>${esc(ses.root)} <button class="link-btn" type="button" data-folder="project">Open folder</button></dd>
       <dt>Address</dt><dd>${esc(location.origin)}</dd>
       <dt>Live reload</dt><dd>${esc(Object.entries(ses.watching || {}).map(([d, m]) => `${d}/ (${m === 'watch' ? 'file events' : 'polling'})`).join(', ') || 'off')}</dd>
       <dt>Child tools</dt><dd>${ses.children ? state.tools.map((t) => `${t.name} — ${t.url}`).join('<br>') : 'Not started (--no-children)'}</dd>
     </dl></div></div></div>`;
+  renderShortcutSettings();
+  $('#shortcut-settings').onclick = onShortcutSettingsClick;
   $('#settings-form').onsubmit = async (ev) => {
     ev.preventDefault();
     const data = Object.fromEntries(new FormData(ev.target).entries());
@@ -624,18 +739,55 @@ async function renderSettings() {
 // ---------------------------------------------------------------------------
 // Command palette
 // ---------------------------------------------------------------------------
+// Settings → Shortcuts: click a row, press the new keys (Esc cancels), or reset.
+let capturingShortcut = null;
+function renderShortcutSettings() {
+  const box = $('#shortcut-settings'); if (!box) return;
+  const all = shortcuts.list();
+  const scopes = ['global', ...MODULES.map((m) => m.id)].filter((s) => all.some((a) => a.scope === s));
+  box.innerHTML = `<div class="section-head"><h2 id="shortcut-title">Shortcuts</h2><span class="count">${all.length} actions</span><div class="actions"><button class="btn btn-sm btn-ghost" type="button" data-reset-shortcuts="all">${icon('restart')}Reset all</button></div></div>
+    <div class="card"><p class="faint" style="padding:12px 16px 0">Click a shortcut, then press the new keys. Esc cancels. A combo already used in the same scope, or by a Workbench action, is refused.</p>
+    ${scopes.map((scope) => `<div class="key-scope"><h3>${esc(SCOPE_TITLE(scope))}</h3>${all.filter((a) => a.scope === scope).map((a) => {
+      const capturing = capturingShortcut === a.id;
+      return `<div class="key-row key-edit"><span>${esc(a.label)}${a.overridden ? ' <span class="tag tag-new">Changed</span>' : ''}</span><span class="key-keys"><button class="btn btn-sm${capturing ? ' btn-primary' : ''}" type="button" data-remap="${esc(a.id)}">${capturing ? 'Press keys… (Esc cancels)' : a.combos.length ? a.combos.map((c) => comboLabel(c)).join(' or ') : 'Not set'}</button>${a.overridden ? `<button class="btn btn-sm btn-ghost" type="button" data-reset-shortcuts="${esc(a.id)}">Reset</button>` : ''}</span></div>`;
+    }).join('')}</div>`).join('')}</div>`;
+}
+function onShortcutSettingsClick(ev) {
+  const b = ev.target.closest('button'); if (!b) return;
+  if (b.dataset.remap) startShortcutCapture(b.dataset.remap);
+  else if (b.dataset.resetShortcuts === 'all') { shortcuts.resetAll(); toast({ title: 'Shortcuts reset to the defaults', record: false, timeout: 2000 }); renderShortcutSettings(); }
+  else if (b.dataset.resetShortcuts) { shortcuts.resetCombo(b.dataset.resetShortcuts); renderShortcutSettings(); }
+}
+function startShortcutCapture(id) {
+  capturingShortcut = id; renderShortcutSettings();
+  const finish = () => { window.removeEventListener('keydown', onCapture, true); capturingShortcut = null; renderShortcutSettings(); };
+  function onCapture(ev) {
+    ev.preventDefault(); ev.stopImmediatePropagation();
+    if (ev.key === 'Escape') return finish();
+    const combo = comboFromEvent(ev); if (!combo) return;
+    const res = shortcuts.setCombo(id, combo);
+    if (res.ok) toast({ title: `Shortcut set to ${comboLabel(res.combo)}`, record: false, timeout: 1800 });
+    else toast({ kind: 'warn', title: 'That combo is already in use', detail: `${res.label} uses it. Pick another.`, record: false });
+    finish();
+  }
+  window.addEventListener('keydown', onCapture, true);
+}
+
 let paletteItems = []; let paletteShown = []; let paletteIndex = 0; let lastFocus = null;
 function commands() {
   const items = [];
-  VIEWS.forEach((v, i) => items.push({ group: 'Go to', title: v.label, sub: `Ctrl+${i + 1}`, icon: v.icon, run: () => show(v.id, { focus: true }) }));
-  items.push({ group: 'Go to', title: 'Settings', sub: 'Ctrl+,', icon: 'gear', run: () => show('settings', { focus: true }) });
+  VIEWS.forEach((v) => items.push({ group: 'Go to', title: v.label, sub: shortcuts.labelOf(navShortcutId(v)), icon: v.icon, run: () => show(v.id, { focus: true }) }));
+  items.push({ group: 'Go to', title: 'Settings', sub: shortcuts.labelOf('global:Settings'), icon: 'gear', run: () => show('settings', { focus: true }) });
+  for (const rec of modules.values()) {
+    for (const c of rec.instance?.commands?.() || []) items.push({ group: rec.def.label, title: c.title, sub: c.sub, icon: 'play', run: c.run });
+  }
   items.push(
-    { group: 'Preview', title: state.collapsed ? 'Show game preview' : 'Hide game preview', sub: 'Ctrl+\\', icon: 'dock', run: toggleDock },
-    { group: 'Preview', title: 'Reload preview', sub: 'Ctrl+R', icon: 'reload', run: () => reloadPreview() },
+    { group: 'Preview', title: state.collapsed ? 'Show game preview' : 'Hide game preview', sub: shortcuts.labelOf('global:Show or hide the preview'), icon: 'dock', run: toggleDock },
+    { group: 'Preview', title: 'Reload preview', sub: shortcuts.labelOf('global:Reload the preview'), icon: 'reload', run: () => reloadPreview() },
     { group: 'Preview', title: `${state.auto ? 'Turn off' : 'Turn on'} auto-reload`, icon: 'reload', run: () => setAuto(!state.auto) },
     ...DEVICES.map((d) => ({ group: 'Preview', title: `Device: ${d.label}`, sub: d.width ? `${d.width}×${d.height}` : 'fill the pane', icon: 'device', run: () => { if (state.collapsed) toggleDock(); setDevice(d.id); } })),
     { group: 'Preview', title: 'Pop out preview', sub: 'new window', icon: 'pop', run: popOut },
-    { group: 'Preview', title: 'Show the game in the preview', icon: 'sparkle', run: () => { state.dockEntry = null; if (state.collapsed) toggleDock(); renderDock(); } },
+    { group: 'Preview', title: 'Show the game in the preview', icon: 'sparkle', run: () => { state.dockEntry = null; previewShow = null; if (state.collapsed) toggleDock(); renderDock(); } },
   );
   for (const d of state.jobs.defs) items.push({ group: 'Jobs', title: `Run: ${d.label}`, sub: d.available ? d.commands[0].slice(0, 48) : 'unavailable', icon: 'play', run: () => runJob(d.id) });
   for (const t of state.tools) items.push({ group: 'Tools', title: `Restart ${t.name}`, sub: t.status, icon: 'restart', run: () => restartTool(t.id) });
@@ -671,15 +823,24 @@ function closePalette(restore = true) { $('#palette').hidden = true; if (restore
 // ---------------------------------------------------------------------------
 // Help, docs, overlays
 // ---------------------------------------------------------------------------
-const SHORTCUTS = [
-  ['General', [['Ctrl', 'K'], 'Command palette — search tools, pages, jobs and actions'], [['?'], 'This list'], [['Esc'], 'Close the palette, a dialog or the drawer'], [['Ctrl', ','], 'Settings']],
-  ['Navigate', [['Ctrl', '1'], 'Home'], [['Ctrl', '2'], 'Content Editor'], [['Ctrl', '3'], 'UI Studio'], [['Ctrl', '4'], 'Pose & FX'], [['Ctrl', '5'], 'Library'], [['Ctrl', '6'], 'Engine Export'], [['Ctrl', '7'], 'Build & Checks']],
-  ['Preview', [['Ctrl', '\\'], 'Show or hide the preview'], [['Ctrl', 'R'], 'Reload the preview'], [['←', '→'], 'Resize (with the splitter focused; Shift for bigger steps)'], [['Enter'], 'Collapse (with the splitter focused)']],
-];
+const SCOPE_TITLE = (scope) => (scope === 'global' ? 'Workbench' : moduleDef(scope)?.label || scope);
+// Keys the registry does not own: the splitter takes arrows and Enter when focused.
+const FIXED_KEYS = [['Preview', [[['←', '→'], 'Resize (with the splitter focused; Shift for bigger steps)'], [['Enter'], 'Collapse (with the splitter focused)']]]];
 function openHelp() {
   closeOverlays(); lastFocus = document.activeElement;
-  const k = (keys) => keys.map((x) => `<kbd>${esc(x)}</kbd>`).join('');
-  $('#help-body').innerHTML = `<div class="keys">${SHORTCUTS.map(([title, ...rows]) => `<h3>${esc(title)}</h3>${rows.map(([keys, what]) => `<div class="key-row"><span>${esc(what)}</span><span class="key-keys">${k(keys)}</span></div>`).join('')}`).join('')}<p class="keys-note">On macOS use ⌘ for Ctrl. Alt+1…7 also switches tools where the browser keeps Ctrl+1…7 for its tabs. Ctrl+K and Ctrl+\\ also work inside the three studios; every other key there is the studio's own, so click the rail or header first for the rest.</p></div>`;
+  const k = (combo) => combo.split('+').map((x) => `<kbd>${esc(x === 'Mod' ? 'Ctrl' : x)}</kbd>`).join('');
+  const all = shortcuts.list();
+  const groups = new Map();
+  for (const a of all) {
+    if (a.scope === 'global' && a.label.startsWith('Go to ')) continue; // listed under Navigate
+    if (!groups.has(a.scope)) groups.set(a.scope, []);
+    groups.get(a.scope).push(a);
+  }
+  const rows = (list) => list.map((a) => `<div class="key-row"><span>${esc(a.label)}</span><span class="key-keys">${a.combos.length ? k(a.combos[0]) : '<span class="faint">none</span>'}</span></div>`).join('');
+  const nav = all.filter((a) => a.scope === 'global' && a.label.startsWith('Go to '));
+  const sections = [['Workbench', groups.get('global') || []], ['Navigate', nav], ...[...groups].filter(([s]) => s !== 'global').map(([s, list]) => [SCOPE_TITLE(s), list])];
+  const fixed = FIXED_KEYS.map(([title, list]) => `<h3>${esc(title)}</h3>${list.map(([keys, what]) => `<div class="key-row"><span>${esc(what)}</span><span class="key-keys">${keys.map((x) => `<kbd>${esc(x)}</kbd>`).join('')}</span></div>`).join('')}`).join('');
+  $('#help-body').innerHTML = `<div class="keys">${sections.filter(([, l]) => l.length).map(([title, list]) => `<h3>${esc(title)}</h3>${rows(list)}`).join('')}${fixed}<p class="keys-note">On macOS use ⌘ for Ctrl. Alt+1…9 also switch views. Remap any shortcut in Settings → Shortcuts. Ctrl+K and Ctrl+\ also work inside the frames of the legacy studios; every other key there is the studio's own, so click the rail or header first.</p></div>`;
   $('#help').hidden = false; $('#help [data-close]').focus();
 }
 async function openDoc(rel) {
@@ -732,20 +893,36 @@ function onClick(ev) {
 }
 
 function onKey(ev) {
-  const mod = ev.ctrlKey || ev.metaKey;
-  const typing = ev.target.closest && ev.target.closest('input, textarea, select, [contenteditable="true"]');
   if (!$('#palette').hidden && ev.target.id === 'palette-input') {
     if (ev.key === 'ArrowDown') { paletteIndex = Math.min(paletteShown.length - 1, paletteIndex + 1); renderPalette(); ev.preventDefault(); return; }
     if (ev.key === 'ArrowUp') { paletteIndex = Math.max(0, paletteIndex - 1); renderPalette(); ev.preventDefault(); return; }
     if (ev.key === 'Enter') { runPalette(paletteIndex); ev.preventDefault(); return; }
   }
   if (ev.key === 'Escape' && anyOverlay()) { closeOverlays(); if (lastFocus && lastFocus.focus) lastFocus.focus(); ev.preventDefault(); return; }
-  if (mod && !ev.shiftKey && !ev.altKey && ev.key.toLowerCase() === 'k') { ev.preventDefault(); if ($('#palette').hidden) openPalette(); else closePalette(); return; }
-  if (mod && ev.key === '\\') { ev.preventDefault(); toggleDock(); return; }
-  if (mod && !ev.shiftKey && ev.key.toLowerCase() === 'r') { ev.preventDefault(); if (reloadPreview()) toast({ title: 'Preview reloaded', record: false, timeout: 1400 }); return; }
-  if (mod && ev.key === ',') { ev.preventDefault(); show('settings', { focus: true }); return; }
-  if ((mod || ev.altKey) && !ev.shiftKey && /^[1-7]$/.test(ev.key)) { ev.preventDefault(); closeOverlays(); show(VIEWS[Number(ev.key) - 1].id, { focus: true }); return; }
-  if (!typing && !mod && ev.key === '?') { ev.preventDefault(); openHelp(); }
+  shortcuts.dispatch(ev, activeModule || 'global');
+}
+
+const navShortcutId = (v) => `global:Go to ${v.label}`;
+/** Global shortcuts, on the registry so Settings → Shortcuts can remap them. */
+function registerShortcuts() {
+  const g = (combo, label, handler, opts) => shortcuts.register('global', combo, label, handler, opts);
+  g(['Mod+K'], 'Command palette', () => { if ($('#palette').hidden) openPalette(); else closePalette(); }, { inInput: true });
+  g(['Mod+\\'], 'Show or hide the preview', () => toggleDock(), { inInput: true });
+  g(['Mod+R'], 'Reload the preview', () => { if (reloadPreview()) toast({ title: 'Preview reloaded', record: false, timeout: 1400 }); return true; }, { inInput: true });
+  g(['Mod+,'], 'Settings', () => { closeOverlays(); show('settings', { focus: true }); }, { inInput: true });
+  g(['?'], 'Keyboard shortcuts', () => openHelp(), { inInput: false });
+  g(['Mod+Z'], 'Undo', () => stepActiveHistory('undo'), { inInput: false });
+  g(['Mod+Shift+Z', 'Mod+Y'], 'Redo', () => stepActiveHistory('redo'), { inInput: false });
+  VIEWS.forEach((v, i) => {
+    const digit = i < 9 ? i + 1 : i === 9 ? 0 : null;
+    if (digit === null) return;
+    g([`Mod+${digit}`, `Alt+${digit}`], `Go to ${v.label}`, () => { closeOverlays(); show(v.id, { focus: true }); }, { inInput: true });
+  });
+}
+/** Undo or redo in the module that is showing; false lets the browser handle the key. */
+function stepActiveHistory(dir) {
+  const rec = activeModule && modules.get(activeModule);
+  return rec ? stepHistory(rec, dir) : false;
 }
 
 // Shortcuts typed inside a tool's frame. A same-origin frame is hooked
@@ -754,10 +931,10 @@ function onKey(ev) {
 // {type: 'ashenspire-workbench-key', key: 'k' | '\\'} instead; a message is
 // honoured only from a frame of this page, and carries no data back.
 const FRAME_KEY = 'ashenspire-workbench-key';
+const FRAME_COMBO = { k: 'Mod+K', '\\': 'Mod+\\', '?': '?' };
 function frameShortcut(key) {
-  if (key === 'k') { if ($('#palette').hidden) openPalette(); else closePalette(); }
-  else if (key === '\\') toggleDock();
-  else if (key === '?' && !anyOverlay()) openHelp();
+  if (key === '?' && anyOverlay()) return;
+  if (FRAME_COMBO[key]) shortcuts.run(FRAME_COMBO[key], 'global');
 }
 function hookFrame(f) {
   let doc = null; try { doc = f.contentDocument; } catch { /* cross-origin */ }
@@ -820,6 +997,8 @@ async function boot() {
   for (const el of $$('[class^="i-"], [class*=" i-"]')) { const name = [...el.classList].find((c) => c.startsWith('i-')).slice(2); el.innerHTML = icon(name); }
   for (const el of $$('.search-icon')) if (!el.innerHTML) el.innerHTML = icon('search');
   renderRail(); renderNotes(); renderDock();
+  registerShortcuts();
+  for (const m of MODULES) modRecord(m.id);
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey, true);
   document.addEventListener('load', (ev) => { if (ev.target.tagName === 'IFRAME') hookFrame(ev.target); }, true);
@@ -832,7 +1011,7 @@ async function boot() {
   $('#dock-collapse').onclick = toggleDock;
   $('#dock-reload').onclick = () => reloadPreview();
   $('#dock-pop').onclick = popOut;
-  $('#dock-back').onclick = () => { state.dockEntry = null; renderDock(); };
+  $('#dock-back').onclick = () => { state.dockEntry = null; previewShow = null; renderDock(); };
   $('#dock-auto').onchange = (ev) => setAuto(ev.target.checked);
   $('#chip-job').onclick = () => show('jobs', { focus: true });
   $('#chip-dirty').onclick = showGitFiles;
@@ -853,7 +1032,10 @@ async function boot() {
   connectEvents();
   const [tools] = await Promise.all([api('tools').catch(() => []), refreshGit(), refreshJobs(), refreshLibrary()]);
   state.tools = tools;
-  show(state.view);
+  const deep = parseHash(location.hash);
+  if (deep && moduleDef(deep.mod)) openModuleById(deep.mod, deep.params);
+  else show(state.view);
+  window.addEventListener('hashchange', () => { const d = parseHash(location.hash); if (d && moduleDef(d.mod)) openModuleById(d.mod, d.params); });
   onTools(tools);
   setInterval(refreshGit, 20000);
   setInterval(renderChips, 30000);
