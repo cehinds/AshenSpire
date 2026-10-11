@@ -849,8 +849,11 @@ opening overrides. New runs snapshot those rows; existing runs keep theirs.
 At turn end, keep cards carrying Retain, resolve Ethereal and other explicit
 lifecycle rules, and shuffle ordinary unplayed cards directly into the draw
 pile (`shuffleHand: true`). Played cards and forced or chosen discards stay in
-the discard pile until its normal reshuffle. Retain does not change a played
-card's destination. The authored Herald and Starseer pools give Retain to
+the discard pile until its normal reshuffle. When the draw pile holds fewer
+cards than the next turn's draw, the whole discard pile joins the returned
+cards in that one shuffle (in deck order under Play in deck order), so a held
+hand never starves the discard of its reshuffle. Retain does not change a
+played card's destination. The authored Herald and Starseer pools give Retain to
 selected healing, ward, setup and costly spells, including their upgrades.
 At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:
 two retained cards plus a draw of four produces six cards; twelve retained
