@@ -337,6 +337,7 @@ export default {
       saving = true;
       setSaveBusy(true);
       let data;
+      const sentAt = Date.now();
       try {
         data = await ctx.api('files/save', { changes });
       } catch (err) {
@@ -363,7 +364,7 @@ export default {
       dlg.close();
       rebuild();
       ctx.toast({ kind: 'success', title: `Saved ${data.files.length} file(s)`, detail: `Backup ${data.backup}`, record: false });
-      ctx.preview.reloadAfterBuild(data.files.map((f) => f.path));
+      ctx.preview.reloadAfterBuild(data.files.map((f) => f.path), sentAt);
     }
 
     /** Disable the dialog's Save button while a save is in flight (openReview redraws it enabled). */

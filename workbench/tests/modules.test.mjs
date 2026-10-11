@@ -73,10 +73,10 @@ test('preview overrides add wb.<key> query values and drop null ones', () => {
 
 test('a save reloads the preview when its build reload arrives, and a non-matching reload does not', () => {
   const w = createReloadWaiter();
-  w.add(['content/source/weapons.csv']);
-  assert.equal(w.event('reload', { files: ['content/other.json'] }), null, 'a reload for other files does not settle the save');
+  w.add(['content/source/weapons.csv'], 0);
+  assert.equal(w.event('reload', { files: ['content/other.json'], startedAt: 1 }), null, 'a reload for other files does not settle the save');
   assert.equal(w.pending, 1);
-  const hit = w.event('reload', { files: ['content/source/weapons.csv', 'x.css'] });
+  const hit = w.event('reload', { files: ['content/source/weapons.csv', 'x.css'], startedAt: 1 });
   assert.equal(hit.type, 'reload');
   assert.equal(w.pending, 0);
   assert.deepEqual(buildAction('reload', Boolean(hit), { auto: false }), { reload: true, failed: false });
@@ -85,8 +85,8 @@ test('a save reloads the preview when its build reload arrives, and a non-matchi
 
 test('a failed build of a saved file toasts instead of reloading, and clears the save', () => {
   const w = createReloadWaiter();
-  w.add(['content/source/weapons.csv']);
-  const hit = w.event('reload-failed', { files: ['content/source/weapons.csv'], step: 'tools/content-build.mjs', output: 'boom' });
+  w.add(['content/source/weapons.csv'], 0);
+  const hit = w.event('reload-failed', { files: ['content/source/weapons.csv'], startedAt: 1, step: 'tools/content-build.mjs', output: 'boom' });
   assert.equal(hit.type, 'reload-failed');
   assert.equal(w.pending, 0);
   assert.deepEqual(buildAction('reload-failed', true), { reload: false, failed: true });
@@ -95,9 +95,9 @@ test('a failed build of a saved file toasts instead of reloading, and clears the
 
 test('with auto-reload on, a saved file reloads the preview once', () => {
   const w = createReloadWaiter();
-  w.add(['content/source/weapons.csv']);
+  w.add(['content/source/weapons.csv'], 0);
   let reloads = 0;
-  const hit = w.event('reload', { files: ['content/source/weapons.csv'] });
+  const hit = w.event('reload', { files: ['content/source/weapons.csv'], startedAt: 1 });
   if (buildAction('reload', Boolean(hit), { auto: true }).reload) reloads += 1;
   assert.equal(reloads, 1);
   assert.equal(buildAction('reload', false, { auto: true }).reload, true, 'auto-reload still reloads for an unrelated build');
@@ -106,13 +106,49 @@ test('with auto-reload on, a saved file reloads the preview once', () => {
 test('a build event that beats the save response still settles it, within the window only', () => {
   let t = 1000;
   const w = createReloadWaiter({ now: () => t, windowMs: 1500 });
-  assert.equal(w.event('reload', { files: ['content/source/a.json'] }), null);
+  assert.equal(w.event('reload', { files: ['content/source/a.json'], startedAt: 1000 }), null);
   t = 2000;
-  assert.equal(w.add(['content/source/a.json']).type, 'reload');
+  assert.equal(w.add(['content/source/a.json'], 900).type, 'reload');
   assert.equal(w.pending, 0);
   t = 5000;
-  w.event('reload', { files: ['content/source/b.json'] });
+  w.event('reload', { files: ['content/source/b.json'], startedAt: 5000 });
   t = 9000;
-  assert.equal(w.add(['content/source/b.json']), null, 'an event older than the window does not settle a later save');
+  assert.equal(w.add(['content/source/b.json'], 4000), null, 'an event older than the window does not settle a later save');
   assert.equal(w.pending, 1);
+});
+
+test('a reload from a build that started before a save was sent cannot settle that save', () => {
+  let t = 1000;
+  const w = createReloadWaiter({ now: () => t, windowMs: 1500 });
+  // An earlier save's build started at 1000 and its reload beat the later save's response.
+  assert.equal(w.event('reload', { files: ['content/source/a.json'], startedAt: 1000 }), null);
+  t = 1200;
+  assert.equal(w.add(['content/source/a.json'], 1100), null, 'the older reload does not satisfy the newer save');
+  assert.equal(w.pending, 1);
+  t = 1300;
+  const hit = w.event('reload', { files: ['content/source/a.json'], startedAt: 1250 });
+  assert.equal(hit.type, 'reload', 'the build that started after the save was sent settles it');
+  assert.equal(w.pending, 0);
+});
+
+test('a build started after the save was sent settles it even when its event beats the response', () => {
+  let t = 1100;
+  const w = createReloadWaiter({ now: () => t, windowMs: 1500 });
+  assert.equal(w.event('reload', { files: ['content/source/a.json'], startedAt: 1050 }), null);
+  t = 1200;
+  assert.equal(w.add(['content/source/a.json'], 1000).type, 'reload');
+  assert.equal(w.pending, 0);
+});
+
+test('a waiting save is settled only by a build that started after it was sent', () => {
+  let t = 1000;
+  const w = createReloadWaiter({ now: () => t });
+  w.add(['content/source/a.json'], 1000);
+  t = 1500;
+  assert.equal(w.event('reload', { files: ['content/source/a.json'], startedAt: 990 }), null, 'a build that started before the save was sent does not settle it');
+  assert.equal(w.event('reload', { files: ['content/source/a.json'] }), null, 'an event without a start time does not settle it');
+  assert.equal(w.pending, 1);
+  t = 2000;
+  assert.equal(w.event('reload', { files: ['content/source/a.json'], startedAt: 1100 }).type, 'reload');
+  assert.equal(w.pending, 0);
 });
