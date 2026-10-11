@@ -86,4 +86,6 @@ The preview screen is the live combat screen with only these additions:
 - Target outline while choosing a target for a card: green when the card has the
   advantage in both speed and stance type, yellow when in only one (even if the
   other is a disadvantage), red when at a disadvantage in both, none otherwise.
+- The live green outline for the player's selection and playable cards becomes
+  blue in the preview, so green only means advantage.
 - No queue strip, no initiative track; End Turn stays as it is.
