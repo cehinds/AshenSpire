@@ -173,49 +173,75 @@ it writes them:
   nothing, so it is safe to re-run.
 
 **Catalog CSS mapping.** Most catalog ids (`docs/component-catalog.html`) are
-not CSS class names: `title-menu-item` is styled as `.tm-entry`, which the kit's
-`titleMenu` builds (`src/ui/kit/index.js`). Two derived columns record the
-mapping, and they approximate it; they are not exact:
+not CSS class names. `title-menu-item`, for example, is styled as `.tm-entry`,
+which the kit's `titleMenu` builds (`src/ui/kit/index.js`). Two derived columns
+record the mapping. They approximate it; they are not exact:
 
 - `components.cssClasses` (space-separated) lists the CSS class selectors that
   style a catalog component (a row whose notes start `[catalog`). The scope is
   per component: `build.mjs` reads only the function or functions named by the
   notes' `view=` (its renderer), not the whole owning file. In that body it takes
   the classes set by `className`, `classList`, a `class:` key, `class="..."` in a
-  template string, `setAttribute('class')` and `cls(...)` arguments. Kit helper
-  calls in the body add the helper's own fixed classes (for example `titleMenu`
-  adds `tm-name`, `tm-sub` and `tm-reason` as well as `tm-entry`), and same-file
-  functions the renderer calls are followed two levels deep. Only classes a
-  `styles/*.css` selector uses are kept. A catalog id that is itself a selector
-  class gets that class alone. Nothing found leaves the cell blank and adds
-  `css:unresolved` to the notes. At this commit 163 of the 270 catalog components
-  resolve (33 by id) and 107 are unresolved.
+  template string, `setAttribute('class')` and `cls(...)` arguments. Same-file
+  functions the renderer calls are followed two levels deep, each function once
+  at its least depth. Only classes a `styles/*.css` selector uses are kept. A
+  catalog id that is itself a selector class gets that class alone. Nothing
+  found leaves the cell blank and adds `css:unresolved` to the notes.
+
+  Three rules narrow the scope:
+  - **Kit helpers** count at the call site, and only for helpers the owner file
+    imports from `src/ui/kit/index.js` and calls bare (`titleMenu(`). A member
+    call (`classList.toggle(`) and a name the file does not import from the kit
+    never match.
+  - **Shared renderers.** A view that runs `inside` another surface and names a
+    function of a module other src files import (`card.upgradePreviewHtml inside
+    smithUpgradeModal`) gets none of that function's own classes. Those classes
+    belong to the shared renderer, which has no catalog row. The row gets the note
+    `owner:shared-renderer`. `smith-upgrade-preview` is the case: `ctext`, `tt-kw`
+    and `tt-title` come from `card.js`, so they stay unowned.
+  - **Titles.** `title-menu-item` resolves to `tm-entry` through the imported
+    `titleMenu`. The 18 title components that name `title.mountTitle` each list
+    `tm-entry`, and no per-component rule can tell them apart, so `tm-entry` has 18
+    owners and counts as generic (below). The 62 rows whose selector contains
+    `.tm-entry` therefore do not re-point. That is a stated gap, not a resolved case.
+
+  At this commit 161 of the 270 catalog components resolve and 109 do not.
 - `styles.componentId` names the catalog component that owns the row's selector,
   when exactly one catalog component's `cssClasses` use a class of it. Ownership
   reads the last compound selector (the element the rule styles) only. Classes
-  in ancestors, and inside `:not()`, `:is()` and `:where()`, are ignored; generic
+  in ancestors, and inside `:not()`, `:is()` and `:where()`, are ignored. Generic
   state classes (spent, outline, active, selected, disabled, hidden, `is-*` and
-  any class three or more catalog components add) never decide. A selector whose
-  parentheses or brackets do not balance keeps its CSS id: 1507 inventory rows
-  are such fragments, left by the inventory's selector extraction, which this
-  tree does not contain, so they are counted (`brokenSelectors`) rather than
-  marked. The CSS-derived id stays in `styles.cssComponentId` for every row. At
-  this commit 1675 rows point at 47 catalog components.
+  any class three or more catalog components add) never decide. The
+  `.deck-editor-art.outline` rule is the guard for this: without the skip it moves
+  to formation-layout-editor.
+
+  **Fragments: 1507 rows are counted, not fixed.** A selector whose parentheses or
+  brackets do not balance is a fragment of a selector list that the inventory
+  split at a comma inside `:has(`, `:is(` or `:not(` (for example
+  `:root[data-layout='narrow'] .combat.coop .coop-seat .sprite:has(.alternative-figure`
+  and a separate `.alternative-card-stage)` row). Its last compound cannot be
+  trusted, so it keeps the CSS-derived componentId and is counted as
+  `brokenSelectors`. The fix belongs in the inventory extractor, which is a
+  separate script not on this branch: it should split selector lists only at
+  commas outside parentheses and brackets. Once the extracted inventory is
+  regenerated, `brokenSelectors` is expected to fall; that has not been run here.
+
+  The CSS-derived id stays in `styles.cssComponentId` for every row. At this
+  commit 1549 rows point at 46 catalog components.
 
 Known gaps: components that share one `view=` function share its classes, since
-a shared body cannot tell them apart. The 18 title components all name
-`title.mountTitle`, so each carries `tm-entry`, and the 62 rows whose selector
-contains `.tm-entry` do not re-point. Calls into other files are not followed,
-and classes built at run time are not seen.
+a shared body cannot tell them apart. Calls into other files are not followed
+(except the kit helpers above), and classes built at run time are not seen.
 
 `check.mjs` requires every `cssClasses` entry to be a selector class in
 `styles/*.css`, a catalog row to list classes exactly when its notes lack
 `css:unresolved`, `cssComponentId` to be a components id, and each re-pointed
 `componentId` to be a catalog component that shares a class with the selector.
-It also guards `title-menu-item` (must list `tm-entry`) and three reviewed
-selectors: `.card .ctext` goes to the sole owner of `ctext`,
-`circle:not(.node-halo)` never goes to `map-node-face`, and
-`.deck-editor-tile.spent .deck-editor-name` goes to `deck-editor-name`.
+It also guards the kit-import rule (`as-toggle` and `as-btn` on the rows that had
+them wrongly), `title-menu-item` keeping `tm-entry`, `ctext` having no catalog
+owner with `.card .ctext` unowned, `smith-upgrade-preview` carrying its
+`owner:shared-renderer` note, and `.deck-editor-art.outline` staying with
+`deck-editor-art`.
 
 **Generated tables.** The files in `tables/presentation/` are generated by
 `build.mjs`. Edit them through the tables or through `workbench.html`, then
