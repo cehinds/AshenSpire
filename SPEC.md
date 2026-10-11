@@ -1169,7 +1169,7 @@ When the Combat Rounds Preview is on, see §4.11.
 
 **Order and hits**
 
-- Initiative is base, plus momentum, plus a d4 rolled once per round. The preview uses the `speed` merge of DESIGN.md: each action's speed is card speed plus the preemptive buff plus initiative, actions act highest speed first, a later card in a queue never acts before an earlier one, and ties go to higher initiative, then the player. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls.
+- Initiative is base, plus momentum, plus a d4. Each combatant rolls its own d4 once per round, in combatant order (the player first, then the others in key order), and that roll is used for all of its actions that round. The preview uses the `speed` merge of DESIGN.md: each action's speed is card speed plus the preemptive buff plus initiative, actions act highest speed first, a later card in a queue never acts before an earlier one, and ties go to higher initiative, then the player. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls.
 - Hit or miss uses the hit roll of DESIGN.md. A missed action applies no effects.
 - A reaction pause keeps the round's cursor. A save taken during a pause resumes at that cursor (§3.12).
 
@@ -1180,7 +1180,7 @@ When the Combat Rounds Preview is on, see §4.11.
 
 **Perception**
 
-- The player reads the first 1 + Perception actions of the round's order, where Perception is the §4.9 stat. Actions beyond that count are placed on the initiative track as `?` at their place in the order (owner, 2026-10-11).
+- For each enemy, the player reads the first 1 + Perception actions of that enemy's own queue, in its play order (the queue prefix of DESIGN.md), where Perception is the §4.9 stat. Actions beyond that count are placed on the initiative track as `?` at their place in the order (owner, 2026-10-11).
 - A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
 - A stage 0 (`?`) action within the read count is not placed on the initiative track. A stage 3 action is placed.
 

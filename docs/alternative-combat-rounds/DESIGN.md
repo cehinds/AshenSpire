@@ -52,6 +52,8 @@ The table of values lives in `speed-mods.csv`. The total is computed by
   slots are the first ones in play order, so perception is a count (a prefix
   of the queue), not a set of chosen slots. Perception still hides details:
   each visible slot is revealed only to the stage described below.
+  In the timeline model (and the preview, SPEC §4.11) the prefix is taken per enemy:
+  the first 1 + Perception actions of each enemy's own queue, in its play order.
 - Visible slots show as action icons, in play order.
 - When the player plays a card, it is played against one of the enemy's
   queued slots (one of the visible ones, or any, see Open questions).
