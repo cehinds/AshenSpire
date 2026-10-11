@@ -8,6 +8,7 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCoopCombat, endTurn, chooseReaction, setReactions, leaveCombat } from '../src/engine/coopCombat.js';
 import { beforeReactionAction } from '../src/engine/combatReactions.js';
+import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
@@ -68,9 +69,13 @@ test('a Counter the seat cannot pay for reports cost with need and have', () => 
 
 test('a Counter whose HP offering would leave the seat dead reports cost with resource hp', () => {
   const combat = solo({ offer: seatStats.hp });
-  assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
+  const events = soloEnd(combat);
+  assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
     cardIds: ['guardCounter'], attackKind: 'attack', resource: 'hp', need: seatStats.hp, have: seatStats.hp }]);
   assert.equal(combat.pendingReaction, undefined);
+  const registries = createRegistries(contentBundle);
+  assert.deepEqual(combatLogEntries(events, { registries }).map(row => row.text).filter(text => text.startsWith('Not enough')),
+    [`Not enough HP to Guard Counter (need ${seatStats.hp}, have ${seatStats.hp}).`]);
 });
 
 test('the Reaction switch off reports switchOff only to a seat holding a candidate', () => {
