@@ -1,8 +1,9 @@
-// workbench/modules/layout/index.mjs — Layout Studio, the shell. Three modes are
+// workbench/modules/layout/index.mjs — Layout Studio, the shell. Four modes are
 // built: "UI config" (the wireframes of content/config/ui drawn as regions on the
 // canvas kit, config-model.mjs), "Battlefield" (the combat formation slots,
-// battlefield-view.mjs) and "Sketch" (free wireframe boxes, sketch-view.mjs). The
-// other modes sit in More until their work lands. This file owns the mode tabs,
+// battlefield-view.mjs), "Sketch" (free wireframe boxes, sketch-view.mjs) and "SP orb"
+// (the combat footer's SP group, orb-view.mjs). The other modes sit in More until
+// their work lands. This file owns the mode tabs,
 // the one review-and-save for every mode, and the #mod=layout&mode=… deep link.
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
@@ -14,13 +15,15 @@ import * as B from './battlefield-model.mjs';
 import * as S from './sketch-model.mjs';
 import { createBattlefieldView } from './battlefield-view.mjs';
 import { createSketchView } from './sketch-view.mjs';
+import { createOrbView } from './orb-view.mjs';
+import * as O from './orb-model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // The kit stylesheet is linked by index.html; only the module's own sheet is injected here.
 const CSS = ['/modules/layout/layout.css'];
 const ZOOM_STEP = 1.25;
 const ALIGN = [['left', 'Align left'], ['center', 'Align centre'], ['right', 'Align right'], ['top', 'Align top'], ['middle', 'Align middle'], ['bottom', 'Align bottom']];
-const VIEWS = { battlefield: createBattlefieldView, sketch: createSketchView };
+const VIEWS = { battlefield: createBattlefieldView, sketch: createSketchView, orb: createOrbView };
 
 function ensureCss() {
   for (const href of CSS) {
@@ -64,6 +67,7 @@ const SHELL = `<div class="lay">
   </div>
   <div class="lay-view" data-view="battlefield" hidden></div>
   <div class="lay-view" data-view="sketch" hidden></div>
+  <div class="lay-view" data-view="orb" hidden></div>
 </div>`;
 
 export default {
@@ -90,16 +94,17 @@ export default {
     const viewport = () => C.viewportOf(device(), { orientation: st.orientation, freeSize: st.freeSize });
     const activeFile = () => (st.files ? st.files.get(wireframe().file) || null : null);
     // The review and save cover every mode: UI config's drafts, the presets and the sketch.
-    const views = { battlefield: null, sketch: null };
+    const views = { battlefield: null, sketch: null, orb: null };
     let mode = 'config';
     const allChanges = () => [
       ...(st.files ? C.changesFor(st.files) : []),
       ...(views.battlefield ? views.battlefield.changes() : []),
       ...(views.sketch ? views.sketch.changes() : []),
+      ...(views.orb ? views.orb.changes() : []),
     ];
     const dirtyCount = () => allChanges().length;
     /** The mode view that owns a saved path, or null for a UI config file. */
-    const viewFor = (path) => (path === B.PRESETS_FILE ? 'battlefield' : path.startsWith(`${S.SKETCH_DIR}/`) ? 'sketch' : null);
+    const viewFor = (path) => (path === B.PRESETS_FILE ? 'battlefield' : path === O.FOOTER_FILE ? 'orb' : path.startsWith(`${S.SKETCH_DIR}/`) ? 'sketch' : null);
     const viewHost = {
       api: ctx.api,
       history: ctx.history,
@@ -394,6 +399,7 @@ export default {
       }
       if (views.battlefield) views.battlefield.saved(data.files, sent);
       if (views.sketch) await views.sketch.saved(data.files, sent);
+      if (views.orb) views.orb.saved(data.files, sent);
       dlg.close();
       rebuild();
       ctx.toast({ kind: 'success', title: `Saved ${data.files.length} file(s)`, detail: `Backup ${data.backup}`, record: false });
@@ -549,6 +555,7 @@ export default {
         { title: 'Rotate the device', sub: 'Layout Studio', run: () => rotate() },
         ...(views.battlefield ? views.battlefield.commands() : []),
         ...(views.sketch ? views.sketch.commands() : []),
+        ...(views.orb ? views.orb.commands() : []),
       ],
     };
   },
