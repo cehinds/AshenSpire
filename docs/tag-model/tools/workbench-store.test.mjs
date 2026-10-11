@@ -14,20 +14,27 @@ const PAGE = path.join(HERE, '..', 'workbench.html');
 const BEGIN = '/* storage:begin */';
 const END = '/* storage:end */';
 
-export function storageSource() {
+// `edit` is an optional [from, to] pair applied to the block, used by tests that
+// disable one mechanism (for example the head lease) to show the race it closes.
+export function storageSource(edit) {
   const html = readFileSync(PAGE, 'utf8');
   const a = html.indexOf(BEGIN);
   const b = html.indexOf(END);
   if (a < 0 || b < 0 || b < a) throw new Error('storage block markers missing in workbench.html');
-  return html.slice(a, b + END.length);
+  let src = html.slice(a, b + END.length);
+  if (edit) {
+    if (!src.includes(edit[0])) throw new Error('edit target missing: ' + edit[0]);
+    src = src.replace(edit[0], edit[1]);
+  }
+  return src;
 }
 
 // Evaluates the storage block in a context built from `ctx`. `expose` is a JS
 // expression evaluated after the block that returns the functions a test needs.
-export function loadStorage(ctx, expose) {
+export function loadStorage(ctx, expose, edit) {
   if (!('TextEncoder' in ctx)) ctx.TextEncoder = TextEncoder;
   const context = vm.createContext(ctx);
-  return vm.runInContext(storageSource() + '\n;(' + expose + ')', context);
+  return vm.runInContext(storageSource(edit) + '\n;(' + expose + ')', context);
 }
 
 test('storage block loads and chunkRows keeps every row in order', () => {
@@ -166,7 +173,7 @@ export function makeFakeDb() {
 const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tstate, chunkRows, hashText, headPath, blobPath })';
 
 // One browser tab: its own state, sharing only the fake db with other tabs.
-export function makePage(db, tables) {
+export function makePage(db, tables, edit) {
   const page = {
     db, canWrite: true, localMode: false,
     state: { data: {} }, dirty: new Set(), saving: new Set(), timers: {},
@@ -179,7 +186,7 @@ export function makePage(db, tables) {
     saveLocal() {},
   };
   for (const t of Object.keys(tables)) page.state.data[t] = { columns: [...tables[t].columns], rows: [] };
-  const api = loadStorage(page, EXPOSE);
+  const api = loadStorage(page, EXPOSE, edit);
   return { page, api };
 }
 
@@ -585,14 +592,30 @@ test('(a) conflict choices: Load theirs drops local edits; Keep mine overwrites 
   assert.equal(B.page.dirty.has('t'), false);
 });
 
+// Holds each head get until two writers have both asked (or 200 ms pass), so both
+// reach the rev check before either writes. This is the interleaving the lease must stop.
+function barrierOnHeadGets(db) {
+  const pend = [];
+  db.delay = (op, p) => {
+    if (op !== 'get' || p !== 'tables/t') return undefined;
+    return new Promise((res) => {
+      pend.push(res);
+      if (pend.length === 2) pend.splice(0).forEach((f) => f());
+      else setTimeout(res, 200);
+    });
+  };
+}
+const NO_LEASE = ['if(!(await acquireHead(t)))', 'if(false)'];
+
 test('(a) interleaved writers under the head lease: exactly one wins, the other sees a conflict', async () => {
   const db = makeFakeDb();
-  db.delay = async (op) => { if (op === 'set') await new Promise((r) => setTimeout(r, 15)); };
+  barrierOnHeadGets(db);
   const A = makePage(db, T), B = makePage(db, T);
   const xs = sample(200, 'x'), ys = sample(200, 'y');
   editTable(A.page, xs);
   editTable(B.page, ys);
   await Promise.all([A.api.flush('t'), B.api.flush('t')]);
+  db.delay = async () => {};
   await settle(30);
   const stored = await storedRows(db);
   const aWon = stored === JSON.stringify(xs), bWon = stored === JSON.stringify(ys);
@@ -600,6 +623,17 @@ test('(a) interleaved writers under the head lease: exactly one wins, the other 
   const loser = aWon ? B : A;
   assert.ok(loser.api.tstate.t.conflict, 'the loser sees the conflict');
   assert.equal(loser.page.dirty.has('t'), true, 'the loser keeps its edits');
+});
+
+test('without the head lease, the same interleaving lets both writers pass the rev check', async () => {
+  const db = makeFakeDb();
+  barrierOnHeadGets(db);
+  const A = makePage(db, T, NO_LEASE), B = makePage(db, T, NO_LEASE);
+  editTable(A.page, sample(200, 'x'));
+  editTable(B.page, sample(200, 'y'));
+  await Promise.all([A.api.flush('t'), B.api.flush('t')]);
+  assert.equal(A.api.tstate.t.conflict, null, 'A saw no conflict');
+  assert.equal(B.api.tstate.t.conflict, null, 'B saw no conflict: both believe they won');
 });
 
 test('(a) interleaved writers: the stored table is exactly one writer\'s full table', async () => {
