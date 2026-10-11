@@ -421,3 +421,52 @@ test('clamp after netting: the mirrored tie at -3 stays at -3', () => {
   );
   assert.equal(momentum.e, -3);
 });
+
+// Codex finding 2: Block >= damage is a full block. It emits 'absorbed' and
+// the success goes to the blocking side, not to the attacker's landed hit.
+test('full block: Block >= damage emits absorbed and credits the blocker', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack', damage: 2 }],
+    [{ id: 'guard', speed: 1, kind: 'other', block: 2 }],
+    1,
+    d20Face(20),
+  );
+  assert.deepEqual(find(events, 'absorbed'), { type: 'absorbed', by: 'enemy', target: 'player', slot: 0, visible: true, momentum: 0 });
+  assert.equal(find(events, 'hit').blocked, true);
+  assert.equal(events.some((e) => e.type === 'interrupted'), false, 'a fully blocked hit does not interrupt');
+  assert.equal(momentum.guard, -1, 'the blocker wins the slot, so M moves toward the enemy');
+});
+
+test('partial block: Block below damage still lands, and the attacker wins the slot', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack', damage: 2 }],
+    [{ id: 'guard', speed: 1, kind: 'other', block: 1 }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(events.some((e) => e.type === 'absorbed'), false);
+  assert.equal(find(events, 'hit').blocked, false);
+  assert.equal(momentum.guard, 1);
+});
+
+test('evade: a miss against an evade action wins the slot for the defender', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'dodger', speed: 1, kind: 'other', stance: 'evade' }],
+    1,
+    d20Face(1),
+  );
+  assert.deepEqual(find(events, 'evaded'), { type: 'evaded', by: 'enemy', target: 'player', slot: 0, visible: true, momentum: 0 });
+  assert.equal(momentum.dodger, -1);
+});
+
+test('a plain miss with no defensive action still moves nothing', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'idle', speed: 1, kind: 'other' }],
+    1,
+    d20Face(1),
+  );
+  assert.equal(events.some((e) => e.type === 'evaded'), false);
+  assert.equal(momentum.idle, 0);
+});
