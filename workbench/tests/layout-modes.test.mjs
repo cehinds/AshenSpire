@@ -1,5 +1,5 @@
 // node --test workbench/tests/layout-modes.test.mjs — Layout Studio's mode list and
-// the deep link #mod=layout&mode=battlefield|sketch (parsed by the Workbench host).
+// the deep link #mod=layout&mode=battlefield|sketch|book-recipes (parsed by the Workbench host).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseHash, hashFor } from '../modules/host.mjs';
@@ -17,7 +17,12 @@ test('the deep link opens battlefield and sketch, and unknown modes open UI conf
 
 test('a mode not built yet opens UI config rather than an empty page', () => {
   assert.equal(L.modeFor('deck-row'), 'config');
-  assert.deepEqual(L.comingNext().map((m) => m.id), ['deck-row', 'sp-orb', 'book-recipes', 'card-layers']);
+  assert.deepEqual(L.comingNext().map((m) => m.id), ['deck-row', 'sp-orb', 'card-layers']);
+});
+
+test('the book recipes link opens that mode', () => {
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=book-recipes').params.mode), 'book-recipes');
+  assert.equal(hashFor('layout', L.paramsFor('book-recipes')), '#mod=layout&mode=book-recipes');
 });
 
 test('the link for a mode round-trips through the host\'s hash helpers', () => {
