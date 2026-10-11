@@ -483,6 +483,160 @@ silent. They are placeholders for testing the shape, not decisions.
 - Perception only tags events as visible. It does not gate targeting.
 - Momentum: per enemy, settled at round end. See Momentum.
 
+## Timeline model (owner, 2026-10-11)
+
+Status: prototype in `timeline.mjs` (tests in `timeline.test.mjs`). It is a new
+model that replaces slot pairing for the next prototype. The slot model
+(`resolveRound`, `resolvePair` and the slot rules above) is kept, unchanged, so the
+two can be compared. Nothing here is engine code, and no game content changes.
+Placeholder numbers are marked PLACEHOLDER in the code and below.
+
+### Queues and SP
+
+- Every combatant (the player and each enemy) builds a queue of cards each round.
+  The number of cards varies.
+- Each card costs SP. Every card costs 3 SP for testing (PLACEHOLDER,
+  `CARD_SP_COST`), unless a card gives its own `cost`. A combatant's SP budget is
+  `sp` (PLACEHOLDER default 6). A queue that costs more than `sp` is rejected.
+- MP is separate and is not modelled here (open, see below).
+- Each card has a target. The player targets a foe id (an enemy) or `self`. An
+  enemy targets `player` or `self`. Attacks must target a foe. Guard and Evade
+  must target `self`.
+
+### Initiative and action speed
+
+- A combatant rolls one d4 per round, from the injected rng, in combatant order
+  (player first). d4 = floor(u * 4) + 1.
+- Initiative of one action = base + d4 + momentum term.
+  - base = floor(DEX / 2) (PLACEHOLDER).
+  - Momentum term, per enemy M_X (decayed, see Momentum):
+    - the player's action on foe X: +momentumSpeed(M_X);
+    - an enemy X's action on the player: -momentumSpeed(M_X);
+    - a `self` action: 0.
+- Action speed = card speed + initiative. A queued defensive card (guard, evade,
+  counter) is preemptive and gets the buff below.
+- A combatant's initiative for ordering (roundRobin, wholeQueue) is the initiative
+  of its lead, which is its first queued card. An empty queue uses base + d4
+  (PLACEHOLDER: the lead rule is a choice, not owner-approved).
+
+### Merge modes
+
+`buildTimeline(queues, ctx)` returns `{ merge, initiative, entries }`. Each entry has
+`speed = { card, buff, base, d4, momentum, initiative, total, effective }`, so a UI
+can show the breakdown. `merge` is one of three modes, so the owner can compare:
+
+- `speed` (default). Sort by action speed, highest first. A card's effective speed
+  is the lesser of its own total and the previous card's effective in the same
+  queue, so a later card never acts before an earlier one. Ties: higher initiative,
+  then the player first. The implementation is a merge of the queue heads, which
+  keeps every queue in its own order.
+- `roundRobin`. Combatants in lead-initiative order. Pass 1 plays each combatant's
+  first card, pass 2 the second, and so on. Inside a pass, card speed breaks a tie
+  in lead initiative.
+- `wholeQueue`. The highest-initiative combatant plays its whole queue, then the
+  next, and so on.
+
+### Round resolution
+
+`createRound(state, options)` starts a round and returns a step-able resolver:
+`next()` resolves one timeline entry and returns `{ entry, events, state, done }`,
+where `state` is a copy after that action. `resolveAll()` runs to the end and
+returns `{ events, state, timeline }`. The round ends after its last entry, and
+then the round-end settle runs (see Momentum).
+
+- A defeated combatant (hp 0) skips its remaining actions (`skipped`,
+  `reason: 'defeated'`). An attack on a defeated target is skipped
+  (`reason: 'targetDefeated'`).
+- An attack rolls its hit with `hitRoll` (Accuracy from `accuracyFor`, evasion from
+  `evasionFor`). A miss ends the attack.
+- A full block is checked next: the active block covers the whole hit (block >= damage,
+  damage > 0). The hit is absorbed, and no evade is rolled.
+- Otherwise an intangible charge avoids the hit and is spent. Otherwise the target
+  rolls its evadePct (`evadePctFor`, base plus the active evade bonus) against
+  `floor(u * 100)`. A roll below evadePct avoids the hit.
+- Damage = attack damage - the active block. The block is a pool: it absorbs up
+  to its amount and is spent as it absorbs (until used up or the round ends).
+  Remaining damage reduces hp. Hp at 0 is defeated.
+
+### Defensive cards
+
+Each defensive card has base values (PLACEHOLDER, `DEFENSE_BASE`): guard block 6,
+evade 20 percentage points, counter damage 2. The owner may give a card its own
+value.
+
+- Preemptive (queued). The card resolves in its place in the queue, and it becomes
+  active for its owner until it is used up or the round ends. It gets the buff
+  `REACTION_BUFF` (PLACEHOLDER, one object, all in one place): +1 speed, +2 block,
+  +10 evade points, +1 counter damage.
+  - Guard: the block pool absorbs the next attacks' damage.
+  - Evade: adds its evade bonus to the next incoming attack's evadePct roll. The
+    card is spent on the next attack, whether or not that attack hits.
+  - Counter: fires on the next attack from its chosen foe, or from any foe when
+    its target is `self`. A counter faster than the attack (strictly higher total
+    speed) cancels it (`countered`), and deals its damage to the attacker. Otherwise
+    the attack resolves, and the counter fires after it (`counterFired`), dealing
+    its damage. A tie does not cancel.
+- Reaction (in hand). A player may play an unplayed defensive card from `hand` as a
+  reaction, when an attack targets that player, if SP is left for the card. The
+  player's `onReaction(attack, eligibleCards)` callback returns a card, or null.
+  The card must be eligible. A reaction uses base values, no buff, and spends the
+  cost. Its effect applies to that attack. A reaction counter fires after that
+  attack and never cancels it (PLACEHOLDER: a choice, not owner-approved). Enemies
+  never react.
+- Eligible cards are defensive cards in hand that are not queued this round and not
+  already played as a reaction this round.
+
+### Momentum (per enemy, settled once per round)
+
+The rules are the Momentum section above, applied to the timeline's exchanges. Each
+enemy has one M, and each attack is one exchange:
+
+- Round start: each enemy's M moves 1 toward 0 (decay). Every action in the round
+  uses this decayed M for its momentum term. M does not change during the round.
+- Each exchange credits each side at most once. A landed hit wins for the attacker.
+  A full block, an avoid (intangible or evadePct), or a miss wins for the defender.
+  A fired or cancelling counter wins for its owner. The gain is the winner's card
+  `momentumGain` (default 1) plus the stance bonus against the other side's card.
+- A counter with the `stagger` tag adds +-3 to its side's summed delta, on top of
+  its slot win.
+- Round end: the summed delta is added to each enemy's M once, then clamped to
+  -3..3. A raw total past the cap sets that side's `poiseDouble` flag. The flag
+  gives the side's next landed hit `poiseMultiplier: 2`. Poise damage is not
+  modelled.
+
+### Enemy adaptation (WIS)
+
+`adaptEnemyQueues(queues, playerQueue, rng, { wis })`, after the player commits
+(PLACEHOLDER numbers):
+
+- Chance = clamp(wis * 15%, 0, 60%). A wis of 0 never changes and draws no rng.
+- A change touches only the third queued action (index 2). It becomes a counter at
+  the player, and only when the player's queue attacks that enemy. Otherwise the
+  action is kept.
+- Returns `{ queues, changed }`. `changed` lists the enemies that changed, so a UI
+  can show "The Husk Brute shifts its stance!".
+
+### UI API
+
+- `makeCombatant(spec, tables)`, `makeFight(specs, tables)`: the state.
+- `buildTimeline(queues, { combatants, rng, momentum?, merge? })`: the ordered
+  entries with the speed breakdown, for a card hint or a preview.
+- `createRound(state, { queues, rng, merge?, decay?, stanceAdvantage?, evadeTable?, onReaction? })`
+  with `next()`, `resolveAll()` and `state`.
+- `adaptEnemyQueues(queues, playerQueue, rng, { wis })`.
+- Tables from resolver.mjs: `parseStanceAdvantage`, `parseEvadeBonus`,
+  `parseEvasionArmor`, `parseEvasionCards`.
+
+### Open in the timeline model
+
+- MP limits and MP costs (open, see question t). Not modelled.
+- Whether a combatant's initiative for ordering is its lead card (as built), its
+  best card, or base + d4 only (PLACEHOLDER choice).
+- Reaction counters (fire after, never cancel) and the replacement counter used by
+  adaptation are placeholders.
+- Interrupts (a landed faster hit interrupting a slower action, and hyperArmor)
+  are not in the timeline model. Poise damage is not modelled.
+
 ## Open questions
 
 a. Resolved (2026-10-11). The example reads dagger +2, heavy armor -3, Strike
