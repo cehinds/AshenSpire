@@ -314,6 +314,24 @@ test('the Unreal importer mirrors the manifest: it prunes only its own stale DT_
   assert.deepEqual(go({ cancelAt: 2 }), [], 'a cancelled import prunes nothing');
   assert.deepEqual(go({ fail: true }), [], 'a failed table prunes nothing');
   assert.deepEqual(go({ prune: false }), [], '--no-prune keeps everything');
+  // An --only export marks its manifest partial: nothing is pruned without --no-prune either.
+  const partial = join(scratch, 'unreal-partial');
+  mkdirSync(join(partial, 'tables'), { recursive: true });
+  writeFileSync(join(partial, 'tables/content.cards.json'), '[]');
+  writeFileSync(join(partial, 'manifest.json'), JSON.stringify({ format: 'ashenspire.engine-export/1', partial: true, tables: [
+    { id: 'content.cards', file: 'tables/content.cards.json' },
+  ] }));
+  assert.deepEqual(go({ export: partial }), [], 'a partial (--only) manifest prunes nothing');
+  const helper = spawnSync(python, ['-I', '-B', '-c', `import sys, types
+sys.modules["unreal"] = types.ModuleType("unreal")
+sys.path.insert(0, sys.argv[1])
+from import_ashenspire import should_prune as sp
+assert sp({"partial": True}, True) is False
+assert sp({"partial": True}, False) is False
+assert sp({}, True) is True
+assert sp({}, False) is False
+print("ok")`, join(root, 'docs/engine-export/unreal')], { encoding: 'utf8' });
+  assert.equal(helper.status, 0, helper.stderr);
 });
 
 // The Unity importer (C#, not compiled here) prunes by ownership: only paths its

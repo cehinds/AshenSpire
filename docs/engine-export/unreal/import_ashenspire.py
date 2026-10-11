@@ -25,8 +25,9 @@ The destination folder mirrors the manifest: after an import that ran to the
 end, was not cancelled and refilled every mapped table, the importer deletes
 the DataTables it owns in --dest (named DT_<table id>, see asset_name) whose
 table is no longer in the manifest. Other assets in the folder are never
-touched. Pass --no-prune for an export made with --only, whose manifest lists
-only some tables.
+touched. An export made with --only marks its manifest `partial: true`, and the
+importer then skips pruning on its own (it logs that it did), as the Unity
+importer does. --no-prune skips pruning for any export.
 """
 
 import argparse
@@ -98,12 +99,19 @@ def ensure_data_table(dest, name, struct):
     return tools.create_asset(name, dest, unreal.DataTable, factory)
 
 
+def should_prune(manifest, prune=True):
+    """Prune only when asked to and the manifest lists every table (not an --only export)."""
+    return bool(prune) and not manifest.get("partial")
+
 def import_export(export_dir, struct_map, dest, prune=True):
     manifest_path = os.path.join(export_dir, "manifest.json")
     with open(manifest_path, "r", encoding="utf-8") as fh:
         manifest = json.load(fh)
     if manifest.get("format") != FORMAT:
         raise RuntimeError("manifest format is %r, expected %r" % (manifest.get("format"), FORMAT))
+    if manifest.get("partial") and prune:
+        unreal.log("AshenSpire: export is partial (--only); stale tables were not removed")
+    prune = should_prune(manifest, prune)
 
     imported, skipped, failed = [], [], []
     cancelled = False
