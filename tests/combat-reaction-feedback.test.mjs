@@ -201,6 +201,21 @@ test('a single-hit root that was skipped reports nothing more', () => {
   assert.deepEqual(unavailable(events), []);
 });
 
+test('mixed-version co-op resolves a seat\'s candidates under that seat\'s own rules', () => {
+  // Seat a runs the legacy rules, seat b the expansion; Whirling Guard is a
+  // candidate only under b's. With b's Reaction switch off, b still hears why.
+  const players = [
+    { id: 'a', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 1, deck: [{ cardId: 'strike', instanceId: 'a:0', upgraded: false }] },
+    { id: 'b', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 2, deck: [{ cardId: 'whirlingGuard', instanceId: 'b:0', upgraded: false }] }];
+  const C = createCoopCombat({ registries: registriesWith({ hits: 1, cardTags: SWEEP }), rng: createRng(701), players,
+    enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
+  for (const P of C.players.values()) P.entity.block = 100;
+  for (const enemy of C.enemies) enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
+  setReactions(C, 'b', false);
+  endTurn(C, 'a'); endTurn(C, 'b');
+  assert.deepEqual(unavailable(C.eventLog).map(row => [row.ownerId, row.reason, row.cardIds]), [['b', 'switchOff', ['whirlingGuard']]]);
+});
+
 test('co-op reports the same reasons through the same offer door', () => {
   const cost = coop();
   cost.players.get('a').entity.energy = 0;

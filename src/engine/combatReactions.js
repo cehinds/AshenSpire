@@ -99,9 +99,14 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
 }
 
 // At most one receipt per incoming root and seat, and only for a seat holding a candidate.
-function reportUnavailable(ctx, group, id, row, reason, extra = {}) {
+// Candidates resolve under the owning seat's rules (co-op seats may run
+// different combat versions), so that seat is active while they are read.
+function reportUnavailable(ctx, group, id, row, reason, extra = {}, hooks = null) {
   if (group.reactionNoticed?.includes(id)) return;
-  const cardIds = candidateCardIds(ctx, row);
+  const previous = ctx.playerKey;
+  if (ctx.players) hooks?.setOwner?.(ctx, id);
+  let cardIds;
+  try { cardIds = candidateCardIds(ctx, row); } finally { if (ctx.players) hooks?.setOwner?.(ctx, previous); }
   if (!cardIds.length) return;
   (group.reactionNoticed ||= []).push(id);
   const { cardId = cardIds[0], ...rest } = extra;
@@ -116,13 +121,13 @@ function seatPresent(ctx, id) {
 }
 
 // Fallback for a later action of an already answered root (reportRestOfRoot usually fires first).
-function reportAlreadyAnswered(ctx, action, group) {
+function reportAlreadyAnswered(ctx, action, group, hooks) {
   const contacts = (action.meta?.expansionContacts || []).flat();
   for (const id of group.reactionAnswered || []) {
     const row = rowFor(ctx, group, id);
     if (!row || group.reactionNoticed?.includes(id) || !seatPresent(ctx, id)) continue;
     if (!contacts.some(contact => group.targets[contact.key] === row && positive(row.contacts[contact.index]))) continue;
-    reportUnavailable(ctx, group, id, row, 'alreadyAnswered');
+    reportUnavailable(ctx, group, id, row, 'alreadyAnswered', {}, hooks);
   }
 }
 
@@ -131,7 +136,7 @@ export function beforeReactionAction(ctx, action, hooks) {
   if (ctx.pendingReaction) return true;
   const group = action.meta?.expansionGroup;
   if (!group || group.carrier?.reactionDepth || action.source?.kind !== 'enemy') return false;
-  if (group.begun) { reportAlreadyAnswered(ctx, action, group); return false; }
+  if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (!action.source.alive) return false;
   const ids = ctx.players ? ctx.order : ['player'];
   const halted = action.source.skipNextTurn ? 'attackerStaggered'
@@ -140,7 +145,7 @@ export function beforeReactionAction(ctx, action, hooks) {
     for (const id of ids) {
       const row = rowFor(ctx, group, id);
       if (!row || !row.contacts.some(positive) || group.reactionAnswered?.includes(id) || !seatPresent(ctx, id)) continue;
-      reportUnavailable(ctx, group, id, row, halted);
+      reportUnavailable(ctx, group, id, row, halted, {}, hooks);
     }
     return false;
   }
@@ -151,7 +156,7 @@ export function beforeReactionAction(ctx, action, hooks) {
     const seat = ctx.players?.get(id);
     const entity = seat?.entity || ctx.player;
     if (!entity.alive || entity.reactionsEnabled === false || (seat && !seat.connected)) {
-      if (entity.reactionsEnabled === false && seatPresent(ctx, id)) reportUnavailable(ctx, group, id, row, 'switchOff');
+      if (entity.reactionsEnabled === false && seatPresent(ctx, id)) reportUnavailable(ctx, group, id, row, 'switchOff', {}, hooks);
       group.reactionAnswered.push(id); continue;
     }
     const previous = ctx.playerKey;
@@ -161,7 +166,7 @@ export function beforeReactionAction(ctx, action, hooks) {
     hooks.setOwner?.(ctx, previous);
     if (!options.length) {
       const { reason = 'other', ...extra } = refusal;
-      reportUnavailable(ctx, group, id, row, reason, extra);
+      reportUnavailable(ctx, group, id, row, reason, extra, hooks);
       group.reactionAnswered.push(id); continue;
     }
     ctx.pendingReaction = { id: `${group.key}:${id}`, groupKey: group.key, ownerId: id,
@@ -198,7 +203,7 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   group.reactionAnswered.push(ownerId);
   delete ctx.pendingReaction;
   ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: option?.play.cardInstanceId || null });
-  if (!option) { reportRestOfRoot(ctx, group, ownerId); return; }
+  if (!option) { reportRestOfRoot(ctx, group, ownerId, hooks); return; }
   ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
     actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
     rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
@@ -215,19 +220,19 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
   }
   restoreReactionQueue(ctx);
-  reportRestOfRoot(ctx, group, ownerId);
+  reportRestOfRoot(ctx, group, ownerId, hooks);
 }
 
 // The one offer covers the whole root: when it has further hits (in this action or
 // later ones), the answering seat hears once that the rest can't be answered.
 // A reaction that killed, staggered or locked the attacker cancels the rest, so
 // there is nothing left to explain (Codex on #1849).
-function reportRestOfRoot(ctx, group, ownerId) {
+function reportRestOfRoot(ctx, group, ownerId, hooks) {
   const row = rowFor(ctx, group, ownerId);
   if (!row || row.contacts.filter(positive).length < 2 || !seatPresent(ctx, ownerId)) return;
   const source = (ctx.enemies || []).find(enemy => enemy.id === group.sourceId);
   if (source && (!source.alive || source.skipNextTurn || controlRestrictions(ctx, source).locked)) return;
-  reportUnavailable(ctx, group, ownerId, row, 'alreadyAnswered');
+  reportUnavailable(ctx, group, ownerId, row, 'alreadyAnswered', {}, hooks);
 }
 
 export function restoreReactionQueue(ctx) {
