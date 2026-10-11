@@ -919,6 +919,28 @@ test('resolvePair partial pool: a side missing from options.charges falls back t
   });
 });
 
+test('resolvePair does not leak charges between calls that reuse the same options object', () => {
+  // Call 1 spends one of the enemy's 2 charges. Call 2 gives its enemy 0 charges,
+  // so it must not evade. A leaked pool would still hold 1 for the enemy.
+  const opts = { charges: {} };
+  const tagged = { id: 'ghost', speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 2 };
+  const first = resolvePair(ATTACKER, tagged, () => 0.99, opts);
+  assert.equal(find(first, 'evaded').reason, 'intangible', 'call 1 spends a charge');
+
+  const empty = { id: 'ghost', speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 0 };
+  const second = resolvePair(ATTACKER, empty, () => 0.99, opts);
+  assert.equal(second.some((e) => e.type === 'evaded'), false, 'call 2 has no charges and does not evade');
+  assert.equal(find(second, 'hit').avoided, false);
+});
+
+test('resolvePair does not throw on a frozen options.charges when no charge is spent', () => {
+  const frozen = Object.freeze({ player: 1 });
+  const plain = { id: 'foe', speed: 1, kind: 'other' };
+  const events = resolvePair(ATTACKER, plain, () => 0.99, { charges: frozen });
+  assert.ok(find(events, 'hit'), 'the pairing resolves');
+  assert.equal(events.some((e) => e.type === 'evaded'), false);
+});
+
 test('intangible pool: an enemy in options.charges with no action this round keeps its charges', () => {
   // G has no queued action this round, but its 3 charges must come back for the next round.
   const cards = [{ id: 'a', slot: 0, speed: 4, kind: 'attack' }];

@@ -183,10 +183,12 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
   };
   // What the evade bonus scopes see for this exchange (DESIGN.md, Evasion).
   const exchangeCtx = { inExchange: true, round: options.round, combatId: options.combatId };
-  // Shared charge pool by side, mutated as charges are spent (DESIGN.md, Evasion).
-  // A side missing from options.charges uses its own intangibleCharges.
-  const pool = options.charges ?? {};
-  for (const who of SIDES) if (!(who in pool)) pool[who] = side[who].intangibleCharges;
+  // Shared charge pool by side, spent in this call (DESIGN.md, Evasion). A side
+  // missing from options.charges uses its own intangibleCharges. The caller's
+  // object is only written back at the end, for supplied sides whose charges changed.
+  const supplied = options.charges ?? {};
+  const pool = {};
+  for (const who of SIDES) pool[who] = who in supplied ? supplied[who] : side[who].intangibleCharges;
   const events = [];
   const cancelled = { player: null, enemy: null };
   const tie = side.player.speed === side.enemy.speed;
@@ -247,6 +249,14 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     return hit && !blocked && avoid === null;
   };
 
+  // Write back only the supplied sides whose charges were spent. A frozen
+  // caller object with nothing spent is never written to.
+  const settle = () => {
+    for (const who of SIDES) {
+      if (who in supplied && pool[who] !== supplied[who]) supplied[who] = pool[who];
+    }
+  };
+
   if (tie) {
     for (const who of SIDES) if (side[who].kind === 'attack') rollHit(who);
     for (const who of SIDES) {
@@ -263,6 +273,7 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
         }
       }
     }
+    settle();
     return events;
   }
 
@@ -296,6 +307,7 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     }
   }
   if (!cancelled[second] && s.kind === 'attack') rollHit(second);
+  settle();
   return events;
 }
 
