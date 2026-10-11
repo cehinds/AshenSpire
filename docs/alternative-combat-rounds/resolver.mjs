@@ -663,7 +663,9 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // Resolves one round: each player card is paired with one enemy slot.
 //
 // playerCards: [{ id, slot, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]
-// enemyQueue:  [{ id, enemyId?, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]   (3 per round)
+// enemyQueue:  [{ id, enemyId?, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]
+//   One entry per enemy action played this round, in play order. The length varies
+//   (DESIGN.md, Round flow and perception). Each entry's slot is its index.
 //   `speed` is the card's total without momentum. This function adds the
 //   momentum of that action's enemy: the player adds half of M_e, the enemy adds -half of M_e.
 // perception:  number of queued actions visible to the player. It only tags

@@ -2046,3 +2046,49 @@ test('resolveRound: accepted pairings resolve in slot order, not input order', (
   assert.deepEqual(forward.evaded, [{ slot: 0, by: 'player', reason: 'intangible' }], 'slot 0 spends the charge');
   assert.deepEqual(reversed, forward, 'input order does not change evaded slot, momentum or charges');
 });
+
+test('queue length varies: enemy a plays 1 action and enemy b plays 3, and each resolves to its own enemy', () => {
+  // Rule (owner, 2026-10-11): enemy actions per round are not fixed at 3. The queue is
+  // whatever the enemies played, in play order. Slot 0 is enemy a's only action; slots
+  // 1..3 are enemy b's. Perception 2 shows slots 0 and 1 (a prefix of the queue).
+  const queue = [
+    { id: 'a1', enemyId: 'a', speed: 2, kind: 'attack' },
+    { id: 'b1', enemyId: 'b', speed: 2, kind: 'attack' },
+    { id: 'b2', enemyId: 'b', speed: 2, kind: 'attack' },
+    { id: 'b3', enemyId: 'b', speed: 2, kind: 'attack' },
+  ];
+  // The player answers slot 0 (a) and slot 3 (b). Slots 1 and 2 are unpaired.
+  const cards = [
+    { id: 'strike0', slot: 0, speed: 4, kind: 'attack' },
+    { id: 'strike3', slot: 3, speed: 4, kind: 'attack' },
+  ];
+  const { events, momentum } = resolveRound(cards, queue, 2, d20Face(20));
+
+  // Every slot event names the enemy that owns that slot in the queue.
+  for (const e of events) {
+    if (typeof e.slot === 'number' && e.enemyId !== undefined) {
+      assert.equal(e.enemyId, queue[e.slot].enemyId, `slot ${e.slot} belongs to ${queue[e.slot].enemyId}`);
+    }
+  }
+  const unpaired = events.filter((e) => e.type === 'unpaired').map((e) => ({ slot: e.slot, enemyId: e.enemyId, visible: e.visible }));
+  assert.deepEqual(unpaired, [
+    { slot: 1, enemyId: 'b', visible: true },
+    { slot: 2, enemyId: 'b', visible: false },
+  ]);
+  // Perception is a prefix of the queue: only slots 0 and 1 are visible.
+  const visibleSlots = [...new Set(events.filter((e) => e.visible === true && typeof e.slot === 'number').map((e) => e.slot))];
+  assert.deepEqual(visibleSlots.sort((x, y) => x - y), [0, 1]);
+  // Momentum is kept per enemy: a wins slot 0 (+1); b wins slot 3 (+1) and loses slots 1 and 2 (-1 each).
+  assert.deepEqual(momentum, { a: 1, b: -1 });
+});
+
+test('queue length varies: perception is a count over a queue of any length (1, 3 or 5 slots)', () => {
+  // Kind 'other' rolls nothing, so only the visibility tags matter here.
+  const make = (n) => Array.from({ length: n }, (_, i) => ({ id: `x${i}`, enemyId: i % 2 ? 'b' : 'a', speed: 1, kind: 'other' }));
+  const visibleOf = (n, perception) => resolveRound([], make(n), perception, d20Face(1))
+    .events.filter((e) => e.type === 'unpaired').map((e) => e.visible);
+  assert.deepEqual(visibleOf(1, 9), [true], 'one slot, perception above the queue length');
+  assert.deepEqual(visibleOf(1, 0), [false], 'one slot, perception 0');
+  assert.deepEqual(visibleOf(3, 2), [true, true, false], 'three slots, perception 2');
+  assert.deepEqual(visibleOf(5, 3), [true, true, true, false, false], 'five slots, perception 3');
+});
