@@ -56,7 +56,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { createStanceLedger } from '../../model/alternativeStance.js';
+import { createStanceLedger, kindForCard } from '../../model/alternativeStance.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { COMBAT_TIMING } from '../animationPace.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
@@ -248,6 +248,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
   const heldStances = createStanceLedger();
+  // The player's last confirmed card kind: the at-rest intent glyph above the head.
+  const heldKinds = createStanceLedger(kindForCard);
   let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
@@ -257,6 +259,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (appliedVisualEvents.has(event)) continue;
       appliedVisualEvents.add(event);
       heldStances.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
+      heldKinds.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
       readinessOrder = readinessAfterEvent(readinessOrder, event, 'player');
     }
@@ -636,19 +639,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const inst = active && findInst(active);
     const def = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     player?.classList.toggle('skill-selected', cardKind(def) === 'skill');
-    syncPlayerActionIntent(player, inst);
+    syncPlayerActionIntent(player, inst, heldKinds.get());
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
     refreshAim();
   }
 
-  function syncPlayerActionIntent(player, inst) {
+  // An armed card's kind shows while it is armed; otherwise the last confirmed
+  // card's kind stays above the figure, so the player's stance reads at rest.
+  function syncPlayerActionIntent(player, inst, held = null) {
     const leading = player?.querySelector('.combatant-leading');
     if (!leading) return;
     leading.querySelector('.player-action-intent')?.remove();
     const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
-    const action = playerActionIntent(def ? combatProfileFor(def) : null, () => {
+    const armed = def ? combatProfileFor(def) : null;
+    const action = playerActionIntent(armed?.maneuver ? armed : held, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
@@ -1408,7 +1414,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, heldStances.get(), readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1495,7 +1501,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }, true);
     if (!existing) zone.appendChild(box);
     const activeCard = findInst(selected || selfArm);
-    syncPlayerActionIntent(box, activeCard);
+    syncPlayerActionIntent(box, activeCard, heldKinds.get());
     stageFor(box)?.setStance?.(heldStances.get());
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
     playerRenderKey = renderKey;

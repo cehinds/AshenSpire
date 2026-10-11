@@ -29,8 +29,8 @@ test('the actual selected action resolves effective equipment tags and the chose
 });
 
 test('both real selection/render callers pass the instance and clear removes the previous action',()=>{
-  assert.match(source,/syncPlayerActionIntent\(player, inst\);/);
-  assert.match(source,/syncPlayerActionIntent\(box, activeCard\);/);
+  assert.match(source,/syncPlayerActionIntent\(player, inst, heldKinds\.get\(\)\);/);
+  assert.match(source,/syncPlayerActionIntent\(box, activeCard, heldKinds\.get\(\)\);/);
   const calls=[];
   const player={querySelector:()=>({querySelector:()=>({remove:()=>calls.push('removed')}),append:()=>assert.fail('no selected action')})};
   const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
