@@ -194,7 +194,7 @@ export function createCardLayersView(root, host) {
       $('.cl-insp').innerHTML = `<p class="lay-note">${st.data ? 'Select a layer on the card or in the list.' : 'The layout file was not loaded.'}</p>`;
       return;
     }
-    const rows = FIELDS.map(([key, label]) => `<div class="lay-row"><code>${esc(label)}</code><span><input type="number" step="any" data-cl-field="${key}" value="${esc(layer[key] ?? '')}" aria-label="${esc(label)}"></span></div>`).join('');
+    const rows = FIELDS.map(([key, label]) => `<div class="lay-row"><code>${esc(label)}</code><span><input type="number" step="any" data-cl-field="${key}" value="${esc(CL.displayNumber(layer[key]))}" aria-label="${esc(label)}"></span></div>`).join('');
     const order = CL.indexOfLayer(st.data, layer.id);
     $('.cl-insp').innerHTML = `<h3>${esc(layer.name || layer.id)}</h3>
       <p class="lay-note">${esc(layer.type)} layer${layer.bind ? ` bound to ${esc(layer.bind)}` : ''}. Paint order ${order + 1} of ${st.data.layers.length}.</p>

@@ -48,6 +48,11 @@ export function serialize(data, format = { indent: '  ', bom: false, newline: '\
   return (format.bom ? '﻿' : '') + body + (format.eol || '');
 }
 
+/** A layer number as the inspector shows it: at most 2 decimals, no trailing zeros. Display only; the stored value is unchanged. */
+export function displayNumber(v) {
+  return Number.isFinite(v) ? String(Math.round(v * 100) / 100) : '';
+}
+
 /**
  * The disk text as a layout the view may take. Throws the first reason the game could not read it
  * (with a count of the rest), so a bad file never reaches the draft.

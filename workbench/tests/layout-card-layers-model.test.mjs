@@ -135,6 +135,15 @@ test('the layer list is front first, with visibility and lock state', () => {
 
 // The view's gestures and reload are DOM code; these check the wiring in its source, as the render
 // page test does for its module.
+test('the inspector shows numbers with at most 2 decimals and no trailing zeros', () => {
+  assert.equal(CL.displayNumber(60.95365454737052), '60.95');
+  assert.equal(CL.displayNumber(40), '40');
+  assert.equal(CL.displayNumber(40.00000001), '40');
+  assert.equal(CL.displayNumber(-12.5), '-12.5');
+  assert.equal(CL.displayNumber(0.126), '0.13');
+  assert.equal(CL.displayNumber(undefined), '');
+});
+
 const VIEW = fs.readFileSync(path.join(ROOT, 'workbench/modules/layout/card-layers-view.mjs'), 'utf8');
 
 test('a cancelled box drag drops the gesture without a history step', () => {
