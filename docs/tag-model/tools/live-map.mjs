@@ -486,6 +486,17 @@ export const LIVE = {
   'card.ranged': 'ranged',
   'card.precision': 'precision',
   'card.extractable': 'extractable',
+  // proposed live mapping (domain pass)
+  'trait': 'trait',
+  'trait.adequateReach': 'trait:adequateReach',
+  'trait.closing': 'trait:closing',
+  'trait.conductive': 'trait:conductive',
+  'trait.mental': 'trait:mental',
+  'trait.projectile': 'trait:projectile',
+  'trait.reveal': 'trait:reveal',
+  'trait.shattering': 'trait:shattering',
+  'trait.unavoidable': 'trait:unavoidable',
+  'trait.unreflectable': 'trait:unreflectable',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,

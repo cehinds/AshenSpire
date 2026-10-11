@@ -755,5 +755,15 @@
  "card.basic": "new",
  "card.ranged": "new",
  "card.precision": "new",
- "card.extractable": "new"
+ "card.extractable": "new",
+ "trait": "new",
+ "trait.adequateReach": "new",
+ "trait.closing": "new",
+ "trait.conductive": "new",
+ "trait.mental": "new",
+ "trait.projectile": "new",
+ "trait.reveal": "new",
+ "trait.shattering": "new",
+ "trait.unavoidable": "new",
+ "trait.unreflectable": "new"
 }

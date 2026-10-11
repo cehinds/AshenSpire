@@ -881,3 +881,13 @@ Grant source {Where a starting card came from. The composed deck deals bound car
 Damage type {Identity of a typed HP damage component.}
 Run {Run structure — what an event, an encounter or an unlock is about.}
 internal {Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.}
+Combat traits {Combat traits: properties of an attack or a target that matchups and rules refer to. Grouping node for the trait vocabulary.}
+  Adequatereach {Combat trait for adequate reach. No engine or content reads it yet.}
+  Closing {Combat trait for closing in. No engine or content reads it yet.}
+  Conductive {Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).}
+  Mental {Combat trait named mental. No trait reference found; 'mental' is also a recovery profile in src/model/combatStatusState.js.}
+  Projectile {Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js; this trait is not read yet.}
+  Reveal {Combat trait for reveal. No engine or content reads it yet.}
+  Shattering {Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).}
+  Unavoidable {Combat trait for unavoidable attacks. No engine or content reads it yet.}
+  Unreflectable {Combat trait given to the meteorite and starfallBeam cards (src/content/combatExpansionCards.js).}

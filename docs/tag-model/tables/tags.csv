@@ -398,7 +398,7 @@ attackSource,attackSource,Attack source,,TagNode,,Source profile supplying an at
 attackSource.weapon,attackSource.weapon,Weapon,attackSource,TagNode,,Categorized Weapon identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:weapon
 attackSource.spell,attackSource.spell,Spell,attackSource,TagNode,,Categorized Spell identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:spell
 attackSource.unarmed,attackSource.unarmed,Unarmed,attackSource,TagNode,,Categorized Unarmed identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:unarmed
-meta.combat.delivery.projectile,projectile,Projectile,meta.combat.delivery,TagNode,,Categorized Projectile identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,delivery:projectile
+meta.combat.delivery.projectile,delivery.projectile,Projectile,meta.combat.delivery,TagNode,,Categorized Projectile identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,delivery:projectile
 classification,classification,classification,,TagNode,,Grouping node for classification in nodes.csv.,,,,,,live-tag,,,classification
 classification.attack,classification.attack,attack,classification,TagNode,,Grouping node for attack in nodes.csv.,,,,,,live-tag,,,classification.attack
 classification.strike,classification.strike,strike,classification,TagNode,,Grouping node for strike in nodes.csv.,,,,,,live-tag,,,classification.strike
@@ -756,6 +756,16 @@ card.basic,basic,Basic,card,Card,,Everybody's — on the shelf without being fou
 card.ranged,card.ranged,Ranged,card,Card,,Authored ranged presentation; no position system.,,,,,,live-tag,➶,7FA8C9,ranged
 card.precision,card.precision,Precision,card,Card,,Deliberate aim and finesse; presentation only.,,,,,,live-tag,◎,C9A227,precision
 card.extractable,extractable,Extractable,card,Card,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.",,,,,,live-tag,⚙,C9A227,extractable
+trait,trait,Combat traits,,TagNode,,Combat traits: properties of an attack or a target that matchups and rules refer to. Grouping node for the trait vocabulary.,,,,,,live-tag,,,trait
+trait.adequateReach,adequateReach,Adequatereach,trait,TagNode,,Combat trait for adequate reach. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:adequateReach
+trait.closing,closing,Closing,trait,TagNode,,Combat trait for closing in. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:closing
+trait.conductive,conductive,Conductive,trait,TagNode,,"Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).",,,,,,live-tag,◇,9FC3E8,trait:conductive
+trait.mental,mental,Mental,trait,TagNode,,Combat trait named mental. No trait reference found; 'mental' is also a recovery profile in src/model/combatStatusState.js.,,,,,,live-tag,◇,9FC3E8,trait:mental
+trait.projectile,trait.projectile,Projectile,trait,TagNode,,Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js; this trait is not read yet.,,,,,,live-tag,◇,9FC3E8,trait:projectile
+trait.reveal,reveal,Reveal,trait,TagNode,,Combat trait for reveal. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:reveal
+trait.shattering,shattering,Shattering,trait,TagNode,,"Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).",,,,,,live-tag,◇,9FC3E8,trait:shattering
+trait.unavoidable,unavoidable,Unavoidable,trait,TagNode,,Combat trait for unavoidable attacks. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:unavoidable
+trait.unreflectable,unreflectable,Unreflectable,trait,TagNode,,Combat trait given to the meteorite and starfallBeam cards (src/content/combatExpansionCards.js).,,,,,,live-tag,◇,9FC3E8,trait:unreflectable
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,
