@@ -100,6 +100,7 @@ export function makeFakeDb() {
   const docs = new Map();
   const listeners = [];
   const log = { sets: [], deletes: [], gets: [] };
+  const leases = new Map(); // path -> {holder, exp}; leases expire on their own, no release
   const parentOf = (p) => p.slice(0, p.lastIndexOf('/'));
   const idOf = (p) => p.slice(p.lastIndexOf('/') + 1);
   const snapOf = (p) => {
@@ -139,6 +140,15 @@ export function makeFakeDb() {
           await fake.afterSet(p);
         },
         async delete() { log.deletes.push(p); await fake.delay('delete', p); docs.delete(p); emit(p); },
+        async acquire(o) {
+          await fake.delay('acquire', p);
+          const now = Date.now(), L = leases.get(p);
+          if (!L || L.exp <= now || L.holder === o.holder) {
+            leases.set(p, { holder: o.holder, exp: now + Math.max(1000, o.ttlMs || 30000) });
+            return { acquired: true, holder: o.holder };
+          }
+          return { acquired: false, expiresAt: new Date(L.exp).toISOString() };
+        },
         onSnapshot(next) { return subscribe({ kind: 'doc', path: p, fn: next, live: true }); },
       };
     },
@@ -440,6 +450,23 @@ test('(a) conflict choices: Load theirs drops local edits; Keep mine overwrites 
   assert.equal(await storedRows(db), JSON.stringify(ys));
   assert.equal(B.api.tstate.t.conflict, null);
   assert.equal(B.page.dirty.has('t'), false);
+});
+
+test('(a) interleaved writers under the head lease: exactly one wins, the other sees a conflict', async () => {
+  const db = makeFakeDb();
+  db.delay = async (op) => { if (op === 'set') await new Promise((r) => setTimeout(r, 15)); };
+  const A = makePage(db, T), B = makePage(db, T);
+  const xs = sample(200, 'x'), ys = sample(200, 'y');
+  editTable(A.page, xs);
+  editTable(B.page, ys);
+  await Promise.all([A.api.flush('t'), B.api.flush('t')]);
+  await settle(30);
+  const stored = await storedRows(db);
+  const aWon = stored === JSON.stringify(xs), bWon = stored === JSON.stringify(ys);
+  assert.ok(aWon !== bWon, 'exactly one writer won');
+  const loser = aWon ? B : A;
+  assert.ok(loser.api.tstate.t.conflict, 'the loser sees the conflict');
+  assert.equal(loser.page.dirty.has('t'), true, 'the loser keeps its edits');
 });
 
 test('(a) interleaved writers: the stored table is exactly one writer\'s full table', async () => {

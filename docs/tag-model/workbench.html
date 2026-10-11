@@ -286,6 +286,18 @@ function subscribeTable(t){
   ts.unsub.push(db.doc(headPath(t)).onSnapshot(s=>onHead(t, s.exists? s.data() : null), e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.')));
 }
 /* ---------- writer: blobs first, then one head write guarded by the rev this view loaded ---------- */
+/* a short lease on the head doc, held only across its get and set; busy retries for up to 10 s, then false.
+   Leases have no release verb, so it lapses on its own after 3 s. */
+const TAB_ID='tab-'+Math.random().toString(36).slice(2,10);
+async function acquireHead(t){
+  const end=Date.now()+10000;
+  for(;;){
+    const r=await db.doc(headPath(t)).acquire({holder:TAB_ID, ttlMs:3000}).catch(()=>null);
+    if(r&&r.acquired) return true;
+    if(Date.now()>end) return false;
+    await sleepMs(50+Math.random()*350);
+  }
+}
 /* a conflict keeps local edits dirty and waits for the user; opts.overwrite writes the head on top of their rev */
 async function flush(t, opts){
   opts=opts||{};
@@ -308,6 +320,8 @@ async function flush(t, opts){
       await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:now});
       written.add(b.hash);
     }
+    /* the head's get and set run under a short lease, so a peer cannot slip a head in between them */
+    if(!(await acquireHead(t))){ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Another tab kept saving this table. Choose which version to keep.'); return; }
     const s=await db.doc(headPath(t)).get();
     const curHead=s.exists? s.data() : null, curRev=revOf(curHead);
     if(!opts.overwrite && curRev!==ts.base){
