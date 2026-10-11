@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { TAG_MODEL_GROUP, refocusesGrid, listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable } from './model.mjs';
+import { TAG_MODEL_GROUP, refocusesGrid, listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable, tagModelLock } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -111,7 +111,17 @@ export default {
       const lines = tm ? [tm.banner, tm.note].filter(Boolean) : [];
       tagBanner.hidden = !lines.length;
       tagBanner.textContent = lines.join(' ');
-      if (state.grid) state.grid.setReadOnly(Boolean(tm && !tm.savable));
+      // A read-only table (a generated one) takes no change: the grid, the toolbar's add, duplicate, delete and import, and the Row form.
+      // A savable tag-model table greys its derived columns and rows (the lock from the server's summary).
+      const ro = tagReadOnly();
+      if (state.grid) { state.grid.setLock(tagModelLock(tm)); state.grid.setReadOnly(ro); }
+      for (const b of el.querySelectorAll('.ds-toolbar [data-act="add"], .ds-toolbar [data-act="dup"], .ds-toolbar [data-act="del"], .ds-toolbar [data-act="import"]')) b.disabled = ro;
+      if (state.grid) renderRow();
+    }
+    /** Whether the selected table is a read-only tag-model table (the server says it is not savable). */
+    function tagReadOnly() {
+      const tm = state.selected ? state.parsed.get(state.selected)?.tagModel ?? null : null;
+      return Boolean(tm && !tm.savable);
     }
     // After a tag-model job: a table its build changed is read again from disk, unless it holds unsaved edits.
     function onTagModelRun(report) {
@@ -325,11 +335,15 @@ export default {
       const r = state.activeRow;
       if (!data || r == null || !data.rows[r]) { rowPanel.innerHTML = '<p class="ds-muted">Click a row to edit it here.</p>'; return; }
       const key = keyColumnOf(data.columns);
-      rowPanel.innerHTML = `<h3>Row ${r + 1}</h3><div class="ds-form">${data.columns.map((c, i) => `<label><span>${esc(c.label)} <em>${esc(c.type)}${key && key.key === c.key ? ' · key' : ''}</em></span><input data-c="${i}" value="${esc(G.formatValue(data.rows[r][c.key], c.type))}" aria-label="${esc(c.label)} row ${r + 1}"></label>`).join('')}</div>`;
+      // A derived field of a tag-model row is shown, not edited; a read-only table disables every field.
+      const lock = tagModelLock(state.parsed.get(state.selected)?.tagModel ?? null);
+      const ro = tagReadOnly();
+      const lockedHere = (c) => ro || G.isLockedRow(data.rows[r], lock) || (lock.columns ?? []).includes(c.key);
+      rowPanel.innerHTML = `<h3>Row ${r + 1}</h3><div class="ds-form">${data.columns.map((c, i) => { const off = lockedHere(c); return `<label${off ? ' class="ds-locked" title="Derived by build.mjs"' : ''}><span>${esc(c.label)} <em>${esc(c.type)}${key && key.key === c.key ? ' · key' : ''}</em></span><input data-c="${i}" value="${esc(G.formatValue(data.rows[r][c.key], c.type))}"${off ? ' disabled' : ''} aria-label="${esc(c.label)} row ${r + 1}"></label>`; }).join('')}</div>`;
     }
     rowPanel.addEventListener('change', (ev) => {
       const input = ev.target.closest('input[data-c]');
-      if (!input || state.activeRow == null) return;
+      if (!input || state.activeRow == null || input.disabled || tagReadOnly()) return;
       const data = state.grid.getData();
       const c = Number(input.dataset.c), col = data.columns[c];
       try {
@@ -348,7 +362,7 @@ export default {
     }
     /** Adds a row under the active row, or at the end. */
     function addRow() {
-      if (!needTable()) return;
+      if (!needTable() || refusesEdit()) return;
       const data = state.grid.getData(), at = activeIndex();
       const index = at == null ? data.rows.length : at + 1;
       state.grid.addRow(index);
@@ -358,6 +372,7 @@ export default {
     el.querySelector('.ds-toolbar').addEventListener('click', (ev) => {
       const act = ev.target.closest('[data-act]')?.dataset.act;
       if (!act || !needTable()) return;
+      if (['add', 'dup', 'del', 'import'].includes(act) && refusesEdit()) return;
       const grid = state.grid, data = grid.getData();
       if (act === 'add') addRow();
       else if (act === 'dup') {
@@ -372,9 +387,15 @@ export default {
       else if (act === 'export') exportTable();
       else if (act === 'review') openReview();
     });
+    /** Says why a bulk edit is refused on a read-only table, and returns true when it is. */
+    function refusesEdit() {
+      if (!tagReadOnly()) return false;
+      ctx.toast({ kind: 'info', title: 'This table is read-only', detail: 'It is generated by docs/tag-model/tools/build.mjs. Run the Tag model job to refresh it.' });
+      return true;
+    }
     fileIn.addEventListener('change', async () => {
       const file = fileIn.files?.[0]; fileIn.value = '';
-      if (!file || !needTable()) return;
+      if (!file || !needTable() || refusesEdit()) return;
       // The table and its key are taken before the read; the text lands only if that table is still selected.
       const read = { generation: gate.latest(), path: state.selected };
       const key = keyColumnOf(state.grid.getData().columns);

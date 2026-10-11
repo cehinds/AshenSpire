@@ -167,5 +167,5 @@ function checkUnkeyedRows(saved, disk, derived, at) {
 
 /** What the Data Studio page needs to show a tag-model table: its tier, whether a save may write it, and its banner and note. */
 export function tagModelSummary(rule) {
-  return { tier: rule.tier, savable: tagModelSavable(rule), job: rule.job, banner: rule.banner, note: rule.note, readOnlyColumns: rule.readOnlyColumns };
+  return { tier: rule.tier, savable: tagModelSavable(rule), job: rule.job, banner: rule.banner, note: rule.note, readOnlyColumns: rule.readOnlyColumns, readOnlyRows: rule.readOnlyRows ?? null };
 }

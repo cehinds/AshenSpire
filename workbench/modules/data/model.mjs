@@ -38,6 +38,11 @@ const isEmpty = (v) => v === undefined || v === null || v === '';
 /** The group the tag model proposal's tables are listed under in Data Studio. */
 export const TAG_MODEL_GROUP = 'Tag model (proposal)';
 
+/** The grid lock for a tag-model table, from the server's summary (tagModelSummary): its derived columns and read-only rows. */
+export function tagModelLock(tagModel) {
+  return tagModel ? { columns: tagModel.readOnlyColumns ?? [], rows: tagModel.readOnlyRows ?? null } : {};
+}
+
 /** Friendlier names for root-level tag-model tables (the path stays visible beside the label). Subfolder tables keep their names. */
 export const TAG_MODEL_LABELS = { assets: 'Art sizes' };
 
