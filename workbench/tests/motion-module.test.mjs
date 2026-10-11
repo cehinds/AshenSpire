@@ -61,6 +61,14 @@ test('the inspector shows the generated note and disables every control for a ge
   assert.equal(controls.length, 9, `inspector inputs, selects, toggles, anchors and remove take lockAttr (${controls.length})`);
 });
 
+test('Keep my version saves on the hashes the 409 reported, and never reads the file (a deleted pose would 404)', () => {
+  const src = read('workbench/modules/motion/index.mjs');
+  const keep = src.match(/if \(act === 'keep'\) \{[\s\S]*?\n      \}/);
+  assert.ok(keep, 'the keep branch exists');
+  assert.doesNotMatch(keep[0], /files\/read/, 'keep does not re-read the file');
+  assert.match(src, /rebaseOnConflicts\(/, 'the save changes are rebased on the reported hashes');
+});
+
 test('the position editor locks every handle of a generated file', () => {
   const src = read('workbench/modules/motion/index.mjs');
   assert.match(src, /if \(isGenerated\(st\.file\.path\)\) for \(const item of doc\.items\) item\.locked = true;/);

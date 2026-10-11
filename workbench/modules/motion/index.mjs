@@ -15,6 +15,7 @@ import {
   clampTime, poseIndexAt, poseStart, stepFrame, stepPose, advance, onionNeighbours, poseTicks, clipBar,
   parseMotionLink, libraryEntries, filterLibrary, parsePoseFile, isDirty, isGenerated, GENERATED_NOTE,
   setClipFields, setAnchor, canvasDocOf, applyCanvasDoc, serializePoseFile, addClip, removeClip, bindingRows,
+  rebaseOnConflicts,
 } from './model.mjs';
 
 // The painted frames sit on a 640px canvas whose floor is at 600px; the figure is drawn 90% of the stage high.
@@ -257,6 +258,8 @@ export default {
       }
       const parsed = parsePoseFile(r.text);
       st.file = { path, kind: r.kind, hash: r.hash, original: r.text, project: parsed.project, problems: parsed.problems };
+      keepConflicts = null;
+      conflictList = [];
       st.time = 0;
       st.selected = null;
       st.playing = false;
@@ -530,11 +533,13 @@ export default {
     dlg.addEventListener('close', () => { dlgBody().innerHTML = ''; });
     reviewBtn.addEventListener('click', () => openReview());
     let saving = false;
+    // The 409 files of the last save, and the disk hashes "Keep my version" saves them against.
+    let conflictList = [], keepConflicts = null;
     /** The open file's change, if its project differs from the bytes read: the same text a save would write. */
     function dirtyChanges() {
       const f = st.file;
       if (!f || isGenerated(f.path) || !isDirty(f.original, f.project)) return [];
-      return [{ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }];
+      return rebaseOnConflicts([{ path: f.path, text: serializePoseFile(f.project, f.original), baseHash: f.hash }], keepConflicts || []);
     }
     function renderDirty() {
       const dirty = dirtyChanges().length > 0;
@@ -574,6 +579,7 @@ export default {
           const list = failure.problems.map((p) => `<li><code>${esc(p.path)}</code> ${esc(p.message)}</li>`).join('');
           await openReview(`<div class="mo-problems"><p><strong>Nothing saved.</strong> The checks found problems:</p><ul>${list}</ul></div>`);
         } else if (failure.kind === 'conflicts') {
+          conflictList = failure.conflicts;
           await openReview('<div class="mo-problems is-conflict"><p><strong>Changed on disk since it was opened.</strong></p><p class="mo-note">Reload drops your edits to this file. Keep my version overwrites the change made on disk.</p><p><button type="button" class="btn btn-sm" data-dlg="reload">Reload from disk</button> <button type="button" class="btn btn-sm" data-dlg="keep">Keep my version</button></p></div>');
         } else {
           await openReview(`<div class="mo-problems"><p><strong>Not saved:</strong> ${esc(failure.message)}. Your edits are still here; try again.</p></div>`);
@@ -581,6 +587,8 @@ export default {
         return;
       }
       saving = false;
+      keepConflicts = null;
+      conflictList = [];
       const sent = new Map(changes.map((c) => [c.path, c.text]));
       for (const saved of data.files || []) {
         if (st.file && saved.path === st.file.path) { st.file.original = sent.get(saved.path); st.file.hash = saved.hash; }
@@ -603,8 +611,8 @@ export default {
         return;
       }
       if (act === 'keep') {
-        const disk = await ctx.api(`files/read?path=${encodeURIComponent(st.file.path)}`);
-        st.file.hash = disk.hash;
+        // The 409 already reports each file's hash on disk (null when deleted): save against those.
+        keepConflicts = conflictList;
         await openReview();
       }
     }
