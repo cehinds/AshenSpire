@@ -153,3 +153,12 @@ test('the bounds and the art paths and fonts are the game\'s', () => {
   assert.deepEqual(O.ORB_ASSETS, staminaOrb.assets);
   assert.deepEqual(O.FOOTER_FONTS, footerFonts);
 });
+
+test('readFooterText accepts the canonical real file and refuses reformatted or invalid text', () => {
+  assert.deepEqual(O.readFooterText(TEXT), data, 'the canonical text passes and parses');
+  assert.throws(() => O.readFooterText(JSON.stringify(data)), /not in the form Layout Studio saves/, 'a file in another form is refused');
+  assert.throws(() => O.readFooterText('{not json'), SyntaxError, 'text that is not JSON is refused');
+  const broken = JSON.parse(TEXT);
+  broken.components.layout.items[0].w = -1;
+  assert.throws(() => O.readFooterText(O.serializeFooter(broken)), /footerLayout\.json: /, 'an invalid item is refused');
+});

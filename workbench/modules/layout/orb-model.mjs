@@ -116,6 +116,19 @@ export function footerProblems(data) {
   return out;
 }
 
+/**
+ * The footer file's text as a view reads it: parsed, in the form a save writes, and free of
+ * problems. Load and reload both take the file through here. Throws an Error that names what is wrong.
+ */
+export function readFooterText(text) {
+  const data = parseFooter(text);
+  // Saving writes the file back in this form; a file in another form would show a diff that no edit made.
+  if (serializeFooter(data) !== text) throw Error(`${FOOTER_FILE} is not in the form Layout Studio saves; edit it in the file`);
+  const problems = footerProblems(data);
+  if (problems.length) throw Error(`${FOOTER_FILE}: ${problems[0]}`);
+  return data;
+}
+
 /** A new footer object with one item field set. The input is never mutated; a refused value throws. */
 export function setItemField(data, id, field, value) {
   const layout = layoutOf(data);
