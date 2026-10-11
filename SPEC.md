@@ -90,7 +90,7 @@ These override everything else in the spec.
    - **Kenney.nl** (CC0) — UI nine-slices, buttons, panel borders.
    - **OpenGameArt.org** (filter CC0/CC-BY) — combat backgrounds, enemy portraits if suitable ones exist.
    - **Google Fonts** (OFL) — display serif (e.g. *Cinzel*) + body sans (e.g. *Inter*).
-4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code never hardcodes an asset path; the CSS backdrops in `styles/` are outside this item until §2.4 lands. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
+4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code is meant never to hardcode an asset path; until §2.4 lands this is not yet true: the CSS backdrops in `styles/` and several UI modules (for example `src/ui/components/scenePainting.js`, `src/ui/components/engravedIcon.js`, `src/ui/cardArtwork.js`, `src/ui/defaultCardArtwork.js`) still build `assets/…` paths directly. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
 5. Third-party **code** may be vendored only if MIT/BSD/Apache/CC0, kept in `src/vendor/`, attributed in `CREDITS.md`. Expected: none beyond possibly a PRNG snippet (mulberry32 is public domain).
 
 ### 2.1 The AI-use acknowledgement — one home, two surfaces
