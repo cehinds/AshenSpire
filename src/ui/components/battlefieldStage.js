@@ -17,7 +17,7 @@ import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
-import { hudGeometry, offsetPlacement } from '../models/HudLayoutOffsetModel.js';
+import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { reducedMotionRequested } from '../motion.js';
 
@@ -784,9 +784,31 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       placeHud: cores => placePlayerHud(true, cores),
       targetCores,
     });
-    settledTargets = targets;
     settledTargetCores = targetCores;
     settledFooterSize = footerSize;
+    // The selected enemy nameplate's offset token moves its visible footer
+    // and its tap target together (offsetTargetPlate), clamped to the field.
+    // It is refused when the moved plate would cover anything packing avoids:
+    // the footer obstacles (HUD, ribbon, tools, hand, the player's panel),
+    // another fighter's controls, or another packed target. 0: as packed.
+    const plateOf = (target) => {
+      const index = placed.findIndex(({ frame }) => frame.dataset.eid === target.id);
+      const box = boxes[index] || {};
+      return targetPlateBox({ x: target.x, y: target.y, footerWidth: box.footerWidth, footerHeight: box.footerHeight,
+        footerSize, hitPx: COMBAT_TARGET_HIT_PX, fieldLeft: fieldRect.left, fieldTop: fieldRect.top });
+    };
+    const platedTargets = !hudOffsets.enemyNameplateDy ? targets : targets.map((target) => {
+      const index = placed.findIndex(({ frame }) => frame.dataset.eid === target.id);
+      const frame = placed[index]?.frame;
+      if (!frame?.classList.contains('enemy') || !frame.classList.contains('context-selected')) return target;
+      const toEdges = (rect) => ({ left: rect.left, right: rect.left + rect.width, top: rect.top, bottom: rect.top + rect.height });
+      const obstacles = [...readFooterObstacles(),
+        ...boxes.flatMap((box, i) => i === index || placed[i].frame.classList.contains('player') ? [] : box.controls),
+        ...targets.filter((other) => other.id !== target.id).map((other) => toEdges(plateOf(other)))];
+      return offsetTargetPlate({ target, plate: plateOf(target), dy: hudOffsets.enemyNameplateDy * zoom,
+        bounds: { left: -Infinity, right: Infinity, top: fieldRect.top, bottom: fieldRect.top + fieldRect.height }, obstacles });
+    });
+    settledTargets = platedTargets;
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect, intentRect } = boxes[i];
       frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
@@ -797,7 +819,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.style.setProperty('--enemy-hit-height', `${COMBAT_TARGET_HIT_PX / zoom}px`);
       }
       if (frameRect) {
-        const target = targets.find(target => target.id === frame.dataset.eid) || combatFrameTarget({
+        const target = platedTargets.find(target => target.id === frame.dataset.eid) || combatFrameTarget({
           ...boxes[i], id: frame.dataset.eid, fieldRect, footerSize, player: frame.classList.contains('player'),
         });
         const local = anchorLocalBox(frameRect, { left: fieldRect.left + target.x,
@@ -813,22 +835,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
           top: fieldRect.top + target.y - footerSize / 2 - (Number.isFinite(boxes[i].footerTop) ? boxes[i].footerTop : hostRect.bottom), width: 0, height: 0 }, { zoom });
-        // The selected enemy nameplate's offset token, added after packing and
-        // clamped to the field; an offset onto a footer obstacle (HUD, ribbon,
-        // tools, hand, the player's panel) is refused. 0: exactly as packed.
-        let plateDy = 0;
-        if (hudOffsets.enemyNameplateDy && frame.classList.contains('enemy') && frame.classList.contains('context-selected')) {
-          const plate = { left: fieldRect.left + target.x - boxes[i].footerWidth / 2, top: fieldRect.top + target.y - footerSize / 2,
-            width: boxes[i].footerWidth, height: boxes[i].footerHeight };
-          const moved = offsetPlacement({ rect: plate, dy: hudOffsets.enemyNameplateDy * zoom,
-            bounds: { left: -Infinity, right: Infinity, top: fieldRect.top, bottom: fieldRect.top + fieldRect.height },
-            obstacles: readFooterObstacles() });
-          plateDy = (moved.top - plate.top) / zoom;
-        }
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
-          footer.style.translate = `${settledPx(offset.left)}px ${settledPx(offset.top + plateDy)}px`;
+          footer.style.translate = `${settledPx(offset.left)}px ${settledPx(offset.top)}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = 'var(--combat-layer-selection)';
           // A fallen footer reserves no space, so a living one may pack onto

@@ -46,3 +46,32 @@ export function offsetPlacement({ rect, dx = 0, dy = 0, bounds, obstacles = [] }
   if (blocked) return { left: rect.left, top: rect.top, shifted: false };
   return { left, top, shifted: left !== rect.left || top !== rect.top };
 }
+
+/**
+ * The screen box a packed target paints: its visible footer (centred on x,
+ * top at y - footerSize / 2, footerHeight tall) united with its square tap
+ * area (hitPx, centred on x, y). x and y are field-local; fieldLeft/fieldTop
+ * turn them into screen px.
+ */
+export function targetPlateBox({ x, y, footerWidth = 0, footerHeight = 0, footerSize = 0, hitPx, fieldLeft = 0, fieldTop = 0 }) {
+  const half = Math.max(footerWidth, hitPx) / 2;
+  const top = Math.min(y - footerSize / 2, y - hitPx / 2);
+  const bottom = Math.max(y - footerSize / 2 + footerHeight, y + hitPx / 2);
+  return { left: fieldLeft + x - half, top: fieldTop + top, width: half * 2, height: bottom - top };
+}
+
+/**
+ * offsetTargetPlate({ target, plate, dy, bounds, obstacles }) → target
+ *   The selected enemy nameplate token moves the visible footer AND its tap
+ *   target together: the returned target's y carries the accepted shift, so
+ *   every consumer of the target (hit area, footer translate, HUD footprint)
+ *   follows it. The offset is clamped to bounds and dropped when the moved
+ *   plate would newly cover an obstacle (offsetPlacement). dy 0 returns the
+ *   same target object.
+ */
+export function offsetTargetPlate({ target, plate, dy = 0, bounds, obstacles = [] }) {
+  if (!dy) return target;
+  const moved = offsetPlacement({ rect: plate, dy, bounds, obstacles });
+  const shift = moved.top - plate.top;
+  return shift ? { ...target, y: target.y + shift } : target;
+}

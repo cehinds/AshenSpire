@@ -10,7 +10,8 @@ import { tmpdir } from 'node:os';
 import { FORM_FACTORS, HUD_LAYOUT_FORMAT, HUD_LAYOUT_TOKENS, PER_CONSUMER, hudLayoutToken, checkTokenValue } from '../tools/hud-layout-tokens.mjs';
 import { buildHudLayoutCss, generateHudLayoutCss, readHudLayoutDocs, mergeHudLayoutExports, HUD_LAYOUT_CSS } from '../tools/hud-layout-css.mjs';
 import { formFactorFor } from '../src/ui/models/FormFactorModel.js';
-import { offsetPlacement, hudGeometry } from '../src/ui/models/HudLayoutOffsetModel.js';
+import { offsetPlacement, hudGeometry, offsetTargetPlate, targetPlateBox } from '../src/ui/models/HudLayoutOffsetModel.js';
+import { runInNewContext } from 'node:vm';
 import { balance } from '../src/content/balance.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -180,6 +181,42 @@ test('every geometry offset is applied by the code that places its element', () 
   const stage = read('src/ui/components/battlefieldStage.js');
   for (const key of ['playerDetailsDx', 'playerDetailsDy', 'enemyNameplateDy', 'turnRibbonDy']) assert.match(stage, new RegExp(`hudOffsets\\.${key}`));
   assert.match(read('src/ui/components/combatTools.js'), /hudGeometry\(style\)\.toolsDy/);
+});
+
+test('the nameplate offset moves the tap target with the plate, and a colliding offset is dropped', () => {
+  const plate = targetPlateBox({ x: 100, y: 200, footerWidth: 104, footerHeight: 24, footerSize: 44, hitPx: 44, fieldLeft: 10, fieldTop: 50 });
+  assert.deepEqual(plate, { left: 58, top: 228, width: 104, height: 44 }, 'footer and 44px square united, in screen px');
+  const target = { id: 'e1', x: 100, y: 200 };
+  const bounds = { left: -Infinity, right: Infinity, top: 50, bottom: 450 };
+  assert.equal(offsetTargetPlate({ target, plate, dy: 0, bounds }), target, 'dy 0: the packed target itself');
+  assert.deepEqual(offsetTargetPlate({ target, plate, dy: -30, bounds }), { id: 'e1', x: 100, y: 170 }, 'the target moves by the plate offset');
+  assert.deepEqual(offsetTargetPlate({ target, plate, dy: -500, bounds }), { id: 'e1', x: 100, y: 22 }, 'clamped to the field top');
+  const neighbour = { left: 60, right: 160, top: 190, bottom: 210 };
+  assert.equal(offsetTargetPlate({ target, plate, dy: -30, bounds, obstacles: [neighbour] }), target, 'an offset onto another target is refused');
+});
+
+test('the stage applies the nameplate offset to the packed target the hit area and footer both read', () => {
+  const stage = read('src/ui/components/battlefieldStage.js');
+  const begin = stage.indexOf('    const plateOf = (target) =>');
+  const end = stage.indexOf('    settledTargets = platedTargets;', begin);
+  assert.ok(begin > 0 && end > begin);
+  const frame = (eid, roles) => ({ dataset: { eid }, classList: { contains: (role) => roles.includes(role) } });
+  const placed = [{ frame: frame('player', ['player']) }, { frame: frame('e1', ['enemy', 'context-selected']) }, { frame: frame('e2', ['enemy']) }];
+  const inspectE2 = { left: 380, right: 420, top: 100, bottom: 140 };
+  const boxes = [{ footerWidth: 0, footerHeight: 0, controls: [] }, { footerWidth: 104, footerHeight: 24, controls: [] },
+    { footerWidth: 104, footerHeight: 24, controls: [inspectE2] }];
+  const run = (dy, targets) => runInNewContext(`${stage.slice(begin, end)}\nplatedTargets`, {
+    targets, placed, boxes, footerSize: 44, COMBAT_TARGET_HIT_PX: 44, fieldRect: { left: 0, top: 0, width: 600, height: 400 }, zoom: 1,
+    hudOffsets: { enemyNameplateDy: dy }, readFooterObstacles: () => [], targetPlateBox, offsetTargetPlate });
+  const apart = [{ id: 'e1', x: 100, y: 300 }, { id: 'e2', x: 400, y: 300 }];
+  assert.equal(run(0, apart), apart, 'token 0: exactly as packed');
+  assert.deepEqual(run(-40, apart).map((t) => t.y), [260, 300], 'only the selected enemy target moves, by the plate offset');
+  const underInspect = [{ id: 'e1', x: 400, y: 300 }, { id: 'e2', x: 100, y: 300 }];
+  assert.deepEqual(run(-170, underInspect).map((t) => t.y), [300, 300], "an offset onto another enemy's Inspect is dropped");
+  const stacked = [{ id: 'e1', x: 100, y: 300 }, { id: 'e2', x: 100, y: 240 }];
+  assert.deepEqual(run(-40, stacked).map((t) => t.y), [300, 240], 'an offset onto another packed target is dropped');
+  assert.match(stage, /const target = platedTargets\.find\(target => target\.id === frame\.dataset\.eid\)/,
+    'the hit area (--enemy-hit-x/y) and the footer translate read the offset target');
 });
 
 test('the tools row keeps its field span unless the token asks for the card band', () => {
