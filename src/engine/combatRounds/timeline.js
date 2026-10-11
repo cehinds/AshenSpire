@@ -138,12 +138,16 @@ export function makeCombatant(spec = {}, tables = {}) {
 }
 
 // The evasion-cards.csv bonus of a played evade card, or null when the card is not in the table.
-// Matches the card's name, then its id (names are case-sensitive, as in the table).
+// Matches the card's name, then its id (names are case-sensitive, as in the table). The table is a
+// Map (makeFight) or a plain object (a JSON round, see round.js); both read the same way.
 function evadeCardBonus(combatant, card) {
   const table = combatant.evadeCards;
   if (!table) return null;
-  const key = [card.name, card.id].find((k) => typeof k === 'string' && table.has(k));
-  return key === undefined ? null : table.get(key);
+  const isMap = table instanceof Map;
+  const has = (k) => (isMap ? table.has(k) : Object.hasOwn(table, k));
+  const read = (k) => (isMap ? table.get(k) : table[k]);
+  const key = [card.name, card.id].find((k) => typeof k === 'string' && has(k));
+  return key === undefined ? null : read(key);
 }
 
 // The foes a combatant may target: enemies for the player, the player for an enemy.
@@ -475,8 +479,8 @@ function gainOf(card) {
 // A side wins an exchange at most once. The gain is the winner's card gain plus the
 // stance bonus against the other side's card. The enemy key is the enemy in the exchange.
 function credit(cur, run, { key, winner, winCard, foeCard, events, seq, credited }) {
-  if (credited.has(winner)) return;
-  credited.add(winner);
+  if (credited.includes(winner)) return;
+  credited.push(winner);
   const gain = gainOf(winCard);
   const bonus = stanceBonus(run.stanceTable, winCard?.stance ?? null, foeCard?.stance ?? null);
   const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
@@ -498,23 +502,24 @@ function stagger(run, { key, owner, target, cur, events, seq }) {
   events.push({ type: 'momentum', reason: 'counterStagger', enemyId: key, by: cur.combatants[owner].side, delta, seq });
 }
 
-// Offers the player's reaction window (owner, 2026-10-11): when an attack targets a
-// player, the player may play an unplayed defensive card from hand, if SP is left.
-// Enemies never react. The card uses base values and spends its sp.
-function offerReaction(cur, entry, events, options, run) {
+// The player's reaction offer for one attack (owner, 2026-10-11): when an attack targets a player,
+// the player may play an unplayed defensive card from hand, if SP is left. Enemies never react.
+// Returns { attack, eligible } when there is a card to offer, else null. It changes nothing, so a
+// caller may stop here, ask the player, and resume later.
+export function reactionOffer(cur, entry, run) {
   const defender = cur.combatants[entry.target];
-  if (defender.side !== 'player' || typeof options.onReaction !== 'function') return { evade: null, counter: null };
+  if (defender.side !== 'player') return null;
   const id = defender.id;
   const usedIds = get(cur.used, id, []);
-  const queued = get(run.queuedIds, id, new Set());
+  const queued = get(run.queuedIds, id, []);
   const foes = foesOf(cur.combatants, id);
   const eligible = defender.hand.filter((c) => DEFENSIVE_KINDS.includes(c.kind)
     && targetOk(c, foes)
-    && !queued.has(c.id)
+    && !queued.includes(c.id)
     && !usedIds.includes(c.id)
     && cardSp(c) <= cur.spLeft[id]
     && (c.kind !== 'counter' || c.target === 'self' || c.target === entry.actor));
-  if (eligible.length === 0) return { evade: null, counter: null };
+  if (eligible.length === 0) return null;
   const attack = {
     seq: entry.seq,
     attacker: entry.actor,
@@ -523,16 +528,27 @@ function offerReaction(cur, entry, events, options, run) {
     damage: Math.max(0, Number(entry.card.damage ?? 0) || 0),
     speed: entry.speed.total,
   };
-  const pick = options.onReaction(attack, eligible.map((c) => ({ ...c })));
-  if (pick === null || pick === undefined) return { evade: null, counter: null };
+  return { attack, eligible };
+}
+
+// The eligible card a pick names (owner, 2026-10-11). A null or undefined pick plays nothing.
+// A pick that is not eligible throws a TypeError.
+export function chooseReaction(eligible, pick) {
+  if (pick === null || pick === undefined) return null;
   const chosen = eligible.find((c) => c.id === pick?.id);
   if (!chosen) throw new TypeError(`onReaction returned a card that is not eligible: ${pick?.id}`);
+  return chosen;
+}
+
+// Spends a chosen reaction card and places it with base values (no buff). A reaction evade or
+// counter is bound to this attack: its record is returned, never left active. A reaction counter
+// fires on this attack after it resolves and never cancels it (placeholder). Queued defences wait.
+function playReaction(cur, entry, events, chosen) {
+  const id = entry.target;
+  const usedIds = get(cur.used, id, []);
   cur.spLeft[id] -= cardSp(chosen);
   put(cur.used, id, [...usedIds, chosen.id]);
   events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, sp: cardSp(chosen) });
-  // Base values, no buff (owner, 2026-10-11). A reaction evade or counter is bound to this
-  // attack: it is returned to resolveAttack, never left active. A reaction counter fires on
-  // this attack after it resolves and never cancels it (placeholder). Queued defences wait.
   const record = placeDefence(cur, id, chosen, { preemptive: false, foe: entry.actor, events, reaction: true });
   return {
     evade: chosen.kind === 'evade' ? record : null,
@@ -598,7 +614,7 @@ function takeCounter(cur, defenderId, attackerId) {
   return i < 0 ? null : list.splice(i, 1)[0];
 }
 
-// One attack after its reaction window (owner, 2026-10-11): a queued or reaction counter may
+// One attack after its reaction offer (owner, 2026-10-11): a queued or reaction counter may
 // cancel it or fire on it, and the attack resolves. `reacted` is the reaction offer.
 function resolveExchange(cur, entry, events, options, run, reacted) {
   // A reaction card that was played answers this attack, and a queued counter waits for a later
@@ -611,7 +627,7 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
   const key = entry.side === 'enemy' ? entry.actor : entry.target;
   const attackCard = { momentumGain: entry.card.momentumGain, stance: entry.card.stance ?? null };
   const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
-  const credited = new Set();
+  const credited = [];
   const sideOf = (id) => cur.combatants[id].side;
   if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
     // A faster counter cancels the attack. A tie or a slower counter does not.
@@ -662,26 +678,23 @@ function discardReactionGuard(cur, targetId, record, events) {
   record.left = 0;
 }
 
-// Resolves one timeline entry into `events`, updating `cur` in place.
-function applyEntry(cur, entry, events, options, run) {
+// Emits the action event of one timeline entry, or its skip. A defensive card is placed here.
+// Returns 'skipped', 'attack' (the attack still needs its reaction and its resolution), or 'done'.
+export function enterEntry(cur, entry, events) {
   const actor = cur.combatants[entry.actor];
   const base = { seq: entry.seq, actor: entry.actor, cardId: entry.cardId };
   if (actor.hp <= 0) {
     events.push({ type: 'skipped', reason: 'defeated', ...base });
-    return;
+    return 'skipped';
   }
   if (entry.target !== 'self' && cur.combatants[entry.target].hp <= 0) {
     events.push({ type: 'skipped', reason: 'targetDefeated', ...base, target: entry.target });
-    return;
+    return 'skipped';
   }
   events.push({ type: 'action', ...base, kind: entry.card.kind, target: entry.target, speed: entry.speed.total });
   const kind = entry.card.kind;
-  if (kind === 'attack') {
-    const reacted = offerReaction(cur, entry, events, options, run);
-    const reactionGuard = reacted.guard ? joinReactionGuard(cur, entry.target, reacted.guard) : null;
-    resolveExchange(cur, entry, events, options, run, reacted);
-    if (reactionGuard) discardReactionGuard(cur, entry.target, reactionGuard, events);
-  } else if (kind === 'guard' || kind === 'evade' || kind === 'counter') {
+  if (kind === 'attack') return 'attack';
+  if (kind === 'guard' || kind === 'evade' || kind === 'counter') {
     // A queued defensive card is preemptive: it becomes active for its owner now.
     placeDefence(cur, entry.actor, entry.card, {
       preemptive: true,
@@ -691,6 +704,30 @@ function applyEntry(cur, entry, events, options, run) {
       speed: entry.speed.effective,
     });
   }
+  return 'done';
+}
+
+// One attack after its reaction is settled (owner, 2026-10-11). `chosen` is the reaction card
+// played against it, or null. The attack resolves exactly as it does with no reaction.
+export function resolveAttackEntry(cur, entry, events, options, run, chosen) {
+  const reacted = chosen ? playReaction(cur, entry, events, chosen) : { evade: null, counter: null, guard: null };
+  // A reaction guard's block joins its target's pool for the one attack it was played against.
+  const reactionGuard = reacted.guard ? joinReactionGuard(cur, entry.target, reacted.guard) : null;
+  resolveExchange(cur, entry, events, options, run, reacted);
+  if (reactionGuard) discardReactionGuard(cur, entry.target, reactionGuard, events);
+}
+
+// Resolves one timeline entry into `events`, updating `cur` in place. An attack asks the
+// player's onReaction (when given) before it resolves.
+function applyEntry(cur, entry, events, options, run) {
+  if (enterEntry(cur, entry, events) !== 'attack') return;
+  const offer = typeof options.onReaction === 'function' ? reactionOffer(cur, entry, run) : null;
+  let chosen = null;
+  if (offer) {
+    const pick = options.onReaction(offer.attack, offer.eligible.map((c) => ({ ...c })));
+    chosen = chooseReaction(offer.eligible, pick);
+  }
+  resolveAttackEntry(cur, entry, events, options, run, chosen);
 }
 
 // Enemy momentum decay at round start (owner, 2026-10-11): each enemy's M moves
@@ -705,19 +742,12 @@ function decayAll(cur, combatants, step, events) {
   }
 }
 
-// Starts one round and returns a step-able resolver (owner, 2026-10-11).
-//
-// state:   from makeFight(); not changed. The round works on a copy.
-// options: { queues, rng, merge?, decay? (default 1), evadeTable? }
-//          queues: { [combatantId]: [card] } (see buildTimeline).
-// Returns { timeline, next(), resolveAll(), state }:
-//   next()        resolves the next timeline entry: { entry, events, state, done }.
-//                 `state` is a copy of the state after that action. `done` is true
-//                 once the last entry has resolved (the round then ends).
-//   resolveAll()  calls next() to the end: { events, state, timeline }.
-//   state         a copy of the state now.
-// Round start: enemy momentum decays (decay events come with the first next()).
-export function createRound(state, options = {}) {
+// Sets up one round from a fight state (owner, 2026-10-11). Shared by createRound() and the JSON
+// round in round.js, so both start from the same numbers and draw the rng in the same order.
+// Returns { cur, timeline, startEvents, run }: `cur` is the working fight state, `timeline` holds
+// the ordered entries, `startEvents` are the decay events, and `run` is the round-scoped data:
+// queuedIds { [combatantId]: [cardId] }, pending { [enemyId]: momentum delta }, stanceTable.
+export function beginRound(state, options = {}) {
   if (!state || typeof state !== 'object' || !state.combatants) throw new TypeError('state must come from makeFight()');
   const cur = structuredClone(state);
   cur.momentum = { ...(cur.momentum ?? {}) };
@@ -750,41 +780,58 @@ export function createRound(state, options = {}) {
 
   // Round-scoped: reactions played (by card id) and each combatant's queued card ids.
   cur.used = {};
-  const run = { queuedIds: {}, pending: {}, stanceTable: options.stanceAdvantage ?? null };
+  const queuedIds = {};
   for (const e of timeline.entries) {
-    put(run.queuedIds, e.actor, get(run.queuedIds, e.actor) ?? new Set());
-    run.queuedIds[e.actor].add(e.card.id);
+    const list = get(queuedIds, e.actor, []);
+    if (!list.includes(e.card.id)) put(queuedIds, e.actor, [...list, e.card.id]);
   }
+  const run = { queuedIds, pending: {}, stanceTable: options.stanceAdvantage ?? null };
+  return { cur, timeline, startEvents, run };
+}
 
+// Round end (owner, 2026-10-11): each enemy's summed delta (`pending`) is added to its start M
+// once, then clamped. A raw total past the cap sets that side's poiseDouble flag. Then the
+// round-scoped effects are cleared.
+export function settleRound(cur, pending, events) {
+  for (const k of Object.keys(cur.combatants)) {
+    if (cur.combatants[k].side !== 'enemy') continue;
+    const from = get(cur.momentum, k, 0);
+    const raw = from + get(pending, k, 0);
+    const to = clampMomentum(raw);
+    put(cur.momentum, k, to);
+    if (to !== from) events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to });
+    if (raw > MOMENTUM_MAX) {
+      events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'player', delta: 0, by: null });
+      put(cur.poiseDouble, 'player', true);
+    }
+    if (raw < MOMENTUM_MIN) {
+      events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'enemy', delta: 0, by: null });
+      put(cur.poiseDouble, k, true);
+    }
+  }
+  events.push({ type: 'roundEnd' });
+  for (const id of Object.keys(cur.active)) cur.active[id] = { guard: 0, guardCards: [], evade: [], counters: [] };
+}
+
+// Starts one round and returns a step-able resolver (owner, 2026-10-11).
+//
+// state:   from makeFight(); not changed. The round works on a copy.
+// options: { queues, rng, merge?, decay? (default 1), evadeTable?, stanceAdvantage?, onReaction? }
+//          queues: { [combatantId]: [card] } (see buildTimeline).
+// Returns { timeline, next(), resolveAll(), state }:
+//   next()        resolves the next timeline entry: { entry, events, state, done }.
+//                 `state` is a copy of the state after that action. `done` is true
+//                 once the last entry has resolved (the round then ends).
+//   resolveAll()  calls next() to the end: { events, state, timeline }.
+//   state         a copy of the state now.
+// Round start: enemy momentum decays (decay events come with the first next()).
+export function createRound(state, options = {}) {
+  const { cur, timeline, startEvents, run } = beginRound(state, options);
+  const entries = timeline.entries;
   let idx = 0;
   let settled = false;
   let pending = startEvents;
-  const entries = timeline.entries;
   const snapshot = () => structuredClone(cur);
-
-  // Round end (owner, 2026-10-11): each enemy's summed delta is added to its start M
-  // once, then clamped. A raw total past the cap sets that side's poiseDouble flag.
-  const settle = (events) => {
-    settled = true;
-    for (const k of Object.keys(cur.combatants)) {
-      if (cur.combatants[k].side !== 'enemy') continue;
-      const from = get(cur.momentum, k, 0);
-      const raw = from + get(run.pending, k, 0);
-      const to = clampMomentum(raw);
-      put(cur.momentum, k, to);
-      if (to !== from) events.push({ type: 'momentumApplied', enemyId: k, from, delta: to - from, to });
-      if (raw > MOMENTUM_MAX) {
-        events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'player', delta: 0, by: null });
-        put(cur.poiseDouble, 'player', true);
-      }
-      if (raw < MOMENTUM_MIN) {
-        events.push({ type: 'momentum', reason: 'overflow', enemyId: k, side: 'enemy', delta: 0, by: null });
-        put(cur.poiseDouble, k, true);
-      }
-    }
-    events.push({ type: 'roundEnd' });
-    for (const id of Object.keys(cur.active)) cur.active[id] = { guard: 0, guardCards: [], evade: [], counters: [] };
-  };
 
   const next = () => {
     const events = pending;
@@ -796,7 +843,10 @@ export function createRound(state, options = {}) {
       idx += 1;
       applyEntry(cur, entry, events, options, run);
     }
-    if (idx >= entries.length) settle(events);
+    if (idx >= entries.length) {
+      settled = true;
+      settleRound(cur, run.pending, events);
+    }
     return { entry: entry ? structuredClone(entry) : null, events, state: snapshot(), done: settled };
   };
 
