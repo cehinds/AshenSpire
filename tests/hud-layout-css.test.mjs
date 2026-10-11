@@ -374,6 +374,25 @@ test('merge rejects a bad token or value by file and name and writes nothing', (
   } finally { t.cleanup(); }
 });
 
+test('an exported null removes the override; a content file may never hold null', () => {
+  const t = tempContentRoot();
+  try {
+    const path = exportFile(t.root, 'desktop', 'desktop', { '--hud-tools-span': null, '--hud-tools-bg': '#101010' });
+    const result = mergeHudLayoutExports([path], { root: t.root });
+    assert.deepEqual(result.errors, []);
+    const after = JSON.parse(readFileSync(join(t.dir, 'desktop.json'), 'utf8')).tokens;
+    assert.equal(Object.hasOwn(after, '--hud-tools-span'), false, 'null deletes the committed override');
+    assert.equal(after['--hud-tools-bg'], '#101010');
+    assert.equal(after['--hud-header-hp-max-width'], '48%', 'omitted tokens are kept');
+    assert.doesNotMatch(readFileSync(join(t.root, 'styles', 'hud-layout.generated.css'), 'utf8').split("[data-form-factor='desktop']")[1].split('}')[0],
+      /--hud-tools-span/, 'the desktop block falls back to the default span');
+  } finally { t.cleanup(); }
+  const { css, errors } = generateHudLayoutCss(withTokens('desktop', { '--hud-tools-span': null }));
+  assert.equal(css, null, '--check / --write refuse a content file holding null');
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /^content\/hud-layout\/desktop\.json: --hud-tools-span: null .*only in an export passed to --merge/);
+});
+
 test('merge refuses a file that is not JSON in the ashenspire-hud-layout/1 format', () => {
   const t = tempContentRoot();
   try {

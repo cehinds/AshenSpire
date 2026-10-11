@@ -42,7 +42,11 @@ single layout decider (no new media queries). Thresholds live in
 }
 ```
 
-A file sets only the tokens it overrides. Unknown token names, a wrong
+A file sets only the tokens it overrides. A studio export passed to `--merge`
+may also give a token the value `null`, meaning *remove this override*: the
+merge deletes it from the content file and the token returns to its default.
+A committed content file never holds `null` (`--check` and `--write` refuse it).
+Unknown token names, a wrong
 `formFactor`, or a value that fails its type check are errors (the generator
 exits 1 and names the file and token). Values are plain CSS text, never `;`,
 `{`, `}`, `<`, `url(` or `expression(`.
@@ -131,5 +135,6 @@ Workflow:
 2. `node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …` validates each
    file and merges it into `content/hud-layout/<ff>.json`: an exported value
    wins, and tokens the export does not carry keep their tuned value. Any refused
-   file writes nothing and exits 1. The stylesheet is regenerated in the same run.
+   file writes nothing and exits 1. An exported `null` deletes that token's
+   override. The stylesheet is regenerated in the same run.
 3. Rebuild.

@@ -168,7 +168,12 @@ export function checkTokenValue(token, value) {
  * Validates one parsed layout file. `expectedFormFactor` is the one its file
  * name says. Returns a list of error strings (empty when valid).
  */
-export function validateHudLayoutFile(doc, expectedFormFactor) {
+/**
+ * Validates one ashenspire-hud-layout/1 document. A token value of `null`
+ * means "remove this override" and is allowed only in a studio export handed
+ * to --merge (`{ allowRemove: true }`); a committed content file never holds it.
+ */
+export function validateHudLayoutFile(doc, expectedFormFactor, { allowRemove = false } = {}) {
   const errors = [];
   if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return ['file must hold a JSON object'];
   for (const key of Object.keys(doc)) {
@@ -185,6 +190,10 @@ export function validateHudLayoutFile(doc, expectedFormFactor) {
   for (const [name, value] of Object.entries(doc.tokens)) {
     const token = hudLayoutToken(name);
     if (!token) { errors.push(`unknown token '${name}'`); continue; }
+    if (value === null) {
+      if (!allowRemove) errors.push(`${name}: null (remove the override) is allowed only in an export passed to --merge`);
+      continue;
+    }
     const reason = checkTokenValue(token, value);
     if (reason) errors.push(`${name}: ${reason}`);
   }
