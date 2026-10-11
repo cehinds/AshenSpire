@@ -202,9 +202,16 @@ Hit when:
 There are two ways to avoid an attack that would land. Both are defensive
 successes for momentum (see Momentum).
 
-- The `intangible` tag. The holder spends one charge to avoid the attack
-  outright. It is guaranteed. Charges live on the side (`intangibleCharges`).
-  At 0 charges the tag does nothing. Emits `evaded` with `reason: 'intangible'`.
+- The `intangible` tag. A charge avoids the attack outright, and it is
+  guaranteed. Charges are per side, per round: `resolveRound` keeps one pool
+  for the player and one for each enemy (keyed by enemy id). Every queued
+  action of an enemy draws on that enemy's pool, so one charge is spent at
+  most once per round. The pool starts from `options.charges`, else from the
+  side's `intangibleCharges` (the first card or first queued action of that
+  side). It is spent in place across the round's pairings, and the remaining
+  counts are returned as `charges: { player, [enemyId]: n }`. At 0 charges
+  the tag does nothing. Emits `evaded` with `reason: 'intangible'` and the
+  pool left in `charges`.
 - The evasion percent, `evadePct`. After an attack would land, the defender
   rolls once. `evadePct` is `evadeBasePct` plus the live bonuses for this
   exchange, clamped to 0..95. The roll is floor(rng x 100), and a roll under
@@ -243,9 +250,10 @@ Card-tag bonuses are passed on the side as `evadeBonuses`.
   they cannot overlap in one attack. A dodge needs a miss, and the percent
   roll happens only on a hit. Whether the evade stance's bonus should also
   apply to a dodge is not decided.
-- Charges are not carried between rounds. The side's `intangibleCharges` is an
-  input, and the resolver does not write it back. The caller reads the
-  `charges` field of the `evaded` event to store what is left.
+- Charges are not carried between rounds. The pools are an input (from
+  `options.charges` or the sides' `intangibleCharges`), and `resolveRound`
+  returns what is left in `charges`. The caller stores that for the next
+  round. Whether a charge refills over time is not decided.
 - The values in `evade-bonus.csv` are TBD.
 
 ## Resolver placeholder rules (prototype)
@@ -295,7 +303,8 @@ f. Resolved (2026-10-11): the guaranteed evasion becomes the `intangible` tag
    with side charges. The percent chance is a separate `evadePct` roll. Whether
    this retires today's Evade charges in src/ is not decided in this prototype.
 g. Resolved (2026-10-11). Success is a landed hit, a counter that fires, a
-   full block (Block >= damage and damage > 0), or a dodge (a miss against an evade action).
+   full block (Block >= damage and damage > 0), an avoid by an `intangible`
+   charge or an `evadePct` roll, or a dodge (a miss against an evade action).
 h. Resolved (2026-10-11). A whiff hands nothing to the other side, unless it
    is a dodge against an evade action.
 i. Resolved (2026-10-11). Momentum updates at round end, once per enemy.
