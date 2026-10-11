@@ -162,16 +162,21 @@ export function parseEvasionCards(text) {
 // dex takes attrs.DEX, and a missing DEX adds nothing. The DEX term is never negative. A buckler adds
 // 1 and any other shield adds 0. An evasionCard not in the table throws, like an
 // unknown armor.
-// With none of evasionArmor, dex, shield or evasionCard given, the result is the
-// plain `evasion` number, so existing callers are unchanged.
+// Owner rule (2026-10-11): the armor formula also runs when attrs.DEX is present,
+// so a side with attrs.DEX and no armor, shield, card or dex counts as Cloth.
+// Cloth works with no tables: a missing Cloth row falls back to the built-in
+// { base: 0, dexCap: 4 }. Any other unknown armor name still throws.
+// With none of evasionArmor, dex, shield, evasionCard or attrs.DEX given, the
+// result is the plain `evasion` number, so existing callers are unchanged.
 export const SHIELD_EVASION = Object.freeze({ buckler: 1 });
+const BUILTIN_CLOTH = Object.freeze({ base: 0, dexCap: 4 });
 
 export function evasionFor({ evasionArmor, dex, shield, evasionCard, attrs, evasion = 0 } = {}, tables = {}) {
   const flat = Number(evasion ?? 0);
   const extra = Number.isFinite(flat) ? flat : 0;
-  if (evasionArmor == null && dex == null && shield == null && evasionCard == null) return extra;
+  if (evasionArmor == null && dex == null && shield == null && evasionCard == null && attrs?.DEX == null) return extra;
   const armorName = evasionArmor ?? 'Cloth';
-  const row = tables?.armor?.get(armorName);
+  const row = tables?.armor?.get(armorName) ?? (armorName === 'Cloth' ? BUILTIN_CLOTH : undefined);
   if (!row) throw new RangeError(`unknown armor "${armorName}"`);
   // A missing dex takes attrs.DEX, and a missing attrs.DEX counts as 1 (adds 0).
   const dexNum = Number(dex ?? attrs?.DEX ?? 1);
