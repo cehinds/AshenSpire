@@ -1824,59 +1824,66 @@ export function mountEquipment(host, {
         },
       };
     });
-    inventoryDisclosure = mountDisclosure(collection, entries, {
-      moreLabel: 'more items',
-      layout: 'column',
-      revealHost: detail,
-      onReveal: (key) => {
-        selectedInventoryKey = key;
-        prompt.hidden = !!key;
-        // Phone rows collapse the detail track until an item is chosen (kit.css).
-        box.dataset.detailOpen = key ? 'true' : 'false';
-        setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
-      },
-      armFace: ({ button, entry, onTap }) => {
-        const draggableRow = draggableRows.get(entry.key);
-        if (draggableRow) attachInventoryDrag(button, draggableRow);
-        if (entry.face?.classModel?.holdAction !== true) return false;
-        const act = faceActions.get(entry.key);
-        if (!act) return false;
-        button.dataset.cardClass = entry.face.className;
-        button.dataset.holdCapable = 'true';
-        if (holdDuration > 0) {
-          const disarm = armHold(button, {
-            ms: holdDuration,
-            id: 'equipInventory',
-            // Same card, same scrolling list — see the whole-card hold above.
-            settleMs: HOLD_DRAG_SETTLE_MS,
-            onConfirm: act,
-            onTap: () => {
-              // The hold controller consumes its trailing click; reveal the
-              // nested card's Information control through the short-tap path.
-              button.querySelector('.card-inspection-target')?.dispatchEvent(new CustomEvent('cardinspectionrequest'));
-              onTap();
-            },
-            hintHost: button.querySelector('.inventory-face'),
-            hintBefore: button.querySelector('.inventory-category'),
-            feedbackHosts: () => {
-              // W1n: the reveal is in the detail column, not beside the face.
-              const reveal = detail.querySelector('.disc-reveal');
-              return [button.querySelector('.inventory-face'), reveal?.dataset.revealFor === entry.key ? reveal : null];
-            },
-          });
-          registerHold(disarm);
-        } else if (selectedSlot) {
-          button.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            act();
-          });
-        } else {
-          return false;
-        }
-        return true;
-      },
-    });
+    if (selectedSlot) {
+      inventoryDisclosure = null;
+      collection.append(pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, detail, prompt, box }));
+      detail.remove();            // the table expands inline; no side column
+      box.classList.add('is-picker-table');
+    } else {
+      inventoryDisclosure = mountDisclosure(collection, entries, {
+        moreLabel: 'more items',
+        layout: 'column',
+        revealHost: detail,
+        onReveal: (key) => {
+          selectedInventoryKey = key;
+          prompt.hidden = !!key;
+          // Phone rows collapse the detail track until an item is chosen (kit.css).
+          box.dataset.detailOpen = key ? 'true' : 'false';
+          setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
+        },
+        armFace: ({ button, entry, onTap }) => {
+          const draggableRow = draggableRows.get(entry.key);
+          if (draggableRow) attachInventoryDrag(button, draggableRow);
+          if (entry.face?.classModel?.holdAction !== true) return false;
+          const act = faceActions.get(entry.key);
+          if (!act) return false;
+          button.dataset.cardClass = entry.face.className;
+          button.dataset.holdCapable = 'true';
+          if (holdDuration > 0) {
+            const disarm = armHold(button, {
+              ms: holdDuration,
+              id: 'equipInventory',
+              // Same card, same scrolling list — see the whole-card hold above.
+              settleMs: HOLD_DRAG_SETTLE_MS,
+              onConfirm: act,
+              onTap: () => {
+                // The hold controller consumes its trailing click; reveal the
+                // nested card's Information control through the short-tap path.
+                button.querySelector('.card-inspection-target')?.dispatchEvent(new CustomEvent('cardinspectionrequest'));
+                onTap();
+              },
+              hintHost: button.querySelector('.inventory-face'),
+              hintBefore: button.querySelector('.inventory-category'),
+              feedbackHosts: () => {
+                // W1n: the reveal is in the detail column, not beside the face.
+                const reveal = detail.querySelector('.disc-reveal');
+                return [button.querySelector('.inventory-face'), reveal?.dataset.revealFor === entry.key ? reveal : null];
+              },
+            });
+            registerHold(disarm);
+          } else if (selectedSlot) {
+            button.addEventListener('click', (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              act();
+            });
+          } else {
+            return false;
+          }
+          return true;
+        },
+      });
+    }
     if (selectedSlot) {
       const clear = button({ label: t('armoury.destination.showAll') });
       clear.addEventListener('click', () => { picking = null; draw(); });
@@ -1889,7 +1896,7 @@ export function mountEquipment(host, {
     if (!entries.length) {
       // Nothing to select: the collection says why and takes the whole pane.
       collection.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
-      detail.remove();
+      if (detail.isConnected) detail.remove();
       box.classList.add('is-empty');
     }
     return box;
