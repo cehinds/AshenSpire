@@ -75,8 +75,8 @@ at M_e = 0.
 - Momentum adds half its value to speed, truncated toward zero. The player
   adds trunc(M_e / 2). The enemy adds -trunc(M_e / 2).
   - +-1 gives 0. +-2 gives +-1. +-3 gives +-1.
-  - The owner wrote "rounded down". This file reads it as truncation toward
-    zero so the shift is symmetric. Flagged for confirmation.
+  - The owner wrote "rounded down". Confirmed by the owner (2026-10-11) as
+    truncation toward zero, so the shift is symmetric.
 
 ### Slot win and loss
 
@@ -140,7 +140,7 @@ The player side is at M_e = +1 against this enemy, so the enemy side is at -1.
     Enemy:  momentum -1 (adds 0)
 
 Earlier this example gave +1, when momentum added its full value. Under the
-half-value rule it is 0. Flagged for confirmation.
+half-value rule it is 0.
 
 ### Combos: undecided
 
@@ -233,8 +233,7 @@ n. Combos: undecided. Examples to decide: a quickstep followed by a shieldBash
    out of the momentum rules until the owner answers.
 o. Does a miss from the evasion stat alone count as a dodge? Current reading:
    no. Only an evade action counts. Flagged.
-p. Speed effect: is "rounded down" truncation toward zero (current reading,
-   symmetric) or floor? Flagged.
+p. Resolved (2026-10-11): truncation toward zero.
 q. Stance bonus: is it added to the base gain (current reading) or does it
    replace it? Smash over block would be 3 or 2. Flagged.
 r. Counter stagger: does it set M_e to +-3 (current reading) or add to it?
