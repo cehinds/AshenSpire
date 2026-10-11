@@ -137,3 +137,9 @@ test('pages: branch previews match feature, fix and chore prefixes in any case (
   assert.ok(filters.length >= 3, `expected the three PR-branch filters, found ${filters.length}`);
   for (const f of filters) assert.match(f, /; "i"\)$/, `case-sensitive branch filter: ${f}`);
 });
+
+test('pages: the dev-preview workflow_run trigger admits capitalised Feature/, Fix/, Chore/ branches (branch filters are case-sensitive)', () => {
+  const wf = readFileSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url), 'utf8');
+  const line = wf.match(/workflow_run:[\s\S]*?branches: \[([^\]]*)\]/)?.[1] ?? '';
+  for (const p of ['feature/**', 'fix/**', 'chore/**', 'Feature/**', 'Fix/**', 'Chore/**']) assert.ok(line.includes(`'${p}'`), `missing ${p}`);
+});
