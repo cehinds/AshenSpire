@@ -798,7 +798,8 @@ go red is `unknown`, not green.
 ## 4. Combat rules (Slay-the-Spire-faithful)
 
 **Reward-card cost tuning (2026-09-19).** Resource costs remain explicit card
-data, paid together with Actions; rarity does not roll a cost at play time.
+data, paid from the one Stamina pool (Actions is how the HUD shows it; `energy`
+is a retired alias of `stamina`); rarity does not roll a cost at play time.
 Across the union of class reward pools, Common/Uncommon/Rare cards target
 30/50/70 percent with a Stamina cost, including 15/30/50 percent with both
 Stamina and Mana, rounded to whole cards. Starter and equipment-only cards
@@ -825,9 +826,9 @@ Stamina/Mana spent or no HP lost, the enemies' turn included; 0 = every turn)
 and **only every N rounds**; **after a won fight** (percent of the maximum,
 applied after the fight's pools are written back); and **at every Rest**
 (percent of the maximum on top of the place's own tags, §13.4j, included in the
-Rest preview). The defaults are the rules above — Stamina recovers
-`mechanics.stamina.idleRecoveryPerTurn` after an idle turn, nothing else
-recovers — and a fight built at the defaults carries no recovery state, so its
+Rest preview). The defaults are the rules above — Stamina gets no idle recovery (the turn-start
+refill in §4.1 already restores it, so `mechanics.stamina.idleRecoveryPerTurn` is
+not applied), and nothing else recovers — and a fight built at the defaults carries no recovery state, so its
 behaviour and its save are unchanged. A fight built under changed rules
 snapshots them with the idle streaks (`combat.recovery`); a restored fight keeps
 them. Co-op seats and the foundation ruleset keep their own recovery rules.
