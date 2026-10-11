@@ -2904,12 +2904,12 @@ as-eyebrow,.as-eyebrow,font-size,1rem,,styles/kit.css:34,all,typography,styles/k
 as-eyebrow,.as-eyebrow,letter-spacing,0.18em,,styles/kit.css:34,all,typography,styles/kit.css:34,as-eyebrow
 as-eyebrow,.as-eyebrow,text-transform,uppercase,,styles/kit.css:34,all,typography,styles/kit.css:34,as-eyebrow
 as-eyebrow,.as-eyebrow,color,var(--muted),,styles/kit.css:34,all,color,styles/kit.css:34,as-eyebrow
-kit.decide,.as-title-l,--track,0.05em,,styles/kit.css:35,all,token,styles/kit.css:35,as-title-l
-kit.decide,.as-title-l,margin,0,,styles/kit.css:35,all,spacing,styles/kit.css:35,as-title-l
-kit.decide,.as-title-l,font,700 2.55rem/1.1 var(--font-display),,styles/kit.css:35,all,typography,styles/kit.css:35,as-title-l
-kit.decide,.as-title-l,letter-spacing,var(--track),,styles/kit.css:35,all,typography,styles/kit.css:35,as-title-l
-kit.decide,.as-title-l,text-indent,var(--track),,styles/kit.css:35,all,typography,styles/kit.css:35,as-title-l
-kit.decide,.as-title-l,color,var(--parchment),,styles/kit.css:35,all,color,styles/kit.css:35,as-title-l
+as-title-l,.as-title-l,--track,0.05em,,styles/kit.css:35,all,token,styles/kit.css:35,as-title-l
+as-title-l,.as-title-l,margin,0,,styles/kit.css:35,all,spacing,styles/kit.css:35,as-title-l
+as-title-l,.as-title-l,font,700 2.55rem/1.1 var(--font-display),,styles/kit.css:35,all,typography,styles/kit.css:35,as-title-l
+as-title-l,.as-title-l,letter-spacing,var(--track),,styles/kit.css:35,all,typography,styles/kit.css:35,as-title-l
+as-title-l,.as-title-l,text-indent,var(--track),,styles/kit.css:35,all,typography,styles/kit.css:35,as-title-l
+as-title-l,.as-title-l,color,var(--parchment),,styles/kit.css:35,all,color,styles/kit.css:35,as-title-l
 as-title-m,.as-title-m,margin,0,,styles/kit.css:36,all,spacing,styles/kit.css:36,as-title-m
 as-title-m,.as-title-m,font,600 2.25rem/1.1 var(--font-display),,styles/kit.css:36,all,typography,styles/kit.css:36,as-title-m
 as-title-m,.as-title-m,letter-spacing,0.03em,,styles/kit.css:36,all,typography,styles/kit.css:36,as-title-m
@@ -4092,7 +4092,7 @@ as-decide,.as-decide,display,flex,,styles/kit.css:514,all,style.other,styles/kit
 as-decide,.as-decide,flex-direction,column,,styles/kit.css:514,all,style.other,styles/kit.css:514,as-decide
 as-decide,.as-decide,gap,0,,styles/kit.css:514,all,spacing,styles/kit.css:514,as-decide
 as-ornament,.as-decide > .as-ornament,margin,1.28rem 0 1.65rem,,styles/kit.css:515,all,spacing,styles/kit.css:515,as-ornament
-kit.decide,.as-decide > .as-title-l,text-align,center,,styles/kit.css:516,all,typography,styles/kit.css:516,as-title-l
+as-title-l,.as-decide > .as-title-l,text-align,center,,styles/kit.css:516,all,typography,styles/kit.css:516,as-title-l
 as-decide,.as-decide > .prompt,margin,1.5rem 0 0,,styles/kit.css:517,all,spacing,styles/kit.css:517,as-decide
 as-decide,.as-decide > .prompt,color,var(--muted),,styles/kit.css:517,all,color,styles/kit.css:517,as-decide
 as-decide,.as-decide > .prompt,font-size,1.32rem,,styles/kit.css:517,all,typography,styles/kit.css:517,as-decide
@@ -5052,13 +5052,13 @@ screen,.screen > h2,letter-spacing,var(--track),,styles/kit.css:1129,all,typogra
 screen,.screen > h2,text-indent,var(--track),,styles/kit.css:1129,all,typography,styles/kit.css:1129,screen
 screen,.screen > h2,color,var(--gold),,styles/kit.css:1129,all,color,styles/kit.css:1129,screen
 screen,.screen > h2,text-align,center,,styles/kit.css:1129,all,typography,styles/kit.css:1129,screen
-kit.decide,.screen > .as-title-l,--track,0.06em,,styles/kit.css:1129,all,token,styles/kit.css:1129,as-title-l
-kit.decide,.screen > .as-title-l,margin,0,,styles/kit.css:1129,all,spacing,styles/kit.css:1129,as-title-l
-kit.decide,.screen > .as-title-l,font,700 2.55rem/1.1 var(--font-display),,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
-kit.decide,.screen > .as-title-l,letter-spacing,var(--track),,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
-kit.decide,.screen > .as-title-l,text-indent,var(--track),,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
-kit.decide,.screen > .as-title-l,color,var(--gold),,styles/kit.css:1129,all,color,styles/kit.css:1129,as-title-l
-kit.decide,.screen > .as-title-l,text-align,center,,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
+as-title-l,.screen > .as-title-l,--track,0.06em,,styles/kit.css:1129,all,token,styles/kit.css:1129,as-title-l
+as-title-l,.screen > .as-title-l,margin,0,,styles/kit.css:1129,all,spacing,styles/kit.css:1129,as-title-l
+as-title-l,.screen > .as-title-l,font,700 2.55rem/1.1 var(--font-display),,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
+as-title-l,.screen > .as-title-l,letter-spacing,var(--track),,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
+as-title-l,.screen > .as-title-l,text-indent,var(--track),,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
+as-title-l,.screen > .as-title-l,color,var(--gold),,styles/kit.css:1129,all,color,styles/kit.css:1129,as-title-l
+as-title-l,.screen > .as-title-l,text-align,center,,styles/kit.css:1129,all,typography,styles/kit.css:1129,as-title-l
 subtitle,.screen > .subtitle,margin,0,,styles/kit.css:1130,all,spacing,styles/kit.css:1130,subtitle
 subtitle,.screen > .subtitle,color,var(--muted),,styles/kit.css:1130,all,color,styles/kit.css:1130,subtitle
 subtitle,.screen > .subtitle,font-size,1.1rem,,styles/kit.css:1130,all,typography,styles/kit.css:1130,subtitle
@@ -5363,7 +5363,7 @@ armoury-content,.armoury-content,display,flex,,styles/kit.css:1383,all,style.oth
 armoury-content,.armoury-content,flex-direction,column,,styles/kit.css:1383,all,style.other,styles/kit.css:1383,armoury-content
 armoury-trays,.armoury-trays,display,contents,,styles/kit.css:1384,all,style.other,styles/kit.css:1384,armoury-trays
 armoury-trays,".armoury-trays > [data-tray-edge=""bottom""]:first-child",margin-top,auto,,styles/kit.css:1385,all,spacing,styles/kit.css:1385,armoury-trays
-inventory-belt,.armoury .as-tray,--tray-compact,35%,,styles/kit.css:1388,all,token,styles/kit.css:1388,as-tray
+as-tray,.armoury .as-tray,--tray-compact,35%,,styles/kit.css:1388,all,token,styles/kit.css:1388,as-tray
 equip-resource-change,.equip-resource-change > .as-flavor,display,block,,styles/kit.css:1389,all,style.other,styles/kit.css:1389,equip-resource-change
 armoury-notice,.as-blocker.armoury-notice,flex,0 0 auto,,styles/kit.css:1390,all,style.other,styles/kit.css:1390,armoury-notice
 armoury-notice,.as-blocker.armoury-notice,border-radius,0,,styles/kit.css:1390,all,radius,styles/kit.css:1390,armoury-notice
@@ -5374,13 +5374,13 @@ armoury-subject,.armoury-subject,display,flex,,styles/kit.css:1394,all,style.oth
 armoury-subject,.armoury-subject,min-width,0,,styles/kit.css:1394,all,spacing,styles/kit.css:1394,armoury-subject
 armoury-subject,.armoury-subject,min-height,34%,,styles/kit.css:1394,all,spacing,styles/kit.css:1394,armoury-subject
 armoury-subject,.armoury-subject,overflow,hidden,,styles/kit.css:1394,all,style.other,styles/kit.css:1394,armoury-subject
-inventory-belt,".armoury .as-tray[data-collapsed=""0""]",flex,0 1 auto,,styles/kit.css:1395,all,style.other,styles/kit.css:1395,as-tray
-inventory-belt,.armoury-body .as-tray.armoury-equipment,--tray-compact,none,,styles/kit.css:1397,all,token,styles/kit.css:1397,armoury-equipment
-inventory-belt,.armoury-body .as-tray.armoury-equipment,flex,1 1 auto,,styles/kit.css:1397,all,style.other,styles/kit.css:1397,armoury-equipment
-inventory-belt,.armoury-body .as-tray.armoury-equipment,min-height,0,,styles/kit.css:1397,all,spacing,styles/kit.css:1397,armoury-equipment
-inventory-belt,.armoury-body .as-tray.armoury-equipment,border-top,0,,styles/kit.css:1397,all,style.other,styles/kit.css:1397,armoury-equipment
-inventory-belt,.armoury-body .as-tray.armoury-equipment,max-height,none,,styles/kit.css:1397,all,spacing,styles/kit.css:1397,armoury-equipment
-inventory-belt,".armoury-body .as-tray.armoury-equipment[data-collapsed=""1""]",flex,0 0 auto,,styles/kit.css:1398,all,style.other,styles/kit.css:1398,armoury-equipment
+as-tray,".armoury .as-tray[data-collapsed=""0""]",flex,0 1 auto,,styles/kit.css:1395,all,style.other,styles/kit.css:1395,as-tray
+armoury-equipment,.armoury-body .as-tray.armoury-equipment,--tray-compact,none,,styles/kit.css:1397,all,token,styles/kit.css:1397,armoury-equipment
+armoury-equipment,.armoury-body .as-tray.armoury-equipment,flex,1 1 auto,,styles/kit.css:1397,all,style.other,styles/kit.css:1397,armoury-equipment
+armoury-equipment,.armoury-body .as-tray.armoury-equipment,min-height,0,,styles/kit.css:1397,all,spacing,styles/kit.css:1397,armoury-equipment
+armoury-equipment,.armoury-body .as-tray.armoury-equipment,border-top,0,,styles/kit.css:1397,all,style.other,styles/kit.css:1397,armoury-equipment
+armoury-equipment,.armoury-body .as-tray.armoury-equipment,max-height,none,,styles/kit.css:1397,all,spacing,styles/kit.css:1397,armoury-equipment
+armoury-equipment,".armoury-body .as-tray.armoury-equipment[data-collapsed=""1""]",flex,0 0 auto,,styles/kit.css:1398,all,style.other,styles/kit.css:1398,armoury-equipment
 armoury-equipment,.armoury-body .as-tray.armoury-equipment > .as-pane,flex,1 1 auto,,styles/kit.css:1399,all,style.other,styles/kit.css:1399,armoury-equipment
 as-row,.armoury-body .as-tray.armoury-equipment > .tray-header > .as-row,padding-inline,0.6rem,,styles/kit.css:1400,all,spacing,styles/kit.css:1400,as-row
 tray-header,.armoury-body .as-tray.armoury-equipment > .tray-header,padding-right,0,,styles/kit.css:1401,all,spacing,styles/kit.css:1401,tray-header
@@ -5430,9 +5430,9 @@ armoury-inventory,".armoury[data-pane=""inventory""] .armoury-inventory",border-
 armoury.paneSplitter,".armoury[data-pane=""inventory""] .armoury-pane-splitter",display,block,,styles/kit.css:1419,all,style.other,styles/kit.css:1419,armoury.paneSplitter
 armoury.paneSplitter,".armoury[data-pane=""inventory""] .armoury-pane-splitter",grid-column,2,,styles/kit.css:1419,all,style.other,styles/kit.css:1419,armoury.paneSplitter
 armoury.paneSplitter,".armoury[data-pane=""inventory""] .armoury-pane-splitter",grid-row,1,,styles/kit.css:1419,all,style.other,styles/kit.css:1419,armoury.paneSplitter
-inventory-belt,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",align-self,stretch,,styles/kit.css:1420,all,style.other,styles/kit.css:1420,as-tray
-inventory-belt,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",height,auto,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
-inventory-belt,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",max-height,none,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
+as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",align-self,stretch,,styles/kit.css:1420,all,style.other,styles/kit.css:1420,as-tray
+as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",height,auto,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
+as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""]",max-height,none,,styles/kit.css:1420,all,spacing,styles/kit.css:1420,as-tray
 as-tray,".armoury[data-pane=""inventory""] .armoury-inventory.as-tray[data-collapsed=""0""] > .as-pane",flex,1 1 auto,,styles/kit.css:1421,all,style.other,styles/kit.css:1421,as-tray
 armoury-body,".armoury[data-responsive=""phone""] .armoury-body",gap,0.7rem,,styles/kit.css:1423,all,spacing,styles/kit.css:1423,armoury-body
 armoury-body,".armoury[data-responsive=""phone""] .armoury-body",padding,0.7rem,,styles/kit.css:1423,all,spacing,styles/kit.css:1423,armoury-body
@@ -6476,14 +6476,14 @@ as-splitter,.as-splitter:focus-visible::before,background,var(--gold),,styles/ki
 as-splitter,.as-splitter:focus-visible::before,box-shadow,"0 0 0.5rem rgba(var(--accent-rgb), 0.55)",,styles/kit.css:1971,all,style.shadow,styles/kit.css:1971,as-splitter
 as-splitter,.as-splitter.dragging::before,background,var(--gold),,styles/kit.css:1971,all,color,styles/kit.css:1971,as-splitter
 as-splitter,.as-splitter.dragging::before,box-shadow,"0 0 0.5rem rgba(var(--accent-rgb), 0.55)",,styles/kit.css:1971,all,style.shadow,styles/kit.css:1971,as-splitter
-inventory-belt,.as-tray,--tray-compact,none,,styles/kit.css:1981,all,token,styles/kit.css:1981,as-tray
-inventory-belt,.as-tray,position,relative,,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
-inventory-belt,.as-tray,display,flex,,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
-inventory-belt,.as-tray,flex-direction,column,,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
-inventory-belt,.as-tray,min-width,0,,styles/kit.css:1981,all,spacing,styles/kit.css:1981,as-tray
-inventory-belt,.as-tray,min-height,0,,styles/kit.css:1981,all,spacing,styles/kit.css:1981,as-tray
-inventory-belt,.as-tray,border-top,1px solid var(--line),,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
-inventory-belt,.as-tray,background,var(--bg-raise),,styles/kit.css:1981,all,color,styles/kit.css:1981,as-tray
+as-tray,.as-tray,--tray-compact,none,,styles/kit.css:1981,all,token,styles/kit.css:1981,as-tray
+as-tray,.as-tray,position,relative,,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
+as-tray,.as-tray,display,flex,,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
+as-tray,.as-tray,flex-direction,column,,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
+as-tray,.as-tray,min-width,0,,styles/kit.css:1981,all,spacing,styles/kit.css:1981,as-tray
+as-tray,.as-tray,min-height,0,,styles/kit.css:1981,all,spacing,styles/kit.css:1981,as-tray
+as-tray,.as-tray,border-top,1px solid var(--line),,styles/kit.css:1981,all,style.other,styles/kit.css:1981,as-tray
+as-tray,.as-tray,background,var(--bg-raise),,styles/kit.css:1981,all,color,styles/kit.css:1981,as-tray
 tray-header,.as-tray > .tray-header,display,flex,,styles/kit.css:1982,all,style.other,styles/kit.css:1982,tray-header
 tray-header,.as-tray > .tray-header,align-items,center,,styles/kit.css:1982,all,style.other,styles/kit.css:1982,tray-header
 tray-header,.as-tray > .tray-header,gap,0.75rem,,styles/kit.css:1982,all,spacing,styles/kit.css:1982,tray-header
@@ -6507,22 +6507,22 @@ as-tray,.as-tray > .as-pane,min-height,0,,styles/kit.css:1988,all,spacing,styles
 as-tray,.as-tray > .as-pane,overflow,auto,,styles/kit.css:1988,all,style.other,styles/kit.css:1988,as-tray
 as-tray,.as-tray > .as-pane,padding-top,0.9rem,,styles/kit.css:1988,all,spacing,styles/kit.css:1988,as-tray
 as-tray,.as-tray > .as-pane[hidden],display,none !important,,styles/kit.css:1989,all,style.other,styles/kit.css:1989,as-tray
-inventory-belt,".as-tray[data-collapsed=""1""]",flex,0 0 auto,,styles/kit.css:1990,all,style.other,styles/kit.css:1990,as-tray
-inventory-belt,".as-tray[data-collapsed=""1""] > :not(.tray-header)",display,none,,styles/kit.css:1991,all,style.other,styles/kit.css:1991,as-tray
+as-tray,".as-tray[data-collapsed=""1""]",flex,0 0 auto,,styles/kit.css:1990,all,style.other,styles/kit.css:1990,as-tray
+as-tray,".as-tray[data-collapsed=""1""] > :not(.tray-header)",display,none,,styles/kit.css:1991,all,style.other,styles/kit.css:1991,as-tray
 tray-header,".as-tray[data-collapsed=""0""] > .tray-header",border-bottom,1px solid var(--line),,styles/kit.css:1992,all,style.other,styles/kit.css:1992,tray-header
-inventory-belt,".as-tray[data-tray-edge=""top""][data-collapsed=""0""][data-sized=""0""]",max-height,var(--tray-compact),,styles/kit.css:1993,all,spacing,styles/kit.css:1993,as-tray
-inventory-belt,".as-tray[data-tray-edge=""bottom""][data-collapsed=""0""][data-sized=""0""]",max-height,var(--tray-compact),,styles/kit.css:1993,all,spacing,styles/kit.css:1993,as-tray
-inventory-belt,".as-tray[data-tray-edge=""top""][data-collapsed=""0""]",min-height,var(--tap-floor),,styles/kit.css:1994,all,spacing,styles/kit.css:1994,as-tray
-inventory-belt,".as-tray[data-tray-edge=""bottom""][data-collapsed=""0""]",min-height,var(--tap-floor),,styles/kit.css:1994,all,spacing,styles/kit.css:1994,as-tray
+as-tray,".as-tray[data-tray-edge=""top""][data-collapsed=""0""][data-sized=""0""]",max-height,var(--tray-compact),,styles/kit.css:1993,all,spacing,styles/kit.css:1993,as-tray
+as-tray,".as-tray[data-tray-edge=""bottom""][data-collapsed=""0""][data-sized=""0""]",max-height,var(--tray-compact),,styles/kit.css:1993,all,spacing,styles/kit.css:1993,as-tray
+as-tray,".as-tray[data-tray-edge=""top""][data-collapsed=""0""]",min-height,var(--tap-floor),,styles/kit.css:1994,all,spacing,styles/kit.css:1994,as-tray
+as-tray,".as-tray[data-tray-edge=""bottom""][data-collapsed=""0""]",min-height,var(--tap-floor),,styles/kit.css:1994,all,spacing,styles/kit.css:1994,as-tray
 as-tray,".as-tray[data-sized=""1""] > .as-pane",flex,1 1 auto,,styles/kit.css:1995,all,style.other,styles/kit.css:1995,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""]",border-top,0,,styles/kit.css:1997,all,style.other,styles/kit.css:1997,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""]",border-top,0,,styles/kit.css:1997,all,style.other,styles/kit.css:1997,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""][data-collapsed=""1""]",align-self,stretch,,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""][data-collapsed=""1""]",flex,0 0 var(--tap-floor),,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""][data-collapsed=""1""]",width,var(--tap-floor),,styles/kit.css:1998,all,spacing,styles/kit.css:1998,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""][data-collapsed=""1""]",align-self,stretch,,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""][data-collapsed=""1""]",flex,0 0 var(--tap-floor),,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""][data-collapsed=""1""]",width,var(--tap-floor),,styles/kit.css:1998,all,spacing,styles/kit.css:1998,as-tray
+as-tray,".as-tray[data-tray-edge=""left""]",border-top,0,,styles/kit.css:1997,all,style.other,styles/kit.css:1997,as-tray
+as-tray,".as-tray[data-tray-edge=""right""]",border-top,0,,styles/kit.css:1997,all,style.other,styles/kit.css:1997,as-tray
+as-tray,".as-tray[data-tray-edge=""left""][data-collapsed=""1""]",align-self,stretch,,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
+as-tray,".as-tray[data-tray-edge=""left""][data-collapsed=""1""]",flex,0 0 var(--tap-floor),,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
+as-tray,".as-tray[data-tray-edge=""left""][data-collapsed=""1""]",width,var(--tap-floor),,styles/kit.css:1998,all,spacing,styles/kit.css:1998,as-tray
+as-tray,".as-tray[data-tray-edge=""right""][data-collapsed=""1""]",align-self,stretch,,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
+as-tray,".as-tray[data-tray-edge=""right""][data-collapsed=""1""]",flex,0 0 var(--tap-floor),,styles/kit.css:1998,all,style.other,styles/kit.css:1998,as-tray
+as-tray,".as-tray[data-tray-edge=""right""][data-collapsed=""1""]",width,var(--tap-floor),,styles/kit.css:1998,all,spacing,styles/kit.css:1998,as-tray
 tray-header,".as-tray[data-tray-edge=""left""][data-collapsed=""1""] > .tray-header",flex-direction,column,,styles/kit.css:1999,all,style.other,styles/kit.css:1999,tray-header
 tray-header,".as-tray[data-tray-edge=""left""][data-collapsed=""1""] > .tray-header",height,100%,,styles/kit.css:1999,all,spacing,styles/kit.css:1999,tray-header
 tray-header,".as-tray[data-tray-edge=""left""][data-collapsed=""1""] > .tray-header",padding,0,,styles/kit.css:1999,all,spacing,styles/kit.css:1999,tray-header
@@ -6559,16 +6559,16 @@ tray-count,".as-tray[data-tray-edge=""right""][data-collapsed=""1""] .tray-count
 tray-count,".as-tray[data-tray-edge=""right""][data-collapsed=""1""] .tray-count",margin,0,,styles/kit.css:2001,all,spacing,styles/kit.css:2001,tray-count
 tray-count,".as-tray[data-tray-edge=""right""][data-collapsed=""1""] .tray-count",text-align,left,,styles/kit.css:2001,all,typography,styles/kit.css:2001,tray-count
 tray-count,".as-tray[data-tray-edge=""right""][data-collapsed=""1""] .tray-count",flex,0 0 auto,,styles/kit.css:2001,all,style.other,styles/kit.css:2001,tray-count
-inventory-belt,".as-tray[data-tray-edge=""left""]",margin-block,0.6rem,,styles/kit.css:2003,all,spacing,styles/kit.css:2003,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""]",margin-left,0.6rem,,styles/kit.css:2003,all,spacing,styles/kit.css:2003,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""]",margin-block,0.6rem,,styles/kit.css:2004,all,spacing,styles/kit.css:2004,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""]",margin-right,0.6rem,,styles/kit.css:2004,all,spacing,styles/kit.css:2004,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""][data-collapsed=""0""]",align-self,stretch,,styles/kit.css:2005,all,style.other,styles/kit.css:2005,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""][data-collapsed=""0""]",width,calc(100% - 0.6rem),,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
-inventory-belt,".as-tray[data-tray-edge=""left""][data-collapsed=""0""]",height,auto,,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""][data-collapsed=""0""]",align-self,stretch,,styles/kit.css:2005,all,style.other,styles/kit.css:2005,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""][data-collapsed=""0""]",width,calc(100% - 0.6rem),,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
-inventory-belt,".as-tray[data-tray-edge=""right""][data-collapsed=""0""]",height,auto,,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
+as-tray,".as-tray[data-tray-edge=""left""]",margin-block,0.6rem,,styles/kit.css:2003,all,spacing,styles/kit.css:2003,as-tray
+as-tray,".as-tray[data-tray-edge=""left""]",margin-left,0.6rem,,styles/kit.css:2003,all,spacing,styles/kit.css:2003,as-tray
+as-tray,".as-tray[data-tray-edge=""right""]",margin-block,0.6rem,,styles/kit.css:2004,all,spacing,styles/kit.css:2004,as-tray
+as-tray,".as-tray[data-tray-edge=""right""]",margin-right,0.6rem,,styles/kit.css:2004,all,spacing,styles/kit.css:2004,as-tray
+as-tray,".as-tray[data-tray-edge=""left""][data-collapsed=""0""]",align-self,stretch,,styles/kit.css:2005,all,style.other,styles/kit.css:2005,as-tray
+as-tray,".as-tray[data-tray-edge=""left""][data-collapsed=""0""]",width,calc(100% - 0.6rem),,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
+as-tray,".as-tray[data-tray-edge=""left""][data-collapsed=""0""]",height,auto,,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
+as-tray,".as-tray[data-tray-edge=""right""][data-collapsed=""0""]",align-self,stretch,,styles/kit.css:2005,all,style.other,styles/kit.css:2005,as-tray
+as-tray,".as-tray[data-tray-edge=""right""][data-collapsed=""0""]",width,calc(100% - 0.6rem),,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
+as-tray,".as-tray[data-tray-edge=""right""][data-collapsed=""0""]",height,auto,,styles/kit.css:2005,all,spacing,styles/kit.css:2005,as-tray
 tray-resize-handle,.as-tray > .tray-resize-handle,position,absolute,,styles/kit.css:2007,all,style.other,styles/kit.css:2007,tray-resize-handle
 tray-resize-handle,.as-tray > .tray-resize-handle,z-index,2,,styles/kit.css:2007,all,z-index,styles/kit.css:2007,tray-resize-handle
 tray-resize-handle,.as-tray > .tray-resize-handle,touch-action,none,,styles/kit.css:2007,all,style.other,styles/kit.css:2007,tray-resize-handle
@@ -7256,7 +7256,7 @@ run-finish-retry,.as-pagedoor .as-decide > .set-section-head,align-items,center,
 run-finish-retry,.as-pagedoor .as-decide > .set-section-head,margin-top,1.8rem,,styles/kit.css:2395,all,spacing,styles/kit.css:2395,set-section-head
 as-detailcard,.as-pagedoor .as-decide > .as-prose + .as-detailcard,margin-top,1rem,,styles/kit.css:2396,all,spacing,styles/kit.css:2396,as-detailcard
 as-decide,.as-pagedoor .as-decide > .as-prose + .as-prose,margin-top,1rem,,styles/kit.css:2396,all,spacing,styles/kit.css:2396,as-decide
-kit.decide,".as-title-l[data-tone=""loss""]",color,var(--danger),,styles/kit.css:2397,all,color,styles/kit.css:2397,as-title-l
+as-title-l,".as-title-l[data-tone=""loss""]",color,var(--danger),,styles/kit.css:2397,all,color,styles/kit.css:2397,as-title-l
 modal-btnrow,.as-detailcard > .modal-btnrow,margin-top,0.8rem,,styles/kit.css:2399,all,spacing,styles/kit.css:2399,modal-btnrow
 as-btnrow,.as-detailcard > .as-btnrow,margin-top,0.8rem,,styles/kit.css:2399,all,spacing,styles/kit.css:2399,as-btnrow
 as-fold,.as-detailcard > .as-fold,border,0,,styles/kit.css:2400,all,style.other,styles/kit.css:2400,as-fold
@@ -8294,8 +8294,8 @@ upright-veil,.upright-veil,padding,24px,,styles/kit.css:3151,all,spacing,styles/
 upright-veil,.upright-veil,overflow,hidden,,styles/kit.css:3151,all,style.other,styles/kit.css:3151,upright-veil
 upright-card,.upright-card,max-width,46rem,,styles/kit.css:3152,all,spacing,styles/kit.css:3152,upright-card
 upright-card,.upright-card,gap,0.6rem,,styles/kit.css:3152,all,spacing,styles/kit.css:3152,upright-card
-kit.decide,.upright-card > .as-title-l,font-size,"calc(2.4rem / var(--ui-zoom, 1))",,styles/kit.css:3153,all,typography,styles/kit.css:3153,as-title-l
-kit.decide,.upright-card > .as-title-l,text-align,center,,styles/kit.css:3153,all,typography,styles/kit.css:3153,as-title-l
+as-title-l,.upright-card > .as-title-l,font-size,"calc(2.4rem / var(--ui-zoom, 1))",,styles/kit.css:3153,all,typography,styles/kit.css:3153,as-title-l
+as-title-l,.upright-card > .as-title-l,text-align,center,,styles/kit.css:3153,all,typography,styles/kit.css:3153,as-title-l
 upright-say,.upright-card > .upright-say,font-size,"calc(1.6rem / var(--ui-zoom, 1))",,styles/kit.css:3154,all,typography,styles/kit.css:3154,upright-say
 upright-safe,.upright-card > .upright-safe,color,var(--muted),,styles/kit.css:3155,all,color,styles/kit.css:3155,upright-safe
 upright-safe,.upright-card > .upright-safe,font-size,"calc(1.4rem / var(--ui-zoom, 1))",,styles/kit.css:3155,all,typography,styles/kit.css:3155,upright-safe

@@ -24,7 +24,7 @@
 // Run tools/check.mjs afterwards.
 
 import { readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv, toCsv } from './csv.mjs';
 import { bandOf } from './bands.mjs';
@@ -365,6 +365,31 @@ const kitClassesOf = new Map();
     kitClassesOf.set(m[1], classWordsOf(src.slice(m.index, next < 0 ? src.length : next)));
   }
 }
+// The kit helpers a file can call are the names it imports from the kit module,
+// bound to their local names (`import { titleMenu as tm }` gives tm -> titleMenu).
+// A namespace import is a member call, and a call written as x.toggle(...) is a
+// member call too, so neither matches; a local function cannot share an imported
+// name in the same module. Imports are read from the owner file itself.
+const kitNamesOf = new Map();
+const kitNames = file => {
+  if (kitNamesOf.has(file)) return kitNamesOf.get(file);
+  const out = new Map();
+  const dir = dirname(resolve(ROOT, file));
+  const kitPath = resolve(ROOT, KIT_FILE);
+  for (const m of sourceOfOwner(file).matchAll(/\bimport\s*(?:type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g)) {
+    const target = resolve(dir, m[2]);
+    if (![target, target + '.js', join(target, 'index.js')].includes(kitPath)) continue;
+    for (const spec of m[1].split(',')) {
+      const parts = spec.trim().split(/\s+as\s+/);
+      const exported = parts[0].trim();
+      const local = (parts[1] || parts[0]).trim();
+      if (exported && !exported.startsWith('type ') && kitClassesOf.has(exported)) out.set(local, exported);
+    }
+  }
+  kitNamesOf.set(file, out);
+  return out;
+};
+const escapeRe = w => w.replace(/[$]/g, '\\$');
 const CALL_DEPTH = 2;
 const wordsOfComponent = (file, notes) => {
   const src = sourceOfOwner(file);
@@ -375,8 +400,9 @@ const wordsOfComponent = (file, notes) => {
   const addBody = (name, body, depth) => {
     seen.add(name);
     for (const w of classWordsOf(body)) out.add(w);
-    for (const [kit, words] of kitClassesOf) {
-      if (new RegExp(`\\b${kit}\\s*\\(`).test(body)) for (const w of words) out.add(w);
+    for (const [local, exported] of kitNames(file)) {
+      // A bare call only: not preceded by an identifier character, a dot or a $.
+      if (new RegExp(`(?<![\\w$.])${escapeRe(local)}\\s*\\(`).test(body)) for (const w of kitClassesOf.get(exported)) out.add(w);
     }
     if (depth >= CALL_DEPTH) return;
     for (const callee of new Set([...body.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)].map(m => m[1]))) {

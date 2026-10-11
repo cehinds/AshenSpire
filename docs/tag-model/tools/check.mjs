@@ -340,6 +340,22 @@ if (presOk.styles && presOk.components) {
   guard('.deck-editor-tile.spent .deck-editor-name', own => { if (own !== 'deck-editor-name') fail(`presentation/styles: ".deck-editor-tile.spent .deck-editor-name" componentId "${own}" should be "deck-editor-name"`); });
 }
 
+// Kit helper matching: a component gets a kit helper's classes only when its file
+// imports the helper and calls it bare. These rows were wrong before the match was
+// limited to imported helpers (classList.toggle, a local button()).
+if (presOk.components) {
+  const classesOf = id => {
+    const row = comps.rows.find(r => at(comps, r, 'id') === id);
+    if (!row) { fail(`presentation/components: guard component "${id}" is missing`); return []; }
+    return splitRefs(at(comps, row, 'cssClasses'));
+  };
+  const forbidden = { 'startup-mark': 'as-toggle', 'startup-divider': 'as-toggle', 'startup-ash-particle': 'as-toggle', 'menu-panel': 'as-toggle', 'shared-run-hud': 'as-btn', 'quick-access-panel': 'as-btn' };
+  for (const [id, cls] of Object.entries(forbidden)) {
+    if (classesOf(id).includes(cls)) fail(`presentation/components: "${id}" must not list "${cls}" (kit helper matched without an import)`);
+  }
+  if (!classesOf('title-menu-item').includes('tm-entry')) fail('presentation/components: "title-menu-item" must list "tm-entry" (imported titleMenu)');
+}
+
 // cssClasses: every listed class is a selector class in styles/*.css; only a
 // catalog row (notes [catalog) lists classes, and it lists none exactly when its
 // notes say css:unresolved.
