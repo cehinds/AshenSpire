@@ -23,7 +23,10 @@ export function clampMomentum(m) {
 
 // Looks up each component in `mods[component][id]`. A missing, blank or TBD
 // value counts as 0 and still appears in `parts` so the gap is visible.
-export function actionSpeed(input = {}, mods = {}) {
+// `input.momentum` is the shared momentum M. The player side adds M, the
+// enemy side adds -M (DESIGN.md, Momentum).
+export function actionSpeed(input = {}, mods = {}, side = 'player') {
+  if (!SIDES.includes(side)) throw new TypeError(`side must be one of ${SIDES.join(', ')}`);
   const parts = {};
   let total = 0;
   for (const key of COMPONENTS) {
@@ -35,7 +38,9 @@ export function actionSpeed(input = {}, mods = {}) {
     parts[key] = value;
     total += value;
   }
-  parts.momentum = clampMomentum(input.momentum ?? 0);
+  const shared = clampMomentum(input.momentum ?? 0);
+  // `0 - shared` rather than `-shared`, so a zero stays +0 for the enemy side.
+  parts.momentum = side === 'enemy' ? 0 - shared : shared;
   total += parts.momentum;
   return { total, parts };
 }
@@ -171,33 +176,53 @@ export function resolvePair(playerIn, enemyIn, rng) {
   return events;
 }
 
+// Momentum gain on success: the card's `momentumGain`, default 1.
+function gainOf(card) {
+  const g = Number(card.momentumGain ?? 1);
+  if (!Number.isFinite(g)) throw new TypeError('momentumGain must be a finite number');
+  return g;
+}
+
+// A success is a landed hit or a counter that triggers (DESIGN.md, Momentum,
+// placeholder). A miss or an interruption is not a success.
+const isSuccess = (e) => (e.type === 'hit' && e.hit === true) || e.type === 'countered';
+
 // Resolves one round: each player card is paired with one enemy slot.
 //
-// playerCards: [{ id, slot, speed, kind, tags, accuracy, attrs, evasion }]
-// enemyQueue:  [{ id, speed, kind, tags, accuracy, attrs, evasion }]   (3 per round)
+// playerCards: [{ id, slot, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]
+// enemyQueue:  [{ id, speed, kind, tags, accuracy, attrs, evasion, momentumGain? }]   (3 per round)
+//   `speed` is the card's total without momentum. This function adds the
+//   shared momentum: the player adds M, the enemy adds -M, using the M that
+//   stands when that pair starts.
 // perception:  number of queued actions visible to the player. It only tags
 //              events with `visible`. Thresholds are open (DESIGN.md, Open q. e).
-// options.combos: [[cardIdA, cardIdB], ...] back-to-back pairs that give +1.
+// options.momentum: the shared M at the start of the round (default 0).
+//
+// Returns { events, momentum }. Every event carries `momentum`, the shared M
+// after that event. A 'momentum' event follows each successful action.
 //
 // Placeholder rules (DESIGN.md, Momentum):
-// - +1 for a correct counter (player counter cancels an enemy attack).
-// - +1 for each listed combo pair played back to back.
-// - -1 when a player card is countered.
+// - After each successful action, M moves toward the actor by the card's
+//   momentumGain (default 1). It is then clamped to -3..+3.
+// - Each pair resolves in order. Later pairs use the updated M.
 // - A second player card on an already paired slot is rejected ('rejected').
 // - An enemy slot with no player card is 'unpaired' and has no effect.
 export function resolveRound(playerCards, enemyQueue, perception, rng, options = {}) {
   if (!Array.isArray(playerCards)) throw new TypeError('playerCards must be an array');
   if (!Array.isArray(enemyQueue)) throw new TypeError('enemyQueue must be an array');
   const visibleCount = Math.max(0, Math.min(enemyQueue.length, Math.trunc(Number(perception) || 0)));
-  const combos = Array.isArray(options.combos) ? options.combos : [];
-  const isCombo = (a, b) => combos.some(([x, y]) => x === a && y === b);
 
+  let momentum = clampMomentum(options.momentum ?? 0);
   const events = [];
-  let momentumDelta = 0;
+  const push = (e) => events.push({ ...e, momentum });
   const paired = new Set();
-  // Id of the last card that was accepted (paired). Rejected cards never
-  // become a combo partner.
-  let lastAcceptedId = null;
+
+  const shift = (who, card, slot) => {
+    const gain = gainOf(card);
+    const before = momentum;
+    momentum = clampMomentum(momentum + (who === 'player' ? gain : -gain));
+    push({ type: 'momentum', by: who, gain, delta: momentum - before, reason: 'success', slot });
+  };
 
   playerCards.forEach((pc, i) => {
     const slot = pc.slot;
@@ -205,37 +230,29 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       throw new RangeError(`playerCards[${i}].slot must be an integer in 0..${enemyQueue.length - 1}`);
     }
     if (paired.has(slot)) {
-      events.push({ type: 'rejected', reason: 'slot taken', slot, cardId: pc.id });
+      push({ type: 'rejected', reason: 'slot taken', slot, cardId: pc.id });
       return;
     }
     paired.add(slot);
 
+    const enemy = enemyQueue[slot];
     const visible = slot < visibleCount;
-    const pairEvents = resolvePair(pc, enemyQueue[slot], rng).map((e) => ({ ...e, slot, visible }));
-    events.push(...pairEvents);
-
-    const correctCounter = pairEvents.some((e) => e.type === 'countered' && e.by === 'player');
-    const countered = pairEvents.some((e) => e.type === 'countered' && e.target === 'player');
-    if (correctCounter) {
-      momentumDelta += 1;
-      events.push({ type: 'momentum', delta: 1, reason: 'correctCounter', slot });
+    const pairEvents = resolvePair(
+      { ...pc, speed: pc.speed + momentum },
+      { ...enemy, speed: enemy.speed - momentum },
+      rng,
+    );
+    for (const e of pairEvents) {
+      push({ ...e, slot, visible });
+      if (isSuccess(e)) shift(e.by, e.by === 'player' ? pc : enemy, slot);
     }
-    if (countered) {
-      momentumDelta -= 1;
-      events.push({ type: 'momentum', delta: -1, reason: 'countered', slot });
-    }
-    if (lastAcceptedId !== null && isCombo(lastAcceptedId, pc.id)) {
-      momentumDelta += 1;
-      events.push({ type: 'momentum', delta: 1, reason: 'combo', slot });
-    }
-    lastAcceptedId = pc.id;
   });
 
   enemyQueue.forEach((enemy, slot) => {
     if (!paired.has(slot)) {
-      events.push({ type: 'unpaired', slot, enemyId: enemy.id, visible: slot < visibleCount });
+      push({ type: 'unpaired', slot, enemyId: enemy.id, visible: slot < visibleCount });
     }
   });
 
-  return { events, momentumDelta };
+  return { events, momentum };
 }
