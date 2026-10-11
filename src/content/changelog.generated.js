@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "Deck editor: one card list with − and ＋, and every card shows its stance",
     "detail": "Removing a card no longer jumps to the search box (on phones it opened the keyboard). Every row in the card library now has − count ＋ buttons, and the inspected card offers both Add to deck and Remove from deck. Phones drop the Library / Inspect / Deck tabs for one list; inspecting opens over it and Back returns to it, and a Draw order view appears only when Play in deck order is on. Each card names its stance: Offensive, Defensive, Casting, Counter or Sweep.",
-    "build": "0.7.1.1302",
+    "build": "0.7.1.1299",
     "pullRequest": 1850,
     "url": "https://github.com/cehinds/AshenSpire/pull/1850"
+  },
+  {
+    "id": "pr-1848",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Game rules updated for clearer combat feedback",
+    "detail": "Rules document change only, nothing in the game changes yet. The rules now say an attack plays the swing and the return to stance before the target reacts, and before numbers and health bars update. They also say the game will report why a reaction wasn't offered and when a Smash breaks Guard.",
+    "build": "0.7.1.1297",
+    "pullRequest": 1848,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1848"
   },
   {
     "id": "pr-1846",
