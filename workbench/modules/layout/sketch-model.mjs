@@ -82,17 +82,18 @@ export const breakpointOf = (sketch, viewport) => M.breakpointFor(sketch.breakpo
 
 /**
  * The boxes as canvas items at a viewport: px rects of the resolved geometry at the
- * breakpoint, in layer order. Hidden boxes are not drawn; locked ones are locked.
+ * breakpoint, in layer order. Hidden boxes stay in the document with hidden set, so
+ * Layers still lists them and can show them again; the canvas kit does not draw them.
+ * Locked ones are locked.
  */
 export function canvasItems(sketch, viewport) {
   const bp = breakpointOf(sketch, viewport);
   const bpId = bp ? bp.id : null;
   return sketch.boxes
     .map((b) => ({ box: M.resolveBox(b, bpId), base: b }))
-    .filter(({ box }) => !box.hidden)
     .map(({ box, base }) => {
       const r = M.boxToPx(box, sketch.unit, viewport);
-      return { id: base.id, x: r.x, y: r.y, w: r.w, h: r.h, z: Number(base.layer) || 0, locked: Boolean(base.locked), label: base.label || base.id, overridden: box.overridden };
+      return { id: base.id, x: r.x, y: r.y, w: r.w, h: r.h, z: Number(base.layer) || 0, locked: Boolean(base.locked), hidden: Boolean(box.hidden), label: base.label || base.id, overridden: box.overridden };
     });
 }
 
@@ -121,7 +122,7 @@ export function applyCanvasItems(sketch, items, viewport, { scope = 'base' } = {
  */
 export function drawingFor(sketch, viewport) {
   const width = Math.round(viewport.width), height = Math.round(viewport.height);
-  const rects = canvasItems(sketch, viewport).sort((a, b) => a.z - b.z)
+  const rects = canvasItems(sketch, viewport).filter((it) => !it.hidden).sort((a, b) => a.z - b.z)
     .map((it) => ({ x: Math.round(it.x), y: Math.round(it.y), w: Math.round(it.w), h: Math.round(it.h), label: it.label, locked: it.locked, overridden: it.overridden }));
   const notes = String(sketch.notes || '').split('\n').filter((l) => l.trim() !== '');
   return { width, height, title: sketch.name || 'Sketch', rects, notes };

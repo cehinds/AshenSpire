@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import * as S from '../modules/layout/sketch-model.mjs';
 import * as M from '../modules/layout/studio-model.mjs';
 import { SKETCH_SCHEMA } from '../modules/layout/studio-model.mjs';
+import { createDocument } from '../ui/kit/canvas-model.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const EXAMPLE = 'ui-studio/workspace/sketches/example-combat-phone.json';
@@ -96,4 +97,16 @@ test('the notes are the sketch\'s own, and the export is the file\'s text', () =
   assert.equal(notes.notes, 'Try the hand at 40%');
   assert.equal(S.exportJson(data, realText), realText, 'an unchanged sketch exports its file');
   assert.equal(JSON.parse(S.exportJson(notes, realText)).notes, 'Try the hand at 40%');
+});
+
+test('a hidden box stays in the canvas document as hidden, so Layers still lists it', () => {
+  const { data } = S.parseSketch(realText);
+  const hidden = S.updateBox(data, 'hand', { hidden: true });
+  const items = S.canvasItems(hidden, phone);
+  assert.deepEqual(items.map((it) => it.id).sort(), ['footer', 'hand', 'hud', 'scene'], 'the hidden box is kept');
+  assert.equal(items.find((it) => it.id === 'hand').hidden, true);
+  assert.equal(items.find((it) => it.id === 'hud').hidden, false);
+  const doc = createDocument({ width: 390, height: 844, items });
+  assert.equal(doc.items.find((it) => it.id === 'hand').hidden, true, 'the canvas kit keeps the flag');
+  assert.equal(S.drawingFor(hidden, phone).rects.length, 3, 'a hidden box is still not drawn in the PNG');
 });
