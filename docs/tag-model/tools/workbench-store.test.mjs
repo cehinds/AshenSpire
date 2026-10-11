@@ -639,6 +639,28 @@ test('a Keep mine retried after an edit still overwrites: the retry keeps its wr
   assert.equal(B.api.tstate.t.conflict, null);
 });
 
+// The formula-row issue rule (formulaRowIssue) between its markers in workbench.html.
+function formulaIssueSource() {
+  const html = readFileSync(PAGE, 'utf8');
+  const a = html.indexOf('/* formula-issues:begin */');
+  const b = html.indexOf('/* formula-issues:end */');
+  if (a < 0 || b < 0 || b < a) throw new Error('formula-issues markers missing in workbench.html');
+  return html.slice(a, b + '/* formula-issues:end */'.length);
+}
+
+test('a proposed formula with no expression is a note, not a problem', () => {
+  const { formulaRowIssue } = vm.runInNewContext(formulaIssueSource() + '\n;({ formulaRowIssue })', {});
+  const evalExpr = (e) => (String(e || '').trim() ? { v: 1 } : { err: 'empty expression', soft: false });
+  const note = formulaRowIssue({ key: 'x', expr: '', status: 'proposed' }, evalExpr);
+  assert.equal(note.note, true);
+  assert.equal(note.msg, 'proposed, no formula yet');
+  assert.equal(formulaRowIssue({ key: 'y', expr: '   ', status: 'proposed' }, evalExpr).note, true, 'blank counts as empty');
+  const problem = formulaRowIssue({ key: 'z', expr: '', status: '' }, evalExpr);
+  assert.equal(problem.msg, 'empty expression', 'an empty expression that is not proposed is still a problem');
+  assert.ok(!problem.note);
+  assert.equal(formulaRowIssue({ key: 'w', expr: '1+1', status: 'proposed' }, evalExpr), null, 'a formula with an expression is not an issue');
+});
+
 test('a second banner that appears while another is up is announced as an alert', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);

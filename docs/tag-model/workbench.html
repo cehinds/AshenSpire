@@ -575,8 +575,15 @@ function cellIssue(table, col, raw){
   return missing.length? 'Unknown: '+missing.join(', ') : null;
 }
 let ISSUES=null;
-function issuesCount(){ return ISSUES? ISSUES.length : null; }
+function issuesCount(){ return ISSUES? ISSUES.filter(x=>!x.note).length : null; } /* notes are shown in the list but are not problems */
 function allIssues(){ if(ISSUES) return ISSUES; ISSUES=computeIssues(); return ISSUES; }
+/* formula-issues:begin */
+/* one formula row's issue: a proposed formula with no expression is a note ("proposed, no formula yet"), not a problem */
+function formulaRowIssue(row, evalExpr){
+  if(!String(row.expr??'').trim() && row.status==='proposed') return {note:true, msg:'proposed, no formula yet'};
+  const e=evalExpr(row.expr); return e.err && !e.soft ? {msg:e.err} : null;
+}
+/* formula-issues:end */
 function computeIssues(){
   const out=[];
   for(const t of ORDER){
@@ -588,7 +595,7 @@ function computeIssues(){
     });
   }
   const tk=new Map(); state.data.tags.rows.forEach((r,i)=>{ const k=String(r.key||''); if(k){ if(tk.has(k)) out.push({t:'tags',i,c:'key',msg:'Duplicate key "'+k+'"',row:r}); tk.set(k,1);} });
-  for(const r of state.data.formulas.rows){ const e=evalExpr(r.expr); if(e.err && !e.soft) out.push({t:'formulas',i:state.data.formulas.rows.indexOf(r),c:'expr',msg:e.err,row:r}); }
+  for(const r of state.data.formulas.rows){ const fi=formulaRowIssue(r, evalExpr); if(fi) out.push({t:'formulas',i:state.data.formulas.rows.indexOf(r),c:'expr',msg:fi.msg,row:r,note:!!fi.note}); }
   return out;
 }
 
@@ -810,7 +817,8 @@ function renderCheck(p){
   const notLoaded=ORDER.filter(t=>!localMode&&!loaded.has(t));
   if(notLoaded.length){ const w=document.createElement('div'); w.className='toolbar'; const m=document.createElement('p'); m.className='help'; m.textContent='Not checked yet, because these tables are not loaded: '+notLoaded.map(t=>TABLES[t].label).join(', ')+'.'; w.append(m, btn('Load all tables',()=>{ notLoaded.forEach(ensure); render(); })); p.appendChild(w); }
   const iss=allIssues();
-  const h=document.createElement('p'); h.className='help'; h.textContent= iss.length? iss.length+' problems across all tables. Click one to jump to its table.' : 'No problems: every reference resolves and every formula computes.';
+  const probs=iss.filter(x=>!x.note).length;
+  const h=document.createElement('p'); h.className='help'; h.textContent= probs? probs+' problems across all tables. Click one to jump to its table.' : 'No problems: every reference resolves and every formula computes.';
   p.appendChild(h);
   const ul=document.createElement('ul'); ul.className='issues';
   for(const it of iss.slice(0,400)){ const li=document.createElement('li'); const b=document.createElement('button'); b.className='x'; b.style.color='var(--fg)'; b.type='button';
