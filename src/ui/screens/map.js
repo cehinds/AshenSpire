@@ -267,13 +267,37 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     trayTimer = setTimeout(fn, ms);
   };
   const glideMs = () => (instantTray() ? 0 : trayTiming.cameraMs);
+  // W9: the camera is moved only when the tray would cover the selected node.
+  // A node whose whole rect sits inside the map's visible part, with a 24 px
+  // margin on every side, stays where the finger put it, so a second tap on it
+  // lands on the node and travels. The visible part's bottom is the top of the
+  // reveal panel (the tray's top less the reveal's height: the reveal grows
+  // upward from the tray's top edge, and the tray element is only its row).
+  // `trayCentred` remembers whether the camera was moved, so closing the tray
+  // resets the framing only when the tray moved it.
+  const COMFORT_MARGIN_PX = 24;
+  let trayCentred = false;
+  function nodeComfortablyVisible(revealHeight) {
+    const nodeEl = app.querySelector(`.map-node[data-node="${selection.selectedId}"]`);
+    if (!nodeEl) return false;
+    const r = nodeEl.getBoundingClientRect();
+    const s = board.scroll.getBoundingClientRect();
+    const coveredTop = tray.getBoundingClientRect().top - revealHeight;
+    const bottom = Math.min(s.bottom, coveredTop);
+    const m = COMFORT_MARGIN_PX;
+    return r.left >= s.left + m && r.right <= s.right - m && r.top >= s.top + m && r.bottom <= bottom - m;
+  }
   function openTray() {
     if (tray.dataset.open === 'true') {
-      // Already open (or closing): stay open, and recentre on the new pick.
+      // Already open (or closing): stay open, and recentre on the new pick
+      // unless the pick is already comfortably visible above the tray.
       clearTimeout(trayTimer);
       tray.dataset.shown = 'true';
       trayReveal.inert = false;
-      board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
+      if (!nodeComfortablyVisible(trayReveal.scrollHeight)) {
+        trayCentred = true;
+        board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayReveal.scrollHeight });
       return;
     }
     wait(trayTiming.openDelayMs, () => {
@@ -281,7 +305,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       tray.dataset.open = 'true';
       trayReveal.inert = false;
       trayReveal.style.height = `${height}px`;
-      board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
+      if (!nodeComfortablyVisible(height)) {
+        trayCentred = true;
+        board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: height });
       wait(trayTiming.slideMs, () => {
         tray.dataset.shown = 'true';
         if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
@@ -296,7 +323,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     wait(trayTiming.fadeMs, () => {
       tray.dataset.open = 'false';
       trayReveal.style.height = '0px';
-      board.resetFraming({ glideMs: glideMs() });
+      // Only a camera the tray moved is put back; a tray that left it alone
+      // must not jump the player's view.
+      if (trayCentred) {
+        trayCentred = false;
+        board.resetFraming({ glideMs: glideMs() });
+      } else board.releaseLook();
     });
   }
   backButton.addEventListener('click', () => clearSelection());

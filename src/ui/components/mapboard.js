@@ -1234,6 +1234,21 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
 
   // ⊙ — "Reset / center", and now it means it: back to the computed frame from
   // wherever the ladder, the wheel, the saved setting or an open tray left us.
+  // THE TRAY'S LOOK WITHOUT A MOVE. A pick the player can already see is left
+  // where the finger put it (map.js), but a later re-fit (#1142) must still
+  // keep that node in the band the tray leaves visible, so the look is
+  // recorded exactly as centerOnNode records it, and the camera stays put.
+  function holdLook(id, { inset = 0 } = {}) {
+    if (!byId[id]) return;
+    insetBottom = Math.max(0, inset);
+    look = { id, inset: insetBottom };
+  }
+  // Closing a tray that never moved the camera forgets its look without
+  // re-framing, so the view the player is looking at does not jump.
+  function releaseLook() {
+    insetBottom = 0;
+    look = null;
+  }
   function resetFraming({ glideMs = 0 } = {}) {
     insetBottom = 0;
     look = null;
@@ -1421,7 +1436,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
 
   return {
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
-    recenter, resetFraming, centerOnNode, stepZoom, teardown,
+    recenter, resetFraming, centerOnNode, holdLook, releaseLook, stepZoom, teardown,
     readingOf: (id) => drawnReadings.get(id) || null,
     get zoom() { return zoom; },
   };
