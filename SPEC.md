@@ -1971,9 +1971,8 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 
 ## 10. Forward hooks (build the seam now, not the feature)
 
-- **Ascension-style difficulty:** run state carries `modifiers: []` consulted by `balance.js` lookups (enemy HP ×, gold ×, starting curse). v1 always empty.
+- **Ascension-style difficulty:** ships as `run.custom.ascension` (`src/content/customMods.js`). The `modifiers: []` slot this section first named is unused.
 - **Act 2/3 signature mechanics needing engine support from M1:** enemy phase-change interrupts (Watchful Omen already exercises this), enemy self-heal on dealing damage (final boss — a status hook on `damageDealt`), enemy applying Bleed to the *player* (player-side meters already exist in the status model; player Bleed threshold 15).
-- **Wondrous Physick crafting** (combine two flasks at shrines): flask effects are already composable data; UI only.
 - **Daily seed / run sharing:** seeds are already displayed and enterable; nothing else needed in v1.
 - **Content packs / mods:** the data/model split makes a pack = one folder of content files passing validation; a pack loader is out of scope for v1 but requires no engine redesign.
 - **Second card pools per class ("Remembrance" variants):** class def already takes `cardPool: []`, so alternate pools are content-only.
