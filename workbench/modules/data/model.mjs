@@ -104,13 +104,13 @@ export function findRow(rows, keyCol, row, match = '') {
 
 /**
  * Validation rules for the grid: the key is required and unique; every value fits its column type.
- * `rows` are the table as read from disk; they decide the key's scope (see keyScopeOf).
+ * `path` is the table's repo path; KEY_SCOPES decides whether its key is unique within a scope column.
  */
-export function tableRules(columns, rows = []) {
+export function tableRules(columns, path = null) {
   const key = keyColumnOf(columns);
   const rules = [];
   if (key) {
-    const scope = keyScopeOf(columns, rows);
+    const scope = keyScopeFor(path);
     rules.push({ kind: 'required', key: key.key });
     rules.push(scope ? { kind: 'unique', keys: [scope, key.key] } : { kind: 'unique', key: key.key });
   }
