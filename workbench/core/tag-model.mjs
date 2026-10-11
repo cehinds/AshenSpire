@@ -100,20 +100,24 @@ export function checkTagModelSave(rule, savedText, diskText = '', path = `${TAG_
     return problems;
   }
   const keyed = saved.columns.includes('id');
-  const keyOf = (row, i) => (keyed ? String(row.id) : `#${i}`);
-  const labelOf = (row, i) => (keyed ? `row ${row.id}` : `row ${i + 1}`);
-  const diskRows = new Map(disk.rows.map((row, i) => [keyOf(row, i), row]));
+  const readOnlyCols = rule.readOnlyColumns.filter((c) => saved.columns.includes(c));
+  if (!keyed) {
+    checkUnkeyedRows(saved, disk, readOnlyCols, at);
+    return problems;
+  }
+  const keyOf = (row) => String(row.id);
+  const labelOf = (row) => `row ${row.id}`;
+  const diskRows = new Map(disk.rows.map((row) => [keyOf(row), row]));
   const isReadOnlyRow = (row) => {
     const r = rule.readOnlyRows;
     return Boolean(r && String(row[r.column] ?? '').startsWith(r.prefix));
   };
-  const readOnlyCols = rule.readOnlyColumns.filter((c) => saved.columns.includes(c));
   const seen = new Set();
-  saved.rows.forEach((row, i) => {
-    const key = keyOf(row, i);
+  saved.rows.forEach((row) => {
+    const key = keyOf(row);
     seen.add(key);
     const base = diskRows.get(key) ?? null;
-    const label = labelOf(row, i);
+    const label = labelOf(row);
     if (isReadOnlyRow(row)) {
       if (!base) at(`${label}: this row is read-only and cannot be added`);
       else for (const col of saved.columns) if ((row[col] ?? '') !== (base[col] ?? '')) at(`${label}, ${col}: this row is read-only`);
@@ -123,10 +127,42 @@ export function checkTagModelSave(rule, savedText, diskText = '', path = `${TAG_
       if ((row[col] ?? '') !== (base ? base[col] ?? '' : '')) at(`${label}, ${col}: read-only column`);
     }
   });
-  disk.rows.forEach((row, i) => {
-    if (isReadOnlyRow(row) && !seen.has(keyOf(row, i))) at(`${labelOf(row, i)}: this row is read-only and cannot be removed`);
+  disk.rows.forEach((row) => {
+    if (isReadOnlyRow(row) && !seen.has(keyOf(row))) at(`${labelOf(row)}: this row is read-only and cannot be removed`);
   });
   return problems;
+}
+
+/**
+ * Rows of a table with no id column. A row is matched to a disk row by its BASE tuple (every
+ * non-derived column), as a multiset: a matched row's derived cells must equal that disk row's.
+ * A row that matches nothing (new, or its base edited) passes only when its derived cells are all
+ * empty, or equal the derived cells of some disk row. A deleted row always passes.
+ * Defence in depth: build.mjs re-derives these columns after every save, so the derived cells a
+ * save writes are corrected anyway; this check refuses the save before it is written.
+ */
+function checkUnkeyedRows(saved, disk, derived, at) {
+  const base = saved.columns.filter((c) => !derived.includes(c));
+  const baseOf = (row) => JSON.stringify(base.map((c) => row[c] ?? ''));
+  const derivedOf = (row) => JSON.stringify(derived.map((c) => row[c] ?? ''));
+  const pool = new Map(); // base tuple → disk rows not matched yet
+  for (const row of disk.rows) {
+    const k = baseOf(row);
+    if (!pool.has(k)) pool.set(k, []);
+    pool.get(k).push(row);
+  }
+  const diskDerived = new Set(disk.rows.map(derivedOf));
+  saved.rows.forEach((row, i) => {
+    const label = `row ${i + 1}`;
+    const candidates = pool.get(baseOf(row));
+    if (candidates?.length) {
+      const match = candidates.shift();
+      for (const col of derived) if ((row[col] ?? '') !== (match[col] ?? '')) at(`${label}, ${col}: read-only column`);
+      return;
+    }
+    if (diskDerived.has(derivedOf(row)) || derived.every((c) => (row[c] ?? '') === '')) return;
+    for (const col of derived) if ((row[col] ?? '') !== '') at(`${label}, ${col}: read-only column`);
+  });
 }
 
 /** What the Data Studio page needs to show a tag-model table: its tier, whether a save may write it, and its banner and note. */

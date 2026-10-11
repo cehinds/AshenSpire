@@ -140,7 +140,8 @@ test('a single-line save over a multiline disk file still runs the rules: a chan
   // The page sends the row's default as one line (no line break), and changes its tag (a read-only column).
   const change = await f.change(SETTINGS, settingsWith({ default: 'Short line', tag: 'player.changed' }));
   const err = await refused(f.files.save([change]), 422);
-  assert.deepEqual(err.problems.map((p) => p.message), ['row 1, tag: read-only column']);
+  // The edited row's derived cells match no row on disk, so each non-empty derived cell is refused.
+  assert.deepEqual(err.problems.map((p) => p.message), ['row 1, tag: read-only column', 'row 1, liveRef: read-only column', 'row 1, scope: read-only column', 'row 1, deviceScope: read-only column']);
   assert.equal(await fs.readFile(path.join(f.root, SETTINGS), 'utf8'), SETTINGS_TEXT, 'nothing is written');
 });
 
@@ -171,4 +172,52 @@ test('an unparseable new text is refused with 422 and its parse message, listed 
   const err = await refused(f.files.save([change]), 422);
   assert.deepEqual(err.problems, [{ path: SETTINGS, message: 'Unclosed CSV quote at line 2.' }]);
   assert.equal(await fs.readFile(path.join(f.root, SETTINGS), 'utf8'), SETTINGS_TEXT);
+});
+
+// settings.csv has no id column, so its rows are matched by their base cells (see checkUnkeyedRows).
+const rowsOf = (rows) => writeTagCSV({ columns: parseTagCSV(SETTINGS_TEXT).columns, rows }, { eol: '\n', trailingNewline: true });
+const settingsRows = () => parseTagCSV(SETTINGS_TEXT).rows;
+
+test('a table with no id: deleting a row is accepted', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  await f.files.save([await f.change(SETTINGS, rowsOf([settingsRows()[1]]))]);
+  assert.deepEqual(parseTagCSV(await fs.readFile(path.join(f.root, SETTINGS), 'utf8')).rows.map((r) => r.key), ['gameConfig.prologue.scenes.warmth.seconds']);
+});
+
+test('a table with no id: inserting a row with empty derived cells is accepted', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  const fresh = { ...settingsRows()[1], key: 'gameConfig.new.row', scope: '', deviceScope: '', tag: '', liveRef: '' };
+  await f.files.save([await f.change(SETTINGS, rowsOf([...settingsRows(), fresh]))]);
+  assert.equal(parseTagCSV(await fs.readFile(path.join(f.root, SETTINGS), 'utf8')).rows.length, 3);
+});
+
+test('a table with no id: inserting a row whose derived cells match no disk row is refused', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  const invented = { ...settingsRows()[1], key: 'gameConfig.new.row', scope: 'invented-scope', deviceScope: '', tag: '', liveRef: '' };
+  const err = await refused(f.files.save([await f.change(SETTINGS, rowsOf([...settingsRows(), invented]))]), 422);
+  assert.deepEqual(err.problems.map((p) => p.message), ['row 3, scope: read-only column']);
+});
+
+test('a table with no id: swapping two rows while keeping their derived cells is refused', async (t) => {
+  const f = await fixture(t);
+  // Disk rows 1 and 2 carry different derived cells (row 2's tag is changed on disk), so a swap that keeps them is visible.
+  const [a, b0] = settingsRows();
+  const b = { ...b0, tag: 'tuning.other' };
+  const disk = rowsOf([a, b]);
+  await fs.writeFile(path.join(f.root, SETTINGS), disk);
+  const swapped = [{ ...b, scope: a.scope, deviceScope: a.deviceScope, tag: a.tag, liveRef: a.liveRef }, { ...a, scope: b.scope, deviceScope: b.deviceScope, tag: b.tag, liveRef: b.liveRef }];
+  const err = await refused(f.files.save([await f.change(SETTINGS, rowsOf(swapped))]), 422);
+  assert.ok(err.problems.some((p) => p.message === 'row 1, tag: read-only column'));
+  assert.equal(await fs.readFile(path.join(f.root, SETTINGS), 'utf8'), disk);
+});
+
+test('a table with no id: editing a base cell is accepted', async (t) => {
+  const f = await fixture(t);
+  await fs.writeFile(path.join(f.root, SETTINGS), SETTINGS_TEXT);
+  const [a, b] = settingsRows();
+  await f.files.save([await f.change(SETTINGS, rowsOf([{ ...a, label: 'Edited label' }, b]))]);
+  assert.equal(parseTagCSV(await fs.readFile(path.join(f.root, SETTINGS), 'utf8')).rows[0].label, 'Edited label');
 });
