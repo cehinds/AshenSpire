@@ -2192,15 +2192,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       snap = next;
       setPacing(false);
       render();
+      // Capture these receipts' overlays before a queued frame's render can
+      // replace effectEvents, then drain the queue, so the plans and overlays
+      // play on the board that stays (a render clears running effects).
+      const overlays = hasCardPlay ? effectEvents
+        : decorateCombatEffects((next.scene.events || []).map(combatEffectReceipt), registries, barrierVisuals);
+      const queued = pendingSnaps; pendingSnaps = [];
+      for (const pending of queued) receiveSnapshot(pending);
+      if (disposed) return;
       // A plan no swing played (Instant, reduced motion, a skip before that
       // seat swung) plays now, as the direct render would have.
       for (const [ownerId, plan] of plans || []) if (!playedPlans.has(ownerId)) playSeatPlan(ownerId, plan);
       // The final render is not a new-receipt render (lastReceiptSeq already
-      // moved), so the paced receipts' overlays play here, on the final board.
-      playReceiptOverlays(hasCardPlay ? effectEvents
-        : decorateCombatEffects((next.scene.events || []).map(combatEffectReceipt), registries, barrierVisuals));
-      const queued = pendingSnaps; pendingSnaps = [];
-      for (const pending of queued) receiveSnapshot(pending);
+      // moved), so the paced receipts' overlays play here.
+      playReceiptOverlays(overlays);
     });
     onStarted();
   }

@@ -122,6 +122,11 @@ test('a paced player attack still earns its receipt overlays, played after the f
   const pace = body('playPacedReceipts');
   const final = pace.lastIndexOf('render();');
   assert.ok(pace.indexOf('playReceiptOverlays(') > final, 'the overlays play on the final board, not a board the next render replaces');
+  // A frame queued during the swing renders first; its render would clear them.
+  const drained = pace.lastIndexOf('for (const pending of queued) receiveSnapshot(pending);');
+  assert.ok(drained > final && pace.indexOf('playReceiptOverlays(overlays);') > drained, 'the overlays play after the queue drains');
+  assert.ok(pace.indexOf('if (!playedPlans.has(ownerId)) playSeatPlan(ownerId, plan);') > drained, 'unplayed plans play after the queue drains');
+  assert.ok(pace.indexOf('const overlays = hasCardPlay ? effectEvents') < drained, 'the overlays are captured before a queued render replaces effectEvents');
   assert.match(body('spawnCombatFx'), /if\(hasNewReceipts\)playReceiptOverlays\(effectEvents\);/);
 });
 
