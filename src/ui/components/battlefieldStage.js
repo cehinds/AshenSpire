@@ -965,7 +965,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const combatHost = field.closest('.combat');
   let wiredAppearance = displayAppearance();
   let releaseBackdrop = wireAlternativeBackdrop(combatHost);
-  combatHost.addEventListener('combatantselectionchange', schedule);
+  // A selection change places the newly shown Info door in the same task that
+  // shows it, so the first paint already has its spot; the frame refit follows.
+  const selectionChanged = () => { refresh(); schedule(); };
+  combatHost.addEventListener('combatantselectionchange', selectionChanged);
   combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
@@ -1012,7 +1015,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   const release = () => {
     releaseBackdrop();
-    combatHost.removeEventListener('combatantselectionchange', schedule);
+    combatHost.removeEventListener('combatantselectionchange', selectionChanged);
     combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
     cancelAnimationFrame(trackingRequest);
