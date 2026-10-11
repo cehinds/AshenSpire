@@ -63,7 +63,7 @@
     }
   },
   "positioning": {
-    "hand": { "selectedLiftRem": 1, "verticalInsetRem": 0.25, "fanAngleDegrees": 2.5, "arcRem": 0.6 },
+    "hand": { "selectedLiftRem": 1, "verticalInsetRem": 0.25, "fanAngleDegrees": 2.5, "arcRem": 0.6, "compactDropRem": 0.3 },
     "formation": {
       "insetRem": 1,
       "horizontalStepFraction": 0.05,

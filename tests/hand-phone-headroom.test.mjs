@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COMBAT_TOOLS_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
+import { wireframeUi } from '../src/content/wireframeUi.js';
 
 // Owner's phone report (2026-10-11): on a ~360x620 game viewport the cards sat
 // at the 72px floor under an empty lift band and an empty chooser reserve. On a
@@ -24,8 +25,11 @@ test('phone cards take the tool-row headroom instead of an empty lift band', () 
     const before = handLayout(input);
     const after = handLayout({ ...input, headroom: tools });
     assert.ok(after.cardWidth > before.cardWidth + 1, `cards grow (${before.cardWidth} -> ${after.cardWidth})`);
-    // The resting fan starts at the inset, right under the row.
-    assert.ok(after.top <= Math.max(before.top - before.lift + 1e-9, input.rem * .25 + 2));
+    // The resting fan starts at the inset, right under the row, dropped by the
+    // authored phone offset (wireframeUi.hand.compactDropRem) and no further.
+    const drop = wireframeUi.hand.compactDropRem * input.rem;
+    assert.ok(after.top <= Math.max(before.top - before.lift + 1e-9, input.rem * .25 + 2) + drop + 1e-9);
+    assert.ok(after.top >= input.rem * .25 - 1e-9, 'the fan never rises above its inset');
     // A selected face, lifted, stays inside the hand (the row's band included).
     for (const card of after.cards) assert.ok(after.top + card.y - after.lift >= -tools - 1e-9);
     // Its chooser fits once the face rises at most to the hand's top edge.
@@ -72,5 +76,24 @@ test('a phone fan keeps each card readable past its neighbour and clear of the e
       assert.ok(left >= cardSideGutterPx / zoom - 1e-6, `${vw}px ${count} cards: left edge ${left * zoom}px`);
       assert.ok(right <= input.width - cardSideGutterPx / zoom + 1e-6, `${vw}px ${count} cards: right edge ${(input.width - right) * zoom}px`);
     }
+  }
+});
+
+// Owner (2026-10-11): a phone's cards sit a little lower, into the space the
+// tool row leaves. The drop never takes a card's resting edge or its chooser
+// past the footer, and never changes the card size.
+test('the phone drop moves the fan down without changing card size or passing the footer', () => {
+  for (const controlsHeight of [0, 64]) {
+    const { tools, ...input } = phone({ controlsHeight });
+    const plan = handLayout({ ...input, headroom: tools });
+    const undropped = handLayout({ ...input, headroom: tools }, { ...wireframeUi.hand, compactDropRem: 0 });
+    assert.equal(plan.cardWidth, undropped.cardWidth, 'the card keeps its width');
+    assert.ok(plan.top > undropped.top + 1e-9, 'the fan moves down');
+    const reach = Math.max(...plan.cards.map(card => {
+      const radians = card.angle * Math.PI / 180;
+      return card.y + plan.cardHeight / 2 + (Math.abs(Math.sin(radians)) * plan.cardWidth + Math.abs(Math.cos(radians)) * plan.cardHeight) / 2
+        + (controlsHeight ? plan.controlsReserve : 0);
+    }));
+    assert.ok(plan.top + reach <= input.height + 1e-9, 'the lowest card and its chooser stay above the footer');
   }
 });

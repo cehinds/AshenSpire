@@ -25,7 +25,7 @@ export function moveHandInstance(order, id, slot) {
 // only where they exceed that headroom, so the resting fan sits right under
 // the row instead of under an empty band, and the reclaimed height goes to
 // the cards.
-export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, headroom = 0 }, config = wireframeUi.hand) {
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0 }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
   const liftReserve = Math.max(0, lift - headroom);
@@ -84,7 +84,21 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   // A phone docks the fan right under its tool row; a width-bound fan leaves
   // its spare height below the cards, not in a gap under the row.
   const centred = compact ? 0 : (height - controlsReserve - cardHeight - arc) / 2;
-  const top = Math.max(0, Math.min(bottomLimit, Math.max(inset + liftReserve, centred)));
+  const base = Math.max(inset + liftReserve, centred);
+  // A phone's fan sits a little lower, into the space its tool row leaves. The
+  // drop is limited by each card's own resting edge, and only a card that
+  // carries a chooser reserves the chooser's extra space below it (a plain
+  // card's outer corner does not, which the uniform bottom limit assumed; with
+  // no list every card is taken to carry one).
+  const drop = compact ? (config.compactDropRem || 0) * rem : 0;
+  const reach = Math.max(...cards.map((card, index) => {
+    const radians = card.angle * Math.PI / 180;
+    const reserve = !controlled || controlled.includes(index) ? controlsReserve : 0;
+    return card.y + cardHeight / 2 + (Math.abs(Math.sin(radians)) * cardWidth + Math.abs(Math.cos(radians)) * cardHeight) / 2 + reserve;
+  }), 0);
+  const top = drop > 0
+    ? Math.max(0, Math.min(Math.max(bottomLimit, height - 1 / zoom - reach), base + drop))
+    : Math.max(0, Math.min(bottomLimit, base));
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
     return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
