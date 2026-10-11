@@ -334,19 +334,22 @@ async function flush(t, opts){
       return;
     }
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-    const base=opts.overwrite? curRev : ts.base;
+    const base=opts.overwrite? curRev : ts.base, prevBase=ts.base;
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
     ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null;
     ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
-    /* a head a peer wrote after ours, seen while we were saving, was not applied: apply it now */
-    if(ts.latest&&(ts.latest.savedAt||0)>now&&revOf(ts.latest)!==rev) newer=ts.latest;
+    /* a head seen during the save that is neither ours nor the one we started from came after ours (no clocks compared):
+       if it was written on top of ours, apply it; otherwise a peer raced us and the conflict banner shows */
+    const L=ts.latest;
+    if(L!==undefined&&revOf(L)!==rev&&revOf(L)!==prevBase) newer=(L&&L.base||'')===rev? L : 'conflict';
   }
   catch(e){
     if(e&&e.code==='invalid_argument'){ dirty.delete(t); canWrite=false; setStatus('warn','This view can read but not save. Edits stay in this browser; export them as CSV.'); saveLocal(); }
     else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
   }
   finally{ saving.delete(t); setStatus(); }
-  if(newer&&!dirty.has(t)) applyHead(t,newer);
+  if(newer==='conflict'){ ts.conflict={theirRev:revOf(ts.latest)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); }
+  else if(newer&&!dirty.has(t)) applyHead(t,newer);
 }
 /* conflict choices: drop local edits and show theirs, or write ours on top of their rev */
 async function loadTheirs(t){

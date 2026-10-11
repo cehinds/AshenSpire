@@ -369,6 +369,43 @@ test('a newer head that arrives while we save is applied once the save ends', as
   assert.equal(JSON.stringify(A.page.state.data.t.rows), JSON.stringify(ys));
 });
 
+test('a head written on top of our save and stamped with a skewed clock is still applied', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  api.subscribeTable('t');
+  await settle(10);
+  editTable(page, sample(5, 'mine'));
+  db.afterSet = async (p) => {
+    if (p !== 'tables/t' || db.log.sets.filter((x) => x === p).length !== 1) return;
+    const ours = db.read(p);
+    await putBlobTable(db, makePage(db, T).api, 't', sample(4, 'peer'), COLS, 1, ours.rev); // savedAt far in the past
+    await settle(20);
+  };
+  await api.flush('t');
+  await settle(30);
+  assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(sample(4, 'peer')));
+});
+
+test('a peer head that did not start from our save shows the conflict banner, and our rows stay', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  api.subscribeTable('t');
+  await settle(10);
+  const mine = sample(5, 'mine');
+  editTable(page, mine);
+  let injected = false;
+  db.afterSet = async (p) => {
+    if (p !== 'tables/t' || injected) return;
+    injected = true;
+    await putBlobTable(db, makePage(db, T).api, 't', sample(4, 'peer'), COLS, Date.now() + 1000, '');
+    await settle(20);
+  };
+  await api.flush('t');
+  await settle(30);
+  assert.ok(api.tstate.t.conflict, 'conflict shown');
+  assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify(mine));
+});
+
 test('invalid_argument on save makes the table read-only: not dirty, and incoming heads still apply', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);
