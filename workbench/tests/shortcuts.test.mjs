@@ -28,6 +28,15 @@ test('a key event becomes the same combo the registry uses', () => {
   assert.equal(comboFromEvent(key('Control', { ctrlKey: true })), '', 'a lone modifier is no combo');
 });
 
+test('macOS Alt combos read the physical key, not the character Alt produces', () => {
+  assert.equal(comboFromEvent({ key: '¡', code: 'Digit1', altKey: true }), 'Alt+1');
+  assert.equal(comboFromEvent({ key: '™', code: 'Digit2', altKey: true }), 'Alt+2');
+  assert.equal(comboFromEvent({ key: 'å', code: 'KeyA', altKey: true }), 'Alt+A');
+  assert.equal(comboFromEvent({ key: 'ƒ', code: 'KeyF', altKey: true, metaKey: true }), 'Mod+Alt+F');
+  assert.equal(comboFromEvent({ key: 'Z', code: 'KeyZ', metaKey: true, shiftKey: true }), 'Mod+Shift+Z');
+  assert.equal(comboFromEvent({ key: 'å', code: 'KeyA' }), 'å', 'without Alt or Mod the typed character is used');
+});
+
 test('the active module runs first, then the global action', () => {
   const r = new ShortcutRegistry();
   const seen = [];

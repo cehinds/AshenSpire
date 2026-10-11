@@ -34,6 +34,14 @@ export function normalizeCombo(text) {
 export function comboFromEvent(ev) {
   const k = ev && ev.key;
   if (!k || MODIFIER_KEYS.includes(k)) return '';
+  // With Alt or Mod held, macOS changes ev.key (Alt+1 gives '¡'); ev.code keeps
+  // the physical key, so letters and digits are read from it there.
+  const physical = (ev.altKey || ev.ctrlKey || ev.metaKey) ? /^(?:Key([A-Z])|Digit([0-9]))$/.exec(ev.code || '') : null;
+  if (physical) {
+    const key = physical[1] || physical[2];
+    const shift = Boolean(ev.shiftKey);
+    return [(ev.ctrlKey || ev.metaKey) && 'Mod', ev.altKey && 'Alt', shift && 'Shift', key].filter(Boolean).join('+');
+  }
   const named = k.length > 1;
   const letter = /^[A-Za-z]$/.test(k);
   let key = k === ' ' ? 'Space' : letter ? k.toUpperCase() : k;
