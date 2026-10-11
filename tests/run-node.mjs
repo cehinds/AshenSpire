@@ -1202,6 +1202,18 @@ if (CORE) {
     console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
     zoomExtra++;
   }
+  // The fourth authored tree: content/hud-layout/<form-factor>.json compiles to
+  // styles/hud-layout.generated.css (docs/hud-layout-tokens.md). A hand edit to
+  // the stylesheet, or a JSON edit nobody compiled, is red here
+  // (tests/hud-layout-css.test.mjs holds the rules).
+  try {
+    execFileSync(process.execPath, ['tools/hud-layout-css.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated HUD layout CSS is current with content/hud-layout (hud-layout-css --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated HUD layout CSS: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
   // The tag tree's derived views — tags, domains, pairings, property rules and
   // src/framework/data/{properties,relations}.js (which bakes the default
   // balance bindings in) — are generated, and nothing at runtime checks them

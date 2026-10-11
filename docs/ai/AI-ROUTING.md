@@ -60,7 +60,9 @@ the whole task.
 Haiku does well when it is told exactly where to look and what "done" means, and it
 wanders when it is not. Every brief carries the following, in this order:
 
-1. **Setup.** `git fetch origin dev && git checkout -B <branch> origin/dev`.
+1. **Setup.** The brief's branch is `worker/<parent-topic>/<task>`, cut from the parent
+   branch, not `origin/dev`. The orchestrator pushes the parent first (`git push -u origin <parent>`), then:
+   `git fetch origin <parent> && git checkout -B worker/<topic>/<task> origin/<parent>`.
 2. **Read first.** The exact files: CLAUDE.md, the SPEC section with its line range, the
    contract doc.
 3. **The defect or goal.** File:line, the failing input and the wrong result, as the
@@ -82,6 +84,18 @@ wanders when it is not. Every brief carries the following, in this order:
 Give paths and line numbers, not a tour of the repo. One brief is one task: if a brief
 needs "and also", it is two briefs.
 
+### Branch lifecycle
+
+```text
+worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► test ──► release ──► main
+```
+
+- When the parent (feature) branch merges into `dev`, the session removes its local worker
+  worktrees and local worker branches (`git worktree remove <path>` if clean, then
+  `git branch -d` only when `git merge-base --is-ancestor <branch> origin/dev`; never `-D`).
+  Ask the owner about anything unmerged.
+- Origin worker branches stay until `dev` is promoted to `test`. Then `worker-branch-cleanup.yml`
+  deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test`.
 ## 3a. Splitting a request into steps Haiku can finish
 
 Haiku succeeds when each brief is a short recipe with the thinking already done.
@@ -122,8 +136,9 @@ Haiku brief written this way landed first time.
    real-browser gates for the screens it touches (map: `map-two-axis-pan`,
    `map-camera-persistence`). Run `git checkout -- buildordinal.json` after the build. When the fake DOM in `tests/helpers/` cannot mount the
    screen, ask for a source test plus the existing real-browser tool.
-8. **Local branches, orchestrator merges.** Workers commit on
-   `<feature>/<task>` in their worktree, and neither push nor open a PR. Worktrees
+8. **Worker branches, orchestrator merges.** Workers commit on
+   `worker/<parent-topic>/<task>` in their worktree (§3 *Branch lifecycle*), push
+   it to origin, and never open a PR or merge. Worktrees
    lack the art cache: the brief says `ln -s <main checkout>/.art-cache .art-cache`
    (never committed). Each worktree is a full checkout (about 2 GB here), so
    remove it as soon as its branch is merged into the feature branch
@@ -160,7 +175,7 @@ Stopped because (only if it stopped):
 | UI layout, CSS, docs, tools, tests only, mechanical renames | Haiku 5.5 reviewer |
 | Security, destructive git, CI permissions | `ashen-reviewer`, and the orchestrator reads the diff line by line |
 
-Give the reviewer the PR number (CONTRIBUTING requires it), the task, the constraints, the diff (`git diff origin/dev...<branch>`),
+Give the reviewer the PR number (CONTRIBUTING requires it), the task, the constraints, the diff (`git diff origin/<base>...<branch>`, where `<base>` is `dev` for a PR and the parent branch for a worker branch),
 the affected files and the specific risks. Do not give it the repo. Every finding is a
 claim the orchestrator verifies. Fix what stands (with a worker or directly), and record
 in the PR who reviewed, what changed, and what was declined and why.

@@ -61,6 +61,7 @@ import { dirname, resolve, join, basename, extname, relative, sep } from 'node:p
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { configSourceErrors } from './config-build.mjs';
+import { FORM_FACTORS as HUD_FORM_FACTORS } from './hud-layout-tokens.mjs';
 import { manifestIds } from './art-source.mjs';
 import { holdForCli } from './lib/build-lock.mjs';
 
@@ -462,12 +463,22 @@ function sweepStraySources(contentRoot) {
   // below by configSourceErrors: stray, by name, unless the generated module
   // src/config/generated/ui.js was compiled from exactly that file's bytes.
   const configDir = join(contentRoot, 'config');
+  // content/hud-layout/ is the FOURTH authored tree, owned by
+  // tools/hud-layout-css.mjs (its --check drift gate runs in tests/run-node.mjs;
+  // docs/hud-layout-tokens.md). That compiler reads exactly one file per form
+  // factor, so any other JSON there is stray, by name.
+  const hudLayoutDir = join(contentRoot, 'hud-layout');
   (function walk(dir) {
     if (!existsSync(dir)) return;
     for (const ent of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
       const abs = join(dir, ent.name);
       if (ent.isDirectory()) walk(abs);
       else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
+      else if (/\.json$/i.test(ent.name) && dir === hudLayoutDir) {
+        if (!HUD_FORM_FACTORS.includes(ent.name.replace(/\.json$/i, ''))) {
+          errors.push(`content/hud-layout/${ent.name}: STRAY SOURCE FILE — tools/hud-layout-css.mjs reads only ${HUD_FORM_FACTORS.map((name) => `${name}.json`).join(', ')}; this file compiles to nothing`);
+        }
+      }
       else if (/\.json$/i.test(ent.name) && dir === frameworkDir) {
         const mirror = join(frameworkGeneratedDir, ent.name.replace(/\.json$/i, '.js'));
         if (!existsSync(mirror)) {

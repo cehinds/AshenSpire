@@ -8,9 +8,69 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-11",
     "summary": "One Workbench for every authoring tool",
     "detail": "For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.",
-    "build": "0.7.1.1292",
+    "build": "0.7.1.1299",
     "pullRequest": 1829,
     "url": "https://github.com/cehinds/AshenSpire/pull/1829"
+  },
+  {
+    "id": "pr-1851",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Preview builds for every open branch now publish",
+    "detail": "Development-process change only, nothing in the game changes. A branch whose name starts with a capital letter, such as Chore/…, now gets its playable preview page like any other open branch, instead of a broken link.",
+    "build": "0.7.1.1298",
+    "pullRequest": 1851,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1851"
+  },
+  {
+    "id": "pr-1848",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Game rules updated for clearer combat feedback",
+    "detail": "Rules document change only, nothing in the game changes yet. The rules now say an attack plays the swing and the return to stance before the target reacts, and before numbers and health bars update. They also say the game will report why a reaction wasn't offered and when a Smash breaks Guard.",
+    "build": "0.7.1.1297",
+    "pullRequest": 1848,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1848"
+  },
+  {
+    "id": "pr-1846",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "A test now passes on Windows too",
+    "detail": "Development-process change only, nothing in the game changes. One source check compared file paths with forward slashes and failed on the Windows test runners at Test; it now reads paths the same way on every system.",
+    "build": "0.7.1.1296",
+    "pullRequest": 1846,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1846"
+  },
+  {
+    "id": "pr-1843",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Combat HUD reads better on every screen size, and its look is tunable from the HUD studio",
+    "detail": "On desktop and widescreen the Combat log and Reaction switch now sit just above your cards instead of at the far screen edges, and the top health bar no longer stretches across the whole screen (it also stops at 60% on tablets). On every screen, health and intent numbers sit on dark plates with a soft shadow, and the selected hero's panel uses the game's serif lettering with gold Poise and Ward labels and a green frame. The game now tells phones, tablets, desktops and ultra-wide screens apart (a sideways phone counts as a tablet), and each gets its own look from a file the HUD Component Studio exports.",
+    "build": "0.7.1.1295",
+    "pullRequest": 1843,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1843"
+  },
+  {
+    "id": "pr-1834",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Faster checks on every change; release builds the Windows installer",
+    "detail": "Development-process change only, nothing in the game changes. Pull requests now run a quick smoke check of about five minutes, the full test suites run when a build is promoted to Test, and Release runs the final polish checks and builds the Windows installer, whose download now follows the Release channel. Each open feature branch gets its own playable build, the README refreshes itself, and new high-resolution art moves to the art repository automatically.",
+    "build": "0.7.1.1293",
+    "pullRequest": 1834,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1834"
+  },
+  {
+    "id": "pr-1841",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Old QA screenshots cleared out of the project",
+    "detail": "Development housekeeping only, nothing in the game changes. About 237 MB of dated QA screenshots and run reports leave the repository; new QA runs go to CI artifacts, and the card layer editor and card preview pages the QA tools use now live under tools/.",
+    "build": "0.7.1.1292",
+    "pullRequest": 1841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1841"
   },
   {
     "id": "pr-1835",
@@ -41,6 +101,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1287",
     "pullRequest": 1833,
     "url": "https://github.com/cehinds/AshenSpire/pull/1833"
+  },
+  {
+    "id": "pr-1832",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Worker branch rules documented; feature-branch playable builds announced",
+    "detail": "Development-process change only, nothing in the game changes. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. The README names where each open feature, fix or chore branch's playable build will live; publishing those builds is still pending, so the link does not work yet.",
+    "build": "0.7.1.1283",
+    "pullRequest": 1832,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1832"
   },
   {
     "id": "pr-1831",

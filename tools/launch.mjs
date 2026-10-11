@@ -104,6 +104,16 @@ if (uiConfig.code !== 0) {
   process.exit(uiConfig.code || 1);
 }
 
+// 0b. Compile the HUD layout tokens (content/hud-layout/*.json →
+// styles/hud-layout.generated.css; docs/hud-layout-tokens.md). The bundler
+// inlines that stylesheet from index.html, so it must be current first.
+console.log('launch: compiling HUD layout tokens…');
+const hudLayout = await steps.run(resolve(ROOT, 'tools/hud-layout-css.mjs'), ['--write']);
+if (hudLayout.code !== 0) {
+  console.error('launch: HUD layout build failed — fix content/hud-layout and retry.');
+  process.exit(hudLayout.code || 1);
+}
+
 // 0. Compile authored content (content/source/*.csv|json → src/content/generated).
 // Runs first so a spreadsheet edit is picked up by the very next launch without
 // anyone remembering a separate command.
