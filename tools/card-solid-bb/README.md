@@ -1,10 +1,11 @@
 # B + B card preview
 
-Implementation evidence for `feature/card-solid-bb`; `report.json` records the
-tested source revision and whether the capture included uncommitted changes.
+Implementation notes for `feature/card-solid-bb`. The screenshots and `report.json`
+that recorded the tested revision were removed from the tree on 2026-10-11; CI
+artifacts hold new runs.
 
 Run `node tools/serve.mjs --port 4397 --no-open --no-lan`, then open
-`http://localhost:4397/docs/qa/card-solid-bb/preview.html`.
+`http://localhost:4397/tools/card-solid-bb/preview.html`.
 The preview uses the native renderer, canonical cards and pinned artwork.
 
 The current illustrated frame keeps its bottom band for a solid gold action
@@ -18,9 +19,8 @@ Up to three primary tag symbols sit on the right of the artwork. Information
 retains the full vocabulary and effect details. Long effects expand the
 parchment inside its safe interior, below the symbol rail.
 
-`approved-preview.png` shows eight examples. Desktop and phone combat,
-inspection captures accompany `report.json`. The QA tool also writes full gallery
-captures and per-card geometry locally.
+The eight approved examples and the desktop and phone captures are not kept in
+the tree. The QA tool writes full gallery captures and per-card geometry locally.
 The browser checks cover 2,186 card variants, all ten native action types and
 eight schools, widths 120/124/144/200px, clipping, overlap, accessible names,
 tap-to-inspect, resource preservation and Escape/focus return.
@@ -33,4 +33,4 @@ sound-effect sample 404s are recorded separately by browser QA.
 
 Packaged verification: the light standalone build 0.7.1.1154 passed desktop
 and phone hand geometry, complete title-fade coverage, inspection and focus
-checks. Its captures and provenance are in `standalone/`. The final build includes all canonical asset metadata used by the build identity.
+checks. Its captures and provenance were removed from the tree (2026-10-11). The final build includes all canonical asset metadata used by the build identity.
