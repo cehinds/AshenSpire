@@ -122,7 +122,7 @@ meta.character.consumable.potion,potion,Potion,meta.character.consumable,Consuma
 meta.character.consumable.throwable,throwable,Throwable,meta.character.consumable,Consumable,,,,,,,,new,,,
 meta.character.consumable.buff-item,buff-item,Buff item,meta.character.consumable,Consumable,,,,,,,,new,,,
 meta.character.consumable.key-item,key-item,Key item,meta.character.consumable,Consumable,,,,,,,,new,,,
-meta.character.creature,creature,Creature,meta.character,Creature,,,,,,,,game-concept,,,
+meta.character.creature,creature,Creature,meta.character,Creature,,,,,,,,live-tag,,,creature
 meta.character.creature.type,creature.type,Type,meta.character.creature,Creature,,,,,,,,game-concept,,,
 meta.character.creature.type.beast,beast,Beast,meta.character.creature.type,Creature,,,,,,,,live-tag,,,beast
 meta.character.creature.type.humanoid,humanoid,Humanoid,meta.character.creature.type,Creature,,,,,,,,live-tag,,,humanoid

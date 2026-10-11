@@ -469,6 +469,8 @@ export const LIVE = {
   'meta.combat.damage.piercing': 'damage.piercing',
   // proposed live mapping (domain pass)
   'damageType': 'damageType',
+  // proposed live mapping (domain pass)
+  'meta.character.creature': 'creature',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,
