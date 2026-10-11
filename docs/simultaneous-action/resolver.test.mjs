@@ -3,6 +3,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   actionSpeed,
   clampMomentum,
@@ -10,9 +13,11 @@ import {
   resolvePair,
   resolveRound,
   rollD20,
+  parseStanceAdvantage,
 } from './resolver.mjs';
 
 // Fixed RNG: returns a float that maps to the wanted d20 face.
+const here = dirname(fileURLToPath(import.meta.url));
 const d20Face = (face) => () => (face - 1) / 20 + 0.01;
 
 const hitsOf = (events) => events.filter((e) => e.type === 'hit');
@@ -197,7 +202,7 @@ test('resolveRound: a counter that triggers moves that enemy M toward the player
   assert.equal(find(events, 'countered').by, 'player');
   assert.equal(momentum.strike, 1);
   assert.deepEqual(find(events, 'momentum'), {
-    type: 'momentum', enemyId: 'strike', by: 'player', gain: 1, delta: 1, reason: 'success', slot: 0, momentum: 0,
+    type: 'momentum', enemyId: 'strike', by: 'player', gain: 1, bonus: 0, delta: 1, reason: 'success', slot: 0, momentum: 0,
   });
 });
 
@@ -469,4 +474,72 @@ test('a plain miss with no defensive action still moves nothing', () => {
   );
   assert.equal(events.some((e) => e.type === 'evaded'), false);
   assert.equal(momentum.idle, 0);
+});
+
+// Stance advantage (rule 3). The table is data: stance-advantage.csv.
+const STANCE_CSV = resolve(here, 'stance-advantage.csv');
+const stanceTable = () => parseStanceAdvantage(readFileSync(STANCE_CSV, 'utf8'));
+
+test('stance-advantage.csv: owner rows are present and every stance is in the tree', () => {
+  const table = stanceTable();
+  assert.equal(table.get('smash>block'), 2, 'smash beats guard and breaks it for +2');
+  assert.equal(table.get('counter>attack'), 1, 'counter beats attack for +1');
+  const tree = new Set(['attack', 'smash', 'sweep', 'block', 'evade', 'counter']);
+  for (const key of table.keys()) {
+    const [a, d] = key.split('>');
+    assert.equal(tree.has(a) && tree.has(d), true, `unknown stance in ${key}`);
+  }
+});
+
+test('stance-advantage.csv parser: a blank bonus defaults to 1, and a bad header throws', () => {
+  const t = parseStanceAdvantage('attacker_stance,defender_stance,bonus,note\nsmash,block,,blank\nsweep,evade,3,x\n');
+  assert.equal(t.get('smash>block'), 1);
+  assert.equal(t.get('sweep>evade'), 3);
+  assert.throws(() => parseStanceAdvantage('stance,against\n'), TypeError);
+});
+
+test('a winning stance adds its bonus: smash beating block gains 1 + 2', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'smash', slot: 0, speed: 4, kind: 'attack', stance: 'smash' }],
+    [{ id: 'guard', speed: 1, kind: 'other', stance: 'block' }],
+    1,
+    d20Face(20),
+    { stanceAdvantage: stanceTable() },
+  );
+  assert.equal(find(events, 'momentum').bonus, 2);
+  assert.equal(momentum.guard, 3);
+});
+
+test('without a stance table, the same win is worth only the base 1', () => {
+  const { momentum } = resolveRound(
+    [{ id: 'smash', slot: 0, speed: 4, kind: 'attack', stance: 'smash' }],
+    [{ id: 'guard', speed: 1, kind: 'other', stance: 'block' }],
+    1,
+    d20Face(20),
+  );
+  assert.equal(momentum.guard, 1);
+});
+
+test('a counter that fires against an attack gains its bonus too', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'counter', slot: 0, speed: 5, kind: 'counter', stance: 'counter' }],
+    [{ id: 'foe', speed: 4, kind: 'attack', stance: 'attack' }],
+    1,
+    d20Face(20),
+    { stanceAdvantage: stanceTable() },
+  );
+  assert.equal(find(events, 'countered').by, 'player');
+  assert.equal(momentum.foe, 2, 'base 1 plus counter-over-attack bonus 1');
+});
+
+test('the bonus goes to the winning stance only', () => {
+  const { momentum } = resolveRound(
+    [{ id: 'block', slot: 0, speed: 1, kind: 'other', stance: 'block' }],
+    [{ id: 'foe', speed: 4, kind: 'attack', stance: 'smash' }],
+    1,
+    d20Face(20),
+    { stanceAdvantage: stanceTable() },
+  );
+  // Smash wins and earns its +2 (total -3). Block loses, so it earns no bonus.
+  assert.equal(momentum.foe, -3);
 });

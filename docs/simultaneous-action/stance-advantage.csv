@@ -1,0 +1,9 @@
+attacker_stance,defender_stance,bonus,note
+smash,block,2,owner: smash beats guard (block) and breaks it
+counter,attack,1,owner: counter beats attack
+counter,smash,1,TBD status: counter punishes a heavy attack
+counter,sweep,1,TBD status: counter punishes a wide attack
+block,attack,1,TBD status: block holds against a plain attack
+evade,attack,1,TBD status: evade dodges a plain attack
+evade,smash,1,TBD status: evade dodges a heavy attack
+evade,sweep,1,TBD status: evade dodges a wide attack

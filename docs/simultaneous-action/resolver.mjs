@@ -195,6 +195,30 @@ function gainOf(card) {
   return g;
 }
 
+// Parses stance-advantage.csv text into a Map from 'attacker>defender' to a
+// bonus. A blank bonus cell means the default, 1 (DESIGN.md, Momentum).
+export function parseStanceAdvantage(text) {
+  const lines = String(text).split('\n').map((l) => l.trim()).filter(Boolean);
+  const header = (lines.shift() ?? '').split(',').slice(0, 3).join(',');
+  if (header !== 'attacker_stance,defender_stance,bonus') {
+    throw new TypeError('stance-advantage.csv: unexpected header');
+  }
+  const table = new Map();
+  for (const line of lines) {
+    const [attacker, defender, bonusCell] = line.split(',');
+    const bonus = bonusCell === undefined || bonusCell.trim() === '' ? 1 : Number(bonusCell);
+    if (!Number.isFinite(bonus)) throw new TypeError(`stance-advantage.csv: bad bonus in "${line}"`);
+    table.set(`${attacker}>${defender}`, bonus);
+  }
+  return table;
+}
+
+// Bonus momentum when a stance wins against the opposing stance. 0 if none.
+export function stanceBonus(table, stance, opposing) {
+  if (!table || !stance || !opposing) return 0;
+  return table.get(`${stance}>${opposing}`) ?? 0;
+}
+
 // The side that wins the slot with this event, or null. A landed hit or a
 // counter that fires is a success (DESIGN.md, Momentum).
 function successSide(e) {
@@ -231,6 +255,7 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   if (!Array.isArray(enemyQueue)) throw new TypeError('enemyQueue must be an array');
   const visibleCount = Math.max(0, Math.min(enemyQueue.length, Math.trunc(Number(perception) || 0)));
   const inputM = options.momentum ?? {};
+  const stanceTable = options.stanceAdvantage ?? null; // Map from parseStanceAdvantage()
   if (typeof inputM !== 'object' || Array.isArray(inputM)) {
     throw new TypeError('options.momentum must be an object keyed by enemy id');
   }
@@ -271,10 +296,13 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
       const winner = successSide(e);
       if (winner) {
         const card = winner === 'player' ? pc : enemy;
+        const foe = winner === 'player' ? enemy : pc;
         const gain = gainOf(card);
-        const delta = winner === 'player' ? gain : -gain;
+        // Stance advantage adds to the success (owner's rule: "adds bonus momentum").
+        const bonus = stanceBonus(stanceTable, card.stance, foe.stance);
+        const delta = (winner === 'player' ? 1 : -1) * (gain + bonus);
         pending[k] = (pending[k] ?? 0) + delta;
-        push({ type: 'momentum', enemyId: k, by: winner, gain, delta, reason: 'success', slot }, k);
+        push({ type: 'momentum', enemyId: k, by: winner, gain, bonus, delta, reason: 'success', slot }, k);
       }
     }
   });
