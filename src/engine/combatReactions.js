@@ -115,7 +115,7 @@ function seatPresent(ctx, id) {
   return !!(seat?.entity || ctx.player)?.alive && (!seat || seat.connected === true);
 }
 
-// A later action of an already answered root still reaches a seat holding a candidate.
+// Fallback for a later action of an already answered root (reportRestOfRoot usually fires first).
 function reportAlreadyAnswered(ctx, action, group) {
   const contacts = (action.meta?.expansionContacts || []).flat();
   for (const id of group.reactionAnswered || []) {
@@ -198,7 +198,7 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   group.reactionAnswered.push(ownerId);
   delete ctx.pendingReaction;
   ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: option?.play.cardInstanceId || null });
-  if (!option) return;
+  if (!option) { reportRestOfRoot(ctx, group, ownerId); return; }
   ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
     actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
     rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
@@ -215,6 +215,15 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
   }
   restoreReactionQueue(ctx);
+  reportRestOfRoot(ctx, group, ownerId);
+}
+
+// The one offer covers the whole root: when it has further hits (in this action or
+// later ones), the answering seat hears once that the rest can't be answered.
+function reportRestOfRoot(ctx, group, ownerId) {
+  const row = rowFor(ctx, group, ownerId);
+  if (!row || row.contacts.filter(positive).length < 2 || !seatPresent(ctx, ownerId)) return;
+  reportUnavailable(ctx, group, ownerId, row, 'alreadyAnswered');
 }
 
 export function restoreReactionQueue(ctx) {

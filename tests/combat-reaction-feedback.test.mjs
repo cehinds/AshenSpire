@@ -155,6 +155,31 @@ test('a later action of an answered root reports alreadyAnswered once', () => {
     cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack' }]);
 });
 
+test('skipping the offer on one action with hits:2 reports alreadyAnswered exactly once', () => {
+  const combat = solo({ cardIds: ['guardCounter', 'guardCounter'] });
+  soloEnd(combat);
+  assert.ok(combat.pendingReaction);
+  assert.equal(combat.queue.filter(action => action.effect.op === 'damage').length, 1, 'one damage action carries both hits');
+  const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }).events;
+  assert.deepEqual(unavailable(events), [{ ownerId: 'player', sourceId: 'e1', reason: 'alreadyAnswered',
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack' }]);
+  const chosenAt = events.findIndex(event => event.type === 'combatReactionChosen');
+  assert.equal(events.findIndex(event => event.type === 'combatReactionUnavailable'), chosenAt + 1, 'right after the answer');
+  assert.deepEqual(combatLogEntries(events, { registries: createRegistries(contentBundle) }).map(row => row.text)
+    .filter(text => text.startsWith('One reaction')), ["One reaction per attack: the rest of this attack can't be answered."]);
+  const coopHits = coop({ cardIds: ['guardCounter', 'guardCounter'] });
+  endTurn(coopHits, 'a');
+  chooseReaction(coopHits, 'a', { offerId: coopHits.pendingReaction.id });
+  assert.deepEqual(unavailable(coopHits.eventLog).map(row => [row.ownerId, row.reason]), [['a', 'alreadyAnswered']]);
+});
+
+test('a single-hit root that was skipped reports nothing more', () => {
+  const combat = solo({ move: { hits: 1 } });
+  soloEnd(combat);
+  const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }).events;
+  assert.deepEqual(unavailable(events), []);
+});
+
 test('co-op reports the same reasons through the same offer door', () => {
   const cost = coop();
   cost.players.get('a').entity.energy = 0;

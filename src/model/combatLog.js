@@ -18,7 +18,7 @@ function reactionUnavailableText(event, { registries, source, owner }) {
     case 'attackerControlled': return `No reaction: ${source} can't act.`;
     case 'controlled': return `No reaction: ${owner} must recover from control first.`;
     case 'unplayable': return `No reaction: ${card?.name || 'that card'} can't be played.`;
-    case 'alreadyAnswered': return 'No reaction: this attack was already answered.';
+    case 'alreadyAnswered': return "One reaction per attack: the rest of this attack can't be answered.";
     default: return 'No reaction available.';
   }
 }
