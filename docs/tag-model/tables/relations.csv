@@ -2,9 +2,9 @@ source,relation,target,value,note
 smash,STRONG_VS,defensive.block,1.5,
 offensive.attack,STRONG_VS,smash,1.25,
 sweep,WEAK_VS,defensive.block,0.75,
-physical.pierce,BYPASSES,counter,,melee only
-hybrid.force,BYPASSES,counter,,melee only
-sweep,BYPASSES,counter,,melee only
+physical.pierce,BYPASSES,stance.counter,,melee only
+hybrid.force,BYPASSES,stance.counter,,melee only
+sweep,BYPASSES,stance.counter,,melee only
 magic.fire,APPLIES,burned,1,
 slashing,APPLIES,bleeding,1,
 magic.frost,APPLIES,build-up.frost,1,
