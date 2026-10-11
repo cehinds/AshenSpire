@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1834",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Faster checks on every change; release builds the Windows installer",
+    "detail": "Development-process change only, nothing in the game changes. Pull requests now run a quick smoke check of about five minutes, the full test suites run when a build is promoted to Test, and Release runs the final polish checks and builds the Windows installer, whose download now follows the Release channel. Each open feature branch gets its own playable build, the README refreshes itself, and new high-resolution art moves to the art repository automatically.",
+    "build": "0.7.1.1293",
+    "pullRequest": 1834,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1834"
+  },
+  {
     "id": "pr-1841",
     "date": "2026-10-11",
     "group": "2026-10-11",
@@ -41,6 +51,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1287",
     "pullRequest": 1833,
     "url": "https://github.com/cehinds/AshenSpire/pull/1833"
+  },
+  {
+    "id": "pr-1832",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Worker branch rules documented; feature-branch playable builds announced",
+    "detail": "Development-process change only, nothing in the game changes. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. The README names where each open feature, fix or chore branch's playable build will live; publishing those builds is still pending, so the link does not work yet.",
+    "build": "0.7.1.1283",
+    "pullRequest": 1832,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1832"
   },
   {
     "id": "pr-1831",

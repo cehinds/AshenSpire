@@ -55,7 +55,11 @@ run `git fetch --prune origin` and `git worktree prune`, then `git worktree
 remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that
 is clean (`git status --porcelain` empty) and whose branch is merged into
 `origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep any
-other worktree; ask the owner before discarding unmerged work. Before handing
+other worktree; ask the owner before discarding unmerged work. Worker branches
+are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/branch-cleanup`
+for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
+the parent branch merges into `dev`; origin worker branches are deleted by
+`worker-branch-cleanup.yml` after `dev` is promoted to `test`. Before handing
 work to Haiku, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
 the key lines yourself, measure before tuning, one owner per file per wave,
 numbered steps with the design already decided, named traps, an acceptance
