@@ -241,11 +241,17 @@ async function dataStudio() {
     await sleep(200);
   });
   await check('Data: paste into a hidden anchor is refused with a banner', async () => {
+    // Keys: click row 1 (r0 c1); click the search box and type Shield; focus moves to the grid
+    // (the grid takes no paste while an input has focus); ArrowDown, Tab; then paste "Should not land".
     await clickAt('.gk-cell[data-r="0"][data-c="1"]');
     await sleep(120);
-    await page.fill('.view.active .gk-search', 'Shield');
+    await page.click('.view.active .gk-search');
+    await page.keyboard.type('Shield');
     await sleep(400);
     await page.evaluate(() => document.querySelector('.view.active .gk-scroll')?.focus({ preventScroll: true }));
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Tab');
+    await sleep(120);
     await page.evaluate(() => {
       const dt = new DataTransfer();
       dt.setData('text/plain', 'Should not land');
@@ -253,14 +259,15 @@ async function dataStudio() {
     });
     await sleep(400);
     const landed = await page.evaluate(() => [...document.querySelectorAll('.view.active .gk-cell')].filter((c) => c.textContent === 'Should not land').length);
-    const bannerUp = await page.locator('.view.active .gk-banner').count();
+    const banner = page.locator('.view.active .gk-banner');
+    const bannerUp = await banner.count();
+    const bannerText = bannerUp ? ((await banner.first().textContent()) || '').trim() : '';
     if (bannerUp) await page.click('.view.active .gk-banner-close');
     await page.fill('.view.active .gk-search', '');
     await sleep(300);
     expect(landed === 0, `paste landed on ${landed} visible cell(s) instead of being refused`);
     expect(bannerUp > 0, 'no refusal banner shown');
-    await sleep(300);
-    expect(/not applied/i.test(title), `banner text was "${title}"`);
+    expect(/not applied/i.test(bannerText), `banner text was "${bannerText.slice(0, 120)}"`);
     return 'refused with banner';
   });
   await check('Data: undo and redo buttons in the header', async () => {
