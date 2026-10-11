@@ -750,6 +750,12 @@ meta.combat.damage.piercing,piercing,piercing,meta.combat.damage,DamageType,,Dam
 damageType,damageType,Damage type,,TagNode,,Identity of a typed HP damage component.,,,,,,live-tag,,,damageType
 run,run,Run,,TagNode,,"Run structure — what an event, an encounter or an unlock is about.",,,,,,live-tag,,,run
 internal,internal,internal,,TagNode,,"Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.",,,,,,live-tag,,,internal
+card.flourish,card.flourish,Flourish,card,Card,,Finesse — footwork and multi-hit.,,,,,,live-tag,✧,9FC3E8,flourish
+card.heavy,card.heavy,Heavy,card,Card,,"Slow, committed, and hard to stop.",,,,,,live-tag,◆,C9A227,heavy
+card.basic,basic,Basic,card,Card,,Everybody's — on the shelf without being found.,,,,,,live-tag,○,7A6F5A,basic
+card.ranged,card.ranged,Ranged,card,Card,,Authored ranged presentation; no position system.,,,,,,live-tag,➶,7FA8C9,ranged
+card.precision,card.precision,Precision,card,Card,,Deliberate aim and finesse; presentation only.,,,,,,live-tag,◎,C9A227,precision
+card.extractable,extractable,Extractable,card,Card,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.",,,,,,live-tag,⚙,C9A227,extractable
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

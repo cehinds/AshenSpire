@@ -749,5 +749,11 @@
  "meta.combat.damage.piercing": "new",
  "damageType": "new",
  "run": "new",
- "internal": "new"
+ "internal": "new",
+ "card.flourish": "new",
+ "card.heavy": "new",
+ "card.basic": "new",
+ "card.ranged": "new",
+ "card.precision": "new",
+ "card.extractable": "new"
 }

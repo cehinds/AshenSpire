@@ -575,6 +575,12 @@ Card
     Base
     Upgraded
   Character card {class-bound}
+  Flourish {Finesse — footwork and multi-hit.}
+  Heavy {Slow, committed, and hard to stop.}
+  Basic {Everybody's — on the shelf without being found.}
+  Ranged {Authored ranged presentation; no position system.}
+  Precision {Deliberate aim and finesse; presentation only.}
+  Extractable {A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.}
 Attack source {Source profile supplying an attack; separate from damage type.}
   Weapon {Categorized Weapon identity; effects are authored separately.}
   Spell {Categorized Spell identity; effects are authored separately.}

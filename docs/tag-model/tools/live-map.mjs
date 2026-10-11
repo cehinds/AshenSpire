@@ -479,6 +479,13 @@ export const LIVE = {
   'meta.combat.skill.spellcraft': 'school',
   // proposed live mapping (domain pass)
   'meta.combat.stance': 'maneuver',
+  // proposed live mapping (domain pass)
+  'card.flourish': 'flourish',
+  'card.heavy': 'heavy',
+  'card.basic': 'basic',
+  'card.ranged': 'ranged',
+  'card.precision': 'precision',
+  'card.extractable': 'extractable',
 };
 
 // GAME: proposal tags marked new that the game already implements (stat, item,
