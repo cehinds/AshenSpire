@@ -846,10 +846,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if(['combat','complete','lobby'].includes(snap.scene.kind))disposeProgression();
     posePresentations = new Map([...app.querySelectorAll('.coop-seat')].map(node => [node.dataset.seat, stageFor(node)?.presentation]));
     clearCombatEffects(app.querySelector('.fx-layer'));
-    // A paced timeline's numbers and callouts land just before its beat
-    // re-renders the board; they ride into the new layer to finish their float
-    // (each removes itself on its own timer).
-    const carriedFx = busy() && snap.scene.kind === 'combat' ? [...(app.querySelector('.fx-layer')?.children || [])] : [];
+    // Numbers and callouts land just before a re-render rebuilds the board (a
+    // paced beat's bars, the timeline's final frame, the next snapshot); they
+    // ride into the new layer to finish their float, each on its own timer.
+    const carriedFx = snap.scene.kind === 'combat' ? [...(app.querySelector('.fx-layer')?.children || [])] : [];
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
