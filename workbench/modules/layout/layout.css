@@ -16,7 +16,8 @@
 .lay-sep { width: 1px; height: 20px; background: var(--as-line); margin: 0 2px; }
 .lay-align { display: inline-flex; gap: 2px; flex-wrap: wrap; }
 
-.lay-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 200px minmax(0, 1fr) 280px; }
+.lay-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 160px minmax(0, 1fr) 240px; }
+.lay-right .ck-grid2 input, .lay-right .ck-field input, .lay-right .ck-field select { width: 100%; min-width: 0; box-sizing: border-box; }
 .lay-left, .lay-right { min-height: 0; overflow: auto; background: var(--as-bg-panel); }
 .lay-left { border-right: 1px solid var(--as-line); }
 .lay-right { border-left: 1px solid var(--as-line); }
