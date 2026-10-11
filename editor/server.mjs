@@ -7,7 +7,7 @@ import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
 import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
-import { tryAcquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
+import { tryAcquire, acquire, busyMessage, lockEnv } from '../tools/lib/build-lock.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -20,6 +20,9 @@ const commands = {
 // src/config/generated) run under the cross-process lock the Workbench and UI
 // Studio share (tools/lib/build-lock.mjs); validate only reads them.
 const WRITES_GENERATED = new Set(['content', 'build']);
+// The trees a build reads (the same rule as workbench/core/files.mjs): a save
+// under them holds the shared lock from validation through the last write.
+const BUILD_INPUT = /^(?:content|src|styles)\//;
 
 // A build action can start builders of its own (notably launch.mjs). Keep each
 // action in a process group on POSIX and stop the complete tree on shutdown so
@@ -36,7 +39,7 @@ function killTree(child, { platform = process.platform, run = spawnSync } = {}) 
 // A loopback origin allowed to frame the studio (the Workbench, workbench/server.mjs).
 // Nothing else may: with no ancestors the page keeps frame-ancestors 'none'.
 export const FRAME_ANCESTOR = /^http:\/\/(127\.0\.0\.1|localhost):\d{1,5}$/;
-export async function createStudio({ root = path.resolve(HERE, '..'), port = 4317, stateDir, codexExecutable, frameAncestors = [] } = {}) {
+export async function createStudio({ root = path.resolve(HERE, '..'), port = 4317, stateDir, codexExecutable, frameAncestors = [], lockWaitMs = 10 * 60 * 1000 } = {}) {
   for (const origin of frameAncestors) if (!FRAME_ANCESTOR.test(origin)) throw Error(`Refused frame ancestor: ${origin}`);
   const ancestors = frameAncestors.join(' ');
   root = await fs.realpath(root);
@@ -128,13 +131,18 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         if (req.method === 'POST') {
           const data = await body(req);
           if (url.pathname === '/api/save') {
-            if (Array.isArray(data.changes)) for (const change of data.changes) {
-              if (change.path?.endsWith('.js') && typeof change.text === 'string') {
-                const checked = spawnSync(process.execPath, ['--check', '--input-type=module'], { input: change.text, encoding: 'utf8', windowsHide: true, timeout: 10000 });
-                if (checked.status !== 0) throw Error(`Syntax check failed for ${change.path}: ${checked.stderr || checked.error?.message}`);
+            // Waits for the shared build lock like the Workbench's file service; a busy lock is a 409 naming its holder.
+            const holdsLock = Array.isArray(data.changes) && data.changes.some(change => BUILD_INPUT.test(String(change?.path ?? '')));
+            const release = holdsLock ? await acquire(root, 'Editor save', { timeoutMs: lockWaitMs }) : null;
+            try {
+              if (Array.isArray(data.changes)) for (const change of data.changes) {
+                if (change.path?.endsWith('.js') && typeof change.text === 'string') {
+                  const checked = spawnSync(process.execPath, ['--check', '--input-type=module'], { input: change.text, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+                  if (checked.status !== 0) throw Error(`Syntax check failed for ${change.path}: ${checked.stderr || checked.error?.message}`);
+                }
               }
-            }
-            return send(res, 200, await workspace.save(data.changes));
+              return send(res, 200, await workspace.save(data.changes));
+            } finally { release?.(); }
           }
           if (url.pathname === '/api/job') return send(res, 200, startJob(data.name));
           if (url.pathname === '/api/codex/account') return send(res, 200, await codex.account());

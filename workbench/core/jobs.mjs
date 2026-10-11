@@ -13,6 +13,9 @@ import { tryAcquire as tryFileLock, acquire as waitFileLock, busyMessage, lockEn
 export const HISTORY = 30;
 const LOG_CAP = 400 * 1024;
 const DISK_LOG_CAP = 48 * 1024;
+/** How long a stopping job's process may take to exit after SIGTERM before it is killed (SIGKILL). */
+export const STOP_GRACE_MS = 5000;
+const STOPPED = 'The Workbench stopped while this ran';
 
 const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests'].flatMap((dir) => {
   try { return fs.readdirSync(path.join(root, dir)).filter((n) => n.endsWith('.test.mjs')).sort().map((n) => `${dir}/${n}`); } catch { return []; }
@@ -57,7 +60,9 @@ export class JobRunner {
     this.locks = new Map(); // lock group → label of whoever holds it (a job or a live-reload build)
     this.lockWaiters = [];
     this.fileLocks = new Map(); // lock group → release() of the cross-process lock
-    try { this.runs = JSON.parse(fs.readFileSync(stateFile, 'utf8')).slice(0, HISTORY).map((r) => (r.status === 'running' ? { ...r, status: 'cancelled', message: 'The Workbench stopped while this ran' } : r)); } catch { /* no history yet */ }
+    this.stopping = new Set(); // runs stopAll() asked to stop: they start no further step
+    this.slotWaiters = []; // checks run whenever a job slot is freed (see slotFreed)
+    try { this.runs = JSON.parse(fs.readFileSync(stateFile, 'utf8')).slice(0, HISTORY).map((r) => (r.status === 'running' ? { ...r, status: 'cancelled', message: STOPPED } : r)); } catch { /* no history yet */ }
   }
 
   defs() {
@@ -108,6 +113,7 @@ export class JobRunner {
   async execute(run, steps) {
     for (const step of steps) {
       if (run.status !== 'running') return;
+      if (this.stopping.has(run)) return this.finish(run, 'cancelled', STOPPED);
       const script = step.args[0].startsWith('--') ? null : path.join(this.root, step.args[0]);
       if (script && !fs.existsSync(script)) {
         if (step.optional) { this.append(run, `· skipped ${step.args[0]} (not in this checkout)\n`); continue; }
@@ -128,6 +134,7 @@ export class JobRunner {
       });
       delete run.child;
       if (run.status !== 'running') return;
+      if (this.stopping.has(run)) return this.finish(run, 'cancelled', STOPPED);
       if (code !== 0) { run.exitCode = code; return this.finish(run, 'failed', `${step.args[0]} exited with ${code}`); }
     }
     this.finish(run, 'passed', '');
@@ -140,7 +147,12 @@ export class JobRunner {
     // A cancelled step keeps the job's slot until its process has really exited,
     // so a re-run cannot write the same output alongside it.
     const child = run.child;
-    const free = () => { if (this.active.get(run.id) === run) { this.active.delete(run.id); if (JOBS[run.id]?.lock) this.release(JOBS[run.id].lock); } };
+    const free = () => {
+      if (this.active.get(run.id) !== run) return;
+      this.active.delete(run.id);
+      if (JOBS[run.id]?.lock) this.release(JOBS[run.id].lock);
+      for (const check of [...this.slotWaiters]) check();
+    };
     if (child && child.exitCode === null && child.signalCode === null) child.once('close', free);
     else free();
     this.persist();
@@ -178,18 +190,42 @@ export class JobRunner {
     return this.summary(run);
   }
 
-  stopAll() { for (const run of this.active.values()) killTree(run.child); }
+  /** Resolves once `run` no longer holds its job slot, that is once its process has exited and its lock is released. */
+  slotFreed(run) {
+    return new Promise((resolve) => {
+      const check = () => { if (this.active.get(run.id) !== run) { this.slotWaiters.splice(this.slotWaiters.indexOf(check), 1); resolve(); } };
+      this.slotWaiters.push(check);
+      check();
+    });
+  }
+
+  /** Stop every running job and resolve once each has exited and freed its slot and file lock.
+   *  SIGTERM first; a process still alive after graceMs gets SIGKILL. */
+  stopAll({ graceMs = STOP_GRACE_MS } = {}) {
+    const runs = [...this.active.values()];
+    return Promise.all(runs.map((run) => {
+      this.stopping.add(run);
+      const freed = this.slotFreed(run);
+      const child = run.child;
+      killTree(child);
+      if (child && child.exitCode === null && child.signalCode === null) {
+        const timer = setTimeout(() => killTree(child, { signal: 'SIGKILL' }), graceMs);
+        freed.then(() => clearTimeout(timer));
+      }
+      return freed;
+    })).then(() => {});
+  }
 }
 
 /** Stop a step and everything it started: the process group on POSIX, the
  *  process tree on Windows (taskkill /T waits until the tree is gone, so the
  *  step's close event, which frees the lock, comes after its builders exit). */
-export function killTree(child, { platform = process.platform, run = spawnSync } = {}) {
+export function killTree(child, { platform = process.platform, run = spawnSync, signal = 'SIGTERM' } = {}) {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
   try {
     if (platform === 'win32') {
       const r = run('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
       if (r.error || r.status !== 0) child.kill();
-    } else process.kill(-child.pid, 'SIGTERM');
-  } catch { try { child.kill(); } catch { /* already gone */ } }
+    } else process.kill(-child.pid, signal);
+  } catch { try { child.kill(signal); } catch { /* already gone */ } }
 }
