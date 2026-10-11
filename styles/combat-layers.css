@@ -292,7 +292,10 @@
   max-width: var(--inspect-box); max-height: var(--inspect-box); padding: 0;
   font-size: calc(14px / var(--ui-zoom,1)); border: 1px solid var(--gold);
 }
-:root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
+/* Owner decision (2026-10-11): an Inspect "i" shows only while its combatant is
+   selected. The rest-state hide below is !important so no shared rule reopens it. */
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
+:root .combat .combatant:not(.context-selected):not(.selected-target) .combatant-leading > .combatant-info { display: none !important; }
 :root .combat[data-layout='formation'] .context-selected .combatant-leading > .combatant-info {
   border-color: var(--combatant-highlight); color: var(--combatant-highlight); box-shadow: 0 0 3px var(--combatant-highlight);
 }
