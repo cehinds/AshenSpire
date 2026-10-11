@@ -91,7 +91,7 @@ meta.character.armor.defensive-property.sanctified,sanctified,Sanctified,meta.ch
 meta.character.armor.defensive-property.mindguard,mindguard,Mindguard,meta.character.armor.defensive-property,Armor,,resists Insanity and Confused,,,,,,new,,,
 meta.character.armor.defensive-property.lightweight,lightweight,Lightweight,meta.character.armor.defensive-property,Armor,,"−SP cost, + Evade",,,,,,new,,,
 meta.character.armor.defensive-property.reinforced,reinforced,Reinforced,meta.character.armor.defensive-property,Armor,,Block not lost on Stagger,,,,,,new,,,
-meta.character.armor.slot,slot,Slot,meta.character.armor,Armor,,,,,,,,game-concept,,,
+meta.character.armor.slot,armor.slot,Slot,meta.character.armor,Armor,,,,,,,,game-concept,,,
 meta.character.armor.slot.head,head,Head,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
 meta.character.armor.slot.body,body,Body,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
 meta.character.armor.slot.hands,hands,Hands,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
@@ -112,12 +112,12 @@ meta.character.relic.trigger.on-play,on-play,On play,meta.character.relic.trigge
 meta.character.relic.trigger.on-hit,on-hit,On hit,meta.character.relic.trigger,Relic,,,,,,,,new,,,
 meta.character.relic.trigger.on-kill,on-kill,On kill,meta.character.relic.trigger,Relic,,,,,,,,new,,,
 meta.character.relic.trigger.passive,passive,Passive,meta.character.relic.trigger,Relic,,,,,,,,game-concept,,,
-meta.character.feat,feat,Feat,meta.character,Feat,,,,,,,,game-concept,,,
+meta.character.feat,character.feat,Feat,meta.character,Feat,,,,,,,,game-concept,,,
 meta.character.feat.class-feat,class-feat,Class feat,meta.character.feat,Feat,,,,,,,,game-concept,,,
 meta.character.feat.skill-feat,skill-feat,Skill feat,meta.character.feat,Feat,,,,,,,,game-concept,,,
 meta.character.feat.ability,ability,Ability,meta.character.feat,Feat,,,,,,,,game-concept,,,
 meta.character.consumable,character.consumable,Consumable,meta.character,Consumable,,,,,,,,game-concept,,,
-meta.character.consumable.flask,flask,Flask,meta.character.consumable,Consumable,,"HP, MP",,,,,,game-concept,,,
+meta.character.consumable.flask,consumable.flask,Flask,meta.character.consumable,Consumable,,"HP, MP",,,,,,game-concept,,,
 meta.character.consumable.potion,potion,Potion,meta.character.consumable,Consumable,,,,,,,,game-concept,,,
 meta.character.consumable.throwable,throwable,Throwable,meta.character.consumable,Consumable,,,,,,,,new,,,
 meta.character.consumable.buff-item,buff-item,Buff item,meta.character.consumable,Consumable,,,,,,,,new,,,
@@ -140,11 +140,11 @@ meta.character.creature.rank.boss,rank.boss,Boss,meta.character.creature.rank,Cr
 meta.character.other,character.other,Other,meta.character,Character,,,,,,,,game-concept,,,
 meta.character.other.location,location,Location,meta.character.other,Location,,,,,,,,game-concept,,,
 meta.character.other.location.shrine,shrine,Shrine,meta.character.other.location,Location,,,,,,,,game-concept,,,
-meta.character.other.location.camp,camp,Camp,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.camp,location.camp,Camp,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.inn,inn,Inn,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.chapel,chapel,Chapel,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.event,location.event,Event,meta.character.other.location,Location,,,,,,,,game-concept,,,
-meta.character.other.location.encounter,encounter,Encounter,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.encounter,location.encounter,Encounter,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.combat,meta.combat,Combat,meta,TagNode,,,,,,,,game-concept,,,
 meta.combat.skill,combat.skill,Skill,meta.combat,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill,weapon-skill,Weapon skill,meta.combat.skill,Skill,,deals physical damage,,,,,,game-concept,,,
@@ -198,7 +198,7 @@ meta.combat.skill.spellcraft.psychic.illusion,illusion,Illusion,meta.combat.skil
 meta.combat.skill.spellcraft.psychic.ritual,ritual,Ritual,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). madness,,,,,,live-tag,,,ritual
 meta.combat.skill.spellcraft.alteration,alteration,Alteration,meta.combat.skill.spellcraft,Skill,alteration,"Moved: re-homed in the proposal (tag-tree.txt [m]). existing school, non-elemental",,,,,,live-tag,,,school:alteration
 meta.combat.damage,damage,Damage,meta.combat,DamageType,,,,,,,,live-tag,,,damage
-meta.combat.damage.physical,physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
+meta.combat.damage.physical,damage.physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
 meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,,live-tag,,,damage:slashing
 meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,,live-tag,,,damage:blunt
 meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,,live-tag,,,damage:piercing
@@ -214,8 +214,8 @@ meta.combat.damage.hybrid,hybrid,Hybrid,meta.combat.damage,DamageType,,,,,,,,gam
 meta.combat.damage.hybrid.force,hybrid.force,Force,meta.combat.damage.hybrid,DamageType,spellcraft.force,Block or Barrier stops it,Drains 2 [defensive-stats.ward]; slips past melee Counter,,,,,live-tag,,,damage:arcane
 meta.combat.stance,combat.stance,Stance,meta.combat,Stance,,,,,,,,game-concept,,,
 meta.combat.stance.offensive,offensive,Offensive,meta.combat.stance,Stance,,,,,,,,game-concept,,,
-meta.combat.stance.offensive.attack,attack,Attack,meta.combat.stance.offensive,Stance,,44 cards,×1.25 vs [smash] stance,,,,,live-tag,,,maneuver:attack
-meta.combat.stance.offensive.attack.strike,strike,Strike,meta.combat.stance.offensive.attack,Stance,,"Strike, Quick Cut, Katana Draw Cut, weapon attacks",,,,,,game-concept,,,
+meta.combat.stance.offensive.attack,offensive.attack,Attack,meta.combat.stance.offensive,Stance,,44 cards,×1.25 vs [smash] stance,,,,,live-tag,,,maneuver:attack
+meta.combat.stance.offensive.attack.strike,attack.strike,Strike,meta.combat.stance.offensive.attack,Stance,,"Strike, Quick Cut, Katana Draw Cut, weapon attacks",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.flurry,flurry,Flurry,meta.combat.stance.offensive.attack,Stance,,"Blade Dance, Thousand Cuts, Twin Fang, Twinblade Flurry",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.bleed-strike,bleed-strike,Bleed strike,meta.combat.stance.offensive.attack,Stance,,"Rend, Serrated Blade, Bloodhunter's Strike, Goreslash",,,,,,game-concept,,,
 meta.combat.stance.offensive.attack.finisher,finisher,Finisher,meta.combat.stance.offensive.attack,Stance,,"Executioner, Deathblow, Coup de Grace, Assassinate",,,,,,game-concept,,,
@@ -230,7 +230,7 @@ meta.combat.stance.offensive.sweep.cleave,sweep.cleave,Cleave,meta.combat.stance
 meta.combat.stance.offensive.sweep.whirl,whirl,Whirl,meta.combat.stance.offensive.sweep,Stance,,Whirling Guard,,,,,,game-concept,,,
 meta.combat.stance.defensive,defensive,Defensive,meta.combat.stance,Stance,,,,,,,,live-tag,,,maneuver:defend
 meta.combat.stance.defensive.block,defensive.block,Block,meta.combat.stance.defensive,Stance,,"about 45 cards, tagged Defend today",Gain Block or Barrier at turn start,,,,,game-concept,,,
-meta.combat.stance.defensive.block.guard,guard,Guard,meta.combat.stance.defensive.block,Stance,,"Defend, Quick Guard, weapon/staff/sceptre Guard, Iron Skin, Brace",,,,,,live-tag,,,guard
+meta.combat.stance.defensive.block.guard,block.guard,Guard,meta.combat.stance.defensive.block,Stance,,"Defend, Quick Guard, weapon/staff/sceptre Guard, Iron Skin, Brace",,,,,,live-tag,,,guard
 meta.combat.stance.defensive.block.shield,block.shield,Shield,meta.combat.stance.defensive.block,Stance,,"Shieldwall, Shield Guard, Shield Bastion, Set the Shield",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.ward,block.ward,Ward,meta.combat.stance.defensive.block,Stance,,"Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.endure,endure,Endure,meta.combat.stance.defensive.block,Stance,,"Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance",,,,,,game-concept,,,
@@ -244,7 +244,7 @@ meta.combat.stance.counter.school-counter,school-counter,School counter,meta.com
 meta.combat.stance.counter.ranged-counter,ranged-counter,Ranged counter,meta.combat.stance.counter,Stance,,"Nock and Wait, Barrage Counter",,,,,,live-tag,,,counter:ranged
 meta.combat.stance.counter.ward-counter,ward-counter,Ward counter,meta.combat.stance.counter,Stance,,"Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal",,,,,,game-concept,,,
 meta.combat.delivery,delivery,Delivery,meta.combat,TagNode,,,,,,,,live-tag,,,delivery
-meta.combat.delivery.melee,melee,Melee,meta.combat.delivery,TagNode,,"Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)",,,,,,new,,,
+meta.combat.delivery.melee,melee,Melee,meta.combat.delivery,TagNode,,"Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)",,,,,,live-tag,◇,9FC3E8,delivery:melee
 meta.combat.delivery.ranged,ranged,Ranged,meta.combat.delivery,TagNode,,"9 cards, was a stance",,,,,,live-tag,,,maneuver:ranged
 meta.combat.delivery.ranged.shot,shot,Shot,meta.combat.delivery.ranged,TagNode,,"Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot",,,,,,game-concept,,,
 meta.combat.delivery.ranged.volley,volley,Volley,meta.combat.delivery.ranged,TagNode,,"Arrow Volley, Toxic Volley, Fan of Knives, Ricochet",,,,,,game-concept,,,
@@ -394,6 +394,36 @@ card.upgrade,card.upgrade,Upgrade,card,Card,,,,,,,,game-concept,,,
 card.upgrade.base,base,Base,card.upgrade,Card,,,,,,,,game-concept,,,
 card.upgrade.upgraded,upgraded,Upgraded,card.upgrade,Card,,,,,,,,live-tag,,,internal.upgraded
 card.character-card,character-card,Character card,card,Card,,class-bound,,,,,,game-concept,,,
+attackSource,attackSource,Attack source,,TagNode,,Source profile supplying an attack; separate from damage type.,,,,,,live-tag,,,attackSource
+attackSource.weapon,attackSource.weapon,Weapon,attackSource,TagNode,,Categorized Weapon identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:weapon
+attackSource.spell,attackSource.spell,Spell,attackSource,TagNode,,Categorized Spell identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:spell
+attackSource.unarmed,attackSource.unarmed,Unarmed,attackSource,TagNode,,Categorized Unarmed identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:unarmed
+meta.combat.delivery.projectile,projectile,Projectile,meta.combat.delivery,TagNode,,Categorized Projectile identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,delivery:projectile
+classification,classification,classification,,TagNode,,Grouping node for classification in nodes.csv.,,,,,,live-tag,,,classification
+classification.attack,classification.attack,attack,classification,TagNode,,Grouping node for attack in nodes.csv.,,,,,,live-tag,,,classification.attack
+classification.strike,classification.strike,strike,classification,TagNode,,Grouping node for strike in nodes.csv.,,,,,,live-tag,,,classification.strike
+classification.guard,classification.guard,guard,classification,TagNode,,Grouping node for guard in nodes.csv.,,,,,,live-tag,,,classification.guard
+classification.weaponArt,weaponArt,weaponArt,classification,TagNode,,Grouping node for weaponArt in nodes.csv.,,,,,,live-tag,,,classification.weaponArt
+classification.class,classification.class,class,classification,TagNode,,"What a class is. Every object in the class collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.class
+classification.relic,classification.relic,relic,classification,TagNode,,"What a relic is. Every object in the relic collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.relic
+classification.flask,classification.flask,flask,classification,TagNode,,"What a flask is. Every object in the flask collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.flask
+classification.keepsake,keepsake,keepsake,classification,TagNode,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.keepsake
+classification.event,classification.event,event,classification,TagNode,,"What a event is. Every object in the event collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.event
+classification.encounter,classification.encounter,encounter,classification,TagNode,,"What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.encounter
+classification.enemy,enemy,enemy,classification,TagNode,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.enemy
+classification.armament,armament,armament,classification,TagNode,,"What a armament is. Every object in the armament collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armament
+classification.armour,armour,armour,classification,TagNode,,"What a armour is. Every object in the armour collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armour
+classification.basicCardProfile,basicCardProfile,basicCardProfile,classification,TagNode,,"What a basicCardProfile is. Every object in the basicCardProfile collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.basicCardProfile
+classification.slot,classification.slot,slot,classification,TagNode,,"What a slot is. Every object in the slot collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.slot
+classification.startingKit,startingKit,startingKit,classification,TagNode,,"What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.startingKit
+classification.unlock,unlock,unlock,classification,TagNode,,"What a unlock is. Every object in the unlock collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.unlock
+classification.companion,companion,companion,classification,TagNode,,"What a companion is. Every object in the companion collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.companion
+classification.sigil,sigil,sigil,classification,TagNode,,"What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.sigil
+classification.feat,classification.feat,feat,classification,TagNode,,A selected class progression feat.,,,,,,live-tag,,,classification.feat
+classification.enemyMove,enemyMove,enemyMove,classification,TagNode,,A scoped action in an enemy move table.,,,,,,live-tag,,,classification.enemyMove
+meta.camp,meta.camp,Combat camp,,TagNode,,Authored combat identity shared by cards and enemy moves.,,,,,,live-tag,,,camp
+meta.camp.physical,camp.physical,Physical,meta.camp,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,⚔,D7B36B,camp:physical
+meta.camp.spell,camp.spell,Spell,meta.camp,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,✦,9FC3E8,camp:spell
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
 meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,

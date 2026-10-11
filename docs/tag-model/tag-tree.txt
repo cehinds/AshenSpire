@@ -243,7 +243,7 @@ Meta
         Ranged counter {Nock and Wait, Barrage Counter}
         Ward counter {Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal}
     Delivery
-      Melee [n] {Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)}
+      Melee {Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)}
       Ranged {9 cards, was a stance}
         Shot {Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot}
         Volley {Arrow Volley, Toxic Volley, Fan of Knives, Ricochet}
@@ -252,6 +252,7 @@ Meta
         Mote {Drowsing Mote, Rot Mote}
       Multi-hit [n]
       Area
+      Projectile {Categorized Projectile identity; effects are authored separately.}
     Magic
       Offensive magic
       Defensive magic
@@ -519,3 +520,32 @@ Card
     Base
     Upgraded
   Character card {class-bound}
+Attack source {Source profile supplying an attack; separate from damage type.}
+  Weapon {Categorized Weapon identity; effects are authored separately.}
+  Spell {Categorized Spell identity; effects are authored separately.}
+  Unarmed {Categorized Unarmed identity; effects are authored separately.}
+classification {Grouping node for classification in nodes.csv.}
+  attack {Grouping node for attack in nodes.csv.}
+  strike {Grouping node for strike in nodes.csv.}
+  guard {Grouping node for guard in nodes.csv.}
+  weaponArt {Grouping node for weaponArt in nodes.csv.}
+  class {What a class is. Every object in the class collection carries this, and nothing outside it may.}
+  relic {What a relic is. Every object in the relic collection carries this, and nothing outside it may.}
+  flask {What a flask is. Every object in the flask collection carries this, and nothing outside it may.}
+  keepsake {What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.}
+  event {What a event is. Every object in the event collection carries this, and nothing outside it may.}
+  encounter {What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.}
+  enemy {What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.}
+  armament {What a armament is. Every object in the armament collection carries this, and nothing outside it may.}
+  armour {What a armour is. Every object in the armour collection carries this, and nothing outside it may.}
+  basicCardProfile {What a basicCardProfile is. Every object in the basicCardProfile collection carries this, and nothing outside it may.}
+  slot {What a slot is. Every object in the slot collection carries this, and nothing outside it may.}
+  startingKit {What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may.}
+  unlock {What a unlock is. Every object in the unlock collection carries this, and nothing outside it may.}
+  companion {What a companion is. Every object in the companion collection carries this, and nothing outside it may.}
+  sigil {What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.}
+  feat {A selected class progression feat.}
+  enemyMove {A scoped action in an enemy move table.}
+Combat camp {Authored combat identity shared by cards and enemy moves.}
+  Physical {Selects physical Guard or magical Ward combat rules.}
+  Spell {Selects physical Guard or magical Ward combat rules.}

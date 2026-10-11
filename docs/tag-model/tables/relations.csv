@@ -1,6 +1,6 @@
 source,relation,target,value,note
 smash,STRONG_VS,defensive.block,1.5,
-attack,STRONG_VS,smash,1.25,
+offensive.attack,STRONG_VS,smash,1.25,
 sweep,WEAK_VS,defensive.block,0.75,
 physical.pierce,BYPASSES,counter,,melee only
 hybrid.force,BYPASSES,counter,,melee only
@@ -15,7 +15,7 @@ magic.fire,CLEARS,frozen,,thaws
 physical.blunt,CLEARS,frozen,,shatters
 type.stance,REFERENCES,combat.stance,,
 gorefire,REQUIRES,blood,,
-attack,DEFAULT_DELIVERY,melee,,Default delivery of the Attack stance (owner decision 3)
+offensive.attack,DEFAULT_DELIVERY,melee,,Default delivery of the Attack stance (owner decision 3)
 smash,DEFAULT_DELIVERY,melee,,Default delivery of the Smash stance
 sweep,DEFAULT_DELIVERY,melee,,Default delivery of the Sweep stance
 parry,DEFAULT_DELIVERY,melee,,Parry counter is a melee delivery
