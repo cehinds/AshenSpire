@@ -636,11 +636,19 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     restoreFocus();
   }
 
+  // The first focus key in a pane that is not a text box. Focus never moves
+  // INTO a text input by fallback (a phone would open its keyboard): a text box
+  // keeps focus only when the focus key itself names it, and the search
+  // handlers re-focus it while typing.
+  function paneFocusable(name) {
+    return [...panel.querySelectorAll(`[data-pane="${name}"] [data-focus-key]`)]
+      .find(candidate => !['INPUT', 'TEXTAREA'].includes(candidate.tagName)) || null;
+  }
+
   function restoreFocus() {
     if (!focusKey) return;
     const previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
-    const node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous
-      : panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
+    const node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous : paneFocusable(pane);
     if (!node) return;
     focusNode(node);
   }
@@ -720,7 +728,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     mobileView = pane;
     const first = [...panel.querySelectorAll(`[data-pane="${pane}"] .deck-editor-main`)]
       .find(node => node.closest?.('.deck-editor-group')?.open !== false)
-      || panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
+      || paneFocusable(pane);
     focusKey = first ? first.dataset.focusKey : null;
     draw();
   }

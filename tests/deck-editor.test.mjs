@@ -579,7 +579,7 @@ test('Reading Desk: pane switching and redraw skip rows inside collapsed deck gr
     };
     collapse();
     editor.dispatch({ family: 'controller', button: 5 });
-    assert.equal(document.activeElement.dataset.focusKey, 'deck-search');
+    assert.equal(document.activeElement.dataset.focusKey, 'display:list', 'a focus restore never lands in the search box');
     assert.equal(editor.dispatch({ family: 'keyboard', key: '-' }), false);
     assert.deepEqual(editState(run), before, 'a hidden row is never removed');
     assert.ok([...editor.root.querySelectorAll('.deck-editor-group')].every(group => !group.open));
@@ -587,9 +587,10 @@ test('Reading Desk: pane switching and redraw skip rows inside collapsed deck gr
     // A selected row may disappear under a collapsed group between draws.
     // Restoration must choose the search control rather than the hidden row.
     editor.root.querySelector('.deck-editor-row .deck-editor-main').focus();
-    collapse();
+    // Restoration must choose a control rather than the hidden row, and never the search box.
     editor.root.querySelector('.deck-editor-tile .deck-editor-step').click();
-    assert.equal(document.activeElement.dataset.focusKey, 'deck-search');
+    assert.equal(document.activeElement.dataset.focusKey, 'display:list', 'a focus restore never lands in the search box');
+    assert.notEqual(document.activeElement.tagName, 'INPUT');
     assert.equal(run.deck.length, before.deck.length + 1);
     assert.equal(editor.dispatch({ family: 'keyboard', key: '-' }), false);
     assert.equal(run.deck.length, before.deck.length + 1);
@@ -840,6 +841,23 @@ test('DOM: a grouped deck row shows ×N and its － takes one copy', async () =>
     row().querySelector('.deck-editor-step[data-action="remove"]').click();
     assert.ok(!run.deck.some((c) => c.instanceId === 'x2') && run.deck.some((c) => c.instanceId === 'x1'), 'one copy left');
     assert.equal(row().querySelector('.deck-editor-count').textContent, '×1', 'single and multiple copies share the count column');
+    editor.close();
+  });
+});
+
+test('DOM: removing a deck card by its － keeps focus off the search box (no phone keyboard)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const minus = editor.root.querySelector('.deck-editor-row .deck-editor-step[data-action="remove"]');
+    assert.ok(minus, 'a deck row carries a − button');
+    minus.focus();
+    minus.click();
+    const active = document.activeElement;
+    assert.ok(active, 'something keeps focus');
+    assert.notEqual(active.tagName, 'INPUT', 'a removal never focuses a search input');
+    assert.notEqual(active.tagName, 'TEXTAREA', 'a removal never focuses a text area');
     editor.close();
   });
 });
