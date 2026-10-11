@@ -15,6 +15,7 @@ import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
+import { t } from './strings.js';
 
 
 // ---------------------------------------------------------------------------
@@ -374,6 +375,98 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   return el;
 }
 
+// ---------------------------------------------------------------------------
+// On-character callouts (owner, 2026-10-11): one short word that rises from
+// above a fighter's head — STAGGERED, COUNTERED, EVADED, CRITICAL, GUARD BREAK.
+// Larger than a damage float and coloured per kind; the words are UI strings.
+// Two on one fighter stack (never overlap) and at most two show at once; the
+// same word already showing on that fighter is not repeated.
+// ---------------------------------------------------------------------------
+export const CALLOUT_KINDS = {
+  staggered: { string: 'combat.callout.staggered', tone: 'gold' },
+  disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
+  countered: { string: 'combat.callout.countered', tone: 'gold' },
+  evaded: { string: 'combat.callout.evaded', tone: 'gold' },
+  critical: { string: 'combat.callout.critical', tone: 'red' },
+  guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
+};
+export const CALLOUT_MS = 900;
+export const CALLOUT_INSTANT_MS = 500;
+const CALLOUT_MAX = 2;
+// One slot's height, in layer px: a slot-1 callout sits this far above slot 0.
+const CALLOUT_SLOT_PX = 34;
+
+// How far the rise animation (combat.css callout-rise) lifts the word.
+const CALLOUT_RISE_PX = 26;
+// The fighter's overhead HUD pieces drawn over the top of its figure.
+const OVERHEAD_SELECTOR = '.combatant-leading, .overhead-control, .as-meters';
+
+/** The lowest bottom edge (layer space) of the HUD sitting over the figure's top, or null. */
+function overheadFloor(layer, anchor, b) {
+  const root = anchor.closest?.('.combatant');
+  if (!root?.querySelectorAll) return null;
+  let floor = null;
+  for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
+    if (anchor.contains?.(node)) continue;
+    const box = anchorLocalBox(layer, node);
+    if (!(box.width > 0 && box.height > 0)) continue;
+    const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+    const overHead = box.top + box.height >= b.top - 16 && box.top < b.top + b.height / 2;
+    if (overlapsX && overHead) floor = Math.max(floor ?? -Infinity, box.top + box.height);
+  }
+  return floor;
+}
+
+const liveCallouts = (layer, forId) => [...(layer.children || [])]
+  .filter((node) => node.dataset?.calloutFor === String(forId));
+
+/** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
+export function callout(layer, anchor, forId, kind) {
+  const def = CALLOUT_KINDS[kind];
+  if (!layer || !anchor || !def || forId == null) return null;
+  const live = liveCallouts(layer, forId);
+  if (live.some((node) => node.dataset.calloutKind === kind)) return null;
+  const used = new Set(live.map((node) => Number(node.dataset.calloutSlot)));
+  let slot = [...Array(CALLOUT_MAX).keys()].find((s) => !used.has(s));
+  if (slot === undefined) {
+    const oldest = live[0];
+    slot = Number(oldest.dataset.calloutSlot) || 0;
+    oldest.remove();
+  }
+  const b = anchorLocalBox(layer, anchor);
+  const el = document.createElement('div');
+  el.className = `fx-callout ${def.tone}`;
+  el.dataset.calloutFor = String(forId);
+  el.dataset.calloutKind = kind;
+  el.dataset.calloutSlot = String(slot);
+  el.setAttribute('aria-hidden', 'true');
+  el.textContent = t(def.string);
+  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
+  el.style.setProperty('--fx-callout-ms', `${ms}ms`);
+  // `left` is the centre (translate -50% in CSS); `top` is the callout's
+  // bottom edge (translate -100%). It sits just above the head, one slot
+  // higher each. A fighter whose overhead HUD (intent, HP plate) sits on its
+  // head — that HUD paints above the effects layer — gets the word just under
+  // the HUD instead, risen end and all, and its stack grows downward.
+  const centre = b.left + b.width / 2;
+  layer.appendChild(el);
+  const width = el.offsetWidth || 0, height = el.offsetHeight || 30;
+  const floor = overheadFloor(layer, anchor, b);
+  const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + height + CALLOUT_RISE_PX);
+  const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
+  let at = { left: centre - width / 2, top: bottom - height };
+  if (width) at = clampBox({ left: at.left, top: at.top, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
+  el.style.left = `${at.left + width / 2}px`;
+  el.style.top = `${at.top + height}px`;
+  setTimeout(() => el.remove(), ms);
+  return el;
+}
+
+/** A click-skip ends every callout in the layer. */
+export function clearCallouts(layer) {
+  for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
+}
+
 /**
  * One semantic split for every attack hit, shared by solo and co-op.
  * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
@@ -529,10 +622,14 @@ export function animateEvents(events, ctx, done) {
   let cued = 0;
   const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events); };
   pending = events.filter((e) => visualFor(e) !== null);
-  const skip = () => {
+  const skip = (event) => {
+    // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
+    // It stays registered until the walk ends (removed below), so a read-only click leaves it armed.
+    if (event?.target?.closest?.('[data-combat-read-only]')) return;
     flushRequested = true;
+    clearCallouts(ctx.layer);
   };
-  addEventListener('pointerdown', skip, { once: true, capture: true });
+  addEventListener('pointerdown', skip, { capture: true });
 
   let i = 0;
   const step = () => {
@@ -546,10 +643,14 @@ export function animateEvents(events, ctx, done) {
       if (done) done();
       return;
     }
-    cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
-    const fn = visualFor(pending[i]);
-    if (fn) fn(ctx);
-    i++;
+    // A callout-only event (CRITICAL before its hit, say) plays in the same
+    // tick as its neighbour, so callouts add no step to the fast path.
+    do {
+      cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
+      const fn = visualFor(pending[i]);
+      if (fn) fn(ctx);
+      i++;
+    } while (i < pending.length && (calloutOnly(pending[i - 1]) || calloutOnly(pending[i])));
     setTimeout(step, COMBAT_TIMING.instantStepMs);
   };
   step();
@@ -644,14 +745,25 @@ const traceBeat = (step, detail) => {
   if (Array.isArray(dbg.trace)) dbg.trace.push([globalThis.performance?.now?.() ?? Date.now(), step, detail]);
 };
 
-// Is this figure out of its stance — mid-action, or showing a pose other than
-// its rest? A figure with no stage, or one that reports neither, is in stance.
-function outOfStance(stage) {
-  if (!stage) return false;
+// Is this figure in its stance? 'out' — mid-action or in a pose other than its
+// rest; 'in'; or 'unknown' for a figure that cannot tell. The stage contracts
+// differ, so each is read through the fields it actually exposes:
+//   alternativeCardStage  presentation.action (an action is playing)
+//   paintedOutfits        presentation.pose / .rest / .transition
+//   enemyPoseStage        stage.pose / stage.rest getters
+//   expansion stages      settle() / play() only → 'unknown'
+export function stanceState(stage) {
+  if (!stage) return 'in';
   const presentation = stage.presentation;
-  if (presentation && typeof presentation === 'object') return !!presentation.action;
-  if (typeof stage.pose !== 'string') return false;
-  return stage.pose !== (typeof stage.rest === 'string' ? stage.rest : 'idle');
+  if (presentation && typeof presentation === 'object') {
+    if (Object.hasOwn(presentation, 'action')) return presentation.action ? 'out' : 'in';
+    if (presentation.transition) return 'out';
+    if (typeof presentation.pose === 'string' && typeof presentation.rest === 'string') {
+      return presentation.pose === presentation.rest ? 'in' : 'out';
+    }
+  }
+  if (typeof stage.pose === 'string') return stage.pose === (typeof stage.rest === 'string' ? stage.rest : 'idle') ? 'in' : 'out';
+  return 'unknown';
 }
 
 export function playTimeline(events, ctx, done) {
@@ -720,6 +832,7 @@ export function playTimeline(events, ctx, done) {
     removeEventListener('pointerdown', skip, { capture: true });
     flushed = true;
     clearHeldFigures();
+    clearCallouts(ctx.layer);
     // An unheld hit reaction (no hit-stop) is not in heldFigures; a skip ends it too.
     for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
     clearCombatEffects(ctx.layer);
@@ -822,10 +935,14 @@ export function playTimeline(events, ctx, done) {
     let stanceLead = false;
     if (sequential && actorEl) {
       const stage = stageFor(actorEl);
-      if (outOfStance(stage)) {
+      const state = stanceState(stage);
+      if (state === 'out') {
         safe(() => stage.settle());
         traceBeat('stance');
         stanceLead = speed.stanceLeadMs > 0;
+      } else if (state === 'unknown' && typeof stage.settle === 'function') {
+        // A stage that cannot report its pose still settles, but nothing waits for it.
+        safe(() => stage.settle());
       }
     }
     const playBeat = () => {
@@ -881,7 +998,7 @@ export function playTimeline(events, ctx, done) {
     // (sequential: only the contact parts here; reactions and numbers follow
     // the recovery).
     const rest = beat.events.filter((e) => !lead.has(e));
-    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind)]));
+    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential })]));
     const visualEvents = sequential
       ? rest.filter((e) => partsOf.get(e)?.contact)
       : rest.filter((e) => partsOf.get(e));
@@ -909,12 +1026,20 @@ export function playTimeline(events, ctx, done) {
     };
     schedule(() => {
       // A beat with nothing to draw at impact still reaches its impact frame.
-      if (actorEl && !visuals.length) markContact('impact');
+      if (actorEl && visualEvents.every(calloutOnly)) markContact('impact');
       let vi = 0;
       const stepV = () => {
         if (finished) return;
         if (flushed) {
           nextBeat();
+          return;
+        }
+        // A callout-only event (impact order: COUNTERED on a counter beat)
+        // shows at once and takes no step, so the hit after it is not delayed.
+        if (vi < visuals.length && calloutOnly(visualEvents[vi])) {
+          traceBeat('callout', visualEvents[vi].type);
+          safe(() => visuals[vi++](ctx));
+          stepV();
           return;
         }
         if (vi < visuals.length) {
@@ -933,7 +1058,8 @@ export function playTimeline(events, ctx, done) {
           }
           safe(() => v(ctx));
           markContact(event.type);
-          if (!damageCued.has(beatIndex) && playerLostHp(event)) {
+          // Sequential: the damage buzz waits for the number (below).
+          if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event)) {
             damageCued.add(beatIndex);
             safe(() => haptic.play('damageTaken'));
           }
@@ -956,7 +1082,7 @@ export function playTimeline(events, ctx, done) {
         // reaction plays, then (reactionMs later) its numbers, in event order;
         // the bars follow the last number.
         const reactions = sequential
-          ? rest.filter((e) => partsOf.get(e)?.reaction || partsOf.get(e)?.numbers)
+          ? rest.filter((e) => partsOf.get(e)?.reaction || partsOf.get(e)?.numbers || partsOf.get(e)?.callout)
           : [];
         const react = () => {
           if (finished) return;
@@ -987,12 +1113,28 @@ export function playTimeline(events, ctx, done) {
               }
               traceBeat('numbers', event.type);
               if (parts.numbers) safe(() => parts.numbers(ctx));
+              if (!damageCued.has(beatIndex) && playerLostHp(event)) {
+                damageCued.add(beatIndex);
+                safe(() => haptic.play('damageTaken'));
+              }
               // The bars follow in the next task, so the number is laid out
               // and painted before the beat's re-render, not after it.
               if (ri >= reactions.length) schedule(applyBeat, 0);
               else schedule(stepR, speed.stepMs);
             };
+            // The callout shows with the reaction and waits for nothing.
+            const said = () => {
+              if (!parts.callout) return;
+              traceBeat('callout', event.type);
+              safe(() => parts.callout(ctx));
+            };
+            if (!parts.reaction && !parts.numbers) {
+              said();
+              stepR();
+              return;
+            }
             if (!parts.reaction) {
+              said();
               numbers();
               return;
             }
@@ -1000,6 +1142,7 @@ export function playTimeline(events, ctx, done) {
             // reaction plays unheld (SPEC §7.4, sequential).
             traceBeat('reaction', event.type);
             safe(() => parts.reaction(ctx));
+            said();
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
               else schedule(stepR, speed.reactionMs);
@@ -1172,8 +1315,10 @@ export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
 // impact frame; `reaction` is the defender's (hurt flash and pose, recoil,
 // shake, stagger wobble); `numbers` are the floats. Every part is optional.
 // visualFor plays all three at once, in that order, for every other path.
-function visualPartsFor(e, beatKind) {
-  const base = baseVisualParts(e, beatKind), effect = combatEffectForEvent(e);
+// `callout` is the on-character word (callout above): it plays with the
+// reaction, and adds no wait of its own.
+function visualPartsFor(e, beatKind, opts) {
+  const base = withCallout(baseVisualParts(e, beatKind, opts), e), effect = combatEffectForEvent(e);
   if (!effect) return base;
   const playEffect = (ctx) => {
     const anchor = ctx.anchorFor(effect.targetId);
@@ -1183,17 +1328,52 @@ function visualPartsFor(e, beatKind) {
   return { ...base, contact: contact ? (ctx) => { contact(ctx); playEffect(ctx); } : playEffect };
 }
 
+/**
+ * calloutForEvent(e) → { kind, targetId } | null — the word an event earns
+ * and the fighter it shows over (co-op screens pass seat ids as targetId).
+ */
+export function calloutForEvent(e = {}) {
+  let kind = null;
+  switch (e.type) {
+    case 'enemyStaggered':
+    case 'playerStaggered': kind = 'staggered'; break;
+    case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
+    case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
+    case 'attackEvaded': kind = 'evaded'; break;
+    case 'combatAvoidanceResolved': if (e.avoided && e.evade?.success) kind = 'evaded'; break;
+    case 'critHit': kind = 'critical'; break;
+    case 'combatGuardBroken': kind = 'guardBreak'; break;
+    default: break;
+  }
+  return kind && e.targetId != null ? { kind, targetId: e.targetId } : null;
+}
+
+function withCallout(parts, e) {
+  const said = calloutForEvent(e);
+  if (!said) return parts;
+  return { ...parts, callout: (ctx) => callout(ctx.layer, ctx.anchorFor(said.targetId), said.targetId, said.kind) };
+}
+
+// An event whose only visual is its callout: it never takes a step of its own.
+function calloutOnly(e) {
+  const parts = visualPartsFor(e);
+  return !!parts && Object.keys(parts).every((key) => key === 'callout' || !parts[key]);
+}
+
 function visualFor(e, beatKind) {
   const parts = visualPartsFor(e, beatKind);
   if (!parts) return null;
   return (ctx) => {
     parts.contact?.(ctx);
     parts.reaction?.(ctx);
+    parts.callout?.(ctx);
     parts.numbers?.(ctx);
   };
 }
 
-function baseVisualParts(e, beatKind) {
+// opts.sequential (SPEC §7.4, beatOrder 'sequential'): a hit's sound plays
+// with its number; only the spark and slash stay at the contact.
+function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
     case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
@@ -1202,15 +1382,16 @@ function baseVisualParts(e, beatKind) {
       const parts = guardHitFloatParts(e);
       const paired = !!(parts.guard && parts.damage);
       const heavy = parts.residual >= 15;
+      const hitSounds = () => {
+        if (parts.guard) sfx.play('block');
+        if (parts.damage) playHitSound(e);
+      };
       return {
         contact: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
-          if (parts.guard) {
-            sfx.play('block');
-            spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          }
+          if (!sequential) hitSounds();
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
-          playHitSound(e);
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         },
@@ -1233,6 +1414,7 @@ function baseVisualParts(e, beatKind) {
           shake(ctx.combatEl, shakePxFor(parts.residual));
         },
         numbers: (ctx) => {
+          if (sequential) hitSounds();
           const anchor = ctx.anchorFor(e.targetId);
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
@@ -1316,8 +1498,8 @@ function baseVisualParts(e, beatKind) {
       return null; // poise fills speak through enemyStaggered below
     case 'ratingImpact':
       if (e.breaks) return {
+        // Its word (STAGGERED / DISRUPTED) is the on-character callout.
         reaction: (ctx) => {
-          banner(ctx.layer, e.label.toUpperCase());
           flash(ctx.anchorFor(e.targetId), 'wobble', 600);
         },
       };
@@ -1333,7 +1515,7 @@ function baseVisualParts(e, beatKind) {
       return {
         reaction: (ctx) => {
           sfx.play('stagger');
-          banner(ctx.layer, 'STAGGERED');
+          // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
           spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');

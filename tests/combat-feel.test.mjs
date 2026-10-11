@@ -146,16 +146,20 @@ function drive(t, fn) {
 // Sequential beat order (animationPace.js, owner 2026-10-11; SPEC §7.4): the
 // hit-stop holds the attacker's impact frame alone; the target's recoil plays
 // unheld after the swing has settled (impactMs 100, totalMs 800 + both holds).
-test('each qualifying multi-hit impact holds both figures, and buzzes at first impact once', (t) => {
+test('each qualifying multi-hit impact holds the attacker, and buzzes once, with the first number', (t) => {
   drive(t, ({ start, tick, holds, buzzes, reactions }) => {
     start([6, 10]); tick(100);
     assert.deepEqual(holds, [['actor', 60, 10100]], 'the attacker holds at impact');
     assert.deepEqual(reactions, [], 'the target has not reacted mid-swing');
-    assert.deepEqual(buzzes, [['damageTaken', 10100]], 'buzz arrives before recovery');
+    // SPEC §7.4 (sequential): the number fires with its sound and haptic, reactionMs after the reaction.
+    assert.deepEqual(buzzes, [], 'no buzz at the contact');
     tick(128);
     assert.deepEqual(holds.slice(1), [['actor', 60, 10228]], 'the second hit holds the attacker after its step and the first hold');
     tick(128); tick(564);
     assert.deepEqual(reactions, [['hit', 220]], 'the target reacts once the swing (800 + 120 ms) is over, at its base duration');
+    assert.deepEqual(buzzes, [], 'nor at the reaction');
+    tick(ANIM_SPEEDS.normal.reactionMs);
+    assert.deepEqual(buzzes, [['damageTaken', 10920 + ANIM_SPEEDS.normal.reactionMs]], 'the buzz comes with the first number');
     for (let i = 0; i < 100; i++) tick(20);
     assert.equal(reactions.length, 2, 'the second hit reacts too');
     assert.ok(holds.every(([who]) => who === 'actor'), 'the target is never held');

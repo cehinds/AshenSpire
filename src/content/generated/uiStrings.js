@@ -199,6 +199,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.callout.staggered",
+    "extends": "",
+    "short": "STAGGERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.disrupted",
+    "extends": "",
+    "short": "DISRUPTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.countered",
+    "extends": "",
+    "short": "COUNTERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.evaded",
+    "extends": "",
+    "short": "EVADED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.critical",
+    "extends": "",
+    "short": "CRITICAL",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.guardBreak",
+    "extends": "",
+    "short": "GUARD BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "common.back",
     "extends": "",
     "short": "Back",

@@ -25,6 +25,7 @@ import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from 
 import { combatLogEntries } from '../../model/combatLog.js';
 import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
 import { mountCombatTools, closeCombatFullLog } from '../components/combatTools.js';
+import { createReactionNote, latestReactionNote } from '../components/reactionNote.js';
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
@@ -232,6 +233,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render();
     },
   });
+  // "No reaction: why", above the Reaction switch, for notes logged from now on.
+  const reactionNote = createReactionNote();
+  let reactionNoteSeen = combat.eventLog.length - 1;
   let paintedAppearance = displayAppearance();
   const potionReveal = resolveTooltipSettings(meta.settings);
   const actionRow = $('.combat-action-row');
@@ -1079,6 +1083,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       disabled: busy || combat.phase !== 'player' || !!combat.pendingAbilityDiscard || !!combat.pendingReaction,
       ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
         { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }));
+    renderReactionNote();
+  }
+
+  function renderReactionNote() {
+    reactionNote.attach(combatEl);
+    const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
+      registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies });
+    if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
   }
 
   function renderTopbar() {
@@ -2856,6 +2868,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         combatLayout.release();
         closeCombatFullLog(combatToolsState);
         combatTools.release();
+        reactionNote.clear();
         aimObserver?.disconnect();
         releaseSelectionWatch();
         expansionChoiceShell?.close?.(); expansionChoiceShell = null;
