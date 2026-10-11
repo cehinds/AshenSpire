@@ -158,10 +158,12 @@ const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={}, saved={}, live={};
+/* storage:begin */
 const PART_BYTES=180000;
 const HOLDER='tab-'+Math.random().toString(36).slice(2,10);
 const stuck={};
 function chunk(rows){ const out=[]; let cur=[], size=2; for(const r of rows){ const n=JSON.stringify(r).length+1; if(cur.length&&size+n>PART_BYTES){ out.push(cur); cur=[]; size=2; } cur.push(r); size+=n; } out.push(cur); return out; }
+/* storage:end */
 
 /* ---------- indexes ---------- */
 let IX={};
