@@ -139,7 +139,13 @@ export async function listArt(root, { limit = MAX_FILES } = {}) {
     return { path: p, bytes, from, ...(dims ? { w: dims.w, h: dims.h } : {}) };
   }));
   files.sort((a, b) => a.path.localeCompare(b.path));
-  return { tag: pin?.tag || null, packs: packs.map(({ id, zip, fetched }) => ({ id, zip, fetched })), files, truncated };
+  // The light tier is also tracked in this repository (assets-mobile/), so it is available without a fetch.
+  const tracked = files.some((f) => f.from === 'tree' && f.path.startsWith('assets-mobile/'));
+  return {
+    tag: pin?.tag || null,
+    packs: packs.map(({ id, zip, fetched }) => ({ id, zip, fetched: fetched || (id === 'light' && tracked) })),
+    files, truncated,
+  };
 }
 
 /**

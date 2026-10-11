@@ -88,12 +88,13 @@ test('listArt lists tracked trees and fetched packs at their game paths, each pa
 test('packs say which are fetched, and a project with no pin lists trees only', async (t) => {
   const root = await project(t);
   const list = await listArt(root);
-  assert.deepEqual(list.packs.map((p) => [p.id, p.fetched]), [['high', true], ['light', false], ['common', false]]);
+  // light is available from the tracked assets-mobile/ tree, so it needs no fetch; common is not fetched here.
+  assert.deepEqual(list.packs.map((p) => [p.id, p.fetched]), [['high', true], ['light', true], ['common', false]]);
   assert.equal(list.packs[0].zip, 'hd-assets-v19.zip');
   const bare = await project(t, { pin: false });
   const none = await listArt(bare);
   assert.equal(none.tag, null);
-  assert.ok(none.packs.every((p) => !p.fetched));
+  assert.deepEqual(none.packs.map((p) => [p.id, p.fetched]), [['high', false], ['light', true], ['common', false]], 'light is tracked, so it stays available');
   assert.ok(!none.files.some((f) => f.path.startsWith('assets/')), 'no pin, no pack: the high paths are absent');
 });
 
