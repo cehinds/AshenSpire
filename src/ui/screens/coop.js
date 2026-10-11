@@ -833,8 +833,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
       combatLayoutState = {};
-      // The fight is over for this seat: its full log door ends with it.
+      // The fight is over for this seat: its full log door and its reaction
+      // note end with it, so neither carries onto the next fight's board.
       closeCombatFullLog(combatToolsState);
+      reactionNote.clear();
       closeCardChoice();
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }

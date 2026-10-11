@@ -68,3 +68,9 @@ test('the toast never takes a click', () => {
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   assert.match(css, /\.reaction-note \{[^}]*pointer-events:none/s);
 });
+
+test('co-op clears the reaction note when its fight ends, with the full log', () => {
+  const source = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
+  const branch = source.slice(source.indexOf("if (snap.scene.kind !== 'combat') {\n      combatLayoutState = {};"));
+  assert.match(branch.slice(0, 600), /closeCombatFullLog\(combatToolsState\);\s*reactionNote\.clear\(\);/);
+});
