@@ -248,7 +248,7 @@ export function resolvePair(playerIn, enemyIn, rng, options = {}) {
     } else if (avoid === 'evasion') {
       events.push({ type: 'evaded', by: other(who), target: who, reason: 'evasion' });
     } else if (!hit && target.stance === 'evade') {
-      // A miss against an evade action is a dodge: the defender wins the slot.
+      // A miss against an evade action is also a dodge. The slot win comes from any miss (successSide).
       events.push({ type: 'evaded', by: other(who), target: who });
     }
     return hit && !blocked && avoid === null;
@@ -505,10 +505,12 @@ export function cardHint(card, enemyAction, ctx = {}) {
   return { border, speedDelta, arrow: speedArrow(speedDelta), breakdown };
 }
 
-// The side that wins the slot with this event, or null. A landed hit or a
-// counter that fires is a success (DESIGN.md, Momentum).
+// The side that wins the slot with this event, or null (DESIGN.md, Momentum). A
+// landed hit or a counter that fires is the attacker's success. Any miss is the
+// defender's success, whatever the defender did (owner, 2026-10-11).
 function successSide(e) {
   if (e.type === 'hit' && e.hit === true && !e.blocked && !e.avoided) return e.by;
+  if (e.type === 'hit' && e.hit === false) return other(e.by);
   if (e.type === 'countered' || e.type === 'absorbed' || e.type === 'evaded') return e.by;
   return null;
 }
@@ -537,8 +539,8 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 //   0 turns it off). A 'momentum' event with reason 'decay' marks each change.
 // - Every pairing in the round uses the round's decayed starting M_e.
 // - Each slot win moves M_e toward the winner by the card's momentumGain
-//   (default 1), plus the stance bonus. A side wins a slot at most once per
-//   pairing. A counter that staggers adds +-3 on top of its slot win. The
+//   (default 1), plus the stance bonus. Any miss is the defender's success.
+//   A side wins a slot at most once per pairing. A counter that staggers adds +-3 on top of its slot win. The
 //   deltas are summed per enemy, then clamped once to -3..3. Opposing staggers
 //   net naturally (owner, 2026-10-11).
 // - Pair events carry `momentum`: that enemy's starting M_e. A 'momentum'

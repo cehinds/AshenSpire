@@ -113,13 +113,13 @@ at M_e = 0.
     the slot, and the resolver emits `absorbed`
   - an avoid: an `intangible` charge, or a successful `evadePct` roll (see
     Evasion). The resolver emits `evaded` with a `reason`
-  - a dodge: a miss against an evade action. The resolver emits `evaded`
+  - a miss, of any kind (natural 1 included), is the defender's success, whatever
+    the defender did (owner, 2026-10-11). The resolver emits `hit` with `hit: false`.
+    A miss against an evade action also emits `evaded`, but the slot is won once
 - A side wins a slot at most once per pairing, however many of its successes
-  the pair produces (for example, a full block followed by a landed hit).
-- A plain miss with no defensive action moves nothing.
+  the pair produces (for example, a full block followed by a landed hit, or a
+  miss against an evade action).
 - A card's `momentumGain` (default 1) is the base amount of the move.
-- Flagged: a miss from the evasion stat alone is not a dodge. Only an evade
-  action counts.
 
 ### Stance advantage bonus
 
@@ -328,8 +328,8 @@ silent. They are placeholders for testing the shape, not decisions.
 - Each attack that is not cancelled rolls the hit roll. The d20 comes from an
   injected RNG.
 - A full block (Block >= damage and damage > 0) turns a landed hit into 'absorbed' for the
-  blocker. A miss against an evade action emits 'evaded'. Both are the
-  momentum successes described in the Momentum section.
+  blocker. A miss against an evade action emits 'evaded'. Any miss is the
+  defender's momentum success (Momentum section).
 - An attack that would land can be avoided by an `intangible` charge, or by the
   `evadePct` roll. Each emits 'evaded' with a `reason`, and each counts as a
   defensive success. The `evadeRoll` event reports the roll.
@@ -355,9 +355,9 @@ f. Resolved (2026-10-11): the guaranteed evasion becomes the `intangible` tag
    this retires today's Evade charges in src/ is not decided in this prototype.
 g. Resolved (2026-10-11). Success is a landed hit, a counter that fires, a
    full block (Block >= damage and damage > 0), an avoid by an `intangible`
-   charge or an `evadePct` roll, or a dodge (a miss against an evade action).
-h. Resolved (2026-10-11). A whiff hands nothing to the other side, unless it
-   is a dodge against an evade action.
+   charge or an `evadePct` roll, or any miss (for the defender, see o).
+h. Resolved (2026-10-11, updated by owner's answer o). A whiff is not free: any
+   miss is the defender's success, not only a dodge against an evade action.
 i. Resolved (2026-10-11). Momentum updates at round end, once per enemy.
 j. Resolved (2026-10-11). Momentum is per enemy: M_e between the player and
    each enemy.
@@ -369,8 +369,9 @@ m. Does the speed effect (half of M, truncated, so at most +-1) feel right next
 n. Resolved (2026-10-11): no combos. Only slot wins and stance advantage move
    momentum. Examples such as a quickstep followed by a shieldBash are not
    counted.
-o. Does a miss from the evasion stat alone count as a dodge? Current reading:
-   no. Only an evade action counts. Flagged.
+o. Resolved (owner, 2026-10-11). Any miss is the defender's success, whatever
+   the defender's action. It is not limited to an evade action. The defender
+   wins the slot once per pairing.
 p. Resolved (2026-10-11): truncation toward zero.
 q. Resolved (owner, 2026-10-11). The stance bonus is added to the base gain.
    Smash over block is 1 + 2 = 3.

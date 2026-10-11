@@ -351,7 +351,8 @@ test('momentumGain: a card with momentumGain 2 moves M by 2 on success', () => {
   assert.equal(find(events, 'momentum').delta, 2);
 });
 
-test('a miss does not move M', () => {
+// Any miss is the defender's success (owner, 2026-10-11), whatever its action.
+test('a miss wins the slot for the defender: M moves toward the enemy', () => {
   const { events, momentum } = resolveRound(
     [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
     [{ id: 'e', speed: 1, kind: 'other' }],
@@ -359,8 +360,35 @@ test('a miss does not move M', () => {
     d20Face(1),
   );
   assert.equal(find(events, 'hit').hit, false);
-  assert.equal(events.some((e) => e.type === 'momentum'), false);
-  assert.equal(momentum.e, 0);
+  assert.deepEqual(find(events, 'momentum'), {
+    type: 'momentum', enemyId: 'e', by: 'enemy', gain: 1, bonus: 0, delta: -1, reason: 'success', slot: 0, momentum: 0,
+  });
+  assert.equal(momentum.e, -1);
+});
+
+test('an enemy attack that misses a player card moves M toward the player', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'guard', slot: 0, speed: 1, kind: 'other' }],
+    [{ id: 'swing', enemyId: 'boss', speed: 4, kind: 'attack' }],
+    1,
+    d20Face(1),
+  );
+  assert.equal(find(events, 'hit').by, 'enemy');
+  assert.equal(find(events, 'hit').hit, false);
+  assert.equal(find(events, 'momentum').by, 'player');
+  assert.equal(momentum.boss, 1);
+});
+
+test('a miss against an evade action credits the defender once, not twice', () => {
+  const { events, momentum } = resolveRound(
+    [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
+    [{ id: 'dodger', speed: 1, kind: 'other', stance: 'evade' }],
+    1,
+    d20Face(1),
+  );
+  assert.equal(find(events, 'evaded').by, 'enemy');
+  assert.equal(events.filter((e) => e.type === 'momentum').length, 1);
+  assert.equal(momentum.dodger, -1);
 });
 
 test('round end: a later slot in the same round does not see the change', () => {
@@ -494,7 +522,7 @@ test('evade: a miss against an evade action wins the slot for the defender', () 
   assert.equal(momentum.dodger, -1);
 });
 
-test('a plain miss with no defensive action still moves nothing', () => {
+test('a plain miss with no defensive action: the defender wins the slot, with no evaded event', () => {
   const { events, momentum } = resolveRound(
     [{ id: 'strike', slot: 0, speed: 4, kind: 'attack' }],
     [{ id: 'idle', speed: 1, kind: 'other' }],
@@ -502,7 +530,8 @@ test('a plain miss with no defensive action still moves nothing', () => {
     d20Face(1),
   );
   assert.equal(events.some((e) => e.type === 'evaded'), false);
-  assert.equal(momentum.idle, 0);
+  assert.equal(find(events, 'momentum').by, 'enemy');
+  assert.equal(momentum.idle, -1);
 });
 
 // Stance advantage (rule 3). The table is data: stance-advantage.csv.
