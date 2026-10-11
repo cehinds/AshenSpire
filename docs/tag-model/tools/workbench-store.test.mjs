@@ -661,6 +661,55 @@ test('a proposed formula with no expression is a note, not a problem', () => {
   assert.equal(formulaRowIssue({ key: 'w', expr: '1+1', status: 'proposed' }, evalExpr), null, 'a formula with an expression is not an issue');
 });
 
+// Loads one marked block of workbench.html in its own context and returns what `expose` names.
+function loadBlock(name, expose) {
+  const html = readFileSync(PAGE, 'utf8');
+  const end = '/* ' + name + ':end */';
+  const a = html.indexOf('/* ' + name + ':begin */');
+  const b = html.indexOf(end);
+  if (a < 0 || b < 0 || b < a) throw new Error(name + ' markers missing in workbench.html');
+  return vm.runInNewContext(html.slice(a, b + end.length) + '\n;(' + expose + ')', {});
+}
+const evalStub = (e) => (String(e || '').trim() ? { v: 1 } : { err: 'empty expression', soft: false });
+const TT_FORMULAS = (cols) => ({ t: { label: 'Formulas', key: 'key', columns: [...cols], refs: {} } });
+
+test('the real formulas.csv imports, saves, loads and exports with its status column; evasion.rating is a note', async () => {
+  const { FORMULA_COLUMNS } = loadBlock('formula-columns', '({ FORMULA_COLUMNS })');
+  const { parseCSV, importRows, toCSV } = loadBlock('csv', '({ parseCSV, importRows, toCSV })');
+  const { formulaRowIssue } = loadBlock('formula-issues', '({ formulaRowIssue })');
+  const csv = readFileSync(path.join(HERE, '..', 'tables', 'formulas.csv'), 'utf8');
+  const tbl = { columns: [...FORMULA_COLUMNS], rows: [] };
+  importRows(tbl, 'key', parseCSV(csv), 'replace');
+  const db = makeFakeDb();
+  const W = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
+  W.page.loaded.add('t');
+  W.page.state.data.t = tbl;
+  W.page.dirty.add('t');
+  await W.api.flush('t');
+  const R = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
+  R.api.subscribeTable('t');
+  await waitFor(() => R.page.loaded.has('t'));
+  const loaded = R.page.state.data.t;
+  const row = loaded.rows.find((r) => r.key === 'evasion.rating');
+  assert.ok(row, 'the row loads');
+  assert.equal(row.status, 'proposed');
+  assert.equal(formulaRowIssue(row, evalStub).note, true, 'shown as a note, not a problem');
+  assert.match(toCSV(loaded.columns, loaded.rows).split('\n')[0], /,status$/, 'export keeps the status column');
+});
+
+test('a formulas head that names no columns keeps status: the table default columns include it', async () => {
+  const { FORMULA_COLUMNS } = loadBlock('formula-columns', '({ FORMULA_COLUMNS })');
+  const { formulaRowIssue } = loadBlock('formula-issues', '({ formulaRowIssue })');
+  const db = makeFakeDb();
+  db.put('tables/t', { rows: [['evasion.rating', '', 'character', 'TBD', 'proposed']] });
+  const R = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
+  R.api.subscribeTable('t');
+  await waitFor(() => R.page.loaded.has('t'));
+  const row = R.page.state.data.t.rows[0];
+  assert.equal(row.status, 'proposed', 'status survives the load');
+  assert.equal(formulaRowIssue(row, evalStub).note, true);
+});
+
 test('a blank proposed formula is styled as a muted note, not as an error', () => {
   const { formulaCellClass } = vm.runInNewContext(formulaIssueSource() + '\n;({ formulaCellClass })', {});
   assert.equal(formulaCellClass({ err: 'proposed, no formula yet', soft: true, note: true }), 'note');

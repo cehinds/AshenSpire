@@ -118,6 +118,9 @@ dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-
 
 <script>
 "use strict";
+/* formula-columns:begin */
+const FORMULA_COLUMNS=['key','expr','scope','description','status']; /* status: 'proposed' rows have no expression yet */
+/* formula-columns:end */
 const TABLES = {
   tags:{label:'Tags', key:'id', help:'One row per tag. <b>id</b> is the full path, <b>key</b> the short unique name formulas use. <b>erd</b> names the model it belongs to, <b>school</b> its magic class, <b>related</b> other tag keys (space separated). Text in <b>effect</b> can cite <code>[key]</code>; <b>variables</b> lists the value keys the tag reads, so its numbers live in Values, never in the tag.',
     columns:['id','key','label','parent','erd','school','description','effect','variables','duration','stacking','related','status','liveId','glyph','color'],
@@ -128,7 +131,7 @@ const TABLES = {
   values:{label:'Values', key:'key', help:'Plain numbers. A value whose key matches a tag key is that tag\'s preview number (for example <code>ar</code> = 24), used when formulas are previewed. <b>scope</b> is the object or area it belongs to.',
     columns:['key','value','unit','scope','description'], refs:{}},
   formulas:{label:'Formulas', key:'key', help:'Expressions over <code>[key]</code> references to values, other formulas, tags with a preview value, and <code>[rank]</code>. Operators <code>+ - * / % ^</code>, comparisons, and <code>min max floor ceil round abs clamp(x,lo,hi) if(cond,a,b)</code>. The result column previews at rank 1.',
-    columns:['key','expr','scope','description'], refs:{}},
+    columns:FORMULA_COLUMNS, refs:{}},
   ranks:{label:'Ranks', key:null, help:'Rank progression as a list. Each row changes a value key from that rank on: <code>+1</code>, <code>-0.5</code>, <code>=8</code> or <code>×1.25</code> (also <code>*1.25</code>). Changes add up rank by rank.',
     columns:['object','rank','key','change','note'], refs:{object:'object', key:'value'}},
   assets:{label:'Assets', key:'id', help:'Game art ids, exactly as the game names them (<code>assets/cards/extended/card-strike-512.webp</code>). The game resolves them through <code>assetUrl()</code>. This page cannot load the game\'s art, so <b>preview</b> holds an image you upload here to see it on the Object sheet.',
@@ -603,6 +606,7 @@ function computeIssues(){
 }
 
 /* ---------- CSV ---------- */
+/* csv:begin */
 function toCSV(cols, rows){
   const esc=v=>{ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   return [cols.map(esc).join(','), ...rows.map(r=>cols.map(c=>esc(r[c])).join(','))].join('\n')+'\n';
@@ -625,6 +629,13 @@ function parseCSV(text){
   return {columns:cols, rows:nonEmpty.slice(1).map(r=>{ const o={}; cols.forEach((c,j)=>{ o[c]=coerce(r[j]??''); }); return o; })};
 }
 function coerce(s){ const raw=String(s), t=raw.trim(); return (/^-?\d+(\.\d+)?$/.test(t) && String(Number(t))===t)? Number(t) : raw; }
+/* merges parsed CSV into a table: columns the CSV names are added; merge updates rows by key and adds new ones; replace swaps the rows */
+function importRows(tbl, key, parsed, mode){
+  for(const c of parsed.columns) if(!tbl.columns.includes(c)) tbl.columns.push(c);
+  if(mode==='replace'||!key){ if(mode==='replace') tbl.rows=parsed.rows; else tbl.rows.push(...parsed.rows); }
+  else { const at=new Map(tbl.rows.map((r,i)=>[String(r[key]),i])); for(const r of parsed.rows){ const k=String(r[key]??''); if(k&&at.has(k)) Object.assign(tbl.rows[at.get(k)],r); else tbl.rows.push(r); } }
+}
+/* csv:end */
 
 /* ---------- persistence ---------- */
 const LS='ashen-tag-workbench-v1';
@@ -848,10 +859,7 @@ function importDialog(t){
 function applyImport(t,text,mode){
   if(!editable(t)){ setStatus('warn','This table is not loaded or not editable yet.'); return; }
   const parsed=parseCSV(text); if(!parsed.columns.length){ setStatus('bad','That CSV has no header row.'); return; }
-  const tbl=state.data[t], key=TABLES[t].key;
-  for(const c of parsed.columns) if(!tbl.columns.includes(c)) tbl.columns.push(c);
-  if(mode==='replace'||!key){ if(mode==='replace') tbl.rows=parsed.rows; else tbl.rows.push(...parsed.rows); }
-  else { const at=new Map(tbl.rows.map((r,i)=>[String(r[key]),i])); for(const r of parsed.rows){ const k=String(r[key]??''); if(k&&at.has(k)) Object.assign(tbl.rows[at.get(k)],r); else tbl.rows.push(r); } }
+  importRows(state.data[t], TABLES[t].key, parsed, mode);
   markDirty(t); setStatus('ok','Imported '+parsed.rows.length+' rows into '+TABLES[t].label+' ('+mode+')'); render();
 }
 function openText(title,help,text,actions,keepOpen){
