@@ -11,6 +11,7 @@ import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { safePath, refusedPath } from '../lib/safe-path.mjs';
 import { shippable } from '../../tools/assetmime.mjs';
+import { usageNeedles, lineUses } from '../modules/assets/model.mjs';
 
 /** The tracked trees the gallery lists, relative to the project root. */
 export const TREE_ROOTS = Object.freeze(['assets-mobile', 'assets-display', 'music']);
@@ -161,6 +162,51 @@ export async function resolveArt(root, gamePath) {
     } catch { /* not in this place: the next one */ }
   }
   return null;
+}
+
+/** The folders a usage search reads, and the text kinds it reads in them. */
+export const USAGE_DIRS = Object.freeze(['content', 'src']);
+const USAGE_EXT = new Set(['.js', '.mjs', '.cjs', '.ts', '.json', '.csv', '.md', '.txt', '.html', '.css']);
+export const USAGE_LIMIT = 200;
+const USAGE_FILE_BYTES = 1024 * 1024;
+
+/**
+ * Where a game path is named in content/ and src/: [{ file, line, text }] (at most USAGE_LIMIT, then
+ * `truncated`). Read-only: it reads text files under those two folders, skips links, hidden and dependency
+ * folders, and files over 1 MB. The needles are the model's (usageNeedles, lineUses).
+ */
+export async function findUsage(root, gamePath) {
+  const real = realpathSync(root);
+  const needles = usageNeedles(gamePath);
+  const hits = [];
+  let files = 0;
+  let truncated = false;
+  if (!needles.paths.length && !needles.keys.length) return { hits, files, truncated };
+  async function scan(dir) {
+    if (truncated) return;
+    let entries;
+    try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      if (truncated) return;
+      if (e.name.startsWith('.') || e.name === 'node_modules' || e.isSymbolicLink()) continue;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) { await scan(full); continue; }
+      if (!e.isFile() || !USAGE_EXT.has(path.extname(e.name).toLowerCase())) continue;
+      const st = await fs.stat(full);
+      if (st.size > USAGE_FILE_BYTES) continue;
+      files += 1;
+      const rel = path.relative(real, full).split(path.sep).join('/');
+      const lines = (await fs.readFile(full, 'utf8')).split(/\r?\n/);
+      for (let i = 0; i < lines.length; i += 1) {
+        if (!lineUses(lines[i], needles)) continue;
+        if (hits.length >= USAGE_LIMIT) { truncated = true; return; }
+        hits.push({ file: rel, line: i + 1, text: lines[i].trim().slice(0, 240) });
+      }
+    }
+  }
+  for (const d of USAGE_DIRS) await scan(path.join(real, d));
+  hits.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line);
+  return { hits, files, truncated };
 }
 
 /** Forget the header cache (tests). */

@@ -23,7 +23,7 @@ import { JobRunner, GENERATED, STOP_GRACE_MS } from './core/jobs.mjs';
 import { createWatcher, createOwnWrites, buildsFor, isBuildOutput } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 import { createFileService } from './core/files.mjs';
-import { listArt, resolveArt } from './core/assets.mjs';
+import { listArt, resolveArt, findUsage } from './core/assets.mjs';
 import { MIME as ASSET_MIME } from '../tools/assetmime.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -295,6 +295,11 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       }
       if (p === '/api/previews') return sendJson(res, 200, await listPreviews(root));
       if (p === '/api/assets/list') return sendJson(res, 200, await listArt(root));
+      if (p === '/api/assets/usage') {
+        const game = url.searchParams.get('path') || '';
+        if (!game || game.length > 512 || game.includes('\0')) return sendJson(res, 400, { error: 'Name one game path' });
+        return sendJson(res, 200, await findUsage(root, game));
+      }
       if (p === '/api/library') return sendJson(res, 200, await library(root, { settings: settings.read(), extBase: `http://${previewAddress}` }));
       if (p === '/api/settings') return sendJson(res, 200, { ...settings.read(), env: { ASHEN_ART_CHECKOUT: env.ASHEN_ART_CHECKOUT || '', ASHEN_EDITOR_CHECKOUT: env.ASHEN_EDITOR_CHECKOUT || '' } });
       if (p === '/api/export/manifest') {

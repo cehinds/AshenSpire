@@ -90,6 +90,25 @@ test('the art route answers 404 for anything the listing does not name', async (
   }
 });
 
+test('the usage search reads content/ and src/ for a game path or its name, token-gated, and nothing else', async (t) => {
+  const root = await project(t);
+  await fs.writeFile(path.join(root, 'content/source/items.csv'), 'id,art\nsword,equipment/sword.png\nswordsmith,none\n');
+  await fs.mkdir(path.join(root, 'src/node_modules/pkg'), { recursive: true });
+  await fs.writeFile(path.join(root, 'src/node_modules/pkg/x.js'), "const a = 'sword';\n");
+  await fs.writeFile(path.join(root, 'src/ui.js'), "export const icon = 'sword';\n// nothing\n");
+  await fs.writeFile(path.join(root, 'notes.txt'), 'sword sword sword\n');
+  const { app, call } = await boot(t, root);
+  assert.equal((await fetch(`${app.url}/api/assets/usage?path=x`)).status, 403, 'token-gated');
+  const res = await call('/api/assets/usage?path=assets-mobile%2Fequipment%2Fsword.png');
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.deepEqual(body.hits.map((h) => [h.file, h.line]), [['content/source/items.csv', 2], ['src/ui.js', 1]], 'the path in csv, the name in js; no node_modules, no root file, no swordsmith');
+  assert.equal(body.hits[0].text, 'sword,equipment/sword.png');
+  assert.equal(body.truncated, false);
+  assert.equal((await call('/api/assets/usage')).status, 400, 'one path is required');
+  assert.equal((await call('/api/assets/usage?path=' + encodeURIComponent('a\0b'))).status, 400);
+});
+
 test('the art route and the listing refuse a foreign Host header', async (t) => {
   const root = await project(t);
   const { app } = await boot(t, root);
