@@ -225,6 +225,30 @@ export function withField(data, key, field, value) {
 }
 
 /**
+ * The layout's supplied anchors follow its presentation. The repo's test requires each
+ * anchor to be what the game computes from the presentation, so an edit to a layout
+ * refreshes that layout's anchors. A value that did not move keeps its bytes; a layout
+ * whose presentation did not change is returned as it is. `prev` is the data before the edit.
+ */
+export function refreshAnchors(data, key, prev = null) {
+  const layout = data[key];
+  if (!layout || !Array.isArray(layout.anchors) || !layout.battlefield) return data;
+  if (prev && prev[key] && JSON.stringify(prev[key].presentation) === JSON.stringify(layout.presentation)) return data;
+  const { width, height } = layout.battlefield;
+  const cells = battlefieldGeometry(layout.presentation, { width, height });
+  const keep = (old, value) => (Number.isFinite(old) && Math.abs(old - value) < 1e-9 ? old : value);
+  const anchors = layout.anchors.map((a) => {
+    const c = cells.find((x) => x.cell === a.cell);
+    if (!c) return a;
+    return { ...a,
+      left: keep(a.left, c.x), right: keep(a.right, width - c.x),
+      top: keep(a.top, c.ground), bottom: keep(a.bottom, height - c.ground),
+      characterScale: keep(a.characterScale, c.characterScale) };
+  });
+  return { ...data, [key]: { ...layout, anchors } };
+}
+
+/**
  * Align the cells on one edge: left, center, right (x) or top, middle, bottom (ground).
  * Returns [{ id, dx, dy }] in px; a cell already on the edge gets 0.
  */

@@ -154,9 +154,12 @@ export function createBattlefieldView(root, host) {
   // ---- edits ---------------------------------------------------------
 
   /** Set the presets draft as one history step. The data is replaced, never mutated. */
-  function setData(next, label) {
+  function setData(raw, label) {
     const prev = st.data;
-    if (!next || JSON.stringify(prev) === JSON.stringify(next)) return false;
+    if (!raw) return false;
+    // The layout's supplied anchors follow its presentation, so the repo's reproduction test keeps passing.
+    const next = B.refreshAnchors(raw, st.layoutKey, prev);
+    if (JSON.stringify(prev) === JSON.stringify(next)) return false;
     const put = (d) => { st.data = d; st.parts.data = d; rebuild(); };
     put(next);
     host.history.push({ label, before: prev, after: next, undo: () => put(prev), redo: () => put(next) });

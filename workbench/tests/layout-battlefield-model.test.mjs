@@ -146,6 +146,31 @@ test('withField clamps numbers to the game\'s limits and refuses unknown fields'
   assert.throws(() => B.withField(parts.data, '2x2', 'frontLayer', 3), /not a Battlefield field/);
 });
 
+test('an edit refreshes its layout\'s anchors, so the game still reproduces them at full and half size', () => {
+  const parts = B.parsePresets(realText);
+  let next = B.moveSlots(parts.data, '2x2', [{ groupId: 'cell-player:1:0', dx: 40, dy: -10, name: 'B1' }], { width: W, height: H });
+  next = B.withField(next, '2x2', 'formationDepth', 70);
+  next = B.refreshAnchors(next, '2x2', parts.data);
+  for (const scale of [1, 0.5]) {
+    const presentation = { ...next['2x2'].presentation, formationGroups: JSON.stringify(next['2x2'].presentation.formationGroups) };
+    const plan = combatFormation({ width: W * scale, height: H * scale, presentation, friends: [], enemies: [] });
+    for (const a of next['2x2'].anchors) {
+      const c = plan.cells.find((p) => p.cell === a.cell);
+      eq(c.x, a.left * scale, `${a.cell} x at ${scale}`);
+      eq(c.ground, a.top * scale, `${a.cell} ground at ${scale}`);
+    }
+  }
+  assert.equal(next['1x1'], parts.data['1x1'], 'the other layout is untouched');
+});
+
+test('refreshing an unedited layout keeps the file\'s bytes', () => {
+  const parts = B.parsePresets(realText);
+  assert.equal(B.refreshAnchors(parts.data, '2x2', parts.data), parts.data, 'the same data comes back');
+  const same = B.withField(parts.data, '2x2', 'formationDepth', parts.data['2x2'].presentation.formationDepth);
+  const text = B.serializePresets(parts, B.refreshAnchors(same, '2x2', parts.data));
+  assert.equal(text, realText, 'a re-set of the same value writes nothing');
+});
+
 const cellsOf = [
   { id: 'a', x: 100, ground: 200 }, { id: 'b', x: 300, ground: 260 }, { id: 'c', x: 340, ground: 220 }, { id: 'd', x: 900, ground: 300 },
 ];
