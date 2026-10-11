@@ -164,10 +164,12 @@ Formula, relation and value keys follow the README conventions.
   magic and hybrid. The families are the three top-level damage nodes in the
   tree (`meta.combat.damage.physical`, `.magic`, `.hybrid`). A value is a
   preview number under the README convention, so each row is a placeholder
-  until a number is set.
+  until a number is set. Cloth, chain and scale are added later with the same
+  nine-family shape (`cloth.resist.*`, `chain.resist.*`, `scale.resist.*`, all
+  `TBD`); their material tags already exist in `tags.csv`.
 - **Couldn't place:**
-  - Cloth, chain and scale are not in the owner's list, so they have no rows.
-    Owner to say if they should.
+  - Cloth, chain and scale were not in the owner's first list. They now have
+    rows; the owner can confirm the list.
   - The families are coarse. Per-type resistances (slashing, blunt, pierce,
     fire, frost and so on) are not split out. Owner to say if they should be.
   - Absorption and siphon are defensive properties, not materials. They are
