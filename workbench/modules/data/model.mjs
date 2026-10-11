@@ -190,7 +190,7 @@ function parseCsv(text) {
   const types = Object.fromEntries(columns.map((c) => [c.key, c.type]));
   const rows = cellRows.map((cells) => Object.fromEntries(columns.map((c, j) => [c.key, typedCell(cells[j], c.type)])));
   // Each read row keeps its line, the comment and blank lines above it, and its canonical text.
-  const leads = rows.map((row, i) => ({ ...lead[i], key: csvLine(row, columns, types) }));
+  const leads = rows.map((row, i) => ({ ...lead[i], text: csvLine(row, columns, types) }));
   return {
     columns, rows,
     meta: { format: 'csv', bom, eol, trailingNewline, pre: lines.slice(0, headerAt), headerLine, names, leads, tail: pending },
@@ -198,43 +198,28 @@ function parseCsv(text) {
 }
 
 /**
- * Pairs each saved row with the read row it came from (its position when
- * read), or -1 for a new row. Rows that match by canonical text pair up in
- * order (a longest common subsequence). Between two matches the rows left
- * over pair in order, so an edited row keeps its place. Read rows nothing
- * pairs with were deleted.
+ * Pairs each saved row with the read row it came from, or -1 for a new row.
+ * Identity, not order: a read row pairs at most once. Pass 1 pairs equal
+ * canonical text, first to first in read order. Pass 3 pairs the rows left
+ * over, in order. Read rows nothing pairs with were deleted. O(n) with a map.
  */
-function alignRows(oldKeys, newKeys) {
-  const n = oldKeys.length, m = newKeys.length;
-  const at = new Array(m).fill(-1);
-  let pre = 0;
-  while (pre < n && pre < m && oldKeys[pre] === newKeys[pre]) { at[pre] = pre; pre++; }
-  let suf = 0;
-  while (suf < n - pre && suf < m - pre && oldKeys[n - 1 - suf] === newKeys[m - 1 - suf]) { at[m - 1 - suf] = n - 1 - suf; suf++; }
-  const a0 = pre, a1 = n - suf, b0 = pre, b1 = m - suf;
-  const A = a1 - a0, B = b1 - b0;
-  const matches = [];
-  // A table this big is not worth it; the middle then pairs in order only.
-  if (A * B <= 4e6) {
-    const L = Array.from({ length: A + 1 }, () => new Uint32Array(B + 1));
-    for (let i = A - 1; i >= 0; i--) {
-      for (let j = B - 1; j >= 0; j--) {
-        L[i][j] = oldKeys[a0 + i] === newKeys[b0 + j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
-      }
-    }
-    let i = 0, j = 0;
-    while (i < A && j < B) {
-      if (oldKeys[a0 + i] === newKeys[b0 + j]) { matches.push([a0 + i, b0 + j]); i++; j++; }
-      else if (L[i + 1][j] >= L[i][j + 1]) i++;
-      else j++;
-    }
+function alignRows(readTexts, savedTexts) {
+  const at = new Array(savedTexts.length).fill(-1);
+  const taken = new Uint8Array(readTexts.length);
+  const byText = new Map();
+  // Pushed last to first, so pop() yields the earliest unused read row of a text.
+  for (let i = readTexts.length - 1; i >= 0; i--) {
+    const list = byText.get(readTexts[i]);
+    if (list) list.push(i); else byText.set(readTexts[i], [i]);
   }
-  for (const [o, q] of matches) at[q] = o;
-  let oi = a0, nj = b0;
-  for (const [o, q] of [...matches, [a1, b1]]) {
-    for (let k = 0; oi + k < o && nj + k < q; k++) at[nj + k] = oi + k;
-    oi = o + 1; nj = q + 1;
-  }
+  savedTexts.forEach((text, j) => {
+    const list = byText.get(text);
+    if (list?.length) { at[j] = list.pop(); taken[at[j]] = 1; }
+  });
+  const freeSaved = [], freeRead = [];
+  at.forEach((i, j) => { if (i < 0) freeSaved.push(j); });
+  for (let i = 0; i < readTexts.length; i++) if (!taken[i]) freeRead.push(i);
+  freeSaved.forEach((j, k) => { if (k < freeRead.length) { at[j] = freeRead[k]; taken[freeRead[k]] = 1; } });
   return at;
 }
 
@@ -244,20 +229,23 @@ function serializeCsv(meta, { columns, rows }) {
   const sameNames = keys.length === meta.names.length && keys.every((k, i) => k === meta.names[i]);
   const out = [...meta.pre, sameNames ? meta.headerLine : columns.map((c) => csvCell(c.key)).join(',')];
   const saved = rows.map((row) => csvLine(row, columns, types));
-  const at = alignRows(meta.leads.map((l) => l.key), saved);
-  // Comments of deleted rows wait for the next row that is kept, or the end of the file.
-  let carried = [], next = 0;
-  saved.forEach((key, j) => {
-    const i = at[j];
-    if (i < 0) { out.push(key); return; }
-    for (; next < i; next++) carried.push(...meta.leads[next].before);
-    const lead = meta.leads[i];
-    out.push(...carried, ...lead.before, key === lead.key ? lead.line : key);
-    carried = [];
-    next = i + 1;
+  const at = alignRows(meta.leads.map((l) => l.text), saved);
+  const paired = new Uint8Array(meta.leads.length);
+  for (const i of at) if (i >= 0) paired[i] = 1;
+  // Leading lines of deleted rows wait for the next kept row in file order, or the end of the file.
+  const inherited = [];
+  let pending = [];
+  meta.leads.forEach((lead, i) => {
+    if (paired[i]) { inherited[i] = pending; pending = []; }
+    else pending.push(...lead.before);
   });
-  for (; next < meta.leads.length; next++) carried.push(...meta.leads[next].before);
-  out.push(...carried, ...meta.tail);
+  saved.forEach((text, j) => {
+    const i = at[j];
+    if (i < 0) { out.push(text); return; }
+    const lead = meta.leads[i];
+    out.push(...inherited[i], ...lead.before, text === lead.text ? lead.line : text);
+  });
+  out.push(...pending, ...meta.tail);
   return (meta.bom ? '﻿' : '') + out.join(meta.eol) + (meta.trailingNewline ? meta.eol : '');
 }
 
