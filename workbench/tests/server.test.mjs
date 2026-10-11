@@ -213,6 +213,9 @@ for (const mode of ['watch', 'poll']) {
     assert.deepEqual(event.files, ['src/new.js', 'styles/main.css']);
     assert.equal(event.count, 2);
     assert.deepEqual(event.built, []);
+    // When the batch's file set was fixed: a save sent after this cannot be the save this build answers.
+    assert.equal(typeof event.startedAt, 'number');
+    assert.ok(event.startedAt <= event.at);
   });
 }
 
@@ -257,6 +260,7 @@ test('a content/config change runs the config compiler before the reload; a fail
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 900)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{"x":1}\n'); };
   const failed = await nextEvent(app, 'reload-failed');
   assert.match(failed.output, /bad config/);
+  assert.equal(typeof failed.startedAt, 'number');
 });
 
 /** Every `name` event until `done(events)` is true; `onEvent(name, data)` sees each event of any name as it arrives. */
