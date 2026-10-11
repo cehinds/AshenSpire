@@ -18,7 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { safePath, createGate, newToken, createSseHub, readJson, sendJson, MIME } from './lib/index.mjs';
 import { ToolSupervisor } from './core/tools.mjs';
-import { JobRunner } from './core/jobs.mjs';
+import { JobRunner, GENERATED } from './core/jobs.mjs';
 import { createWatcher, buildsFor } from './core/watch.mjs';
 import { Settings, resolveExternal } from './core/settings.mjs';
 
@@ -116,6 +116,8 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
       const built = [];
       if (steps.length) {
         hub.send('building', { files, steps });
+        // Live-reload builds share the jobs' lock: never two writers of the generated trees.
+        await jobs.acquire(GENERATED, 'A live-reload build');
         watcher.mute();
         try {
           for (const step of steps) {
@@ -123,7 +125,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
             built.push(step);
             if (code !== 0) { hub.send('reload-failed', { files, step, output: out.slice(-6000) }); return; }
           }
-        } finally { watcher.unmute(); }
+        } finally { watcher.unmute(); jobs.release(GENERATED); }
       }
       reloads += 1;
       hub.send('reload', { files, count: files.length, built, at: Date.now() });

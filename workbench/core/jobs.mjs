@@ -19,7 +19,7 @@ const testFiles = (root) => ['editor/tests', 'ui-studio/tests', 'workbench/tests
 
 /** Jobs in one lock group write the same generated trees (src/content/generated,
  *  src/framework/data, src/config/generated), so only one of them runs at a time. */
-const GENERATED = 'generated-sources';
+export const GENERATED = 'generated-sources';
 
 /** id → { label, description, lock?, steps(root) → [{ args, optional?, missing? }] } */
 export const JOBS = {
@@ -51,6 +51,8 @@ export class JobRunner {
   constructor({ root, stateFile, onEvent = () => {} }) {
     Object.assign(this, { root, stateFile, onEvent });
     this.runs = []; this.active = new Map(); // id → run
+    this.locks = new Map(); // lock group → label of whoever holds it (a job or a live-reload build)
+    this.lockWaiters = [];
     try { this.runs = JSON.parse(fs.readFileSync(stateFile, 'utf8')).slice(0, HISTORY).map((r) => (r.status === 'running' ? { ...r, status: 'cancelled', message: 'The Workbench stopped while this ran' } : r)); } catch { /* no history yet */ }
   }
 
@@ -78,8 +80,8 @@ export class JobRunner {
     const job = Object.hasOwn(JOBS, id) ? JOBS[id] : null;
     if (!job) throw Object.assign(Error(`Unknown job: ${String(id).slice(0, 60)}`), { status: 400 });
     if (this.active.has(id)) throw Object.assign(Error(`${job.label} is already running`), { status: 409 });
-    const blocker = job.lock && [...this.active.keys()].find((other) => JOBS[other]?.lock === job.lock);
-    if (blocker) throw Object.assign(Error(`${JOBS[blocker].label} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
+    if (job.lock && this.locks.has(job.lock)) throw Object.assign(Error(`${this.locks.get(job.lock)} is running and writes the same generated files; ${job.label} can start when it finishes`), { status: 409 });
+    if (job.lock) this.locks.set(job.lock, job.label);
     const run = { runId: `${Date.now().toString(36)}-${randomBytes(3).toString('hex')}`, id, label: job.label, status: 'running', startedAt: Date.now(), endedAt: null, durationMs: null, exitCode: null, message: '', log: '' };
     this.runs.unshift(run); this.runs.length = Math.min(this.runs.length, HISTORY);
     this.active.set(id, run);
@@ -126,10 +128,23 @@ export class JobRunner {
     // A cancelled step keeps the job's slot until its process has really exited,
     // so a re-run cannot write the same output alongside it.
     const child = run.child;
-    if (child && child.exitCode === null && child.signalCode === null) child.once('close', () => { if (this.active.get(run.id) === run) this.active.delete(run.id); });
-    else this.active.delete(run.id);
+    const free = () => { if (this.active.get(run.id) === run) { this.active.delete(run.id); if (JOBS[run.id]?.lock) this.release(JOBS[run.id].lock); } };
+    if (child && child.exitCode === null && child.signalCode === null) child.once('close', free);
+    else free();
     this.persist();
     this.onEvent('job', this.summary(run));
+  }
+
+  /** Wait for a lock group to be free, then hold it as `label`; pair with release(). */
+  async acquire(lock, label) {
+    while (this.locks.has(lock)) await new Promise((resolve) => this.lockWaiters.push(resolve));
+    this.locks.set(lock, label);
+  }
+
+  release(lock) {
+    this.locks.delete(lock);
+    const waiters = this.lockWaiters.splice(0);
+    for (const wake of waiters) wake();
   }
 
   cancel(runId) {

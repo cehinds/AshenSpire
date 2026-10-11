@@ -35,7 +35,8 @@ export class Settings {
     try { saved = JSON.parse(fs.readFileSync(this.file, 'utf8')); } catch { /* none yet */ }
     const base = defaults(this.env);
     const out = { ...base };
-    for (const k of Object.keys(base)) if (typeof saved[k] === 'string' && saved[k] !== '') out[k] = saved[k];
+    // A saved empty string is an explicit "none": it overrides the default or the environment.
+    for (const k of Object.keys(base)) if (typeof saved[k] === 'string') out[k] = saved[k];
     return out;
   }
   save(next) {
