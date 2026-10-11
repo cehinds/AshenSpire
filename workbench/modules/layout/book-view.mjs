@@ -6,6 +6,7 @@
 // to src/content/bookArtPresets.js. index.mjs mounts this view and supplies the host.
 import * as K from './book-model.mjs';
 import * as C from './config-model.mjs';
+import * as I from './book-inspect.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const CSS = '/modules/layout/book-view.css';
@@ -158,7 +159,7 @@ export function createBookView(root, host) {
   function paintPalette() {
     const row = $('[data-bk="palette"]');
     const r = recipe();
-    const colour = r ? r.color.toLowerCase() : null;
+    const colour = typeof r?.color === 'string' ? r.color.toLowerCase() : null;
     row.replaceChildren(...((st.catalog?.palette) || []).map((color) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -175,23 +176,14 @@ export function createBookView(root, host) {
 
   /** The inspector: each recipe field of the book, as the control that matches its kind. */
   function paintInspector() {
-    const box = $('.bk-insp');
-    const r = recipe();
-    const book = st.catalog?.books.find((b) => b.id === st.bookId);
-    if (!r) { box.innerHTML = st.error ? `<p class="lay-hint is-error">${esc(st.error)}</p>` : '<p class="lay-note">Pick a book to edit its recipe.</p>'; return; }
-    const dis = editable() ? '' : ' disabled';
-    const selectOf = (field, options, label = (v) => v) => `<div class="lay-row"><code>${esc(field)}</code><span><select data-bk-field="${field}"${dis}>${options.map((o) => `<option value="${esc(o)}"${o === r[field] ? ' selected' : ''}>${esc(label(o))}</option>`).join('')}</select></span></div>`;
-    const colourOf = (field) => `<div class="lay-row"><code>${esc(field)}</code><span><input type="color" data-bk-colour="${field}" value="${esc(r[field].toLowerCase())}" aria-label="${esc(field)} colour"${dis}> <input type="text" data-bk-field="${field}" value="${esc(r[field])}" size="8" maxlength="7"${dis}></span></div>`;
-    const cat = st.catalog || K.catalogOf({});
-    box.innerHTML = `<h3>${esc(book?.name || st.bookId)}</h3>
-      <p class="lay-note">${esc(st.bookId)} in ${esc(K.RECIPES_FILE)}</p>
-      ${selectOf('cover', cat.cover)}
-      ${colourOf('color')}
-      ${selectOf('symbol', cat.symbol)}
-      ${selectOf('treatment', cat.treatment, (v) => `${v} (${K.TREATMENT_LABELS[v] || v})`)}
-      ${colourOf('ink')}
-      ${selectOf('trim', cat.trim)}
-      <p class="lay-note">${editable() ? 'Only the values you change are written. Save with Review changes.' : 'Edits are off until the game server answers.'}</p>`;
+    $('.bk-insp').innerHTML = I.inspectorHtml({
+      bookId: st.bookId,
+      bookName: st.catalog?.books.find((b) => b.id === st.bookId)?.name,
+      recipe: recipe(),
+      catalog: st.catalog || K.catalogOf({}),
+      editable: editable(),
+      error: st.error,
+    });
   }
 
   function paintStatus() {

@@ -3,12 +3,16 @@
 // "missing" badge show the gap, the banner lists the game's problems, and nothing is filled in.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as I from '../modules/layout/book-inspect.mjs';
 import * as B from '../modules/layout/book-model.mjs';
 import { consumables } from '../../src/content/consumables.js';
 import { BOOK_ART_PRESETS } from '../../src/content/bookArtPresets.js';
 import { BOOK_COVERS, BOOK_SYMBOLS, BOOK_TREATMENTS, BOOK_TRIMS, BOOK_PALETTE, bookArtProblems } from '../../src/content/bookArt.js';
 
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const CATALOG = B.catalogOf({ books: consumables.filter((r) => r.kind === 'skillBook'), cover: BOOK_COVERS, symbol: BOOK_SYMBOLS, treatment: BOOK_TREATMENTS, trim: BOOK_TRIMS, palette: BOOK_PALETTE });
 const withoutField = (field) => { const r = { ...BOOK_ART_PRESETS.spellbook }; delete r[field]; return r; };
 const show = (recipe, extra = {}) => I.inspectorHtml({ bookId: 'spellbook', bookName: 'Spellbook', recipe, catalog: CATALOG, editable: true, ...extra });
@@ -70,6 +74,14 @@ test('without a catalog the banner waits for the game, and nothing throws', () =
 test('no recipe is a note, or the load error', () => {
   assert.match(I.inspectorHtml({ bookId: null, recipe: null, catalog: CATALOG }), /Pick a book/);
   assert.match(I.inspectorHtml({ bookId: 'x', recipe: null, catalog: CATALOG, error: 'Could not load' }), /Could not load/);
+});
+
+test('the view draws its inspector through the pure builder, and never calls toLowerCase on a value it may not have', () => {
+  const src = readFileSync(join(ROOT, 'workbench/modules/layout/book-view.mjs'), 'utf8');
+  assert.match(src, /I\.inspectorHtml\(\{/);
+  assert.match(src, /import \* as I from '\.\/book-inspect\.mjs';/);
+  assert.doesNotMatch(src, /r\[field\]\.toLowerCase\(\)/);
+  assert.match(src, /typeof r\?\.color === 'string' \? r\.color\.toLowerCase\(\) : null/, 'the palette guards a missing colour');
 });
 
 test('the swatch is the colour only when it is a six-digit hex colour', () => {
