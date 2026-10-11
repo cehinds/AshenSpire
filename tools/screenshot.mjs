@@ -287,8 +287,9 @@ async function capture(shot) {
 // this file already found wrong once (see captureStable). So a `ready` shot is
 // driven over DevTools: load, wait until tools/shotReady.mjs says every
 // combatant's shown artwork is loaded and decoded, then capture that frame.
-// If it never gets there the run fails and names the images, and no PNG is
-// written — a combat frame missing a figure is not evidence.
+// If it never gets there the run fails and names the images, and the shot's
+// PNG is removed (an older one must not pass for this run's) — a combat frame
+// missing a figure is not evidence.
 async function captureReady(shot) {
   const out = shotPath(shot.name);
   const [width, height] = VIEWPORT.split(',').map(Number);
@@ -336,6 +337,7 @@ async function captureReady(shot) {
           : `pending [${state.pending.join(', ')}] broken [${state.broken.join(', ')}] `
             + `undrawn [${state.combatants.filter((c) => !c.drawn).map((c) => c.eid).join(', ')}]`;
         console.error(`  ✗ ${shot.name}: artwork not ready after ${READY_TIMEOUT_MS} ms — ${why}; NOT captured.`);
+        rmSync(out, { force: true });
         return false;
       }
       // Ready is necessary, not sufficient. One run in about thirty still
@@ -351,6 +353,7 @@ async function captureReady(shot) {
         onRetry: (attempt) => console.error(`    ${shot.name}: frame still changing (try ${attempt}/${MAX_TRIES})`) });
       if (!frame) {
         console.error(`  ✗ ${shot.name}: no settled frame in ${MAX_TRIES} retakes; NOT captured.`);
+        rmSync(out, { force: true });
         return false;
       }
       writeFileAtomic(out, frame);

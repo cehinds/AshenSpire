@@ -44,6 +44,9 @@ export function createStepRunner({ graceMs: defaultGraceMs } = {}) {
 /**
  * Stop the runner's running step on SIGINT, SIGTERM or SIGHUP, then exit with the conventional
  * 128 + signal number. Call it from a CLI's main after it takes the build lock.
+ * It exits rather than re-raising the signal on purpose: process.exit runs the 'exit' handler
+ * that releases the build lock, and death by the signal would skip it. A caller that reads exit
+ * codes (tools/verdict.mjs) therefore sees 128 + n, a failure, never a pass.
  */
 export function stopStepsOnSignal(runner, { exit = (code) => process.exit(code), signals = ['SIGINT', 'SIGTERM', 'SIGHUP'], numbers = { SIGINT: 2, SIGTERM: 15, SIGHUP: 1 } } = {}) {
   for (const signal of signals) {
