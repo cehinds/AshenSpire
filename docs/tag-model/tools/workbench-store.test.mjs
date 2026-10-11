@@ -661,6 +661,13 @@ test('a proposed formula with no expression is a note, not a problem', () => {
   assert.equal(formulaRowIssue({ key: 'w', expr: '1+1', status: 'proposed' }, evalExpr), null, 'a formula with an expression is not an issue');
 });
 
+test('a blank proposed formula is styled as a muted note, not as an error', () => {
+  const { formulaCellClass } = vm.runInNewContext(formulaIssueSource() + '\n;({ formulaCellClass })', {});
+  assert.equal(formulaCellClass({ err: 'proposed, no formula yet', soft: true, note: true }), 'note');
+  assert.equal(formulaCellClass({ err: 'unexpected end', soft: false }), 'bad', 'a real parse error stays red');
+  assert.equal(formulaCellClass({ err: 'unknown ref', soft: true }), 'warn', 'a soft error warns');
+});
+
 test('a second banner that appears while another is up is announced as an alert', async () => {
   const db = makeFakeDb();
   const A = makePage(db, T);

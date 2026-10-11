@@ -61,7 +61,7 @@ td.c-expr input{font-family:var(--mono);font-size:.76rem}
 td.bad input{box-shadow:inset 0 -2px 0 var(--bad)}
 td.warn input{box-shadow:inset 0 -2px 0 var(--warn)}
 td.out{padding:6px 8px;font:.76rem var(--mono);white-space:nowrap;color:var(--teal)}
-td.out.bad{color:var(--bad)} td.out.warn{color:var(--warn)}
+td.out.bad{color:var(--bad)} td.out.warn{color:var(--warn)} td.out.note{color:var(--muted)}
 .x{border:0;background:none;color:var(--muted);padding:2px 6px;font-size:.9rem}
 .x:hover{color:var(--bad)}
 .more{padding:10px;text-align:center}
@@ -549,7 +549,8 @@ function rankedValues(objectId, rank){
   }
   return m;
 }
-function evalExpr(expr, rank=1, objectId=null){
+function evalExpr(expr, rank=1, objectId=null, status){
+  if(!String(expr??'').trim() && status==='proposed') return {err:'proposed, no formula yet', soft:true, note:true};
   try{ const v=evalNode(parse(String(expr||'')), makeEnv(rank,objectId)); return {v}; }
   catch(e){ return {err:e.message, soft:!!e.soft}; }
 }
@@ -583,6 +584,8 @@ function formulaRowIssue(row, evalExpr){
   if(!String(row.expr??'').trim() && row.status==='proposed') return {note:true, msg:'proposed, no formula yet'};
   const e=evalExpr(row.expr); return e.err && !e.soft ? {msg:e.err} : null;
 }
+/* a formula cell's style for a result that is not a value: a note is muted, a soft error warns, anything else is an error */
+function formulaCellClass(e){ return e.note? 'note' : e.soft? 'warn' : 'bad'; }
 /* formula-issues:end */
 function computeIssues(){
   const out=[];
@@ -713,7 +716,7 @@ function renderTable(p,t){
         inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; if(t==='formulas') draw(); renderTabs(); });
         td.appendChild(inp); tr.appendChild(td);
       }
-      if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(e.soft?'warn':'bad'); } tr.appendChild(td); }
+      if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr,1,null,r.status); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(formulaCellClass(e)); } tr.appendChild(td); }
       body.appendChild(tr);
     }
     table.appendChild(body); grid.appendChild(table);
@@ -783,7 +786,7 @@ function renderSheet(p){
   const rowsHtml=[];
   const env=makeEnv(rank,id);
   for(const r of vrows){ let v; try{ v=fmt(env(String(r.key))); }catch(e){ v=e.message; } rowsHtml.push(['value',r.key,v,r.unit,r.description]); }
-  for(const r of frows){ const e=evalExpr(r.expr,rank,id); rowsHtml.push(['formula',r.key,'v' in e?fmt(e.v):e.err,'',r.expr]); }
+  for(const r of frows){ const e=evalExpr(r.expr,rank,id,r.status); rowsHtml.push(['formula',r.key,'v' in e?fmt(e.v):e.err,'',r.expr]); }
   for(const k of outside){ const kind=refKind(k)||'unknown'; let v='—'; try{ v=fmt(env(k)); }catch(e){ v=e.soft?'runtime':e.message; } rowsHtml.push(['uses '+kind,k,v,'',(IX.val.get(k)||IX.frm.get(k))?.description||findTag(k)?.label||'']); }
   vt.innerHTML='<table><thead><tr><th>kind</th><th>key</th><th>value</th><th>unit</th><th>detail</th></tr></thead><tbody>'+rowsHtml.map(r=>'<tr><td>'+escapeHtml(r[0])+'</td><td class="mono">'+escapeHtml(r[1])+'</td><td class="num">'+escapeHtml(r[2])+'</td><td>'+escapeHtml(r[3]||'')+'</td><td class="mono">'+escapeHtml(r[4]||'')+'</td></tr>').join('')+'</tbody></table>';
   vb.appendChild(vt); right.appendChild(vb);
