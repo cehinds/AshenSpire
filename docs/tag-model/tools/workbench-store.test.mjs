@@ -698,11 +698,12 @@ test('the real formulas.csv imports, saves, loads and exports with its status co
   assert.match(toCSV(loaded.columns, loaded.rows).split('\n')[0], /,status$/, 'export keeps the status column');
 });
 
-test('a formulas head that names no columns keeps status: the table default columns include it', async () => {
+test('a formulas head that names its columns keeps status: the table default columns include it', async () => {
   const { FORMULA_COLUMNS } = loadBlock('formula-columns', '({ FORMULA_COLUMNS })');
   const { formulaRowIssue } = loadBlock('formula-issues', '({ formulaRowIssue })');
   const db = makeFakeDb();
-  db.put('tables/t', { rows: [['evasion.rating', '', 'character', 'TBD', 'proposed']] });
+  // positional rows need their own column list; a columnless head is blocked (see the test below)
+  db.put('tables/t', { columns: FORMULA_COLUMNS, rows: [['evasion.rating', '', 'character', 'TBD', 'proposed']] });
   const R = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
   R.api.subscribeTable('t');
   await waitFor(() => R.page.loaded.has('t'));
@@ -1283,4 +1284,35 @@ test('a local save from an older page gains the default columns that are new', (
   assert.equal(JSON.stringify(got.columns.slice(0, 2)), JSON.stringify(['id', 'name']), 'saved columns keep their order');
   for (const c of tables.objects.columns) assert.ok(got.columns.includes(c), 'default column kept: ' + c);
   assert.equal(JSON.stringify(got.rows), JSON.stringify([{ id: 'o1', name: 'Dagger' }]), 'saved rows are kept as they were');
+});
+
+test('a columnless head of positional rows is blocked, not read with the default columns', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { rows: [['x1', 'n', 1]] });
+  api.subscribeTable('t');
+  await settle(30);
+  assert.equal(page.loaded.has('t'), false, 'the table is not loaded');
+  assert.equal(page.state.data.t.rows.length, 0, 'no row is adopted');
+  assert.ok(page.statuses.some((s) => s.level === 'bad' && /positional rows with no column list/.test(s.msg)), 'the block is shown');
+});
+
+test('a columnless legacy head whose parts are positional rows is blocked too', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { parts: 1, format: 'arrays' });
+  db.put('tables/t/parts/p0', { index: 0, rows: [['a1', 'n', 1]] });
+  api.subscribeTable('t');
+  await settle(30);
+  assert.equal(page.loaded.has('t'), false, 'the table is not loaded');
+  assert.equal(page.state.data.t.rows.length, 0, 'no row is adopted');
+});
+
+test('a columnless head whose rows are objects still loads with the defaults', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { rows: [{ id: 'o1', name: 'n', qty: 2 }] });
+  api.subscribeTable('t');
+  await waitFor(() => page.loaded.has('t'));
+  assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify([{ id: 'o1', name: 'n', qty: 2 }]));
 });

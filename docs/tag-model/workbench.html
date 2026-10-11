@@ -209,6 +209,9 @@ function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
 /* a blob head's rev; a legacy head gets an identity derived from its JSON, so a later legacy write is a change; absent is '' */
 function revOf(h){ if(!h) return ''; if(h.format==='blobs') return h.rev||''; return 'legacy:'+hashText(JSON.stringify(h)); }
 function headCols(h,t){ return Array.isArray(h.columns)&&h.columns.length? h.columns : TABLES[t].columns; }
+/* positional rows need the head's own column list: the defaults could shift their cells, so such a head is blocked */
+const NO_COLUMNS='This table is stored as positional rows with no column list, so this page cannot tell which cell is which. It is blocked and cannot be saved over. Reload later.';
+function positionalWithoutColumns(h, rows){ return !(Array.isArray(h.columns)&&h.columns.length) && rows.some(r=>Array.isArray(r)); }
 function objectRows(hc, arrs){ return arrs.map(a=>{ const o={}; hc.forEach((c,j)=>{ o[c]=a[j]??''; }); return o; }); }
 function adoptRows(t, hc, objs){
   if(dirty.has(t)||saving.has(t)) return;
@@ -245,6 +248,7 @@ function legacyAssemble(t){
     ids.push(p.id); arrs.push(...p.rows);
   }
   ts.legacyDocs=ids;
+  if(positionalWithoutColumns(h,arrs)){ blockTable(t,NO_COLUMNS); return; }
   adoptRows(t, hc, arrs.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r));
 }
 function ensureParts(t){
@@ -269,12 +273,14 @@ async function applyHead(t,h){
        The user's choice (Load theirs or Keep mine) resolves it, and it cannot silently lose rows. */
     if(ts.lastSaveAt&&Date.now()-ts.lastSaveAt<10000&&revOf(h)!==ts.base&&(h.base||'')!==ts.base){ ts.conflict={theirRev:revOf(h)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); return; }
     const arrs=[]; for(const x of h.blobs||[]) arrs.push(...r.got.get(x));
+    if(positionalWithoutColumns(h,arrs)){ blockTable(t,NO_COLUMNS); return; }
     ts.incomplete=null; ts.base=revOf(h); ts.blobs=r.got; ts.legacyDocs=[];
     adoptRows(t, headCols(h,t), objectRows(headCols(h,t), arrs));
     return;
   }
   if(h.format!==undefined&&h.format!=='arrays'&&h.format!=='blobs'){ blockTable(t,UNKNOWN_FORMAT); return; }
   if(Array.isArray(h.rows)){ /* oldest inline format: the rows are in the head itself */
+    if(positionalWithoutColumns(h,h.rows)){ blockTable(t,NO_COLUMNS); return; }
     stopParts(t); ts.legacy=null; ts.base=revOf(h); ts.blobs=new Map(); ts.incomplete=null; ts.legacyDocs=[];
     const hc=headCols(h,t); adoptRows(t, hc, h.rows.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r)); return;
   }
