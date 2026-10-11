@@ -215,7 +215,7 @@ export function buildTimeline(queues, ctx = {}) {
     return cards.map((c, cardIndex) => {
       const preemptive = DEFENSIVE_KINDS.includes(c.kind);
       const buff = preemptive ? REACTION_BUFF.speed : 0;
-      const card = Number(c.speed ?? 0) + buff;
+      const card = Number(c.speed ?? 0);
       const momentumPart = momentumTerm(combatants[id].side, id, c.target, momentum);
       const initiative = base[id] + d4[id] + momentumPart;
       return {
@@ -234,8 +234,8 @@ export function buildTimeline(queues, ctx = {}) {
           d4: d4[id],
           momentum: momentumPart,
           initiative,
-          total: card + initiative,
-          effective: card + initiative,
+          total: card + buff + initiative,
+          effective: card + buff + initiative,
         },
       };
     });
@@ -269,7 +269,7 @@ export function buildTimeline(queues, ctx = {}) {
         .filter((i) => lanes[i].length > k)
         .map((i) => ({ i, entry: lanes[i][k] }))
         .sort((a, b) => (lead[laneIds[b.i]] - lead[laneIds[a.i]])
-          || (b.entry.speed.card - a.entry.speed.card)
+          || ((b.entry.speed.card + b.entry.speed.buff) - (a.entry.speed.card + a.entry.speed.buff))
           || (a.i - b.i));
       entries.push(...pass.map((p) => p.entry));
     }

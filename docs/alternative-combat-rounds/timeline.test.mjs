@@ -167,6 +167,31 @@ test('each entry breaks its speed into card, base, d4 and momentum terms', () =>
   assert.equal(tl.initiative.player.base, 0);
 });
 
+test('a preemptive defensive card reports its raw speed; the buff is a separate term', () => {
+  const { player, goblin, wolf } = trio();
+  const tl = buildTimeline(
+    { player: [card('guard', 'guard', 'self', 5)], goblin: [atk('stab', 'player', 5)], wolf: [] },
+    {
+      combatants: { player, goblin, wolf },
+      rng: seqRng(TRIO_RNG),
+      momentum: { goblin: 2 }, // momentumSpeed(2) = 1, so the enemy term is -1
+      merge: 'speed',
+    },
+  );
+  const sumTerms = (s) => s.card + s.buff + s.base + s.d4 + s.momentum;
+  const guard = tl.entries.find((e) => e.cardId === 'guard');
+  assert.equal(guard.speed.card, 5);
+  assert.equal(guard.speed.buff, 1);
+  assert.equal(sumTerms(guard.speed), guard.speed.total);
+  assert.equal(guard.speed.total, 7); // 5 + 1 + (base 0 + d4 1 + momentum 0)
+
+  const stab = tl.entries.find((e) => e.cardId === 'stab');
+  assert.equal(stab.speed.card, 5);
+  assert.equal(stab.speed.buff, 0);
+  assert.equal(sumTerms(stab.speed), stab.speed.total);
+  assert.equal(stab.speed.total, 8); // 5 + 0 + (base 0 + d4 4 + momentum -1)
+});
+
 test('momentum term keeps its sign for the player and the enemy', () => {
   const { player, goblin, wolf } = trio();
   const tl = buildTimeline(trioQueues(), {

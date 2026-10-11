@@ -526,7 +526,8 @@ Placeholder numbers are marked PLACEHOLDER in the code and below.
 
 `buildTimeline(queues, ctx)` returns `{ merge, initiative, entries }`. Each entry has
 `speed = { card, buff, base, d4, momentum, initiative, total, effective }`, so a UI
-can show the breakdown. `merge` is one of three modes, so the owner can compare:
+can show the breakdown. `card` is the raw card speed; `buff` (REACTION_BUFF.speed for a
+preemptive card, else 0) is added separately, so `total = card + buff + initiative`. `merge` is one of three modes, so the owner can compare:
 
 - `speed` (default). Sort by action speed, highest first. A card's effective speed
   is the lesser of its own total and the previous card's effective in the same
