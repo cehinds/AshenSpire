@@ -136,25 +136,33 @@
     }
   }
 
-  // Tokens for one form factor. Only tokens explicitly set in the scene data or changed from the seed are emitted.
+  // Tokens for one form factor. A token is written only when the scene's value differs from the
+  // untouched seed (the seed's base values in the default view, with no form factor overrides).
+  // Export-settings values (minWidth, maxWidth, span) count as set when the scene sets them, so an
+  // untouched seed exports {} for every form factor and the game keeps its tuned content values.
   function exportTokens(scene, seed, bindings, formFactor, options = {}) {
     checkFormFactor(formFactor);
     const state = options.state || defaultState(scene);
+    const reference = seed || scene;
     const tokens = {};
     for (const [token, binding] of Object.entries(bindings.tokens)) {
       const node = findNode(scene, binding.node);
       if (!node) throw new Error(`${token}: node ${binding.node} does not exist`);
+      const seedNode = findNode(reference, binding.node);
+      if (!seedNode) throw new Error(`${token}: node ${binding.node} does not exist in the seed`);
       if (binding.type === 'px') {
-        const seedNode = findNode(seed || scene, binding.node);
         const offset = resolveNode(node, state, formFactor)[binding.axis] - seedNode[binding.axis];
-        const explicit = !!(node.formFactors && node.formFactors[formFactor] && node.formFactors[formFactor][binding.axis] !== undefined);
-        if (offset === 0 && !explicit) continue;
-        tokens[token] = cssWhole(offset * SCALE);
+        const value = cssWhole(offset * SCALE);
+        if (offset === 0 || value === '0px') continue;
+        tokens[token] = value;
       } else {
         const raw = readPath(resolveNode(node, state, formFactor), binding.path);
         if (raw === undefined) continue;
         const value = formatStyle(token, binding, raw);
         if (value === undefined) continue;
+        const seedRaw = readPath(resolveNode(seedNode, state), binding.path);
+        const seedValue = seedRaw === undefined ? undefined : formatStyle(token, binding, seedRaw);
+        if (value === seedValue) continue;
         tokens[token] = value;
       }
       const problem = checkValue(binding, tokens[token]);

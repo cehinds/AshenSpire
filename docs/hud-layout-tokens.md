@@ -7,7 +7,10 @@ exports those files; `tools/hud-layout-css.mjs` turns them into
 stylesheets. Nothing else writes these properties.
 
 ```
-studio (Export CSS JSON) ──► content/hud-layout/<form-factor>.json
+studio (Export CSS JSON) ──► ~/Downloads/<form-factor>.json
+                                   │  node tools/hud-layout-css.mjs --merge <files>
+                                   ▼
+                            content/hud-layout/<form-factor>.json
                                    │  node tools/hud-layout-css.mjs --write
                                    ▼
                             styles/hud-layout.generated.css ──► game
@@ -105,5 +108,18 @@ tokens are read from the node's shadow, backing, fill, stroke and font
 properties. The studio's form-factor toggle (Mobile / Tablet / Desktop /
 Widescreen) keeps a separate set of overrides per form factor; **Export CSS
 JSON** writes the current form factor's file, or all four as separate files.
-Copy the exported files into `content/hud-layout/`, run
-`node tools/hud-layout-css.mjs --write`, then rebuild.
+
+An export carries only the tokens whose value differs from the studio's seed
+(the layout as shipped in `tools/hud-component-studio/scene.json`). An untouched
+studio exports `"tokens": {}` for every form factor, so exporting without edits
+changes nothing in the game. Export-settings values (`minWidth`, `maxWidth`,
+`span`) count as set once the designer sets them in the Inspector.
+
+Workflow:
+
+1. **Export CSS JSON** in the studio (this form factor, or all four) downloads the files.
+2. `node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …` validates each
+   file and merges it into `content/hud-layout/<ff>.json`: an exported value
+   wins, and tokens the export does not carry keep their tuned value. Any refused
+   file writes nothing and exits 1. The stylesheet is regenerated in the same run.
+3. Rebuild.
